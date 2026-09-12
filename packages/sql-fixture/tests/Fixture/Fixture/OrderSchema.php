@@ -12,6 +12,9 @@ use SqlFixture\Schema\TableSchema;
  */
 final class OrderSchema
 {
+    /**
+     * Returns create.
+     */
     public static function create(): TableSchema
     {
         return new TableSchema('order', [

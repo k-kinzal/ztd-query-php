@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace SqlFixture\Hydrator;
 
+/**
+ * Hydrates generated row values into a requested object type.
+ */
 interface HydratorInterface
 {
     /**

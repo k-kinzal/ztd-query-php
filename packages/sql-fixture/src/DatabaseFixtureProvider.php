@@ -10,7 +10,6 @@ use PDO;
 use SqlFixture\Hydrator\HydratorInterface;
 use SqlFixture\Platform\PlatformFactory;
 use SqlFixture\Schema\SchemaFetcherInterface;
-use SqlFixture\Schema\TableSchema;
 use SqlFixture\TypeMapper\TypeMapperInterface;
 
 /**
@@ -18,17 +17,25 @@ use SqlFixture\TypeMapper\TypeMapperInterface;
  *
  * Automatically detects the database driver (MySQL, SQLite) and uses
  * the appropriate schema fetcher and type mapper.
+ *
+ * @visibility public
+ * @example Generate a fixture from a live SQLite table
+ *     $pdo = new \PDO('sqlite::memory:');
+ *     $pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+ *     $provider = new \SqlFixture\DatabaseFixtureProvider(\Faker\Factory::create(), $pdo);
+ *     $provider->fixture('users', ['name' => 'Alice']) // => ['name' => 'Alice']
  */
 class DatabaseFixtureProvider extends Base
 {
     private FixtureGenerator $fixtureGenerator;
     private SchemaFetcherInterface $schemaFetcher;
-    private PDO $connection;
     private string $driver;
 
-    /** @var array<string, TableSchema> Table name → parsed schema cache */
-    private array $schemaCache = [];
+    private Provider\DatabaseSchemaCache $schemaCache;
 
+    /**
+     * Initializes the collaborators and declared state for this object.
+     */
     public function __construct(
         Generator $faker,
         PDO $connection,
@@ -38,13 +45,13 @@ class DatabaseFixtureProvider extends Base
     ) {
         parent::__construct($faker);
 
-        $this->connection = $connection;
         $this->driver = PlatformFactory::detectDriver($connection);
 
         $typeMapper ??= PlatformFactory::createTypeMapper($this->driver);
         $schemaParser = PlatformFactory::createSchemaParser($this->driver);
 
         $this->schemaFetcher = $schemaFetcher ?? PlatformFactory::createSchemaFetcher($this->driver);
+        $this->schemaCache = new Provider\DatabaseSchemaCache($connection, $this->schemaFetcher);
         $this->fixtureGenerator = new FixtureGenerator($faker, $typeMapper, $hydrator, $schemaParser);
     }
 
@@ -62,41 +69,20 @@ class DatabaseFixtureProvider extends Base
         array $overrides = [],
         ?string $className = null,
     ): array|object {
-        $schema = $this->getSchema($tableName);
+        $schema = $this->schemaCache->getSchema($tableName);
         return $this->fixtureGenerator->generate($schema, $overrides, $className);
     }
 
-    /**
-     * Get or fetch schema for a table.
-     */
-    private function getSchema(string $tableName): TableSchema
-    {
-        $normalizedName = $this->normalizeTableName($tableName);
 
-        if (!isset($this->schemaCache[$normalizedName])) {
-            $this->schemaCache[$normalizedName] = $this->schemaFetcher->fetchSchema(
-                $this->connection,
-                $tableName
-            );
-        }
 
-        return $this->schemaCache[$normalizedName];
-    }
 
-    /**
-     * Normalize table name for caching.
-     */
-    private function normalizeTableName(string $tableName): string
-    {
-        return str_replace(['`', '"'], '', $tableName);
-    }
 
     /**
      * Clear the schema cache.
      */
     public function clearCache(): void
     {
-        $this->schemaCache = [];
+        $this->schemaCache->clear();
     }
 
     /**

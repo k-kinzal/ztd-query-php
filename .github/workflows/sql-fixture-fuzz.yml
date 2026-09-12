@@ -13,11 +13,18 @@ on:
 permissions:
   actions: read
   contents: read
-  issues: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  COMPOSER_NO_INTERACTION: '1'
 
 jobs:
   fuzz:
     name: ${{ matrix.target.name }}
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -29,49 +36,78 @@ jobs:
       run:
         working-directory: packages/sql-fixture
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - uses: shivammathur/setup-php@v2
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:
-          php-version: '8.5'
+          php-version: '8.3'
           extensions: ${{ matrix.target.extensions }}
           coverage: none
 
-      - uses: ramsey/composer-install@v3
+      - uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
           working-directory: packages/sql-fixture
+          dependency-versions: locked
+          composer-options: --prefer-dist
+          require-lock-file: true
 
-      - uses: actions/cache/restore@v5
+      - name: Check installed platform requirements
+        run: composer check-platform-reqs
+
+      - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: packages/sql-fixture/fuzz/corpus/${{ matrix.target.corpus }}
-          key: fuzz-sql-fixture-${{ matrix.target.corpus }}-${{ github.run_id }}
+          key: fuzz-sql-fixture-v2-${{ matrix.target.corpus }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            fuzz-sql-fixture-${{ matrix.target.corpus }}-
+            fuzz-sql-fixture-v2-${{ matrix.target.corpus }}-
 
-      - name: fuzzer
+      - name: Run the bounded fuzz campaign
+        env:
+          MAX_RUNS: ${{ inputs.max_runs || '10000' }}
         run: |
+          case "$MAX_RUNS" in
+            ''|*[!0-9]*) echo 'max_runs must be a positive integer.' >&2; exit 2 ;;
+          esac
+          if [ "${#MAX_RUNS}" -gt 8 ] || [ "$MAX_RUNS" -lt 1 ]; then
+            echo 'max_runs must be between 1 and 99999999.' >&2
+            exit 2
+          fi
+          mkdir -p build/fuzz fuzz/corpus/${{ matrix.target.corpus }}
           vendor/bin/php-fuzzer fuzz fuzz/${{ matrix.target.script }} \
             fuzz/corpus/${{ matrix.target.corpus }}/ \
-            --max-runs=${{ inputs.max_runs || '10000' }}
+            --max-runs="$MAX_RUNS" 2>&1 | tee "build/fuzz/${{ matrix.target.name }}.log"
+          if grep -Eq '^(CORPUS )?CRASH|^DUPLICATE CRASH' "build/fuzz/${{ matrix.target.name }}.log"; then
+            exit 1
+          fi
 
       - if: always()
-        uses: actions/cache/save@v5
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: packages/sql-fixture/fuzz/corpus/${{ matrix.target.corpus }}
-          key: fuzz-sql-fixture-${{ matrix.target.corpus }}-${{ github.run_id }}
+          key: fuzz-sql-fixture-v2-${{ matrix.target.corpus }}-${{ github.run_id }}-${{ github.run_attempt }}
 
-      - if: ${{ always() && hashFiles('packages/sql-fixture/crash-*') != '' }}
-        uses: actions/upload-artifact@v6
+      - if: ${{ always() && hashFiles('packages/sql-fixture/crash-*', 'packages/sql-fixture/timeout-*', 'packages/sql-fixture/oom-*') != '' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: fuzz-crashes-sql-fixture-${{ matrix.target.name }}
-          path: packages/sql-fixture/crash-*
+          path: |
+            packages/sql-fixture/crash-*
+            packages/sql-fixture/timeout-*
+            packages/sql-fixture/oom-*
+            packages/sql-fixture/build/fuzz/
 
   notify:
     name: Notify on crash
+    if: always()
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      actions: read
+      issues: write
     runs-on: ubuntu-latest
     needs: [fuzz]
     steps:
-      - uses: actions/github-script@v8
+      - uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           script: |
             const { data } = await github.rest.actions.listWorkflowRunArtifacts({

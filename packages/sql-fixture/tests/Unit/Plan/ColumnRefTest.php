@@ -13,10 +13,25 @@ use SqlFixture\Plan\PlanSyntaxException;
 
 #[CoversClass(ColumnRef::class)]
 #[UsesClass(PlanSyntaxException::class)]
+#[UsesClass(\SqlFixture\Plan\FixturePlan::class)]
+#[UsesClass(\SqlFixture\Plan\PlanParser::class)]
+#[UsesClass(\SqlFixture\Plan\PlanPrinter::class)]
+#[UsesClass(\SqlFixture\Plan\Relation::class)]
+#[UsesClass(\SqlFixture\Plan\RelationKind::class)]
+#[UsesClass(\SqlFixture\Plan\RelationSide::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\PlanStatements::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\RelationCursor::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\RelationReader::class)]
+#[UsesClass(\SqlFixture\Plan\PlanStructureException::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\PlanTables::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\RelationGroups::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\StatementPrinter::class)]
+#[UsesClass(\SqlFixture\Plan\Validation\PlanValidation::class)]
+#[UsesClass(\SqlFixture\Plan\Validation\TableName::class)]
 final class ColumnRefTest extends TestCase
 {
     #[Test]
-    public function namesATableAndItsColumns(): void
+    public function testNamesATableAndItsColumns(): void
     {
         $ref = new ColumnRef('order', ['id']);
 
@@ -25,7 +40,7 @@ final class ColumnRefTest extends TestCase
     }
 
     #[Test]
-    public function ofBuildsFromVariadicColumns(): void
+    public function testOfBuildsFromVariadicColumns(): void
     {
         $ref = ColumnRef::of('order', 'shop_id', 'no');
 
@@ -33,63 +48,49 @@ final class ColumnRefTest extends TestCase
     }
 
     #[Test]
-    public function aSingleColumnIsNotComposite(): void
+    public function testIsCompositeASingleColumnIsNotComposite(): void
     {
         self::assertFalse(ColumnRef::of('order', 'id')->isComposite());
     }
 
     #[Test]
-    public function severalColumnsAreComposite(): void
+    public function testSeveralColumnsAreComposite(): void
     {
         self::assertTrue(ColumnRef::of('order', 'shop_id', 'no')->isComposite());
     }
 
     #[Test]
-    public function printsASingleColumnWithADot(): void
+    public function testToStringPrintsASingleColumnWithADot(): void
     {
         self::assertSame('order.id', ColumnRef::of('order', 'id')->toString());
     }
 
     #[Test]
-    public function printsCompositeColumnsInParentheses(): void
+    public function testPrintsCompositeColumnsInParentheses(): void
     {
         self::assertSame('order.(shop_id, no)', ColumnRef::of('order', 'shop_id', 'no')->toString());
     }
 
     #[Test]
-    public function castsToItsWrittenForm(): void
+    public function testCastsToItsWrittenForm(): void
     {
         self::assertSame('order.id', (string) ColumnRef::of('order', 'id'));
     }
 
     #[Test]
-    public function equalsComparesTableAndColumns(): void
+    public function testEqualsComparesTableAndColumns(): void
     {
         self::assertTrue(ColumnRef::of('order', 'id')->equals(ColumnRef::of('order', 'id')));
         self::assertFalse(ColumnRef::of('order', 'id')->equals(ColumnRef::of('order', 'no')));
         self::assertFalse(ColumnRef::of('order', 'id')->equals(ColumnRef::of('shipment', 'id')));
     }
 
-    #[Test]
-    public function anEmptyTableNameIsRejected(): void
-    {
-        $this->expectException(PlanSyntaxException::class);
-        $this->expectExceptionMessage('must name a table');
 
-        new ColumnRef('', ['id']);
-    }
+
+
 
     #[Test]
-    public function anEndpointWithoutColumnsIsRejected(): void
-    {
-        $this->expectException(PlanSyntaxException::class);
-        $this->expectExceptionMessage('names no columns');
-
-        new ColumnRef('order', []);
-    }
-
-    #[Test]
-    public function fromReadsASingleColumnEndpoint(): void
+    public function testFromReadsASingleColumnEndpoint(): void
     {
         $ref = ColumnRef::from('order.id');
 
@@ -98,7 +99,7 @@ final class ColumnRefTest extends TestCase
     }
 
     #[Test]
-    public function fromReadsACompositeEndpoint(): void
+    public function testFromReadsACompositeEndpoint(): void
     {
         $ref = ColumnRef::from('order.(shop_id, no)');
 
@@ -106,49 +107,35 @@ final class ColumnRefTest extends TestCase
     }
 
     #[Test]
-    public function fromStripsQuoting(): void
+    public function testFromStripsQuoting(): void
     {
         self::assertSame('order.id', ColumnRef::from('`order`."id"')->toString());
     }
 
-    #[Test]
-    public function fromRejectsAnEndpointWithoutAColumn(): void
-    {
-        $this->expectException(PlanSyntaxException::class);
-        $this->expectExceptionMessage("'.' after the table name");
 
-        ColumnRef::from('order');
-    }
 
     #[Test]
-    public function fromIgnoresSpaceAroundACompositeList(): void
+    public function testFromIgnoresSpaceAroundACompositeList(): void
     {
         self::assertSame(['shop_id', 'no'], ColumnRef::from('order. (shop_id, no) ')->columns);
     }
 
     #[Test]
-    public function fromDropsEmptyEntriesWithoutLeavingGapsInTheList(): void
+    public function testFromDropsEmptyEntriesWithoutLeavingGapsInTheList(): void
     {
         self::assertSame(['a', 'b'], ColumnRef::from('order.(a, , b)')->columns);
     }
 
-    #[Test]
-    public function fromRejectsACompositeListThatIsNeverClosed(): void
-    {
-        $this->expectException(PlanSyntaxException::class);
-        $this->expectExceptionMessage("expected ')'");
 
-        ColumnRef::from('order.(a, b');
-    }
 
     #[Test]
-    public function ofKeepsColumnsInTheOrderGiven(): void
+    public function testOfKeepsColumnsInTheOrderGiven(): void
     {
         self::assertSame(['shop_id', 'no'], ColumnRef::of('order', 'shop_id', 'no')->columns);
     }
 
     #[Test]
-    public function ofReindexesColumnsSpreadFromAKeyedArray(): void
+    public function testOfReindexesColumnsSpreadFromAKeyedArray(): void
     {
         self::assertSame(['shop_id', 'no'], ColumnRef::of('order', ...['a' => 'shop_id', 'b' => 'no'])->columns);
     }

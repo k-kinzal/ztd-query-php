@@ -6,23 +6,38 @@ namespace SqlFixture\Plan;
 
 use InvalidArgumentException;
 
+/**
+ * Plan syntax exception.
+ */
 final class PlanSyntaxException extends InvalidArgumentException
 {
+    /**
+     * Returns empty plan.
+     */
     public static function emptyPlan(): self
     {
         return new self('A fixture plan must name at least one table.');
     }
 
+    /**
+     * Returns empty table name.
+     */
     public static function emptyTableName(): self
     {
         return new self('A relation endpoint must name a table.');
     }
 
+    /**
+     * Returns no columns.
+     */
     public static function noColumns(string $table): self
     {
         return new self(sprintf('The endpoint for table %s names no columns.', $table));
     }
 
+    /**
+     * Returns not a table name.
+     */
     public static function notATableName(string $part): self
     {
         return new self(sprintf(
@@ -32,6 +47,9 @@ final class PlanSyntaxException extends InvalidArgumentException
         ));
     }
 
+    /**
+     * Returns unbalanced brackets.
+     */
     public static function unbalancedBrackets(string $plan): self
     {
         return new self(sprintf(
@@ -40,6 +58,9 @@ final class PlanSyntaxException extends InvalidArgumentException
         ));
     }
 
+    /**
+     * Returns unexpected.
+     */
     public static function unexpected(string $plan, int $offset, string $expected): self
     {
         return new self(sprintf(
@@ -50,6 +71,9 @@ final class PlanSyntaxException extends InvalidArgumentException
         ));
     }
 
+    /**
+     * Returns many to many unsupported.
+     */
     public static function manyToManyUnsupported(string $plan): self
     {
         return new self(sprintf(
@@ -61,6 +85,9 @@ final class PlanSyntaxException extends InvalidArgumentException
         ));
     }
 
+    /**
+     * Returns composite arity mismatch.
+     */
     public static function compositeArityMismatch(ColumnRef $left, ColumnRef $right): self
     {
         return new self(sprintf(

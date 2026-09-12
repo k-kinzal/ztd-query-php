@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Fixture;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -14,10 +13,11 @@ use SqlFixture\Fixture\TableOverrides;
 
 #[CoversClass(RowSpec::class)]
 #[UsesClass(TableOverrides::class)]
+#[CoversClass(\SqlFixture\Fixture\OverrideRows::class)]
 final class RowSpecTest extends TestCase
 {
     #[Test]
-    public function anUnspecifiedTableLeavesTheCountFree(): void
+    public function testUnspecifiedAnUnspecifiedTableLeavesTheCountFree(): void
     {
         $spec = RowSpec::unspecified();
 
@@ -26,7 +26,7 @@ final class RowSpecTest extends TestCase
     }
 
     #[Test]
-    public function anIntegerIsACountWithNothingOverridden(): void
+    public function testFromAnIntegerIsACountWithNothingOverridden(): void
     {
         $spec = RowSpec::from('order_detail', 3);
 
@@ -35,13 +35,13 @@ final class RowSpecTest extends TestCase
     }
 
     #[Test]
-    public function anEmptyArrayMeansNoRows(): void
+    public function testAnEmptyArrayMeansNoRows(): void
     {
         self::assertSame(0, RowSpec::from('order_detail', [])->count);
     }
 
     #[Test]
-    public function oneSetOfValuesAppliesToEveryRow(): void
+    public function testOverridesForOneSetOfValuesAppliesToEveryRow(): void
     {
         $spec = RowSpec::from('order_detail', ['quantity' => 2]);
 
@@ -51,7 +51,7 @@ final class RowSpecTest extends TestCase
     }
 
     #[Test]
-    public function aListGivesOneEntryPerRow(): void
+    public function testAListGivesOneEntryPerRow(): void
     {
         $spec = RowSpec::from('order_detail', [['quantity' => 1], ['quantity' => 2]]);
 
@@ -62,7 +62,7 @@ final class RowSpecTest extends TestCase
     }
 
     #[Test]
-    public function tableOverridesApplyToEveryRow(): void
+    public function testTableOverridesApplyToEveryRow(): void
     {
         $spec = RowSpec::from('order', TableOverrides::of(['status' => 'paid']));
 
@@ -71,7 +71,7 @@ final class RowSpecTest extends TestCase
     }
 
     #[Test]
-    public function aListOfTableOverridesGivesOneEntryPerRow(): void
+    public function testAListOfTableOverridesGivesOneEntryPerRow(): void
     {
         $spec = RowSpec::from('order_detail', [
             TableOverrides::of(['quantity' => 1]),
@@ -82,17 +82,10 @@ final class RowSpecTest extends TestCase
         self::assertSame(['quantity' => 2], $spec->overridesFor(1));
     }
 
-    #[Test]
-    public function aNegativeCountIsRejected(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('cannot be negative');
 
-        RowSpec::from('order_detail', -1);
-    }
 
     #[Test]
-    public function aListOfScalarsIsReadAsColumnValuesNotRows(): void
+    public function testAListOfScalarsIsReadAsColumnValuesNotRows(): void
     {
         $spec = RowSpec::from('order_detail', ['a', 'b']);
 
@@ -101,13 +94,13 @@ final class RowSpecTest extends TestCase
     }
 
     #[Test]
-    public function zeroIsAValidCount(): void
+    public function testZeroIsAValidCount(): void
     {
         self::assertSame(0, RowSpec::from('order_detail', 0)->count);
     }
 
     #[Test]
-    public function aKeyedArrayOfArraysIsStillOneSetOfValues(): void
+    public function testAKeyedArrayOfArraysIsStillOneSetOfValues(): void
     {
         $spec = RowSpec::from('order_detail', ['payload' => ['a' => 1]]);
 

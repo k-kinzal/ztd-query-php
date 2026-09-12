@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace Tests\Fixture;
 
 use Faker\Generator;
-use Faker\Provider\Miscellaneous;
+use InvalidArgumentException;
+use Override;
 
 /**
  * Spy subclass of Faker\Generator that records arguments to number/float/boolean methods.
@@ -18,18 +19,29 @@ use Faker\Provider\Miscellaneous;
  */
 final class SpyGenerator extends Generator
 {
-    /** @var list<array{mixed, mixed}> */
+    /**
+     * @var list<array{mixed, mixed}>
+     */
     public array $numberBetweenCalls = [];
 
-    /** @var list<array{mixed, mixed, mixed}> */
+    /**
+     * @var list<array{mixed, mixed, mixed}>
+     */
     public array $randomFloatCalls = [];
 
-    /** @var list<array{int}> */
+    /**
+     * @var list<array{int}>
+     */
     public array $booleanCalls = [];
 
-    /** @var array<string, list<array<mixed>>> */
+    /**
+     * @var array<string, list<array<mixed>>>
+     */
     public array $methodCalls = [];
 
+    /**
+     * Returns create.
+     */
     public static function create(string $locale = 'en_US'): self
     {
         $spy = new self();
@@ -49,6 +61,9 @@ final class SpyGenerator extends Generator
         return $spy;
     }
 
+    /**
+     * Returns reset.
+     */
     public function reset(): void
     {
         $this->numberBetweenCalls = [];
@@ -60,10 +75,19 @@ final class SpyGenerator extends Generator
     /**
      * @param array<mixed> $attributes
      * @return mixed
+     * @throws InvalidArgumentException
      */
+    #[Override]
     public function __call($method, $attributes)
     {
         $this->methodCalls[$method][] = $attributes;
+        if ($method === 'boolean') {
+            $chance = $attributes[0] ?? 50;
+            if (!is_int($chance)) {
+                throw new InvalidArgumentException('The boolean chance must be an integer.');
+            }
+            $this->booleanCalls[] = [$chance];
+        }
 
         return parent::__call($method, $attributes);
     }
@@ -72,6 +96,7 @@ final class SpyGenerator extends Generator
      * @param mixed $int1
      * @param mixed $int2
      */
+    #[Override]
     public function numberBetween($int1 = 0, $int2 = 2147483647): int
     {
         $this->numberBetweenCalls[] = [$int1, $int2];
@@ -84,6 +109,7 @@ final class SpyGenerator extends Generator
      * @param mixed $min
      * @param mixed $max
      */
+    #[Override]
     public function randomFloat($nbMaxDecimals = null, $min = 0, $max = null): float
     {
         $this->randomFloatCalls[] = [$nbMaxDecimals, $min, $max];
@@ -91,13 +117,4 @@ final class SpyGenerator extends Generator
         return parent::randomFloat($nbMaxDecimals, $min, $max);
     }
 
-    /**
-     * @param int $chanceOfGettingTrue
-     */
-    public function boolean($chanceOfGettingTrue = 50): bool
-    {
-        $this->booleanCalls[] = [$chanceOfGettingTrue];
-
-        return Miscellaneous::boolean($chanceOfGettingTrue);
-    }
 }

@@ -28,6 +28,9 @@ final class ColumnRef
         }
     }
 
+    /**
+     * Returns of.
+     */
     public static function of(string $table, string ...$columns): self
     {
         return new self($table, array_values($columns));
@@ -64,6 +67,9 @@ final class ColumnRef
         return new self($table, $names);
     }
 
+    /**
+     * Returns is composite.
+     */
     public function isComposite(): bool
     {
         return count($this->columns) > 1;
@@ -77,6 +83,9 @@ final class ColumnRef
         return $this->table === $other->table && $this->columns === $other->columns;
     }
 
+    /**
+     * Returns to string.
+     */
     public function toString(): string
     {
         if (!$this->isComposite()) {
@@ -86,6 +95,9 @@ final class ColumnRef
         return $this->table . '.(' . implode(', ', $this->columns) . ')';
     }
 
+    /**
+     * Returns the canonical textual representation.
+     */
     public function __toString(): string
     {
         return $this->toString();

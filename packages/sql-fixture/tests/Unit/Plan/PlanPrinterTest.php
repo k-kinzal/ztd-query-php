@@ -26,16 +26,25 @@ use SqlFixture\Plan\RelationSide;
 #[UsesClass(RelationKind::class)]
 #[UsesClass(RelationSide::class)]
 #[UsesClass(PlanSyntaxException::class)]
+#[CoversClass(\SqlFixture\Plan\Printing\PlanTables::class)]
+#[CoversClass(\SqlFixture\Plan\Printing\RelationGroups::class)]
+#[CoversClass(\SqlFixture\Plan\Printing\StatementPrinter::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\PlanStatements::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\RelationCursor::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\RelationReader::class)]
+#[UsesClass(\SqlFixture\Plan\PlanStructureException::class)]
+#[UsesClass(\SqlFixture\Plan\Validation\PlanValidation::class)]
+#[UsesClass(\SqlFixture\Plan\Validation\TableName::class)]
 final class PlanPrinterTest extends TestCase
 {
     #[Test]
-    public function printsATableOnlyPlanAsItsTableName(): void
+    public function testPrintsATableOnlyPlanAsItsTableName(): void
     {
         self::assertSame('order', (new PlanPrinter())->print(FixturePlan::table('order')));
     }
 
     #[Test]
-    public function printsARelationWithSpacesAroundTheOperator(): void
+    public function testPrintsARelationWithSpacesAroundTheOperator(): void
     {
         $plan = (new PlanParser())->parse('order.id<order_detail.order_id');
 
@@ -43,7 +52,7 @@ final class PlanPrinterTest extends TestCase
     }
 
     #[Test]
-    public function regroupsRelationsThatShareALeftEnd(): void
+    public function testRegroupsRelationsThatShareALeftEnd(): void
     {
         $plan = (new PlanParser())->parse(
             'order.id < order_detail.order_id, order.id < shipment.order_id'
@@ -56,7 +65,7 @@ final class PlanPrinterTest extends TestCase
     }
 
     #[Test]
-    public function doesNotGroupRelationsWithDifferentOperators(): void
+    public function testDoesNotGroupRelationsWithDifferentOperators(): void
     {
         $plan = (new PlanParser())->parse('order.id < order_detail.order_id, order.id - shipment.order_id');
 
@@ -67,7 +76,7 @@ final class PlanPrinterTest extends TestCase
     }
 
     #[Test]
-    public function doesNotGroupRelationsWithDifferentOptionalMarkers(): void
+    public function testDoesNotGroupRelationsWithDifferentOptionalMarkers(): void
     {
         $plan = (new PlanParser())->parse('order.id < order_detail.order_id, order.id <? shipment.order_id');
 
@@ -78,7 +87,7 @@ final class PlanPrinterTest extends TestCase
     }
 
     #[Test]
-    public function printsOptionalMarkersOnTheSideTheyBelongTo(): void
+    public function testPrintsOptionalMarkersOnTheSideTheyBelongTo(): void
     {
         $plan = (new PlanParser())->parse('order.id ?< order_detail.order_id');
 
@@ -128,7 +137,7 @@ final class PlanPrinterTest extends TestCase
     }
 
     #[Test]
-    public function printsASingleRelationWithoutAPlan(): void
+    public function testPrintsASingleRelationWithoutAPlan(): void
     {
         $relation = Relation::oneToMany('order.id', 'order_detail.order_id');
 
@@ -136,7 +145,7 @@ final class PlanPrinterTest extends TestCase
     }
 
     #[Test]
-    public function aStandaloneTableIsWrittenOutAlongsideTheRelations(): void
+    public function testAStandaloneTableIsWrittenOutAlongsideTheRelations(): void
     {
         $plan = (new PlanParser())->parse('a.id < b.a_id, audit_log');
 
@@ -144,10 +153,14 @@ final class PlanPrinterTest extends TestCase
     }
 
     #[Test]
-    public function severalStandaloneTablesKeepTheOrderTheyWereNamedIn(): void
+    public function testSeveralStandaloneTablesKeepTheOrderTheyWereNamedIn(): void
     {
         $plan = (new PlanParser())->parse('audit_log, a.id < b.a_id, feature_flag');
 
         self::assertSame('a.id < b.a_id, audit_log, feature_flag', (new PlanPrinter())->print($plan));
+    }
+    public function testPrintRelationIncludesOptionalEndpointMarkers(): void
+    {
+        self::assertSame('a.id <? b.a_id', (new PlanPrinter())->printRelation(Relation::oneToMany('a.id', 'b.a_id', true)));
     }
 }

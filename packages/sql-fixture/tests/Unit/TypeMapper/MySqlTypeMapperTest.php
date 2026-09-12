@@ -16,10 +16,20 @@ use SqlFixture\TypeMapper\MySqlTypeMapper;
 #[CoversClass(MySqlTypeMapper::class)]
 #[UsesClass(ColumnDefinition::class)]
 #[UsesClass(PlatformMySqlTypeMapper::class)]
+#[UsesClass(\SqlFixture\TypeMapper\TypeMapperInterface::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\ColumnGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\DecimalGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\GeometryGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\IntegerGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\NumericGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\SpatialGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\StringGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\TextGenerator::class)]
+#[UsesClass(\SqlFixture\TypeMapper\ParagraphGenerator::class)]
 final class MySqlTypeMapperTest extends TestCase
 {
     #[Test]
-    public function generateTinyInt(): void
+    public function testGenerateTinyInt(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -34,7 +44,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateTinyIntUnsigned(): void
+    public function testGenerateTinyIntUnsigned(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -49,7 +59,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateTinyIntOneAsBoolean(): void
+    public function testGenerateTinyIntOneAsBoolean(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -62,7 +72,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateInt(): void
+    public function testGenerateInt(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -75,7 +85,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateDecimal(): void
+    public function testGenerateDecimal(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -88,7 +98,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateVarchar(): void
+    public function testGenerateVarchar(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -102,7 +112,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateChar(): void
+    public function testGenerateChar(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -116,7 +126,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateDate(): void
+    public function testGenerateDate(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -130,7 +140,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateTime(): void
+    public function testGenerateTime(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -144,7 +154,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateDatetime(): void
+    public function testGenerateDatetime(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -158,7 +168,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateTimestamp(): void
+    public function testGenerateTimestamp(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -174,7 +184,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateYear(): void
+    public function testGenerateYear(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -189,7 +199,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateEnum(): void
+    public function testGenerateEnum(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -203,7 +213,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateSet(): void
+    public function testGenerateSet(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -220,7 +230,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateJson(): void
+    public function testGenerateJson(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -237,7 +247,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generatePoint(): void
+    public function testGeneratePoint(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -251,7 +261,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateAutoIncrementReturnsNull(): void
+    public function testGenerateAutoIncrementReturnsNull(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -264,7 +274,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateGeneratedColumnReturnsNull(): void
+    public function testGenerateGeneratedColumnReturnsNull(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -277,7 +287,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateBit(): void
+    public function testGenerateBit(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -292,7 +302,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateBinary(): void
+    public function testGenerateBinary(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -306,7 +316,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateBlob(): void
+    public function testGenerateBlob(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -320,7 +330,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateText(): void
+    public function testGenerateText(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -334,7 +344,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateSmallInt(): void
+    public function testGenerateSmallInt(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -349,7 +359,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateSmallIntUnsigned(): void
+    public function testGenerateSmallIntUnsigned(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -364,7 +374,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateMediumInt(): void
+    public function testGenerateMediumInt(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -379,7 +389,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateMediumIntUnsigned(): void
+    public function testGenerateMediumIntUnsigned(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -394,7 +404,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateIntUnsigned(): void
+    public function testGenerateIntUnsigned(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -408,7 +418,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateBigInt(): void
+    public function testGenerateBigInt(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -421,7 +431,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateBigIntUnsigned(): void
+    public function testGenerateBigIntUnsigned(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -435,7 +445,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateFloat(): void
+    public function testGenerateFloat(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -448,7 +458,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateDouble(): void
+    public function testGenerateDouble(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -461,7 +471,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateDecimalUnsigned(): void
+    public function testGenerateDecimalUnsigned(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -475,7 +485,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateTinyText(): void
+    public function testGenerateTinyText(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -489,7 +499,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateMediumText(): void
+    public function testGenerateMediumText(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -502,7 +512,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateLongText(): void
+    public function testGenerateLongText(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -515,7 +525,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateVarbinary(): void
+    public function testGenerateVarbinary(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -529,7 +539,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateTinyBlob(): void
+    public function testGenerateTinyBlob(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -542,7 +552,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateMediumBlob(): void
+    public function testGenerateMediumBlob(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -555,7 +565,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateLongBlob(): void
+    public function testGenerateLongBlob(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -568,7 +578,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateEnumEmpty(): void
+    public function testGenerateEnumEmpty(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -581,7 +591,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateSetEmpty(): void
+    public function testGenerateSetEmpty(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -594,7 +604,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateLineString(): void
+    public function testGenerateLineString(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -608,7 +618,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generatePolygon(): void
+    public function testGeneratePolygon(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -622,7 +632,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateMultiPoint(): void
+    public function testGenerateMultiPoint(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -636,7 +646,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateMultiLineString(): void
+    public function testGenerateMultiLineString(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -650,7 +660,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateMultiPolygon(): void
+    public function testGenerateMultiPolygon(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -664,7 +674,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateGeometry(): void
+    public function testGenerateGeometry(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -678,7 +688,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateGeometryCollection(): void
+    public function testGenerateGeometryCollection(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -692,7 +702,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateBoolean(): void
+    public function testGenerateBoolean(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -705,7 +715,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateBool(): void
+    public function testGenerateBool(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -718,7 +728,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateReal(): void
+    public function testGenerateReal(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -731,7 +741,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateNumeric(): void
+    public function testGenerateNumeric(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -744,7 +754,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateInteger(): void
+    public function testGenerateInteger(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -757,7 +767,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateUnknownType(): void
+    public function testGenerateUnknownType(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -770,7 +780,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateNullableWithDefaultNull(): void
+    public function testGenerateNullableWithDefaultNull(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -802,7 +812,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateNonNullableNeverReturnsNull(): void
+    public function testGenerateNonNullableNeverReturnsNull(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -820,7 +830,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateDecimalBoundaryValues(): void
+    public function testGenerateDecimalBoundaryValues(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -839,7 +849,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateIntBoundaryValues(): void
+    public function testGenerateIntBoundaryValues(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -858,7 +868,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateIntUnsignedBoundaryValues(): void
+    public function testGenerateIntUnsignedBoundaryValues(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -877,7 +887,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateVarcharRespectsLength(): void
+    public function testGenerateVarcharRespectsLength(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -896,7 +906,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateBitBoundaryValues(): void
+    public function testGenerateBitBoundaryValues(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -920,7 +930,7 @@ final class MySqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateYearBoundary(): void
+    public function testGenerateYearBoundary(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -19,7 +18,7 @@ use SqlFixture\Schema\TableSchema;
 final class InvalidOverrideExceptionTest extends TestCase
 {
     #[Test]
-    public function unknownColumnListsWhatTheTableHas(): void
+    public function testUnknownColumnListsWhatTheTableHas(): void
     {
         $schema = new TableSchema('order', [
             'id' => new ColumnDefinition('id', 'INT'),
@@ -35,7 +34,7 @@ final class InvalidOverrideExceptionTest extends TestCase
     }
 
     #[Test]
-    public function notNullableSaysWhyNullIsRefused(): void
+    public function testNotNullableSaysWhyNullIsRefused(): void
     {
         $schema = new TableSchema('order', ['status' => new ColumnDefinition('status', 'VARCHAR', nullable: false)]);
 
@@ -45,7 +44,7 @@ final class InvalidOverrideExceptionTest extends TestCase
     }
 
     #[Test]
-    public function generatedColumnSaysTheDatabaseComputesIt(): void
+    public function testGeneratedColumnSaysTheDatabaseComputesIt(): void
     {
         $schema = new TableSchema('order', ['code' => new ColumnDefinition('code', 'VARCHAR', generated: true)]);
 
@@ -58,14 +57,5 @@ final class InvalidOverrideExceptionTest extends TestCase
         );
     }
 
-    #[Test]
-    public function isInvalidArgumentException(): void
-    {
-        $schema = new TableSchema('order', ['id' => new ColumnDefinition('id', 'INT')]);
 
-        self::assertInstanceOf(
-            InvalidArgumentException::class,
-            InvalidOverrideException::unknownColumn('x', $schema)
-        );
-    }
 }

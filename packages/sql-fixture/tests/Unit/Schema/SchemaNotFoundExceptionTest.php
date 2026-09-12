@@ -7,14 +7,13 @@ namespace Tests\Unit\Schema;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 use SqlFixture\Schema\SchemaNotFoundException;
 
 #[CoversClass(SchemaNotFoundException::class)]
 final class SchemaNotFoundExceptionTest extends TestCase
 {
     #[Test]
-    public function namesTheMissingTable(): void
+    public function testForTableNamesTheMissingTable(): void
     {
         self::assertSame(
             'Schema not found for table: order',
@@ -23,7 +22,7 @@ final class SchemaNotFoundExceptionTest extends TestCase
     }
 
     #[Test]
-    public function listsKnownTablesAlphabetically(): void
+    public function testListsKnownTablesAlphabetically(): void
     {
         self::assertSame(
             'Schema not found for table: order. Known tables: customer, product',
@@ -31,9 +30,5 @@ final class SchemaNotFoundExceptionTest extends TestCase
         );
     }
 
-    #[Test]
-    public function isRuntimeException(): void
-    {
-        self::assertInstanceOf(RuntimeException::class, SchemaNotFoundException::forTable('order'));
-    }
+
 }

@@ -12,6 +12,9 @@ use SqlFixture\Plan\Relation;
  */
 final class OrderWithDetailsPlan extends FixturePlan
 {
+    /**
+     * Initializes the collaborators and declared state for this object.
+     */
     public function __construct()
     {
         parent::__construct(

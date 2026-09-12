@@ -6,6 +6,9 @@ namespace SqlFixture\Schema;
 
 use RuntimeException;
 
+/**
+ * Schema not found exception.
+ */
 final class SchemaNotFoundException extends RuntimeException
 {
     /**

@@ -11,7 +11,6 @@ use SqlFixture\Hydrator\HydratorInterface;
 use SqlFixture\Platform\PlatformFactory;
 use SqlFixture\Schema\TableSchema;
 use SqlFixture\TypeMapper\TypeMapperInterface;
-use Throwable;
 
 /**
  * Faker provider that generates fixtures from local DDL files.
@@ -20,7 +19,9 @@ class FileFixtureProvider extends Base
 {
     private FixtureGenerator $fixtureGenerator;
 
-    /** @var array<string, TableSchema> Table name → parsed schema cache */
+    /**
+     * @var array<string, TableSchema> Table name → parsed schema cache
+     */
     private array $schemas = [];
 
     /**
@@ -39,7 +40,7 @@ class FileFixtureProvider extends Base
         $schemaParser = PlatformFactory::createSchemaParser($dialect);
 
         $this->fixtureGenerator = new FixtureGenerator($faker, $typeMapper, $hydrator, $schemaParser);
-        $this->loadSchemas($ddlPath);
+        $this->schemas = (new Provider\DdlDirectory())->loadSchemas($ddlPath, $schemaParser);
     }
 
     /**
@@ -50,6 +51,7 @@ class FileFixtureProvider extends Base
      * @param array<string, mixed> $overrides Override values
      * @param class-string<T>|null $className Deserialization target class
      * @return ($className is null ? array<string, mixed> : T)
+     * @throws RuntimeException
      */
     public function fixture(
         string $tableName,
@@ -83,50 +85,9 @@ class FileFixtureProvider extends Base
         return array_keys($this->schemas);
     }
 
-    /**
-     * Load all SQL files from the DDL directory.
-     */
-    private function loadSchemas(string $ddlPath): void
-    {
-        if (!is_dir($ddlPath)) {
-            throw new RuntimeException("DDL path is not a directory: {$ddlPath}");
-        }
 
-        $files = glob($ddlPath . '/*.sql');
-        if ($files === false) {
-            throw new RuntimeException("Failed to read DDL directory: {$ddlPath}");
-        }
 
-        foreach ($files as $file) {
-            $this->loadSchemaFile($file);
-        }
-    }
 
-    /**
-     * Load a single SQL file.
-     */
-    private function loadSchemaFile(string $filePath): void
-    {
-        $content = file_get_contents($filePath);
-        if ($content === false) {
-            throw new RuntimeException("Failed to read file: {$filePath}");
-        }
-
-        $content = preg_replace('/--.*$/m', '', $content);
-        $content = preg_replace('/\/\*.*?\*\//s', '', $content ?? '');
-
-        if ($content === null || trim($content) === '') {
-            return;
-        }
-
-        try {
-            $schema = $this->fixtureGenerator->getSchemaParser()->parse($content);
-            $this->schemas[strtolower($schema->tableName)] = $schema;
-        } catch (Throwable $e) {
-            // Skip files that don't contain valid CREATE TABLE statements
-            // This allows the directory to contain other SQL files
-        }
-    }
 
     /**
      * Manually register a schema.

@@ -18,6 +18,9 @@ use SqlFixture\Schema\StaticSchemaResolver;
  */
 final class ShopSchemas
 {
+    /**
+     * Returns generator.
+     */
     public static function generator(int $seed = 20260101): PlanGenerator
     {
         return new PlanGenerator(self::resolver(), new FixtureGenerator(self::faker($seed)), self::faker($seed));
@@ -56,6 +59,9 @@ final class ShopSchemas
         return $counts;
     }
 
+    /**
+     * Returns faker.
+     */
     public static function faker(int $seed = 20260101): Generator
     {
         $faker = Factory::create();
@@ -64,6 +70,9 @@ final class ShopSchemas
         return $faker;
     }
 
+    /**
+     * Returns resolver.
+     */
     public static function resolver(): StaticSchemaResolver
     {
         $parser = new MySqlSchemaParser();

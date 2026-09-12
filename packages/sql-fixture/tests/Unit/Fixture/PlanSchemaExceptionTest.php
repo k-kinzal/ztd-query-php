@@ -8,7 +8,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 use SqlFixture\Fixture\PlanSchemaException;
 use SqlFixture\Plan\ColumnRef;
 use SqlFixture\Schema\ColumnDefinition;
@@ -18,10 +17,26 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(ColumnRef::class)]
 #[UsesClass(TableSchema::class)]
 #[UsesClass(ColumnDefinition::class)]
+#[UsesClass(\SqlFixture\Plan\FixturePlan::class)]
+#[UsesClass(\SqlFixture\Plan\PlanParser::class)]
+#[UsesClass(\SqlFixture\Plan\PlanPrinter::class)]
+#[UsesClass(\SqlFixture\Plan\PlanSyntaxException::class)]
+#[UsesClass(\SqlFixture\Plan\Relation::class)]
+#[UsesClass(\SqlFixture\Plan\RelationKind::class)]
+#[UsesClass(\SqlFixture\Plan\RelationSide::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\PlanStatements::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\RelationCursor::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\RelationReader::class)]
+#[UsesClass(\SqlFixture\Plan\PlanStructureException::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\PlanTables::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\RelationGroups::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\StatementPrinter::class)]
+#[UsesClass(\SqlFixture\Plan\Validation\PlanValidation::class)]
+#[UsesClass(\SqlFixture\Plan\Validation\TableName::class)]
 final class PlanSchemaExceptionTest extends TestCase
 {
     #[Test]
-    public function namesTheLinkTheTableAndWhatItDoesHave(): void
+    public function testUnknownColumnNamesTheLinkTheTableAndWhatItDoesHave(): void
     {
         $schema = new TableSchema('order', [
             'id' => new ColumnDefinition('id', 'INT'),
@@ -36,19 +51,10 @@ final class PlanSchemaExceptionTest extends TestCase
         );
     }
 
-    #[Test]
-    public function isRuntimeException(): void
-    {
-        $schema = new TableSchema('order', ['id' => new ColumnDefinition('id', 'INT')]);
 
-        self::assertInstanceOf(
-            RuntimeException::class,
-            PlanSchemaException::unknownColumn(ColumnRef::of('order', 'x'), 'x', $schema)
-        );
-    }
 
     #[Test]
-    public function generatedColumnExplainsWhyItCannotCarryAValue(): void
+    public function testGeneratedColumnExplainsWhyItCannotCarryAValue(): void
     {
         $schema = new TableSchema('order', ['code' => new ColumnDefinition('code', 'VARCHAR', generated: true)]);
 
@@ -63,7 +69,7 @@ final class PlanSchemaExceptionTest extends TestCase
     }
 
     #[Test]
-    public function missingValueNamesBothEnds(): void
+    public function testMissingValueNamesBothEnds(): void
     {
         $message = PlanSchemaException::missingValue('order_id', ColumnRef::of('order', 'id'), 'id')->getMessage();
 

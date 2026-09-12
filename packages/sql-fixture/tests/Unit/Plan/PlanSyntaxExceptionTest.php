@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Plan;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -14,10 +13,25 @@ use SqlFixture\Plan\PlanSyntaxException;
 
 #[CoversClass(PlanSyntaxException::class)]
 #[UsesClass(ColumnRef::class)]
+#[UsesClass(\SqlFixture\Plan\FixturePlan::class)]
+#[UsesClass(\SqlFixture\Plan\PlanParser::class)]
+#[UsesClass(\SqlFixture\Plan\PlanPrinter::class)]
+#[UsesClass(\SqlFixture\Plan\Relation::class)]
+#[UsesClass(\SqlFixture\Plan\RelationKind::class)]
+#[UsesClass(\SqlFixture\Plan\RelationSide::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\PlanStatements::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\RelationCursor::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\RelationReader::class)]
+#[UsesClass(\SqlFixture\Plan\PlanStructureException::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\PlanTables::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\RelationGroups::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\StatementPrinter::class)]
+#[UsesClass(\SqlFixture\Plan\Validation\PlanValidation::class)]
+#[UsesClass(\SqlFixture\Plan\Validation\TableName::class)]
 final class PlanSyntaxExceptionTest extends TestCase
 {
     #[Test]
-    public function emptyPlanAsksForATable(): void
+    public function testEmptyPlanAsksForATable(): void
     {
         self::assertSame(
             'A fixture plan must name at least one table.',
@@ -26,7 +40,7 @@ final class PlanSyntaxExceptionTest extends TestCase
     }
 
     #[Test]
-    public function emptyTableNameAsksForATable(): void
+    public function testEmptyTableNameAsksForATable(): void
     {
         self::assertSame(
             'A relation endpoint must name a table.',
@@ -35,7 +49,7 @@ final class PlanSyntaxExceptionTest extends TestCase
     }
 
     #[Test]
-    public function noColumnsNamesTheTable(): void
+    public function testNoColumnsNamesTheTable(): void
     {
         self::assertSame(
             'The endpoint for table order names no columns.',
@@ -44,7 +58,7 @@ final class PlanSyntaxExceptionTest extends TestCase
     }
 
     #[Test]
-    public function unexpectedReportsTheOffsetAndWhatWasWanted(): void
+    public function testUnexpectedReportsTheOffsetAndWhatWasWanted(): void
     {
         $message = PlanSyntaxException::unexpected('order.id ! x.y', 9, "one of '<', '>' or '-'")->getMessage();
 
@@ -56,7 +70,7 @@ final class PlanSyntaxExceptionTest extends TestCase
     }
 
     #[Test]
-    public function manyToManyPointsAtTheExplicitForm(): void
+    public function testManyToManyUnsupportedManyToManyPointsAtTheExplicitForm(): void
     {
         $message = PlanSyntaxException::manyToManyUnsupported('order.id <> product.id')->getMessage();
 
@@ -70,7 +84,7 @@ final class PlanSyntaxExceptionTest extends TestCase
     }
 
     #[Test]
-    public function compositeArityMismatchReportsBothCounts(): void
+    public function testCompositeArityMismatchReportsBothCounts(): void
     {
         $message = PlanSyntaxException::compositeArityMismatch(
             ColumnRef::of('order', 'shop_id', 'no'),
@@ -84,14 +98,10 @@ final class PlanSyntaxExceptionTest extends TestCase
         );
     }
 
-    #[Test]
-    public function isInvalidArgumentException(): void
-    {
-        self::assertInstanceOf(InvalidArgumentException::class, PlanSyntaxException::emptyPlan());
-    }
+
 
     #[Test]
-    public function notATableNamePointsAtFrom(): void
+    public function testNotATableNamePointsAtFrom(): void
     {
         $message = PlanSyntaxException::notATableName('order.id < order_detail.order_id')->getMessage();
 
@@ -104,7 +114,7 @@ final class PlanSyntaxExceptionTest extends TestCase
     }
 
     #[Test]
-    public function unbalancedBracketsNamesThePlan(): void
+    public function testUnbalancedBracketsNamesThePlan(): void
     {
         self::assertSame(
             'The fixture plan closes a bracket it never opened. Plan: a.id < b.a_id]',

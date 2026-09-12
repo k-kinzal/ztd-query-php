@@ -15,7 +15,7 @@ use SqlFixture\Fixture\FixtureSet;
 final class FixtureSetTest extends TestCase
 {
     #[Test]
-    public function readsByPositionInThePlansOrder(): void
+    public function testReadsByPositionInThePlansOrder(): void
     {
         $set = new FixtureSet(
             ['order' => [['id' => 1]], 'order_detail' => [['id' => 1], ['id' => 2]]],
@@ -28,7 +28,7 @@ final class FixtureSetTest extends TestCase
     }
 
     #[Test]
-    public function destructuresIntoTheTablesThePlanNames(): void
+    public function testOffsetGetSupportsListAssignment(): void
     {
         $set = new FixtureSet(
             ['order' => [['id' => 1]], 'order_detail' => [['id' => 9]]],
@@ -43,7 +43,7 @@ final class FixtureSetTest extends TestCase
     }
 
     #[Test]
-    public function readsByTableName(): void
+    public function testReadsByTableName(): void
     {
         $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
 
@@ -51,7 +51,7 @@ final class FixtureSetTest extends TestCase
     }
 
     #[Test]
-    public function aTableHoldingAListReadsBackAsAList(): void
+    public function testATableHoldingAListReadsBackAsAList(): void
     {
         $set = new FixtureSet(['order_detail' => [['id' => 1]]], ['order_detail' => true], ['order_detail']);
 
@@ -59,7 +59,7 @@ final class FixtureSetTest extends TestCase
     }
 
     #[Test]
-    public function rowIsNullWhereNothingWasGenerated(): void
+    public function testRowIsNullWhereNothingWasGenerated(): void
     {
         $set = new FixtureSet(['order_shipping' => []], ['order_shipping' => false], ['order_shipping']);
 
@@ -68,7 +68,7 @@ final class FixtureSetTest extends TestCase
     }
 
     #[Test]
-    public function rowRefusesATableHoldingAList(): void
+    public function testRowRefusesATableHoldingAList(): void
     {
         $set = new FixtureSet(['order_detail' => [['id' => 1]]], ['order_detail' => true], ['order_detail']);
 
@@ -79,7 +79,7 @@ final class FixtureSetTest extends TestCase
     }
 
     #[Test]
-    public function rowsAlwaysReturnsAList(): void
+    public function testRowsAlwaysReturnsAList(): void
     {
         $set = new FixtureSet(
             ['order' => [['id' => 1]], 'order_detail' => [['id' => 2]], 'shipping' => []],
@@ -93,7 +93,7 @@ final class FixtureSetTest extends TestCase
     }
 
     #[Test]
-    public function countsTheTablesNotTheRows(): void
+    public function testCountsTheTablesNotTheRows(): void
     {
         $set = new FixtureSet(
             ['order' => [['id' => 1]], 'order_detail' => [['id' => 1], ['id' => 2]]],
@@ -105,7 +105,7 @@ final class FixtureSetTest extends TestCase
     }
 
     #[Test]
-    public function iteratesInThePlansOrder(): void
+    public function testIteratesInThePlansOrder(): void
     {
         $set = new FixtureSet(
             ['order' => [['id' => 1]], 'order_detail' => [['id' => 2]]],
@@ -117,7 +117,7 @@ final class FixtureSetTest extends TestCase
     }
 
     #[Test]
-    public function reportsWhichTablesItHolds(): void
+    public function testTablesReportsWhichTablesItHolds(): void
     {
         $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
 
@@ -128,7 +128,7 @@ final class FixtureSetTest extends TestCase
     }
 
     #[Test]
-    public function anUnknownTableReadsBackAsNothing(): void
+    public function testAnUnknownTableReadsBackAsNothing(): void
     {
         $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
 
@@ -136,30 +136,12 @@ final class FixtureSetTest extends TestCase
         self::assertSame([], $set->rows('nope'));
     }
 
-    #[Test]
-    public function cannotBeWrittenTo(): void
-    {
-        $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
 
-        $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('read-only');
 
-        $set['order'] = [];
-    }
+
 
     #[Test]
-    public function cannotHaveEntriesRemoved(): void
-    {
-        $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
-
-        $this->expectException(LogicException::class);
-        $this->expectExceptionMessage('read-only');
-
-        unset($set['order']);
-    }
-
-    #[Test]
-    public function getReadsTheEntryWhicheverShapeItHas(): void
+    public function testGetReadsTheEntryWhicheverShapeItHas(): void
     {
         $set = new FixtureSet(
             ['order' => [['id' => 1]], 'order_detail' => [['id' => 2]]],
@@ -172,7 +154,7 @@ final class FixtureSetTest extends TestCase
     }
 
     #[Test]
-    public function anUnknownTableIsNotTreatedAsAList(): void
+    public function testAnUnknownTableIsNotTreatedAsAList(): void
     {
         $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
 
@@ -180,7 +162,7 @@ final class FixtureSetTest extends TestCase
     }
 
     #[Test]
-    public function toArrayKeepsEveryTable(): void
+    public function testToArrayKeepsEveryTable(): void
     {
         $set = new FixtureSet(
             ['order' => [['id' => 1]], 'order_detail' => [['id' => 2]]],
@@ -195,11 +177,38 @@ final class FixtureSetTest extends TestCase
     }
 
     #[Test]
-    public function aPositionPastTheEndReadsAsNothing(): void
+    public function testAPositionPastTheEndReadsAsNothing(): void
     {
         $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
 
         self::assertNull($set[7]);
         self::assertFalse(isset($set[7]));
+    }
+    public function testOffsetExistsTracksNamesAndPositions(): void
+    {
+        $set = new FixtureSet(['a' => []], ['a' => true], ['a']);
+        self::assertTrue(isset($set['a']));
+        self::assertTrue(isset($set[0]));
+        self::assertFalse(isset($set[1]));
+    }
+    public function testGetIteratorPreservesPlanOrder(): void
+    {
+        $set = new FixtureSet(['a' => [['id' => 2]], 'b' => []], ['a' => false, 'b' => true], ['b', 'a']);
+        self::assertSame([[], ['id' => 2]], iterator_to_array($set));
+    }
+    public function testOffsetSetRejectsMutation(): void
+    {
+        $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('A FixtureSet is read-only.');
+        $set['order'] = ['id' => 2];
+    }
+
+    public function testOffsetUnsetRejectsRemoval(): void
+    {
+        $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
+        $this->expectException(LogicException::class);
+        $this->expectExceptionMessage('A FixtureSet is read-only.');
+        unset($set['order']);
     }
 }

@@ -17,6 +17,10 @@ namespace SqlFixture\Plan;
  */
 final class Relation
 {
+    /**
+     * Initializes the collaborators and declared state for this object.
+     * @throws PlanSyntaxException
+     */
     public function __construct(
         public readonly ColumnRef $left,
         public readonly RelationKind $kind,
@@ -38,9 +42,9 @@ final class Relation
         bool $childOptional = false,
     ): self {
         return new self(
-            self::ref($parent),
+            ($parent instanceof ColumnRef ? $parent : ColumnRef::from($parent)),
             RelationKind::OneToMany,
-            self::ref($child),
+            ($child instanceof ColumnRef ? $child : ColumnRef::from($child)),
             false,
             $childOptional
         );
@@ -55,9 +59,9 @@ final class Relation
         bool $parentOptional = false,
     ): self {
         return new self(
-            self::ref($child),
+            ($child instanceof ColumnRef ? $child : ColumnRef::from($child)),
             RelationKind::ManyToOne,
-            self::ref($parent),
+            ($parent instanceof ColumnRef ? $parent : ColumnRef::from($parent)),
             false,
             $parentOptional
         );
@@ -72,9 +76,9 @@ final class Relation
         bool $childOptional = false,
     ): self {
         return new self(
-            self::ref($parent),
+            ($parent instanceof ColumnRef ? $parent : ColumnRef::from($parent)),
             RelationKind::OneToOne,
-            self::ref($child),
+            ($child instanceof ColumnRef ? $child : ColumnRef::from($child)),
             false,
             $childOptional
         );
@@ -105,7 +109,7 @@ final class Relation
      */
     public function parent(): ColumnRef
     {
-        return $this->side($this->kind->parentSide());
+        return $this->kind->parentSide() === RelationSide::Left ? $this->left : $this->right;
     }
 
     /**
@@ -113,7 +117,7 @@ final class Relation
      */
     public function child(): ColumnRef
     {
-        return $this->side($this->kind->childSide());
+        return $this->kind->childSide() === RelationSide::Left ? $this->left : $this->right;
     }
 
     /**
@@ -121,7 +125,7 @@ final class Relation
      */
     public function parentIsOptional(): bool
     {
-        return $this->optionalAt($this->kind->parentSide());
+        return $this->kind->parentSide() === RelationSide::Left ? $this->leftOptional : $this->rightOptional;
     }
 
     /**
@@ -132,9 +136,12 @@ final class Relation
      */
     public function childIsOptional(): bool
     {
-        return $this->optionalAt($this->kind->childSide());
+        return $this->kind->childSide() === RelationSide::Left ? $this->leftOptional : $this->rightOptional;
     }
 
+    /**
+     * Reports whether the relation permits multiple child rows.
+     */
     public function childIsCollection(): bool
     {
         return $this->kind->childIsCollection();
@@ -170,18 +177,9 @@ final class Relation
         return [$this->left->table, $this->right->table];
     }
 
-    private static function ref(string|ColumnRef $reference): ColumnRef
-    {
-        return $reference instanceof ColumnRef ? $reference : ColumnRef::from($reference);
-    }
 
-    private function side(RelationSide $side): ColumnRef
-    {
-        return $side === RelationSide::Left ? $this->left : $this->right;
-    }
 
-    private function optionalAt(RelationSide $side): bool
-    {
-        return $side === RelationSide::Left ? $this->leftOptional : $this->rightOptional;
-    }
+
+
+
 }

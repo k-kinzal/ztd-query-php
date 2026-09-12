@@ -4,28 +4,29 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Schema;
 
-use PHPUnit\Framework\Attributes\CoversNothing;
-use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
-use SqlFixture\Schema\SchemaParserInterface;
+use SqlFixture\Schema\SchemaParserInterface as Subject;
 
-#[CoversNothing]
+#[CoversClass(Subject::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\Sqlite\SqliteSchemaParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Schema\ColumnDefinition::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Schema\SchemaParseException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Schema\TableSchema::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\Sqlite\Schema\ColumnParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\Sqlite\Schema\DefaultExpression::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\Sqlite\Schema\DefinitionList::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\Sqlite\Schema\TableSyntax::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\Sqlite\Schema\TypeDeclaration::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Schema\DefinitionSegments::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Schema\TypeShape::class)]
 final class SchemaParserInterfaceTest extends TestCase
 {
-    #[Test]
-    public function interfaceExists(): void
+    public function testParseReturnsTheSchemaContract(): void
     {
-        self::assertTrue(interface_exists(SchemaParserInterface::class));
-    }
-
-    #[Test]
-    public function declaresParseMethod(): void
-    {
-        $reflection = new ReflectionClass(SchemaParserInterface::class);
-        self::assertTrue($reflection->hasMethod('parse'));
-
-        $method = $reflection->getMethod('parse');
-        self::assertCount(1, $method->getParameters());
+        $parser = new \SqlFixture\Platform\Sqlite\SqliteSchemaParser();
+        $schema = $parser->parse('CREATE TABLE users (id INT PRIMARY KEY, name TEXT)');
+        self::assertSame('users', $schema->tableName);
+        self::assertSame(['id', 'name'], array_keys($schema->columns));
     }
 }

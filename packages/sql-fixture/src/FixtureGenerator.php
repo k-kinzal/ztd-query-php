@@ -13,12 +13,18 @@ use SqlFixture\Schema\SchemaParserInterface;
 use SqlFixture\Schema\TableSchema;
 use SqlFixture\TypeMapper\TypeMapperInterface;
 
-final class FixtureGenerator
+/**
+ * Generates row data and optionally hydrates it into a consumer object.
+ */
+final class FixtureGenerator implements Fixture\RowGeneration
 {
     private TypeMapperInterface $typeMapper;
     private HydratorInterface $hydrator;
     private SchemaParserInterface $schemaParser;
 
+    /**
+     * Initializes the collaborators and declared state for this object.
+     */
     public function __construct(
         private readonly Generator $faker,
         ?TypeMapperInterface $typeMapper = null,
@@ -35,7 +41,7 @@ final class FixtureGenerator
      *
      * @template T of object
      * @param TableSchema $schema Parsed table schema
-     * @param array<string, mixed> $overrides Override values
+     * @param array<mixed> $overrides Override values
      * @param class-string<T>|null $className Deserialization target class
      * @return ($className is null ? array<string, mixed> : T)
      */
@@ -44,7 +50,7 @@ final class FixtureGenerator
         array $overrides = [],
         ?string $className = null,
     ): array|object {
-        $this->assertOverridesFitSchema($schema, $overrides);
+        (new Fixture\Validation\OverrideValidator())->assertOverridesFitSchema($schema, $overrides);
 
         $data = [];
 
@@ -70,34 +76,7 @@ final class FixtureGenerator
         return $this->hydrator->hydrate($data, $className);
     }
 
-    /**
-     * Refuse an override the table could not hold.
-     *
-     * Without this a misspelt column is dropped and the real one generated at
-     * random, and a null lands in a NOT NULL column to fail much later at the
-     * insert. Both look like working fixtures right up until they do not.
-     *
-     * @param array<string, mixed> $overrides
-     * @throws InvalidOverrideException
-     */
-    private function assertOverridesFitSchema(TableSchema $schema, array $overrides): void
-    {
-        foreach ($overrides as $columnName => $value) {
-            $column = $schema->getColumn($columnName);
 
-            if ($column === null) {
-                throw InvalidOverrideException::unknownColumn($columnName, $schema);
-            }
-
-            if ($column->generated) {
-                throw InvalidOverrideException::generatedColumn($columnName, $schema);
-            }
-
-            if ($value === null && !$column->nullable) {
-                throw InvalidOverrideException::notNullable($columnName, $schema);
-            }
-        }
-    }
 
     /**
      * Get the schema parser instance.

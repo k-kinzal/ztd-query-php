@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace SqlFixture\Schema;
 
+/**
+ * Holds the named columns and ordered primary key of one table.
+ */
 final class TableSchema
 {
     /**
@@ -17,11 +20,17 @@ final class TableSchema
     ) {
     }
 
+    /**
+     * Returns column.
+     */
     public function getColumn(string $name): ?ColumnDefinition
     {
         return $this->columns[$name] ?? null;
     }
 
+    /**
+     * Returns has column.
+     */
     public function hasColumn(string $name): bool
     {
         return isset($this->columns[$name]);

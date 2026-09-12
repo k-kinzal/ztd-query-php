@@ -11,6 +11,9 @@ use LogicException;
  */
 final class PlanStructureException extends LogicException
 {
+    /**
+     * Returns columns bound twice.
+     */
     public static function columnsBoundTwice(ColumnRef $child, ColumnRef $first, ColumnRef $second): self
     {
         return new self(sprintf(
@@ -34,6 +37,9 @@ final class PlanStructureException extends LogicException
         ));
     }
 
+    /**
+     * Returns unbounded self reference.
+     */
     public static function unboundedSelfReference(string $table, string $written): self
     {
         return new self(sprintf(
