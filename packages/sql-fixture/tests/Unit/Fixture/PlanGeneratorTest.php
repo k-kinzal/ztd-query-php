@@ -100,6 +100,7 @@ use Tests\Fixture\Fixture\ShopSchemas;
 #[UsesClass(\SqlFixture\Schema\TypeShape::class)]
 #[UsesClass(\SqlFixture\TypeMapper\ParagraphGenerator::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinitionInput::class)]
 final class PlanGeneratorTest extends TestCase
 {
     #[Test]

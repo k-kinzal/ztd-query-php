@@ -155,7 +155,4 @@ final class FixtureSet implements ArrayAccess, IteratorAggregate, Countable
         return count($this->order);
     }
 
-
-
-
 }

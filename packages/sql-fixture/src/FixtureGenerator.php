@@ -76,8 +76,6 @@ final class FixtureGenerator implements Fixture\RowGeneration
         return $this->hydrator->hydrate($data, $className);
     }
 
-
-
     /**
      * Get the schema parser instance.
      */

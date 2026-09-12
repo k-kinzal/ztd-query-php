@@ -30,5 +30,4 @@ final class SchemaNotFoundExceptionTest extends TestCase
         );
     }
 
-
 }

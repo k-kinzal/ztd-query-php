@@ -65,7 +65,7 @@
         "bench:quick": "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10",
         "bench:full": "@bench",
         "doctest": "phpunit --testsuite doctest",
-        "docgen": "cd ../.. && packages/sql-fixture/vendor/bin/docgen --packages=packages/sql-fixture --deptrac=packages/sql-fixture/deptrac.yaml --output=packages/sql-fixture/build/docs --cache-dir=packages/sql-fixture/build/docgen-cache --title=k-kinzal/sql-fixture",
+        "docgen": "cd ../.. && packages/sql-fixture/vendor/bin/docgen --packages=packages/sql-fixture --deptrac=\"$PWD/packages/sql-fixture/deptrac.yaml\" --output=packages/sql-fixture/build/docs --cache-dir=packages/sql-fixture/build/docgen-cache --title=k-kinzal/sql-fixture",
         "docgen:serve": "@docgen --serve",
         "docgen:diff": "@docgen --diff=origin/main --serve",
         "docgen:fresh": "@docgen --no-cache",

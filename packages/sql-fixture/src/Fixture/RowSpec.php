@@ -84,5 +84,4 @@ final class RowSpec
         return $this->rows[$index] ?? [];
     }
 
-
 }

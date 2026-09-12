@@ -21,7 +21,7 @@ final class MySqlSchemaParser implements SchemaParserInterface
      */
     public function parse(string $createTableSql): TableSchema
     {
-        $parser = new Parser($createTableSql);
+        $parser = new Parser((new Schema\TableDefinitionInput())->withoutPartitioning($createTableSql));
 
         if ($parser->statements === []) {
             throw SchemaParseException::invalidSql($createTableSql, 'No statements found');
@@ -40,24 +40,5 @@ final class MySqlSchemaParser implements SchemaParserInterface
 
         return new TableSchema($tableName, $columns, $primaryKeys);
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 }

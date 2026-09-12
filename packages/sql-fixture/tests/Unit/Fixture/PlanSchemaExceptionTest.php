@@ -51,8 +51,6 @@ final class PlanSchemaExceptionTest extends TestCase
         );
     }
 
-
-
     #[Test]
     public function testGeneratedColumnExplainsWhyItCannotCarryAValue(): void
     {

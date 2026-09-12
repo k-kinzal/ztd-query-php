@@ -78,9 +78,10 @@ runs:
         if [ -n "$DOCGEN_DIFF" ]; then
           args+=("--diff=$DOCGEN_DIFF")
         fi
+        # The generated config must also be available to DocGen's base-revision worktree.
         packages/sql-fixture/vendor/bin/docgen \
           --packages=packages/sql-faker,packages/sql-fixture \
-          --deptrac=build/docgen-input/deptrac.yaml \
+          --deptrac="$PWD/build/docgen-input/deptrac.yaml" \
           --coverage=build/docgen-input/coverage \
           --output=build/docs --cache-dir=build/docgen-cache \
           --title=k-kinzal/ztd-query-php --base-url="$DOCGEN_BASE_URL" "${args[@]}"

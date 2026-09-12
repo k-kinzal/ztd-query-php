@@ -40,13 +40,4 @@ final class PostgreSqlSchemaFetcher implements SchemaFetcherInterface
         return (new Schema\CatalogSchema())->fetchSchemaFromInformationSchema($pdo, $tableName);
     }
 
-
-
-
-
-
-
-
-
-
 }

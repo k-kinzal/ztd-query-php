@@ -24,6 +24,7 @@ use SqlFixture\Schema\TableSchema;
 #[CoversClass(\SqlFixture\Platform\MySql\Schema\TypeParameters::class)]
 #[UsesClass(\SqlFixture\Schema\SchemaParserInterface::class)]
 #[UsesClass(\SqlFixture\Schema\TypeShape::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinitionInput::class)]
 final class MySqlSchemaParserTest extends TestCase
 {
     #[Test]
@@ -681,5 +682,13 @@ final class MySqlSchemaParserTest extends TestCase
         $schema = (new MySqlSchemaParser())->parse('CREATE TABLE test (a DEC(5,1))');
 
         self::assertSame(['a'], $schema->getColumnNames());
+    }
+    public function testParsePartitionedCreateAsValuesReadsTheExplicitColumn(): void
+    {
+        $schema = (new MySqlSchemaParser())->parse('CREATE TABLE t (value VARBINARY(1)) STATS_SAMPLE_PAGES 1 PARTITION BY KEY () REPLACE AS VALUES ROW (NULL)');
+        self::assertSame('t', $schema->tableName);
+        self::assertSame(['value'], array_keys($schema->columns));
+        self::assertSame('VARBINARY', $schema->columns['value']->type);
+        self::assertSame(1, $schema->columns['value']->length);
     }
 }

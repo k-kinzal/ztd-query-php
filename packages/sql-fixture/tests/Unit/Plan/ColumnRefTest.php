@@ -85,10 +85,6 @@ final class ColumnRefTest extends TestCase
         self::assertFalse(ColumnRef::of('order', 'id')->equals(ColumnRef::of('shipment', 'id')));
     }
 
-
-
-
-
     #[Test]
     public function testFromReadsASingleColumnEndpoint(): void
     {
@@ -112,8 +108,6 @@ final class ColumnRefTest extends TestCase
         self::assertSame('order.id', ColumnRef::from('`order`."id"')->toString());
     }
 
-
-
     #[Test]
     public function testFromIgnoresSpaceAroundACompositeList(): void
     {
@@ -125,8 +119,6 @@ final class ColumnRefTest extends TestCase
     {
         self::assertSame(['a', 'b'], ColumnRef::from('order.(a, , b)')->columns);
     }
-
-
 
     #[Test]
     public function testOfKeepsColumnsInTheOrderGiven(): void

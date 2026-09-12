@@ -26,6 +26,7 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinition::class)]
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\TypeParameters::class)]
 #[UsesClass(\SqlFixture\Schema\TypeShape::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinitionInput::class)]
 final class MySqlSchemaParserTest extends TestCase
 {
     #[Test]

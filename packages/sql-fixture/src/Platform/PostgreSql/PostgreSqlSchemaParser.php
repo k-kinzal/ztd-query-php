@@ -48,25 +48,4 @@ final class PostgreSqlSchemaParser implements SchemaParserInterface
         return new TableSchema($tableName, $columns, $primaryKeys);
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }

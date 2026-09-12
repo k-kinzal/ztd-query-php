@@ -198,8 +198,6 @@ final class RelationTest extends TestCase
         self::assertSame(['category'], $relation->tables());
     }
 
-
-
     #[Test]
     public function testNamedConstructorsBuildEachOperator(): void
     {

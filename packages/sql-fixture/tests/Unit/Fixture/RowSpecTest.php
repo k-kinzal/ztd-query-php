@@ -82,8 +82,6 @@ final class RowSpecTest extends TestCase
         self::assertSame(['quantity' => 2], $spec->overridesFor(1));
     }
 
-
-
     #[Test]
     public function testAListOfScalarsIsReadAsColumnValuesNotRows(): void
     {

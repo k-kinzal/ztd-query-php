@@ -73,5 +73,4 @@ final class PlanStructureExceptionTest extends TestCase
         );
     }
 
-
 }

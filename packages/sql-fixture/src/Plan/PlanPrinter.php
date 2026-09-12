@@ -31,8 +31,6 @@ final class PlanPrinter
         return implode(', ', $statements);
     }
 
-
-
     /**
      * Write a single relation, without needing a plan to hold it.
      */
@@ -40,12 +38,5 @@ final class PlanPrinter
     {
         return (new Printing\StatementPrinter())->printGroup([$relation]);
     }
-
-
-
-
-
-
-
 
 }

@@ -85,10 +85,6 @@ class FileFixtureProvider extends Base
         return array_keys($this->schemas);
     }
 
-
-
-
-
     /**
      * Manually register a schema.
      */

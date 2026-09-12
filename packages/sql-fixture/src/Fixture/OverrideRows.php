@@ -39,5 +39,4 @@ final class OverrideRows
         return $rows;
     }
 
-
 }

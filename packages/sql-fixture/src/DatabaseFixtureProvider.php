@@ -73,10 +73,6 @@ class DatabaseFixtureProvider extends Base
         return $this->fixtureGenerator->generate($schema, $overrides, $className);
     }
 
-
-
-
-
     /**
      * Clear the schema cache.
      */

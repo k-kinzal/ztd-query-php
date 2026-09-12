@@ -233,13 +233,4 @@ class FixturePlan implements Stringable
         return $this->toString();
     }
 
-
-
-
-
-
-
-
-
-
 }

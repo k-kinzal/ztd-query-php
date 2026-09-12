@@ -59,6 +59,7 @@ use Tests\Fixture\Fixture\ShopSchemas;
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinition::class)]
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\TypeParameters::class)]
 #[UsesClass(\SqlFixture\Schema\TypeShape::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinitionInput::class)]
 final class PlanSchemaValidatorTest extends TestCase
 {
     #[Test]

@@ -136,10 +136,6 @@ final class FixtureSetTest extends TestCase
         self::assertSame([], $set->rows('nope'));
     }
 
-
-
-
-
     #[Test]
     public function testGetReadsTheEntryWhicheverShapeItHas(): void
     {

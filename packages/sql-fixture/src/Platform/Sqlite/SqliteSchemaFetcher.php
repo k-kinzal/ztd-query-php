@@ -41,9 +41,4 @@ final class SqliteSchemaFetcher implements SchemaFetcherInterface
         return (new Schema\PragmaSchema())->fetchSchemaViaPragma($pdo, $tableName);
     }
 
-
-
-
-
-
 }

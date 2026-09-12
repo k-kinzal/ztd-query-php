@@ -32,7 +32,4 @@ final class MySqlSchemaFetcher implements SchemaFetcherInterface
         return $this->parser->parse($createTableSql);
     }
 
-
-
-
 }

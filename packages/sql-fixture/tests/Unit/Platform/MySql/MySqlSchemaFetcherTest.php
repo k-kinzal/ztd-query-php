@@ -24,6 +24,7 @@ use SqlFixture\Platform\MySql\MySqlSchemaFetcher as Subject;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinition::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\TypeParameters::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Schema\TypeShape::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinitionInput::class)]
 final class MySqlSchemaFetcherTest extends TestCase
 {
     public function testFetchSchemaParsesLiveDatabaseDdl(): void

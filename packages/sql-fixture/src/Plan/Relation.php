@@ -177,9 +177,4 @@ final class Relation
         return [$this->left->table, $this->right->table];
     }
 
-
-
-
-
-
 }

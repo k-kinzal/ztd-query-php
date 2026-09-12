@@ -239,10 +239,6 @@ final class FixturePlanTest extends TestCase
         self::assertSame([], $plan->dependentsOf('order_detail'));
     }
 
-
-
-
-
     #[Test]
     public function testAnOptionalSelfReferenceIsAllowed(): void
     {
@@ -250,10 +246,6 @@ final class FixturePlanTest extends TestCase
 
         self::assertSame(['category'], $plan->generationOrder);
     }
-
-
-
-
 
     #[Test]
     public function testTwoForeignKeysBetweenTheSameTablesAreAllowed(): void
@@ -326,8 +318,6 @@ final class FixturePlanTest extends TestCase
         self::assertSame(['order', 'order_detail', 'audit_log'], $plan->tables);
     }
 
-
-
     #[Test]
     public function testAlteringADeclaredPlanGivesAPlainPlan(): void
     {
@@ -336,8 +326,6 @@ final class FixturePlanTest extends TestCase
         self::assertNotInstanceOf(OrderWithDetailsPlan::class, $plan);
         self::assertSame(['order', 'order_detail', 'customer', 'audit_log'], $plan->tables);
     }
-
-
 
     #[Test]
     public function testPartsSpreadFromAKeyedArrayAreStillReadInOrder(): void

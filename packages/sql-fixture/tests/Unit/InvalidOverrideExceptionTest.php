@@ -57,5 +57,4 @@ final class InvalidOverrideExceptionTest extends TestCase
         );
     }
 
-
 }

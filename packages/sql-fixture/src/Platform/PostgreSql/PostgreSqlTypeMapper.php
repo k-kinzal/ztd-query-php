@@ -41,21 +41,4 @@ final class PostgreSqlTypeMapper implements TypeMapperInterface
         return $value;
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }

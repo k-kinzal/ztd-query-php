@@ -51,6 +51,7 @@ use Tests\Fixture\GeneratorTestUser;
 #[UsesClass(\SqlFixture\Platform\MySql\Value\TextGenerator::class)]
 #[UsesClass(\SqlFixture\Schema\TypeShape::class)]
 #[UsesClass(\SqlFixture\TypeMapper\ParagraphGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinitionInput::class)]
 final class FixtureGeneratorTest extends TestCase
 {
     #[Test]
@@ -182,10 +183,6 @@ final class FixtureGeneratorTest extends TestCase
         self::assertSame($customParser, $generator->getSchemaParser());
     }
 
-
-
-
-
     #[Test]
     public function testNullIsAcceptedForANullableColumn(): void
     {
@@ -197,8 +194,6 @@ final class FixtureGeneratorTest extends TestCase
 
         self::assertNull($data['note']);
     }
-
-
 
     #[Test]
     public function testAnOverrideForAnAutoIncrementColumnIsStillAllowed(): void

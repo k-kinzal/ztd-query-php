@@ -38,7 +38,6 @@ class FixtureProvider extends Provider\SqlSchemaProvider
     private Generator $faker;
     private StaticSchemaResolver $schemaResolver;
 
-
     /**
      * @param string $dialect SQL dialect ('mysql' or 'sqlite')
      */
@@ -111,8 +110,6 @@ class FixtureProvider extends Provider\SqlSchemaProvider
     {
         return $this->schemaResolver;
     }
-
-
 
     /**
      * Get the underlying fixture generator.

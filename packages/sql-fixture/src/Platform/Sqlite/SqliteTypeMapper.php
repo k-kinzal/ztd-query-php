@@ -41,19 +41,4 @@ final class SqliteTypeMapper implements TypeMapperInterface
         return $value;
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }

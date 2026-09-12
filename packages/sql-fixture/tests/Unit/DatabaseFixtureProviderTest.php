@@ -91,6 +91,7 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\Schema\DefinitionSegments::class)]
 #[UsesClass(\SqlFixture\Schema\TypeShape::class)]
 #[UsesClass(\SqlFixture\TypeMapper\ParagraphGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinitionInput::class)]
 final class DatabaseFixtureProviderTest extends TestCase
 {
     #[Test]

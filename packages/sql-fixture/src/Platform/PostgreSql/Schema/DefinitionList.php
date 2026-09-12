@@ -51,7 +51,6 @@ final class DefinitionList
         return (new \SqlFixture\Schema\DefinitionSegments())->split($columnsBlock);
     }
 
-
     /**
      * Recognizes table constraints that do not declare a column.
      */

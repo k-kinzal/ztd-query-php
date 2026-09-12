@@ -79,6 +79,7 @@ use SqlFixture\Platform\Sqlite\SqliteTypeMapper;
 #[UsesClass(\SqlFixture\Schema\DefinitionSegments::class)]
 #[UsesClass(\SqlFixture\Schema\TypeShape::class)]
 #[UsesClass(\SqlFixture\TypeMapper\ParagraphGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinitionInput::class)]
 final class PlatformFactoryTest extends TestCase
 {
     #[Test]
@@ -105,8 +106,6 @@ final class PlatformFactoryTest extends TestCase
         self::assertInstanceOf(PostgreSqlSchemaParser::class, $parser);
     }
 
-
-
     #[Test]
     public function testCreateTypeMapperForMysql(): void
     {
@@ -131,8 +130,6 @@ final class PlatformFactoryTest extends TestCase
         self::assertInstanceOf(PostgreSqlTypeMapper::class, $mapper);
     }
 
-
-
     #[Test]
     public function testCreateSchemaFetcherForMysql(): void
     {
@@ -156,8 +153,6 @@ final class PlatformFactoryTest extends TestCase
 
         self::assertInstanceOf(PostgreSqlSchemaFetcher::class, $fetcher);
     }
-
-
 
     #[Test]
     public function testDetectDriverForSqlite(): void

@@ -98,8 +98,6 @@ final class PlanSyntaxExceptionTest extends TestCase
         );
     }
 
-
-
     #[Test]
     public function testNotATableNamePointsAtFrom(): void
     {

@@ -51,23 +51,4 @@ final class SqliteSchemaParser implements SchemaParserInterface
         return new TableSchema($tableName, $columns, $primaryKeys);
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }

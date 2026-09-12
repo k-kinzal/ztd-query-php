@@ -184,12 +184,6 @@ final class PlanParserTest extends TestCase
         self::assertSame('order_detail.order_id', $plan->relations[0]->right->toString());
     }
 
-
-
-
-
-
-
     /**
      * @return array<string, array{string, string}>
      */
@@ -265,8 +259,5 @@ final class PlanParserTest extends TestCase
 
         self::assertCount(2, $plan->relations);
     }
-
-
-
 
 }

@@ -62,5 +62,4 @@ final class StaticSchemaResolver implements SchemaResolverInterface
         return array_keys($this->schemas);
     }
 
-
 }
