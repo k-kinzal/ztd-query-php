@@ -86,4 +86,27 @@ final class IntegerDomainTest extends TestCase
         self::assertSame(0, $domain->compare('10', '10'));
         self::assertGreaterThan(0, $domain->compare('18446744073709551615', '18446744073709551614'));
     }
+
+    public function testChooseSamplesUpToSixtyFiveDigitsWhenNoMaximumIsDeclared(): void
+    {
+        self::assertSame(str_repeat('0', 16) . str_repeat('9', 65), (new IntegerDomain('0', null))->choose(static fn (int $count): int => $count - 1));
+    }
+
+    public function testChooseCompletesDigitsBeyondTheMaximumPrefixUpToNine(): void
+    {
+        $decisions = [1, 0];
+        self::assertSame('19', (new IntegerDomain('0', '99', 0))->choose(static function (int $count) use (&$decisions): int {
+            return array_shift($decisions) ?? $count - 1;
+        }));
+    }
+
+    public function testChooseAllowsTheLargestPaddingChoice(): void
+    {
+        self::assertSame(str_repeat('0', 1024) . '5', (new IntegerDomain('5', '5', 1024))->choose(static fn (int $count): int => $count - 1));
+    }
+
+    public function testMatchReadsSeparatorsOnlyWhenTheScannerAcceptsThem(): void
+    {
+        self::assertSame([], (new IntegerDomain('10', '20'))->match('1_0'));
+    }
 }

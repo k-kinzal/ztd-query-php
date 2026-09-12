@@ -5,6 +5,17 @@
         "directories": [
             "src"
         ],
+        // The lexical declarations are reference data, like the grammar ASTs under resources/.
+        // Their correctness is established by fuzzing against the native parsers, not by unit
+        // tests that would have to carry a second copy of the declarations. Mutating them only
+        // measures that duplication, and Infection stalls for minutes while it indexes the
+        // covering tests of every node in these files, which marks unrelated mutants as timed out.
+        // This exception is limited to these reference declarations.
+        "excludes": [
+            "MySql/Generation/Lexeme/DefinitionFactory.php",
+            "PostgreSql/Generation/Lexeme/DefinitionFactory.php",
+            "Sqlite/Generation/Lexeme/DefinitionFactory.php"
+        ],
     },
     "mutators": {
         "@default": true

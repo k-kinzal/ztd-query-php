@@ -40,4 +40,38 @@ final class CharacterDomainTest extends TestCase
         self::assertSame([], $domain->match('abb'));
         self::assertSame([6], $domain->match("'aaaa'"));
     }
+
+    public function testChooseSpansTheDefaultLengthsFromEmptyToTheScannerMaximum(): void
+    {
+        $domain = new CharacterDomain(['a']);
+        self::assertSame('', $domain->choose(static fn (int $count): int => 0));
+        self::assertSame(str_repeat('a', 255), $domain->choose(static fn (int $count): int => $count - 1));
+    }
+
+    public function testChooseStaysInsideDeclaredLengthBounds(): void
+    {
+        $domain = new CharacterDomain(['a'], 2, 4);
+        self::assertSame('aa', $domain->choose(static fn (int $count): int => 0));
+        self::assertSame('aaaa', $domain->choose(static fn (int $count): int => $count - 1));
+    }
+
+    public function testChooseAcceptsTheLargestScannerLength(): void
+    {
+        self::assertSame('', (new CharacterDomain(['a'], 0, 65535))->choose(static fn (int $count): int => 0));
+    }
+
+    public function testMatchRequiresTheDeclaredPrefix(): void
+    {
+        self::assertSame([], (new CharacterDomain(['a'], 0, 2, "X'", "'"))->match("'a'"));
+    }
+
+    public function testMatchCountsMultiplesFromTheMinimumLength(): void
+    {
+        self::assertSame([4, 6], (new CharacterDomain(['a'], 2, 3, multiple: 2))->match('aaaaaa'));
+    }
+
+    public function testMatchReportsEachEndOnceWhenAtomsOverlap(): void
+    {
+        self::assertSame([0, 1, 2, 3], (new CharacterDomain(['a', 'aa']))->match('aaa'));
+    }
 }
