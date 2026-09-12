@@ -50,13 +50,12 @@
 <span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-kw">abstract</span> <span class="tok-kw">class</span> <span class="tok-id">IdentifierQuoterContractTest</span> <span class="tok-kw">extends</span> <span class="tok-id">TestCase</span></span>
 <span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a>{</span>
-<span class="src-line" data-diff="removed"><span class="ln">17</span>    <span class="tok-kw">abstract</span> <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">createQuoter</span>(): <span class="tok-id">IdentifierQuoter</span>;</span>
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com">     * Answers the quoter this dialect names things with.</span></span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com">     * @return IdentifierQuoter The quoter under test</span></span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>    <span class="tok-kw">abstract</span> <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">createQuoter</span>(): <span class="tok-id">IdentifierQuoter</span>;</span>
+<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a>    <span class="tok-kw">abstract</span> <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">createQuoter</span>(): <span class="tok-id">IdentifierQuoter</span>;</span>
 <span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a></span>
 <span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-com">     * Return the expected quote character for this platform.</span></span>
@@ -64,8 +63,7 @@
 <span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a><span class="tok-com">     * @return non-empty-string</span></span>
 <span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a><span class="tok-com">     */</span></span>
-<span class="src-line" data-diff="removed"><span class="ln">25</span>    <span class="tok-kw">abstract</span> <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">quoteCharacter</span>(): <span class="tok-id">string</span>;</span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    <span class="tok-kw">abstract</span> <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">quoteCharacter</span>(): <span class="tok-id">string</span>;</span>
+<span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a>    <span class="tok-kw">abstract</span> <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">quoteCharacter</span>(): <span class="tok-id">string</span>;</span>
 <span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a></span>
 <span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a><span class="tok-com">     * quote() must return a non-empty string (P-IQ-1).</span></span>

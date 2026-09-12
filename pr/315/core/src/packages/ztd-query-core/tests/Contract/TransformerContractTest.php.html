@@ -61,19 +61,17 @@
 <span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-kw">abstract</span> <span class="tok-kw">class</span> <span class="tok-id">TransformerContractTest</span> <span class="tok-kw">extends</span> <span class="tok-id">TestCase</span></span>
 <span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a>{</span>
-<span class="src-line" data-diff="removed"><span class="ln">24</span>    <span class="tok-kw">abstract</span> <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">createTransformer</span>(): <span class="tok-id">SqlTransformer</span>;</span>
 <span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com">     * Answers the transformer this dialect rewrites a query with.</span></span>
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com">     * @return SqlTransformer The transformer under test</span></span>
 <span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>    <span class="tok-kw">abstract</span> <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">createTransformer</span>(): <span class="tok-id">SqlTransformer</span>;</span>
+<span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a>    <span class="tok-kw">abstract</span> <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">createTransformer</span>(): <span class="tok-id">SqlTransformer</span>;</span>
 <span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a></span>
 <span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a><span class="tok-com">     * A valid SELECT statement referencing the &quot;users&quot; table.</span></span>
 <span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a><span class="tok-com">     */</span></span>
-<span class="src-line" data-diff="removed"><span class="ln">29</span>    <span class="tok-kw">abstract</span> <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">selectSql</span>(): <span class="tok-id">string</span>;</span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    <span class="tok-kw">abstract</span> <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">selectSql</span>(): <span class="tok-id">string</span>;</span>
+<span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a>    <span class="tok-kw">abstract</span> <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">selectSql</span>(): <span class="tok-id">string</span>;</span>
 <span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a></span>
 <span class="src-line" id="L39" data-diff="same"><a class="ln" href="#L39">39</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L40" data-diff="same"><a class="ln" href="#L40">40</a><span class="tok-com">     * Empty table context must return the original SQL unchanged (P-TF-1).</span></span>
@@ -218,8 +216,7 @@
 <span class="src-line" data-diff="removed"><span class="ln">168</span><span class="tok-com">     * @return array&lt;string, array{rows: array&lt;int, array&lt;string, mixed&gt;&gt;, columns: array&lt;int, string&gt;, columnTypes: array&lt;string, ColumnType&gt;}&gt;</span></span>
 <span class="src-line" id="L176" data-diff="added"><a class="ln" href="#L176">176</a><span class="tok-com">     * @return array&lt;string, array{rows: list&lt;Row&gt;, columns: array&lt;int, string&gt;, columnTypes: array&lt;string, ColumnDeclaration&gt;}&gt;</span></span>
 <span class="src-line" id="L177" data-diff="same"><a class="ln" href="#L177">177</a><span class="tok-com">     */</span></span>
-<span class="src-line" data-diff="removed"><span class="ln">170</span>    <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">singleRowTableContext</span>(): <span class="tok-kw">array</span></span>
-<span class="src-line" id="L178" data-diff="added"><a class="ln" href="#L178">178</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">singleRowTableContext</span>(): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L178" data-diff="same"><a class="ln" href="#L178">178</a>    <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">singleRowTableContext</span>(): <span class="tok-kw">array</span></span>
 <span class="src-line" id="L179" data-diff="same"><a class="ln" href="#L179">179</a>    {</span>
 <span class="src-line" id="L180" data-diff="same"><a class="ln" href="#L180">180</a>        <span class="tok-kw">return</span> [</span>
 <span class="src-line" id="L181" data-diff="same"><a class="ln" href="#L181">181</a>            <span class="tok-str">&#039;users&#039;</span> =&gt; [</span>
@@ -245,8 +242,7 @@
 <span class="src-line" data-diff="removed"><span class="ln">190</span><span class="tok-com">     * @return array&lt;string, array{rows: array&lt;int, array&lt;string, mixed&gt;&gt;, columns: array&lt;int, string&gt;, columnTypes: array&lt;string, ColumnType&gt;}&gt;</span></span>
 <span class="src-line" id="L198" data-diff="added"><a class="ln" href="#L198">198</a><span class="tok-com">     * @return array&lt;string, array{rows: list&lt;Row&gt;, columns: array&lt;int, string&gt;, columnTypes: array&lt;string, ColumnDeclaration&gt;}&gt;</span></span>
 <span class="src-line" id="L199" data-diff="same"><a class="ln" href="#L199">199</a><span class="tok-com">     */</span></span>
-<span class="src-line" data-diff="removed"><span class="ln">192</span>    <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">emptyRowsTableContext</span>(): <span class="tok-kw">array</span></span>
-<span class="src-line" id="L200" data-diff="added"><a class="ln" href="#L200">200</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">emptyRowsTableContext</span>(): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L200" data-diff="same"><a class="ln" href="#L200">200</a>    <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">emptyRowsTableContext</span>(): <span class="tok-kw">array</span></span>
 <span class="src-line" id="L201" data-diff="same"><a class="ln" href="#L201">201</a>    {</span>
 <span class="src-line" id="L202" data-diff="same"><a class="ln" href="#L202">202</a>        <span class="tok-kw">return</span> [</span>
 <span class="src-line" id="L203" data-diff="same"><a class="ln" href="#L203">203</a>            <span class="tok-str">&#039;users&#039;</span> =&gt; [</span>
@@ -267,8 +263,7 @@
 <span class="src-line" id="L215" data-diff="same"><a class="ln" href="#L215">215</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L216" data-diff="same"><a class="ln" href="#L216">216</a><span class="tok-com">     * Return the platform-specific native type for INTEGER.</span></span>
 <span class="src-line" id="L217" data-diff="same"><a class="ln" href="#L217">217</a><span class="tok-com">     */</span></span>
-<span class="src-line" data-diff="removed"><span class="ln">210</span>    <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">nativeIntegerType</span>(): <span class="tok-id">string</span></span>
-<span class="src-line" id="L218" data-diff="added"><a class="ln" href="#L218">218</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">nativeIntegerType</span>(): <span class="tok-id">string</span></span>
+<span class="src-line" id="L218" data-diff="same"><a class="ln" href="#L218">218</a>    <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">nativeIntegerType</span>(): <span class="tok-id">string</span></span>
 <span class="src-line" id="L219" data-diff="same"><a class="ln" href="#L219">219</a>    {</span>
 <span class="src-line" id="L220" data-diff="same"><a class="ln" href="#L220">220</a>        <span class="tok-kw">return</span> <span class="tok-str">&#039;INTEGER&#039;</span>;</span>
 <span class="src-line" id="L221" data-diff="same"><a class="ln" href="#L221">221</a>    }</span>
@@ -276,8 +271,7 @@
 <span class="src-line" id="L223" data-diff="same"><a class="ln" href="#L223">223</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L224" data-diff="same"><a class="ln" href="#L224">224</a><span class="tok-com">     * Return the platform-specific native type for VARCHAR/STRING.</span></span>
 <span class="src-line" id="L225" data-diff="same"><a class="ln" href="#L225">225</a><span class="tok-com">     */</span></span>
-<span class="src-line" data-diff="removed"><span class="ln">218</span>    <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">nativeStringType</span>(): <span class="tok-id">string</span></span>
-<span class="src-line" id="L226" data-diff="added"><a class="ln" href="#L226">226</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">nativeStringType</span>(): <span class="tok-id">string</span></span>
+<span class="src-line" id="L226" data-diff="same"><a class="ln" href="#L226">226</a>    <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">nativeStringType</span>(): <span class="tok-id">string</span></span>
 <span class="src-line" id="L227" data-diff="same"><a class="ln" href="#L227">227</a>    {</span>
 <span class="src-line" id="L228" data-diff="same"><a class="ln" href="#L228">228</a>        <span class="tok-kw">return</span> <span class="tok-str">&#039;VARCHAR(255)&#039;</span>;</span>
 <span class="src-line" id="L229" data-diff="same"><a class="ln" href="#L229">229</a>    }</span>

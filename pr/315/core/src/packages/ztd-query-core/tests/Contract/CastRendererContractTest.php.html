@@ -53,13 +53,12 @@
 <span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-kw">abstract</span> <span class="tok-kw">class</span> <span class="tok-id">CastRendererContractTest</span> <span class="tok-kw">extends</span> <span class="tok-id">TestCase</span></span>
 <span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a>{</span>
-<span class="src-line" data-diff="removed"><span class="ln">19</span>    <span class="tok-kw">abstract</span> <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">createRenderer</span>(): <span class="tok-id">CastRenderer</span>;</span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com">     * Answers the renderer this dialect casts with.</span></span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com">     * @return CastRenderer The renderer under test</span></span>
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>    <span class="tok-kw">abstract</span> <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">createRenderer</span>(): <span class="tok-id">CastRenderer</span>;</span>
+<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a>    <span class="tok-kw">abstract</span> <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">createRenderer</span>(): <span class="tok-id">CastRenderer</span>;</span>
 <span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a></span>
 <span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a><span class="tok-com">     * renderCast must return a non-empty string for every type family (P-CR-1).</span></span>
@@ -242,8 +241,7 @@
 <span class="src-line" id="L195" data-diff="same"><a class="ln" href="#L195">195</a><span class="tok-com">     * Provide a representative native type string for a given family.</span></span>
 <span class="src-line" id="L196" data-diff="same"><a class="ln" href="#L196">196</a><span class="tok-com">     * Subclasses may override this to provide platform-specific native types.</span></span>
 <span class="src-line" id="L197" data-diff="same"><a class="ln" href="#L197">197</a><span class="tok-com">     */</span></span>
-<span class="src-line" data-diff="removed"><span class="ln">193</span>    <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">nativeTypeFor</span>(<span class="tok-id">ColumnTypeFamily</span> <span class="tok-var">$family</span>): <span class="tok-id">string</span></span>
-<span class="src-line" id="L198" data-diff="added"><a class="ln" href="#L198">198</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">nativeTypeFor</span>(<span class="tok-id">ColumnTypeFamily</span> <span class="tok-var">$family</span>): <span class="tok-id">string</span></span>
+<span class="src-line" id="L198" data-diff="same"><a class="ln" href="#L198">198</a>    <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">nativeTypeFor</span>(<span class="tok-id">ColumnTypeFamily</span> <span class="tok-var">$family</span>): <span class="tok-id">string</span></span>
 <span class="src-line" id="L199" data-diff="same"><a class="ln" href="#L199">199</a>    {</span>
 <span class="src-line" id="L200" data-diff="same"><a class="ln" href="#L200">200</a>        <span class="tok-kw">return</span> <span class="tok-kw">match</span> (<span class="tok-var">$family</span>) {</span>
 <span class="src-line" id="L201" data-diff="same"><a class="ln" href="#L201">201</a>            <span class="tok-id">ColumnTypeFamily</span>::<span class="tok-id">INTEGER</span> =&gt; <span class="tok-str">&#039;INTEGER&#039;</span>,</span>

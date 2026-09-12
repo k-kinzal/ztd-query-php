@@ -52,26 +52,23 @@
 <span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-kw">abstract</span> <span class="tok-kw">class</span> <span class="tok-id">SchemaParserContractTest</span> <span class="tok-kw">extends</span> <span class="tok-id">TestCase</span></span>
 <span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a>{</span>
-<span class="src-line" data-diff="removed"><span class="ln">17</span>    <span class="tok-kw">abstract</span> <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">createParser</span>(): <span class="tok-id">SchemaParser</span>;</span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com">     * Answers the parser this dialect reads a declaration with.</span></span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com">     * @return SchemaParser The parser under test</span></span>
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>    <span class="tok-kw">abstract</span> <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">createParser</span>(): <span class="tok-id">SchemaParser</span>;</span>
+<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a>    <span class="tok-kw">abstract</span> <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">createParser</span>(): <span class="tok-id">SchemaParser</span>;</span>
 <span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a></span>
 <span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a><span class="tok-com">     * A valid CREATE TABLE statement in the platform&#039;s dialect.</span></span>
 <span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a><span class="tok-com">     * Must define at least: columns, primary key, NOT NULL columns, column types, unique constraints.</span></span>
 <span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a><span class="tok-com">     */</span></span>
-<span class="src-line" data-diff="removed"><span class="ln">23</span>    <span class="tok-kw">abstract</span> <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">validCreateTableSql</span>(): <span class="tok-id">string</span>;</span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    <span class="tok-kw">abstract</span> <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">validCreateTableSql</span>(): <span class="tok-id">string</span>;</span>
+<span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a>    <span class="tok-kw">abstract</span> <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">validCreateTableSql</span>(): <span class="tok-id">string</span>;</span>
 <span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a></span>
 <span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a><span class="tok-com">     * A SQL statement that is NOT a CREATE TABLE (e.g. SELECT, INSERT).</span></span>
 <span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a><span class="tok-com">     */</span></span>
-<span class="src-line" data-diff="removed"><span class="ln">28</span>    <span class="tok-kw">abstract</span> <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">nonCreateTableSql</span>(): <span class="tok-id">string</span>;</span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    <span class="tok-kw">abstract</span> <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">nonCreateTableSql</span>(): <span class="tok-id">string</span>;</span>
+<span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a>    <span class="tok-kw">abstract</span> <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">nonCreateTableSql</span>(): <span class="tok-id">string</span>;</span>
 <span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a></span>
 <span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a><span class="tok-com">     * Valid CREATE TABLE must return a non-null TableDefinition (P-SP-5).</span></span>
@@ -262,8 +259,7 @@
 <span class="src-line" data-diff="removed"><span class="ln">216</span><span class="tok-com">     * @return array&lt;int, string&gt;</span></span>
 <span class="src-line" id="L223" data-diff="added"><a class="ln" href="#L223">223</a><span class="tok-com">     * @return list&lt;string&gt;</span></span>
 <span class="src-line" id="L224" data-diff="same"><a class="ln" href="#L224">224</a><span class="tok-com">     */</span></span>
-<span class="src-line" data-diff="removed"><span class="ln">218</span>    <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">expectedColumns</span>(): <span class="tok-kw">array</span></span>
-<span class="src-line" id="L225" data-diff="added"><a class="ln" href="#L225">225</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">expectedColumns</span>(): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L225" data-diff="same"><a class="ln" href="#L225">225</a>    <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">expectedColumns</span>(): <span class="tok-kw">array</span></span>
 <span class="src-line" id="L226" data-diff="same"><a class="ln" href="#L226">226</a>    {</span>
 <span class="src-line" id="L227" data-diff="same"><a class="ln" href="#L227">227</a>        <span class="tok-kw">return</span> [<span class="tok-str">&#039;id&#039;</span>, <span class="tok-str">&#039;name&#039;</span>, <span class="tok-str">&#039;email&#039;</span>];</span>
 <span class="src-line" id="L228" data-diff="same"><a class="ln" href="#L228">228</a>    }</span>
@@ -274,8 +270,7 @@
 <span class="src-line" data-diff="removed"><span class="ln">226</span><span class="tok-com">     * @return array&lt;int, string&gt;</span></span>
 <span class="src-line" id="L233" data-diff="added"><a class="ln" href="#L233">233</a><span class="tok-com">     * @return list&lt;string&gt;</span></span>
 <span class="src-line" id="L234" data-diff="same"><a class="ln" href="#L234">234</a><span class="tok-com">     */</span></span>
-<span class="src-line" data-diff="removed"><span class="ln">228</span>    <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">expectedPrimaryKeys</span>(): <span class="tok-kw">array</span></span>
-<span class="src-line" id="L235" data-diff="added"><a class="ln" href="#L235">235</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">expectedPrimaryKeys</span>(): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L235" data-diff="same"><a class="ln" href="#L235">235</a>    <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">expectedPrimaryKeys</span>(): <span class="tok-kw">array</span></span>
 <span class="src-line" id="L236" data-diff="same"><a class="ln" href="#L236">236</a>    {</span>
 <span class="src-line" id="L237" data-diff="same"><a class="ln" href="#L237">237</a>        <span class="tok-kw">return</span> [<span class="tok-str">&#039;id&#039;</span>];</span>
 <span class="src-line" id="L238" data-diff="same"><a class="ln" href="#L238">238</a>    }</span>
@@ -286,8 +281,7 @@
 <span class="src-line" data-diff="removed"><span class="ln">236</span><span class="tok-com">     * @return array&lt;int, string&gt;</span></span>
 <span class="src-line" id="L243" data-diff="added"><a class="ln" href="#L243">243</a><span class="tok-com">     * @return list&lt;string&gt;</span></span>
 <span class="src-line" id="L244" data-diff="same"><a class="ln" href="#L244">244</a><span class="tok-com">     */</span></span>
-<span class="src-line" data-diff="removed"><span class="ln">238</span>    <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">expectedNotNullColumns</span>(): <span class="tok-kw">array</span></span>
-<span class="src-line" id="L245" data-diff="added"><a class="ln" href="#L245">245</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">expectedNotNullColumns</span>(): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L245" data-diff="same"><a class="ln" href="#L245">245</a>    <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">expectedNotNullColumns</span>(): <span class="tok-kw">array</span></span>
 <span class="src-line" id="L246" data-diff="same"><a class="ln" href="#L246">246</a>    {</span>
 <span class="src-line" id="L247" data-diff="same"><a class="ln" href="#L247">247</a>        <span class="tok-kw">return</span> [<span class="tok-str">&#039;id&#039;</span>, <span class="tok-str">&#039;name&#039;</span>];</span>
 <span class="src-line" id="L248" data-diff="same"><a class="ln" href="#L248">248</a>    }</span>
