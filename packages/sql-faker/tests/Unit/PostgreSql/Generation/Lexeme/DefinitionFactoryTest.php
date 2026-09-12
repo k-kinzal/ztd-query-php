@@ -51,7 +51,7 @@ use SqlFaker\PostgreSql\Generation\Lexeme\DefinitionFactory;
 #[UsesClass(\SqlFaker\Generation\Exception\LexicalException::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\HashBoundLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\KeywordLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\PostgreSql\Lookahead\PgLookahead::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Lookahead\PgLookahead::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Value\IdentifierDomain::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Value\QuotedDomain::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Value\OperatorDomain::class)]

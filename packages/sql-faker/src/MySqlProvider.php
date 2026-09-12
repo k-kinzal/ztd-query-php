@@ -6,11 +6,11 @@ namespace SqlFaker;
 
 use Faker\Generator;
 use Faker\Provider\Base;
-use SqlFaker\Coverage\GrammarCoverage;
+use SqlFaker\Generation\Coverage\GrammarCoverage;
 use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\Generation\SqlGenerator;
 use SqlFaker\Grammar\Model\Grammar;
-use SqlFaker\MySql\GenerationPlans;
+use SqlFaker\MySql\Generation\GenerationPlans;
 use SqlFaker\MySql\Grammar\MySqlGrammar;
 use SqlFaker\MySql\StatementType;
 use SqlFaker\Provider\SqlGeneratorFactory;

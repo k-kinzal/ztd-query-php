@@ -32,7 +32,7 @@ use SqlFaker\PostgreSql\Generation\Rewrite\RewriteDefinitions;
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Name\RelationNameRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\TimeZoneIntervalRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\WindowFrameRule::class)]
-#[UsesClass(\SqlFaker\PostgreSql\Lookahead\PgLookahead::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Lookahead\PgLookahead::class)]
 #[UsesClass(ProductionOccurrence::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Expression\ExpressionGroupingRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\ConstraintAttributesRule::class)]

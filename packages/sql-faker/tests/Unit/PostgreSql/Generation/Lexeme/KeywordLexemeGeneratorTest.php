@@ -26,7 +26,7 @@ use SqlFaker\PostgreSql\Generation\Lexeme\KeywordLexemeGenerator;
 #[UsesClass(\SqlFaker\Generation\Lexeme\LexemeSequence::class)]
 #[UsesClass(\SqlFaker\Generation\Candidate\RegisteredLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\Generation\Token\TerminalOccurrence::class)]
-#[UsesClass(\SqlFaker\PostgreSql\Lookahead\PgLookahead::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Lookahead\PgLookahead::class)]
 #[UsesClass(\SqlFaker\Generation\Lexeme\SpacingConstraint::class)]
 #[UsesClass(\SqlFaker\Generation\Token\ProductionOccurrence::class)]
 #[UsesClass(\SqlFaker\Generation\Exception\LexicalException::class)]

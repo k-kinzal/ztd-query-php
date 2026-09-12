@@ -7,7 +7,7 @@ namespace SqlFaker\PostgreSql\Generation\Rewrite;
 use Override;
 use SqlFaker\Generation\Token\RewriteRule;
 use SqlFaker\Generation\Token\TerminalSequence;
-use SqlFaker\PostgreSql\Lookahead\PgLookahead;
+use SqlFaker\PostgreSql\Generation\Lookahead\PgLookahead;
 
 /**
  * Settles parser.c/base_yylex aliases after the grammar's otherwise ambiguous followers have been selected.

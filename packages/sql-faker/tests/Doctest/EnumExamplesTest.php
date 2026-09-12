@@ -53,7 +53,7 @@ final class EnumExamplesTest extends TestCase
     public static function providerExamples(): Generator
     {
         foreach (['MySql', 'PostgreSql', 'Sqlite'] as $dialect) {
-            $file = __DIR__ . '/../../src/' . $dialect . '/StatementRule.php';
+            $file = __DIR__ . '/../../src/' . $dialect . '/Generation/StatementRule.php';
             $source = file_get_contents($file);
             if ($source === false) {
                 throw new LogicException('Cannot read statement enum: ' . $file);
@@ -79,7 +79,7 @@ final class EnumExamplesTest extends TestCase
                         $docblock->getText(),
                         $name,
                         $docblock->getStartLine(),
-                        'SqlFaker\\' . $dialect,
+                        'SqlFaker\\' . $dialect . '\\Generation',
                     );
                     $examples = iterator_to_array((new ExampleExtractor())->extract($target));
                     if ($examples === []) {

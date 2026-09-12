@@ -7,7 +7,7 @@ namespace Tests\Unit\SqlFaker\Sqlite;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Sqlite\StatementRule;
+use SqlFaker\Sqlite\Generation\StatementRule;
 use SqlFaker\Sqlite\StatementType;
 
 #[CoversClass(StatementType::class)]

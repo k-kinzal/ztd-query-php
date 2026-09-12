@@ -6,7 +6,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use SqlFaker\Compiler\Lemon\LemonParser;
-use SqlFaker\Grammar\Resource\GrammarWriter;
+use SqlFaker\Compiler\Resource\GrammarWriter;
 use SqlFaker\Grammar\Resource\SqlVersion;
 
 /**

@@ -11,12 +11,12 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Generation\Lexeme\LexicalGrammar;
 use SqlFaker\Generation\Plan\GenerationPlan;
-use SqlFaker\MySql\LexicalGrammar as MySqlLexicalGrammar;
+use SqlFaker\MySql\Generation\LexicalGrammar as MySqlLexicalGrammar;
 use SqlFaker\MySqlProvider;
-use SqlFaker\PostgreSql\LexicalGrammar as PostgreSqlLexicalGrammar;
+use SqlFaker\PostgreSql\Generation\LexicalGrammar as PostgreSqlLexicalGrammar;
 use SqlFaker\PostgreSql\StatementType as PostgreSqlStatementType;
 use SqlFaker\PostgreSqlProvider;
-use SqlFaker\Sqlite\LexicalGrammar as SqliteLexicalGrammar;
+use SqlFaker\Sqlite\Generation\LexicalGrammar as SqliteLexicalGrammar;
 use SqlFaker\SqliteProvider;
 
 #[CoversNothing]
