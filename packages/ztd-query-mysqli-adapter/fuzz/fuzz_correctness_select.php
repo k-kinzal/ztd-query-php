@@ -14,6 +14,8 @@ use Fuzz\Correctness\MysqliCorrectnessHarness;
 use Fuzz\Correctness\SchemaAwareSqlBuilder;
 use Fuzz\Correctness\Target\SelectCorrectnessTarget;
 
+date_default_timezone_set('UTC');
+
 [$host, $port] = MysqliConnector::endpoint();
 
 $rawMysqli = new mysqli($host, 'root', 'root', '', $port);

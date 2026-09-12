@@ -49,6 +49,14 @@ final class MySqlCastRendererTest extends CastRendererContractTest
         self::assertSame('CAST(1 AS SIGNED)', $result);
     }
 
+    public function testRenderCastPreservesYearCoercionForIntegerFamily(): void
+    {
+        $renderer = new MySqlCastRenderer();
+        self::assertSame('CAST(CAST(78 AS YEAR) AS SIGNED)', $renderer->renderCast('78', new ColumnType(ColumnTypeFamily::INTEGER, 'YEAR')));
+        self::assertSame('CAST(CAST(69 AS YEAR) AS SIGNED)', $renderer->renderCast('69', new ColumnType(ColumnTypeFamily::INTEGER, 'year(4)')));
+        self::assertSame('CAST(NULL AS SIGNED)', $renderer->renderNullCast(new ColumnType(ColumnTypeFamily::INTEGER, 'YEAR')));
+    }
+
     public function testRenderCastString(): void
     {
         $type = new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)');

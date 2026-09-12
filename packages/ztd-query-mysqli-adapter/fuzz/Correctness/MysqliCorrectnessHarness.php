@@ -43,6 +43,7 @@ final class MysqliCorrectnessHarness
         $this->pass = $pass;
         $this->rawMysqli = new mysqli($host, $user, $pass, $dbName, $port);
         $this->faker = Factory::create();
+        $this->faker->addProvider(new FixedDateTimeProvider());
         $this->fixtureProvider = new FixtureProvider($this->faker);
     }
 

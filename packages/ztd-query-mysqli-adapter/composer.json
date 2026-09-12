@@ -88,7 +88,7 @@
         }
     },
     "scripts": {
-        "test": "@php -d memory_limit=512M tests/run.php --parallel --processes=auto --max-processes=4",
+        "test": "@php -d memory_limit=512M tests/run.php --parallel --processes=4",
         "test:unit": "@php -d memory_limit=512M tests/run.php --testsuite unit",
         "test:integration": "@php -d memory_limit=512M tests/run.php --testsuite integration",
         "lint": [
@@ -109,13 +109,30 @@
             "@fuzz:correctness:update",
             "@fuzz:correctness:delete"
         ],
-        "fuzz:robustness": "php-fuzzer fuzz fuzz/fuzz_robustness_execute.php fuzz/corpus/robustness-execute --timeout=15",
-        "fuzz:correctness:select": "php-fuzzer fuzz fuzz/fuzz_correctness_select.php fuzz/corpus/correctness-select --timeout=15",
-        "fuzz:correctness:insert": "php-fuzzer fuzz fuzz/fuzz_correctness_insert.php fuzz/corpus/correctness-insert --timeout=15",
-        "fuzz:correctness:replace": "php-fuzzer fuzz fuzz/fuzz_correctness_replace.php fuzz/corpus/correctness-replace --timeout=15",
-        "fuzz:correctness:update": "php-fuzzer fuzz fuzz/fuzz_correctness_update.php fuzz/corpus/correctness-update --timeout=15",
-        "fuzz:correctness:delete": "php-fuzzer fuzz fuzz/fuzz_correctness_delete.php fuzz/corpus/correctness-delete --timeout=15",
-        "infection": "infection --configuration=infection.json5 --threads=4 --only-covering-test-cases --no-progress",
+        "fuzz:robustness": [
+            "Composer\\Config::disableProcessTimeout",
+            "php-fuzzer fuzz fuzz/fuzz_robustness_execute.php fuzz/corpus/robustness-execute --timeout=15"
+        ],
+        "fuzz:correctness:select": [
+            "Composer\\Config::disableProcessTimeout",
+            "php-fuzzer fuzz fuzz/fuzz_correctness_select.php fuzz/corpus/correctness-select --timeout=15"
+        ],
+        "fuzz:correctness:insert": [
+            "Composer\\Config::disableProcessTimeout",
+            "php-fuzzer fuzz fuzz/fuzz_correctness_insert.php fuzz/corpus/correctness-insert --timeout=15"
+        ],
+        "fuzz:correctness:replace": [
+            "Composer\\Config::disableProcessTimeout",
+            "php-fuzzer fuzz fuzz/fuzz_correctness_replace.php fuzz/corpus/correctness-replace --timeout=15"
+        ],
+        "fuzz:correctness:update": [
+            "Composer\\Config::disableProcessTimeout",
+            "php-fuzzer fuzz fuzz/fuzz_correctness_update.php fuzz/corpus/correctness-update --timeout=15"
+        ],
+        "fuzz:correctness:delete": [
+            "Composer\\Config::disableProcessTimeout",
+            "php-fuzzer fuzz fuzz/fuzz_correctness_delete.php fuzz/corpus/correctness-delete --timeout=15"
+        ],
         "test:coverage": "@php -d memory_limit=1G tests/run.php --coverage-xml build/coverage-xml --log-junit build/junit.xml",
         "doctest": "@php -d memory_limit=512M tests/run.php --testsuite doctest",
         "phpstan": "phpstan analyse --memory-limit=512M",
@@ -130,8 +147,14 @@
             "deptrac debug:unassigned --config-file=deptrac.yaml",
             "deptrac debug:unused --config-file=deptrac.yaml"
         ],
-        "bench": "phpbench run --report=aggregate --store",
-        "bench:quick": "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10 --store",
+        "bench": [
+            "Composer\\Config::disableProcessTimeout",
+            "phpbench run --report=aggregate --store"
+        ],
+        "bench:quick": [
+            "Composer\\Config::disableProcessTimeout",
+            "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10 --store"
+        ],
         "bench:full": "@bench",
         "docgen": "cd ../.. && packages/ztd-query-mysqli-adapter/vendor/bin/docgen --packages=packages/ztd-query-mysqli-adapter --deptrac=\"$PWD/packages/ztd-query-mysqli-adapter/deptrac.yaml\" --output=packages/ztd-query-mysqli-adapter/build/docs --cache-dir=packages/ztd-query-mysqli-adapter/build/docgen-cache --title=k-kinzal/ztd-query-mysqli-adapter --coverage=packages/ztd-query-mysqli-adapter/build/coverage-xml",
         "docgen:serve": [

@@ -68,16 +68,16 @@ final class SqlExpressionGenerator
         }
 
         if (str_contains($col, 'date') && str_contains($col, 'time')) {
-            return "'" . $this->faker->dateTimeBetween('-1 year', 'now')->format('Y-m-d H:i:s') . "'";
+            return "'" . $this->faker->dateTimeBetween('2000-01-01', '2020-01-01', 'UTC')->format('Y-m-d H:i:s') . "'";
         }
         if (str_contains($col, 'timestamp')) {
-            return "'" . $this->faker->dateTimeBetween('-1 year', 'now')->format('Y-m-d H:i:s') . "'";
+            return "'" . $this->faker->dateTimeBetween('2000-01-01', '2020-01-01', 'UTC')->format('Y-m-d H:i:s') . "'";
         }
         if (str_contains($col, 'date')) {
-            return "'" . $this->faker->date('Y-m-d') . "'";
+            return "'" . $this->faker->date('Y-m-d', 1577836800) . "'";
         }
         if (str_contains($col, 'time')) {
-            return "'" . $this->faker->time('H:i:s') . "'";
+            return "'" . $this->faker->time('H:i:s', 1577836800) . "'";
         }
 
         if (str_contains($col, 'json')) {

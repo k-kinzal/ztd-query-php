@@ -1026,4 +1026,22 @@ final class MysqliCteShadowingTest extends TestCase
             $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
         }
     }
+    public function testYearShorthandMatchesNativeCoercionWithoutPhysicalWrites(): void
+    {
+        [$database, $native] = MySqlContainer::createTestDatabase();
+        try {
+            $native->query('CREATE TABLE years (id INT PRIMARY KEY, value YEAR)');
+            $ztd = ZtdMysqli::fromMysqli($native);
+            self::assertNotFalse($ztd->query("INSERT INTO years VALUES (1, 78), (2, 69), (3, 0), (4, '0')"));
+            $result = $ztd->query('SELECT value FROM years ORDER BY id');
+            self::assertInstanceOf(mysqli_result::class, $result);
+            self::assertSame([['value' => 1978], ['value' => 2069], ['value' => 0], ['value' => 2000]], $result->fetch_all(MYSQLI_ASSOC));
+            $physical = $native->query('SELECT * FROM years');
+            self::assertInstanceOf(mysqli_result::class, $physical);
+            self::assertSame([], $physical->fetch_all(MYSQLI_ASSOC));
+        } finally {
+            $native->query('DROP DATABASE `' . $database . '`');
+        }
+    }
+
 }

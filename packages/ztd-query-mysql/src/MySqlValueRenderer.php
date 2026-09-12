@@ -38,6 +38,9 @@ final class MySqlValueRenderer implements ValueRenderer
         }
 
         $resolvedType = $type ?? $this->inferType($value);
+        if ($resolvedType->family === ColumnTypeFamily::INTEGER && preg_match('/^YEAR(?:\(4\))?$/i', $resolvedType->nativeType) === 1) {
+            $resolvedType = new ColumnType(ColumnTypeFamily::INTEGER, 'INT');
+        }
         $expression = $this->renderExpression($value, $resolvedType, $type !== null);
 
         return $this->castRenderer->renderCast($expression, $resolvedType);
