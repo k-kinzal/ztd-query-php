@@ -182,6 +182,9 @@ final class InsertTransformer implements SqlTransformer
                 $columnDefaults,
                 $generatedIdentityStarts,
             );
+            if ($columnTypes === []) {
+                return $select;
+            }
             $projections = [];
             foreach ($tableColumns as $column) {
                 $quoted = '`' . str_replace('`', '``', $column) . '`';

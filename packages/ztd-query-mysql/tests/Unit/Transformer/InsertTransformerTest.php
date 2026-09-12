@@ -997,4 +997,27 @@ final class InsertTransformerTest extends TestCase
 
         self::assertStringContainsString('1 AS `id`', $generated);
     }
+    public function testInsertSelectCastsDestinationTypesAndQuotesUntypedColumns(): void
+    {
+        $tables = [
+            'years' => [
+                'rows' => [],
+                'columns' => ['id', 'value', 'note`tag'],
+                'columnTypes' => [
+                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'),
+                    'value' => new ColumnType(ColumnTypeFamily::INTEGER, 'YEAR'),
+                ],
+            ],
+        ];
+        $sql = (new InsertTransformer(new MySqlParser(), new SelectTransformer()))->transform(
+            "INSERT INTO years SELECT 1, 93, 'ok'",
+            $tables,
+        );
+        self::assertStringContainsString(
+            'SELECT CAST(_ztd_insert_cast.`id` AS SIGNED) AS `id`, CAST(CAST(_ztd_insert_cast.`value` AS YEAR) AS SIGNED) AS `value`, _ztd_insert_cast.`note``tag` AS `note``tag` FROM (',
+            $sql,
+        );
+        self::assertStringContainsString(') AS _ztd_insert_cast', $sql);
+    }
+
 }
