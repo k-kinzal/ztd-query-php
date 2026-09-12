@@ -10,3 +10,4 @@ composer.lock
 /fuzz/coverage/
 /crash-*
 /minimized-*
+phpbench.json
