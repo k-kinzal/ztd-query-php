@@ -128,130 +128,131 @@
 <span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Grammar\Generation\Value\RadixDomain</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Grammar\Generation\Value\WordDomain</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Grammar\Generation\Value\Utf8</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L79" data-diff="same"><a class="ln" href="#L79">79</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">LexicalExceptionTest</span> <span class="tok-kw">extends</span> <span class="tok-id">TestCase</span></span>
-<span class="src-line" id="L80" data-diff="same"><a class="ln" href="#L80">80</a>{</span>
-<span class="src-line" id="L81" data-diff="same"><a class="ln" href="#L81">81</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testTokenizingUnsupportedInputReportsTheOffsetAndTheInput</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L82" data-diff="same"><a class="ln" href="#L82">82</a>    {</span>
-<span class="src-line" id="L83" data-diff="same"><a class="ln" href="#L83">83</a>        <span class="tok-var">$lexical</span> = <span class="tok-kw">new</span> <span class="tok-id">LexicalGrammar</span>(<span class="tok-id">Factory</span>::<span class="tok-id">create</span>(), <span class="tok-str">&#039;mysql-8.4.7&#039;</span>);</span>
-<span class="src-line" id="L84" data-diff="same"><a class="ln" href="#L84">84</a></span>
-<span class="src-line" id="L85" data-diff="same"><a class="ln" href="#L85">85</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">LexicalException</span>::<span class="tok-kw">class</span>);</span>
-<span class="src-line" id="L86" data-diff="same"><a class="ln" href="#L86">86</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&#039;Unsupported MySQL lexical input at offset 0:&#039;</span>);</span>
-<span class="src-line" id="L87" data-diff="same"><a class="ln" href="#L87">87</a></span>
-<span class="src-line" id="L88" data-diff="same"><a class="ln" href="#L88">88</a>        <span class="tok-var">$lexical</span>-&gt;<span class="tok-id">tokenize</span>(<span class="tok-str">&quot;\x00&quot;</span>);</span>
-<span class="src-line" id="L89" data-diff="same"><a class="ln" href="#L89">89</a>    }</span>
-<span class="src-line" id="L90" data-diff="same"><a class="ln" href="#L90">90</a></span>
-<span class="src-line" id="L91" data-diff="same"><a class="ln" href="#L91">91</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRealizingAnUnknownTerminalReportsTheTerminal</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L92" data-diff="same"><a class="ln" href="#L92">92</a>    {</span>
-<span class="src-line" id="L93" data-diff="same"><a class="ln" href="#L93">93</a>        <span class="tok-var">$lexical</span> = <span class="tok-kw">new</span> <span class="tok-id">LexicalGrammar</span>(<span class="tok-id">Factory</span>::<span class="tok-id">create</span>(), <span class="tok-str">&#039;mysql-8.4.7&#039;</span>);</span>
-<span class="src-line" id="L94" data-diff="same"><a class="ln" href="#L94">94</a></span>
-<span class="src-line" id="L95" data-diff="same"><a class="ln" href="#L95">95</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">LexicalException</span>::<span class="tok-kw">class</span>);</span>
-<span class="src-line" id="L96" data-diff="same"><a class="ln" href="#L96">96</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&#039;Unsupported MySQL terminal for mysql-8.4.7: NOT_A_TERMINAL&#039;</span>);</span>
-<span class="src-line" id="L97" data-diff="same"><a class="ln" href="#L97">97</a></span>
-<span class="src-line" id="L98" data-diff="same"><a class="ln" href="#L98">98</a>        <span class="tok-var">$lexical</span>-&gt;<span class="tok-id">realize</span>([<span class="tok-str">&#039;NOT_A_TERMINAL&#039;</span>]);</span>
-<span class="src-line" id="L99" data-diff="same"><a class="ln" href="#L99">99</a>    }</span>
-<span class="src-line" id="L100" data-diff="same"><a class="ln" href="#L100">100</a></span>
-<span class="src-line" id="L101" data-diff="same"><a class="ln" href="#L101">101</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testUnsupportedTerminalNamesTheTerminalAndTheProfile</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L102" data-diff="same"><a class="ln" href="#L102">102</a>    {</span>
-<span class="src-line" id="L103" data-diff="same"><a class="ln" href="#L103">103</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
-<span class="src-line" id="L104" data-diff="same"><a class="ln" href="#L104">104</a>            <span class="tok-str">&#039;Unsupported MySQL terminal for mysql-8.4.7: NOT_A_TERMINAL&#039;</span>,</span>
-<span class="src-line" id="L105" data-diff="same"><a class="ln" href="#L105">105</a>            <span class="tok-id">LexicalException</span>::<span class="tok-id">unsupportedTerminal</span>(<span class="tok-str">&#039;MySQL&#039;</span>, <span class="tok-str">&#039;mysql-8.4.7&#039;</span>, <span class="tok-str">&#039;NOT_A_TERMINAL&#039;</span>)-&gt;<span class="tok-id">getMessage</span>(),</span>
-<span class="src-line" id="L106" data-diff="same"><a class="ln" href="#L106">106</a>        );</span>
-<span class="src-line" id="L107" data-diff="same"><a class="ln" href="#L107">107</a>    }</span>
-<span class="src-line" id="L108" data-diff="same"><a class="ln" href="#L108">108</a></span>
-<span class="src-line" id="L109" data-diff="same"><a class="ln" href="#L109">109</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testUnsupportedInputNamesTheOffsetAndTheText</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L110" data-diff="same"><a class="ln" href="#L110">110</a>    {</span>
-<span class="src-line" id="L111" data-diff="same"><a class="ln" href="#L111">111</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
-<span class="src-line" id="L112" data-diff="same"><a class="ln" href="#L112">112</a>            <span class="tok-str">&#039;Unsupported SQLite lexical input at offset 3: abc&#039;</span>,</span>
-<span class="src-line" id="L113" data-diff="same"><a class="ln" href="#L113">113</a>            <span class="tok-id">LexicalException</span>::<span class="tok-id">unsupportedInput</span>(<span class="tok-str">&#039;SQLite&#039;</span>, <span class="tok-num">3</span>, <span class="tok-str">&#039;abc&#039;</span>)-&gt;<span class="tok-id">getMessage</span>(),</span>
-<span class="src-line" id="L114" data-diff="same"><a class="ln" href="#L114">114</a>        );</span>
-<span class="src-line" id="L115" data-diff="same"><a class="ln" href="#L115">115</a>    }</span>
-<span class="src-line" id="L116" data-diff="same"><a class="ln" href="#L116">116</a></span>
-<span class="src-line" id="L117" data-diff="same"><a class="ln" href="#L117">117</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testNoProgressNamesTheOffsetTheReadGotStuckAt</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L118" data-diff="same"><a class="ln" href="#L118">118</a>    {</span>
-<span class="src-line" id="L119" data-diff="same"><a class="ln" href="#L119">119</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
-<span class="src-line" id="L120" data-diff="same"><a class="ln" href="#L120">120</a>            <span class="tok-str">&#039;SQLite lexer made no progress at offset 3: abc&#039;</span>,</span>
-<span class="src-line" id="L121" data-diff="same"><a class="ln" href="#L121">121</a>            <span class="tok-id">LexicalException</span>::<span class="tok-id">noProgress</span>(<span class="tok-str">&#039;SQLite&#039;</span>, <span class="tok-num">3</span>, <span class="tok-str">&#039;abc&#039;</span>)-&gt;<span class="tok-id">getMessage</span>(),</span>
-<span class="src-line" id="L122" data-diff="same"><a class="ln" href="#L122">122</a>        );</span>
-<span class="src-line" id="L123" data-diff="same"><a class="ln" href="#L123">123</a>    }</span>
-<span class="src-line" id="L124" data-diff="same"><a class="ln" href="#L124">124</a></span>
-<span class="src-line" id="L125" data-diff="same"><a class="ln" href="#L125">125</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testUnterminatedQuotedTokenNamesTheText</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L126" data-diff="same"><a class="ln" href="#L126">126</a>    {</span>
-<span class="src-line" id="L127" data-diff="same"><a class="ln" href="#L127">127</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
-<span class="src-line" id="L128" data-diff="same"><a class="ln" href="#L128">128</a>            <span class="tok-str">&quot;Unterminated MySQL quoted token: &#039;abc&quot;</span>,</span>
-<span class="src-line" id="L129" data-diff="same"><a class="ln" href="#L129">129</a>            <span class="tok-id">LexicalException</span>::<span class="tok-id">unterminatedQuotedToken</span>(<span class="tok-str">&#039;MySQL&#039;</span>, <span class="tok-str">&quot;&#039;abc&quot;</span>)-&gt;<span class="tok-id">getMessage</span>(),</span>
-<span class="src-line" id="L130" data-diff="same"><a class="ln" href="#L130">130</a>        );</span>
-<span class="src-line" id="L131" data-diff="same"><a class="ln" href="#L131">131</a>    }</span>
-<span class="src-line" id="L132" data-diff="same"><a class="ln" href="#L132">132</a></span>
-<span class="src-line" id="L133" data-diff="same"><a class="ln" href="#L133">133</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testUnterminatedBracketIdentifierNamesTheDialect</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L134" data-diff="same"><a class="ln" href="#L134">134</a>    {</span>
-<span class="src-line" id="L135" data-diff="same"><a class="ln" href="#L135">135</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
-<span class="src-line" id="L136" data-diff="same"><a class="ln" href="#L136">136</a>            <span class="tok-str">&#039;Unterminated SQLite bracket identifier.&#039;</span>,</span>
-<span class="src-line" id="L137" data-diff="same"><a class="ln" href="#L137">137</a>            <span class="tok-id">LexicalException</span>::<span class="tok-id">unterminatedBracketIdentifier</span>(<span class="tok-str">&#039;SQLite&#039;</span>)-&gt;<span class="tok-id">getMessage</span>(),</span>
-<span class="src-line" id="L138" data-diff="same"><a class="ln" href="#L138">138</a>        );</span>
-<span class="src-line" id="L139" data-diff="same"><a class="ln" href="#L139">139</a>    }</span>
-<span class="src-line" id="L140" data-diff="same"><a class="ln" href="#L140">140</a></span>
-<span class="src-line" id="L141" data-diff="same"><a class="ln" href="#L141">141</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testUnterminatedBlockCommentNamesTheDialect</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L142" data-diff="same"><a class="ln" href="#L142">142</a>    {</span>
-<span class="src-line" id="L143" data-diff="same"><a class="ln" href="#L143">143</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
-<span class="src-line" id="L144" data-diff="same"><a class="ln" href="#L144">144</a>            <span class="tok-str">&#039;Unterminated PostgreSQL block comment.&#039;</span>,</span>
-<span class="src-line" id="L145" data-diff="same"><a class="ln" href="#L145">145</a>            <span class="tok-id">LexicalException</span>::<span class="tok-id">unterminatedBlockComment</span>(<span class="tok-str">&#039;PostgreSQL&#039;</span>)-&gt;<span class="tok-id">getMessage</span>(),</span>
-<span class="src-line" id="L146" data-diff="same"><a class="ln" href="#L146">146</a>        );</span>
-<span class="src-line" id="L147" data-diff="same"><a class="ln" href="#L147">147</a>    }</span>
-<span class="src-line" id="L148" data-diff="same"><a class="ln" href="#L148">148</a></span>
-<span class="src-line" id="L149" data-diff="same"><a class="ln" href="#L149">149</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testUnterminatedDollarQuotedStringNamesTheDialect</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L150" data-diff="same"><a class="ln" href="#L150">150</a>    {</span>
-<span class="src-line" id="L151" data-diff="same"><a class="ln" href="#L151">151</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
-<span class="src-line" id="L152" data-diff="same"><a class="ln" href="#L152">152</a>            <span class="tok-str">&#039;Unterminated MySQL dollar-quoted string.&#039;</span>,</span>
-<span class="src-line" id="L153" data-diff="same"><a class="ln" href="#L153">153</a>            <span class="tok-id">LexicalException</span>::<span class="tok-id">unterminatedDollarQuotedString</span>(<span class="tok-str">&#039;MySQL&#039;</span>)-&gt;<span class="tok-id">getMessage</span>(),</span>
-<span class="src-line" id="L154" data-diff="same"><a class="ln" href="#L154">154</a>        );</span>
-<span class="src-line" id="L155" data-diff="same"><a class="ln" href="#L155">155</a>    }</span>
-<span class="src-line" id="L156" data-diff="same"><a class="ln" href="#L156">156</a></span>
-<span class="src-line" id="L157" data-diff="same"><a class="ln" href="#L157">157</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testLexemeDoesNotRealizeTerminalNamesBoth</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L158" data-diff="same"><a class="ln" href="#L158">158</a>    {</span>
-<span class="src-line" id="L159" data-diff="same"><a class="ln" href="#L159">159</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
-<span class="src-line" id="L160" data-diff="same"><a class="ln" href="#L160">160</a>            <span class="tok-str">&#039;Requested MySQL lexeme does not realize IDENT: 42&#039;</span>,</span>
-<span class="src-line" id="L161" data-diff="same"><a class="ln" href="#L161">161</a>            <span class="tok-id">LexicalException</span>::<span class="tok-id">lexemeDoesNotRealizeTerminal</span>(<span class="tok-str">&#039;MySQL&#039;</span>, <span class="tok-str">&#039;IDENT&#039;</span>, <span class="tok-str">&#039;42&#039;</span>)-&gt;<span class="tok-id">getMessage</span>(),</span>
-<span class="src-line" id="L162" data-diff="same"><a class="ln" href="#L162">162</a>        );</span>
-<span class="src-line" id="L163" data-diff="same"><a class="ln" href="#L163">163</a>    }</span>
-<span class="src-line" id="L164" data-diff="same"><a class="ln" href="#L164">164</a></span>
-<span class="src-line" id="L165" data-diff="same"><a class="ln" href="#L165">165</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testNoWitnessForLexemeNamesBoth</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L166" data-diff="same"><a class="ln" href="#L166">166</a>    {</span>
-<span class="src-line" id="L167" data-diff="same"><a class="ln" href="#L167">167</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
-<span class="src-line" id="L168" data-diff="same"><a class="ln" href="#L168">168</a>            <span class="tok-str">&#039;MySQL lexical catalog has no IDENT witness for: 42&#039;</span>,</span>
-<span class="src-line" id="L169" data-diff="same"><a class="ln" href="#L169">169</a>            <span class="tok-id">LexicalException</span>::<span class="tok-id">noWitnessForLexeme</span>(<span class="tok-str">&#039;MySQL&#039;</span>, <span class="tok-str">&#039;IDENT&#039;</span>, <span class="tok-str">&#039;42&#039;</span>)-&gt;<span class="tok-id">getMessage</span>(),</span>
-<span class="src-line" id="L170" data-diff="same"><a class="ln" href="#L170">170</a>        );</span>
-<span class="src-line" id="L171" data-diff="same"><a class="ln" href="#L171">171</a>    }</span>
-<span class="src-line" id="L172" data-diff="same"><a class="ln" href="#L172">172</a></span>
-<span class="src-line" id="L173" data-diff="same"><a class="ln" href="#L173">173</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRenderedSubstitutesBytesJsonHasNoEncodingFor</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L174" data-diff="same"><a class="ln" href="#L174">174</a>    {</span>
-<span class="src-line" id="L175" data-diff="same"><a class="ln" href="#L175">175</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;[&quot;\\ufffd&quot;]&#039;</span>, <span class="tok-id">LexicalException</span>::<span class="tok-id">rendered</span>([<span class="tok-str">&quot;\xB1&quot;</span>]));</span>
-<span class="src-line" id="L176" data-diff="same"><a class="ln" href="#L176">176</a>    }</span>
-<span class="src-line" id="L177" data-diff="same"><a class="ln" href="#L177">177</a></span>
-<span class="src-line" id="L178" data-diff="same"><a class="ln" href="#L178">178</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRenderedWritesAnOrdinarySequenceAsJson</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L179" data-diff="same"><a class="ln" href="#L179">179</a>    {</span>
-<span class="src-line" id="L180" data-diff="same"><a class="ln" href="#L180">180</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;[&quot;IDENT&quot;]&#039;</span>, <span class="tok-id">LexicalException</span>::<span class="tok-id">rendered</span>([<span class="tok-str">&#039;IDENT&#039;</span>]));</span>
-<span class="src-line" id="L181" data-diff="same"><a class="ln" href="#L181">181</a>    }</span>
-<span class="src-line" id="L182" data-diff="same"><a class="ln" href="#L182">182</a></span>
-<span class="src-line" id="L183" data-diff="same"><a class="ln" href="#L183">183</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRoundTripMismatchCarriesBothSequencesAndTheText</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L184" data-diff="same"><a class="ln" href="#L184">184</a>    {</span>
-<span class="src-line" id="L185" data-diff="same"><a class="ln" href="#L185">185</a>        <span class="tok-var">$message</span> = <span class="tok-id">LexicalException</span>::<span class="tok-id">roundTripMismatch</span>(</span>
-<span class="src-line" id="L186" data-diff="same"><a class="ln" href="#L186">186</a>            <span class="tok-str">&#039;MySQL&#039;</span>,</span>
-<span class="src-line" id="L187" data-diff="same"><a class="ln" href="#L187">187</a>            <span class="tok-str">&#039;mysql-8.4.7&#039;</span>,</span>
-<span class="src-line" id="L188" data-diff="same"><a class="ln" href="#L188">188</a>            [<span class="tok-str">&#039;SELECT_SYM&#039;</span>],</span>
-<span class="src-line" id="L189" data-diff="same"><a class="ln" href="#L189">189</a>            [<span class="tok-str">&#039;IDENT&#039;</span>],</span>
-<span class="src-line" id="L190" data-diff="same"><a class="ln" href="#L190">190</a>            <span class="tok-str">&#039;select&#039;</span>,</span>
-<span class="src-line" id="L191" data-diff="same"><a class="ln" href="#L191">191</a>        )-&gt;<span class="tok-id">getMessage</span>();</span>
-<span class="src-line" id="L192" data-diff="same"><a class="ln" href="#L192">192</a></span>
-<span class="src-line" id="L193" data-diff="same"><a class="ln" href="#L193">193</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
-<span class="src-line" id="L194" data-diff="same"><a class="ln" href="#L194">194</a>            <span class="tok-str">&quot;MySQL lexical round-trip failed for mysql-8.4.7.\n&quot;</span></span>
-<span class="src-line" id="L195" data-diff="same"><a class="ln" href="#L195">195</a>            . <span class="tok-str">&quot;Expected: [\&quot;SELECT_SYM\&quot;]\n&quot;</span></span>
-<span class="src-line" id="L196" data-diff="same"><a class="ln" href="#L196">196</a>            . <span class="tok-str">&quot;Actual: [\&quot;IDENT\&quot;]\n&quot;</span></span>
-<span class="src-line" id="L197" data-diff="same"><a class="ln" href="#L197">197</a>            . <span class="tok-str">&#039;SQL: select&#039;</span>,</span>
-<span class="src-line" id="L198" data-diff="same"><a class="ln" href="#L198">198</a>            <span class="tok-var">$message</span>,</span>
-<span class="src-line" id="L199" data-diff="same"><a class="ln" href="#L199">199</a>        );</span>
-<span class="src-line" id="L200" data-diff="same"><a class="ln" href="#L200">200</a>    }</span>
-<span class="src-line" id="L201" data-diff="same"><a class="ln" href="#L201">201</a>}</span>
-<span class="src-line" id="L202" data-diff="same"><a class="ln" href="#L202">202</a></span>
+<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Grammar\Generation\Lexeme\LexicalDefinition</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L80" data-diff="same"><a class="ln" href="#L80">80</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">LexicalExceptionTest</span> <span class="tok-kw">extends</span> <span class="tok-id">TestCase</span></span>
+<span class="src-line" id="L81" data-diff="same"><a class="ln" href="#L81">81</a>{</span>
+<span class="src-line" id="L82" data-diff="same"><a class="ln" href="#L82">82</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testTokenizingUnsupportedInputReportsTheOffsetAndTheInput</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L83" data-diff="same"><a class="ln" href="#L83">83</a>    {</span>
+<span class="src-line" id="L84" data-diff="same"><a class="ln" href="#L84">84</a>        <span class="tok-var">$lexical</span> = <span class="tok-kw">new</span> <span class="tok-id">LexicalGrammar</span>(<span class="tok-id">Factory</span>::<span class="tok-id">create</span>(), <span class="tok-str">&#039;mysql-8.4.7&#039;</span>);</span>
+<span class="src-line" id="L85" data-diff="same"><a class="ln" href="#L85">85</a></span>
+<span class="src-line" id="L86" data-diff="same"><a class="ln" href="#L86">86</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">LexicalException</span>::<span class="tok-kw">class</span>);</span>
+<span class="src-line" id="L87" data-diff="same"><a class="ln" href="#L87">87</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&#039;Unsupported MySQL lexical input at offset 0:&#039;</span>);</span>
+<span class="src-line" id="L88" data-diff="same"><a class="ln" href="#L88">88</a></span>
+<span class="src-line" id="L89" data-diff="same"><a class="ln" href="#L89">89</a>        <span class="tok-var">$lexical</span>-&gt;<span class="tok-id">tokenize</span>(<span class="tok-str">&quot;\x00&quot;</span>);</span>
+<span class="src-line" id="L90" data-diff="same"><a class="ln" href="#L90">90</a>    }</span>
+<span class="src-line" id="L91" data-diff="same"><a class="ln" href="#L91">91</a></span>
+<span class="src-line" id="L92" data-diff="same"><a class="ln" href="#L92">92</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRealizingAnUnknownTerminalReportsTheTerminal</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L93" data-diff="same"><a class="ln" href="#L93">93</a>    {</span>
+<span class="src-line" id="L94" data-diff="same"><a class="ln" href="#L94">94</a>        <span class="tok-var">$lexical</span> = <span class="tok-kw">new</span> <span class="tok-id">LexicalGrammar</span>(<span class="tok-id">Factory</span>::<span class="tok-id">create</span>(), <span class="tok-str">&#039;mysql-8.4.7&#039;</span>);</span>
+<span class="src-line" id="L95" data-diff="same"><a class="ln" href="#L95">95</a></span>
+<span class="src-line" id="L96" data-diff="same"><a class="ln" href="#L96">96</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">LexicalException</span>::<span class="tok-kw">class</span>);</span>
+<span class="src-line" id="L97" data-diff="same"><a class="ln" href="#L97">97</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&#039;Unsupported MySQL terminal for mysql-8.4.7: NOT_A_TERMINAL&#039;</span>);</span>
+<span class="src-line" id="L98" data-diff="same"><a class="ln" href="#L98">98</a></span>
+<span class="src-line" id="L99" data-diff="same"><a class="ln" href="#L99">99</a>        <span class="tok-var">$lexical</span>-&gt;<span class="tok-id">realize</span>([<span class="tok-str">&#039;NOT_A_TERMINAL&#039;</span>]);</span>
+<span class="src-line" id="L100" data-diff="same"><a class="ln" href="#L100">100</a>    }</span>
+<span class="src-line" id="L101" data-diff="same"><a class="ln" href="#L101">101</a></span>
+<span class="src-line" id="L102" data-diff="same"><a class="ln" href="#L102">102</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testUnsupportedTerminalNamesTheTerminalAndTheProfile</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L103" data-diff="same"><a class="ln" href="#L103">103</a>    {</span>
+<span class="src-line" id="L104" data-diff="same"><a class="ln" href="#L104">104</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" id="L105" data-diff="same"><a class="ln" href="#L105">105</a>            <span class="tok-str">&#039;Unsupported MySQL terminal for mysql-8.4.7: NOT_A_TERMINAL&#039;</span>,</span>
+<span class="src-line" id="L106" data-diff="same"><a class="ln" href="#L106">106</a>            <span class="tok-id">LexicalException</span>::<span class="tok-id">unsupportedTerminal</span>(<span class="tok-str">&#039;MySQL&#039;</span>, <span class="tok-str">&#039;mysql-8.4.7&#039;</span>, <span class="tok-str">&#039;NOT_A_TERMINAL&#039;</span>)-&gt;<span class="tok-id">getMessage</span>(),</span>
+<span class="src-line" id="L107" data-diff="same"><a class="ln" href="#L107">107</a>        );</span>
+<span class="src-line" id="L108" data-diff="same"><a class="ln" href="#L108">108</a>    }</span>
+<span class="src-line" id="L109" data-diff="same"><a class="ln" href="#L109">109</a></span>
+<span class="src-line" id="L110" data-diff="same"><a class="ln" href="#L110">110</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testUnsupportedInputNamesTheOffsetAndTheText</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L111" data-diff="same"><a class="ln" href="#L111">111</a>    {</span>
+<span class="src-line" id="L112" data-diff="same"><a class="ln" href="#L112">112</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" id="L113" data-diff="same"><a class="ln" href="#L113">113</a>            <span class="tok-str">&#039;Unsupported SQLite lexical input at offset 3: abc&#039;</span>,</span>
+<span class="src-line" id="L114" data-diff="same"><a class="ln" href="#L114">114</a>            <span class="tok-id">LexicalException</span>::<span class="tok-id">unsupportedInput</span>(<span class="tok-str">&#039;SQLite&#039;</span>, <span class="tok-num">3</span>, <span class="tok-str">&#039;abc&#039;</span>)-&gt;<span class="tok-id">getMessage</span>(),</span>
+<span class="src-line" id="L115" data-diff="same"><a class="ln" href="#L115">115</a>        );</span>
+<span class="src-line" id="L116" data-diff="same"><a class="ln" href="#L116">116</a>    }</span>
+<span class="src-line" id="L117" data-diff="same"><a class="ln" href="#L117">117</a></span>
+<span class="src-line" id="L118" data-diff="same"><a class="ln" href="#L118">118</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testNoProgressNamesTheOffsetTheReadGotStuckAt</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L119" data-diff="same"><a class="ln" href="#L119">119</a>    {</span>
+<span class="src-line" id="L120" data-diff="same"><a class="ln" href="#L120">120</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" id="L121" data-diff="same"><a class="ln" href="#L121">121</a>            <span class="tok-str">&#039;SQLite lexer made no progress at offset 3: abc&#039;</span>,</span>
+<span class="src-line" id="L122" data-diff="same"><a class="ln" href="#L122">122</a>            <span class="tok-id">LexicalException</span>::<span class="tok-id">noProgress</span>(<span class="tok-str">&#039;SQLite&#039;</span>, <span class="tok-num">3</span>, <span class="tok-str">&#039;abc&#039;</span>)-&gt;<span class="tok-id">getMessage</span>(),</span>
+<span class="src-line" id="L123" data-diff="same"><a class="ln" href="#L123">123</a>        );</span>
+<span class="src-line" id="L124" data-diff="same"><a class="ln" href="#L124">124</a>    }</span>
+<span class="src-line" id="L125" data-diff="same"><a class="ln" href="#L125">125</a></span>
+<span class="src-line" id="L126" data-diff="same"><a class="ln" href="#L126">126</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testUnterminatedQuotedTokenNamesTheText</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L127" data-diff="same"><a class="ln" href="#L127">127</a>    {</span>
+<span class="src-line" id="L128" data-diff="same"><a class="ln" href="#L128">128</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" id="L129" data-diff="same"><a class="ln" href="#L129">129</a>            <span class="tok-str">&quot;Unterminated MySQL quoted token: &#039;abc&quot;</span>,</span>
+<span class="src-line" id="L130" data-diff="same"><a class="ln" href="#L130">130</a>            <span class="tok-id">LexicalException</span>::<span class="tok-id">unterminatedQuotedToken</span>(<span class="tok-str">&#039;MySQL&#039;</span>, <span class="tok-str">&quot;&#039;abc&quot;</span>)-&gt;<span class="tok-id">getMessage</span>(),</span>
+<span class="src-line" id="L131" data-diff="same"><a class="ln" href="#L131">131</a>        );</span>
+<span class="src-line" id="L132" data-diff="same"><a class="ln" href="#L132">132</a>    }</span>
+<span class="src-line" id="L133" data-diff="same"><a class="ln" href="#L133">133</a></span>
+<span class="src-line" id="L134" data-diff="same"><a class="ln" href="#L134">134</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testUnterminatedBracketIdentifierNamesTheDialect</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L135" data-diff="same"><a class="ln" href="#L135">135</a>    {</span>
+<span class="src-line" id="L136" data-diff="same"><a class="ln" href="#L136">136</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" id="L137" data-diff="same"><a class="ln" href="#L137">137</a>            <span class="tok-str">&#039;Unterminated SQLite bracket identifier.&#039;</span>,</span>
+<span class="src-line" id="L138" data-diff="same"><a class="ln" href="#L138">138</a>            <span class="tok-id">LexicalException</span>::<span class="tok-id">unterminatedBracketIdentifier</span>(<span class="tok-str">&#039;SQLite&#039;</span>)-&gt;<span class="tok-id">getMessage</span>(),</span>
+<span class="src-line" id="L139" data-diff="same"><a class="ln" href="#L139">139</a>        );</span>
+<span class="src-line" id="L140" data-diff="same"><a class="ln" href="#L140">140</a>    }</span>
+<span class="src-line" id="L141" data-diff="same"><a class="ln" href="#L141">141</a></span>
+<span class="src-line" id="L142" data-diff="same"><a class="ln" href="#L142">142</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testUnterminatedBlockCommentNamesTheDialect</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L143" data-diff="same"><a class="ln" href="#L143">143</a>    {</span>
+<span class="src-line" id="L144" data-diff="same"><a class="ln" href="#L144">144</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" id="L145" data-diff="same"><a class="ln" href="#L145">145</a>            <span class="tok-str">&#039;Unterminated PostgreSQL block comment.&#039;</span>,</span>
+<span class="src-line" id="L146" data-diff="same"><a class="ln" href="#L146">146</a>            <span class="tok-id">LexicalException</span>::<span class="tok-id">unterminatedBlockComment</span>(<span class="tok-str">&#039;PostgreSQL&#039;</span>)-&gt;<span class="tok-id">getMessage</span>(),</span>
+<span class="src-line" id="L147" data-diff="same"><a class="ln" href="#L147">147</a>        );</span>
+<span class="src-line" id="L148" data-diff="same"><a class="ln" href="#L148">148</a>    }</span>
+<span class="src-line" id="L149" data-diff="same"><a class="ln" href="#L149">149</a></span>
+<span class="src-line" id="L150" data-diff="same"><a class="ln" href="#L150">150</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testUnterminatedDollarQuotedStringNamesTheDialect</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L151" data-diff="same"><a class="ln" href="#L151">151</a>    {</span>
+<span class="src-line" id="L152" data-diff="same"><a class="ln" href="#L152">152</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" id="L153" data-diff="same"><a class="ln" href="#L153">153</a>            <span class="tok-str">&#039;Unterminated MySQL dollar-quoted string.&#039;</span>,</span>
+<span class="src-line" id="L154" data-diff="same"><a class="ln" href="#L154">154</a>            <span class="tok-id">LexicalException</span>::<span class="tok-id">unterminatedDollarQuotedString</span>(<span class="tok-str">&#039;MySQL&#039;</span>)-&gt;<span class="tok-id">getMessage</span>(),</span>
+<span class="src-line" id="L155" data-diff="same"><a class="ln" href="#L155">155</a>        );</span>
+<span class="src-line" id="L156" data-diff="same"><a class="ln" href="#L156">156</a>    }</span>
+<span class="src-line" id="L157" data-diff="same"><a class="ln" href="#L157">157</a></span>
+<span class="src-line" id="L158" data-diff="same"><a class="ln" href="#L158">158</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testLexemeDoesNotRealizeTerminalNamesBoth</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L159" data-diff="same"><a class="ln" href="#L159">159</a>    {</span>
+<span class="src-line" id="L160" data-diff="same"><a class="ln" href="#L160">160</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" id="L161" data-diff="same"><a class="ln" href="#L161">161</a>            <span class="tok-str">&#039;Requested MySQL lexeme does not realize IDENT: 42&#039;</span>,</span>
+<span class="src-line" id="L162" data-diff="same"><a class="ln" href="#L162">162</a>            <span class="tok-id">LexicalException</span>::<span class="tok-id">lexemeDoesNotRealizeTerminal</span>(<span class="tok-str">&#039;MySQL&#039;</span>, <span class="tok-str">&#039;IDENT&#039;</span>, <span class="tok-str">&#039;42&#039;</span>)-&gt;<span class="tok-id">getMessage</span>(),</span>
+<span class="src-line" id="L163" data-diff="same"><a class="ln" href="#L163">163</a>        );</span>
+<span class="src-line" id="L164" data-diff="same"><a class="ln" href="#L164">164</a>    }</span>
+<span class="src-line" id="L165" data-diff="same"><a class="ln" href="#L165">165</a></span>
+<span class="src-line" id="L166" data-diff="same"><a class="ln" href="#L166">166</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testNoWitnessForLexemeNamesBoth</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L167" data-diff="same"><a class="ln" href="#L167">167</a>    {</span>
+<span class="src-line" id="L168" data-diff="same"><a class="ln" href="#L168">168</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" id="L169" data-diff="same"><a class="ln" href="#L169">169</a>            <span class="tok-str">&#039;MySQL lexical catalog has no IDENT witness for: 42&#039;</span>,</span>
+<span class="src-line" id="L170" data-diff="same"><a class="ln" href="#L170">170</a>            <span class="tok-id">LexicalException</span>::<span class="tok-id">noWitnessForLexeme</span>(<span class="tok-str">&#039;MySQL&#039;</span>, <span class="tok-str">&#039;IDENT&#039;</span>, <span class="tok-str">&#039;42&#039;</span>)-&gt;<span class="tok-id">getMessage</span>(),</span>
+<span class="src-line" id="L171" data-diff="same"><a class="ln" href="#L171">171</a>        );</span>
+<span class="src-line" id="L172" data-diff="same"><a class="ln" href="#L172">172</a>    }</span>
+<span class="src-line" id="L173" data-diff="same"><a class="ln" href="#L173">173</a></span>
+<span class="src-line" id="L174" data-diff="same"><a class="ln" href="#L174">174</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRenderedSubstitutesBytesJsonHasNoEncodingFor</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L175" data-diff="same"><a class="ln" href="#L175">175</a>    {</span>
+<span class="src-line" id="L176" data-diff="same"><a class="ln" href="#L176">176</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;[&quot;\\ufffd&quot;]&#039;</span>, <span class="tok-id">LexicalException</span>::<span class="tok-id">rendered</span>([<span class="tok-str">&quot;\xB1&quot;</span>]));</span>
+<span class="src-line" id="L177" data-diff="same"><a class="ln" href="#L177">177</a>    }</span>
+<span class="src-line" id="L178" data-diff="same"><a class="ln" href="#L178">178</a></span>
+<span class="src-line" id="L179" data-diff="same"><a class="ln" href="#L179">179</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRenderedWritesAnOrdinarySequenceAsJson</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L180" data-diff="same"><a class="ln" href="#L180">180</a>    {</span>
+<span class="src-line" id="L181" data-diff="same"><a class="ln" href="#L181">181</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;[&quot;IDENT&quot;]&#039;</span>, <span class="tok-id">LexicalException</span>::<span class="tok-id">rendered</span>([<span class="tok-str">&#039;IDENT&#039;</span>]));</span>
+<span class="src-line" id="L182" data-diff="same"><a class="ln" href="#L182">182</a>    }</span>
+<span class="src-line" id="L183" data-diff="same"><a class="ln" href="#L183">183</a></span>
+<span class="src-line" id="L184" data-diff="same"><a class="ln" href="#L184">184</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRoundTripMismatchCarriesBothSequencesAndTheText</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L185" data-diff="same"><a class="ln" href="#L185">185</a>    {</span>
+<span class="src-line" id="L186" data-diff="same"><a class="ln" href="#L186">186</a>        <span class="tok-var">$message</span> = <span class="tok-id">LexicalException</span>::<span class="tok-id">roundTripMismatch</span>(</span>
+<span class="src-line" id="L187" data-diff="same"><a class="ln" href="#L187">187</a>            <span class="tok-str">&#039;MySQL&#039;</span>,</span>
+<span class="src-line" id="L188" data-diff="same"><a class="ln" href="#L188">188</a>            <span class="tok-str">&#039;mysql-8.4.7&#039;</span>,</span>
+<span class="src-line" id="L189" data-diff="same"><a class="ln" href="#L189">189</a>            [<span class="tok-str">&#039;SELECT_SYM&#039;</span>],</span>
+<span class="src-line" id="L190" data-diff="same"><a class="ln" href="#L190">190</a>            [<span class="tok-str">&#039;IDENT&#039;</span>],</span>
+<span class="src-line" id="L191" data-diff="same"><a class="ln" href="#L191">191</a>            <span class="tok-str">&#039;select&#039;</span>,</span>
+<span class="src-line" id="L192" data-diff="same"><a class="ln" href="#L192">192</a>        )-&gt;<span class="tok-id">getMessage</span>();</span>
+<span class="src-line" id="L193" data-diff="same"><a class="ln" href="#L193">193</a></span>
+<span class="src-line" id="L194" data-diff="same"><a class="ln" href="#L194">194</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" id="L195" data-diff="same"><a class="ln" href="#L195">195</a>            <span class="tok-str">&quot;MySQL lexical round-trip failed for mysql-8.4.7.\n&quot;</span></span>
+<span class="src-line" id="L196" data-diff="same"><a class="ln" href="#L196">196</a>            . <span class="tok-str">&quot;Expected: [\&quot;SELECT_SYM\&quot;]\n&quot;</span></span>
+<span class="src-line" id="L197" data-diff="same"><a class="ln" href="#L197">197</a>            . <span class="tok-str">&quot;Actual: [\&quot;IDENT\&quot;]\n&quot;</span></span>
+<span class="src-line" id="L198" data-diff="same"><a class="ln" href="#L198">198</a>            . <span class="tok-str">&#039;SQL: select&#039;</span>,</span>
+<span class="src-line" id="L199" data-diff="same"><a class="ln" href="#L199">199</a>            <span class="tok-var">$message</span>,</span>
+<span class="src-line" id="L200" data-diff="same"><a class="ln" href="#L200">200</a>        );</span>
+<span class="src-line" id="L201" data-diff="same"><a class="ln" href="#L201">201</a>    }</span>
+<span class="src-line" id="L202" data-diff="same"><a class="ln" href="#L202">202</a>}</span>
+<span class="src-line" id="L203" data-diff="same"><a class="ln" href="#L203">203</a></span>
 </code></pre>
 </main>
 <footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
