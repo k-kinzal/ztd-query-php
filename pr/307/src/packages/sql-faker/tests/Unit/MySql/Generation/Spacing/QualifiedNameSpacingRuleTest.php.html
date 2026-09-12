@@ -44,14 +44,14 @@
 <span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\Attributes\CoversClass</span>;</span>
 <span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\Attributes\UsesClass</span>;</span>
 <span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\TestCase</span>;</span>
-<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Lexeme\Lexeme</span>;</span>
-<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Lexeme\LexemeInput</span>;</span>
-<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Output\ResolvedOutput</span>;</span>
-<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Spacing\LexemeBoundary</span>;</span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Spacing\SpacingConstraint</span>;</span>
-<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Spacing\SpacingRule</span>;</span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Token\TerminalOccurrence</span>;</span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Token\TerminalSequence</span>;</span>
+<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Lexeme\Lexeme</span>;</span>
+<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Lexeme\LexemeBoundary</span>;</span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Lexeme\LexemeInput</span>;</span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Lexeme\ResolvedOutput</span>;</span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Lexeme\SpacingConstraint</span>;</span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Lexeme\SpacingRule</span>;</span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Token\TerminalOccurrence</span>;</span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Token\TerminalSequence</span>;</span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\Generation\Spacing\QualifiedNameSpacingRule</span>;</span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a></span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>#[<span class="tok-id">CoversClass</span>(<span class="tok-id">QualifiedNameSpacingRule</span>::<span class="tok-kw">class</span>)]</span>
@@ -63,8 +63,8 @@
 <span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">SpacingRule</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">TerminalOccurrence</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">TerminalSequence</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Grammar\Generation\Lexeme\LexemeSequence</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Grammar\Generation\Token\ProductionOccurrence</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Generation\Lexeme\LexemeSequence</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Generation\Token\ProductionOccurrence</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">QualifiedNameSpacingRuleTest</span> <span class="tok-kw">extends</span> <span class="tok-id">TestCase</span></span>
 <span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>{</span>
 <span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testApplyConstrainsOnlyItsSourceDefinedBoundary</span>(): <span class="tok-id">void</span></span>

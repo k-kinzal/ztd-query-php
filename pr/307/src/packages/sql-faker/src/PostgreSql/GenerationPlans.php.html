@@ -41,8 +41,10 @@
 <span class="src-line" id="L5" data-diff="same"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlFaker\PostgreSql</span>;</span>
 <span class="src-line" id="L6" data-diff="same"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7" data-diff="same"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">Faker\Generator</span>;</span>
-<span class="src-line" id="L8" data-diff="same"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Derivation\GenerationPlan</span>;</span>
-<span class="src-line" id="L9" data-diff="same"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Derivation\ProductionPattern</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">8</span><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Derivation\GenerationPlan</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">9</span><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Derivation\ProductionPattern</span>;</span>
+<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Plan\GenerationPlan</span>;</span>
+<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Plan\ProductionPattern</span>;</span>
 <span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a></span>
 <span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-com"> * Names the generation plans this dialect&#039;s provider is built from.</span></span>

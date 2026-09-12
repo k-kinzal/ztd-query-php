@@ -42,11 +42,11 @@
 <span class="src-line" id="L5" data-diff="added"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlFaker\PostgreSql\Generation\Lexeme</span>;</span>
 <span class="src-line" id="L6" data-diff="added"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">Override</span>;</span>
-<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates</span>;</span>
-<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Lexeme\LexemeGenerator</span>;</span>
-<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Lexeme\LexemeInput</span>;</span>
-<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Lexeme\RegisteredLexemeGenerator</span>;</span>
-<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\PostgreSql\PgLookahead</span>;</span>
+<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Candidate\RegisteredLexemeGenerator</span>;</span>
+<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Lexeme\LexemeCandidates</span>;</span>
+<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Lexeme\LexemeGenerator</span>;</span>
+<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Lexeme\LexemeInput</span>;</span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\PostgreSql\Lookahead\PgLookahead</span>;</span>
 <span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a></span>
 <span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> * Combines kwlist.h registrations with parser.c/base_yylex&#039;s required followers for lookahead tokens.</span></span>
@@ -65,7 +65,7 @@
 <span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a></span>
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com">     * Rejects an impossible lookahead context before selecting a registered spelling.</span></span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     * @throws \SqlFaker\Grammar\LexicalException When a declared keyword registration is missing</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     * @throws \SqlFaker\Generation\Exception\LexicalException When a declared keyword registration is missing</span></span>
 <span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    #[<span class="tok-id">Override</span>]</span>
 <span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">generate</span>(<span class="tok-id">LexemeInput</span> <span class="tok-var">$input</span>): <span class="tok-id">LexemeCandidates</span></span>

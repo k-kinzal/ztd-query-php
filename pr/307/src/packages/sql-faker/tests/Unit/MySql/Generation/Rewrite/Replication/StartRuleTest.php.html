@@ -45,17 +45,17 @@
 <span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\Attributes\DataProvider</span>;</span>
 <span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\Attributes\UsesClass</span>;</span>
 <span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\TestCase</span>;</span>
-<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Derivation\DerivationTrace</span>;</span>
-<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\NonTerminal</span>;</span>
-<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Production</span>;</span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Terminal</span>;</span>
+<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Derivation\DerivationTrace</span>;</span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Model\NonTerminal</span>;</span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Model\Production</span>;</span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Model\Terminal</span>;</span>
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\Generation\Rewrite\Replication\StartRule</span>;</span>
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a></span>
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a>#[<span class="tok-id">CoversClass</span>(<span class="tok-id">StartRule</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">DerivationTrace</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Grammar\Generation\Token\ProductionOccurrence</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Grammar\Generation\Token\TerminalOccurrence</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Grammar\Generation\Token\TerminalSequence</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Generation\Token\ProductionOccurrence</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Generation\Token\TerminalOccurrence</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Generation\Token\TerminalSequence</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">NonTerminal</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">Production</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">Terminal</span>::<span class="tok-kw">class</span>)]</span>
