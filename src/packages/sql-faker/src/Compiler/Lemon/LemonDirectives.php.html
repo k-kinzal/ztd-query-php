@@ -77,7 +77,7 @@
 <span class="src-line" id="L42"><a class="ln" href="#L42">42</a>        <span class="tok-kw">if</span> (<span class="tok-id">preg_match_all</span>(<span class="tok-str">&#039;/%token_class\s+(\w+)\s+(.+?)\.?\s*$/m&#039;</span>, <span class="tok-var">$input</span>, <span class="tok-var">$matches</span>) &gt; <span class="tok-num">0</span>) {</span>
 <span class="src-line" id="L43"><a class="ln" href="#L43">43</a>            <span class="tok-var">$count</span> = <span class="tok-id">count</span>(<span class="tok-var">$matches</span>[<span class="tok-num">0</span>]);</span>
 <span class="src-line" id="L44"><a class="ln" href="#L44">44</a>            <span class="tok-kw">for</span> (<span class="tok-var">$index</span> = <span class="tok-num">0</span>; <span class="tok-var">$index</span> &lt; <span class="tok-var">$count</span>; <span class="tok-var">$index</span>++) {</span>
-<span class="src-line" id="L45"><a class="ln" href="#L45">45</a>                <span class="tok-var">$symbols</span>-&gt;<span class="tok-id">declareToken</span>(<span class="tok-var">$matches</span>[<span class="tok-num">1</span>][<span class="tok-var">$index</span>]);</span>
+<span class="src-line" id="L45"><a class="ln" href="#L45">45</a>                <span class="tok-var">$symbols</span>-&gt;<span class="tok-id">declareRule</span>(<span class="tok-var">$matches</span>[<span class="tok-num">1</span>][<span class="tok-var">$index</span>]);</span>
 <span class="src-line" id="L46"><a class="ln" href="#L46">46</a>                <span class="tok-var">$symbols</span>-&gt;<span class="tok-id">declareTokensOn</span>(<span class="tok-var">$matches</span>[<span class="tok-num">2</span>][<span class="tok-var">$index</span>], <span class="tok-str">&#039;/[\s|]+/&#039;</span>);</span>
 <span class="src-line" id="L47"><a class="ln" href="#L47">47</a>            }</span>
 <span class="src-line" id="L48"><a class="ln" href="#L48">48</a>        }</span>
@@ -86,8 +86,22 @@
 <span class="src-line" id="L51"><a class="ln" href="#L51">51</a>            <span class="tok-var">$symbols</span>-&gt;<span class="tok-id">declareToken</span>(<span class="tok-var">$match</span>[<span class="tok-num">1</span>]);</span>
 <span class="src-line" id="L52"><a class="ln" href="#L52">52</a>        }</span>
 <span class="src-line" id="L53"><a class="ln" href="#L53">53</a>    }</span>
-<span class="src-line" id="L54"><a class="ln" href="#L54">54</a>}</span>
-<span class="src-line" id="L55"><a class="ln" href="#L55">55</a></span>
+<span class="src-line" id="L54"><a class="ln" href="#L54">54</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L55"><a class="ln" href="#L55">55</a><span class="tok-com">     * Exposes each declared token class as its complete set of alternatives.</span></span>
+<span class="src-line" id="L56"><a class="ln" href="#L56">56</a><span class="tok-com">     * @return array&lt;string, list&lt;string&gt;&gt;</span></span>
+<span class="src-line" id="L57"><a class="ln" href="#L57">57</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L58"><a class="ln" href="#L58">58</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">tokenClasses</span>(<span class="tok-id">string</span> <span class="tok-var">$input</span>): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L59"><a class="ln" href="#L59">59</a>    {</span>
+<span class="src-line" id="L60"><a class="ln" href="#L60">60</a>        <span class="tok-id">preg_match_all</span>(<span class="tok-str">&#039;/%token_class\s+(\w+)\s+([^.]*)\./s&#039;</span>, <span class="tok-var">$input</span>, <span class="tok-var">$matches</span>, <span class="tok-id">PREG_SET_ORDER</span>);</span>
+<span class="src-line" id="L61"><a class="ln" href="#L61">61</a>        <span class="tok-var">$classes</span> = [];</span>
+<span class="src-line" id="L62"><a class="ln" href="#L62">62</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$matches</span> <span class="tok-kw">as</span> <span class="tok-var">$match</span>) {</span>
+<span class="src-line" id="L63"><a class="ln" href="#L63">63</a>            <span class="tok-var">$tokens</span> = <span class="tok-id">preg_split</span>(<span class="tok-str">&#039;/[\s|]+/&#039;</span>, <span class="tok-id">trim</span>(<span class="tok-var">$match</span>[<span class="tok-num">2</span>]));</span>
+<span class="src-line" id="L64"><a class="ln" href="#L64">64</a>            <span class="tok-var">$classes</span>[<span class="tok-var">$match</span>[<span class="tok-num">1</span>]] = <span class="tok-var">$tokens</span> === <span class="tok-id">false</span> ? [] : <span class="tok-id">array_values</span>(<span class="tok-id">array_filter</span>(<span class="tok-var">$tokens</span>, <span class="tok-kw">static</span> <span class="tok-kw">fn</span> (<span class="tok-id">string</span> <span class="tok-var">$name</span>): <span class="tok-id">bool</span> =&gt; <span class="tok-var">$name</span> !== <span class="tok-str">&#039;&#039;</span>));</span>
+<span class="src-line" id="L65"><a class="ln" href="#L65">65</a>        }</span>
+<span class="src-line" id="L66"><a class="ln" href="#L66">66</a>        <span class="tok-kw">return</span> <span class="tok-var">$classes</span>;</span>
+<span class="src-line" id="L67"><a class="ln" href="#L67">67</a>    }</span>
+<span class="src-line" id="L68"><a class="ln" href="#L68">68</a>}</span>
+<span class="src-line" id="L69"><a class="ln" href="#L69">69</a></span>
 </code></pre>
 </main>
 <footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

@@ -80,19 +80,26 @@
 <span class="src-line" id="L45"><a class="ln" href="#L45">45</a>        <span class="tok-var">$symbols</span> = <span class="tok-kw">new</span> <span class="tok-id">LemonSymbols</span>();</span>
 <span class="src-line" id="L46"><a class="ln" href="#L46">46</a>        (<span class="tok-kw">new</span> <span class="tok-id">LemonDirectives</span>())-&gt;<span class="tok-id">declareInto</span>(<span class="tok-str">&quot;%token_class anytype INTEGER|TEXT|BLOB.\n&quot;</span>, <span class="tok-var">$symbols</span>);</span>
 <span class="src-line" id="L47"><a class="ln" href="#L47">47</a></span>
-<span class="src-line" id="L48"><a class="ln" href="#L48">48</a>        <span class="tok-id">self</span>::<span class="tok-id">assertTrue</span>(<span class="tok-var">$symbols</span>-&gt;<span class="tok-id">isTerminal</span>(<span class="tok-str">&#039;anytype&#039;</span>));</span>
-<span class="src-line" id="L49"><a class="ln" href="#L49">49</a>        <span class="tok-id">self</span>::<span class="tok-id">assertTrue</span>(<span class="tok-var">$symbols</span>-&gt;<span class="tok-id">isTerminal</span>(<span class="tok-str">&#039;BLOB&#039;</span>));</span>
-<span class="src-line" id="L50"><a class="ln" href="#L50">50</a>    }</span>
-<span class="src-line" id="L51"><a class="ln" href="#L51">51</a></span>
-<span class="src-line" id="L52"><a class="ln" href="#L52">52</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testDeclareIntoReadsTheWildcardToken</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L53"><a class="ln" href="#L53">53</a>    {</span>
-<span class="src-line" id="L54"><a class="ln" href="#L54">54</a>        <span class="tok-var">$symbols</span> = <span class="tok-kw">new</span> <span class="tok-id">LemonSymbols</span>();</span>
-<span class="src-line" id="L55"><a class="ln" href="#L55">55</a>        (<span class="tok-kw">new</span> <span class="tok-id">LemonDirectives</span>())-&gt;<span class="tok-id">declareInto</span>(<span class="tok-str">&quot;%wildcard ANY.\n&quot;</span>, <span class="tok-var">$symbols</span>);</span>
-<span class="src-line" id="L56"><a class="ln" href="#L56">56</a></span>
-<span class="src-line" id="L57"><a class="ln" href="#L57">57</a>        <span class="tok-id">self</span>::<span class="tok-id">assertTrue</span>(<span class="tok-var">$symbols</span>-&gt;<span class="tok-id">isTerminal</span>(<span class="tok-str">&#039;ANY&#039;</span>));</span>
-<span class="src-line" id="L58"><a class="ln" href="#L58">58</a>    }</span>
-<span class="src-line" id="L59"><a class="ln" href="#L59">59</a>}</span>
+<span class="src-line" id="L48"><a class="ln" href="#L48">48</a>        <span class="tok-id">self</span>::<span class="tok-id">assertFalse</span>(<span class="tok-var">$symbols</span>-&gt;<span class="tok-id">isTerminal</span>(<span class="tok-str">&#039;anytype&#039;</span>));</span>
+<span class="src-line" id="L49"><a class="ln" href="#L49">49</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([<span class="tok-str">&#039;anytype&#039;</span> =&gt; [<span class="tok-str">&#039;INT&#039;</span>, <span class="tok-str">&#039;REAL&#039;</span>]], (<span class="tok-kw">new</span> <span class="tok-id">LemonDirectives</span>())-&gt;<span class="tok-id">tokenClasses</span>(<span class="tok-str">&#039;%token_class anytype INT|REAL.&#039;</span>));</span>
+<span class="src-line" id="L50"><a class="ln" href="#L50">50</a>        <span class="tok-id">self</span>::<span class="tok-id">assertTrue</span>(<span class="tok-var">$symbols</span>-&gt;<span class="tok-id">isTerminal</span>(<span class="tok-str">&#039;BLOB&#039;</span>));</span>
+<span class="src-line" id="L51"><a class="ln" href="#L51">51</a>    }</span>
+<span class="src-line" id="L52"><a class="ln" href="#L52">52</a></span>
+<span class="src-line" id="L53"><a class="ln" href="#L53">53</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testDeclareIntoReadsTheWildcardToken</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L54"><a class="ln" href="#L54">54</a>    {</span>
+<span class="src-line" id="L55"><a class="ln" href="#L55">55</a>        <span class="tok-var">$symbols</span> = <span class="tok-kw">new</span> <span class="tok-id">LemonSymbols</span>();</span>
+<span class="src-line" id="L56"><a class="ln" href="#L56">56</a>        (<span class="tok-kw">new</span> <span class="tok-id">LemonDirectives</span>())-&gt;<span class="tok-id">declareInto</span>(<span class="tok-str">&quot;%wildcard ANY.\n&quot;</span>, <span class="tok-var">$symbols</span>);</span>
+<span class="src-line" id="L57"><a class="ln" href="#L57">57</a></span>
+<span class="src-line" id="L58"><a class="ln" href="#L58">58</a>        <span class="tok-id">self</span>::<span class="tok-id">assertTrue</span>(<span class="tok-var">$symbols</span>-&gt;<span class="tok-id">isTerminal</span>(<span class="tok-str">&#039;ANY&#039;</span>));</span>
+<span class="src-line" id="L59"><a class="ln" href="#L59">59</a>    }</span>
 <span class="src-line" id="L60"><a class="ln" href="#L60">60</a></span>
+<span class="src-line" id="L61"><a class="ln" href="#L61">61</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testTokenClassesRetainsEveryAlternativeAcrossLines</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L62"><a class="ln" href="#L62">62</a>    {</span>
+<span class="src-line" id="L63"><a class="ln" href="#L63">63</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([<span class="tok-str">&#039;id&#039;</span> =&gt; [<span class="tok-str">&#039;ID&#039;</span>, <span class="tok-str">&#039;INDEXED&#039;</span>], <span class="tok-str">&#039;number&#039;</span> =&gt; [<span class="tok-str">&#039;INTEGER&#039;</span>, <span class="tok-str">&#039;FLOAT&#039;</span>]], (<span class="tok-kw">new</span> <span class="tok-id">LemonDirectives</span>())-&gt;<span class="tok-id">tokenClasses</span>(<span class="tok-str">&quot;%token_class id ID|INDEXED.\n%token_class number INTEGER\n FLOAT.&quot;</span>));</span>
+<span class="src-line" id="L64"><a class="ln" href="#L64">64</a>    }</span>
+<span class="src-line" id="L65"><a class="ln" href="#L65">65</a></span>
+<span class="src-line" id="L66"><a class="ln" href="#L66">66</a>}</span>
+<span class="src-line" id="L67"><a class="ln" href="#L67">67</a></span>
 </code></pre>
 </main>
 <footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
