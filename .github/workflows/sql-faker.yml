@@ -52,6 +52,20 @@ jobs:
           working-directory: packages/sql-faker
       - run: composer lint
 
+  bench:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          extensions: mbstring
+          coverage: none
+      - uses: ramsey/composer-install@v3
+        with:
+          working-directory: packages/sql-faker
+      - run: composer bench
+
   mutation:
     name: Mutation Testing
     runs-on: ubuntu-latest

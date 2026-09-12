@@ -163,12 +163,6 @@ $faker->seed(12345);
 $sql = $faker->selectStatement(maxDepth: 6);
 ```
 
-## Benchmarks
-
-Run `composer bench` from `packages/sql-faker` for the full PHPBench suite, or
-`composer bench:quick` for fast feedback. See [benchmark setup and CI comparisons](docs/benchmarks.md)
-for workloads, local baselines, and the report-only pull-request workflow.
-
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
