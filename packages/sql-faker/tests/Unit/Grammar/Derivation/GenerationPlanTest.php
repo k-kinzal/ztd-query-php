@@ -10,8 +10,8 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Choice\ByteChoices;
 use SqlFaker\Grammar\Choice\BytePlanCompiler;
-use SqlFaker\Grammar\Choice\CompletionWitness;
-use SqlFaker\Grammar\Choice\PatternProductions;
+use SqlFaker\Grammar\Derivation\Completion\CompletionWitness;
+use SqlFaker\Grammar\Derivation\Completion\PatternProductions;
 use SqlFaker\Grammar\Derivation\CompletionCosts;
 use SqlFaker\Grammar\Derivation\CompletionFrontier;
 use SqlFaker\Grammar\Derivation\CompletionMemo;
@@ -54,47 +54,6 @@ use SqlFaker\Grammar\Terminal;
 
 #[CoversClass(GenerationPlan::class)]
 #[UsesClass(ProductionPattern::class)]
-#[UsesClass(PlanBuilder::class)]
-#[UsesClass(ByteChoices::class)]
-#[UsesClass(CompletionCosts::class)]
-#[UsesClass(Grammar::class)]
-#[UsesClass(NonTerminal::class)]
-#[UsesClass(Production::class)]
-#[UsesClass(ProductionRule::class)]
-#[UsesClass(Terminal::class)]
-#[UsesClass(Derivation::class)]
-#[UsesClass(DerivationTrace::class)]
-#[UsesClass(TerminationAnalyzer::class)]
-#[UsesClass(TerminationCost::class)]
-#[UsesClass(ChoiceLexemeGenerator::class)]
-#[UsesClass(Lexeme::class)]
-#[UsesClass(LexemeCandidates::class)]
-#[UsesClass(LexemeInput::class)]
-#[UsesClass(LexemeSequence::class)]
-#[UsesClass(ValueLexemeGenerator::class)]
-#[UsesClass(CandidateResolver::class)]
-#[UsesClass(OutputPart::class)]
-#[UsesClass(ResolvedOutput::class)]
-#[UsesClass(ReverseLexemeGenerator::class)]
-#[UsesClass(CombinedSpacingRule::class)]
-#[UsesClass(LexemeBoundary::class)]
-#[UsesClass(SpacingConstraint::class)]
-#[UsesClass(ProductionOccurrence::class)]
-#[UsesClass(TerminalOccurrence::class)]
-#[UsesClass(TerminalSequence::class)]
-#[UsesClass(TokenGenerator::class)]
-#[UsesClass(CompletionState::class)]
-#[UsesClass(CompletionFrontier::class)]
-#[UsesClass(ConstrainedCompletion::class)]
-#[UsesClass(ValueChoices::class)]
-#[UsesClass(BoundaryCompletion::class)]
-#[UsesClass(CompletionMemo::class)]
-#[UsesClass(CompletionReduction::class)]
-#[UsesClass(ConstraintDependencies::class)]
-#[UsesClass(BytePlanCompiler::class)]
-#[UsesClass(PatternProductions::class)]
-#[UsesClass(CompletionWitness::class)]
-#[UsesClass(CharacterDomain::class)]
 final class GenerationPlanTest extends TestCase
 {
     public function testAllCoversTheGrammarWithoutProductionConstraints(): void

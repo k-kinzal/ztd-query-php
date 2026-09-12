@@ -17,13 +17,13 @@ use SqlFaker\Grammar\Derivation\GenerationPlan;
 use SqlFaker\Grammar\Derivation\ProductionPattern;
 use SqlFaker\Grammar\Derivation\TerminationAnalyzer;
 use SqlFaker\Grammar\Grammar;
-use SqlFaker\Grammar\Lexical\RandomStringGenerator;
-use SqlFaker\Grammar\Lexical\TerminalInventory;
 use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\Grammar\Terminal;
+use SqlFaker\Grammar\TerminalInventory;
+use SqlFaker\Sqlite\Generation\Value\LiteralGenerator;
 use SqlFaker\Sqlite\GenerationPlans;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
 use SqlFaker\Sqlite\LexicalGrammar;
@@ -32,7 +32,7 @@ use SqlFaker\SqliteProvider;
 use UnexpectedValueException;
 
 #[CoversClass(SqliteProvider::class)]
-#[CoversClass(RandomStringGenerator::class)]
+#[CoversClass(LiteralGenerator::class)]
 #[CoversClass(SqlGenerator::class)]
 #[CoversClass(SqliteGrammar::class)]
 #[CoversClass(Grammar::class)]
@@ -72,7 +72,7 @@ use UnexpectedValueException;
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\SqlSerializer::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Spacing\CombinedSpacingRule::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\KeywordPhraseSpacingRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Spacing\KeywordPhraseSpacingRule::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Spacing\LexemeBoundary::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Spacing\SpacingConstraint::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
@@ -81,12 +81,12 @@ use UnexpectedValueException;
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalSequence::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\TokenGenerator::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\TokenRewriter::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\UniqueOptionRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Option\UniqueOptionRule::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionCase::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\Grammar\LexicalException::class)]
-#[UsesClass(\SqlFaker\Grammar\Lexical\LexicalKeywordIndex::class)]
-#[UsesClass(\SqlFaker\Grammar\Lexical\RandomCharacters::class)]
+#[UsesClass(\SqlFaker\Sqlite\Tokenization\KeywordIndex::class)]
+#[UsesClass(\SqlFaker\Grammar\Generation\Value\RandomCharacters::class)]
 #[UsesClass(\SqlFaker\Grammar\Resource\SqlVersionRegistry::class)]
 #[UsesClass(\SqlFaker\MySql\GenerationContext::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\DefinitionFactory::class)]
@@ -143,7 +143,7 @@ use UnexpectedValueException;
 #[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\WithoutRowidRule::class)]
 #[UsesClass(\SqlFaker\Sqlite\GrammarAdaptation::class)]
 #[UsesClass(\SqlFaker\Sqlite\SqliteTokenizer::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\ExpressionGroupingRule::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\Expression\ExpressionGroupingRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\AlterEventRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\SubqueryContextRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\ConstraintAttributesRule::class)]
@@ -196,7 +196,7 @@ use UnexpectedValueException;
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\ChoiceDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\IntegerDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\SequenceDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\DollarQuotedDomain::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Value\DollarQuotedDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Column\ConstraintCapabilitiesRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Column\ForeignKeyActionRule::class)]
@@ -217,16 +217,16 @@ use UnexpectedValueException;
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Column\NumericContextRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CharsetLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CharsetValueLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\IdentifierDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\QuotedDomain::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Value\IdentifierDomain::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Value\QuotedDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\RepeatDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Choice\PatternProductions::class)]
-#[UsesClass(\SqlFaker\Grammar\Choice\CompletionWitness::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\OperatorDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\RadixDomain::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\Completion\PatternProductions::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\Completion\CompletionWitness::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Value\OperatorDomain::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Value\RadixDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\Utf8::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexicalDefinition::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\LexicalDefinition::class)]
 final class SqliteProviderTest extends TestCase
 {
     #[DataProvider('providerTargetedGenerationSeed')]

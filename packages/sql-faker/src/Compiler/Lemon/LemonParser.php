@@ -15,7 +15,7 @@ use SqlFaker\Grammar\Symbol;
 use SqlFaker\Grammar\Terminal;
 
 /**
- * Reads a Lemon grammar file, such as SQLite's parse.y, as a grammar.
+ * Reads Lemon source declarations and production rules into a grammar.
  *
  * Lemon writes one alternative per line — `lhs(alias) ::= symbol ... .` — so
  * the alternatives of a rule are gathered by name rather than grouped in the

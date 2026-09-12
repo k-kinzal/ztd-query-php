@@ -34,8 +34,8 @@ use SqlFaker\Grammar\Terminal;
 #[UsesClass(\SqlFaker\Grammar\Derivation\CompletionReduction::class)]
 #[UsesClass(\SqlFaker\Grammar\Derivation\ConstraintDependencies::class)]
 #[UsesClass(\SqlFaker\Grammar\Choice\BytePlanCompiler::class)]
-#[UsesClass(\SqlFaker\Grammar\Choice\PatternProductions::class)]
-#[UsesClass(\SqlFaker\Grammar\Choice\CompletionWitness::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\Completion\PatternProductions::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\Completion\CompletionWitness::class)]
 final class ConstrainedCompletionTest extends TestCase
 {
     /**

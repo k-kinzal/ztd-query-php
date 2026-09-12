@@ -8,20 +8,24 @@ use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\Lexical\LexicalKeywordIndex;
-use SqlFaker\Grammar\Lexical\RandomCharacters;
-use SqlFaker\Grammar\Lexical\RandomStringGenerator;
+use SqlFaker\Grammar\Generation\Value\RandomCharacters;
 use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\Resource\SqlVersionRegistry;
 use SqlFaker\Grammar\SqlVersion;
+use SqlFaker\MySql\Generation\Value\LiteralGenerator;
 use SqlFaker\MySql\LexicalGrammar;
 use SqlFaker\MySql\MySqlTokenizer;
+use SqlFaker\MySql\Tokenization\KeywordIndex;
 
 #[CoversClass(LexicalException::class)]
 #[UsesClass(LexicalGrammar::class)]
-#[UsesClass(RandomStringGenerator::class)]
+#[UsesClass(LiteralGenerator::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Value\LiteralGenerator::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Value\LiteralGenerator::class)]
 #[UsesClass(SqlVersion::class)]
-#[UsesClass(LexicalKeywordIndex::class)]
+#[UsesClass(KeywordIndex::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Tokenization\KeywordIndex::class)]
+#[UsesClass(\SqlFaker\Sqlite\Tokenization\KeywordIndex::class)]
 #[UsesClass(RandomCharacters::class)]
 #[UsesClass(SqlVersionRegistry::class)]
 #[UsesClass(MySqlTokenizer::class)]
@@ -50,7 +54,7 @@ use SqlFaker\MySql\MySqlTokenizer;
 #[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeSequence::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\OutputPart::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\SqlSerializer::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\KeywordPhraseSpacingRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Spacing\KeywordPhraseSpacingRule::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Spacing\LexemeBoundary::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Spacing\SpacingConstraint::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
@@ -67,18 +71,25 @@ use SqlFaker\MySql\MySqlTokenizer;
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\ChoiceDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\IntegerDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\SequenceDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\DollarQuotedDomain::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Value\DollarQuotedDomain::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Value\DollarQuotedDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\ValueChoices::class)]
 #[UsesClass(\SqlFaker\Grammar\Choice\BytePlanCompiler::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CharsetLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CharsetValueLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\IdentifierDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\QuotedDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\RadixDomain::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Value\IdentifierDomain::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Value\IdentifierDomain::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Value\IdentifierDomain::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Value\QuotedDomain::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Value\QuotedDomain::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Value\QuotedDomain::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Value\RadixDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\Utf8::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexicalDefinition::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\LexicalDefinition::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\LexicalDefinition::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\LexicalDefinition::class)]
 final class LexicalExceptionTest extends TestCase
 {
     public function testTokenizingUnsupportedInputReportsTheOffsetAndTheInput(): void

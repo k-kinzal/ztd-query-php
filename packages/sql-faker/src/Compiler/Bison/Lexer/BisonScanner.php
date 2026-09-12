@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace SqlFaker\Compiler\Bison\Lexer;
 
-use SqlFaker\Grammar\Lexical\SourceCursor;
-
 /**
  * One state of the Bison lexer, selected by the character it starts on.
  *

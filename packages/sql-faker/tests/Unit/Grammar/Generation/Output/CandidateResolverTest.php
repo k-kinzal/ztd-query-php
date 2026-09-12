@@ -30,7 +30,6 @@ use SqlFaker\Grammar\Generation\Output\ResolvedOutput;
 use SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator;
 use SqlFaker\Grammar\Generation\Output\SqlSerializer;
 use SqlFaker\Grammar\Generation\Spacing\CombinedSpacingRule;
-use SqlFaker\Grammar\Generation\Spacing\KeywordPhraseSpacingRule;
 use SqlFaker\Grammar\Generation\Spacing\LexemeBoundary;
 use SqlFaker\Grammar\Generation\Spacing\SpacingConstraint;
 use SqlFaker\Grammar\Generation\Spacing\SpacingRule;
@@ -49,6 +48,7 @@ use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\Terminal;
+use SqlFaker\MySql\Generation\Spacing\KeywordPhraseSpacingRule;
 
 #[CoversClass(CandidateResolver::class)]
 #[UsesClass(RewriteRule::class)]
@@ -102,8 +102,8 @@ use SqlFaker\Grammar\Terminal;
 #[UsesClass(\SqlFaker\Grammar\Derivation\CompletionReduction::class)]
 #[UsesClass(\SqlFaker\Grammar\Derivation\ConstraintDependencies::class)]
 #[UsesClass(\SqlFaker\Grammar\Choice\BytePlanCompiler::class)]
-#[UsesClass(\SqlFaker\Grammar\Choice\PatternProductions::class)]
-#[UsesClass(\SqlFaker\Grammar\Choice\CompletionWitness::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\Completion\PatternProductions::class)]
+#[UsesClass(\SqlFaker\Grammar\Derivation\Completion\CompletionWitness::class)]
 final class CandidateResolverTest extends TestCase
 {
     public function testResolvePropagatesConditionsAcrossAnEmptyMarkerWithoutWritingSpaces(): void

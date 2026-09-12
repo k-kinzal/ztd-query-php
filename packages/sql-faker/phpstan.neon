@@ -6,6 +6,14 @@ includes:
     - vendor/k-kinzal/php-ai-toolkit/rules.neon
 
 parameters:
+    toolkit:
+        forbiddenTermsByPath:
+            'src/Compiler/*': [mysql, postgres, pgsql, sqlite, mariadb]
+            'src/Generation/*': [mysql, postgres, pgsql, sqlite, mariadb]
+            'src/Grammar/*': [mysql, postgres, pgsql, sqlite, mariadb]
+        forbiddenNamespacePrefixes:
+            - 'Tests\Fixture'
+            - 'Tests\Fixtures'
     level: max
     paths:
         - src

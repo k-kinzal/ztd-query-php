@@ -85,6 +85,7 @@ use Symfony\Component\Filesystem\Filesystem;
 #[UsesClass(ValueChoices::class)]
 #[UsesClass(BoundaryCompletion::class)]
 #[UsesClass(CharacterDomain::class)]
+#[UsesClass(FixedLexemeGenerator::class)]
 final class GrammarCoverageTest extends TestCase
 {
     public function testSnapshotSeparatesReachedFromEmittedAndKeepsTheFullDenominator(): void

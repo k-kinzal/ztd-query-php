@@ -4,19 +4,19 @@ declare(strict_types=1);
 
 namespace SqlFaker\PostgreSql\Generation\Rewrite;
 
-use SqlFaker\Grammar\Generation\Token\ExpressionGroupingRule;
 use SqlFaker\Grammar\Generation\Token\TerminalMappingRule;
 use SqlFaker\Grammar\Generation\Token\TokenRewriter;
-use SqlFaker\Grammar\Generation\Token\UniqueOptionRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Column\ConstraintCapabilitiesRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Column\ForeignKeyActionRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Column\IdentityOptionRule;
+use SqlFaker\PostgreSql\Generation\Rewrite\Expression\ExpressionGroupingRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Name\AliasRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Name\AnyRelationNameRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Name\ColumnNameRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Name\FunctionNameRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Name\IndirectionStarRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Name\RelationNameRule;
+use SqlFaker\PostgreSql\Generation\Rewrite\Option\UniqueOptionRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Query\IntoClauseRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Query\ParserOptionsRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Query\SchemaElementsRule;

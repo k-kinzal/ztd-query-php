@@ -13,7 +13,7 @@ use SqlFaker\Grammar\Generation\Lexeme\LexemeGenerator;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeSequence;
 use SqlFaker\Grammar\Generation\Value\IntegerDomain;
-use SqlFaker\Grammar\Generation\Value\RadixDomain;
+use SqlFaker\MySql\Generation\Value\RadixDomain;
 
 /**
  * Restricts MySQL decimal and hexadecimal forms to a source-defined nonnegative 31-bit interval.

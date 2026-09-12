@@ -45,7 +45,6 @@
     "autoload-dev": {
         "psr-4": {
             "Tests\\Unit\\SqlFaker\\": "tests/Unit/",
-            "Tests\\Fixtures\\SqlFaker\\": "tests/Fixtures/",
             "SqlFaker\\Fuzz\\": "fuzz/"
         }
     },

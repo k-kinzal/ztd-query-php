@@ -17,16 +17,16 @@ final class ConstrainedCompletion
 {
     private readonly CompletionReduction $reduction;
     private readonly CompletionMemo $memo;
-    private readonly \SqlFaker\Grammar\Choice\CompletionWitness $witness;
-    private readonly \SqlFaker\Grammar\Choice\PatternProductions $productions;
+    private readonly Completion\CompletionWitness $witness;
+    private readonly Completion\PatternProductions $productions;
     /**
      * Reuses the grammar's unconstrained fixed point for pruning completed constraint prefixes.
      */
     public function __construct(Grammar $grammar, private readonly CompletionCosts $costs)
     {
         $this->memo = new CompletionMemo();
-        $this->productions = new \SqlFaker\Grammar\Choice\PatternProductions($grammar);
-        $this->witness = new \SqlFaker\Grammar\Choice\CompletionWitness($costs, $this->productions, $this->memo);
+        $this->productions = new Completion\PatternProductions($grammar);
+        $this->witness = new Completion\CompletionWitness($costs, $this->productions, $this->memo);
         $this->reduction = new CompletionReduction($costs, new ConstraintDependencies($grammar));
     }
 

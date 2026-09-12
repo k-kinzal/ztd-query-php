@@ -23,7 +23,7 @@ final class LexicalException extends RuntimeException
     /**
      * Reports a terminal without an applicable lexical generator.
      *
-     * @param string $dialect Dialect name as it appears in messages, e.g. "MySQL"
+     * @param string $dialect Dialect label supplied by the calling implementation
      * @param string $version Lexical profile version in use
      * @param string $terminal Terminal that was asked for
      *

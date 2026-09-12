@@ -34,14 +34,13 @@ use SqlFaker\Compiler\Bison\Lexer\DirectiveScanner;
 use SqlFaker\Compiler\Bison\Lexer\IdentifierScanner;
 use SqlFaker\Compiler\Bison\Lexer\NumberScanner;
 use SqlFaker\Compiler\Bison\Lexer\QuotedLiteralScanner;
+use SqlFaker\Compiler\Bison\Lexer\SourceCursor;
 use SqlFaker\Compiler\Bison\Lexer\TypeTagScanner;
-use SqlFaker\Grammar\Lexical\SourceCursor;
 
 #[CoversClass(BisonPreambleReader::class)]
 #[UsesClass(BisonDeclarationBoundary::class)]
 #[UsesClass(BisonDirectiveReaderChain::class)]
 #[UsesClass(BisonLexeme::class)]
-#[UsesClass(BisonLexer::class)]
 #[UsesClass(BisonLexer::class)]
 #[UsesClass(BisonPreamble::class)]
 #[UsesClass(BisonScannerChain::class)]

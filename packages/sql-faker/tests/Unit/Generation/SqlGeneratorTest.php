@@ -19,8 +19,8 @@ use SqlFaker\Coverage\SequenceObservation;
 use SqlFaker\Generation\SqlGenerator;
 use SqlFaker\Grammar\Choice\ByteChoices;
 use SqlFaker\Grammar\Choice\BytePlanCompiler;
-use SqlFaker\Grammar\Choice\CompletionWitness;
-use SqlFaker\Grammar\Choice\PatternProductions;
+use SqlFaker\Grammar\Derivation\Completion\CompletionWitness;
+use SqlFaker\Grammar\Derivation\Completion\PatternProductions;
 use SqlFaker\Grammar\Derivation\CompletionCosts;
 use SqlFaker\Grammar\Derivation\CompletionFrontier;
 use SqlFaker\Grammar\Derivation\CompletionMemo;
@@ -123,6 +123,7 @@ use SqlFaker\Grammar\Terminal;
 #[UsesClass(PatternProductions::class)]
 #[UsesClass(CompletionWitness::class)]
 #[UsesClass(CharacterDomain::class)]
+#[UsesClass(FixedLexemeGenerator::class)]
 final class SqlGeneratorTest extends TestCase
 {
     public function testGenerateRecordsACompleteCoverageObservation(): void
@@ -372,7 +373,7 @@ final class SqlGeneratorTest extends TestCase
                 $choices = array_map($choose, array_fill(0, 32, 2));
                 self::assertContains(0, $choices);
                 self::assertContains(1, $choices);
-                self::assertSame([], array_diff($choices, [0, 1]));
+                self::assertSame([], array_filter($choices, static fn (mixed $choice): bool => $choice !== 0 && $choice !== 1));
                 self::assertSame(0, $choose(1));
                 return (new ReverseLexemeGenerator(
                     new FixedLexemeGenerator('T', 'fixture', 'fixture-literal'),

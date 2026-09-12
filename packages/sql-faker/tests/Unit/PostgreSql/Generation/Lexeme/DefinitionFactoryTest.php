@@ -42,7 +42,7 @@ use SqlFaker\PostgreSql\Generation\Lexeme\DefinitionFactory;
 #[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\CharacterDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\ChoiceDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\DollarQuotedDomain::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Value\DollarQuotedDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\IntegerDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\SequenceDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\ValueChoices::class)]
@@ -52,14 +52,14 @@ use SqlFaker\PostgreSql\Generation\Lexeme\DefinitionFactory;
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\HashBoundLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\KeywordLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\PostgreSql\PgLookahead::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\IdentifierDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\QuotedDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\OperatorDomain::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Value\IdentifierDomain::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Value\QuotedDomain::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Value\OperatorDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Resource\SqlVersionRegistry::class)]
 #[UsesClass(\SqlFaker\Grammar\SqlVersion::class)]
 #[UsesClass(\SqlFaker\Grammar\Choice\BytePlanCompiler::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexicalDefinition::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\LexicalDefinition::class)]
 final class DefinitionFactoryTest extends TestCase
 {
     public function testCreateCombinesLexicalOutputAndBoundaryDecisions(): void
