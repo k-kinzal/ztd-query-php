@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZTD Query PHP — k-kinzal/ztd-query-core</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/315/core/k-kinzal/ztd-query-core/doc/README.md.html">
+<meta name="description" content="ZTD Query PHP, a document of the k-kinzal/ztd-query-core package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="k-kinzal/ztd-query-core">
+<meta property="og:title" content="ZTD Query PHP — k-kinzal/ztd-query-core">
+<meta property="og:description" content="ZTD Query PHP, a document of the k-kinzal/ztd-query-core package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/315/core/k-kinzal/ztd-query-core/doc/README.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/315/core/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="k-kinzal/ztd-query-core">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../">
+<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../../index.html">k-kinzal/ztd-query-core</a></div><div class="sb-pkg"><a href="../../../k-kinzal/ztd-query-core/index.html">k-kinzal/ztd-query-core</a></div><nav class="sb-block"><div class="sb-title">Package</div><ul class="sb-list"><li data-diff="modified"><a href="../../../k-kinzal/ztd-query-core/all-items.html">All items</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-core/index.html#documents">Documents</a></li></ul><div class="sb-kind" data-diff="modified">Layers</div><ul class="sb-list"><li data-diff="same"><a href="../../../k-kinzal/ztd-query-core/layer.Config.html">Config</a></li><li data-diff="modified"><a href="../../../k-kinzal/ztd-query-core/layer.Contract.html">Contract</a></li><li data-diff="modified"><a href="../../../k-kinzal/ztd-query-core/layer.Exception.html">Exception</a></li><li data-diff="modified"><a href="../../../k-kinzal/ztd-query-core/layer.Schema.html">Schema</a></li><li data-diff="modified"><a href="../../../k-kinzal/ztd-query-core/layer.Session.html">Session</a></li><li data-diff="modified"><a href="../../../k-kinzal/ztd-query-core/layer.Simulation.html">Simulation</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-core/layer.Simulator.html">Simulator</a></li><li data-diff="modified"><a href="../../../k-kinzal/ztd-query-core/layer.Sql.html">Sql</a></li></ul></nav><nav class="sb-block"><div class="sb-title">Namespaces</div><ul class="sb-list"><li data-diff="modified"><a href="../../../k-kinzal/ztd-query-core/ZtdQuery/index.html" title="ZtdQuery">ZtdQuery</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-core/ZtdQuery/Config/index.html" title="ZtdQuery\Config">ZtdQuery\Config</a></li><li data-diff="modified"><a href="../../../k-kinzal/ztd-query-core/ZtdQuery/Connection/index.html" title="ZtdQuery\Connection">ZtdQuery\Connection</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-core/ZtdQuery/Connection/Exception/index.html" title="ZtdQuery\Connection\Exception">ZtdQuery\Connection\Exception</a></li><li data-diff="modified"><a href="../../../k-kinzal/ztd-query-core/ZtdQuery/Exception/index.html" title="ZtdQuery\Exception">ZtdQuery\Exception</a></li><li data-diff="modified"><a href="../../../k-kinzal/ztd-query-core/ZtdQuery/Platform/index.html" title="ZtdQuery\Platform">ZtdQuery\Platform</a></li><li data-diff="modified"><a href="../../../k-kinzal/ztd-query-core/ZtdQuery/Rewrite/index.html" title="ZtdQuery\Rewrite">ZtdQuery\Rewrite</a></li><li data-diff="modified"><a href="../../../k-kinzal/ztd-query-core/ZtdQuery/Schema/index.html" title="ZtdQuery\Schema">ZtdQuery\Schema</a></li><li data-diff="added"><a href="../../../k-kinzal/ztd-query-core/ZtdQuery/Schema/Key/index.html" title="ZtdQuery\Schema\Key">ZtdQuery\Schema\Key</a></li><li data-diff="added"><a href="../../../k-kinzal/ztd-query-core/ZtdQuery/Schema/Partition/index.html" title="ZtdQuery\Schema\Partition">ZtdQuery\Schema\Partition</a></li><li data-diff="modified"><a href="../../../k-kinzal/ztd-query-core/ZtdQuery/Shadow/index.html" title="ZtdQuery\Shadow">ZtdQuery\Shadow</a></li><li data-diff="modified"><a href="../../../k-kinzal/ztd-query-core/ZtdQuery/Shadow/Mutation/index.html" title="ZtdQuery\Shadow\Mutation">ZtdQuery\Shadow\Mutation</a></li><li data-diff="added"><a href="../../../k-kinzal/ztd-query-core/ZtdQuery/Shadow/Mutation/Row/index.html" title="ZtdQuery\Shadow\Mutation\Row">ZtdQuery\Shadow\Mutation\Row</a></li><li data-diff="added"><a href="../../../k-kinzal/ztd-query-core/ZtdQuery/Shadow/Mutation/Table/index.html" title="ZtdQuery\Shadow\Mutation\Table">ZtdQuery\Shadow\Mutation\Table</a></li><li data-diff="added"><a href="../../../k-kinzal/ztd-query-core/ZtdQuery/Shadow/Mutation/Upsert/index.html" title="ZtdQuery\Shadow\Mutation\Upsert">ZtdQuery\Shadow\Mutation\Upsert</a></li><li data-diff="added"><a href="../../../k-kinzal/ztd-query-core/ZtdQuery/Shadow/Row/index.html" title="ZtdQuery\Shadow\Row">ZtdQuery\Shadow\Row</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-core/ZtdQuery/Simulator/index.html" title="ZtdQuery\Simulator">ZtdQuery\Simulator</a></li><li data-diff="modified"><a href="../../../k-kinzal/ztd-query-core/ZtdQuery/Sql/index.html" title="ZtdQuery\Sql">ZtdQuery\Sql</a></li><li data-diff="added"><a href="../../../k-kinzal/ztd-query-core/ZtdQuery/Sql/Profile/index.html" title="ZtdQuery\Sql\Profile">ZtdQuery\Sql\Profile</a></li><li data-diff="added"><a href="../../../k-kinzal/ztd-query-core/ZtdQuery/Sql/Reader/index.html" title="ZtdQuery\Sql\Reader">ZtdQuery\Sql\Reader</a></li></ul></nav></nav>
+<div class="page">
+<header class="topbar">
+<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
+<nav class="crumbs"><a href="../../../k-kinzal/ztd-query-core/index.html">k-kinzal/ztd-query-core</a><span class="crumb-sep">::</span><span class="crumb-current">README.md</span></nav>
+<div class="topbar-tools">
+<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing d56513049 to working tree">d56513049 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><button id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between d56513049 and working tree." data-off="This page documents what d56513049 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>ZTD Query PHP</h1><div class="symbol-meta"><span class="src-link">README.md</span></div></div>
+<section class="readme" data-diff="same"><div class="doc-block" data-diff="same"><h2>ZTD Query PHP</h2>
+</div><div class="doc-block" data-diff="same"><p><a href="https://opensource.org/licenses/MIT"><span class="md-target" title="https://img.shields.io/badge/License-MIT-yellow.svg">License: MIT</span></a> <a href="https://www.php.net/"><span class="md-target" title="https://img.shields.io/badge/PHP-8.1%2B-blue.svg">PHP Version</span></a></p>
+</div><div class="doc-block" data-diff="same"><p>A Zero Table Dependency testing library for PHP 8.1+ that enables SQL unit testing without modifying physical databases.</p>
+</div><div class="doc-block" data-diff="same"><h3>Overview</h3>
+</div><div class="doc-block" data-diff="same"><p>ZTD Query PHP wraps PDO to intercept and transform SQL queries using CTE (Common Table Expression) shadowing. This allows you to:</p>
+</div><div class="doc-block" data-diff="same"><ul><li>Test SQL queries against fixture data without migrations, data seeding, or cleanup</li><li>Use the real MySQL engine for query execution (not mocks)</li><li>Run tests in parallel with complete isolation</li><li>Treat SQL as pure functions: input (fixtures) -&gt; output (results)</li></ul>
+</div><div class="doc-block" data-diff="same"><h4>How It Works</h4>
+</div><div class="doc-block" data-diff="same"><p><strong>CTE Shadowing</strong> - Table references in SELECT queries are replaced with CTEs containing your fixture data:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>-- Original query
+SELECT email FROM users WHERE id = 1
+
+-- Transformed query (with fixture data)
+WITH users AS (
+  SELECT 1 AS id, &#039;alice@example.com&#039; AS email
+  UNION ALL
+  SELECT 2 AS id, &#039;bob@example.com&#039; AS email
+)
+SELECT email FROM users WHERE id = 1</code></pre>
+</div><div class="doc-block" data-diff="same"><p><strong>Result Select Query</strong> - INSERT/UPDATE/DELETE statements are converted to SELECT queries that return the affected rows:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>-- Original
+UPDATE users SET name = &#039;Alice&#039; WHERE id = 1
+
+-- Transformed (returns rows that would be affected)
+WITH users AS (...fixture data...)
+SELECT id, &#039;Alice&#039; AS name FROM users WHERE id = 1</code></pre>
+</div><div class="doc-block" data-diff="same"><h3>Requirements</h3>
+</div><div class="doc-block" data-diff="same"><ul><li>PHP 8.1 or higher</li><li>MySQL 5.6 - 9.1</li><li>PDO extension</li></ul>
+</div><div class="doc-block" data-diff="same"><h3>Installation</h3>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>composer require --dev k-kinzal/ztd-query-php</code></pre>
+</div><div class="doc-block" data-diff="same"><h3>Usage</h3>
+</div><div class="doc-block" data-diff="same"><h4>Basic Example</h4>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Adapter\Pdo\ZtdPdo</span>;
+
+<span class="tok-com">// Create ZTD-wrapped PDO connection</span>
+<span class="tok-var">$pdo</span> = <span class="tok-kw">new</span> <span class="tok-id">ZtdPdo</span>(<span class="tok-str">&#039;mysql:host=localhost;dbname=test&#039;</span>, <span class="tok-str">&#039;user&#039;</span>, <span class="tok-str">&#039;password&#039;</span>);
+
+<span class="tok-com">// Define schema and insert fixture data</span>
+<span class="tok-var">$pdo</span>-&gt;<span class="tok-id">exec</span>(<span class="tok-str">&#039;CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255), email VARCHAR(255))&#039;</span>);
+<span class="tok-var">$pdo</span>-&gt;<span class="tok-id">exec</span>(<span class="tok-str">&quot;INSERT INTO users (id, name, email) VALUES (1, &#039;Alice&#039;, &#039;alice@example.com&#039;)&quot;</span>);
+<span class="tok-var">$pdo</span>-&gt;<span class="tok-id">exec</span>(<span class="tok-str">&quot;INSERT INTO users (id, name, email) VALUES (2, &#039;Bob&#039;, &#039;bob@example.com&#039;)&quot;</span>);
+
+<span class="tok-com">// Execute queries against fixture data (no physical table access)</span>
+<span class="tok-var">$stmt</span> = <span class="tok-var">$pdo</span>-&gt;<span class="tok-id">prepare</span>(<span class="tok-str">&#039;SELECT * FROM users WHERE id = ?&#039;</span>);
+<span class="tok-var">$stmt</span>-&gt;<span class="tok-id">execute</span>([<span class="tok-num">1</span>]);
+<span class="tok-var">$result</span> = <span class="tok-var">$stmt</span>-&gt;<span class="tok-id">fetchAll</span>();
+<span class="tok-com">// Returns: [[&#039;id&#039; =&gt; 1, &#039;name&#039; =&gt; &#039;Alice&#039;, &#039;email&#039; =&gt; &#039;alice@example.com&#039;]]</span></code></pre>
+</div><div class="doc-block" data-diff="same"><h4>Wrapping Existing PDO</h4>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Adapter\Pdo\ZtdPdo</span>;
+
+<span class="tok-var">$existingPdo</span> = <span class="tok-kw">new</span> <span class="tok-id">PDO</span>(<span class="tok-str">&#039;mysql:host=localhost;dbname=test&#039;</span>, <span class="tok-str">&#039;user&#039;</span>, <span class="tok-str">&#039;password&#039;</span>);
+
+<span class="tok-com">// Wrap without creating a new connection</span>
+<span class="tok-var">$ztdPdo</span> = <span class="tok-id">ZtdPdo</span>::<span class="tok-id">fromPdo</span>(<span class="tok-var">$existingPdo</span>);</code></pre>
+</div><div class="doc-block" data-diff="same"><h4>Testing Write Operations</h4>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code><span class="tok-var">$pdo</span>-&gt;<span class="tok-id">exec</span>(<span class="tok-str">&#039;CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255))&#039;</span>);
+<span class="tok-var">$pdo</span>-&gt;<span class="tok-id">exec</span>(<span class="tok-str">&quot;INSERT INTO users (id, name) VALUES (1, &#039;Alice&#039;)&quot;</span>);
+
+<span class="tok-com">// INSERT returns the inserted row data</span>
+<span class="tok-var">$stmt</span> = <span class="tok-var">$pdo</span>-&gt;<span class="tok-id">prepare</span>(<span class="tok-str">&#039;INSERT INTO users (id, name) VALUES (?, ?)&#039;</span>);
+<span class="tok-var">$stmt</span>-&gt;<span class="tok-id">execute</span>([<span class="tok-num">2</span>, <span class="tok-str">&#039;Bob&#039;</span>]);
+<span class="tok-var">$inserted</span> = <span class="tok-var">$stmt</span>-&gt;<span class="tok-id">fetchAll</span>();
+<span class="tok-com">// Returns: [[&#039;id&#039; =&gt; 2, &#039;name&#039; =&gt; &#039;Bob&#039;]]</span>
+
+<span class="tok-com">// UPDATE returns the updated row data</span>
+<span class="tok-var">$stmt</span> = <span class="tok-var">$pdo</span>-&gt;<span class="tok-id">prepare</span>(<span class="tok-str">&#039;UPDATE users SET name = ? WHERE id = ?&#039;</span>);
+<span class="tok-var">$stmt</span>-&gt;<span class="tok-id">execute</span>([<span class="tok-str">&#039;Alice Updated&#039;</span>, <span class="tok-num">1</span>]);
+<span class="tok-var">$updated</span> = <span class="tok-var">$stmt</span>-&gt;<span class="tok-id">fetchAll</span>();
+<span class="tok-com">// Returns: [[&#039;id&#039; =&gt; 1, &#039;name&#039; =&gt; &#039;Alice Updated&#039;]]</span>
+
+<span class="tok-com">// DELETE returns the deleted row data</span>
+<span class="tok-var">$stmt</span> = <span class="tok-var">$pdo</span>-&gt;<span class="tok-id">prepare</span>(<span class="tok-str">&#039;DELETE FROM users WHERE id = ?&#039;</span>);
+<span class="tok-var">$stmt</span>-&gt;<span class="tok-id">execute</span>([<span class="tok-num">1</span>]);
+<span class="tok-var">$deleted</span> = <span class="tok-var">$stmt</span>-&gt;<span class="tok-id">fetchAll</span>();
+<span class="tok-com">// Returns: [[&#039;id&#039; =&gt; 1, &#039;name&#039; =&gt; &#039;Alice&#039;]]</span></code></pre>
+</div><div class="doc-block" data-diff="same"><h4>Enabling/Disabling ZTD Mode</h4>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code><span class="tok-var">$pdo</span> = <span class="tok-kw">new</span> <span class="tok-id">ZtdPdo</span>(<span class="tok-var">$dsn</span>, <span class="tok-var">$user</span>, <span class="tok-var">$password</span>);
+
+<span class="tok-com">// Disable ZTD to execute against physical database</span>
+<span class="tok-var">$pdo</span>-&gt;<span class="tok-id">disableZtd</span>();
+<span class="tok-var">$pdo</span>-&gt;<span class="tok-id">exec</span>(<span class="tok-str">&#039;CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255))&#039;</span>);
+
+<span class="tok-com">// Re-enable ZTD for testing</span>
+<span class="tok-var">$pdo</span>-&gt;<span class="tok-id">enableZtd</span>();</code></pre>
+</div><div class="doc-block" data-diff="same"><h3>Configuration</h3>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Adapter\Pdo\ZtdPdo</span>;
+<span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Config\ZtdConfig</span>;
+<span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Config\UnsupportedSqlBehavior</span>;
+<span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Config\UnknownSchemaBehavior</span>;
+
+<span class="tok-var">$config</span> = <span class="tok-kw">new</span> <span class="tok-id">ZtdConfig</span>(
+    <span class="tok-com">// How to handle unsupported SQL statements (default behavior)</span>
+    <span class="tok-id">unsupportedBehavior</span>: <span class="tok-id">UnsupportedSqlBehavior</span>::<span class="tok-id">Exception</span>, <span class="tok-com">// or Ignore, Notice</span>
+
+    <span class="tok-com">// How to handle references to unknown tables</span>
+    <span class="tok-id">unknownSchemaBehavior</span>: <span class="tok-id">UnknownSchemaBehavior</span>::<span class="tok-id">Exception</span>, <span class="tok-com">// or Passthrough</span>
+
+    <span class="tok-com">// Per-pattern behavior rules (first match wins)</span>
+    <span class="tok-id">behaviorRules</span>: [
+        <span class="tok-com">// Prefix-based rules (case-insensitive)</span>
+        <span class="tok-str">&#039;BEGIN&#039;</span> =&gt; <span class="tok-id">UnsupportedSqlBehavior</span>::<span class="tok-id">Ignore</span>,
+        <span class="tok-str">&#039;COMMIT&#039;</span> =&gt; <span class="tok-id">UnsupportedSqlBehavior</span>::<span class="tok-id">Ignore</span>,
+        <span class="tok-str">&#039;ROLLBACK&#039;</span> =&gt; <span class="tok-id">UnsupportedSqlBehavior</span>::<span class="tok-id">Ignore</span>,
+
+        <span class="tok-com">// Regex-based rules (patterns starting with &#039;/&#039;)</span>
+        <span class="tok-str">&#039;/^SET\s+SESSION/i&#039;</span> =&gt; <span class="tok-id">UnsupportedSqlBehavior</span>::<span class="tok-id">Ignore</span>,
+        <span class="tok-str">&#039;/^SET\s+/i&#039;</span> =&gt; <span class="tok-id">UnsupportedSqlBehavior</span>::<span class="tok-id">Notice</span>,
+    ],
+);
+
+<span class="tok-var">$pdo</span> = <span class="tok-kw">new</span> <span class="tok-id">ZtdPdo</span>(<span class="tok-var">$dsn</span>, <span class="tok-var">$user</span>, <span class="tok-var">$password</span>, <span class="tok-id">config</span>: <span class="tok-var">$config</span>);</code></pre>
+</div><div class="doc-block" data-diff="same"><h4>Configuration Options</h4>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead><tbody><tr><td><code>unsupportedBehavior</code></td><td><code>Ignore</code>, <code>Notice</code>, <code>Exception</code></td><td>Default behavior when unsupported SQL is executed</td></tr><tr><td><code>unknownSchemaBehavior</code></td><td><code>Passthrough</code>, <code>Exception</code></td><td>Behavior when unknown table is referenced</td></tr><tr><td><code>behaviorRules</code></td><td><code>array&lt;string, UnsupportedSqlBehavior&gt;</code></td><td>Per-pattern behavior overrides (first match wins)</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><h3>SQL Support</h3>
+</div><div class="doc-block" data-diff="same"><h4>Fully Supported</h4>
+</div><div class="doc-block" data-diff="same"><ul><li><strong>SELECT</strong>: All clauses including JOIN, GROUP BY, HAVING, ORDER BY, LIMIT, UNION, subqueries, CTEs, window functions</li><li><strong>INSERT</strong>: VALUES, SELECT, ON DUPLICATE KEY UPDATE, IGNORE</li><li><strong>REPLACE</strong></li><li><strong>UPDATE</strong>: Single/multi-table with ORDER BY/LIMIT</li><li><strong>DELETE</strong>: Single/multi-table with ORDER BY/LIMIT</li><li><strong>TRUNCATE</strong></li><li><strong>DDL</strong>: CREATE TABLE, ALTER TABLE, DROP TABLE (virtual schema)</li><li><strong>WITH</strong>: CTE and recursive CTE</li></ul>
+</div><div class="doc-block" data-diff="same"><h4>Ignored (No-op)</h4>
+</div><div class="doc-block" data-diff="same"><ul><li>Transaction control: BEGIN, COMMIT, ROLLBACK, SAVEPOINT</li></ul>
+</div><div class="doc-block" data-diff="same"><h4>Unsupported</h4>
+</div><div class="doc-block" data-diff="same"><ul><li>Stored procedures, triggers, functions, views</li><li>Database/schema operations</li><li>User/permission management</li><li>Server operations (FLUSH, RESET, etc.)</li></ul>
+</div><div class="doc-block" data-diff="same"><h3>Development</h3>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code># Run tests
+composer test
+
+# Run unit tests
+composer test:unit
+
+# Run linter (PHP-CS-Fixer + PHPStan level max)
+composer lint
+
+# Fix code style
+composer format</code></pre>
+</div><div class="doc-block" data-diff="same"><h3>License</h3>
+</div><div class="doc-block" data-diff="same"><p>MIT License. See <span class="md-target" title="LICENSE">LICENSE</span> for details.</p>
+</div></section>
+</main>
+<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div>
+<script src="../../../assets/search-index.js" defer></script>
+<script src="../../../assets/app.js" defer></script>
+</body>
+</html>
