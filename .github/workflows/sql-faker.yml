@@ -37,7 +37,6 @@ jobs:
         with:
           working-directory: packages/sql-faker
       - run: composer test
-      - run: composer test:oracles
 
   lint:
     runs-on: ubuntu-latest

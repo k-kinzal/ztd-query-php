@@ -45,7 +45,7 @@
     "autoload-dev": {
         "psr-4": {
             "Tests\\Unit\\SqlFaker\\": "tests/Unit/",
-            "SqlFaker\\Fuzz\\": "fuzz/"
+            "Fuzz\\": "fuzz/"
         }
     },
     "scripts": {
@@ -62,7 +62,6 @@
         "docgen:diff": "@docgen --diff=origin/main --serve",
         "docgen:fresh": "@docgen --no-cache",
         "test:unit": "phpunit --testsuite unit",
-        "test:oracles": "phpunit --no-coverage --exclude-group native tests/Integration/Fuzz",
         "lint": [
             "@format:check",
             "@phpstan",
@@ -79,10 +78,9 @@
             "@fuzz:pg",
             "@fuzz:sqlite"
         ],
-        "fuzz:program": "php-fuzzer fuzz fuzz/fuzz_program_syntax.php",
-        "fuzz:mysql": "php-fuzzer fuzz fuzz/fuzz_mysql_syntax.php",
-        "fuzz:pg": "php-fuzzer fuzz fuzz/fuzz_pg_syntax.php",
-        "fuzz:sqlite": "php-fuzzer fuzz fuzz/fuzz_sqlite_syntax.php",
+        "fuzz:mysql": "php-fuzzer fuzz fuzz/fuzz_mysql_syntax.php fuzz/corpus/mysql/",
+        "fuzz:pg": "php-fuzzer fuzz fuzz/fuzz_pg_syntax.php fuzz/corpus/pg/",
+        "fuzz:sqlite": "php-fuzzer fuzz fuzz/fuzz_sqlite_syntax.php fuzz/corpus/sqlite/",
         "phpstan": "phpstan analyse --memory-limit=512M",
         "deptrac": [
             "deptrac analyse --config-file=deptrac.yaml",
@@ -93,8 +91,7 @@
             "deptrac debug:unused --config-file=deptrac.yaml"
         ],
         "loc-guard": "loc-guard --config=loc.yaml",
-        "tree-guard": "tree-guard --config=tree.yaml",
-        "test:oracles:native": "phpunit --no-coverage tests/Integration/Fuzz"
+        "tree-guard": "tree-guard --config=tree.yaml"
     },
     "config": {
         "allow-plugins": {

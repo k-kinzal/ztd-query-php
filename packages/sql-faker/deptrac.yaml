@@ -80,8 +80,6 @@ deptrac:
           value: 'src/Coverage/'
         - type: classLike
           value: '^SqlFaker\\Coverage\\(Measurement|Trace|Checkpoint|Snapshot|History|Entry|Rewrite)$'
-        - type: classLike
-          value: '^SqlFaker\\Coverage\\Verification\\Trace$'
     # Coordinates derivation, rewriting and lexical realization.
     - name: Generation
       collectors:

@@ -4,11 +4,12 @@
  * PHP-Fuzzer entry point for MySQL SQL syntax validation.
  *
  * Usage:
- *   MYSQL_VERSION=8.0.44 vendor/bin/php-fuzzer fuzz fuzz/fuzz_mysql_syntax.php fuzz/corpus/mysql/
+ *   MYSQL_VERSION=8.4.7 vendor/bin/php-fuzzer fuzz fuzz/fuzz_mysql_syntax.php fuzz/corpus/mysql/
  *
  * Environment variables:
- *   MYSQL_VERSION - MySQL version to test (default: 8.4.7)
- *                   Supported: 5.6.51, 5.7.44, 8.0.44, 8.1.0, 8.2.0, 8.3.0, 8.4.7, 9.0.1, 9.1.0
+ *   MYSQL_VERSION     - MySQL version to test (default: 8.4.7)
+ *                       Supported: 5.6.51, 5.7.44, 8.0.44, 8.1.0, 8.2.0, 8.3.0, 8.4.7, 9.0.1, 9.1.0
+ *   SQLFAKER_COVERAGE - Set to 0 to run without recording grammar coverage under fuzz/coverage/mysql
  */
 
 declare(strict_types=1);
@@ -26,39 +27,38 @@ register_shutdown_function(static function (): void {
 });
 
 use Faker\Factory;
-use SqlFaker\Coverage\CoverageException;
+use Fuzz\Container\MySql56Container;
+use Fuzz\Container\MySql57Container;
+use Fuzz\Container\MySql80Container;
+use Fuzz\Container\MySql81Container;
+use Fuzz\Container\MySql82Container;
+use Fuzz\Container\MySql83Container;
+use Fuzz\Container\MySql84Container;
+use Fuzz\Container\MySql90Container;
+use Fuzz\Container\MySql91Container;
+use Fuzz\Target\MySqlSyntaxCheck;
 use SqlFaker\Coverage\GrammarCoverage;
-use SqlFaker\Coverage\Verification\FeatureFeedback;
-use SqlFaker\Coverage\Verification\VerificationCoverage;
-use SqlFaker\Fuzz\Container\MySql56Container;
-use SqlFaker\Fuzz\Container\MySql57Container;
-use SqlFaker\Fuzz\Container\MySql80Container;
-use SqlFaker\Fuzz\Container\MySql81Container;
-use SqlFaker\Fuzz\Container\MySql82Container;
-use SqlFaker\Fuzz\Container\MySql83Container;
-use SqlFaker\Fuzz\Container\MySql84Container;
-use SqlFaker\Fuzz\Container\MySql90Container;
-use SqlFaker\Fuzz\Container\MySql91Container;
-use SqlFaker\Fuzz\Target\InfrastructureFailure;
-use SqlFaker\Fuzz\Target\MySqlSyntaxCheck;
-use SqlFaker\Fuzz\Target\ObservedCheck;
-use SqlFaker\Fuzz\Target\OracleEnvironment;
+use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\MySqlProvider;
 use Testcontainers\Testcontainers;
 
 $mysqlVersion = getenv('MYSQL_VERSION') !== false ? getenv('MYSQL_VERSION') : '8.4.7';
 
+/**
+ * Container, grammar version and the statement rule to generate from. Statements start below
+ * the grammar entry point, which also lists parser-internal selectors that PREPARE rejects.
+ */
 $containerMap = [
-    '5.6.51' => [MySql56Container::class, 'mysql-5.6.51'],
-    '5.7.44' => [MySql57Container::class, 'mysql-5.7.44'],
-    '8.0.44' => [MySql80Container::class, 'mysql-8.0.44'],
-    '8.1.0'  => [MySql81Container::class, 'mysql-8.1.0'],
-    '8.2.0'  => [MySql82Container::class, 'mysql-8.2.0'],
-    '8.3.0'  => [MySql83Container::class, 'mysql-8.3.0'],
-    '8.4.7'  => [MySql84Container::class, 'mysql-8.4.7'],
-    '9.0.1'  => [MySql90Container::class, 'mysql-9.0.1'],
-    '9.1.0'  => [MySql91Container::class, 'mysql-9.1.0'],
+    '5.6.51' => [MySql56Container::class, 'mysql-5.6.51', 'statement'],
+    '5.7.44' => [MySql57Container::class, 'mysql-5.7.44', 'statement'],
+    '8.0.44' => [MySql80Container::class, 'mysql-8.0.44', 'simple_statement_or_begin'],
+    '8.1.0'  => [MySql81Container::class, 'mysql-8.1.0', 'simple_statement_or_begin'],
+    '8.2.0'  => [MySql82Container::class, 'mysql-8.2.0', 'simple_statement_or_begin'],
+    '8.3.0'  => [MySql83Container::class, 'mysql-8.3.0', 'simple_statement_or_begin'],
+    '8.4.7'  => [MySql84Container::class, 'mysql-8.4.7', 'simple_statement_or_begin'],
+    '9.0.1'  => [MySql90Container::class, 'mysql-9.0.1', 'simple_statement_or_begin'],
+    '9.1.0'  => [MySql91Container::class, 'mysql-9.1.0', 'simple_statement_or_begin'],
 ];
 
 if (!isset($containerMap[$mysqlVersion])) {
@@ -67,7 +67,7 @@ if (!isset($containerMap[$mysqlVersion])) {
     exit(1);
 }
 
-[$containerClass, $grammarVersion] = $containerMap[$mysqlVersion];
+[$containerClass, $grammarVersion, $root] = $containerMap[$mysqlVersion];
 
 fwrite(STDERR, "Starting MySQL $mysqlVersion container...\n");
 
@@ -86,74 +86,26 @@ $pdo = new PDO(
     ]
 );
 
-$coverage = new GrammarCoverage(__DIR__ . '/coverage/mysql');
+fwrite(STDERR, "MySQL $mysqlVersion ready on $host:$port\n");
+fwrite(STDERR, "Grammar version: $grammarVersion\n");
+
+$coverage = getenv('SQLFAKER_COVERAGE') === '0' ? null : new GrammarCoverage(__DIR__ . '/coverage/mysql');
 $provider = new MySqlProvider(Factory::create(), $grammarVersion, $coverage);
 $check = new MySqlSyntaxCheck($pdo, $grammarVersion);
-$oracleRevision = OracleEnvironment::revision();
-$verification = new VerificationCoverage($coverage, $oracleRevision, OracleEnvironment::mysql($pdo, $grammarVersion), __DIR__ . '/coverage/mysql/verification');
-$observed = new ObservedCheck($check, $verification);
-$feedback = new FeatureFeedback();
 $planner = $provider->planner();
-$root = isset($coverage->inventory()->grammar->ruleMap['simple_statement_or_begin']) ? 'simple_statement_or_begin' : 'statement';
 $constraints = GenerationPlan::fromRule($root)->requiringNonEmpty();
-$generations = 0;
-/**
- * Negative edge IDs are disjoint from PHP-Fuzzer's nonnegative instrumented edges.
- * Each production contributes one stable feature; PHP-Fuzzer still owns mutation and corpus selection.
- */
-$grammarFeatures = array_flip(array_keys($coverage->inventory()->entries));
-register_shutdown_function(static function () use ($coverage, $verification): void {
-    if (function_exists('pcntl_alarm')) {
-        pcntl_alarm(0);
-    }
-    $coverage->flush();
-    $verification->flush();
-});
-/**
- * Stops at the next input boundary so coverage flushes and container shutdown run outside an active generation.
- */
-$stopSignal = null;
-if (function_exists('pcntl_signal')) {
-    pcntl_async_signals(true);
-    foreach ([SIGINT, SIGTERM] as $signal) {
-        pcntl_signal($signal, static function (int $received) use (&$stopSignal): void {
-            $stopSignal ??= $received;
-        });
-    }
-}
+
+fwrite(STDERR, "Starting fuzzer...\n\n");
 
 /**
+ * The plan compiler reads four budget bytes and then one decision per byte, so inputs
+ * are allowed to grow well beyond php-fuzzer's default length.
+ *
  * @var PhpFuzzer\Config $config
  */
 $config->setAllowedExceptions([]);
 $config->setMaxLen(80004);
-$config->setTarget(static function (string $input) use ($provider, $planner, $constraints, $observed, $verification, $feedback, $coverage, $grammarFeatures, &$generations, &$stopSignal): void {
-    if ($stopSignal !== null) {
-        exit(128 + $stopSignal);
-    }
-    try {
-        $plan = (new SqlFaker\Generation\Choice\BytePlanCompiler())->compile($input, $planner, $constraints);
-        $sql = $provider->generate($plan);
-        if ($provider->generate($plan) !== $sql) {
-            throw new LogicException('The same input produced different SQL.');
-        }
-        foreach ($coverage->lastGeneration()['reachedIds'] ?? [] as $id) {
-            PhpFuzzer\FuzzingContext::$edges[-1 - $grammarFeatures[$id]] = 1;
-        }
-        $trace = $coverage->lastGeneration();
-        if ($trace !== null) {
-            PhpFuzzer\FuzzingContext::$edges += $feedback->edges($trace);
-        }
-        $verdict = $observed->verify($sql, $input);
-        if ($trace !== null) {
-            PhpFuzzer\FuzzingContext::$edges += $feedback->edges($trace, $verdict->status);
-        }
-        if (++$generations % 100 === 0) {
-            $coverage->flush();
-            $verification->flush();
-        }
-    } catch (InfrastructureFailure|CoverageException $failure) {
-        fwrite(STDERR, $failure->getMessage() . "\n");
-        exit(2);
-    }
+$config->setTarget(static function (string $input) use ($provider, $planner, $constraints, $check): void {
+    $plan = (new BytePlanCompiler())->compile($input, $planner, $constraints);
+    $check->verify($provider->generate($plan), $input);
 });

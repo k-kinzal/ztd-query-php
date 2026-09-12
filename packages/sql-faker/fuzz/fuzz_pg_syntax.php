@@ -6,6 +6,8 @@
  * Usage:
  *   vendor/bin/php-fuzzer fuzz fuzz/fuzz_pg_syntax.php fuzz/corpus/pg/
  *
+ * Environment variables:
+ *   SQLFAKER_COVERAGE - Set to 0 to run without recording grammar coverage under fuzz/coverage/pg
  */
 
 declare(strict_types=1);
@@ -23,15 +25,10 @@ register_shutdown_function(static function (): void {
 });
 
 use Faker\Factory;
-use SqlFaker\Coverage\CoverageException;
+use Fuzz\Container\PostgreSqlContainer;
+use Fuzz\Target\PgSyntaxCheck;
 use SqlFaker\Coverage\GrammarCoverage;
-use SqlFaker\Coverage\Verification\FeatureFeedback;
-use SqlFaker\Coverage\Verification\VerificationCoverage;
-use SqlFaker\Fuzz\Container\PostgreSqlContainer;
-use SqlFaker\Fuzz\Target\InfrastructureFailure;
-use SqlFaker\Fuzz\Target\ObservedCheck;
-use SqlFaker\Fuzz\Target\OracleEnvironment;
-use SqlFaker\Fuzz\Target\PgSyntaxCheck;
+use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\PostgreSqlProvider;
 use Testcontainers\Testcontainers;
@@ -45,75 +42,29 @@ $host = str_replace('localhost', '127.0.0.1', $instance->getHost());
 
 $connection = pg_connect("host=$host port=$port dbname=fuzz_test user=test password=test");
 if ($connection === false) {
-    throw new InfrastructureFailure('Cannot connect to the fixed PostgreSQL instance.');
-}
-$coverage = new GrammarCoverage(__DIR__ . '/coverage/pg');
-$provider = new PostgreSqlProvider(Factory::create(), 'pg-17.2', $coverage);
-$check = new PgSyntaxCheck($connection);
-$oracleRevision = OracleEnvironment::revision();
-$verification = new VerificationCoverage($coverage, $oracleRevision, OracleEnvironment::pg($connection), __DIR__ . '/coverage/pg/verification');
-$observed = new ObservedCheck($check, $verification);
-$feedback = new FeatureFeedback();
-$planner = $provider->planner();
-$constraints = GenerationPlan::fromRule('stmt')->requiringNonEmpty();
-$generations = 0;
-/**
- * Negative edge IDs are disjoint from PHP-Fuzzer's nonnegative instrumented edges.
- * Each production contributes one stable feature; PHP-Fuzzer still owns mutation and corpus selection.
- */
-$grammarFeatures = array_flip(array_keys($coverage->inventory()->entries));
-register_shutdown_function(static function () use ($coverage, $verification): void {
-    if (function_exists('pcntl_alarm')) {
-        pcntl_alarm(0);
-    }
-    $coverage->flush();
-    $verification->flush();
-});
-/**
- * Stops at the next input boundary so coverage flushes and container shutdown run outside an active generation.
- */
-$stopSignal = null;
-if (function_exists('pcntl_signal')) {
-    pcntl_async_signals(true);
-    foreach ([SIGINT, SIGTERM] as $signal) {
-        pcntl_signal($signal, static function (int $received) use (&$stopSignal): void {
-            $stopSignal ??= $received;
-        });
-    }
+    fwrite(STDERR, "Cannot connect to PostgreSQL on $host:$port\n");
+    exit(2);
 }
 
+fwrite(STDERR, "PostgreSQL ready on $host:$port\n");
+
+$coverage = getenv('SQLFAKER_COVERAGE') === '0' ? null : new GrammarCoverage(__DIR__ . '/coverage/pg');
+$provider = new PostgreSqlProvider(Factory::create(), 'pg-17.2', $coverage);
+$check = new PgSyntaxCheck($connection);
+$planner = $provider->planner();
+$constraints = GenerationPlan::fromRule('stmt')->requiringNonEmpty();
+
+fwrite(STDERR, "Starting fuzzer...\n\n");
+
 /**
+ * The plan compiler reads four budget bytes and then one decision per byte, so inputs
+ * are allowed to grow well beyond php-fuzzer's default length.
+ *
  * @var PhpFuzzer\Config $config
  */
 $config->setAllowedExceptions([]);
 $config->setMaxLen(80004);
-$config->setTarget(static function (string $input) use ($provider, $planner, $constraints, $observed, $verification, $feedback, $coverage, $grammarFeatures, &$generations, &$stopSignal): void {
-    if ($stopSignal !== null) {
-        exit(128 + $stopSignal);
-    }
-    try {
-        $plan = (new SqlFaker\Generation\Choice\BytePlanCompiler())->compile($input, $planner, $constraints);
-        $sql = $provider->generate($plan);
-        if ($provider->generate($plan) !== $sql) {
-            throw new LogicException('The same input produced different SQL.');
-        }
-        foreach ($coverage->lastGeneration()['reachedIds'] ?? [] as $id) {
-            PhpFuzzer\FuzzingContext::$edges[-1 - $grammarFeatures[$id]] = 1;
-        }
-        $trace = $coverage->lastGeneration();
-        if ($trace !== null) {
-            PhpFuzzer\FuzzingContext::$edges += $feedback->edges($trace);
-        }
-        $verdict = $observed->verify($sql, $input);
-        if ($trace !== null) {
-            PhpFuzzer\FuzzingContext::$edges += $feedback->edges($trace, $verdict->status);
-        }
-        if (++$generations % 100 === 0) {
-            $coverage->flush();
-            $verification->flush();
-        }
-    } catch (InfrastructureFailure|CoverageException $failure) {
-        fwrite(STDERR, $failure->getMessage() . "\n");
-        exit(2);
-    }
+$config->setTarget(static function (string $input) use ($provider, $planner, $constraints, $check): void {
+    $plan = (new BytePlanCompiler())->compile($input, $planner, $constraints);
+    $check->verify($provider->generate($plan), $input);
 });

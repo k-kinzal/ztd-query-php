@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlFaker\Fuzz\Container;
+namespace Fuzz\Container;
 
 use Override;
 use Testcontainers\Containers\GenericContainer\GenericContainer;

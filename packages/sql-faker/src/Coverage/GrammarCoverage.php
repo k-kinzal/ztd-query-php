@@ -7,6 +7,7 @@ namespace SqlFaker\Coverage;
 use JsonException;
 use SqlFaker\Generation\Lexeme\ResolvedOutput;
 use SqlFaker\Generation\Token\TerminalSequence;
+use WeakReference;
 
 /**
  * Observes derivations without influencing generation or consuming randomness.
@@ -40,13 +41,29 @@ final class GrammarCoverage
     private ?array $restoredCheckpoint = null;
 
     /**
+     * Number of generations after which unsaved discoveries are written to the snapshot directory.
+     */
+    public const FLUSH_INTERVAL = 100;
+
+    /**
      * Enables memory-only measurement unless a snapshot directory is explicitly supplied.
+     *
+     * A supplied directory is written every FLUSH_INTERVAL generations and once more at
+     * shutdown, so callers only decide whether coverage is recorded.
      */
     public function __construct(private readonly ?string $storageDirectory = null)
     {
         $this->saved = new CoverageSets();
         $this->current = new CoverageSets();
         $this->runId = bin2hex(random_bytes(16));
+        if ($storageDirectory !== null) {
+            $coverage = WeakReference::create($this);
+            register_shutdown_function(static function () use ($coverage, $storageDirectory): void {
+                if (is_dir($storageDirectory)) {
+                    $coverage->get()?->flush();
+                }
+            });
+        }
     }
 
     /**
@@ -204,12 +221,17 @@ final class GrammarCoverage
     }
 
     /**
-     * Closes the generation in a finally block, retaining failures.
+     * Closes the generation in a finally block, retaining failures, and saves every FLUSH_INTERVAL generations.
+     *
+     * @throws CoverageException When a snapshot cannot be encoded
      */
     public function endGeneration(): void
     {
         $this->trace?->end();
         $this->inProgress = false;
+        if ($this->generations % self::FLUSH_INTERVAL === 0) {
+            $this->flush();
+        }
     }
 
     /**

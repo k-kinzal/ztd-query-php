@@ -1276,4 +1276,52 @@ final class GrammarCoverageTest extends TestCase
         self::assertSame('', $trace['spacingEvents'][0]['separator']);
         self::assertSame([], $trace['spacingEvents'][0]['rules']);
     }
+
+    public function testEndGenerationSavesUnsavedDiscoveriesEveryHundredGenerations(): void
+    {
+        $directory = sys_get_temp_dir() . '/sql-faker-coverage-' . bin2hex(random_bytes(8));
+        (new Filesystem())->mkdir($directory);
+        $coverage = new GrammarCoverage($directory);
+        $coverage->register(
+            new GrammarCoverageInventory(
+                (new Grammar(
+                    'stmt',
+                    ['stmt' => new ProductionRule('stmt', [new Production([new Terminal('SELECT')]), new Production([new Terminal('DELETE')])])],
+                ))->identified(),
+                'stmt',
+                'test-v1',
+            ),
+            'revision-a',
+        );
+        $recordedProductionIds = $coverage->inventory()->denominator;
+        $generate = static function (int $generation) use ($coverage, $recordedProductionIds): void {
+            $coverage->beginGeneration('stmt', []);
+            $coverage->beginAttempt(0);
+            $coverage->record(0, null, null, 'stmt', $recordedProductionIds[0], 'input');
+            $coverage->commitAttempt('sql-hash-' . $generation);
+            $coverage->endGeneration();
+        };
+        array_map($generate, range(1, GrammarCoverage::FLUSH_INTERVAL - 1));
+        self::assertSame([], glob($directory . '/*.json'));
+        $generate(GrammarCoverage::FLUSH_INTERVAL);
+        $snapshots = glob($directory . '/*.json');
+        self::assertNotFalse($snapshots);
+        self::assertCount(1, $snapshots);
+        unset($coverage, $generate);
+        $restored = new GrammarCoverage($directory);
+        $restored->register(
+            new GrammarCoverageInventory(
+                (new Grammar(
+                    'stmt',
+                    ['stmt' => new ProductionRule('stmt', [new Production([new Terminal('SELECT')]), new Production([new Terminal('DELETE')])])],
+                ))->identified(),
+                'stmt',
+                'test-v1',
+            ),
+            'revision-a',
+        );
+        self::assertSame(1, $restored->snapshot()['cumulative']['reached']);
+        unset($restored);
+        (new Filesystem())->remove($directory);
+    }
 }

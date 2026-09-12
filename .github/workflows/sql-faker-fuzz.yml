@@ -81,8 +81,6 @@ jobs:
           path: packages/sql-faker/fuzz/coverage/${{ matrix.target.database }}
           key: sql-faker-coverage-v1-${{ matrix.target.database }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: sql-faker-coverage-v1-${{ matrix.target.database }}-
-      - name: Check oracle classifications
-        run: composer test:oracles
       - name: Run PHP-Fuzzer
         env:
           FUZZ_MAX_RUNS: ${{ inputs.max_runs || '10000' }}

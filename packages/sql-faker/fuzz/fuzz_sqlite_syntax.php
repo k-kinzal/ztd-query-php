@@ -1,92 +1,53 @@
 <?php
 
+/**
+ * PHP-Fuzzer entry point for SQLite SQL syntax validation.
+ *
+ * Usage:
+ *   vendor/bin/php-fuzzer fuzz fuzz/fuzz_sqlite_syntax.php fuzz/corpus/sqlite/
+ *
+ * PHP's PDO SQLite extension must link SQLite 3.47.2, the release the grammar was built from.
+ *
+ * Environment variables:
+ *   SQLFAKER_COVERAGE - Set to 0 to run without recording grammar coverage under fuzz/coverage/sqlite
+ */
+
 declare(strict_types=1);
 
 use Faker\Factory;
-use SqlFaker\Coverage\CoverageException;
+use Fuzz\Target\SqliteSyntaxCheck;
 use SqlFaker\Coverage\GrammarCoverage;
-use SqlFaker\Coverage\Verification\FeatureFeedback;
-use SqlFaker\Coverage\Verification\VerificationCoverage;
-use SqlFaker\Fuzz\Target\InfrastructureFailure;
-use SqlFaker\Fuzz\Target\ObservedCheck;
-use SqlFaker\Fuzz\Target\OracleEnvironment;
-use SqlFaker\Fuzz\Target\SqliteSyntaxCheck;
+use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\SqliteProvider;
 
-$coverage = new GrammarCoverage(__DIR__ . '/coverage/sqlite');
-$provider = new SqliteProvider(Factory::create(), 'sqlite-3.47.2', $coverage);
-$engine = new PDO('sqlite::memory:');
-$version = $engine->query('SELECT sqlite_version()');
-if ($version === false || $version->fetchColumn() !== '3.47.2') {
-    throw new InfrastructureFailure('SQLite verification requires exactly 3.47.2.');
-}
-unset($engine);
-$check = new SqliteSyntaxCheck();
-$oracleRevision = OracleEnvironment::revision();
-$verification = new VerificationCoverage($coverage, $oracleRevision, OracleEnvironment::sqlite(new PDO('sqlite::memory:')), __DIR__ . '/coverage/sqlite/verification');
-$observed = new ObservedCheck($check, $verification);
-$feedback = new FeatureFeedback();
-$planner = $provider->planner();
-$constraints = GenerationPlan::fromRule('cmd')->requiringNonEmpty();
-$generations = 0;
-/**
- * Negative edge IDs are disjoint from PHP-Fuzzer's nonnegative instrumented edges.
- * Each production contributes one stable feature; PHP-Fuzzer still owns mutation and corpus selection.
- */
-$grammarFeatures = array_flip(array_keys($coverage->inventory()->entries));
-register_shutdown_function(static function () use ($coverage, $verification): void {
-    if (function_exists('pcntl_alarm')) {
-        pcntl_alarm(0);
-    }
-    $coverage->flush();
-    $verification->flush();
-});
-/**
- * Stops at the next input boundary so coverage flushes and container shutdown run outside an active generation.
- */
-$stopSignal = null;
-if (function_exists('pcntl_signal')) {
-    pcntl_async_signals(true);
-    foreach ([SIGINT, SIGTERM] as $signal) {
-        pcntl_signal($signal, static function (int $received) use (&$stopSignal): void {
-            $stopSignal ??= $received;
-        });
-    }
+$pdo = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+$version = $pdo->query('SELECT sqlite_version()');
+$linked = $version === false ? null : $version->fetchColumn();
+if ($linked !== '3.47.2') {
+    fwrite(STDERR, 'SQLite 3.47.2 is required, PDO links ' . (is_scalar($linked) ? (string) $linked : 'unknown') . "\n");
+    exit(2);
 }
 
+fwrite(STDERR, "SQLite $linked ready\n");
+
+$coverage = getenv('SQLFAKER_COVERAGE') === '0' ? null : new GrammarCoverage(__DIR__ . '/coverage/sqlite');
+$provider = new SqliteProvider(Factory::create(), 'sqlite-3.47.2', $coverage);
+$check = new SqliteSyntaxCheck($pdo);
+$planner = $provider->planner();
+$constraints = GenerationPlan::fromRule('cmd')->requiringNonEmpty();
+
+fwrite(STDERR, "Starting fuzzer...\n\n");
+
 /**
+ * The plan compiler reads four budget bytes and then one decision per byte, so inputs
+ * are allowed to grow well beyond php-fuzzer's default length.
+ *
  * @var PhpFuzzer\Config $config
  */
 $config->setAllowedExceptions([]);
 $config->setMaxLen(80004);
-$config->setTarget(static function (string $input) use ($provider, $planner, $constraints, $observed, $verification, $feedback, $coverage, $grammarFeatures, &$generations, &$stopSignal): void {
-    if ($stopSignal !== null) {
-        exit(128 + $stopSignal);
-    }
-    try {
-        $plan = (new SqlFaker\Generation\Choice\BytePlanCompiler())->compile($input, $planner, $constraints);
-        $sql = $provider->generate($plan);
-        if ($provider->generate($plan) !== $sql) {
-            throw new LogicException('The same input produced different SQL.');
-        }
-        foreach ($coverage->lastGeneration()['reachedIds'] ?? [] as $id) {
-            PhpFuzzer\FuzzingContext::$edges[-1 - $grammarFeatures[$id]] = 1;
-        }
-        $trace = $coverage->lastGeneration();
-        if ($trace !== null) {
-            PhpFuzzer\FuzzingContext::$edges += $feedback->edges($trace);
-        }
-        $verdict = $observed->verify($sql, $input);
-        if ($trace !== null) {
-            PhpFuzzer\FuzzingContext::$edges += $feedback->edges($trace, $verdict->status);
-        }
-        if (++$generations % 100 === 0) {
-            $coverage->flush();
-            $verification->flush();
-        }
-    } catch (InfrastructureFailure|CoverageException $failure) {
-        fwrite(STDERR, $failure->getMessage() . "\n");
-        exit(2);
-    }
+$config->setTarget(static function (string $input) use ($provider, $planner, $constraints, $check): void {
+    $plan = (new BytePlanCompiler())->compile($input, $planner, $constraints);
+    $check->verify($provider->generate($plan), $input);
 });
