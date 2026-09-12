@@ -47,10 +47,10 @@
 <span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Value\RandomCharacters</span>;</span>
 <span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Resource\SqlVersion</span>;</span>
 <span class="src-line" id="L14"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Resource\SqlVersionRegistry</span>;</span>
-<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\Generation\Value\LiteralGenerator</span>;</span>
-<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\LexicalGrammar</span>;</span>
-<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\Tokenization\KeywordIndex</span>;</span>
-<span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\Tokenization\MySqlTokenizer</span>;</span>
+<span class="src-line" id="L15"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\Generation\LexicalGrammar</span>;</span>
+<span class="src-line" id="L16"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\Generation\Tokenization\KeywordIndex</span>;</span>
+<span class="src-line" id="L17"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\Generation\Tokenization\MySqlTokenizer</span>;</span>
+<span class="src-line" id="L18"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\Generation\Value\LiteralGenerator</span>;</span>
 <span class="src-line" id="L19"><a class="ln" href="#L19">19</a></span>
 <span class="src-line" id="L20"><a class="ln" href="#L20">20</a>#[<span class="tok-id">CoversClass</span>(<span class="tok-id">LexicalException</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L21"><a class="ln" href="#L21">21</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">LexicalGrammar</span>::<span class="tok-kw">class</span>)]</span>
@@ -59,12 +59,12 @@
 <span class="src-line" id="L24"><a class="ln" href="#L24">24</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Sqlite\Generation\Value\LiteralGenerator</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L25"><a class="ln" href="#L25">25</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">SqlVersion</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L26"><a class="ln" href="#L26">26</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">KeywordIndex</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L27"><a class="ln" href="#L27">27</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\PostgreSql\Tokenization\KeywordIndex</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L28"><a class="ln" href="#L28">28</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Sqlite\Tokenization\KeywordIndex</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L27"><a class="ln" href="#L27">27</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\PostgreSql\Generation\Tokenization\KeywordIndex</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L28"><a class="ln" href="#L28">28</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Sqlite\Generation\Tokenization\KeywordIndex</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L29"><a class="ln" href="#L29">29</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">RandomCharacters</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L30"><a class="ln" href="#L30">30</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">SqlVersionRegistry</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L31"><a class="ln" href="#L31">31</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">MySqlTokenizer</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L32"><a class="ln" href="#L32">32</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\MySql\Tokenization\MySqlQuoting</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L32"><a class="ln" href="#L32">32</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\MySql\Generation\Tokenization\MySqlQuoting</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L33"><a class="ln" href="#L33">33</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Generation\Candidate\ChoiceLexemeGenerator</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L34"><a class="ln" href="#L34">34</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Generation\Candidate\FixedLexemeGenerator</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L35"><a class="ln" href="#L35">35</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Generation\Candidate\IntegerLexemeGenerator</span>::<span class="tok-kw">class</span>)]</span>
