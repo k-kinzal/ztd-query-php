@@ -80,6 +80,10 @@ jobs:
           php-version: '8.5'
           extensions: dom, json, libxml, mbstring, pcntl, xml, xmlwriter
           coverage: pcov
+          # A mutant that turns a loop into an endless loop keeps allocating and emitting
+          # PHP warnings; bounding memory ends it as a fatal error within seconds instead
+          # of holding a thread until the Infection timeout.
+          ini-values: memory_limit=1G
       - name: Install package dependencies
         uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
