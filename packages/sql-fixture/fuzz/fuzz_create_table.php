@@ -27,7 +27,7 @@ fwrite(STDERR, "Starting fuzzer...\n\n");
 $target = new CreateTableTarget($grammarVersion, $maxExpansions);
 
 /** @var PhpFuzzer\Config $config */
-Fuzz\Corpus\SeedCorpus::prepare('create-table');
+Fuzz\Input\SeedCorpus::prepare('create-table');
 
 $config->setMaxLen(4096);
 $config->setAllowedExceptions([]);

@@ -44,7 +44,7 @@ fwrite(STDERR, "Starting fuzzer...\n\n");
 $target = new InsertSelectTarget($pdo);
 
 /** @var PhpFuzzer\Config $config */
-Fuzz\Corpus\SeedCorpus::prepare('insert-select');
+Fuzz\Input\SeedCorpus::prepare('insert-select');
 
 $config->setMaxLen(4096);
 $config->setAllowedExceptions([]);
