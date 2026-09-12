@@ -52,8 +52,7 @@ final class RelationCursorTest extends TestCase
 
     public function testSkipWhitespaceStopsBeforeIdentifier(): void
     {
-        $cursor = new Subject(' 	
-        a');
+        $cursor = new Subject(" \t\n        a");
         $cursor->skipWhitespace();
         self::assertSame('a', $cursor->peek());
     }
