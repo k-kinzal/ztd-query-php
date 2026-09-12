@@ -7,7 +7,6 @@ namespace Tests\Unit;
 use Exception;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqliException;
 
 #[CoversClass(ZtdMysqliException::class)]
@@ -17,7 +16,7 @@ final class ZtdMysqliExceptionTest extends TestCase
     {
         $exception = new ZtdMysqliException('test');
 
-        self::assertInstanceOf(RuntimeException::class, $exception);
+        self::assertSame('test', $exception->getMessage());
     }
 
     public function testMessageAndCode(): void

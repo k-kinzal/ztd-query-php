@@ -4,79 +4,56 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use mysqli_result;
+use mysqli_stmt;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
-use ReflectionMethod;
+use Tests\Fixtures\MySqlContainer;
 use ZtdQuery\Adapter\Mysqli\MysqliStatementBindingBridge;
-use ZtdQuery\Adapter\Mysqli\ZtdMysqliStatement;
 
 #[CoversClass(MysqliStatementBindingBridge::class)]
+#[Large]
 final class MysqliStatementBindingBridgeTest extends TestCase
 {
-    public function testLimitsThePhpStanExcludedBridgeToNativeBindingMethods(): void
+    public function testBind_paramRetainsReferencesAcrossExecutions(): void
     {
-        $bridge = new ReflectionClass(MysqliStatementBindingBridge::class);
-        $statement = new ReflectionClass(ZtdMysqliStatement::class);
-        $declaredMethods = array_map(
-            static fn (ReflectionMethod $method): string => $method->getName(),
-            array_filter(
-                $bridge->getMethods(),
-                static fn (ReflectionMethod $method): bool => $method->getDeclaringClass()->getName() === MysqliStatementBindingBridge::class,
-            ),
-        );
-        sort($declaredMethods);
-        $parent = $statement->getParentClass();
-
-        self::assertSame(['__construct', 'bind_param', 'bind_result'], $declaredMethods);
-        self::assertInstanceOf(ReflectionClass::class, $parent);
-        self::assertSame(MysqliStatementBindingBridge::class, $parent->getName());
-        self::assertTrue($bridge->getMethod('bind_param')->isFinal());
-        self::assertTrue($bridge->getMethod('bind_result')->isFinal());
-        self::assertTrue($bridge->getMethod('bind_param')->getParameters()[1]->isPassedByReference());
-        self::assertTrue($bridge->getMethod('bind_result')->getParameters()[0]->isPassedByReference());
+        [$database, $connection] = MySqlContainer::createTestDatabase();
+        try {
+            $statement = $connection->prepare('SELECT ? AS value');
+            self::assertInstanceOf(mysqli_stmt::class, $statement);
+            $bridge = new class ($statement) extends MysqliStatementBindingBridge {};
+            $value = 7;
+            self::assertTrue($bridge->bind_param('i', $value));
+            $value = 42;
+            self::assertTrue($statement->execute());
+            $result = $statement->get_result();
+            self::assertInstanceOf(mysqli_result::class, $result);
+            self::assertSame([['value' => 42]], $result->fetch_all(MYSQLI_ASSOC));
+            $statement->close();
+        } finally {
+            $connection->query('DROP DATABASE `' . $database . '`');
+        }
     }
 
-    public function testExcludedBridgeContainsOnlyTheReviewedDelegationBodies(): void
+    public function testBind_resultWritesBackToCallerVariables(): void
     {
-        $bridge = new ReflectionClass(MysqliStatementBindingBridge::class);
-        $fileName = $bridge->getFileName();
-        self::assertIsString($fileName);
-        $source = file_get_contents($fileName);
-
-        self::assertSame(<<<'PHP'
-<?php
-
-declare(strict_types=1);
-
-namespace ZtdQuery\Adapter\Mysqli;
-
-use mysqli_stmt;
-
-/**
- * Isolates native mysqli by-reference signatures that PHPStan models incorrectly.
- */
-abstract class MysqliStatementBindingBridge extends mysqli_stmt
-{
-    private mysqli_stmt $bindingDelegate;
-
-    public function __construct(mysqli_stmt $bindingDelegate)
-    {
-        $this->bindingDelegate = $bindingDelegate;
-    }
-
-    /** @param mixed ...$vars */
-    final public function bind_param(string $types, mixed &...$vars): bool
-    {
-        return $this->bindingDelegate->bind_param($types, ...$vars);
-    }
-
-    final public function bind_result(mixed &...$vars): bool
-    {
-        return $this->bindingDelegate->bind_result(...$vars);
-    }
-}
-
-PHP, $source);
+        [$database, $connection] = MySqlContainer::createTestDatabase();
+        try {
+            $statement = $connection->prepare("SELECT 7 AS id, 'Alice' AS name");
+            self::assertInstanceOf(mysqli_stmt::class, $statement);
+            $bridge = new class ($statement) extends MysqliStatementBindingBridge {};
+            $id = null;
+            $name = null;
+            self::assertTrue($statement->execute());
+            self::assertTrue($bridge->bind_result($id, $name));
+            self::assertTrue($statement->fetch());
+            self::assertSame(7, $id);
+            self::assertSame('Alice', $name);
+            self::assertNull($statement->fetch());
+            $statement->close();
+        } finally {
+            $connection->query('DROP DATABASE `' . $database . '`');
+        }
     }
 }

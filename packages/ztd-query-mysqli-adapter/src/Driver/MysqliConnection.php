@@ -19,6 +19,9 @@ final class MysqliConnection implements ConnectionInterface
 {
     private mysqli $mysqli;
 
+    /**
+     * Adapt an existing native connection for the ZTD session.
+     */
     public function __construct(mysqli $mysqli)
     {
         $this->mysqli = $mysqli;

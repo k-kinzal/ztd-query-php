@@ -6,159 +6,116 @@ on:
   workflow_dispatch:
     inputs:
       max_runs:
-        description: 'Max fuzzing iterations'
+        description: Maximum iterations per target
         default: '10000'
         type: string
       mysql_version:
-        description: 'MySQL version for DB targets (leave empty for matrix)'
-        default: ''
-        type: string
+        description: MySQL version
+        default: all
+        type: choice
+        options: ['all', '8.0.44', '8.4.7']
+  pull_request:
+    paths:
+      - 'packages/ztd-query-mysqli-adapter/**'
+      - 'packages/ztd-query-mysql/**'
+      - 'packages/ztd-query-core/**'
+      - 'packages/sql-faker/**'
+      - 'packages/sql-fixture/**'
+      - '.github/workflows/ztd-query-mysqli-adapter-fuzz.yml'
 
 permissions:
-  actions: read
   contents: read
-  issues: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: packages/ztd-query-mysqli-adapter
 
 jobs:
-  robustness-execute:
-    name: Robustness / execute (MySQL ${{ matrix.mysql }})
+  fuzz:
+    name: ${{ matrix.target.corpus }} (MySQL ${{ matrix.mysql }})
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
-        mysql: ${{ inputs.mysql_version && fromJson(format('["{0}"]', inputs.mysql_version)) || fromJson('["8.0.44", "8.4.7"]') }}
-    defaults:
-      run:
-        working-directory: packages/ztd-query-mysqli-adapter
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.5'
-          extensions: mbstring, mysqli, pcntl
-          coverage: none
-
-      - uses: ramsey/composer-install@v3
-        with:
-          working-directory: packages/ztd-query-mysqli-adapter
-
-      - uses: actions/cache/restore@v5
-        with:
-          path: packages/ztd-query-mysqli-adapter/fuzz/corpus/robustness-execute
-          key: fuzz-robustness-execute-mysqli-${{ matrix.mysql }}-${{ github.run_id }}
-          restore-keys: |
-            fuzz-robustness-execute-mysqli-${{ matrix.mysql }}-
-
-      - name: fuzzer
-        env:
-          MYSQL_VERSION: ${{ matrix.mysql }}
-        run: |
-          vendor/bin/php-fuzzer fuzz fuzz/fuzz_robustness_execute.php \
-            fuzz/corpus/robustness-execute/ \
-            --max-runs=${{ inputs.max_runs || '10000' }}
-
-      - if: always()
-        uses: actions/cache/save@v5
-        with:
-          path: packages/ztd-query-mysqli-adapter/fuzz/corpus/robustness-execute
-          key: fuzz-robustness-execute-mysqli-${{ matrix.mysql }}-${{ github.run_id }}
-
-      - if: ${{ always() && hashFiles('packages/ztd-query-mysqli-adapter/crash-*') != '' }}
-        uses: actions/upload-artifact@v6
-        with:
-          name: fuzz-crashes-robustness-execute-mysqli-${{ matrix.mysql }}
-          path: packages/ztd-query-mysqli-adapter/crash-*
-
-  correctness:
-    name: Correctness / ${{ matrix.target.name }}-mysqli (MySQL ${{ matrix.mysql }})
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        mysql: ${{ inputs.mysql_version && fromJson(format('["{0}"]', inputs.mysql_version)) || fromJson('["8.0.44", "8.4.7"]') }}
+        mysql: ${{ inputs.mysql_version && inputs.mysql_version != 'all' && fromJson(format('["{0}"]', inputs.mysql_version)) || fromJson('["8.0.44", "8.4.7"]') }}
         target:
-          - { name: select, script: fuzz_correctness_select.php, corpus: correctness-select }
-          - { name: insert, script: fuzz_correctness_insert.php, corpus: correctness-insert }
-          - { name: replace, script: fuzz_correctness_replace.php, corpus: correctness-replace }
-          - { name: update, script: fuzz_correctness_update.php, corpus: correctness-update }
-          - { name: delete, script: fuzz_correctness_delete.php, corpus: correctness-delete }
-    defaults:
-      run:
-        working-directory: packages/ztd-query-mysqli-adapter
+          - {script: fuzz:robustness, corpus: robustness-execute}
+          - {script: fuzz:correctness:select, corpus: correctness-select}
+          - {script: fuzz:correctness:insert, corpus: correctness-insert}
+          - {script: fuzz:correctness:replace, corpus: correctness-replace}
+          - {script: fuzz:correctness:update, corpus: correctness-update}
+          - {script: fuzz:correctness:delete, corpus: correctness-delete}
+    services:
+      mysql:
+        image: mysql:${{ matrix.mysql }}
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_ROOT_HOST: '%'
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=10s --health-timeout=5s --health-retries=20
+    env:
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_PORT: '3306'
+      MYSQL_VERSION: ${{ matrix.mysql }}
     steps:
-      - uses: actions/checkout@v6
-
-      - uses: shivammathur/setup-php@v2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:
           php-version: '8.5'
-          extensions: mbstring, mysqli, pcntl
+          extensions: mbstring, mysqli, pdo_mysql, pcntl, dom, xml, xmlwriter, gd
           coverage: none
-
-      - uses: ramsey/composer-install@v3
+          ini-values: memory_limit=1G
+      - name: Validate the Composer manifest
+        run: composer validate --strict --no-check-publish
+      - uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
           working-directory: packages/ztd-query-mysqli-adapter
-
-      - uses: actions/cache/restore@v5
-        with:
-          path: packages/ztd-query-mysqli-adapter/fuzz/corpus/${{ matrix.target.corpus }}
-          key: fuzz-${{ matrix.target.corpus }}-mysqli-${{ matrix.mysql }}-${{ github.run_id }}
-          restore-keys: |
-            fuzz-${{ matrix.target.corpus }}-mysqli-${{ matrix.mysql }}-
-
-      - name: fuzzer
-        env:
-          MYSQL_VERSION: ${{ matrix.mysql }}
+          dependency-versions: highest
+          composer-options: --prefer-dist
+      - name: Check dependency consistency and platform requirements
         run: |
-          vendor/bin/php-fuzzer fuzz fuzz/${{ matrix.target.script }} \
-            fuzz/corpus/${{ matrix.target.corpus }}/ \
-            --max-runs=${{ inputs.max_runs || '10000' }}
-
-      - if: always()
-        uses: actions/cache/save@v5
+          composer validate --strict --no-check-publish
+          composer check-platform-reqs
+      - name: Restore corpus
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: packages/ztd-query-mysqli-adapter/fuzz/corpus/${{ matrix.target.corpus }}
-          key: fuzz-${{ matrix.target.corpus }}-mysqli-${{ matrix.mysql }}-${{ github.run_id }}
-
-      - if: ${{ always() && hashFiles('packages/ztd-query-mysqli-adapter/crash-*') != '' }}
-        uses: actions/upload-artifact@v6
+          key: mysqli-fuzz-${{ matrix.mysql }}-${{ matrix.target.corpus }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: mysqli-fuzz-${{ matrix.mysql }}-${{ matrix.target.corpus }}-
+      - name: Run bounded fuzz campaign
+        env:
+          MAX_RUNS: ${{ inputs.max_runs || (github.event_name == 'pull_request' && '100') || '10000' }}
+          FUZZ_SCRIPT: ${{ matrix.target.script }}
+          CORPUS: ${{ matrix.target.corpus }}
+        run: |
+          set -euo pipefail
+          [[ "$MAX_RUNS" =~ ^[1-9][0-9]*$ ]] || { echo 'max_runs must be a positive integer' >&2; exit 1; }
+          mkdir -p "fuzz/corpus/$CORPUS"
+          composer "$FUZZ_SCRIPT" -- --max-runs="$MAX_RUNS"
+          if compgen -G 'crash-*' > /dev/null; then
+            echo 'Fuzzing produced crash artifacts; replay the uploaded inputs.' >&2
+            exit 1
+          fi
+      - name: Save corpus
+        if: always()
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          name: fuzz-crashes-${{ matrix.target.name }}-mysqli-${{ matrix.mysql }}
+          path: packages/ztd-query-mysqli-adapter/fuzz/corpus/${{ matrix.target.corpus }}
+          key: mysqli-fuzz-${{ matrix.mysql }}-${{ matrix.target.corpus }}-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Upload crash inputs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: mysqli-fuzz-${{ matrix.mysql }}-${{ matrix.target.corpus }}
           path: packages/ztd-query-mysqli-adapter/crash-*
-
-  notify:
-    name: Notify on crash
-    runs-on: ubuntu-latest
-    needs:
-      - robustness-execute
-      - correctness
-    steps:
-      - uses: actions/github-script@v8
-        with:
-          script: |
-            const { data } = await github.rest.actions.listWorkflowRunArtifacts({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: context.runId
-            });
-            if (!data.artifacts.some(({ name }) => name.startsWith('fuzz-crashes-'))) {
-              console.log('No fuzz crash artifacts found');
-              return;
-            }
-            const { data: issues } = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              labels: 'fuzz',
-              state: 'open'
-            });
-            if (issues.length > 0) {
-              console.log('Open fuzz issue already exists, skipping creation');
-              return;
-            }
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: `Fuzz: Crash detected (ztd-query-mysqli-adapter)`,
-              body: `Fuzzing found a crash.\n\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nCheck the uploaded artifacts for crash details.`,
-              labels: ['bug', 'fuzz']
-            });
+          if-no-files-found: ignore

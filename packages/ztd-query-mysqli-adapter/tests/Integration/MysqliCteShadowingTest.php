@@ -5,19 +5,19 @@ declare(strict_types=1);
 namespace Tests\Integration;
 
 use mysqli_result;
-use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use Tests\Fixtures\MySqlContainer;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 
-/**
- * Integration tests for ZtdMysqli: CTE shadowing and CRUD operations.
- *
- * Verifies that ZTD mode intercepts queries, applies CTE shadowing,
- * and does not modify the physical database.
- */
-#[CoversNothing]
+#[\PHPUnit\Framework\Attributes\CoversClass(ZtdMysqli::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\ZtdQuery\Adapter\Mysqli\ZtdMysqliStatement::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\ZtdQuery\Adapter\Mysqli\MysqliConnection::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\ZtdQuery\Adapter\Mysqli\MysqliResultStatement::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\ZtdQuery\Adapter\Mysqli\MysqliResultColumnExtractor::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\ZtdQuery\Adapter\Mysqli\MysqliStatementBindingBridge::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\ZtdQuery\Adapter\Mysqli\ZtdMysqliException::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\ZtdQuery\Adapter\Mysqli\Native\MysqliPropertyReader::class)]
 #[Large]
 final class MysqliCteShadowingTest extends TestCase
 {
@@ -618,7 +618,6 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertNotFalse($result);
             self::assertInstanceOf(mysqli_result::class, $result);
 
-            /** @var list<array<string, mixed>> $rows */
             $rows = $result->fetch_all(MYSQLI_ASSOC);
             self::assertCount(0, $rows);
         } finally {
@@ -643,7 +642,6 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertNotFalse($result);
             self::assertInstanceOf(mysqli_result::class, $result);
 
-            /** @var list<array<string, mixed>> $rows */
             $rows = $result->fetch_all(MYSQLI_ASSOC);
             self::assertCount(2, $rows);
         } finally {
@@ -668,11 +666,12 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertNotFalse($result);
             self::assertInstanceOf(mysqli_result::class, $result);
 
-            /** @var list<array<string, mixed>> $rows */
             $rows = $result->fetch_all(MYSQLI_ASSOC);
             self::assertCount(1, $rows);
             self::assertSame('Charlie', $rows[0]['name']);
-            /** @var string|int $age */
+            /**
+             * @var string|int $age
+             */
             $age = $rows[0]['age'];
             self::assertSame('35', (string) $age);
         } finally {
@@ -701,7 +700,6 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertNotFalse($result);
             self::assertInstanceOf(mysqli_result::class, $result);
 
-            /** @var list<array<string, mixed>> $rows */
             $rows = $result->fetch_all(MYSQLI_ASSOC);
             self::assertCount(2, $rows);
 
@@ -734,7 +732,6 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertNotFalse($result);
             self::assertInstanceOf(mysqli_result::class, $result);
 
-            /** @var list<array<string, mixed>> $rows */
             $rows = $result->fetch_all(MYSQLI_ASSOC);
             self::assertCount(1, $rows);
             self::assertSame('Charlie', $rows[0]['name']);
@@ -764,7 +761,6 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertNotFalse($result);
             self::assertInstanceOf(mysqli_result::class, $result);
 
-            /** @var list<array<string, mixed>> $rows */
             $rows = $result->fetch_all(MYSQLI_ASSOC);
             self::assertCount(2, $rows);
             self::assertSame('Alice', $rows[0]['name']);
@@ -813,7 +809,6 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertNotFalse($result);
             self::assertInstanceOf(mysqli_result::class, $result);
 
-            /** @var list<array<string, mixed>> $rows */
             $rows = $result->fetch_all(MYSQLI_ASSOC);
             self::assertCount(3, $rows);
 
@@ -845,7 +840,6 @@ final class MysqliCteShadowingTest extends TestCase
             $result = $stmt->get_result();
             self::assertNotFalse($result);
 
-            /** @var list<array<string, mixed>> $rows */
             $rows = $result->fetch_all(MYSQLI_ASSOC);
             self::assertCount(1, $rows);
             self::assertSame('Charlie', $rows[0]['name']);
@@ -876,7 +870,6 @@ final class MysqliCteShadowingTest extends TestCase
             $result = $stmt->get_result();
             self::assertNotFalse($result);
 
-            /** @var list<array<string, mixed>> $rows */
             $rows = $result->fetch_all(MYSQLI_ASSOC);
             self::assertCount(0, $rows);
         } finally {
@@ -947,7 +940,6 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertNotFalse($result);
             self::assertInstanceOf(mysqli_result::class, $result);
 
-            /** @var list<array<string, mixed>> $rows */
             $rows = $result->fetch_all(MYSQLI_ASSOC);
             self::assertCount(1, $rows);
             self::assertSame('Charlie', $rows[0]['name']);
@@ -974,7 +966,6 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertNotFalse($selectResult);
             self::assertInstanceOf(mysqli_result::class, $selectResult);
 
-            /** @var list<array<string, mixed>> $rows */
             $rows = $selectResult->fetch_all(MYSQLI_ASSOC);
             self::assertCount(1, $rows);
         } finally {

@@ -1,0 +1,47 @@
+# NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
+scan:
+  roots:
+    - src
+  exclude: []
+
+policies:
+  standard:
+    limits:
+      file:
+        lines: 500
+        ncloc: 350
+      class:
+        lines: 400
+      trait:
+        lines: 300
+      interface:
+        lines: 200
+      enum:
+        lines: 200
+      function:
+        lines: 50
+        cyclomatic_complexity: 20
+      method:
+        lines: 50
+        cyclomatic_complexity: 20
+
+  native-api-adapter:
+    extends: standard
+    limits:
+      file: { lines: 1000, ncloc: 650 }
+      class: { lines: 900 }
+
+apply:
+  default: standard
+  rules:
+    - name: native-api-adapters
+      match:
+        paths: [src/ZtdMysqli.php, src/ZtdMysqliStatement.php]
+      policy: native-api-adapter
+
+report:
+  reporter: ai
+  order_by:
+    - path
+    - line
+    - rule

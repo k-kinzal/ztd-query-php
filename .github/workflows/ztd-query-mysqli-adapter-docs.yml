@@ -1,0 +1,138 @@
+name: Docs (mysqli adapter)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/ztd-query-mysqli-adapter/**'
+      - 'packages/ztd-query-core/**'
+      - 'packages/ztd-query-mysql/**'
+      - 'packages/sql-fixture/**'
+      - 'packages/sql-faker/**'
+      - '.github/workflows/ztd-query-mysqli-adapter-docs.yml'
+      - '.github/workflows/ztd-query-mysqli-adapter-docs-preview.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sql-faker-docs-publish
+  cancel-in-progress: false
+
+env:
+  COMPOSER_NO_INTERACTION: '1'
+  DOCS_BRANCH: gh-pages
+
+jobs:
+  publish:
+    name: Generate and publish the documentation site
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pages: write
+    services:
+      mysql:
+        image: mysql:8.0.44
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_ROOT_HOST: '%'
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=10s --health-timeout=5s --health-retries=20
+    env:
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_PORT: '3306'
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+        with:
+          php-version: '8.5'
+          extensions: mbstring, pcntl, gd, mysqli, pdo_mysql, dom, xml, xmlwriter
+          coverage: pcov
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+        with:
+          working-directory: packages/ztd-query-mysqli-adapter
+          dependency-versions: highest
+          composer-options: --prefer-dist
+
+      - name: Check installed platform requirements
+        run: |
+          composer --working-dir=packages/ztd-query-mysqli-adapter validate --strict --no-check-publish
+          composer --working-dir=packages/ztd-query-mysqli-adapter check-platform-reqs
+
+      - name: Restore the DocGen cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: packages/ztd-query-mysqli-adapter/build/docgen-cache
+          key: mysqli-docgen-${{ runner.os }}-${{ hashFiles('packages/ztd-query-mysqli-adapter/composer.json') }}-${{ github.sha }}
+          restore-keys: |
+            mysqli-docgen-${{ runner.os }}-${{ hashFiles('packages/ztd-query-mysqli-adapter/composer.json') }}-
+            mysqli-docgen-${{ runner.os }}-
+
+      - name: Generate the coverage report the site reads
+        run: composer --working-dir=packages/ztd-query-mysqli-adapter test:coverage
+
+      - name: Generate the documentation
+        run: |
+          set -euo pipefail
+
+          repository="$(printf '%s' "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')"
+          composer --working-dir=packages/ztd-query-mysqli-adapter docgen -- \
+            --base-url="https://${repository%%/*}.github.io/${repository#*/}/mysqli"
+
+      - name: Check out the documentation branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ env.DOCS_BRANCH }}
+          path: .docs-branch
+
+      - name: Publish the site
+        working-directory: .docs-branch
+        run: |
+          set -euo pipefail
+
+          mkdir -p mysqli
+          rsync -a --checksum --delete ../packages/ztd-query-mysqli-adapter/build/docs/ mysqli/
+          touch .nojekyll
+
+          git add --all
+          if git diff --cached --quiet; then
+            echo "The ${DOCS_BRANCH} branch already serves this documentation."
+            exit 0
+          fi
+
+          git -c user.name='github-actions[bot]' \
+            -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+            commit --message "docs: generate from ${GITHUB_SHA}"
+          git push origin "HEAD:${DOCS_BRANCH}"
+
+      - name: Build GitHub Pages and wait for publication
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          expected_sha="$(git -C .docs-branch rev-parse HEAD)"
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/pages/builds" > /dev/null
+          for attempt in {1..60}; do
+            build="$(gh api "repos/${GITHUB_REPOSITORY}/pages/builds/latest")"
+            if [ "$(jq -r .commit <<< "$build")" = "$expected_sha" ]; then
+              case "$(jq -r .status <<< "$build")" in
+                built) exit 0 ;;
+                errored) jq .error <<< "$build"; exit 1 ;;
+              esac
+            fi
+            sleep 10
+          done
+          echo 'Timed out waiting for GitHub Pages publication.' >&2
+          exit 1

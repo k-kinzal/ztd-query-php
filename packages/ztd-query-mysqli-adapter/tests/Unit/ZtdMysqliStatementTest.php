@@ -159,7 +159,7 @@ final class ZtdMysqliStatementTest extends TestCase
         self::assertTrue($stmt->execute());
     }
 
-    public function testGetResultReturnsFalseForWriteWithoutResultSet(): void
+    public function testGet_resultReturnsFalseForWriteWithoutResultSet(): void
     {
         $delegate = StubMysqliStmt::create();
         $delegate->getResultReturn = false;
@@ -341,7 +341,7 @@ final class ZtdMysqliStatementTest extends TestCase
         self::assertFalse($stmt->execute([1]));
     }
 
-    public function testGetResultReturnsCachedResultAndClearsIt(): void
+    public function testGet_resultReturnsCachedResultAndClearsIt(): void
     {
         $delegate = StubMysqliStmt::create();
         $delegate->getResultReturn = false;
@@ -436,5 +436,126 @@ final class ZtdMysqliStatementTest extends TestCase
         $stmt = new ZtdMysqliStatement($delegate, $session, null);
 
         self::assertFalse($stmt->execute());
+    }
+
+    public function testFree_resultPreservesNativeArgumentsAndResult(): void
+    {
+        $native = StubMysqliStmt::create();
+        $session = new Session(self::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class));
+        $ztd = new ZtdMysqliStatement($native, $session, null);
+
+        $ztd->free_result();
+        self::assertSame([['free_result', []]], $native->calls);
+    }
+
+    public function testStore_resultPreservesNativeArgumentsAndResult(): void
+    {
+        $native = StubMysqliStmt::create();
+        $session = new Session(self::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class));
+        $ztd = new ZtdMysqliStatement($native, $session, null);
+
+        self::assertSame(true, $ztd->store_result());
+        self::assertSame([['store_result', []]], $native->calls);
+    }
+
+    public function testData_seekPreservesNativeArgumentsAndResult(): void
+    {
+        $native = StubMysqliStmt::create();
+        $session = new Session(self::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class));
+        $ztd = new ZtdMysqliStatement($native, $session, null);
+
+        $ztd->data_seek(3);
+        self::assertSame([['data_seek', [3]]], $native->calls);
+    }
+
+    public function testResult_metadataPreservesNativeArgumentsAndResult(): void
+    {
+        $native = StubMysqliStmt::create();
+        $session = new Session(self::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class));
+        $ztd = new ZtdMysqliStatement($native, $session, null);
+
+        self::assertSame(false, $ztd->result_metadata());
+        self::assertSame([['result_metadata', []]], $native->calls);
+    }
+
+    public function testAttr_getPreservesNativeArgumentsAndResult(): void
+    {
+        $native = StubMysqliStmt::create();
+        $session = new Session(self::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class));
+        $ztd = new ZtdMysqliStatement($native, $session, null);
+
+        self::assertSame(0, $ztd->attr_get(MYSQLI_STMT_ATTR_CURSOR_TYPE));
+        self::assertSame([['attr_get', [MYSQLI_STMT_ATTR_CURSOR_TYPE]]], $native->calls);
+    }
+
+    public function testAttr_setPreservesNativeArgumentsAndResult(): void
+    {
+        $native = StubMysqliStmt::create();
+        $session = new Session(self::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class));
+        $ztd = new ZtdMysqliStatement($native, $session, null);
+
+        self::assertSame(true, $ztd->attr_set(MYSQLI_STMT_ATTR_CURSOR_TYPE, MYSQLI_CURSOR_TYPE_READ_ONLY));
+        self::assertSame([['attr_set', [MYSQLI_STMT_ATTR_CURSOR_TYPE, MYSQLI_CURSOR_TYPE_READ_ONLY]]], $native->calls);
+    }
+
+    public function testGet_warningsPreservesNativeArgumentsAndResult(): void
+    {
+        $native = StubMysqliStmt::create();
+        $session = new Session(self::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class));
+        $ztd = new ZtdMysqliStatement($native, $session, null);
+
+        self::assertSame(false, $ztd->get_warnings());
+        self::assertSame([['get_warnings', []]], $native->calls);
+    }
+
+    public function testMore_resultsPreservesNativeArgumentsAndResult(): void
+    {
+        $native = StubMysqliStmt::create();
+        $session = new Session(self::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class));
+        $ztd = new ZtdMysqliStatement($native, $session, null);
+
+        self::assertSame(false, $ztd->more_results());
+        self::assertSame([['more_results', []]], $native->calls);
+    }
+
+    public function testNext_resultPreservesNativeArgumentsAndResult(): void
+    {
+        $native = StubMysqliStmt::create();
+        $session = new Session(self::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class));
+        $ztd = new ZtdMysqliStatement($native, $session, null);
+
+        self::assertSame(false, $ztd->next_result());
+        self::assertSame([['next_result', []]], $native->calls);
+    }
+
+    public function testNum_rowsPreservesNativeArgumentsAndResult(): void
+    {
+        $native = StubMysqliStmt::create();
+        $native->numRowsReturn = 5;
+        $session = new Session(self::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class));
+        $ztd = new ZtdMysqliStatement($native, $session, null);
+
+        self::assertSame(5, $ztd->num_rows());
+        self::assertSame([['num_rows', []]], $native->calls);
+    }
+
+    public function testPreparePreservesNativeArgumentsAndResult(): void
+    {
+        $native = StubMysqliStmt::create();
+        $session = new Session(self::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class));
+        $ztd = new ZtdMysqliStatement($native, $session, null);
+
+        self::assertSame(true, $ztd->prepare('SELECT 42'));
+        self::assertSame([['prepare', ['SELECT 42']]], $native->calls);
+    }
+
+    public function testSend_long_dataPreservesNativeArgumentsAndResult(): void
+    {
+        $native = StubMysqliStmt::create();
+        $session = new Session(self::createStub(SqlRewriter::class), new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class));
+        $ztd = new ZtdMysqliStatement($native, $session, null);
+
+        self::assertSame(true, $ztd->send_long_data(2, 'payload'));
+        self::assertSame([['send_long_data', [2, 'payload']]], $native->calls);
     }
 }

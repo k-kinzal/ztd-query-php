@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tests\Fixtures;
 
 use mysqli;
+use Override;
+use RuntimeException;
 use Testcontainers\Containers\GenericContainer\GenericContainer;
 use Testcontainers\Containers\WaitStrategy\PDO\MySQLDSN;
 use Testcontainers\Containers\WaitStrategy\PDO\PDOConnectWaitStrategy;
@@ -23,7 +25,7 @@ final class MySqlContainer extends GenericContainer
     /**
      * @var null|string
      */
-    protected static $IMAGE = 'mysql:8.0';
+    protected static $IMAGE = 'mysql:8.0.44';
 
     /**
      * @var null|string
@@ -52,6 +54,7 @@ final class MySqlContainer extends GenericContainer
      */
     protected static $AUTO_REMOVE_ON_EXIT = true;
 
+    #[Override]
     protected function waitStrategy($instance): PDOConnectWaitStrategy
     {
         unset($instance);
@@ -64,9 +67,14 @@ final class MySqlContainer extends GenericContainer
             ->withRetryInterval(250000);
     }
 
+    /**
+     * Connect to the started container and cache its native handle.
+     *
+     * @throws RuntimeException If the MySQL port is not mapped.
+     */
     public function afterStart($instance): void
     {
-        $port = $instance->getMappedPort(3306);
+        $port = $instance->getMappedPort(3306) ?? throw new RuntimeException('MySQL port was not mapped.');
         $host = str_replace('localhost', '127.0.0.1', $instance->getHost());
 
         $mysqli = new mysqli($host, 'root', 'root', '', $port);
@@ -79,18 +87,39 @@ final class MySqlContainer extends GenericContainer
      * Run the container and create an isolated test database.
      *
      * @return array{string, mysqli}
+     * @throws RuntimeException If the configured port is invalid.
      */
     public static function createTestDatabase(): array
     {
-        $instance = Testcontainers::run(self::class);
-
-        /** @var mysqli $mysqli */
-        $mysqli = $instance->getData(mysqli::class);
+        $mysqli = new mysqli(...self::connectionParameters());
+        $mysqli->set_charset('utf8mb4');
 
         $databaseName = 'ztd_' . bin2hex(random_bytes(8));
         $mysqli->query(sprintf('CREATE DATABASE `%s` CHARACTER SET utf8mb4', $databaseName));
         $mysqli->select_db($databaseName);
 
         return [$databaseName, $mysqli];
+    }
+    /**
+     * Resolve the local service or disposable container used by native fixtures.
+     *
+     * @return array{string, string, string, string, int}
+     * @throws RuntimeException If the configured port is invalid.
+     */
+    public static function connectionParameters(): array
+    {
+        $host = getenv('MYSQL_HOST');
+        if ($host !== false) {
+            $configuredPort = getenv('MYSQL_PORT');
+            $port = filter_var($configuredPort === false ? '3306' : $configuredPort, FILTER_VALIDATE_INT);
+            if ($port === false) {
+                throw new RuntimeException('MYSQL_PORT must be an integer.');
+            }
+            return [$host, 'root', 'root', '', $port];
+        }
+        $instance = Testcontainers::run(self::class);
+        return [str_replace('localhost', '127.0.0.1', $instance->getHost()), 'root', 'root', '', $instance->getMappedPort(3306) ?? throw new RuntimeException('MySQL port was not mapped.')];
+
+
     }
 }
