@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>k-kinzal/ztd-query-mysqli-adapter — k-kinzal/ztd-query-mysqli-adapter</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/317/mysqli/k-kinzal/ztd-query-mysqli-adapter/">
+<meta name="description" content="MySQLi adapter for ZTD Query">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="k-kinzal/ztd-query-mysqli-adapter">
+<meta property="og:title" content="k-kinzal/ztd-query-mysqli-adapter — k-kinzal/ztd-query-mysqli-adapter">
+<meta property="og:description" content="MySQLi adapter for ZTD Query">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/317/mysqli/k-kinzal/ztd-query-mysqli-adapter/">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/317/mysqli/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="k-kinzal/ztd-query-mysqli-adapter">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../">
+<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../index.html">k-kinzal/ztd-query-mysqli-adapter</a></div><div class="sb-pkg"><a href="../../k-kinzal/ztd-query-mysqli-adapter/index.html">k-kinzal/ztd-query-mysqli-adapter</a></div><nav class="sb-block"><div class="sb-title">On this page</div><ul class="sb-list"><li data-diff="same"><a href="#layers">Architecture layers</a></li><li data-diff="same"><a href="#namespaces">Namespaces</a></li><li data-diff="same"><a href="#documents">Documents</a></li><li data-diff="same"><a href="#readme">README</a></li></ul></nav><nav class="sb-block"><div class="sb-title">Package</div><ul class="sb-list"><li data-diff="modified"><a href="../../k-kinzal/ztd-query-mysqli-adapter/all-items.html">All items</a></li><li data-diff="same"><a href="../../k-kinzal/ztd-query-mysqli-adapter/index.html#documents">Documents</a></li></ul><div class="sb-kind" data-diff="modified">Layers</div><ul class="sb-list"><li data-diff="modified"><a href="../../k-kinzal/ztd-query-mysqli-adapter/layer.Driver.html">Driver</a></li><li data-diff="added"><a href="../../k-kinzal/ztd-query-mysqli-adapter/layer.Native.html">Native</a></li><li data-diff="modified"><a href="../../k-kinzal/ztd-query-mysqli-adapter/layer.PublicApi.html">PublicApi</a></li></ul></nav><nav class="sb-block"><div class="sb-title">Namespaces</div><ul class="sb-list"><li data-diff="modified"><a href="../../k-kinzal/ztd-query-mysqli-adapter/ZtdQuery/Adapter/Mysqli/index.html" title="ZtdQuery\Adapter\Mysqli">ZtdQuery\Adapter\Mysqli</a></li><li data-diff="added"><a href="../../k-kinzal/ztd-query-mysqli-adapter/ZtdQuery/Adapter/Mysqli/Native/index.html" title="ZtdQuery\Adapter\Mysqli\Native">ZtdQuery\Adapter\Mysqli\Native</a></li></ul></nav></nav>
+<div class="page">
+<header class="topbar">
+<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
+<nav class="crumbs"><span class="crumb-current">k-kinzal/ztd-query-mysqli-adapter</span></nav>
+<div class="topbar-tools">
+<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing d56513049 to working tree">d56513049 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><button id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between d56513049 and working tree." data-off="This page documents what d56513049 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-package">package</span>k-kinzal/ztd-query-mysqli-adapter</h1></div>
+<p class="lede">MySQLi adapter for ZTD Query</p>
+<div class="relation-row"><span class="relation-label">Repository</span> <a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-mysqli-adapter" title="Repository: https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-mysqli-adapter" rel="noreferrer">github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-mysqli-adapter</a></div>
+<div class="relation-row"><span class="relation-label">External dependencies</span> <code>k-kinzal/ztd-query-core</code> <span class="dep-constraint">dev-main</span>, <code>k-kinzal/ztd-query-mysql</code> <span class="dep-constraint">dev-main</span></div>
+<section data-diff="same"><h2 id="layers">Architecture layers<a class="anchor" href="#layers">§</a></h2><p class="section-note">Layers and allowed dependencies from <code>deptrac.yaml</code>. Layers without an arrow are dependency-free by rule.</p><div class="graph-wrap"><svg class="graph" viewBox="0 0 258 176" role="img" style="max-width:258px"><path class="edge edge-allowed" d="M 125.0 42.0 C 125.0 72.0, 61.0 62.0, 61.0 89.0"/><circle class="edge-tip edge-allowed" cx="61.0" cy="90.0" r="2.6"/><path class="edge edge-allowed" d="M 125.0 42.0 C 125.0 72.0, 189.0 62.0, 189.0 89.0"/><circle class="edge-tip edge-allowed" cx="189.0" cy="90.0" r="2.6"/><a href="../../k-kinzal/ztd-query-mysqli-adapter/layer.Driver.html"><rect class="node node-layer" x="8" y="92" width="106" height="34" rx="7"/><text x="61" y="114">Driver (4)</text></a><a href="../../k-kinzal/ztd-query-mysqli-adapter/layer.Native.html"><rect class="node node-layer" x="136" y="92" width="106" height="34" rx="7"/><text x="189" y="114">Native (1)</text></a><a href="../../k-kinzal/ztd-query-mysqli-adapter/layer.PublicApi.html"><rect class="node node-layer" x="60" y="8" width="130" height="34" rx="7"/><text x="125" y="30">PublicApi (4)</text></a></svg></div></section>
+<section data-diff="modified"><h2 id="namespaces">Namespaces<a class="anchor" href="#namespaces">§</a></h2><div class="table-wrap"><table class="symbol-table"><tr data-diff="modified"><td><a href="../../k-kinzal/ztd-query-mysqli-adapter/ZtdQuery/Adapter/Mysqli/index.html">ZtdQuery\Adapter\Mysqli</a></td><td class="ns-counts"> <span class="ns-count k-class">8 classes</span></td></tr><tr data-diff="added"><td><a href="../../k-kinzal/ztd-query-mysqli-adapter/ZtdQuery/Adapter/Mysqli/Native/index.html">ZtdQuery\Adapter\Mysqli\Native</a></td><td class="ns-counts"> <span class="ns-count k-class">1 class</span></td></tr></table></div></section>
+<section data-diff="same"><h2 id="documents">Documents <span class="count">1</span><a class="anchor" href="#documents">§</a></h2><div class="table-wrap"><table class="symbol-table"><tr data-diff="same"><td><a href="../../k-kinzal/ztd-query-mysqli-adapter/doc/README.md.html">ZTD Query MySQLi Adapter</a></td><td class="item-ns">README.md</td></tr></table></div></section>
+<section class="readme" data-diff="same"><h2 id="readme">README<a class="anchor" href="#readme">§</a></h2><h2>ZTD Query MySQLi Adapter</h2>
+<p><a href="https://opensource.org/licenses/MIT"><span class="md-target" title="https://img.shields.io/badge/License-MIT-yellow.svg">License: MIT</span></a> <a href="https://www.php.net/"><span class="md-target" title="https://img.shields.io/badge/PHP-8.1%2B-blue.svg">PHP Version</span></a></p>
+<p>MySQLi adapter for <a href="https://github.com/k-kinzal/ztd-query-core">ZTD Query PHP</a>. Drop-in replacement for mysqli that transparently applies Zero Table Dependency query transformation.</p>
+<h3>Overview</h3>
+<p>This package provides <code>ZtdMysqli</code> and <code>ZtdMysqliStatement</code>, which extend <code>mysqli</code> and <code>mysqli_stmt</code> respectively. They intercept SQL queries and transform them using CTE (Common Table Expression) shadowing, enabling SQL unit testing without modifying physical databases.</p>
+<ul><li><strong>Drop-in replacement</strong> - <code>ZtdMysqli</code> extends <code>mysqli</code> and is type-compatible everywhere <code>mysqli</code> is expected</li><li><strong>Transparent rewriting</strong> - All queries are automatically rewritten at <code>prepare()</code>/<code>query()</code>/<code>execute_query()</code> time</li><li><strong>Toggle on/off</strong> - Enable or disable ZTD mode at runtime with <code>enableZtd()</code>/<code>disableZtd()</code></li><li><strong>Wrap existing connections</strong> - Use <code>ZtdMysqli::fromMysqli()</code> to wrap an existing mysqli instance without creating a new connection</li></ul>
+<h3>Requirements</h3>
+<ul><li>PHP 8.1 or higher</li><li>MySQLi extension</li><li>MySQL 5.6 - 9.1</li><li><a href="https://github.com/k-kinzal/ztd-query-core">k-kinzal/ztd-query-php</a> (core)</li><li><a href="https://github.com/k-kinzal/ztd-query-mysql">k-kinzal/ztd-query-mysql</a> (MySQL platform)</li></ul>
+<h3>Installation</h3>
+<pre class="code-block"><code>composer require --dev k-kinzal/ztd-query-mysqli-adapter</code></pre>
+<h3>Usage</h3>
+<h4>Creating a New Connection</h4>
+<pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Adapter\Mysqli\ZtdMysqli</span>;
+
+<span class="tok-var">$mysqli</span> = <span class="tok-kw">new</span> <span class="tok-id">ZtdMysqli</span>(<span class="tok-str">&#039;localhost&#039;</span>, <span class="tok-str">&#039;user&#039;</span>, <span class="tok-str">&#039;password&#039;</span>, <span class="tok-str">&#039;test&#039;</span>);
+
+<span class="tok-com">// Define schema and insert fixture data</span>
+<span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&#039;CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255), email VARCHAR(255))&#039;</span>);
+<span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&quot;INSERT INTO users (id, name, email) VALUES (1, &#039;Alice&#039;, &#039;alice@example.com&#039;)&quot;</span>);
+<span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&quot;INSERT INTO users (id, name, email) VALUES (2, &#039;Bob&#039;, &#039;bob@example.com&#039;)&quot;</span>);
+
+<span class="tok-com">// Query against fixture data (no physical table access)</span>
+<span class="tok-var">$stmt</span> = <span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">prepare</span>(<span class="tok-str">&#039;SELECT * FROM users WHERE id = ?&#039;</span>);
+<span class="tok-var">$stmt</span>-&gt;<span class="tok-id">bind_param</span>(<span class="tok-str">&#039;i&#039;</span>, <span class="tok-var">$id</span>);
+<span class="tok-var">$id</span> = <span class="tok-num">1</span>;
+<span class="tok-var">$stmt</span>-&gt;<span class="tok-id">execute</span>();
+<span class="tok-var">$result</span> = <span class="tok-var">$stmt</span>-&gt;<span class="tok-id">get_result</span>();
+<span class="tok-var">$row</span> = <span class="tok-var">$result</span>-&gt;<span class="tok-id">fetch_assoc</span>();
+<span class="tok-com">// [&#039;id&#039; =&gt; 1, &#039;name&#039; =&gt; &#039;Alice&#039;, &#039;email&#039; =&gt; &#039;alice@example.com&#039;]</span></code></pre>
+<h4>Wrapping an Existing mysqli Instance</h4>
+<pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Adapter\Mysqli\ZtdMysqli</span>;
+
+<span class="tok-var">$existingMysqli</span> = <span class="tok-kw">new</span> <span class="tok-id">mysqli</span>(<span class="tok-str">&#039;localhost&#039;</span>, <span class="tok-str">&#039;user&#039;</span>, <span class="tok-str">&#039;password&#039;</span>, <span class="tok-str">&#039;test&#039;</span>);
+<span class="tok-var">$ztdMysqli</span> = <span class="tok-id">ZtdMysqli</span>::<span class="tok-id">fromMysqli</span>(<span class="tok-var">$existingMysqli</span>);</code></pre>
+<h4>Testing Write Operations</h4>
+<p>INSERT/UPDATE/DELETE statements are converted to SELECT queries that return the affected rows:</p>
+<pre class="code-block"><code><span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&#039;CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255))&#039;</span>);
+<span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&quot;INSERT INTO users (id, name) VALUES (1, &#039;Alice&#039;)&quot;</span>);
+
+<span class="tok-com">// INSERT returns the inserted row data</span>
+<span class="tok-var">$result</span> = <span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&quot;INSERT INTO users (id, name) VALUES (2, &#039;Bob&#039;)&quot;</span>);
+<span class="tok-var">$row</span> = <span class="tok-var">$result</span>-&gt;<span class="tok-id">fetch_assoc</span>();
+<span class="tok-com">// [&#039;id&#039; =&gt; 2, &#039;name&#039; =&gt; &#039;Bob&#039;]</span>
+
+<span class="tok-com">// UPDATE returns the updated row data</span>
+<span class="tok-var">$result</span> = <span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&quot;UPDATE users SET name = &#039;Alice Updated&#039; WHERE id = 1&quot;</span>);
+<span class="tok-var">$row</span> = <span class="tok-var">$result</span>-&gt;<span class="tok-id">fetch_assoc</span>();
+<span class="tok-com">// [&#039;id&#039; =&gt; 1, &#039;name&#039; =&gt; &#039;Alice Updated&#039;]</span>
+
+<span class="tok-com">// DELETE returns the deleted row data</span>
+<span class="tok-var">$result</span> = <span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&quot;DELETE FROM users WHERE id = 1&quot;</span>);
+<span class="tok-var">$row</span> = <span class="tok-var">$result</span>-&gt;<span class="tok-id">fetch_assoc</span>();
+<span class="tok-com">// [&#039;id&#039; =&gt; 1, &#039;name&#039; =&gt; &#039;Alice&#039;]</span></code></pre>
+<h4>Enabling/Disabling ZTD Mode</h4>
+<pre class="code-block"><code><span class="tok-var">$mysqli</span> = <span class="tok-kw">new</span> <span class="tok-id">ZtdMysqli</span>(<span class="tok-str">&#039;localhost&#039;</span>, <span class="tok-str">&#039;user&#039;</span>, <span class="tok-str">&#039;password&#039;</span>, <span class="tok-str">&#039;test&#039;</span>);
+
+<span class="tok-com">// Disable ZTD to execute against physical database</span>
+<span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">disableZtd</span>();
+<span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&#039;CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255))&#039;</span>);
+
+<span class="tok-com">// Re-enable ZTD for testing</span>
+<span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">enableZtd</span>();
+
+<span class="tok-com">// Check current status</span>
+<span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">isZtdEnabled</span>(); <span class="tok-com">// true</span></code></pre>
+<h4>Affected Row Count</h4>
+<p>Due to PHP&#039;s C extension property handler, <code>$mysqli-&gt;affected_rows</code> may not work reliably with ZTD operations. Use the dedicated method instead:</p>
+<pre class="code-block"><code><span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&quot;INSERT INTO users (id, name) VALUES (1, &#039;Alice&#039;)&quot;</span>);
+<span class="tok-var">$affectedRows</span> = <span class="tok-var">$mysqli</span>-&gt;<span class="tok-id">lastAffectedRows</span>();
+<span class="tok-com">// 1</span></code></pre>
+<h4>Configuration</h4>
+<pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Adapter\Mysqli\ZtdMysqli</span>;
+<span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Config\ZtdConfig</span>;
+<span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Config\UnsupportedSqlBehavior</span>;
+<span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Config\UnknownSchemaBehavior</span>;
+
+<span class="tok-var">$config</span> = <span class="tok-kw">new</span> <span class="tok-id">ZtdConfig</span>(
+    <span class="tok-id">unsupportedBehavior</span>: <span class="tok-id">UnsupportedSqlBehavior</span>::<span class="tok-id">Exception</span>,
+    <span class="tok-id">unknownSchemaBehavior</span>: <span class="tok-id">UnknownSchemaBehavior</span>::<span class="tok-id">Exception</span>,
+    <span class="tok-id">behaviorRules</span>: [
+        <span class="tok-str">&#039;BEGIN&#039;</span> =&gt; <span class="tok-id">UnsupportedSqlBehavior</span>::<span class="tok-id">Ignore</span>,
+        <span class="tok-str">&#039;COMMIT&#039;</span> =&gt; <span class="tok-id">UnsupportedSqlBehavior</span>::<span class="tok-id">Ignore</span>,
+        <span class="tok-str">&#039;ROLLBACK&#039;</span> =&gt; <span class="tok-id">UnsupportedSqlBehavior</span>::<span class="tok-id">Ignore</span>,
+    ],
+);
+
+<span class="tok-var">$mysqli</span> = <span class="tok-kw">new</span> <span class="tok-id">ZtdMysqli</span>(<span class="tok-str">&#039;localhost&#039;</span>, <span class="tok-str">&#039;user&#039;</span>, <span class="tok-str">&#039;password&#039;</span>, <span class="tok-str">&#039;test&#039;</span>, <span class="tok-id">config</span>: <span class="tok-var">$config</span>);</code></pre>
+<div class="table-wrap"><table><thead><tr><th>Option</th><th>Values</th><th>Description</th></tr></thead><tbody><tr><td><code>unsupportedBehavior</code></td><td><code>Ignore</code>, <code>Notice</code>, <code>Exception</code></td><td>Default behavior when unsupported SQL is executed</td></tr><tr><td><code>unknownSchemaBehavior</code></td><td><code>Passthrough</code>, <code>Exception</code></td><td>Behavior when unknown table is referenced</td></tr><tr><td><code>behaviorRules</code></td><td><code>array&lt;string, UnsupportedSqlBehavior&gt;</code></td><td>Per-pattern behavior overrides (first match wins)</td></tr></tbody></table></div>
+<h3>API Reference</h3>
+<h4>ZtdMysqli</h4>
+<div class="table-wrap"><table><thead><tr><th>Method</th><th>Description</th></tr></thead><tbody><tr><td><code>__construct($hostname, $username, $password, $database, $port, $socket, $config)</code></td><td>Create a new ZTD-wrapped mysqli connection</td></tr><tr><td><code>ZtdMysqli::fromMysqli($mysqli, $config)</code></td><td>Wrap an existing mysqli instance</td></tr><tr><td><code>enableZtd()</code></td><td>Enable ZTD mode</td></tr><tr><td><code>disableZtd()</code></td><td>Disable ZTD mode</td></tr><tr><td><code>isZtdEnabled()</code></td><td>Check whether ZTD mode is enabled</td></tr><tr><td><code>lastAffectedRows()</code></td><td>Get affected row count from the last ZTD or regular operation</td></tr><tr><td><code>prepare($query)</code></td><td>Prepare a statement (rewritten if ZTD enabled)</td></tr><tr><td><code>query($query, $resultMode)</code></td><td>Execute a query with ZTD processing</td></tr><tr><td><code>real_query($query)</code></td><td>Execute a query without fetching results</td></tr><tr><td><code>execute_query($query, $params)</code></td><td>Execute a parameterized query (PHP 8.2+)</td></tr></tbody></table></div>
+<p>All other mysqli methods (<code>begin_transaction</code>, <code>commit</code>, <code>rollback</code>, <code>real_escape_string</code>, etc.) are delegated to the inner mysqli instance. Properties are delegated via <code>__get</code>/<code>__isset</code>.</p>
+<h4>ZtdMysqliStatement</h4>
+<p>Extends <code>mysqli_stmt</code> with ZTD-aware behavior. <code>execute()</code>, <code>get_result()</code>, and <code>bind_param()</code> work transparently. Use <code>ztdAffectedRows()</code> to get the ZTD-aware affected row count for write operations.</p>
+<h3>Development</h3>
+<pre class="code-block"><code># Run unit tests
+composer test:unit
+
+# Run integration tests (requires Docker)
+composer test:integration
+
+# Run all tests
+composer test
+
+# Run linter (PHP-CS-Fixer + PHPStan level max)
+composer lint
+
+# Fix code style
+composer format</code></pre>
+<h3>License</h3>
+<p>MIT License. See <span class="md-target" title="LICENSE">LICENSE</span> for details.</p>
+</section>
+</main>
+<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div>
+<script src="../../assets/search-index.js" defer></script>
+<script src="../../assets/app.js" defer></script>
+</body>
+</html>
