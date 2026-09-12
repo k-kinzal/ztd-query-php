@@ -1943,7 +1943,9 @@ final class MySqlRewriterTest extends RewriterContractTest
         self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind());
         self::assertInstanceOf(InsertMutation::class, $plan->mutation());
         self::assertStringStartsWith('WITH source AS', $plan->sql());
-        self::assertSame(1, substr_count($plan->sql(), 'WITH'));
+        self::assertSame(1, substr_count($plan->sql(), 'WITH source AS'));
+        self::assertSame(1, substr_count($plan->sql(), 'WITH `__ztd_insert_source`'));
+        self::assertStringContainsString('CAST(_ztd_insert_cast.`id` AS SIGNED)', $plan->sql());
     }
 
     public function testRewriteWithStatementDeleteIgnoresHashCommentsAroundItsCteHeader(): void
