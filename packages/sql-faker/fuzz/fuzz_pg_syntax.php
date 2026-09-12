@@ -7,7 +7,7 @@
  *   vendor/bin/php-fuzzer fuzz fuzz/fuzz_pg_syntax.php fuzz/corpus/pg/
  *
  * Environment variables:
- *   MAX_DEPTH - Grammar expansion max depth (default: 8)
+ *   SQLFAKER_COVERAGE - Set to 0 to run without recording grammar coverage under fuzz/coverage/pg
  */
 
 declare(strict_types=1);
@@ -24,11 +24,14 @@ register_shutdown_function(static function (): void {
     }
 });
 
+use Faker\Factory;
 use Fuzz\Container\PostgreSqlContainer;
-use Fuzz\Target\PgSyntaxTarget;
+use Fuzz\Target\PgSyntaxCheck;
+use SqlFaker\Coverage\GrammarCoverage;
+use SqlFaker\Generation\Choice\BytePlanCompiler;
+use SqlFaker\Generation\Plan\GenerationPlan;
+use SqlFaker\PostgreSqlProvider;
 use Testcontainers\Testcontainers;
-
-$maxDepth = (int) (getenv('MAX_DEPTH') !== false ? getenv('MAX_DEPTH') : 8);
 
 fwrite(STDERR, "Starting PostgreSQL container...\n");
 
@@ -37,22 +40,31 @@ $instance = Testcontainers::run(PostgreSqlContainer::class);
 $port = $instance->getMappedPort(5432);
 $host = str_replace('localhost', '127.0.0.1', $instance->getHost());
 
-$pdo = new PDO(
-    "pgsql:host=$host;port=$port;dbname=fuzz_test",
-    'test',
-    'test',
-    [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_EMULATE_PREPARES => false,
-    ]
-);
+$connection = pg_connect("host=$host port=$port dbname=fuzz_test user=test password=test");
+if ($connection === false) {
+    fwrite(STDERR, "Cannot connect to PostgreSQL on $host:$port\n");
+    exit(2);
+}
 
 fwrite(STDERR, "PostgreSQL ready on $host:$port\n");
-fwrite(STDERR, "Max depth: $maxDepth\n");
+
+$coverage = getenv('SQLFAKER_COVERAGE') === '0' ? null : new GrammarCoverage(__DIR__ . '/coverage/pg');
+$provider = new PostgreSqlProvider(Factory::create(), 'pg-17.2', $coverage);
+$check = new PgSyntaxCheck($connection);
+$planner = $provider->planner();
+$constraints = GenerationPlan::fromRule('stmt')->requiringNonEmpty();
+
 fwrite(STDERR, "Starting fuzzer...\n\n");
 
-$target = new PgSyntaxTarget($pdo, $maxDepth);
-
-/** @var PhpFuzzer\Config $config */
+/**
+ * The plan compiler reads four budget bytes and then one decision per byte, so inputs
+ * are allowed to grow well beyond php-fuzzer's default length.
+ *
+ * @var PhpFuzzer\Config $config
+ */
 $config->setAllowedExceptions([]);
-$config->setTarget(Closure::fromCallable($target));
+$config->setMaxLen(80004);
+$config->setTarget(static function (string $input) use ($provider, $planner, $constraints, $check): void {
+    $plan = (new BytePlanCompiler())->compile($input, $planner, $constraints);
+    $check->verify($provider->generate($plan), $input);
+});

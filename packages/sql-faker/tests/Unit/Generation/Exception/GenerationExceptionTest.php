@@ -9,6 +9,8 @@ use PHPUnit\Framework\TestCase;
 use SqlFaker\Generation\Exception\GenerationException;
 
 #[CoversClass(GenerationException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Generation\Derivation\CompletionCosts::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Generation\Derivation\DerivationNode::class)]
 final class GenerationExceptionTest extends TestCase
 {
     public function testDerivationLimitExceededReportsTheBudget(): void

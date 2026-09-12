@@ -18,6 +18,7 @@ use SqlFaker\MySql\GenerationPlans;
 #[UsesClass(ProductionPattern::class)]
 #[UsesClass(Grammar::class)]
 #[UsesClass(ProductionRule::class)]
+#[UsesClass(\SqlFaker\Generation\Choice\BytePlanCompiler::class)]
 final class GenerationPlansTest extends TestCase
 {
     public function testWithoutEmptyRowsConstrainsEveryOptionalValuesOccurrence(): void

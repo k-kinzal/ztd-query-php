@@ -36,11 +36,7 @@ final class StartRuleResolver
     public function startSymbolFor(?string $requested): string
     {
         if ($requested === null) {
-            if (isset($this->grammar->ruleMap['simple_statement_or_begin'])) {
-                return 'simple_statement_or_begin';
-            }
-
-            return isset($this->grammar->ruleMap['statement']) ? 'statement' : $this->grammar->startSymbol;
+            return $this->grammar->startSymbol;
         }
         if (isset($this->grammar->ruleMap[$requested])) {
             return $requested;

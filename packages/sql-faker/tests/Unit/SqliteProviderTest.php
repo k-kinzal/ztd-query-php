@@ -204,6 +204,14 @@ use UnexpectedValueException;
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Query\ParserOptionsRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\JsonTablePathRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\AggregateArgumentRule::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\CompletionState::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\CompletionFrontier::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\ConstrainedCompletion::class)]
+#[UsesClass(\SqlFaker\Generation\Value\ValueChoices::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\CompletionMemo::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\CompletionReduction::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\ConstraintDependencies::class)]
+#[UsesClass(\SqlFaker\Generation\Choice\BytePlanCompiler::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Name\HostNameRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Name\ParserNameRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Column\NumericContextRule::class)]
@@ -213,6 +221,8 @@ use UnexpectedValueException;
 #[UsesClass(\SqlFaker\Sqlite\Generation\Value\QuotedDomain::class)]
 #[UsesClass(\SqlFaker\Generation\Value\RepeatDomain::class)]
 #[UsesClass(\SqlFaker\Generation\Value\WordDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\Completion\PatternProductions::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\Completion\CompletionWitness::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Value\OperatorDomain::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Value\RadixDomain::class)]
 #[UsesClass(\SqlFaker\Generation\Value\Utf8::class)]
@@ -1027,4 +1037,11 @@ final class SqliteProviderTest extends TestCase
         yield 'DropTable' => [StatementType::DropTable];
     }
 
+    public function testPlannerCompilesReusableInstructionsWithoutChangingTheDefaultStart(): void
+    {
+        $provider = new SqliteProvider(Factory::create(), 'sqlite-3.47.2');
+        $plan = (new \SqlFaker\Generation\Choice\BytePlanCompiler())->compile('', $provider->planner());
+        self::assertNull($plan->startRule());
+        self::assertSame($provider->generate($plan), $provider->generate($plan));
+    }
 }

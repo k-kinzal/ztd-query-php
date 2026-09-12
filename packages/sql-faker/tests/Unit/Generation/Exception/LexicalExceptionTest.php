@@ -74,6 +74,8 @@ use SqlFaker\MySql\Tokenization\MySqlTokenizer;
 #[UsesClass(\SqlFaker\MySql\Generation\Value\DollarQuotedDomain::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Value\DollarQuotedDomain::class)]
 #[UsesClass(\SqlFaker\Generation\Output\BoundaryCompletion::class)]
+#[UsesClass(\SqlFaker\Generation\Value\ValueChoices::class)]
+#[UsesClass(\SqlFaker\Generation\Choice\BytePlanCompiler::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CharsetLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CharsetValueLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Value\IdentifierDomain::class)]

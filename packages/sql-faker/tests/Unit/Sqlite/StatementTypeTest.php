@@ -12,6 +12,8 @@ use SqlFaker\Sqlite\StatementType;
 
 #[CoversClass(StatementType::class)]
 #[UsesClass(StatementRule::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\CompletionCosts::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\DerivationNode::class)]
 final class StatementTypeTest extends TestCase
 {
     public function testAliasPreservesAllProviderStatementCases(): void

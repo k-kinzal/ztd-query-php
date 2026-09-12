@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace SqlFaker\PostgreSql;
 
+use Closure;
 use Faker\Generator as FakerGenerator;
 use InvalidArgumentException;
 use Override;
 use RuntimeException;
 use SqlFaker\Generation\Exception\LexicalException;
 use SqlFaker\Generation\Lexeme\LexicalGrammar as LexicalGrammarContract;
+use SqlFaker\Generation\Lexeme\ResolvedOutput;
 use SqlFaker\Generation\Output\ReverseLexemeGenerator;
 use SqlFaker\Generation\Output\SqlSerializer;
 use SqlFaker\Generation\Plan\GenerationPlan;
@@ -122,8 +124,21 @@ final class LexicalGrammar implements LexicalGrammarContract
      */
     public function realizeSequence(TerminalSequence $sequence, ?GenerationPlan $plan = null): string
     {
-        $output = $this->pipeline->generate($sequence, $plan, fn (int $count): int => $this->faker->numberBetween(0, $count - 1));
+        $output = $this->resolveSequence($sequence, $plan, fn (int $count): int => $this->faker->numberBetween(0, $count - 1));
         return (new SqlSerializer())->serialize($output->pieces());
+    }
+
+    /**
+     * Exposes the resolved choices to a plan compiler without interpreting its input.
+     * @param GenerationPlan<bool>|null $plan
+     * @param Closure(int): int $choose
+     * @param (Closure(positive-int): ?int)|null $valueChoice Constructive values selected only while compiling a plan
+     * @throws LexicalException When no compatible candidate exists
+     */
+    #[Override]
+    public function resolveSequence(TerminalSequence $sequence, ?GenerationPlan $plan, Closure $choose, ?Closure $valueChoice = null): ResolvedOutput
+    {
+        return $this->pipeline->generate($sequence, $plan, $choose, $valueChoice);
     }
 
     /**

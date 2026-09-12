@@ -10,6 +10,8 @@ use PHPUnit\Framework\TestCase;
 use SqlFaker\MySql\Tokenization\MySqlQuoting;
 
 #[CoversClass(MySqlQuoting::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Generation\Derivation\CompletionCosts::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Generation\Derivation\DerivationNode::class)]
 final class MySqlQuotingTest extends TestCase
 {
     #[DataProvider('providerIdentifier')]

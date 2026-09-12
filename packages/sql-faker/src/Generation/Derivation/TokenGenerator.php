@@ -33,12 +33,13 @@ final class TokenGenerator
     /**
      * Produces the selected terminal occurrences and their grammar provenance.
      * @param GenerationPlan<bool> $plan
+     * @param (Closure(int): ?int)|null $choose
      * @throws \SqlFaker\Generation\Exception\GenerationException When the grammar cannot complete the plan
      * @throws LogicException When derivation failed to retain its trace
      */
-    public function generate(string $root, GenerationPlan $plan): TerminalSequence
+    public function generate(string $root, GenerationPlan $plan, ?Closure $choose = null): TerminalSequence
     {
-        $derivation = new Derivation($this->grammar, $this->faker, $this->termination, $this->completion);
+        $derivation = new Derivation($this->grammar, $this->faker, $this->termination, $this->completion, $choose);
         $derivation->of($root, $plan);
         return ($derivation->trace ?? throw new LogicException('Missing derivation trace.'))->terminals();
     }

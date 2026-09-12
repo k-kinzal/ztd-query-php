@@ -14,6 +14,7 @@ use SqlFaker\PostgreSql\GenerationPlans;
 #[CoversClass(GenerationPlans::class)]
 #[UsesClass(GenerationPlan::class)]
 #[UsesClass(ProductionPattern::class)]
+#[UsesClass(\SqlFaker\Generation\Choice\BytePlanCompiler::class)]
 final class GenerationPlansTest extends TestCase
 {
     public function testForeignKeyConstraintRestrictsTheTableConstraintGrammar(): void

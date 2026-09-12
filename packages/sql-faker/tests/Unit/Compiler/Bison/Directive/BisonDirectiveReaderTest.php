@@ -18,6 +18,8 @@ use SqlFaker\Compiler\Bison\Directive\TypeDirectiveReader;
 use SqlFaker\Compiler\Bison\Lexer\BisonTokenStream;
 
 #[CoversNothing]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Generation\Derivation\CompletionCosts::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Generation\Derivation\DerivationNode::class)]
 final class BisonDirectiveReaderTest extends TestCase
 {
     #[DataProvider('providerReader')]

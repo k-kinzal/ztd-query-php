@@ -18,6 +18,8 @@ final class Production
      */
     public function __construct(
         public readonly array $symbols,
+        public readonly ?int $ordinal = null,
+        public readonly ?string $origin = null,
     ) {
     }
 

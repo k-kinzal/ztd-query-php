@@ -41,7 +41,6 @@ use SqlFaker\Compiler\Bison\Rule\BisonRuleReader;
 #[UsesClass(BisonAlternativeReader::class)]
 #[UsesClass(BisonLexeme::class)]
 #[UsesClass(BisonLexer::class)]
-#[UsesClass(BisonLexer::class)]
 #[UsesClass(BisonRuleNode::class)]
 #[UsesClass(BisonScannerChain::class)]
 #[UsesClass(BisonSymbolNode::class)]

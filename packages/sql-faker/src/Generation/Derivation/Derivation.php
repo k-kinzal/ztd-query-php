@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlFaker\Generation\Derivation;
 
+use Closure;
 use Faker\Generator as FakerGenerator;
 use SqlFaker\Generation\Exception\GenerationException;
 use SqlFaker\Generation\Plan\GenerationPlan;
@@ -25,6 +26,7 @@ final class Derivation
     private int $steps = 0;
 
     private readonly CompletionCosts $completion;
+    private readonly ConstrainedCompletion $constrainedCompletion;
 
     /**
      * Occurrences from the most recent derivation, including empty productions.
@@ -35,14 +37,17 @@ final class Derivation
      * @param Grammar $grammar Grammar being walked
      * @param FakerGenerator $faker Source of the choices the walk makes freely
      * @param TerminationAnalyzer $analyzer Answers what a production still costs to finish
+     * @param (Closure(int): ?int)|null $choose Optional choice policy; null results choose the shortest completion
      */
     public function __construct(
         private readonly Grammar $grammar,
         private readonly FakerGenerator $faker,
         private readonly TerminationAnalyzer $analyzer,
         ?CompletionCosts $completion = null,
+        private readonly ?Closure $choose = null,
     ) {
         $this->completion = $completion ?? new CompletionCosts($grammar, static fn (string $terminal): bool => false);
+        $this->constrainedCompletion = new ConstrainedCompletion($grammar, $this->completion);
     }
 
     /**
@@ -71,7 +76,7 @@ final class Derivation
             }
 
             $this->steps++;
-            if ($this->steps > self::STEP_LIMIT) {
+            if ($this->steps > ($plan->expansionBudget() ?? self::STEP_LIMIT)) {
                 throw GenerationException::derivationLimitExceeded();
             }
 
@@ -81,7 +86,9 @@ final class Derivation
             $occurrences[$nonTerminal->value] = $occurrence + 1;
             $alternatives = $this->alternatives($nonTerminal, $plan, $occurrence);
 
-            $alternatives = $this->completable($alternatives, $form, $index, $plan);
+            $alternatives = count($alternatives) === 1
+                ? $this->affordableCompletion($alternatives, $form, $index, $plan)
+                : $this->completable($alternatives, $form, $index, $plan, $occurrences);
             $production = $this->selectProduction($alternatives, $plan);
             $ordinal = array_search($production, $this->grammar->ruleMap[$nonTerminal->value]->alternatives, true);
             $this->trace->expand($index, $production, $ordinal === false ? 0 : $ordinal);
@@ -162,7 +169,12 @@ final class Derivation
     public function selectProduction(array $alternatives, GenerationPlan $plan): Production
     {
         if ($this->steps < $plan->maxDepth()) {
-            return $alternatives[$this->faker->numberBetween(0, count($alternatives) - 1)];
+            $index = $this->choose === null
+                ? $this->faker->numberBetween(0, count($alternatives) - 1)
+                : ($this->choose)(count($alternatives));
+            if ($index !== null) {
+                return $alternatives[$index];
+            }
         }
 
         $selected = 0;
@@ -196,10 +208,7 @@ final class Derivation
         if ($rule->alternatives === []) {
             throw GenerationException::ruleHasNoAlternatives($nonTerminal->value);
         }
-        $alternatives = array_values(array_filter(
-            $rule->alternatives,
-            $this->analyzer->isProductionViable(...),
-        ));
+        $alternatives = array_filter($rule->alternatives, $this->analyzer->isProductionViable(...));
         if ($alternatives === []) {
             throw GenerationException::noRealizableAlternative($nonTerminal->value);
         }
@@ -207,17 +216,18 @@ final class Derivation
         if ($pattern !== null) {
             $alternatives = array_values(array_filter(
                 $alternatives,
-                static fn (Production $production): bool => $pattern->matches(array_map(
+                static fn (Production $production, int $ordinal): bool => $pattern->matches(array_map(
                     static fn (Symbol $symbol): string => $symbol->value(),
                     $production->symbols,
-                )),
+                ), $ordinal),
+                ARRAY_FILTER_USE_BOTH,
             ));
             if ($alternatives === []) {
                 throw GenerationException::noAlternativeMatchingPlan($nonTerminal->value);
             }
         }
 
-        return $alternatives;
+        return array_values($alternatives);
     }
 
     /**
@@ -226,15 +236,37 @@ final class Derivation
      * @param list<Symbol> $form
      * @param GenerationPlan<bool> $plan
      * @return non-empty-list<Production>
+     * @param array<string, int> $occurrences Occurrences already selected before the pending continuation
      * @throws GenerationException When the explicit plan has no affordable completion
      */
-    public function completable(array $alternatives, array $form, int $index, GenerationPlan $plan): array
+    public function completable(array $alternatives, array $form, int $index, GenerationPlan $plan, array $occurrences = []): array
     {
         $nonEmpty = $plan->requiresNonEmpty() && !$this->completion->hasTerminalOutput(array_slice($form, 0, $index));
-        $candidates = $this->completion->affordable($alternatives, array_slice($form, $index + 1), $nonEmpty, self::STEP_LIMIT - $this->steps);
+        $candidates = $this->affordableCompletion($alternatives, $form, $index, $plan);
+        if ($plan->hasRemainingPatterns($occurrences)) {
+            $budget = ($plan->expansionBudget() ?? self::STEP_LIMIT) - $this->steps;
+            $candidates = array_values(array_filter($candidates, fn (Production $production): bool =>
+                $this->constrainedCompletion->within([...$production->symbols, ...array_slice($form, $index + 1)], $plan, $occurrences, $nonEmpty, $budget)));
+        }
         if ($candidates === []) {
             throw GenerationException::derivationLimitExceeded();
         }
         return $candidates;
+    }
+
+    /**
+     * Checks budget/output lower bounds when the next production is forced; the walk validates subsequent forced steps directly.
+     * Looking ahead cannot select a different production here, so it would only repeat the frozen plan's remaining walk.
+     * @param non-empty-list<Production> $alternatives
+     * @param list<Symbol> $form
+     * @param GenerationPlan<bool> $plan
+     * @return non-empty-list<Production>
+     * @throws GenerationException When no production can satisfy the remaining budget and output requirement
+     */
+    public function affordableCompletion(array $alternatives, array $form, int $index, GenerationPlan $plan): array
+    {
+        $nonEmpty = $plan->requiresNonEmpty() && !$this->completion->hasTerminalOutput(array_slice($form, 0, $index));
+        $candidates = $this->completion->affordable($alternatives, array_slice($form, $index + 1), $nonEmpty, ($plan->expansionBudget() ?? self::STEP_LIMIT) - $this->steps);
+        return $candidates === [] ? throw GenerationException::derivationLimitExceeded() : $candidates;
     }
 }

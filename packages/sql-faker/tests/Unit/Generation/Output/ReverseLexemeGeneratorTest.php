@@ -53,6 +53,8 @@ use SqlFaker\Generation\Token\TerminalSequence;
 #[UsesClass(\SqlFaker\Generation\Output\BoundaryCompletion::class)]
 #[UsesClass(\SqlFaker\Generation\Value\CharacterDomain::class)]
 #[UsesClass(\SqlFaker\Generation\Value\WordDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\ValueChoices::class)]
+#[UsesClass(\SqlFaker\Generation\Choice\BytePlanCompiler::class)]
 final class ReverseLexemeGeneratorTest extends TestCase
 {
     public function testGenerateCompoundOutputRemainsInOrderAndEofAddsNoBoundary(): void

@@ -8,6 +8,7 @@ on:
     paths:
       - 'packages/sql-faker/**'
       - '.github/workflows/sql-faker.yml'
+      - '.github/workflows/sql-faker-fuzz.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}

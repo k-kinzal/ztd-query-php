@@ -29,7 +29,6 @@ use SqlFaker\Compiler\Bison\Lexer\TypeTagScanner;
 #[UsesClass(BisonDeclarationBoundary::class)]
 #[UsesClass(BisonLexeme::class)]
 #[UsesClass(BisonLexer::class)]
-#[UsesClass(BisonLexer::class)]
 #[UsesClass(BisonScannerChain::class)]
 #[UsesClass(BisonToken::class)]
 #[UsesClass(BisonTokenDeclaration::class)]

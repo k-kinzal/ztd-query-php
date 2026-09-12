@@ -10,6 +10,8 @@ use PHPUnit\Framework\TestCase;
 use SqlFaker\Sqlite\Tokenization\SqliteQuoting;
 
 #[CoversClass(SqliteQuoting::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Generation\Derivation\CompletionCosts::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Generation\Derivation\DerivationNode::class)]
 final class SqliteQuotingTest extends TestCase
 {
     #[DataProvider('providerIdentifier')]

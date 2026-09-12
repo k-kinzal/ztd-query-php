@@ -59,4 +59,18 @@ final class StartRuleResolverTest extends TestCase
         self::assertSame('delete', $resolver->startSymbolFor('delete_stmt'));
         self::assertSame($grammar->startSymbol, $resolver->startSymbolFor('simple_statement_or_begin'));
     }
+    /**
+     * @return list<array{string}>
+     */
+    public static function providerEntryVersions(): array
+    {
+        return [['mysql-5.6.51'], ['mysql-8.4.7']];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerEntryVersions')]
+    public function testStartSymbolForPreservesGrammarEntryEvenWhenStatementRulesExist(string $version): void
+    {
+        $grammar = MySqlGrammar::load($version);
+        self::assertSame($grammar->startSymbol, (new StartRuleResolver($grammar))->startSymbolFor(null));
+    }
 }

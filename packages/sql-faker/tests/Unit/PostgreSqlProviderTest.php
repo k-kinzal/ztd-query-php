@@ -202,7 +202,14 @@ use SqlFaker\PostgreSqlProvider;
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Query\ParserOptionsRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\JsonTablePathRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\AggregateArgumentRule::class)]
-#[UsesClass(\SqlFaker\Generation\Candidate\IntegerLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\CompletionState::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\CompletionFrontier::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\ConstrainedCompletion::class)]
+#[UsesClass(\SqlFaker\Generation\Value\ValueChoices::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\CompletionMemo::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\CompletionReduction::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\ConstraintDependencies::class)]
+#[UsesClass(\SqlFaker\Generation\Choice\BytePlanCompiler::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Name\HostNameRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Name\ParserNameRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Column\NumericContextRule::class)]
@@ -212,6 +219,8 @@ use SqlFaker\PostgreSqlProvider;
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Value\QuotedDomain::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Value\OperatorDomain::class)]
 #[UsesClass(\SqlFaker\Generation\Value\WordDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\Completion\PatternProductions::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\Completion\CompletionWitness::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Value\RadixDomain::class)]
 #[UsesClass(\SqlFaker\Generation\Value\RepeatDomain::class)]
 #[UsesClass(\SqlFaker\Generation\Value\Utf8::class)]
@@ -1251,5 +1260,12 @@ final class PostgreSqlProviderTest extends TestCase
 
         self::assertSame($sql, $provider->domainDmlStatement(40));
         self::assertContains($tokens[0], ['INSERT', 'UPDATE', 'DELETE_P']);
+    }
+    public function testPlannerCompilesReusableInstructionsWithoutChangingTheDefaultStart(): void
+    {
+        $provider = new PostgreSqlProvider(Factory::create(), 'pg-17.2');
+        $plan = (new \SqlFaker\Generation\Choice\BytePlanCompiler())->compile('', $provider->planner());
+        self::assertNull($plan->startRule());
+        self::assertSame($provider->generate($plan), $provider->generate($plan));
     }
 }

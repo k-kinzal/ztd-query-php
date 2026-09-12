@@ -19,14 +19,16 @@ final class ProductionPattern
     private const CONTAINING = 'containing';
     private const EXACT = 'exact';
     private const NON_EMPTY = 'non-empty';
+    private const ORDINAL = 'ordinal';
 
     /**
      * @param array<array-key, string> $symbols Symbols the pattern is written in terms of
-     * @param self::CONTAINING|self::EXACT|self::NON_EMPTY $mode How those symbols are compared against an alternative
+     * @param self::CONTAINING|self::EXACT|self::NON_EMPTY|self::ORDINAL $mode How those symbols are compared against an alternative
      */
     public function __construct(
         private readonly array $symbols,
         private readonly string $mode,
+        private readonly ?int $ordinal = null,
     ) {
     }
 
@@ -55,6 +57,14 @@ final class ProductionPattern
     }
 
     /**
+     * Selects one alternative, including when several have identical symbols.
+     */
+    public static function at(int $ordinal): self
+    {
+        return new self([], self::ORDINAL, $ordinal);
+    }
+
+    /**
      * Matches any alternative that writes at least one symbol.
      *
      * @return self Pattern refusing only the empty alternative
@@ -67,8 +77,11 @@ final class ProductionPattern
     /**
      * @param list<string> $symbols
      */
-    public function matches(array $symbols): bool
+    public function matches(array $symbols, ?int $ordinal = null): bool
     {
+        if ($this->mode === self::ORDINAL) {
+            return $ordinal !== null && $ordinal === $this->ordinal;
+        }
         if ($this->mode === self::EXACT) {
             return $symbols === $this->symbols;
         }

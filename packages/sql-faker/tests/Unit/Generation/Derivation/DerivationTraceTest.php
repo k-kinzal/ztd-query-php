@@ -94,6 +94,16 @@ use SqlFaker\MySql\Generation\Spacing\KeywordPhraseSpacingRule;
 #[UsesClass(LexicalException::class)]
 #[UsesClass(\SqlFaker\Generation\Plan\ProductionPattern::class)]
 #[UsesClass(\SqlFaker\Generation\Output\BoundaryCompletion::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\CompletionState::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\CompletionFrontier::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\ConstrainedCompletion::class)]
+#[UsesClass(\SqlFaker\Generation\Value\ValueChoices::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\CompletionMemo::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\CompletionReduction::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\ConstraintDependencies::class)]
+#[UsesClass(\SqlFaker\Generation\Choice\BytePlanCompiler::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\Completion\PatternProductions::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\Completion\CompletionWitness::class)]
 final class DerivationTraceTest extends TestCase
 {
     public function testExpandPreservesRuleAncestorsAndProductionOrdinals(): void

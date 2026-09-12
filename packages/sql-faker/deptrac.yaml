@@ -78,6 +78,8 @@ deptrac:
       collectors:
         - type: directory
           value: 'src/Coverage/'
+        - type: classLike
+          value: '^SqlFaker\\Coverage\\(Measurement|Trace|Checkpoint|Snapshot|History|Entry|Rewrite)$'
     # Coordinates derivation, rewriting and lexical realization.
     - name: Generation
       collectors:

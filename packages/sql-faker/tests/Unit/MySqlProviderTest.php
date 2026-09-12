@@ -202,6 +202,14 @@ use SqlFaker\MySqlProvider;
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\JsonTablePathRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\AggregateArgumentRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Expression\ConcatenationRule::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\CompletionState::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\CompletionFrontier::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\ConstrainedCompletion::class)]
+#[UsesClass(\SqlFaker\Generation\Value\ValueChoices::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\CompletionMemo::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\CompletionReduction::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\ConstraintDependencies::class)]
+#[UsesClass(\SqlFaker\Generation\Choice\BytePlanCompiler::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Name\HostNameRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Name\ParserNameRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Column\NumericContextRule::class)]
@@ -212,6 +220,8 @@ use SqlFaker\MySqlProvider;
 #[UsesClass(\SqlFaker\MySql\Generation\Value\RadixDomain::class)]
 #[UsesClass(\SqlFaker\Generation\Value\Utf8::class)]
 #[UsesClass(\SqlFaker\Generation\Value\WordDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\Completion\PatternProductions::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\Completion\CompletionWitness::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Value\OperatorDomain::class)]
 #[UsesClass(\SqlFaker\Generation\Value\RepeatDomain::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\LexicalDefinition::class)]
@@ -1463,4 +1473,34 @@ final class MySqlProviderTest extends TestCase
         }
     }
 
+    public function testPlannerCompilesReusableInstructionsWithoutChangingTheDefaultStart(): void
+    {
+        $provider = new MySqlProvider(Factory::create(), 'mysql-8.4.7');
+        $plan = (new \SqlFaker\Generation\Choice\BytePlanCompiler())->compile('', $provider->planner());
+        self::assertNull($plan->startRule());
+        self::assertSame($provider->generate($plan), $provider->generate($plan));
+    }
+    public function testPlannerFreezesConstructiveValuesFromFuzzBytes(): void
+    {
+        $faker = Factory::create();
+        $provider = new MySqlProvider($faker, 'mysql-8.4.7');
+        $planner = $provider->planner();
+        $constraints = GenerationPlan::constrained('ulong_num', [
+            'ulong_num' => [ProductionPattern::containing('NUM')],
+        ])->withExpansionBudget(1);
+        $outputs = array_map(static fn (int $byte): string => $provider->generate((new \SqlFaker\Generation\Choice\BytePlanCompiler())->compile(
+            "\0\0\0\0" . str_repeat(chr($byte) . chr($byte), 64),
+            $planner,
+            $constraints
+        )), range(1, 31));
+        self::assertGreaterThan(8, count(array_unique($outputs)));
+        $plan = (new \SqlFaker\Generation\Choice\BytePlanCompiler())->compile("\0\0\0\0" . str_repeat("\0\xff", 64), $planner, $constraints);
+        $first = $provider->generate($plan);
+        self::assertGreaterThan(2, (int) $first);
+        self::assertSame($first, $plan->lexemeAt('NUM', 0));
+        self::assertNotNull($plan->candidateKeyAt('NUM', 0));
+        $faker->seed(913);
+        $faker->numberBetween(0, 1000);
+        self::assertSame($first, $provider->generate($plan));
+    }
 }

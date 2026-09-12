@@ -149,4 +149,9 @@ final class LexicalGrammarTest extends TestCase
         self::assertSame('42', $lexical->realizeSequence($sequence, GenerationPlan::all()->withLexemes(['NUM' => ['42']])));
     }
 
+    public function testResolveSequenceUsesTheCommonContractForCandidateInspection(): void
+    {
+        $lexical = new SqliteLexicalGrammar(Factory::create(), 'sqlite-3.47.2');
+        self::assertCount(1, $lexical->resolveSequence(\SqlFaker\Generation\Token\TerminalSequence::fromNames(['INTEGER']), null, static fn (int $count): int => 0)->candidates);
+    }
 }

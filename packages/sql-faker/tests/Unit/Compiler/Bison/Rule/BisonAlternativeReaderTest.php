@@ -32,7 +32,6 @@ use SqlFaker\Compiler\Bison\Rule\BisonAlternativeReader;
 #[UsesClass(BisonAlternativeNode::class)]
 #[UsesClass(BisonLexeme::class)]
 #[UsesClass(BisonLexer::class)]
-#[UsesClass(BisonLexer::class)]
 #[UsesClass(BisonScannerChain::class)]
 #[UsesClass(BisonSymbolNode::class)]
 #[UsesClass(BisonToken::class)]

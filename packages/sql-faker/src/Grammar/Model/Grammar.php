@@ -62,6 +62,25 @@ final class Grammar
             throw new RuntimeException("Failed to load grammar from: {$path}");
         }
 
-        return $grammar;
+        return $grammar->identified();
+    }
+    /**
+     * Assigns original ordinals before any dialect adapter filters alternatives.
+     */
+    public function identified(): self
+    {
+        $rules = [];
+        foreach ($this->ruleMap as $name => $rule) {
+            $alternatives = [];
+            foreach ($rule->alternatives as $ordinal => $production) {
+                $alternatives[] = new Production(
+                    $production->symbols,
+                    $production->ordinal ?? $ordinal,
+                    $production->origin ?? $name . '#' . $ordinal
+                );
+            }
+            $rules[$name] = new ProductionRule($name, $alternatives);
+        }
+        return new self($this->startSymbol, $rules);
     }
 }

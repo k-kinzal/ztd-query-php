@@ -10,6 +10,8 @@ use PHPUnit\Framework\TestCase;
 use SqlFaker\PostgreSql\Lookahead\PgLookahead;
 
 #[CoversClass(PgLookahead::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Generation\Derivation\CompletionCosts::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Generation\Derivation\DerivationNode::class)]
 final class PgLookaheadTest extends TestCase
 {
     #[DataProvider('providerLookahead')]

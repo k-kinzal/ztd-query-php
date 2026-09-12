@@ -10,6 +10,8 @@ use PHPUnit\Framework\TestCase;
 use SqlFaker\PostgreSql\Tokenization\PgQuoting;
 
 #[CoversClass(PgQuoting::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Generation\Derivation\CompletionCosts::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Generation\Derivation\DerivationNode::class)]
 final class PgQuotingTest extends TestCase
 {
     #[DataProvider('providerIdentifier')]
