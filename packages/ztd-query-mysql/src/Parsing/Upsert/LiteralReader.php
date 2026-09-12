@@ -6,7 +6,9 @@ namespace ZtdQuery\Platform\MySql\Parsing\Upsert;
 
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenKind;/**
+use ZtdQuery\Sql\SqlTokenKind;
+
+/**
  * Literal Reader.
  *
  * @visibility ZtdQuery\Platform\MySql

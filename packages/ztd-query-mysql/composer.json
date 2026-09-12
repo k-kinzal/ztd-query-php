@@ -119,9 +119,15 @@
             "deptrac debug:unassigned --config-file=deptrac.yaml",
             "deptrac debug:unused --config-file=deptrac.yaml"
         ],
-        "docgen": "cd ../.. && packages/ztd-query-mysql/vendor/bin/docgen --packages=packages/ztd-query-mysql --deptrac=packages/ztd-query-mysql/deptrac.yaml --output=packages/ztd-query-mysql/build/docs --cache-dir=packages/ztd-query-mysql/build/docgen-cache --title=k-kinzal/ztd-query-mysql --coverage=packages/ztd-query-mysql/build/coverage-xml",
-        "docgen:serve": "@docgen --serve",
-        "docgen:diff": "@docgen --diff=origin/main --serve",
+        "docgen": "cd ../.. && packages/ztd-query-mysql/vendor/bin/docgen --packages=packages/ztd-query-mysql --deptrac=\"$PWD/packages/ztd-query-mysql/deptrac.yaml\" --output=packages/ztd-query-mysql/build/docs --cache-dir=packages/ztd-query-mysql/build/docgen-cache --title=k-kinzal/ztd-query-mysql --coverage=packages/ztd-query-mysql/build/coverage-xml",
+        "docgen:serve": [
+            "Composer\\Config::disableProcessTimeout",
+            "@docgen --serve"
+        ],
+        "docgen:diff": [
+            "Composer\\Config::disableProcessTimeout",
+            "@docgen --diff=origin/main --serve"
+        ],
         "docgen:fresh": "@docgen --no-cache",
         "test:coverage": "@php tests/run.php --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
     },

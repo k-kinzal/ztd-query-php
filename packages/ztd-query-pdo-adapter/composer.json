@@ -32,7 +32,12 @@
     "repositories": [
         {
             "type": "path",
-            "url": "../ztd-query-core"
+            "url": "../ztd-query-core",
+            "options": {
+                "versions": {
+                    "k-kinzal/ztd-query-core": "dev-main"
+                }
+            }
         },
         {
             "type": "path",
