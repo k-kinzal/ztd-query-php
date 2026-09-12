@@ -1033,12 +1033,34 @@ final class MysqliCteShadowingTest extends TestCase
             $native->query('CREATE TABLE years (id INT PRIMARY KEY, value YEAR)');
             $ztd = ZtdMysqli::fromMysqli($native);
             self::assertNotFalse($ztd->query("INSERT INTO years VALUES (1, 78), (2, 69), (3, 0), (4, '0')"));
+            self::assertNotFalse($ztd->query('INSERT INTO years (id, value) SELECT 5, 93'));
             $result = $ztd->query('SELECT value FROM years ORDER BY id');
             self::assertInstanceOf(mysqli_result::class, $result);
-            self::assertSame([['value' => 1978], ['value' => 2069], ['value' => 0], ['value' => 2000]], $result->fetch_all(MYSQLI_ASSOC));
+            self::assertSame([['value' => 1978], ['value' => 2069], ['value' => 0], ['value' => 2000], ['value' => 1993]], $result->fetch_all(MYSQLI_ASSOC));
             $physical = $native->query('SELECT * FROM years');
             self::assertInstanceOf(mysqli_result::class, $physical);
             self::assertSame([], $physical->fetch_all(MYSQLI_ASSOC));
+        } finally {
+            $native->query('DROP DATABASE `' . $database . '`');
+        }
+    }
+
+    public function testNativeConstructorCreatesAnIsolatedDefaultSession(): void
+    {
+        [$database, $native] = MySqlContainer::createTestDatabase();
+        [$host, , , , $port] = MySqlContainer::connectionParameters();
+        try {
+            $native->query('CREATE TABLE users (id INT)');
+            $ztd = new ZtdMysqli($host, 'root', 'root', $database, $port);
+            self::assertTrue($ztd->isZtdEnabled());
+            self::assertNotFalse($ztd->query('INSERT INTO users VALUES (42)'));
+            $simulated = $ztd->query('SELECT * FROM users');
+            self::assertInstanceOf(mysqli_result::class, $simulated);
+            self::assertSame([['id' => 42]], $simulated->fetch_all(MYSQLI_ASSOC));
+            $physical = $native->query('SELECT * FROM users');
+            self::assertInstanceOf(mysqli_result::class, $physical);
+            self::assertSame([], $physical->fetch_all(MYSQLI_ASSOC));
+            self::assertTrue($ztd->close());
         } finally {
             $native->query('DROP DATABASE `' . $database . '`');
         }

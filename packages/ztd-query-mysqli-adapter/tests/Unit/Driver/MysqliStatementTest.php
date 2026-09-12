@@ -115,4 +115,40 @@ final class MysqliStatementTest extends TestCase
         self::assertTrue($native->closeCalled);
     }
 
+    public function testExecuteWithParametersWrapsNativeDuplicateKeyErrors(): void
+    {
+        [$database, $native] = \Tests\Fixtures\MySqlContainer::createTestDatabase();
+        $native->query('CREATE TABLE users (id INT PRIMARY KEY)');
+        $native->query('INSERT INTO users VALUES (1)');
+        $prepared = $native->prepare('INSERT INTO users VALUES (?)');
+        self::assertNotFalse($prepared);
+        mysqli_report(MYSQLI_REPORT_OFF);
+        try {
+            $this->expectException(\ZtdQuery\Connection\Exception\DatabaseException::class);
+            $this->expectExceptionCode(1062);
+            (new MysqliStatement($prepared, $native))->execute([1]);
+        } finally {
+            mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+            $native->query('DROP DATABASE `' . $database . '`');
+        }
+    }
+
+    public function testExecuteWithoutParametersWrapsNativeDuplicateKeyErrors(): void
+    {
+        [$database, $native] = \Tests\Fixtures\MySqlContainer::createTestDatabase();
+        $native->query('CREATE TABLE users (id INT PRIMARY KEY)');
+        $native->query('INSERT INTO users VALUES (1)');
+        $prepared = $native->prepare('INSERT INTO users VALUES (1)');
+        self::assertNotFalse($prepared);
+        mysqli_report(MYSQLI_REPORT_OFF);
+        try {
+            $this->expectException(\ZtdQuery\Connection\Exception\DatabaseException::class);
+            $this->expectExceptionCode(1062);
+            (new MysqliStatement($prepared, $native))->execute(null);
+        } finally {
+            mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+            $native->query('DROP DATABASE `' . $database . '`');
+        }
+    }
+
 }

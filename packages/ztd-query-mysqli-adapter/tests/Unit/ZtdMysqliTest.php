@@ -259,7 +259,7 @@ final class ZtdMysqliTest extends TestCase
         $factory = new RecordingSessionFactory($rewriter, new ShadowStore());
         $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
 
-        $ztd->close();
+        self::assertTrue($ztd->close());
 
         self::assertTrue($innerMysqli->closeCalled);
     }
@@ -648,4 +648,177 @@ final class ZtdMysqliTest extends TestCase
         self::assertSame([['id' => '7']], $result->fetch_all(MYSQLI_ASSOC));
         $native->close();
     }
+    public function testQueryReturnsFalseWhenPrepareFails(): void
+    {
+        $native = new StubMysqli();
+        $rewriter = self::createStub(SqlRewriter::class);
+        $rewriter->method('rewrite')->willReturn(new RewritePlan('SELECT 1', QueryKind::READ));
+        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory($rewriter, new ShadowStore()));
+        self::assertFalse($ztd->query('SELECT 1'));
+        self::assertSame('SELECT 1', $native->prepareCalledWith);
+    }
+
+    public function testQueryReturnsFalseWhenExecutionFails(): void
+    {
+        $native = new StubMysqli();
+        $rewriter = self::createStub(SqlRewriter::class);
+        $rewriter->method('rewrite')->willReturn(new RewritePlan('SELECT 1', QueryKind::READ));
+        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory($rewriter, new ShadowStore()));
+        $statement = StubMysqliStmt::create();
+        $statement->executeReturn = false;
+        $native->prepareReturn = $statement;
+        self::assertFalse($ztd->query('SELECT 1'));
+        self::assertSame(1, $statement->executeCallCount);
+    }
+
+    public function testQueryReturnsTrueWhenExecutionHasNoResultSet(): void
+    {
+        $native = new StubMysqli();
+        $rewriter = self::createStub(SqlRewriter::class);
+        $rewriter->method('rewrite')->willReturn(new RewritePlan('SELECT 1', QueryKind::READ));
+        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory($rewriter, new ShadowStore()));
+        $statement = StubMysqliStmt::create();
+        $native->prepareReturn = $statement;
+        self::assertTrue($ztd->query('SELECT 1'));
+        self::assertSame(1, $statement->executeCallCount);
+    }
+
+    public function testRealQueryReturnsFalseWhenPrepareFails(): void
+    {
+        $native = new StubMysqli();
+        $rewriter = self::createStub(SqlRewriter::class);
+        $rewriter->method('rewrite')->willReturn(new RewritePlan('SELECT 1', QueryKind::READ));
+        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory($rewriter, new ShadowStore()));
+        self::assertFalse($ztd->real_query('SELECT 1'));
+        self::assertSame('SELECT 1', $native->prepareCalledWith);
+    }
+
+    public function testExecuteQueryWithParametersReturnsFalseWhenPrepareFails(): void
+    {
+        $native = new StubMysqli();
+        $rewriter = self::createStub(SqlRewriter::class);
+        $rewriter->method('rewrite')->willReturn(new RewritePlan('SELECT 1', QueryKind::READ));
+        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory($rewriter, new ShadowStore()));
+        self::assertFalse($ztd->execute_query('SELECT 1', [7]));
+        self::assertSame('SELECT 1', $native->prepareCalledWith);
+    }
+
+    public function testExecuteQueryWithParametersReturnsFalseWhenExecutionFails(): void
+    {
+        $native = new StubMysqli();
+        $rewriter = self::createStub(SqlRewriter::class);
+        $rewriter->method('rewrite')->willReturn(new RewritePlan('SELECT 1', QueryKind::READ));
+        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory($rewriter, new ShadowStore()));
+        $statement = StubMysqliStmt::create();
+        $statement->executeReturn = false;
+        $native->prepareReturn = $statement;
+        self::assertFalse($ztd->execute_query('SELECT 1', [7]));
+        self::assertSame(1, $statement->executeCallCount);
+    }
+
+    public function testExecuteQueryWithParametersReturnsTrueWhenExecutionHasNoResultSet(): void
+    {
+        $native = new StubMysqli();
+        $rewriter = self::createStub(SqlRewriter::class);
+        $rewriter->method('rewrite')->willReturn(new RewritePlan('SELECT 1', QueryKind::READ));
+        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory($rewriter, new ShadowStore()));
+        $statement = StubMysqliStmt::create();
+        $native->prepareReturn = $statement;
+        self::assertTrue($ztd->execute_query('SELECT 1', [7]));
+        self::assertSame(1, $statement->executeCallCount);
+    }
+
+    public function testExecuteQueryWithoutParametersReturnsFalseWhenPrepareFails(): void
+    {
+        $native = new StubMysqli();
+        $rewriter = self::createStub(SqlRewriter::class);
+        $rewriter->method('rewrite')->willReturn(new RewritePlan('SELECT 1', QueryKind::READ));
+        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory($rewriter, new ShadowStore()));
+        self::assertFalse($ztd->execute_query('SELECT 1'));
+        self::assertSame('SELECT 1', $native->prepareCalledWith);
+    }
+
+    public function testExecuteQueryWithoutParametersReturnsFalseWhenExecutionFails(): void
+    {
+        $native = new StubMysqli();
+        $rewriter = self::createStub(SqlRewriter::class);
+        $rewriter->method('rewrite')->willReturn(new RewritePlan('SELECT 1', QueryKind::READ));
+        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory($rewriter, new ShadowStore()));
+        $statement = StubMysqliStmt::create();
+        $statement->executeReturn = false;
+        $native->prepareReturn = $statement;
+        self::assertFalse($ztd->execute_query('SELECT 1'));
+        self::assertSame(1, $statement->executeCallCount);
+    }
+
+    public function testExecuteQueryWithoutParametersReturnsTrueWhenExecutionHasNoResultSet(): void
+    {
+        $native = new StubMysqli();
+        $rewriter = self::createStub(SqlRewriter::class);
+        $rewriter->method('rewrite')->willReturn(new RewritePlan('SELECT 1', QueryKind::READ));
+        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory($rewriter, new ShadowStore()));
+        $statement = StubMysqliStmt::create();
+        $native->prepareReturn = $statement;
+        self::assertTrue($ztd->execute_query('SELECT 1'));
+        self::assertSame(1, $statement->executeCallCount);
+    }
+
+    public function testAutocommitStartsRollbackScope(): void
+    {
+        $native = new StubMysqli();
+        $store = new ShadowStore();
+        $store->set('items', [['id' => 1]]);
+        $rewriter = self::createStub(SqlRewriter::class);
+        $rewriter->method('transactionStatement')->willReturnCallback((new \ZtdQuery\Platform\MySql\MySqlTransactionStatementParser())->parse(...));
+        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory($rewriter, $store));
+        self::assertTrue($ztd->autocommit(false));
+        $store->insert('items', [['id' => 2]]);
+        self::assertTrue($ztd->rollback());
+        self::assertSame([['id' => 1]], $store->get('items'));
+    }
+
+    public function testAutocommitCommitsShadowRows(): void
+    {
+        $native = new StubMysqli();
+        $store = new ShadowStore();
+        $store->set('items', [['id' => 1]]);
+        $rewriter = self::createStub(SqlRewriter::class);
+        $rewriter->method('transactionStatement')->willReturnCallback((new \ZtdQuery\Platform\MySql\MySqlTransactionStatementParser())->parse(...));
+        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory($rewriter, $store));
+        self::assertTrue($ztd->begin_transaction());
+        $store->insert('items', [['id' => 2]]);
+        self::assertTrue($ztd->autocommit(true));
+        self::assertTrue($ztd->rollback());
+        self::assertSame([['id' => 1], ['id' => 2]], $store->get('items'));
+    }
+
+    public function testRealQueryRollbackRestoresShadowRows(): void
+    {
+        $native = new StubMysqli();
+        $store = new ShadowStore();
+        $store->set('items', [['id' => 1]]);
+        $rewriter = self::createStub(SqlRewriter::class);
+        $rewriter->method('transactionStatement')->willReturnCallback((new \ZtdQuery\Platform\MySql\MySqlTransactionStatementParser())->parse(...));
+        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory($rewriter, $store));
+        self::assertTrue($ztd->real_query('BEGIN'));
+        $store->insert('items', [['id' => 2]]);
+        self::assertTrue($ztd->real_query('ROLLBACK'));
+        self::assertSame([['id' => 1]], $store->get('items'));
+    }
+
+    public function testSavepointRestoresItsSnapshot(): void
+    {
+        $native = new StubMysqli();
+        $store = new ShadowStore();
+        $store->set('items', [['id' => 1]]);
+        $rewriter = self::createStub(SqlRewriter::class);
+        $rewriter->method('transactionStatement')->willReturnCallback((new \ZtdQuery\Platform\MySql\MySqlTransactionStatementParser())->parse(...));
+        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory($rewriter, $store));
+        self::assertTrue($ztd->begin_transaction());
+        self::assertTrue($ztd->savepoint('sp'));
+        $store->insert('items', [['id' => 2]]);
+        self::assertTrue($ztd->query('ROLLBACK TO SAVEPOINT sp'));
+        self::assertSame([['id' => 1]], $store->get('items'));
+    }
+
 }

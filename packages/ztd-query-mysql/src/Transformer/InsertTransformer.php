@@ -175,13 +175,25 @@ final class InsertTransformer implements SqlTransformer
                 $existingRows,
             );
 
-            return $this->insertSelectRenderer->render(
+            $select = $this->insertSelectRenderer->render(
                 $sourceSelectSql ?? $statement->select->build(),
                 $tableColumns,
                 $sourceColumns,
                 $columnDefaults,
                 $generatedIdentityStarts,
             );
+            $projections = [];
+            foreach ($tableColumns as $column) {
+                $quoted = '`' . str_replace('`', '``', $column) . '`';
+                $expression = '_ztd_insert_cast.' . $quoted;
+                $type = $columnTypes[$column] ?? null;
+                if ($type instanceof ColumnType) {
+                    $expression = $this->castRenderer->renderCast($expression, $type);
+                }
+                $projections[] = $expression . ' AS ' . $quoted;
+            }
+
+            return 'SELECT ' . implode(', ', $projections) . ' FROM (' . $select . ') AS _ztd_insert_cast';
         }
 
         throw new RuntimeException('Insert statement has no values to project.');

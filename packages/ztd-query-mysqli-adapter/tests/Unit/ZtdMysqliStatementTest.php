@@ -238,6 +238,7 @@ final class ZtdMysqliStatementTest extends TestCase
     public function testFetchReturnsNullForWriteWithoutResultSet(): void
     {
         $delegate = StubMysqliStmt::create();
+        $delegate->fetchReturn = true;
         $delegate->getResultReturn = false;
         $session = new Session(
             static::createStub(SqlRewriter::class),
@@ -267,7 +268,7 @@ final class ZtdMysqliStatementTest extends TestCase
         );
         $stmt = new ZtdMysqliStatement($delegate, $session, null);
 
-        $stmt->close();
+        self::assertTrue($stmt->close());
 
         self::assertTrue($delegate->closeCalled);
     }

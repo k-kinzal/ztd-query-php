@@ -17,7 +17,7 @@ final class MySqlCastRenderer implements CastRenderer
 {
     public function renderCast(string $expression, ColumnType $type): string
     {
-        if ($type->family === ColumnTypeFamily::INTEGER && preg_match('/^YEAR(?:\(4\))?$/i', $type->nativeType) === 1) {
+        if ($type->family === ColumnTypeFamily::INTEGER && in_array(strtoupper($type->nativeType), ['YEAR', 'YEAR(4)'], true)) {
             return "CAST(CAST($expression AS YEAR) AS SIGNED)";
         }
 

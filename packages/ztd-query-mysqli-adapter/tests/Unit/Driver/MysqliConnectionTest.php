@@ -58,4 +58,12 @@ final class MysqliConnectionTest extends TestCase
             $mysqli->query('DROP DATABASE `' . $database . '`');
         }
     }
+    public function testNativeFalseWithoutAnErrorRemainsFalse(): void
+    {
+        $native = new \Tests\Fixtures\StubMysqli();
+        $native->queryReturn = false;
+        self::assertFalse((new MysqliConnection($native))->query('SELECT 1'));
+        self::assertSame('SELECT 1', $native->queryCalledWith);
+    }
+
 }
