@@ -4,19 +4,37 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Transformer;
 
-use ZtdQuery\Platform\MySql\MySqlCastRenderer;
+use PhpMyAdmin\SqlParser\Parser;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
+use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
 use ZtdQuery\Platform\MySql\UpdateAssignmentExtractor;
 use ZtdQuery\Platform\MySql\UpdateSourceExtractor;
-use PhpMyAdmin\SqlParser\Parser;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
-use PHPUnit\Framework\TestCase;
 
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlPartitionSelectionRewriter::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\AssignmentExpression::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\Cte\HeaderParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\Cte\IdentifierReferences::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\OptionalInsertIntoNormalizer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\Relation\ReferenceReader::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Projection\FullText\ExpressionEditor::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Projection\Partition\SelectionReader::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Projection\Partition\SourceProjection::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\Set\OrderRewriter::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\Set\ValueNormalizer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\Shadow\CteRows::class)]
+
+
+#[UsesClass(\ZtdQuery\Platform\MySql\Type\CastTypeResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Type\Enum\RankEdits::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Type\Value\ScalarExpression::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Type\Value\StringCoercion::class)]
 #[CoversClass(UpdateTransformer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlSelectRelationParser::class)]
 #[UsesClass(MySqlParser::class)]
@@ -32,6 +50,8 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[CoversClass(\ZtdQuery\Platform\MySql\Transformer\Update\ResultSelect::class)]
+#[CoversClass(\ZtdQuery\Platform\MySql\Transformer\Update\TargetProjection::class)]
 final class UpdateTransformerTest extends TestCase
 {
     public function testBuildProjectionPreservesDerivedJoinSource(): void
@@ -151,9 +171,9 @@ final class UpdateTransformerTest extends TestCase
         $result = $transformer->buildProjection($statement, ['id', 'name']);
 
         self::assertStringContainsString("SELECT 'Bob' AS `name`", $result['sql']);
-        self::assertStringContainsString("`u`.`id`", $result['sql']);
-        self::assertStringContainsString("FROM `users` AS u", $result['sql']);
-        self::assertStringContainsString("WHERE id = 1", $result['sql']);
+        self::assertStringContainsString('`u`.`id`', $result['sql']);
+        self::assertStringContainsString('FROM `users` AS u', $result['sql']);
+        self::assertStringContainsString('WHERE id = 1', $result['sql']);
         self::assertSame('users', $result['table']);
         self::assertCount(1, $result['tables']);
     }
@@ -168,10 +188,10 @@ final class UpdateTransformerTest extends TestCase
 
         $result = $transformer->buildProjection($statement, ['id', 'name', 'price']);
 
-        self::assertStringContainsString("AS `name`", $result['sql']);
-        self::assertStringNotContainsString("``name``", $result['sql']);
-        self::assertStringContainsString("`products`.`id`", $result['sql']);
-        self::assertStringContainsString("`products`.`price`", $result['sql']);
+        self::assertStringContainsString('AS `name`', $result['sql']);
+        self::assertStringNotContainsString('``name``', $result['sql']);
+        self::assertStringContainsString('`products`.`id`', $result['sql']);
+        self::assertStringContainsString('`products`.`price`', $result['sql']);
     }
 
     public function testBuildUpdateSelectWithUnqualifiedColumnName(): void
@@ -184,10 +204,10 @@ final class UpdateTransformerTest extends TestCase
 
         $result = $transformer->buildProjection($statement, ['id', 'name', 'price']);
 
-        self::assertStringContainsString("AS `name`", $result['sql']);
-        self::assertStringNotContainsString("``", $result['sql']);
-        self::assertStringContainsString("`products`.`id`", $result['sql']);
-        self::assertStringContainsString("`products`.`price`", $result['sql']);
+        self::assertStringContainsString('AS `name`', $result['sql']);
+        self::assertStringNotContainsString('``', $result['sql']);
+        self::assertStringContainsString('`products`.`id`', $result['sql']);
+        self::assertStringContainsString('`products`.`price`', $result['sql']);
     }
 
     public function testBuildUpdateSelectWithBacktickedUnqualifiedColumn(): void
@@ -200,8 +220,8 @@ final class UpdateTransformerTest extends TestCase
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
 
-        self::assertStringContainsString("AS `name`", $result['sql']);
-        self::assertStringNotContainsString("``name``", $result['sql']);
+        self::assertStringContainsString('AS `name`', $result['sql']);
+        self::assertStringNotContainsString('``name``', $result['sql']);
     }
 
     public function testBuildUpdateSelectWithJoin(): void
@@ -215,11 +235,11 @@ final class UpdateTransformerTest extends TestCase
         $result = $transformer->buildProjection($statement, ['id', 'name']);
 
         self::assertStringContainsString("SELECT 'Updated' AS `name`", $result['sql']);
-        self::assertStringContainsString("`u`.`id`", $result['sql']);
-        self::assertStringContainsString("FROM `users` AS u", $result['sql']);
-        self::assertStringContainsString("JOIN `orders` AS o", $result['sql']);
-        self::assertStringContainsString("ON u.id = o.user_id", $result['sql']);
-        self::assertStringContainsString("WHERE o.amount > 100", $result['sql']);
+        self::assertStringContainsString('`u`.`id`', $result['sql']);
+        self::assertStringContainsString('FROM `users` AS u', $result['sql']);
+        self::assertStringContainsString('JOIN `orders` AS o', $result['sql']);
+        self::assertStringContainsString('ON u.id = o.user_id', $result['sql']);
+        self::assertStringContainsString('WHERE o.amount > 100', $result['sql']);
     }
 
     public function testBuildUpdateSelectWithLeftJoin(): void
@@ -233,8 +253,8 @@ final class UpdateTransformerTest extends TestCase
         $result = $transformer->buildProjection($statement, ['id', 'status']);
 
         self::assertStringContainsString("SELECT 'inactive' AS `status`", $result['sql']);
-        self::assertStringContainsString("LEFT JOIN `orders` AS o", $result['sql']);
-        self::assertStringContainsString("ON u.id = o.user_id", $result['sql']);
+        self::assertStringContainsString('LEFT JOIN `orders` AS o', $result['sql']);
+        self::assertStringContainsString('ON u.id = o.user_id', $result['sql']);
     }
 
     public function testBuildUpdateSelectWithMultipleJoins(): void
@@ -247,10 +267,10 @@ final class UpdateTransformerTest extends TestCase
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
 
-        self::assertStringContainsString("JOIN `orders` AS o", $result['sql']);
-        self::assertStringContainsString("JOIN `products` AS p", $result['sql']);
-        self::assertStringContainsString("ON u.id = o.user_id", $result['sql']);
-        self::assertStringContainsString("ON o.product_id = p.id", $result['sql']);
+        self::assertStringContainsString('JOIN `orders` AS o', $result['sql']);
+        self::assertStringContainsString('JOIN `products` AS p', $result['sql']);
+        self::assertStringContainsString('ON u.id = o.user_id', $result['sql']);
+        self::assertStringContainsString('ON o.product_id = p.id', $result['sql']);
     }
 
     public function testBuildMultiTableUpdate(): void
@@ -263,8 +283,8 @@ final class UpdateTransformerTest extends TestCase
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
 
-        self::assertStringContainsString("FROM `users`", $result['sql']);
-        self::assertStringContainsString("`orders`", $result['sql']);
+        self::assertStringContainsString('FROM `users`', $result['sql']);
+        self::assertStringContainsString('`orders`', $result['sql']);
         self::assertSame('users', $result['table']);
         self::assertCount(2, $result['tables']);
         self::assertArrayHasKey('users', $result['tables']);
@@ -398,7 +418,7 @@ final class UpdateTransformerTest extends TestCase
     public function testBuildUpdateSelectExactFormat(): void
     {
         $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
-        $sql = "UPDATE t SET a = 1 WHERE b = 2";
+        $sql = 'UPDATE t SET a = 1 WHERE b = 2';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
         self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
@@ -411,7 +431,7 @@ final class UpdateTransformerTest extends TestCase
     public function testBuildUpdateSelectWithoutColumnsIncludesSetValuesOnly(): void
     {
         $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
-        $sql = "UPDATE t SET a = 1";
+        $sql = 'UPDATE t SET a = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
         self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
@@ -430,7 +450,7 @@ final class UpdateTransformerTest extends TestCase
 
         $result = $transformer->buildProjection($statement, ['id', 'name']);
         self::assertStringContainsString('FROM `users` AS u', $result['sql']);
-        self::assertStringContainsString("`u`.`id`", $result['sql']);
+        self::assertStringContainsString('`u`.`id`', $result['sql']);
     }
 
     public function testBuildMultiTableUpdateAdditionalTableAlias(): void
@@ -449,7 +469,7 @@ final class UpdateTransformerTest extends TestCase
     public function testBuildUpdateSelectCoveredColNotDuplicated(): void
     {
         $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
-        $sql = "UPDATE t SET a = 1, b = 2 WHERE c = 3";
+        $sql = 'UPDATE t SET a = 1, b = 2 WHERE c = 3';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
         self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
@@ -475,7 +495,7 @@ final class UpdateTransformerTest extends TestCase
     public function testBuildUpdateSelectOrderByFormatContainsKeyword(): void
     {
         $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
-        $sql = "UPDATE t SET a = 1 ORDER BY b DESC LIMIT 5";
+        $sql = 'UPDATE t SET a = 1 ORDER BY b DESC LIMIT 5';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
         self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
@@ -498,7 +518,7 @@ final class UpdateTransformerTest extends TestCase
     public function testBuildProjectionOrderByExactFormat(): void
     {
         $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
-        $sql = "UPDATE t SET a = 1 ORDER BY b ASC LIMIT 3";
+        $sql = 'UPDATE t SET a = 1 ORDER BY b ASC LIMIT 3';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
         self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
@@ -512,7 +532,7 @@ final class UpdateTransformerTest extends TestCase
     public function testBuildProjectionColumnsNotEmpty(): void
     {
         $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
-        $sql = "UPDATE t SET a = 1 WHERE id = 1";
+        $sql = 'UPDATE t SET a = 1 WHERE id = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
         self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
@@ -526,7 +546,7 @@ final class UpdateTransformerTest extends TestCase
     public function testBuildProjectionCoveredColIsNotDuplicatedWhenTrue(): void
     {
         $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
-        $sql = "UPDATE t SET a = 99 WHERE id = 1";
+        $sql = 'UPDATE t SET a = 99 WHERE id = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
         self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
@@ -576,7 +596,7 @@ final class UpdateTransformerTest extends TestCase
     public function testBuildProjectionWithNoWhereReturnsNoWhereClause(): void
     {
         $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
-        $sql = "UPDATE t SET a = 1";
+        $sql = 'UPDATE t SET a = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
         self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
@@ -588,7 +608,7 @@ final class UpdateTransformerTest extends TestCase
     public function testBuildProjectionWithNoOrderByReturnsNoOrderClause(): void
     {
         $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
-        $sql = "UPDATE t SET a = 1 WHERE id = 1";
+        $sql = 'UPDATE t SET a = 1 WHERE id = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
         self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
@@ -601,7 +621,7 @@ final class UpdateTransformerTest extends TestCase
     public function testBuildProjectionCoveredColIsTrueNotFalse(): void
     {
         $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
-        $sql = "UPDATE t SET a = 99 WHERE id = 1";
+        $sql = 'UPDATE t SET a = 99 WHERE id = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
         self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
@@ -615,7 +635,7 @@ final class UpdateTransformerTest extends TestCase
     public function testBuildProjectionLimitContainsActualValue(): void
     {
         $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
-        $sql = "UPDATE t SET a = 1 ORDER BY b LIMIT 5";
+        $sql = 'UPDATE t SET a = 1 ORDER BY b LIMIT 5';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
         self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
@@ -627,7 +647,7 @@ final class UpdateTransformerTest extends TestCase
     public function testBuildProjectionSingleTableNoAdditionalTables(): void
     {
         $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
-        $sql = "UPDATE t SET a = 1 WHERE id = 1";
+        $sql = 'UPDATE t SET a = 1 WHERE id = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
         self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
@@ -865,7 +885,7 @@ final class UpdateTransformerTest extends TestCase
     public function testBuildProjectionExactSqlForUpdateWithLeftJoinOn(): void
     {
         $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
-        $sql = "UPDATE t1 LEFT JOIN t2 ON t1.id = t2.t1_id SET t1.a = 99";
+        $sql = 'UPDATE t1 LEFT JOIN t2 ON t1.id = t2.t1_id SET t1.a = 99';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
         self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);
@@ -896,7 +916,7 @@ final class UpdateTransformerTest extends TestCase
     public function testBuildProjectionCoveredColBlocksColumnFromRemainder(): void
     {
         $transformer = new UpdateTransformer(new MySqlParser(), new SelectTransformer());
-        $sql = "UPDATE t SET x = 10, y = 20 WHERE id = 1";
+        $sql = 'UPDATE t SET x = 10, y = 20 WHERE id = 1';
         $parser = new Parser($sql);
         $statement = $parser->statements[0];
         self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\UpdateStatement::class, $statement);

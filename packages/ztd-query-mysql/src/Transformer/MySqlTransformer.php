@@ -11,9 +11,9 @@ use PhpMyAdmin\SqlParser\Statements\SelectStatement;
 use PhpMyAdmin\SqlParser\Statements\UpdateStatement;
 use PhpMyAdmin\SqlParser\Statements\WithStatement;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Rewrite\SqlTransformer;
-use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 
 /**
  * Composite SQL transformer for MySQL.
@@ -31,6 +31,9 @@ final class MySqlTransformer implements SqlTransformer
     private ReplaceTransformer $replaceTransformer;
     private MySqlCteShadowComposer $cteComposer;
 
+    /**
+     * Configure the dependencies used by this operation.
+     */
     public function __construct(
         MySqlParser $parser,
         SelectTransformer $selectTransformer,
@@ -50,6 +53,7 @@ final class MySqlTransformer implements SqlTransformer
 
     /**
      * {@inheritDoc}
+     * @throws UnsupportedSqlException
      */
     public function transform(string $sql, array $tables): string
     {
@@ -100,6 +104,9 @@ final class MySqlTransformer implements SqlTransformer
         throw new UnsupportedSqlException($sql, 'Statement type not supported by transformer');
     }
 
+    /**
+     * Commit Rewrite State for the supplied MySQL input.
+     */
     public function commitRewriteState(): void
     {
         $this->insertTransformer->commitRewriteState();

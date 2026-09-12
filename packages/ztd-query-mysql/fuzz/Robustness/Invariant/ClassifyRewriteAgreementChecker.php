@@ -4,52 +4,41 @@ declare(strict_types=1);
 
 namespace Fuzz\Robustness\Invariant;
 
-use Throwable;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\MySqlQueryGuard;
-use ZtdQuery\Rewrite\QueryKind;
-use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Platform\MySql\MySqlReadOnlyDiagnosticStatement;
+use ZtdQuery\Platform\MySql\MySqlRewriter;
+use ZtdQuery\Rewrite\QueryKind;
 
+/**
+ * Implements the Classify Rewrite Agreement Checker contract for MySQL.
+ */
 final class ClassifyRewriteAgreementChecker implements InvariantChecker
 {
     private MySqlQueryGuard $guard;
-    private SqlRewriter $rewriter;
+    private MySqlRewriter $rewriter;
 
-    public function __construct(MySqlQueryGuard $guard, SqlRewriter $rewriter)
+    /**
+     * Configure the dependencies used by this operation.
+     */
+    public function __construct(MySqlQueryGuard $guard, MySqlRewriter $rewriter)
     {
         $this->guard = $guard;
         $this->rewriter = $rewriter;
     }
 
+    /**
+     * Check for the supplied MySQL input.
+     */
     public function check(string $sql): ?InvariantViolation
     {
         $diagnostic = MySqlReadOnlyDiagnosticStatement::isSafe($sql);
 
-        try {
-            $classifyResult = $this->guard->classify($sql);
-        } catch (Throwable $exception) {
-            if ($diagnostic) {
-                return new InvariantViolation('INV-L2-06', 'read-only diagnostic classification threw', $sql, ['exception' => $exception::class]);
-            }
-
-            return null;
-        }
+        $classifyResult = $this->guard->classify($sql);
 
         if ($diagnostic && $classifyResult !== QueryKind::READ) {
             return new InvariantViolation('INV-L2-06', 'read-only diagnostic was not classified as READ', $sql);
-        }
-
-        if ($classifyResult === null) {
-            try {
-                $this->rewriter->rewrite($sql);
-                return null;
-            } catch (UnsupportedSqlException) {
-                return null;
-            } catch (Throwable) {
-                return null;
-            }
         }
 
         try {
@@ -66,12 +55,6 @@ final class ClassifyRewriteAgreementChecker implements InvariantChecker
             }
 
             return null;
-        } catch (Throwable $exception) {
-            if ($diagnostic) {
-                return new InvariantViolation('INV-L2-06', 'read-only diagnostic rewrite threw', $sql, ['exception' => $exception::class]);
-            }
-
-            return null;
         }
 
         if ($diagnostic && ($plan->kind() !== QueryKind::READ || $plan->sql() !== $sql)) {
@@ -84,7 +67,7 @@ final class ClassifyRewriteAgreementChecker implements InvariantChecker
                 'classify() and rewrite() disagree on QueryKind',
                 $sql,
                 [
-                    'classify_result' => $classifyResult->value,
+                    'classify_result' => $classifyResult?->value,
                     'rewrite_kind' => $plan->kind()->value,
                 ]
             );

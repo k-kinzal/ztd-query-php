@@ -1,0 +1,59 @@
+# NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
+deptrac:
+  paths:
+    - ./src
+  analyser:
+    types:
+      - class
+      - use
+      - file
+  layers:
+    - name: SessionFactory
+      collectors:
+        - type: directory
+          value: src/MySqlSessionFactory.php$
+    - name: Rewrite
+      collectors:
+        - type: directory
+          value: src/Rewrite/.*
+    - name: Mutation
+      collectors:
+        - type: directory
+          value: src/Mutation/.*
+    - name: Transformer
+      collectors:
+        - type: directory
+          value: src/Transformer/.*
+    - name: Projection
+      collectors:
+        - type: directory
+          value: src/Projection/.*
+    - name: Schema
+      collectors:
+        - type: directory
+          value: src/Schema/.*
+    - name: Type
+      collectors:
+        - type: directory
+          value: src/Type/.*
+    - name: Parsing
+      collectors:
+        - type: directory
+          value: src/Parsing/.*
+    - name: Core
+      collectors:
+        - type: classLike
+          value: ^ZtdQuery\\(?!Platform\\MySql\\).*
+    - name: SqlParser
+      collectors:
+        - type: classLike
+          value: ^PhpMyAdmin\\SqlParser\\.*
+  ruleset:
+    SessionFactory: [Rewrite, Mutation, Transformer, Schema, Type, Parsing, Core, SqlParser]
+    Rewrite: [Mutation, Transformer, Projection, Schema, Parsing, Core, SqlParser]
+    Mutation: [Transformer, Schema, Parsing, Core, SqlParser]
+    Transformer: [Projection, Type, Parsing, Core, SqlParser]
+    Projection: [Type, Parsing, Core, SqlParser]
+    Schema: [Type, Parsing, Core, SqlParser]
+    Type: [Parsing, Core]
+    Parsing: [Core, SqlParser]

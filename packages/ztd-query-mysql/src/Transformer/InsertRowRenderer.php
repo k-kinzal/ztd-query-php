@@ -4,12 +4,19 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\MySql\Transformer;
 
+use InvalidArgumentException;
 use ZtdQuery\Rewrite\InsertRowProjectionPlanner;
 
+/**
+ * Implements the Insert Row Renderer contract for MySQL.
+ */
 final class InsertRowRenderer
 {
     private InsertRowProjectionPlanner $projectionPlanner;
 
+    /**
+     * Configure the dependencies used by this operation.
+     */
     public function __construct()
     {
         $this->projectionPlanner = new InsertRowProjectionPlanner();
@@ -19,11 +26,12 @@ final class InsertRowRenderer
      * @param list<string> $insertColumns
      * @param list<string> $values
      * @return array<string, string>
+     * @throws InvalidArgumentException
      */
     public function providedExpressions(array $insertColumns, array $values): array
     {
         if (count($insertColumns) !== count($values)) {
-            throw new \InvalidArgumentException('Insert values count does not match column count.');
+            throw new InvalidArgumentException('Insert values count does not match column count.');
         }
 
         $provided = [];

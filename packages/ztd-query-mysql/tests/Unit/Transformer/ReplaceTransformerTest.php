@@ -8,8 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\InsertSelectSourceExtractor;
+use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlUpsertAssignmentExtractor;
@@ -19,6 +19,31 @@ use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlPartitionSelectionRewriter::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\Cte\HeaderParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\Cte\IdentifierReferences::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\OptionalInsertIntoNormalizer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\Relation\ReferenceReader::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\Upsert\AssignmentReader::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Projection\FullText\ExpressionEditor::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Projection\Partition\SelectionReader::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Projection\Partition\SourceProjection::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Projection\Upsert\ConflictPredicate::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Projection\Upsert\ExpressionBinder::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Projection\Upsert\MetadataColumns::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Projection\Upsert\QualifiedColumn::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\Insert\InsertTarget::class)]
+
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\Insert\ResultProjection::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\Select\ExpressionAliaser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\Set\OrderRewriter::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\Set\ValueNormalizer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\Shadow\CteRows::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Type\CastTypeResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Type\Enum\RankEdits::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Type\Value\ScalarExpression::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Type\Value\StringCoercion::class)]
 #[CoversClass(ReplaceTransformer::class)]
 #[UsesClass(InsertTransformer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Transformer\InsertRowRenderer::class)]
@@ -37,6 +62,7 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlNativeUpsertProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[CoversClass(\ZtdQuery\Platform\MySql\Transformer\Insert\ReplaceStatementConverter::class)]
 final class ReplaceTransformerTest extends TestCase
 {
     public function testTransformReplaceCastsParametersToTargetColumnTypes(): void
@@ -91,7 +117,7 @@ final class ReplaceTransformerTest extends TestCase
 
         $result = $transformer->transform("# REPLACE INTO hidden VALUES (0)\nREPLACE INTO users VALUES (1, 'Alice')", $tables);
 
-        self::assertStringContainsString("1 AS `id`", $result);
+        self::assertStringContainsString('1 AS `id`', $result);
         self::assertStringContainsString("'Alice' AS `name`", $result);
     }
 
@@ -144,7 +170,7 @@ final class ReplaceTransformerTest extends TestCase
         ];
 
         $result = $transformer->transform($sql, $tables);
-        self::assertStringContainsString("1 AS `id`", $result);
+        self::assertStringContainsString('1 AS `id`', $result);
         self::assertStringContainsString("'Alice' AS `name`", $result);
     }
 
@@ -206,7 +232,7 @@ final class ReplaceTransformerTest extends TestCase
         $tables = [];
 
         $result = $transformer->transform($sql, $tables);
-        self::assertStringContainsString("1 AS `id`", $result);
+        self::assertStringContainsString('1 AS `id`', $result);
         self::assertStringContainsString("'Alice' AS `name`", $result);
     }
 
@@ -216,7 +242,7 @@ final class ReplaceTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new ReplaceTransformer($parser, $selectTransformer);
 
-        $sql = "REPLACE INTO archive (id, name) SELECT id, name FROM users";
+        $sql = 'REPLACE INTO archive (id, name) SELECT id, name FROM users';
         $tables = [
             'archive' => [
                 'rows' => [],
@@ -235,7 +261,7 @@ final class ReplaceTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new ReplaceTransformer($parser, $selectTransformer);
 
-        $sql = "REPLACE INTO t (a, b) VALUES (1, 2)";
+        $sql = 'REPLACE INTO t (a, b) VALUES (1, 2)';
         $tables = [];
 
         $result = $transformer->transform($sql, $tables);
@@ -248,7 +274,7 @@ final class ReplaceTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new ReplaceTransformer($parser, $selectTransformer);
 
-        $sql = "REPLACE INTO t SET a = 1, b = 2";
+        $sql = 'REPLACE INTO t SET a = 1, b = 2';
         $tables = ['t' => ['columns' => ['a', 'b'], 'columnTypes' => [], 'rows' => []]];
 
         $result = $transformer->transform($sql, $tables);
@@ -262,7 +288,7 @@ final class ReplaceTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new ReplaceTransformer($parser, $selectTransformer);
 
-        $sql = "REPLACE INTO t (a) VALUES (1), (2)";
+        $sql = 'REPLACE INTO t (a) VALUES (1), (2)';
         $tables = [];
 
         $result = $transformer->transform($sql, $tables);
@@ -275,7 +301,7 @@ final class ReplaceTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new ReplaceTransformer($parser, $selectTransformer);
 
-        $sql = "REPLACE INTO t (a, b) VALUES (1)";
+        $sql = 'REPLACE INTO t (a, b) VALUES (1)';
         $tables = [];
 
         $this->expectException(UnsupportedSqlException::class);
@@ -289,7 +315,7 @@ final class ReplaceTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new ReplaceTransformer($parser, $selectTransformer);
 
-        $sql = "REPLACE INTO archive (id, name) SELECT id, name FROM users WHERE active = 0";
+        $sql = 'REPLACE INTO archive (id, name) SELECT id, name FROM users WHERE active = 0';
         $tables = [
             'archive' => [
                 'rows' => [],
@@ -310,7 +336,7 @@ final class ReplaceTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new ReplaceTransformer($parser, $selectTransformer);
 
-        $sql = "REPLACE INTO t SET a = 10, b = 20";
+        $sql = 'REPLACE INTO t SET a = 10, b = 20';
         $tables = ['t' => ['columns' => ['a', 'b'], 'columnTypes' => [], 'rows' => []]];
 
         $result = $transformer->transform($sql, $tables);
@@ -347,7 +373,7 @@ final class ReplaceTransformerTest extends TestCase
         ];
 
         $result = $transformer->transform($sql, $tables);
-        self::assertStringContainsString("1 AS `id`", $result);
+        self::assertStringContainsString('1 AS `id`', $result);
         self::assertStringContainsString("'Bob' AS `name`", $result);
     }
 
@@ -357,7 +383,7 @@ final class ReplaceTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new ReplaceTransformer($parser, $selectTransformer);
 
-        $sql = "REPLACE INTO t (id) VALUES (1), (2), (3)";
+        $sql = 'REPLACE INTO t (id) VALUES (1), (2), (3)';
         $tables = [];
 
         $result = $transformer->transform($sql, $tables);
@@ -380,7 +406,7 @@ final class ReplaceTransformerTest extends TestCase
         ];
 
         $result = $transformer->transform($sql, $tables);
-        self::assertStringContainsString("1 AS `id`", $result);
+        self::assertStringContainsString('1 AS `id`', $result);
         self::assertStringContainsString("'x' AS `name`", $result);
     }
 
@@ -429,7 +455,7 @@ final class ReplaceTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new ReplaceTransformer($parser, $selectTransformer);
 
-        $sql = "REPLACE INTO t SET x = 42";
+        $sql = 'REPLACE INTO t SET x = 42';
         $tables = ['t' => ['columns' => ['x'], 'columnTypes' => [], 'rows' => []]];
 
         $result = $transformer->transform($sql, $tables);
@@ -458,5 +484,14 @@ final class ReplaceTransformerTest extends TestCase
         $this->expectException(UnsupportedSqlException::class);
         $this->expectExceptionMessage('Cannot resolve INSERT target');
         $transformer->transform('REPLACE SELECT 1', []);
+    }
+
+    public function testCommitRewriteState(): void
+    {
+        $transformer = new ReplaceTransformer(new MySqlParser(), new SelectTransformer());
+        $tables = ['users' => ['rows' => [], 'columns' => ['id', 'name'], 'columnTypes' => [], 'identityStrategies' => ['id' => \ZtdQuery\Schema\IdentityGenerationStrategy::MaxValue]]];
+        self::assertSame("SELECT 1 AS `id`, 'a' AS `name`", $transformer->transform("REPLACE INTO users (name) VALUES ('a')", $tables));
+        $transformer->commitRewriteState();
+        self::assertSame("SELECT 2 AS `id`, 'b' AS `name`", $transformer->transform("REPLACE INTO users (name) VALUES ('b')", $tables));
     }
 }

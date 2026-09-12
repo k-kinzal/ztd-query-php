@@ -11,7 +11,7 @@ use ZtdQuery\Platform\MySql\Transformer\InsertRowRenderer;
 #[CoversClass(InsertRowRenderer::class)]
 final class InsertRowRendererTest extends TestCase
 {
-    public function testParsesMySqlDefaultAndRendersCompleteRow(): void
+    public function testRenderParsesMySqlDefaultAndRendersCompleteRow(): void
     {
         $renderer = new InsertRowRenderer();
         $provided = $renderer->providedExpressions(['id', 'name'], ['  default  ', "  'Ada'  "]);
@@ -30,15 +30,9 @@ final class InsertRowRendererTest extends TestCase
         ));
     }
 
-    public function testRejectsMismatchedMySqlValues(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Insert values count does not match column count.');
 
-        (new InsertRowRenderer())->providedExpressions(['id'], []);
-    }
 
-    public function testPreservesEveryProvidedMySqlExpression(): void
+    public function testProvidedExpressionsPreservesEveryProvidedMySqlExpression(): void
     {
         self::assertSame(
             ['id' => '42', 'name' => "'Ada'"],

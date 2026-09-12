@@ -4,23 +4,38 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Transformer;
 
+use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
+use RuntimeException;
 use Tests\Contract\TransformerContractTest;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
-use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
-use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
-use ZtdQuery\Platform\MySql\MySqlTypeSemantics;
-use ZtdQuery\Platform\MySql\MySqlPartitionSelectionRewriter;
 use ZtdQuery\Platform\MySql\MySqlFullTextSearchRewriter;
+use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
+use ZtdQuery\Platform\MySql\MySqlPartitionSelectionRewriter;
+use ZtdQuery\Platform\MySql\MySqlTypeSemantics;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
+use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\TablePartitioning;
 
+#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\Cte\HeaderParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\Cte\IdentifierReferences::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\Relation\ReferenceReader::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Projection\FullText\ExpressionEditor::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Projection\Partition\SelectionReader::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Projection\Partition\SourceProjection::class)]
+
+
+
+#[UsesClass(\ZtdQuery\Platform\MySql\Type\CastTypeResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Type\Enum\RankEdits::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Type\Value\ScalarExpression::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Type\Value\StringCoercion::class)]
 #[CoversClass(SelectTransformer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlSelectRelationParser::class)]
 #[UsesClass(MySqlCastRenderer::class)]
@@ -32,6 +47,9 @@ use ZtdQuery\Schema\TablePartitioning;
 #[UsesClass(MySqlPartitionSelectionRewriter::class)]
 #[UsesClass(MySqlFullTextSearchRewriter::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[CoversClass(\ZtdQuery\Platform\MySql\Transformer\Set\OrderRewriter::class)]
+#[CoversClass(\ZtdQuery\Platform\MySql\Transformer\Set\ValueNormalizer::class)]
+#[CoversClass(\ZtdQuery\Platform\MySql\Transformer\Shadow\CteRows::class)]
 final class SelectTransformerTest extends TransformerContractTest
 {
     public function testTransformsPartitionSelectionBeforeComposingShadowCte(): void
@@ -105,23 +123,25 @@ final class SelectTransformerTest extends TransformerContractTest
         self::assertStringContainsString('CUSTOM_VALUE AS `id`', $transformer->transform('SELECT * FROM users', $tables));
     }
 
+    #[Override]
     protected function createTransformer(): SqlTransformer
     {
         return new SelectTransformer();
     }
 
+    #[Override]
     protected function selectSql(): string
     {
         return 'SELECT * FROM users WHERE id = 1';
     }
 
-    #[\Override]
+    #[Override]
     protected function nativeIntegerType(): string
     {
         return 'INT';
     }
 
-    #[\Override]
+    #[Override]
     protected function nativeStringType(): string
     {
         return 'VARCHAR(255)';
@@ -489,7 +509,7 @@ final class SelectTransformerTest extends TransformerContractTest
             ],
         ];
 
-        self::expectException(\RuntimeException::class);
+        self::expectException(RuntimeException::class);
         self::expectExceptionMessage('Unsupported value type');
         $transformer->transform($sql, $tables);
     }
@@ -994,7 +1014,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['s' => 'val']],
                 'columns' => ['s'],
                 'columnTypes' => [
-                    's' => new ColumnType(ColumnTypeFamily::STRING, "SET()"),
+                    's' => new ColumnType(ColumnTypeFamily::STRING, 'SET()'),
                 ],
             ],
         ];
@@ -1006,7 +1026,7 @@ final class SelectTransformerTest extends TransformerContractTest
     public function testTransformWithExistingWithAndLeadingComment(): void
     {
         $transformer = new SelectTransformer();
-        $sql = "/* comment */WITH cte AS (SELECT 1) SELECT * FROM users, cte";
+        $sql = '/* comment */WITH cte AS (SELECT 1) SELECT * FROM users, cte';
         $tables = [
             'users' => [
                 'rows' => [['id' => 1]],
@@ -1267,7 +1287,7 @@ final class SelectTransformerTest extends TransformerContractTest
         $sql = 'SELECT * FROM t';
         $tables = [
             't' => [
-                'rows' => [["s" => "it's"]],
+                'rows' => [['s' => "it's"]],
                 'columns' => ['s'],
                 'columnTypes' => [
                     's' => new ColumnType(ColumnTypeFamily::STRING, "SET('it''s','me')"),
@@ -1917,7 +1937,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['s' => 'a,b']],
                 'columns' => ['s'],
                 'columnTypes' => [
-                    's' => new ColumnType(ColumnTypeFamily::STRING, "SET()"),
+                    's' => new ColumnType(ColumnTypeFamily::STRING, 'SET()'),
                 ],
             ],
         ];
@@ -1932,7 +1952,7 @@ final class SelectTransformerTest extends TransformerContractTest
         $sql = 'SELECT * FROM t';
         $tables = [
             't' => [
-                'rows' => [["s" => "it's"]],
+                'rows' => [['s' => "it's"]],
                 'columns' => ['s'],
                 'columnTypes' => [
                     's' => new ColumnType(ColumnTypeFamily::STRING, "SET('it''s','other')"),
@@ -1953,7 +1973,7 @@ final class SelectTransformerTest extends TransformerContractTest
                 'rows' => [['s' => 'abc']],
                 'columns' => ['s'],
                 'columnTypes' => [
-                    's' => new ColumnType(ColumnTypeFamily::STRING, "VARCHAR(100)"),
+                    's' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(100)'),
                 ],
             ],
         ];
@@ -2140,7 +2160,7 @@ final class SelectTransformerTest extends TransformerContractTest
         $sql = 'SELECT * FROM t';
         $tables = [
             't' => [
-                'rows' => [["s" => "it's,me"]],
+                'rows' => [['s' => "it's,me"]],
                 'columns' => ['s'],
                 'columnTypes' => [
                     's' => new ColumnType(ColumnTypeFamily::STRING, "SET('me','it''s')"),
@@ -2195,7 +2215,7 @@ final class SelectTransformerTest extends TransformerContractTest
     public function testTransformSetOrderByEscapesSingleQuoteInFindInSet(): void
     {
         $transformer = new SelectTransformer();
-        $sql = "SELECT * FROM items ORDER BY `status`";
+        $sql = 'SELECT * FROM items ORDER BY `status`';
         $tables = [
             'items' => [
                 'rows' => [['id' => 1, 'status' => "it's"]],
@@ -2211,7 +2231,7 @@ final class SelectTransformerTest extends TransformerContractTest
         self::assertStringContainsString("FIND_IN_SET('it''s', `status`)", $result);
     }
 
-    public function testConstructorUsesCustomCastRenderer(): void
+    public function testTransformUsesCustomCastRenderer(): void
     {
         $castRenderer = self::createStub(CastRenderer::class);
         $castRenderer->method('renderCast')->willReturn('CUSTOM_CAST');
@@ -2231,7 +2251,7 @@ final class SelectTransformerTest extends TransformerContractTest
         self::assertStringContainsString('CUSTOM_CAST', $result);
     }
 
-    public function testConstructorUsesCustomIdentifierQuoter(): void
+    public function testTransformUsesCustomIdentifierQuoter(): void
     {
         $quoter = self::createStub(IdentifierQuoter::class);
         $quoter->method('quote')->willReturnCallback(static fn (string $id): string => "[$id]");
@@ -2323,7 +2343,7 @@ final class SelectTransformerTest extends TransformerContractTest
         ];
 
         $result = $transformer->transform($sql, $tables);
-        self::assertStringContainsString("`users` AS", $result);
+        self::assertStringContainsString('`users` AS', $result);
         $usersPos = strpos($result, '`users` AS');
         $existingPos = strpos($result, 'existing AS');
         self::assertNotFalse($usersPos);
