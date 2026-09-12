@@ -7,8 +7,8 @@ namespace SqlFaker;
 use Faker\Generator;
 use Faker\Provider\Base;
 use SqlFaker\Coverage\GrammarCoverage;
+use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\Generation\SqlGenerator;
-use SqlFaker\Grammar\Derivation\GenerationPlan;
 use SqlFaker\Provider\SqlGeneratorFactory;
 use SqlFaker\Sqlite\GenerationPlans;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
@@ -63,10 +63,10 @@ final class SqliteProvider extends Base
      * @visibility public
      * @example Compile input before generating SQL
      *     $provider = new \SqlFaker\SqliteProvider(\Faker\Factory::create());
-     *     $plan = (new \SqlFaker\Grammar\Choice\BytePlanCompiler())->compile('', $provider->planner());
+     *     $plan = (new \SqlFaker\Generation\Choice\BytePlanCompiler())->compile('', $provider->planner());
      *     $provider->generate($plan) === $provider->generate($plan) // => true
      */
-    public function planner(): Grammar\Derivation\PlanBuilder
+    public function planner(): Generation\Choice\PlanBuilder
     {
         return $this->sql->planner();
     }
@@ -74,8 +74,8 @@ final class SqliteProvider extends Base
     /**
      * Generates through the same engine used by the convenience methods.
      *
-     * @throws Grammar\GenerationException When derivation fails
-     * @throws Grammar\LexicalException When lexical realization fails
+     * @throws Generation\Exception\GenerationException When derivation fails
+     * @throws Generation\Exception\LexicalException When lexical realization fails
      *
      * @template TRequiresNonEmpty of bool
      * @param GenerationPlan<TRequiresNonEmpty> $plan
@@ -83,7 +83,7 @@ final class SqliteProvider extends Base
      * @visibility public
      * @example Generate a statement from deterministic choice bytes
      *     $provider = new \SqlFaker\SqliteProvider(\Faker\Factory::create());
-     *     $plan = \SqlFaker\Grammar\Derivation\GenerationPlan::all()->requiringNonEmpty()->withExpansionBudget(100);
+     *     $plan = \SqlFaker\Generation\Plan\GenerationPlan::all()->requiringNonEmpty()->withExpansionBudget(100);
      *     $provider->generate($plan) !== '' // => true
      */
     public function generate(GenerationPlan $plan): string

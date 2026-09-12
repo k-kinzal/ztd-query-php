@@ -10,17 +10,17 @@ use SqlFaker\Coverage\GeneratorRevision;
 use SqlFaker\Coverage\GrammarCoverage;
 use SqlFaker\Coverage\GrammarCoverageInventory;
 use SqlFaker\Coverage\SequenceObservation;
-use SqlFaker\Grammar\Derivation\GenerationPlan;
-use SqlFaker\Grammar\Derivation\PlanBuilder;
-use SqlFaker\Grammar\Generation\Output\ResolvedOutput;
-use SqlFaker\Grammar\Generation\Output\SqlSerializer;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
-use SqlFaker\Grammar\Generation\Token\TokenGenerator;
-use SqlFaker\Grammar\Generation\Token\TokenRewriter;
-use SqlFaker\Grammar\GenerationException;
-use SqlFaker\Grammar\Grammar;
-use SqlFaker\Grammar\LexicalException;
-use SqlFaker\Grammar\LexicalGrammar;
+use SqlFaker\Generation\Choice\PlanBuilder;
+use SqlFaker\Generation\Derivation\TokenGenerator;
+use SqlFaker\Generation\Exception\GenerationException;
+use SqlFaker\Generation\Exception\LexicalException;
+use SqlFaker\Generation\Lexeme\LexicalGrammar;
+use SqlFaker\Generation\Lexeme\ResolvedOutput;
+use SqlFaker\Generation\Output\SqlSerializer;
+use SqlFaker\Generation\Plan\GenerationPlan;
+use SqlFaker\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Token\TokenRewriter;
+use SqlFaker\Grammar\Model\Grammar;
 
 /**
  * Derives terminals, rewrites structural constraints, and realizes lexemes once.

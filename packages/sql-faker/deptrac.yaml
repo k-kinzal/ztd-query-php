@@ -1,258 +1,231 @@
 # NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
+#
+# Every layer is one directory under src/, so the layer of a class is its namespace.
+# The only exceptions are PHPDoc type aliases, which Deptrac reads as class-like tokens
+# and which are assigned to the layer of the file that declares them.
 deptrac:
   paths:
     - ./src
-    - ./fuzz/Target
   analyser:
     types:
       - class
       - use
   layers:
-    # Grammar productions and symbols, independent of generation and database definitions.
+    # Productions and symbols of a compiled grammar.
     - name: GrammarModel
       collectors:
         - type: directory
-          value: 'src/Grammar/(Grammar|NonTerminal|Production|ProductionRule|Symbol|Terminal|TerminalInventory)\.php$'
-    # Pinned release lookup and grammar artifact persistence.
-    - name: GrammarResources
+          value: 'src/Grammar/Model/'
+    # Supported releases and the grammar artifacts committed for them.
+    - name: GrammarResource
       collectors:
         - type: directory
-          value: 'src/Grammar/(Resource/|SqlVersion\.php$)'
-    # Failure contracts shared by grammar, generation and dialect implementations.
-    - name: GenerationErrors
-      collectors:
-        - type: directory
-          value: 'src/Grammar/[^/]*Exception\.php$'
-    # Immutable requested productions, lexical values and budgets; no compilation or execution.
-    - name: GenerationPlan
-      collectors:
-        # PHPDoc type parameter or local type alias used by this layer.
-        - type: classLike
-          value: '^SqlFaker\\Grammar\\Derivation\\TRequiresNonEmpty$'
-        - type: directory
-          value: 'src/Grammar/Derivation/(GenerationPlan|ProductionPattern)\.php$'
-    # Terminal occurrences, derivation provenance and the structural rewrite contract.
-    - name: TerminalModel
-      collectors:
-        - type: directory
-          value: 'src/Grammar/Generation/Token/(TerminalOccurrence|ProductionOccurrence|TerminalSequence|RewriteRule)\.php$'
-    # Database-independent value choices and sequence/character/integer combinators.
-    - name: ValueDomain
-      collectors:
-        - type: directory
-          value: 'src/Grammar/Generation/Value/'
-    # Lexical candidates, resolved output and boundary constraints; no database syntax or orchestration.
-    - name: LexemeModel
-      collectors:
-        - type: directory
-          value: 'src/Grammar/Generation/(Lexeme/(Lexeme|LexemeCandidates|LexemeGenerator|LexemeInput|LexemeSequence)\.php$|Output/(OutputPart|ResolvedOutput)\.php$|Spacing/(LexemeBoundary|SpacingConstraint|SpacingRule)\.php$)'
-    # Applies explicitly supplied structural mappings and rewrite order.
-    - name: TokenRewrite
-      collectors:
-        - type: directory
-          value: 'src/Grammar/Generation/Token/(TokenRewriter|TerminalMappingRule)\.php$'
-    # Walks productions and computes bounded completion without database-specific rules.
-    - name: Derivation
-      collectors:
-        - type: directory
-          value: 'src/Grammar/Derivation/(?!GenerationPlan\.php$|ProductionPattern\.php$|PlanBuilder\.php$)'
-    # Derivation entry point returning terminal occurrences.
-    - name: TokenGeneration
-      collectors:
-        - type: directory
-          value: 'src/Grammar/Generation/Token/TokenGenerator\.php$'
-    # Composes candidates, resolves boundaries and serializes the selected output.
-    - name: LexemeGeneration
-      collectors:
-        - type: directory
-          value: 'src/Grammar/Generation/(Lexeme/(?!Lexeme\.php$|LexemeCandidates\.php$|LexemeGenerator\.php$|LexemeInput\.php$|LexemeSequence\.php$)|Output/(?!OutputPart\.php$|ResolvedOutput\.php$)|Spacing/CombinedSpacingRule\.php$|Version/)'
-    # Dialect lexical generation API consumed by the SQL generator and plan compiler.
-    - name: LexicalContract
-      collectors:
-        - type: directory
-          value: 'src/Grammar/LexicalGrammar\.php$'
-    # Compiles decision bytes into an immutable plan using the public generation contracts.
-    - name: PlanCompilation
-      collectors:
-        - type: directory
-          value: 'src/Grammar/(Choice/|Derivation/PlanBuilder\.php$)'
-    # Coordinates derivation, structural rewriting and lexical realization.
-    - name: SqlGeneration
-      collectors:
-        - type: directory
-          value: 'src/Generation/'
-    # Reads upstream Bison/Lemon source into grammar models; independent of runtime generation.
+          value: 'src/Grammar/Resource/'
+    # Reads upstream Bison and Lemon sources into grammar models.
     - name: Compiler
       collectors:
         - type: directory
           value: 'src/Compiler/'
-    # Public Faker entry points and composition of the selected database implementation.
+    # Failures raised while generating SQL.
+    - name: GenerationException
+      collectors:
+        - type: directory
+          value: 'src/Generation/Exception/'
+    # Immutable requested productions, lexical values and budgets.
+    - name: GenerationPlan
+      collectors:
+        - type: directory
+          value: 'src/Generation/Plan/'
+        - type: classLike
+          value: '^SqlFaker\\Generation\\Plan\\TRequiresNonEmpty$'
+    # Terminal occurrences, their derivation provenance and structural rewriting.
+    - name: Token
+      collectors:
+        - type: directory
+          value: 'src/Generation/Token/'
+    # Database-independent value domains and choices.
+    - name: Value
+      collectors:
+        - type: directory
+          value: 'src/Generation/Value/'
+    # Lexemes, candidates, resolved output, boundaries and the dialect lexical contract.
+    - name: Lexeme
+      collectors:
+        - type: directory
+          value: 'src/Generation/Lexeme/'
+    # Generators that offer lexeme candidates for a terminal.
+    - name: Candidate
+      collectors:
+        - type: directory
+          value: 'src/Generation/Candidate/'
+    # Resolves candidates against boundaries and serializes the chosen output.
+    - name: Output
+      collectors:
+        - type: directory
+          value: 'src/Generation/Output/'
+    # Walks productions under a plan and computes bounded completion.
+    - name: Derivation
+      collectors:
+        - type: directory
+          value: 'src/Generation/Derivation/'
+    # Compiles decision bytes into plans.
+    - name: Choice
+      collectors:
+        - type: directory
+          value: 'src/Generation/Choice/'
+    # Records what generation reached and emitted.
+    - name: Coverage
+      collectors:
+        - type: directory
+          value: 'src/Coverage/'
+        - type: classLike
+          value: '^SqlFaker\\Coverage\\(Measurement|Trace|Checkpoint|Snapshot|History|Entry|Rewrite)$'
+        - type: classLike
+          value: '^SqlFaker\\Coverage\\Verification\\Trace$'
+    # Coordinates derivation, rewriting and lexical realization.
+    - name: Generation
+      collectors:
+        - type: directory
+          value: 'src/Generation/[^/]+\.php$'
+    # Public Faker entry points and composition of the selected database.
     - name: Provider
       collectors:
         - type: directory
-          value: 'src/([^/]+Provider\.php$|Provider/)'
-    # MySql release declarations, scanner values and spacing policies.
-    - name: MySqlLexemes
+          value: 'src/[^/]+Provider\.php$'
+        - type: directory
+          value: 'src/Provider/'
+    - name: MySqlGrammar
       collectors:
         - type: directory
-          value: 'src/MySql/Generation/(Lexeme|Value|Spacing)/'
-    # MySql grammar-action and structural validity rules.
+          value: 'src/MySql/Grammar/'
+    - name: MySqlTokenization
+      collectors:
+        - type: directory
+          value: 'src/MySql/Tokenization/'
+    - name: MySqlValue
+      collectors:
+        - type: directory
+          value: 'src/MySql/Generation/Value/'
+    - name: MySqlSpacing
+      collectors:
+        - type: directory
+          value: 'src/MySql/Generation/Spacing/'
+    - name: MySqlLexeme
+      collectors:
+        - type: directory
+          value: 'src/MySql/Generation/Lexeme/'
     - name: MySqlRewrite
       collectors:
         - type: directory
           value: 'src/MySql/Generation/Rewrite/'
-    # MySql diagnostic SQL tokenization and keyword indexing.
-    - name: MySqlTokenization
-      collectors:
-        - type: directory
-          value: 'src/MySql/(Tokenization/|(MySqlTokenizer|MySqlQuoting)\.php$)'
-    # MySql runtime composition and public plan presets.
+    # Runtime composition and plan presets; StatementType is a class_alias declared there.
     - name: MySql
       collectors:
-        # Public compatibility alias resolved by class_alias.
+        - type: directory
+          value: 'src/MySql/[^/]+\.php$'
         - type: classLike
           value: '^SqlFaker\\MySql\\StatementType$'
-        - type: directory
-          value: 'src/MySql/(?!Generation/|Tokenization/|(MySqlTokenizer|MySqlQuoting)\.php$)'
-    # PostgreSql release declarations, scanner values and spacing policies.
-    - name: PostgreSqlLexemes
+    - name: PostgreSqlGrammar
       collectors:
         - type: directory
-          value: 'src/PostgreSql/Generation/(Lexeme|Value|Spacing)/'
-    # PostgreSql grammar-action and structural validity rules.
+          value: 'src/PostgreSql/Grammar/'
+    - name: PostgreSqlLookahead
+      collectors:
+        - type: directory
+          value: 'src/PostgreSql/Lookahead/'
+        - type: classLike
+          value: '^SqlFaker\\PostgreSql\\Lookahead\\LookaheadRule$'
+    - name: PostgreSqlTokenization
+      collectors:
+        - type: directory
+          value: 'src/PostgreSql/Tokenization/'
+    - name: PostgreSqlValue
+      collectors:
+        - type: directory
+          value: 'src/PostgreSql/Generation/Value/'
+    - name: PostgreSqlLexeme
+      collectors:
+        - type: directory
+          value: 'src/PostgreSql/Generation/Lexeme/'
     - name: PostgreSqlRewrite
       collectors:
         - type: directory
           value: 'src/PostgreSql/Generation/Rewrite/'
-    # PostgreSql diagnostic SQL tokenization and keyword indexing.
-    - name: PostgreSqlTokenization
-      collectors:
-        - type: directory
-          value: 'src/PostgreSql/(Tokenization/|(PgTokenizer)\.php$)'
-    # PostgreSql runtime composition and public plan presets.
     - name: PostgreSql
       collectors:
-        # Public compatibility alias resolved by class_alias.
+        - type: directory
+          value: 'src/PostgreSql/[^/]+\.php$'
         - type: classLike
           value: '^SqlFaker\\PostgreSql\\StatementType$'
-        - type: directory
-          value: 'src/PostgreSql/(?!Generation/|Tokenization/|(PgTokenizer)\.php$|PgLookahead\.php$)'
-    # Sqlite release declarations, scanner values and spacing policies.
-    - name: SqliteLexemes
+    - name: SqliteGrammar
       collectors:
         - type: directory
-          value: 'src/Sqlite/Generation/(Lexeme|Value|Spacing)/'
-    # Sqlite grammar-action and structural validity rules.
+          value: 'src/Sqlite/Grammar/'
+    - name: SqliteTokenization
+      collectors:
+        - type: directory
+          value: 'src/Sqlite/Tokenization/'
+    - name: SqliteValue
+      collectors:
+        - type: directory
+          value: 'src/Sqlite/Generation/Value/'
+    - name: SqliteLexeme
+      collectors:
+        - type: directory
+          value: 'src/Sqlite/Generation/Lexeme/'
     - name: SqliteRewrite
       collectors:
         - type: directory
           value: 'src/Sqlite/Generation/Rewrite/'
-    # Sqlite diagnostic SQL tokenization and keyword indexing.
-    - name: SqliteTokenization
-      collectors:
-        - type: directory
-          value: 'src/Sqlite/(Tokenization/|(SqliteTokenizer)\.php$)'
-    # Sqlite runtime composition and public plan presets.
     - name: Sqlite
       collectors:
-        # Public compatibility alias resolved by class_alias.
+        - type: directory
+          value: 'src/Sqlite/[^/]+\.php$'
         - type: classLike
           value: '^SqlFaker\\Sqlite\\StatementType$'
-        - type: directory
-          value: 'src/Sqlite/(?!Generation/|Tokenization/|(SqliteTokenizer)\.php$)'
-    # PostgreSQL parser lookahead rules shared by its generation and diagnostic tokenizer.
-    - name: PostgreSqlLookahead
-      collectors:
-        # PHPDoc type parameter or local type alias used by this layer.
-        - type: classLike
-          value: '^SqlFaker\\PostgreSql\\LookaheadRule$'
-        - type: directory
-          value: 'src/PostgreSql/PgLookahead\.php$'
     - name: Faker
       collectors:
         - type: classLike
           value: ^Faker\\.*
     - name: PhpRuntime
       collectors:
-        - type: classLike
-          value: '^(PgSql\\Connection|FFI\\CData)$'
         - type: php_internal
           value: '.*'
-    # Records grammar and lexical observations and persists cumulative snapshots.
-    - name: Coverage
-      collectors:
-        - type: classLike
-          value: '^SqlFaker\\Coverage\\(Measurement|Trace|Checkpoint|Snapshot|History|Entry|Rewrite)$'
-        - type: directory
-          value: 'src/Coverage/(?!Verification/)'
-    # Associates observed SQL with independent oracle outcomes and witnesses.
-    - name: Verification
-      collectors:
-        - type: classLike
-          value: '^SqlFaker\\Coverage\\Verification\\Trace$'
-        - type: directory
-          value: 'src/Coverage/Verification/'
-    # Native verification contracts and explicitly configured oracle environments.
-    - name: OracleContract
-      collectors:
-        - type: directory
-          value: 'fuzz/Target/(SyntaxCheck|SyntaxFailure|InfrastructureFailure|OracleEnvironment)\.php$'
-    # MySql native syntax verification adapter.
-    - name: MySqlOracle
-      collectors:
-        - type: directory
-          value: 'fuzz/Target/MySqlSyntaxCheck\.php$'
-    # PostgreSql native syntax verification adapters.
-    - name: PostgreSqlOracle
-      collectors:
-        - type: directory
-          value: 'fuzz/Target/Pg(SyntaxCheck|RawCheck)\.php$'
-    # Sqlite native syntax verification adapters.
-    - name: SqliteOracle
-      collectors:
-        - type: directory
-          value: 'fuzz/Target/Sqlite(SyntaxCheck|ProgramCheck|Native)\.php$'
-    # Records independent verification results; never called by grammar or generation.
-    - name: OracleObservation
-      collectors:
-        - type: directory
-          value: 'fuzz/Target/(ObservedCheck|VerificationRegistry)\.php$'
   ruleset:
     GrammarModel: [PhpRuntime]
-    GrammarResources: [GrammarModel, PhpRuntime]
-    GenerationErrors: [PhpRuntime]
+    GrammarResource: [GrammarModel, PhpRuntime]
+    Compiler: [GrammarModel, GrammarResource, PhpRuntime]
+    GenerationException: [GrammarModel, PhpRuntime]
     GenerationPlan: [PhpRuntime]
-    TerminalModel: [PhpRuntime]
-    ValueDomain: [Faker, PhpRuntime]
-    LexemeModel: [TerminalModel, ValueDomain, PhpRuntime]
-    TokenRewrite: [TerminalModel, PhpRuntime]
-    Derivation: [GrammarModel, GenerationPlan, TerminalModel, GenerationErrors, Faker, PhpRuntime]
-    TokenGeneration: [GrammarModel, GenerationPlan, TerminalModel, Derivation, GenerationErrors, Faker, PhpRuntime]
-    LexemeGeneration: [GenerationPlan, TerminalModel, ValueDomain, LexemeModel, GenerationErrors, PhpRuntime]
-    LexicalContract: [GenerationPlan, TerminalModel, LexemeModel, GenerationErrors, PhpRuntime]
-    PlanCompilation: [GrammarModel, GenerationPlan, TerminalModel, LexemeModel, Derivation, TokenGeneration, TokenRewrite, LexicalContract, GenerationErrors, Faker, PhpRuntime]
-    SqlGeneration: [GrammarModel, GenerationPlan, TerminalModel, LexemeModel, TokenGeneration, TokenRewrite, LexemeGeneration, LexicalContract, GenerationErrors, Faker, PhpRuntime, PlanCompilation, Coverage]
-    Compiler: [GrammarModel, GrammarResources, GenerationErrors, PhpRuntime]
-    Provider: [GrammarModel, GrammarResources, GenerationPlan, PlanCompilation, SqlGeneration, LexicalContract, GenerationErrors, MySql, PostgreSql, Sqlite, Faker, PhpRuntime, Coverage]
-    MySqlLexemes: [GrammarResources, TerminalModel, ValueDomain, LexemeModel, LexemeGeneration, GenerationErrors, Faker, PhpRuntime]
-    MySqlRewrite: [TerminalModel, TokenRewrite, PhpRuntime]
-    MySqlTokenization: [GenerationErrors, PhpRuntime]
-    MySql: [GrammarModel, GrammarResources, GenerationPlan, PlanCompilation, TerminalModel, LexemeModel, LexemeGeneration, TokenRewrite, LexicalContract, GenerationErrors, MySqlLexemes, MySqlRewrite, MySqlTokenization, Faker, PhpRuntime]
-    PostgreSqlLexemes: [GrammarResources, TerminalModel, ValueDomain, LexemeModel, LexemeGeneration, GenerationErrors, Faker, PostgreSqlLookahead, PhpRuntime]
-    PostgreSqlRewrite: [TerminalModel, TokenRewrite, PostgreSqlLookahead, PhpRuntime]
-    PostgreSqlTokenization: [GenerationErrors, PostgreSqlLookahead, PhpRuntime]
-    PostgreSql: [GrammarModel, GrammarResources, GenerationPlan, PlanCompilation, TerminalModel, LexemeModel, LexemeGeneration, TokenRewrite, LexicalContract, GenerationErrors, PostgreSqlLexemes, PostgreSqlRewrite, PostgreSqlTokenization, Faker, PostgreSqlLookahead, PhpRuntime]
-    SqliteLexemes: [GrammarResources, TerminalModel, ValueDomain, LexemeModel, LexemeGeneration, GenerationErrors, Faker, PhpRuntime]
-    SqliteRewrite: [TerminalModel, TokenRewrite, PhpRuntime]
-    SqliteTokenization: [GenerationErrors, PhpRuntime]
-    Sqlite: [GrammarModel, GrammarResources, GenerationPlan, PlanCompilation, TerminalModel, LexemeModel, LexemeGeneration, TokenRewrite, LexicalContract, GenerationErrors, SqliteLexemes, SqliteRewrite, SqliteTokenization, Faker, PhpRuntime]
+    Token: [PhpRuntime]
+    Value: [Faker, PhpRuntime]
+    Lexeme: [GenerationPlan, Token, Value, GenerationException, PhpRuntime]
+    Candidate: [GenerationPlan, Token, Value, Lexeme, GenerationException, PhpRuntime]
+    Output: [GenerationPlan, Token, Value, Lexeme, GenerationException, PhpRuntime]
+    Derivation: [GrammarModel, GenerationPlan, Token, GenerationException, Faker, PhpRuntime]
+    Choice: [GrammarModel, GenerationPlan, Token, Lexeme, Derivation, GenerationException, Faker, PhpRuntime]
+    Coverage: [GrammarModel, Token, Lexeme, PhpRuntime]
+    Generation: [GrammarModel, GenerationPlan, Token, Lexeme, Output, Derivation, Choice, Coverage, GenerationException, Faker, PhpRuntime]
+    Provider: [GrammarModel, GrammarResource, GenerationPlan, Lexeme, Choice, Generation, Coverage, GenerationException, MySqlGrammar, MySql, PostgreSqlGrammar, PostgreSql, SqliteGrammar, Sqlite, Faker, PhpRuntime]
+    MySqlGrammar: [GrammarModel, GrammarResource, PhpRuntime]
+    MySqlTokenization: [GenerationException, PhpRuntime]
+    MySqlValue: [Value, Faker, PhpRuntime]
+    MySqlSpacing: [Lexeme, PhpRuntime]
+    MySqlLexeme: [GrammarResource, Token, Value, Lexeme, Candidate, Output, GenerationException, MySqlValue, MySqlSpacing, Faker, PhpRuntime]
+    MySqlRewrite: [Token, PhpRuntime]
+    MySql: [GrammarModel, GrammarResource, GenerationPlan, Token, Lexeme, Output, Choice, GenerationException, MySqlGrammar, MySqlTokenization, MySqlValue, MySqlLexeme, MySqlRewrite, Faker, PhpRuntime]
+    PostgreSqlGrammar: [GrammarModel, GrammarResource, PhpRuntime]
     PostgreSqlLookahead: [PhpRuntime]
+    PostgreSqlTokenization: [GenerationException, PostgreSqlLookahead, PhpRuntime]
+    PostgreSqlValue: [Value, Faker, PhpRuntime]
+    PostgreSqlLexeme: [GrammarResource, Token, Value, Lexeme, Candidate, Output, GenerationException, PostgreSqlLookahead, PostgreSqlValue, Faker, PhpRuntime]
+    PostgreSqlRewrite: [Token, PostgreSqlLookahead, PhpRuntime]
+    PostgreSql: [GrammarModel, GrammarResource, GenerationPlan, Token, Lexeme, Output, Choice, GenerationException, PostgreSqlGrammar, PostgreSqlLookahead, PostgreSqlTokenization, PostgreSqlValue, PostgreSqlLexeme, PostgreSqlRewrite, Faker, PhpRuntime]
+    SqliteGrammar: [GrammarModel, GrammarResource, PhpRuntime]
+    SqliteTokenization: [GenerationException, PhpRuntime]
+    SqliteValue: [Value, Faker, PhpRuntime]
+    SqliteLexeme: [GrammarResource, Token, Value, Lexeme, Candidate, Output, GenerationException, SqliteValue, Faker, PhpRuntime]
+    SqliteRewrite: [Token, PhpRuntime]
+    Sqlite: [GrammarModel, GrammarResource, GenerationPlan, Token, Lexeme, Output, Choice, GenerationException, SqliteGrammar, SqliteTokenization, SqliteValue, SqliteLexeme, SqliteRewrite, Faker, PhpRuntime]
     Faker: [PhpRuntime]
     PhpRuntime: []
-    Coverage: [GrammarModel, TerminalModel, LexemeModel, PhpRuntime]
-    Verification: [Coverage, PhpRuntime]
-    OracleContract: [Verification, PhpRuntime]
-    MySqlOracle: [OracleContract, Verification, PhpRuntime]
-    PostgreSqlOracle: [OracleContract, Verification, PhpRuntime]
-    SqliteOracle: [OracleContract, Verification, PhpRuntime]
-    OracleObservation: [OracleContract, Coverage, Verification, PhpRuntime]

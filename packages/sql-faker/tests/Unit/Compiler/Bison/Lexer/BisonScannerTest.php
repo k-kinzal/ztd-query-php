@@ -18,8 +18,8 @@ use SqlFaker\Compiler\Bison\Lexer\SourceCursor;
 use SqlFaker\Compiler\Bison\Lexer\TypeTagScanner;
 
 #[CoversNothing]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Derivation\CompletionCosts::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Derivation\DerivationNode::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Generation\Derivation\CompletionCosts::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Generation\Derivation\DerivationNode::class)]
 final class BisonScannerTest extends TestCase
 {
     #[DataProvider('providerScanner')]

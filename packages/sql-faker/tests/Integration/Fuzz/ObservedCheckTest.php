@@ -14,11 +14,11 @@ use SqlFaker\Fuzz\Target\InfrastructureFailure;
 use SqlFaker\Fuzz\Target\ObservedCheck;
 use SqlFaker\Fuzz\Target\SyntaxCheck;
 use SqlFaker\Fuzz\Target\SyntaxFailure;
-use SqlFaker\Grammar\Grammar;
-use SqlFaker\Grammar\NonTerminal;
-use SqlFaker\Grammar\Production;
-use SqlFaker\Grammar\ProductionRule;
-use SqlFaker\Grammar\Terminal;
+use SqlFaker\Grammar\Model\Grammar;
+use SqlFaker\Grammar\Model\NonTerminal;
+use SqlFaker\Grammar\Model\Production;
+use SqlFaker\Grammar\Model\ProductionRule;
+use SqlFaker\Grammar\Model\Terminal;
 
 #[CoversClass(ObservedCheck::class)]
 final class ObservedCheckTest extends TestCase

@@ -46,7 +46,7 @@ use SqlFaker\Compiler\Bison\Rule\BisonAlternativeReader;
 #[UsesClass(QuotedLiteralScanner::class)]
 #[UsesClass(TypeTagScanner::class)]
 #[UsesClass(BisonSymbolForm::class)]
-#[UsesClass(\SqlFaker\Grammar\GrammarParseException::class)]
+#[UsesClass(\SqlFaker\Compiler\GrammarParseException::class)]
 final class BisonAlternativeReaderTest extends TestCase
 {
     public function testReadAllTakesTheSymbolsUpToTheSemicolon(): void

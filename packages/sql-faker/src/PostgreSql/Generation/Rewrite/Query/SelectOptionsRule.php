@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace SqlFaker\PostgreSql\Generation\Rewrite\Query;
 
 use Override;
-use SqlFaker\Grammar\Generation\Token\ProductionOccurrence;
-use SqlFaker\Grammar\Generation\Token\RewriteRule;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Token\ProductionOccurrence;
+use SqlFaker\Generation\Token\RewriteRule;
+use SqlFaker\Generation\Token\TerminalSequence;
 
 /**
  * gram.y:insertSelectOptions merges parenthesized query options into the same SelectStmt.

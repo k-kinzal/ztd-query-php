@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace SqlFaker\PostgreSql\Generation\Lexeme;
 
 use Override;
-use SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates;
-use SqlFaker\Grammar\Generation\Lexeme\LexemeGenerator;
-use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
-use SqlFaker\Grammar\Generation\Lexeme\RegisteredLexemeGenerator;
-use SqlFaker\PostgreSql\PgLookahead;
+use SqlFaker\Generation\Candidate\RegisteredLexemeGenerator;
+use SqlFaker\Generation\Lexeme\LexemeCandidates;
+use SqlFaker\Generation\Lexeme\LexemeGenerator;
+use SqlFaker\Generation\Lexeme\LexemeInput;
+use SqlFaker\PostgreSql\Lookahead\PgLookahead;
 
 /**
  * Combines kwlist.h registrations with parser.c/base_yylex's required followers for lookahead tokens.
@@ -28,7 +28,7 @@ final class KeywordLexemeGenerator implements LexemeGenerator
 
     /**
      * Rejects an impossible lookahead context before selecting a registered spelling.
-     * @throws \SqlFaker\Grammar\LexicalException When a declared keyword registration is missing
+     * @throws \SqlFaker\Generation\Exception\LexicalException When a declared keyword registration is missing
      */
     #[Override]
     public function generate(LexemeInput $input): LexemeCandidates

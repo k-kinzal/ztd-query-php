@@ -6,8 +6,8 @@ namespace SqlFaker\Sqlite;
 
 use Faker\Generator;
 use InvalidArgumentException;
-use SqlFaker\Grammar\Derivation\GenerationPlan;
-use SqlFaker\Grammar\Derivation\ProductionPattern;
+use SqlFaker\Generation\Plan\GenerationPlan;
+use SqlFaker\Generation\Plan\ProductionPattern;
 
 /**
  * Names the generation plans this dialect's provider is built from.

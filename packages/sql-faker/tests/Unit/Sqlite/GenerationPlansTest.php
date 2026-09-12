@@ -7,14 +7,14 @@ namespace Tests\Unit\SqlFaker\Sqlite;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\Derivation\GenerationPlan;
-use SqlFaker\Grammar\Derivation\ProductionPattern;
+use SqlFaker\Generation\Plan\GenerationPlan;
+use SqlFaker\Generation\Plan\ProductionPattern;
 use SqlFaker\Sqlite\GenerationPlans;
 
 #[CoversClass(GenerationPlans::class)]
 #[UsesClass(GenerationPlan::class)]
 #[UsesClass(ProductionPattern::class)]
-#[UsesClass(\SqlFaker\Grammar\Choice\BytePlanCompiler::class)]
+#[UsesClass(\SqlFaker\Generation\Choice\BytePlanCompiler::class)]
 final class GenerationPlansTest extends TestCase
 {
     public function testMultiDmlStatementDirectsBothStatementOccurrences(): void

@@ -9,7 +9,7 @@ use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\Generation\Value\RandomCharacters;
+use SqlFaker\Generation\Value\RandomCharacters;
 use SqlFaker\PostgreSql\Generation\Value\LiteralGenerator;
 
 #[CoversClass(LiteralGenerator::class)]

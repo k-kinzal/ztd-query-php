@@ -7,10 +7,10 @@ namespace Tests\Unit\SqlFaker\MySql;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\Derivation\GenerationPlan;
-use SqlFaker\Grammar\Derivation\ProductionPattern;
-use SqlFaker\Grammar\Grammar;
-use SqlFaker\Grammar\ProductionRule;
+use SqlFaker\Generation\Plan\GenerationPlan;
+use SqlFaker\Generation\Plan\ProductionPattern;
+use SqlFaker\Grammar\Model\Grammar;
+use SqlFaker\Grammar\Model\ProductionRule;
 use SqlFaker\MySql\GenerationPlans;
 
 #[CoversClass(GenerationPlans::class)]
@@ -18,7 +18,7 @@ use SqlFaker\MySql\GenerationPlans;
 #[UsesClass(ProductionPattern::class)]
 #[UsesClass(Grammar::class)]
 #[UsesClass(ProductionRule::class)]
-#[UsesClass(\SqlFaker\Grammar\Choice\BytePlanCompiler::class)]
+#[UsesClass(\SqlFaker\Generation\Choice\BytePlanCompiler::class)]
 final class GenerationPlansTest extends TestCase
 {
     public function testWithoutEmptyRowsConstrainsEveryOptionalValuesOccurrence(): void

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlFaker\MySql\Generation\Rewrite;
 
-use SqlFaker\Grammar\Generation\Token\TerminalMappingRule;
-use SqlFaker\Grammar\Generation\Token\TokenRewriter;
+use SqlFaker\Generation\Token\TerminalMappingRule;
+use SqlFaker\Generation\Token\TokenRewriter;
 use SqlFaker\MySql\Generation\Rewrite\Alter\OrderByRule;
 use SqlFaker\MySql\Generation\Rewrite\Column\AutoIncrementRule;
 use SqlFaker\MySql\Generation\Rewrite\Column\FieldLengthRule;

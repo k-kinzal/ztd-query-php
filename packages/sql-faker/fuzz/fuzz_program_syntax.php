@@ -19,8 +19,8 @@ use SqlFaker\Fuzz\Target\PgRawCheck;
 use SqlFaker\Fuzz\Target\PgSyntaxCheck;
 use SqlFaker\Fuzz\Target\SqliteProgramCheck;
 use SqlFaker\Fuzz\Target\VerificationRegistry;
-use SqlFaker\Grammar\Derivation\GenerationPlan;
-use SqlFaker\Grammar\Derivation\ProductionPattern;
+use SqlFaker\Generation\Plan\GenerationPlan;
+use SqlFaker\Generation\Plan\ProductionPattern;
 use SqlFaker\MySqlProvider;
 use SqlFaker\PostgreSqlProvider;
 use SqlFaker\SqliteProvider;
@@ -104,7 +104,7 @@ $config->setTarget(static function (string $input) use ($provider, $planner, $ca
         $case = $cases[ord($input[0] ?? "\0") % count($cases)];
         $root = $case['root'];
         $constraints = $case['ordinal'] === null ? GenerationPlan::fromRule($root) : GenerationPlan::constrained($root, [$root => [ProductionPattern::at($case['ordinal'])]]);
-        $plan = (new \SqlFaker\Grammar\Choice\BytePlanCompiler())->compile(substr($input, 1), $planner, $constraints->withExpansionBudget(100));
+        $plan = (new \SqlFaker\Generation\Choice\BytePlanCompiler())->compile(substr($input, 1), $planner, $constraints->withExpansionBudget(100));
         $fragment = $provider->generate($plan);
         if ($provider->generate($plan) !== $fragment) {
             throw new LogicException('A frozen plan generated different SQL.');

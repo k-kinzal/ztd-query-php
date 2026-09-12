@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace SqlFaker\MySql\Generation\Rewrite\Alter;
 
 use Override;
-use SqlFaker\Grammar\Generation\Token\RewriteRule;
-use SqlFaker\Grammar\Generation\Token\TerminalOccurrence;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Token\RewriteRule;
+use SqlFaker\Generation\Token\TerminalOccurrence;
+use SqlFaker\Generation\Token\TerminalSequence;
 
 /**
  * sql_yacc.yy alter_order_list shifts comma plus identifier before reducing alter_list.

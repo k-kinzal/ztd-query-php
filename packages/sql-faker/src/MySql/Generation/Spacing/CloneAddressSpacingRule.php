@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace SqlFaker\MySql\Generation\Spacing;
 
 use Override;
-use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
-use SqlFaker\Grammar\Generation\Spacing\LexemeBoundary;
-use SqlFaker\Grammar\Generation\Spacing\SpacingConstraint;
-use SqlFaker\Grammar\Generation\Spacing\SpacingRule;
+use SqlFaker\Generation\Lexeme\LexemeBoundary;
+use SqlFaker\Generation\Lexeme\LexemeInput;
+use SqlFaker\Generation\Lexeme\SpacingConstraint;
+use SqlFaker\Generation\Lexeme\SpacingRule;
 
 /**
  * sql/sql_yacc.yy clone_stmt checks the raw token positions on both sides of the port colon.

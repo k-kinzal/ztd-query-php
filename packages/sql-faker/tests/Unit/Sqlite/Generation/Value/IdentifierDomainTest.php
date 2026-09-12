@@ -7,7 +7,7 @@ namespace Tests\Unit\SqlFaker\Sqlite\Generation\Value;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\Generation\Value\CharacterDomain;
+use SqlFaker\Generation\Value\CharacterDomain;
 use SqlFaker\Sqlite\Generation\Value\IdentifierDomain;
 
 #[CoversClass(IdentifierDomain::class)]

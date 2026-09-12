@@ -8,16 +8,16 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\Generation\Lexeme\Lexeme;
-use SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates;
-use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
-use SqlFaker\Grammar\Generation\Lexeme\LexemeSequence;
-use SqlFaker\Grammar\Generation\Lexeme\MatchingLexemeGenerator;
-use SqlFaker\Grammar\Generation\Lexeme\RegisteredLexemeGenerator;
-use SqlFaker\Grammar\Generation\Output\ResolvedOutput;
-use SqlFaker\Grammar\Generation\Token\TerminalOccurrence;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
-use SqlFaker\Grammar\LexicalException;
+use SqlFaker\Generation\Candidate\MatchingLexemeGenerator;
+use SqlFaker\Generation\Candidate\RegisteredLexemeGenerator;
+use SqlFaker\Generation\Exception\LexicalException;
+use SqlFaker\Generation\Lexeme\Lexeme;
+use SqlFaker\Generation\Lexeme\LexemeCandidates;
+use SqlFaker\Generation\Lexeme\LexemeInput;
+use SqlFaker\Generation\Lexeme\LexemeSequence;
+use SqlFaker\Generation\Lexeme\ResolvedOutput;
+use SqlFaker\Generation\Token\TerminalOccurrence;
+use SqlFaker\Generation\Token\TerminalSequence;
 use SqlFaker\Sqlite\Generation\Lexeme\WindowNameLexemeGenerator;
 
 #[CoversClass(WindowNameLexemeGenerator::class)]
@@ -31,8 +31,8 @@ use SqlFaker\Sqlite\Generation\Lexeme\WindowNameLexemeGenerator;
 #[UsesClass(TerminalOccurrence::class)]
 #[UsesClass(TerminalSequence::class)]
 #[UsesClass(LexicalException::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\SpacingConstraint::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\SpacingConstraint::class)]
+#[UsesClass(\SqlFaker\Generation\Token\ProductionOccurrence::class)]
 final class WindowNameLexemeGeneratorTest extends TestCase
 {
     /**

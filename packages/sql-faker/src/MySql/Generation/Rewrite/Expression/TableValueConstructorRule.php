@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace SqlFaker\MySql\Generation\Rewrite\Expression;
 
 use Override;
-use SqlFaker\Grammar\Generation\Token\RewriteRule;
-use SqlFaker\Grammar\Generation\Token\TerminalOccurrence;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Token\RewriteRule;
+use SqlFaker\Generation\Token\TerminalOccurrence;
+use SqlFaker\Generation\Token\TerminalSequence;
 
 /**
  * sql_resolver.cc disallows empty rows and DEFAULT outside an INSERT table value constructor.

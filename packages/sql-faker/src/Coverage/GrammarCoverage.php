@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlFaker\Coverage;
 
 use JsonException;
-use SqlFaker\Grammar\Generation\Output\ResolvedOutput;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Lexeme\ResolvedOutput;
+use SqlFaker\Generation\Token\TerminalSequence;
 
 /**
  * Observes derivations without influencing generation or consuming randomness.

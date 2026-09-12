@@ -170,8 +170,8 @@ All three exception classes below extend `RuntimeException`:
 
 | Exception | Meaning |
 | --- | --- |
-| `SqlFaker\Grammar\GenerationException` | The requested SQL could not be generated, for example because its grammar constraints could not be satisfied. |
-| `SqlFaker\Grammar\LexicalException` | Tokens could not be represented consistently as SQL text. |
+| `SqlFaker\Generation\Exception\GenerationException` | The requested SQL could not be generated, for example because its grammar constraints could not be satisfied. |
+| `SqlFaker\Generation\Exception\LexicalException` | Tokens could not be represented consistently as SQL text. |
 | `SqlFaker\Grammar\LexicalCatalogException` | The selected version's lexical data is malformed or inconsistent. |
 
 A provider can also throw `RuntimeException` when a version is unsupported or its

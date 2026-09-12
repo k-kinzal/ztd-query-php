@@ -8,19 +8,19 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\Derivation\DerivationTrace;
-use SqlFaker\Grammar\Production;
-use SqlFaker\Grammar\Terminal;
+use SqlFaker\Generation\Derivation\DerivationTrace;
+use SqlFaker\Grammar\Model\Production;
+use SqlFaker\Grammar\Model\Terminal;
 use SqlFaker\MySql\Generation\Rewrite\RewriteDefinitions;
 
 #[CoversClass(RewriteDefinitions::class)]
 #[UsesClass(DerivationTrace::class)]
 #[UsesClass(Production::class)]
 #[UsesClass(Terminal::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalSequence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\TokenRewriter::class)]
+#[UsesClass(\SqlFaker\Generation\Token\ProductionOccurrence::class)]
+#[UsesClass(\SqlFaker\Generation\Token\TerminalOccurrence::class)]
+#[UsesClass(\SqlFaker\Generation\Token\TerminalSequence::class)]
+#[UsesClass(\SqlFaker\Generation\Token\TokenRewriter::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Option\UniqueOptionRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\AlterDatabaseRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\ConstraintEnforcementRule::class)]
@@ -31,7 +31,7 @@ use SqlFaker\MySql\Generation\Rewrite\RewriteDefinitions;
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\RequiredAliasRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\RoleGrantRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\SetNamesRule::class)]
-#[UsesClass(\SqlFaker\Grammar\NonTerminal::class)]
+#[UsesClass(\SqlFaker\Grammar\Model\NonTerminal::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Expression\ExpressionGroupingRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\AlterEventRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\SubqueryContextRule::class)]
@@ -55,7 +55,7 @@ use SqlFaker\MySql\Generation\Rewrite\RewriteDefinitions;
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Partition\ValueArityRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Partition\ValueShape::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Routine\LanguageRule::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalMappingRule::class)]
+#[UsesClass(\SqlFaker\Generation\Token\TerminalMappingRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Query\WindowFrameRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Expression\ConcatenationRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Name\HostNameRule::class)]

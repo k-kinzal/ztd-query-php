@@ -6,10 +6,10 @@ namespace SqlFaker\MySql\Generation\Value;
 
 use Closure;
 use Override;
-use SqlFaker\Grammar\Generation\Value\CharacterDomain;
-use SqlFaker\Grammar\Generation\Value\SequenceDomain;
-use SqlFaker\Grammar\Generation\Value\ValueDomain;
-use SqlFaker\Grammar\Generation\Value\WordDomain;
+use SqlFaker\Generation\Value\CharacterDomain;
+use SqlFaker\Generation\Value\SequenceDomain;
+use SqlFaker\Generation\Value\ValueDomain;
+use SqlFaker\Generation\Value\WordDomain;
 
 /**
  * Prefixed and quoted radix literals. Whole-byte sampling is a charset constraint;

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlFaker\Sqlite\Generation\Rewrite;
 
-use SqlFaker\Grammar\Generation\Token\TerminalMappingRule;
-use SqlFaker\Grammar\Generation\Token\TokenRewriter;
+use SqlFaker\Generation\Token\TerminalMappingRule;
+use SqlFaker\Generation\Token\TokenRewriter;
 use SqlFaker\Sqlite\Generation\Rewrite\Expression\ExpressionGroupingRule;
 
 /**

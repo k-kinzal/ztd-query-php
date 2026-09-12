@@ -32,7 +32,7 @@ use SqlFaker\Fuzz\Target\InfrastructureFailure;
 use SqlFaker\Fuzz\Target\ObservedCheck;
 use SqlFaker\Fuzz\Target\OracleEnvironment;
 use SqlFaker\Fuzz\Target\PgSyntaxCheck;
-use SqlFaker\Grammar\Derivation\GenerationPlan;
+use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\PostgreSqlProvider;
 use Testcontainers\Testcontainers;
 
@@ -92,7 +92,7 @@ $config->setTarget(static function (string $input) use ($provider, $planner, $co
         exit(128 + $stopSignal);
     }
     try {
-        $plan = (new SqlFaker\Grammar\Choice\BytePlanCompiler())->compile($input, $planner, $constraints);
+        $plan = (new SqlFaker\Generation\Choice\BytePlanCompiler())->compile($input, $planner, $constraints);
         $sql = $provider->generate($plan);
         if ($provider->generate($plan) !== $sql) {
             throw new LogicException('The same input produced different SQL.');

@@ -18,8 +18,8 @@ use SqlFaker\Fuzz\Target\PgSyntaxCheck;
 use SqlFaker\Fuzz\Target\SqliteProgramCheck;
 use SqlFaker\Fuzz\Target\SqliteSyntaxCheck;
 use SqlFaker\Fuzz\Target\SyntaxFailure;
-use SqlFaker\Grammar\Derivation\GenerationPlan;
-use SqlFaker\Grammar\Derivation\ProductionPattern;
+use SqlFaker\Generation\Plan\GenerationPlan;
+use SqlFaker\Generation\Plan\ProductionPattern;
 use SqlFaker\PostgreSqlProvider;
 
 #[CoversNothing]
@@ -177,7 +177,7 @@ final class NativeSyntaxCheckTest extends TestCase
         self::assertIsString($input);
         $provider = new PostgreSqlProvider(Factory::create(), 'pg-17.2');
         $constraints = GenerationPlan::constrained('parse_toplevel', ['parse_toplevel' => [ProductionPattern::at(3)]])->withExpansionBudget(100);
-        $plan = (new \SqlFaker\Grammar\Choice\BytePlanCompiler())->compile(substr($input, 1), $provider->planner(), $constraints);
+        $plan = (new \SqlFaker\Generation\Choice\BytePlanCompiler())->compile(substr($input, 1), $provider->planner(), $constraints);
         $sql = $provider->generate($plan);
         self::assertSame($sql, $provider->generate($plan));
         $check = new PgRawCheck($connection, 3, $module);

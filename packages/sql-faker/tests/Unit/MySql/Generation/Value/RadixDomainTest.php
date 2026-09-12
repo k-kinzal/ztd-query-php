@@ -7,9 +7,9 @@ namespace Tests\Unit\SqlFaker\MySql\Generation\Value;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\Generation\Value\CharacterDomain;
-use SqlFaker\Grammar\Generation\Value\SequenceDomain;
-use SqlFaker\Grammar\Generation\Value\WordDomain;
+use SqlFaker\Generation\Value\CharacterDomain;
+use SqlFaker\Generation\Value\SequenceDomain;
+use SqlFaker\Generation\Value\WordDomain;
 use SqlFaker\MySql\Generation\Value\RadixDomain;
 
 #[CoversClass(RadixDomain::class)]

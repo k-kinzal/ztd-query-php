@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlFaker\PostgreSql\Generation\Value;
 
 use Faker\Generator as FakerGenerator;
-use SqlFaker\Grammar\Generation\Value\RandomCharacters;
+use SqlFaker\Generation\Value\RandomCharacters;
 
 /**
  * Generates PostgreSql literal bodies for the bounded lexical API.

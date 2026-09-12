@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlFaker\PostgreSql\Generation\Rewrite\Expression;
 
-use SqlFaker\Grammar\Generation\Token\RewriteRule;
-use SqlFaker\Grammar\Generation\Token\TerminalOccurrence;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Token\RewriteRule;
+use SqlFaker\Generation\Token\TerminalOccurrence;
+use SqlFaker\Generation\Token\TerminalSequence;
 
 /**
  * Preserves derived operand grouping where the source grammar permits parenthesized expressions.

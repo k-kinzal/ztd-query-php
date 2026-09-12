@@ -7,7 +7,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 use SqlFaker\Compiler\Lemon\LemonParser;
 use SqlFaker\Grammar\Resource\GrammarWriter;
-use SqlFaker\Grammar\SqlVersion;
+use SqlFaker\Grammar\Resource\SqlVersion;
 
 /**
  * Build script for generating a versioned grammar AST from SQLite sources.

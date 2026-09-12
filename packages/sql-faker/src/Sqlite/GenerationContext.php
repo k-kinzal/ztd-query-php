@@ -7,9 +7,9 @@ namespace SqlFaker\Sqlite;
 use Closure;
 use Faker\Generator;
 use RuntimeException;
-use SqlFaker\Grammar\Generation\Token\TokenRewriter;
-use SqlFaker\Grammar\Grammar;
-use SqlFaker\Grammar\LexicalGrammar as LexicalContract;
+use SqlFaker\Generation\Lexeme\LexicalGrammar as LexicalContract;
+use SqlFaker\Generation\Token\TokenRewriter;
+use SqlFaker\Grammar\Model\Grammar;
 use SqlFaker\Sqlite\Generation\Rewrite\RewriteDefinitions;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
 

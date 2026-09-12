@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace SqlFaker\Sqlite;
 
-use SqlFaker\Grammar\Grammar;
-use SqlFaker\Grammar\Production;
-use SqlFaker\Grammar\ProductionRule;
+use SqlFaker\Grammar\Model\Grammar;
+use SqlFaker\Grammar\Model\Production;
+use SqlFaker\Grammar\Model\ProductionRule;
 
 /**
  * Exposes statement aliases for SQLite's cmd alternatives without filtering the upstream grammar.

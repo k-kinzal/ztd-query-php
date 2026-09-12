@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlFaker\MySql\Generation\Lexeme;
 
-use SqlFaker\Grammar\Generation\Lexeme\IntegerLexemeGenerator;
-use SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates;
-use SqlFaker\Grammar\Generation\Lexeme\LexemeGenerator;
-use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
+use SqlFaker\Generation\Candidate\IntegerLexemeGenerator;
+use SqlFaker\Generation\Lexeme\LexemeCandidates;
+use SqlFaker\Generation\Lexeme\LexemeGenerator;
+use SqlFaker\Generation\Lexeme\LexemeInput;
 
 /**
  * Create_field::init requires M >= D; my_decimal_trim gives (0,0) its default precision.

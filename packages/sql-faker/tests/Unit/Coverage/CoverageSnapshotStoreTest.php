@@ -16,14 +16,14 @@ use SqlFaker\Coverage\GrammarCoverage;
 use SqlFaker\Coverage\GrammarCoverageInventory;
 use SqlFaker\Coverage\LexicalObservation;
 use SqlFaker\Coverage\SnapshotValidation;
-use SqlFaker\Grammar\Choice\ByteChoices;
-use SqlFaker\Grammar\Derivation\CompletionCosts;
-use SqlFaker\Grammar\Derivation\DerivationNode;
-use SqlFaker\Grammar\Grammar;
-use SqlFaker\Grammar\NonTerminal;
-use SqlFaker\Grammar\Production;
-use SqlFaker\Grammar\ProductionRule;
-use SqlFaker\Grammar\Terminal;
+use SqlFaker\Generation\Choice\ByteChoices;
+use SqlFaker\Generation\Derivation\CompletionCosts;
+use SqlFaker\Generation\Derivation\DerivationNode;
+use SqlFaker\Grammar\Model\Grammar;
+use SqlFaker\Grammar\Model\NonTerminal;
+use SqlFaker\Grammar\Model\Production;
+use SqlFaker\Grammar\Model\ProductionRule;
+use SqlFaker\Grammar\Model\Terminal;
 use Symfony\Component\Filesystem\Filesystem;
 
 #[CoversClass(CoverageSnapshotStore::class)]

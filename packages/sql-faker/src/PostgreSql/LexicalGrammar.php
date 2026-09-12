@@ -9,16 +9,18 @@ use Faker\Generator as FakerGenerator;
 use InvalidArgumentException;
 use Override;
 use RuntimeException;
-use SqlFaker\Grammar\Derivation\GenerationPlan;
-use SqlFaker\Grammar\Generation\Output\ResolvedOutput;
-use SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator;
-use SqlFaker\Grammar\Generation\Output\SqlSerializer;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
-use SqlFaker\Grammar\LexicalException;
-use SqlFaker\Grammar\LexicalGrammar as LexicalGrammarContract;
+use SqlFaker\Generation\Exception\LexicalException;
+use SqlFaker\Generation\Lexeme\LexicalGrammar as LexicalGrammarContract;
+use SqlFaker\Generation\Lexeme\ResolvedOutput;
+use SqlFaker\Generation\Output\ReverseLexemeGenerator;
+use SqlFaker\Generation\Output\SqlSerializer;
+use SqlFaker\Generation\Plan\GenerationPlan;
+use SqlFaker\Generation\Token\TerminalSequence;
 use SqlFaker\PostgreSql\Generation\Lexeme\DefinitionFactory;
 use SqlFaker\PostgreSql\Generation\Value\LiteralGenerator;
+use SqlFaker\PostgreSql\Lookahead\PgLookahead;
 use SqlFaker\PostgreSql\Tokenization\KeywordIndex;
+use SqlFaker\PostgreSql\Tokenization\PgTokenizer;
 
 /**
  * PostgreSQL lexical generation using source-based candidate and boundary definitions.

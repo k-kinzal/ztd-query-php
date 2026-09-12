@@ -41,7 +41,7 @@ use SqlFaker\Compiler\Bison\Lexer\TypeTagScanner;
 #[UsesClass(DirectiveScanner::class)]
 #[UsesClass(TypeTagScanner::class)]
 #[UsesClass(\SqlFaker\Compiler\Bison\Lexer\PunctuationScanner::class)]
-#[UsesClass(\SqlFaker\Grammar\GrammarParseException::class)]
+#[UsesClass(\SqlFaker\Compiler\GrammarParseException::class)]
 final class DefineDirectiveReaderTest extends TestCase
 {
     public function testHandlesClaimsOnlyTheDefineDirective(): void

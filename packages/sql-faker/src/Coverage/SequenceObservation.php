@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlFaker\Coverage;
 
-use SqlFaker\Grammar\Generation\Token\TerminalOccurrence;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Token\TerminalOccurrence;
+use SqlFaker\Generation\Token\TerminalSequence;
 
 /**
  * Separates selected grammar occurrences from source subtrees preserved in the emitted sequence.

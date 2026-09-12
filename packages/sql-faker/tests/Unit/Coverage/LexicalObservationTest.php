@@ -8,13 +8,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Coverage\LexicalObservation;
-use SqlFaker\Grammar\Generation\Lexeme\Lexeme;
-use SqlFaker\Grammar\Generation\Lexeme\LexemeSequence;
-use SqlFaker\Grammar\Generation\Output\OutputPart;
-use SqlFaker\Grammar\Generation\Output\ResolvedOutput;
-use SqlFaker\Grammar\Generation\Spacing\SpacingConstraint;
-use SqlFaker\Grammar\Generation\Token\TerminalOccurrence;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Lexeme\Lexeme;
+use SqlFaker\Generation\Lexeme\LexemeSequence;
+use SqlFaker\Generation\Lexeme\OutputPart;
+use SqlFaker\Generation\Lexeme\ResolvedOutput;
+use SqlFaker\Generation\Lexeme\SpacingConstraint;
+use SqlFaker\Generation\Token\TerminalOccurrence;
+use SqlFaker\Generation\Token\TerminalSequence;
 
 #[CoversClass(LexicalObservation::class)]
 #[UsesClass(Lexeme::class)]

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlFaker\Sqlite\Generation\Rewrite;
 
 use Override;
-use SqlFaker\Grammar\Generation\Token\RewriteRule;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Token\RewriteRule;
+use SqlFaker\Generation\Token\TerminalSequence;
 
 /**
  * parse.y/parserAddExprIdListTerm only accepts COLLATE and sort order while loading legacy schemas.

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlFaker\Sqlite\Generation\Rewrite;
 
 use Override;
-use SqlFaker\Grammar\Generation\Token\RewriteRule;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Token\RewriteRule;
+use SqlFaker\Generation\Token\TerminalSequence;
 
 /**
  * version-3.47.2 parse.y table_option recognizes the ID spelling STRICT and WITHOUT ROWID.

@@ -6,7 +6,7 @@ namespace SqlFaker\PostgreSql\Generation\Value;
 
 use Closure;
 use Override;
-use SqlFaker\Grammar\Generation\Value\ValueDomain;
+use SqlFaker\Generation\Value\ValueDomain;
 
 /**
  * Reuses one chosen tag at both boundaries; the declared body alphabet excludes dollars.

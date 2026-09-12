@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlFaker\Coverage;
 
-use SqlFaker\Grammar\Grammar;
-use SqlFaker\Grammar\NonTerminal;
-use SqlFaker\Grammar\Production;
-use SqlFaker\Grammar\Symbol;
+use SqlFaker\Grammar\Model\Grammar;
+use SqlFaker\Grammar\Model\NonTerminal;
+use SqlFaker\Grammar\Model\Production;
+use SqlFaker\Grammar\Model\Symbol;
 
 /**
  * Enumerates the effective grammar before any per-generation restrictions.

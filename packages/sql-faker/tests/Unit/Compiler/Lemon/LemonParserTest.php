@@ -9,18 +9,18 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
+use SqlFaker\Compiler\GrammarParseException;
 use SqlFaker\Compiler\Lemon\LemonDirectives;
 use SqlFaker\Compiler\Lemon\LemonParser;
 use SqlFaker\Compiler\Lemon\LemonRules;
 use SqlFaker\Compiler\Lemon\LemonSymbols;
 use SqlFaker\Compiler\Lemon\LemonText;
-use SqlFaker\Grammar\Grammar;
-use SqlFaker\Grammar\GrammarParseException;
-use SqlFaker\Grammar\NonTerminal;
-use SqlFaker\Grammar\Production;
-use SqlFaker\Grammar\ProductionRule;
-use SqlFaker\Grammar\Symbol;
-use SqlFaker\Grammar\Terminal;
+use SqlFaker\Grammar\Model\Grammar;
+use SqlFaker\Grammar\Model\NonTerminal;
+use SqlFaker\Grammar\Model\Production;
+use SqlFaker\Grammar\Model\ProductionRule;
+use SqlFaker\Grammar\Model\Symbol;
+use SqlFaker\Grammar\Model\Terminal;
 
 #[CoversClass(LemonParser::class)]
 #[CoversClass(Grammar::class)]

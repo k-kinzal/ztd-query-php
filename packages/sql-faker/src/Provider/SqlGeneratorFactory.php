@@ -7,7 +7,7 @@ namespace SqlFaker\Provider;
 use Faker\Generator;
 use SqlFaker\Coverage\GrammarCoverage;
 use SqlFaker\Generation\SqlGenerator;
-use SqlFaker\Grammar\Grammar;
+use SqlFaker\Grammar\Model\Grammar;
 use SqlFaker\MySql\GenerationContext as MySqlContext;
 use SqlFaker\PostgreSql\GenerationContext as PgContext;
 use SqlFaker\Sqlite\GenerationContext as SqliteContext;

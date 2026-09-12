@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace SqlFaker\Sqlite\Generation\Lexeme;
 
 use Override;
-use SqlFaker\Grammar\Generation\Lexeme\Lexeme;
-use SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates;
-use SqlFaker\Grammar\Generation\Lexeme\LexemeGenerator;
-use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
-use SqlFaker\Grammar\Generation\Lexeme\LexemeSequence;
-use SqlFaker\Grammar\LexicalException;
+use SqlFaker\Generation\Exception\LexicalException;
+use SqlFaker\Generation\Lexeme\Lexeme;
+use SqlFaker\Generation\Lexeme\LexemeCandidates;
+use SqlFaker\Generation\Lexeme\LexemeGenerator;
+use SqlFaker\Generation\Lexeme\LexemeInput;
+use SqlFaker\Generation\Lexeme\LexemeSequence;
 
 /**
  * Realizes JOIN_KW registrations under the complete join-type condition from select.c/sqlite3JoinType.

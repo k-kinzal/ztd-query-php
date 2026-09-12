@@ -8,17 +8,17 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\Generation\Token\ProductionOccurrence;
-use SqlFaker\Grammar\Generation\Token\TerminalOccurrence;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Token\ProductionOccurrence;
+use SqlFaker\Generation\Token\TerminalOccurrence;
+use SqlFaker\Generation\Token\TerminalSequence;
 use SqlFaker\PostgreSql\Generation\Rewrite\RewriteDefinitions;
 
 #[CoversClass(RewriteDefinitions::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Routine\SubstringRule::class)]
 #[UsesClass(TerminalSequence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalMappingRule::class)]
+#[UsesClass(\SqlFaker\Generation\Token\TerminalMappingRule::class)]
 #[UsesClass(TerminalOccurrence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\TokenRewriter::class)]
+#[UsesClass(\SqlFaker\Generation\Token\TokenRewriter::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Option\UniqueOptionRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\CopySourceRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\FetchWithTiesRule::class)]
@@ -32,7 +32,7 @@ use SqlFaker\PostgreSql\Generation\Rewrite\RewriteDefinitions;
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Name\RelationNameRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\TimeZoneIntervalRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\WindowFrameRule::class)]
-#[UsesClass(\SqlFaker\PostgreSql\PgLookahead::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Lookahead\PgLookahead::class)]
 #[UsesClass(ProductionOccurrence::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Expression\ExpressionGroupingRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\ConstraintAttributesRule::class)]

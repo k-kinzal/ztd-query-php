@@ -72,7 +72,7 @@ use SqlFaker\Compiler\Bison\Lexer\TypeTagScanner;
 #[UsesClass(\SqlFaker\Compiler\Bison\Ast\BisonPrecedenceDeclaration::class)]
 #[UsesClass(\SqlFaker\Compiler\Bison\Ast\BisonTypeDeclaration::class)]
 #[UsesClass(\SqlFaker\Compiler\Bison\Lexer\PunctuationScanner::class)]
-#[UsesClass(\SqlFaker\Grammar\GrammarParseException::class)]
+#[UsesClass(\SqlFaker\Compiler\GrammarParseException::class)]
 final class BisonPreambleReaderTest extends TestCase
 {
     public function testReadTakesThePrologueAndTheDeclarations(): void
