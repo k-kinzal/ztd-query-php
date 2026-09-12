@@ -37,10 +37,33 @@ use Tests\Fixture\Fixture\ShopSchemas;
 #[UsesClass(SchemaNotFoundException::class)]
 #[UsesClass(TableSchema::class)]
 #[UsesClass(ColumnDefinition::class)]
+#[CoversClass(\SqlFixture\Fixture\Validation\EndpointValidator::class)]
+#[UsesClass(\SqlFixture\Plan\PlanPrinter::class)]
+#[UsesClass(\SqlFixture\Plan\PlanSyntaxException::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaParseException::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaParserInterface::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaResolverInterface::class)]
+#[UsesClass(\SqlFixture\Schema\TableIdentifier::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\PlanStatements::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\RelationCursor::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\RelationReader::class)]
+#[UsesClass(\SqlFixture\Plan\PlanStructureException::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\PlanTables::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\RelationGroups::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\StatementPrinter::class)]
+#[UsesClass(\SqlFixture\Plan\Validation\PlanValidation::class)]
+#[UsesClass(\SqlFixture\Plan\Validation\TableName::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\ColumnParser::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\DefaultExpression::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\DefinitionIntegrity::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinition::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TypeParameters::class)]
+#[UsesClass(\SqlFixture\Schema\TypeShape::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinitionInput::class)]
 final class PlanSchemaValidatorTest extends TestCase
 {
     #[Test]
-    public function aPlanMatchingTheSchemaPasses(): void
+    public function testValidateAPlanMatchingTheSchemaPasses(): void
     {
         $validator = new PlanSchemaValidator(ShopSchemas::resolver());
 
@@ -87,7 +110,7 @@ final class PlanSchemaValidatorTest extends TestCase
     }
 
     #[Test]
-    public function aTableTheResolverDoesNotKnowIsRejected(): void
+    public function testATableTheResolverDoesNotKnowIsRejected(): void
     {
         $validator = new PlanSchemaValidator(ShopSchemas::resolver());
 
@@ -98,7 +121,7 @@ final class PlanSchemaValidatorTest extends TestCase
     }
 
     #[Test]
-    public function aTableNamedWithoutAnyRelationIsCheckedToo(): void
+    public function testATableNamedWithoutAnyRelationIsCheckedToo(): void
     {
         $validator = new PlanSchemaValidator(ShopSchemas::resolver());
 
@@ -109,7 +132,7 @@ final class PlanSchemaValidatorTest extends TestCase
     }
 
     #[Test]
-    public function aGeneratedColumnCannotBeLinked(): void
+    public function testAGeneratedColumnCannotBeLinked(): void
     {
         $resolver = new StaticSchemaResolver([
             new TableSchema('order', [
@@ -128,7 +151,7 @@ final class PlanSchemaValidatorTest extends TestCase
     }
 
     #[Test]
-    public function aGeneratedColumnCannotBeWrittenIntoEither(): void
+    public function testAGeneratedColumnCannotBeWrittenIntoEither(): void
     {
         $resolver = new StaticSchemaResolver([
             new TableSchema('order', ['id' => new ColumnDefinition('id', 'INT', autoIncrement: true)], ['id']),

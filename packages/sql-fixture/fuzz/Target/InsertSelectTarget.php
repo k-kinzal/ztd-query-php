@@ -7,6 +7,7 @@ namespace Fuzz\Target;
 use Error;
 use Faker\Factory;
 use Faker\Generator;
+use JsonException;
 use PDO;
 use SqlFixture\FixtureProvider;
 
@@ -49,14 +50,16 @@ final class InsertSelectTarget
     private Generator $faker;
     private FixtureProvider $fixtureProvider;
 
+    /**
+     * Initializes the collaborators and declared state for this object.
+     */
     public function __construct(
         private readonly PDO $pdo,
     ) {
         $this->faker = Factory::create();
         $this->fixtureProvider = new FixtureProvider($this->faker);
 
-        $this->pdo->exec('DROP TABLE IF EXISTS all_types');
-        $this->pdo->exec(self::ALL_TYPES_TABLE);
+        $this->pdo->exec(str_replace('CREATE TABLE', 'CREATE TEMPORARY TABLE', self::ALL_TYPES_TABLE));
     }
 
     /**
@@ -64,10 +67,11 @@ final class InsertSelectTarget
      *
      * @param string $input Raw fuzzer input (mutated bytes)
      * @throws Error On INSERT/SELECT mismatch
+     * @throws JsonException When a round-tripped JSON value is malformed
      */
     public function __invoke(string $input): void
     {
-        $seed = $this->inputToSeed($input);
+        $seed = crc32(str_pad($input, 4, "\0"));
         $this->faker->seed($seed);
 
         $fixture = $this->fixtureProvider->fixture(self::ALL_TYPES_TABLE);
@@ -81,109 +85,54 @@ final class InsertSelectTarget
             implode(', ', $placeholders)
         );
 
-        $values = array_map(function ($v) {
-            if (is_bool($v)) {
-                return $v ? 1 : 0;
+        $this->pdo->beginTransaction();
+        try {
+            $stmt = $this->pdo->prepare($sql);
+            foreach (array_values($fixture) as $index => $value) {
+                $type = match (true) {
+                    $value === null => PDO::PARAM_NULL,
+                    is_int($value) => PDO::PARAM_INT,
+                    is_bool($value) => PDO::PARAM_BOOL,
+                    default => PDO::PARAM_STR,
+                };
+                $stmt->bindValue($index + 1, $value, $type);
             }
-            return $v;
-        }, array_values($fixture));
+            $stmt->execute();
 
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($values);
+            $id = (int) $this->pdo->lastInsertId();
 
-        $id = (int) $this->pdo->lastInsertId();
+            $stmt = $this->pdo->prepare('SELECT * FROM all_types WHERE id = ?');
+            $stmt->execute([$id]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $stmt = $this->pdo->prepare('SELECT * FROM all_types WHERE id = ?');
-        $stmt->execute([$id]);
-        $result = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!is_array($result)) {
-            throw new Error(
-                "Failed to retrieve inserted row\n" .
-                "Seed: $seed\n" .
-                "ID: $id"
-            );
-        }
-
-        foreach ($fixture as $column => $expected) {
-            /** @var mixed $actual */
-            $actual = $result[$column] ?? null;
-
-            if (!$this->compare($expected, $actual, $column)) {
+            if (!is_array($result)) {
                 throw new Error(
-                    "Value mismatch\n" .
+                    "Failed to retrieve inserted row\n" .
                     "Seed: $seed\n" .
-                    "Column: $column\n" .
-                    "Expected: " . var_export($expected, true) . "\n" .
-                    "Actual: " . var_export($actual, true)
+                    "ID: $id"
                 );
             }
-        }
 
-        $this->pdo->exec("DELETE FROM all_types WHERE id = $id");
+            foreach ($fixture as $column => $expected) {
+                $actual = $result[$column] ?? null;
+
+                if (!(new \Fuzz\Oracle\StoredValueComparator())->compare($expected, $actual, $column)) {
+                    throw new Error(
+                        "Value mismatch\n" .
+                        "Seed: $seed\n" .
+                        "Column: $column\n" .
+                        'Expected: ' . var_export($expected, true) . "\n" .
+                        'Actual: ' . var_export($actual, true)
+                    );
+                }
+            }
+
+        } finally {
+            $this->pdo->rollBack();
+        }
     }
 
-    private function inputToSeed(string $input): int
-    {
-        if (strlen($input) < 4) {
-            $input = str_pad($input, 4, "\0");
-        }
-        return crc32($input);
-    }
 
-    /**
-     * Compare expected and actual values with type-appropriate logic.
-     */
-    private function compare(mixed $expected, mixed $actual, string $column): bool
-    {
-        if ($expected === null && $actual === null) {
-            return true;
-        }
 
-        if ($expected === null || $actual === null) {
-            return false;
-        }
 
-        if (is_bool($expected)) {
-            return (bool) $actual === $expected;
-        }
-
-        if (is_float($expected)) {
-            $actualFloat = (float) (is_numeric($actual) ? $actual : 0);
-            if ($expected === 0.0) {
-                return abs($actualFloat) < 0.0001;
-            }
-            return abs($expected - $actualFloat) / abs($expected) < 0.001;
-        }
-
-        if (is_int($expected)) {
-            if (str_starts_with($column, 'col_bit')) {
-                $actualStr = is_string($actual) ? $actual : '';
-                $actualInt = $actualStr === '' ? 0 : ord($actualStr);
-                return $expected === $actualInt;
-            }
-            return $expected === (int) (is_numeric($actual) ? $actual : 0);
-        }
-
-        if (is_string($expected)) {
-            $actualStr = is_string($actual) ? $actual : (is_scalar($actual) ? (string) $actual : '');
-            if ($column === 'col_json') {
-                $expectedJson = json_decode($expected, true);
-                $actualJson = json_decode($actualStr, true);
-                return $expectedJson === $actualJson;
-            }
-
-            if ($column === 'col_set') {
-                $expectedParts = explode(',', $expected);
-                $actualParts = explode(',', $actualStr);
-                sort($expectedParts);
-                sort($actualParts);
-                return $expectedParts === $actualParts;
-            }
-
-            return $expected === $actual;
-        }
-
-        return $expected === $actual;
-    }
 }

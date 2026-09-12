@@ -6,20 +6,20 @@ namespace Tests\Unit;
 
 use Faker\Factory;
 use Faker\Generator;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlFixture\FileFixtureProvider;
 use SqlFixture\FixtureGenerator;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
-use SqlFixture\Platform\PlatformFactory;
-use SqlFixture\Platform\MySql\MySqlSchemaParser;
-use SqlFixture\Schema\ColumnDefinition;
-use SqlFixture\Schema\TableSchema;
-use SqlFixture\Schema\SchemaParseException;
-use SqlFixture\Platform\MySql\MySqlTypeMapper;
 use SqlFixture\Hydrator\ReflectionHydrator;
+use SqlFixture\Platform\MySql\MySqlSchemaParser;
+use SqlFixture\Platform\MySql\MySqlTypeMapper;
+use SqlFixture\Platform\PlatformFactory;
+use SqlFixture\Schema\ColumnDefinition;
+use SqlFixture\Schema\SchemaParseException;
+use SqlFixture\Schema\TableSchema;
 use Tests\Fixture\FileTestUser;
 
 #[CoversClass(FileFixtureProvider::class)]
@@ -31,10 +31,75 @@ use Tests\Fixture\FileTestUser;
 #[UsesClass(SchemaParseException::class)]
 #[UsesClass(MySqlTypeMapper::class)]
 #[UsesClass(ReflectionHydrator::class)]
+#[CoversClass(\SqlFixture\Provider\DdlDirectory::class)]
+#[CoversClass(\SqlFixture\Provider\DdlFile::class)]
+#[UsesClass(\SqlFixture\Hydrator\HydrationException::class)]
+#[UsesClass(\SqlFixture\Hydrator\HydratorInterface::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\MySqlSchemaFetcher::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\PostgreSqlSchemaFetcher::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\PostgreSqlSchemaParser::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\PostgreSqlTypeMapper::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\SqliteSchemaFetcher::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\SqliteSchemaParser::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\SqliteTypeMapper::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaFetcherInterface::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaParserInterface::class)]
+#[UsesClass(\SqlFixture\TypeMapper\TypeMapperInterface::class)]
+#[UsesClass(\SqlFixture\Fixture\RowGeneration::class)]
+#[UsesClass(\SqlFixture\Fixture\Validation\OverrideValidator::class)]
+#[UsesClass(\SqlFixture\Hydrator\Reflection\ConstructorHydration::class)]
+#[UsesClass(\SqlFixture\Hydrator\Reflection\PropertyHydration::class)]
+#[UsesClass(\SqlFixture\Hydrator\Reflection\PropertyNames::class)]
+#[UsesClass(\SqlFixture\Hydrator\Reflection\ValueConversion::class)]
+#[UsesClass(\SqlFixture\InvalidOverrideException::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\ColumnParser::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\CreateTableQuery::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\DefaultExpression::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\DefinitionIntegrity::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\IdentifierQuoter::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinition::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TypeParameters::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\ColumnGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\DecimalGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\GeometryGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\IntegerGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\NumericGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\SpatialGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\StringGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\TextGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\CatalogColumn::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\CatalogDdl::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\CatalogQuery::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\CatalogSchema::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\ColumnParser::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\DefaultExpression::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\DefinitionList::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\TableSyntax::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\TypeDeclaration::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Value\ColumnGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Value\DecimalGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Value\NumericGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Value\StringGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Value\StructuredGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Value\TemporalGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\ColumnParser::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\CreateTableQuery::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\DefaultExpression::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\DefinitionList::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\PragmaColumn::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\PragmaSchema::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\TableSyntax::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\TypeDeclaration::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Value\ColumnGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Value\TypeAffinity::class)]
+#[UsesClass(\SqlFixture\Schema\DefinitionSegments::class)]
+#[UsesClass(\SqlFixture\Schema\TypeShape::class)]
+#[UsesClass(\SqlFixture\TypeMapper\ParagraphGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinitionInput::class)]
 final class FileFixtureProviderTest extends TestCase
 {
     #[Test]
-    public function loadsSchemasFromDirectory(): void
+    public function testLoadsSchemasFromDirectory(): void
     {
         $tempDir = (static function (): string {
             $dir = sys_get_temp_dir() . '/sql-fixture-test-' . uniqid();
@@ -67,7 +132,7 @@ final class FileFixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function fixtureGeneratesDataForLoadedTable(): void
+    public function testFixtureGeneratesDataForLoadedTable(): void
     {
         $tempDir = (static function (): string {
             $dir = sys_get_temp_dir() . '/sql-fixture-test-' . uniqid();
@@ -102,7 +167,7 @@ final class FileFixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function fixtureWithOverrides(): void
+    public function testFixtureWithOverrides(): void
     {
         $tempDir = (static function (): string {
             $dir = sys_get_temp_dir() . '/sql-fixture-test-' . uniqid();
@@ -136,7 +201,7 @@ final class FileFixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function fixtureWithHydration(): void
+    public function testFixtureWithHydration(): void
     {
         $tempDir = (static function (): string {
             $dir = sys_get_temp_dir() . '/sql-fixture-test-' . uniqid();
@@ -156,7 +221,6 @@ final class FileFixtureProviderTest extends TestCase
             })(), $tempDir);
             $user = $provider->fixture('users', ['id' => 1, 'name' => 'Test'], FileTestUser::class);
 
-            self::assertInstanceOf(FileTestUser::class, $user);
             self::assertSame(1, $user->id);
             self::assertSame('Test', $user->name);
         } finally {
@@ -172,7 +236,7 @@ final class FileFixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function throwsExceptionForNonExistentTable(): void
+    public function testThrowsExceptionForNonExistentTable(): void
     {
         $tempDir = (static function (): string {
             $dir = sys_get_temp_dir() . '/sql-fixture-test-' . uniqid();
@@ -202,7 +266,7 @@ final class FileFixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function throwsExceptionForNonExistentDirectory(): void
+    public function testThrowsExceptionForNonExistentDirectory(): void
     {
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('not a directory');
@@ -214,7 +278,7 @@ final class FileFixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function hasTableReturnsFalseForNonExistent(): void
+    public function testHasTableReturnsFalseForNonExistent(): void
     {
         $tempDir = (static function (): string {
             $dir = sys_get_temp_dir() . '/sql-fixture-test-' . uniqid();
@@ -241,7 +305,7 @@ final class FileFixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function getTableNames(): void
+    public function testGetTableNames(): void
     {
         $tempDir = (static function (): string {
             $dir = sys_get_temp_dir() . '/sql-fixture-test-' . uniqid();
@@ -280,7 +344,7 @@ final class FileFixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function registerSchema(): void
+    public function testRegisterSchema(): void
     {
         $tempDir = (static function (): string {
             $dir = sys_get_temp_dir() . '/sql-fixture-test-' . uniqid();
@@ -311,7 +375,7 @@ final class FileFixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function getFixtureGenerator(): void
+    public function testGetFixtureGenerator(): void
     {
         $tempDir = (static function (): string {
             $dir = sys_get_temp_dir() . '/sql-fixture-test-' . uniqid();
@@ -324,7 +388,7 @@ final class FileFixtureProviderTest extends TestCase
                 $faker->seed(12345);
                 return $faker;
             })(), $tempDir);
-            self::assertInstanceOf(FixtureGenerator::class, $provider->getFixtureGenerator());
+            self::assertSame(['id' => 7], $provider->getFixtureGenerator()->generate(new TableSchema('sample', ['id' => new ColumnDefinition('id', 'INT')]), ['id' => 7]));
         } finally {
             (static function (string $dir): void {
                 if (is_dir($dir)) {
@@ -338,7 +402,7 @@ final class FileFixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function skipsInvalidSqlFiles(): void
+    public function testSkipsInvalidSqlFiles(): void
     {
         $tempDir = (static function (): string {
             $dir = sys_get_temp_dir() . '/sql-fixture-test-' . uniqid();
@@ -373,7 +437,7 @@ final class FileFixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function handlesCommentsInSqlFiles(): void
+    public function testHandlesCommentsInSqlFiles(): void
     {
         $tempDir = (static function (): string {
             $dir = sys_get_temp_dir() . '/sql-fixture-test-' . uniqid();
@@ -409,7 +473,7 @@ final class FileFixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function handlesEmptySqlFile(): void
+    public function testHandlesEmptySqlFile(): void
     {
         $tempDir = (static function (): string {
             $dir = sys_get_temp_dir() . '/sql-fixture-test-' . uniqid();
@@ -442,7 +506,7 @@ final class FileFixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function handlesCommentOnlySqlFile(): void
+    public function testHandlesCommentOnlySqlFile(): void
     {
         $tempDir = (static function (): string {
             $dir = sys_get_temp_dir() . '/sql-fixture-test-' . uniqid();
@@ -475,7 +539,7 @@ final class FileFixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function tableNameIsCaseInsensitive(): void
+    public function testTableNameIsCaseInsensitive(): void
     {
         $tempDir = (static function (): string {
             $dir = sys_get_temp_dir() . '/sql-fixture-test-' . uniqid();
@@ -510,7 +574,7 @@ final class FileFixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function fixtureWithMixedCaseTableName(): void
+    public function testFixtureWithMixedCaseTableName(): void
     {
         $tempDir = (static function (): string {
             $dir = sys_get_temp_dir() . '/sql-fixture-test-' . uniqid();
@@ -545,7 +609,7 @@ final class FileFixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function registerSchemaWithMixedCaseFixture(): void
+    public function testRegisterSchemaWithMixedCaseFixture(): void
     {
         $tempDir = (static function (): string {
             $dir = sys_get_temp_dir() . '/sql-fixture-test-' . uniqid();

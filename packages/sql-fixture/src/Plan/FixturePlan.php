@@ -32,19 +32,33 @@ use Stringable;
  * A subclass names a plan without adding a kind of plan, so the builders below
  * return a plain FixturePlan rather than the subclass: once a declared plan is
  * altered it is no longer the plan that class stands for.
+ *
+ * @visibility public
+ * @example Build and print a relational fixture plan
+ *     $plan = \SqlFixture\Plan\FixturePlan::from('users.id < posts.user_id');
+ *     $plan->tables // => ['users', 'posts']
+ *     $plan->toString() // => 'users.id < posts.user_id'
  */
 class FixturePlan implements Stringable
 {
-    /** @var list<Relation|string> */
+    /**
+     * @var list<Relation|string>
+     */
     private readonly array $parts;
 
-    /** @var list<Relation> */
+    /**
+     * @var list<Relation>
+     */
     public readonly array $relations;
 
-    /** @var list<string> Every table named, in first-mentioned order */
+    /**
+     * @var list<string> Every table named, in first-mentioned order
+     */
     public readonly array $tables;
 
-    /** @var list<string> Every table, ordered so a parent always precedes its children */
+    /**
+     * @var list<string> Every table, ordered so a parent always precedes its children
+     */
     public readonly array $generationOrder;
 
     /**
@@ -63,16 +77,16 @@ class FixturePlan implements Stringable
                 continue;
             }
 
-            $tables[] = self::assertTableName($part);
+            $tables[] = (new Validation\TableName())->assertTableName($part);
         }
 
         $this->parts = array_values($parts);
         $this->relations = $relations;
         $this->tables = array_values(array_unique($tables));
 
-        $this->rejectColumnsBoundTwice($relations);
-        $this->rejectUnboundedSelfReferences($relations);
-        $this->generationOrder = $this->sortByDependency($this->tables, $relations);
+        (new Validation\PlanValidation())->rejectColumnsBoundTwice($relations);
+        (new Validation\PlanValidation())->rejectUnboundedSelfReferences($relations);
+        $this->generationOrder = (new Validation\PlanValidation())->sortByDependency($this->tables, $relations);
     }
 
     /**
@@ -97,6 +111,9 @@ class FixturePlan implements Stringable
         return new self($table);
     }
 
+    /**
+     * Returns with relation.
+     */
     public function withRelation(Relation $relation): self
     {
         return new self(...[...$this->parts, $relation]);
@@ -200,125 +217,20 @@ class FixturePlan implements Stringable
         ));
     }
 
+    /**
+     * Returns to string.
+     */
     public function toString(): string
     {
         return (new PlanPrinter())->print($this);
     }
 
+    /**
+     * Returns the canonical textual representation.
+     */
     public function __toString(): string
     {
         return $this->toString();
     }
 
-    /**
-     * A column set references one parent, so binding it twice is a mistake
-     * whether the two relations agree or not.
-     *
-     * @param list<Relation> $relations
-     */
-    private function rejectColumnsBoundTwice(array $relations): void
-    {
-        $seen = [];
-
-        foreach ($relations as $relation) {
-            $child = $relation->child();
-            $key = $child->toString();
-
-            if (isset($seen[$key])) {
-                throw PlanStructureException::columnsBoundTwice($child, $seen[$key], $relation->parent());
-            }
-
-            $seen[$key] = $relation->parent();
-        }
-    }
-
-    /**
-     * A table that requires a row of itself can never finish.
-     *
-     * @param list<Relation> $relations
-     */
-    private function rejectUnboundedSelfReferences(array $relations): void
-    {
-        foreach ($relations as $relation) {
-            $isSelfReference = $relation->parent()->table === $relation->child()->table;
-
-            if ($isSelfReference && $relation->minimumChildRows() > 0) {
-                throw PlanStructureException::unboundedSelfReference(
-                    $relation->parent()->table,
-                    (new PlanPrinter())->printRelation($relation)
-                );
-            }
-        }
-    }
-
-    /**
-     * Order the tables so every parent comes before its children.
-     *
-     * Self references are left out of the ordering: a table cannot precede
-     * itself, and an optional one terminates on its own.
-     *
-     * @param list<string> $tables
-     * @param list<Relation> $relations
-     * @return list<string>
-     */
-    private function sortByDependency(array $tables, array $relations): array
-    {
-        $pending = $tables;
-        $ordered = [];
-
-        while ($pending !== []) {
-            $ready = [];
-            $waiting = [];
-
-            foreach ($pending as $table) {
-                if ($this->waitsForAny($table, $relations, $pending)) {
-                    $waiting[] = $table;
-                    continue;
-                }
-
-                $ready[] = $table;
-            }
-
-            if ($ready === []) {
-                throw PlanStructureException::cycle($pending);
-            }
-
-            $ordered = [...$ordered, ...$ready];
-            $pending = $waiting;
-        }
-
-        return $ordered;
-    }
-
-    /**
-     * @param list<Relation> $relations
-     * @param list<string> $pending
-     */
-    private function waitsForAny(string $table, array $relations, array $pending): bool
-    {
-        foreach ($relations as $relation) {
-            $parent = $relation->parent()->table;
-
-            if ($relation->child()->table !== $table || $parent === $table) {
-                continue;
-            }
-
-            if (in_array($parent, $pending, true)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static function assertTableName(string $part): string
-    {
-        $table = trim($part);
-
-        if (preg_match('/^(?:`[^`]+`|"[^"]+"|[A-Za-z_][A-Za-z0-9_$]*)$/', $table) !== 1) {
-            throw PlanSyntaxException::notATableName($part);
-        }
-
-        return trim($table, '`"');
-    }
 }

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace SqlFixture\Schema;
 
+/**
+ * Parses CREATE TABLE text into a dialect-independent schema.
+ */
 interface SchemaParserInterface
 {
     /**

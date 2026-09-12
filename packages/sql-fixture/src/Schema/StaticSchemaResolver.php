@@ -9,7 +9,9 @@ namespace SqlFixture\Schema;
  */
 final class StaticSchemaResolver implements SchemaResolverInterface
 {
-    /** @var array<string, TableSchema> Lower-cased table name => schema */
+    /**
+     * @var array<string, TableSchema> Lower-cased table name => schema
+     */
     private array $schemas = [];
 
     /**
@@ -22,14 +24,21 @@ final class StaticSchemaResolver implements SchemaResolverInterface
         }
     }
 
+    /**
+     * Registers the table schema under its normalized name.
+     */
     public function register(TableSchema $schema): void
     {
-        $this->schemas[$this->normalize($schema->tableName)] = $schema;
+        $this->schemas[(new TableIdentifier())->normalize($schema->tableName)] = $schema;
     }
 
+    /**
+     * Returns the schema registered for the table, or reports that it is missing.
+     * @throws SchemaNotFoundException
+     */
     public function resolve(string $tableName): TableSchema
     {
-        $schema = $this->schemas[$this->normalize($tableName)] ?? null;
+        $schema = $this->schemas[(new TableIdentifier())->normalize($tableName)] ?? null;
         if ($schema === null) {
             throw SchemaNotFoundException::forTable($tableName, $this->tableNames());
         }
@@ -37,9 +46,12 @@ final class StaticSchemaResolver implements SchemaResolverInterface
         return $schema;
     }
 
+    /**
+     * Reports whether the named table is registered.
+     */
     public function has(string $tableName): bool
     {
-        return isset($this->schemas[$this->normalize($tableName)]);
+        return isset($this->schemas[(new TableIdentifier())->normalize($tableName)]);
     }
 
     /**
@@ -50,15 +62,4 @@ final class StaticSchemaResolver implements SchemaResolverInterface
         return array_keys($this->schemas);
     }
 
-    private function normalize(string $tableName): string
-    {
-        $name = str_replace(['`', '"', '[', ']'], '', $tableName);
-
-        $separator = strrpos($name, '.');
-        if ($separator !== false) {
-            $name = substr($name, $separator + 1);
-        }
-
-        return strtolower($name);
-    }
 }

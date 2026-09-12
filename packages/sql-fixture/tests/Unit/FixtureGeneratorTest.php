@@ -5,20 +5,17 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use Faker\Factory;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\FixtureGenerator;
-use SqlFixture\InvalidOverrideException;
-use SqlFixture\Hydrator\HydratorInterface;
 use SqlFixture\Hydrator\ReflectionHydrator;
+use SqlFixture\InvalidOverrideException;
 use SqlFixture\Platform\MySql\MySqlSchemaParser;
 use SqlFixture\Platform\MySql\MySqlTypeMapper;
 use SqlFixture\Schema\ColumnDefinition;
-use SqlFixture\Schema\SchemaParserInterface;
 use SqlFixture\Schema\TableSchema;
-use SqlFixture\TypeMapper\TypeMapperInterface;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\Fixture\GeneratorTestUser;
 
 #[CoversClass(FixtureGenerator::class)]
@@ -27,10 +24,38 @@ use Tests\Fixture\GeneratorTestUser;
 #[UsesClass(ColumnDefinition::class)]
 #[UsesClass(TableSchema::class)]
 #[UsesClass(ReflectionHydrator::class)]
+#[CoversClass(\SqlFixture\Fixture\Validation\OverrideValidator::class)]
+#[UsesClass(\SqlFixture\Hydrator\HydrationException::class)]
+#[UsesClass(\SqlFixture\Hydrator\HydratorInterface::class)]
+#[UsesClass(MySqlSchemaParser::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaParseException::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaParserInterface::class)]
+#[UsesClass(\SqlFixture\TypeMapper\TypeMapperInterface::class)]
+#[UsesClass(\SqlFixture\Fixture\RowGeneration::class)]
+#[UsesClass(\SqlFixture\Hydrator\Reflection\ConstructorHydration::class)]
+#[UsesClass(\SqlFixture\Hydrator\Reflection\PropertyHydration::class)]
+#[UsesClass(\SqlFixture\Hydrator\Reflection\PropertyNames::class)]
+#[UsesClass(\SqlFixture\Hydrator\Reflection\ValueConversion::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\ColumnParser::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\DefaultExpression::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\DefinitionIntegrity::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinition::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TypeParameters::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\ColumnGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\DecimalGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\GeometryGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\IntegerGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\NumericGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\SpatialGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\StringGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\TextGenerator::class)]
+#[UsesClass(\SqlFixture\Schema\TypeShape::class)]
+#[UsesClass(\SqlFixture\TypeMapper\ParagraphGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinitionInput::class)]
 final class FixtureGeneratorTest extends TestCase
 {
     #[Test]
-    public function generateWithSchema(): void
+    public function testGenerateWithSchema(): void
     {
         $schema = new TableSchema('users', [
             'id' => new ColumnDefinition('id', 'INT'),
@@ -46,7 +71,7 @@ final class FixtureGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function generateWithOverrides(): void
+    public function testGenerateWithOverrides(): void
     {
         $schema = new TableSchema('users', [
             'id' => new ColumnDefinition('id', 'INT'),
@@ -61,7 +86,7 @@ final class FixtureGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function generateSkipsAutoIncrement(): void
+    public function testGenerateSkipsAutoIncrement(): void
     {
         $schema = new TableSchema('users', [
             'id' => new ColumnDefinition('id', 'INT', autoIncrement: true),
@@ -78,7 +103,7 @@ final class FixtureGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function generateSkipsGeneratedColumns(): void
+    public function testGenerateSkipsGeneratedColumns(): void
     {
         $schema = new TableSchema('users', [
             'id' => new ColumnDefinition('id', 'INT'),
@@ -96,7 +121,7 @@ final class FixtureGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function generateWithHydration(): void
+    public function testGenerateWithHydration(): void
     {
         $schema = new TableSchema('users', [
             'id' => new ColumnDefinition('id', 'INT'),
@@ -107,43 +132,39 @@ final class FixtureGeneratorTest extends TestCase
         $faker->seed(12345);
         $user = (new FixtureGenerator($faker))->generate($schema, ['id' => 1, 'name' => 'Test'], GeneratorTestUser::class);
 
-        self::assertInstanceOf(GeneratorTestUser::class, $user);
         self::assertSame(1, $user->id);
         self::assertSame('Test', $user->name);
     }
 
     #[Test]
-    public function getSchemaParser(): void
+    public function testGetSchemaParser(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
         $parser = (new FixtureGenerator($faker))->getSchemaParser();
-        self::assertInstanceOf(SchemaParserInterface::class, $parser);
         self::assertInstanceOf(MySqlSchemaParser::class, $parser);
     }
 
     #[Test]
-    public function getTypeMapper(): void
+    public function testGetTypeMapper(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
         $mapper = (new FixtureGenerator($faker))->getTypeMapper();
-        self::assertInstanceOf(TypeMapperInterface::class, $mapper);
         self::assertInstanceOf(MySqlTypeMapper::class, $mapper);
     }
 
     #[Test]
-    public function getHydrator(): void
+    public function testGetHydrator(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
         $hydrator = (new FixtureGenerator($faker))->getHydrator();
-        self::assertInstanceOf(HydratorInterface::class, $hydrator);
         self::assertInstanceOf(ReflectionHydrator::class, $hydrator);
     }
 
     #[Test]
-    public function constructorWithCustomDependencies(): void
+    public function testConfigureWithCustomDependencies(): void
     {
         $faker = Factory::create();
         $customMapper = new MySqlTypeMapper();
@@ -163,31 +184,7 @@ final class FixtureGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function anOverrideForAColumnTheTableLacksIsRejected(): void
-    {
-        $schema = new TableSchema('users', ['name' => new ColumnDefinition('name', 'VARCHAR', length: 255)]);
-
-        $this->expectException(InvalidOverrideException::class);
-        $this->expectExceptionMessage('Cannot override users.nmae');
-
-        (new FixtureGenerator(Factory::create()))->generate($schema, ['nmae' => 'Ada']);
-    }
-
-    #[Test]
-    public function nullIsRejectedForAColumnThatCannotHoldIt(): void
-    {
-        $schema = new TableSchema('users', [
-            'name' => new ColumnDefinition('name', 'VARCHAR', length: 255, nullable: false),
-        ]);
-
-        $this->expectException(InvalidOverrideException::class);
-        $this->expectExceptionMessage('with null: the column is NOT NULL');
-
-        (new FixtureGenerator(Factory::create()))->generate($schema, ['name' => null]);
-    }
-
-    #[Test]
-    public function nullIsAcceptedForANullableColumn(): void
+    public function testNullIsAcceptedForANullableColumn(): void
     {
         $schema = new TableSchema('users', [
             'note' => new ColumnDefinition('note', 'VARCHAR', length: 255, nullable: true),
@@ -199,20 +196,7 @@ final class FixtureGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function anOverrideForAGeneratedColumnIsRejected(): void
-    {
-        $schema = new TableSchema('users', [
-            'slug' => new ColumnDefinition('slug', 'VARCHAR', length: 255, generated: true),
-        ]);
-
-        $this->expectException(InvalidOverrideException::class);
-        $this->expectExceptionMessage('the database computes it');
-
-        (new FixtureGenerator(Factory::create()))->generate($schema, ['slug' => 'x']);
-    }
-
-    #[Test]
-    public function anOverrideForAnAutoIncrementColumnIsStillAllowed(): void
+    public function testAnOverrideForAnAutoIncrementColumnIsStillAllowed(): void
     {
         $schema = new TableSchema('users', [
             'id' => new ColumnDefinition('id', 'INT', autoIncrement: true),

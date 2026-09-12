@@ -5,12 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit\Platform\Sqlite;
 
 use PDO;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Platform\Sqlite\SqliteSchemaFetcher;
-use SqlFixture\Schema\SchemaFetcherInterface;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use SqlFixture\Platform\Sqlite\SqliteSchemaParser;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\TableSchema;
@@ -19,17 +18,23 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(SqliteSchemaParser::class)]
 #[UsesClass(ColumnDefinition::class)]
 #[UsesClass(TableSchema::class)]
+#[CoversClass(\SqlFixture\Platform\Sqlite\Schema\CreateTableQuery::class)]
+#[CoversClass(\SqlFixture\Platform\Sqlite\Schema\PragmaColumn::class)]
+#[CoversClass(\SqlFixture\Platform\Sqlite\Schema\PragmaSchema::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaFetcherInterface::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaParseException::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaParserInterface::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\ColumnParser::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\DefaultExpression::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\DefinitionList::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\TableSyntax::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\TypeDeclaration::class)]
+#[UsesClass(\SqlFixture\Schema\DefinitionSegments::class)]
+#[UsesClass(\SqlFixture\Schema\TypeShape::class)]
 final class SqliteSchemaFetcherTest extends TestCase
 {
     #[Test]
-    public function implementsSchemaFetcherInterface(): void
-    {
-        $fetcher = new SqliteSchemaFetcher();
-        self::assertInstanceOf(SchemaFetcherInterface::class, $fetcher);
-    }
-
-    #[Test]
-    public function fetchSchemaFromSqliteTable(): void
+    public function testFetchSchemaFromSqliteTable(): void
     {
         $pdo = new PDO('sqlite::memory:');
         $pdo->exec('CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price REAL)');
@@ -44,7 +49,7 @@ final class SqliteSchemaFetcherTest extends TestCase
     }
 
     #[Test]
-    public function fetchSchemaWithVarcharLength(): void
+    public function testFetchSchemaWithVarcharLength(): void
     {
         $pdo = new PDO('sqlite::memory:');
         $pdo->exec('CREATE TABLE items (id INTEGER PRIMARY KEY, name VARCHAR(100) NOT NULL)');
@@ -58,7 +63,7 @@ final class SqliteSchemaFetcherTest extends TestCase
     }
 
     #[Test]
-    public function fetchSchemaWithDecimalPrecisionScale(): void
+    public function testFetchSchemaWithDecimalPrecisionScale(): void
     {
         $pdo = new PDO('sqlite::memory:');
         $pdo->exec('CREATE TABLE money (id INTEGER PRIMARY KEY, amount DECIMAL(10, 2))');
@@ -72,7 +77,7 @@ final class SqliteSchemaFetcherTest extends TestCase
     }
 
     #[Test]
-    public function fetchSchemaWithDefaultValues(): void
+    public function testFetchSchemaWithDefaultValues(): void
     {
         $pdo = new PDO('sqlite::memory:');
         $pdo->exec("CREATE TABLE defaults (
@@ -93,7 +98,7 @@ final class SqliteSchemaFetcherTest extends TestCase
     }
 
     #[Test]
-    public function fetchSchemaWithNullableColumns(): void
+    public function testFetchSchemaWithNullableColumns(): void
     {
         $pdo = new PDO('sqlite::memory:');
         $pdo->exec('CREATE TABLE test (id INTEGER NOT NULL, name TEXT)');
@@ -106,7 +111,7 @@ final class SqliteSchemaFetcherTest extends TestCase
     }
 
     #[Test]
-    public function fetchSchemaWithAutoincrement(): void
+    public function testFetchSchemaWithAutoincrement(): void
     {
         $pdo = new PDO('sqlite::memory:');
         $pdo->exec('CREATE TABLE test (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)');
@@ -118,7 +123,7 @@ final class SqliteSchemaFetcherTest extends TestCase
     }
 
     #[Test]
-    public function fetchSchemaWithCustomParser(): void
+    public function testFetchSchemaWithCustomParser(): void
     {
         $pdo = new PDO('sqlite::memory:');
         $pdo->exec('CREATE TABLE test (id INTEGER PRIMARY KEY, name TEXT)');
@@ -131,7 +136,7 @@ final class SqliteSchemaFetcherTest extends TestCase
     }
 
     #[Test]
-    public function fetchSchemaWithDefaultCurrentTimestamp(): void
+    public function testFetchSchemaWithDefaultCurrentTimestamp(): void
     {
         $pdo = new PDO('sqlite::memory:');
         $pdo->exec('CREATE TABLE test (id INTEGER PRIMARY KEY, created_at TEXT DEFAULT CURRENT_TIMESTAMP)');

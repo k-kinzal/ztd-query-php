@@ -1,0 +1,87 @@
+name: Build package documentation
+description: Combine package architecture and coverage inputs before generating the documentation site.
+inputs:
+  base-url:
+    description: Public URL of this site or preview
+    required: true
+  diff:
+    description: Optional base revision for a pull request preview
+    required: false
+    default: ''
+runs:
+  using: composite
+  steps:
+    - name: Combine architecture inputs
+      shell: bash
+      run: |
+        mkdir -p build/docgen-input
+        php <<'PHP'
+        <?php
+        require 'packages/sql-fixture/vendor/autoload.php';
+        $combined = ['deptrac' => ['layers' => [], 'ruleset' => []]];
+        foreach (['sql-faker', 'sql-fixture'] as $package) {
+            $config = Symfony\Component\Yaml\Yaml::parseFile("packages/$package/deptrac.yaml")['deptrac'];
+            foreach ($config['layers'] as $layer) {
+                $layer['name'] = "$package: " . $layer['name'];
+                foreach ($layer['collectors'] as &$collector) {
+                    if ($collector['type'] === 'directory') {
+                        $collector['value'] = "^packages/$package/" . $collector['value'];
+                    }
+                }
+                unset($collector);
+                $combined['deptrac']['layers'][] = $layer;
+            }
+            foreach ($config['ruleset'] as $layer => $allowed) {
+                $combined['deptrac']['ruleset']["$package: $layer"] = array_map(
+                    static fn (string $dependency): string => "$package: $dependency", $allowed
+                );
+            }
+        }
+        file_put_contents('build/docgen-input/deptrac.yaml', Symfony\Component\Yaml\Yaml::dump($combined, 8));
+        PHP
+    - name: Combine coverage with repository-relative source paths
+      shell: bash
+      run: |
+        python3 <<'PY'
+        from pathlib import Path
+        import xml.etree.ElementTree as ET
+        import shutil
+
+        root = Path.cwd()
+        output = root / 'build/docgen-input/coverage'
+        if output.exists():
+            shutil.rmtree(output)
+        for package in ['sql-faker', 'sql-fixture']:
+            reports = root / 'packages' / package / 'build/coverage-xml'
+            index = ET.parse(reports / 'index.xml')
+            source = index.find('.//{*}project').attrib['source']
+            prefix = Path(source).relative_to(root).as_posix()
+            for report in reports.rglob('*.xml'):
+                if report.name == 'index.xml':
+                    continue
+                document = ET.parse(report)
+                ET.register_namespace('', 'https://schema.phpunit.de/coverage/1.0')
+                for file in document.findall('.//{*}file'):
+                    original = file.get('path', '').strip('/')
+                    file.set('path', '/'.join(part for part in [prefix, original] if part))
+                destination = output / package / report.relative_to(reports)
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                document.write(destination, encoding='utf-8', xml_declaration=True)
+        PY
+    - name: Generate both package sites
+      shell: bash
+      env:
+        DOCGEN_BASE_URL: ${{ inputs.base-url }}
+        DOCGEN_DIFF: ${{ inputs.diff }}
+      run: |
+        args=()
+        if [ -n "$DOCGEN_DIFF" ]; then
+          args+=("--diff=$DOCGEN_DIFF")
+        fi
+        # The generated config must also be available to DocGen's base-revision worktree.
+        packages/sql-fixture/vendor/bin/docgen \
+          --packages=packages/sql-faker,packages/sql-fixture \
+          --deptrac="$PWD/build/docgen-input/deptrac.yaml" \
+          --coverage=build/docgen-input/coverage \
+          --output=build/docs --cache-dir=build/docgen-cache \
+          --title=k-kinzal/ztd-query-php --base-url="$DOCGEN_BASE_URL" "${args[@]}"

@@ -13,6 +13,9 @@ use SqlFixture\Schema\TableSchema;
  */
 final class PlanSchemaException extends RuntimeException
 {
+    /**
+     * Returns generated column.
+     */
     public static function generatedColumn(ColumnRef $reference, string $column, TableSchema $schema): self
     {
         return new self(sprintf(
@@ -25,6 +28,9 @@ final class PlanSchemaException extends RuntimeException
         ));
     }
 
+    /**
+     * Returns missing value.
+     */
     public static function missingValue(string $childColumn, ColumnRef $parent, string $parentColumn): self
     {
         return new self(sprintf(
@@ -35,6 +41,9 @@ final class PlanSchemaException extends RuntimeException
         ));
     }
 
+    /**
+     * Returns unknown column.
+     */
     public static function unknownColumn(ColumnRef $reference, string $column, TableSchema $schema): self
     {
         return new self(sprintf(

@@ -26,11 +26,12 @@ use Traversable;
  *
  * @implements ArrayAccess<int|string, array<string, mixed>|list<array<string, mixed>>|null>
  * @implements IteratorAggregate<int, array<string, mixed>|list<array<string, mixed>>|null>
+ * @template TValue = mixed
  */
 final class FixtureSet implements ArrayAccess, IteratorAggregate, Countable
 {
     /**
-     * @param array<string, list<array<string, mixed>>> $rows
+     * @param array<string, list<array<string, TValue>>> $rows
      * @param array<string, bool> $lists Table => reads back as a list
      * @param list<string> $order Table names in the order the plan names them
      */
@@ -46,9 +47,9 @@ final class FixtureSet implements ArrayAccess, IteratorAggregate, Countable
      */
     public function get(int|string $table): ?array
     {
-        $name = $this->resolve($table);
+        $name = (is_int($table) ? ($this->order[$table] ?? '') : $table);
 
-        return ($this->lists[$name] ?? false) ? $this->rows($name) : $this->firstRow($name);
+        return ($this->lists[$name] ?? false) ? $this->rows($name) : (($this->rows[$name] ?? [])[0] ?? null);
     }
 
     /**
@@ -59,7 +60,7 @@ final class FixtureSet implements ArrayAccess, IteratorAggregate, Countable
      */
     public function row(int|string $table): ?array
     {
-        $name = $this->resolve($table);
+        $name = (is_int($table) ? ($this->order[$table] ?? '') : $table);
 
         if ($this->lists[$name] ?? false) {
             throw new OutOfBoundsException(sprintf(
@@ -68,7 +69,7 @@ final class FixtureSet implements ArrayAccess, IteratorAggregate, Countable
             ));
         }
 
-        return $this->firstRow($name);
+        return (($this->rows[$name] ?? [])[0] ?? null);
     }
 
     /**
@@ -78,7 +79,7 @@ final class FixtureSet implements ArrayAccess, IteratorAggregate, Countable
      */
     public function rows(int|string $table): array
     {
-        return $this->rows[$this->resolve($table)] ?? [];
+        return $this->rows[(is_int($table) ? ($this->order[$table] ?? '') : $table)] ?? [];
     }
 
     /**
@@ -102,26 +103,43 @@ final class FixtureSet implements ArrayAccess, IteratorAggregate, Countable
         return $entries;
     }
 
+    /**
+     * Reports whether the plan contains an entry at this name or position.
+     */
     public function offsetExists(mixed $offset): bool
     {
-        return in_array($this->resolve($offset), $this->order, true);
+        return in_array((is_int($offset) ? ($this->order[$offset] ?? '') : $offset), $this->order, true);
     }
 
+    /**
+     * Reads the generated entry at this name or position.
+     */
     public function offsetGet(mixed $offset): ?array
     {
         return $this->get($offset);
     }
 
+    /**
+     * Rejects modification of the immutable fixture set.
+     * @throws LogicException
+     */
     public function offsetSet(mixed $offset, mixed $value): void
     {
         throw new LogicException('A FixtureSet is read-only.');
     }
 
+    /**
+     * Rejects removal from the immutable fixture set.
+     * @throws LogicException
+     */
     public function offsetUnset(mixed $offset): void
     {
         throw new LogicException('A FixtureSet is read-only.');
     }
 
+    /**
+     * Iterates table entries in the order declared by the fixture plan.
+     */
     public function getIterator(): Traversable
     {
         foreach ($this->order as $table) {
@@ -129,25 +147,12 @@ final class FixtureSet implements ArrayAccess, IteratorAggregate, Countable
         }
     }
 
+    /**
+     * Returns the number of tables represented by this fixture set.
+     */
     public function count(): int
     {
         return count($this->order);
     }
 
-    /**
-     * @return array<string, mixed>|null
-     */
-    private function firstRow(string $table): ?array
-    {
-        return ($this->rows[$table] ?? [])[0] ?? null;
-    }
-
-    /**
-     * Positions read in the order the plan names its tables, which is what
-     * makes [$order, $details] = ... line up with the plan as written.
-     */
-    private function resolve(int|string $table): string
-    {
-        return is_int($table) ? ($this->order[$table] ?? '') : $table;
-    }
 }

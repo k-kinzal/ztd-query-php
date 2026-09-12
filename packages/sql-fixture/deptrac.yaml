@@ -1,0 +1,77 @@
+# NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
+# Layers follow the schema, plan, row generation and provider composition responsibilities.
+deptrac:
+  paths: [./src]
+  analyser:
+    types: [class, use]
+  layers:
+    - name: Schema
+      collectors:
+        - type: directory
+          value: 'src/Schema/(?!MySqlSchemaParser\.php)'
+    - name: TypeMapping
+      collectors:
+        - type: directory
+          value: 'src/TypeMapper/(?!MySqlTypeMapper\.php)'
+    - name: Hydration
+      collectors:
+        - type: directory
+          value: 'src/Hydrator/'
+    - name: Plan
+      collectors:
+        - type: directory
+          value: 'src/Plan/'
+    - name: Generation
+      collectors:
+        - type: directory
+          value: 'src/Fixture/(?!PlanGenerator\.php)'
+        - type: directory
+          value: 'src/InvalidOverrideException\.php$'
+    - name: MySql
+      collectors:
+        - type: directory
+          value: 'src/Platform/MySql/'
+    - name: PostgreSql
+      collectors:
+        - type: directory
+          value: 'src/Platform/PostgreSql/'
+    - name: Sqlite
+      collectors:
+        - type: directory
+          value: 'src/Platform/Sqlite/'
+    - name: Provider
+      collectors:
+        - type: directory
+          value: 'src/[^/]+Provider\.php$'
+        - type: directory
+          value: 'src/Provider/'
+        - type: directory
+          value: 'src/FixtureGenerator\.php$'
+        - type: directory
+          value: 'src/Fixture/PlanGenerator\.php$'
+        - type: directory
+          value: 'src/Platform/PlatformFactory\.php$'
+        - type: directory
+          value: 'src/Schema/MySqlSchemaParser\.php$'
+        - type: directory
+          value: 'src/TypeMapper/MySqlTypeMapper\.php$'
+    - name: Faker
+      collectors:
+        - type: classLike
+          value: '^Faker\\.*'
+    - name: SqlParser
+      collectors:
+        - type: classLike
+          value: '^PhpMyAdmin\\SqlParser\\.*'
+  ruleset:
+    Schema: []
+    TypeMapping: [Schema, Faker]
+    Hydration: []
+    Plan: []
+    Generation: [Schema, Plan, Faker]
+    MySql: [Schema, TypeMapping, Faker, SqlParser]
+    PostgreSql: [Schema, TypeMapping, Faker]
+    Sqlite: [Schema, TypeMapping, Faker]
+    Provider: [Schema, TypeMapping, Hydration, Plan, Generation, MySql, PostgreSql, Sqlite, Faker]
+    Faker: []
+    SqlParser: []

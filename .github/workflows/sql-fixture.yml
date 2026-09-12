@@ -1,18 +1,25 @@
 name: CI (sql-fixture)
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
   pull_request:
     paths:
       - 'packages/sql-fixture/**'
       - 'packages/sql-faker/**'
-      - 'packages/phpstan-custom-rules/**'
       - '.github/workflows/sql-fixture.yml'
+      - '.github/workflows/sql-fixture-fuzz.yml'
+
+permissions:
+  contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
+
+env:
+  COMPOSER_NO_INTERACTION: '1'
 
 defaults:
   run:
@@ -21,88 +28,226 @@ defaults:
 jobs:
   test:
     name: Test (PHP ${{ matrix.php }})
+    services:
+      mysql:
+        image: container-registry.oracle.com/mysql/community-server:8.4.7
+        env:
+          MYSQL_ROOT_PASSWORD: toolkit
+          MYSQL_ROOT_HOST: '%'
+          MYSQL_DATABASE: sql_fixture
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -ptoolkit"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+      postgres:
+        image: postgres:17.2
+        env:
+          POSTGRES_PASSWORD: toolkit
+          POSTGRES_DB: sql_fixture
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd="pg_isready -U postgres -d sql_fixture"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+    env:
+      SQL_FIXTURE_MYSQL_DSN: mysql:host=127.0.0.1;port=3306;dbname=sql_fixture
+      SQL_FIXTURE_PGSQL_DSN: pgsql:host=127.0.0.1;port=5432;dbname=sql_fixture
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
         php: ['8.1', '8.2', '8.3', '8.4', '8.5']
     steps:
-      - uses: actions/checkout@v6
-      - uses: shivammathur/setup-php@v2
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:
           php-version: ${{ matrix.php }}
-          extensions: mbstring
+          extensions: dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, pdo_mysql, pdo_pgsql, pdo_sqlite, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
           coverage: none
-      - uses: ramsey/composer-install@v3
+      - name: Validate the Composer manifest and lock file
+        run: composer validate --strict --no-check-publish
+      - name: Install dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
           working-directory: packages/sql-fixture
-      - run: composer test:unit
-
-  test-integration:
-    name: Integration Test (PHP ${{ matrix.php }})
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        php: ['8.1', '8.2', '8.3', '8.4', '8.5']
-    steps:
-      - uses: actions/checkout@v6
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-          extensions: mbstring, pdo, pdo_pgsql, pdo_sqlite
-          coverage: none
-      - uses: ramsey/composer-install@v3
-        with:
-          working-directory: packages/sql-fixture
-      - run: composer test:integration
+          dependency-versions: locked
+          composer-options: --prefer-dist
+          require-lock-file: true
+      - name: Check installed platform requirements
+        if: matrix.php == '8.1' || matrix.php == '8.2' || matrix.php == '8.3'
+        run: composer check-platform-reqs
+      - name: Check library requirements outside the locked ParaTest PHP range
+        if: matrix.php == '8.4' || matrix.php == '8.5'
+        run: composer check-platform-reqs --no-dev
+      - name: Run the tests in parallel
+        run: composer test
 
   lint:
+    name: Lint
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v6
-      - uses: shivammathur/setup-php@v2
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:
-          php-version: '8.5'
-          extensions: mbstring
+          php-version: '8.3'
+          extensions: dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, pdo_mysql, pdo_pgsql, pdo_sqlite, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
           coverage: none
-      - uses: ramsey/composer-install@v3
+      - name: Validate the Composer manifest and lock file
+        run: composer validate --strict --no-check-publish
+      - name: Install dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
           working-directory: packages/sql-fixture
-      - run: composer lint
+          dependency-versions: locked
+          composer-options: --prefer-dist
+          require-lock-file: true
+      - name: Check installed platform requirements
+        run: composer check-platform-reqs
+      - name: Check the formatting
+        run: composer format:check
+      - name: Analyse with PHPStan
+        run: composer phpstan
+      - name: Check PHP compatibility
+        run: composer compat
+      - name: Check the source metrics
+        run: composer loc-guard
+      - name: Check the directory structure
+        run: composer tree-guard
+      - name: Check the architecture layers
+        run: composer deptrac
+
+  bench:
+    name: Benchmark
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+        with:
+          php-version: '8.3'
+          extensions: dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, pdo_mysql, pdo_pgsql, pdo_sqlite, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
+          coverage: none
+      - name: Validate the Composer manifest and lock file
+        run: composer validate --strict --no-check-publish
+      - name: Install dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+        with:
+          working-directory: packages/sql-fixture
+          dependency-versions: locked
+          composer-options: --prefer-dist
+          require-lock-file: true
+      - name: Check installed platform requirements
+        run: composer check-platform-reqs
+      - name: Run the benchmarks
+        run: |
+          mkdir -p build/phpbench
+          composer bench -- --dump-file=build/phpbench/results.xml | tee build/phpbench/report.txt
+      - name: Upload benchmark measurements
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: sql-fixture-phpbench
+          path: |
+            packages/sql-fixture/build/phpbench/
+          if-no-files-found: ignore
 
   mutation:
     name: Mutation Testing
+    services:
+      mysql:
+        image: container-registry.oracle.com/mysql/community-server:8.4.7
+        env:
+          MYSQL_ROOT_PASSWORD: toolkit
+          MYSQL_ROOT_HOST: '%'
+          MYSQL_DATABASE: sql_fixture
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -ptoolkit"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+      postgres:
+        image: postgres:17.2
+        env:
+          POSTGRES_PASSWORD: toolkit
+          POSTGRES_DB: sql_fixture
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd="pg_isready -U postgres -d sql_fixture"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+    env:
+      SQL_FIXTURE_MYSQL_DSN: mysql:host=127.0.0.1;port=3306;dbname=sql_fixture
+      SQL_FIXTURE_PGSQL_DSN: pgsql:host=127.0.0.1;port=5432;dbname=sql_fixture
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v6
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
           fetch-depth: 0
-      - uses: shivammathur/setup-php@v2
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:
           php-version: '8.5'
-          extensions: mbstring
+          extensions: ctype, date, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, pdo_mysql, pdo_pgsql, pdo_sqlite, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
           coverage: pcov
-      - uses: ramsey/composer-install@v3
+          tools: infection:0.35.4
+          ini-values: memory_limit=256M
+      - name: Validate the Composer manifest and lock file
+        run: composer validate --strict --no-check-publish
+      - name: Install package dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
           working-directory: packages/sql-fixture
-      - name: infection
+          dependency-versions: locked
+          composer-options: --prefer-dist
+          require-lock-file: true
+      - name: Check installed platform requirements
         run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            git fetch origin $GITHUB_BASE_REF
-            php -d memory_limit=256M vendor/bin/infection \
-              --threads=max \
-              --git-diff-lines \
-              --git-diff-base=origin/$GITHUB_BASE_REF \
-              --min-covered-msi=100 \
-              --ignore-msi-with-no-mutations \
-              --only-covering-test-cases \
-              --no-progress \
-              --logger-github
-          else
-            php -d memory_limit=512M vendor/bin/infection \
-              --threads=max \
-              --min-covered-msi=80 \
-              --no-progress \
-              --logger-github
-          fi
+          composer check-platform-reqs --no-dev
+          infection --version
+      - name: Mutation testing on changed lines
+        if: github.event_name == 'pull_request'
+        run: >-
+          php -d memory_limit=1G "$(command -v infection)"
+          --configuration=infection.json5
+          --threads=4
+          --only-covering-test-cases
+          --git-diff-lines
+          --git-diff-base="origin/${GITHUB_BASE_REF}"
+          --ignore-msi-with-no-mutations
+          --min-msi=85
+          --min-covered-msi=85
+          --no-progress
+          --logger-github
+      - name: Mutation testing on the whole source tree
+        if: github.event_name != 'pull_request'
+        run: >-
+          php -d memory_limit=1G "$(command -v infection)"
+          --configuration=infection.json5
+          --threads=4
+          --only-covering-test-cases
+          --no-progress
+          --logger-github
+      - name: Reject skipped whole-tree mutants
+        if: github.event_name != 'pull_request'
+        run: |
+          php -d memory_limit=1G -r '
+            $report = json_decode(file_get_contents("build/infection/infection.json"), true, 512, JSON_THROW_ON_ERROR);
+            if ($report["stats"]["skippedCount"] !== 0) {
+                fwrite(STDERR, "Infection skipped mutants before execution; review the timeout against test durations.\n");
+                exit(1);
+            }
+          '
+      - name: Upload mutation reports
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: sql-fixture-infection
+          path: packages/sql-fixture/build/infection/
+          if-no-files-found: ignore

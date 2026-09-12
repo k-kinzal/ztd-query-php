@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlFixture\Fixture;
 
-use SqlFixture\Plan\ColumnRef;
 use SqlFixture\Plan\FixturePlan;
 use SqlFixture\Schema\SchemaResolverInterface;
 
@@ -19,6 +18,9 @@ use SqlFixture\Schema\SchemaResolverInterface;
  */
 final class PlanSchemaValidator
 {
+    /**
+     * Initializes the collaborators and declared state for this object.
+     */
     public function __construct(private readonly SchemaResolverInterface $schemas)
     {
     }
@@ -34,25 +36,9 @@ final class PlanSchemaValidator
         }
 
         foreach ($plan->relations as $relation) {
-            $this->checkEndpoint($relation->left);
-            $this->checkEndpoint($relation->right);
+            (new Validation\EndpointValidator())->checkEndpoint($this->schemas, $relation->left);
+            (new Validation\EndpointValidator())->checkEndpoint($this->schemas, $relation->right);
         }
     }
 
-    private function checkEndpoint(ColumnRef $reference): void
-    {
-        $schema = $this->schemas->resolve($reference->table);
-
-        foreach ($reference->columns as $column) {
-            $definition = $schema->getColumn($column);
-
-            if ($definition === null) {
-                throw PlanSchemaException::unknownColumn($reference, $column, $schema);
-            }
-
-            if ($definition->generated) {
-                throw PlanSchemaException::generatedColumn($reference, $column, $schema);
-            }
-        }
-    }
 }

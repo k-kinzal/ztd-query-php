@@ -21,10 +21,28 @@ use Tests\Fixture\Fixture\OrderSchema;
 #[UsesClass(\SqlFixture\Fixture\FixtureSet::class)]
 #[UsesClass(TableSchema::class)]
 #[UsesClass(ColumnDefinition::class)]
+#[UsesClass(\SqlFixture\Fixture\OverrideRows::class)]
+#[UsesClass(\SqlFixture\Fixture\TableOverrides::class)]
+#[UsesClass(\SqlFixture\Plan\ColumnRef::class)]
+#[UsesClass(\SqlFixture\Plan\PlanParser::class)]
+#[UsesClass(\SqlFixture\Plan\PlanPrinter::class)]
+#[UsesClass(\SqlFixture\Plan\PlanSyntaxException::class)]
+#[UsesClass(\SqlFixture\Plan\Relation::class)]
+#[UsesClass(\SqlFixture\Plan\RelationKind::class)]
+#[UsesClass(\SqlFixture\Plan\RelationSide::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\PlanStatements::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\RelationCursor::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\RelationReader::class)]
+#[UsesClass(\SqlFixture\Plan\PlanStructureException::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\PlanTables::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\RelationGroups::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\StatementPrinter::class)]
+#[UsesClass(\SqlFixture\Plan\Validation\PlanValidation::class)]
+#[UsesClass(\SqlFixture\Plan\Validation\TableName::class)]
 final class GenerationRunTest extends TestCase
 {
     #[Test]
-    public function claimingATableStopsASecondWalkStarting(): void
+    public function testClaimingATableStopsASecondWalkStarting(): void
     {
         $run = new GenerationRun([]);
         $run->claim(['order', 'customer']);
@@ -35,7 +53,7 @@ final class GenerationRunTest extends TestCase
     }
 
     #[Test]
-    public function reachingATableAsAListSticks(): void
+    public function testReachedReachingATableAsAListSticks(): void
     {
         $run = new GenerationRun([]);
         $run->claim(['order_detail']);
@@ -47,7 +65,7 @@ final class GenerationRunTest extends TestCase
     }
 
     #[Test]
-    public function aTableReachedOnlyAsASingleRowReadsBackAsOne(): void
+    public function testToSetATableReachedOnlyAsASingleRowReadsBackAsOne(): void
     {
         $run = new GenerationRun([]);
         $run->reached('order', false);
@@ -60,7 +78,7 @@ final class GenerationRunTest extends TestCase
     }
 
     #[Test]
-    public function aKeyNothingReadsIsLeftToTheDatabase(): void
+    public function testAKeyNothingReadsIsLeftToTheDatabase(): void
     {
         $run = new GenerationRun([]);
 
@@ -68,7 +86,7 @@ final class GenerationRunTest extends TestCase
     }
 
     #[Test]
-    public function aKeyARelationReadsIsStoodInFor(): void
+    public function testAKeyARelationReadsIsStoodInFor(): void
     {
         $run = new GenerationRun([]);
 
@@ -77,7 +95,7 @@ final class GenerationRunTest extends TestCase
     }
 
     #[Test]
-    public function recordKeepsAKeyTheCallerSupplied(): void
+    public function testRecordKeepsAKeyTheCallerSupplied(): void
     {
         $run = new GenerationRun([]);
 
@@ -85,7 +103,7 @@ final class GenerationRunTest extends TestCase
     }
 
     #[Test]
-    public function onlyAutoIncrementColumnsAreStoodInFor(): void
+    public function testOnlyAutoIncrementColumnsAreStoodInFor(): void
     {
         $run = new GenerationRun([]);
 
@@ -93,7 +111,7 @@ final class GenerationRunTest extends TestCase
     }
 
     #[Test]
-    public function wasAskedForReportsWhatTheCallerMentioned(): void
+    public function testWasAskedForReportsWhatTheCallerMentioned(): void
     {
         $run = new GenerationRun(['order' => RowSpec::from('order', 2)]);
 
@@ -102,7 +120,7 @@ final class GenerationRunTest extends TestCase
     }
 
     #[Test]
-    public function specForFallsBackToUnspecified(): void
+    public function testSpecForFallsBackToUnspecified(): void
     {
         $run = new GenerationRun(['order' => RowSpec::from('order', 2)]);
 
@@ -111,7 +129,7 @@ final class GenerationRunTest extends TestCase
     }
 
     #[Test]
-    public function aTableThatGeneratedNothingReadsBackAsNull(): void
+    public function testATableThatGeneratedNothingReadsBackAsNull(): void
     {
         $run = new GenerationRun([]);
 
@@ -119,7 +137,7 @@ final class GenerationRunTest extends TestCase
     }
 
     #[Test]
-    public function claimingDoesNotUndoWhatTheWalkAlreadyLearnt(): void
+    public function testClaimingDoesNotUndoWhatTheWalkAlreadyLearnt(): void
     {
         $run = new GenerationRun([]);
         $run->reached('order', true);
@@ -133,7 +151,7 @@ final class GenerationRunTest extends TestCase
     }
 
     #[Test]
-    public function aClaimedTableThatWasNeverReachedIsNotAList(): void
+    public function testAClaimedTableThatWasNeverReachedIsNotAList(): void
     {
         $run = new GenerationRun([]);
         $run->claim(['order']);
@@ -142,7 +160,7 @@ final class GenerationRunTest extends TestCase
     }
 
     #[Test]
-    public function everyReferencedColumnIsConsideredNotJustTheFirst(): void
+    public function testEveryReferencedColumnIsConsideredNotJustTheFirst(): void
     {
         $run = new GenerationRun([]);
 
@@ -152,7 +170,7 @@ final class GenerationRunTest extends TestCase
     }
 
     #[Test]
-    public function recordReturnsTheWholeRow(): void
+    public function testRecordReturnsTheWholeRow(): void
     {
         $run = new GenerationRun([]);
 
@@ -160,5 +178,20 @@ final class GenerationRunTest extends TestCase
             ['status' => 'paid', 'id' => 1],
             $run->record(OrderSchema::create(), ['status' => 'paid'], ['id'])
         );
+    }
+    public function testLastRowReturnsTheMostRecentRecordedValues(): void
+    {
+        $run = new GenerationRun([]);
+        $run->record(OrderSchema::create(), ['status' => 'new']);
+        $run->record(OrderSchema::create(), ['status' => 'paid']);
+        self::assertSame(['status' => 'paid'], $run->lastRow('order'));
+        self::assertSame([], $run->lastRow('unknown'));
+    }
+    public function testHasVisitedDistinguishesNewAndClaimedTables(): void
+    {
+        $run = new GenerationRun([]);
+        self::assertFalse($run->hasVisited('order'));
+        $run->claim(['order']);
+        self::assertTrue($run->hasVisited('order'));
     }
 }

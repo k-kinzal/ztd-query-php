@@ -4,27 +4,25 @@ declare(strict_types=1);
 
 namespace Tests\Unit\TypeMapper;
 
-use PHPUnit\Framework\Attributes\CoversNothing;
-use PHPUnit\Framework\Attributes\Test;
+use Faker\Factory;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use SqlFixture\TypeMapper\TypeMapperInterface;
+use SqlFixture\Schema\ColumnDefinition;
+use SqlFixture\TypeMapper\TypeMapperInterface as Subject;
 
-#[CoversNothing]
+#[CoversClass(Subject::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\Sqlite\SqliteTypeMapper::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(ColumnDefinition::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\Sqlite\Value\ColumnGenerator::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\Sqlite\Value\TypeAffinity::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\ParagraphGenerator::class)]
 final class TypeMapperInterfaceTest extends TestCase
 {
-    #[Test]
-    public function interfaceExists(): void
+    public function testGenerateReturnsAValueForTheColumn(): void
     {
-        self::assertTrue(interface_exists(TypeMapperInterface::class));
-    }
-
-    #[Test]
-    public function declaresGenerateMethod(): void
-    {
-        $reflection = new \ReflectionClass(TypeMapperInterface::class);
-        self::assertTrue($reflection->hasMethod('generate'));
-
-        $method = $reflection->getMethod('generate');
-        self::assertCount(2, $method->getParameters());
+        $mapper = new \SqlFixture\Platform\Sqlite\SqliteTypeMapper();
+        $value = $mapper->generate(Factory::create(), new ColumnDefinition('code', 'VARCHAR', length: 8, nullable: false));
+        self::assertIsString($value);
+        self::assertLessThanOrEqual(8, strlen($value));
     }
 }

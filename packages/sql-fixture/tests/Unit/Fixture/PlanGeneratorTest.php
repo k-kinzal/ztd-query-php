@@ -52,10 +52,59 @@ use Tests\Fixture\Fixture\ShopSchemas;
 #[UsesClass(SchemaNotFoundException::class)]
 #[UsesClass(TableSchema::class)]
 #[UsesClass(ColumnDefinition::class)]
+#[CoversClass(\SqlFixture\Fixture\Generation\ConnectedTables::class)]
+#[CoversClass(\SqlFixture\Fixture\Generation\OverrideSpecs::class)]
+#[CoversClass(\SqlFixture\Fixture\Generation\RelationCounts::class)]
+#[CoversClass(\SqlFixture\Fixture\Generation\RelationProjection::class)]
+#[CoversClass(\SqlFixture\Fixture\Generation\RowMaterializer::class)]
+#[UsesClass(\SqlFixture\Fixture\OverrideRows::class)]
+#[UsesClass(\SqlFixture\Fixture\RowGeneration::class)]
+#[UsesClass(\SqlFixture\Hydrator\HydrationException::class)]
+#[UsesClass(\SqlFixture\Hydrator\HydratorInterface::class)]
+#[UsesClass(\SqlFixture\Hydrator\ReflectionHydrator::class)]
+#[UsesClass(\SqlFixture\Plan\PlanSyntaxException::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaParseException::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaParserInterface::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaResolverInterface::class)]
+#[UsesClass(\SqlFixture\Schema\TableIdentifier::class)]
+#[UsesClass(\SqlFixture\TypeMapper\TypeMapperInterface::class)]
+#[UsesClass(\SqlFixture\Fixture\Validation\EndpointValidator::class)]
+#[UsesClass(\SqlFixture\Fixture\Validation\OverrideValidator::class)]
+#[UsesClass(\SqlFixture\Hydrator\Reflection\ConstructorHydration::class)]
+#[UsesClass(\SqlFixture\Hydrator\Reflection\PropertyHydration::class)]
+#[UsesClass(\SqlFixture\Hydrator\Reflection\PropertyNames::class)]
+#[UsesClass(\SqlFixture\Hydrator\Reflection\ValueConversion::class)]
+#[UsesClass(\SqlFixture\InvalidOverrideException::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\PlanStatements::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\RelationCursor::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\RelationReader::class)]
+#[UsesClass(\SqlFixture\Plan\PlanStructureException::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\PlanTables::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\RelationGroups::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\StatementPrinter::class)]
+#[UsesClass(\SqlFixture\Plan\Validation\PlanValidation::class)]
+#[UsesClass(\SqlFixture\Plan\Validation\TableName::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\ColumnParser::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\DefaultExpression::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\DefinitionIntegrity::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinition::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TypeParameters::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\ColumnGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\DecimalGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\GeometryGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\IntegerGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\NumericGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\SpatialGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\StringGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\TextGenerator::class)]
+#[UsesClass(\SqlFixture\Schema\TypeShape::class)]
+#[UsesClass(\SqlFixture\TypeMapper\ParagraphGenerator::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinitionInput::class)]
 final class PlanGeneratorTest extends TestCase
 {
     #[Test]
-    public function theTableThePlanIsAboutGetsOneRow(): void
+    public function testGenerateTheTableThePlanIsAboutGetsOneRow(): void
     {
         $set = ShopSchemas::generator()->generate(
             FixturePlan::from('order.id < order_detail.order_id')
@@ -65,7 +114,7 @@ final class PlanGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function theSubjectIsOneRowEvenWhenSomethingReferencesIt(): void
+    public function testTheSubjectIsOneRowEvenWhenSomethingReferencesIt(): void
     {
         $set = ShopSchemas::generator()->generate(
             FixturePlan::from('order.id < order_detail.order_id, order.customer_id > customer.id')
@@ -76,7 +125,7 @@ final class PlanGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function childRowsCarryTheParentKey(): void
+    public function testChildRowsCarryTheParentKey(): void
     {
         $set = ShopSchemas::generator()->generate(
             FixturePlan::from('order.id < order_detail.order_id'),
@@ -88,7 +137,7 @@ final class PlanGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function aParentIsGeneratedAndLinkedTo(): void
+    public function testAParentIsGeneratedAndLinkedTo(): void
     {
         $set = ShopSchemas::generator()->generate(
             FixturePlan::from('order.customer_id > customer.id')
@@ -98,7 +147,7 @@ final class PlanGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function aCountOfZeroGeneratesNoRows(): void
+    public function testACountOfZeroGeneratesNoRows(): void
     {
         $set = ShopSchemas::generator()->generate(
             FixturePlan::from('order.id < order_detail.order_id'),
@@ -109,7 +158,7 @@ final class PlanGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function oneSetOfValuesAppliesToEveryGeneratedRow(): void
+    public function testOneSetOfValuesAppliesToEveryGeneratedRow(): void
     {
         $set = ShopSchemas::generator()->generate(
             FixturePlan::from('order.id < order_detail.order_id'),
@@ -117,16 +166,13 @@ final class PlanGeneratorTest extends TestCase
         );
 
         self::assertNotSame([], $set->rows('order_detail'));
-        $quantities = array_map(
-            static fn (array $row): mixed => $row['quantity'] ?? null,
-            $set->rows('order_detail')
-        );
+        $quantities = array_column($set->rows('order_detail'), 'quantity');
 
         self::assertSame([2], array_values(array_unique($quantities, SORT_REGULAR)));
     }
 
     #[Test]
-    public function aListGivesOneRowPerEntry(): void
+    public function testAListGivesOneRowPerEntry(): void
     {
         $set = ShopSchemas::generator()->generate(
             FixturePlan::from('order.id < order_detail.order_id'),
@@ -137,7 +183,7 @@ final class PlanGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function anUnmentionedChildIsStillGenerated(): void
+    public function testAnUnmentionedChildIsStillGenerated(): void
     {
         $set = ShopSchemas::generator()->generate(
             FixturePlan::from('order.id < order_detail.order_id')
@@ -147,19 +193,19 @@ final class PlanGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function anOptionalChildMayGenerateNoneAtAll(): void
+    public function testAnOptionalChildMayGenerateNoneAtAll(): void
     {
         self::assertContains(0, ShopSchemas::childCountsOverSeeds('order.id <? order_detail.order_id'));
     }
 
     #[Test]
-    public function aRequiredChildNeverGeneratesNone(): void
+    public function testARequiredChildNeverGeneratesNone(): void
     {
         self::assertNotContains(0, ShopSchemas::childCountsOverSeeds('order.id < order_detail.order_id'));
     }
 
     #[Test]
-    public function aOneToOneChildIsASingleRow(): void
+    public function testAOneToOneChildIsASingleRow(): void
     {
         $set = ShopSchemas::generator()->generate(
             FixturePlan::from('order.id - order_shipping.order_id'),
@@ -170,7 +216,7 @@ final class PlanGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function anOptionalOneToOneAskedForNoneIsNull(): void
+    public function testAnOptionalOneToOneAskedForNoneIsNull(): void
     {
         $set = ShopSchemas::generator()->generate(
             FixturePlan::from('order.id -? order_shipping.order_id'),
@@ -181,7 +227,7 @@ final class PlanGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function everyChildOfAListGetsItsOwnParent(): void
+    public function testEveryChildOfAListGetsItsOwnParent(): void
     {
         $set = ShopSchemas::generator()->generate(
             FixturePlan::from('order.id < order_detail.order_id, order_detail.product_id > product.id'),
@@ -196,7 +242,7 @@ final class PlanGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function fixingTheLinkingColumnLeavesTheParentAlone(): void
+    public function testFixingTheLinkingColumnLeavesTheParentAlone(): void
     {
         $set = ShopSchemas::generator()->generate(
             FixturePlan::from('order.customer_id > customer.id'),
@@ -208,7 +254,7 @@ final class PlanGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function tablesThatStandAloneAreGeneratedToo(): void
+    public function testTablesThatStandAloneAreGeneratedToo(): void
     {
         $set = ShopSchemas::generator()->generate(
             FixturePlan::from('order.id < order_detail.order_id, audit_log')
@@ -218,7 +264,7 @@ final class PlanGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function entriesComeBackInTheOrderThePlanNamesThem(): void
+    public function testEntriesComeBackInTheOrderThePlanNamesThem(): void
     {
         $set = ShopSchemas::generator()->generate(
             FixturePlan::from('order.id < order_detail.order_id, order.customer_id > customer.id'),
@@ -233,7 +279,7 @@ final class PlanGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function overridesMayBeGivenAsTableOverrides(): void
+    public function testOverridesMayBeGivenAsTableOverrides(): void
     {
         $set = ShopSchemas::generator()->generate(
             FixturePlan::from('order.id < order_detail.order_id'),
@@ -244,7 +290,7 @@ final class PlanGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function anUnknownTableIsReported(): void
+    public function testAnUnknownTableIsReported(): void
     {
         $this->expectException(SchemaNotFoundException::class);
         $this->expectExceptionMessage('Schema not found for table: nope');
@@ -253,7 +299,7 @@ final class PlanGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function aPlanNamingAColumnTheTableLacksIsRejectedBeforeGenerating(): void
+    public function testAPlanNamingAColumnTheTableLacksIsRejectedBeforeGenerating(): void
     {
         $this->expectException(PlanSchemaException::class);
         $this->expectExceptionMessage('order_detail has no column oder_id');
@@ -262,7 +308,7 @@ final class PlanGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function theSubjectHonoursACountItWasGiven(): void
+    public function testTheSubjectHonoursACountItWasGiven(): void
     {
         $set = ShopSchemas::generator()->generate(
             FixturePlan::from('order.id < order_detail.order_id'),
@@ -273,7 +319,7 @@ final class PlanGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function aRowCarriesBothItsInheritedKeyAndItsOwnParentKey(): void
+    public function testARowCarriesBothItsInheritedKeyAndItsOwnParentKey(): void
     {
         $set = ShopSchemas::generator()->generate(
             FixturePlan::from('order.id < order_detail.order_id, order_detail.product_id > product.id'),
@@ -287,7 +333,7 @@ final class PlanGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function everyOtherRelationOfAParentIsStillFollowed(): void
+    public function testEveryOtherRelationOfAParentIsStillFollowed(): void
     {
         $set = ShopSchemas::generator()->generate(
             FixturePlan::from('order.customer_id > customer.id, customer.id < audit_log.customer_id')
@@ -297,7 +343,7 @@ final class PlanGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function anOptionalParentIsGeneratedWhenTheCallerAsksForIt(): void
+    public function testAnOptionalParentIsGeneratedWhenTheCallerAsksForIt(): void
     {
         $set = ShopSchemas::generator()->generate(
             FixturePlan::from('order.customer_id >? customer.id'),
@@ -309,7 +355,7 @@ final class PlanGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function aCompositeRelationCarriesEveryColumn(): void
+    public function testACompositeRelationCarriesEveryColumn(): void
     {
         $set = ShopSchemas::generator()->generate(
             FixturePlan::from('shop_order.(shop_id, no) < shop_order_line.(shop_id, order_no)'),
@@ -323,7 +369,7 @@ final class PlanGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function aOneToOneChildIsGeneratedExactlyOnce(): void
+    public function testAOneToOneChildIsGeneratedExactlyOnce(): void
     {
         $set = ShopSchemas::generator()->generate(
             FixturePlan::from('order.id - order_shipping.order_id')
@@ -333,7 +379,7 @@ final class PlanGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function keysAreStoodInForEveryColumnARelationReads(): void
+    public function testKeysAreStoodInForEveryColumnARelationReads(): void
     {
         $set = ShopSchemas::generator()->generate(
             FixturePlan::from('twin.id < twin_child.twin_id, twin.other_id < twin_other.twin_other_id')
@@ -344,7 +390,7 @@ final class PlanGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function aRequiredParentIsGeneratedWhetherOrNotItWasAskedFor(): void
+    public function testARequiredParentIsGeneratedWhetherOrNotItWasAskedFor(): void
     {
         $set = ShopSchemas::generator()->generate(FixturePlan::from('order.customer_id > customer.id'));
 
@@ -352,7 +398,7 @@ final class PlanGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function anOptionalParentNobodyAskedForIsLeftOut(): void
+    public function testAnOptionalParentNobodyAskedForIsLeftOut(): void
     {
         $set = ShopSchemas::generator()->generate(FixturePlan::from('order.customer_id >? customer.id'));
 
@@ -360,7 +406,7 @@ final class PlanGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function anUnboundedChildCountCanExceedItsMinimum(): void
+    public function testAnUnboundedChildCountCanExceedItsMinimum(): void
     {
         self::assertNotSame(
             [1],
@@ -369,7 +415,7 @@ final class PlanGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function aOneToOneChildIsNeverGeneratedMoreThanOnce(): void
+    public function testAOneToOneChildIsNeverGeneratedMoreThanOnce(): void
     {
         self::assertSame(
             [1],
@@ -380,7 +426,7 @@ final class PlanGeneratorTest extends TestCase
     }
 
     #[Test]
-    public function aTableReachableOnlyBackwardsAlongARelationIsStillPartOfTheWalk(): void
+    public function testATableReachableOnlyBackwardsAlongARelationIsStillPartOfTheWalk(): void
     {
         $set = ShopSchemas::generator()->generate(
             FixturePlan::from('order.id < order_detail.order_id, product.id ?< order_detail.product_id')

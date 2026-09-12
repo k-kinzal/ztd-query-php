@@ -24,8 +24,17 @@ use SqlFixture\TypeMapper\TypeMapperInterface;
  */
 final class PlatformFactory
 {
+    /**
+     * D r i v e r  m y s q l.
+     */
     public const DRIVER_MYSQL = 'mysql';
+    /**
+     * D r i v e r  s q l i t e.
+     */
     public const DRIVER_SQLITE = 'sqlite';
+    /**
+     * D r i v e r  p g s q l.
+     */
     public const DRIVER_PGSQL = 'pgsql';
 
     /**

@@ -4,27 +4,32 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Schema;
 
-use PHPUnit\Framework\Attributes\CoversNothing;
-use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use SqlFixture\Schema\SchemaResolverInterface;
+use SqlFixture\Schema\ColumnDefinition;
+use SqlFixture\Schema\SchemaResolverInterface as Subject;
+use SqlFixture\Schema\StaticSchemaResolver;
+use SqlFixture\Schema\TableSchema;
 
-#[CoversNothing]
+#[CoversClass(Subject::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(ColumnDefinition::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Schema\SchemaNotFoundException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(StaticSchemaResolver::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Schema\TableIdentifier::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(TableSchema::class)]
 final class SchemaResolverInterfaceTest extends TestCase
 {
-    #[Test]
-    public function interfaceExists(): void
+    public function testResolveReturnsTheRegisteredSchema(): void
     {
-        self::assertTrue(interface_exists(SchemaResolverInterface::class));
+        $schema = new TableSchema('users', ['id' => new ColumnDefinition('id', 'INT')]);
+        $resolver = new StaticSchemaResolver([$schema]);
+        self::assertSame($schema, $resolver->resolve('users'));
     }
 
-    #[Test]
-    public function declaresResolveAndHas(): void
+    public function testHasReportsAvailabilityBeforeResolution(): void
     {
-        $reflection = new \ReflectionClass(SchemaResolverInterface::class);
-
-        self::assertTrue($reflection->hasMethod('resolve'));
-        self::assertTrue($reflection->hasMethod('has'));
-        self::assertCount(1, $reflection->getMethod('resolve')->getParameters());
+        $resolver = new StaticSchemaResolver([new TableSchema('users', [])]);
+        self::assertTrue($resolver->has('users'));
+        self::assertFalse($resolver->has('missing'));
     }
 }

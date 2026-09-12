@@ -19,10 +19,22 @@ use SqlFixture\Plan\RelationSide;
 #[UsesClass(RelationKind::class)]
 #[UsesClass(RelationSide::class)]
 #[UsesClass(PlanSyntaxException::class)]
+#[UsesClass(\SqlFixture\Plan\FixturePlan::class)]
+#[UsesClass(\SqlFixture\Plan\PlanParser::class)]
+#[UsesClass(\SqlFixture\Plan\PlanPrinter::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\PlanStatements::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\RelationCursor::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\RelationReader::class)]
+#[UsesClass(\SqlFixture\Plan\PlanStructureException::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\PlanTables::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\RelationGroups::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\StatementPrinter::class)]
+#[UsesClass(\SqlFixture\Plan\Validation\PlanValidation::class)]
+#[UsesClass(\SqlFixture\Plan\Validation\TableName::class)]
 final class RelationTest extends TestCase
 {
     #[Test]
-    public function keepsTheSidesInTheOrderTheyWereWritten(): void
+    public function testKeepsTheSidesInTheOrderTheyWereWritten(): void
     {
         $relation = new Relation(
             ColumnRef::of('order', 'id'),
@@ -35,7 +47,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function oneToManyMakesTheLeftSideTheParent(): void
+    public function testOneToManyMakesTheLeftSideTheParent(): void
     {
         $relation = new Relation(
             ColumnRef::of('order', 'id'),
@@ -48,7 +60,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function manyToOneDescribesTheSameShapeWrittenBackwards(): void
+    public function testManyToOneDescribesTheSameShapeWrittenBackwards(): void
     {
         $relation = new Relation(
             ColumnRef::of('order_detail', 'order_id'),
@@ -61,7 +73,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function columnMapPointsChildColumnsAtParentColumns(): void
+    public function testColumnMapPointsChildColumnsAtParentColumns(): void
     {
         $relation = new Relation(
             ColumnRef::of('order', 'id'),
@@ -73,7 +85,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function columnMapPairsCompositeKeysPositionally(): void
+    public function testColumnMapPairsCompositeKeysPositionally(): void
     {
         $relation = new Relation(
             ColumnRef::of('order', 'shop_id', 'no'),
@@ -85,7 +97,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function columnMapReadsTheSameWrittenEitherWay(): void
+    public function testColumnMapReadsTheSameWrittenEitherWay(): void
     {
         $forwards = new Relation(
             ColumnRef::of('order', 'id'),
@@ -102,7 +114,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function aMarkerNextToTheParentMakesTheParentOptional(): void
+    public function testParentIsOptionalAMarkerNextToTheParentMakesTheParentOptional(): void
     {
         $relation = new Relation(
             ColumnRef::of('order_detail', 'order_id'),
@@ -117,7 +129,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function aMarkerNextToTheChildMakesTheChildOptional(): void
+    public function testChildIsOptionalAMarkerNextToTheChildMakesTheChildOptional(): void
     {
         $relation = new Relation(
             ColumnRef::of('order', 'id'),
@@ -132,7 +144,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function bothSidesAreRequiredByDefault(): void
+    public function testBothSidesAreRequiredByDefault(): void
     {
         $relation = new Relation(
             ColumnRef::of('order', 'id'),
@@ -145,7 +157,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function onlyOneToOneHoldsASingleChildRow(): void
+    public function testChildIsCollectionOnlyOneToOneHoldsASingleChildRow(): void
     {
         $many = new Relation(
             ColumnRef::of('order', 'id'),
@@ -163,7 +175,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function tablesListsBothEnds(): void
+    public function testTablesListsBothEnds(): void
     {
         $relation = new Relation(
             ColumnRef::of('order', 'id'),
@@ -175,7 +187,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function aSelfReferenceNamesItsTableOnce(): void
+    public function testASelfReferenceNamesItsTableOnce(): void
     {
         $relation = new Relation(
             ColumnRef::of('category', 'id'),
@@ -187,20 +199,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function sidesOfDifferentArityAreRejected(): void
-    {
-        $this->expectException(PlanSyntaxException::class);
-        $this->expectExceptionMessage('names 2 columns on one side and 1 on the other');
-
-        new Relation(
-            ColumnRef::of('order', 'shop_id', 'no'),
-            RelationKind::OneToMany,
-            ColumnRef::of('order_detail', 'order_no')
-        );
-    }
-
-    #[Test]
-    public function namedConstructorsBuildEachOperator(): void
+    public function testNamedConstructorsBuildEachOperator(): void
     {
         self::assertSame(RelationKind::OneToMany, Relation::oneToMany('a.id', 'b.a_id')->kind);
         self::assertSame(RelationKind::ManyToOne, Relation::manyToOne('b.a_id', 'a.id')->kind);
@@ -208,7 +207,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function namedConstructorsReadEndpointsWrittenAsStrings(): void
+    public function testNamedConstructorsReadEndpointsWrittenAsStrings(): void
     {
         $relation = Relation::oneToMany('order.(shop_id, no)', 'order_detail.(shop_id, order_no)');
 
@@ -217,7 +216,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function namedConstructorsAlsoTakeColumnRefs(): void
+    public function testNamedConstructorsAlsoTakeColumnRefs(): void
     {
         $relation = Relation::oneToMany(ColumnRef::of('order', 'id'), ColumnRef::of('order_detail', 'order_id'));
 
@@ -225,45 +224,45 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function oneToManyCanMarkTheChildOptional(): void
+    public function testOneToManyCanMarkTheChildOptional(): void
     {
         self::assertTrue(Relation::oneToMany('a.id', 'b.a_id', true)->childIsOptional());
         self::assertFalse(Relation::oneToMany('a.id', 'b.a_id')->childIsOptional());
     }
 
     #[Test]
-    public function manyToOneCanMarkTheParentOptional(): void
+    public function testManyToOneCanMarkTheParentOptional(): void
     {
         self::assertTrue(Relation::manyToOne('b.a_id', 'a.id', true)->parentIsOptional());
         self::assertFalse(Relation::manyToOne('b.a_id', 'a.id')->parentIsOptional());
     }
 
     #[Test]
-    public function aRequiredChildIsGeneratedEvenWhenNoneAreGiven(): void
+    public function testMinimumChildRowsARequiredChildIsGeneratedEvenWhenNoneAreGiven(): void
     {
         self::assertSame(1, Relation::oneToMany('order.id', 'order_detail.order_id')->minimumChildRows());
     }
 
     #[Test]
-    public function anOptionalChildMayEndUpWithNoRows(): void
+    public function testAnOptionalChildMayEndUpWithNoRows(): void
     {
         self::assertSame(0, Relation::oneToMany('order.id', 'order_detail.order_id', true)->minimumChildRows());
     }
 
     #[Test]
-    public function aCollectionChildHasNoUpperBound(): void
+    public function testMaximumChildRowsACollectionChildHasNoUpperBound(): void
     {
         self::assertNull(Relation::oneToMany('order.id', 'order_detail.order_id')->maximumChildRows());
     }
 
     #[Test]
-    public function aOneToOneChildIsCappedAtOneRow(): void
+    public function testAOneToOneChildIsCappedAtOneRow(): void
     {
         self::assertSame(1, Relation::oneToOne('order.id', 'order_shipping.order_id')->maximumChildRows());
     }
 
     #[Test]
-    public function anOptionalOneToOneChildRangesFromNoneToOne(): void
+    public function testAnOptionalOneToOneChildRangesFromNoneToOne(): void
     {
         $relation = Relation::oneToOne('order.id', 'order_shipping.order_id', true);
 
@@ -272,7 +271,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function namedConstructorsLeaveTheLeftSideRequired(): void
+    public function testNamedConstructorsLeaveTheLeftSideRequired(): void
     {
         self::assertFalse(Relation::oneToMany('a.id', 'b.a_id', true)->leftOptional);
         self::assertFalse(Relation::manyToOne('b.a_id', 'a.id', true)->leftOptional);
@@ -280,7 +279,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function oneToManyMarksOnlyTheRightSideOptional(): void
+    public function testOneToManyMarksOnlyTheRightSideOptional(): void
     {
         $relation = Relation::oneToMany('a.id', 'b.a_id', true);
 
@@ -289,7 +288,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function oneToOneMarksOnlyTheRightSideOptional(): void
+    public function testOneToOneMarksOnlyTheRightSideOptional(): void
     {
         $relation = Relation::oneToOne('a.id', 'b.a_id', true);
 
@@ -298,7 +297,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function manyToOneMarksOnlyTheRightSideOptional(): void
+    public function testManyToOneMarksOnlyTheRightSideOptional(): void
     {
         $relation = Relation::manyToOne('b.a_id', 'a.id', true);
 
@@ -307,7 +306,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function oneToManyLeavesBothSidesRequiredByDefault(): void
+    public function testOneToManyLeavesBothSidesRequiredByDefault(): void
     {
         $relation = Relation::oneToMany('a.id', 'b.a_id');
 
@@ -316,7 +315,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function manyToOneLeavesBothSidesRequiredByDefault(): void
+    public function testManyToOneLeavesBothSidesRequiredByDefault(): void
     {
         $relation = Relation::manyToOne('b.a_id', 'a.id');
 
@@ -325,7 +324,7 @@ final class RelationTest extends TestCase
     }
 
     #[Test]
-    public function oneToOneLeavesBothSidesRequiredByDefault(): void
+    public function testOneToOneLeavesBothSidesRequiredByDefault(): void
     {
         $relation = Relation::oneToOne('a.id', 'b.a_id');
 

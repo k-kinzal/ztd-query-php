@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlFixture;
 
 use Faker\Generator;
-use Faker\Provider\Base;
 use SqlFixture\Fixture\FixtureSet;
 use SqlFixture\Fixture\PlanGenerator;
 use SqlFixture\Fixture\TableOverrides;
@@ -19,16 +18,25 @@ use SqlFixture\TypeMapper\TypeMapperInterface;
 
 /**
  * Faker provider that generates fixtures from CREATE TABLE SQL statements.
+ *
+ * @visibility public
+ * @example Generate a row while leaving the auto-increment key to the database
+ *     $provider = new \SqlFixture\FixtureProvider(\Faker\Factory::create());
+ *     $provider->fixture('CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(30))', ['name' => 'Alice']) // => ['name' => 'Alice']
+ *
+ * @example Generate linked rows from registered schemas
+ *     $provider = new \SqlFixture\FixtureProvider(\Faker\Factory::create());
+ *     $provider->registerSchema('CREATE TABLE users (id INT PRIMARY KEY)');
+ *     $provider->registerSchema('CREATE TABLE posts (user_id INT)');
+ *     $rows = $provider->fixtures('users.id < posts.user_id', ['users' => ['id' => 9], 'posts' => 2]);
+ *     $rows->rows('posts') // => [['user_id' => 9], ['user_id' => 9]]
  */
-class FixtureProvider extends Base
+class FixtureProvider extends Provider\SqlSchemaProvider
 {
     private FixtureGenerator $fixtureGenerator;
     private string $dialect;
     private Generator $faker;
     private StaticSchemaResolver $schemaResolver;
-
-    /** @var array<string, TableSchema> Schema cache by SQL hash */
-    private array $schemaCache = [];
 
     /**
      * @param string $dialect SQL dialect ('mysql' or 'sqlite')
@@ -101,27 +109,6 @@ class FixtureProvider extends Base
     public function getSchemaResolver(): StaticSchemaResolver
     {
         return $this->schemaResolver;
-    }
-
-    /**
-     * Get or parse schema from SQL.
-     */
-    protected function getSchema(string $createTableSql, ?string $dialect = null): TableSchema
-    {
-        $effectiveDialect = $dialect ?? $this->dialect;
-        $cacheKey = md5($createTableSql . ':' . $effectiveDialect);
-
-        if (!isset($this->schemaCache[$cacheKey])) {
-            $parser = ($effectiveDialect !== $this->dialect)
-                ? PlatformFactory::createSchemaParser($effectiveDialect)
-                : $this->fixtureGenerator->getSchemaParser();
-
-            $schema = $parser->parse($createTableSql);
-            $this->schemaCache[$cacheKey] = $schema;
-            $this->schemaResolver->register($schema);
-        }
-
-        return $this->schemaCache[$cacheKey];
     }
 
     /**

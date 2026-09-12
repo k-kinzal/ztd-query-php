@@ -13,10 +13,25 @@ use SqlFixture\Plan\PlanStructureException;
 
 #[CoversClass(PlanStructureException::class)]
 #[UsesClass(ColumnRef::class)]
+#[UsesClass(\SqlFixture\Plan\FixturePlan::class)]
+#[UsesClass(\SqlFixture\Plan\PlanParser::class)]
+#[UsesClass(\SqlFixture\Plan\PlanPrinter::class)]
+#[UsesClass(\SqlFixture\Plan\PlanSyntaxException::class)]
+#[UsesClass(\SqlFixture\Plan\Relation::class)]
+#[UsesClass(\SqlFixture\Plan\RelationKind::class)]
+#[UsesClass(\SqlFixture\Plan\RelationSide::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\PlanStatements::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\RelationCursor::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\RelationReader::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\PlanTables::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\RelationGroups::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\StatementPrinter::class)]
+#[UsesClass(\SqlFixture\Plan\Validation\PlanValidation::class)]
+#[UsesClass(\SqlFixture\Plan\Validation\TableName::class)]
 final class PlanStructureExceptionTest extends TestCase
 {
     #[Test]
-    public function columnsBoundTwiceNamesTheColumnAndBothParents(): void
+    public function testColumnsBoundTwiceNamesTheColumnAndBothParents(): void
     {
         $message = PlanStructureException::columnsBoundTwice(
             ColumnRef::of('b', 'x'),
@@ -32,7 +47,7 @@ final class PlanStructureExceptionTest extends TestCase
     }
 
     #[Test]
-    public function cycleShowsTheLoopClosingBackOnItself(): void
+    public function testCycleShowsTheLoopClosingBackOnItself(): void
     {
         $message = PlanStructureException::cycle(['a', 'b', 'c'])->getMessage();
 
@@ -44,7 +59,7 @@ final class PlanStructureExceptionTest extends TestCase
     }
 
     #[Test]
-    public function unboundedSelfReferenceSuggestsTheOptionalMarker(): void
+    public function testUnboundedSelfReferenceSuggestsTheOptionalMarker(): void
     {
         $message = PlanStructureException::unboundedSelfReference(
             'category',
@@ -58,9 +73,4 @@ final class PlanStructureExceptionTest extends TestCase
         );
     }
 
-    #[Test]
-    public function isLogicException(): void
-    {
-        self::assertInstanceOf(\LogicException::class, PlanStructureException::cycle(['a', 'b']));
-    }
 }

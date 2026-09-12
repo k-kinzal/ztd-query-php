@@ -17,6 +17,9 @@ use SqlFixture\Schema\TableSchema;
  */
 final class InvalidOverrideException extends InvalidArgumentException
 {
+    /**
+     * Returns unknown column.
+     */
     public static function unknownColumn(string $column, TableSchema $schema): self
     {
         return new self(sprintf(
@@ -27,6 +30,9 @@ final class InvalidOverrideException extends InvalidArgumentException
         ));
     }
 
+    /**
+     * Returns not nullable.
+     */
     public static function notNullable(string $column, TableSchema $schema): self
     {
         return new self(sprintf(
@@ -36,6 +42,9 @@ final class InvalidOverrideException extends InvalidArgumentException
         ));
     }
 
+    /**
+     * Returns generated column.
+     */
     public static function generatedColumn(string $column, TableSchema $schema): self
     {
         return new self(sprintf(
