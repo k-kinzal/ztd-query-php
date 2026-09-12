@@ -1,0 +1,30 @@
+# NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
+deptrac:
+  paths: [src]
+  layers:
+    - name: PublicApi
+      collectors:
+        - type: directory
+          value: src/[^/]+\.php$
+    - name: Driver
+      collectors:
+        - type: directory
+          value: src/Driver/.*
+    - name: Native
+      collectors:
+        - type: directory
+          value: src/Native/.*
+    - name: Core
+      collectors:
+        - type: classLike
+          value: ^ZtdQuery\\(?!Adapter\\|Platform\\MySql\\)
+    - name: MySqlPlatform
+      collectors:
+        - type: composer
+          composerPath: composer.json
+          composerLockPath: composer.lock
+          packages: [k-kinzal/ztd-query-mysql]
+  ruleset:
+    PublicApi: [Driver, Native, Core, MySqlPlatform]
+    Driver: [Core]
+    Native: []

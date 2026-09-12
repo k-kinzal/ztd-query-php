@@ -7,22 +7,30 @@ namespace Fuzz\Correctness\Target;
 use Error;
 use Faker\Generator;
 use Fuzz\Correctness\MysqliCorrectnessHarness;
-use Fuzz\Correctness\ResultComparator;
-use Fuzz\Correctness\SchemaDefinition;
 use Fuzz\Correctness\SchemaPool;
-use mysqli;
-use mysqli_result;
-use Throwable;
+use Fuzz\Correctness\TableStateOracle;
+use mysqli_sql_exception;
+use ZtdQuery\Adapter\Mysqli\ZtdMysqliException;
 
+/**
+ * Compares native and simulated REPLACE operations from reproducible inputs.
+ */
 final class ReplaceCorrectnessTarget
 {
+    /**
+     * Bind the connection, schema generator and deterministic input dependencies.
+     */
     public function __construct(
         private readonly MysqliCorrectnessHarness $harness,
         private readonly Generator $faker,
-        private readonly ResultComparator $comparator = new ResultComparator(),
     ) {
     }
 
+    /**
+     * Execute one seeded scenario and reset all mutable database state.
+     *
+     * @throws Error When native and simulated behavior differ.
+     */
     public function __invoke(string $input): void
     {
         $seed = crc32(str_pad($input, 4, "\0"));
@@ -47,43 +55,17 @@ final class ReplaceCorrectnessTarget
             $this->harness->getRawMysqli()->execute_query($sql, $params);
             try {
                 $this->harness->getZtdMysqli()->execute_query($sql, $params);
-            } catch (Throwable $exception) {
+            } catch (ZtdMysqliException | mysqli_sql_exception $exception) {
                 throw new Error("ZTD prepared REPLACE failed after native success\nSeed: $seed\nSQL: $sql", 0, $exception);
             }
 
-            $this->compareTableState($schema, $seed, $sql);
+            (new TableStateOracle($this->harness))->compare($schema, $seed, $sql);
         } finally {
             $this->harness->teardown();
         }
     }
 
-    private function compareTableState(SchemaDefinition $schema, int $seed, string $sql): void
-    {
-        $rawRows = $this->fetchAll($this->harness->getRawMysqli(), $schema->name);
-        $ztdRows = $this->fetchAll($this->harness->getZtdMysqli(), $schema->name);
 
-        if (!$this->comparator->compareRows($rawRows, $ztdRows, $schema->primaryKeys)) {
-            throw new Error(
-                "Prepared REPLACE table state mismatch\n"
-                . "Seed: $seed\n"
-                . "SQL: $sql\n"
-                . 'Native: ' . json_encode($rawRows, JSON_THROW_ON_ERROR) . "\n"
-                . 'ZTD: ' . json_encode($ztdRows, JSON_THROW_ON_ERROR),
-            );
-        }
-    }
 
-    /** @return array<int, array<string, mixed>> */
-    private function fetchAll(mysqli $mysqli, string $table): array
-    {
-        $result = $mysqli->query("SELECT * FROM `$table`");
-        if (!$result instanceof mysqli_result) {
-            return [];
-        }
 
-        /** @var array<int, array<string, mixed>> $rows */
-        $rows = $result->fetch_all(MYSQLI_ASSOC);
-
-        return $rows;
-    }
 }

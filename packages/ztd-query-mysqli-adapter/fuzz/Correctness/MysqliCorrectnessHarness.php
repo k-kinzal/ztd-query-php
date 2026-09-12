@@ -7,13 +7,16 @@ namespace Fuzz\Correctness;
 use Faker\Factory;
 use Faker\Generator;
 use mysqli;
-use mysqli_result;
+use RuntimeException;
 use SqlFixture\FixtureProvider;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 use ZtdQuery\Config\UnknownSchemaBehavior;
 use ZtdQuery\Config\UnsupportedSqlBehavior;
 use ZtdQuery\Config\ZtdConfig;
 
+/**
+ * Resets native and simulated tables to the same synthetic fixture state.
+ */
 final class MysqliCorrectnessHarness
 {
     private mysqli $rawMysqli;
@@ -27,9 +30,10 @@ final class MysqliCorrectnessHarness
     private Generator $faker;
     private FixtureProvider $fixtureProvider;
 
-    /** @var array<int, array<string, mixed>> */
-    private array $fixtureRows = [];
 
+    /**
+     * Bind the connection, schema generator and deterministic input dependencies.
+     */
     public function __construct(string $host, int $port, string $dbName, string $user, string $pass)
     {
         $this->host = $host;
@@ -55,7 +59,7 @@ final class MysqliCorrectnessHarness
         $this->rawMysqli->query("DROP TABLE IF EXISTS `{$schema->name}`");
         $this->rawMysqli->query($schema->sql);
 
-        $this->fixtureRows = [];
+        $fixtureRows = [];
         for ($i = 0; $i < $rowCount; $i++) {
             $row = $this->fixtureProvider->fixture($schema->sql);
             if (count($schema->primaryKeys) === 1 && $schema->primaryKeys[0] === 'id') {
@@ -65,11 +69,11 @@ final class MysqliCorrectnessHarness
                 $row['order_id'] = $i + 1;
                 $row['product_id'] = ($i + 1) * 10;
             }
-            $this->fixtureRows[] = $row;
+            $fixtureRows[] = $row;
         }
 
-        foreach ($this->fixtureRows as $row) {
-            $this->insertRow($this->rawMysqli, $schema->name, $row);
+        foreach ($fixtureRows as $row) {
+            (new FixtureRowWriter())->insertRow($this->rawMysqli, $schema->name, $row);
         }
 
         $this->ztdMysqli = new ZtdMysqli(
@@ -83,7 +87,7 @@ final class MysqliCorrectnessHarness
         );
 
         $this->ztdMysqli->query($schema->sql);
-        foreach ($this->fixtureRows as $row) {
+        foreach ($fixtureRows as $row) {
             $columns = array_keys($row);
             $values = array_map(function ($v) {
                 if ($v === null) {
@@ -107,9 +111,12 @@ final class MysqliCorrectnessHarness
             $this->ztdMysqli->query($sql);
         }
 
-        return $this->fixtureRows;
+        return $fixtureRows;
     }
 
+    /**
+     * Remove the active physical table and discard its simulated session.
+     */
     public function teardown(): void
     {
         if ($this->currentSchema !== null) {
@@ -117,59 +124,37 @@ final class MysqliCorrectnessHarness
         }
         $this->ztdMysqli = null;
         $this->currentSchema = null;
-        $this->fixtureRows = [];
     }
 
+    /**
+     * Return the native connection that serves as the differential oracle.
+     */
     public function getRawMysqli(): mysqli
     {
         return $this->rawMysqli;
     }
 
+    /**
+     * Return the adapter initialized for the current scenario.
+     *
+     * @throws RuntimeException If setup has not created a session.
+     */
     public function getZtdMysqli(): ZtdMysqli
     {
         if ($this->ztdMysqli === null) {
-            throw new \RuntimeException('ZtdMysqli not initialized. Call setup() first.');
+            throw new RuntimeException('ZtdMysqli not initialized. Call setup() first.');
         }
         return $this->ztdMysqli;
     }
 
-    /**
-     * @return array<int, array<string, mixed>>
-     */
-    public function getFixtureRows(): array
-    {
-        return $this->fixtureRows;
-    }
 
+    /**
+     * Return the schema owned by the active scenario, if any.
+     */
     public function getCurrentSchema(): ?SchemaDefinition
     {
         return $this->currentSchema;
     }
 
-    /**
-     * @param array<string, mixed> $row
-     */
-    private function insertRow(mysqli $mysqli, string $table, array $row): void
-    {
-        $columns = array_keys($row);
-        $placeholders = array_fill(0, count($columns), '?');
-        $sql = sprintf(
-            'INSERT INTO `%s` (%s) VALUES (%s)',
-            $table,
-            implode(', ', array_map(fn ($c) => "`$c`", $columns)),
-            implode(', ', $placeholders)
-        );
-        $values = array_map(function ($v) {
-            if (is_bool($v)) {
-                return $v ? 1 : 0;
-            }
-            return $v;
-        }, array_values($row));
-        $types = str_repeat('s', count($values));
-        $stmt = $mysqli->prepare($sql);
-        assert($stmt !== false);
-        $stmt->bind_param($types, ...$values);
-        $stmt->execute();
-        $stmt->close();
-    }
+
 }

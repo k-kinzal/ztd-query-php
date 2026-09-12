@@ -28,6 +28,9 @@ final class MysqliStatement implements StatementInterface
      */
     private mysqli_result|false|null $result = null;
 
+    /**
+     * Adapt a prepared native statement and retain its connection for error details.
+     */
     public function __construct(mysqli_stmt $statement, mysqli $mysqli)
     {
         $this->statement = $statement;
@@ -65,7 +68,9 @@ final class MysqliStatement implements StatementInterface
             }
         }
 
-        // get_result() is deferred so ZtdMysqliStatement::get_result() can call it on the underlying stmt
+        /**
+         * get_result() is deferred so ZtdMysqliStatement::get_result() can call it on the underlying stmt
+         */
 
         return true;
     }
@@ -75,17 +80,18 @@ final class MysqliStatement implements StatementInterface
      */
     public function fetchAll(): array
     {
-        $result = $this->loadResult();
+        $result = $this->result ??= $this->statement->get_result();
 
         if ($result === false) {
             $this->statement->close();
             return [];
         }
 
-        /** @var array<int, array<string, mixed>> $rows */
         $rows = $result->fetch_all(MYSQLI_ASSOC);
 
-        // Free the result to avoid "Commands out of sync" errors
+        /**
+         * Free the result to avoid "Commands out of sync" errors
+         */
         $result->free();
         $this->result = null;
 
@@ -99,7 +105,7 @@ final class MysqliStatement implements StatementInterface
      */
     public function resultColumns(ResultColumnTypeResolver $typeResolver): array
     {
-        $result = $this->loadResult();
+        $result = $this->result ??= $this->statement->get_result();
         if ($result === false) {
             return [];
         }
@@ -115,12 +121,4 @@ final class MysqliStatement implements StatementInterface
         return (int) $this->statement->affected_rows;
     }
 
-    private function loadResult(): mysqli_result|false
-    {
-        if ($this->result === null) {
-            $this->result = $this->statement->get_result();
-        }
-
-        return $this->result;
-    }
 }

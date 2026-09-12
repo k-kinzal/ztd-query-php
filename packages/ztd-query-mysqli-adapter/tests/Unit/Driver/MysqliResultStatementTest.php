@@ -9,9 +9,8 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Tests\Fixtures\StubMysqliField;
 use Tests\Fixtures\StubMysqliResult;
-use ZtdQuery\Adapter\Mysqli\MysqliResultStatement;
 use ZtdQuery\Adapter\Mysqli\MysqliResultColumnExtractor;
-use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Adapter\Mysqli\MysqliResultStatement;
 use ZtdQuery\Platform\ResultColumnTypeResolver;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
@@ -24,7 +23,7 @@ final class MysqliResultStatementTest extends TestCase
     {
         $stmt = new MysqliResultStatement(null, 0);
 
-        self::assertInstanceOf(StatementInterface::class, $stmt);
+        self::assertSame([], $stmt->fetchAll());
     }
 
     public function testExecuteAlwaysReturnsTrue(): void

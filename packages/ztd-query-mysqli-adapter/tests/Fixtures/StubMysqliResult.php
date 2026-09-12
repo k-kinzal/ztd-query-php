@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
+use mysqli;
 use mysqli_result;
-use ReflectionClass;
+use Override;
 
 /**
  * Test double for mysqli_result that allows configuring behavior without PHPUnit mocks.
@@ -18,20 +19,31 @@ use ReflectionClass;
  */
 class StubMysqliResult extends mysqli_result
 {
-    /** @var array<int, array<string, mixed>> */
+    /**
+     * Create an inert native result for delegation tests.
+     */
+    public function __construct()
+    {
+        parent::__construct(new mysqli(...MySqlContainer::connectionParameters()));
+    }
+
+    /**
+     * @var array<int, array<string, int|float|string|bool|null>>
+     */
     private array $rows = [];
 
-    /** @var list<StubMysqliField> */
+    /**
+     * @var list<StubMysqliField>
+     */
     private array $fields = [];
 
     /**
-     * @param array<int, array<string, mixed>> $rows
+     * @param array<int, array<string, int|float|string|bool|null>> $rows
      * @param list<StubMysqliField> $fields
      */
     public static function create(array $rows = [], array $fields = []): self
     {
-        /** @var self $instance */
-        $instance = (new ReflectionClass(self::class))->newInstanceWithoutConstructor();
+        $instance = new self();
         $instance->rows = $rows;
         $instance->fields = $fields;
 
@@ -39,16 +51,34 @@ class StubMysqliResult extends mysqli_result
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return array<int, array<string, int|float|string|bool|null>>
      */
+    #[Override]
     public function fetch_all(int $mode = MYSQLI_NUM): array
     {
         return $this->rows;
     }
 
-    /** @return list<StubMysqliField> */
+    /**
+     * @return list<StubMysqliField>
+     */
+    #[Override]
     public function fetch_fields(): array
     {
         return $this->fields;
+    }
+
+    /**
+     * Result release observed by the delegation tests.
+     */
+    public bool $freed = false;
+
+    /**
+     * Mark the synthetic result released without using a native result buffer.
+     */
+    #[Override]
+    public function free(): void
+    {
+        $this->freed = true;
     }
 }

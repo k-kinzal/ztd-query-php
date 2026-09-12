@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace Fuzz\Container;
 
+use Override;
 use Testcontainers\Containers\GenericContainer\GenericContainer;
 use Testcontainers\Containers\WaitStrategy\PDO\MySQLDSN;
 use Testcontainers\Containers\WaitStrategy\PDO\PDOConnectWaitStrategy;
 
+/**
+ * Starts the pinned MySQL 8.4 service used by differential fuzzing.
+ */
 final class MySql84Container extends GenericContainer
 {
     /**
@@ -37,6 +41,7 @@ final class MySql84Container extends GenericContainer
      */
     protected static $STARTUP_TIMEOUT = 300;
 
+    #[Override]
     protected function waitStrategy($instance): PDOConnectWaitStrategy
     {
         unset($instance);
@@ -49,6 +54,9 @@ final class MySql84Container extends GenericContainer
             ->withRetryInterval(250000);
     }
 
+    /**
+     * Return the SQL Faker grammar matching this server image.
+     */
     public static function getGrammarVersion(): string
     {
         return 'mysql-8.4.7';

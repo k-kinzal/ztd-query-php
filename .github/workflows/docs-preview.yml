@@ -96,7 +96,7 @@ jobs:
           set -euo pipefail
 
           mkdir -p "pr/${PR_NUMBER}"
-          rsync -a --checksum --delete ../packages/sql-faker/build/docs/ "pr/${PR_NUMBER}/"
+          rsync -a --checksum --delete --exclude '/mysqli/' ../packages/sql-faker/build/docs/ "pr/${PR_NUMBER}/"
           touch .nojekyll
 
           git add --all

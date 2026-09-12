@@ -4,13 +4,20 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
-use PHPUnit\Framework\Attributes\CoversNothing;
+use mysqli_result;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use Tests\Fixtures\MySqlContainer;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 
-#[CoversNothing]
+#[\PHPUnit\Framework\Attributes\CoversClass(ZtdMysqli::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\ZtdQuery\Adapter\Mysqli\ZtdMysqliStatement::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\ZtdQuery\Adapter\Mysqli\MysqliConnection::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\ZtdQuery\Adapter\Mysqli\MysqliResultStatement::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\ZtdQuery\Adapter\Mysqli\MysqliResultColumnExtractor::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\ZtdQuery\Adapter\Mysqli\MysqliStatementBindingBridge::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\ZtdQuery\Adapter\Mysqli\ZtdMysqliException::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\ZtdQuery\Adapter\Mysqli\Native\MysqliPropertyReader::class)]
 #[Large]
 final class MysqliLoadDataTest extends TestCase
 {
@@ -37,14 +44,14 @@ final class MysqliLoadDataTest extends TestCase
             self::assertSame(2, $ztdMysqli->lastAffectedRows());
 
             $rows = $ztdMysqli->query(sprintf('SELECT id, name FROM `%s` ORDER BY id', $table));
-            self::assertInstanceOf(\mysqli_result::class, $rows);
+            self::assertInstanceOf(mysqli_result::class, $rows);
             self::assertSame([
                 ['id' => 1, 'name' => 'Alice'],
                 ['id' => 2, 'name' => 'Bob'],
             ], $rows->fetch_all(MYSQLI_ASSOC));
 
             $physical = $rawMysqli->query(sprintf('SELECT COUNT(*) AS count FROM `%s`', $table));
-            self::assertInstanceOf(\mysqli_result::class, $physical);
+            self::assertInstanceOf(mysqli_result::class, $physical);
             self::assertSame([['count' => '0']], $physical->fetch_all(MYSQLI_ASSOC));
         } finally {
             $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
