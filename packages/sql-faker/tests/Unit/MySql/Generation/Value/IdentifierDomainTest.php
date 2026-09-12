@@ -27,6 +27,6 @@ final class IdentifierDomainTest extends TestCase
         self::assertSame([2, 3, 4], $domain->match('!a0_ ', 1));
         self::assertSame([], $domain->match('0a'));
         self::assertSame([], $domain->match(''));
-        self::assertNotContains(3, (new IdentifierDomain('Ss', 'QqLl', excluded: ['SQL'])->match('sQl')));
+        self::assertNotContains(3, (new IdentifierDomain('Ss', 'QqLl', excluded: ['SQL']))->match('sQl'));
     }
 }

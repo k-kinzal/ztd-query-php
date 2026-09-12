@@ -14,7 +14,7 @@ final class Utf8Test extends TestCase
     #[\PHPUnit\Framework\Attributes\DataProvider('providerEncodings')]
     public function testValidRecognizesScalarBoundariesAndWidthLimits(string $bytes, int $width, bool $valid): void
     {
-        self::assertSame($valid, (new Utf8()->valid($bytes, $width)));
+        self::assertSame($valid, (new Utf8())->valid($bytes, $width));
     }
 
     /**
