@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>SQL Faker documentation — k-kinzal/sql-faker</title>
-<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-faker/doc/docs/README.md.html">
-<meta name="description" content="SQL Faker documentation, a document of the k-kinzal/sql-faker package.">
+<title>SQL generation algorithm — k-kinzal/sql-faker</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-faker/doc/docs/algorithm.md.html">
+<meta name="description" content="SQL generation algorithm, a document of the k-kinzal/sql-faker package.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="k-kinzal/sql-faker">
-<meta property="og:title" content="SQL Faker documentation — k-kinzal/sql-faker">
-<meta property="og:description" content="SQL Faker documentation, a document of the k-kinzal/sql-faker package.">
-<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-faker/doc/docs/README.md.html">
+<meta property="og:title" content="SQL generation algorithm — k-kinzal/sql-faker">
+<meta property="og:description" content="SQL generation algorithm, a document of the k-kinzal/sql-faker package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-faker/doc/docs/algorithm.md.html">
 <meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/assets/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -24,7 +24,7 @@
 <div class="page">
 <header class="topbar">
 <button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
-<nav class="crumbs"><a href="../../../../k-kinzal/sql-faker/index.html">k-kinzal/sql-faker</a><span class="crumb-sep">::</span><span class="crumb-current">docs/README.md</span></nav>
+<nav class="crumbs"><a href="../../../../k-kinzal/sql-faker/index.html">k-kinzal/sql-faker</a><span class="crumb-sep">::</span><span class="crumb-current">docs/algorithm.md</span></nav>
 <div class="topbar-tools">
 <input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
 <button id="theme-toggle" title="Toggle theme">◐</button>
@@ -32,11 +32,49 @@
 </header>
 <div class="search-results" id="search-results" hidden></div>
 <main class="content">
-<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>SQL Faker documentation</h1><div class="symbol-meta"><span class="src-link">docs/README.md</span></div></div>
-<section class="readme"><h2>SQL Faker documentation</h2>
-<p>SQL Faker generates SQL strings for MySQL, PostgreSQL, and SQLite. Use it to exercise a SQL parser, explore statement forms, or supply varied input to tools that inspect SQL. No database connection is needed to generate strings.</p>
-<ul><li><a href="../../../../k-kinzal/sql-faker/doc/docs/usage.md.html">User guide</a> — installation, choosing a dialect, statement selection, depth, reproducibility, and output behavior.</li><li><a href="../../../../k-kinzal/sql-faker/doc/docs/api.md.html">API reference</a> — provider methods, dialect differences, argument bounds, and exceptions you can handle.</li><li><a href="../../../../k-kinzal/sql-faker/doc/docs/versions.md.html">Supported versions</a> — version tags and defaults for each dialect.</li></ul>
-<p>Start with the <a href="../../../../k-kinzal/sql-faker/doc/docs/usage.md.html#generate-your-first-statement">first example</a>. Generated SQL follows the selected dialect&#039;s grammar; executing it also requires a suitable database schema and server configuration.</p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>SQL generation algorithm</h1><div class="symbol-meta"><span class="src-link">docs/algorithm.md</span></div></div>
+<section class="readme"><h2>SQL generation algorithm</h2>
+<p>SQL Faker generates SQL from the official grammar of the selected database version: MySQL&#039;s Bison grammar (<code>sql_yacc.yy</code>), PostgreSQL&#039;s Bison grammar (<code>gram.y</code>), or SQLite&#039;s Lemon grammar (<code>parse.y</code>). A grammar describes how statements, clauses, and expressions can be assembled from smaller parts.</p>
+<h3>Grammar derivation</h3>
+<p>A grammar contains <strong>non-terminals</strong>, which still need expansion, and <strong>terminals</strong>, which represent keywords, punctuation, identifiers, or literal tokens. Each non-terminal has one or more production alternatives.</p>
+<p>For example, a simplified SELECT grammar can be written as:</p>
+<pre class="code-block"><code>statement  → SELECT expression FROM identifier
+expression → identifier | integer | expression + expression
+identifier → IDENT
+integer    → NUM</code></pre>
+<p>Generation starts with a non-terminal representing the desired statement or fragment. The leftmost remaining non-terminal is replaced with one of its alternatives. Repeating this operation eventually produces only terminals:</p>
+<pre class="code-block"><code>statement
+→ SELECT expression FROM identifier
+→ SELECT expression + expression FROM identifier
+→ SELECT identifier + expression FROM identifier
+→ SELECT IDENT + expression FROM identifier
+→ SELECT IDENT + integer FROM identifier
+→ SELECT IDENT + NUM FROM identifier
+→ SELECT IDENT + NUM FROM IDENT</code></pre>
+<p>Alternative selection introduces variation. Expanding an expression to another expression can produce nested operations, and expanding a list recursively can produce additional columns, rows, or statements. Selecting a fragment&#039;s rule uses the same process without first generating an enclosing statement.</p>
+<h3>Completing recursive expansions</h3>
+<p>Recursive alternatives need a finite route to terminal symbols. Before selecting an alternative, generation considers the minimum expansions needed to finish both that alternative and the rest of the statement. Alternatives that cannot finish within the remaining expansion allowance are excluded.</p>
+<p>When additional conditions restrict production choices, completion also considers those conditions in descendant rules and repeated occurrences. If output must contain text, completion must include a terminal that contributes text rather than only empty productions or parser markers.</p>
+<p>Early choices are random among eligible alternatives. Once the expansion count reaches its complexity threshold, selection favors shorter completions: fewer terminal symbols, or fewer rule expansions followed by fewer terminal symbols. This allows recursive SQL structures to terminate without cutting off an unfinished statement.</p>
+<h3>Applying structural constraints</h3>
+<p>A context-free grammar describes the shapes of SQL, but database parsers also apply rules to relationships between parts of a statement. After derivation, dialect-specific transformations account for these structural requirements, such as expression grouping and clause combinations, before choosing the final text.</p>
+<h3>Choosing token text</h3>
+<p>The terminal sequence still contains token classes such as IDENT and NUM. Lexical generation replaces them with concrete text, selecting identifiers, literal values, keyword spellings, and operators for the target dialect and version.</p>
+<p>For the SELECT example, one realization is:</p>
+<pre class="code-block"><code>SELECT IDENT + NUM FROM IDENT
+→ SELECT price + 1 FROM products</code></pre>
+<p>Lexical forms are selected from right to left. A candidate must be compatible with the already selected text to its right and allow the remaining text to its left to be completed. This matters because a token&#039;s spelling and its neighbors can determine whether whitespace is required or forbidden.</p>
+<h3>Joining the text</h3>
+<p>Once lexical forms have been selected, their boundary requirements determine the separators. For example, <code>SELECT</code> and <code>price</code> need separation so they are not read as the single identifier <code>SELECTprice</code>. Other forms require adjacent characters, such as a prefix and its quoted literal.</p>
+<p>The resolved token text and separators are then concatenated to produce the SQL string. Selecting the spellings and boundaries before concatenation preserves the intended token structure.</p>
+<h3>Limitations</h3>
+<p>SQL Faker&#039;s scope is generating SQL syntax. It does not generate a database state in which every resulting statement is executable.</p>
+<h4>Schema and type consistency</h4>
+<p>Generated names and values are not coordinated with an existing schema. A query can refer to a missing table or column, apply a function to an incompatible type, or violate a database constraint. For example, generating <code>SELECT price FROM products</code> does not establish that <code>products.price</code> exists. Syntactic validity therefore does not guarantee successful execution.</p>
+<h4>Dependencies between statements</h4>
+<p>Separate generated statements do not form a coordinated database scenario. Generating CREATE TABLE followed by INSERT does not make the INSERT use that table&#039;s columns. Likewise, generation does not establish the session state, prepared statements, permissions, or transaction history that another statement may require.</p>
+<h4>Query results</h4>
+<p>Generation does not target a particular result set or database effect. A valid SELECT may return no rows, and an UPDATE or DELETE may affect none. SQL Faker does not ensure that a query expresses an application&#039;s intended logic or produces specified values.</p>
 </section>
 </main>
 <footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
