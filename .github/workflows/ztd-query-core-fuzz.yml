@@ -93,7 +93,7 @@ jobs:
             exit 2
           fi
 
-          mkdir -p "${{ matrix.target.corpus }}"
+          php fuzz/seed-corpus.php
           vendor/bin/php-fuzzer fuzz \
             "${{ matrix.target.script }}" \
             "${{ matrix.target.corpus }}/" \

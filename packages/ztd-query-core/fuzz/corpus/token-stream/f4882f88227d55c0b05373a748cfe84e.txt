@@ -1,2 +1,0 @@
-SELECT 'it''s', "-- li≈≈ne
-S

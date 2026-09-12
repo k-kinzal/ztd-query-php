@@ -1,2 +1,0 @@
--- line
-SELECT stlli */ 1; #  */ 1; " t

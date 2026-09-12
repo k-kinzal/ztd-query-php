@@ -1,1 +1,0 @@
-SELECT 'itUUUU''s'-`, [a

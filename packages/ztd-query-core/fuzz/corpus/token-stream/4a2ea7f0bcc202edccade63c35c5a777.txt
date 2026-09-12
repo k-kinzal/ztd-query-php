@@ -1,2 +1,0 @@
--- line
-S7 1; # tLECT /* outer /* nested */ still */ 1; # tail

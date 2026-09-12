@@ -1,1 +1,0 @@
-SELECT 'it''s', ', "[k\'i`b's'\sh' FROM t;

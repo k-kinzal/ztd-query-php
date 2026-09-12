@@ -1,1 +1,0 @@
-SELEC:name,, @@va,r $nam%::suffix(arg), ?6, ?R;

@@ -1,0 +1,1 @@
+WITH c AS (SELECT f((1 + 2), [3, 4])) SELECT * FROM c; BEGIN; SAVEPOINT x;

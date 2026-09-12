@@ -66,7 +66,10 @@
         "bench:quick": "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10",
         "bench:full": "@bench",
         "fuzz": "@fuzz:token-stream",
-        "fuzz:token-stream": "php-fuzzer fuzz fuzz/fuzz_token_stream.php fuzz/corpus/token-stream/",
+        "fuzz:token-stream": [
+            "@php fuzz/seed-corpus.php",
+            "php-fuzzer fuzz fuzz/fuzz_token_stream.php fuzz/corpus/token-stream/"
+        ],
         "docgen": "cd ../.. && packages/ztd-query-core/vendor/bin/docgen --packages=packages/ztd-query-core --deptrac=\"$PWD/packages/ztd-query-core/deptrac.yaml\" --output=packages/ztd-query-core/build/docs --cache-dir=packages/ztd-query-core/build/docgen-cache --title=k-kinzal/ztd-query-core",
         "docgen:serve": "@docgen --serve",
         "docgen:diff": "@docgen --diff=origin/main --serve",
