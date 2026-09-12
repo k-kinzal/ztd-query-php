@@ -12,20 +12,20 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Derivation\GenerationPlan;
 use SqlFaker\Grammar\Generation\Token\TerminalSequence;
-use SqlFaker\Grammar\Lexical\LexicalKeywordIndex;
-use SqlFaker\Grammar\Lexical\RandomCharacters;
-use SqlFaker\Grammar\Lexical\RandomStringGenerator;
+use SqlFaker\Grammar\Generation\Value\RandomCharacters;
 use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\Resource\SqlVersionRegistry;
 use SqlFaker\Grammar\SqlVersion;
+use SqlFaker\Sqlite\Generation\Value\LiteralGenerator;
 use SqlFaker\Sqlite\LexicalGrammar;
 use SqlFaker\Sqlite\SqliteTokenizer;
+use SqlFaker\Sqlite\Tokenization\KeywordIndex;
 
 #[CoversClass(LexicalGrammar::class)]
-#[CoversClass(RandomStringGenerator::class)]
+#[CoversClass(LiteralGenerator::class)]
 #[UsesClass(SqlVersion::class)]
 #[UsesClass(LexicalException::class)]
-#[UsesClass(LexicalKeywordIndex::class)]
+#[UsesClass(KeywordIndex::class)]
 #[UsesClass(RandomCharacters::class)]
 #[UsesClass(SqlVersionRegistry::class)]
 #[UsesClass(SqliteTokenizer::class)]
@@ -62,13 +62,13 @@ use SqlFaker\Sqlite\SqliteTokenizer;
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\ChoiceDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\IntegerDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\SequenceDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\DollarQuotedDomain::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Value\DollarQuotedDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\IdentifierDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\QuotedDomain::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Value\IdentifierDomain::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Value\QuotedDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\RepeatDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexicalDefinition::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\LexicalDefinition::class)]
 final class LexicalGrammarTest extends TestCase
 {
     public function testGenerateQuotedIdentifierWritesWhatTheLexerReadsBackAsAnIdentifier(): void

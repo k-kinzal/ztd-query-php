@@ -17,10 +17,8 @@ use SqlFaker\Grammar\GrammarParseException;
  * Each section knows its own end, which is what lets this class say what a
  * grammar file is without also saying how any part of it is spelled.
  *
- * A file with no rules is refused. Everything else the parser does not
- * understand is carried through rather than dropped, because MySQL's grammar
- * uses constructs no model here covers and the rules after one of them are
- * still worth having.
+ * A file with no rules is refused. Unknown declarations are retained as
+ * source text so later passes can preserve constructs outside the AST model.
  *
  * @visibility root
  */

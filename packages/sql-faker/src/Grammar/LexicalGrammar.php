@@ -27,7 +27,7 @@ interface LexicalGrammar
     /**
      * Names the server version this grammar generates for.
      *
-     * @return string Profile version, e.g. "mysql-8.4.7"
+     * @return string Exact release identifier supplied by the dialect implementation
      */
     public function version(): string;
 

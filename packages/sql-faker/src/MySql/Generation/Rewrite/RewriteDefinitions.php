@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace SqlFaker\MySql\Generation\Rewrite;
 
-use SqlFaker\Grammar\Generation\Token\ExpressionGroupingRule;
 use SqlFaker\Grammar\Generation\Token\TerminalMappingRule;
 use SqlFaker\Grammar\Generation\Token\TokenRewriter;
-use SqlFaker\Grammar\Generation\Token\UniqueOptionRule;
 use SqlFaker\MySql\Generation\Rewrite\Alter\OrderByRule;
 use SqlFaker\MySql\Generation\Rewrite\Column\AutoIncrementRule;
 use SqlFaker\MySql\Generation\Rewrite\Column\FieldLengthRule;
 use SqlFaker\MySql\Generation\Rewrite\Expression\ConcatenationRule;
+use SqlFaker\MySql\Generation\Rewrite\Expression\ExpressionGroupingRule;
 use SqlFaker\MySql\Generation\Rewrite\Expression\QuantifiedComparisonRule;
 use SqlFaker\MySql\Generation\Rewrite\Expression\TableValueConstructorRule;
 use SqlFaker\MySql\Generation\Rewrite\Name\SystemVariableRule;
+use SqlFaker\MySql\Generation\Rewrite\Option\UniqueOptionRule;
 use SqlFaker\MySql\Generation\Rewrite\Partition\DefinitionRule;
 use SqlFaker\MySql\Generation\Rewrite\Partition\FieldListRule;
 use SqlFaker\MySql\Generation\Rewrite\Partition\ListValueRule;

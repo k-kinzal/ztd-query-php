@@ -26,7 +26,7 @@ use SqlFaker\MySql\Generation\Lexeme\BoundedIntegerLexemeGenerator;
 #[UsesClass(TerminalSequence::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\CharacterDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\IntegerDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\RadixDomain::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Value\RadixDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\SequenceDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
 final class BoundedIntegerLexemeGeneratorTest extends TestCase

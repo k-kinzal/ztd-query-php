@@ -30,7 +30,7 @@ use SqlFaker\Compiler\Bison\Lexer\TypeTagScanner;
 #[UsesClass(\SqlFaker\Compiler\Bison\Lexer\BisonToken::class)]
 #[UsesClass(\SqlFaker\Compiler\Bison\Lexer\BisonTrivia::class)]
 #[UsesClass(\SqlFaker\Grammar\GrammarParseException::class)]
-#[UsesClass(\SqlFaker\Grammar\Lexical\SourceCursor::class)]
+#[UsesClass(\SqlFaker\Compiler\Bison\Lexer\SourceCursor::class)]
 final class BisonScannerChainTest extends TestCase
 {
     /**

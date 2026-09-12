@@ -30,10 +30,10 @@ use SqlFaker\MySql\Generation\Lexeme\CharsetLexemeGenerator;
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\ChoiceDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\IntegerDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\SequenceDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\DollarQuotedDomain::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Value\DollarQuotedDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Output\OutputPart::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\ValueChoices::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\RadixDomain::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Value\RadixDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\Utf8::class)]
 #[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
 final class CharsetLexemeGeneratorTest extends TestCase

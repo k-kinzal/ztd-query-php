@@ -27,7 +27,7 @@ use SqlFaker\Sqlite\Generation\Rewrite\RewriteDefinitions;
 #[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\WindowFrameRule::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\WithoutRowidRule::class)]
 #[UsesClass(\SqlFaker\Grammar\NonTerminal::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\ExpressionGroupingRule::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\Expression\ExpressionGroupingRule::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\CompoundSelectRule::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\UpsertSourceRule::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\FunctionArgumentRule::class)]

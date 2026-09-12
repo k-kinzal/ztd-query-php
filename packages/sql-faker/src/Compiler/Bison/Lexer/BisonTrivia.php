@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlFaker\Compiler\Bison\Lexer;
 
 use SqlFaker\Grammar\GrammarParseException;
-use SqlFaker\Grammar\Lexical\SourceCursor;
 
 /**
  * The text between two lexemes that carries no token of its own.

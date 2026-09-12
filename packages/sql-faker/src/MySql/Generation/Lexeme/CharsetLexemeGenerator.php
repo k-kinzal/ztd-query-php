@@ -9,9 +9,9 @@ use SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeGenerator;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
 use SqlFaker\Grammar\Generation\Lexeme\ValueLexemeGenerator;
-use SqlFaker\Grammar\Generation\Value\RadixDomain;
 use SqlFaker\Grammar\Generation\Value\Utf8;
 use SqlFaker\Grammar\Generation\Value\WordDomain;
+use SqlFaker\MySql\Generation\Value\RadixDomain;
 
 /**
  * sql_yacc.yy literal actions require introduced bytes to be well formed in the selected character set.

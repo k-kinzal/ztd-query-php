@@ -22,11 +22,11 @@ use SqlFaker\Compiler\Bison\Lexer\IdentifierScanner;
 use SqlFaker\Compiler\Bison\Lexer\NumberScanner;
 use SqlFaker\Compiler\Bison\Lexer\PunctuationScanner;
 use SqlFaker\Compiler\Bison\Lexer\QuotedLiteralScanner;
+use SqlFaker\Compiler\Bison\Lexer\SourceCursor;
 use SqlFaker\Compiler\Bison\Lexer\TypeTagScanner;
 use SqlFaker\Compiler\Bison\Rule\BisonAlternativeDraft;
 use SqlFaker\Compiler\Bison\Rule\BisonAlternativeReader;
 use SqlFaker\Compiler\Bison\Rule\BisonRuleReader;
-use SqlFaker\Grammar\Lexical\SourceCursor;
 
 #[CoversClass(BisonRuleReader::class)]
 #[UsesClass(ActionScanner::class)]

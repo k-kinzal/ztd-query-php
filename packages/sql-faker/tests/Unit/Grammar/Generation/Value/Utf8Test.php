@@ -7,7 +7,6 @@ namespace Tests\Unit\SqlFaker\Grammar\Generation\Value;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Grammar\Generation\Value\Utf8;
-use Tests\Fixtures\SqlFaker\PhpDiagnosticGuard;
 
 #[CoversClass(Utf8::class)]
 final class Utf8Test extends TestCase
@@ -15,7 +14,7 @@ final class Utf8Test extends TestCase
     #[\PHPUnit\Framework\Attributes\DataProvider('providerEncodings')]
     public function testValidRecognizesScalarBoundariesAndWidthLimits(string $bytes, int $width, bool $valid): void
     {
-        self::assertSame($valid, PhpDiagnosticGuard::run(static fn (): bool => (new Utf8())->valid($bytes, $width)));
+        self::assertSame($valid, (new Utf8()->valid($bytes, $width)));
     }
 
     /**

@@ -9,21 +9,20 @@ use SqlFaker\Grammar\Generation\Lexeme\ChoiceLexemeGenerator;
 use SqlFaker\Grammar\Generation\Lexeme\FixedLexemeGenerator;
 use SqlFaker\Grammar\Generation\Lexeme\IntegerLexemeGenerator;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
-use SqlFaker\Grammar\Generation\Lexeme\LexicalDefinition;
 use SqlFaker\Grammar\Generation\Lexeme\MatchingLexemeGenerator;
 use SqlFaker\Grammar\Generation\Lexeme\ValueLexemeGenerator;
 use SqlFaker\Grammar\Generation\Spacing\CombinedSpacingRule;
 use SqlFaker\Grammar\Generation\Value\CharacterDomain;
 use SqlFaker\Grammar\Generation\Value\ChoiceDomain;
-use SqlFaker\Grammar\Generation\Value\DollarQuotedDomain;
-use SqlFaker\Grammar\Generation\Value\IdentifierDomain;
-use SqlFaker\Grammar\Generation\Value\OperatorDomain;
-use SqlFaker\Grammar\Generation\Value\QuotedDomain;
 use SqlFaker\Grammar\Generation\Value\SequenceDomain;
 use SqlFaker\Grammar\Generation\Value\WordDomain;
 use SqlFaker\Grammar\Generation\Version\VersionCase;
 use SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator;
 use SqlFaker\Grammar\SqlVersion;
+use SqlFaker\PostgreSql\Generation\Value\DollarQuotedDomain;
+use SqlFaker\PostgreSql\Generation\Value\IdentifierDomain;
+use SqlFaker\PostgreSql\Generation\Value\OperatorDomain;
+use SqlFaker\PostgreSql\Generation\Value\QuotedDomain;
 
 /**
  * Declares scanner values, fixed spellings, contextual domains and spacing for PostgreSQL 17.2.

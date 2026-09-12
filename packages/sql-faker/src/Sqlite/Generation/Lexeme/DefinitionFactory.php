@@ -8,22 +8,21 @@ use RuntimeException;
 use SqlFaker\Grammar\Generation\Lexeme\ChoiceLexemeGenerator;
 use SqlFaker\Grammar\Generation\Lexeme\FixedLexemeGenerator;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
-use SqlFaker\Grammar\Generation\Lexeme\LexicalDefinition;
 use SqlFaker\Grammar\Generation\Lexeme\MatchingLexemeGenerator;
 use SqlFaker\Grammar\Generation\Lexeme\RegisteredLexemeGenerator;
 use SqlFaker\Grammar\Generation\Lexeme\ValueLexemeGenerator;
 use SqlFaker\Grammar\Generation\Spacing\CombinedSpacingRule;
 use SqlFaker\Grammar\Generation\Value\CharacterDomain;
 use SqlFaker\Grammar\Generation\Value\ChoiceDomain;
-use SqlFaker\Grammar\Generation\Value\IdentifierDomain;
 use SqlFaker\Grammar\Generation\Value\IntegerDomain;
-use SqlFaker\Grammar\Generation\Value\QuotedDomain;
 use SqlFaker\Grammar\Generation\Value\RepeatDomain;
 use SqlFaker\Grammar\Generation\Value\SequenceDomain;
 use SqlFaker\Grammar\Generation\Value\WordDomain;
 use SqlFaker\Grammar\Generation\Version\VersionCase;
 use SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator;
 use SqlFaker\Grammar\SqlVersion;
+use SqlFaker\Sqlite\Generation\Value\IdentifierDomain;
+use SqlFaker\Sqlite\Generation\Value\QuotedDomain;
 
 /**
  * Declares scanner values, fixed spellings, contextual domains and spacing for SQLite 3.47.2.

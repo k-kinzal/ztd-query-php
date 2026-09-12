@@ -14,9 +14,8 @@ use SqlFaker\Compiler\Bison\Lexer\BisonTokenStream;
  *
  * The section ends at the `%%` that opens the rules, and that separator is
  * consumed here so the rules reader starts on a rule. A declaration whose
- * arguments do not match its directive is dropped rather than aborting the
- * section: MySQL's grammar carries directives this parser has no model for, and
- * losing the declarations after one of them would cost more than the one.
+ * arguments do not match its directive is skipped to its declaration boundary.
+ * Reading then continues with the next declaration in the same source section.
  *
  * @visibility root
  */

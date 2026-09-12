@@ -10,7 +10,7 @@ use SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeGenerator;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
 use SqlFaker\Grammar\Generation\Lexeme\LexemeSequence;
-use SqlFaker\Grammar\Generation\Value\QuotedDomain;
+use SqlFaker\MySql\Generation\Value\QuotedDomain;
 
 /**
  * sql_yacc.yy:filter_wild_db_table_string requires a dot and forbids line feeds after get_text decoding.

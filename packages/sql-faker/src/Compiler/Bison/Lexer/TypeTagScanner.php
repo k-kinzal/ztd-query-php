@@ -6,7 +6,6 @@ namespace SqlFaker\Compiler\Bison\Lexer;
 
 use Override;
 use SqlFaker\Grammar\GrammarParseException;
-use SqlFaker\Grammar\Lexical\SourceCursor;
 
 /**
  * Consumes an angle-bracketed semantic type tag such as `<num>`.

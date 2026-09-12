@@ -12,11 +12,11 @@ use SqlFaker\Grammar\Derivation\GenerationPlan;
 use SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator;
 use SqlFaker\Grammar\Generation\Output\SqlSerializer;
 use SqlFaker\Grammar\Generation\Token\TerminalSequence;
-use SqlFaker\Grammar\Lexical\LexicalKeywordIndex;
-use SqlFaker\Grammar\Lexical\RandomStringGenerator;
 use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\LexicalGrammar as LexicalGrammarContract;
 use SqlFaker\PostgreSql\Generation\Lexeme\DefinitionFactory;
+use SqlFaker\PostgreSql\Generation\Value\LiteralGenerator;
+use SqlFaker\PostgreSql\Tokenization\KeywordIndex;
 
 /**
  * PostgreSQL lexical generation using source-based candidate and boundary definitions.
@@ -29,7 +29,7 @@ final class LexicalGrammar implements LexicalGrammarContract
     /**
      * @readonly
      */
-    private RandomStringGenerator $strings;
+    private LiteralGenerator $strings;
 
     private readonly ReverseLexemeGenerator $pipeline;
 
@@ -51,18 +51,18 @@ final class LexicalGrammar implements LexicalGrammarContract
     /**
      * @param FakerGenerator $faker Source of the choices realization makes
      * @param string $profileVersion Exact server version to generate for, e.g. "pg-17.2"
-     * @param LexicalKeywordIndex|null $index Inverts the profile's terminal-to-spelling map
+     * @param KeywordIndex|null $index Inverts the profile's terminal-to-spelling map
      *
      * @throws RuntimeException When the exact release has no declaration
      */
     public function __construct(
         private readonly FakerGenerator $faker,
         private readonly string $profileVersion,
-        ?LexicalKeywordIndex $index = null,
+        ?KeywordIndex $index = null,
     ) {
         $definition = (new DefinitionFactory())->create($profileVersion);
-        $index ??= new LexicalKeywordIndex();
-        $this->strings = new RandomStringGenerator($faker);
+        $index ??= new KeywordIndex();
+        $this->strings = new LiteralGenerator($faker);
         $this->pipeline = $definition->pipeline;
         $this->nonOutput = $definition->nonOutput;
         $this->lookahead = new PgLookahead(PgLookahead::definitions());

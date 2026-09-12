@@ -20,8 +20,8 @@ use SqlFaker\Grammar\UnknownSymbolException;
 /**
  * Compiles a Grammar from a BisonAst.
  *
- * This compiler works for any Bison grammar (MySQL, PostgreSQL, etc.)
- * by transforming the Bison AST into a formal grammar structure.
+ * Transforms the supplied Bison AST into productions and symbols without
+ * selecting a database dialect or interpreting its scanner actions.
  *
  * @visibility root
  */
