@@ -41,17 +41,17 @@
 <span class="src-line" id="L4" data-diff="added"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5" data-diff="added"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlFaker\MySql\Generation\Rewrite</span>;</span>
 <span class="src-line" id="L6" data-diff="added"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Token\ExpressionGroupingRule</span>;</span>
-<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Token\TerminalMappingRule</span>;</span>
-<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Token\TokenRewriter</span>;</span>
-<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Token\UniqueOptionRule</span>;</span>
-<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\Generation\Rewrite\Alter\OrderByRule</span>;</span>
-<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\Generation\Rewrite\Column\AutoIncrementRule</span>;</span>
-<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\Generation\Rewrite\Column\FieldLengthRule</span>;</span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\Generation\Rewrite\Expression\ConcatenationRule</span>;</span>
-<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\Generation\Rewrite\Expression\QuantifiedComparisonRule</span>;</span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\Generation\Rewrite\Expression\TableValueConstructorRule</span>;</span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\Generation\Rewrite\Name\SystemVariableRule</span>;</span>
+<span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Token\TerminalMappingRule</span>;</span>
+<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Token\TokenRewriter</span>;</span>
+<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\Generation\Rewrite\Alter\OrderByRule</span>;</span>
+<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\Generation\Rewrite\Column\AutoIncrementRule</span>;</span>
+<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\Generation\Rewrite\Column\FieldLengthRule</span>;</span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\Generation\Rewrite\Expression\ConcatenationRule</span>;</span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\Generation\Rewrite\Expression\ExpressionGroupingRule</span>;</span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\Generation\Rewrite\Expression\QuantifiedComparisonRule</span>;</span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\Generation\Rewrite\Expression\TableValueConstructorRule</span>;</span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\Generation\Rewrite\Name\SystemVariableRule</span>;</span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\Generation\Rewrite\Option\UniqueOptionRule</span>;</span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\Generation\Rewrite\Partition\DefinitionRule</span>;</span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\Generation\Rewrite\Partition\FieldListRule</span>;</span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\MySql\Generation\Rewrite\Partition\ListValueRule</span>;</span>

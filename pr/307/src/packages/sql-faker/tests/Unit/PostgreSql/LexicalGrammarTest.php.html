@@ -49,39 +49,44 @@
 <span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\TestCase</span>;</span>
 <span class="src-line" data-diff="removed"><span class="ln">14</span><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Lexical\LexicalCatalogShape</span>;</span>
 <span class="src-line" data-diff="removed"><span class="ln">15</span><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Lexical\LexicalCoverageCheck</span>;</span>
-<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Derivation\GenerationPlan</span>;</span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Token\TerminalSequence</span>;</span>
-<span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Lexical\LexicalKeywordIndex</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">16</span><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Lexical\LexicalKeywordIndex</span>;</span>
 <span class="src-line" data-diff="removed"><span class="ln">17</span><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Lexical\LexicalProfileSource</span>;</span>
 <span class="src-line" data-diff="removed"><span class="ln">18</span><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Lexical\LexicalWitnessCheck</span>;</span>
 <span class="src-line" data-diff="removed"><span class="ln">19</span><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Lexical\LexicalWitnessShape</span>;</span>
-<span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Lexical\RandomCharacters</span>;</span>
-<span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Lexical\RandomStringGenerator</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">20</span><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Lexical\RandomCharacters</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">21</span><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Lexical\RandomStringGenerator</span>;</span>
 <span class="src-line" data-diff="removed"><span class="ln">22</span><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Lexical\TokenJoiner</span>;</span>
 <span class="src-line" data-diff="removed"><span class="ln">23</span><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\LexicalCatalog</span>;</span>
 <span class="src-line" data-diff="removed"><span class="ln">24</span><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\LexicalCatalogException</span>;</span>
-<span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\LexicalException</span>;</span>
-<span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Resource\SqlVersionRegistry</span>;</span>
-<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\SqlVersion</span>;</span>
-<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\PostgreSql\LexicalGrammar</span>;</span>
-<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\PostgreSql\PgLookahead</span>;</span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Derivation\GenerationPlan</span>;</span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Token\TerminalSequence</span>;</span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Value\RandomCharacters</span>;</span>
+<span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\LexicalException</span>;</span>
+<span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Resource\SqlVersionRegistry</span>;</span>
+<span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\SqlVersion</span>;</span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\PostgreSql\Generation\Value\LiteralGenerator</span>;</span>
+<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\PostgreSql\LexicalGrammar</span>;</span>
+<span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\PostgreSql\PgLookahead</span>;</span>
 <span class="src-line" data-diff="removed"><span class="ln">30</span><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\PostgreSql\PgTerminalRealizer</span>;</span>
-<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\PostgreSql\PgTokenizer</span>;</span>
+<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\PostgreSql\PgTokenizer</span>;</span>
 <span class="src-line" data-diff="removed"><span class="ln">32</span><span class="tok-kw">use</span> <span class="tok-id">UnexpectedValueException</span>;</span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\PostgreSql\Tokenization\KeywordIndex</span>;</span>
 <span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a></span>
 <span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a>#[<span class="tok-id">CoversClass</span>(<span class="tok-id">LexicalGrammar</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a>#[<span class="tok-id">CoversClass</span>(<span class="tok-id">RandomStringGenerator</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">35</span>#[<span class="tok-id">CoversClass</span>(<span class="tok-id">RandomStringGenerator</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" data-diff="removed"><span class="ln">36</span>#[<span class="tok-id">CoversClass</span>(<span class="tok-id">TokenJoiner</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" data-diff="removed"><span class="ln">37</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">LexicalCatalog</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" data-diff="removed"><span class="ln">38</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">LexicalCatalogException</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>#[<span class="tok-id">CoversClass</span>(<span class="tok-id">LiteralGenerator</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">SqlVersion</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" data-diff="removed"><span class="ln">40</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">LexicalCatalogShape</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" data-diff="removed"><span class="ln">41</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">LexicalCoverageCheck</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">LexicalException</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">LexicalKeywordIndex</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">43</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">LexicalKeywordIndex</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" data-diff="removed"><span class="ln">44</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">LexicalProfileSource</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" data-diff="removed"><span class="ln">45</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">LexicalWitnessCheck</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" data-diff="removed"><span class="ln">46</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">LexicalWitnessShape</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">KeywordIndex</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">RandomCharacters</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">SqlVersionRegistry</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">PgLookahead</span>::<span class="tok-kw">class</span>)]</span>
@@ -119,14 +124,14 @@
 <span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Grammar\Generation\Value\ChoiceDomain</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Grammar\Generation\Value\IntegerDomain</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Grammar\Generation\Value\SequenceDomain</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Grammar\Generation\Value\DollarQuotedDomain</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\PostgreSql\Generation\Value\DollarQuotedDomain</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Grammar\Generation\Output\BoundaryCompletion</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Grammar\Generation\Lexeme\IntegerLexemeGenerator</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Grammar\Generation\Value\IdentifierDomain</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Grammar\Generation\Value\OperatorDomain</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Grammar\Generation\Value\QuotedDomain</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\PostgreSql\Generation\Value\IdentifierDomain</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\PostgreSql\Generation\Value\OperatorDomain</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\PostgreSql\Generation\Value\QuotedDomain</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Grammar\Generation\Value\WordDomain</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\Grammar\Generation\Lexeme\LexicalDefinition</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFaker\PostgreSql\Generation\Lexeme\LexicalDefinition</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L74" data-diff="same"><a class="ln" href="#L74">74</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">LexicalGrammarTest</span> <span class="tok-kw">extends</span> <span class="tok-id">TestCase</span></span>
 <span class="src-line" id="L75" data-diff="same"><a class="ln" href="#L75">75</a>{</span>
 <span class="src-line" id="L76" data-diff="same"><a class="ln" href="#L76">76</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testGenerateQuotedIdentifierWritesWhatTheLexerReadsBackAsAnIdentifier</span>(): <span class="tok-id">void</span></span>

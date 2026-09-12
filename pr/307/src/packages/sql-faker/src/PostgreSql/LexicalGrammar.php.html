@@ -45,18 +45,20 @@
 <span class="src-line" id="L9" data-diff="same"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">Override</span>;</span>
 <span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">RuntimeException</span>;</span>
 <span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Derivation\GenerationPlan</span>;</span>
-<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator</span>;</span>
-<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Output\SqlSerializer</span>;</span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Token\TerminalSequence</span>;</span>
-<span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Lexical\LexicalKeywordIndex</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">12</span><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Lexical\LexicalKeywordIndex</span>;</span>
 <span class="src-line" data-diff="removed"><span class="ln">13</span><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Lexical\LexicalProfileSource</span>;</span>
-<span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Lexical\RandomStringGenerator</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">14</span><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Lexical\RandomStringGenerator</span>;</span>
 <span class="src-line" data-diff="removed"><span class="ln">15</span><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Lexical\TokenJoiner</span>;</span>
 <span class="src-line" data-diff="removed"><span class="ln">16</span><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\LexicalCatalog</span>;</span>
 <span class="src-line" data-diff="removed"><span class="ln">17</span><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\LexicalCatalogException</span>;</span>
-<span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\LexicalException</span>;</span>
-<span class="src-line" id="L18" data-diff="same"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\LexicalGrammar</span> <span class="tok-kw">as</span> <span class="tok-id">LexicalGrammarContract</span>;</span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\PostgreSql\Generation\Lexeme\DefinitionFactory</span>;</span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator</span>;</span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Output\SqlSerializer</span>;</span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Token\TerminalSequence</span>;</span>
+<span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\LexicalException</span>;</span>
+<span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\LexicalGrammar</span> <span class="tok-kw">as</span> <span class="tok-id">LexicalGrammarContract</span>;</span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\PostgreSql\Generation\Lexeme\DefinitionFactory</span>;</span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\PostgreSql\Generation\Value\LiteralGenerator</span>;</span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\PostgreSql\Tokenization\KeywordIndex</span>;</span>
 <span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a></span>
 <span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a><span class="tok-com">/**</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">22</span><span class="tok-com"> * PostgreSQL lexical realization for one exact server version.</span></span>
@@ -76,10 +78,11 @@
 <span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">LexicalGrammar</span> <span class="tok-kw">implements</span> <span class="tok-id">LexicalGrammarContract</span></span>
 <span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a>{</span>
 <span class="src-line" data-diff="removed"><span class="ln">36</span>    <span class="tok-com">/** @readonly */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">37</span>    <span class="tok-kw">private</span> <span class="tok-id">RandomStringGenerator</span> <span class="tok-var">$strings</span>;</span>
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com">     * @readonly</span></span>
 <span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a>    <span class="tok-kw">private</span> <span class="tok-id">RandomStringGenerator</span> <span class="tok-var">$strings</span>;</span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>    <span class="tok-kw">private</span> <span class="tok-id">LiteralGenerator</span> <span class="tok-var">$strings</span>;</span>
 <span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a></span>
 <span class="src-line" data-diff="removed"><span class="ln">39</span>    <span class="tok-com">/** @readonly */</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">40</span>    <span class="tok-kw">private</span> <span class="tok-id">LexicalCatalog</span> <span class="tok-var">$catalog</span>;</span>
@@ -110,7 +113,8 @@
 <span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a><span class="tok-com">     * @param string $profileVersion Exact server version to generate for, e.g. &quot;pg-17.2&quot;</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">54</span><span class="tok-com">     * @param bool $allowSyntheticTerminals Whether terminals may be written without a catalogued witness</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">55</span><span class="tok-com">     * @param LexicalProfileSource|null $profiles Loads the checked-in profile for the version</span></span>
-<span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a><span class="tok-com">     * @param LexicalKeywordIndex|null $index Inverts the profile&#039;s terminal-to-spelling map</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">56</span><span class="tok-com">     * @param LexicalKeywordIndex|null $index Inverts the profile&#039;s terminal-to-spelling map</span></span>
+<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a><span class="tok-com">     * @param KeywordIndex|null $index Inverts the profile&#039;s terminal-to-spelling map</span></span>
 <span class="src-line" id="L55" data-diff="same"><a class="ln" href="#L55">55</a><span class="tok-com">     *</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">58</span><span class="tok-com">     * @throws RuntimeException When the profile is missing or describes another server</span></span>
 <span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a><span class="tok-com">     * @throws RuntimeException When the exact release has no declaration</span></span>
@@ -120,16 +124,16 @@
 <span class="src-line" id="L60" data-diff="same"><a class="ln" href="#L60">60</a>        <span class="tok-kw">private</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$profileVersion</span>,</span>
 <span class="src-line" data-diff="removed"><span class="ln">63</span>        <span class="tok-kw">private</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$allowSyntheticTerminals</span> = <span class="tok-id">false</span>,</span>
 <span class="src-line" data-diff="removed"><span class="ln">64</span>        ?<span class="tok-id">LexicalProfileSource</span> <span class="tok-var">$profiles</span> = <span class="tok-id">null</span>,</span>
-<span class="src-line" id="L61" data-diff="same"><a class="ln" href="#L61">61</a>        ?<span class="tok-id">LexicalKeywordIndex</span> <span class="tok-var">$index</span> = <span class="tok-id">null</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">65</span>        ?<span class="tok-id">LexicalKeywordIndex</span> <span class="tok-var">$index</span> = <span class="tok-id">null</span>,</span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>        ?<span class="tok-id">KeywordIndex</span> <span class="tok-var">$index</span> = <span class="tok-id">null</span>,</span>
 <span class="src-line" id="L62" data-diff="same"><a class="ln" href="#L62">62</a>    ) {</span>
 <span class="src-line" data-diff="removed"><span class="ln">67</span>        <span class="tok-com">/**</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">68</span><span class="tok-com">         * @var array{keywords: array&lt;string, list&lt;string&gt;&gt;, lookahead: array&lt;string, array{token: string, followed_by: list&lt;string&gt;}&gt;, catalog: Catalog} $profile</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">69</span><span class="tok-com">         */</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">70</span>        <span class="tok-var">$profile</span> = (<span class="tok-var">$profiles</span> ?? <span class="tok-kw">new</span> <span class="tok-id">LexicalProfileSource</span>())-&gt;<span class="tok-id">load</span>(<span class="tok-str">&#039;postgresql&#039;</span>, <span class="tok-var">$profileVersion</span>);</span>
-<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>        <span class="tok-var">$definition</span> = (<span class="tok-kw">new</span> <span class="tok-id">DefinitionFactory</span>())-&gt;<span class="tok-id">create</span>(<span class="tok-var">$profileVersion</span>);</span>
-<span class="src-line" id="L64" data-diff="same"><a class="ln" href="#L64">64</a>        <span class="tok-var">$index</span> ??= <span class="tok-kw">new</span> <span class="tok-id">LexicalKeywordIndex</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">71</span>        <span class="tok-var">$index</span> ??= <span class="tok-kw">new</span> <span class="tok-id">LexicalKeywordIndex</span>();</span>
 <span class="src-line" data-diff="removed"><span class="ln">72</span></span>
-<span class="src-line" id="L65" data-diff="same"><a class="ln" href="#L65">65</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">strings</span> = <span class="tok-kw">new</span> <span class="tok-id">RandomStringGenerator</span>(<span class="tok-var">$faker</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">73</span>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">strings</span> = <span class="tok-kw">new</span> <span class="tok-id">RandomStringGenerator</span>(<span class="tok-var">$faker</span>);</span>
 <span class="src-line" data-diff="removed"><span class="ln">74</span>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">catalog</span> = <span class="tok-kw">new</span> <span class="tok-id">LexicalCatalog</span>(<span class="tok-var">$profile</span>[<span class="tok-str">&#039;catalog&#039;</span>]);</span>
 <span class="src-line" data-diff="removed"><span class="ln">75</span>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">lookahead</span> = <span class="tok-kw">new</span> <span class="tok-id">PgLookahead</span>(<span class="tok-var">$profile</span>[<span class="tok-str">&#039;lookahead&#039;</span>]);</span>
 <span class="src-line" data-diff="removed"><span class="ln">76</span>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">tokenizer</span> = <span class="tok-kw">new</span> <span class="tok-id">PgTokenizer</span>(<span class="tok-var">$index</span>-&gt;<span class="tok-id">reversed</span>(<span class="tok-var">$profile</span>[<span class="tok-str">&#039;keywords&#039;</span>]), <span class="tok-var">$this</span>-&gt;<span class="tok-id">lookahead</span>);</span>
@@ -143,6 +147,9 @@
 <span class="src-line" data-diff="removed"><span class="ln">84</span>            <span class="tok-var">$allowSyntheticTerminals</span>,</span>
 <span class="src-line" data-diff="removed"><span class="ln">85</span>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">strings</span>,</span>
 <span class="src-line" data-diff="removed"><span class="ln">86</span>        );</span>
+<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>        <span class="tok-var">$definition</span> = (<span class="tok-kw">new</span> <span class="tok-id">DefinitionFactory</span>())-&gt;<span class="tok-id">create</span>(<span class="tok-var">$profileVersion</span>);</span>
+<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>        <span class="tok-var">$index</span> ??= <span class="tok-kw">new</span> <span class="tok-id">KeywordIndex</span>();</span>
+<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">strings</span> = <span class="tok-kw">new</span> <span class="tok-id">LiteralGenerator</span>(<span class="tok-var">$faker</span>);</span>
 <span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">pipeline</span> = <span class="tok-var">$definition</span>-&gt;<span class="tok-id">pipeline</span>;</span>
 <span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">nonOutput</span> = <span class="tok-var">$definition</span>-&gt;<span class="tok-id">nonOutput</span>;</span>
 <span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">lookahead</span> = <span class="tok-kw">new</span> <span class="tok-id">PgLookahead</span>(<span class="tok-id">PgLookahead</span>::<span class="tok-id">definitions</span>());</span>

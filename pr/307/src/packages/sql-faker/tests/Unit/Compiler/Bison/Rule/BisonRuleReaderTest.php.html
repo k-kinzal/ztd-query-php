@@ -58,11 +58,12 @@
 <span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Compiler\Bison\Lexer\NumberScanner</span>;</span>
 <span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Compiler\Bison\Lexer\PunctuationScanner</span>;</span>
 <span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Compiler\Bison\Lexer\QuotedLiteralScanner</span>;</span>
-<span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Compiler\Bison\Lexer\TypeTagScanner</span>;</span>
-<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Compiler\Bison\Rule\BisonAlternativeDraft</span>;</span>
-<span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Compiler\Bison\Rule\BisonAlternativeReader</span>;</span>
-<span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Compiler\Bison\Rule\BisonRuleReader</span>;</span>
-<span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Lexical\SourceCursor</span>;</span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Compiler\Bison\Lexer\SourceCursor</span>;</span>
+<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Compiler\Bison\Lexer\TypeTagScanner</span>;</span>
+<span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Compiler\Bison\Rule\BisonAlternativeDraft</span>;</span>
+<span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Compiler\Bison\Rule\BisonAlternativeReader</span>;</span>
+<span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Compiler\Bison\Rule\BisonRuleReader</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">29</span><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Lexical\SourceCursor</span>;</span>
 <span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a></span>
 <span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a>#[<span class="tok-id">CoversClass</span>(<span class="tok-id">BisonRuleReader</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">ActionScanner</span>::<span class="tok-kw">class</span>)]</span>
