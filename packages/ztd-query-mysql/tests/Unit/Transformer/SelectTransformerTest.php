@@ -23,6 +23,19 @@ use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\TablePartitioning;
 
+#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\Cte\HeaderParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\Cte\IdentifierReferences::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\Relation\ReferenceReader::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Projection\FullText\ExpressionEditor::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Projection\Partition\SelectionReader::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Projection\Partition\SourceProjection::class)]
+
+
+
+#[UsesClass(\ZtdQuery\Platform\MySql\Type\CastTypeResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Type\Enum\RankEdits::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Type\Value\ScalarExpression::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Type\Value\StringCoercion::class)]
 #[CoversClass(SelectTransformer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlSelectRelationParser::class)]
 #[UsesClass(MySqlCastRenderer::class)]
@@ -34,6 +47,9 @@ use ZtdQuery\Schema\TablePartitioning;
 #[UsesClass(MySqlPartitionSelectionRewriter::class)]
 #[UsesClass(MySqlFullTextSearchRewriter::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[CoversClass(\ZtdQuery\Platform\MySql\Transformer\Set\OrderRewriter::class)]
+#[CoversClass(\ZtdQuery\Platform\MySql\Transformer\Set\ValueNormalizer::class)]
+#[CoversClass(\ZtdQuery\Platform\MySql\Transformer\Shadow\CteRows::class)]
 final class SelectTransformerTest extends TransformerContractTest
 {
     public function testTransformsPartitionSelectionBeforeComposingShadowCte(): void
@@ -107,11 +123,13 @@ final class SelectTransformerTest extends TransformerContractTest
         self::assertStringContainsString('CUSTOM_VALUE AS `id`', $transformer->transform('SELECT * FROM users', $tables));
     }
 
+    #[Override]
     protected function createTransformer(): SqlTransformer
     {
         return new SelectTransformer();
     }
 
+    #[Override]
     protected function selectSql(): string
     {
         return 'SELECT * FROM users WHERE id = 1';
@@ -2213,7 +2231,7 @@ final class SelectTransformerTest extends TransformerContractTest
         self::assertStringContainsString("FIND_IN_SET('it''s', `status`)", $result);
     }
 
-    public function testConstructorUsesCustomCastRenderer(): void
+    public function testTransformUsesCustomCastRenderer(): void
     {
         $castRenderer = self::createStub(CastRenderer::class);
         $castRenderer->method('renderCast')->willReturn('CUSTOM_CAST');
@@ -2233,7 +2251,7 @@ final class SelectTransformerTest extends TransformerContractTest
         self::assertStringContainsString('CUSTOM_CAST', $result);
     }
 
-    public function testConstructorUsesCustomIdentifierQuoter(): void
+    public function testTransformUsesCustomIdentifierQuoter(): void
     {
         $quoter = self::createStub(IdentifierQuoter::class);
         $quoter->method('quote')->willReturnCallback(static fn (string $id): string => "[$id]");

@@ -4,33 +4,46 @@ declare(strict_types=1);
 
 namespace Fuzz\Robustness\Invariant;
 
-use Throwable;
+use ZtdQuery\Exception\UnknownSchemaException;
+use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\MySql\MySqlRewriter;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
-use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Shadow\Mutation\MultiDeleteMutation;
 use ZtdQuery\Shadow\Mutation\MultiUpdateMutation;
 
+/**
+ * Implements the Rewrite Plan Consistency Checker contract for MySQL.
+ */
 final class RewritePlanConsistencyChecker implements InvariantChecker
 {
-    private SqlRewriter $rewriter;
+    private MySqlRewriter $rewriter;
 
-    public function __construct(SqlRewriter $rewriter)
+    /**
+     * Configure the dependencies used by this operation.
+     */
+    public function __construct(MySqlRewriter $rewriter)
     {
         $this->rewriter = $rewriter;
     }
 
+    /**
+     * Check for the supplied MySQL input.
+     */
     public function check(string $sql): ?InvariantViolation
     {
         try {
             $plan = $this->rewriter->rewrite($sql);
-        } catch (Throwable) {
+        } catch (UnsupportedSqlException | UnknownSchemaException) {
             return null;
         }
 
         return $this->checkPlan($plan, $sql);
     }
 
+    /**
+     * Check Plan for the supplied MySQL input.
+     */
     public function checkPlan(RewritePlan $plan, string $sql): ?InvariantViolation
     {
         $kind = $plan->kind();

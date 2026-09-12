@@ -16,6 +16,24 @@ use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 
+#[UsesClass(\ZtdQuery\Platform\MySql\MySqlPartitionSelectionRewriter::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\Cte\HeaderParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\Cte\IdentifierReferences::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\OptionalInsertIntoNormalizer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\Relation\ExpressionNames::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\Relation\ReferenceReader::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Projection\FullText\ExpressionEditor::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Projection\Partition\SelectionReader::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Projection\Partition\SourceProjection::class)]
+
+
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\Set\OrderRewriter::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\Set\ValueNormalizer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\Shadow\CteRows::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Type\CastTypeResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Type\Enum\RankEdits::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Type\Value\ScalarExpression::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Type\Value\StringCoercion::class)]
 #[CoversClass(DeleteTransformer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlSelectRelationParser::class)]
 #[UsesClass(MySqlParser::class)]
@@ -29,6 +47,8 @@ use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[CoversClass(\ZtdQuery\Platform\MySql\Transformer\Delete\ResultSelect::class)]
+#[CoversClass(\ZtdQuery\Platform\MySql\Transformer\Delete\TargetProjection::class)]
 final class DeleteTransformerTest extends TestCase
 {
     public function testTransformPreservesCaseWhereExpression(): void

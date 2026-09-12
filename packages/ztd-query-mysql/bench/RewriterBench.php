@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Bench;
 
 use LogicException;
+use PhpBench\Attributes as Bench;
 use ZtdQuery\Platform\MySql\MySqlMutationResolver;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlQueryGuard;
@@ -19,6 +20,9 @@ use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
 
+/**
+ * Implements the Rewriter Bench contract for MySQL.
+ */
 final class RewriterBench
 {
     private MySqlRewriter $rewriter;
@@ -27,6 +31,10 @@ final class RewriterBench
 
     private string $insertSql = "INSERT INTO users (id, name, email) VALUES (1, 'Alice', 'alice@example.com')";
 
+    /**
+     * Set Up for the supplied MySQL input.
+     * @throws LogicException
+     */
     public function setUp(): void
     {
         $parser = new MySqlParser();
@@ -72,20 +80,20 @@ final class RewriterBench
     }
 
     /**
-     * @BeforeMethods({"setUp"})
-     * @Revs(50)
-     * @Iterations(5)
+     * Bench Rewrite Select for the supplied MySQL input.
      */
+    #[Bench\BeforeMethods('setUp')]
+    #[Bench\Revs(1000)]
     public function benchRewriteSelect(): void
     {
         $this->rewriter->rewrite($this->selectSql);
     }
 
     /**
-     * @BeforeMethods({"setUp"})
-     * @Revs(50)
-     * @Iterations(5)
+     * Bench Rewrite Insert for the supplied MySQL input.
      */
+    #[Bench\BeforeMethods('setUp')]
+    #[Bench\Revs(1000)]
     public function benchRewriteInsert(): void
     {
         $this->rewriter->rewrite($this->insertSql);

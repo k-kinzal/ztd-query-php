@@ -2,102 +2,121 @@ name: Fuzz (ztd-query-mysql)
 
 on:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '43 3 * * *'
   workflow_dispatch:
     inputs:
       max_runs:
-        description: 'Max fuzzing iterations'
+        description: Maximum inputs evaluated by each fuzz target
+        required: true
         default: '10000'
         type: string
 
 permissions:
-  actions: read
   contents: read
-  issues: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  COMPOSER_NO_INTERACTION: '1'
 
 jobs:
-  robustness:
-    name: Robustness / ${{ matrix.target.name }}
+  fuzz:
+    name: Fuzz ${{ matrix.target.name }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
         target:
-          - { name: classify, script: fuzz_robustness_classify.php, corpus: robustness-classify }
-          - { name: rewrite, script: fuzz_robustness_rewrite.php, corpus: robustness-rewrite }
-          - { name: full, script: fuzz_robustness.php, corpus: robustness }
+          - name: mysql-full
+            script: fuzz/fuzz_robustness.php
+            corpus: fuzz/corpus/robustness
+            extensions: dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
+          - name: mysql-classify
+            script: fuzz/fuzz_robustness_classify.php
+            corpus: fuzz/corpus/robustness-classify
+            extensions: dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
+          - name: mysql-rewrite
+            script: fuzz/fuzz_robustness_rewrite.php
+            corpus: fuzz/corpus/robustness-rewrite
+            extensions: dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
     defaults:
       run:
         working-directory: packages/ztd-query-mysql
     steps:
-      - uses: actions/checkout@v6
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - uses: shivammathur/setup-php@v2
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:
           php-version: '8.5'
-          extensions: mbstring, pcntl
+          extensions: ${{ matrix.target.extensions }}
           coverage: none
 
-      - uses: ramsey/composer-install@v3
+      - name: Select and validate the runtime dependency lock
+        run: |
+          cp composer.lock.php-8.5 composer.lock
+          composer validate --strict --no-check-publish
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
           working-directory: packages/ztd-query-mysql
+          dependency-versions: locked
+          composer-options: --prefer-dist
+          require-lock-file: true
 
-      - uses: actions/cache/restore@v5
+      - name: Check installed platform requirements
+        run: composer check-platform-reqs
+
+      - name: Restore the evolved corpus
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: packages/ztd-query-mysql/fuzz/corpus/${{ matrix.target.corpus }}
-          key: fuzz-ztd-query-mysql-${{ matrix.target.corpus }}-${{ github.run_id }}
+          path: packages/ztd-query-mysql/${{ matrix.target.corpus }}
+          key: fuzz-${{ matrix.target.name }}-${{ runner.os }}-${{ hashFiles('packages/ztd-query-mysql/composer.lock.php-8.5') }}-${{ hashFiles('packages/ztd-query-mysql/fuzz/**/*.php') }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            fuzz-ztd-query-mysql-${{ matrix.target.corpus }}-
+            fuzz-${{ matrix.target.name }}-${{ runner.os }}-${{ hashFiles('packages/ztd-query-mysql/composer.lock.php-8.5') }}-${{ hashFiles('packages/ztd-query-mysql/fuzz/**/*.php') }}-
+            fuzz-${{ matrix.target.name }}-${{ runner.os }}-${{ hashFiles('packages/ztd-query-mysql/composer.lock.php-8.5') }}-
+            fuzz-${{ matrix.target.name }}-${{ runner.os }}-
 
-      - name: fuzzer
+      - name: Run the fuzz target
+        env:
+          FUZZ_MAX_RUNS: ${{ inputs.max_runs || '10000' }}
         run: |
-          vendor/bin/php-fuzzer fuzz fuzz/${{ matrix.target.script }} \
-            fuzz/corpus/${{ matrix.target.corpus }}/ \
-            --max-runs=${{ inputs.max_runs || '10000' }}
+          set -euo pipefail
 
-      - if: always()
-        uses: actions/cache/save@v5
-        with:
-          path: packages/ztd-query-mysql/fuzz/corpus/${{ matrix.target.corpus }}
-          key: fuzz-ztd-query-mysql-${{ matrix.target.corpus }}-${{ github.run_id }}
+          case "$FUZZ_MAX_RUNS" in
+            ''|*[!0-9]*)
+              echo 'max_runs must be a positive integer.' >&2
+              exit 2
+              ;;
+          esac
+          if [ "$FUZZ_MAX_RUNS" -lt 1 ]; then
+            echo 'max_runs must be a positive integer.' >&2
+            exit 2
+          fi
 
-      - if: ${{ always() && hashFiles('packages/ztd-query-mysql/crash-*') != '' }}
-        uses: actions/upload-artifact@v6
+          mkdir -p "${{ matrix.target.corpus }}"
+          vendor/bin/php-fuzzer fuzz \
+            "${{ matrix.target.script }}" \
+            "${{ matrix.target.corpus }}/" \
+            "--max-runs=$FUZZ_MAX_RUNS"
+
+      - name: Save the evolved corpus
+        if: always()
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          name: fuzz-crashes-ztd-query-mysql-robustness-${{ matrix.target.name }}
+          path: packages/ztd-query-mysql/${{ matrix.target.corpus }}
+          key: fuzz-${{ matrix.target.name }}-${{ runner.os }}-${{ hashFiles('packages/ztd-query-mysql/composer.lock.php-8.5') }}-${{ hashFiles('packages/ztd-query-mysql/fuzz/**/*.php') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Upload crash inputs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: fuzz-crashes-${{ matrix.target.name }}
           path: packages/ztd-query-mysql/crash-*
-
-  notify:
-    name: Notify on crash
-    runs-on: ubuntu-latest
-    needs: [robustness]
-    steps:
-      - uses: actions/github-script@v8
-        with:
-          script: |
-            const { data } = await github.rest.actions.listWorkflowRunArtifacts({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: context.runId
-            });
-            if (!data.artifacts.some(({ name }) => name.startsWith('fuzz-crashes-'))) {
-              console.log('No fuzz crash artifacts found');
-              return;
-            }
-            const { data: issues } = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              labels: 'fuzz',
-              state: 'open'
-            });
-            if (issues.length > 0) {
-              console.log('Open fuzz issue already exists, skipping creation');
-              return;
-            }
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: `Fuzz: Crash detected (ztd-query-mysql)`,
-              body: `Fuzzing found a crash.\n\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nCheck the uploaded artifacts for crash details.`,
-              labels: ['bug', 'fuzz']
-            });
+          if-no-files-found: ignore
+          retention-days: 14

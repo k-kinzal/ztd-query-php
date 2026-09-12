@@ -13,6 +13,7 @@ use ZtdQuery\Platform\MySql\Transformer\MySqlSelectListAliaser;
 #[CoversClass(MySqlSelectListAliaser::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[CoversClass(\ZtdQuery\Platform\MySql\Transformer\Select\ExpressionAliaser::class)]
 final class MySqlSelectListAliaserTest extends TestCase
 {
     public function testAliasesOnlyTopLevelProjectionAndPreservesClauses(): void
@@ -45,7 +46,7 @@ final class MySqlSelectListAliaserTest extends TestCase
         );
     }
 
-    public function testCountsStructuredProjectionWithoutTreatingFunctionArgumentAsWildcard(): void
+    public function testProjectionCountCountsStructuredProjectionWithoutTreatingFunctionArgumentAsWildcard(): void
     {
         $aliaser = new MySqlSelectListAliaser();
 

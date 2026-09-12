@@ -7,10 +7,8 @@ namespace ZtdQuery\Platform\MySql\Transformer;
 use PhpMyAdmin\SqlParser\Statements\ReplaceStatement;
 use RuntimeException;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\MySql\MySqlLexerProfile;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Rewrite\SqlTransformer;
-use ZtdQuery\Sql\SqlTokenStream;
 
 /**
  * Transforms REPLACE statements into SELECT queries that return the replaced rows.
@@ -21,6 +19,9 @@ final class ReplaceTransformer implements SqlTransformer
     private MySqlParser $parser;
     private InsertTransformer $insertTransformer;
 
+    /**
+     * Configure the dependencies used by this operation.
+     */
     public function __construct(MySqlParser $parser, SelectTransformer $selectTransformer)
     {
         $this->parser = $parser;
@@ -29,10 +30,11 @@ final class ReplaceTransformer implements SqlTransformer
 
     /**
      * {@inheritDoc}
+     * @throws UnsupportedSqlException
      */
     public function transform(string $sql, array $tables): string
     {
-        $insertSql = $this->asInsert($sql);
+        $insertSql = (new Insert\ReplaceStatementConverter())->asInsert($sql);
         $statements = $this->parser->parse($sql);
         $statement = $statements[0] ?? null;
         if ($statement instanceof ReplaceStatement) {
@@ -50,22 +52,12 @@ final class ReplaceTransformer implements SqlTransformer
         }
     }
 
+    /**
+     * Commit Rewrite State for the supplied MySQL input.
+     */
     public function commitRewriteState(): void
     {
         $this->insertTransformer->commitRewriteState();
     }
 
-    private function asInsert(string $sql): string
-    {
-        $tokens = SqlTokenStream::tokenize($sql, MySqlLexerProfile::create())->significantTokens();
-        if ($tokens === []) {
-            throw new UnsupportedSqlException($sql, 'Expected REPLACE statement');
-        }
-        $token = $tokens[0];
-        if (!$token->isKeyword('REPLACE')) {
-            throw new UnsupportedSqlException($sql, 'Expected REPLACE statement');
-        }
-
-        return substr_replace($sql, 'INSERT', $token->offset, strlen($token->text));
-    }
 }

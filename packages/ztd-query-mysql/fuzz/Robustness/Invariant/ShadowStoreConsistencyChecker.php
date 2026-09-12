@@ -6,10 +6,16 @@ namespace Fuzz\Robustness\Invariant;
 
 use ZtdQuery\Shadow\ShadowStore;
 
+/**
+ * Implements the Shadow Store Consistency Checker contract for MySQL.
+ */
 final class ShadowStoreConsistencyChecker
 {
     private ShadowStore $store;
 
+    /**
+     * Configure the dependencies used by this operation.
+     */
     public function __construct(ShadowStore $store)
     {
         $this->store = $store;

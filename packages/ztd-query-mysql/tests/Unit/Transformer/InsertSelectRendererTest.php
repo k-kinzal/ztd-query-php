@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Transformer;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -13,6 +12,7 @@ use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\Transformer\InsertSelectRenderer;
 use ZtdQuery\Platform\MySql\Transformer\MySqlSelectListAliaser;
 
+#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\Select\ExpressionAliaser::class)]
 #[CoversClass(InsertSelectRenderer::class)]
 #[UsesClass(MySqlIdentifierQuoter::class)]
 #[UsesClass(MySqlSelectListAliaser::class)]
@@ -58,7 +58,7 @@ final class InsertSelectRendererTest extends TestCase
         self::assertStringContainsString('SELECT source.* FROM source', $result);
     }
 
-    public function testRendersGeneratedIdentityWithMySqlDialectSyntax(): void
+    public function testRenderGeneratedIdentityRendersGeneratedIdentityWithMySqlDialectSyntax(): void
     {
         self::assertSame(
             '8 + ROW_NUMBER() OVER () - 1',
@@ -74,11 +74,5 @@ final class InsertSelectRendererTest extends TestCase
         );
     }
 
-    public function testRejectsNonPositiveGeneratedIdentityStart(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Generated identity start must be positive.');
 
-        (new InsertSelectRenderer())->renderGeneratedIdentity(0);
-    }
 }

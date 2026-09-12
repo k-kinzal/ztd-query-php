@@ -4,19 +4,12 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\MySql\Transformer;
 
-use PhpMyAdmin\SqlParser\Components\Expression;
-use PhpMyAdmin\SqlParser\Components\JoinKeyword;
-use PhpMyAdmin\SqlParser\Components\Limit;
-use PhpMyAdmin\SqlParser\Components\OrderKeyword;
 use PhpMyAdmin\SqlParser\Statements\DeleteStatement;
 use RuntimeException;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
 use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
-use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Rewrite\SqlTransformer;
-use ZtdQuery\Shadow\Mutation\MultiTableMutationRow;
 use ZtdQuery\Shadow\Mutation\MultiTableMutationTarget;
 
 /**
@@ -28,6 +21,9 @@ final class DeleteTransformer implements SqlTransformer
     private SelectTransformer $selectTransformer;
     private MySqlCteShadowComposer $cteComposer;
 
+    /**
+     * Configure the dependencies used by this operation.
+     */
     public function __construct(
         MySqlParser $parser,
         SelectTransformer $selectTransformer,
@@ -39,6 +35,7 @@ final class DeleteTransformer implements SqlTransformer
 
     /**
      * {@inheritDoc}
+     * @throws UnsupportedSqlException
      */
     public function transform(string $sql, array $tables): string
     {
@@ -52,7 +49,7 @@ final class DeleteTransformer implements SqlTransformer
         $targetTable = null;
         if ($statement->from !== null && $statement->from !== []) {
             $targetExpr = $statement->from[0];
-            $targetTable = self::exprTable($targetExpr);
+            $targetTable = \ZtdQuery\Platform\MySql\Parsing\Relation\ExpressionNames::table($targetExpr);
         }
 
         $columnNames = [];
@@ -63,7 +60,7 @@ final class DeleteTransformer implements SqlTransformer
         $projection = $this->buildProjection($statement, $sql, $columnNames);
         $targetTableNames = array_keys($projection['tables']);
         if (isset($targetTableNames[1])) {
-            $targets = $this->targetsFromContexts($projection['tables'], $tables);
+            $targets = (new Delete\TargetProjection())->targetsFromContexts($projection['tables'], $tables);
             $projection = $this->buildProjection($statement, $sql, $columnNames, $targets);
         }
 
@@ -81,262 +78,11 @@ final class DeleteTransformer implements SqlTransformer
      * @param array<int, string> $columns
      * @param list<MultiTableMutationTarget> $targets
      * @return array{sql: string, table: string, tables: array<string, array{alias: string}>}
+     * @throws RuntimeException
      */
     public function buildProjection(DeleteStatement $stmt, string $originalSql, array $columns, array $targets = []): array
     {
-        $targetTableName = 'unknown';
-        $targetTableAlias = null;
-        /** @var array<string, array{alias: string}> $allTargetTables */
-        $allTargetTables = [];
-
-        if ($stmt->columns !== null && $stmt->columns !== []) {
-            $targetExpr = $stmt->columns[0];
-            $targetTableAlias = self::exprTable($targetExpr);
-
-            foreach ($stmt->columns as $colExpr) {
-                $alias = self::exprTable($colExpr);
-                if ($alias !== null && $alias !== '') {
-                    $allTargetTables[$alias] = ['alias' => $alias];
-                }
-            }
-        }
-
-        if ($targetTableAlias === null || $targetTableAlias === '') {
-            if ($stmt->from !== null && $stmt->from !== []) {
-                $targetTableExpr = $stmt->from[0];
-                $targetTableName = self::exprTable($targetTableExpr);
-                if ($targetTableName === null || $targetTableName === '') {
-                    throw new RuntimeException('Delete target table could not be resolved.');
-                }
-                $targetTableAlias = self::exprAlias($targetTableExpr) ?? $targetTableName;
-            }
-        } else {
-            $found = false;
-            if ($stmt->from !== null && $stmt->from !== []) {
-                foreach ($stmt->from as $from) {
-                    $alias = self::exprAlias($from);
-                    if ($alias === $targetTableAlias) {
-                        $targetTableName = self::exprTable($from);
-                        if ($targetTableName !== null && $targetTableName !== '') {
-                            $found = true;
-                        }
-                        break;
-                    }
-                }
-            }
-            if (!$found && $stmt->join !== null && $stmt->join !== []) {
-                foreach ($stmt->join as $join) {
-                    if ($join->expr === null) {
-                        continue;
-                    }
-                    $alias = self::exprAlias($join->expr);
-                    if ($alias === $targetTableAlias) {
-                        $targetTableName = self::exprTable($join->expr);
-                        if ($targetTableName !== null && $targetTableName !== '') {
-                            $found = true;
-                        }
-                        break;
-                    }
-                }
-            }
-            if (!$found && $stmt->using !== null && $stmt->using !== []) {
-                foreach ($stmt->using as $using) {
-                    $alias = self::exprAlias($using);
-                    if ($alias === $targetTableAlias) {
-                        $targetTableName = self::exprTable($using);
-                        if ($targetTableName !== null && $targetTableName !== '') {
-                            $found = true;
-                        }
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (preg_match('/\bPARTITION\s*\(([^)]+)\)/i', $originalSql, $matches) === 1) {
-            throw new RuntimeException('ZTD Write Protection: PARTITION clause in DELETE is not supported (cannot simulate safely).');
-        }
-
-        $fromClause = '';
-        if ($stmt->from !== null && $stmt->from !== []) {
-            $fromParts = [];
-            foreach ($stmt->from as $expr) {
-                $fromParts[] = Expression::build($expr);
-            }
-            $fromClause = ' FROM ' . implode(', ', $fromParts);
-        }
-
-        $joinClause = '';
-        if ($stmt->join !== null && $stmt->join !== []) {
-            $joinClause = ' ' . JoinKeyword::build($stmt->join);
-        }
-
-        $usingClause = '';
-        if ($stmt->using !== null && $stmt->using !== []) {
-            $usingParts = [];
-            foreach ($stmt->using as $expr) {
-                $usingParts[] = Expression::build($expr);
-            }
-            $fromClause = ' FROM ' . implode(', ', $usingParts);
-        }
-
-        $whereClause = '';
-        $whereExpression = (new DmlWhereClauseExtractor())->extract($originalSql);
-        if ($whereExpression !== null && $whereExpression !== '') {
-            $whereClause = ' WHERE ' . $whereExpression;
-        }
-
-        $orderClause = '';
-        if ($stmt->order !== null && $stmt->order !== []) {
-            $orderParts = [];
-            foreach ($stmt->order as $order) {
-                $orderParts[] = OrderKeyword::build($order);
-            }
-            $orderClause = ' ORDER BY ' . implode(', ', $orderParts);
-        }
-
-        $limitClause = '';
-        if ($stmt->limit !== null) {
-            $limitClause = ' LIMIT ' . Limit::build($stmt->limit);
-        }
-
-        $targetTableAlias = $targetTableAlias ?? $targetTableName;
-        if ($targetTableAlias === null || $targetTableAlias === '') {
-            throw new RuntimeException('Delete target table could not be resolved.');
-        }
-
-        $selectList = "`$targetTableAlias`.*";
-        if ($columns !== []) {
-            $parts = [];
-            foreach ($columns as $column) {
-                $parts[] = "`$targetTableAlias`.`$column` AS `$column`";
-            }
-            $selectList = implode(', ', $parts);
-        }
-
-        $sql = "SELECT $selectList$fromClause$joinClause$usingClause $whereClause$orderClause$limitClause";
-
-        if ($targetTableName === null || $targetTableName === '') {
-            throw new RuntimeException('Delete target table could not be resolved.');
-        }
-
-        /** @var array<string, array{alias: string}> $resolvedTables */
-        $resolvedTables = [];
-        if ($allTargetTables !== []) {
-            foreach ($allTargetTables as $alias => $info) {
-                $resolvedName = $this->resolveAliasToTable($alias, $stmt);
-                if ($resolvedName !== null) {
-                    $resolvedTables[$resolvedName] = ['alias' => $alias];
-                }
-            }
-        } else {
-            $resolvedTables[$targetTableName] = ['alias' => $targetTableAlias];
-        }
-
-        if ($targets !== []) {
-            $selectList = $this->multiTableSelectList($resolvedTables, $targets);
-            $sql = "SELECT $selectList$fromClause$joinClause$usingClause $whereClause$orderClause$limitClause";
-        }
-
-        return ['sql' => $sql, 'table' => $targetTableName, 'tables' => $resolvedTables];
+        return (new Delete\ResultSelect())->buildProjection($stmt, $originalSql, $columns, $targets);
     }
 
-    /**
-     * @param array<string, array{alias: string}> $resolvedTables
-     * @param array<string, array{viewSql: string}|array{rows: array<int, array<string, mixed>>, columns: array<int, string>, columnTypes: array<string, \ZtdQuery\Schema\ColumnType>, primaryKeys?: array<int, string>}> $contexts
-     * @return list<MultiTableMutationTarget>
-     */
-    private function targetsFromContexts(array $resolvedTables, array $contexts): array
-    {
-        $targets = [];
-        foreach ($resolvedTables as $tableName => $tableInfo) {
-            $context = $contexts[$tableName] ?? null;
-            if (!isset($context['columns'])) {
-                continue;
-            }
-            $targets[] = new MultiTableMutationTarget(
-                $tableName,
-                $context['columns'],
-                $context['primaryKeys'] ?? [],
-            );
-        }
-
-        return $targets;
-    }
-
-    /**
-     * @param array<string, array{alias: string}> $resolvedTables
-     * @param list<MultiTableMutationTarget> $targets
-     */
-    private function multiTableSelectList(array $resolvedTables, array $targets): string
-    {
-        $codec = new MultiTableMutationRow();
-        $quoter = new MySqlIdentifierQuoter();
-        $parts = [];
-        foreach ($targets as $targetIndex => $target) {
-            $tableInfo = $resolvedTables[$target->tableName()] ?? null;
-            if ($tableInfo === null) {
-                continue;
-            }
-            foreach ($target->matchColumns() as $columnIndex => $column) {
-                $alias = $quoter->quote($tableInfo['alias']);
-                $quotedColumn = $quoter->quote($column);
-                $metadata = $quoter->quote($codec->valueColumn($targetIndex, $columnIndex));
-                $parts[] = "$alias.$quotedColumn AS $metadata";
-            }
-        }
-
-        return implode(', ', $parts);
-    }
-
-    private function resolveAliasToTable(string $alias, DeleteStatement $stmt): ?string
-    {
-        if ($stmt->from !== null && $stmt->from !== []) {
-            foreach ($stmt->from as $from) {
-                $fromAlias = self::exprAlias($from);
-                if ($fromAlias === $alias) {
-                    return self::exprTable($from);
-                }
-            }
-        }
-
-        if ($stmt->join !== null && $stmt->join !== []) {
-            foreach ($stmt->join as $join) {
-                if ($join->expr === null) {
-                    continue;
-                }
-                $joinAlias = self::exprAlias($join->expr);
-                if ($joinAlias === $alias) {
-                    return self::exprTable($join->expr);
-                }
-            }
-        }
-
-        if ($stmt->using !== null && $stmt->using !== []) {
-            foreach ($stmt->using as $using) {
-                $usingAlias = self::exprAlias($using);
-                if ($usingAlias === $alias) {
-                    return self::exprTable($using);
-                }
-            }
-        }
-
-        return $alias;
-    }
-
-    /**
-     * Resolve table name from an Expression, preferring ->table over ->expr.
-     */
-    private static function exprTable(Expression $expr): ?string
-    {
-        return (($expr->table ?? '') !== '') ? $expr->table : $expr->expr;
-    }
-
-    /**
-     * Resolve alias from an Expression, falling back to table name.
-     */
-    private static function exprAlias(Expression $expr): ?string
-    {
-        return (($expr->alias ?? '') !== '') ? $expr->alias : self::exprTable($expr);
-    }
 }

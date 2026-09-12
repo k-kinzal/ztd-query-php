@@ -23,6 +23,12 @@ use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
 
+#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\Alter\OptionList::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\OptionalInsertIntoNormalizer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Schema\DefinitionBuilder::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Schema\ForeignKey\DefinitionReader::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Schema\ForeignKey\TokenReader::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Schema\Partition\PredicateCompiler::class)]
 #[CoversClass(AlterTableMutation::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlColumnTypeMapper::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlForeignKeyDefinitionParser::class)]
@@ -30,6 +36,14 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(MySqlSchemaParser::class)]
 #[UsesClass(MySqlPartitioningParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[CoversClass(\ZtdQuery\Platform\MySql\Mutation\Alter\ColumnAction::class)]
+#[CoversClass(\ZtdQuery\Platform\MySql\Mutation\Alter\ColumnAlteration::class)]
+#[CoversClass(\ZtdQuery\Platform\MySql\Mutation\Alter\ColumnDefinitionParser::class)]
+#[CoversClass(\ZtdQuery\Platform\MySql\Mutation\Alter\CreateTableRenderer::class)]
+#[CoversClass(\ZtdQuery\Platform\MySql\Mutation\Alter\OperationApplier::class)]
+#[CoversClass(\ZtdQuery\Platform\MySql\Mutation\Alter\PrimaryKeyAlteration::class)]
+#[CoversClass(\ZtdQuery\Platform\MySql\Mutation\Alter\StoredColumns::class)]
+#[CoversClass(\ZtdQuery\Platform\MySql\Mutation\Alter\UnsupportedKeyword::class)]
 final class AlterTableMutationTest extends TestCase
 {
     public function testApplyAddColumnAddsNewColumn(): void

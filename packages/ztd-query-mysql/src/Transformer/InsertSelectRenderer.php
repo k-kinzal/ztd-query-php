@@ -9,12 +9,18 @@ use RuntimeException;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Rewrite\InsertSelectProjectionPlanner;
 
+/**
+ * Implements the Insert Select Renderer contract for MySQL.
+ */
 final class InsertSelectRenderer
 {
     private MySqlIdentifierQuoter $quoter;
     private InsertSelectProjectionPlanner $projectionPlanner;
     private MySqlSelectListAliaser $selectListAliaser;
 
+    /**
+     * Configure the dependencies used by this operation.
+     */
     public function __construct()
     {
         $this->quoter = new MySqlIdentifierQuoter();
@@ -27,6 +33,7 @@ final class InsertSelectRenderer
      * @param list<string> $insertColumns
      * @param array<string, string> $defaults
      * @param array<string, int> $generatedIdentityStarts
+     * @throws RuntimeException
      */
     public function render(
         string $selectSql,
@@ -66,6 +73,10 @@ final class InsertSelectRenderer
             . $selectSql . ') SELECT ' . implode(', ', $selects) . ' FROM ' . $sourceName;
     }
 
+    /**
+     * Render Generated Identity for the supplied MySQL input.
+     * @throws InvalidArgumentException
+     */
     public function renderGeneratedIdentity(int $start): string
     {
         if ($start < 1) {
