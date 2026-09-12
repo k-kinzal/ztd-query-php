@@ -8,6 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use SqlFixture\Fixture\PlanSchemaException;
 use SqlFixture\Plan\ColumnRef;
 use SqlFixture\Schema\ColumnDefinition;
@@ -41,7 +42,7 @@ final class PlanSchemaExceptionTest extends TestCase
         $schema = new TableSchema('order', ['id' => new ColumnDefinition('id', 'INT')]);
 
         self::assertInstanceOf(
-            \RuntimeException::class,
+            RuntimeException::class,
             PlanSchemaException::unknownColumn(ColumnRef::of('order', 'x'), 'x', $schema)
         );
     }

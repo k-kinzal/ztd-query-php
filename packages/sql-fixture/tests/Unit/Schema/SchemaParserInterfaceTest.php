@@ -7,6 +7,7 @@ namespace Tests\Unit\Schema;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 use SqlFixture\Schema\SchemaParserInterface;
 
 #[CoversNothing]
@@ -21,7 +22,7 @@ final class SchemaParserInterfaceTest extends TestCase
     #[Test]
     public function declaresParseMethod(): void
     {
-        $reflection = new \ReflectionClass(SchemaParserInterface::class);
+        $reflection = new ReflectionClass(SchemaParserInterface::class);
         self::assertTrue($reflection->hasMethod('parse'));
 
         $method = $reflection->getMethod('parse');

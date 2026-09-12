@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Plan;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -86,7 +87,7 @@ final class PlanSyntaxExceptionTest extends TestCase
     #[Test]
     public function isInvalidArgumentException(): void
     {
-        self::assertInstanceOf(\InvalidArgumentException::class, PlanSyntaxException::emptyPlan());
+        self::assertInstanceOf(InvalidArgumentException::class, PlanSyntaxException::emptyPlan());
     }
 
     #[Test]

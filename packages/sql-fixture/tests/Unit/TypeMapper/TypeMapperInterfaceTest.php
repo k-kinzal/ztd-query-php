@@ -7,6 +7,7 @@ namespace Tests\Unit\TypeMapper;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 use SqlFixture\TypeMapper\TypeMapperInterface;
 
 #[CoversNothing]
@@ -21,7 +22,7 @@ final class TypeMapperInterfaceTest extends TestCase
     #[Test]
     public function declaresGenerateMethod(): void
     {
-        $reflection = new \ReflectionClass(TypeMapperInterface::class);
+        $reflection = new ReflectionClass(TypeMapperInterface::class);
         self::assertTrue($reflection->hasMethod('generate'));
 
         $method = $reflection->getMethod('generate');

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Schema;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Schema\ColumnDefinition;
-use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(ColumnDefinition::class)]
 final class ColumnDefinitionTest extends TestCase

@@ -7,6 +7,7 @@ namespace Tests\Unit\Schema;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 use SqlFixture\Schema\SchemaResolverInterface;
 
 #[CoversNothing]
@@ -21,7 +22,7 @@ final class SchemaResolverInterfaceTest extends TestCase
     #[Test]
     public function declaresResolveAndHas(): void
     {
-        $reflection = new \ReflectionClass(SchemaResolverInterface::class);
+        $reflection = new ReflectionClass(SchemaResolverInterface::class);
 
         self::assertTrue($reflection->hasMethod('resolve'));
         self::assertTrue($reflection->hasMethod('has'));

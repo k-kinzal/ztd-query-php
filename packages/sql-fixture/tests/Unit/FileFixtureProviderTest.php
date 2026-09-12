@@ -6,20 +6,20 @@ namespace Tests\Unit;
 
 use Faker\Factory;
 use Faker\Generator;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlFixture\FileFixtureProvider;
 use SqlFixture\FixtureGenerator;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
-use SqlFixture\Platform\PlatformFactory;
-use SqlFixture\Platform\MySql\MySqlSchemaParser;
-use SqlFixture\Schema\ColumnDefinition;
-use SqlFixture\Schema\TableSchema;
-use SqlFixture\Schema\SchemaParseException;
-use SqlFixture\Platform\MySql\MySqlTypeMapper;
 use SqlFixture\Hydrator\ReflectionHydrator;
+use SqlFixture\Platform\MySql\MySqlSchemaParser;
+use SqlFixture\Platform\MySql\MySqlTypeMapper;
+use SqlFixture\Platform\PlatformFactory;
+use SqlFixture\Schema\ColumnDefinition;
+use SqlFixture\Schema\SchemaParseException;
+use SqlFixture\Schema\TableSchema;
 use Tests\Fixture\FileTestUser;
 
 #[CoversClass(FileFixtureProvider::class)]

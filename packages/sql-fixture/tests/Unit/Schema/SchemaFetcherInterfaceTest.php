@@ -7,6 +7,7 @@ namespace Tests\Unit\Schema;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 use SqlFixture\Schema\SchemaFetcherInterface;
 
 #[CoversNothing]
@@ -21,7 +22,7 @@ final class SchemaFetcherInterfaceTest extends TestCase
     #[Test]
     public function declaresFetchSchemaMethod(): void
     {
-        $reflection = new \ReflectionClass(SchemaFetcherInterface::class);
+        $reflection = new ReflectionClass(SchemaFetcherInterface::class);
         self::assertTrue($reflection->hasMethod('fetchSchema'));
 
         $method = $reflection->getMethod('fetchSchema');

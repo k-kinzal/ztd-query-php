@@ -6,10 +6,12 @@ namespace SqlFixture;
 
 use Faker\Generator;
 use Faker\Provider\Base;
+use RuntimeException;
 use SqlFixture\Hydrator\HydratorInterface;
 use SqlFixture\Platform\PlatformFactory;
 use SqlFixture\Schema\TableSchema;
 use SqlFixture\TypeMapper\TypeMapperInterface;
+use Throwable;
 
 /**
  * Faker provider that generates fixtures from local DDL files.
@@ -57,7 +59,7 @@ class FileFixtureProvider extends Base
         $normalizedName = strtolower($tableName);
 
         if (!isset($this->schemas[$normalizedName])) {
-            throw new \RuntimeException("Schema not found for table: {$tableName}");
+            throw new RuntimeException("Schema not found for table: {$tableName}");
         }
 
         return $this->fixtureGenerator->generate($this->schemas[$normalizedName], $overrides, $className);
@@ -87,12 +89,12 @@ class FileFixtureProvider extends Base
     private function loadSchemas(string $ddlPath): void
     {
         if (!is_dir($ddlPath)) {
-            throw new \RuntimeException("DDL path is not a directory: {$ddlPath}");
+            throw new RuntimeException("DDL path is not a directory: {$ddlPath}");
         }
 
         $files = glob($ddlPath . '/*.sql');
         if ($files === false) {
-            throw new \RuntimeException("Failed to read DDL directory: {$ddlPath}");
+            throw new RuntimeException("Failed to read DDL directory: {$ddlPath}");
         }
 
         foreach ($files as $file) {
@@ -107,7 +109,7 @@ class FileFixtureProvider extends Base
     {
         $content = file_get_contents($filePath);
         if ($content === false) {
-            throw new \RuntimeException("Failed to read file: {$filePath}");
+            throw new RuntimeException("Failed to read file: {$filePath}");
         }
 
         $content = preg_replace('/--.*$/m', '', $content);
@@ -120,7 +122,7 @@ class FileFixtureProvider extends Base
         try {
             $schema = $this->fixtureGenerator->getSchemaParser()->parse($content);
             $this->schemas[strtolower($schema->tableName)] = $schema;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             // Skip files that don't contain valid CREATE TABLE statements
             // This allows the directory to contain other SQL files
         }

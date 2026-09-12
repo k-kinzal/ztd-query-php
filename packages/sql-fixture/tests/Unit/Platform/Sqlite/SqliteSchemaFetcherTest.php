@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Tests\Unit\Platform\Sqlite;
 
 use PDO;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Platform\Sqlite\SqliteSchemaFetcher;
-use SqlFixture\Schema\SchemaFetcherInterface;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use SqlFixture\Platform\Sqlite\SqliteSchemaParser;
 use SqlFixture\Schema\ColumnDefinition;
+use SqlFixture\Schema\SchemaFetcherInterface;
 use SqlFixture\Schema\TableSchema;
 
 #[CoversClass(SqliteSchemaFetcher::class)]

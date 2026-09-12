@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace Tests\Unit\TypeMapper;
 
 use Faker\Factory;
-use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Platform\MySql\MySqlTypeMapper as PlatformMySqlTypeMapper;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\TypeMapper\MySqlTypeMapper;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 
 #[CoversClass(MySqlTypeMapper::class)]
 #[UsesClass(ColumnDefinition::class)]

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Fixture;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -84,7 +85,7 @@ final class RowSpecTest extends TestCase
     #[Test]
     public function aNegativeCountIsRejected(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('cannot be negative');
 
         RowSpec::from('order_detail', -1);

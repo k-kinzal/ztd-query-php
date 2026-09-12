@@ -6,7 +6,9 @@ namespace Tests\Unit\Platform;
 
 use InvalidArgumentException;
 use PDO;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Platform\MySql\MySqlSchemaFetcher;
 use SqlFixture\Platform\MySql\MySqlSchemaParser;
@@ -18,8 +20,6 @@ use SqlFixture\Platform\PostgreSql\PostgreSqlTypeMapper;
 use SqlFixture\Platform\Sqlite\SqliteSchemaFetcher;
 use SqlFixture\Platform\Sqlite\SqliteSchemaParser;
 use SqlFixture\Platform\Sqlite\SqliteTypeMapper;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 
 #[CoversClass(PlatformFactory::class)]
 #[UsesClass(SqliteSchemaFetcher::class)]

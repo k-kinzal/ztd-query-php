@@ -114,8 +114,8 @@ final class InsertSelectTarget
                     "Value mismatch\n" .
                     "Seed: $seed\n" .
                     "Column: $column\n" .
-                    "Expected: " . var_export($expected, true) . "\n" .
-                    "Actual: " . var_export($actual, true)
+                    'Expected: ' . var_export($expected, true) . "\n" .
+                    'Actual: ' . var_export($actual, true)
                 );
             }
         }

@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Platform\MySql;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Platform\MySql\MySqlSchemaParser;
-use SqlFixture\Schema\SchemaParseException;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use SqlFixture\Schema\ColumnDefinition;
+use SqlFixture\Schema\SchemaParseException;
 use SqlFixture\Schema\TableSchema;
 
 /**

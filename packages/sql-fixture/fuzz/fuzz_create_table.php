@@ -26,5 +26,5 @@ fwrite(STDERR, "Starting fuzzer...\n\n");
 
 $target = new CreateTableTarget($grammarVersion, $maxDepth);
 
-/** @var \PhpFuzzer\Config $config */
+/** @var PhpFuzzer\Config $config */
 $config->setTarget(Closure::fromCallable($target));

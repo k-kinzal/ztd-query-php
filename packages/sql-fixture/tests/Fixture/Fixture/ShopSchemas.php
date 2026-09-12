@@ -7,10 +7,9 @@ namespace Tests\Fixture\Fixture;
 use Faker\Factory;
 use Faker\Generator;
 use SqlFixture\Fixture\PlanGenerator;
-use SqlFixture\Plan\FixturePlan;
 use SqlFixture\FixtureGenerator;
+use SqlFixture\Plan\FixturePlan;
 use SqlFixture\Platform\MySql\MySqlSchemaParser;
-use SqlFixture\Platform\MySql\MySqlTypeMapper;
 use SqlFixture\Schema\StaticSchemaResolver;
 
 /**

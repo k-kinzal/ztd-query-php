@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Hydrator;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Hydrator\HydrationException;
 use SqlFixture\Hydrator\ReflectionHydrator;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\Fixture\Hydrator\TestEntity;
 use Tests\Fixture\Hydrator\TestEntityNoParams;
 use Tests\Fixture\Hydrator\TestEntityViaProperties;

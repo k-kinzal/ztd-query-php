@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace Tests\Integration\PostgreSql;
 
 use Faker\Factory;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlFixture\FixtureGenerator;
 use SqlFixture\FixtureProvider;
 use SqlFixture\Platform\PlatformFactory;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
-use SqlFixture\FixtureGenerator;
 use SqlFixture\Platform\PostgreSql\PostgreSqlSchemaParser;
 use SqlFixture\Platform\PostgreSql\PostgreSqlTypeMapper;
 use SqlFixture\Schema\ColumnDefinition;

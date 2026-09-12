@@ -5,20 +5,20 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use Faker\Factory;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\FixtureGenerator;
-use SqlFixture\InvalidOverrideException;
 use SqlFixture\Hydrator\HydratorInterface;
 use SqlFixture\Hydrator\ReflectionHydrator;
+use SqlFixture\InvalidOverrideException;
 use SqlFixture\Platform\MySql\MySqlSchemaParser;
 use SqlFixture\Platform\MySql\MySqlTypeMapper;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\SchemaParserInterface;
 use SqlFixture\Schema\TableSchema;
 use SqlFixture\TypeMapper\TypeMapperInterface;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\Fixture\GeneratorTestUser;
 
 #[CoversClass(FixtureGenerator::class)]

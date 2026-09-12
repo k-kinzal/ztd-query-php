@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Hydrator;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Hydrator\HydrationException;
-use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(HydrationException::class)]
 final class HydrationExceptionTest extends TestCase

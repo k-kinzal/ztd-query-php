@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Plan;
 
+use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -61,6 +62,6 @@ final class PlanStructureExceptionTest extends TestCase
     #[Test]
     public function isLogicException(): void
     {
-        self::assertInstanceOf(\LogicException::class, PlanStructureException::cycle(['a', 'b']));
+        self::assertInstanceOf(LogicException::class, PlanStructureException::cycle(['a', 'b']));
     }
 }

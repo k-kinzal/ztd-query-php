@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Fixture;
 
+use LogicException;
+use OutOfBoundsException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -70,7 +72,7 @@ final class FixtureSetTest extends TestCase
     {
         $set = new FixtureSet(['order_detail' => [['id' => 1]]], ['order_detail' => true], ['order_detail']);
 
-        $this->expectException(\OutOfBoundsException::class);
+        $this->expectException(OutOfBoundsException::class);
         $this->expectExceptionMessage('holds a list of rows');
 
         $set->row('order_detail');
@@ -139,7 +141,7 @@ final class FixtureSetTest extends TestCase
     {
         $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
 
-        $this->expectException(\LogicException::class);
+        $this->expectException(LogicException::class);
         $this->expectExceptionMessage('read-only');
 
         $set['order'] = [];
@@ -150,7 +152,7 @@ final class FixtureSetTest extends TestCase
     {
         $set = new FixtureSet(['order' => [['id' => 1]]], ['order' => false], ['order']);
 
-        $this->expectException(\LogicException::class);
+        $this->expectException(LogicException::class);
         $this->expectExceptionMessage('read-only');
 
         unset($set['order']);

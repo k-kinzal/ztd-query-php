@@ -7,6 +7,7 @@ namespace Tests\Unit\Hydrator;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use ReflectionClass;
 use SqlFixture\Hydrator\HydratorInterface;
 
 #[CoversNothing]
@@ -21,7 +22,7 @@ final class HydratorInterfaceTest extends TestCase
     #[Test]
     public function declaresHydrateMethod(): void
     {
-        $reflection = new \ReflectionClass(HydratorInterface::class);
+        $reflection = new ReflectionClass(HydratorInterface::class);
         self::assertTrue($reflection->hasMethod('hydrate'));
 
         $method = $reflection->getMethod('hydrate');

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -63,7 +64,7 @@ final class InvalidOverrideExceptionTest extends TestCase
         $schema = new TableSchema('order', ['id' => new ColumnDefinition('id', 'INT')]);
 
         self::assertInstanceOf(
-            \InvalidArgumentException::class,
+            InvalidArgumentException::class,
             InvalidOverrideException::unknownColumn('x', $schema)
         );
     }
