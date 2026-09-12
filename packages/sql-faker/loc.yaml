@@ -41,10 +41,60 @@ policies:
         lines: 10
         cyclomatic_complexity: 1
 
+  # Scanner declarations stay together in one composition for direct source review.
+  # MySQL complexity includes the explicit release choices in its keyword maps.
+  mysql-scanner-declarations:
+    extends: standard
+    limits:
+      file:
+        lines: 2000
+        ncloc: 1900
+      class:
+        lines: 1950
+      method:
+        lines: 1900
+        cyclomatic_complexity: 40
+
+  postgres-scanner-declarations:
+    extends: standard
+    limits:
+      file:
+        lines: 1150
+        ncloc: 1100
+      class:
+        lines: 1100
+      method:
+        lines: 1050
+
+  sqlite-scanner-declarations:
+    extends: standard
+    limits:
+      file:
+        lines: 800
+        ncloc: 750
+      class:
+        lines: 750
+      method:
+        lines: 700
 
 apply:
   default: standard
   rules:
+    - name: mysql-scanner-declarations
+      match:
+        paths:
+          - src/MySql/Generation/Lexeme/DefinitionFactory.php
+      policy: mysql-scanner-declarations
+    - name: postgres-scanner-declarations
+      match:
+        paths:
+          - src/PostgreSql/Generation/Lexeme/DefinitionFactory.php
+      policy: postgres-scanner-declarations
+    - name: sqlite-scanner-declarations
+      match:
+        paths:
+          - src/Sqlite/Generation/Lexeme/DefinitionFactory.php
+      policy: sqlite-scanner-declarations
     - name: faker-providers
       match:
         paths:

@@ -21,8 +21,8 @@ use SqlFaker\Compiler\Bison\Lexer\DirectiveScanner;
 use SqlFaker\Compiler\Bison\Lexer\IdentifierScanner;
 use SqlFaker\Compiler\Bison\Lexer\NumberScanner;
 use SqlFaker\Compiler\Bison\Lexer\QuotedLiteralScanner;
+use SqlFaker\Compiler\Bison\Lexer\SourceCursor;
 use SqlFaker\Compiler\Bison\Lexer\TypeTagScanner;
-use SqlFaker\Grammar\Lexical\SourceCursor;
 
 #[CoversClass(ParamDirectiveReader::class)]
 #[UsesClass(BisonDeclarationBoundary::class)]
@@ -41,6 +41,8 @@ use SqlFaker\Grammar\Lexical\SourceCursor;
 #[UsesClass(NumberScanner::class)]
 #[UsesClass(QuotedLiteralScanner::class)]
 #[UsesClass(TypeTagScanner::class)]
+#[UsesClass(\SqlFaker\Compiler\Bison\Lexer\PunctuationScanner::class)]
+#[UsesClass(\SqlFaker\Compiler\GrammarParseException::class)]
 final class ParamDirectiveReaderTest extends TestCase
 {
     public function testHandlesClaimsBothParameterDirectives(): void

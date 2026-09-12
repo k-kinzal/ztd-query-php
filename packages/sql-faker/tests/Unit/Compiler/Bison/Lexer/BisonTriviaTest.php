@@ -8,8 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Compiler\Bison\Lexer\BisonTrivia;
-use SqlFaker\Grammar\GrammarParseException;
-use SqlFaker\Grammar\Lexical\SourceCursor;
+use SqlFaker\Compiler\Bison\Lexer\SourceCursor;
+use SqlFaker\Compiler\GrammarParseException;
 
 #[CoversClass(BisonTrivia::class)]
 #[UsesClass(GrammarParseException::class)]

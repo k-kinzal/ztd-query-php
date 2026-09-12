@@ -6,49 +6,81 @@ namespace Tests\Unit\SqlFaker\MySql;
 
 use Closure;
 use Faker\Factory;
-use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
-use SqlFaker\Grammar\Lexical\LexicalCatalogShape;
-use SqlFaker\Grammar\Lexical\LexicalCoverageCheck;
-use SqlFaker\Grammar\Lexical\LexicalKeywordIndex;
-use SqlFaker\Grammar\Lexical\LexicalProfileSource;
-use SqlFaker\Grammar\Lexical\LexicalWitnessCheck;
-use SqlFaker\Grammar\Lexical\LexicalWitnessShape;
-use SqlFaker\Grammar\Lexical\RandomCharacters;
-use SqlFaker\Grammar\Lexical\RandomStringGenerator;
-use SqlFaker\Grammar\Lexical\TokenJoiner;
-use SqlFaker\Grammar\LexicalCatalog;
-use SqlFaker\Grammar\LexicalCatalogException;
-use SqlFaker\Grammar\LexicalException;
+use SqlFaker\Generation\Exception\LexicalException;
+use SqlFaker\Generation\Plan\GenerationPlan;
+use SqlFaker\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Value\RandomCharacters;
+use SqlFaker\Grammar\Resource\SqlVersion;
 use SqlFaker\Grammar\Resource\SqlVersionRegistry;
-use SqlFaker\Grammar\SqlVersion;
+use SqlFaker\MySql\Generation\Value\LiteralGenerator;
 use SqlFaker\MySql\LexicalGrammar;
-use SqlFaker\MySql\MySqlTerminalRealizer;
-use SqlFaker\MySql\MySqlTokenizer;
-use UnexpectedValueException;
+use SqlFaker\MySql\Tokenization\KeywordIndex;
+use SqlFaker\MySql\Tokenization\MySqlTokenizer;
 
 #[CoversClass(LexicalGrammar::class)]
-#[CoversClass(RandomStringGenerator::class)]
-#[CoversClass(TokenJoiner::class)]
-#[UsesClass(LexicalCatalog::class)]
+#[CoversClass(LiteralGenerator::class)]
 #[UsesClass(SqlVersion::class)]
-#[UsesClass(LexicalCatalogException::class)]
-#[UsesClass(LexicalCatalogShape::class)]
-#[UsesClass(LexicalCoverageCheck::class)]
 #[UsesClass(LexicalException::class)]
-#[UsesClass(LexicalKeywordIndex::class)]
-#[UsesClass(LexicalProfileSource::class)]
-#[UsesClass(LexicalWitnessCheck::class)]
-#[UsesClass(LexicalWitnessShape::class)]
+#[UsesClass(KeywordIndex::class)]
 #[UsesClass(RandomCharacters::class)]
 #[UsesClass(SqlVersionRegistry::class)]
-#[UsesClass(MySqlTerminalRealizer::class)]
 #[UsesClass(MySqlTokenizer::class)]
-#[UsesClass(\SqlFaker\MySql\MySqlQuoting::class)]
+#[UsesClass(\SqlFaker\MySql\Tokenization\MySqlQuoting::class)]
+#[UsesClass(GenerationPlan::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\ChoiceLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\FixedLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\IntegerLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\Lexeme::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeCandidates::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeInput::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeSequence::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\MatchingLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\ValueLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\SequenceLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Output\CandidateResolver::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\OutputPart::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\ResolvedOutput::class)]
+#[UsesClass(\SqlFaker\Generation\Output\ReverseLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Output\SqlSerializer::class)]
+#[UsesClass(\SqlFaker\Generation\Output\CombinedSpacingRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Spacing\KeywordPhraseSpacingRule::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeBoundary::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\SpacingConstraint::class)]
+#[UsesClass(\SqlFaker\Generation\Token\TerminalOccurrence::class)]
+#[UsesClass(TerminalSequence::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\VersionCase::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\VersionedLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\DefinitionFactory::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\KeywordLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Spacing\CloneAddressSpacingRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Spacing\FunctionSpacingRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Spacing\QualifiedNameSpacingRule::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Spacing\VariableSpacingRule::class)]
+#[UsesClass(\SqlFaker\Generation\Plan\ProductionPattern::class)]
+#[UsesClass(\SqlFaker\Generation\Token\ProductionOccurrence::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\BoundedIntegerLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\ReplicationTablePatternLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\SizeNumberLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\FactorLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\PrecisionLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Value\CharacterDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\ChoiceDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\IntegerDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\SequenceDomain::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Value\DollarQuotedDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Output\BoundaryCompletion::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CharsetLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CharsetValueLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Value\IdentifierDomain::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Value\QuotedDomain::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Value\RadixDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\Utf8::class)]
+#[UsesClass(\SqlFaker\Generation\Value\WordDomain::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Lexeme\LexicalDefinition::class)]
 final class LexicalGrammarTest extends TestCase
 {
     public function testGeneratesPublicProviderLexemesThroughDialectGrammar(): void
@@ -160,57 +192,6 @@ final class LexicalGrammarTest extends TestCase
         ];
     }
 
-    #[DataProvider('providerGeneratedStringLiteral')]
-    public function testGeneratesEveryStringLiteralStrategy(int $choice, string $expected): void
-    {
-        $faker = new class ($choice) extends \Faker\Generator {
-            private bool $first = true;
-
-            public function __construct(private readonly int $choice)
-            {
-                parent::__construct();
-            }
-
-            /**
-             * @param mixed $min
-             * @param mixed $max
-             *
-             * @throws UnexpectedValueException When the bound is not an integer
-             */
-            #[Override]
-            public function numberBetween($min = 0, $max = 2147483647): int
-            {
-                if ($this->first) {
-                    $this->first = false;
-
-                    return $this->choice;
-                }
-                if (!is_int($min)) {
-                    throw new UnexpectedValueException();
-                }
-
-                return $min;
-            }
-        };
-
-        self::assertSame(
-            $expected,
-            (new LexicalGrammar($faker, 'mysql-8.4.7', true))->realize(['TEXT_STRING']),
-        );
-    }
-
-    /**
-     * @return iterable<string, array{int, string}>
-     */
-    public static function providerGeneratedStringLiteral(): iterable
-    {
-        yield 'combined arm value zero' => [0, "'ACCESSIBLE ACCESSIBLE'"];
-        yield 'combined arm value one' => [1, "'ACCESSIBLE ACCESSIBLE'"];
-        yield 'quote escaping' => [2, "'a''b'"];
-        yield 'backslash' => [3, "'a\\b'"];
-        yield 'random body' => [4, "''"];
-    }
-
     public function testTokenizesQuotedValuesHexValuesAndCommentsAsSingleTokens(): void
     {
         $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
@@ -280,19 +261,12 @@ SQL;
         $afterSupport = new LexicalGrammar($faker, 'mysql-8.1.0');
 
         self::assertSame('mysql-8.0.44', $beforeSupport->version());
-        self::assertFalse($beforeSupport->supports('DOLLAR_QUOTED_STRING_SYM'));
-        self::assertTrue($afterSupport->supports('DOLLAR_QUOTED_STRING_SYM'));
-        self::assertFalse($afterSupport->supports('NOT_A_TERMINAL'));
-    }
-
-    public function testRejectsAMissingGrammarTerminal(): void
-    {
-        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
-
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('NOT_A_TERMINAL');
-
-        $lexical->assertTerminalsCovered(['NOT_A_TERMINAL']);
+        self::assertSame('$tag$text$tag$', $afterSupport->realize(['DOLLAR_QUOTED_STRING_SYM'], GenerationPlan::all()->withLexemes([
+            'DOLLAR_QUOTED_STRING_SYM' => ['$tag$text$tag$'],
+        ])));
+        $this->expectException(LexicalException::class);
+        $this->expectExceptionMessage('DOLLAR_QUOTED_STRING_SYM');
+        $beforeSupport->realize(['DOLLAR_QUOTED_STRING_SYM']);
     }
 
     #[DataProvider('providerInvalidSql')]
@@ -329,63 +303,30 @@ SQL;
         ], $lexical->tokenize($sql));
     }
 
-    public function testRealizationCanPlaceACommentBeforeTheFirstToken(): void
+    #[DataProvider('providerFixedTerminal')]
+    public function testRealizeOfFixedTerminal(string $terminal, string $expected): void
     {
-        $faker = Factory::create();
-        $faker->seed(20260815);
-        $lexical = new LexicalGrammar($faker, 'mysql-8.4.7');
-        $statements = array_map(
-            static fn (int $iteration): string => $lexical->realize(['SELECT_SYM', 'IDENT']),
-            range(1, 32),
-        );
-
-        self::assertNotEmpty(array_filter(
-            $statements,
-            static fn (string $sql): bool => preg_match('/^\s*(?:--|#|\/\*)/', $sql) === 1,
-        ));
-    }
-
-    public function testRejectsAContextThatChangesTheDerivedToken(): void
-    {
-        $this->expectException(LexicalException::class);
-        $this->expectExceptionMessage('Expected: ["@","IDENT"]');
-
-        (new LexicalGrammar(Factory::create(), 'mysql-8.4.7'))->realize(['@', 'IDENT']);
-    }
-
-    public function testSyntheticRealizationDisablesTriviaAndAcceptsUnknownTerminals(): void
-    {
-        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7', true);
-
-        self::assertTrue($lexical->supports('NOT_A_TERMINAL'));
-        self::assertSame('', $lexical->realize(['GRAMMAR_SELECTOR_TEST', 'END_OF_INPUT']));
-        self::assertSame('SELECT', $lexical->realize(['SELECT_SYM']));
-        self::assertSame([], $lexical->tokenize(''));
-    }
-
-    #[DataProvider('providerFixedSyntheticTerminal')]
-    public function testSyntheticRealizationOfFixedTerminal(string $terminal, string $expected): void
-    {
-        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7', true);
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
 
         self::assertSame($expected, $lexical->realize([$terminal]));
     }
 
-    public function testSyntheticRealizationOfGeneratedTerminals(): void
+    public function testRealizeOfGeneratedTerminals(): void
     {
         $faker = Factory::create();
         $faker->seed(17);
-        $lexical = new LexicalGrammar($faker, 'mysql-8.4.7', true);
+        $lexical = new LexicalGrammar($faker, 'mysql-8.4.7');
 
         self::assertMatchesRegularExpression('/^_[A-Za-z0-9_]+$/', $lexical->realize(['IDENT']));
         self::assertStringStartsWith('`', $lexical->realize(['IDENT_QUOTED']));
         self::assertStringStartsWith("'", $lexical->realize(['TEXT_STRING']));
         self::assertStringStartsWith("N'", $lexical->realize(['NCHAR_STRING']));
-        self::assertStringStartsWith('$$', $lexical->realize(['DOLLAR_QUOTED_STRING_SYM']));
+        self::assertContains($lexical->realize(['DOLLAR_QUOTED_STRING_SYM']), ['$$text$$', '$tag$text$tag$']);
         self::assertMatchesRegularExpression('/^\d+$/', $lexical->realize(['NUM']));
         self::assertMatchesRegularExpression('/^\d+$/', $lexical->realize(['LONG_NUM']));
         self::assertSame('18446744073709551615', $lexical->realize(['ULONGLONG_NUM']));
-        self::assertMatchesRegularExpression('/^\d+\.\d+$/', $lexical->realize(['DECIMAL_NUM']));
+        self::assertSame(['DECIMAL_NUM'], $lexical->tokenize($lexical->realize(['DECIMAL_NUM'])));
+        self::assertSame(['UNDERSCORE_CHARSET'], $lexical->tokenize($lexical->realize(['UNDERSCORE_CHARSET'])));
         self::assertMatchesRegularExpression('/^[+-]?\d+(?:\.\d+)?[eE][+-]?\d+$/', $lexical->realize(['FLOAT_NUM']));
         self::assertSame(['HEX_NUM'], $lexical->tokenize($lexical->realize(['HEX_NUM'])));
         self::assertSame(['BIN_NUM'], $lexical->tokenize($lexical->realize(['BIN_NUM'])));
@@ -407,7 +348,7 @@ SQL;
     /**
      * @return iterable<string, array{string, string}>
      */
-    public static function providerFixedSyntheticTerminal(): iterable
+    public static function providerFixedTerminal(): iterable
     {
         yield 'EQ' => ['EQ', '='];
         yield 'EQUAL_SYM' => ['EQUAL_SYM', '<=>'];
@@ -415,7 +356,6 @@ SQL;
         yield 'GT_SYM' => ['GT_SYM', '>'];
         yield 'LE' => ['LE', '<='];
         yield 'GE' => ['GE', '>='];
-        yield 'NE' => ['NE', '<>'];
         yield 'SHIFT_LEFT' => ['SHIFT_LEFT', '<<'];
         yield 'SHIFT_RIGHT' => ['SHIFT_RIGHT', '>>'];
         yield 'AND_AND_SYM' => ['AND_AND_SYM', '&&'];
@@ -424,9 +364,7 @@ SQL;
         yield 'SET_VAR' => ['SET_VAR', ':='];
         yield 'JSON_SEPARATOR_SYM' => ['JSON_SEPARATOR_SYM', '->'];
         yield 'JSON_UNQUOTED_SEPARATOR_SYM' => ['JSON_UNQUOTED_SEPARATOR_SYM', '->>'];
-        yield 'NEG' => ['NEG', '-'];
         yield 'WITH_ROLLUP_SYM' => ['WITH_ROLLUP_SYM', 'WITH ROLLUP'];
-        yield 'UNDERSCORE_CHARSET' => ['UNDERSCORE_CHARSET', '_utf8mb4'];
         yield 'PARAM_MARKER' => ['PARAM_MARKER', '?'];
     }
 
@@ -559,31 +497,38 @@ SQL;
             $lexical->generateHostname(),
         );
     }
-
-    public function testSupportsAcceptsATerminalTheCatalogWitnesses(): void
+    public function testRealizeSequenceHonorsThePlannedStringWithoutRequiringTrivia(): void
     {
-        self::assertTrue((new LexicalGrammar(Factory::create(), 'mysql-8.4.7'))->supports('SELECT_SYM'));
+        $grammar = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+        $plan = GenerationPlan::all()->withLexemes(['TEXT_STRING' => ["'a''b'"]]);
+        self::assertSame("'a''b'", $grammar->realizeSequence(TerminalSequence::fromNames(['TEXT_STRING']), $plan));
     }
 
-    public function testSupportsRejectsATerminalNoCatalogWitnesses(): void
+    public function testIsNonOutputDoesNotConfuseOrdinaryValuesWithParserMarkers(): void
     {
-        self::assertFalse((new LexicalGrammar(Factory::create(), 'mysql-8.4.7'))->supports('NOT_A_TERMINAL'));
+        $grammar = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+        self::assertFalse($grammar->isNonOutput('TEXT_STRING'));
+        self::assertFalse($grammar->isNonOutput('UNIMPLEMENTED'));
     }
 
-    public function testAssertTerminalsCoveredAcceptsTerminalsTheProfileClassifies(): void
+    public function testRealizeReportsAnUnimplementedTerminalAtItsActualUse(): void
     {
-        (new LexicalGrammar(Factory::create(), 'mysql-8.4.7'))->assertTerminalsCovered(['SELECT_SYM', 'IDENT']);
-
-        $this->expectNotToPerformAssertions();
+        $grammar = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+        $this->expectException(LexicalException::class);
+        $this->expectExceptionMessage('UNIMPLEMENTED');
+        $grammar->realize(['UNIMPLEMENTED']);
     }
 
-    public function testAssertTerminalsCoveredReportsATerminalTheProfileDoesNotClassify(): void
+    public function testRealizeKeepsContextualUserVariableSpellingWithoutTokenizerEqualityAsAGate(): void
     {
         $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+        self::assertSame('@_sqlfaker_identifier', $lexical->realize(['@', 'IDENT']));
+    }
 
-        $this->expectException(LexicalCatalogException::class);
-        $this->expectExceptionMessage('missing grammar terminals: NOT_A_TERMINAL');
-
-        $lexical->assertTerminalsCovered(['NOT_A_TERMINAL']);
+    public function testRealizeRetainsBothRegisteredInequalitySpellings(): void
+    {
+        $lexical = new LexicalGrammar(Factory::create(), 'mysql-8.4.7');
+        self::assertSame('!=', $lexical->realizeSequence(TerminalSequence::fromNames(['NE']), GenerationPlan::all()->withLexemes(['NE' => ['!=']])));
+        self::assertSame('<>', $lexical->realizeSequence(TerminalSequence::fromNames(['NE']), GenerationPlan::all()->withLexemes(['NE' => ['<>']])));
     }
 }

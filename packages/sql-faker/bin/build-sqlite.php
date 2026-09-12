@@ -6,14 +6,11 @@ declare(strict_types=1);
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use SqlFaker\Compiler\Lemon\LemonParser;
-use SqlFaker\Grammar\Lexical\LexicalProfileCheck;
-use SqlFaker\Grammar\Lexical\LexicalProfileWriter;
-use SqlFaker\Grammar\Lexical\TerminalInventory;
-use SqlFaker\Grammar\SqlVersion;
-use SqlFaker\Sqlite\SqliteProfileBuilder;
+use SqlFaker\Grammar\Resource\GrammarWriter;
+use SqlFaker\Grammar\Resource\SqlVersion;
 
 /**
- * Build script for generating a versioned grammar and lexical profile from SQLite sources.
+ * Build script for generating a versioned grammar AST from SQLite sources.
  *
  * Usage:
  *   php bin/build-sqlite.php                     # Use the default supported version
@@ -85,7 +82,6 @@ function sqliteFetchGramFile(string $url): string
 function sqliteBuildVersion(
     string $version,
     LemonParser $parser,
-    SqliteProfileBuilder $lexical,
 ): bool {
     try {
         $sqlVersion = SqlVersion::resolve('sqlite', $version);
@@ -108,9 +104,6 @@ function sqliteBuildVersion(
 
     try {
         $grammar = $parser->parse($contents);
-        fwrite(STDOUT, "Building lexical profile...\n");
-        $profile = $lexical->build($version);
-        (new LexicalProfileCheck())->assertCompatible($profile, 'sqlite', $version, TerminalInventory::fromGrammar($grammar));
     } catch (Throwable $e) {
         fwrite(STDERR, "Error building {$version}: {$e->getMessage()}\n");
         fwrite(STDERR, "Trace: {$e->getTraceAsString()}\n");
@@ -133,6 +126,7 @@ declare(strict_types=1);
  *
  * Source: {$url}
  * Version: {$version}
+ * Lemon build defines: none (default source configuration)
  * Generated: %s
  *
  * @return array<string, string>
@@ -150,7 +144,8 @@ PHP;
     );
 
     try {
-        (new LexicalProfileWriter())->publishVersion($sqlVersion, $output, $profile);
+        (new GrammarWriter())->publish($sqlVersion, $output);
+        fwrite(STDOUT, 'Generated: ' . $sqlVersion->astPath . "\n");
     } catch (Throwable $throwable) {
         fwrite(STDERR, "Error publishing {$version}: {$throwable->getMessage()}\n");
 
@@ -168,14 +163,13 @@ function sqliteMain(array $argv): int
     fwrite(STDOUT, 'Building ' . count($versions) . ' SQLite version(s): ' . implode(', ', $versions) . "\n");
 
     $parser = new LemonParser();
-    $lexical = new SqliteProfileBuilder();
 
     $success = 0;
     $failed = 0;
     $failedVersions = [];
 
     foreach ($versions as $version) {
-        if (sqliteBuildVersion($version, $parser, $lexical)) {
+        if (sqliteBuildVersion($version, $parser)) {
             $success++;
         } else {
             $failed++;

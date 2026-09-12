@@ -9,9 +9,9 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Compiler\Bison\Lexer\BisonLexeme;
 use SqlFaker\Compiler\Bison\Lexer\BisonToken;
+use SqlFaker\Compiler\Bison\Lexer\SourceCursor;
 use SqlFaker\Compiler\Bison\Lexer\TypeTagScanner;
-use SqlFaker\Grammar\GrammarParseException;
-use SqlFaker\Grammar\Lexical\SourceCursor;
+use SqlFaker\Compiler\GrammarParseException;
 
 #[CoversClass(TypeTagScanner::class)]
 #[UsesClass(BisonLexeme::class)]

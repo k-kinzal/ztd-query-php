@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlFaker\Compiler\Bison\Lexer;
 
 use Override;
-use SqlFaker\Grammar\Lexical\SourceCursor;
 
 /**
  * Consumes a brace-delimited semantic action.

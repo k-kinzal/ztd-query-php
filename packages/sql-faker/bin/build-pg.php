@@ -7,14 +7,11 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 use SqlFaker\Compiler\Bison\BisonParser;
 use SqlFaker\Compiler\Bison\GrammarCompiler;
-use SqlFaker\Grammar\Lexical\LexicalProfileCheck;
-use SqlFaker\Grammar\Lexical\LexicalProfileWriter;
-use SqlFaker\Grammar\Lexical\TerminalInventory;
-use SqlFaker\Grammar\SqlVersion;
-use SqlFaker\PostgreSql\PgProfileBuilder;
+use SqlFaker\Grammar\Resource\GrammarWriter;
+use SqlFaker\Grammar\Resource\SqlVersion;
 
 /**
- * Build script for generating a versioned grammar and lexical profile from PostgreSQL sources.
+ * Build script for generating a versioned grammar AST from PostgreSQL sources.
  *
  * Usage:
  *   php bin/build-pg.php                 # Use the default supported version
@@ -87,7 +84,6 @@ function pgBuildVersion(
     string $version,
     BisonParser $parser,
     GrammarCompiler $compiler,
-    PgProfileBuilder $lexical,
 ): bool {
     try {
         $sqlVersion = SqlVersion::resolve('postgresql', $version);
@@ -111,9 +107,6 @@ function pgBuildVersion(
     try {
         $ast = $parser->parse($contents);
         $grammar = $compiler->compile($ast);
-        fwrite(STDOUT, "Building lexical profile...\n");
-        $profile = $lexical->build($version);
-        (new LexicalProfileCheck())->assertCompatible($profile, 'postgresql', $version, TerminalInventory::fromGrammar($grammar));
     } catch (Throwable $e) {
         fwrite(STDERR, "Error building {$version}: {$e->getMessage()}\n");
         fwrite(STDERR, "Trace: {$e->getTraceAsString()}\n");
@@ -153,7 +146,8 @@ PHP;
     );
 
     try {
-        (new LexicalProfileWriter())->publishVersion($sqlVersion, $output, $profile);
+        (new GrammarWriter())->publish($sqlVersion, $output);
+        fwrite(STDOUT, 'Generated: ' . $sqlVersion->astPath . "\n");
     } catch (Throwable $throwable) {
         fwrite(STDERR, "Error publishing {$version}: {$throwable->getMessage()}\n");
 
@@ -172,14 +166,13 @@ function pgMain(array $argv): int
 
     $parser = new BisonParser();
     $compiler = new GrammarCompiler();
-    $lexical = new PgProfileBuilder();
 
     $success = 0;
     $failed = 0;
     $failedVersions = [];
 
     foreach ($versions as $version) {
-        if (pgBuildVersion($version, $parser, $compiler, $lexical)) {
+        if (pgBuildVersion($version, $parser, $compiler)) {
             $success++;
         } else {
             $failed++;

@@ -5,6 +5,17 @@
         "directories": [
             "src"
         ],
+        // The lexical declarations are reference data, like the grammar ASTs under resources/.
+        // Their correctness is established by fuzzing against the native parsers, not by unit
+        // tests that would have to carry a second copy of the declarations. Mutating them only
+        // measures that duplication, and Infection stalls for minutes while it indexes the
+        // covering tests of every node in these files, which marks unrelated mutants as timed out.
+        // This exception is limited to these reference declarations.
+        "excludes": [
+            "MySql/Generation/Lexeme/DefinitionFactory.php",
+            "PostgreSql/Generation/Lexeme/DefinitionFactory.php",
+            "Sqlite/Generation/Lexeme/DefinitionFactory.php"
+        ],
     },
     "mutators": {
         "@default": true
@@ -13,8 +24,10 @@
     "minCoveredMsi": 80,
     // The covered initial suite takes about 200 seconds; allow headroom to avoid skipping mutants.
     "timeout": 300,
-    "timeoutsAsEscaped": true,
-    "maxTimeouts": 0,
+    // Timed-out mutants keep Infection's default meaning: detected. A mutant that turns a loop
+    // condition into an endless loop cannot be killed by an assertion, and Infection deliberately
+    // does not avoid generating such mutants (infection/infection#1133, #2229). The mutation job
+    // bounds runaway mutants with a PHP memory_limit instead of counting them as escaped.
     "tmpDir": "build/infection-tmp",
     "logs": {
         "text": "build/infection/escaped.log",

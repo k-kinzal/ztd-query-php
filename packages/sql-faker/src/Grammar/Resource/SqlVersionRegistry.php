@@ -5,17 +5,10 @@ declare(strict_types=1);
 namespace SqlFaker\Grammar\Resource;
 
 use RuntimeException;
-use SqlFaker\Grammar\SqlVersion;
 
 /**
- * Answers which SQL implementation versions this package ships artifacts for.
- *
- * A grammar AST and a lexical profile are generated per release and committed
- * under `resources`, and `resources/version.php` is the only record of which
- * releases were generated and where each pair landed. Reading that record is a
- * separate concern from being one entry in it, so the registry answers for the
- * catalogue and SqlVersion carries a single entry.
- *
+ * Resolves supported releases and their generated grammar AST paths.
+ * Lexical definitions for these same releases are reviewed PHP declarations.
  * @visibility parent
  */
 final class SqlVersionRegistry
@@ -47,7 +40,6 @@ final class SqlVersionRegistry
             $dialect,
             $version,
             $this->path($resources['ast']),
-            $this->path($resources['lexical']),
         );
     }
 
@@ -92,11 +84,13 @@ final class SqlVersionRegistry
     /**
      * Reads the record of which releases were generated.
      *
-     * @return array<string, array{default: string, versions: array<string, array{ast: string, lexical: string}>}> Releases by dialect
+     * @return array<string, array{default: string, versions: array<string, array{ast: string}>}> Releases by dialect
      */
     public function entries(): array
     {
-        /** @var array<string, array{default: string, versions: array<string, array{ast: string, lexical: string}>}> $registry */
+        /**
+         * @var array<string, array{default: string, versions: array<string, array{ast: string}>}> $registry
+         */
         $registry = require $this->directory() . '/version.php';
 
         return $registry;

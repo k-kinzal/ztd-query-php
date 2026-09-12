@@ -6,8 +6,8 @@ namespace SqlFaker;
 
 use Faker\Generator;
 use Faker\Provider\Base;
+use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\Generation\SqlGenerator;
-use SqlFaker\Grammar\Derivation\GenerationPlan;
 use SqlFaker\PostgreSql\GenerationPlans;
 use SqlFaker\PostgreSql\Grammar\PgGrammar;
 use SqlFaker\PostgreSql\StatementType;
@@ -21,7 +21,7 @@ use SqlFaker\Provider\SqlGeneratorFactory;
  * valid (tables/columns may not exist).
  *
  * maxDepth selects shortest productions once the depth is reached; it is not a SQL length limit.
- * Generated statements may include whitespace and SQL comments. Optional clauses may be empty.
+ * The basic pipeline resolves lexical spaces without inserting comments. Optional clauses may be empty.
  * Seed the supplied Faker generator to reproduce a run within the same package version.
  *
  * @visibility public

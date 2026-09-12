@@ -6,49 +6,69 @@ namespace Tests\Unit\SqlFaker\Sqlite;
 
 use Closure;
 use Faker\Factory;
-use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
-use SqlFaker\Grammar\Lexical\LexicalCatalogShape;
-use SqlFaker\Grammar\Lexical\LexicalCoverageCheck;
-use SqlFaker\Grammar\Lexical\LexicalKeywordIndex;
-use SqlFaker\Grammar\Lexical\LexicalProfileSource;
-use SqlFaker\Grammar\Lexical\LexicalWitnessCheck;
-use SqlFaker\Grammar\Lexical\LexicalWitnessShape;
-use SqlFaker\Grammar\Lexical\RandomCharacters;
-use SqlFaker\Grammar\Lexical\RandomStringGenerator;
-use SqlFaker\Grammar\Lexical\TokenJoiner;
-use SqlFaker\Grammar\LexicalCatalog;
-use SqlFaker\Grammar\LexicalCatalogException;
-use SqlFaker\Grammar\LexicalException;
+use SqlFaker\Generation\Exception\LexicalException;
+use SqlFaker\Generation\Plan\GenerationPlan;
+use SqlFaker\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Value\RandomCharacters;
+use SqlFaker\Grammar\Resource\SqlVersion;
 use SqlFaker\Grammar\Resource\SqlVersionRegistry;
-use SqlFaker\Grammar\SqlVersion;
+use SqlFaker\Sqlite\Generation\Value\LiteralGenerator;
 use SqlFaker\Sqlite\LexicalGrammar;
-use SqlFaker\Sqlite\SqliteTerminalRealizer;
-use SqlFaker\Sqlite\SqliteTokenizer;
-use UnexpectedValueException;
+use SqlFaker\Sqlite\Tokenization\KeywordIndex;
+use SqlFaker\Sqlite\Tokenization\SqliteTokenizer;
 
 #[CoversClass(LexicalGrammar::class)]
-#[CoversClass(RandomStringGenerator::class)]
-#[CoversClass(TokenJoiner::class)]
-#[UsesClass(LexicalCatalog::class)]
-#[UsesClass(LexicalCatalogException::class)]
+#[CoversClass(LiteralGenerator::class)]
 #[UsesClass(SqlVersion::class)]
-#[UsesClass(LexicalCatalogShape::class)]
-#[UsesClass(LexicalCoverageCheck::class)]
 #[UsesClass(LexicalException::class)]
-#[UsesClass(LexicalKeywordIndex::class)]
-#[UsesClass(LexicalProfileSource::class)]
-#[UsesClass(LexicalWitnessCheck::class)]
-#[UsesClass(LexicalWitnessShape::class)]
+#[UsesClass(KeywordIndex::class)]
 #[UsesClass(RandomCharacters::class)]
 #[UsesClass(SqlVersionRegistry::class)]
-#[UsesClass(SqliteTerminalRealizer::class)]
 #[UsesClass(SqliteTokenizer::class)]
-#[UsesClass(\SqlFaker\Sqlite\SqliteQuoting::class)]
+#[UsesClass(\SqlFaker\Sqlite\Tokenization\SqliteQuoting::class)]
+#[UsesClass(GenerationPlan::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\ChoiceLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\FixedLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\Lexeme::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeCandidates::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeInput::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeSequence::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\MatchingLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\ValueLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\RegisteredLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Output\CandidateResolver::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\OutputPart::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\ResolvedOutput::class)]
+#[UsesClass(\SqlFaker\Generation\Output\ReverseLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Output\SqlSerializer::class)]
+#[UsesClass(\SqlFaker\Generation\Output\CombinedSpacingRule::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\SpacingConstraint::class)]
+#[UsesClass(\SqlFaker\Generation\Token\TerminalOccurrence::class)]
+#[UsesClass(TerminalSequence::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\VersionCase::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\VersionedLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\DefinitionFactory::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\JoinLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Plan\ProductionPattern::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeBoundary::class)]
+#[UsesClass(\SqlFaker\Generation\Token\ProductionOccurrence::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\JoinModifiers::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\WindowNameLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Value\CharacterDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\ChoiceDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\IntegerDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\SequenceDomain::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Value\DollarQuotedDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Output\BoundaryCompletion::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Value\IdentifierDomain::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Value\QuotedDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\RepeatDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\WordDomain::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\LexicalDefinition::class)]
 final class LexicalGrammarTest extends TestCase
 {
     public function testGenerateQuotedIdentifierWritesWhatTheLexerReadsBackAsAnIdentifier(): void
@@ -92,30 +112,6 @@ final class LexicalGrammarTest extends TestCase
         self::assertSame('sqlite-3.47.2', (new LexicalGrammar(Factory::create(), 'sqlite-3.47.2'))->version());
     }
 
-    public function testSupportsAcceptsATerminalTheSqliteTokenizerCanWrite(): void
-    {
-        self::assertTrue((new LexicalGrammar(Factory::create(), 'sqlite-3.47.2'))->supports('ID'));
-    }
-
-    public function testSupportsRejectsATerminalNoSqliteTokenizerDeclares(): void
-    {
-        self::assertFalse((new LexicalGrammar(Factory::create(), 'sqlite-3.47.2'))->supports('NO_SUCH_TERMINAL'));
-    }
-
-    public function testAssertTerminalsCoveredAcceptsATerminalTheCatalogWitnesses(): void
-    {
-        (new LexicalGrammar(Factory::create(), 'sqlite-3.47.2'))->assertTerminalsCovered(['ID']);
-
-        $this->expectNotToPerformAssertions();
-    }
-
-    public function testAssertTerminalsCoveredReportsATerminalTheCatalogNeitherWitnessesNorExcludes(): void
-    {
-        $this->expectException(LexicalCatalogException::class);
-
-        (new LexicalGrammar(Factory::create(), 'sqlite-3.47.2'))->assertTerminalsCovered(['NO_SUCH_TERMINAL']);
-    }
-
     /**
      * @param Closure(LexicalGrammar): string $withDefaults
      * @param Closure(LexicalGrammar): string $withExplicitBounds
@@ -157,57 +153,6 @@ final class LexicalGrammarTest extends TestCase
             static fn (LexicalGrammar $grammar): string => $grammar->generateDecimalLiteral(),
             static fn (LexicalGrammar $grammar): string => $grammar->generateDecimalLiteral(15, 2),
         ];
-    }
-
-    #[DataProvider('providerGeneratedStringLiteral')]
-    public function testGeneratesEveryStringLiteralStrategy(int $choice, string $expected): void
-    {
-        $faker = new class ($choice) extends \Faker\Generator {
-            private bool $first = true;
-
-            public function __construct(private readonly int $choice)
-            {
-                parent::__construct();
-            }
-
-            /**
-             * @param mixed $min
-             * @param mixed $max
-             *
-             * @throws UnexpectedValueException When the bound is not an integer
-             */
-            #[Override]
-            public function numberBetween($min = 0, $max = 2147483647): int
-            {
-                if ($this->first) {
-                    $this->first = false;
-
-                    return $this->choice;
-                }
-                if (!is_int($min)) {
-                    throw new UnexpectedValueException();
-                }
-
-                return $min;
-            }
-        };
-
-        self::assertSame(
-            $expected,
-            (new LexicalGrammar($faker, 'sqlite-3.47.2', true))->realize(['STRING']),
-        );
-    }
-
-    /**
-     * @return iterable<string, array{int, string}>
-     */
-    public static function providerGeneratedStringLiteral(): iterable
-    {
-        yield 'combined arm value zero' => [0, "'ABORT ABORT'"];
-        yield 'combined arm value one' => [1, "'ABORT ABORT'"];
-        yield 'quote escaping' => [2, "'a''b'"];
-        yield 'backslash' => [3, "'a\\b'"];
-        yield 'random body' => [4, "''"];
     }
 
     public function testTokenizesQuotedIdentifiersStringsVariablesAndComments(): void
@@ -258,26 +203,10 @@ SQL;
         );
     }
 
-    public function testReportsVersionSupportAndMissingTerminal(): void
-    {
-        $lexical = new LexicalGrammar(Factory::create(), 'sqlite-3.47.2');
-
-        self::assertSame('sqlite-3.47.2', $lexical->version());
-        self::assertTrue($lexical->supports('ID'));
-        self::assertFalse($lexical->supports('NOT_A_TERMINAL'));
-
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('NOT_A_TERMINAL');
-
-        $lexical->assertTerminalsCovered(['NOT_A_TERMINAL']);
-    }
-
     public function testRealizesStrictTableOptionAsIdentifierToken(): void
     {
         $lexical = new LexicalGrammar(Factory::create(), 'sqlite-3.47.2');
 
-        self::assertTrue($lexical->supports(LexicalGrammar::STRICT_TABLE_OPTION));
-        $lexical->assertTerminalsCovered(['ID', LexicalGrammar::STRICT_TABLE_OPTION]);
         $sql = $lexical->realize([LexicalGrammar::STRICT_TABLE_OPTION]);
         self::assertStringContainsString('STRICT', $sql);
         self::assertSame(['ID'], $lexical->tokenize($sql));
@@ -295,131 +224,41 @@ SQL;
         $lexical->tokenize($sql);
     }
 
-    public function testRealizesTokenClassesAndWildcardWithoutInventingLexerTokens(): void
-    {
-        $faker = Factory::create();
-        $faker->seed(22);
-        $lexical = new LexicalGrammar($faker, 'sqlite-3.47.2');
-        $sql = $lexical->realize(['ID', 'COMMA', 'STRING', 'COMMA', 'QNUMBER', 'COMMA', 'ANY']);
-
-        self::assertSame(['ID', 'COMMA', 'STRING', 'COMMA', 'QNUMBER', 'COMMA', 'ID'], $lexical->tokenize($sql));
-    }
-
-    public function testRealizationCanPlaceACommentBeforeTheFirstToken(): void
-    {
-        $faker = Factory::create();
-        $faker->seed(20260815);
-        $lexical = new LexicalGrammar($faker, 'sqlite-3.47.2');
-        $statements = array_map(
-            static fn (int $iteration): string => $lexical->realize(['SELECT', 'ID']),
-            range(1, 32),
-        );
-
-        self::assertNotEmpty(array_filter(
-            $statements,
-            static fn (string $sql): bool => preg_match('/^\s*(?:--|\/\*)/', $sql) === 1,
-        ));
-    }
-
-    public function testSyntheticRealizationDisablesTriviaAndAcceptsUnknownTerminals(): void
-    {
-        $faker = Factory::create();
-        $faker->seed(1);
-        $lexical = new LexicalGrammar($faker, 'sqlite-3.47.2', true);
-
-        self::assertTrue($lexical->supports('UNKNOWN'));
-        self::assertSame('SELECT', $lexical->realize(['SELECT']));
-        self::assertSame('->*', $lexical->realize(['PTR', 'STAR']));
-        self::assertSame('*->', $lexical->realize(['STAR', 'PTR']));
-        self::assertSame([], $lexical->tokenize(''));
-    }
-
-    #[DataProvider('providerFixedSyntheticTerminal')]
-    public function testSyntheticRealizationOfFixedTerminal(string $terminal, string $expected): void
+    #[DataProvider('providerFixedTerminal')]
+    public function testRealizeOfFixedTerminal(string $terminal, string $expected): void
     {
         $faker = Factory::create();
         $faker->seed(17);
-        $lexical = new LexicalGrammar($faker, 'sqlite-3.47.2', true);
+        $lexical = new LexicalGrammar($faker, 'sqlite-3.47.2');
 
         self::assertSame($expected, $lexical->realize([$terminal]));
     }
 
-    #[DataProvider('providerIdentifierSyntheticTerminal')]
-    public function testSyntheticRealizationOfIdentifier(string $terminal): void
+    #[DataProvider('providerIdentifierTerminal')]
+    public function testRealizeOfIdentifier(string $terminal): void
     {
         $faker = Factory::create();
         $faker->seed(17);
-        $lexical = new LexicalGrammar($faker, 'sqlite-3.47.2', true);
+        $lexical = new LexicalGrammar($faker, 'sqlite-3.47.2');
 
         self::assertNotSame($terminal, $lexical->realize([$terminal]));
     }
 
-    #[DataProvider('providerIdentifierQuoteStrategy')]
-    public function testIdentifierQuoteStrategy(int $choice, string $expected): void
-    {
-        $faker = new class ([0, $choice]) extends \Faker\Generator {
-            private int $call = 0;
-
-            /**
-             * @param list<int> $choices
-             */
-            public function __construct(private readonly array $choices)
-            {
-                parent::__construct();
-            }
-
-            /**
-             * @param mixed $min
-             * @param mixed $max
-             *
-             * @throws UnexpectedValueException When the bound is not an integer
-             */
-            #[Override]
-            public function numberBetween($min = 0, $max = 2147483647): int
-            {
-                if (isset($this->choices[$this->call])) {
-                    return $this->choices[$this->call++];
-                }
-                if (!is_int($min)) {
-                    throw new UnexpectedValueException();
-                }
-
-                return $min;
-            }
-        };
-
-        self::assertSame(
-            $expected,
-            (new LexicalGrammar($faker, 'sqlite-3.47.2', true))->realize(['ID']),
-        );
-    }
-
-    /**
-     * @return iterable<string, array{int, string}>
-     */
-    public static function providerIdentifierQuoteStrategy(): iterable
-    {
-        yield 'double quote escaping' => [0, '"select""quoted"'];
-        yield 'backtick escaping' => [1, '`select``quoted`'];
-        yield 'closing bracket removal' => [2, '[selectquoted]'];
-        yield 'unquoted identifier' => [3, 'select'];
-    }
-
-    #[DataProvider('providerStringSyntheticTerminal')]
-    public function testSyntheticRealizationOfString(string $terminal): void
+    #[DataProvider('providerStringTerminal')]
+    public function testRealizeOfString(string $terminal): void
     {
         $faker = Factory::create();
         $faker->seed(17);
-        $lexical = new LexicalGrammar($faker, 'sqlite-3.47.2', true);
+        $lexical = new LexicalGrammar($faker, 'sqlite-3.47.2');
 
         self::assertStringStartsWith("'", $lexical->realize([$terminal]));
     }
 
-    public function testSyntheticRealizationOfGeneratedTerminals(): void
+    public function testRealizeOfGeneratedTerminals(): void
     {
         $faker = Factory::create();
         $faker->seed(17);
-        $lexical = new LexicalGrammar($faker, 'sqlite-3.47.2', true);
+        $lexical = new LexicalGrammar($faker, 'sqlite-3.47.2');
 
         self::assertMatchesRegularExpression("/^X'[0-9a-f]*'$/", $lexical->realize(['BLOB']));
         self::assertMatchesRegularExpression('/^\d+$/', $lexical->realize(['number']));
@@ -443,10 +282,10 @@ SQL;
     /**
      * @return iterable<string, array{string, string}>
      */
-    public static function providerFixedSyntheticTerminal(): iterable
+    public static function providerFixedTerminal(): iterable
     {
         yield 'QNUMBER' => ['QNUMBER', '1_0'];
-        yield 'ANY' => ['ANY', '_any'];
+        yield 'ANY' => ['ANY', 'name'];
         yield 'LP' => ['LP', '('];
         yield 'RP' => ['RP', ')'];
         yield 'SEMI' => ['SEMI', ';'];
@@ -466,7 +305,7 @@ SQL;
     /**
      * @return iterable<string, array{string}>
      */
-    public static function providerIdentifierSyntheticTerminal(): iterable
+    public static function providerIdentifierTerminal(): iterable
     {
         yield 'ID' => ['ID'];
         yield 'id' => ['id'];
@@ -476,9 +315,31 @@ SQL;
     /**
      * @return iterable<string, array{string}>
      */
-    public static function providerStringSyntheticTerminal(): iterable
+    public static function providerStringTerminal(): iterable
     {
         yield 'ids' => ['ids'];
         yield 'STRING' => ['STRING'];
     }
+    public function testRealizeSequenceHonorsThePlannedStringWithoutRequiringTrivia(): void
+    {
+        $grammar = new LexicalGrammar(Factory::create(), 'sqlite-3.47.2');
+        $plan = GenerationPlan::all()->withLexemes(['STRING' => ["'a''b'"]]);
+        self::assertSame("'a''b'", $grammar->realizeSequence(TerminalSequence::fromNames(['STRING']), $plan));
+    }
+
+    public function testIsNonOutputDoesNotConfuseOrdinaryValuesWithParserMarkers(): void
+    {
+        $grammar = new LexicalGrammar(Factory::create(), 'sqlite-3.47.2');
+        self::assertFalse($grammar->isNonOutput('STRING'));
+        self::assertFalse($grammar->isNonOutput('UNIMPLEMENTED'));
+    }
+
+    public function testRealizeReportsAnUnimplementedTerminalAtItsActualUse(): void
+    {
+        $grammar = new LexicalGrammar(Factory::create(), 'sqlite-3.47.2');
+        $this->expectException(LexicalException::class);
+        $this->expectExceptionMessage('UNIMPLEMENTED');
+        $grammar->realize(['UNIMPLEMENTED']);
+    }
+
 }

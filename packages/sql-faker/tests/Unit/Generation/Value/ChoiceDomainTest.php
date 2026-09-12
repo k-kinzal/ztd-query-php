@@ -1,0 +1,38 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\SqlFaker\Generation\Value;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\TestCase;
+use SqlFaker\Generation\Value\CharacterDomain;
+use SqlFaker\Generation\Value\ChoiceDomain;
+use SqlFaker\Generation\Value\IntegerDomain;
+use SqlFaker\Generation\Value\SequenceDomain;
+use SqlFaker\Generation\Value\ValueChoices;
+use SqlFaker\Generation\Value\ValueDomain;
+
+#[CoversClass(ChoiceDomain::class)]
+#[UsesClass(CharacterDomain::class)]
+#[UsesClass(IntegerDomain::class)]
+#[UsesClass(SequenceDomain::class)]
+#[UsesClass(ValueChoices::class)]
+#[UsesClass(ValueDomain::class)]
+final class ChoiceDomainTest extends TestCase
+{
+    public function testChooseReachesEachDeclaredForm(): void
+    {
+        $domain = new ChoiceDomain(new CharacterDomain(['0'], 1, 1, '0x'), new CharacterDomain(['f'], 2, 2, "X'", "'"));
+        self::assertSame('0x0', $domain->choose(static fn (int $count): int => 0));
+        self::assertSame("X'ff'", $domain->choose(static fn (int $count): int => $count - 1));
+    }
+
+    public function testMatchUnionsAndDeduplicatesAlternativeEndPositions(): void
+    {
+        $domain = new ChoiceDomain(new CharacterDomain(['a'], 1, 2), new CharacterDomain(['a'], 1, 1));
+        self::assertSame([2, 3], $domain->match('!aa?', 1));
+        self::assertSame([], $domain->match('b'));
+    }
+}

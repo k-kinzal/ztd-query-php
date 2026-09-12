@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
 use SqlFaker\Compiler\Bison\Lexer\BisonLexeme;
 use SqlFaker\Compiler\Bison\Lexer\BisonToken;
 use SqlFaker\Compiler\Bison\Lexer\PunctuationScanner;
-use SqlFaker\Grammar\Lexical\SourceCursor;
+use SqlFaker\Compiler\Bison\Lexer\SourceCursor;
 
 #[CoversClass(PunctuationScanner::class)]
 #[UsesClass(BisonLexeme::class)]

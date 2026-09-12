@@ -15,6 +15,7 @@ use SqlFaker\Compiler\Bison\Rule\BisonAlternativeDraft;
 #[CoversClass(BisonAlternativeDraft::class)]
 #[UsesClass(BisonAlternativeNode::class)]
 #[UsesClass(BisonSymbolNode::class)]
+#[UsesClass(BisonSymbolForm::class)]
 final class BisonAlternativeDraftTest extends TestCase
 {
     public function testCompleteYieldsAnEmptyAlternativeWhenNothingWasRead(): void

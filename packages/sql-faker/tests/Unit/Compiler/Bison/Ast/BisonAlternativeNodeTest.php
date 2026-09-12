@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\SqlFaker\Compiler\Bison\Ast;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Compiler\Bison\Ast\BisonAlternativeNode;
 use SqlFaker\Compiler\Bison\Ast\BisonSymbolForm;
@@ -12,6 +13,7 @@ use SqlFaker\Compiler\Bison\Ast\BisonSymbolNode;
 
 #[CoversClass(BisonAlternativeNode::class)]
 #[CoversClass(BisonSymbolNode::class)]
+#[UsesClass(BisonSymbolForm::class)]
 final class BisonAlternativeNodeTest extends TestCase
 {
     public function testExposesEveryPartOfTheAlternative(): void

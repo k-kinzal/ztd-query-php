@@ -7,8 +7,8 @@ namespace Tests\Unit\SqlFaker\PostgreSql;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\Derivation\GenerationPlan;
-use SqlFaker\Grammar\Derivation\ProductionPattern;
+use SqlFaker\Generation\Plan\GenerationPlan;
+use SqlFaker\Generation\Plan\ProductionPattern;
 use SqlFaker\PostgreSql\GenerationPlans;
 
 #[CoversClass(GenerationPlans::class)]
@@ -344,4 +344,16 @@ final class GenerationPlansTest extends TestCase
         self::assertSame($expected->value, $plan->startRule());
         self::assertSame(8, $plan->maxDepth());
     }
+    public function testTableSampleStatementKeepsTheConstraintBeyondTheFirstOccurrence(): void
+    {
+        $plan = GenerationPlans::tableSampleStatement();
+        $from = $plan->patternAt('from_clause', 1);
+        $table = $plan->patternAt('table_ref', 1);
+        self::assertNotNull($from);
+        self::assertNotNull($table);
+        self::assertFalse($from->matches([]));
+        self::assertTrue($table->matches(['relation_expr', 'tablesample_clause']));
+        self::assertFalse($table->matches(['relation_expr']));
+    }
+
 }

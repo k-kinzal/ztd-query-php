@@ -12,11 +12,9 @@ use SqlFaker\Compiler\Bison\Lexer\BisonTokenStream;
 /**
  * Reads any directive no other reader knows.
  *
- * Bison keeps adding directives and MySQL's grammar uses several this parser
- * has no model for. Skipping them would silently drop content and leave the
- * stream pointing into the middle of a declaration, so the arguments are
- * consumed to the boundary and kept as text: the declaration survives the round
- * trip even though nothing understands it.
+ * Consumes arguments through the declaration boundary and preserves their
+ * source text in an unknown-declaration node. Later stages can retain
+ * directives without interpreting their semantics.
  *
  * @visibility root
  */

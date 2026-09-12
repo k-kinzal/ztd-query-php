@@ -22,10 +22,10 @@ use SqlFaker\Compiler\Bison\Lexer\IdentifierScanner;
 use SqlFaker\Compiler\Bison\Lexer\NumberScanner;
 use SqlFaker\Compiler\Bison\Lexer\PunctuationScanner;
 use SqlFaker\Compiler\Bison\Lexer\QuotedLiteralScanner;
+use SqlFaker\Compiler\Bison\Lexer\SourceCursor;
 use SqlFaker\Compiler\Bison\Lexer\TypeTagScanner;
 use SqlFaker\Compiler\Bison\Rule\BisonAlternativeDraft;
 use SqlFaker\Compiler\Bison\Rule\BisonAlternativeReader;
-use SqlFaker\Grammar\Lexical\SourceCursor;
 
 #[CoversClass(BisonAlternativeReader::class)]
 #[UsesClass(BisonAlternativeDraft::class)]
@@ -46,6 +46,8 @@ use SqlFaker\Grammar\Lexical\SourceCursor;
 #[UsesClass(PunctuationScanner::class)]
 #[UsesClass(QuotedLiteralScanner::class)]
 #[UsesClass(TypeTagScanner::class)]
+#[UsesClass(BisonSymbolForm::class)]
+#[UsesClass(\SqlFaker\Compiler\GrammarParseException::class)]
 final class BisonAlternativeReaderTest extends TestCase
 {
     public function testReadAllTakesTheSymbolsUpToTheSemicolon(): void

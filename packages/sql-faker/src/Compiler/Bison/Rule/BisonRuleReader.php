@@ -11,11 +11,8 @@ use SqlFaker\Compiler\Bison\Lexer\BisonTokenStream;
 /**
  * Reads the rules section of a Bison grammar.
  *
- * A rule is an identifier followed by a colon, and nothing else in the section
- * looks like that. Anything that does not is skipped one token at a time rather
- * than aborting the section, because MySQL's grammar carries constructs this
- * parser has no model for and losing the rules after one of them would be worse
- * than losing the construct itself.
+ * Recognizes a rule by its identifier and following colon. Tokens outside
+ * that pattern are skipped so reading can resume at the next rule boundary.
  *
  * @visibility root
  */

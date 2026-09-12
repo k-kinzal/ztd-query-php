@@ -11,13 +11,14 @@ use SqlFaker\Compiler\Bison\Lexer\ActionScanner;
 use SqlFaker\Compiler\Bison\Lexer\BisonLexeme;
 use SqlFaker\Compiler\Bison\Lexer\BisonToken;
 use SqlFaker\Compiler\Bison\Lexer\BisonTrivia;
-use SqlFaker\Grammar\Lexical\SourceCursor;
+use SqlFaker\Compiler\Bison\Lexer\SourceCursor;
 
 #[CoversClass(ActionScanner::class)]
 #[UsesClass(BisonLexeme::class)]
 #[UsesClass(BisonToken::class)]
 #[UsesClass(BisonTrivia::class)]
 #[UsesClass(SourceCursor::class)]
+#[UsesClass(\SqlFaker\Compiler\GrammarParseException::class)]
 final class ActionScannerTest extends TestCase
 {
     public function testHandlesClaimsOnlyAnOpeningBrace(): void

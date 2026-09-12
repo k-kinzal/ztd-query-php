@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlFaker\PostgreSql;
 
 use Faker\Generator;
-use SqlFaker\Grammar\Derivation\GenerationPlan;
-use SqlFaker\Grammar\Derivation\ProductionPattern;
+use SqlFaker\Generation\Plan\GenerationPlan;
+use SqlFaker\Generation\Plan\ProductionPattern;
 
 /**
  * Names the generation plans this dialect's provider is built from.
@@ -211,7 +211,10 @@ final class GenerationPlans
             ],
             'from_clause' => [ProductionPattern::nonEmpty()],
             'table_ref' => [ProductionPattern::containing('relation_expr', 'tablesample_clause')],
-        ])->requiringNonEmpty();
+        ])
+            ->withPatternForEveryOccurrence('from_clause', ProductionPattern::nonEmpty())
+            ->withPatternForEveryOccurrence('table_ref', ProductionPattern::containing('relation_expr', 'tablesample_clause'))
+            ->requiringNonEmpty();
     }
 
     /**
@@ -265,6 +268,7 @@ final class GenerationPlans
             'insert_rest' => [ProductionPattern::exactly('DEFAULT', 'VALUES')],
             'opt_on_conflict' => [ProductionPattern::containing('DO', 'UPDATE')],
             'opt_conf_expr' => [ProductionPattern::containing('index_params', 'where_clause')],
+            'index_elem' => [ProductionPattern::exactly('ColId', 'index_elem_options')],
             'where_clause' => [ProductionPattern::nonEmpty()],
         ])->requiringNonEmpty();
     }
