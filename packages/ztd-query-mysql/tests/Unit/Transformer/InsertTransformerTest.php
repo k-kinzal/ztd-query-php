@@ -1013,11 +1013,13 @@ final class InsertTransformerTest extends TestCase
             "INSERT INTO years SELECT 1, 93, 'ok'",
             $tables,
         );
-        self::assertStringContainsString(
-            'SELECT CAST(_ztd_insert_cast.`id` AS SIGNED) AS `id`, CAST(CAST(_ztd_insert_cast.`value` AS YEAR) AS SIGNED) AS `value`, _ztd_insert_cast.`note``tag` AS `note``tag` FROM (',
+        self::assertSame(
+            'SELECT CAST(_ztd_insert_cast.`id` AS SIGNED) AS `id`, CAST(CAST(_ztd_insert_cast.`value` AS YEAR) AS SIGNED) AS `value`, _ztd_insert_cast.`note``tag` AS `note``tag` FROM ('
+            . 'WITH `__ztd_insert_source` (`__ztd_insert_0`, `__ztd_insert_1`, `__ztd_insert_2`) AS ('
+            . "SELECT 1 AS `__ztd_insert_0`, 93 AS `__ztd_insert_1`, 'ok' AS `__ztd_insert_2` ) "
+            . 'SELECT `__ztd_insert_0` AS `id`, `__ztd_insert_1` AS `value`, `__ztd_insert_2` AS `note``tag` FROM `__ztd_insert_source`) AS _ztd_insert_cast',
             $sql,
         );
-        self::assertStringContainsString(') AS _ztd_insert_cast', $sql);
     }
 
 }

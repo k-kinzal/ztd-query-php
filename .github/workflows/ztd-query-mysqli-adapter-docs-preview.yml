@@ -22,6 +22,7 @@ permissions:
 concurrency:
   group: sql-faker-docs-publish
   cancel-in-progress: false
+  queue: max
 
 env:
   COMPOSER_NO_INTERACTION: '1'
