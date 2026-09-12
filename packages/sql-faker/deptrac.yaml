@@ -72,20 +72,15 @@ deptrac:
       collectors:
         - type: classLike
           value: '^Faker\\.*'
-    - name: PhpRuntime
-      collectors:
-        - type: php_internal
-          value: '.*'
   ruleset:
-    Grammar: [PhpRuntime]
-    Compiler: [Grammar, PhpRuntime]
-    Generation: [Grammar, Faker, PhpRuntime]
-    MySqlGrammar: [Grammar, PhpRuntime]
-    MySqlGeneration: [Grammar, Generation, MySqlGrammar, Faker, PhpRuntime]
-    PostgreSqlGrammar: [Grammar, PhpRuntime]
-    PostgreSqlGeneration: [Grammar, Generation, PostgreSqlGrammar, Faker, PhpRuntime]
-    SqliteGrammar: [Grammar, PhpRuntime]
-    SqliteGeneration: [Grammar, Generation, SqliteGrammar, Faker, PhpRuntime]
+    Grammar: []
+    Compiler: [Grammar]
+    Generation: [Grammar, Faker]
+    MySqlGrammar: [Grammar]
+    MySqlGeneration: [Grammar, Generation, MySqlGrammar, Faker]
+    PostgreSqlGrammar: [Grammar]
+    PostgreSqlGeneration: [Grammar, Generation, PostgreSqlGrammar, Faker]
+    SqliteGrammar: [Grammar]
+    SqliteGeneration: [Grammar, Generation, SqliteGrammar, Faker]
     Provider: [Grammar, Generation, MySqlGrammar, MySqlGeneration, PostgreSqlGrammar, PostgreSqlGeneration, SqliteGrammar, SqliteGeneration, Faker]
     Faker: []
-    PhpRuntime: []

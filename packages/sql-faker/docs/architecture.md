@@ -12,7 +12,7 @@ remain implementation details within that stage.
 
 The Faker **Provider** layer is the composition boundary. It selects a database,
 loads its grammar and constructs the shared engine with that database's generation
-collaborators. PHP's runtime is available to compilation, grammar and generation.
+collaborators.
 
 ## Shared concepts and database implementations
 
@@ -41,7 +41,7 @@ flowchart TD
 ```
 
 This graph shows MySQL; PostgreSQL and SQLite have the same dependency directions.
-Faker and PHP runtime edges are omitted. Provider can compose all three databases,
+Faker edges are omitted. Provider can compose all three databases,
 but database implementations cannot depend on each other. Shared stages cannot
 depend on a database or Provider. Grammar cannot depend on Generation or Compiler,
 and runtime generation cannot depend on Compiler.
@@ -94,6 +94,10 @@ committed grammar artifacts are unchanged.
 outside the declared layers. `composer deptrac:debug` also reports unused allowed
 dependencies; `composer lint` runs these checks alongside the package's other
 guards. The configuration has no baseline, skipped violations or catch-all layer.
+
+PHP's built-in classes are not assigned to a layer. Deptrac's default
+`ignore_uncovered_internal_classes: true` keeps them out of uncovered-dependency
+reports.
 
 Production classes are collected by stage directory. Deptrac also treats PHPDoc
 type aliases and `StatementType` class aliases as dependencies, so those names
