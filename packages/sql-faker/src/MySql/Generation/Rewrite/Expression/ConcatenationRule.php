@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlFaker\MySql\Generation\Rewrite\Expression;
 
 use Override;
-use SqlFaker\Grammar\Generation\Token\RewriteRule;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Token\RewriteRule;
+use SqlFaker\Generation\Token\TerminalSequence;
 
 /**
  * Default SQL mode scans || as OR2_SYM; the OR_OR_SYM production constructs Item_func_concat.

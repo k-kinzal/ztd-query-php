@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace SqlFaker\MySql\Generation\Lexeme;
 
 use Override;
-use SqlFaker\Grammar\Generation\Lexeme\Lexeme;
-use SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates;
-use SqlFaker\Grammar\Generation\Lexeme\LexemeGenerator;
-use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
-use SqlFaker\Grammar\Generation\Lexeme\LexemeSequence;
-use SqlFaker\Grammar\Generation\Value\IntegerDomain;
-use SqlFaker\Grammar\Generation\Value\SequenceDomain;
-use SqlFaker\Grammar\Generation\Value\WordDomain;
+use SqlFaker\Generation\Lexeme\Lexeme;
+use SqlFaker\Generation\Lexeme\LexemeCandidates;
+use SqlFaker\Generation\Lexeme\LexemeGenerator;
+use SqlFaker\Generation\Lexeme\LexemeInput;
+use SqlFaker\Generation\Lexeme\LexemeSequence;
+use SqlFaker\Generation\Value\IntegerDomain;
+use SqlFaker\Generation\Value\SequenceDomain;
+use SqlFaker\Generation\Value\WordDomain;
 
 /**
  * Supplies identifier-form sizes accepted by sql_yacc.yy:size_number, with a 31-bit magnitude prefix.

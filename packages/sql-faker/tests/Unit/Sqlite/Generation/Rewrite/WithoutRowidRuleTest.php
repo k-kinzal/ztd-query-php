@@ -7,11 +7,11 @@ namespace Tests\Unit\SqlFaker\Sqlite\Generation\Rewrite;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\Derivation\DerivationTrace;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
-use SqlFaker\Grammar\NonTerminal;
-use SqlFaker\Grammar\Production;
-use SqlFaker\Grammar\Terminal;
+use SqlFaker\Generation\Derivation\DerivationTrace;
+use SqlFaker\Generation\Token\TerminalSequence;
+use SqlFaker\Grammar\Model\NonTerminal;
+use SqlFaker\Grammar\Model\Production;
+use SqlFaker\Grammar\Model\Terminal;
 use SqlFaker\Sqlite\Generation\Rewrite\WithoutRowidRule;
 
 #[CoversClass(WithoutRowidRule::class)]
@@ -20,8 +20,8 @@ use SqlFaker\Sqlite\Generation\Rewrite\WithoutRowidRule;
 #[UsesClass(Production::class)]
 #[UsesClass(Terminal::class)]
 #[UsesClass(TerminalSequence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
+#[UsesClass(\SqlFaker\Generation\Token\ProductionOccurrence::class)]
+#[UsesClass(\SqlFaker\Generation\Token\TerminalOccurrence::class)]
 final class WithoutRowidRuleTest extends TestCase
 {
     public function testRewriteCompletesAKeyOnlyForWithoutRowidAndRetainsTheOriginalTrace(): void

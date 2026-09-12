@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlFaker\Grammar\Resource\ArtifactDirectory;
 use SqlFaker\Grammar\Resource\GrammarWriter;
-use SqlFaker\Grammar\SqlVersion;
+use SqlFaker\Grammar\Resource\SqlVersion;
 
 #[CoversClass(GrammarWriter::class)]
 #[UsesClass(ArtifactDirectory::class)]

@@ -6,9 +6,9 @@ namespace SqlFaker;
 
 use Faker\Generator;
 use Faker\Provider\Base;
+use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\Generation\SqlGenerator;
-use SqlFaker\Grammar\Derivation\GenerationPlan;
-use SqlFaker\Grammar\Grammar;
+use SqlFaker\Grammar\Model\Grammar;
 use SqlFaker\MySql\GenerationPlans;
 use SqlFaker\MySql\Grammar\MySqlGrammar;
 use SqlFaker\MySql\StatementType;

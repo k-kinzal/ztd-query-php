@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlFaker\PostgreSql\Generation\Rewrite\Routine;
 
 use Override;
-use SqlFaker\Grammar\Generation\Token\RewriteRule;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Token\RewriteRule;
+use SqlFaker\Generation\Token\TerminalSequence;
 
 /**
  * parse_clause.c:transformRangeFunction disallows ordinality beside a top-level column definition list.

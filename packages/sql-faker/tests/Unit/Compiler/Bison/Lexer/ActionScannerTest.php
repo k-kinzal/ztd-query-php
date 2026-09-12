@@ -18,7 +18,7 @@ use SqlFaker\Compiler\Bison\Lexer\SourceCursor;
 #[UsesClass(BisonToken::class)]
 #[UsesClass(BisonTrivia::class)]
 #[UsesClass(SourceCursor::class)]
-#[UsesClass(\SqlFaker\Grammar\GrammarParseException::class)]
+#[UsesClass(\SqlFaker\Compiler\GrammarParseException::class)]
 final class ActionScannerTest extends TestCase
 {
     public function testHandlesClaimsOnlyAnOpeningBrace(): void

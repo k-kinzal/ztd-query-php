@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlFaker\MySql\Generation\Rewrite;
 
 use Override;
-use SqlFaker\Grammar\Generation\Token\RewriteRule;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Token\RewriteRule;
+use SqlFaker\Generation\Token\TerminalSequence;
 
 /**
  * sql_yacc.yy/alter_event_stmt requires at least one event alteration after its name.

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlFaker\PostgreSql\Generation\Rewrite\Routine;
 
 use Override;
-use SqlFaker\Grammar\Generation\Token\RewriteRule;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Token\RewriteRule;
+use SqlFaker\Generation\Token\TerminalSequence;
 
 /**
  * Aggregate arguments cannot have output modes; ordered-set direct VARIADIC types need coordinated lists.

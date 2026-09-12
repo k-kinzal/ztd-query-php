@@ -50,7 +50,7 @@ use SqlFaker\Compiler\Bison\Rule\BisonRuleReader;
 #[UsesClass(BisonTrivia::class)]
 #[UsesClass(SourceCursor::class)]
 #[UsesClass(\SqlFaker\Compiler\Bison\Ast\BisonSymbolForm::class)]
-#[UsesClass(\SqlFaker\Grammar\GrammarParseException::class)]
+#[UsesClass(\SqlFaker\Compiler\GrammarParseException::class)]
 final class BisonRuleReaderTest extends TestCase
 {
     public function testReadAllKeepsTheRulesInTheOrderTheyWereDeclared(): void

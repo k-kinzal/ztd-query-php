@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlFaker\MySql\Generation\Rewrite\Column;
 
-use SqlFaker\Grammar\Generation\Token\RewriteRule;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Token\RewriteRule;
+use SqlFaker\Generation\Token\TerminalSequence;
 
 /**
  * create_field.cc/Create_field::init permits AUTO_INCREMENT only for integer storage types.

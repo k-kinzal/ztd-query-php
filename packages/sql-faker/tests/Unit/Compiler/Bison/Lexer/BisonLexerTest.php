@@ -20,7 +20,7 @@ use SqlFaker\Compiler\Bison\Lexer\PunctuationScanner;
 use SqlFaker\Compiler\Bison\Lexer\QuotedLiteralScanner;
 use SqlFaker\Compiler\Bison\Lexer\SourceCursor;
 use SqlFaker\Compiler\Bison\Lexer\TypeTagScanner;
-use SqlFaker\Grammar\GrammarParseException;
+use SqlFaker\Compiler\GrammarParseException;
 
 #[CoversClass(BisonLexer::class)]
 #[UsesClass(ActionScanner::class)]

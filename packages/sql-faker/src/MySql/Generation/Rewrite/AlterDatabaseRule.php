@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlFaker\MySql\Generation\Rewrite;
 
 use Override;
-use SqlFaker\Grammar\Generation\Token\RewriteRule;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Token\RewriteRule;
+use SqlFaker\Generation\Token\TerminalSequence;
 
 /**
  * sql/sql_yacc.yy ident_or_empty and alter_database_options compete for an initial option keyword that is also allowed as an identifier.

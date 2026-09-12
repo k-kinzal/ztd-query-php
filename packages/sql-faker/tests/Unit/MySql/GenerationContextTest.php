@@ -8,15 +8,15 @@ use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlFaker\Generation\Exception\GenerationException;
+use SqlFaker\Generation\Exception\LexicalException;
+use SqlFaker\Generation\Plan\GenerationPlan;
+use SqlFaker\Generation\Plan\ProductionPattern;
 use SqlFaker\Generation\SqlGenerator;
-use SqlFaker\Grammar\Derivation\GenerationPlan;
-use SqlFaker\Grammar\Derivation\ProductionPattern;
-use SqlFaker\Grammar\GenerationException;
-use SqlFaker\Grammar\Grammar;
-use SqlFaker\Grammar\LexicalException;
-use SqlFaker\Grammar\Production;
-use SqlFaker\Grammar\ProductionRule;
-use SqlFaker\Grammar\Terminal;
+use SqlFaker\Grammar\Model\Grammar;
+use SqlFaker\Grammar\Model\Production;
+use SqlFaker\Grammar\Model\ProductionRule;
+use SqlFaker\Grammar\Model\Terminal;
 use SqlFaker\MySql\GenerationContext;
 
 #[CoversClass(GenerationContext::class)]
@@ -29,42 +29,42 @@ use SqlFaker\MySql\GenerationContext;
 #[UsesClass(ProductionPattern::class)]
 #[UsesClass(GenerationException::class)]
 #[UsesClass(LexicalException::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionCosts::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\Derivation::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\DerivationTrace::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\TerminationAnalyzer::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\TerminationCost::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\ChoiceLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\FixedLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\IntegerLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\Lexeme::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeInput::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeSequence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\MatchingLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\ValueLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\SequenceLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Output\CandidateResolver::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Output\OutputPart::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Output\ResolvedOutput::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Output\SqlSerializer::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\CombinedSpacingRule::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\SpacingConstraint::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalSequence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\TokenGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\TokenRewriter::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\CompletionCosts::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\Derivation::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\DerivationTrace::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\TerminationAnalyzer::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\TerminationCost::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\ChoiceLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\FixedLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\IntegerLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\Lexeme::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeCandidates::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeInput::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeSequence::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\MatchingLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\ValueLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\SequenceLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Output\CandidateResolver::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\OutputPart::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\ResolvedOutput::class)]
+#[UsesClass(\SqlFaker\Generation\Output\ReverseLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Output\SqlSerializer::class)]
+#[UsesClass(\SqlFaker\Generation\Output\CombinedSpacingRule::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\SpacingConstraint::class)]
+#[UsesClass(\SqlFaker\Generation\Token\ProductionOccurrence::class)]
+#[UsesClass(\SqlFaker\Generation\Token\TerminalOccurrence::class)]
+#[UsesClass(\SqlFaker\Generation\Token\TerminalSequence::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\TokenGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Token\TokenRewriter::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Option\UniqueOptionRule::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionCase::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\VersionCase::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\VersionedLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\MySql\Tokenization\KeywordIndex::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\RandomCharacters::class)]
+#[UsesClass(\SqlFaker\Generation\Value\RandomCharacters::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Value\LiteralGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\NonTerminal::class)]
+#[UsesClass(\SqlFaker\Grammar\Model\NonTerminal::class)]
 #[UsesClass(\SqlFaker\Grammar\Resource\SqlVersionRegistry::class)]
-#[UsesClass(\SqlFaker\Grammar\SqlVersion::class)]
+#[UsesClass(\SqlFaker\Grammar\Resource\SqlVersion::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\DefinitionFactory::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\KeywordLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\AlterDatabaseRule::class)]
@@ -79,10 +79,10 @@ use SqlFaker\MySql\GenerationContext;
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\SetNamesRule::class)]
 #[UsesClass(\SqlFaker\MySql\Grammar\MySqlGrammar::class)]
 #[UsesClass(\SqlFaker\MySql\LexicalGrammar::class)]
-#[UsesClass(\SqlFaker\MySql\MySqlTokenizer::class)]
+#[UsesClass(\SqlFaker\MySql\Tokenization\MySqlTokenizer::class)]
 #[UsesClass(\SqlFaker\MySql\StartRuleResolver::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Spacing\KeywordPhraseSpacingRule::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\LexemeBoundary::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeBoundary::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Spacing\CloneAddressSpacingRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Spacing\FunctionSpacingRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Spacing\QualifiedNameSpacingRule::class)]
@@ -113,16 +113,16 @@ use SqlFaker\MySql\GenerationContext;
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Routine\LanguageRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\FactorLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\PrecisionLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalMappingRule::class)]
+#[UsesClass(\SqlFaker\Generation\Token\TerminalMappingRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Partition\ValueArityRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Partition\ValueShape::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Query\WindowFrameRule::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\CharacterDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\ChoiceDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\IntegerDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\SequenceDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\CharacterDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\ChoiceDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\IntegerDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\SequenceDomain::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Value\DollarQuotedDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
+#[UsesClass(\SqlFaker\Generation\Output\BoundaryCompletion::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Expression\ConcatenationRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\Name\HostNameRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CharsetLexemeGenerator::class)]
@@ -130,8 +130,8 @@ use SqlFaker\MySql\GenerationContext;
 #[UsesClass(\SqlFaker\MySql\Generation\Value\IdentifierDomain::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Value\QuotedDomain::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Value\RadixDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\Utf8::class)]
+#[UsesClass(\SqlFaker\Generation\Value\WordDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\Utf8::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\LexicalDefinition::class)]
 final class GenerationContextTest extends TestCase
 {

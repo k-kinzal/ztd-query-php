@@ -1,0 +1,45 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlFaker\Generation\Derivation;
+
+use Closure;
+use Faker\Generator;
+use LogicException;
+use SqlFaker\Generation\Plan\GenerationPlan;
+use SqlFaker\Generation\Token\TerminalSequence;
+use SqlFaker\Grammar\Model\Grammar;
+
+/**
+ * Derives grammar terminals without choosing spellings or pruning unsupported lexemes.
+ */
+final class TokenGenerator
+{
+    private readonly TerminationAnalyzer $termination;
+
+    private readonly CompletionCosts $completion;
+
+    /**
+     * Fixes grammar and production choices; marker metadata affects emptiness, never handler availability.
+     * @param Closure(string): bool $nonOutput
+     */
+    public function __construct(private readonly Grammar $grammar, private readonly Generator $faker, Closure $nonOutput)
+    {
+        $this->termination = new TerminationAnalyzer($grammar);
+        $this->completion = new CompletionCosts($grammar, $nonOutput);
+    }
+
+    /**
+     * Produces the selected terminal occurrences and their grammar provenance.
+     * @param GenerationPlan<bool> $plan
+     * @throws \SqlFaker\Generation\Exception\GenerationException When the grammar cannot complete the plan
+     * @throws LogicException When derivation failed to retain its trace
+     */
+    public function generate(string $root, GenerationPlan $plan): TerminalSequence
+    {
+        $derivation = new Derivation($this->grammar, $this->faker, $this->termination, $this->completion);
+        $derivation->of($root, $plan);
+        return ($derivation->trace ?? throw new LogicException('Missing derivation trace.'))->terminals();
+    }
+}

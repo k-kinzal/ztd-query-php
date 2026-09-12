@@ -7,10 +7,10 @@ namespace Tests\Unit\SqlFaker\MySql\Generation\Rewrite;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\Derivation\DerivationTrace;
-use SqlFaker\Grammar\NonTerminal;
-use SqlFaker\Grammar\Production;
-use SqlFaker\Grammar\Terminal;
+use SqlFaker\Generation\Derivation\DerivationTrace;
+use SqlFaker\Grammar\Model\NonTerminal;
+use SqlFaker\Grammar\Model\Production;
+use SqlFaker\Grammar\Model\Terminal;
 use SqlFaker\MySql\Generation\Rewrite\RoleGrantRule;
 
 #[CoversClass(RoleGrantRule::class)]
@@ -18,9 +18,9 @@ use SqlFaker\MySql\Generation\Rewrite\RoleGrantRule;
 #[UsesClass(NonTerminal::class)]
 #[UsesClass(Production::class)]
 #[UsesClass(Terminal::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalSequence::class)]
+#[UsesClass(\SqlFaker\Generation\Token\ProductionOccurrence::class)]
+#[UsesClass(\SqlFaker\Generation\Token\TerminalOccurrence::class)]
+#[UsesClass(\SqlFaker\Generation\Token\TerminalSequence::class)]
 final class RoleGrantRuleTest extends TestCase
 {
     public function testRewriteChangesPrivilegesToRolesOnlyWithoutAnOnTarget(): void
@@ -85,7 +85,7 @@ final class RoleGrantRuleTest extends TestCase
 
     public function testPrivilegePreservesMissingOccurrences(): void
     {
-        $input = \SqlFaker\Grammar\Generation\Token\TerminalSequence::fromNames(['SELECT_SYM']);
+        $input = \SqlFaker\Generation\Token\TerminalSequence::fromNames(['SELECT_SYM']);
         self::assertSame($input, (new RoleGrantRule())->privilege($input, 0, 1));
     }
 }

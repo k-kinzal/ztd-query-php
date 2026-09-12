@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlFaker\MySql\Generation\Rewrite\Replication;
 
 use Override;
-use SqlFaker\Grammar\Generation\Token\RewriteRule;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Token\RewriteRule;
+use SqlFaker\Generation\Token\TerminalSequence;
 
 /**
  * Maps replication table filters to the string domain checked by sql_yacc.yy.

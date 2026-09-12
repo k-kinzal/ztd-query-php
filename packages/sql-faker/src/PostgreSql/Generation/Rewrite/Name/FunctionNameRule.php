@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlFaker\PostgreSql\Generation\Rewrite\Name;
 
 use Override;
-use SqlFaker\Grammar\Generation\Token\RewriteRule;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Token\RewriteRule;
+use SqlFaker\Generation\Token\TerminalSequence;
 
 /**
  * gram.y/check_func_name accepts String name components, excluding A_Star and A_Indices.

@@ -6,8 +6,8 @@ namespace SqlFaker\MySql\Generation\Value;
 
 use Closure;
 use Override;
-use SqlFaker\Grammar\Generation\Value\CharacterDomain;
-use SqlFaker\Grammar\Generation\Value\ValueDomain;
+use SqlFaker\Generation\Value\CharacterDomain;
+use SqlFaker\Generation\Value\ValueDomain;
 
 /**
 

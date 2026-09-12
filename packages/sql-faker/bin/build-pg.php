@@ -8,7 +8,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 use SqlFaker\Compiler\Bison\BisonParser;
 use SqlFaker\Compiler\Bison\GrammarCompiler;
 use SqlFaker\Grammar\Resource\GrammarWriter;
-use SqlFaker\Grammar\SqlVersion;
+use SqlFaker\Grammar\Resource\SqlVersion;
 
 /**
  * Build script for generating a versioned grammar AST from PostgreSQL sources.

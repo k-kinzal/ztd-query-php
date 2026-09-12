@@ -8,15 +8,16 @@ use Faker\Generator as FakerGenerator;
 use InvalidArgumentException;
 use Override;
 use RuntimeException;
-use SqlFaker\Grammar\Derivation\GenerationPlan;
-use SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator;
-use SqlFaker\Grammar\Generation\Output\SqlSerializer;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
-use SqlFaker\Grammar\LexicalException;
-use SqlFaker\Grammar\LexicalGrammar as LexicalGrammarContract;
+use SqlFaker\Generation\Exception\LexicalException;
+use SqlFaker\Generation\Lexeme\LexicalGrammar as LexicalGrammarContract;
+use SqlFaker\Generation\Output\ReverseLexemeGenerator;
+use SqlFaker\Generation\Output\SqlSerializer;
+use SqlFaker\Generation\Plan\GenerationPlan;
+use SqlFaker\Generation\Token\TerminalSequence;
 use SqlFaker\MySql\Generation\Lexeme\DefinitionFactory;
 use SqlFaker\MySql\Generation\Value\LiteralGenerator;
 use SqlFaker\MySql\Tokenization\KeywordIndex;
+use SqlFaker\MySql\Tokenization\MySqlTokenizer;
 
 /**
  * MySQL lexical generation using source-based candidate and boundary definitions.

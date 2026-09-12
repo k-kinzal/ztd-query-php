@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlFaker\MySql;
 
-use SqlFaker\Grammar\Grammar;
+use SqlFaker\Grammar\Model\Grammar;
 
 /**
  * Resolves MySQL rule names across grammar releases.

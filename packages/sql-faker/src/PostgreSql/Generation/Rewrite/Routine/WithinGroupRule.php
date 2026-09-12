@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlFaker\PostgreSql\Generation\Rewrite\Routine;
 
-use SqlFaker\Grammar\Generation\Token\RewriteRule;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Token\RewriteRule;
+use SqlFaker\Generation\Token\TerminalSequence;
 
 /**
  * gram.y:func_expr forbids inner ordering, DISTINCT and VARIADIC with WITHIN GROUP.

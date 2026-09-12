@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Compiler\Bison\Lexer\BisonTrivia;
 use SqlFaker\Compiler\Bison\Lexer\SourceCursor;
-use SqlFaker\Grammar\GrammarParseException;
+use SqlFaker\Compiler\GrammarParseException;
 
 #[CoversClass(BisonTrivia::class)]
 #[UsesClass(GrammarParseException::class)]

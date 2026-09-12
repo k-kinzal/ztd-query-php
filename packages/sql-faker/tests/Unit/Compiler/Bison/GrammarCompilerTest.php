@@ -16,9 +16,9 @@ use SqlFaker\Compiler\Bison\Ast\BisonSymbolNode;
 use SqlFaker\Compiler\Bison\Ast\BisonTokenDeclaration;
 use SqlFaker\Compiler\Bison\Ast\BisonTokenDefinition;
 use SqlFaker\Compiler\Bison\GrammarCompiler;
-use SqlFaker\Grammar\NonTerminal;
-use SqlFaker\Grammar\Terminal;
-use SqlFaker\Grammar\UnknownSymbolException;
+use SqlFaker\Compiler\UnknownSymbolException;
+use SqlFaker\Grammar\Model\NonTerminal;
+use SqlFaker\Grammar\Model\Terminal;
 
 #[CoversClass(BisonAlternativeNode::class)]
 #[CoversClass(BisonAst::class)]
@@ -31,12 +31,12 @@ use SqlFaker\Grammar\UnknownSymbolException;
 #[CoversClass(NonTerminal::class)]
 #[CoversClass(Terminal::class)]
 #[CoversClass(UnknownSymbolException::class)]
-#[CoversClass(\SqlFaker\Grammar\Grammar::class)]
+#[CoversClass(\SqlFaker\Grammar\Model\Grammar::class)]
 #[CoversClass(NonTerminal::class)]
-#[CoversClass(\SqlFaker\Grammar\Production::class)]
-#[CoversClass(\SqlFaker\Grammar\ProductionRule::class)]
+#[CoversClass(\SqlFaker\Grammar\Model\Production::class)]
+#[CoversClass(\SqlFaker\Grammar\Model\ProductionRule::class)]
 #[UsesClass(GrammarCompiler::class)]
-#[UsesClass(\SqlFaker\Grammar\Grammar::class)]
+#[UsesClass(\SqlFaker\Grammar\Model\Grammar::class)]
 #[UsesClass(BisonSymbolForm::class)]
 final class GrammarCompilerTest extends TestCase
 {

@@ -8,19 +8,19 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
-use SqlFaker\Grammar\Generation\Output\ResolvedOutput;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Lexeme\LexemeInput;
+use SqlFaker\Generation\Lexeme\ResolvedOutput;
+use SqlFaker\Generation\Token\TerminalSequence;
 use SqlFaker\MySql\Generation\Lexeme\ReplicationTablePatternLexemeGenerator;
 
 #[CoversClass(ReplicationTablePatternLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\Lexeme::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeSequence::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\Lexeme::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeCandidates::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeSequence::class)]
 #[UsesClass(LexemeInput::class)]
 #[UsesClass(ResolvedOutput::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\SpacingConstraint::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\SpacingConstraint::class)]
+#[UsesClass(\SqlFaker\Generation\Token\TerminalOccurrence::class)]
 #[UsesClass(TerminalSequence::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Value\QuotedDomain::class)]
 final class ReplicationTablePatternLexemeGeneratorTest extends TestCase

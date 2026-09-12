@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlFaker\MySql\Generation\Rewrite\Partition;
 
 use Override;
-use SqlFaker\Grammar\Generation\Token\RewriteRule;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Token\RewriteRule;
+use SqlFaker\Generation\Token\TerminalSequence;
 
 /**
  * sql_const.h:MAX_REF_PARTS limits partition and subpartition field lists to sixteen names.

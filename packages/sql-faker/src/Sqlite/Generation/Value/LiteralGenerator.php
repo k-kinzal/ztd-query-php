@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlFaker\Sqlite\Generation\Value;
 
 use Faker\Generator as FakerGenerator;
-use SqlFaker\Grammar\Generation\Value\RandomCharacters;
+use SqlFaker\Generation\Value\RandomCharacters;
 
 /**
  * Generates Sqlite literal bodies for the bounded lexical API.

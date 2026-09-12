@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlFaker\MySql\Generation\Rewrite\Name;
 
-use SqlFaker\Grammar\Generation\Token\RewriteRule;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Token\RewriteRule;
+use SqlFaker\Generation\Token\TerminalSequence;
 
 /**
  * sql_lex.cc/MY_LEX_SYSTEM_VAR accepts an identifier or backtick immediately after the second at-sign.

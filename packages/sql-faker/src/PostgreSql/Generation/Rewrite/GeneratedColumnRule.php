@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlFaker\PostgreSql\Generation\Rewrite;
 
 use Override;
-use SqlFaker\Grammar\Generation\Token\RewriteRule;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Token\RewriteRule;
+use SqlFaker\Generation\Token\TerminalSequence;
 
 /**
  * gram.y ColConstraintElem requires GENERATED ALWAYS for expressions; IDENTITY also permits BY DEFAULT.

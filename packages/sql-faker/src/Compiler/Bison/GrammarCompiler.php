@@ -9,13 +9,13 @@ use SqlFaker\Compiler\Bison\Ast\BisonRuleNode;
 use SqlFaker\Compiler\Bison\Ast\BisonSymbolForm;
 use SqlFaker\Compiler\Bison\Ast\BisonTokenDeclaration;
 use SqlFaker\Compiler\Bison\Ast\BisonTokenDefinition;
-use SqlFaker\Grammar\Grammar;
-use SqlFaker\Grammar\NonTerminal;
-use SqlFaker\Grammar\Production;
-use SqlFaker\Grammar\ProductionRule;
-use SqlFaker\Grammar\Symbol;
-use SqlFaker\Grammar\Terminal;
-use SqlFaker\Grammar\UnknownSymbolException;
+use SqlFaker\Compiler\UnknownSymbolException;
+use SqlFaker\Grammar\Model\Grammar;
+use SqlFaker\Grammar\Model\NonTerminal;
+use SqlFaker\Grammar\Model\Production;
+use SqlFaker\Grammar\Model\ProductionRule;
+use SqlFaker\Grammar\Model\Symbol;
+use SqlFaker\Grammar\Model\Terminal;
 
 /**
  * Compiles a Grammar from a BisonAst.

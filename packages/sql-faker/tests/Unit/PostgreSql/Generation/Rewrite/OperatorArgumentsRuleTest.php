@@ -7,10 +7,10 @@ namespace Tests\Unit\SqlFaker\PostgreSql\Generation\Rewrite;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\Derivation\DerivationTrace;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
-use SqlFaker\Grammar\Production;
-use SqlFaker\Grammar\Terminal;
+use SqlFaker\Generation\Derivation\DerivationTrace;
+use SqlFaker\Generation\Token\TerminalSequence;
+use SqlFaker\Grammar\Model\Production;
+use SqlFaker\Grammar\Model\Terminal;
 use SqlFaker\PostgreSql\Generation\Rewrite\OperatorArgumentsRule;
 
 #[CoversClass(OperatorArgumentsRule::class)]
@@ -18,9 +18,9 @@ use SqlFaker\PostgreSql\Generation\Rewrite\OperatorArgumentsRule;
 #[UsesClass(Production::class)]
 #[UsesClass(Terminal::class)]
 #[UsesClass(TerminalSequence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
-#[UsesClass(\SqlFaker\Grammar\NonTerminal::class)]
+#[UsesClass(\SqlFaker\Generation\Token\TerminalOccurrence::class)]
+#[UsesClass(\SqlFaker\Generation\Token\ProductionOccurrence::class)]
+#[UsesClass(\SqlFaker\Grammar\Model\NonTerminal::class)]
 final class OperatorArgumentsRuleTest extends TestCase
 {
     public function testRewriteCompletesOnlyAUnaryOperatorSignature(): void

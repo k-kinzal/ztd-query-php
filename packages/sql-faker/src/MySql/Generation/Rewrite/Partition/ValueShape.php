@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlFaker\MySql\Generation\Rewrite\Partition;
 
-use SqlFaker\Grammar\Generation\Token\TerminalOccurrence;
+use SqlFaker\Generation\Token\TerminalOccurrence;
 
 /**
  * Models the scalar and row value lists of sql_yacc.yy:part_values_in and part_func_max.

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlFaker\PostgreSql\Generation\Rewrite\Name;
 
-use SqlFaker\Grammar\Generation\Token\RewriteRule;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Token\RewriteRule;
+use SqlFaker\Generation\Token\TerminalSequence;
 
 /**
  * parse_expr.c and parse_target.c allow up to four ColumnRef fields before subscripting.

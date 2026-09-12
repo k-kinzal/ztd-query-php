@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlFaker\PostgreSql\Generation\Rewrite;
 
-use SqlFaker\Grammar\Generation\Token\TerminalMappingRule;
-use SqlFaker\Grammar\Generation\Token\TokenRewriter;
+use SqlFaker\Generation\Token\TerminalMappingRule;
+use SqlFaker\Generation\Token\TokenRewriter;
 use SqlFaker\PostgreSql\Generation\Rewrite\Column\ConstraintCapabilitiesRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Column\ForeignKeyActionRule;
 use SqlFaker\PostgreSql\Generation\Rewrite\Column\IdentityOptionRule;

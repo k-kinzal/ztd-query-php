@@ -7,10 +7,10 @@ namespace Tests\Unit\SqlFaker\Sqlite\Generation\Lexeme;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\Generation\Lexeme\FixedLexemeGenerator;
-use SqlFaker\Grammar\Generation\Output\SqlSerializer;
-use SqlFaker\Grammar\Generation\Spacing\CombinedSpacingRule;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Candidate\FixedLexemeGenerator;
+use SqlFaker\Generation\Output\CombinedSpacingRule;
+use SqlFaker\Generation\Output\SqlSerializer;
+use SqlFaker\Generation\Token\TerminalSequence;
 use SqlFaker\Sqlite\Generation\Lexeme\LexicalDefinition;
 
 #[CoversClass(LexicalDefinition::class)]
@@ -18,17 +18,17 @@ use SqlFaker\Sqlite\Generation\Lexeme\LexicalDefinition;
 #[UsesClass(SqlSerializer::class)]
 #[UsesClass(CombinedSpacingRule::class)]
 #[UsesClass(TerminalSequence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\Lexeme::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeInput::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeSequence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Output\CandidateResolver::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Output\OutputPart::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Output\ResolvedOutput::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\SpacingConstraint::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\Lexeme::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeCandidates::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeInput::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeSequence::class)]
+#[UsesClass(\SqlFaker\Generation\Output\BoundaryCompletion::class)]
+#[UsesClass(\SqlFaker\Generation\Output\CandidateResolver::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\OutputPart::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\ResolvedOutput::class)]
+#[UsesClass(\SqlFaker\Generation\Output\ReverseLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\SpacingConstraint::class)]
+#[UsesClass(\SqlFaker\Generation\Token\TerminalOccurrence::class)]
 final class LexicalDefinitionTest extends TestCase
 {
     public function testCompositionProducesOutputAndKeepsItsDiagnosticMetadata(): void

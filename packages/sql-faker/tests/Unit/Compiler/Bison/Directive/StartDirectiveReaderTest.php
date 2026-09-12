@@ -40,7 +40,7 @@ use SqlFaker\Compiler\Bison\Lexer\TypeTagScanner;
 #[UsesClass(QuotedLiteralScanner::class)]
 #[UsesClass(TypeTagScanner::class)]
 #[UsesClass(\SqlFaker\Compiler\Bison\Lexer\PunctuationScanner::class)]
-#[UsesClass(\SqlFaker\Grammar\GrammarParseException::class)]
+#[UsesClass(\SqlFaker\Compiler\GrammarParseException::class)]
 final class StartDirectiveReaderTest extends TestCase
 {
     public function testHandlesClaimsOnlyTheStartDirective(): void

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlFaker\Compiler\Bison\Lexer;
 
-use SqlFaker\Grammar\GrammarParseException;
+use SqlFaker\Compiler\GrammarParseException;
 
 /**
  * Turns Bison grammar source into a stream of tokens, one call at a time.

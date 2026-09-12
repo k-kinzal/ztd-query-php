@@ -6,14 +6,14 @@ namespace SqlFaker\Generation;
 
 use Closure;
 use Faker\Generator;
-use SqlFaker\Grammar\Derivation\GenerationPlan;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
-use SqlFaker\Grammar\Generation\Token\TokenGenerator;
-use SqlFaker\Grammar\Generation\Token\TokenRewriter;
-use SqlFaker\Grammar\GenerationException;
-use SqlFaker\Grammar\Grammar;
-use SqlFaker\Grammar\LexicalException;
-use SqlFaker\Grammar\LexicalGrammar;
+use SqlFaker\Generation\Derivation\TokenGenerator;
+use SqlFaker\Generation\Exception\GenerationException;
+use SqlFaker\Generation\Exception\LexicalException;
+use SqlFaker\Generation\Lexeme\LexicalGrammar;
+use SqlFaker\Generation\Plan\GenerationPlan;
+use SqlFaker\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Token\TokenRewriter;
+use SqlFaker\Grammar\Model\Grammar;
 
 /**
  * Derives terminals, rewrites structural constraints, and realizes lexemes once.

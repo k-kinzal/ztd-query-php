@@ -8,39 +8,39 @@ use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlFaker\Generation\Exception\GenerationException;
+use SqlFaker\Generation\Exception\LexicalException;
+use SqlFaker\Generation\Lexeme\LexicalGrammar;
+use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\Generation\SqlGenerator;
-use SqlFaker\Grammar\Derivation\GenerationPlan;
-use SqlFaker\Grammar\Generation\Token\RewriteRule;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
-use SqlFaker\Grammar\Generation\Token\TokenRewriter;
-use SqlFaker\Grammar\GenerationException;
-use SqlFaker\Grammar\Grammar;
-use SqlFaker\Grammar\LexicalException;
-use SqlFaker\Grammar\LexicalGrammar;
-use SqlFaker\Grammar\Production;
-use SqlFaker\Grammar\ProductionRule;
-use SqlFaker\Grammar\Terminal;
+use SqlFaker\Generation\Token\RewriteRule;
+use SqlFaker\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Token\TokenRewriter;
+use SqlFaker\Grammar\Model\Grammar;
+use SqlFaker\Grammar\Model\Production;
+use SqlFaker\Grammar\Model\ProductionRule;
+use SqlFaker\Grammar\Model\Terminal;
 
 #[CoversClass(SqlGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\Derivation::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\Derivation::class)]
 #[UsesClass(GenerationException::class)]
 #[UsesClass(GenerationPlan::class)]
 #[UsesClass(Grammar::class)]
-#[UsesClass(\SqlFaker\Grammar\NonTerminal::class)]
+#[UsesClass(\SqlFaker\Grammar\Model\NonTerminal::class)]
 #[UsesClass(Production::class)]
 #[UsesClass(ProductionRule::class)]
 #[UsesClass(Terminal::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\TerminationAnalyzer::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\TerminationCost::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\TerminationAnalyzer::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\TerminationCost::class)]
 #[UsesClass(LexicalException::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionCosts::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\DerivationTrace::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\CompletionCosts::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\DerivationTrace::class)]
+#[UsesClass(\SqlFaker\Generation\Token\ProductionOccurrence::class)]
+#[UsesClass(\SqlFaker\Generation\Token\TerminalOccurrence::class)]
 #[UsesClass(TerminalSequence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\TokenGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\TokenGenerator::class)]
 #[UsesClass(TokenRewriter::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\ProductionPattern::class)]
+#[UsesClass(\SqlFaker\Generation\Plan\ProductionPattern::class)]
 final class SqlGeneratorTest extends TestCase
 {
     public function testGenerateReusesCompletionAnalysisAcrossDifferentPlans(): void

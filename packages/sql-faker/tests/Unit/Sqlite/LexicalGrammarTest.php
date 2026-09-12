@@ -10,16 +10,16 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\Derivation\GenerationPlan;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
-use SqlFaker\Grammar\Generation\Value\RandomCharacters;
-use SqlFaker\Grammar\LexicalException;
+use SqlFaker\Generation\Exception\LexicalException;
+use SqlFaker\Generation\Plan\GenerationPlan;
+use SqlFaker\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Value\RandomCharacters;
+use SqlFaker\Grammar\Resource\SqlVersion;
 use SqlFaker\Grammar\Resource\SqlVersionRegistry;
-use SqlFaker\Grammar\SqlVersion;
 use SqlFaker\Sqlite\Generation\Value\LiteralGenerator;
 use SqlFaker\Sqlite\LexicalGrammar;
-use SqlFaker\Sqlite\SqliteTokenizer;
 use SqlFaker\Sqlite\Tokenization\KeywordIndex;
+use SqlFaker\Sqlite\Tokenization\SqliteTokenizer;
 
 #[CoversClass(LexicalGrammar::class)]
 #[CoversClass(LiteralGenerator::class)]
@@ -29,45 +29,45 @@ use SqlFaker\Sqlite\Tokenization\KeywordIndex;
 #[UsesClass(RandomCharacters::class)]
 #[UsesClass(SqlVersionRegistry::class)]
 #[UsesClass(SqliteTokenizer::class)]
-#[UsesClass(\SqlFaker\Sqlite\SqliteQuoting::class)]
+#[UsesClass(\SqlFaker\Sqlite\Tokenization\SqliteQuoting::class)]
 #[UsesClass(GenerationPlan::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\ChoiceLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\FixedLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\Lexeme::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeInput::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeSequence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\MatchingLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\ValueLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\RegisteredLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Output\CandidateResolver::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Output\OutputPart::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Output\ResolvedOutput::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Output\SqlSerializer::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\CombinedSpacingRule::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\SpacingConstraint::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\ChoiceLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\FixedLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\Lexeme::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeCandidates::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeInput::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeSequence::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\MatchingLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\ValueLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\RegisteredLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Output\CandidateResolver::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\OutputPart::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\ResolvedOutput::class)]
+#[UsesClass(\SqlFaker\Generation\Output\ReverseLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Output\SqlSerializer::class)]
+#[UsesClass(\SqlFaker\Generation\Output\CombinedSpacingRule::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\SpacingConstraint::class)]
+#[UsesClass(\SqlFaker\Generation\Token\TerminalOccurrence::class)]
 #[UsesClass(TerminalSequence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionCase::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\VersionCase::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\VersionedLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\DefinitionFactory::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\JoinLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\ProductionPattern::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\LexemeBoundary::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
+#[UsesClass(\SqlFaker\Generation\Plan\ProductionPattern::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeBoundary::class)]
+#[UsesClass(\SqlFaker\Generation\Token\ProductionOccurrence::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\JoinModifiers::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\WindowNameLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\CharacterDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\ChoiceDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\IntegerDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\SequenceDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\CharacterDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\ChoiceDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\IntegerDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\SequenceDomain::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Value\DollarQuotedDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
+#[UsesClass(\SqlFaker\Generation\Output\BoundaryCompletion::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Value\IdentifierDomain::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Value\QuotedDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\RepeatDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\RepeatDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\WordDomain::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\LexicalDefinition::class)]
 final class LexicalGrammarTest extends TestCase
 {

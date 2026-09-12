@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace SqlFaker\MySql\Generation\Lexeme;
 
-use SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates;
-use SqlFaker\Grammar\Generation\Lexeme\LexemeGenerator;
-use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
-use SqlFaker\Grammar\Generation\Lexeme\ValueLexemeGenerator;
-use SqlFaker\Grammar\Generation\Value\WordDomain;
+use SqlFaker\Generation\Candidate\ValueLexemeGenerator;
+use SqlFaker\Generation\Lexeme\LexemeCandidates;
+use SqlFaker\Generation\Lexeme\LexemeGenerator;
+use SqlFaker\Generation\Lexeme\LexemeInput;
+use SqlFaker\Generation\Value\WordDomain;
 
 /**
  * sql_yacc.yy/factor accepts exactly 2 or 3; paired ALTER USER factors differ and ADD factors ascend.

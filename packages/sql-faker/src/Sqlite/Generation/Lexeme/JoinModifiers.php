@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace SqlFaker\Sqlite\Generation\Lexeme;
 
-use SqlFaker\Grammar\LexicalException;
+use SqlFaker\Generation\Exception\LexicalException;
 
 /**
  * The word flags and validity conditions in SQLite 3.47.2 select.c/sqlite3JoinType.

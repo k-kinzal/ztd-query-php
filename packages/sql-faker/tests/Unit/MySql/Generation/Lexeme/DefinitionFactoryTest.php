@@ -9,10 +9,10 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
-use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
-use SqlFaker\Grammar\Generation\Output\ResolvedOutput;
-use SqlFaker\Grammar\Generation\Output\SqlSerializer;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Lexeme\LexemeInput;
+use SqlFaker\Generation\Lexeme\ResolvedOutput;
+use SqlFaker\Generation\Output\SqlSerializer;
+use SqlFaker\Generation\Token\TerminalSequence;
 use SqlFaker\MySql\Generation\Lexeme\DefinitionFactory;
 
 #[CoversClass(DefinitionFactory::class)]
@@ -20,36 +20,36 @@ use SqlFaker\MySql\Generation\Lexeme\DefinitionFactory;
 #[UsesClass(ResolvedOutput::class)]
 #[UsesClass(SqlSerializer::class)]
 #[UsesClass(TerminalSequence::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\GenerationPlan::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\ProductionPattern::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\ChoiceLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\FixedLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\IntegerLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\Lexeme::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeSequence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\MatchingLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\ValueLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\SequenceLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Output\CandidateResolver::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Output\OutputPart::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\CombinedSpacingRule::class)]
+#[UsesClass(\SqlFaker\Generation\Plan\GenerationPlan::class)]
+#[UsesClass(\SqlFaker\Generation\Plan\ProductionPattern::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\ChoiceLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\FixedLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\IntegerLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\Lexeme::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeCandidates::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeSequence::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\MatchingLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\ValueLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\SequenceLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Output\BoundaryCompletion::class)]
+#[UsesClass(\SqlFaker\Generation\Output\CandidateResolver::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\OutputPart::class)]
+#[UsesClass(\SqlFaker\Generation\Output\ReverseLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Output\CombinedSpacingRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Spacing\KeywordPhraseSpacingRule::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\LexemeBoundary::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\SpacingConstraint::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\CharacterDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\ChoiceDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeBoundary::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\SpacingConstraint::class)]
+#[UsesClass(\SqlFaker\Generation\Token\ProductionOccurrence::class)]
+#[UsesClass(\SqlFaker\Generation\Token\TerminalOccurrence::class)]
+#[UsesClass(\SqlFaker\Generation\Value\CharacterDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\ChoiceDomain::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Value\DollarQuotedDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\IntegerDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\SequenceDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\ValueChoices::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionCase::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\LexicalException::class)]
+#[UsesClass(\SqlFaker\Generation\Value\IntegerDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\SequenceDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\ValueChoices::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\VersionCase::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\VersionedLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Exception\LexicalException::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\BoundedIntegerLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CharsetLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\CharsetValueLexemeGenerator::class)]
@@ -65,10 +65,10 @@ use SqlFaker\MySql\Generation\Lexeme\DefinitionFactory;
 #[UsesClass(\SqlFaker\MySql\Generation\Value\IdentifierDomain::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Value\QuotedDomain::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Value\RadixDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\Utf8::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\Utf8::class)]
+#[UsesClass(\SqlFaker\Generation\Value\WordDomain::class)]
 #[UsesClass(\SqlFaker\Grammar\Resource\SqlVersionRegistry::class)]
-#[UsesClass(\SqlFaker\Grammar\SqlVersion::class)]
+#[UsesClass(\SqlFaker\Grammar\Resource\SqlVersion::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\LexicalDefinition::class)]
 final class DefinitionFactoryTest extends TestCase
 {
@@ -282,7 +282,7 @@ final class DefinitionFactoryTest extends TestCase
     public function testStringsKeepsConstructedIntroducedValuesValidUnderAnExplicitAsciiCharsetValue(): void
     {
         $tokens = TerminalSequence::fromNames(['UNDERSCORE_CHARSET', 'TEXT_STRING']);
-        $result = (new DefinitionFactory())->create('mysql-8.4.7')->lexemes->generate(new LexemeInput($tokens, 1, new ResolvedOutput(), values: new \SqlFaker\Grammar\Generation\Value\ValueChoices(static fn (int $count): int => $count - 1)));
+        $result = (new DefinitionFactory())->create('mysql-8.4.7')->lexemes->generate(new LexemeInput($tokens, 1, new ResolvedOutput(), values: new \SqlFaker\Generation\Value\ValueChoices(static fn (int $count): int => $count - 1)));
         self::assertNotNull($result);
         self::assertSame(1, preg_match('/\A[\x00-\x7f]*\z/D', [...$result->sequences()][0]->lexemes[0]->text));
     }
@@ -294,7 +294,7 @@ final class DefinitionFactoryTest extends TestCase
     #[DataProvider('providerConstructedBoundariesValue')]
     public function testCreateConstructsScannerBoundaryValuesValue(string $terminal, array $decisions, array $expected): void
     {
-        $values = new \SqlFaker\Grammar\Generation\Value\ValueChoices(static function (int $count) use (&$decisions): int {
+        $values = new \SqlFaker\Generation\Value\ValueChoices(static function (int $count) use (&$decisions): int {
             return array_shift($decisions) ?? $count - 1;
         });
         $result = (new DefinitionFactory())->create('mysql-8.4.7')->lexemes->generate(new LexemeInput(TerminalSequence::fromNames([$terminal]), 0, new ResolvedOutput(), values: $values));
@@ -348,7 +348,7 @@ final class DefinitionFactoryTest extends TestCase
     #[DataProvider('providerIntroducedBoundariesValue')]
     public function testBinaryAndStringsConstructCompleteAsciiValuesAfterIntroducersValue(string $terminal, array $decisions, string $expected): void
     {
-        $values = new \SqlFaker\Grammar\Generation\Value\ValueChoices(static function (int $count) use (&$decisions): int {
+        $values = new \SqlFaker\Generation\Value\ValueChoices(static function (int $count) use (&$decisions): int {
             return array_shift($decisions) ?? $count - 1;
         });
         $result = (new DefinitionFactory())->create('mysql-8.4.7')->lexemes->generate(new LexemeInput(TerminalSequence::fromNames(['UNDERSCORE_CHARSET', $terminal]), 1, new ResolvedOutput(), values: $values));
@@ -448,7 +448,7 @@ final class DefinitionFactoryTest extends TestCase
     #[DataProvider('providerConstructedStringsDollarString')]
     public function testCreateConstructsCompleteDollarDelimitersAndUnescapedBodiesDollarString(array $decisions, string $expected): void
     {
-        $values = new \SqlFaker\Grammar\Generation\Value\ValueChoices(static function (int $count) use (&$decisions): int {
+        $values = new \SqlFaker\Generation\Value\ValueChoices(static function (int $count) use (&$decisions): int {
             return array_shift($decisions) ?? $count - 1;
         });
         $result = (new DefinitionFactory())->create('mysql-8.4.7')->lexemes->generate(new LexemeInput(TerminalSequence::fromNames(['DOLLAR_QUOTED_STRING_SYM']), 0, new ResolvedOutput(), values: $values));

@@ -8,34 +8,34 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
-use SqlFaker\Grammar\Generation\Output\ResolvedOutput;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Lexeme\LexemeInput;
+use SqlFaker\Generation\Lexeme\ResolvedOutput;
+use SqlFaker\Generation\Token\TerminalSequence;
 use SqlFaker\MySql\Generation\Lexeme\CharsetLexemeGenerator;
 
 #[CoversClass(CharsetLexemeGenerator::class)]
 #[UsesClass(LexemeInput::class)]
 #[UsesClass(ResolvedOutput::class)]
 #[UsesClass(TerminalSequence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\ChoiceLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\IntegerLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\Lexeme::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeSequence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\ValueLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\SpacingConstraint::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\CharacterDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\ChoiceDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\IntegerDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\SequenceDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\ChoiceLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\IntegerLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\Lexeme::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeCandidates::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\LexemeSequence::class)]
+#[UsesClass(\SqlFaker\Generation\Candidate\ValueLexemeGenerator::class)]
+#[UsesClass(\SqlFaker\Generation\Token\TerminalOccurrence::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\SpacingConstraint::class)]
+#[UsesClass(\SqlFaker\Generation\Token\ProductionOccurrence::class)]
+#[UsesClass(\SqlFaker\Generation\Value\CharacterDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\ChoiceDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\IntegerDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\SequenceDomain::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Value\DollarQuotedDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Output\OutputPart::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\ValueChoices::class)]
+#[UsesClass(\SqlFaker\Generation\Lexeme\OutputPart::class)]
+#[UsesClass(\SqlFaker\Generation\Value\ValueChoices::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Value\RadixDomain::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\Utf8::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\WordDomain::class)]
+#[UsesClass(\SqlFaker\Generation\Value\Utf8::class)]
+#[UsesClass(\SqlFaker\Generation\Value\WordDomain::class)]
 final class CharsetLexemeGeneratorTest extends TestCase
 {
     #[DataProvider('providerEncodings')]
@@ -69,7 +69,7 @@ final class CharsetLexemeGeneratorTest extends TestCase
     public function testGenerateKeepsOnlyCharsetsCompatibleWithTheResolvedLiteral(): void
     {
         $tokens = TerminalSequence::fromNames(['UNDERSCORE_CHARSET', 'HEX_NUM']);
-        $right = new ResolvedOutput([new \SqlFaker\Grammar\Generation\Output\OutputPart(new \SqlFaker\Grammar\Generation\Lexeme\Lexeme("X'ff'", 'number', $tokens->terminals[1], 'hex'), '', 'hex')]);
+        $right = new ResolvedOutput([new \SqlFaker\Generation\Lexeme\OutputPart(new \SqlFaker\Generation\Lexeme\Lexeme("X'ff'", 'number', $tokens->terminals[1], 'hex'), '', 'hex')]);
         $generator = new CharsetLexemeGenerator();
         $result = $generator->generate(new LexemeInput($tokens, 0, $right));
         self::assertNotNull($result);

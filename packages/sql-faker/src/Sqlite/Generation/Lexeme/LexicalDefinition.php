@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace SqlFaker\Sqlite\Generation\Lexeme;
 
-use SqlFaker\Grammar\Generation\Lexeme\LexemeGenerator;
-use SqlFaker\Grammar\Generation\Output\CandidateResolver;
-use SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator;
-use SqlFaker\Grammar\Generation\Spacing\SpacingRule;
+use SqlFaker\Generation\Lexeme\LexemeGenerator;
+use SqlFaker\Generation\Lexeme\SpacingRule;
+use SqlFaker\Generation\Output\CandidateResolver;
+use SqlFaker\Generation\Output\ReverseLexemeGenerator;
 
 /**
  * Carries one lexical composition and its tokenizer and token-budget metadata.

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlFaker\Grammar\Resource;
 
 use RuntimeException;
-use SqlFaker\Grammar\SqlVersion;
 
 /**
  * Resolves supported releases and their generated grammar AST paths.

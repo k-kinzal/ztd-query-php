@@ -7,7 +7,7 @@ namespace SqlFaker\Compiler\Bison;
 use SqlFaker\Compiler\Bison\Ast\BisonAst;
 use SqlFaker\Compiler\Bison\Lexer\BisonTokenStream;
 use SqlFaker\Compiler\Bison\Rule\BisonRuleReader;
-use SqlFaker\Grammar\GrammarParseException;
+use SqlFaker\Compiler\GrammarParseException;
 
 /**
  * Reads a GNU Bison or Yacc grammar file into an AST.

@@ -8,15 +8,15 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\Generation\Token\ProductionOccurrence;
-use SqlFaker\Grammar\Generation\Token\TerminalOccurrence;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Token\ProductionOccurrence;
+use SqlFaker\Generation\Token\TerminalOccurrence;
+use SqlFaker\Generation\Token\TerminalSequence;
 use SqlFaker\PostgreSql\Generation\Rewrite\LookaheadRule;
 
 #[CoversClass(LookaheadRule::class)]
 #[UsesClass(TerminalSequence::class)]
 #[UsesClass(TerminalOccurrence::class)]
-#[UsesClass(\SqlFaker\PostgreSql\PgLookahead::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Lookahead\PgLookahead::class)]
 #[UsesClass(ProductionOccurrence::class)]
 final class LookaheadRuleTest extends TestCase
 {

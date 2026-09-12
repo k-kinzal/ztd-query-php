@@ -8,8 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\Generation\Token\TerminalOccurrence;
-use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Generation\Token\TerminalOccurrence;
+use SqlFaker\Generation\Token\TerminalSequence;
 use SqlFaker\MySql\Generation\Rewrite\Partition\ValueShape;
 
 #[CoversClass(ValueShape::class)]

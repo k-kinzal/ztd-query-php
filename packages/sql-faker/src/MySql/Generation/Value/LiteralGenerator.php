@@ -6,7 +6,7 @@ namespace SqlFaker\MySql\Generation\Value;
 
 use Faker\Generator as FakerGenerator;
 use LogicException;
-use SqlFaker\Grammar\Generation\Value\RandomCharacters;
+use SqlFaker\Generation\Value\RandomCharacters;
 
 /**
  * Generates MySql literal bodies for the bounded lexical API.

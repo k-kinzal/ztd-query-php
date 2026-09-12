@@ -7,9 +7,9 @@ namespace SqlFaker\MySql;
 use Closure;
 use Faker\Generator;
 use RuntimeException;
-use SqlFaker\Grammar\Generation\Token\TokenRewriter;
-use SqlFaker\Grammar\Grammar;
-use SqlFaker\Grammar\LexicalGrammar as LexicalContract;
+use SqlFaker\Generation\Lexeme\LexicalGrammar as LexicalContract;
+use SqlFaker\Generation\Token\TokenRewriter;
+use SqlFaker\Grammar\Model\Grammar;
 use SqlFaker\MySql\Generation\Rewrite\RewriteDefinitions;
 use SqlFaker\MySql\Grammar\MySqlGrammar;
 

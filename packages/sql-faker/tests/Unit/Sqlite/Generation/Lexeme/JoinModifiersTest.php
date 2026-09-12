@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\Grammar\LexicalException;
+use SqlFaker\Generation\Exception\LexicalException;
 use SqlFaker\Sqlite\Generation\Lexeme\JoinModifiers;
 
 #[CoversClass(JoinModifiers::class)]
