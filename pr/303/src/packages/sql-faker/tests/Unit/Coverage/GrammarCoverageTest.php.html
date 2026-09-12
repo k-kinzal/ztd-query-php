@@ -27,14 +27,14 @@
 <nav class="crumbs"><a href="../../../../../../index.html">src</a><span class="crumb-sep">::</span><span class="crumb-current">packages/sql-faker/tests/Unit/Coverage/GrammarCoverageTest.php</span></nav>
 <div class="topbar-tools">
 <input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
-<span class="diff-range" title="Comparing 0cf9cc5a to working tree">0cf9cc5a <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><button id="theme-toggle" title="Toggle theme">◐</button>
+<span class="diff-range" title="Comparing 01615685 to working tree">01615685 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><button id="theme-toggle" title="Toggle theme">◐</button>
 </div>
 </header>
 <div class="search-results" id="search-results" hidden></div>
 <main class="content">
-<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 0cf9cc5a and working tree." data-off="This page documents what 0cf9cc5a had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 01615685 and working tree." data-off="This page documents what 01615685 had and working tree no longer has. Switch to Diff to read it." hidden></p>
 <div class="symbol-head"><h1 class="source-title">packages/sql-faker/tests/Unit/Coverage/GrammarCoverageTest.php</h1></div>
-<div class="notice diff-banner" data-diff="added">Added in working tree, compared to 0cf9cc5a.</div>
+<div class="notice diff-banner" data-diff="added">Added in working tree, compared to 01615685.</div>
 <pre class="source" data-diff="added"><code><span class="src-line" id="L1" data-diff="added"><a class="ln" href="#L1">1</a>&lt;?php</span>
 <span class="src-line" id="L2" data-diff="added"><a class="ln" href="#L2">2</a></span>
 <span class="src-line" id="L3" data-diff="added"><a class="ln" href="#L3">3</a><span class="tok-kw">declare</span> (<span class="tok-id">strict_types</span>=<span class="tok-num">1</span>);</span>
@@ -55,34 +55,34 @@
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Coverage\LexicalObservation</span>;</span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Coverage\SequenceObservation</span>;</span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Coverage\SnapshotValidation</span>;</span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Choice\ByteChoices</span>;</span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Derivation\CompletionCosts</span>;</span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Derivation\DerivationNode</span>;</span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Derivation\DerivationTrace</span>;</span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Lexeme\ChoiceLexemeGenerator</span>;</span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Lexeme\FixedLexemeGenerator</span>;</span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Lexeme\Lexeme</span>;</span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates</span>;</span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Lexeme\LexemeInput</span>;</span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Lexeme\LexemeSequence</span>;</span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Lexeme\ValueLexemeGenerator</span>;</span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Output\BoundaryCompletion</span>;</span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Output\CandidateResolver</span>;</span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Output\OutputPart</span>;</span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Output\ResolvedOutput</span>;</span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator</span>;</span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Spacing\CombinedSpacingRule</span>;</span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Spacing\SpacingConstraint</span>;</span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Token\ProductionOccurrence</span>;</span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Token\TerminalOccurrence</span>;</span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Token\TerminalSequence</span>;</span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Value\CharacterDomain</span>;</span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Generation\Value\ValueChoices</span>;</span>
-<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Grammar</span>;</span>
-<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\NonTerminal</span>;</span>
-<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Production</span>;</span>
-<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\ProductionRule</span>;</span>
-<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Terminal</span>;</span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Candidate\ChoiceLexemeGenerator</span>;</span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Candidate\FixedLexemeGenerator</span>;</span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Candidate\ValueLexemeGenerator</span>;</span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Choice\ByteChoices</span>;</span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Derivation\CompletionCosts</span>;</span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Derivation\DerivationNode</span>;</span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Derivation\DerivationTrace</span>;</span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Lexeme\Lexeme</span>;</span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Lexeme\LexemeCandidates</span>;</span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Lexeme\LexemeInput</span>;</span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Lexeme\LexemeSequence</span>;</span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Lexeme\OutputPart</span>;</span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Lexeme\ResolvedOutput</span>;</span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Lexeme\SpacingConstraint</span>;</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Output\BoundaryCompletion</span>;</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Output\CandidateResolver</span>;</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Output\CombinedSpacingRule</span>;</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Output\ReverseLexemeGenerator</span>;</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Token\ProductionOccurrence</span>;</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Token\TerminalOccurrence</span>;</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Token\TerminalSequence</span>;</span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Value\CharacterDomain</span>;</span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Value\ValueChoices</span>;</span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Model\Grammar</span>;</span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Model\NonTerminal</span>;</span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Model\Production</span>;</span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Model\ProductionRule</span>;</span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Grammar\Model\Terminal</span>;</span>
 <span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a><span class="tok-kw">use</span> <span class="tok-id">Symfony\Component\Filesystem\Filesystem</span>;</span>
 <span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a></span>
 <span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>#[<span class="tok-id">CoversClass</span>(<span class="tok-id">GrammarCoverage</span>::<span class="tok-kw">class</span>)]</span>
@@ -1313,8 +1313,56 @@
 <span class="src-line" id="L1276" data-diff="added"><a class="ln" href="#L1276">1276</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;&#039;</span>, <span class="tok-var">$trace</span>[<span class="tok-str">&#039;spacingEvents&#039;</span>][<span class="tok-num">0</span>][<span class="tok-str">&#039;separator&#039;</span>]);</span>
 <span class="src-line" id="L1277" data-diff="added"><a class="ln" href="#L1277">1277</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([], <span class="tok-var">$trace</span>[<span class="tok-str">&#039;spacingEvents&#039;</span>][<span class="tok-num">0</span>][<span class="tok-str">&#039;rules&#039;</span>]);</span>
 <span class="src-line" id="L1278" data-diff="added"><a class="ln" href="#L1278">1278</a>    }</span>
-<span class="src-line" id="L1279" data-diff="added"><a class="ln" href="#L1279">1279</a>}</span>
-<span class="src-line" id="L1280" data-diff="added"><a class="ln" href="#L1280">1280</a></span>
+<span class="src-line" id="L1279" data-diff="added"><a class="ln" href="#L1279">1279</a></span>
+<span class="src-line" id="L1280" data-diff="added"><a class="ln" href="#L1280">1280</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testEndGenerationSavesUnsavedDiscoveriesEveryHundredGenerations</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L1281" data-diff="added"><a class="ln" href="#L1281">1281</a>    {</span>
+<span class="src-line" id="L1282" data-diff="added"><a class="ln" href="#L1282">1282</a>        <span class="tok-var">$directory</span> = <span class="tok-id">sys_get_temp_dir</span>() . <span class="tok-str">&#039;/sql-faker-coverage-&#039;</span> . <span class="tok-id">bin2hex</span>(<span class="tok-id">random_bytes</span>(<span class="tok-num">8</span>));</span>
+<span class="src-line" id="L1283" data-diff="added"><a class="ln" href="#L1283">1283</a>        (<span class="tok-kw">new</span> <span class="tok-id">Filesystem</span>())-&gt;<span class="tok-id">mkdir</span>(<span class="tok-var">$directory</span>);</span>
+<span class="src-line" id="L1284" data-diff="added"><a class="ln" href="#L1284">1284</a>        <span class="tok-var">$coverage</span> = <span class="tok-kw">new</span> <span class="tok-id">GrammarCoverage</span>(<span class="tok-var">$directory</span>);</span>
+<span class="src-line" id="L1285" data-diff="added"><a class="ln" href="#L1285">1285</a>        <span class="tok-var">$coverage</span>-&gt;<span class="tok-id">register</span>(</span>
+<span class="src-line" id="L1286" data-diff="added"><a class="ln" href="#L1286">1286</a>            <span class="tok-kw">new</span> <span class="tok-id">GrammarCoverageInventory</span>(</span>
+<span class="src-line" id="L1287" data-diff="added"><a class="ln" href="#L1287">1287</a>                (<span class="tok-kw">new</span> <span class="tok-id">Grammar</span>(</span>
+<span class="src-line" id="L1288" data-diff="added"><a class="ln" href="#L1288">1288</a>                    <span class="tok-str">&#039;stmt&#039;</span>,</span>
+<span class="src-line" id="L1289" data-diff="added"><a class="ln" href="#L1289">1289</a>                    [<span class="tok-str">&#039;stmt&#039;</span> =&gt; <span class="tok-kw">new</span> <span class="tok-id">ProductionRule</span>(<span class="tok-str">&#039;stmt&#039;</span>, [<span class="tok-kw">new</span> <span class="tok-id">Production</span>([<span class="tok-kw">new</span> <span class="tok-id">Terminal</span>(<span class="tok-str">&#039;SELECT&#039;</span>)]), <span class="tok-kw">new</span> <span class="tok-id">Production</span>([<span class="tok-kw">new</span> <span class="tok-id">Terminal</span>(<span class="tok-str">&#039;DELETE&#039;</span>)])])],</span>
+<span class="src-line" id="L1290" data-diff="added"><a class="ln" href="#L1290">1290</a>                ))-&gt;<span class="tok-id">identified</span>(),</span>
+<span class="src-line" id="L1291" data-diff="added"><a class="ln" href="#L1291">1291</a>                <span class="tok-str">&#039;stmt&#039;</span>,</span>
+<span class="src-line" id="L1292" data-diff="added"><a class="ln" href="#L1292">1292</a>                <span class="tok-str">&#039;test-v1&#039;</span>,</span>
+<span class="src-line" id="L1293" data-diff="added"><a class="ln" href="#L1293">1293</a>            ),</span>
+<span class="src-line" id="L1294" data-diff="added"><a class="ln" href="#L1294">1294</a>            <span class="tok-str">&#039;revision-a&#039;</span>,</span>
+<span class="src-line" id="L1295" data-diff="added"><a class="ln" href="#L1295">1295</a>        );</span>
+<span class="src-line" id="L1296" data-diff="added"><a class="ln" href="#L1296">1296</a>        <span class="tok-var">$recordedProductionIds</span> = <span class="tok-var">$coverage</span>-&gt;<span class="tok-id">inventory</span>()-&gt;<span class="tok-id">denominator</span>;</span>
+<span class="src-line" id="L1297" data-diff="added"><a class="ln" href="#L1297">1297</a>        <span class="tok-var">$generate</span> = <span class="tok-kw">static</span> <span class="tok-kw">function</span> (<span class="tok-id">int</span> <span class="tok-var">$generation</span>) <span class="tok-kw">use</span> (<span class="tok-var">$coverage</span>, <span class="tok-var">$recordedProductionIds</span>): <span class="tok-id">void</span> {</span>
+<span class="src-line" id="L1298" data-diff="added"><a class="ln" href="#L1298">1298</a>            <span class="tok-var">$coverage</span>-&gt;<span class="tok-id">beginGeneration</span>(<span class="tok-str">&#039;stmt&#039;</span>, []);</span>
+<span class="src-line" id="L1299" data-diff="added"><a class="ln" href="#L1299">1299</a>            <span class="tok-var">$coverage</span>-&gt;<span class="tok-id">beginAttempt</span>(<span class="tok-num">0</span>);</span>
+<span class="src-line" id="L1300" data-diff="added"><a class="ln" href="#L1300">1300</a>            <span class="tok-var">$coverage</span>-&gt;<span class="tok-id">record</span>(<span class="tok-num">0</span>, <span class="tok-id">null</span>, <span class="tok-id">null</span>, <span class="tok-str">&#039;stmt&#039;</span>, <span class="tok-var">$recordedProductionIds</span>[<span class="tok-num">0</span>], <span class="tok-str">&#039;input&#039;</span>);</span>
+<span class="src-line" id="L1301" data-diff="added"><a class="ln" href="#L1301">1301</a>            <span class="tok-var">$coverage</span>-&gt;<span class="tok-id">commitAttempt</span>(<span class="tok-str">&#039;sql-hash-&#039;</span> . <span class="tok-var">$generation</span>);</span>
+<span class="src-line" id="L1302" data-diff="added"><a class="ln" href="#L1302">1302</a>            <span class="tok-var">$coverage</span>-&gt;<span class="tok-id">endGeneration</span>();</span>
+<span class="src-line" id="L1303" data-diff="added"><a class="ln" href="#L1303">1303</a>        };</span>
+<span class="src-line" id="L1304" data-diff="added"><a class="ln" href="#L1304">1304</a>        <span class="tok-id">array_map</span>(<span class="tok-var">$generate</span>, <span class="tok-id">range</span>(<span class="tok-num">1</span>, <span class="tok-id">GrammarCoverage</span>::<span class="tok-id">FLUSH_INTERVAL</span> - <span class="tok-num">1</span>));</span>
+<span class="src-line" id="L1305" data-diff="added"><a class="ln" href="#L1305">1305</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([], <span class="tok-id">glob</span>(<span class="tok-var">$directory</span> . <span class="tok-str">&#039;/*.json&#039;</span>));</span>
+<span class="src-line" id="L1306" data-diff="added"><a class="ln" href="#L1306">1306</a>        <span class="tok-var">$generate</span>(<span class="tok-id">GrammarCoverage</span>::<span class="tok-id">FLUSH_INTERVAL</span>);</span>
+<span class="src-line" id="L1307" data-diff="added"><a class="ln" href="#L1307">1307</a>        <span class="tok-var">$snapshots</span> = <span class="tok-id">glob</span>(<span class="tok-var">$directory</span> . <span class="tok-str">&#039;/*.json&#039;</span>);</span>
+<span class="src-line" id="L1308" data-diff="added"><a class="ln" href="#L1308">1308</a>        <span class="tok-id">self</span>::<span class="tok-id">assertNotFalse</span>(<span class="tok-var">$snapshots</span>);</span>
+<span class="src-line" id="L1309" data-diff="added"><a class="ln" href="#L1309">1309</a>        <span class="tok-id">self</span>::<span class="tok-id">assertCount</span>(<span class="tok-num">1</span>, <span class="tok-var">$snapshots</span>);</span>
+<span class="src-line" id="L1310" data-diff="added"><a class="ln" href="#L1310">1310</a>        <span class="tok-kw">unset</span>(<span class="tok-var">$coverage</span>, <span class="tok-var">$generate</span>);</span>
+<span class="src-line" id="L1311" data-diff="added"><a class="ln" href="#L1311">1311</a>        <span class="tok-var">$restored</span> = <span class="tok-kw">new</span> <span class="tok-id">GrammarCoverage</span>(<span class="tok-var">$directory</span>);</span>
+<span class="src-line" id="L1312" data-diff="added"><a class="ln" href="#L1312">1312</a>        <span class="tok-var">$restored</span>-&gt;<span class="tok-id">register</span>(</span>
+<span class="src-line" id="L1313" data-diff="added"><a class="ln" href="#L1313">1313</a>            <span class="tok-kw">new</span> <span class="tok-id">GrammarCoverageInventory</span>(</span>
+<span class="src-line" id="L1314" data-diff="added"><a class="ln" href="#L1314">1314</a>                (<span class="tok-kw">new</span> <span class="tok-id">Grammar</span>(</span>
+<span class="src-line" id="L1315" data-diff="added"><a class="ln" href="#L1315">1315</a>                    <span class="tok-str">&#039;stmt&#039;</span>,</span>
+<span class="src-line" id="L1316" data-diff="added"><a class="ln" href="#L1316">1316</a>                    [<span class="tok-str">&#039;stmt&#039;</span> =&gt; <span class="tok-kw">new</span> <span class="tok-id">ProductionRule</span>(<span class="tok-str">&#039;stmt&#039;</span>, [<span class="tok-kw">new</span> <span class="tok-id">Production</span>([<span class="tok-kw">new</span> <span class="tok-id">Terminal</span>(<span class="tok-str">&#039;SELECT&#039;</span>)]), <span class="tok-kw">new</span> <span class="tok-id">Production</span>([<span class="tok-kw">new</span> <span class="tok-id">Terminal</span>(<span class="tok-str">&#039;DELETE&#039;</span>)])])],</span>
+<span class="src-line" id="L1317" data-diff="added"><a class="ln" href="#L1317">1317</a>                ))-&gt;<span class="tok-id">identified</span>(),</span>
+<span class="src-line" id="L1318" data-diff="added"><a class="ln" href="#L1318">1318</a>                <span class="tok-str">&#039;stmt&#039;</span>,</span>
+<span class="src-line" id="L1319" data-diff="added"><a class="ln" href="#L1319">1319</a>                <span class="tok-str">&#039;test-v1&#039;</span>,</span>
+<span class="src-line" id="L1320" data-diff="added"><a class="ln" href="#L1320">1320</a>            ),</span>
+<span class="src-line" id="L1321" data-diff="added"><a class="ln" href="#L1321">1321</a>            <span class="tok-str">&#039;revision-a&#039;</span>,</span>
+<span class="src-line" id="L1322" data-diff="added"><a class="ln" href="#L1322">1322</a>        );</span>
+<span class="src-line" id="L1323" data-diff="added"><a class="ln" href="#L1323">1323</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-num">1</span>, <span class="tok-var">$restored</span>-&gt;<span class="tok-id">snapshot</span>()[<span class="tok-str">&#039;cumulative&#039;</span>][<span class="tok-str">&#039;reached&#039;</span>]);</span>
+<span class="src-line" id="L1324" data-diff="added"><a class="ln" href="#L1324">1324</a>        <span class="tok-kw">unset</span>(<span class="tok-var">$restored</span>);</span>
+<span class="src-line" id="L1325" data-diff="added"><a class="ln" href="#L1325">1325</a>        (<span class="tok-kw">new</span> <span class="tok-id">Filesystem</span>())-&gt;<span class="tok-id">remove</span>(<span class="tok-var">$directory</span>);</span>
+<span class="src-line" id="L1326" data-diff="added"><a class="ln" href="#L1326">1326</a>    }</span>
+<span class="src-line" id="L1327" data-diff="added"><a class="ln" href="#L1327">1327</a>}</span>
+<span class="src-line" id="L1328" data-diff="added"><a class="ln" href="#L1328">1328</a></span>
 </code></pre>
 </main>
 <footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
