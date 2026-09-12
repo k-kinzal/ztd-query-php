@@ -1,0 +1,1 @@
+SELECT 'it''s', "a""b", `a``b`, [a]]b], E'back\\slash' FROM t;

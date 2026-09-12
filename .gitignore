@@ -111,6 +111,7 @@ composer.lock
 
 # Fuzz testing artifacts
 packages/*/fuzz/corpus/
+!packages/ztd-query-core/fuzz/corpus/
 **/crash-*.txt
 
 ### PhpStorm ###
