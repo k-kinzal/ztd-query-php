@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
+use mysqli_result;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -39,8 +40,8 @@ final class MysqliCteShadowingTest extends TestCase
 
             $updatedUsers = $ztdMysqli->query("SELECT id, name FROM `{$users}` ORDER BY id");
             $updatedOrders = $ztdMysqli->query("SELECT order_id, status FROM `{$orders}` ORDER BY order_id");
-            self::assertInstanceOf(\mysqli_result::class, $updatedUsers);
-            self::assertInstanceOf(\mysqli_result::class, $updatedOrders);
+            self::assertInstanceOf(mysqli_result::class, $updatedUsers);
+            self::assertInstanceOf(mysqli_result::class, $updatedOrders);
             self::assertSame(
                 [['id' => 1, 'name' => 'Alice'], ['id' => 2, 'name' => 'Updated']],
                 $updatedUsers->fetch_all(MYSQLI_ASSOC),
@@ -56,15 +57,15 @@ final class MysqliCteShadowingTest extends TestCase
 
             $remainingUsers = $ztdMysqli->query("SELECT id FROM `{$users}` ORDER BY id");
             $remainingOrders = $ztdMysqli->query("SELECT order_id FROM `{$orders}` ORDER BY order_id");
-            self::assertInstanceOf(\mysqli_result::class, $remainingUsers);
-            self::assertInstanceOf(\mysqli_result::class, $remainingOrders);
+            self::assertInstanceOf(mysqli_result::class, $remainingUsers);
+            self::assertInstanceOf(mysqli_result::class, $remainingOrders);
             self::assertSame([['id' => 1]], $remainingUsers->fetch_all(MYSQLI_ASSOC));
             self::assertSame([['order_id' => 10]], $remainingOrders->fetch_all(MYSQLI_ASSOC));
 
             $physicalUsers = $rawMysqli->query("SELECT * FROM `{$users}`");
             $physicalOrders = $rawMysqli->query("SELECT * FROM `{$orders}`");
-            self::assertInstanceOf(\mysqli_result::class, $physicalUsers);
-            self::assertInstanceOf(\mysqli_result::class, $physicalOrders);
+            self::assertInstanceOf(mysqli_result::class, $physicalUsers);
+            self::assertInstanceOf(mysqli_result::class, $physicalOrders);
             self::assertSame([], $physicalUsers->fetch_all(MYSQLI_ASSOC));
             self::assertSame([], $physicalOrders->fetch_all(MYSQLI_ASSOC));
         } finally {
@@ -87,7 +88,7 @@ final class MysqliCteShadowingTest extends TestCase
             ));
 
             $rows = $ztdMysqli->query(sprintf('SELECT * FROM `%s` WHERE id = 1', $table));
-            self::assertInstanceOf(\mysqli_result::class, $rows);
+            self::assertInstanceOf(mysqli_result::class, $rows);
             self::assertSame([['id' => 1, 'name' => 'replaced']], $rows->fetch_all(MYSQLI_ASSOC));
         } finally {
             $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
@@ -109,7 +110,7 @@ final class MysqliCteShadowingTest extends TestCase
             ));
 
             $rows = $ztdMysqli->query(sprintf('SELECT * FROM `%s` WHERE id = 1', $table));
-            self::assertInstanceOf(\mysqli_result::class, $rows);
+            self::assertInstanceOf(mysqli_result::class, $rows);
             self::assertSame([['id' => 1, 'name' => 'updated']], $rows->fetch_all(MYSQLI_ASSOC));
         } finally {
             $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
@@ -128,7 +129,7 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertNotFalse($ztdMysqli->query(sprintf("UPDATE `%s` SET notes = '' WHERE name = 'Alice'", $table)));
 
             $result = $ztdMysqli->query(sprintf('SELECT notes FROM `%s` WHERE id = 1', $table));
-            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertInstanceOf(mysqli_result::class, $result);
             self::assertSame([['notes' => '']], $result->fetch_all(MYSQLI_ASSOC));
         } finally {
             $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
@@ -147,11 +148,11 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertNotFalse($ztdMysqli->query(sprintf("UPDATE `%s` SET payload = X'576F726C64' WHERE id = 1", $table)));
 
             $result = $ztdMysqli->query(sprintf('SELECT payload FROM `%s` WHERE id = 1', $table));
-            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertInstanceOf(mysqli_result::class, $result);
             self::assertSame([['payload' => 'World']], $result->fetch_all(MYSQLI_ASSOC));
 
             $physical = $rawMysqli->query(sprintf('SELECT payload FROM `%s`', $table));
-            self::assertInstanceOf(\mysqli_result::class, $physical);
+            self::assertInstanceOf(mysqli_result::class, $physical);
             self::assertSame([], $physical->fetch_all(MYSQLI_ASSOC));
         } finally {
             $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
@@ -170,11 +171,11 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertNotFalse($ztdMysqli->query(sprintf('UPDATE `%s` SET due_at = created_at + INTERVAL 30 DAY WHERE id = 1', $table)));
 
             $result = $ztdMysqli->query(sprintf('SELECT due_at FROM `%s` WHERE id = 1', $table));
-            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertInstanceOf(mysqli_result::class, $result);
             self::assertSame([['due_at' => '2025-01-31 10:00:00']], $result->fetch_all(MYSQLI_ASSOC));
 
             $physical = $rawMysqli->query(sprintf('SELECT due_at FROM `%s`', $table));
-            self::assertInstanceOf(\mysqli_result::class, $physical);
+            self::assertInstanceOf(mysqli_result::class, $physical);
             self::assertSame([], $physical->fetch_all(MYSQLI_ASSOC));
         } finally {
             $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
@@ -201,8 +202,8 @@ final class MysqliCteShadowingTest extends TestCase
 
             $updated = $ztdMysqli->query(sprintf('SELECT id, score FROM `%s` ORDER BY id', $updates));
             $remaining = $ztdMysqli->query(sprintf('SELECT id, score FROM `%s` ORDER BY id', $deletes));
-            self::assertInstanceOf(\mysqli_result::class, $updated);
-            self::assertInstanceOf(\mysqli_result::class, $remaining);
+            self::assertInstanceOf(mysqli_result::class, $updated);
+            self::assertInstanceOf(mysqli_result::class, $remaining);
             self::assertSame([
                 ['id' => 1, 'score' => 0],
                 ['id' => 2, 'score' => 60],
@@ -216,8 +217,8 @@ final class MysqliCteShadowingTest extends TestCase
 
             $physicalUpdates = $rawMysqli->query(sprintf('SELECT * FROM `%s`', $updates));
             $physicalDeletes = $rawMysqli->query(sprintf('SELECT * FROM `%s`', $deletes));
-            self::assertInstanceOf(\mysqli_result::class, $physicalUpdates);
-            self::assertInstanceOf(\mysqli_result::class, $physicalDeletes);
+            self::assertInstanceOf(mysqli_result::class, $physicalUpdates);
+            self::assertInstanceOf(mysqli_result::class, $physicalDeletes);
             self::assertSame([], $physicalUpdates->fetch_all(MYSQLI_ASSOC));
             self::assertSame([], $physicalDeletes->fetch_all(MYSQLI_ASSOC));
         } finally {
@@ -239,11 +240,11 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertNotFalse($ztdMysqli->query(sprintf("INSERT INTO `%s` VALUES (10, 1, 'Child')", $child)));
 
             $result = $ztdMysqli->query(sprintf('SELECT * FROM `%s`', $child));
-            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertInstanceOf(mysqli_result::class, $result);
             self::assertSame([['id' => 10, 'parent_id' => 1, 'label' => 'Child']], $result->fetch_all(MYSQLI_ASSOC));
 
             $physical = $rawMysqli->query(sprintf('SELECT * FROM `%s`', $child));
-            self::assertInstanceOf(\mysqli_result::class, $physical);
+            self::assertInstanceOf(mysqli_result::class, $physical);
             self::assertSame([], $physical->fetch_all(MYSQLI_ASSOC));
         } finally {
             $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
@@ -268,9 +269,9 @@ final class MysqliCteShadowingTest extends TestCase
             $rawRows = $rawMysqli->query(sprintf('SELECT id, quantity FROM `%s`', $nativeTable));
             $ztdRows = $ztdMysqli->query(sprintf('SELECT id, quantity FROM `%s`', $shadowTable));
             $physicalShadowRows = $rawMysqli->query(sprintf('SELECT * FROM `%s`', $shadowTable));
-            self::assertInstanceOf(\mysqli_result::class, $rawRows);
-            self::assertInstanceOf(\mysqli_result::class, $ztdRows);
-            self::assertInstanceOf(\mysqli_result::class, $physicalShadowRows);
+            self::assertInstanceOf(mysqli_result::class, $rawRows);
+            self::assertInstanceOf(mysqli_result::class, $ztdRows);
+            self::assertInstanceOf(mysqli_result::class, $physicalShadowRows);
             self::assertEquals($rawRows->fetch_all(MYSQLI_ASSOC), $ztdRows->fetch_all(MYSQLI_ASSOC));
             self::assertSame([], $physicalShadowRows->fetch_all(MYSQLI_ASSOC));
         } finally {
@@ -313,7 +314,7 @@ final class MysqliCteShadowingTest extends TestCase
             $ztdMysqli->commit();
 
             $committed = $ztdMysqli->query(sprintf('SELECT * FROM `%s` ORDER BY id', $table));
-            self::assertInstanceOf(\mysqli_result::class, $committed);
+            self::assertInstanceOf(mysqli_result::class, $committed);
             self::assertSame([
                 ['id' => 1, 'name' => 'one'],
                 ['id' => 2, 'name' => 'two'],
@@ -323,7 +324,7 @@ final class MysqliCteShadowingTest extends TestCase
             $ztdMysqli->query(sprintf("UPDATE `%s` SET name = 'changed'", $table));
             $ztdMysqli->rollback();
             $rolledBack = $ztdMysqli->query(sprintf('SELECT * FROM `%s` ORDER BY id', $table));
-            self::assertInstanceOf(\mysqli_result::class, $rolledBack);
+            self::assertInstanceOf(mysqli_result::class, $rolledBack);
             self::assertSame([
                 ['id' => 1, 'name' => 'one'],
                 ['id' => 2, 'name' => 'two'],
@@ -346,11 +347,11 @@ final class MysqliCteShadowingTest extends TestCase
                 'WITH RECURSIVE tree AS (SELECT id, parent_id FROM `%1$s` WHERE parent_id IS NULL UNION ALL SELECT n.id, n.parent_id FROM `%1$s` n JOIN tree t ON n.parent_id = t.id) SELECT id FROM tree ORDER BY id',
                 $table,
             ));
-            self::assertInstanceOf(\mysqli_result::class, $recursive);
+            self::assertInstanceOf(mysqli_result::class, $recursive);
             self::assertSame([['id' => 1], ['id' => 2], ['id' => 3]], $recursive->fetch_all(MYSQLI_ASSOC));
 
             $owned = $ztdMysqli->query(sprintf('WITH `%1$s` AS (SELECT 9 AS id, NULL AS parent_id) SELECT id FROM `%1$s`', $table));
-            self::assertInstanceOf(\mysqli_result::class, $owned);
+            self::assertInstanceOf(mysqli_result::class, $owned);
             self::assertSame([['id' => 9]], $owned->fetch_all(MYSQLI_ASSOC));
         } finally {
             $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
@@ -370,7 +371,7 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertNotFalse($ztdMysqli->query(sprintf("WITH chosen AS (SELECT id FROM `%1\$s` WHERE value = 'one') DELETE FROM `%1\$s` WHERE id IN (SELECT id FROM chosen)", $table)));
 
             $result = $ztdMysqli->query(sprintf('SELECT * FROM `%s`', $table));
-            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertInstanceOf(mysqli_result::class, $result);
             self::assertSame([['id' => 2, 'value' => 'changed']], $result->fetch_all(MYSQLI_ASSOC));
         } finally {
             $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
@@ -389,7 +390,7 @@ final class MysqliCteShadowingTest extends TestCase
             $ztdMysqli->query(sprintf('UPDATE `%s` SET id = 30, left_value = right_value, right_value = left_value ORDER BY id DESC LIMIT 1', $table));
 
             $result = $ztdMysqli->query(sprintf('SELECT * FROM `%s` ORDER BY id', $table));
-            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertInstanceOf(mysqli_result::class, $result);
             self::assertSame([
                 ['id' => 1, 'left_value' => 'a1', 'right_value' => 'b1'],
                 ['id' => 2, 'left_value' => 'a2', 'right_value' => 'b2'],
@@ -430,9 +431,9 @@ final class MysqliCteShadowingTest extends TestCase
             $targetRows = $ztdMysqli->query(sprintf('SELECT * FROM `%s` ORDER BY id', $target));
             $summaryRows = $ztdMysqli->query(sprintf('SELECT * FROM `%s` ORDER BY region', $summary));
             $regionRows = $ztdMysqli->query(sprintf('SELECT * FROM `%s` ORDER BY id', $regions));
-            self::assertInstanceOf(\mysqli_result::class, $targetRows);
-            self::assertInstanceOf(\mysqli_result::class, $summaryRows);
-            self::assertInstanceOf(\mysqli_result::class, $regionRows);
+            self::assertInstanceOf(mysqli_result::class, $targetRows);
+            self::assertInstanceOf(mysqli_result::class, $summaryRows);
+            self::assertInstanceOf(mysqli_result::class, $regionRows);
             self::assertEquals([
                 ['id' => 1, 'region' => 'east', 'amount' => 100],
                 ['id' => 2, 'region' => 'east', 'amount' => 200],
@@ -464,7 +465,7 @@ final class MysqliCteShadowingTest extends TestCase
             $ztdMysqli->query(sprintf('UPDATE `%1$s` SET active = 0 WHERE dept_id IN (SELECT dept_id FROM `%1$s` GROUP BY dept_id HAVING AVG(salary) > 100000)', $table));
 
             $result = $ztdMysqli->query(sprintf('SELECT id, active FROM `%s` ORDER BY id', $table));
-            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertInstanceOf(mysqli_result::class, $result);
             self::assertSame([
                 ['id' => 1, 'active' => 0],
                 ['id' => 2, 'active' => 0],
@@ -492,7 +493,7 @@ final class MysqliCteShadowingTest extends TestCase
             $ztdMysqli->query(sprintf("DELETE FROM `%1\$s` WHERE customer_id IN (SELECT customer_id FROM `%1\$s` WHERE status = 'cancelled' GROUP BY customer_id HAVING COUNT(*) >= 1)", $table));
 
             $result = $ztdMysqli->query(sprintf('SELECT * FROM `%s` ORDER BY id', $table));
-            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertInstanceOf(mysqli_result::class, $result);
             self::assertSame([
                 ['id' => 4, 'customer_id' => 2, 'amount' => '200.00', 'status' => 'completed'],
                 ['id' => 5, 'customer_id' => 3, 'amount' => '10.00', 'status' => 'completed'],
@@ -515,8 +516,8 @@ final class MysqliCteShadowingTest extends TestCase
 
             $ztdRows = $ztdMysqli->query(sprintf('SELECT id, name FROM `%s` ORDER BY id', $table));
             $rawRows = $rawMysqli->query(sprintf('SELECT * FROM `%s`', $table));
-            self::assertInstanceOf(\mysqli_result::class, $ztdRows);
-            self::assertInstanceOf(\mysqli_result::class, $rawRows);
+            self::assertInstanceOf(mysqli_result::class, $ztdRows);
+            self::assertInstanceOf(mysqli_result::class, $rawRows);
             self::assertEquals([['id' => 1, 'name' => 'Alice'], ['id' => 2, 'name' => 'Bob']], $ztdRows->fetch_all(MYSQLI_ASSOC));
             self::assertSame([], $rawRows->fetch_all(MYSQLI_ASSOC));
         } finally {
@@ -535,15 +536,15 @@ final class MysqliCteShadowingTest extends TestCase
         $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
 
         try {
-            $rawMysqli->query(sprintf("INSERT INTO `%s` (id, status) VALUES (1, DEFAULT)", $table));
+            $rawMysqli->query(sprintf('INSERT INTO `%s` (id, status) VALUES (1, DEFAULT)', $table));
             $rawMysqli->query(sprintf('INSERT INTO `%s` () VALUES ()', $table));
-            $ztdMysqli->query(sprintf("INSERT INTO `%s` (id, status) VALUES (1, DEFAULT)", $table));
+            $ztdMysqli->query(sprintf('INSERT INTO `%s` (id, status) VALUES (1, DEFAULT)', $table));
             $ztdMysqli->query(sprintf('INSERT INTO `%s` () VALUES ()', $table));
 
             $raw = $rawMysqli->query(sprintf('SELECT * FROM `%s` ORDER BY id', $table));
             $ztd = $ztdMysqli->query(sprintf('SELECT * FROM `%s` ORDER BY id', $table));
-            self::assertInstanceOf(\mysqli_result::class, $raw);
-            self::assertInstanceOf(\mysqli_result::class, $ztd);
+            self::assertInstanceOf(mysqli_result::class, $raw);
+            self::assertInstanceOf(mysqli_result::class, $ztd);
             $rawRows = $raw->fetch_all(MYSQLI_ASSOC);
             $ztdRows = $ztd->fetch_all(MYSQLI_ASSOC);
             self::assertEquals($rawRows, $ztdRows);
@@ -564,8 +565,8 @@ final class MysqliCteShadowingTest extends TestCase
 
             $ordered = $ztdMysqli->query(sprintf('SELECT size FROM `%s` ORDER BY size', $table));
             $compared = $ztdMysqli->query(sprintf("SELECT size FROM `%s` WHERE size > 'small' ORDER BY size", $table));
-            self::assertInstanceOf(\mysqli_result::class, $ordered);
-            self::assertInstanceOf(\mysqli_result::class, $compared);
+            self::assertInstanceOf(mysqli_result::class, $ordered);
+            self::assertInstanceOf(mysqli_result::class, $compared);
             self::assertSame(['small', 'medium', 'large'], array_column($ordered->fetch_all(MYSQLI_ASSOC), 'size'));
             self::assertSame(['medium', 'large'], array_column($compared->fetch_all(MYSQLI_ASSOC), 'size'));
         } finally {
@@ -596,8 +597,8 @@ final class MysqliCteShadowingTest extends TestCase
                 $users,
                 $vip,
             ));
-            self::assertInstanceOf(\mysqli_result::class, $except);
-            self::assertInstanceOf(\mysqli_result::class, $intersect);
+            self::assertInstanceOf(mysqli_result::class, $except);
+            self::assertInstanceOf(mysqli_result::class, $intersect);
             self::assertSame([['name' => 'Bob']], $except->fetch_all(MYSQLI_ASSOC));
             self::assertSame([['name' => 'Alice']], $intersect->fetch_all(MYSQLI_ASSOC));
         } finally {
@@ -615,7 +616,7 @@ final class MysqliCteShadowingTest extends TestCase
         try {
             $result = $ztdMysqli->query(sprintf('SELECT * FROM `%s` ORDER BY id', $table));
             self::assertNotFalse($result);
-            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertInstanceOf(mysqli_result::class, $result);
 
             /** @var list<array<string, mixed>> $rows */
             $rows = $result->fetch_all(MYSQLI_ASSOC);
@@ -640,7 +641,7 @@ final class MysqliCteShadowingTest extends TestCase
 
             $result = $rawMysqli->query(sprintf('SELECT * FROM `%s`', $table));
             self::assertNotFalse($result);
-            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertInstanceOf(mysqli_result::class, $result);
 
             /** @var list<array<string, mixed>> $rows */
             $rows = $result->fetch_all(MYSQLI_ASSOC);
@@ -665,7 +666,7 @@ final class MysqliCteShadowingTest extends TestCase
 
             $result = $ztdMysqli->query(sprintf('SELECT * FROM `%s` ORDER BY id', $table));
             self::assertNotFalse($result);
-            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertInstanceOf(mysqli_result::class, $result);
 
             /** @var list<array<string, mixed>> $rows */
             $rows = $result->fetch_all(MYSQLI_ASSOC);
@@ -698,7 +699,7 @@ final class MysqliCteShadowingTest extends TestCase
 
             $result = $ztdMysqli->query(sprintf('SELECT * FROM `%s` ORDER BY name', $table));
             self::assertNotFalse($result);
-            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertInstanceOf(mysqli_result::class, $result);
 
             /** @var list<array<string, mixed>> $rows */
             $rows = $result->fetch_all(MYSQLI_ASSOC);
@@ -729,9 +730,9 @@ final class MysqliCteShadowingTest extends TestCase
                 $table
             ));
 
-            $result = $ztdMysqli->query(sprintf("SELECT * FROM `%s` WHERE age > 30", $table));
+            $result = $ztdMysqli->query(sprintf('SELECT * FROM `%s` WHERE age > 30', $table));
             self::assertNotFalse($result);
-            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertInstanceOf(mysqli_result::class, $result);
 
             /** @var list<array<string, mixed>> $rows */
             $rows = $result->fetch_all(MYSQLI_ASSOC);
@@ -761,7 +762,7 @@ final class MysqliCteShadowingTest extends TestCase
 
             $result = $rawMysqli->query(sprintf('SELECT * FROM `%s` ORDER BY id', $table));
             self::assertNotFalse($result);
-            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertInstanceOf(mysqli_result::class, $result);
 
             /** @var list<array<string, mixed>> $rows */
             $rows = $result->fetch_all(MYSQLI_ASSOC);
@@ -810,7 +811,7 @@ final class MysqliCteShadowingTest extends TestCase
 
             $result = $rawMysqli->query(sprintf('SELECT * FROM `%s`', $table));
             self::assertNotFalse($result);
-            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertInstanceOf(mysqli_result::class, $result);
 
             /** @var list<array<string, mixed>> $rows */
             $rows = $result->fetch_all(MYSQLI_ASSOC);
@@ -944,7 +945,7 @@ final class MysqliCteShadowingTest extends TestCase
                 ['Charlie']
             );
             self::assertNotFalse($result);
-            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertInstanceOf(mysqli_result::class, $result);
 
             /** @var list<array<string, mixed>> $rows */
             $rows = $result->fetch_all(MYSQLI_ASSOC);
@@ -971,7 +972,7 @@ final class MysqliCteShadowingTest extends TestCase
 
             $selectResult = $ztdMysqli->query(sprintf('SELECT * FROM `%s`', $table));
             self::assertNotFalse($selectResult);
-            self::assertInstanceOf(\mysqli_result::class, $selectResult);
+            self::assertInstanceOf(mysqli_result::class, $selectResult);
 
             /** @var list<array<string, mixed>> $rows */
             $rows = $selectResult->fetch_all(MYSQLI_ASSOC);
@@ -998,7 +999,7 @@ final class MysqliCteShadowingTest extends TestCase
 
             $result = $ztdMysqli->query(sprintf('SELECT value FROM `%s` WHERE id = 1', $table));
             self::assertNotFalse($result);
-            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertInstanceOf(mysqli_result::class, $result);
             self::assertSame([['value' => $value]], $result->fetch_all(MYSQLI_ASSOC));
         } finally {
             $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
@@ -1016,19 +1017,19 @@ final class MysqliCteShadowingTest extends TestCase
         $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
 
         try {
-            self::assertNotFalse($ztdMysqli->query("INSERT INTO events VALUES "
+            self::assertNotFalse($ztdMysqli->query('INSERT INTO events VALUES '
                 . "(1, '2023-06-01'), (2, '2024-01-15'), (3, '2024-11-20'), (4, '2025-02-01')"));
 
             $selected = $ztdMysqli->query('SELECT id FROM events PARTITION (p2024) ORDER BY id');
-            self::assertInstanceOf(\mysqli_result::class, $selected);
+            self::assertInstanceOf(mysqli_result::class, $selected);
             self::assertSame([['id' => 2], ['id' => 3]], $selected->fetch_all(MYSQLI_ASSOC));
 
             $combined = $ztdMysqli->query('SELECT e.id FROM events PARTITION (p2023, pmax) e ORDER BY e.id');
-            self::assertInstanceOf(\mysqli_result::class, $combined);
+            self::assertInstanceOf(mysqli_result::class, $combined);
             self::assertSame([['id' => 1], ['id' => 4]], $combined->fetch_all(MYSQLI_ASSOC));
 
             $physical = $rawMysqli->query('SELECT COUNT(*) AS total FROM events');
-            self::assertInstanceOf(\mysqli_result::class, $physical);
+            self::assertInstanceOf(mysqli_result::class, $physical);
             self::assertSame([['total' => '0']], $physical->fetch_all(MYSQLI_ASSOC));
         } finally {
             $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));

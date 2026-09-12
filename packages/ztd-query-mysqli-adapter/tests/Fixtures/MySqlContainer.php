@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Fixtures;
 
+use mysqli;
 use Testcontainers\Containers\GenericContainer\GenericContainer;
 use Testcontainers\Containers\WaitStrategy\PDO\MySQLDSN;
 use Testcontainers\Containers\WaitStrategy\PDO\PDOConnectWaitStrategy;
@@ -68,7 +69,7 @@ final class MySqlContainer extends GenericContainer
         $port = $instance->getMappedPort(3306);
         $host = str_replace('localhost', '127.0.0.1', $instance->getHost());
 
-        $mysqli = new \mysqli($host, 'root', 'root', '', $port);
+        $mysqli = new mysqli($host, 'root', 'root', '', $port);
         $mysqli->set_charset('utf8mb4');
 
         $instance->setData($mysqli);
@@ -77,14 +78,14 @@ final class MySqlContainer extends GenericContainer
     /**
      * Run the container and create an isolated test database.
      *
-     * @return array{string, \mysqli}
+     * @return array{string, mysqli}
      */
     public static function createTestDatabase(): array
     {
         $instance = Testcontainers::run(self::class);
 
-        /** @var \mysqli $mysqli */
-        $mysqli = $instance->getData(\mysqli::class);
+        /** @var mysqli $mysqli */
+        $mysqli = $instance->getData(mysqli::class);
 
         $databaseName = 'ztd_' . bin2hex(random_bytes(8));
         $mysqli->query(sprintf('CREATE DATABASE `%s` CHARACTER SET utf8mb4', $databaseName));

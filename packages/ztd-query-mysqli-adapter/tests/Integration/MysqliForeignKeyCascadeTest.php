@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
+use mysqli_result;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -40,20 +41,20 @@ final class MysqliForeignKeyCascadeTest extends TestCase
                 self::assertStringContainsString("Foreign key constraint 'fk_department' violated", $exception->getMessage());
             }
             $employees = $ztdMysqli->query('SELECT id, department_id FROM employees ORDER BY id');
-            self::assertInstanceOf(\mysqli_result::class, $employees);
+            self::assertInstanceOf(mysqli_result::class, $employees);
             self::assertSame([['id' => 10, 'department_id' => 1]], $employees->fetch_all(MYSQLI_ASSOC));
 
             self::assertNotFalse($ztdMysqli->query('UPDATE departments SET id = 2 WHERE id = 1'));
             self::assertNotFalse($ztdMysqli->query('UPDATE employees SET id = 20 WHERE id = 10'));
             $task = $ztdMysqli->query('SELECT employee_id FROM tasks WHERE id = 100');
-            self::assertInstanceOf(\mysqli_result::class, $task);
+            self::assertInstanceOf(mysqli_result::class, $task);
             self::assertSame([['employee_id' => 20]], $task->fetch_all(MYSQLI_ASSOC));
 
             self::assertNotFalse($ztdMysqli->query('DELETE FROM departments WHERE id = 2'));
             $employees = $ztdMysqli->query('SELECT id FROM employees');
             $tasks = $ztdMysqli->query('SELECT id FROM tasks');
-            self::assertInstanceOf(\mysqli_result::class, $employees);
-            self::assertInstanceOf(\mysqli_result::class, $tasks);
+            self::assertInstanceOf(mysqli_result::class, $employees);
+            self::assertInstanceOf(mysqli_result::class, $tasks);
             self::assertSame([], $employees->fetch_all(MYSQLI_ASSOC));
             self::assertSame([], $tasks->fetch_all(MYSQLI_ASSOC));
 
@@ -61,7 +62,7 @@ final class MysqliForeignKeyCascadeTest extends TestCase
                 . '(SELECT COUNT(*) FROM departments) + '
                 . '(SELECT COUNT(*) FROM employees) + '
                 . '(SELECT COUNT(*) FROM tasks) AS row_count');
-            self::assertInstanceOf(\mysqli_result::class, $physical);
+            self::assertInstanceOf(mysqli_result::class, $physical);
             self::assertSame([['row_count' => '0']], $physical->fetch_all(MYSQLI_ASSOC));
         } finally {
             $mysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));

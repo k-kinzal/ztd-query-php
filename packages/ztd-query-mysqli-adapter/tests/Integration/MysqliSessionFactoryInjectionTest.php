@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
+use mysqli_result;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -33,7 +34,7 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
 
             $result = $ztd->query(sprintf('SELECT * FROM `%s`', $table));
             self::assertNotFalse($result);
-            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertInstanceOf(mysqli_result::class, $result);
 
             /** @var list<array<string, mixed>> $rows */
             $rows = $result->fetch_all(MYSQLI_ASSOC);
@@ -60,7 +61,7 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
 
             $result = $ztd->query(sprintf('SELECT * FROM `%s` ORDER BY name', $table));
             self::assertNotFalse($result);
-            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertInstanceOf(mysqli_result::class, $result);
 
             /** @var list<array<string, mixed>> $rows */
             $rows = $result->fetch_all(MYSQLI_ASSOC);
@@ -88,7 +89,7 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
 
             $result = $rawMysqli->query(sprintf('SELECT * FROM `%s` ORDER BY name', $table));
             self::assertNotFalse($result);
-            self::assertInstanceOf(\mysqli_result::class, $result);
+            self::assertInstanceOf(mysqli_result::class, $result);
 
             /** @var list<array<string, mixed>> $rows */
             $rows = $result->fetch_all(MYSQLI_ASSOC);
@@ -165,7 +166,7 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
 
             $resultDefault = $ztdDefault->query(sprintf('SELECT * FROM `%s`', $table));
             self::assertNotFalse($resultDefault);
-            self::assertInstanceOf(\mysqli_result::class, $resultDefault);
+            self::assertInstanceOf(mysqli_result::class, $resultDefault);
 
             /** @var list<array<string, mixed>> $rowsDefault */
             $rowsDefault = $resultDefault->fetch_all(MYSQLI_ASSOC);

@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use LogicException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Tests\Fixtures\StubMysqliField;
 use Tests\Fixtures\StubMysqliResult;
 use ZtdQuery\Adapter\Mysqli\MysqliResultColumnExtractor;
-use ZtdQuery\Platform\ResultColumnTypeResolver;
 use ZtdQuery\Platform\MissingResultColumnTypeResolver;
+use ZtdQuery\Platform\ResultColumnTypeResolver;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
@@ -24,7 +25,7 @@ final class MysqliResultColumnExtractorTest extends TestCase
             new StubMysqliField('name', MYSQLI_TYPE_VAR_STRING, 255),
         ]);
 
-        $this->expectException(\LogicException::class);
+        $this->expectException(LogicException::class);
         $this->expectExceptionMessage('A database platform result column type resolver is required.');
 
         MysqliResultColumnExtractor::extract($result, new MissingResultColumnTypeResolver());

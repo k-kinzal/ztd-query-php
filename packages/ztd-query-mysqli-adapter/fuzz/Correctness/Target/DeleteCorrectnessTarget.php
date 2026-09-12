@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace Fuzz\Correctness\Target;
 
 use Error;
+use Faker\Generator;
 use Fuzz\Correctness\MysqliCorrectnessHarness;
 use Fuzz\Correctness\ResultComparator;
 use Fuzz\Correctness\SchemaAwareSqlBuilder;
 use Fuzz\Correctness\SchemaDefinition;
 use Fuzz\Correctness\SchemaPool;
-use Faker\Generator;
 use mysqli;
 use mysqli_result;
 use mysqli_sql_exception;
@@ -85,8 +85,8 @@ final class DeleteCorrectnessTarget
                 "DELETE table state mismatch\n" .
                 "Seed: $seed\n" .
                 "Schema: {$schema->name}\n" .
-                "Raw row count: " . count($rawRows) . "\n" .
-                "ZTD row count: " . count($ztdRows)
+                'Raw row count: ' . count($rawRows) . "\n" .
+                'ZTD row count: ' . count($ztdRows)
             );
         }
     }

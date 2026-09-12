@@ -9,11 +9,13 @@ use mysqli_result;
 use mysqli_stmt;
 use mysqli_warning;
 use ReflectionClass;
+use ReturnTypeWillChange;
+use SensitiveParameter;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Platform\MySql\MySqlSessionFactory;
-use ZtdQuery\Session;
 use ZtdQuery\Platform\SessionFactory;
+use ZtdQuery\Session;
 use ZtdQuery\Sql\TransactionStatement;
 
 /**
@@ -354,7 +356,7 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
-    #[\ReturnTypeWillChange]
+    #[ReturnTypeWillChange]
     public function close()
     {
         $this->innerMysqli->close();
@@ -412,7 +414,7 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
-    public function change_user(string $username, #[\SensitiveParameter] string $password, ?string $database): bool
+    public function change_user(string $username, #[SensitiveParameter] string $password, ?string $database): bool
     {
         return $this->innerMysqli->change_user($username, $password, $database);
     }
@@ -423,7 +425,7 @@ class ZtdMysqli extends mysqli
     public function connect(
         ?string $hostname = null,
         ?string $username = null,
-        #[\SensitiveParameter] ?string $password = null,
+        #[SensitiveParameter] ?string $password = null,
         ?string $database = null,
         ?int $port = null,
         ?string $socket = null
@@ -435,7 +437,7 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
-    #[\ReturnTypeWillChange]
+    #[ReturnTypeWillChange]
     public function debug(string $options)
     {
         $this->innerMysqli->debug($options);
@@ -545,7 +547,7 @@ class ZtdMysqli extends mysqli
     public function real_connect(
         ?string $hostname = null,
         ?string $username = null,
-        #[\SensitiveParameter] ?string $password = null,
+        #[SensitiveParameter] ?string $password = null,
         ?string $database = null,
         ?int $port = null,
         ?string $socket = null,
@@ -599,7 +601,7 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
-    #[\ReturnTypeWillChange]
+    #[ReturnTypeWillChange]
     public function ssl_set(
         ?string $key,
         ?string $certificate,

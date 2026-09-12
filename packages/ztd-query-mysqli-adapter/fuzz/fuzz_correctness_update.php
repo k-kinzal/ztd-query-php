@@ -29,5 +29,5 @@ $harness = new MysqliCorrectnessHarness($host, (int) $port, $db, 'root', 'root')
 $sqlBuilder = new SchemaAwareSqlBuilder($faker);
 $target = new UpdateCorrectnessTarget($harness, $sqlBuilder, $faker);
 
-/** @var \PhpFuzzer\Config $config */
-$config->setTarget(\Closure::fromCallable($target));
+/** @var PhpFuzzer\Config $config */
+$config->setTarget(Closure::fromCallable($target));

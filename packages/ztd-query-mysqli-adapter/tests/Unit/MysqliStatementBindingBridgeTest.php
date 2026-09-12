@@ -7,6 +7,7 @@ namespace Tests\Unit;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use ReflectionMethod;
 use ZtdQuery\Adapter\Mysqli\MysqliStatementBindingBridge;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqliStatement;
 
@@ -18,10 +19,10 @@ final class MysqliStatementBindingBridgeTest extends TestCase
         $bridge = new ReflectionClass(MysqliStatementBindingBridge::class);
         $statement = new ReflectionClass(ZtdMysqliStatement::class);
         $declaredMethods = array_map(
-            static fn (\ReflectionMethod $method): string => $method->getName(),
+            static fn (ReflectionMethod $method): string => $method->getName(),
             array_filter(
                 $bridge->getMethods(),
-                static fn (\ReflectionMethod $method): bool => $method->getDeclaringClass()->getName() === MysqliStatementBindingBridge::class,
+                static fn (ReflectionMethod $method): bool => $method->getDeclaringClass()->getName() === MysqliStatementBindingBridge::class,
             ),
         );
         sort($declaredMethods);
