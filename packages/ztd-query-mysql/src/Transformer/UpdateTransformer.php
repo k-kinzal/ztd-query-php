@@ -9,18 +9,19 @@ use PhpMyAdmin\SqlParser\Components\Expression;
 use PhpMyAdmin\SqlParser\Components\Limit;
 use PhpMyAdmin\SqlParser\Components\OrderKeyword;
 use PhpMyAdmin\SqlParser\Statements\UpdateStatement;
+use RuntimeException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
 use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
+use ZtdQuery\Platform\MySql\MySqlLexerProfile;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\UpdateAssignmentExtractor;
 use ZtdQuery\Platform\MySql\UpdateSourceExtractor;
 use ZtdQuery\Rewrite\SqlTransformer;
-use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
 use ZtdQuery\Shadow\Mutation\MultiTableMutationRow;
 use ZtdQuery\Shadow\Mutation\MultiTableMutationTarget;
-use ZtdQuery\Platform\MySql\MySqlLexerProfile;
+use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
 use ZtdQuery\Sql\SqlTokenStream;
 
 /**
@@ -122,12 +123,12 @@ final class UpdateTransformer implements SqlTransformer
         ?string $sourceExpression = null,
     ): array {
         if ($stmt->tables === null || $stmt->tables === []) {
-            throw new \RuntimeException("Update statement has no tables?");
+            throw new RuntimeException('Update statement has no tables?');
         }
         $targetTableExpr = $stmt->tables[0];
         $targetTableName = $targetTableExpr->table;
         if ($targetTableName === null || $targetTableName === '') {
-            throw new \RuntimeException("Update statement target table name is empty.");
+            throw new RuntimeException('Update statement target table name is empty.');
         }
 
         $qualifier = (($targetTableExpr->alias ?? '') !== '') ? $targetTableExpr->alias : $targetTableName;
@@ -154,7 +155,7 @@ final class UpdateTransformer implements SqlTransformer
                     $colName = trim(end($parts), '`"\'');
                 }
 
-                $selectCols[] = ($assignmentValues[$index] ?? $setOp->value) . " AS `" . $colName . "`";
+                $selectCols[] = ($assignmentValues[$index] ?? $setOp->value) . ' AS `' . $colName . '`';
                 $coveredCols[$colName] = true;
             }
         }
@@ -175,39 +176,39 @@ final class UpdateTransformer implements SqlTransformer
         }
 
         if ($selectCols === []) {
-            $selectCols[] = "*";
+            $selectCols[] = '*';
         }
-        $selectList = implode(", ", $selectCols);
+        $selectList = implode(', ', $selectCols);
 
-        $aliasClause = "";
+        $aliasClause = '';
         if (($targetTableExpr->alias ?? '') !== '') {
-            $aliasClause = " AS " . $targetTableExpr->alias;
+            $aliasClause = ' AS ' . $targetTableExpr->alias;
         }
 
         $additionalTables = $this->buildAdditionalTables($stmt);
 
         $joinClause = $this->buildJoinClause($stmt);
 
-        $whereClause = "";
+        $whereClause = '';
         if ($whereExpression === null) {
             $whereExpression = Condition::build($stmt->where ?? []);
         }
         if ($whereExpression !== '') {
-            $whereClause = " WHERE " . $whereExpression;
+            $whereClause = ' WHERE ' . $whereExpression;
         }
 
-        $orderByClause = "";
+        $orderByClause = '';
         if ($stmt->order !== null && $stmt->order !== []) {
             $orderParts = [];
             foreach ($stmt->order as $orderExpr) {
                 $orderParts[] = OrderKeyword::build($orderExpr);
             }
-            $orderByClause = " ORDER BY " . implode(", ", $orderParts);
+            $orderByClause = ' ORDER BY ' . implode(', ', $orderParts);
         }
 
-        $limitClause = "";
+        $limitClause = '';
         if ($stmt->limit !== null) {
-            $limitClause = " LIMIT " . Limit::build($stmt->limit);
+            $limitClause = ' LIMIT ' . Limit::build($stmt->limit);
         }
 
         $sourceClause = $sourceExpression ?? "`$targetTableName`$aliasClause$additionalTables$joinClause";

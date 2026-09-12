@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\MySql;
 
-use PhpMyAdmin\SqlParser\Components\OptionsArray;
 use PhpMyAdmin\SqlParser\Components\Expression;
+use PhpMyAdmin\SqlParser\Components\OptionsArray;
 use PhpMyAdmin\SqlParser\Statements\LoadStatement;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;

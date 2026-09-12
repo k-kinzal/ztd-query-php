@@ -4,6 +4,12 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\MySql\Mutation;
 
+use PhpMyAdmin\SqlParser\Components\AlterOperation;
+use PhpMyAdmin\SqlParser\Components\CreateDefinition;
+use PhpMyAdmin\SqlParser\Statements\AlterStatement;
+use PhpMyAdmin\SqlParser\Statements\CreateStatement;
+use PhpMyAdmin\SqlParser\Token;
+use RuntimeException;
 use ZtdQuery\Exception\ColumnAlreadyExistsException;
 use ZtdQuery\Exception\ColumnNotFoundException;
 use ZtdQuery\Exception\SchemaNotFoundException;
@@ -13,11 +19,6 @@ use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\Mutation\ShadowMutation;
 use ZtdQuery\Shadow\ShadowStore;
-use PhpMyAdmin\SqlParser\Components\AlterOperation;
-use PhpMyAdmin\SqlParser\Components\CreateDefinition;
-use PhpMyAdmin\SqlParser\Statements\AlterStatement;
-use PhpMyAdmin\SqlParser\Statements\CreateStatement;
-use PhpMyAdmin\SqlParser\Token;
 
 /**
  * Applies ALTER TABLE operation to the virtual schema.
@@ -56,12 +57,12 @@ final class AlterTableMutation implements ShadowMutation
 
         $parser = new \PhpMyAdmin\SqlParser\Parser($createSql);
         if ($parser->statements === []) {
-            throw new \RuntimeException("Failed to parse reconstructed schema for '{$this->tableName}'.");
+            throw new RuntimeException("Failed to parse reconstructed schema for '{$this->tableName}'.");
         }
 
         $createStmt = $parser->statements[0];
         if (!$createStmt instanceof CreateStatement) {
-            throw new \RuntimeException("Reconstructed schema for '{$this->tableName}' is not a CREATE TABLE statement.");
+            throw new RuntimeException("Reconstructed schema for '{$this->tableName}' is not a CREATE TABLE statement.");
         }
 
         foreach ($this->alterStatement->altered ?? [] as $op) {
@@ -71,7 +72,7 @@ final class AlterTableMutation implements ShadowMutation
         $newSql = $createStmt->build();
         $newDefinition = $this->schemaParser->parse($newSql);
         if ($newDefinition === null) {
-            throw new \RuntimeException("Failed to parse altered schema for '{$this->tableName}'.");
+            throw new RuntimeException("Failed to parse altered schema for '{$this->tableName}'.");
         }
         if ($definition->partitioning !== null) {
             $newDefinition = $newDefinition->withPartitioning($definition->partitioning);

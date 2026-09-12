@@ -6,8 +6,8 @@ namespace ZtdQuery\Platform\MySql;
 
 use ZtdQuery\Platform\IdentifierQuoter;
 use ZtdQuery\Shadow\Mutation\UpsertMutationRow;
-use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlLexerProfile;
+use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 

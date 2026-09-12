@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Transformer;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\Transformer\InsertSelectRenderer;
 use ZtdQuery\Platform\MySql\Transformer\MySqlSelectListAliaser;
@@ -38,7 +40,7 @@ final class InsertSelectRendererTest extends TestCase
 
     public function testRejectsKnownMySqlProjectionCountMismatch(): void
     {
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('INSERT column count does not match SELECT column count.');
 
         (new InsertSelectRenderer())->render('SELECT id, name FROM users', ['id'], ['id'], []);
@@ -74,7 +76,7 @@ final class InsertSelectRendererTest extends TestCase
 
     public function testRejectsNonPositiveGeneratedIdentityStart(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Generated identity start must be positive.');
 
         (new InsertSelectRenderer())->renderGeneratedIdentity(0);

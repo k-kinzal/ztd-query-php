@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\MySql;
 
 use PhpMyAdmin\SqlParser\Statements\CreateStatement;
+use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
-use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\TableDefinition;
 
 /**

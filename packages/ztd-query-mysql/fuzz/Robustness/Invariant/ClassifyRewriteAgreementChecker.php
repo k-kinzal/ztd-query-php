@@ -8,9 +8,9 @@ use Throwable;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\MySqlQueryGuard;
+use ZtdQuery\Platform\MySql\MySqlReadOnlyDiagnosticStatement;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\SqlRewriter;
-use ZtdQuery\Platform\MySql\MySqlReadOnlyDiagnosticStatement;
 
 final class ClassifyRewriteAgreementChecker implements InvariantChecker
 {

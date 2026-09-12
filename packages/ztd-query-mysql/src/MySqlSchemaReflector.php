@@ -7,7 +7,6 @@ namespace ZtdQuery\Platform\MySql;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Platform\SchemaReflector;
 use ZtdQuery\Platform\ViewReflector;
-use ZtdQuery\Schema\ViewDefinition;
 
 /**
  * Fetches MySQL schema information via SQL queries.

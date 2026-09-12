@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\MySql\Transformer;
 
-use ZtdQuery\Platform\MySql\MySqlCastRenderer;
-use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
-use ZtdQuery\Platform\MySql\MySqlTypeSemantics;
-use ZtdQuery\Platform\MySql\MySqlPartitionSelectionRewriter;
-use ZtdQuery\Platform\MySql\MySqlFullTextSearchRewriter;
+use RuntimeException;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
-use ZtdQuery\Platform\ValueRenderer;
+use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
+use ZtdQuery\Platform\MySql\MySqlFullTextSearchRewriter;
 use ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector;
+use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
+use ZtdQuery\Platform\MySql\MySqlPartitionSelectionRewriter;
+use ZtdQuery\Platform\MySql\MySqlTypeSemantics;
+use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
@@ -146,15 +147,15 @@ final class SelectTransformer implements SqlTransformer
                     $valStr = $this->formatValue($row[$col] ?? null, $type);
                     $selects[] = "$valStr AS " . $this->quoter->quote($col);
                 }
-                $ctes[] = "SELECT " . implode(", ", $selects);
+                $ctes[] = 'SELECT ' . implode(', ', $selects);
             }
 
-            $union = implode(" UNION ALL ", $ctes);
+            $union = implode(' UNION ALL ', $ctes);
             return $this->wrapCte($quotedTable, $union, $columns, $generatedExpressions);
         }
 
         if ($rows === []) {
-            throw new \RuntimeException("Cannot shadow table '$tableName' with empty data (columns unknown).");
+            throw new RuntimeException("Cannot shadow table '$tableName' with empty data (columns unknown).");
         }
 
         $ctes = [];
@@ -166,10 +167,10 @@ final class SelectTransformer implements SqlTransformer
                 $valStr = $this->formatValue($val, $type);
                 $selects[] = "$valStr AS " . $this->quoter->quote($colName);
             }
-            $ctes[] = "SELECT " . implode(", ", $selects);
+            $ctes[] = 'SELECT ' . implode(', ', $selects);
         }
 
-        $union = implode(" UNION ALL ", $ctes);
+        $union = implode(' UNION ALL ', $ctes);
         return $this->wrapCte($quotedTable, $union, array_keys($rows[0]), $generatedExpressions);
     }
 
@@ -215,7 +216,7 @@ final class SelectTransformer implements SqlTransformer
             return $value;
         }
 
-        if (preg_match("/^SET\\((.*)\\)$/i", trim($mysqlType), $matches) !== 1) {
+        if (preg_match('/^SET\\((.*)\\)$/i', trim($mysqlType), $matches) !== 1) {
             return $value;
         }
 

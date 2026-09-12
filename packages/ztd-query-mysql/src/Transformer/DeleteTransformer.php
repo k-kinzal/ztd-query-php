@@ -9,6 +9,7 @@ use PhpMyAdmin\SqlParser\Components\JoinKeyword;
 use PhpMyAdmin\SqlParser\Components\Limit;
 use PhpMyAdmin\SqlParser\Components\OrderKeyword;
 use PhpMyAdmin\SqlParser\Statements\DeleteStatement;
+use RuntimeException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
 use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
@@ -105,7 +106,7 @@ final class DeleteTransformer implements SqlTransformer
                 $targetTableExpr = $stmt->from[0];
                 $targetTableName = self::exprTable($targetTableExpr);
                 if ($targetTableName === null || $targetTableName === '') {
-                    throw new \RuntimeException('Delete target table could not be resolved.');
+                    throw new RuntimeException('Delete target table could not be resolved.');
                 }
                 $targetTableAlias = self::exprAlias($targetTableExpr) ?? $targetTableName;
             }
@@ -153,10 +154,10 @@ final class DeleteTransformer implements SqlTransformer
         }
 
         if (preg_match('/\bPARTITION\s*\(([^)]+)\)/i', $originalSql, $matches) === 1) {
-            throw new \RuntimeException("ZTD Write Protection: PARTITION clause in DELETE is not supported (cannot simulate safely).");
+            throw new RuntimeException('ZTD Write Protection: PARTITION clause in DELETE is not supported (cannot simulate safely).');
         }
 
-        $fromClause = "";
+        $fromClause = '';
         if ($stmt->from !== null && $stmt->from !== []) {
             $fromParts = [];
             foreach ($stmt->from as $expr) {
@@ -165,12 +166,12 @@ final class DeleteTransformer implements SqlTransformer
             $fromClause = ' FROM ' . implode(', ', $fromParts);
         }
 
-        $joinClause = "";
+        $joinClause = '';
         if ($stmt->join !== null && $stmt->join !== []) {
             $joinClause = ' ' . JoinKeyword::build($stmt->join);
         }
 
-        $usingClause = "";
+        $usingClause = '';
         if ($stmt->using !== null && $stmt->using !== []) {
             $usingParts = [];
             foreach ($stmt->using as $expr) {
@@ -179,29 +180,29 @@ final class DeleteTransformer implements SqlTransformer
             $fromClause = ' FROM ' . implode(', ', $usingParts);
         }
 
-        $whereClause = "";
+        $whereClause = '';
         $whereExpression = (new DmlWhereClauseExtractor())->extract($originalSql);
         if ($whereExpression !== null && $whereExpression !== '') {
-            $whereClause = " WHERE " . $whereExpression;
+            $whereClause = ' WHERE ' . $whereExpression;
         }
 
-        $orderClause = "";
+        $orderClause = '';
         if ($stmt->order !== null && $stmt->order !== []) {
             $orderParts = [];
             foreach ($stmt->order as $order) {
                 $orderParts[] = OrderKeyword::build($order);
             }
-            $orderClause = " ORDER BY " . implode(", ", $orderParts);
+            $orderClause = ' ORDER BY ' . implode(', ', $orderParts);
         }
 
-        $limitClause = "";
+        $limitClause = '';
         if ($stmt->limit !== null) {
-            $limitClause = " LIMIT " . Limit::build($stmt->limit);
+            $limitClause = ' LIMIT ' . Limit::build($stmt->limit);
         }
 
         $targetTableAlias = $targetTableAlias ?? $targetTableName;
         if ($targetTableAlias === null || $targetTableAlias === '') {
-            throw new \RuntimeException('Delete target table could not be resolved.');
+            throw new RuntimeException('Delete target table could not be resolved.');
         }
 
         $selectList = "`$targetTableAlias`.*";
@@ -216,7 +217,7 @@ final class DeleteTransformer implements SqlTransformer
         $sql = "SELECT $selectList$fromClause$joinClause$usingClause $whereClause$orderClause$limitClause";
 
         if ($targetTableName === null || $targetTableName === '') {
-            throw new \RuntimeException('Delete target table could not be resolved.');
+            throw new RuntimeException('Delete target table could not be resolved.');
         }
 
         /** @var array<string, array{alias: string}> $resolvedTables */

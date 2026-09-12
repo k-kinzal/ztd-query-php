@@ -8,8 +8,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\InsertSelectSourceExtractor;
+use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlUpsertAssignmentExtractor;
@@ -91,7 +91,7 @@ final class ReplaceTransformerTest extends TestCase
 
         $result = $transformer->transform("# REPLACE INTO hidden VALUES (0)\nREPLACE INTO users VALUES (1, 'Alice')", $tables);
 
-        self::assertStringContainsString("1 AS `id`", $result);
+        self::assertStringContainsString('1 AS `id`', $result);
         self::assertStringContainsString("'Alice' AS `name`", $result);
     }
 
@@ -144,7 +144,7 @@ final class ReplaceTransformerTest extends TestCase
         ];
 
         $result = $transformer->transform($sql, $tables);
-        self::assertStringContainsString("1 AS `id`", $result);
+        self::assertStringContainsString('1 AS `id`', $result);
         self::assertStringContainsString("'Alice' AS `name`", $result);
     }
 
@@ -206,7 +206,7 @@ final class ReplaceTransformerTest extends TestCase
         $tables = [];
 
         $result = $transformer->transform($sql, $tables);
-        self::assertStringContainsString("1 AS `id`", $result);
+        self::assertStringContainsString('1 AS `id`', $result);
         self::assertStringContainsString("'Alice' AS `name`", $result);
     }
 
@@ -216,7 +216,7 @@ final class ReplaceTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new ReplaceTransformer($parser, $selectTransformer);
 
-        $sql = "REPLACE INTO archive (id, name) SELECT id, name FROM users";
+        $sql = 'REPLACE INTO archive (id, name) SELECT id, name FROM users';
         $tables = [
             'archive' => [
                 'rows' => [],
@@ -235,7 +235,7 @@ final class ReplaceTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new ReplaceTransformer($parser, $selectTransformer);
 
-        $sql = "REPLACE INTO t (a, b) VALUES (1, 2)";
+        $sql = 'REPLACE INTO t (a, b) VALUES (1, 2)';
         $tables = [];
 
         $result = $transformer->transform($sql, $tables);
@@ -248,7 +248,7 @@ final class ReplaceTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new ReplaceTransformer($parser, $selectTransformer);
 
-        $sql = "REPLACE INTO t SET a = 1, b = 2";
+        $sql = 'REPLACE INTO t SET a = 1, b = 2';
         $tables = ['t' => ['columns' => ['a', 'b'], 'columnTypes' => [], 'rows' => []]];
 
         $result = $transformer->transform($sql, $tables);
@@ -262,7 +262,7 @@ final class ReplaceTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new ReplaceTransformer($parser, $selectTransformer);
 
-        $sql = "REPLACE INTO t (a) VALUES (1), (2)";
+        $sql = 'REPLACE INTO t (a) VALUES (1), (2)';
         $tables = [];
 
         $result = $transformer->transform($sql, $tables);
@@ -275,7 +275,7 @@ final class ReplaceTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new ReplaceTransformer($parser, $selectTransformer);
 
-        $sql = "REPLACE INTO t (a, b) VALUES (1)";
+        $sql = 'REPLACE INTO t (a, b) VALUES (1)';
         $tables = [];
 
         $this->expectException(UnsupportedSqlException::class);
@@ -289,7 +289,7 @@ final class ReplaceTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new ReplaceTransformer($parser, $selectTransformer);
 
-        $sql = "REPLACE INTO archive (id, name) SELECT id, name FROM users WHERE active = 0";
+        $sql = 'REPLACE INTO archive (id, name) SELECT id, name FROM users WHERE active = 0';
         $tables = [
             'archive' => [
                 'rows' => [],
@@ -310,7 +310,7 @@ final class ReplaceTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new ReplaceTransformer($parser, $selectTransformer);
 
-        $sql = "REPLACE INTO t SET a = 10, b = 20";
+        $sql = 'REPLACE INTO t SET a = 10, b = 20';
         $tables = ['t' => ['columns' => ['a', 'b'], 'columnTypes' => [], 'rows' => []]];
 
         $result = $transformer->transform($sql, $tables);
@@ -347,7 +347,7 @@ final class ReplaceTransformerTest extends TestCase
         ];
 
         $result = $transformer->transform($sql, $tables);
-        self::assertStringContainsString("1 AS `id`", $result);
+        self::assertStringContainsString('1 AS `id`', $result);
         self::assertStringContainsString("'Bob' AS `name`", $result);
     }
 
@@ -357,7 +357,7 @@ final class ReplaceTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new ReplaceTransformer($parser, $selectTransformer);
 
-        $sql = "REPLACE INTO t (id) VALUES (1), (2), (3)";
+        $sql = 'REPLACE INTO t (id) VALUES (1), (2), (3)';
         $tables = [];
 
         $result = $transformer->transform($sql, $tables);
@@ -380,7 +380,7 @@ final class ReplaceTransformerTest extends TestCase
         ];
 
         $result = $transformer->transform($sql, $tables);
-        self::assertStringContainsString("1 AS `id`", $result);
+        self::assertStringContainsString('1 AS `id`', $result);
         self::assertStringContainsString("'x' AS `name`", $result);
     }
 
@@ -429,7 +429,7 @@ final class ReplaceTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new ReplaceTransformer($parser, $selectTransformer);
 
-        $sql = "REPLACE INTO t SET x = 42";
+        $sql = 'REPLACE INTO t SET x = 42';
         $tables = ['t' => ['columns' => ['x'], 'columnTypes' => [], 'rows' => []]];
 
         $result = $transformer->transform($sql, $tables);

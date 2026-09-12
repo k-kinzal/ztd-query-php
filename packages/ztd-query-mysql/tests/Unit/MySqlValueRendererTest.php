@@ -7,6 +7,8 @@ namespace Tests\Unit;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
+use Stringable;
 use ZtdQuery\Platform\MySql\MySqlValueRenderer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
@@ -73,7 +75,7 @@ final class MySqlValueRendererTest extends TestCase
 
     public function testInferredStringableUsesItsSqlRepresentation(): void
     {
-        $value = new class () implements \Stringable {
+        $value = new class () implements Stringable {
             public function __toString(): string
             {
                 return 'CURRENT_TIMESTAMP';
@@ -110,7 +112,7 @@ final class MySqlValueRendererTest extends TestCase
     {
         $renderer = new MySqlValueRenderer();
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $renderer->renderValue([]);
     }
 }

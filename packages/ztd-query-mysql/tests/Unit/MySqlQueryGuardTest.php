@@ -7,6 +7,7 @@ namespace Tests\Unit;
 use PhpMyAdmin\SqlParser\Parser;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
+use RuntimeException;
 use Tests\Contract\QueryClassifierContractTest;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlQueryGuard;
@@ -125,7 +126,7 @@ class MySqlQueryGuardTest extends QueryClassifierContractTest
     {
         $guard = new MySqlQueryGuard(new MySqlParser());
 
-        self::expectException(\RuntimeException::class);
+        self::expectException(RuntimeException::class);
         self::expectExceptionMessage('ZTD Write Protection');
 
         $guard->assertAllowed('DROP DATABASE test');
@@ -191,8 +192,8 @@ class MySqlQueryGuardTest extends QueryClassifierContractTest
     public function testAssertAllowedDoesNotThrowForWrite(): void
     {
         $guard = new MySqlQueryGuard(new MySqlParser());
-        $guard->assertAllowed("INSERT INTO users (id) VALUES (1)");
-        self::assertSame(QueryKind::WRITE_SIMULATED, $guard->classify("INSERT INTO users (id) VALUES (1)"));
+        $guard->assertAllowed('INSERT INTO users (id) VALUES (1)');
+        self::assertSame(QueryKind::WRITE_SIMULATED, $guard->classify('INSERT INTO users (id) VALUES (1)'));
     }
 
     public function testAssertAllowedDoesNotThrowForDdl(): void
@@ -248,7 +249,7 @@ class MySqlQueryGuardTest extends QueryClassifierContractTest
     public function testAssertAllowedThrowsForSelectInto(): void
     {
         $guard = new MySqlQueryGuard(new MySqlParser());
-        self::expectException(\RuntimeException::class);
+        self::expectException(RuntimeException::class);
         $guard->assertAllowed('SELECT * INTO OUTFILE "/tmp/data" FROM users');
     }
 
@@ -333,13 +334,13 @@ class MySqlQueryGuardTest extends QueryClassifierContractTest
     public function testClassifyWithFallbackInsertInWith(): void
     {
         $guard = new MySqlQueryGuard(new MySqlParser());
-        self::assertSame(QueryKind::WRITE_SIMULATED, $guard->classify("WITH cte AS (SELECT 1) INSERT INTO users (id) VALUES (1)"));
+        self::assertSame(QueryKind::WRITE_SIMULATED, $guard->classify('WITH cte AS (SELECT 1) INSERT INTO users (id) VALUES (1)'));
     }
 
     public function testClassifyWithFallbackReplaceInWithReturnsNull(): void
     {
         $guard = new MySqlQueryGuard(new MySqlParser());
-        self::assertNull($guard->classify("WITH cte AS (SELECT 1) REPLACE INTO users (id) VALUES (1)"));
+        self::assertNull($guard->classify('WITH cte AS (SELECT 1) REPLACE INTO users (id) VALUES (1)'));
     }
 
     public function testClassifyWithFallbackTruncateInWithReturnsNull(): void
@@ -375,7 +376,7 @@ class MySqlQueryGuardTest extends QueryClassifierContractTest
     public function testClassifyWithFallbackBacktickQuotedIdentifier(): void
     {
         $guard = new MySqlQueryGuard(new MySqlParser());
-        self::assertSame(QueryKind::READ, $guard->classify("WITH `DELETE` AS (SELECT 1) SELECT * FROM `DELETE`"));
+        self::assertSame(QueryKind::READ, $guard->classify('WITH `DELETE` AS (SELECT 1) SELECT * FROM `DELETE`'));
     }
 
     public function testClassifyWithFallbackDoubleQuotedString(): void
@@ -438,7 +439,7 @@ class MySqlQueryGuardTest extends QueryClassifierContractTest
     public function testAssertAllowedThrowsForUnsupportedSql(): void
     {
         $guard = new MySqlQueryGuard(new MySqlParser());
-        self::expectException(\RuntimeException::class);
+        self::expectException(RuntimeException::class);
         $guard->assertAllowed('DROP DATABASE test');
     }
 
@@ -521,7 +522,7 @@ class MySqlQueryGuardTest extends QueryClassifierContractTest
         $guard = new MySqlQueryGuard(new MySqlParser());
         self::assertSame(
             QueryKind::READ,
-            $guard->classify("WITH `DELETE` AS (SELECT 1) SELECT * FROM `DELETE`")
+            $guard->classify('WITH `DELETE` AS (SELECT 1) SELECT * FROM `DELETE`')
         );
     }
 

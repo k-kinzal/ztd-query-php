@@ -11,9 +11,9 @@ use PhpMyAdmin\SqlParser\Statements\SelectStatement;
 use PhpMyAdmin\SqlParser\Statements\UpdateStatement;
 use PhpMyAdmin\SqlParser\Statements\WithStatement;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Rewrite\SqlTransformer;
-use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 
 /**
  * Composite SQL transformer for MySQL.

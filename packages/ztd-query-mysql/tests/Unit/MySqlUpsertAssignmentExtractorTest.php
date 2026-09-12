@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\MySqlUpsertAssignmentExtractor;
 
@@ -39,7 +39,7 @@ final class MySqlUpsertAssignmentExtractorTest extends TestCase
             ['name' => 'incoming.name'],
         ];
         yield 'values function and nested commas' => [
-            "INSERT INTO t VALUES (1, 2) ON DUPLICATE KEY UPDATE value = IF(VALUES(value) > value, VALUES(value), value)",
+            'INSERT INTO t VALUES (1, 2) ON DUPLICATE KEY UPDATE value = IF(VALUES(value) > value, VALUES(value), value)',
             ['value' => 'IF(VALUES(value) > value, VALUES(value), value)'],
         ];
         yield 'multiple alias references after other identifiers' => [

@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\MySql\Transformer;
 
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
-use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Platform\MySql\MySqlLexerProfile;
+use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 

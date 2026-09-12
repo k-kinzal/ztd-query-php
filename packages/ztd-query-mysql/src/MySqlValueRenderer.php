@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\MySql;
 
+use RuntimeException;
 use Stringable;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\ValueRenderer;
@@ -83,7 +84,7 @@ final class MySqlValueRenderer implements ValueRenderer
             return $this->readStream($value);
         }
 
-        throw new \RuntimeException('Unsupported value type for CTE shadowing.');
+        throw new RuntimeException('Unsupported value type for CTE shadowing.');
     }
 
     /** @param resource $stream */

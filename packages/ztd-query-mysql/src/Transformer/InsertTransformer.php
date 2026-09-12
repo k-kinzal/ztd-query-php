@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\MySql\Transformer;
 
+use InvalidArgumentException;
 use PhpMyAdmin\SqlParser\Components\ArrayObj;
 use PhpMyAdmin\SqlParser\Components\SetOperation;
 use PhpMyAdmin\SqlParser\Statements\InsertStatement;
@@ -12,9 +13,9 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\MySql\InsertSelectSourceExtractor;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
+use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 use ZtdQuery\Platform\MySql\MySqlNativeUpsertProjector;
 use ZtdQuery\Platform\MySql\MySqlParser;
-use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
 use ZtdQuery\Platform\MySql\MySqlUpsertAssignmentExtractor;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
@@ -215,7 +216,7 @@ final class InsertTransformer implements SqlTransformer
         $sourceColumns = $insertColumns !== [] || $values === [] ? $insertColumns : $tableColumns;
         try {
             $providedExpressions = $this->rowRenderer->providedExpressions($sourceColumns, $values);
-        } catch (\InvalidArgumentException $exception) {
+        } catch (InvalidArgumentException $exception) {
             throw new RuntimeException($exception->getMessage(), 0, $exception);
         }
         $generatedValues = $this->identityAllocator->allocateMissing(

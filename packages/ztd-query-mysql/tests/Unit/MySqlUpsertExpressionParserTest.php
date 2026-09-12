@@ -10,7 +10,6 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\MySqlUpsertExpressionParser;
-use ZtdQuery\Shadow\Mutation\UpsertExpression;
 
 #[CoversClass(MySqlUpsertExpressionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
@@ -72,7 +71,7 @@ final class MySqlUpsertExpressionParserTest extends TestCase
     public function testUnescapesQuotedIdentifiersAndMySqlStrings(): void
     {
         $expression = (new MySqlUpsertExpressionParser())->parse(
-            "`it``ems`.`quan``tity` + VALUES(`quan``tity`)",
+            '`it``ems`.`quan``tity` + VALUES(`quan``tity`)',
             'it`ems',
         );
 
