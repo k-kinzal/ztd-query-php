@@ -27,8 +27,8 @@ register_shutdown_function(static function (): void {
 use Faker\Factory;
 use Fuzz\Container\PostgreSqlContainer;
 use Fuzz\Target\PgSyntaxCheck;
-use SqlFaker\Coverage\GrammarCoverage;
 use SqlFaker\Generation\Choice\BytePlanCompiler;
+use SqlFaker\Generation\Coverage\GrammarCoverage;
 use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\PostgreSqlProvider;
 use Testcontainers\Testcontainers;

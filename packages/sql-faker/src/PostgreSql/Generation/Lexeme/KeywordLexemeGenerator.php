@@ -9,7 +9,7 @@ use SqlFaker\Generation\Candidate\RegisteredLexemeGenerator;
 use SqlFaker\Generation\Lexeme\LexemeCandidates;
 use SqlFaker\Generation\Lexeme\LexemeGenerator;
 use SqlFaker\Generation\Lexeme\LexemeInput;
-use SqlFaker\PostgreSql\Lookahead\PgLookahead;
+use SqlFaker\PostgreSql\Generation\Lookahead\PgLookahead;
 
 /**
  * Combines kwlist.h registrations with parser.c/base_yylex's required followers for lookahead tokens.

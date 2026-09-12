@@ -6,10 +6,10 @@ namespace SqlFaker;
 
 use Faker\Generator;
 use Faker\Provider\Base;
-use SqlFaker\Coverage\GrammarCoverage;
+use SqlFaker\Generation\Coverage\GrammarCoverage;
 use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\Generation\SqlGenerator;
-use SqlFaker\PostgreSql\GenerationPlans;
+use SqlFaker\PostgreSql\Generation\GenerationPlans;
 use SqlFaker\PostgreSql\Grammar\PgGrammar;
 use SqlFaker\PostgreSql\StatementType;
 use SqlFaker\Provider\SqlGeneratorFactory;

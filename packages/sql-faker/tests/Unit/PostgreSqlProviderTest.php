@@ -22,10 +22,10 @@ use SqlFaker\Grammar\Model\ProductionRule;
 use SqlFaker\Grammar\Model\Terminal;
 use SqlFaker\Grammar\Model\TerminalInventory;
 use SqlFaker\Grammar\Resource\SqlVersion;
+use SqlFaker\PostgreSql\Generation\GenerationPlans;
+use SqlFaker\PostgreSql\Generation\LexicalGrammar;
 use SqlFaker\PostgreSql\Generation\Value\LiteralGenerator;
-use SqlFaker\PostgreSql\GenerationPlans;
 use SqlFaker\PostgreSql\Grammar\PgGrammar;
-use SqlFaker\PostgreSql\LexicalGrammar;
 use SqlFaker\PostgreSql\StatementType;
 use SqlFaker\PostgreSqlProvider;
 
@@ -83,10 +83,10 @@ use SqlFaker\PostgreSqlProvider;
 #[UsesClass(\SqlFaker\Generation\Candidate\VersionCase::class)]
 #[UsesClass(\SqlFaker\Generation\Candidate\VersionedLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\Generation\Exception\LexicalException::class)]
-#[UsesClass(\SqlFaker\PostgreSql\Tokenization\KeywordIndex::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Tokenization\KeywordIndex::class)]
 #[UsesClass(\SqlFaker\Generation\Value\RandomCharacters::class)]
 #[UsesClass(\SqlFaker\Grammar\Resource\SqlVersionRegistry::class)]
-#[UsesClass(\SqlFaker\MySql\GenerationContext::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\GenerationContext::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\DefinitionFactory::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Lexeme\KeywordLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\AlterDatabaseRule::class)]
@@ -104,10 +104,10 @@ use SqlFaker\PostgreSqlProvider;
 #[UsesClass(\SqlFaker\MySql\Generation\Spacing\QualifiedNameSpacingRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Spacing\VariableSpacingRule::class)]
 #[UsesClass(\SqlFaker\MySql\Grammar\MySqlGrammar::class)]
-#[UsesClass(\SqlFaker\MySql\LexicalGrammar::class)]
-#[UsesClass(\SqlFaker\MySql\Tokenization\MySqlTokenizer::class)]
-#[UsesClass(\SqlFaker\MySql\StartRuleResolver::class)]
-#[UsesClass(\SqlFaker\PostgreSql\GenerationContext::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\LexicalGrammar::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Tokenization\MySqlTokenizer::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\StartRuleResolver::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\GenerationContext::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\DefinitionFactory::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\HashBoundLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\KeywordLexemeGenerator::class)]
@@ -124,9 +124,9 @@ use SqlFaker\PostgreSqlProvider;
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\RewriteDefinitions::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\TimeZoneIntervalRule::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\WindowFrameRule::class)]
-#[UsesClass(\SqlFaker\PostgreSql\Lookahead\PgLookahead::class)]
-#[UsesClass(\SqlFaker\PostgreSql\Tokenization\PgTokenizer::class)]
-#[UsesClass(\SqlFaker\Sqlite\GenerationContext::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Lookahead\PgLookahead::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Tokenization\PgTokenizer::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\GenerationContext::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\DefinitionFactory::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\JoinLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Lexeme\JoinModifiers::class)]
@@ -137,10 +137,10 @@ use SqlFaker\PostgreSqlProvider;
 #[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\TableOptionRule::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\WindowFrameRule::class)]
 #[UsesClass(\SqlFaker\Sqlite\Generation\Rewrite\WithoutRowidRule::class)]
-#[UsesClass(\SqlFaker\Sqlite\GrammarAdaptation::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\GrammarAdaptation::class)]
 #[UsesClass(\SqlFaker\Sqlite\Grammar\SqliteGrammar::class)]
-#[UsesClass(\SqlFaker\Sqlite\LexicalGrammar::class)]
-#[UsesClass(\SqlFaker\Sqlite\Tokenization\SqliteTokenizer::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\LexicalGrammar::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Tokenization\SqliteTokenizer::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Rewrite\Expression\ExpressionGroupingRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\AlterEventRule::class)]
 #[UsesClass(\SqlFaker\MySql\Generation\Rewrite\SubqueryContextRule::class)]

@@ -12,10 +12,10 @@ use SqlFaker\Generation\Exception\LexicalException;
 use SqlFaker\Generation\Value\RandomCharacters;
 use SqlFaker\Grammar\Resource\SqlVersion;
 use SqlFaker\Grammar\Resource\SqlVersionRegistry;
+use SqlFaker\MySql\Generation\LexicalGrammar;
+use SqlFaker\MySql\Generation\Tokenization\KeywordIndex;
+use SqlFaker\MySql\Generation\Tokenization\MySqlTokenizer;
 use SqlFaker\MySql\Generation\Value\LiteralGenerator;
-use SqlFaker\MySql\LexicalGrammar;
-use SqlFaker\MySql\Tokenization\KeywordIndex;
-use SqlFaker\MySql\Tokenization\MySqlTokenizer;
 
 #[CoversClass(LexicalException::class)]
 #[UsesClass(LexicalGrammar::class)]
@@ -24,12 +24,12 @@ use SqlFaker\MySql\Tokenization\MySqlTokenizer;
 #[UsesClass(\SqlFaker\Sqlite\Generation\Value\LiteralGenerator::class)]
 #[UsesClass(SqlVersion::class)]
 #[UsesClass(KeywordIndex::class)]
-#[UsesClass(\SqlFaker\PostgreSql\Tokenization\KeywordIndex::class)]
-#[UsesClass(\SqlFaker\Sqlite\Tokenization\KeywordIndex::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Tokenization\KeywordIndex::class)]
+#[UsesClass(\SqlFaker\Sqlite\Generation\Tokenization\KeywordIndex::class)]
 #[UsesClass(RandomCharacters::class)]
 #[UsesClass(SqlVersionRegistry::class)]
 #[UsesClass(MySqlTokenizer::class)]
-#[UsesClass(\SqlFaker\MySql\Tokenization\MySqlQuoting::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Tokenization\MySqlQuoting::class)]
 #[UsesClass(\SqlFaker\Generation\Candidate\ChoiceLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\Generation\Candidate\FixedLexemeGenerator::class)]
 #[UsesClass(\SqlFaker\Generation\Candidate\IntegerLexemeGenerator::class)]

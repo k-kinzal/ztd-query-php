@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace SqlFaker\Provider;
 
 use Faker\Generator;
-use SqlFaker\Coverage\GrammarCoverage;
+use SqlFaker\Generation\Coverage\GrammarCoverage;
 use SqlFaker\Generation\SqlGenerator;
 use SqlFaker\Grammar\Model\Grammar;
-use SqlFaker\MySql\GenerationContext as MySqlContext;
-use SqlFaker\PostgreSql\GenerationContext as PgContext;
-use SqlFaker\Sqlite\GenerationContext as SqliteContext;
+use SqlFaker\MySql\Generation\GenerationContext as MySqlContext;
+use SqlFaker\PostgreSql\Generation\GenerationContext as PgContext;
+use SqlFaker\Sqlite\Generation\GenerationContext as SqliteContext;
 
 /**
  * Assembles the dialect collaborators used by the Faker providers.
