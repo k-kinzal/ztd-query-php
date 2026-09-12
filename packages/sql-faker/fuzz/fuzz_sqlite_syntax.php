@@ -16,8 +16,8 @@ declare(strict_types=1);
 
 use Faker\Factory;
 use Fuzz\Target\SqliteSyntaxCheck;
-use SqlFaker\Coverage\GrammarCoverage;
 use SqlFaker\Generation\Choice\BytePlanCompiler;
+use SqlFaker\Generation\Coverage\GrammarCoverage;
 use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\SqliteProvider;
 

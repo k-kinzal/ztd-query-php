@@ -10,7 +10,7 @@ final class MySqlProvider
 
     public function quotedIdentifier(): string
     {
-        return $this->sql->generate(\SqlFaker\MySql\GenerationPlans::quotedIdentifier(1, 64));
+        return $this->sql->generate(\SqlFaker\MySql\Generation\GenerationPlans::quotedIdentifier(1, 64));
     }
 
     public function statement(?string $type): string

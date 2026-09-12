@@ -6,11 +6,11 @@ namespace SqlFaker\Generation;
 
 use Closure;
 use Faker\Generator;
-use SqlFaker\Coverage\GeneratorRevision;
-use SqlFaker\Coverage\GrammarCoverage;
-use SqlFaker\Coverage\GrammarCoverageInventory;
-use SqlFaker\Coverage\SequenceObservation;
 use SqlFaker\Generation\Choice\PlanBuilder;
+use SqlFaker\Generation\Coverage\GeneratorRevision;
+use SqlFaker\Generation\Coverage\GrammarCoverage;
+use SqlFaker\Generation\Coverage\GrammarCoverageInventory;
+use SqlFaker\Generation\Coverage\SequenceObservation;
 use SqlFaker\Generation\Derivation\TokenGenerator;
 use SqlFaker\Generation\Exception\GenerationException;
 use SqlFaker\Generation\Exception\LexicalException;

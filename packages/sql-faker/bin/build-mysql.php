@@ -7,7 +7,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 use SqlFaker\Compiler\Bison\BisonParser;
 use SqlFaker\Compiler\Bison\GrammarCompiler;
-use SqlFaker\Grammar\Resource\GrammarWriter;
+use SqlFaker\Compiler\Resource\GrammarWriter;
 use SqlFaker\Grammar\Resource\SqlVersion;
 
 /**

@@ -16,7 +16,7 @@ use SqlFaker\PostgreSql\Generation\Rewrite\LookaheadRule;
 #[CoversClass(LookaheadRule::class)]
 #[UsesClass(TerminalSequence::class)]
 #[UsesClass(TerminalOccurrence::class)]
-#[UsesClass(\SqlFaker\PostgreSql\Lookahead\PgLookahead::class)]
+#[UsesClass(\SqlFaker\PostgreSql\Generation\Lookahead\PgLookahead::class)]
 #[UsesClass(ProductionOccurrence::class)]
 final class LookaheadRuleTest extends TestCase
 {

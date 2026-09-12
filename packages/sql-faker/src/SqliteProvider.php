@@ -6,11 +6,11 @@ namespace SqlFaker;
 
 use Faker\Generator;
 use Faker\Provider\Base;
-use SqlFaker\Coverage\GrammarCoverage;
+use SqlFaker\Generation\Coverage\GrammarCoverage;
 use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\Generation\SqlGenerator;
 use SqlFaker\Provider\SqlGeneratorFactory;
-use SqlFaker\Sqlite\GenerationPlans;
+use SqlFaker\Sqlite\Generation\GenerationPlans;
 use SqlFaker\Sqlite\Grammar\SqliteGrammar;
 use SqlFaker\Sqlite\StatementType;
 

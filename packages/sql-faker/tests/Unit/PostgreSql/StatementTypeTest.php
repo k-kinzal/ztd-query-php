@@ -7,7 +7,7 @@ namespace Tests\Unit\SqlFaker\PostgreSql;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlFaker\PostgreSql\StatementRule;
+use SqlFaker\PostgreSql\Generation\StatementRule;
 use SqlFaker\PostgreSql\StatementType;
 
 #[CoversClass(StatementType::class)]
