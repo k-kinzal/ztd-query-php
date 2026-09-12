@@ -61,13 +61,6 @@ $sql = $faker->sql(maxDepth: 6);
 $select = $faker->selectStatement(maxDepth: 6);
 ```
 
-## Documentation
-
-- [Algorithm and limitations](docs/algorithm.md)
-- [Faker interface](docs/faker.md)
-- [SqlGenerator interface](docs/generator.md)
-- [Generation plans](docs/plan.md)
-
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.

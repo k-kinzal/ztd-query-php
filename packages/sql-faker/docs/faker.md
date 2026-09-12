@@ -1,189 +1,252 @@
 # Faker interface
 
-SQL Faker exposes SQL generation as [FakerPHP](https://fakerphp.org/) provider methods. Use this interface to generate statements, fragments, and lexical values alongside other Faker data. For custom constraints, pass a [generation plan](plan.md) to the provider’s `generate()` method or use the [SqlGenerator interface](generator.md).
+SQL Faker adds SQL-generation methods to FakerPHP. Choose a provider for your database, then call its methods through Faker or directly on the provider.
 
 ## Common
 
-### Registration and seeding
+### Register a provider
+
+Create a Faker instance and register a provider. The following Common examples use this MySQL provider:
 
 ```php
 use Faker\Factory;
 use SqlFaker\MySqlProvider;
 use SqlFaker\MySql\StatementType;
 
+require 'vendor/autoload.php';
+
 $faker = Factory::create();
 $provider = new MySqlProvider($faker, 'mysql-8.4.7');
 $faker->addProvider($provider);
 $faker->seed(12345);
-
-$sql = $faker->sql(StatementType::Select, maxDepth: 6);
-$expression = $faker->expr(maxDepth: 3);
-$identifier = $provider->quotedIdentifier(1, 12);
 ```
 
-Every provider takes `(Faker\Generator $generator, ?string $version = null, ?SqlFaker\Coverage\GrammarCoverage $coverage = null)`. The optional coverage collector records exercised grammar and lexical choices. The provider constructor also registers the provider with the supplied Faker instance; the explicit `addProvider()` call follows the usual Faker registration style but is optional here. Provider methods can be called directly, as shown above, for an explicitly typed PHP interface.
+The provider constructor also registers itself, so the explicit `addProvider()` call is optional. The second constructor argument selects a version; omit it to use the default. Use separate Faker instances for different dialects because their method names overlap.
 
-Use a separate Faker instance for each dialect: providers share method names, and Faker resolves overlapping methods to a provider according to registration order. Select a version tag from the [support table](../README.md#support-syntax). An unsupported tag raises `RuntimeException`.
+### Generate statements
 
-Construct the provider before calling Faker's [`seed()`](https://fakerphp.org/#seeding-the-generator), which controls the random sequence. Reproduction also requires the same dependencies, grammar, arguments, and order of random calls. Generated strings may include comments or varying whitespace; an example's exact output is not a stable contract across upgrades.
+Use a named method to select a statement family. Every call returns SQL text.
 
-### Generation plans
+```php
+$select = $faker->selectStatement(maxDepth: 6);
+$insert = $faker->insertStatement(maxDepth: 6);
+$update = $faker->updateStatement(maxDepth: 6);
+$delete = $faker->deleteStatement(maxDepth: 6);
+```
 
-Every provider also exposes `generate(GenerationPlan $plan): string` and `planner(): SqlFaker\Generation\Choice\PlanBuilder`. Use `generate()` to apply custom constraints and `planner()` to compile choices for replay with the same dialect settings. See [generation plans](plan.md). Call these methods directly on the provider to keep the SQL interface explicit.
+Pass the dialect's `StatementType` to `sql()` when the statement choice is stored in a variable. `StatementRule` is another name for the same enum. Calling the provider directly uses the same generation behavior.
 
-### Statements and fragments
+```php
+$type = StatementType::Select;
+$sql = $faker->sql($type, maxDepth: 6);
+$direct = $provider->sql($type, maxDepth: 6);
+$any = $faker->sql(maxDepth: 6);
+```
 
-All methods that generate SQL return `string`. Unless a different default is stated, statement and fragment methods take `int $maxDepth = PHP_INT_MAX`. This is an expansion-count threshold that favors shorter derivations once reached, not a strict nesting or length limit. See [complexity and termination](algorithm.md#complexity-and-termination).
+All three providers also offer `createTableStatement()`, `alterTableStatement()`, `dropTableStatement()`, and `simpleStatement()`. SQLite's CREATE TABLE helper selects an opening fragment; see the SQLite example below for a complete definition.
 
-`sql()` takes an optional dialect-specific `StatementType` enum as its first argument and `int $maxDepth = PHP_INT_MAX` as its second. The common enum cases are `Select`, `Insert`, `Update`, `Delete`, `CreateTable`, `AlterTable`, `DropTable`, and `SimpleStatement`. `StatementRule` is the canonical enum name and `StatementType` is its alias. The enum classes are separate for each dialect. Use a positional first argument when writing similar calls for multiple dialects: MySQL names it `$startRule`, while PostgreSQL and SQLite name it `$type`.
+### Generate fragments
 
-| Method | Requested syntax |
-|--------|------------------|
-| `selectStatement()` | SELECT family; SQLite can also select VALUES |
-| `insertStatement()` | INSERT family; SQLite can also select REPLACE |
-| `updateStatement()` | UPDATE |
-| `deleteStatement()` | DELETE |
-| `createTableStatement()` | CREATE TABLE rule; SQLite returns only the opening fragment |
-| `alterTableStatement()` | ALTER TABLE rule |
-| `dropTableStatement()` | DROP rule; PostgreSQL can select other object types |
-| `simpleStatement()` | General statement entry point |
-| `expr()` | Expression |
-| `whereClause()` | WHERE clause; PostgreSQL and SQLite can return an empty string |
-| `withClause()` | WITH clause; SQLite can return an empty string |
-| `identifier()` | Identifier grammar rule, which can also select a permitted keyword or quoted form |
-| `foreignKeyConstraint()` | Named FOREIGN KEY constraint fragment |
+Generate an expression or clause when you need input for only part of a SQL statement:
 
-The following methods exist in all three providers and take `int $maxDepth = 40`. They select a particular syntax shape, without preparing the schema or checking its semantics.
+```php
+$expression = $provider->expr(maxDepth: 3);
+$where = $provider->whereClause(maxDepth: 3);
+$with = $provider->withClause(maxDepth: 3);
+$name = $provider->identifier(maxDepth: 3);
+```
 
-| Method | Requested syntax |
-|--------|------------------|
-| `insertFunctionUpsertStatement()` | Upsert with a function expression in its update portion |
-| `fullTextSearchStatement()` | SELECT with the dialect's full-text matching syntax |
-| `temporaryTableStatement()` | CREATE TEMPORARY/TEMP TABLE |
-| `viewStatement()` | CREATE VIEW |
-| `generatedColumnStatement()` | CREATE TABLE with a generated column |
-| `foreignKeyCascadeStatement()` | CREATE TABLE with a foreign key and ON UPDATE/DELETE CASCADE |
+These are SQL fragments, including any keywords or quoting selected by the grammar. Optional clause methods can return an empty string: PostgreSQL permits this for `whereClause()`, and SQLite also permits it for its optional ordering, limit, grouping, HAVING, and WITH clauses.
 
-### Lexical values
+### Generate identifiers and values
 
-These methods construct individual SQL values. All parameters below are integers. Length parameters refer to the generated content, excluding surrounding quotes or prefixes.
+Use lexical methods to specify lengths and numeric ranges. They return strings, including quotes or prefixes where appropriate.
 
-| Method | MySQL defaults | PostgreSQL defaults | SQLite defaults |
-|--------|----------------|---------------------|-----------------|
-| `quotedIdentifier($minLength, $maxLength)` | `1, 64` | `1, 63` | `1, 128` |
-| `stringLiteral($minLength, $maxLength)` | `1, 255` | `1, 255` | `1, 255` |
-| `integerLiteral($min, $max)` | `1, 2147483647` | `1, 2147483647` | `1, PHP_INT_MAX` |
-| `decimalLiteral($precision, $scale)` | `10, 2` | `10, 2` | `15, 2` |
+```php
+$identifier = $provider->quotedIdentifier(minLength: 4, maxLength: 12);
+$string = $provider->stringLiteral(minLength: 1, maxLength: 20);
+$integer = $provider->integerLiteral(min: 42, max: 42);
+$decimal = $provider->decimalLiteral(precision: 6, scale: 2);
+```
 
-`integerLiteral()` returns a numeric string. `decimalLiteral()` uses at least one integer digit and at least two fractional digits, even when a smaller scale is supplied; its parameters are not a database `DECIMAL(p, s)` validator. Lexical helpers generate values directly and do not run the statement derivation, structural rewriting, or lexical boundary-selection pipeline. See [limitations](algorithm.md#limitations).
+`$integer` is the SQL text `'42'`. Lengths exclude surrounding quotes and prefixes. `decimalLiteral()` emits at least one integer digit and two fractional digits; its parameters control generation rather than validating a database column definition.
 
-### Generation errors
+Quoted identifiers use backticks for MySQL and double quotes for PostgreSQL and SQLite. These methods generate new values; they do not escape an existing application value.
 
-The same exceptions apply to all three providers. `SqlFaker\Generation\Exception\GenerationException` reports an unsatisfied grammar plan or expansion budget. `SqlFaker\Generation\Exception\LexicalException` reports missing or incompatible lexical choices. Both extend `RuntimeException`. Unsupported version tags also raise `RuntimeException`, while invalid bounds or plan arguments can raise `InvalidArgumentException`. See the [generator error reference](generator.md#errors).
+### Control complexity
+
+Pass `maxDepth` to statement and fragment methods to favor shorter SQL:
+
+```php
+$short = $provider->selectStatement(maxDepth: 1);
+$varied = $provider->selectStatement(maxDepth: 6);
+```
+
+`maxDepth` counts grammar expansions before shorter completions are preferred. It does not set an exact nesting level or output length. Most methods default to `PHP_INT_MAX`; feature-specific methods such as `viewStatement()` and `insertFunctionUpsertStatement()` default to `40`.
+
+### Repeat a result
+
+Construct the provider before setting the seed. Reset the seed and repeat the same calls to reproduce their output with the same SQL Faker, FakerPHP, and database versions:
+
+```php
+$faker->seed(12345);
+$first = $provider->selectStatement(maxDepth: 6);
+
+$faker->seed(12345);
+$second = $provider->selectStatement(maxDepth: 6);
+
+$sameSql = $first === $second;
+```
+
+Other Faker calls consume random values too, so preserve their order when replaying a longer sequence.
+
+### Use a generation plan
+
+Call `generate()` directly on the provider to use a [generation plan](plan.md):
+
+```php
+$plan = \SqlFaker\Generation\Plan\GenerationPlan::fromRule(StatementType::Select->value)
+    ->requiringNonEmpty()
+    ->withMaxDepth(6)
+    ->withExpansionBudget(100);
+
+$sql = $provider->generate($plan);
+```
+
+For replayable production and lexical choices, use the provider's `planner()` as shown in [Compile a plan with callbacks](plan.md#compile-a-plan-with-callbacks).
 
 ## MySQL
 
-Use `SqlFaker\MySqlProvider` with `SqlFaker\MySql\StatementType`. The default version is `mysql-8.4.7`.
+### Select a version
 
-Without a statement type, `sql()` uses the selected grammar’s own entry point and requires non-empty output. Common statement rules also have older-version fallbacks. Some fallbacks are broader than the method name: for example, a CREATE TABLE request can use the general `create` rule. Helpers referencing syntax absent from the chosen version can fail. CTE and row-alias helpers are not available for every supported MySQL version.
+Use an exact tag from the README's [version table](../README.md#mysql). The default is `mysql-8.4.7`.
 
-### Additional statements and fragments
+```php
+$mysqlFaker = \Faker\Factory::create();
+$mysql = new \SqlFaker\MySqlProvider($mysqlFaker, 'mysql-8.4.7');
+$mysqlFaker->seed(7);
 
-| Method | Default `maxDepth` | Requested syntax |
-|--------|--------------------|------------------|
-| `sqlWithoutEmptyRows(?StatementType $startRule = null, int $maxDepth = PHP_INT_MAX)` | `PHP_INT_MAX` | SQL with every visited `opt_values` production required to be non-empty |
-| `replaceStatement()` | `PHP_INT_MAX` | REPLACE |
-| `truncateStatement()` | `PHP_INT_MAX` | TRUNCATE |
-| `createIndexStatement()`, `dropIndexStatement()` | `PHP_INT_MAX` | CREATE INDEX / DROP INDEX |
-| `beginStatement()`, `commitStatement()`, `rollbackStatement()` | `PHP_INT_MAX` | Transaction statements |
-| `loadDataStatement()` | `PHP_INT_MAX` | LOAD statement from `load_stmt`, including DATA or XML alternatives |
-| `multiTableUpdateStatement()`, `multiTableDeleteStatement()` | `PHP_INT_MAX` | UPDATE / DELETE with two target table references |
-| `updateJoinDerivedStatement()` | `40` | UPDATE joining a derived table |
-| `insertSelectCompoundStatement()` | `40` | INSERT from a compound query using UNION ALL |
-| `insertRowAliasUpsertStatement()` | `40` | INSERT with a row alias and ON DUPLICATE KEY UPDATE |
-| `partitionSelectStatement()` | `40` | SELECT with a PARTITION clause |
-| `simpleExpr()`, `literal()`, `predicate()` | `PHP_INT_MAX` | Simple expression, literal, or predicate |
-| `orderClause()`, `limitClause()` | `PHP_INT_MAX` | ORDER BY / LIMIT fragment |
-| `tableReference()`, `joinedTable()`, `tableIdent()` | `PHP_INT_MAX` | Table reference, join, or table identifier |
-| `subquery()` | `PHP_INT_MAX` | Subquery |
+$sql = $mysql->sql(\SqlFaker\MySql\StatementType::Insert, maxDepth: 6);
+```
 
-`sqlWithoutEmptyRows()` constrains grammar productions; it does not check insert-column counts or prevent a query from returning zero rows. The common upsert helper uses ON DUPLICATE KEY UPDATE with an IF expression, and full-text generation uses MATCH ... AGAINST. Generated-column plans select STORED syntax.
+The first argument to MySQL's `sql()` is named `startRule`. With no type, it starts from the selected grammar's entry point. Explicit statement rules have aliases for older versions; some older aliases cover a broader statement family.
 
-### Additional lexical values
+### Generate MySQL fragments and literals
 
-MySQL's `quotedIdentifier()` uses backticks.
+```php
+$order = $mysql->orderClause(maxDepth: 3);
+$limit = $mysql->limitClause(maxDepth: 3);
+$table = $mysql->tableIdent(maxDepth: 3);
+$predicate = $mysql->predicate(maxDepth: 3);
 
-| Method with default arguments | Output form |
-|-------------------------------|-------------|
-| `nationalStringLiteral($minLength = 1, $maxLength = 255)` | `N'...'` |
-| `dollarQuotedString($minLength = 1, $maxLength = 255)` | `$$...$$` |
-| `longIntegerLiteral($min = 0, $max = 2147483647)` | Integer string within the supplied range |
-| `unsignedBigIntLiteral($minLength = 1, $maxLength = 20)` | Digit string with leading zeros removed; the result can be shorter than `minLength`, and length does not validate the unsigned BIGINT range |
-| `floatLiteral($precision = 10, $scale = 2, $minExponent = -38, $maxExponent = 38)` | Decimal with exponent |
-| `hexLiteral($minLength = 1, $maxLength = 16)` | `0x...` |
-| `quotedHexLiteral($minBytes = 1, $maxBytes = 8)` | `X'...'`, two hex digits per byte |
-| `binaryLiteral($minLength = 1, $maxLength = 64)` | `0b...` |
-| `hostname($minParts = 1, $maxParts = 4, $maxPartLength = 63)` | Dot-separated hostname |
+$national = $mysql->nationalStringLiteral(minLength: 1, maxLength: 12);
+$hex = $mysql->quotedHexLiteral(minBytes: 2, maxBytes: 4);
+$bits = $mysql->binaryLiteral(minLength: 4, maxLength: 8);
+```
 
-These helpers construct their output even if the selected grammar version does not accept that form. In particular, `dollarQuotedString()` is not a version-compatibility check.
+The literals include their SQL notation: `N'...'`, `X'...'`, and `0b...`. Other MySQL lexical methods include `hexLiteral()`, `floatLiteral()`, `longIntegerLiteral()`, `unsignedBigIntLiteral()`, `dollarQuotedString()`, and `hostname()`.
+
+### Require non-empty row values
+
+Use `sqlWithoutEmptyRows()` when every generated row-value list must contain a value:
+
+```php
+$sql = $mysql->sqlWithoutEmptyRows(
+    \SqlFaker\MySql\StatementType::Insert,
+    maxDepth: 6,
+);
+```
+
+This concerns SQL row-value syntax, not whether executing a query returns rows.
+
+### Generate a particular MySQL feature
+
+```php
+$temporary = $mysql->temporaryTableStatement(maxDepth: 6);
+$fullText = $mysql->fullTextSearchStatement(maxDepth: 6);
+```
+
+`temporaryTableStatement()` selects a temporary table declaration. `fullTextSearchStatement()` selects MATCH ... AGAINST syntax. Other feature methods include `multiTableUpdateStatement()`, `multiTableDeleteStatement()`, `insertRowAliasUpsertStatement()`, and `partitionSelectStatement()`.
 
 ## PostgreSQL
 
-Use `SqlFaker\PostgreSqlProvider` with `SqlFaker\PostgreSql\StatementType`. The default version is `pg-17.2`.
+### Generate a PostgreSQL statement
 
-Without a type, `sql()` first chooses a random enum case. The enum additionally includes `CreateTableAs` and `CreateDomain`. `simpleStatement()` uses the broad `stmt` rule. `dropTableStatement()` and `StatementType::DropTable` use `DropStmt`, which can generate DROP for objects other than tables.
+The default version is `pg-17.2`. PostgreSQL names the first `sql()` argument `type`; omitting it randomly selects an enum case.
 
-### Additional statements and fragments
+```php
+$pgFaker = \Faker\Factory::create();
+$postgres = new \SqlFaker\PostgreSqlProvider($pgFaker, 'pg-17.2');
+$pgFaker->seed(7);
 
-| Method | Default `maxDepth` | Requested syntax |
-|--------|--------------------|------------------|
-| `createTableAsStatement()` | `PHP_INT_MAX` | CREATE TABLE AS |
-| `createDomainStatement()` | `PHP_INT_MAX` | CREATE DOMAIN |
-| `truncateStatement()` | `PHP_INT_MAX` | TRUNCATE |
-| `copyStatement()` | `PHP_INT_MAX` | COPY |
-| `createIndexStatement()` | `PHP_INT_MAX` | CREATE INDEX |
-| `transactionStatement()` | `PHP_INT_MAX` | Transaction statement from `TransactionStmt` |
-| `simpleExpr()`, `literal()` | `PHP_INT_MAX` | Simple expression or constant |
-| `sortClause()`, `selectLimit()` | `PHP_INT_MAX` | ORDER BY or select-limit syntax |
-| `tableRef()`, `joinedTable()`, `qualifiedName()` | `PHP_INT_MAX` | Table reference, join, or qualified name |
-| `subquery()` | `PHP_INT_MAX` | Parenthesized SELECT |
-| `partialIndexUpsertStatement()` | `40` | ON CONFLICT DO UPDATE with an index-inference predicate |
-| `domainDmlStatement()` | `40` | Random INSERT, UPDATE, or DELETE without a top-level WITH clause |
-| `partitionOfStatement()` | `40` | CREATE TABLE ... PARTITION OF with range bounds |
-| `tableSampleStatement()` | `40` | SELECT with TABLESAMPLE |
-| `doStatement()` | `40` | DO with a string body |
-| `mergeStatement()` | `40` | MERGE with DELETE, DO NOTHING, UPDATE, and INSERT branches |
+$sql = $postgres->sql(type: \SqlFaker\PostgreSql\StatementType::Select, maxDepth: 6);
+$createAs = $postgres->createTableAsStatement(maxDepth: 6);
+```
 
-`whereClause()` permits empty output. Other general statement and fragment methods request non-empty output. Full-text generation selects the `@@` operator. The common upsert helper uses ON CONFLICT DO UPDATE, and generated-column plans select STORED syntax. `domainDmlStatement()` does not create a domain or bind columns to one. `doStatement()` does not validate the procedural language inside its generated string.
+PostgreSQL additionally exposes `CreateTableAs` and `CreateDomain` enum cases. Its `DropTable` case uses the broader `DropStmt` grammar rule, which can select other object types.
 
-### Additional lexical values
+### Generate PostgreSQL fragments and literals
 
-PostgreSQL's `quotedIdentifier()` uses double quotes.
+```php
+$order = $postgres->sortClause(maxDepth: 3);
+$limit = $postgres->selectLimit(maxDepth: 3);
+$table = $postgres->qualifiedName(maxDepth: 3);
 
-| Method with default arguments | Output form |
-|-------------------------------|-------------|
-| `floatLiteral($precision = 10, $scale = 2, $minExponent = -307, $maxExponent = 308)` | Decimal with exponent |
-| `hexLiteral($minLength = 1, $maxLength = 16)` | `X'...'` |
-| `binaryLiteral($minLength = 1, $maxLength = 64)` | `B'...'` |
-| `dollarQuotedString($minLength = 1, $maxLength = 255)` | `$$...$$` |
-| `parameterMarker($min = 1, $max = 99)` | Positional parameter such as `$1`; no bound value is generated |
+$body = $postgres->dollarQuotedString(minLength: 4, maxLength: 12);
+$parameter = $postgres->parameterMarker(min: 1, max: 1);
+$bits = $postgres->binaryLiteral(minLength: 4, maxLength: 8);
+```
+
+`selectLimit()` can produce LIMIT, OFFSET, or FETCH syntax. `$body` includes dollar quotes, `$parameter` is the text `$1`, and `$bits` uses `B'...'` notation. Parameter generation does not bind a value.
+
+### Generate a particular PostgreSQL feature
+
+```php
+$copy = $postgres->copyStatement(maxDepth: 6);
+$sample = $postgres->tableSampleStatement(maxDepth: 6);
+```
+
+These select COPY and TABLESAMPLE syntax. Other PostgreSQL feature methods include `mergeStatement()`, `partialIndexUpsertStatement()`, `partitionOfStatement()`, and `doStatement()`.
 
 ## SQLite
 
-Use `SqlFaker\SqliteProvider` with `SqlFaker\Sqlite\StatementType`. The default version is `sqlite-3.47.2`.
+### Generate an SQLite statement
 
-Without a type, `sql()` first chooses a random enum case. `simpleStatement()` selects the general `cmd` rule. `createTableStatement()` and `StatementType::CreateTable` select `create_table`, which generates the opening CREATE TABLE and table name, without the column definition or AS SELECT portion. Use `temporaryTableStatement()` for a complete temporary-table statement, or a [constrained `cmd` plan](plan.md#sqlite) for complete general CREATE TABLE syntax.
+The default version is `sqlite-3.47.2`. SQLite names the first `sql()` argument `type`; omitting it randomly selects an enum case.
 
-### Additional statements and fragments
+```php
+$sqliteFaker = \Faker\Factory::create();
+$sqlite = new \SqlFaker\SqliteProvider($sqliteFaker, 'sqlite-3.47.2');
+$sqliteFaker->seed(7);
 
-| Method | Default `maxDepth` | Requested syntax |
-|--------|--------------------|------------------|
-| `term()` | `PHP_INT_MAX` | Literal term |
-| `orderByClause()` | `PHP_INT_MAX` | Optional ORDER BY clause |
-| `limitClause()` | `PHP_INT_MAX` | Optional LIMIT clause |
-| `groupByClause()` | `PHP_INT_MAX` | Optional GROUP BY clause |
-| `havingClause()` | `PHP_INT_MAX` | Optional HAVING clause |
-| `fullname()` | `PHP_INT_MAX` | Table name with optional database qualifier |
-| `multiDmlStatement()` | `40` | Two semicolon-terminated statements, each randomly chosen from INSERT, UPDATE, and DELETE |
+$sql = $sqlite->sql(type: \SqlFaker\Sqlite\StatementType::Select, maxDepth: 6);
+```
 
-The optional clause methods above, `whereClause()`, and `withClause()` can return an empty string. Full-text generation uses MATCH, and the common upsert helper uses ON CONFLICT DO UPDATE. These methods do not create full-text tables, indexes, or functions. `quotedIdentifier()` uses double quotes. SQLite has no additional lexical-value methods beyond those listed under Common.
+The SELECT family also includes VALUES, and the INSERT family can include REPLACE.
+
+### Generate optional clauses
+
+```php
+$order = $sqlite->orderByClause(maxDepth: 3);
+$group = $sqlite->groupByClause(maxDepth: 3);
+$having = $sqlite->havingClause(maxDepth: 3);
+$limit = $sqlite->limitClause(maxDepth: 3);
+```
+
+Each result can be an empty string because the corresponding clause is optional.
+
+### Generate a complete table declaration
+
+`createTableStatement()` selects the opening CREATE TABLE fragment. Use `temporaryTableStatement()` for a complete temporary-table declaration, or use the [complete CREATE TABLE plan](plan.md#sqlite) for a general table declaration.
+
+```php
+$temporary = $sqlite->temporaryTableStatement(maxDepth: 6);
+```
+
+### Generate two DML statements
+
+```php
+$statements = $sqlite->multiDmlStatement(maxDepth: 6);
+```
+
+This returns two semicolon-terminated statements, each selected from INSERT, UPDATE, and DELETE. To choose each statement type explicitly, use the [SQLite generation plan](plan.md#sqlite).

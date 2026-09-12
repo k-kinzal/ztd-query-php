@@ -1,52 +1,12 @@
 # SqlGenerator interface
 
-`SqlFaker\Generation\SqlGenerator` is the common direct SQL-generation class for MySQL, PostgreSQL, and SQLite. Use it with a [generation plan](plan.md) when you need custom production constraints, an explicit expansion budget, or access to generation diagnostics. It uses Faker for randomness without requiring a SQL provider to be registered.
+Use `SqlFaker\Generation\SqlGenerator` to generate SQL directly from a [generation plan](plan.md). The same class supports MySQL, PostgreSQL, and SQLite; `SqlGeneratorFactory` configures it for the selected database version.
 
 ## Common
 
-### Construction
+### Create a generator
 
-Use `SqlFaker\Provider\SqlGeneratorFactory` to bind the selected grammar, version, lexical definitions, and structural rules. All three factory methods return the same `SqlFaker\Generation\SqlGenerator` class.
-
-| Factory | Grammar loader | Default version |
-|---------|----------------|-----------------|
-| `forMySql()` | `SqlFaker\MySql\Grammar\MySqlGrammar::load()` | `mysql-8.4.7` |
-| `forPostgreSql()` | `SqlFaker\PostgreSql\Grammar\PgGrammar::load()` | `pg-17.2` |
-| `forSqlite()` | `SqlFaker\Sqlite\Grammar\SqliteGrammar::load()` | `sqlite-3.47.2` |
-
-Each factory takes `(Faker\Generator $faker, SqlFaker\Grammar\Model\Grammar $grammar, string $version, ?SqlFaker\Coverage\GrammarCoverage $coverage = null)`. The loaders return the common grammar model. Their `resolveVersion(?string $version = null): string` method resolves a default or validates a supplied tag. Load the grammar and pass the same resolved version to the factory.
-
-The optional coverage collector records which grammar and lexical choices generation exercises. Omit it when you only need SQL strings. Construct the generator before seeding Faker so setup does not affect a replayed sequence.
-
-### Generating SQL
-
-| Member | Purpose |
-|--------|---------|
-| `generate(GenerationPlan $plan): string` | Generate one result, reset the latest diagnostics, and enforce the plan's non-empty requirement |
-| `planner(): SqlFaker\Generation\Choice\PlanBuilder` | Compile plans with the same grammar, aliases, structural rules, and lexical definitions |
-| `lastSequence` | Nullable `SqlFaker\Generation\Token\TerminalSequence` with original production choices and transformed terminals |
-| `lastOutput` | Nullable `SqlFaker\Generation\Lexeme\ResolvedOutput` with selected candidates and resolved boundaries |
-
-`generate()` accepts `SqlFaker\Generation\Plan\GenerationPlan`, not SQL text or an enum. Use `GenerationPlan::fromRule(StatementType::Select->value)` to select an enum's grammar rule. Set complexity and expansion limits on the plan; `generate()` has no separate depth argument.
-
-A successful call returns a string: a statement, several statements, a fragment, or an empty result according to the entry rule. `requiringNonEmpty()` requests a non-empty string or an exception. It does not turn a fragment into a complete statement. Reusing an ordinary plan generates a fresh result from the current Faker random state. A [compiled plan](plan.md#compiling-replayable-plans) can fix its production and lexical choices.
-
-`lastSequence` and `lastOutput` describe the latest grammar-based generation. They remain `null` for direct lexical plans. After a failed call, they can be `null` or contain only the completed stages; they do not describe an earlier successful call.
-
-For explicit composition, the constructor takes the common grammar, Faker, a `SqlFaker\Generation\Lexeme\LexicalGrammar`, and optional `TokenRewriter`, start-rule resolver closure, coverage collector, and original grammar. The public `realize(string $root, GenerationPlan $plan): string` method runs derivation, rewriting, and lexical realization from an explicit rule. It bypasses `generate()`'s start-rule resolution, diagnostic reset, coverage lifecycle, lexical-target dispatch, and final empty-string check. Use `generate()` for the complete plan contract.
-
-### Errors
-
-| Exception | Typical cause |
-|-----------|---------------|
-| `RuntimeException` | Unsupported version or unavailable/invalid grammar resources |
-| `InvalidArgumentException` | Invalid plan parameters, budget, or lexical target |
-| `SqlFaker\Generation\Exception\GenerationException` | Unknown rule, unsatisfied grammar constraints, insufficient expansion budget, or an empty result when non-empty output is required |
-| `SqlFaker\Generation\Exception\LexicalException` | No lexical candidate satisfies the requested token, spelling, or boundary constraints |
-
-Both generation-specific exception classes extend `RuntimeException`. Generation does not retry completed statements. Retain the version, seed or compiled plan, method arguments, and exception message when reproducing a failure. See [algorithm and limitations](algorithm.md) for the scope of successful output.
-
-## MySQL
+Load the grammar and pass it to the matching factory with the same version tag. The following Common examples use this MySQL generator:
 
 ```php
 use Faker\Factory;
@@ -55,10 +15,22 @@ use SqlFaker\MySql\Grammar\MySqlGrammar;
 use SqlFaker\MySql\StatementType;
 use SqlFaker\Provider\SqlGeneratorFactory;
 
+require 'vendor/autoload.php';
+
 $faker = Factory::create();
 $version = MySqlGrammar::resolveVersion('mysql-8.4.7');
-$generator = SqlGeneratorFactory::forMySql($faker, MySqlGrammar::load($version), $version);
+$grammar = MySqlGrammar::load($version);
+$generator = SqlGeneratorFactory::forMySql($faker, $grammar, $version);
 $faker->seed(12345);
+```
+
+`resolveVersion()` without an argument selects the database's default version. The generator uses Faker for random choices; registering a SQL provider is not required.
+
+### Generate a statement
+
+Pass the desired rule to `GenerationPlan::fromRule()`, then call `generate()`:
+
+```php
 $plan = GenerationPlan::fromRule(StatementType::Select->value)
     ->requiringNonEmpty()
     ->withMaxDepth(6);
@@ -66,57 +38,165 @@ $plan = GenerationPlan::fromRule(StatementType::Select->value)
 $sql = $generator->generate($plan);
 ```
 
-`GenerationPlan::all()` uses the grammar's own entry point. To select a general statement family explicitly, use `StatementType::SimpleStatement->value`. The generator maps common modern start-rule names to older names when needed, including `select_stmt` to `select` and `create_table_stmt` to `create`. Older fallback rules can cover broader statement families. Aliasing does not translate every nested rule or production pattern in a plan.
+The return value is SQL text. `StatementType::Insert`, `Update`, and `Delete` select other statement families. `requiringNonEmpty()` requires a non-empty result; a rule for a fragment still produces a fragment.
 
-Use `SqlFaker\MySql\GenerationPlans` for [MySQL presets](plan.md#mysql), including non-empty row values and multi-table mutations. Each preset must be compatible with the chosen grammar version.
+### Generate SQL without selecting a statement family
+
+Use `all()` to start from the grammar's entry point:
+
+```php
+$plan = GenerationPlan::all()
+    ->requiringNonEmpty()
+    ->withMaxDepth(3);
+
+$sql = $generator->generate($plan);
+```
+
+The grammar's entry point determines whether the result can contain multiple statements. To generate from a particular statement family or fragment, select its rule explicitly.
+
+### Generate fragments and lexical values
+
+A rule such as MySQL's `expr` produces a fragment. A lexical plan constructs one value with the supplied bounds:
+
+```php
+$expression = $generator->generate(
+    GenerationPlan::fromRule('expr')->withMaxDepth(3),
+);
+
+$integer = $generator->generate(
+    \SqlFaker\MySql\GenerationPlans::integerLiteral(min: 42, max: 42),
+);
+
+$string = $generator->generate(
+    \SqlFaker\MySql\GenerationPlans::stringLiteral(minLength: 1, maxLength: 20),
+);
+```
+
+`$integer` is the string `'42'`, and `$string` includes SQL quotes. Lexical plan factories require their bounds explicitly.
+
+### Reuse a plan
+
+The same plan can be used for a series of generated inputs:
+
+```php
+$selectPlan = GenerationPlan::fromRule(StatementType::Select->value)
+    ->requiringNonEmpty()
+    ->withMaxDepth(3)
+    ->withExpansionBudget(100);
+
+$queries = [];
+for ($i = 0; $i < 3; ++$i) {
+    $queries[] = $generator->generate($selectPlan);
+}
+```
+
+Each call uses the next random choices. `withExpansionBudget()` caps the total grammar expansions for a call; `withMaxDepth()` sets the threshold after which shorter completions are preferred.
+
+### Reproduce the same sequence
+
+Seed Faker after constructing the generator, and reset the seed before repeating a sequence:
+
+```php
+$faker->seed(7);
+$first = $generator->generate($selectPlan);
+
+$faker->seed(7);
+$second = $generator->generate($selectPlan);
+
+$sameSql = $first === $second;
+```
+
+Keep the SQL Faker, FakerPHP, database version, and call sequence fixed. To retain explicit production and lexical choices, use `planner()` as shown in [Compile a plan with callbacks](plan.md#compile-a-plan-with-callbacks).
+
+### Handle a generation error
+
+Catch `GenerationException` for a rule or generation condition that cannot be satisfied, and `LexicalException` for incompatible token realization:
+
+```php
+try {
+    $sql = $generator->generate(
+        $selectPlan->withExpansionBudget(1),
+    );
+} catch (\SqlFaker\Generation\Exception\GenerationException $error) {
+    $generationError = $error->getMessage();
+} catch (\SqlFaker\Generation\Exception\LexicalException $error) {
+    $lexicalError = $error->getMessage();
+}
+```
+
+A SELECT cannot complete in one grammar expansion. Choose an expansion budget large enough to finish the requested structure. Both exception types extend `RuntimeException`.
+
+## MySQL
+
+### Generate for an older MySQL version
+
+Use the version's grammar and the same version tag when creating the generator:
+
+```php
+$mysqlFaker = \Faker\Factory::create();
+$mysqlVersion = \SqlFaker\MySql\Grammar\MySqlGrammar::resolveVersion('mysql-5.7.44');
+$mysqlGrammar = \SqlFaker\MySql\Grammar\MySqlGrammar::load($mysqlVersion);
+$mysqlGenerator = SqlGeneratorFactory::forMySql($mysqlFaker, $mysqlGrammar, $mysqlVersion);
+$mysqlFaker->seed(7);
+
+$sql = $mysqlGenerator->generate(
+    GenerationPlan::fromRule(\SqlFaker\MySql\StatementType::Select->value)
+        ->requiringNonEmpty()
+        ->withMaxDepth(3),
+);
+```
+
+The MySQL generator resolves common statement-rule aliases across releases. For example, `select_stmt` maps to `select` when needed by the older grammar. Use syntax supported by the version selected in the [README table](../README.md#mysql).
 
 ## PostgreSQL
 
+### Generate with the PostgreSQL grammar
+
+Use `PgGrammar` and `forPostgreSql()` with PostgreSQL's rule names:
+
 ```php
-use Faker\Factory;
-use SqlFaker\Generation\Plan\GenerationPlan;
-use SqlFaker\PostgreSql\Grammar\PgGrammar;
-use SqlFaker\PostgreSql\StatementType;
-use SqlFaker\Provider\SqlGeneratorFactory;
+$pgFaker = \Faker\Factory::create();
+$pgVersion = \SqlFaker\PostgreSql\Grammar\PgGrammar::resolveVersion('pg-17.2');
+$pgGrammar = \SqlFaker\PostgreSql\Grammar\PgGrammar::load($pgVersion);
+$pgGenerator = SqlGeneratorFactory::forPostgreSql($pgFaker, $pgGrammar, $pgVersion);
+$pgFaker->seed(7);
 
-$faker = Factory::create();
-$version = PgGrammar::resolveVersion('pg-17.2');
-$generator = SqlGeneratorFactory::forPostgreSql($faker, PgGrammar::load($version), $version);
-$faker->seed(12345);
-$plan = GenerationPlan::fromRule(StatementType::Select->value)
-    ->requiringNonEmpty()
-    ->withMaxDepth(6);
+$sql = $pgGenerator->generate(
+    GenerationPlan::fromRule(\SqlFaker\PostgreSql\StatementType::Select->value)
+        ->requiringNonEmpty()
+        ->withMaxDepth(3),
+);
 
-$sql = $generator->generate($plan);
+$expression = $pgGenerator->generate(
+    GenerationPlan::fromRule('a_expr')->withMaxDepth(3),
+);
 ```
 
-`GenerationPlan::all()` uses the grammar's entry point and can produce multiple statements or empty output. Use `GenerationPlan::fromRule('stmt')->requiringNonEmpty()` for a general non-empty statement or a specific enum value for a statement family. `StatementType::DropTable` maps to `DropStmt`, which also covers other object types.
-
-This differs from the Faker provider's parameterless `sql()`, which first chooses a random enum case. Use `SqlFaker\PostgreSql\GenerationPlans` for [PostgreSQL presets](plan.md#postgresql), including MERGE, COPY, and TABLESAMPLE.
+Use `fromRule('stmt')` for a general PostgreSQL statement. `all()` starts at the complete grammar entry point, which can produce multiple statements or empty output.
 
 ## SQLite
 
+### Generate with the SQLite grammar
+
+Use `SqliteGrammar` and `forSqlite()`. SQLite's preset plans apply `withStepBudget()`, which prefers fewer remaining expansions when the depth threshold is reached:
+
 ```php
-use Faker\Factory;
-use SqlFaker\Generation\Plan\GenerationPlan;
-use SqlFaker\Sqlite\Grammar\SqliteGrammar;
-use SqlFaker\Sqlite\StatementType;
-use SqlFaker\Provider\SqlGeneratorFactory;
+$sqliteFaker = \Faker\Factory::create();
+$sqliteVersion = \SqlFaker\Sqlite\Grammar\SqliteGrammar::resolveVersion('sqlite-3.47.2');
+$sqliteGrammar = \SqlFaker\Sqlite\Grammar\SqliteGrammar::load($sqliteVersion);
+$sqliteGenerator = SqlGeneratorFactory::forSqlite($sqliteFaker, $sqliteGrammar, $sqliteVersion);
+$sqliteFaker->seed(7);
 
-$faker = Factory::create();
-$version = SqliteGrammar::resolveVersion('sqlite-3.47.2');
-$generator = SqlGeneratorFactory::forSqlite($faker, SqliteGrammar::load($version), $version);
-$faker->seed(12345);
-$plan = GenerationPlan::fromRule(StatementType::Select->value)
-    ->requiringNonEmpty()
-    ->withStepBudget()
-    ->withMaxDepth(6);
+$sql = $sqliteGenerator->generate(
+    \SqlFaker\Sqlite\GenerationPlans::statement(
+        \SqlFaker\Sqlite\StatementType::Select->value,
+        maxDepth: 3,
+    ),
+);
 
-$sql = $generator->generate($plan);
+$where = $sqliteGenerator->generate(
+    GenerationPlan::fromRule('where_opt')->withMaxDepth(1),
+);
 ```
 
-`GenerationPlan::all()` uses the grammar's entry point. Use `fromRule('cmd')` for the general command rule. The generator also provides dedicated `insert`, `update`, `delete`, `alter_table`, and `drop_table` entry points from command alternatives. Optional rules such as `where_opt`, `orderby_opt`, `limit_opt`, and `with` can produce empty strings.
-
-`StatementType::CreateTable` maps to the `create_table` opening fragment. To request a complete CREATE TABLE statement, constrain `cmd` to the alternative containing `create_table` and `create_table_args`; see the [SQLite plan example](plan.md#sqlite).
-
-`SqlFaker\Sqlite\GenerationPlans` presets apply `withStepBudget()`, favoring fewer remaining expansions at the depth threshold. `multiDmlStatement()` lets you choose two semicolon-terminated DML statements explicitly. Other [SQLite presets](plan.md#sqlite) cover temporary tables, views, generated columns, cascading foreign keys, upserts, and full-text syntax.
+`$where` can be empty because WHERE is optional. To require a clause, add `requiringNonEmpty()`. Use `fromRule('cmd')` for a general SQLite command, and the [SQLite plan example](plan.md#sqlite) for a complete CREATE TABLE statement.

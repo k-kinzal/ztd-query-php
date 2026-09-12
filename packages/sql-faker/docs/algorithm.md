@@ -1,57 +1,78 @@
 # SQL generation algorithm
 
-SQL Faker generates SQL by deriving statements and fragments from a selected database grammar. MySQL uses its official Bison grammar (`sql_yacc.yy`), PostgreSQL uses its Bison grammar (`gram.y`), and SQLite uses its Lemon grammar (`parse.y`). The selected version also determines the lexical forms and structural rules used to produce SQL text. See the [supported versions](../README.md#support-syntax).
+SQL Faker generates SQL from the official grammar of the selected database version: MySQL's Bison grammar (`sql_yacc.yy`), PostgreSQL's Bison grammar (`gram.y`), or SQLite's Lemon grammar (`parse.y`). A grammar describes how statements, clauses, and expressions can be assembled from smaller parts.
 
-Both the [Faker interface](faker.md) and the [SqlGenerator interface](generator.md) accept [generation plans](plan.md), which select the starting rule, production constraints, token choices, and complexity settings.
+## Grammar derivation
 
-## Generation process
+A grammar contains **non-terminals**, which still need expansion, and **terminals**, which represent keywords, punctuation, identifiers, or literal tokens. Each non-terminal has one or more production alternatives.
 
-```mermaid
-flowchart LR
-    A[Grammar version and generation plan] --> B[Derive grammar terminals]
-    B --> C[Apply structural rules]
-    C --> D[Choose compatible lexical forms]
-    D --> E[Resolve spacing and return SQL]
+For example, a simplified SELECT grammar can be written as:
+
+```text
+statement  → SELECT expression FROM identifier
+expression → identifier | integer | expression + expression
+identifier → IDENT
+integer    → NUM
 ```
 
-1. **Choose a starting rule.** A plan selects a statement, a fragment such as an expression, or the grammar's own entry point. Explicit rule names may be resolved to release-specific aliases.
-2. **Derive terminals.** SQL Faker repeatedly expands the leftmost non-terminal. It applies occurrence-specific production patterns and excludes alternatives that cannot terminate or fit within the remaining expansion budget. Completion analysis considers descendant and repeated-occurrence constraints, including the requirement for non-empty output. Eligible alternatives are chosen using Faker until the complexity threshold is reached.
-3. **Apply structural rules.** Dialect-specific rules transform the derived token sequence to account for parser constraints that the grammar alone does not express. Original production choices and the transformed sequence remain distinguishable in the generator's diagnostics.
-4. **Choose lexical forms.** Terminals are realized from right to left. Each terminal offers candidate spellings or values with spacing requirements. SQL Faker selects a candidate compatible with the resolved suffix and the outstanding requirements to its left. Requested spellings and candidate keys further restrict this selection.
-5. **Serialize the result.** Once token boundaries are resolved, their text and separators are concatenated. The final result must be non-empty when the plan requires it.
+Generation starts with a non-terminal representing the desired statement or fragment. The leftmost remaining non-terminal is replaced with one of its alternatives. Repeating this operation eventually produces only terminals:
 
-Generation makes one pass through these stages. It does not retry complete SQL statements, repair finished SQL, or re-tokenize the completed string as an acceptance check. If a selected terminal has no compatible lexical realization, generation fails; the grammar walk does not hide missing lexical support by removing that grammar alternative.
+```text
+statement
+→ SELECT expression FROM identifier
+→ SELECT expression + expression FROM identifier
+→ SELECT identifier + expression FROM identifier
+→ SELECT IDENT + expression FROM identifier
+→ SELECT IDENT + integer FROM identifier
+→ SELECT IDENT + NUM FROM identifier
+→ SELECT IDENT + NUM FROM IDENT
+```
 
-Lexical plans, such as `GenerationPlans::stringLiteral(1, 20)`, use a separate path that constructs a single lexical value directly from its parameters. They do not walk statement grammar or run the structural and boundary-selection stages above.
+Alternative selection introduces variation. Expanding an expression to another expression can produce nested operations, and expanding a list recursively can produce additional columns, rows, or statements. Selecting a fragment's rule uses the same process without first generating an enclosing statement.
 
-## Complexity and termination
+## Completing recursive expansions
 
-`maxDepth` is a threshold on the total number of non-terminal expansions. It does not measure nesting depth. Its minimum effective value is `1`, so `maxDepth: 0` also selects the shortest alternatives immediately.
+Recursive alternatives need a finite route to terminal symbols. Before selecting an alternative, generation considers the minimum expansions needed to finish both that alternative and the rest of the statement. Alternatives that cannot finish within the remaining expansion allowance are excluded.
 
-Once the expansion count reaches the threshold, ordinary plans prefer the smallest estimated terminal count. Plans using `withStepBudget()` first prefer fewer remaining expansions, then fewer terminals. SQLite's provider plans apply that preference. Regardless of this preference, generation checks that the remaining form can complete within its expansion budget.
+When additional conditions restrict production choices, completion also considers those conditions in descendant rules and repeated occurrences. If output must contain text, completion must include a terminal that contributes text rather than only empty productions or parser markers.
 
-The default expansion budget is 5,000. `withExpansionBudget($budget)` sets an explicit positive limit, independently of `maxDepth`. A plan that cannot complete within that budget raises `GenerationException`. A larger budget can permit larger derivations and more expensive completion analysis; it is not a time or memory limit.
+Early choices are random among eligible alternatives. Once the expansion count reaches its complexity threshold, selection favors shorter completions: fewer terminal symbols, or fewer rule expansions followed by fewer terminal symbols. This allows recursive SQL structures to terminate without cutting off an unfinished statement.
 
-Lower depth thresholds favor shorter derivations. They do not fix the SQL length, the number of clauses, or the number of nested queries. The default `PHP_INT_MAX` postpones the shortening preference but does not remove the expansion budget. The shortest choices can consistently prefer the first equally short alternative, reducing variety.
+## Applying structural constraints
 
-## Reproducibility
+A context-free grammar describes the shapes of SQL, but database parsers also apply rules to relationships between parts of a statement. After derivation, dialect-specific transformations account for these structural requirements, such as expression grouping and clause combinations, before choosing the final text.
 
-Construct the provider or generator before seeding Faker, then repeat the same calls with the same arguments. Keep the SQL Faker, FakerPHP, database grammar, and runtime versions fixed when reproducing a result. Other Faker calls or PHP random-number calls can change subsequent output.
+## Choosing token text
 
-For explicit replay of production and lexical choices, a [compiled generation plan](plan.md#compiling-replayable-plans) records the chosen alternatives, spellings, and candidate identities. It is tied to the grammar and generation definitions used to compile it; it is not a portable SQL representation or a compatibility promise across upgrades.
+The terminal sequence still contains token classes such as IDENT and NUM. Lexical generation replaces them with concrete text, selecting identifiers, literal values, keyword spellings, and operators for the target dialect and version.
+
+For the SELECT example, one realization is:
+
+```text
+SELECT IDENT + NUM FROM IDENT
+→ SELECT price + 1 FROM products
+```
+
+Lexical forms are selected from right to left. A candidate must be compatible with the already selected text to its right and allow the remaining text to its left to be completed. This matters because a token's spelling and its neighbors can determine whether whitespace is required or forbidden.
+
+## Joining the text
+
+Once lexical forms have been selected, their boundary requirements determine the separators. For example, `SELECT` and `price` need separation so they are not read as the single identifier `SELECTprice`. Other forms require adjacent characters, such as a prefix and its quoted literal.
+
+The resolved token text and separators are then concatenated to produce the SQL string. Selecting the spellings and boundaries before concatenation preserves the intended token structure.
 
 ## Limitations
 
-| Area | What to expect |
-|------|----------------|
-| Execution and semantics | SQL Faker does not inspect a database schema or execute SQL. Table and column names, types, function arguments, constraints, privileges, and server state may be incompatible. Syntactically accepted SQL can still fail during execution. |
-| Server acceptance | Grammar derivation, structural rules, and lexical boundary rules model SQL syntax, but generation does not ask the database server to parse the result. Parser semantic actions, SQL modes, extensions, and build options may impose additional restrictions. |
-| Syntax coverage | The bundled grammar, selected version, structural transformations, and plan determine the reachable syntax. Supported version tags do not mean exhaustive coverage of all server configurations. An absent lexical candidate remains a generation error. |
-| Distribution | Random choices occur at individual grammar rules and lexical candidate sets. Complete statements are not sampled uniformly, and repeated calls do not guarantee coverage of every SQL form. |
-| Fragments and statement counts | Optional rules can return empty strings, and general entry points can produce multiple statements or command forms. Some named rules produce only fragments. Check the dialect notes in the [Faker](faker.md) and [generator](generator.md) references. |
-| Names and values | Identifiers and values are not schema-aware fixture data. They need not be unique or consistent across a statement. A lexical helper generates a new value; it does not quote an application-supplied value. |
-| Lexical parameters | Length and numeric bounds control construction, not database validation. Direct lexical helpers can produce a form unsupported by the selected server version or outside its accepted value range. They do not cover every escaping, Unicode, or numeric boundary case. |
-| Constraints | Patterns restrict a rule when it is visited; they do not require that rule to be reached or express relationships between tables and columns. Lexeme requests must match an available candidate or value domain and its boundary constraints. |
-| Resource limits and failures | An unknown rule, contradictory constraints, an insufficient expansion budget, or incompatible lexical candidates can raise an exception. Raising the budget cannot repair a contradiction or guarantee successful execution. |
+SQL Faker's scope is generating SQL syntax. It does not generate a database state in which every resulting statement is executable.
 
-If a test requires successful execution, provide the necessary schema and state and validate the generated statement against the target database.
+### Schema and type consistency
+
+Generated names and values are not coordinated with an existing schema. A query can refer to a missing table or column, apply a function to an incompatible type, or violate a database constraint. For example, generating `SELECT price FROM products` does not establish that `products.price` exists. Syntactic validity therefore does not guarantee successful execution.
+
+### Dependencies between statements
+
+Separate generated statements do not form a coordinated database scenario. Generating CREATE TABLE followed by INSERT does not make the INSERT use that table's columns. Likewise, generation does not establish the session state, prepared statements, permissions, or transaction history that another statement may require.
+
+### Query results
+
+Generation does not target a particular result set or database effect. A valid SELECT may return no rows, and an UPDATE or DELETE may affect none. SQL Faker does not ensure that a query expresses an application's intended logic or produces specified values.
