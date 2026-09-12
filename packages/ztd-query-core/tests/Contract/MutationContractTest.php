@@ -29,40 +29,40 @@ abstract class MutationContractTest extends TestCase
      *
      * @return list<Row>
      */
-    abstract public function initialRows(): array;
+    abstract protected function initialRows(): array;
 
     /**
      * Create rows to insert for testing.
      *
      * @return list<Row>
      */
-    abstract public function insertRows(): array;
+    abstract protected function insertRows(): array;
 
     /**
      * Create rows representing a delete result set (rows that were deleted).
      *
      * @return list<Row>
      */
-    abstract public function deleteRows(): array;
+    abstract protected function deleteRows(): array;
 
     /**
      * Create rows representing an update result set (rows after update).
      *
      * @return list<Row>
      */
-    abstract public function updateRows(): array;
+    abstract protected function updateRows(): array;
 
     /**
      * Return the primary key column names for the test table.
      *
      * @return array<int, string>
      */
-    abstract public function primaryKeys(): array;
+    abstract protected function primaryKeys(): array;
 
     /**
      * Return the table name used in tests.
      */
-    public function tableName(): string
+    protected function tableName(): string
     {
         return 'users';
     }
@@ -70,7 +70,7 @@ abstract class MutationContractTest extends TestCase
     /**
      * Return a different table name for isolation tests.
      */
-    public function otherTableName(): string
+    protected function otherTableName(): string
     {
         return 'orders';
     }

@@ -29,12 +29,12 @@ abstract class TransformerContractTest extends TestCase
      *
      * @return SqlTransformer The transformer under test
      */
-    abstract public function createTransformer(): SqlTransformer;
+    abstract protected function createTransformer(): SqlTransformer;
 
     /**
      * A valid SELECT statement referencing the "users" table.
      */
-    abstract public function selectSql(): string;
+    abstract protected function selectSql(): string;
 
     /**
      * Empty table context must return the original SQL unchanged (P-TF-1).
@@ -175,7 +175,7 @@ abstract class TransformerContractTest extends TestCase
      *
      * @return array<string, array{rows: list<Row>, columns: array<int, string>, columnTypes: array<string, ColumnDeclaration>}>
      */
-    public function singleRowTableContext(): array
+    protected function singleRowTableContext(): array
     {
         return [
             'users' => [
@@ -197,7 +197,7 @@ abstract class TransformerContractTest extends TestCase
      *
      * @return array<string, array{rows: list<Row>, columns: array<int, string>, columnTypes: array<string, ColumnDeclaration>}>
      */
-    public function emptyRowsTableContext(): array
+    protected function emptyRowsTableContext(): array
     {
         return [
             'users' => [
@@ -215,7 +215,7 @@ abstract class TransformerContractTest extends TestCase
     /**
      * Return the platform-specific native type for INTEGER.
      */
-    public function nativeIntegerType(): string
+    protected function nativeIntegerType(): string
     {
         return 'INTEGER';
     }
@@ -223,7 +223,7 @@ abstract class TransformerContractTest extends TestCase
     /**
      * Return the platform-specific native type for VARCHAR/STRING.
      */
-    public function nativeStringType(): string
+    protected function nativeStringType(): string
     {
         return 'VARCHAR(255)';
     }

@@ -21,18 +21,18 @@ abstract class SchemaParserContractTest extends TestCase
      *
      * @return SchemaParser The parser under test
      */
-    abstract public function createParser(): SchemaParser;
+    abstract protected function createParser(): SchemaParser;
 
     /**
      * A valid CREATE TABLE statement in the platform's dialect.
      * Must define at least: columns, primary key, NOT NULL columns, column types, unique constraints.
      */
-    abstract public function validCreateTableSql(): string;
+    abstract protected function validCreateTableSql(): string;
 
     /**
      * A SQL statement that is NOT a CREATE TABLE (e.g. SELECT, INSERT).
      */
-    abstract public function nonCreateTableSql(): string;
+    abstract protected function nonCreateTableSql(): string;
 
     /**
      * Valid CREATE TABLE must return a non-null TableDefinition (P-SP-5).
@@ -222,7 +222,7 @@ abstract class SchemaParserContractTest extends TestCase
      *
      * @return list<string>
      */
-    public function expectedColumns(): array
+    protected function expectedColumns(): array
     {
         return ['id', 'name', 'email'];
     }
@@ -232,7 +232,7 @@ abstract class SchemaParserContractTest extends TestCase
      *
      * @return list<string>
      */
-    public function expectedPrimaryKeys(): array
+    protected function expectedPrimaryKeys(): array
     {
         return ['id'];
     }
@@ -242,7 +242,7 @@ abstract class SchemaParserContractTest extends TestCase
      *
      * @return list<string>
      */
-    public function expectedNotNullColumns(): array
+    protected function expectedNotNullColumns(): array
     {
         return ['id', 'name'];
     }

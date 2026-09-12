@@ -21,7 +21,7 @@ abstract class CastRendererContractTest extends TestCase
      *
      * @return CastRenderer The renderer under test
      */
-    abstract public function createRenderer(): CastRenderer;
+    abstract protected function createRenderer(): CastRenderer;
 
     /**
      * renderCast must return a non-empty string for every type family (P-CR-1).
@@ -195,7 +195,7 @@ abstract class CastRendererContractTest extends TestCase
      * Provide a representative native type string for a given family.
      * Subclasses may override this to provide platform-specific native types.
      */
-    public function nativeTypeFor(ColumnTypeFamily $family): string
+    protected function nativeTypeFor(ColumnTypeFamily $family): string
     {
         return match ($family) {
             ColumnTypeFamily::INTEGER => 'INTEGER',

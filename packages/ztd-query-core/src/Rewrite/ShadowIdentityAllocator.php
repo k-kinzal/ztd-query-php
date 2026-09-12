@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Rewrite;
 
-use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Schema\Key\IdentityGenerationStrategy;
 use ZtdQuery\Schema\TableDefinition;
 
@@ -21,7 +20,6 @@ use ZtdQuery\Schema\TableDefinition;
  * takes its numbers with it, and only a committed one moves the counter on.
  *
  * @phpstan-import-type Row from TableDefinition
- * @phpstan-import-type RenderableValue from ValueRenderer
  * @phpstan-import-type RowValue from TableDefinition
  */
 final class ShadowIdentityAllocator
@@ -53,7 +51,7 @@ final class ShadowIdentityAllocator
     /**
      * @param array<string, IdentityGenerationStrategy> $strategies
      * @param list<string> $providedColumns
-     * @param list<array<string, RenderableValue>> $existingRows
+     * @param array<int, Row> $existingRows
      * @return array<string, int>
      */
     public function allocateMissing(
@@ -79,7 +77,7 @@ final class ShadowIdentityAllocator
     /**
      * @param array<string, IdentityGenerationStrategy> $strategies
      * @param list<string> $providedColumns
-     * @param list<array<string, RenderableValue>> $existingRows
+     * @param array<int, Row> $existingRows
      * @return array<string, int>
      */
     public function allocateSelectStarts(
@@ -112,7 +110,7 @@ final class ShadowIdentityAllocator
      * @param string $table Table the column belongs to
      * @param string $column Column the value is generated for
      * @param IdentityGenerationStrategy $strategy How the database decides the value
-     * @param list<array<string, RenderableValue>> $existingRows Rows the table already holds
+     * @param array<int, Row> $existingRows Rows the table already holds
      *
      * @return int The value the column would take next
      */
@@ -134,7 +132,7 @@ final class ShadowIdentityAllocator
     }
 
     /**
-     * @param list<array<string, RenderableValue>> $rows
+     * @param array<int, Row> $rows
      */
     public function nextAfterExistingRows(string $column, array $rows, int $next): int
     {
@@ -155,7 +153,7 @@ final class ShadowIdentityAllocator
      * a whole number counts. Anything else does not stand for a number the
      * table would have generated, and answers nothing rather than nought.
      *
-     * @param RenderableValue $value Value as the driver answered it
+     * @param mixed $value Value as the driver answered it
      *
      * @return int|null The number, or null where the value is not one
      */

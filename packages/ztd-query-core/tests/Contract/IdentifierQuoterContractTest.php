@@ -19,7 +19,7 @@ abstract class IdentifierQuoterContractTest extends TestCase
      *
      * @return IdentifierQuoter The quoter under test
      */
-    abstract public function createQuoter(): IdentifierQuoter;
+    abstract protected function createQuoter(): IdentifierQuoter;
 
     /**
      * Return the expected quote character for this platform.
@@ -27,7 +27,7 @@ abstract class IdentifierQuoterContractTest extends TestCase
      *
      * @return non-empty-string
      */
-    abstract public function quoteCharacter(): string;
+    abstract protected function quoteCharacter(): string;
 
     /**
      * quote() must return a non-empty string (P-IQ-1).

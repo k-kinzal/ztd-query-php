@@ -23,49 +23,49 @@ abstract class QueryClassifierContractTest extends TestCase
     /**
      * @throws UnsupportedSqlException When the statement is not one ZTD can classify at all
      */
-    abstract public function classify(string $sql): ?QueryKind;
+    abstract protected function classify(string $sql): ?QueryKind;
 
     /**
      * Answers a SELECT this dialect accepts.
      *
      * @return string The statement
      */
-    abstract public function selectSql(): string;
+    abstract protected function selectSql(): string;
 
     /**
      * Answers an INSERT this dialect accepts.
      *
      * @return string The statement
      */
-    abstract public function insertSql(): string;
+    abstract protected function insertSql(): string;
 
     /**
      * Answers an UPDATE this dialect accepts.
      *
      * @return string The statement
      */
-    abstract public function updateSql(): string;
+    abstract protected function updateSql(): string;
 
     /**
      * Answers a DELETE this dialect accepts.
      *
      * @return string The statement
      */
-    abstract public function deleteSql(): string;
+    abstract protected function deleteSql(): string;
 
     /**
      * Answers a CREATE TABLE this dialect accepts.
      *
      * @return string The statement
      */
-    abstract public function createTableSql(): string;
+    abstract protected function createTableSql(): string;
 
     /**
      * Answers a DROP TABLE this dialect accepts.
      *
      * @return string The statement
      */
-    abstract public function dropTableSql(): string;
+    abstract protected function dropTableSql(): string;
 
     /**
      * SELECT must classify as READ.
