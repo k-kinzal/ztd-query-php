@@ -32,13 +32,51 @@ use SqlFaker\MySql\Generation\Spacing\VariableSpacingRule;
 
 /**
  * Declares scanner values, fixed spellings, contextual domains and spacing for each exact release.
- * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/create_field.cc
- * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy
+ * Source tags match every MySQL release in resources/version.php; lex.h links accompany the keyword declarations.
+ * Create_field::init is in field.cc for MySQL 5.6/5.7 and create_field.cc for MySQL 8.x/9.x.
+ * @see https://github.com/mysql/mysql-server/blob/mysql-5.6.51/sql/sql_lex.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-5.6.51/sql/sql_yacc.yy
  * @see https://github.com/mysql/mysql-server/blob/mysql-5.6.51/sql/field.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-5.6.51/sql/table.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-5.7.44/sql/sql_lex.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-5.7.44/sql/sql_yacc.yy
  * @see https://github.com/mysql/mysql-server/blob/mysql-5.7.44/sql/field.cc
- * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/field.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-5.7.44/sql/table.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.0.44/sql/sql_lex.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.0.44/sql/sql_yacc.yy
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.0.44/sql/create_field.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.0.44/sql/field.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.0.44/sql/table.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.1.0/sql/sql_lex.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.1.0/sql/sql_yacc.yy
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.1.0/sql/create_field.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.1.0/sql/field.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.1.0/sql/table.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.2.0/sql/sql_lex.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.2.0/sql/sql_yacc.yy
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.2.0/sql/create_field.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.2.0/sql/field.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.2.0/sql/table.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.3.0/sql/sql_lex.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.3.0/sql/sql_yacc.yy
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.3.0/sql/create_field.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.3.0/sql/field.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.3.0/sql/table.cc
  * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_lex.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/create_field.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/field.cc
  * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/table.cc#L3749-L3786
+ * @see https://github.com/mysql/mysql-server/blob/mysql-9.0.1/sql/sql_lex.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-9.0.1/sql/sql_yacc.yy
+ * @see https://github.com/mysql/mysql-server/blob/mysql-9.0.1/sql/create_field.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-9.0.1/sql/field.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-9.0.1/sql/table.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-9.1.0/sql/sql_lex.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-9.1.0/sql/sql_yacc.yy
+ * @see https://github.com/mysql/mysql-server/blob/mysql-9.1.0/sql/create_field.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-9.1.0/sql/field.cc
+ * @see https://github.com/mysql/mysql-server/blob/mysql-9.1.0/sql/table.cc
  */
 final class DefinitionFactory
 {

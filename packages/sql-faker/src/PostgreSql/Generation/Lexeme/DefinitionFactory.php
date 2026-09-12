@@ -26,7 +26,8 @@ use SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator;
 use SqlFaker\Grammar\SqlVersion;
 
 /**
- * Composes REL_17_2 scan.l domains and parser.c selector/lookahead tokens.
+ * Declares scanner values, fixed spellings, contextual domains and spacing for PostgreSQL 17.2.
+ * Source tag REL_17_2 matches pg-17.2 in resources/version.php.
  * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/parser.c
  * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/scan.l
  * @see https://github.com/postgres/postgres/blob/REL_17_2/src/backend/parser/gram.y

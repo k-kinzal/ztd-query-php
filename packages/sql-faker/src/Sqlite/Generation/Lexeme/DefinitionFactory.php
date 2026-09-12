@@ -26,9 +26,11 @@ use SqlFaker\Grammar\Generation\Version\VersionedLexemeGenerator;
 use SqlFaker\Grammar\SqlVersion;
 
 /**
- * Composes the reviewed SQLite tokenizer cases without post-serialization whitespace changes.
+ * Declares scanner values, fixed spellings, contextual domains and spacing for SQLite 3.47.2.
+ * Source tag version-3.47.2 matches sqlite-3.47.2 in resources/version.php.
  * @see https://github.com/sqlite/sqlite/blob/version-3.47.2/src/build.c
  * @see https://github.com/sqlite/sqlite/blob/version-3.47.2/src/global.c
+ * @see https://github.com/sqlite/sqlite/blob/version-3.47.2/src/parse.y
  * @see https://github.com/sqlite/sqlite/blob/version-3.47.2/src/tokenize.c
  * @see https://github.com/sqlite/sqlite/blob/version-3.47.2/tool/mkkeywordhash.c
  */
