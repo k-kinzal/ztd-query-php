@@ -32,6 +32,21 @@ final class Utf8Test extends TestCase
         yield ['é', 1, false];
         yield ['猫', 3, true];
         yield ['😀', 3, false];
+        yield ["a\x80", 4, false];
+        yield ["\xc2\x7f", 4, false];
+        yield ["\xc2\x80", 4, true];
+        yield ["\xc2\xbf", 4, true];
+        yield ["\xc2\xc0", 4, false];
+        yield ["\xe0\x9f\xbf", 4, false];
+        yield ["\xe0\xa0\x80", 4, true];
+        yield ["\xed\x9f\xbf", 4, true];
+        yield ["\xf0\x8f\xbf\xbf", 4, false];
+        yield ["\xf0\x90\x80\x80", 4, true];
+    }
+
+    public function testValidReadsFourByteScalarsByDefault(): void
+    {
+        self::assertTrue((new Utf8())->valid('😀'));
     }
     public function testWidthClassifiesLeadingByteBoundaries(): void
     {

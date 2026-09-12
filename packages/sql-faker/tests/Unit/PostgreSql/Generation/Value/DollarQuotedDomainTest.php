@@ -31,4 +31,20 @@ final class DollarQuotedDomainTest extends TestCase
         self::assertSame([], $domain->match('plain'));
         self::assertSame([], $domain->match('$a'));
     }
+
+    public function testMatchRequiresADollarAndALegalTagAtTheOffset(): void
+    {
+        $domain = new DollarQuotedDomain(new CharacterDomain(['a'], 0, 3), new CharacterDomain(['x'], 0, 3));
+        self::assertSame([], $domain->match('x$a$x$a$'));
+        self::assertSame([], $domain->match('$b$x$b$'));
+        self::assertSame([8], $domain->match('!$a$x$a$', 1));
+    }
+
+    public function testMatchClosesAtTheDelimiterAfterTheTagAndOnlyRejectsNulBytesInsideTheBody(): void
+    {
+        $domain = new DollarQuotedDomain(new CharacterDomain(['a'], 0, 3), new CharacterDomain(['x'], 0, 3));
+        self::assertSame([4], $domain->match('$$$$'));
+        self::assertSame([5], $domain->match("\$\$x\$\$\0"));
+        self::assertSame([11], $domain->match("\$aaa\$x\$aaa\$\0"));
+    }
 }
