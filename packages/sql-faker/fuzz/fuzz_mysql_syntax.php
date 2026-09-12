@@ -132,7 +132,7 @@ $config->setTarget(static function (string $input) use ($provider, $planner, $co
         exit(128 + $stopSignal);
     }
     try {
-        $plan = GenerationPlan::fromBytes($input, $planner, $constraints);
+        $plan = (new SqlFaker\Grammar\Choice\BytePlanCompiler())->compile($input, $planner, $constraints);
         $sql = $provider->generate($plan);
         if ($provider->generate($plan) !== $sql) {
             throw new LogicException('The same input produced different SQL.');

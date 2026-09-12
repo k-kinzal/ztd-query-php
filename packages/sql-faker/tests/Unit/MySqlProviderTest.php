@@ -1476,7 +1476,7 @@ final class MySqlProviderTest extends TestCase
     public function testPlannerCompilesReusableInstructionsWithoutChangingTheDefaultStart(): void
     {
         $provider = new MySqlProvider(Factory::create(), 'mysql-8.4.7');
-        $plan = GenerationPlan::fromBytes('', $provider->planner());
+        $plan = (new \SqlFaker\Grammar\Choice\BytePlanCompiler())->compile('', $provider->planner());
         self::assertNull($plan->startRule());
         self::assertSame($provider->generate($plan), $provider->generate($plan));
     }
@@ -1488,13 +1488,13 @@ final class MySqlProviderTest extends TestCase
         $constraints = GenerationPlan::constrained('ulong_num', [
             'ulong_num' => [ProductionPattern::containing('NUM')],
         ])->withExpansionBudget(1);
-        $outputs = array_map(static fn (int $byte): string => $provider->generate(GenerationPlan::fromBytes(
+        $outputs = array_map(static fn (int $byte): string => $provider->generate((new \SqlFaker\Grammar\Choice\BytePlanCompiler())->compile(
             "\0\0\0\0" . str_repeat(chr($byte) . chr($byte), 64),
             $planner,
             $constraints
         )), range(1, 31));
         self::assertGreaterThan(8, count(array_unique($outputs)));
-        $plan = GenerationPlan::fromBytes("\0\0\0\0" . str_repeat("\0\xff", 64), $planner, $constraints);
+        $plan = (new \SqlFaker\Grammar\Choice\BytePlanCompiler())->compile("\0\0\0\0" . str_repeat("\0\xff", 64), $planner, $constraints);
         $first = $provider->generate($plan);
         self::assertGreaterThan(2, (int) $first);
         self::assertSame($first, $plan->lexemeAt('NUM', 0));

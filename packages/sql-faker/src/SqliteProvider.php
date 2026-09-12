@@ -63,7 +63,7 @@ final class SqliteProvider extends Base
      * @visibility public
      * @example Compile input before generating SQL
      *     $provider = new \SqlFaker\SqliteProvider(\Faker\Factory::create());
-     *     $plan = \SqlFaker\Grammar\Derivation\GenerationPlan::fromBytes('', $provider->planner());
+     *     $plan = \SqlFaker\Grammar\Derivation\(new \SqlFaker\Grammar\Choice\BytePlanCompiler())->compile('', $provider->planner());
      *     $provider->generate($plan) === $provider->generate($plan) // => true
      */
     public function planner(): Grammar\Derivation\PlanBuilder

@@ -104,7 +104,7 @@ $config->setTarget(static function (string $input) use ($provider, $planner, $ca
         $case = $cases[ord($input[0] ?? "\0") % count($cases)];
         $root = $case['root'];
         $constraints = $case['ordinal'] === null ? GenerationPlan::fromRule($root) : GenerationPlan::constrained($root, [$root => [ProductionPattern::at($case['ordinal'])]]);
-        $plan = GenerationPlan::fromBytes(substr($input, 1), $planner, $constraints->withExpansionBudget(100));
+        $plan = (new \SqlFaker\Grammar\Choice\BytePlanCompiler())->compile(substr($input, 1), $planner, $constraints->withExpansionBudget(100));
         $fragment = $provider->generate($plan);
         if ($provider->generate($plan) !== $fragment) {
             throw new LogicException('A frozen plan generated different SQL.');

@@ -1,46 +1,64 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace Tests\Unit\SqlFaker\Coverage;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Coverage\CoverageException;
+use SqlFaker\Coverage\CoverageSets;
 use SqlFaker\Coverage\CoverageSnapshotStore;
-use Tests\Fixtures\SqlFaker\CoverageFixture;
+use SqlFaker\Coverage\GenerationTrace;
+use SqlFaker\Coverage\GeneratorRevision;
+use SqlFaker\Coverage\GrammarCoverage;
+use SqlFaker\Coverage\GrammarCoverageInventory;
+use SqlFaker\Coverage\LexicalObservation;
+use SqlFaker\Coverage\SnapshotValidation;
+use SqlFaker\Grammar\Choice\ByteChoices;
+use SqlFaker\Grammar\Derivation\CompletionCosts;
+use SqlFaker\Grammar\Derivation\DerivationNode;
+use SqlFaker\Grammar\Grammar;
+use SqlFaker\Grammar\NonTerminal;
+use SqlFaker\Grammar\Production;
+use SqlFaker\Grammar\ProductionRule;
+use SqlFaker\Grammar\Terminal;
+use Symfony\Component\Filesystem\Filesystem;
 
 #[CoversClass(CoverageSnapshotStore::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Grammar::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Production::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\ProductionRule::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Terminal::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\NonTerminal::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Coverage\GrammarCoverageInventory::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(CoverageException::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Coverage\GrammarCoverage::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Coverage\GeneratorRevision::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Coverage\SnapshotValidation::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Coverage\GenerationTrace::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Coverage\CoverageSets::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Choice\ByteChoices::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Derivation\CompletionCosts::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Derivation\DerivationNode::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Coverage\LexicalObservation::class)]
+#[UsesClass(Grammar::class)]
+#[UsesClass(Production::class)]
+#[UsesClass(ProductionRule::class)]
+#[UsesClass(Terminal::class)]
+#[UsesClass(NonTerminal::class)]
+#[UsesClass(GrammarCoverageInventory::class)]
+#[UsesClass(CoverageException::class)]
+#[UsesClass(GrammarCoverage::class)]
+#[UsesClass(GeneratorRevision::class)]
+#[UsesClass(SnapshotValidation::class)]
+#[UsesClass(GenerationTrace::class)]
+#[UsesClass(CoverageSets::class)]
+#[UsesClass(ByteChoices::class)]
+#[UsesClass(CompletionCosts::class)]
+#[UsesClass(DerivationNode::class)]
+#[UsesClass(LexicalObservation::class)]
 final class CoverageSnapshotStoreTest extends TestCase
 {
     public function testReadReturnsNoHistoryWhenTheKeyHasNoSnapshot(): void
     {
-        $directory = CoverageFixture::directory();
+        $directory = sys_get_temp_dir() . '/sql-faker-coverage-' . bin2hex(random_bytes(8));
+        (new Filesystem())->mkdir($directory);
         $store = new CoverageSnapshotStore($directory, 'key');
         self::assertNull($store->read());
         unset($store);
-        CoverageFixture::remove($directory);
+        (new Filesystem())->remove($directory);
     }
 
     public function testWriteReplacesACompleteSnapshotAndIgnoresInterruptedTemporaryFiles(): void
     {
-        $directory = CoverageFixture::directory();
+        $directory = sys_get_temp_dir() . '/sql-faker-coverage-' . bin2hex(random_bytes(8));
+        (new Filesystem())->mkdir($directory);
         $store = new CoverageSnapshotStore($directory, 'key');
         $store->write('{"old":true}');
         file_put_contents($directory . '/interrupted-temporary', '{"partial":');
@@ -48,19 +66,20 @@ final class CoverageSnapshotStoreTest extends TestCase
         $store->write('{"new":true}');
         self::assertSame('{"new":true}', $store->read());
         unset($store);
-        CoverageFixture::remove($directory);
+        (new Filesystem())->remove($directory);
     }
 
     public function testWriteRejectsASecondWriterForTheSameKey(): void
     {
-        $directory = CoverageFixture::directory();
+        $directory = sys_get_temp_dir() . '/sql-faker-coverage-' . bin2hex(random_bytes(8));
+        (new Filesystem())->mkdir($directory);
         $store = new CoverageSnapshotStore($directory, 'key');
         $this->expectException(CoverageException::class);
         try {
             new CoverageSnapshotStore($directory, 'key');
         } finally {
             unset($store);
-            CoverageFixture::remove($directory);
+            (new Filesystem())->remove($directory);
         }
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace Tests\Unit\SqlFaker\Coverage\Verification;
 
@@ -11,7 +11,7 @@ use PHPUnit\Framework\TestCase;
 use SqlFaker\Coverage\CoverageException;
 use SqlFaker\Coverage\CoverageSnapshotStore;
 use SqlFaker\Coverage\Verification\VerificationWitnessStore;
-use Tests\Fixtures\SqlFaker\CoverageFixture;
+use Symfony\Component\Filesystem\Filesystem;
 
 #[CoversClass(VerificationWitnessStore::class)]
 #[UsesClass(CoverageSnapshotStore::class)]
@@ -21,10 +21,12 @@ final class VerificationWitnessStoreTest extends TestCase
     /**
      * @throws JsonException
      */
+
     public function testRecordPreservesOriginalBytesWhenTheFuzzerCorpusIsNotAvailable(): void
     {
-        $directory = CoverageFixture::directory();
-        $input = "\0\xff\0";
+        $directory = sys_get_temp_dir() . '/sql-faker-coverage-' . bin2hex(random_bytes(8));
+        (new Filesystem())->mkdir($directory);
+        $input = "\x00\xff\x00";
         $sql = "SELECT '猫'";
         $store = new VerificationWitnessStore($directory);
         $store->record($input, $sql);
@@ -35,7 +37,7 @@ final class VerificationWitnessStoreTest extends TestCase
         self::assertNotNull($json);
         self::assertSame(['inputHex' => '00ff00', 'sql' => $sql], json_decode($json, true, flags: JSON_THROW_ON_ERROR));
         unset($reader, $store);
-        CoverageFixture::remove($directory);
+        (new Filesystem())->remove($directory);
     }
 
     public function testRecordReportsUnencodableSqlInsteadOfDroppingItsWitness(): void

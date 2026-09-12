@@ -1,41 +1,84 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace Tests\Unit\SqlFaker\Coverage;
 
 use JsonException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Coverage\CoverageException;
+use SqlFaker\Coverage\CoverageSets;
+use SqlFaker\Coverage\CoverageSnapshotStore;
+use SqlFaker\Coverage\GenerationTrace;
+use SqlFaker\Coverage\GeneratorRevision;
+use SqlFaker\Coverage\GrammarCoverage;
+use SqlFaker\Coverage\GrammarCoverageInventory;
+use SqlFaker\Coverage\LexicalObservation;
 use SqlFaker\Coverage\SnapshotValidation;
-use Tests\Fixtures\SqlFaker\CoverageFixture;
+use SqlFaker\Grammar\Choice\ByteChoices;
+use SqlFaker\Grammar\Derivation\CompletionCosts;
+use SqlFaker\Grammar\Derivation\DerivationNode;
+use SqlFaker\Grammar\Grammar;
+use SqlFaker\Grammar\NonTerminal;
+use SqlFaker\Grammar\Production;
+use SqlFaker\Grammar\ProductionRule;
+use SqlFaker\Grammar\Terminal;
 
 #[CoversClass(SnapshotValidation::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Grammar::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Production::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\ProductionRule::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Terminal::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\NonTerminal::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Coverage\GrammarCoverageInventory::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(CoverageException::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Coverage\GrammarCoverage::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Coverage\GeneratorRevision::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Coverage\CoverageSnapshotStore::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Coverage\GenerationTrace::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Coverage\CoverageSets::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Choice\ByteChoices::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Derivation\CompletionCosts::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Grammar\Derivation\DerivationNode::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFaker\Coverage\LexicalObservation::class)]
+#[UsesClass(Grammar::class)]
+#[UsesClass(Production::class)]
+#[UsesClass(ProductionRule::class)]
+#[UsesClass(Terminal::class)]
+#[UsesClass(NonTerminal::class)]
+#[UsesClass(GrammarCoverageInventory::class)]
+#[UsesClass(CoverageException::class)]
+#[UsesClass(GrammarCoverage::class)]
+#[UsesClass(GeneratorRevision::class)]
+#[UsesClass(CoverageSnapshotStore::class)]
+#[UsesClass(GenerationTrace::class)]
+#[UsesClass(CoverageSets::class)]
+#[UsesClass(ByteChoices::class)]
+#[UsesClass(CompletionCosts::class)]
+#[UsesClass(DerivationNode::class)]
+#[UsesClass(LexicalObservation::class)]
 final class SnapshotValidationTest extends TestCase
 {
     /**
      * @throws JsonException
      */
+
     public function testDecodeRestoresOnlyWellFormedSnapshotData(): void
     {
-        $snapshot = CoverageFixture::coverage()->snapshot();
+        $grammarCoverage = new GrammarCoverage(null);
+        $grammarCoverage->register(
+            new GrammarCoverageInventory(
+                (new Grammar(
+                    'stmt',
+                    [
+                        'stmt' => new ProductionRule(
+                            'stmt',
+                            [new Production([new Terminal('SELECT'), new NonTerminal('expr')]), new Production([new Terminal('DELETE')])],
+                        ),
+                        'expr' => new ProductionRule(
+                            'expr',
+                            [
+                                new Production([new Terminal('1')]),
+                                new Production([new NonTerminal('expr'), new Terminal('+'), new NonTerminal('expr')]),
+                                new Production([]),
+                            ],
+                        ),
+                        'outside' => new ProductionRule('outside', [new Production([new Terminal('OUTSIDE')])]),
+                    ],
+                ))->identified(),
+                'stmt',
+                'test-v1',
+            ),
+            'revision-a',
+        );
+        $snapshot = $grammarCoverage->snapshot();
         self::assertSame($snapshot, (new SnapshotValidation())->decode(json_encode($snapshot, JSON_THROW_ON_ERROR)));
     }
 
@@ -53,7 +96,32 @@ final class SnapshotValidationTest extends TestCase
 
     public function testCompatibleRejectsUnknownProductionIds(): void
     {
-        $coverage = CoverageFixture::coverage();
+        $coverage = new GrammarCoverage(null);
+        $coverage->register(
+            new GrammarCoverageInventory(
+                (new Grammar(
+                    'stmt',
+                    [
+                        'stmt' => new ProductionRule(
+                            'stmt',
+                            [new Production([new Terminal('SELECT'), new NonTerminal('expr')]), new Production([new Terminal('DELETE')])],
+                        ),
+                        'expr' => new ProductionRule(
+                            'expr',
+                            [
+                                new Production([new Terminal('1')]),
+                                new Production([new NonTerminal('expr'), new Terminal('+'), new NonTerminal('expr')]),
+                                new Production([]),
+                            ],
+                        ),
+                        'outside' => new ProductionRule('outside', [new Production([new Terminal('OUTSIDE')])]),
+                    ],
+                ))->identified(),
+                'stmt',
+                'test-v1',
+            ),
+            'revision-a',
+        );
         $snapshot = $coverage->snapshot();
         $snapshot['cumulative']['reachedIds'] = ['unknown'];
         $this->expectException(CoverageException::class);
@@ -62,7 +130,32 @@ final class SnapshotValidationTest extends TestCase
 
     public function testCompatibleRejectsAnUntrustedInventoryDigest(): void
     {
-        $coverage = CoverageFixture::coverage();
+        $coverage = new GrammarCoverage(null);
+        $coverage->register(
+            new GrammarCoverageInventory(
+                (new Grammar(
+                    'stmt',
+                    [
+                        'stmt' => new ProductionRule(
+                            'stmt',
+                            [new Production([new Terminal('SELECT'), new NonTerminal('expr')]), new Production([new Terminal('DELETE')])],
+                        ),
+                        'expr' => new ProductionRule(
+                            'expr',
+                            [
+                                new Production([new Terminal('1')]),
+                                new Production([new NonTerminal('expr'), new Terminal('+'), new NonTerminal('expr')]),
+                                new Production([]),
+                            ],
+                        ),
+                        'outside' => new ProductionRule('outside', [new Production([new Terminal('OUTSIDE')])]),
+                    ],
+                ))->identified(),
+                'stmt',
+                'test-v1',
+            ),
+            'revision-a',
+        );
         $snapshot = $coverage->snapshot();
         $snapshot['inventoryDigest'] = 'wrong';
         $this->expectException(CoverageException::class);
@@ -71,7 +164,32 @@ final class SnapshotValidationTest extends TestCase
 
     public function testCompatibleRejectsEmittedProductionsThatWereNeverReached(): void
     {
-        $coverage = CoverageFixture::coverage();
+        $coverage = new GrammarCoverage(null);
+        $coverage->register(
+            new GrammarCoverageInventory(
+                (new Grammar(
+                    'stmt',
+                    [
+                        'stmt' => new ProductionRule(
+                            'stmt',
+                            [new Production([new Terminal('SELECT'), new NonTerminal('expr')]), new Production([new Terminal('DELETE')])],
+                        ),
+                        'expr' => new ProductionRule(
+                            'expr',
+                            [
+                                new Production([new Terminal('1')]),
+                                new Production([new NonTerminal('expr'), new Terminal('+'), new NonTerminal('expr')]),
+                                new Production([]),
+                            ],
+                        ),
+                        'outside' => new ProductionRule('outside', [new Production([new Terminal('OUTSIDE')])]),
+                    ],
+                ))->identified(),
+                'stmt',
+                'test-v1',
+            ),
+            'revision-a',
+        );
         $snapshot = $coverage->snapshot();
         $snapshot['cumulative']['emittedIds'] = [$coverage->inventory()->denominator[0]];
         $this->expectException(CoverageException::class);
@@ -81,7 +199,9 @@ final class SnapshotValidationTest extends TestCase
     public function testCheckpointRequiresTypedDiagnosticFields(): void
     {
         $validator = new SnapshotValidation();
-        self::assertTrue($validator->checkpoint((object) ['savedAt' => 'time', 'runId' => 'run', 'generationsObservedInRun' => 1, 'generationInProgress' => false]));
+        self::assertTrue(
+            $validator->checkpoint((object) ['savedAt' => 'time', 'runId' => 'run', 'generationsObservedInRun' => 1, 'generationInProgress' => false]),
+        );
         self::assertFalse($validator->checkpoint((object) ['savedAt' => 'time']));
     }
 
@@ -89,9 +209,36 @@ final class SnapshotValidationTest extends TestCase
      * @return list<array{string}>
      * @throws JsonException
      */
+
     public static function providerMalformedHistories(): array
     {
-        $base = CoverageFixture::coverage()->snapshot();
+        $grammarCoverage = new GrammarCoverage(null);
+        $grammarCoverage->register(
+            new GrammarCoverageInventory(
+                (new Grammar(
+                    'stmt',
+                    [
+                        'stmt' => new ProductionRule(
+                            'stmt',
+                            [new Production([new Terminal('SELECT'), new NonTerminal('expr')]), new Production([new Terminal('DELETE')])],
+                        ),
+                        'expr' => new ProductionRule(
+                            'expr',
+                            [
+                                new Production([new Terminal('1')]),
+                                new Production([new NonTerminal('expr'), new Terminal('+'), new NonTerminal('expr')]),
+                                new Production([]),
+                            ],
+                        ),
+                        'outside' => new ProductionRule('outside', [new Production([new Terminal('OUTSIDE')])]),
+                    ],
+                ))->identified(),
+                'stmt',
+                'test-v1',
+            ),
+            'revision-a',
+        );
+        $base = $grammarCoverage->snapshot();
         $cases = [null, [], ['formatVersion' => '1'], ['formatVersion' => 1]];
         foreach (['grammarFingerprint', 'generatorRevision', 'root', 'inventoryDigest', 'cumulative', 'checkpoint'] as $field) {
             $missing = $base;
@@ -109,8 +256,8 @@ final class SnapshotValidationTest extends TestCase
         }
         return array_values(array_map(static fn ($case): array => [json_encode($case, JSON_THROW_ON_ERROR)], $cases));
     }
+    #[DataProvider('providerMalformedHistories')]
 
-    #[\PHPUnit\Framework\Attributes\DataProvider('providerMalformedHistories')]
     public function testDecodeRejectsMalformedHistoryFields(string $json): void
     {
         $this->expectException(CoverageException::class);
@@ -120,6 +267,7 @@ final class SnapshotValidationTest extends TestCase
     /**
      * @return list<array{'grammarFingerprint'|'generatorRevision'|'root'|'inventoryDigest'}>
      */
+
     public static function providerIdentityFields(): array
     {
         return [['grammarFingerprint'], ['generatorRevision'], ['root'], ['inventoryDigest']];
@@ -128,10 +276,36 @@ final class SnapshotValidationTest extends TestCase
     /**
      * @param 'grammarFingerprint'|'generatorRevision'|'root'|'inventoryDigest' $field
      */
-    #[\PHPUnit\Framework\Attributes\DataProvider('providerIdentityFields')]
+    #[DataProvider('providerIdentityFields')]
+
     public function testCompatibleRequiresEveryIdentityComponent(string $field): void
     {
-        $coverage = CoverageFixture::coverage();
+        $coverage = new GrammarCoverage(null);
+        $coverage->register(
+            new GrammarCoverageInventory(
+                (new Grammar(
+                    'stmt',
+                    [
+                        'stmt' => new ProductionRule(
+                            'stmt',
+                            [new Production([new Terminal('SELECT'), new NonTerminal('expr')]), new Production([new Terminal('DELETE')])],
+                        ),
+                        'expr' => new ProductionRule(
+                            'expr',
+                            [
+                                new Production([new Terminal('1')]),
+                                new Production([new NonTerminal('expr'), new Terminal('+'), new NonTerminal('expr')]),
+                                new Production([]),
+                            ],
+                        ),
+                        'outside' => new ProductionRule('outside', [new Production([new Terminal('OUTSIDE')])]),
+                    ],
+                ))->identified(),
+                'stmt',
+                'test-v1',
+            ),
+            'revision-a',
+        );
         $snapshot = $coverage->snapshot();
         $different = $snapshot;
         $different[$field] = 'different';
@@ -139,5 +313,4 @@ final class SnapshotValidationTest extends TestCase
         $this->expectExceptionMessage('Incompatible coverage snapshot: ' . $field);
         (new SnapshotValidation())->compatible($different, $snapshot, $coverage->inventory());
     }
-
 }

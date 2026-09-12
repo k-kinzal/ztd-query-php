@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlFaker\Grammar\Derivation;
 
 use InvalidArgumentException;
-use SqlFaker\Grammar\Choice\BytePlanCompiler;
 
 /**
  * An immutable plan selecting the start rule, productions, lexemes and expansion limits.
@@ -57,16 +56,7 @@ final class GenerationPlan
         return new self(null, [], [], [], null, [], false, PHP_INT_MAX);
     }
 
-    /**
-     * Compiles arbitrary input into explicit instructions; no input is retained.
-     * @param GenerationPlan<bool>|null $constraints Caller-selected start rule and output constraints
-     * @return self<bool>
-     * @throws InvalidArgumentException When the configured constraints cannot be completed
-     */
-    public static function fromBytes(string $input, PlanBuilder $builder, ?self $constraints = null): self
-    {
-        return (new BytePlanCompiler())->compile($input, $builder, $constraints);
-    }
+
 
     /**
      * Directs a walk that begins at one rule instead of the grammar entry point.

@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace Tests\Unit\SqlFaker\Generation;
 
@@ -9,76 +9,120 @@ use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlFaker\Coverage\CoverageSets;
+use SqlFaker\Coverage\GenerationTrace;
+use SqlFaker\Coverage\GeneratorRevision;
 use SqlFaker\Coverage\GrammarCoverage;
+use SqlFaker\Coverage\GrammarCoverageInventory;
+use SqlFaker\Coverage\LexicalObservation;
+use SqlFaker\Coverage\SequenceObservation;
 use SqlFaker\Generation\SqlGenerator;
+use SqlFaker\Grammar\Choice\ByteChoices;
+use SqlFaker\Grammar\Choice\BytePlanCompiler;
+use SqlFaker\Grammar\Choice\CompletionWitness;
+use SqlFaker\Grammar\Choice\PatternProductions;
+use SqlFaker\Grammar\Derivation\CompletionCosts;
+use SqlFaker\Grammar\Derivation\CompletionFrontier;
+use SqlFaker\Grammar\Derivation\CompletionMemo;
+use SqlFaker\Grammar\Derivation\CompletionReduction;
+use SqlFaker\Grammar\Derivation\CompletionState;
+use SqlFaker\Grammar\Derivation\ConstrainedCompletion;
+use SqlFaker\Grammar\Derivation\ConstraintDependencies;
+use SqlFaker\Grammar\Derivation\Derivation;
+use SqlFaker\Grammar\Derivation\DerivationTrace;
 use SqlFaker\Grammar\Derivation\GenerationPlan;
+use SqlFaker\Grammar\Derivation\PlanBuilder;
+use SqlFaker\Grammar\Derivation\ProductionPattern;
+use SqlFaker\Grammar\Derivation\TerminationAnalyzer;
+use SqlFaker\Grammar\Derivation\TerminationCost;
+use SqlFaker\Grammar\Generation\Lexeme\ChoiceLexemeGenerator;
+use SqlFaker\Grammar\Generation\Lexeme\FixedLexemeGenerator;
+use SqlFaker\Grammar\Generation\Lexeme\Lexeme;
+use SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates;
+use SqlFaker\Grammar\Generation\Lexeme\LexemeInput;
+use SqlFaker\Grammar\Generation\Lexeme\LexemeSequence;
+use SqlFaker\Grammar\Generation\Lexeme\ValueLexemeGenerator;
+use SqlFaker\Grammar\Generation\Output\BoundaryCompletion;
+use SqlFaker\Grammar\Generation\Output\CandidateResolver;
+use SqlFaker\Grammar\Generation\Output\OutputPart;
+use SqlFaker\Grammar\Generation\Output\ResolvedOutput;
+use SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator;
+use SqlFaker\Grammar\Generation\Output\SqlSerializer;
+use SqlFaker\Grammar\Generation\Spacing\CombinedSpacingRule;
+use SqlFaker\Grammar\Generation\Spacing\LexemeBoundary;
+use SqlFaker\Grammar\Generation\Spacing\SpacingConstraint;
+use SqlFaker\Grammar\Generation\Token\ProductionOccurrence;
 use SqlFaker\Grammar\Generation\Token\RewriteRule;
+use SqlFaker\Grammar\Generation\Token\TerminalOccurrence;
 use SqlFaker\Grammar\Generation\Token\TerminalSequence;
+use SqlFaker\Grammar\Generation\Token\TokenGenerator;
 use SqlFaker\Grammar\Generation\Token\TokenRewriter;
+use SqlFaker\Grammar\Generation\Value\CharacterDomain;
+use SqlFaker\Grammar\Generation\Value\ValueChoices;
 use SqlFaker\Grammar\GenerationException;
 use SqlFaker\Grammar\Grammar;
 use SqlFaker\Grammar\LexicalException;
 use SqlFaker\Grammar\LexicalGrammar;
+use SqlFaker\Grammar\NonTerminal;
 use SqlFaker\Grammar\Production;
 use SqlFaker\Grammar\ProductionRule;
 use SqlFaker\Grammar\Terminal;
-use Tests\Fixtures\SqlFaker\CoverageFixture;
 
 #[CoversClass(SqlGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\Derivation::class)]
+#[UsesClass(Derivation::class)]
 #[UsesClass(GenerationException::class)]
 #[UsesClass(GenerationPlan::class)]
 #[UsesClass(Grammar::class)]
-#[UsesClass(\SqlFaker\Grammar\NonTerminal::class)]
+#[UsesClass(NonTerminal::class)]
 #[UsesClass(Production::class)]
 #[UsesClass(ProductionRule::class)]
 #[UsesClass(Terminal::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\TerminationAnalyzer::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\TerminationCost::class)]
+#[UsesClass(TerminationAnalyzer::class)]
+#[UsesClass(TerminationCost::class)]
 #[UsesClass(LexicalException::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionCosts::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\DerivationTrace::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\ProductionOccurrence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\TerminalOccurrence::class)]
+#[UsesClass(CompletionCosts::class)]
+#[UsesClass(DerivationTrace::class)]
+#[UsesClass(ProductionOccurrence::class)]
+#[UsesClass(TerminalOccurrence::class)]
 #[UsesClass(TerminalSequence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Token\TokenGenerator::class)]
+#[UsesClass(TokenGenerator::class)]
 #[UsesClass(TokenRewriter::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\ProductionPattern::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\ChoiceLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\Lexeme::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeCandidates::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeInput::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\LexemeSequence::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Lexeme\ValueLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Output\CandidateResolver::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Output\OutputPart::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Output\ResolvedOutput::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Output\ReverseLexemeGenerator::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Output\SqlSerializer::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\CombinedSpacingRule::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\SpacingConstraint::class)]
-#[UsesClass(\SqlFaker\Grammar\Choice\ByteChoices::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\PlanBuilder::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Spacing\LexemeBoundary::class)]
+#[UsesClass(ProductionPattern::class)]
+#[UsesClass(ChoiceLexemeGenerator::class)]
+#[UsesClass(Lexeme::class)]
+#[UsesClass(LexemeCandidates::class)]
+#[UsesClass(LexemeInput::class)]
+#[UsesClass(LexemeSequence::class)]
+#[UsesClass(ValueLexemeGenerator::class)]
+#[UsesClass(CandidateResolver::class)]
+#[UsesClass(OutputPart::class)]
+#[UsesClass(ResolvedOutput::class)]
+#[UsesClass(ReverseLexemeGenerator::class)]
+#[UsesClass(SqlSerializer::class)]
+#[UsesClass(CombinedSpacingRule::class)]
+#[UsesClass(SpacingConstraint::class)]
+#[UsesClass(ByteChoices::class)]
+#[UsesClass(PlanBuilder::class)]
+#[UsesClass(LexemeBoundary::class)]
 #[UsesClass(GrammarCoverage::class)]
-#[UsesClass(\SqlFaker\Coverage\GrammarCoverageInventory::class)]
-#[UsesClass(\SqlFaker\Coverage\GeneratorRevision::class)]
-#[UsesClass(\SqlFaker\Coverage\GenerationTrace::class)]
-#[UsesClass(\SqlFaker\Coverage\CoverageSets::class)]
-#[UsesClass(\SqlFaker\Coverage\SequenceObservation::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionState::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionFrontier::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\ConstrainedCompletion::class)]
-#[UsesClass(\SqlFaker\Coverage\LexicalObservation::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\ValueChoices::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Output\BoundaryCompletion::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionMemo::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\CompletionReduction::class)]
-#[UsesClass(\SqlFaker\Grammar\Derivation\ConstraintDependencies::class)]
-#[UsesClass(\SqlFaker\Grammar\Choice\BytePlanCompiler::class)]
-#[UsesClass(\SqlFaker\Grammar\Choice\PatternProductions::class)]
-#[UsesClass(\SqlFaker\Grammar\Choice\CompletionWitness::class)]
-#[UsesClass(\SqlFaker\Grammar\Generation\Value\CharacterDomain::class)]
+#[UsesClass(GrammarCoverageInventory::class)]
+#[UsesClass(GeneratorRevision::class)]
+#[UsesClass(GenerationTrace::class)]
+#[UsesClass(CoverageSets::class)]
+#[UsesClass(SequenceObservation::class)]
+#[UsesClass(CompletionState::class)]
+#[UsesClass(CompletionFrontier::class)]
+#[UsesClass(ConstrainedCompletion::class)]
+#[UsesClass(LexicalObservation::class)]
+#[UsesClass(ValueChoices::class)]
+#[UsesClass(BoundaryCompletion::class)]
+#[UsesClass(CompletionMemo::class)]
+#[UsesClass(CompletionReduction::class)]
+#[UsesClass(ConstraintDependencies::class)]
+#[UsesClass(BytePlanCompiler::class)]
+#[UsesClass(PatternProductions::class)]
+#[UsesClass(CompletionWitness::class)]
+#[UsesClass(CharacterDomain::class)]
 final class SqlGeneratorTest extends TestCase
 {
     public function testGenerateRecordsACompleteCoverageObservation(): void
@@ -86,8 +130,50 @@ final class SqlGeneratorTest extends TestCase
         $coverage = new GrammarCoverage();
         $lexical = $this->createMock(LexicalGrammar::class);
         $lexical->method('version')->willReturn('test-v1');
-        $lexical->method('resolveSequence')->willReturnCallback(CoverageFixture::resolve(...));
-        $generator = new SqlGenerator(CoverageFixture::syntaxGrammar(), Factory::create(), $lexical, coverage: $coverage);
+        $literalDomain = new CharacterDomain(array_map(chr(...), range(0, 255)), 0, 255);
+        $lexemePipeline = new ReverseLexemeGenerator(
+            new ChoiceLexemeGenerator(
+                new ValueLexemeGenerator('SELECT', $literalDomain, ['SELECT'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('DELETE', $literalDomain, ['DELETE'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('FROM', $literalDomain, ['FROM'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('missing', $literalDomain, ['missing'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('1', $literalDomain, ['1'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('+', $literalDomain, ['+'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('AS', $literalDomain, ['AS'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('name', $literalDomain, ['name'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('CHANGED', $literalDomain, ['CHANGED'], 'fixture', 'fixture-literal'),
+            ),
+            new CandidateResolver(new CombinedSpacingRule()),
+            'fixture',
+        );
+        $lexical->method('resolveSequence')->willReturnCallback(
+            static fn (TerminalSequence $sequence, ?GenerationPlan $plan, Closure $choose) => $lexemePipeline->generate($sequence, $plan, $choose),
+        );
+        $generator = new SqlGenerator(
+            (new Grammar(
+                'stmt',
+                [
+                    'stmt' => new ProductionRule(
+                        'stmt',
+                        [
+                            new Production([new Terminal('SELECT'), new NonTerminal('expr'), new NonTerminal('tail')]),
+                            new Production([new Terminal('DELETE'), new Terminal('FROM'), new Terminal('missing')]),
+                        ],
+                    ),
+                    'expr' => new ProductionRule(
+                        'expr',
+                        [
+                            new Production([new Terminal('1')]),
+                            new Production([new NonTerminal('expr'), new Terminal('+'), new NonTerminal('expr')]),
+                        ],
+                    ),
+                    'tail' => new ProductionRule('tail', [new Production([]), new Production([new Terminal('AS'), new Terminal('name')])]),
+                ],
+            ))->identified(),
+            Factory::create(),
+            $lexical,
+            coverage: $coverage,
+        );
         $sql = $generator->generate(GenerationPlan::all()->withMaxDepth(1)->withStepBudget()->withExpansionBudget(17));
         self::assertSame('DELETE FROM missing', $sql);
         $trace = $coverage->lastGeneration();
@@ -111,10 +197,55 @@ final class SqlGeneratorTest extends TestCase
     {
         $coverage = new GrammarCoverage();
         $lexical = $this->createMock(LexicalGrammar::class);
-        $lexical->method('resolveSequence')->willReturnCallback(CoverageFixture::resolve(...));
+        $literalDomain = new CharacterDomain(array_map(chr(...), range(0, 255)), 0, 255);
+        $lexemePipeline = new ReverseLexemeGenerator(
+            new ChoiceLexemeGenerator(
+                new ValueLexemeGenerator('SELECT', $literalDomain, ['SELECT'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('DELETE', $literalDomain, ['DELETE'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('FROM', $literalDomain, ['FROM'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('missing', $literalDomain, ['missing'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('1', $literalDomain, ['1'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('+', $literalDomain, ['+'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('AS', $literalDomain, ['AS'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('name', $literalDomain, ['name'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('CHANGED', $literalDomain, ['CHANGED'], 'fixture', 'fixture-literal'),
+            ),
+            new CandidateResolver(new CombinedSpacingRule()),
+            'fixture',
+        );
+        $lexical->method('resolveSequence')->willReturnCallback(
+            static fn (TerminalSequence $sequence, ?GenerationPlan $plan, Closure $choose) => $lexemePipeline->generate($sequence, $plan, $choose),
+        );
         $rule = $this->createMock(RewriteRule::class);
-        $rule->method('rewrite')->willReturnCallback(static fn (TerminalSequence $sequence): TerminalSequence => $sequence->replace(0, 1, [$sequence->terminals[0]->replaced('CHANGED', 'fixture.change')], 'fixture.change'));
-        $generator = new SqlGenerator(CoverageFixture::syntaxGrammar(), Factory::create(), $lexical, new TokenRewriter($rule), coverage: $coverage);
+        $rule->method('rewrite')->willReturnCallback(
+            static fn (TerminalSequence $sequence): TerminalSequence => $sequence->replace(0, 1, [$sequence->terminals[0]->replaced('CHANGED', 'fixture.change')], 'fixture.change'),
+        );
+        $generator = new SqlGenerator(
+            (new Grammar(
+                'stmt',
+                [
+                    'stmt' => new ProductionRule(
+                        'stmt',
+                        [
+                            new Production([new Terminal('SELECT'), new NonTerminal('expr'), new NonTerminal('tail')]),
+                            new Production([new Terminal('DELETE'), new Terminal('FROM'), new Terminal('missing')]),
+                        ],
+                    ),
+                    'expr' => new ProductionRule(
+                        'expr',
+                        [
+                            new Production([new Terminal('1')]),
+                            new Production([new NonTerminal('expr'), new Terminal('+'), new NonTerminal('expr')]),
+                        ],
+                    ),
+                    'tail' => new ProductionRule('tail', [new Production([]), new Production([new Terminal('AS'), new Terminal('name')])]),
+                ],
+            ))->identified(),
+            Factory::create(),
+            $lexical,
+            new TokenRewriter($rule),
+            coverage: $coverage,
+        );
         self::assertSame('CHANGED FROM missing', $generator->generate(GenerationPlan::all()->withMaxDepth(1)->withStepBudget()));
         self::assertNotNull($coverage->lastGeneration());
         self::assertSame(['fixture.change'], $coverage->lastGeneration()['rewrites']);
@@ -127,22 +258,92 @@ final class SqlGeneratorTest extends TestCase
         $coverage = new GrammarCoverage();
         $lexical = $this->createMock(LexicalGrammar::class);
         $lexical->method('generate')->willReturn('');
-        $generator = new SqlGenerator(CoverageFixture::syntaxGrammar(), Factory::create(), $lexical, coverage: $coverage);
-        self::assertInstanceOf(GenerationException::class, CoverageFixture::generationFailure($generator, GenerationPlan::lexical('identifier', [])->requiringNonEmpty()));
-        self::assertNotNull($coverage->lastGeneration());
-        self::assertSame('failed', $coverage->lastGeneration()['status']);
-        self::assertSame('discarded', $coverage->lastGeneration()['attempts'][0]['status']);
-        self::assertSame([], $coverage->lastGeneration()['emittedIds']);
-        self::assertFalse($coverage->snapshot()['checkpoint']['generationInProgress']);
+        $generator = new SqlGenerator(
+            (new Grammar(
+                'stmt',
+                [
+                    'stmt' => new ProductionRule(
+                        'stmt',
+                        [
+                            new Production([new Terminal('SELECT'), new NonTerminal('expr'), new NonTerminal('tail')]),
+                            new Production([new Terminal('DELETE'), new Terminal('FROM'), new Terminal('missing')]),
+                        ],
+                    ),
+                    'expr' => new ProductionRule(
+                        'expr',
+                        [
+                            new Production([new Terminal('1')]),
+                            new Production([new NonTerminal('expr'), new Terminal('+'), new NonTerminal('expr')]),
+                        ],
+                    ),
+                    'tail' => new ProductionRule('tail', [new Production([]), new Production([new Terminal('AS'), new Terminal('name')])]),
+                ],
+            ))->identified(),
+            Factory::create(),
+            $lexical,
+            coverage: $coverage,
+        );
+        $this->expectException(GenerationException::class);
+        try {
+            $generator->generate(GenerationPlan::lexical('identifier', [])->requiringNonEmpty());
+        } finally {
+            self::assertNotNull($coverage->lastGeneration());
+            self::assertSame('failed', $coverage->lastGeneration()['status']);
+            self::assertSame('discarded', $coverage->lastGeneration()['attempts'][0]['status']);
+            self::assertSame([], $coverage->lastGeneration()['emittedIds']);
+            self::assertFalse($coverage->snapshot()['checkpoint']['generationInProgress']);
+        }
     }
 
     public function testGenerateReplacesGrammarCoverageWithTheLatestLexicalTrace(): void
     {
         $coverage = new GrammarCoverage();
         $lexical = $this->createMock(LexicalGrammar::class);
-        $lexical->method('resolveSequence')->willReturnCallback(CoverageFixture::resolve(...));
+        $literalDomain = new CharacterDomain(array_map(chr(...), range(0, 255)), 0, 255);
+        $lexemePipeline = new ReverseLexemeGenerator(
+            new ChoiceLexemeGenerator(
+                new ValueLexemeGenerator('SELECT', $literalDomain, ['SELECT'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('DELETE', $literalDomain, ['DELETE'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('FROM', $literalDomain, ['FROM'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('missing', $literalDomain, ['missing'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('1', $literalDomain, ['1'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('+', $literalDomain, ['+'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('AS', $literalDomain, ['AS'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('name', $literalDomain, ['name'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('CHANGED', $literalDomain, ['CHANGED'], 'fixture', 'fixture-literal'),
+            ),
+            new CandidateResolver(new CombinedSpacingRule()),
+            'fixture',
+        );
+        $lexical->method('resolveSequence')->willReturnCallback(
+            static fn (TerminalSequence $sequence, ?GenerationPlan $plan, Closure $choose) => $lexemePipeline->generate($sequence, $plan, $choose),
+        );
         $lexical->method('generate')->willReturn('name');
-        $generator = new SqlGenerator(CoverageFixture::syntaxGrammar(), Factory::create(), $lexical, coverage: $coverage);
+        $generator = new SqlGenerator(
+            (new Grammar(
+                'stmt',
+                [
+                    'stmt' => new ProductionRule(
+                        'stmt',
+                        [
+                            new Production([new Terminal('SELECT'), new NonTerminal('expr'), new NonTerminal('tail')]),
+                            new Production([new Terminal('DELETE'), new Terminal('FROM'), new Terminal('missing')]),
+                        ],
+                    ),
+                    'expr' => new ProductionRule(
+                        'expr',
+                        [
+                            new Production([new Terminal('1')]),
+                            new Production([new NonTerminal('expr'), new Terminal('+'), new NonTerminal('expr')]),
+                        ],
+                    ),
+                    'tail' => new ProductionRule('tail', [new Production([]), new Production([new Terminal('AS'), new Terminal('name')])]),
+                ],
+            ))->identified(),
+            Factory::create(),
+            $lexical,
+            coverage: $coverage,
+        );
         $generator->generate(GenerationPlan::all()->withMaxDepth(1)->withStepBudget());
         self::assertSame('name', $generator->generate(GenerationPlan::lexical('identifier', [])));
         self::assertNotNull($coverage->lastGeneration());
@@ -168,32 +369,46 @@ final class SqlGeneratorTest extends TestCase
              * @param Closure(int): int $choose
              */
             static function (TerminalSequence $sequence, GenerationPlan $plan, Closure $choose) {
-                $choices = CoverageFixture::candidateChoices($choose);
+                $choices = array_map($choose, array_fill(0, 32, 2));
                 self::assertContains(0, $choices);
                 self::assertContains(1, $choices);
                 self::assertSame([], array_diff($choices, [0, 1]));
                 self::assertSame(0, $choose(1));
-                return CoverageFixture::output('T');
-            }
+                return (new ReverseLexemeGenerator(
+                    new FixedLexemeGenerator('T', 'fixture', 'fixture-literal'),
+                    new CandidateResolver(new CombinedSpacingRule()),
+                    'fixture',
+                ))->generate(TerminalSequence::fromNames(['T']), null, static fn (int $count): int => 0);
+            },
         );
         self::assertSame('T', (new SqlGenerator($grammar, $faker, $lexical))->realize('stmt', GenerationPlan::all()));
     }
 
     public function testGenerateReusesCompletionAnalysisAcrossDifferentPlans(): void
     {
-        $grammar = new Grammar('first', [
-            'first' => new ProductionRule('first', [new Production([new Terminal('T')])]),
-            'second' => new ProductionRule('second', [new Production([new Terminal('U')])]),
-        ]);
+        $grammar = new Grammar(
+            'first',
+            [
+                'first' => new ProductionRule('first', [new Production([new Terminal('T')])]),
+                'second' => new ProductionRule('second', [new Production([new Terminal('U')])]),
+            ],
+        );
         $lexer = $this->createMock(LexicalGrammar::class);
         $observations = [];
-        $lexer->method('isNonOutput')->willReturnCallback(static function (string $terminal) use (&$observations): bool {
-            $observations[] = $terminal;
-            return false;
-        });
-        $lexer->method('resolveSequence')->willReturnCallback(static fn (TerminalSequence $sequence) => CoverageFixture::output(implode(' ', $sequence->names())));
+        $lexer->method('isNonOutput')->willReturnCallback(
+            static function (string $terminal) use (&$observations): bool {
+                $observations[] = $terminal;
+                return false;
+            },
+        );
+        $lexer->method('resolveSequence')->willReturnCallback(
+            static fn (TerminalSequence $sequence) => (new ReverseLexemeGenerator(
+                new FixedLexemeGenerator(implode(' ', $sequence->names()), 'fixture', 'fixture-literal'),
+                new CandidateResolver(new CombinedSpacingRule()),
+                'fixture',
+            ))->generate(TerminalSequence::fromNames([implode(' ', $sequence->names())]), null, static fn (int $count): int => 0),
+        );
         $generator = new SqlGenerator($grammar, Factory::create(), $lexer);
-
         self::assertSame('T', $generator->generate(GenerationPlan::all()));
         self::assertSame(['T', 'U'], $observations);
         self::assertSame('U', $generator->generate(GenerationPlan::fromRule('second')));
@@ -204,40 +419,51 @@ final class SqlGeneratorTest extends TestCase
 
     public function testGenerateUsesTheGrammarEntryPointWithoutDialectKnowledge(): void
     {
-        $grammar = new Grammar('custom_entry', [
-            'custom_entry' => new ProductionRule('custom_entry', [new Production([new Terminal('CUSTOM')])]),
-        ]);
+        $grammar = new Grammar('custom_entry', ['custom_entry' => new ProductionRule('custom_entry', [new Production([new Terminal('CUSTOM')])])]);
         $plan = GenerationPlan::all();
         $lexer = $this->createMock(LexicalGrammar::class);
-        $lexer->expects(self::once())->method('resolveSequence')->with(self::callback(static fn (TerminalSequence $sequence): bool => $sequence->names() === ['CUSTOM']), $plan)->willReturn(CoverageFixture::output('custom sql'));
+        $lexer->expects(self::once())->method('resolveSequence')->with(self::callback(static fn (TerminalSequence $sequence): bool => $sequence->names() === ['CUSTOM']), $plan)->willReturn(
+            (new ReverseLexemeGenerator(
+                new FixedLexemeGenerator('custom sql', 'fixture', 'fixture-literal'),
+                new CandidateResolver(new CombinedSpacingRule()),
+                'fixture',
+            ))->generate(TerminalSequence::fromNames(['custom sql']), null, static fn (int $count): int => 0),
+        );
         $generator = new SqlGenerator($grammar, Factory::create(), $lexer);
-
         self::assertSame('custom sql', $generator->generate($plan));
     }
 
     public function testGenerateUsesExplicitRulesAndSuppliedParserSemantics(): void
     {
-        $grammar = new Grammar('other', [
-            'selected' => new ProductionRule('selected', [new Production([new Terminal('RAW')])]),
-        ]);
+        $grammar = new Grammar('other', ['selected' => new ProductionRule('selected', [new Production([new Terminal('RAW')])])]);
         $plan = GenerationPlan::fromRule('selected')->requiringNonEmpty();
         $lexer = $this->createMock(LexicalGrammar::class);
-        $lexer->expects(self::once())->method('resolveSequence')->with(self::callback(static fn (TerminalSequence $sequence): bool => $sequence->names() === ['NORMALIZED', 'RAW']), $plan)->willReturn(CoverageFixture::output('normalized'));
+        $lexer->expects(self::once())->method('resolveSequence')->with(self::callback(static fn (TerminalSequence $sequence): bool => $sequence->names() === ['NORMALIZED', 'RAW']), $plan)->willReturn(
+            (new ReverseLexemeGenerator(
+                new FixedLexemeGenerator('normalized', 'fixture', 'fixture-literal'),
+                new CandidateResolver(new CombinedSpacingRule()),
+                'fixture',
+            ))->generate(TerminalSequence::fromNames(['normalized']), null, static fn (int $count): int => 0),
+        );
         $rule = $this->createMock(RewriteRule::class);
-        $rule->method('rewrite')->willReturnCallback(static fn (TerminalSequence $sequence): TerminalSequence =>
-            $sequence->replace(0, 0, [$sequence->inserted('NORMALIZED', $sequence->terminals[0], 'test.rule')], 'test.rule'));
+        $rule->method('rewrite')->willReturnCallback(
+            static fn (TerminalSequence $sequence): TerminalSequence => $sequence->replace(0, 0, [$sequence->inserted('NORMALIZED', $sequence->terminals[0], 'test.rule')], 'test.rule'),
+        );
         $generator = new SqlGenerator($grammar, Factory::create(), $lexer, new TokenRewriter($rule));
-
         self::assertSame('normalized', $generator->generate($plan));
     }
 
     public function testGenerateUsesTheSuppliedVersionSpecificRuleResolver(): void
     {
-        $grammar = new Grammar('other', [
-            'old_rule' => new ProductionRule('old_rule', [new Production([new Terminal('TOKEN')])]),
-        ]);
+        $grammar = new Grammar('other', ['old_rule' => new ProductionRule('old_rule', [new Production([new Terminal('TOKEN')])])]);
         $lexer = $this->createMock(LexicalGrammar::class);
-        $lexer->expects(self::once())->method('resolveSequence')->with(self::callback(static fn (TerminalSequence $sequence): bool => $sequence->names() === ['TOKEN']))->willReturn(CoverageFixture::output('token'));
+        $lexer->expects(self::once())->method('resolveSequence')->with(self::callback(static fn (TerminalSequence $sequence): bool => $sequence->names() === ['TOKEN']))->willReturn(
+            (new ReverseLexemeGenerator(
+                new FixedLexemeGenerator('token', 'fixture', 'fixture-literal'),
+                new CandidateResolver(new CombinedSpacingRule()),
+                'fixture',
+            ))->generate(TerminalSequence::fromNames(['token']), null, static fn (int $count): int => 0),
+        );
         $generator = new SqlGenerator(
             $grammar,
             Factory::create(),
@@ -245,7 +471,6 @@ final class SqlGeneratorTest extends TestCase
             null,
             static fn (?string $rule): string => $rule === 'new_rule' ? 'old_rule' : 'missing',
         );
-
         self::assertSame('token', $generator->generate(GenerationPlan::fromRule('new_rule')));
     }
 
@@ -256,7 +481,6 @@ final class SqlGeneratorTest extends TestCase
         $lexer->expects(self::once())->method('generate')->with($plan)->willReturn('name');
         $lexer->expects(self::never())->method('resolveSequence');
         $generator = new SqlGenerator(new Grammar('missing', []), Factory::create(), $lexer);
-
         self::assertSame('name', $generator->generate($plan));
     }
 
@@ -268,7 +492,6 @@ final class SqlGeneratorTest extends TestCase
         $lexer->expects(self::once())->method('resolveSequence')->willThrowException($failure);
         $generator = new SqlGenerator($grammar, Factory::create(), $lexer);
         $this->expectExceptionObject($failure);
-
         $generator->generate(GenerationPlan::all());
     }
 
@@ -276,9 +499,14 @@ final class SqlGeneratorTest extends TestCase
     {
         $grammar = new Grammar('stmt', ['stmt' => new ProductionRule('stmt', [new Production([])])]);
         $lexer = $this->createMock(LexicalGrammar::class);
-        $lexer->expects(self::once())->method('resolveSequence')->willReturn(CoverageFixture::output(''));
+        $lexer->expects(self::once())->method('resolveSequence')->willReturn(
+            (new ReverseLexemeGenerator(
+                new FixedLexemeGenerator('', 'fixture', 'fixture-literal'),
+                new CandidateResolver(new CombinedSpacingRule()),
+                'fixture',
+            ))->generate(TerminalSequence::fromNames(['']), null, static fn (int $count): int => 0),
+        );
         $generator = new SqlGenerator($grammar, Factory::create(), $lexer);
-
         self::assertSame('', $generator->generate(GenerationPlan::all()));
     }
 
@@ -287,11 +515,16 @@ final class SqlGeneratorTest extends TestCase
         $grammar = new Grammar('stmt', ['stmt' => new ProductionRule('stmt', [new Production([new Terminal('T')])])]);
         $lexer = $this->createMock(LexicalGrammar::class);
         $lexer->method('version')->willReturn('custom-1');
-        $lexer->expects(self::once())->method('resolveSequence')->willReturn(CoverageFixture::output(''));
+        $lexer->expects(self::once())->method('resolveSequence')->willReturn(
+            (new ReverseLexemeGenerator(
+                new FixedLexemeGenerator('', 'fixture', 'fixture-literal'),
+                new CandidateResolver(new CombinedSpacingRule()),
+                'fixture',
+            ))->generate(TerminalSequence::fromNames(['']), null, static fn (int $count): int => 0),
+        );
         $generator = new SqlGenerator($grammar, Factory::create(), $lexer);
         $this->expectException(GenerationException::class);
         $this->expectExceptionMessage('custom-1 generation plan requires non-empty output.');
-
         $generator->generate(GenerationPlan::all()->requiringNonEmpty());
     }
 
@@ -299,7 +532,13 @@ final class SqlGeneratorTest extends TestCase
     {
         $grammar = new Grammar('stmt', ['stmt' => new ProductionRule('stmt', [new Production([new Terminal('TOKEN')])])]);
         $lexer = $this->createMock(LexicalGrammar::class);
-        $lexer->method('resolveSequence')->willReturn(CoverageFixture::output('token'));
+        $lexer->method('resolveSequence')->willReturn(
+            (new ReverseLexemeGenerator(
+                new FixedLexemeGenerator('token', 'fixture', 'fixture-literal'),
+                new CandidateResolver(new CombinedSpacingRule()),
+                'fixture',
+            ))->generate(TerminalSequence::fromNames(['token']), null, static fn (int $count): int => 0),
+        );
         $lexer->method('generate')->willReturn('name');
         $generator = new SqlGenerator($grammar, Factory::create(), $lexer);
         self::assertSame('token', $generator->generate(GenerationPlan::all()));
@@ -310,12 +549,21 @@ final class SqlGeneratorTest extends TestCase
 
     public function testGenerateReportsOnlyTheLatestRewrittenDerivation(): void
     {
-        $grammar = new Grammar('first', [
-            'first' => new ProductionRule('first', [new Production([new Terminal('A')])]),
-            'second' => new ProductionRule('second', [new Production([new Terminal('B')])]),
-        ]);
+        $grammar = new Grammar(
+            'first',
+            [
+                'first' => new ProductionRule('first', [new Production([new Terminal('A')])]),
+                'second' => new ProductionRule('second', [new Production([new Terminal('B')])]),
+            ],
+        );
         $lexer = $this->createMock(LexicalGrammar::class);
-        $lexer->method('resolveSequence')->willReturn(CoverageFixture::output('output'));
+        $lexer->method('resolveSequence')->willReturn(
+            (new ReverseLexemeGenerator(
+                new FixedLexemeGenerator('output', 'fixture', 'fixture-literal'),
+                new CandidateResolver(new CombinedSpacingRule()),
+                'fixture',
+            ))->generate(TerminalSequence::fromNames(['output']), null, static fn (int $count): int => 0),
+        );
         $rule = $this->createMock(RewriteRule::class);
         $rule->method('rewrite')->willReturnCallback(static fn (TerminalSequence $sequence): TerminalSequence => $sequence->replace(0, 0, [], 'observed'));
         $generator = new SqlGenerator($grammar, Factory::create(), $lexer, new TokenRewriter($rule));
@@ -331,9 +579,50 @@ final class SqlGeneratorTest extends TestCase
     public function testPlannerBindsTheSameGrammarEntryAndFreezesEveryChoice(): void
     {
         $lexical = $this->createMock(LexicalGrammar::class);
-        $lexical->method('resolveSequence')->willReturnCallback(CoverageFixture::resolve(...));
-        $generator = new SqlGenerator(CoverageFixture::syntaxGrammar(), Factory::create(), $lexical);
-        $plan = GenerationPlan::fromBytes('', $generator->planner());
+        $literalDomain = new CharacterDomain(array_map(chr(...), range(0, 255)), 0, 255);
+        $lexemePipeline = new ReverseLexemeGenerator(
+            new ChoiceLexemeGenerator(
+                new ValueLexemeGenerator('SELECT', $literalDomain, ['SELECT'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('DELETE', $literalDomain, ['DELETE'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('FROM', $literalDomain, ['FROM'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('missing', $literalDomain, ['missing'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('1', $literalDomain, ['1'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('+', $literalDomain, ['+'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('AS', $literalDomain, ['AS'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('name', $literalDomain, ['name'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('CHANGED', $literalDomain, ['CHANGED'], 'fixture', 'fixture-literal'),
+            ),
+            new CandidateResolver(new CombinedSpacingRule()),
+            'fixture',
+        );
+        $lexical->method('resolveSequence')->willReturnCallback(
+            static fn (TerminalSequence $sequence, ?GenerationPlan $plan, Closure $choose) => $lexemePipeline->generate($sequence, $plan, $choose),
+        );
+        $generator = new SqlGenerator(
+            (new Grammar(
+                'stmt',
+                [
+                    'stmt' => new ProductionRule(
+                        'stmt',
+                        [
+                            new Production([new Terminal('SELECT'), new NonTerminal('expr'), new NonTerminal('tail')]),
+                            new Production([new Terminal('DELETE'), new Terminal('FROM'), new Terminal('missing')]),
+                        ],
+                    ),
+                    'expr' => new ProductionRule(
+                        'expr',
+                        [
+                            new Production([new Terminal('1')]),
+                            new Production([new NonTerminal('expr'), new Terminal('+'), new NonTerminal('expr')]),
+                        ],
+                    ),
+                    'tail' => new ProductionRule('tail', [new Production([]), new Production([new Terminal('AS'), new Terminal('name')])]),
+                ],
+            ))->identified(),
+            Factory::create(),
+            $lexical,
+        );
+        $plan = (new BytePlanCompiler())->compile('', $generator->planner());
         self::assertSame('stmt', $generator->planner()->root($plan));
         self::assertSame($generator->generate($plan), $generator->generate($plan));
     }
@@ -341,8 +630,49 @@ final class SqlGeneratorTest extends TestCase
     public function testRealizeRetainsTheActualTerminalAndLexicalTrace(): void
     {
         $lexical = $this->createMock(LexicalGrammar::class);
-        $lexical->method('resolveSequence')->willReturnCallback(CoverageFixture::resolve(...));
-        $generator = new SqlGenerator(CoverageFixture::syntaxGrammar(), Factory::create(), $lexical);
+        $literalDomain = new CharacterDomain(array_map(chr(...), range(0, 255)), 0, 255);
+        $lexemePipeline = new ReverseLexemeGenerator(
+            new ChoiceLexemeGenerator(
+                new ValueLexemeGenerator('SELECT', $literalDomain, ['SELECT'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('DELETE', $literalDomain, ['DELETE'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('FROM', $literalDomain, ['FROM'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('missing', $literalDomain, ['missing'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('1', $literalDomain, ['1'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('+', $literalDomain, ['+'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('AS', $literalDomain, ['AS'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('name', $literalDomain, ['name'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('CHANGED', $literalDomain, ['CHANGED'], 'fixture', 'fixture-literal'),
+            ),
+            new CandidateResolver(new CombinedSpacingRule()),
+            'fixture',
+        );
+        $lexical->method('resolveSequence')->willReturnCallback(
+            static fn (TerminalSequence $sequence, ?GenerationPlan $plan, Closure $choose) => $lexemePipeline->generate($sequence, $plan, $choose),
+        );
+        $generator = new SqlGenerator(
+            (new Grammar(
+                'stmt',
+                [
+                    'stmt' => new ProductionRule(
+                        'stmt',
+                        [
+                            new Production([new Terminal('SELECT'), new NonTerminal('expr'), new NonTerminal('tail')]),
+                            new Production([new Terminal('DELETE'), new Terminal('FROM'), new Terminal('missing')]),
+                        ],
+                    ),
+                    'expr' => new ProductionRule(
+                        'expr',
+                        [
+                            new Production([new Terminal('1')]),
+                            new Production([new NonTerminal('expr'), new Terminal('+'), new NonTerminal('expr')]),
+                        ],
+                    ),
+                    'tail' => new ProductionRule('tail', [new Production([]), new Production([new Terminal('AS'), new Terminal('name')])]),
+                ],
+            ))->identified(),
+            Factory::create(),
+            $lexical,
+        );
         self::assertSame('DELETE FROM missing', $generator->realize('stmt', GenerationPlan::all()->withMaxDepth(1)->withStepBudget()));
         self::assertNotNull($generator->lastSequence);
         self::assertSame(['DELETE', 'FROM', 'missing'], $generator->lastSequence->names());
