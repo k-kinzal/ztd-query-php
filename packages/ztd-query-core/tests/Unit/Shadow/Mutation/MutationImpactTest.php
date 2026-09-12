@@ -8,20 +8,22 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Rewrite\AffectedRowsMode;
-use ZtdQuery\Schema\CandidateKeyConflict;
-use ZtdQuery\Schema\CandidateKeySet;
+use ZtdQuery\Schema\Key\CandidateKeyConflict;
+use ZtdQuery\Schema\Key\CandidateKeySet;
 use ZtdQuery\Schema\TableDefinition;
-use ZtdQuery\Shadow\Mutation\DeleteMutation;
-use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\Mutation\MutationImpact;
 use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
-use ZtdQuery\Shadow\Mutation\ReplaceMutation;
-use ZtdQuery\Shadow\Mutation\SynchronizeMutation;
-use ZtdQuery\Shadow\Mutation\UpsertExpression;
+use ZtdQuery\Shadow\Mutation\Row\DeleteMutation;
+use ZtdQuery\Shadow\Mutation\Row\InsertMutation;
+use ZtdQuery\Shadow\Mutation\Row\ReplaceMutation;
+use ZtdQuery\Shadow\Mutation\Row\UpdateMutation;
+use ZtdQuery\Shadow\Mutation\Table\SynchronizeMutation;
+use ZtdQuery\Shadow\Mutation\Upsert\UpsertOperator;
 use ZtdQuery\Shadow\Mutation\UpsertColumnSource;
+use ZtdQuery\Shadow\Mutation\UpsertExpression;
 use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
 use ZtdQuery\Shadow\Mutation\UpsertMutation;
-use ZtdQuery\Shadow\Mutation\UpdateMutation;
+use ZtdQuery\Shadow\Mutation\UpsertUpdate;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenStream;
@@ -41,6 +43,19 @@ use ZtdQuery\Sql\SqlTokenStream;
 #[UsesClass(ShadowStore::class)]
 #[UsesClass(SqlToken::class)]
 #[UsesClass(SqlTokenStream::class)]
+#[UsesClass(\ZtdQuery\Schema\Key\CandidateKeyMatch::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\ConflictSearch::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\RowConstraints::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertColumn::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertComparison::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertNumber::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertTruth::class)]
+#[UsesClass(\ZtdQuery\Shadow\Row\RowMatch::class)]
+#[UsesClass(\ZtdQuery\Shadow\Row\RowMultiset::class)]
+#[UsesClass(UpsertUpdate::class)]
+#[UsesClass(UpsertOperator::class)]
+#[UsesClass(\ZtdQuery\Schema\RowSet::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertLiteral::class)]
 final class MutationImpactTest extends TestCase
 {
     public function testInsertImpactContainsOnlyRowsActuallyAdded(): void
@@ -209,5 +224,26 @@ final class MutationImpactTest extends TestCase
 
         self::assertSame(0, $impact->affectedRowCount(AffectedRowsMode::Matched));
         self::assertSame([], $impact->returningRows());
+    }
+
+    public function testAffectedRowCountIsNothingWhereTheStatementReportsNone(): void
+    {
+        $impact = new MutationImpact(new InsertMutation('users'), [], [['id' => 1]], [['id' => 1]]);
+
+        self::assertSame(0, $impact->affectedRowCount(AffectedRowsMode::None));
+    }
+
+    public function testReturningRowsAnswersTheRowsAStatementWouldReadBack(): void
+    {
+        $impact = new MutationImpact(new InsertMutation('users'), [], [['id' => 1]], [['id' => 1]]);
+
+        self::assertSame([['id' => 1]], $impact->returningRows());
+    }
+
+    public function testIsInsertLikeIsFalseForAStatementThatOnlyRemovesRows(): void
+    {
+        $impact = new MutationImpact(new DeleteMutation('users', ['id']), [['id' => 1]], [['id' => 1]], []);
+
+        self::assertFalse($impact->isInsertLike());
     }
 }

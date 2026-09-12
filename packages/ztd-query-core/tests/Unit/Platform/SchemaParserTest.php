@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Platform;
 
+use Override;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use Tests\Contract\SchemaParserContractTest;
 use Tests\Fake\FakeSchemaParser;
@@ -12,12 +13,12 @@ use ZtdQuery\Platform\SchemaParser;
 #[CoversNothing]
 final class SchemaParserTest extends SchemaParserContractTest
 {
-    protected function createParser(): SchemaParser
+    public function createParser(): SchemaParser
     {
         return new FakeSchemaParser();
     }
 
-    protected function validCreateTableSql(): string
+    public function validCreateTableSql(): string
     {
         return 'CREATE TABLE users ('
             . 'id INTEGER NOT NULL PRIMARY KEY, '
@@ -28,26 +29,31 @@ final class SchemaParserTest extends SchemaParserContractTest
             . ')';
     }
 
-    protected function nonCreateTableSql(): string
+    public function nonCreateTableSql(): string
     {
         return 'SELECT * FROM users';
     }
 
     /**
-     * @return array<int, string>
+     * @return list<string>
      */
-    #[\Override]
-    protected function expectedColumns(): array
+    #[Override]
+    public function expectedColumns(): array
     {
         return ['id', 'name', 'email', 'age'];
     }
 
     /**
-     * @return array<int, string>
+     * @return list<string>
      */
-    #[\Override]
-    protected function expectedNotNullColumns(): array
+    #[Override]
+    public function expectedNotNullColumns(): array
     {
         return ['id', 'name', 'email'];
+    }
+
+    public function testParseAnswersNothingForAStatementThatCreatesNoTable(): void
+    {
+        self::assertNull($this->createParser()->parse('SELECT 1'));
     }
 }

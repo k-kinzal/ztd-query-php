@@ -5,16 +5,39 @@ declare(strict_types=1);
 namespace ZtdQuery\Shadow;
 
 use ZtdQuery\Exception\MissingPrimaryKeyException;
+use ZtdQuery\Schema\RowSet;
+use ZtdQuery\Schema\TableDefinition;
+use ZtdQuery\Shadow\Row\RowMatch;
 
 /**
  * Holds in-memory shadow rows for tables.
+ *
+ * @phpstan-import-type Row from TableDefinition
+ *
+ * @visibility public
+ *
+ * @example Snapshot and restore fixture rows
+ *     $store = new \ZtdQuery\Shadow\ShadowStore();
+ *     $store->set('users', [['id' => 1, 'name' => 'Alice']]);
+ *     $snapshot = $store->snapshot();
+ *     $store->update('users', [['id' => 1, 'name' => 'Bob']], ['id']);
+ *     $store->get('users') // => [['id' => 1, 'name' => 'Bob']]
+ *     $store->restore($snapshot);
+ *     $store->get('users') // => [['id' => 1, 'name' => 'Alice']]
  */
 class ShadowStore
 {
     /**
+     * @param RowMatch $match Decides when a stored row is the row a caller means
+     */
+    public function __construct(private readonly RowMatch $match = new RowMatch())
+    {
+    }
+
+    /**
      * Shadow rows keyed by table name.
      *
-     * @var array<string, array<int, array<string, mixed>>>
+     * @var array<string, RowSet>
      */
     private array $fixtures = [];
 
@@ -26,24 +49,26 @@ class ShadowStore
     private array $initializedTables = [];
 
     /**
-     * Replace all shadow rows for a table.
+     * Replaces every shadow row of a table.
      *
-     * @param array<int, array<string, mixed>> $rows
+     * The caller's row keys and values are retained unchanged.
+     *
+     * @param array<int, Row> $rows Rows the table now has, in order
      */
     public function set(string $tableName, array $rows): void
     {
-        $this->fixtures[$tableName] = $rows;
+        $this->fixtures[$tableName] = new RowSet($rows);
         $this->initializedTables[$tableName] = $tableName;
     }
 
     /**
      * Get all shadow rows for a table.
      *
-     * @return array<int, array<string, mixed>>
+     * @return array<int, Row>
      */
     public function get(string $tableName): array
     {
-        return $this->fixtures[$tableName] ?? [];
+        return ($this->fixtures[$tableName] ?? new RowSet())->rows;
     }
 
     /**
@@ -74,11 +99,16 @@ class ShadowStore
     /**
      * Get all stored shadow tables.
      *
-     * @return array<string, array<int, array<string, mixed>>>
+     * @return array<string, array<int, Row>>
      */
     public function getAll(): array
     {
-        return $this->fixtures;
+        $tables = [];
+        foreach ($this->fixtures as $name => $snapshot) {
+            $tables[$name] = $snapshot->rows;
+        }
+
+        return $tables;
     }
 
     /**
@@ -90,11 +120,21 @@ class ShadowStore
         $this->initializedTables = [];
     }
 
+    /**
+     * Snapshot.
+     *
+     * @return self
+     */
     public function snapshot(): self
     {
         return clone $this;
     }
 
+    /**
+     * Restore.
+     *
+     * @param self $snapshot
+     */
     public function restore(self $snapshot): void
     {
         $this->fixtures = $snapshot->fixtures;
@@ -107,7 +147,7 @@ class ShadowStore
     public function ensure(string $tableName): void
     {
         if (!array_key_exists($tableName, $this->fixtures)) {
-            $this->fixtures[$tableName] = [];
+            $this->fixtures[$tableName] = new RowSet();
         }
         $this->initializedTables[$tableName] = $tableName;
     }
@@ -123,18 +163,18 @@ class ShadowStore
     /**
      * Append rows to a table shadow set.
      *
-     * @param array<int, array<string, mixed>> $rows
+     * @param array<int, Row> $rows
      */
     public function insert(string $tableName, array $rows): void
     {
-        $current = $this->fixtures[$tableName] ?? [];
-        $this->fixtures[$tableName] = array_merge($current, $rows);
+        $current = $this->get($tableName);
+        $this->fixtures[$tableName] = new RowSet(array_merge($current, $rows));
     }
 
     /**
      * Delete rows from the shadow set.
      *
-     * @param array<int, array<string, mixed>> $deletedRows
+     * @param array<int, Row> $deletedRows
      * @param array<int, string> $primaryKeys
      */
     public function delete(string $tableName, array $deletedRows, array $primaryKeys = []): void
@@ -143,13 +183,13 @@ class ShadowStore
             return;
         }
 
-        $currentRows = $this->fixtures[$tableName];
+        $currentRows = $this->fixtures[$tableName]->rows;
         $remainingRows = [];
 
         foreach ($currentRows as $currentRow) {
             $isDeleted = false;
             foreach ($deletedRows as $deletedRow) {
-                if ($this->rowsMatch($currentRow, $deletedRow, $primaryKeys)) {
+                if ($this->match->identifies($currentRow, $deletedRow, $primaryKeys)) {
                     $isDeleted = true;
                     break;
                 }
@@ -160,14 +200,16 @@ class ShadowStore
             }
         }
 
-        $this->fixtures[$tableName] = $remainingRows;
+        $this->fixtures[$tableName] = new RowSet($remainingRows);
     }
 
     /**
      * Update rows matched by primary keys.
      *
-     * @param array<int, array<string, mixed>> $updatedRows
+     * @param array<int, Row> $updatedRows
      * @param array<int, string> $primaryKeys
+     *
+     * @throws MissingPrimaryKeyException When the table declares no key to identify a row by
      */
     public function update(string $tableName, array $updatedRows, array $primaryKeys): void
     {
@@ -179,21 +221,25 @@ class ShadowStore
             throw new MissingPrimaryKeyException($tableName);
         }
 
-        $currentRows = &$this->fixtures[$tableName];
+        $currentRows = $this->fixtures[$tableName]->rows;
 
         foreach ($updatedRows as $updatedRow) {
             foreach ($currentRows as &$currentRow) {
-                if ($this->rowsMatch($currentRow, $updatedRow, $primaryKeys)) {
+                if ($this->match->identifies($currentRow, $updatedRow, $primaryKeys)) {
                     $currentRow = $updatedRow;
                     break;
                 }
             }
         }
+        unset($currentRow);
+        $this->fixtures[$tableName] = new RowSet($currentRows);
     }
 
     /**
-     * @param list<array{row: array<string, mixed>, identity: array<string, mixed>}> $updates
+     * @param list<array{row: Row, identity: Row}> $updates
      * @param array<int, string> $primaryKeys
+     *
+     * @throws MissingPrimaryKeyException When the table declares no key to identify a row by
      */
     public function updateIdentified(string $tableName, array $updates, array $primaryKeys): void
     {
@@ -204,37 +250,16 @@ class ShadowStore
             throw new MissingPrimaryKeyException($tableName);
         }
 
-        $currentRows = &$this->fixtures[$tableName];
+        $currentRows = $this->fixtures[$tableName]->rows;
         foreach ($updates as $update) {
             foreach ($currentRows as &$currentRow) {
-                if ($this->rowsMatch($currentRow, $update['identity'], $primaryKeys)) {
+                if ($this->match->identifies($currentRow, $update['identity'], $primaryKeys)) {
                     $currentRow = $update['row'];
                     break;
                 }
             }
         }
-    }
-
-    /**
-     * @param array<string, mixed> $left
-     * @param array<string, mixed> $right
-     * @param array<int, string> $primaryKeys
-     */
-    private function rowsMatch(array $left, array $right, array $primaryKeys): bool
-    {
-        if ($primaryKeys === []) {
-            return $left === $right;
-        }
-
-        foreach ($primaryKeys as $key) {
-            if (!array_key_exists($key, $left) || !array_key_exists($key, $right)) {
-                return false;
-            }
-            if ($left[$key] !== $right[$key]) {
-                return false;
-            }
-        }
-
-        return true;
+        unset($currentRow);
+        $this->fixtures[$tableName] = new RowSet($currentRows);
     }
 }

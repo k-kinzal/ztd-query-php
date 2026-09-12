@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Tests\Fake\FakeStatement;
 use ZtdQuery\GenericExecuteResult;
 use ZtdQuery\Rewrite\QueryKind;
-use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(GenericExecuteResult::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Schema\RowSet::class)]
 final class GenericExecuteResultTest extends TestCase
 {
     public function testPassthroughResult(): void
@@ -201,5 +202,25 @@ final class GenericExecuteResultTest extends TestCase
         self::assertFalse($result->isPassthrough());
         self::assertTrue($result->isSuccess());
         self::assertSame(1, $result->rowCount());
+    }
+
+    public function testIsPassthroughIsTrueOnlyWhereTheOriginalStatementStillHasToRun(): void
+    {
+        self::assertTrue(GenericExecuteResult::passthrough()->isPassthrough());
+        self::assertFalse(GenericExecuteResult::fromBufferedRows([], QueryKind::READ)->isPassthrough());
+    }
+
+    public function testIsSuccessIsFalseOnlyForAResultThatFailed(): void
+    {
+        self::assertTrue(GenericExecuteResult::fromBufferedRows([], QueryKind::READ)->isSuccess());
+        self::assertFalse(GenericExecuteResult::failure(QueryKind::READ)->isSuccess());
+    }
+
+    public function testKindAnswersWhatWasRun(): void
+    {
+        self::assertSame(
+            QueryKind::DDL_SIMULATED,
+            GenericExecuteResult::fromBufferedRows([], QueryKind::DDL_SIMULATED)->kind(),
+        );
     }
 }

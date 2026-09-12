@@ -6,6 +6,8 @@ namespace ZtdQuery;
 
 use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Rewrite\QueryKind;
+use ZtdQuery\Schema\RowSet;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * Generic implementation of ExecuteResult.
@@ -15,6 +17,8 @@ use ZtdQuery\Rewrite\QueryKind;
  * - Rewritten SELECT: wraps a StatementInterface for fetching
  * - Simulated WRITE: buffers rows and provides iteration
  * - Failure: represents execution failure
+ *
+ * @phpstan-import-type Row from TableDefinition
  */
 final class GenericExecuteResult implements ExecuteResult
 {
@@ -26,9 +30,8 @@ final class GenericExecuteResult implements ExecuteResult
     /**
      * Buffered rows for simulated writes.
      *
-     * @var array<int, array<string, mixed>>|null
      */
-    private ?array $bufferedRows;
+    private ?RowSet $bufferedRows;
 
     /**
      * Current index into buffered rows.
@@ -43,9 +46,14 @@ final class GenericExecuteResult implements ExecuteResult
     private bool $resultSet;
 
     /**
-     * @param array<int, array<string, mixed>>|null $bufferedRows
+     * Binds a result to everything it will answer from.
+     *
+     * Every way of building one goes through a named constructor, because what a
+     * result is depends on which of them was used.
+     *
+     * @param list<Row>|null $bufferedRows
      */
-    private function __construct(
+    public function __construct(
         bool $passthrough,
         bool $success,
         QueryKind $kind,
@@ -58,7 +66,7 @@ final class GenericExecuteResult implements ExecuteResult
         $this->success = $success;
         $this->kind = $kind;
         $this->rewrittenStatement = $rewrittenStatement;
-        $this->bufferedRows = $bufferedRows;
+        $this->bufferedRows = $bufferedRows === null ? null : new RowSet($bufferedRows);
         $this->rowCountOverride = $rowCountOverride;
         $this->resultSet = $resultSet;
     }
@@ -103,7 +111,7 @@ final class GenericExecuteResult implements ExecuteResult
     /**
      * Create a result with buffered rows (for simulated WRITE queries).
      *
-     * @param array<int, array<string, mixed>> $rows
+     * @param list<Row> $rows
      */
     public static function fromBufferedRows(
         array $rows,
@@ -125,7 +133,7 @@ final class GenericExecuteResult implements ExecuteResult
     /**
      * Create a result with both a statement and buffered rows.
      *
-     * @param array<int, array<string, mixed>> $rows
+     * @param list<Row> $rows
      */
     public static function fromStatementAndRows(
         StatementInterface $statement,
@@ -172,10 +180,10 @@ final class GenericExecuteResult implements ExecuteResult
     public function fetch(): array|false
     {
         if ($this->bufferedRows !== null) {
-            if ($this->bufferIndex >= count($this->bufferedRows)) {
+            if ($this->bufferIndex >= count($this->bufferedRows->rows)) {
                 return false;
             }
-            $row = $this->bufferedRows[$this->bufferIndex];
+            $row = $this->bufferedRows->rows[$this->bufferIndex];
             $this->bufferIndex++;
 
             return $row;
@@ -186,7 +194,7 @@ final class GenericExecuteResult implements ExecuteResult
             if ($rows === []) {
                 return false;
             }
-            $this->bufferedRows = $rows;
+            $this->bufferedRows = new RowSet($rows);
             $this->bufferIndex = 1;
 
             return $rows[0];
@@ -201,8 +209,8 @@ final class GenericExecuteResult implements ExecuteResult
     public function fetchAll(): array
     {
         if ($this->bufferedRows !== null) {
-            $rows = array_slice($this->bufferedRows, $this->bufferIndex);
-            $this->bufferIndex = count($this->bufferedRows);
+            $rows = array_slice($this->bufferedRows->rows, $this->bufferIndex);
+            $this->bufferIndex = count($this->bufferedRows->rows);
 
             return $rows;
         }

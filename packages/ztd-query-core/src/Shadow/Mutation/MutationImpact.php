@@ -5,25 +5,53 @@ declare(strict_types=1);
 namespace ZtdQuery\Shadow\Mutation;
 
 use ZtdQuery\Rewrite\AffectedRowsMode;
+use ZtdQuery\Schema\RowSet;
+use ZtdQuery\Schema\TableDefinition;
+use ZtdQuery\Shadow\Mutation\Row\DeleteMutation;
+use ZtdQuery\Shadow\Mutation\Row\InsertMutation;
+use ZtdQuery\Shadow\Mutation\Row\ReplaceMutation;
+use ZtdQuery\Shadow\Mutation\Row\UpdateMutation;
+use ZtdQuery\Shadow\Mutation\Table\SynchronizeMutation;
+use ZtdQuery\Shadow\Row\RowMultiset;
 
 /**
  * Derives observable execution metadata from a shadow-state transition.
+ *
+ * @phpstan-import-type Row from TableDefinition
  */
 final class MutationImpact
 {
+    private readonly RowSet $before;
+    private readonly RowSet $input;
+    private readonly RowSet $after;
+
     /**
-     * @param array<int, array<string, mixed>> $before
-     * @param array<int, array<string, mixed>> $input
-     * @param array<int, array<string, mixed>> $after
+     * @param ShadowMutation $mutation The statement whose effect this reports
+     * @param array<int, Row> $before The table as it stood
+     * @param list<Row> $input The rows the statement was given
+     * @param array<int, Row> $after The table as it stands now
+     * @param RowMultiset $rows Accounts for rows that repeat
+     * @param MutationRowIdentity $identity Takes the carried names back off a row
      */
     public function __construct(
         private readonly ShadowMutation $mutation,
-        private readonly array $before,
-        private readonly array $input,
-        private readonly array $after,
+        array $before,
+        array $input,
+        array $after,
+        private readonly RowMultiset $rows = new RowMultiset(),
+        private readonly MutationRowIdentity $identity = new MutationRowIdentity(),
     ) {
+        $this->before = new RowSet($before);
+        $this->input = new RowSet($input);
+        $this->after = new RowSet($after);
     }
 
+    /**
+     * Affected row count.
+     *
+     * @param AffectedRowsMode $mode
+     * @return int
+     */
     public function affectedRowCount(AffectedRowsMode $mode): int
     {
         if ($mode === AffectedRowsMode::None) {
@@ -33,31 +61,31 @@ final class MutationImpact
             return count($this->mutation->resultRows());
         }
         if ($mode === AffectedRowsMode::Matched && $this->mutation instanceof UpdateMutation) {
-            return count($this->input);
+            return count($this->input->rows);
         }
         if ($mode === AffectedRowsMode::Changed && $this->mutation instanceof SynchronizeMutation) {
-            return $this->mutation->affectedRowCount($this->before, $this->after);
+            return $this->mutation->affectedRowCount($this->before->rows, $this->after->rows);
         }
 
         return max(
-            count($this->difference($this->before, $this->after)),
-            count($this->difference($this->after, $this->before)),
+            count($this->rows->difference($this->before->rows, $this->after->rows)),
+            count($this->rows->difference($this->after->rows, $this->before->rows)),
         );
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return list<Row>
      */
     public function returningRows(): array
     {
         if ($this->mutation instanceof UpsertMutation) {
-            return $this->clean($this->mutation->resultRows());
+            return $this->identity->stripAll($this->mutation->resultRows());
         }
         if ($this->mutation instanceof UpdateMutation || $this->mutation instanceof DeleteMutation) {
-            return $this->clean($this->input);
+            return $this->identity->stripAll(array_values($this->input->rows));
         }
 
-        $added = $this->difference($this->after, $this->before);
+        $added = $this->rows->difference($this->after->rows, $this->before->rows);
         if ($added !== []) {
             return $added;
         }
@@ -65,66 +93,16 @@ final class MutationImpact
         return [];
     }
 
+    /**
+     * Reports whether insert like.
+     *
+     * @return bool
+     */
     public function isInsertLike(): bool
     {
         return $this->mutation instanceof InsertMutation
             || $this->mutation instanceof ReplaceMutation
             || $this->mutation instanceof SynchronizeMutation
             || $this->mutation instanceof UpsertMutation;
-    }
-
-    /**
-     * @param array<int, array<string, mixed>> $left
-     * @param array<int, array<string, mixed>> $right
-     * @return array<int, array<string, mixed>>
-     */
-    private function difference(array $left, array $right): array
-    {
-        $remaining = $right;
-        $difference = [];
-        foreach ($left as $row) {
-            $match = null;
-            foreach ($remaining as $index => $candidate) {
-                if ($this->rowsEqual($row, $candidate)) {
-                    $match = $index;
-                }
-            }
-            if ($match === null) {
-                $difference[] = $row;
-                continue;
-            }
-            unset($remaining[$match]);
-        }
-
-        return $difference;
-    }
-
-    /**
-     * @param array<string, mixed> $left
-     * @param array<string, mixed> $right
-     */
-    private function rowsEqual(array $left, array $right): bool
-    {
-        if (count($left) !== count($right)) {
-            return false;
-        }
-        foreach ($left as $column => $value) {
-            if (!array_key_exists($column, $right) || $right[$column] !== $value) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     * @param array<int, array<string, mixed>> $rows
-     * @return array<int, array<string, mixed>>
-     */
-    private function clean(array $rows): array
-    {
-        $identity = new MutationRowIdentity();
-
-        return array_map($identity->strip(...), $rows);
     }
 }

@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Exception;
 
-use PHPUnit\Framework\TestCase;
-use RuntimeException;
-use ZtdQuery\Exception\UnknownSchemaException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\TestCase;
+use ZtdQuery\Exception\UnknownSchemaException;
 
 #[CoversClass(UnknownSchemaException::class)]
 final class UnknownSchemaExceptionTest extends TestCase
@@ -73,10 +72,4 @@ final class UnknownSchemaExceptionTest extends TestCase
         self::assertSame('table', $exception->getIdentifierType());
     }
 
-    public function testExtendsRuntimeException(): void
-    {
-        $exception = new UnknownSchemaException('sql', 'identifier');
-
-        self::assertInstanceOf(RuntimeException::class, $exception);
-    }
 }

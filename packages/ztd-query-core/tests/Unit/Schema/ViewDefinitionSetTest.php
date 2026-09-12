@@ -59,4 +59,49 @@ final class ViewDefinitionSetTest extends TestCase
             array_keys($definitions->orderedDefinitions()),
         );
     }
+
+    public function testRegisterMakesAViewOneOfTheSet(): void
+    {
+        $definitions = new ViewDefinitionSet();
+        $view = new ViewDefinition('query', []);
+
+        $definitions->register('summary', $view);
+
+        self::assertSame(['summary' => $view], $definitions->orderedDefinitions());
+    }
+
+    public function testRegisterUnderANameAlreadyThereTakesThePlaceOfIt(): void
+    {
+        $definitions = new ViewDefinitionSet();
+        $replacement = new ViewDefinition('second query', []);
+        $definitions->register('summary', new ViewDefinition('first query', []));
+        $definitions->register('summary', $replacement);
+
+        self::assertSame(['summary' => $replacement], $definitions->orderedDefinitions());
+    }
+
+    public function testHasAnswersForAViewTheSetKnows(): void
+    {
+        $definitions = new ViewDefinitionSet();
+        $definitions->register('summary', new ViewDefinition('query', []));
+
+        self::assertTrue($definitions->has('summary'));
+        self::assertFalse($definitions->has('other'));
+    }
+
+    public function testHasAnyViewsIsFalseUntilOneIsRegistered(): void
+    {
+        $definitions = new ViewDefinitionSet();
+
+        self::assertFalse($definitions->hasAnyViews());
+
+        $definitions->register('summary', new ViewDefinition('query', []));
+
+        self::assertTrue($definitions->hasAnyViews());
+    }
+
+    public function testOrderedDefinitionsIsEmptyForASetWithNoViews(): void
+    {
+        self::assertSame([], (new ViewDefinitionSet())->orderedDefinitions());
+    }
 }

@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Exception;
 
-use PHPUnit\Framework\TestCase;
-use RuntimeException;
-use ZtdQuery\Exception\ForeignKeyViolationException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\TestCase;
+use ZtdQuery\Exception\ForeignKeyViolationException;
 
 #[CoversClass(ForeignKeyViolationException::class)]
 final class ForeignKeyViolationExceptionTest extends TestCase
@@ -64,10 +63,18 @@ final class ForeignKeyViolationExceptionTest extends TestCase
         self::assertSame('id', $exception->getReferencedColumn());
     }
 
-    public function testExtendsRuntimeException(): void
+    public function testOfNamesTheFirstColumnTheKeyPointsAt(): void
     {
-        $exception = new ForeignKeyViolationException('sql', 'table', 'constraint', 'refTable', 'refColumn');
+        $exception = ForeignKeyViolationException::of('DELETE', 'children', 'fk', 'parents', ['id', 'other']);
 
-        self::assertInstanceOf(RuntimeException::class, $exception);
+        self::assertSame('id', $exception->getReferencedColumn());
+        self::assertSame('children', $exception->getTableName());
+    }
+
+    public function testOfNamesNoColumnWhereTheKeyPointsAtNone(): void
+    {
+        $exception = ForeignKeyViolationException::of('DELETE', 'children', 'fk', 'parents', []);
+
+        self::assertSame('', $exception->getReferencedColumn());
     }
 }

@@ -1,0 +1,126 @@
+name: Fuzz (ztd-query-core)
+
+on:
+  schedule:
+    - cron: '37 4 * * *'
+  workflow_dispatch:
+    inputs:
+      max_runs:
+        description: Maximum inputs evaluated by each fuzz target
+        required: true
+        default: '10000'
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  COMPOSER_NO_INTERACTION: '1'
+
+jobs:
+  fuzz:
+    name: Fuzz ${{ matrix.target.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - name: core-token-stream
+            script: fuzz/fuzz_token_stream.php
+            corpus: fuzz/corpus/token-stream
+            extensions: dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
+    defaults:
+      run:
+        working-directory: packages/ztd-query-core
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+        with:
+          php-version: '8.5'
+          extensions: ${{ matrix.target.extensions }}
+          coverage: none
+
+      - name: Select the PHP dependency lock
+        run: cp composer.lock.php-8.5 composer.lock
+
+      - name: Validate the Composer manifest and lock file
+        run: composer validate --strict --no-check-publish
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+        with:
+          working-directory: packages/ztd-query-core
+          dependency-versions: locked
+          composer-options: --prefer-dist
+          require-lock-file: true
+
+      - name: Check installed platform requirements
+        run: composer check-platform-reqs
+
+      - name: Restore the evolved corpus
+        id: corpus-cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: packages/ztd-query-core/${{ matrix.target.corpus }}
+          key: fuzz-${{ matrix.target.name }}-${{ runner.os }}-${{ hashFiles('packages/ztd-query-core/composer.lock.php-8.5') }}-${{ hashFiles('packages/ztd-query-core/fuzz/**') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            fuzz-${{ matrix.target.name }}-${{ runner.os }}-${{ hashFiles('packages/ztd-query-core/composer.lock.php-8.5') }}-${{ hashFiles('packages/ztd-query-core/fuzz/**') }}-
+            fuzz-${{ matrix.target.name }}-${{ runner.os }}-${{ hashFiles('packages/ztd-query-core/composer.lock.php-8.5') }}-
+            fuzz-${{ matrix.target.name }}-${{ runner.os }}-
+
+      - name: Run the fuzz target
+        env:
+          FUZZ_MAX_RUNS: ${{ inputs.max_runs || '10000' }}
+        run: |
+          set -euo pipefail
+
+          case "$FUZZ_MAX_RUNS" in
+            ''|*[!0-9]*)
+              echo 'max_runs must be a positive integer.' >&2
+              exit 2
+              ;;
+          esac
+          if [ "$FUZZ_MAX_RUNS" -lt 1 ]; then
+            echo 'max_runs must be a positive integer.' >&2
+            exit 2
+          fi
+
+          mkdir -p "${{ matrix.target.corpus }}"
+          vendor/bin/php-fuzzer fuzz \
+            "${{ matrix.target.script }}" \
+            "${{ matrix.target.corpus }}/" \
+            "--max-runs=$FUZZ_MAX_RUNS"
+
+      - name: Reject crash inputs
+        if: always()
+        run: |
+          shopt -s nullglob
+          crashes=(crash-*)
+          if [ "${#crashes[@]}" -ne 0 ]; then
+            echo 'The fuzz target produced crash inputs; download the crash artifact to reproduce.' >&2
+            exit 1
+          fi
+
+      - name: Save the evolved corpus
+        if: always()
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: packages/ztd-query-core/${{ matrix.target.corpus }}
+          key: ${{ steps.corpus-cache.outputs.cache-primary-key }}
+
+      - name: Upload crash inputs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: fuzz-crashes-${{ matrix.target.name }}
+          path: packages/ztd-query-core/crash-*
+          if-no-files-found: ignore
+          retention-days: 14

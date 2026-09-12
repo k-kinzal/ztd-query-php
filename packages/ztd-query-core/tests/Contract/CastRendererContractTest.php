@@ -6,7 +6,7 @@ namespace Tests\Contract;
 
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\CastRenderer;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 /**
@@ -16,7 +16,12 @@ use ZtdQuery\Schema\ColumnTypeFamily;
  */
 abstract class CastRendererContractTest extends TestCase
 {
-    abstract protected function createRenderer(): CastRenderer;
+    /**
+     * Answers the renderer this dialect casts with.
+     *
+     * @return CastRenderer The renderer under test
+     */
+    abstract public function createRenderer(): CastRenderer;
 
     /**
      * renderCast must return a non-empty string for every type family (P-CR-1).
@@ -26,7 +31,7 @@ abstract class CastRendererContractTest extends TestCase
         $renderer = $this->createRenderer();
 
         foreach (ColumnTypeFamily::cases() as $family) {
-            $type = new ColumnType($family, $this->nativeTypeFor($family));
+            $type = new ColumnDeclaration($family, $this->nativeTypeFor($family));
             $result = $renderer->renderCast("'test'", $type);
 
             self::assertNotEmpty(
@@ -44,7 +49,7 @@ abstract class CastRendererContractTest extends TestCase
         $renderer = $this->createRenderer();
 
         foreach (ColumnTypeFamily::cases() as $family) {
-            $type = new ColumnType($family, $this->nativeTypeFor($family));
+            $type = new ColumnDeclaration($family, $this->nativeTypeFor($family));
             $result = $renderer->renderNullCast($type);
 
             self::assertNotEmpty(
@@ -62,7 +67,7 @@ abstract class CastRendererContractTest extends TestCase
         $renderer = $this->createRenderer();
 
         foreach (ColumnTypeFamily::cases() as $family) {
-            $type = new ColumnType($family, $this->nativeTypeFor($family));
+            $type = new ColumnDeclaration($family, $this->nativeTypeFor($family));
             $result = $renderer->renderNullCast($type);
 
             self::assertStringContainsString(
@@ -81,7 +86,7 @@ abstract class CastRendererContractTest extends TestCase
         $renderer = $this->createRenderer();
 
         foreach (ColumnTypeFamily::cases() as $family) {
-            $type = new ColumnType($family, $this->nativeTypeFor($family));
+            $type = new ColumnDeclaration($family, $this->nativeTypeFor($family));
             $result = $renderer->renderNullCast($type);
 
             self::assertStringContainsString(
@@ -100,7 +105,7 @@ abstract class CastRendererContractTest extends TestCase
         $renderer = $this->createRenderer();
 
         foreach (ColumnTypeFamily::cases() as $family) {
-            $type = new ColumnType($family, $this->nativeTypeFor($family));
+            $type = new ColumnDeclaration($family, $this->nativeTypeFor($family));
 
             $castResult = $renderer->renderCast("'value'", $type);
             $nullResult = $renderer->renderNullCast($type);
@@ -122,7 +127,7 @@ abstract class CastRendererContractTest extends TestCase
     public function testRenderCastForIntegerProducesExactForm(): void
     {
         $renderer = $this->createRenderer();
-        $type = new ColumnType(ColumnTypeFamily::INTEGER, $this->nativeTypeFor(ColumnTypeFamily::INTEGER));
+        $type = new ColumnDeclaration(ColumnTypeFamily::INTEGER, $this->nativeTypeFor(ColumnTypeFamily::INTEGER));
 
         $result = $renderer->renderCast("'42'", $type);
 
@@ -139,7 +144,7 @@ abstract class CastRendererContractTest extends TestCase
     public function testRenderNullCastProducesExactForm(): void
     {
         $renderer = $this->createRenderer();
-        $type = new ColumnType(ColumnTypeFamily::INTEGER, $this->nativeTypeFor(ColumnTypeFamily::INTEGER));
+        $type = new ColumnDeclaration(ColumnTypeFamily::INTEGER, $this->nativeTypeFor(ColumnTypeFamily::INTEGER));
 
         $result = $renderer->renderNullCast($type);
 
@@ -156,7 +161,7 @@ abstract class CastRendererContractTest extends TestCase
     public function testRenderCastForStringIncludesStringType(): void
     {
         $renderer = $this->createRenderer();
-        $type = new ColumnType(ColumnTypeFamily::STRING, $this->nativeTypeFor(ColumnTypeFamily::STRING));
+        $type = new ColumnDeclaration(ColumnTypeFamily::STRING, $this->nativeTypeFor(ColumnTypeFamily::STRING));
 
         $result = $renderer->renderCast("'hello'", $type);
         $upper = strtoupper($result);
@@ -173,7 +178,7 @@ abstract class CastRendererContractTest extends TestCase
     public function testRenderCastIsDeterministic(): void
     {
         $renderer = $this->createRenderer();
-        $type = new ColumnType(ColumnTypeFamily::INTEGER, $this->nativeTypeFor(ColumnTypeFamily::INTEGER));
+        $type = new ColumnDeclaration(ColumnTypeFamily::INTEGER, $this->nativeTypeFor(ColumnTypeFamily::INTEGER));
 
         $result1 = $renderer->renderCast('42', $type);
         $result2 = $renderer->renderCast('42', $type);
@@ -190,7 +195,7 @@ abstract class CastRendererContractTest extends TestCase
      * Provide a representative native type string for a given family.
      * Subclasses may override this to provide platform-specific native types.
      */
-    protected function nativeTypeFor(ColumnTypeFamily $family): string
+    public function nativeTypeFor(ColumnTypeFamily $family): string
     {
         return match ($family) {
             ColumnTypeFamily::INTEGER => 'INTEGER',

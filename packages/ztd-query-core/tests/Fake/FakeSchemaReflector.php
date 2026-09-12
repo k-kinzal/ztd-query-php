@@ -24,16 +24,32 @@ final class FakeSchemaReflector implements SchemaReflector
         $this->schemas = $schemas;
     }
 
+    /**
+     * Adds table.
+     *
+     * @param string $tableName
+     * @param string $createSql
+     */
     public function addTable(string $tableName, string $createSql): void
     {
         $this->schemas[$tableName] = $createSql;
     }
 
+    /**
+     * Answers create statement.
+     *
+     * @param string $tableName
+     * @return ?string
+     */
     public function getCreateStatement(string $tableName): ?string
     {
         return $this->schemas[$tableName] ?? null;
     }
 
+    /**
+     * Reflect all.
+     *
+     */
     public function reflectAll(): array
     {
         return $this->schemas;

@@ -6,8 +6,9 @@ namespace Tests\Contract;
 
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Rewrite\SqlTransformer;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * Abstract contract test for SqlTransformer implementations.
@@ -18,15 +19,22 @@ use ZtdQuery\Schema\ColumnTypeFamily;
  * - P-TF-3: Table names appear as CTE names in transformed output.
  * - P-TF-4: Transform is deterministic.
  * - P-TF-5: Output is always non-empty.
+ *
+ * @phpstan-import-type Row from TableDefinition
  */
 abstract class TransformerContractTest extends TestCase
 {
-    abstract protected function createTransformer(): SqlTransformer;
+    /**
+     * Answers the transformer this dialect rewrites a query with.
+     *
+     * @return SqlTransformer The transformer under test
+     */
+    abstract public function createTransformer(): SqlTransformer;
 
     /**
      * A valid SELECT statement referencing the "users" table.
      */
-    abstract protected function selectSql(): string;
+    abstract public function selectSql(): string;
 
     /**
      * Empty table context must return the original SQL unchanged (P-TF-1).
@@ -114,9 +122,9 @@ abstract class TransformerContractTest extends TestCase
                 ],
                 'columns' => ['id', 'name', 'email'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, $this->nativeIntegerType()),
-                    'name' => new ColumnType(ColumnTypeFamily::STRING, $this->nativeStringType()),
-                    'email' => new ColumnType(ColumnTypeFamily::STRING, $this->nativeStringType()),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, $this->nativeIntegerType()),
+                    'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, $this->nativeStringType()),
+                    'email' => new ColumnDeclaration(ColumnTypeFamily::STRING, $this->nativeStringType()),
                 ],
             ],
         ];
@@ -165,9 +173,9 @@ abstract class TransformerContractTest extends TestCase
     /**
      * Build a single-row table context for the "users" table.
      *
-     * @return array<string, array{rows: array<int, array<string, mixed>>, columns: array<int, string>, columnTypes: array<string, ColumnType>}>
+     * @return array<string, array{rows: list<Row>, columns: array<int, string>, columnTypes: array<string, ColumnDeclaration>}>
      */
-    protected function singleRowTableContext(): array
+    public function singleRowTableContext(): array
     {
         return [
             'users' => [
@@ -176,9 +184,9 @@ abstract class TransformerContractTest extends TestCase
                 ],
                 'columns' => ['id', 'name', 'email'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, $this->nativeIntegerType()),
-                    'name' => new ColumnType(ColumnTypeFamily::STRING, $this->nativeStringType()),
-                    'email' => new ColumnType(ColumnTypeFamily::STRING, $this->nativeStringType()),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, $this->nativeIntegerType()),
+                    'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, $this->nativeStringType()),
+                    'email' => new ColumnDeclaration(ColumnTypeFamily::STRING, $this->nativeStringType()),
                 ],
             ],
         ];
@@ -187,18 +195,18 @@ abstract class TransformerContractTest extends TestCase
     /**
      * Build an empty-rows table context for the "users" table (columns known, no data).
      *
-     * @return array<string, array{rows: array<int, array<string, mixed>>, columns: array<int, string>, columnTypes: array<string, ColumnType>}>
+     * @return array<string, array{rows: list<Row>, columns: array<int, string>, columnTypes: array<string, ColumnDeclaration>}>
      */
-    protected function emptyRowsTableContext(): array
+    public function emptyRowsTableContext(): array
     {
         return [
             'users' => [
                 'rows' => [],
                 'columns' => ['id', 'name', 'email'],
                 'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, $this->nativeIntegerType()),
-                    'name' => new ColumnType(ColumnTypeFamily::STRING, $this->nativeStringType()),
-                    'email' => new ColumnType(ColumnTypeFamily::STRING, $this->nativeStringType()),
+                    'id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, $this->nativeIntegerType()),
+                    'name' => new ColumnDeclaration(ColumnTypeFamily::STRING, $this->nativeStringType()),
+                    'email' => new ColumnDeclaration(ColumnTypeFamily::STRING, $this->nativeStringType()),
                 ],
             ],
         ];
@@ -207,7 +215,7 @@ abstract class TransformerContractTest extends TestCase
     /**
      * Return the platform-specific native type for INTEGER.
      */
-    protected function nativeIntegerType(): string
+    public function nativeIntegerType(): string
     {
         return 'INTEGER';
     }
@@ -215,7 +223,7 @@ abstract class TransformerContractTest extends TestCase
     /**
      * Return the platform-specific native type for VARCHAR/STRING.
      */
-    protected function nativeStringType(): string
+    public function nativeStringType(): string
     {
         return 'VARCHAR(255)';
     }

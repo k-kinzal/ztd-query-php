@@ -6,6 +6,8 @@ namespace Tests\Contract;
 
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\SchemaParser;
+use ZtdQuery\Schema\ColumnDeclaration;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * Abstract contract test for SchemaParser implementations.
@@ -14,18 +16,23 @@ use ZtdQuery\Platform\SchemaParser;
  */
 abstract class SchemaParserContractTest extends TestCase
 {
-    abstract protected function createParser(): SchemaParser;
+    /**
+     * Answers the parser this dialect reads a declaration with.
+     *
+     * @return SchemaParser The parser under test
+     */
+    abstract public function createParser(): SchemaParser;
 
     /**
      * A valid CREATE TABLE statement in the platform's dialect.
      * Must define at least: columns, primary key, NOT NULL columns, column types, unique constraints.
      */
-    abstract protected function validCreateTableSql(): string;
+    abstract public function validCreateTableSql(): string;
 
     /**
      * A SQL statement that is NOT a CREATE TABLE (e.g. SELECT, INSERT).
      */
-    abstract protected function nonCreateTableSql(): string;
+    abstract public function nonCreateTableSql(): string;
 
     /**
      * Valid CREATE TABLE must return a non-null TableDefinition (P-SP-5).
@@ -213,9 +220,9 @@ abstract class SchemaParserContractTest extends TestCase
     /**
      * Return expected column names in order for the validCreateTableSql fixture.
      *
-     * @return array<int, string>
+     * @return list<string>
      */
-    protected function expectedColumns(): array
+    public function expectedColumns(): array
     {
         return ['id', 'name', 'email'];
     }
@@ -223,9 +230,9 @@ abstract class SchemaParserContractTest extends TestCase
     /**
      * Return expected primary key column names.
      *
-     * @return array<int, string>
+     * @return list<string>
      */
-    protected function expectedPrimaryKeys(): array
+    public function expectedPrimaryKeys(): array
     {
         return ['id'];
     }
@@ -233,9 +240,9 @@ abstract class SchemaParserContractTest extends TestCase
     /**
      * Return columns that must be NOT NULL.
      *
-     * @return array<int, string>
+     * @return list<string>
      */
-    protected function expectedNotNullColumns(): array
+    public function expectedNotNullColumns(): array
     {
         return ['id', 'name'];
     }
@@ -252,7 +259,7 @@ abstract class SchemaParserContractTest extends TestCase
     }
 
     /**
-     * Every key in typedColumns must exist in columns (structural invariant for ColumnType migration).
+     * Every key in typedColumns must exist in columns (structural invariant for ColumnDeclaration migration).
      */
     public function testTypedColumnsKeysSubsetOfColumns(): void
     {
