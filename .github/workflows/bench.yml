@@ -141,8 +141,8 @@ jobs:
 
           baseline_phpbench="baseline/$BENCH_PROJECT_DIR/vendor/bin/phpbench"
           candidate_phpbench="candidate/$BENCH_PROJECT_DIR/vendor/bin/phpbench"
-          baseline_version=$("$baseline_phpbench" --version)
-          candidate_version=$("$candidate_phpbench" --version)
+          baseline_version=$("$baseline_phpbench" --version 2>&1)
+          candidate_version=$("$candidate_phpbench" --version 2>&1)
 
           if [ "$baseline_version" != "$candidate_version" ]; then
             echo 'BENCH_COMPARISON_KIND=toolchain-changed' >> "$GITHUB_ENV"
@@ -240,7 +240,7 @@ jobs:
             if [ -x vendor/bin/phpbench ]; then
               vendor/bin/phpbench --version
             fi
-          } > build/phpbench/metadata.txt
+          } > build/phpbench/metadata.txt 2>&1
 
       - name: Publish the benchmark job summary
         if: always()
