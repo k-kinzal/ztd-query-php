@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>k-kinzal/sql-fixture — k-kinzal/ztd-query-php</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/314/k-kinzal/sql-fixture/">
+<meta name="description" content="Generate PHP-Faker based fixtures from SQL schemas">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="k-kinzal/ztd-query-php">
+<meta property="og:title" content="k-kinzal/sql-fixture — k-kinzal/ztd-query-php">
+<meta property="og:description" content="Generate PHP-Faker based fixtures from SQL schemas">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/314/k-kinzal/sql-fixture/">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/314/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="k-kinzal/ztd-query-php">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../">
+<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../index.html">k-kinzal/ztd-query-php</a></div><div class="sb-pkg"><a href="../../k-kinzal/sql-fixture/index.html">k-kinzal/sql-fixture</a></div><nav class="sb-block"><div class="sb-title">On this page</div><ul class="sb-list"><li data-diff="same"><a href="#layers">Architecture layers</a></li><li data-diff="same"><a href="#namespaces">Namespaces</a></li><li data-diff="same"><a href="#documents">Documents</a></li><li data-diff="same"><a href="#readme">README</a></li></ul></nav><nav class="sb-block"><div class="sb-title">Package</div><ul class="sb-list"><li data-diff="modified"><a href="../../k-kinzal/sql-fixture/all-items.html">All items</a></li><li data-diff="modified"><a href="../../k-kinzal/sql-fixture/index.html#documents">Documents</a></li></ul><div class="sb-kind" data-diff="modified">Layers</div><ul class="sb-list"><li data-diff="modified"><a href="../../k-kinzal/sql-fixture/layer.sql-fixture--Generation.html">sql-fixture: Generation</a></li><li data-diff="modified"><a href="../../k-kinzal/sql-fixture/layer.sql-fixture--Hydration.html">sql-fixture: Hydration</a></li><li data-diff="modified"><a href="../../k-kinzal/sql-fixture/layer.sql-fixture--MySql.html">sql-fixture: MySql</a></li><li data-diff="modified"><a href="../../k-kinzal/sql-fixture/layer.sql-fixture--Plan.html">sql-fixture: Plan</a></li><li data-diff="modified"><a href="../../k-kinzal/sql-fixture/layer.sql-fixture--PostgreSql.html">sql-fixture: PostgreSql</a></li><li data-diff="modified"><a href="../../k-kinzal/sql-fixture/layer.sql-fixture--Provider.html">sql-fixture: Provider</a></li><li data-diff="modified"><a href="../../k-kinzal/sql-fixture/layer.sql-fixture--Schema.html">sql-fixture: Schema</a></li><li data-diff="modified"><a href="../../k-kinzal/sql-fixture/layer.sql-fixture--Sqlite.html">sql-fixture: Sqlite</a></li><li data-diff="modified"><a href="../../k-kinzal/sql-fixture/layer.sql-fixture--TypeMapping.html">sql-fixture: TypeMapping</a></li></ul></nav><nav class="sb-block"><div class="sb-title">Namespaces</div><ul class="sb-list"><li data-diff="modified"><a href="../../k-kinzal/sql-fixture/SqlFixture/index.html" title="SqlFixture">SqlFixture</a></li><li data-diff="modified"><a href="../../k-kinzal/sql-fixture/SqlFixture/Fixture/index.html" title="SqlFixture\Fixture">SqlFixture\Fixture</a></li><li data-diff="added"><a href="../../k-kinzal/sql-fixture/SqlFixture/Fixture/Generation/index.html" title="SqlFixture\Fixture\Generation">SqlFixture\Fixture\Generation</a></li><li data-diff="added"><a href="../../k-kinzal/sql-fixture/SqlFixture/Fixture/Validation/index.html" title="SqlFixture\Fixture\Validation">SqlFixture\Fixture\Validation</a></li><li data-diff="modified"><a href="../../k-kinzal/sql-fixture/SqlFixture/Hydrator/index.html" title="SqlFixture\Hydrator">SqlFixture\Hydrator</a></li><li data-diff="added"><a href="../../k-kinzal/sql-fixture/SqlFixture/Hydrator/Reflection/index.html" title="SqlFixture\Hydrator\Reflection">SqlFixture\Hydrator\Reflection</a></li><li data-diff="modified"><a href="../../k-kinzal/sql-fixture/SqlFixture/Plan/index.html" title="SqlFixture\Plan">SqlFixture\Plan</a></li><li data-diff="added"><a href="../../k-kinzal/sql-fixture/SqlFixture/Plan/Parsing/index.html" title="SqlFixture\Plan\Parsing">SqlFixture\Plan\Parsing</a></li><li data-diff="added"><a href="../../k-kinzal/sql-fixture/SqlFixture/Plan/Printing/index.html" title="SqlFixture\Plan\Printing">SqlFixture\Plan\Printing</a></li><li data-diff="added"><a href="../../k-kinzal/sql-fixture/SqlFixture/Plan/Validation/index.html" title="SqlFixture\Plan\Validation">SqlFixture\Plan\Validation</a></li><li data-diff="modified"><a href="../../k-kinzal/sql-fixture/SqlFixture/Platform/index.html" title="SqlFixture\Platform">SqlFixture\Platform</a></li><li data-diff="modified"><a href="../../k-kinzal/sql-fixture/SqlFixture/Platform/MySql/index.html" title="SqlFixture\Platform\MySql">SqlFixture\Platform\MySql</a></li><li data-diff="added"><a href="../../k-kinzal/sql-fixture/SqlFixture/Platform/MySql/Schema/index.html" title="SqlFixture\Platform\MySql\Schema">SqlFixture\Platform\MySql\Schema</a></li><li data-diff="added"><a href="../../k-kinzal/sql-fixture/SqlFixture/Platform/MySql/Value/index.html" title="SqlFixture\Platform\MySql\Value">SqlFixture\Platform\MySql\Value</a></li><li data-diff="modified"><a href="../../k-kinzal/sql-fixture/SqlFixture/Platform/PostgreSql/index.html" title="SqlFixture\Platform\PostgreSql">SqlFixture\Platform\PostgreSql</a></li><li data-diff="added"><a href="../../k-kinzal/sql-fixture/SqlFixture/Platform/PostgreSql/Schema/index.html" title="SqlFixture\Platform\PostgreSql\Schema">SqlFixture\Platform\PostgreSql\Schema</a></li><li data-diff="added"><a href="../../k-kinzal/sql-fixture/SqlFixture/Platform/PostgreSql/Value/index.html" title="SqlFixture\Platform\PostgreSql\Value">SqlFixture\Platform\PostgreSql\Value</a></li><li data-diff="modified"><a href="../../k-kinzal/sql-fixture/SqlFixture/Platform/Sqlite/index.html" title="SqlFixture\Platform\Sqlite">SqlFixture\Platform\Sqlite</a></li><li data-diff="added"><a href="../../k-kinzal/sql-fixture/SqlFixture/Platform/Sqlite/Schema/index.html" title="SqlFixture\Platform\Sqlite\Schema">SqlFixture\Platform\Sqlite\Schema</a></li><li data-diff="added"><a href="../../k-kinzal/sql-fixture/SqlFixture/Platform/Sqlite/Value/index.html" title="SqlFixture\Platform\Sqlite\Value">SqlFixture\Platform\Sqlite\Value</a></li><li data-diff="added"><a href="../../k-kinzal/sql-fixture/SqlFixture/Provider/index.html" title="SqlFixture\Provider">SqlFixture\Provider</a></li><li data-diff="modified"><a href="../../k-kinzal/sql-fixture/SqlFixture/Schema/index.html" title="SqlFixture\Schema">SqlFixture\Schema</a></li><li data-diff="modified"><a href="../../k-kinzal/sql-fixture/SqlFixture/TypeMapper/index.html" title="SqlFixture\TypeMapper">SqlFixture\TypeMapper</a></li></ul></nav></nav>
+<div class="page">
+<header class="topbar">
+<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
+<nav class="crumbs"><span class="crumb-current">k-kinzal/sql-fixture</span></nav>
+<div class="topbar-tools">
+<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing d56513049 to working tree">d56513049 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><button id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between d56513049 and working tree." data-off="This page documents what d56513049 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-package">package</span>k-kinzal/sql-fixture</h1></div>
+<p class="lede">Generate PHP-Faker based fixtures from SQL schemas</p>
+<div class="relation-row"><span class="relation-label">Repository</span> <a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-fixture" title="Repository: https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-fixture" rel="noreferrer">github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-fixture</a></div>
+<div class="relation-row"><span class="relation-label">Depends on</span> <a href="../../k-kinzal/sql-faker/index.html">k-kinzal/sql-faker</a> <span class="chip chip-sm chip-ghost">require-dev</span></div>
+<div class="relation-row"><span class="relation-label">External dependencies</span> <code>fakerphp/faker</code> <span class="dep-constraint">^1.23</span>, <code>phpmyadmin/sql-parser</code> <span class="dep-constraint">^5.11</span></div>
+<section data-diff="same"><h2 id="layers">Architecture layers<a class="anchor" href="#layers">§</a></h2><p class="section-note">Layers and allowed dependencies from <code>deptrac.yaml</code>. Layers without an arrow are dependency-free by rule.</p><div class="graph-wrap"><svg class="graph" viewBox="0 0 746 344" role="img" style="max-width:746px"><path class="edge edge-allowed" d="M 505.0 210.0 C 505.0 240.0, 609.0 230.0, 609.0 257.0"/><circle class="edge-tip edge-allowed" cx="609.0" cy="258.0" r="2.6"/><path class="edge edge-allowed" d="M 233.0 210.0 C 233.0 240.0, 609.0 230.0, 609.0 257.0"/><circle class="edge-tip edge-allowed" cx="609.0" cy="258.0" r="2.6"/><path class="edge edge-allowed" d="M 233.0 210.0 C 233.0 240.0, 377.0 230.0, 377.0 257.0"/><circle class="edge-tip edge-allowed" cx="377.0" cy="258.0" r="2.6"/><path class="edge edge-allowed" d="M 113.0 126.0 C 113.0 156.0, 609.0 230.0, 609.0 257.0"/><circle class="edge-tip edge-allowed" cx="609.0" cy="258.0" r="2.6"/><path class="edge edge-allowed" d="M 113.0 126.0 C 113.0 156.0, 505.0 146.0, 505.0 173.0"/><circle class="edge-tip edge-allowed" cx="505.0" cy="174.0" r="2.6"/><path class="edge edge-allowed" d="M 365.0 126.0 C 365.0 156.0, 609.0 230.0, 609.0 257.0"/><circle class="edge-tip edge-allowed" cx="609.0" cy="258.0" r="2.6"/><path class="edge edge-allowed" d="M 365.0 126.0 C 365.0 156.0, 505.0 146.0, 505.0 173.0"/><circle class="edge-tip edge-allowed" cx="505.0" cy="174.0" r="2.6"/><path class="edge edge-allowed" d="M 621.0 126.0 C 621.0 156.0, 609.0 230.0, 609.0 257.0"/><circle class="edge-tip edge-allowed" cx="609.0" cy="258.0" r="2.6"/><path class="edge edge-allowed" d="M 621.0 126.0 C 621.0 156.0, 505.0 146.0, 505.0 173.0"/><circle class="edge-tip edge-allowed" cx="505.0" cy="174.0" r="2.6"/><path class="edge edge-allowed" d="M 369.0 42.0 C 369.0 72.0, 609.0 230.0, 609.0 257.0"/><circle class="edge-tip edge-allowed" cx="609.0" cy="258.0" r="2.6"/><path class="edge edge-allowed" d="M 369.0 42.0 C 369.0 72.0, 505.0 146.0, 505.0 173.0"/><circle class="edge-tip edge-allowed" cx="505.0" cy="174.0" r="2.6"/><path class="edge edge-allowed" d="M 369.0 42.0 C 369.0 72.0, 137.0 230.0, 137.0 257.0"/><circle class="edge-tip edge-allowed" cx="137.0" cy="258.0" r="2.6"/><path class="edge edge-allowed" d="M 369.0 42.0 C 369.0 72.0, 377.0 230.0, 377.0 257.0"/><circle class="edge-tip edge-allowed" cx="377.0" cy="258.0" r="2.6"/><path class="edge edge-allowed" d="M 369.0 42.0 C 369.0 72.0, 233.0 146.0, 233.0 173.0"/><circle class="edge-tip edge-allowed" cx="233.0" cy="174.0" r="2.6"/><path class="edge edge-allowed" d="M 369.0 42.0 C 369.0 72.0, 113.0 62.0, 113.0 89.0"/><circle class="edge-tip edge-allowed" cx="113.0" cy="90.0" r="2.6"/><path class="edge edge-allowed" d="M 369.0 42.0 C 369.0 72.0, 365.0 62.0, 365.0 89.0"/><circle class="edge-tip edge-allowed" cx="365.0" cy="90.0" r="2.6"/><path class="edge edge-allowed" d="M 369.0 42.0 C 369.0 72.0, 621.0 62.0, 621.0 89.0"/><circle class="edge-tip edge-allowed" cx="621.0" cy="90.0" r="2.6"/><a href="../../k-kinzal/sql-fixture/layer.sql-fixture--Generation.html"><rect class="node node-layer" x="108" y="176" width="250" height="34" rx="7"/><text x="233" y="198">sql-fixture: Generation (16)</text></a><a href="../../k-kinzal/sql-fixture/layer.sql-fixture--Hydration.html"><rect class="node node-layer" x="20" y="260" width="234" height="34" rx="7"/><text x="137" y="282">sql-fixture: Hydration (7)</text></a><a href="../../k-kinzal/sql-fixture/layer.sql-fixture--MySql.html"><rect class="node node-layer" x="8" y="92" width="210" height="34" rx="7"/><text x="113" y="114">sql-fixture: MySql (19)</text></a><a href="../../k-kinzal/sql-fixture/layer.sql-fixture--Plan.html"><rect class="node node-layer" x="276" y="260" width="202" height="34" rx="7"/><text x="377" y="282">sql-fixture: Plan (17)</text></a><a href="../../k-kinzal/sql-fixture/layer.sql-fixture--PostgreSql.html"><rect class="node node-layer" x="240" y="92" width="250" height="34" rx="7"/><text x="365" y="114">sql-fixture: PostgreSql (18)</text></a><a href="../../k-kinzal/sql-fixture/layer.sql-fixture--Provider.html"><rect class="node node-layer" x="252" y="8" width="234" height="34" rx="7"/><text x="369" y="30">sql-fixture: Provider (12)</text></a><a href="../../k-kinzal/sql-fixture/layer.sql-fixture--Schema.html"><rect class="node node-layer" x="500" y="260" width="218" height="34" rx="7"/><text x="609" y="282">sql-fixture: Schema (11)</text></a><a href="../../k-kinzal/sql-fixture/layer.sql-fixture--Sqlite.html"><rect class="node node-layer" x="512" y="92" width="218" height="34" rx="7"/><text x="621" y="114">sql-fixture: Sqlite (13)</text></a><a href="../../k-kinzal/sql-fixture/layer.sql-fixture--TypeMapping.html"><rect class="node node-layer" x="380" y="176" width="250" height="34" rx="7"/><text x="505" y="198">sql-fixture: TypeMapping (2)</text></a></svg></div></section>
+<section data-diff="modified"><h2 id="namespaces">Namespaces<a class="anchor" href="#namespaces">§</a></h2><div class="table-wrap"><table class="symbol-table"><tr data-diff="modified"><td><a href="../../k-kinzal/sql-fixture/SqlFixture/index.html">SqlFixture</a></td><td class="ns-counts"> <span class="ns-count k-class">5 classes</span></td></tr><tr data-diff="modified"><td><a href="../../k-kinzal/sql-fixture/SqlFixture/Fixture/index.html">SqlFixture\Fixture</a></td><td class="ns-counts"> <span class="ns-count k-interface">1 interface</span> <span class="ns-count k-class">8 classes</span></td></tr><tr data-diff="added"><td><a href="../../k-kinzal/sql-fixture/SqlFixture/Fixture/Generation/index.html">SqlFixture\Fixture\Generation</a></td><td class="ns-counts"> <span class="ns-count k-class">5 classes</span></td></tr><tr data-diff="added"><td><a href="../../k-kinzal/sql-fixture/SqlFixture/Fixture/Validation/index.html">SqlFixture\Fixture\Validation</a></td><td class="ns-counts"> <span class="ns-count k-class">2 classes</span></td></tr><tr data-diff="modified"><td><a href="../../k-kinzal/sql-fixture/SqlFixture/Hydrator/index.html">SqlFixture\Hydrator</a></td><td class="ns-counts"> <span class="ns-count k-interface">1 interface</span> <span class="ns-count k-class">2 classes</span></td></tr><tr data-diff="added"><td><a href="../../k-kinzal/sql-fixture/SqlFixture/Hydrator/Reflection/index.html">SqlFixture\Hydrator\Reflection</a></td><td class="ns-counts"> <span class="ns-count k-class">4 classes</span></td></tr><tr data-diff="modified"><td><a href="../../k-kinzal/sql-fixture/SqlFixture/Plan/index.html">SqlFixture\Plan</a></td><td class="ns-counts"> <span class="ns-count k-class">7 classes</span> <span class="ns-count k-enum">2 enums</span></td></tr><tr data-diff="added"><td><a href="../../k-kinzal/sql-fixture/SqlFixture/Plan/Parsing/index.html">SqlFixture\Plan\Parsing</a></td><td class="ns-counts"> <span class="ns-count k-class">3 classes</span></td></tr><tr data-diff="added"><td><a href="../../k-kinzal/sql-fixture/SqlFixture/Plan/Printing/index.html">SqlFixture\Plan\Printing</a></td><td class="ns-counts"> <span class="ns-count k-class">3 classes</span></td></tr><tr data-diff="added"><td><a href="../../k-kinzal/sql-fixture/SqlFixture/Plan/Validation/index.html">SqlFixture\Plan\Validation</a></td><td class="ns-counts"> <span class="ns-count k-class">2 classes</span></td></tr><tr data-diff="modified"><td><a href="../../k-kinzal/sql-fixture/SqlFixture/Platform/index.html">SqlFixture\Platform</a></td><td class="ns-counts"> <span class="ns-count k-class">1 class</span></td></tr><tr data-diff="modified"><td><a href="../../k-kinzal/sql-fixture/SqlFixture/Platform/MySql/index.html">SqlFixture\Platform\MySql</a></td><td class="ns-counts"> <span class="ns-count k-class">3 classes</span></td></tr><tr data-diff="added"><td><a href="../../k-kinzal/sql-fixture/SqlFixture/Platform/MySql/Schema/index.html">SqlFixture\Platform\MySql\Schema</a></td><td class="ns-counts"> <span class="ns-count k-class">8 classes</span></td></tr><tr data-diff="added"><td><a href="../../k-kinzal/sql-fixture/SqlFixture/Platform/MySql/Value/index.html">SqlFixture\Platform\MySql\Value</a></td><td class="ns-counts"> <span class="ns-count k-class">8 classes</span></td></tr><tr data-diff="modified"><td><a href="../../k-kinzal/sql-fixture/SqlFixture/Platform/PostgreSql/index.html">SqlFixture\Platform\PostgreSql</a></td><td class="ns-counts"> <span class="ns-count k-class">3 classes</span></td></tr><tr data-diff="added"><td><a href="../../k-kinzal/sql-fixture/SqlFixture/Platform/PostgreSql/Schema/index.html">SqlFixture\Platform\PostgreSql\Schema</a></td><td class="ns-counts"> <span class="ns-count k-class">9 classes</span></td></tr><tr data-diff="added"><td><a href="../../k-kinzal/sql-fixture/SqlFixture/Platform/PostgreSql/Value/index.html">SqlFixture\Platform\PostgreSql\Value</a></td><td class="ns-counts"> <span class="ns-count k-class">6 classes</span></td></tr><tr data-diff="modified"><td><a href="../../k-kinzal/sql-fixture/SqlFixture/Platform/Sqlite/index.html">SqlFixture\Platform\Sqlite</a></td><td class="ns-counts"> <span class="ns-count k-class">3 classes</span></td></tr><tr data-diff="added"><td><a href="../../k-kinzal/sql-fixture/SqlFixture/Platform/Sqlite/Schema/index.html">SqlFixture\Platform\Sqlite\Schema</a></td><td class="ns-counts"> <span class="ns-count k-class">8 classes</span></td></tr><tr data-diff="added"><td><a href="../../k-kinzal/sql-fixture/SqlFixture/Platform/Sqlite/Value/index.html">SqlFixture\Platform\Sqlite\Value</a></td><td class="ns-counts"> <span class="ns-count k-class">2 classes</span></td></tr><tr data-diff="added"><td><a href="../../k-kinzal/sql-fixture/SqlFixture/Provider/index.html">SqlFixture\Provider</a></td><td class="ns-counts"> <span class="ns-count k-class">4 classes</span></td></tr><tr data-diff="modified"><td><a href="../../k-kinzal/sql-fixture/SqlFixture/Schema/index.html">SqlFixture\Schema</a></td><td class="ns-counts"> <span class="ns-count k-interface">3 interfaces</span> <span class="ns-count k-class">9 classes</span></td></tr><tr data-diff="modified"><td><a href="../../k-kinzal/sql-fixture/SqlFixture/TypeMapper/index.html">SqlFixture\TypeMapper</a></td><td class="ns-counts"> <span class="ns-count k-interface">1 interface</span> <span class="ns-count k-class">2 classes</span></td></tr></table></div></section>
+<section data-diff="modified"><h2 id="documents">Documents <span class="count">2</span><a class="anchor" href="#documents">§</a></h2><div class="table-wrap"><table class="symbol-table"><tr data-diff="same"><td><a href="../../k-kinzal/sql-fixture/doc/README.md.html">SQL Fixture</a></td><td class="item-ns">README.md</td></tr><tr data-diff="added"><td><a href="../../k-kinzal/sql-fixture/doc/fuzz/README.md.html">sql-fixture fuzz targets</a></td><td class="item-ns">fuzz/README.md</td></tr></table></div></section>
+<section class="readme" data-diff="same"><h2 id="readme">README<a class="anchor" href="#readme">§</a></h2><h2>SQL Fixture</h2>
+<p><a href="https://opensource.org/licenses/MIT"><span class="md-target" title="https://img.shields.io/badge/License-MIT-yellow.svg">License: MIT</span></a> <a href="https://www.php.net/"><span class="md-target" title="https://img.shields.io/badge/PHP-8.1%2B-blue.svg">PHP Version</span></a></p>
+<p>A <a href="https://github.com/FakerPHP/Faker">FakerPHP</a> provider for generating test fixture data from SQL schemas. Parses CREATE TABLE statements and generates type-appropriate fake data.</p>
+<h3>Overview</h3>
+<p>SQL Fixture reads your database schema (CREATE TABLE) and automatically generates realistic fixture data with correct types, lengths, and constraints. It supports MySQL and SQLite with three usage modes:</p>
+<ul><li><strong><code>FixtureProvider</code></strong> - Generate fixtures from CREATE TABLE SQL strings</li><li><strong><code>DatabaseFixtureProvider</code></strong> - Generate fixtures from a live database connection (PDO)</li><li><strong><code>FileFixtureProvider</code></strong> - Generate fixtures from a directory of DDL files</li></ul>
+<p>All modes support object hydration via <code>ReflectionHydrator</code>, converting generated data directly into typed PHP objects.</p>
+<h3>Requirements</h3>
+<ul><li>PHP 8.1 or higher</li><li><a href="https://github.com/FakerPHP/Faker">fakerphp/faker</a> ^1.23</li><li><a href="https://github.com/phpmyadmin/sql-parser">phpmyadmin/sql-parser</a> ^5.11</li></ul>
+<h3>Installation</h3>
+<pre class="code-block"><code>composer require --dev k-kinzal/sql-fixture</code></pre>
+<h3>Usage</h3>
+<h4>From SQL Strings</h4>
+<p>Use <code>FixtureProvider</code> when you have CREATE TABLE SQL available:</p>
+<pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">Faker\Factory</span>;
+<span class="tok-kw">use</span> <span class="tok-id">SqlFixture\FixtureProvider</span>;
+
+<span class="tok-var">$faker</span> = <span class="tok-id">Factory</span>::<span class="tok-id">create</span>();
+<span class="tok-var">$faker</span>-&gt;<span class="tok-id">addProvider</span>(<span class="tok-kw">new</span> <span class="tok-id">FixtureProvider</span>(<span class="tok-var">$faker</span>));
+
+<span class="tok-var">$fixture</span> = <span class="tok-var">$faker</span>-&gt;<span class="tok-id">fixture</span>(
+    <span class="tok-str">&#039;CREATE TABLE users (</span>
+<span class="tok-str">        id INT PRIMARY KEY AUTO_INCREMENT,</span>
+<span class="tok-str">        name VARCHAR(255) NOT NULL,</span>
+<span class="tok-str">        email VARCHAR(100) NOT NULL,</span>
+<span class="tok-str">        age INT UNSIGNED,</span>
+<span class="tok-str">        status ENUM(&quot;active&quot;, &quot;inactive&quot;),</span>
+<span class="tok-str">        balance DECIMAL(10, 2),</span>
+<span class="tok-str">        created_at DATETIME</span>
+<span class="tok-str">    )&#039;</span>
+);
+<span class="tok-com">// Returns: [&#039;name&#039; =&gt; &#039;John Doe&#039;, &#039;email&#039; =&gt; &#039;john@example.com&#039;, &#039;age&#039; =&gt; 28, ...]</span>
+<span class="tok-com">// Note: auto_increment columns (id) are skipped by default</span></code></pre>
+<h4>From Database Connection</h4>
+<p>Use <code>DatabaseFixtureProvider</code> with a PDO connection to generate fixtures from your actual database schema:</p>
+<pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">Faker\Factory</span>;
+<span class="tok-kw">use</span> <span class="tok-id">SqlFixture\DatabaseFixtureProvider</span>;
+
+<span class="tok-var">$pdo</span> = <span class="tok-kw">new</span> <span class="tok-id">PDO</span>(<span class="tok-str">&#039;mysql:host=localhost;dbname=myapp&#039;</span>, <span class="tok-str">&#039;user&#039;</span>, <span class="tok-str">&#039;password&#039;</span>);
+<span class="tok-var">$faker</span> = <span class="tok-id">Factory</span>::<span class="tok-id">create</span>();
+<span class="tok-var">$faker</span>-&gt;<span class="tok-id">addProvider</span>(<span class="tok-kw">new</span> <span class="tok-id">DatabaseFixtureProvider</span>(<span class="tok-var">$faker</span>, <span class="tok-var">$pdo</span>));
+
+<span class="tok-com">// Generate fixture by table name</span>
+<span class="tok-var">$fixture</span> = <span class="tok-var">$faker</span>-&gt;<span class="tok-id">fixture</span>(<span class="tok-str">&#039;users&#039;</span>);
+<span class="tok-com">// Schema is fetched via SHOW CREATE TABLE and cached</span></code></pre>
+<h4>From DDL Files</h4>
+<p>Use <code>FileFixtureProvider</code> with a directory containing <code>.sql</code> files:</p>
+<pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">Faker\Factory</span>;
+<span class="tok-kw">use</span> <span class="tok-id">SqlFixture\FileFixtureProvider</span>;
+
+<span class="tok-com">// Directory contains: users.sql, posts.sql, comments.sql</span>
+<span class="tok-var">$faker</span> = <span class="tok-id">Factory</span>::<span class="tok-id">create</span>();
+<span class="tok-var">$faker</span>-&gt;<span class="tok-id">addProvider</span>(<span class="tok-kw">new</span> <span class="tok-id">FileFixtureProvider</span>(<span class="tok-var">$faker</span>, <span class="tok-str">&#039;/path/to/ddl/&#039;</span>));
+
+<span class="tok-var">$fixture</span> = <span class="tok-var">$faker</span>-&gt;<span class="tok-id">fixture</span>(<span class="tok-str">&#039;users&#039;</span>);
+
+<span class="tok-com">// List available tables</span>
+<span class="tok-var">$tables</span> = <span class="tok-var">$faker</span>-&gt;<span class="tok-id">getTableNames</span>(); <span class="tok-com">// [&#039;users&#039;, &#039;posts&#039;, &#039;comments&#039;]</span>
+
+<span class="tok-com">// Register additional schemas at runtime</span>
+<span class="tok-var">$faker</span>-&gt;<span class="tok-id">registerSchema</span>(<span class="tok-str">&#039;CREATE TABLE tags (id INT PRIMARY KEY, name VARCHAR(50))&#039;</span>);</code></pre>
+<h4>Overriding Values</h4>
+<p>Pass specific values to override generated data:</p>
+<pre class="code-block"><code><span class="tok-var">$fixture</span> = <span class="tok-var">$faker</span>-&gt;<span class="tok-id">fixture</span>(
+    <span class="tok-str">&#039;CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255), email VARCHAR(255))&#039;</span>,
+    [<span class="tok-str">&#039;id&#039;</span> =&gt; <span class="tok-num">1</span>, <span class="tok-str">&#039;name&#039;</span> =&gt; <span class="tok-str">&#039;Alice&#039;</span>]
+);
+<span class="tok-com">// Returns: [&#039;id&#039; =&gt; 1, &#039;name&#039; =&gt; &#039;Alice&#039;, &#039;email&#039; =&gt; &#039;&lt;generated&gt;&#039;]</span></code></pre>
+<h4>Object Hydration</h4>
+<p>Generate typed PHP objects directly using <code>ReflectionHydrator</code>:</p>
+<pre class="code-block"><code><span class="tok-kw">class</span> <span class="tok-id">User</span>
+{
+    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(
+        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">int</span> <span class="tok-var">$id</span>,
+        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$userName</span>,
+        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$email</span>,
+    ) {}
+}
+
+<span class="tok-var">$user</span> = <span class="tok-var">$faker</span>-&gt;<span class="tok-id">fixture</span>(
+    <span class="tok-str">&#039;CREATE TABLE users (id INT PRIMARY KEY, user_name VARCHAR(255), email VARCHAR(255))&#039;</span>,
+    [<span class="tok-str">&#039;id&#039;</span> =&gt; <span class="tok-num">1</span>],
+    <span class="tok-id">User</span>::<span class="tok-kw">class</span>
+);
+<span class="tok-com">// Returns: User(id: 1, userName: &#039;generated_name&#039;, email: &#039;generated@example.com&#039;)</span></code></pre>
+<p>The hydrator handles:</p>
+<ul><li>Constructor parameter matching (exact name or snake_case to camelCase conversion)</li><li>Type casting (string to int/float/bool, JSON decode for arrays)</li><li>Default values and nullable parameters</li><li>Property-based hydration for classes without constructors</li></ul>
+<h4>SQLite Support</h4>
+<pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">SqlFixture\FixtureProvider</span>;
+<span class="tok-kw">use</span> <span class="tok-id">SqlFixture\Platform\PlatformFactory</span>;
+
+<span class="tok-com">// Specify dialect explicitly</span>
+<span class="tok-var">$faker</span>-&gt;<span class="tok-id">addProvider</span>(<span class="tok-kw">new</span> <span class="tok-id">FixtureProvider</span>(<span class="tok-var">$faker</span>, <span class="tok-id">dialect</span>: <span class="tok-id">PlatformFactory</span>::<span class="tok-id">DRIVER_SQLITE</span>));
+
+<span class="tok-var">$fixture</span> = <span class="tok-var">$faker</span>-&gt;<span class="tok-id">fixture</span>(
+    <span class="tok-str">&#039;CREATE TABLE users (</span>
+<span class="tok-str">        id INTEGER PRIMARY KEY AUTOINCREMENT,</span>
+<span class="tok-str">        name TEXT NOT NULL,</span>
+<span class="tok-str">        score REAL</span>
+<span class="tok-str">    )&#039;</span>
+);
+
+<span class="tok-com">// DatabaseFixtureProvider auto-detects dialect from PDO driver</span>
+<span class="tok-var">$pdo</span> = <span class="tok-kw">new</span> <span class="tok-id">PDO</span>(<span class="tok-str">&#039;sqlite::memory:&#039;</span>);
+<span class="tok-var">$faker</span>-&gt;<span class="tok-id">addProvider</span>(<span class="tok-kw">new</span> <span class="tok-id">DatabaseFixtureProvider</span>(<span class="tok-var">$faker</span>, <span class="tok-var">$pdo</span>));
+<span class="tok-com">// SQLite dialect is automatically detected</span></code></pre>
+<h3>Supported Types</h3>
+<h4>MySQL</h4>
+<div class="table-wrap"><table><thead><tr><th>Category</th><th>Types</th></tr></thead><tbody><tr><td>Integer</td><td>TINYINT, SMALLINT, MEDIUMINT, INT, BIGINT</td></tr><tr><td>Decimal</td><td>FLOAT, DOUBLE, REAL, DECIMAL, NUMERIC</td></tr><tr><td>String</td><td>CHAR, VARCHAR, TINYTEXT, TEXT, MEDIUMTEXT, LONGTEXT</td></tr><tr><td>Binary</td><td>BINARY, VARBINARY, TINYBLOB, BLOB, MEDIUMBLOB, LONGBLOB</td></tr><tr><td>Enum/Set</td><td>ENUM, SET</td></tr><tr><td>Date/Time</td><td>DATE, TIME, DATETIME, TIMESTAMP, YEAR</td></tr><tr><td>JSON</td><td>JSON</td></tr><tr><td>Boolean</td><td>BOOL, BOOLEAN</td></tr><tr><td>Bit</td><td>BIT</td></tr><tr><td>Spatial</td><td>POINT, LINESTRING, POLYGON, MULTIPOINT, MULTILINESTRING, MULTIPOLYGON, GEOMETRYCOLLECTION</td></tr></tbody></table></div>
+<h4>SQLite</h4>
+<div class="table-wrap"><table><thead><tr><th>Affinity</th><th>Mapped Types</th></tr></thead><tbody><tr><td>INTEGER</td><td>INT, INTEGER, TINYINT, SMALLINT, MEDIUMINT, BIGINT, INT2, INT8</td></tr><tr><td>TEXT</td><td>CHAR, VARCHAR, TEXT, CLOB, TINYTEXT, MEDIUMTEXT, LONGTEXT</td></tr><tr><td>REAL</td><td>FLOAT, DOUBLE, REAL</td></tr><tr><td>BLOB</td><td>BLOB, BINARY, VARBINARY</td></tr><tr><td>NUMERIC</td><td>BOOLEAN, DATE, DATETIME, TIMESTAMP, DECIMAL</td></tr></tbody></table></div>
+<h3>Column Handling</h3>
+<ul><li><strong>AUTO_INCREMENT / AUTOINCREMENT</strong> columns are skipped (not generated)</li><li><strong>Generated columns</strong> (<code>AS</code> expressions) are skipped</li><li><strong>Nullable columns</strong> have a 10% chance of returning null/default</li><li><strong>UNSIGNED</strong> constraint is respected for numeric types</li><li><strong>Length/precision/scale</strong> are respected for string and decimal types</li><li><strong>ENUM/SET</strong> values are randomly selected from the declared options</li><li><strong>DEFAULT</strong> values are used when a nullable column generates null</li></ul>
+<h3>Extensibility</h3>
+<p>Customize behavior by providing your own implementations:</p>
+<pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">SqlFixture\FixtureProvider</span>;
+<span class="tok-kw">use</span> <span class="tok-id">SqlFixture\TypeMapper\TypeMapperInterface</span>;
+<span class="tok-kw">use</span> <span class="tok-id">SqlFixture\Schema\SchemaParserInterface</span>;
+<span class="tok-kw">use</span> <span class="tok-id">SqlFixture\Hydrator\HydratorInterface</span>;
+
+<span class="tok-var">$provider</span> = <span class="tok-kw">new</span> <span class="tok-id">FixtureProvider</span>(
+    <span class="tok-var">$faker</span>,
+    <span class="tok-id">typeMapper</span>: <span class="tok-var">$customTypeMapper</span>,      <span class="tok-com">// Custom type-to-value mapping</span>
+    <span class="tok-id">hydrator</span>: <span class="tok-var">$customHydrator</span>,          <span class="tok-com">// Custom object hydration</span>
+    <span class="tok-id">schemaParser</span>: <span class="tok-var">$customSchemaParser</span>,  <span class="tok-com">// Custom CREATE TABLE parsing</span>
+    <span class="tok-id">dialect</span>: <span class="tok-str">&#039;mysql&#039;</span>,
+);</code></pre>
+<h3>Development</h3>
+<pre class="code-block"><code># Run unit tests
+composer test:unit
+
+# Run all tests
+composer test
+
+# Run linter (PHP-CS-Fixer + PHPStan level max)
+composer lint
+
+# Run fuzz tests
+composer fuzz:create-table
+composer fuzz:insert-select
+
+# Fix code style
+composer format</code></pre>
+<h3>License</h3>
+<p>MIT License. See <span class="md-target" title="LICENSE">LICENSE</span> for details.</p>
+</section>
+</main>
+<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div>
+<script src="../../assets/search-index.js" defer></script>
+<script src="../../assets/app.js" defer></script>
+</body>
+</html>

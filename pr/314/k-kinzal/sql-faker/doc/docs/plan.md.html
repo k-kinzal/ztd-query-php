@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Generation plans — k-kinzal/ztd-query-php</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/314/k-kinzal/sql-faker/doc/docs/plan.md.html">
+<meta name="description" content="Generation plans, a document of the k-kinzal/sql-faker package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="k-kinzal/ztd-query-php">
+<meta property="og:title" content="Generation plans — k-kinzal/ztd-query-php">
+<meta property="og:description" content="Generation plans, a document of the k-kinzal/sql-faker package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/314/k-kinzal/sql-faker/doc/docs/plan.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/314/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="k-kinzal/ztd-query-php">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../">
+<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../../../index.html">k-kinzal/ztd-query-php</a></div><div class="sb-pkg"><a href="../../../../k-kinzal/sql-faker/index.html">k-kinzal/sql-faker</a></div><nav class="sb-block"><div class="sb-title">Package</div><ul class="sb-list"><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/all-items.html">All items</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/index.html#documents">Documents</a></li></ul><div class="sb-kind" data-diff="same">Layers</div><ul class="sb-list"><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/layer.sql-faker--Compiler.html">sql-faker: Compiler</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/layer.sql-faker--Generation.html">sql-faker: Generation</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/layer.sql-faker--Grammar.html">sql-faker: Grammar</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/layer.sql-faker--MySqlGeneration.html">sql-faker: MySqlGeneration</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/layer.sql-faker--MySqlGrammar.html">sql-faker: MySqlGrammar</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/layer.sql-faker--PostgreSqlGeneration.html">sql-faker: PostgreSqlGeneration</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/layer.sql-faker--PostgreSqlGrammar.html">sql-faker: PostgreSqlGrammar</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/layer.sql-faker--Provider.html">sql-faker: Provider</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/layer.sql-faker--SqliteGeneration.html">sql-faker: SqliteGeneration</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/layer.sql-faker--SqliteGrammar.html">sql-faker: SqliteGrammar</a></li></ul></nav><nav class="sb-block"><div class="sb-title">Namespaces</div><ul class="sb-list"><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/index.html" title="SqlFaker">SqlFaker</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Compiler/index.html" title="SqlFaker\Compiler">SqlFaker\Compiler</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Compiler/Bison/index.html" title="SqlFaker\Compiler\Bison">SqlFaker\Compiler\Bison</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Compiler/Bison/Ast/index.html" title="SqlFaker\Compiler\Bison\Ast">SqlFaker\Compiler\Bison\Ast</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Compiler/Bison/Directive/index.html" title="SqlFaker\Compiler\Bison\Directive">SqlFaker\Compiler\Bison\Directive</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Compiler/Bison/Lexer/index.html" title="SqlFaker\Compiler\Bison\Lexer">SqlFaker\Compiler\Bison\Lexer</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Compiler/Bison/Rule/index.html" title="SqlFaker\Compiler\Bison\Rule">SqlFaker\Compiler\Bison\Rule</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Compiler/Lemon/index.html" title="SqlFaker\Compiler\Lemon">SqlFaker\Compiler\Lemon</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Compiler/Resource/index.html" title="SqlFaker\Compiler\Resource">SqlFaker\Compiler\Resource</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Generation/index.html" title="SqlFaker\Generation">SqlFaker\Generation</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Generation/Candidate/index.html" title="SqlFaker\Generation\Candidate">SqlFaker\Generation\Candidate</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Generation/Choice/index.html" title="SqlFaker\Generation\Choice">SqlFaker\Generation\Choice</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Generation/Coverage/index.html" title="SqlFaker\Generation\Coverage">SqlFaker\Generation\Coverage</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Generation/Derivation/index.html" title="SqlFaker\Generation\Derivation">SqlFaker\Generation\Derivation</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Generation/Derivation/Completion/index.html" title="SqlFaker\Generation\Derivation\Completion">SqlFaker\Generation\Derivation\Completion</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Generation/Exception/index.html" title="SqlFaker\Generation\Exception">SqlFaker\Generation\Exception</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Generation/Lexeme/index.html" title="SqlFaker\Generation\Lexeme">SqlFaker\Generation\Lexeme</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Generation/Output/index.html" title="SqlFaker\Generation\Output">SqlFaker\Generation\Output</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Generation/Plan/index.html" title="SqlFaker\Generation\Plan">SqlFaker\Generation\Plan</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Generation/Token/index.html" title="SqlFaker\Generation\Token">SqlFaker\Generation\Token</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Generation/Value/index.html" title="SqlFaker\Generation\Value">SqlFaker\Generation\Value</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Grammar/Model/index.html" title="SqlFaker\Grammar\Model">SqlFaker\Grammar\Model</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Grammar/Resource/index.html" title="SqlFaker\Grammar\Resource">SqlFaker\Grammar\Resource</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/MySql/Generation/index.html" title="SqlFaker\MySql\Generation">SqlFaker\MySql\Generation</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/MySql/Generation/Lexeme/index.html" title="SqlFaker\MySql\Generation\Lexeme">SqlFaker\MySql\Generation\Lexeme</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/MySql/Generation/Rewrite/index.html" title="SqlFaker\MySql\Generation\Rewrite">SqlFaker\MySql\Generation\Rewrite</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/MySql/Generation/Rewrite/Alter/index.html" title="SqlFaker\MySql\Generation\Rewrite\Alter">SqlFaker\MySql\Generation\Rewrite\Alter</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/MySql/Generation/Rewrite/Column/index.html" title="SqlFaker\MySql\Generation\Rewrite\Column">SqlFaker\MySql\Generation\Rewrite\Column</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/MySql/Generation/Rewrite/Expression/index.html" title="SqlFaker\MySql\Generation\Rewrite\Expression">SqlFaker\MySql\Generation\Rewrite\Expression</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/MySql/Generation/Rewrite/Name/index.html" title="SqlFaker\MySql\Generation\Rewrite\Name">SqlFaker\MySql\Generation\Rewrite\Name</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/MySql/Generation/Rewrite/Option/index.html" title="SqlFaker\MySql\Generation\Rewrite\Option">SqlFaker\MySql\Generation\Rewrite\Option</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/MySql/Generation/Rewrite/Partition/index.html" title="SqlFaker\MySql\Generation\Rewrite\Partition">SqlFaker\MySql\Generation\Rewrite\Partition</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/MySql/Generation/Rewrite/Query/index.html" title="SqlFaker\MySql\Generation\Rewrite\Query">SqlFaker\MySql\Generation\Rewrite\Query</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/MySql/Generation/Rewrite/Replication/index.html" title="SqlFaker\MySql\Generation\Rewrite\Replication">SqlFaker\MySql\Generation\Rewrite\Replication</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/MySql/Generation/Rewrite/Routine/index.html" title="SqlFaker\MySql\Generation\Rewrite\Routine">SqlFaker\MySql\Generation\Rewrite\Routine</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/MySql/Generation/Spacing/index.html" title="SqlFaker\MySql\Generation\Spacing">SqlFaker\MySql\Generation\Spacing</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/MySql/Generation/Tokenization/index.html" title="SqlFaker\MySql\Generation\Tokenization">SqlFaker\MySql\Generation\Tokenization</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/MySql/Generation/Value/index.html" title="SqlFaker\MySql\Generation\Value">SqlFaker\MySql\Generation\Value</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/MySql/Grammar/index.html" title="SqlFaker\MySql\Grammar">SqlFaker\MySql\Grammar</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/PostgreSql/Generation/index.html" title="SqlFaker\PostgreSql\Generation">SqlFaker\PostgreSql\Generation</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/PostgreSql/Generation/Lexeme/index.html" title="SqlFaker\PostgreSql\Generation\Lexeme">SqlFaker\PostgreSql\Generation\Lexeme</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/PostgreSql/Generation/Lookahead/index.html" title="SqlFaker\PostgreSql\Generation\Lookahead">SqlFaker\PostgreSql\Generation\Lookahead</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/PostgreSql/Generation/Rewrite/index.html" title="SqlFaker\PostgreSql\Generation\Rewrite">SqlFaker\PostgreSql\Generation\Rewrite</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/PostgreSql/Generation/Rewrite/Column/index.html" title="SqlFaker\PostgreSql\Generation\Rewrite\Column">SqlFaker\PostgreSql\Generation\Rewrite\Column</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/PostgreSql/Generation/Rewrite/Expression/index.html" title="SqlFaker\PostgreSql\Generation\Rewrite\Expression">SqlFaker\PostgreSql\Generation\Rewrite\Expression</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/PostgreSql/Generation/Rewrite/Name/index.html" title="SqlFaker\PostgreSql\Generation\Rewrite\Name">SqlFaker\PostgreSql\Generation\Rewrite\Name</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/PostgreSql/Generation/Rewrite/Option/index.html" title="SqlFaker\PostgreSql\Generation\Rewrite\Option">SqlFaker\PostgreSql\Generation\Rewrite\Option</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/PostgreSql/Generation/Rewrite/Query/index.html" title="SqlFaker\PostgreSql\Generation\Rewrite\Query">SqlFaker\PostgreSql\Generation\Rewrite\Query</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/PostgreSql/Generation/Rewrite/Routine/index.html" title="SqlFaker\PostgreSql\Generation\Rewrite\Routine">SqlFaker\PostgreSql\Generation\Rewrite\Routine</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/PostgreSql/Generation/Tokenization/index.html" title="SqlFaker\PostgreSql\Generation\Tokenization">SqlFaker\PostgreSql\Generation\Tokenization</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/PostgreSql/Generation/Value/index.html" title="SqlFaker\PostgreSql\Generation\Value">SqlFaker\PostgreSql\Generation\Value</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/PostgreSql/Grammar/index.html" title="SqlFaker\PostgreSql\Grammar">SqlFaker\PostgreSql\Grammar</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Provider/index.html" title="SqlFaker\Provider">SqlFaker\Provider</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Sqlite/Generation/index.html" title="SqlFaker\Sqlite\Generation">SqlFaker\Sqlite\Generation</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Sqlite/Generation/Lexeme/index.html" title="SqlFaker\Sqlite\Generation\Lexeme">SqlFaker\Sqlite\Generation\Lexeme</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Sqlite/Generation/Rewrite/index.html" title="SqlFaker\Sqlite\Generation\Rewrite">SqlFaker\Sqlite\Generation\Rewrite</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Sqlite/Generation/Rewrite/Expression/index.html" title="SqlFaker\Sqlite\Generation\Rewrite\Expression">SqlFaker\Sqlite\Generation\Rewrite\Expression</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Sqlite/Generation/Tokenization/index.html" title="SqlFaker\Sqlite\Generation\Tokenization">SqlFaker\Sqlite\Generation\Tokenization</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Sqlite/Generation/Value/index.html" title="SqlFaker\Sqlite\Generation\Value">SqlFaker\Sqlite\Generation\Value</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-faker/SqlFaker/Sqlite/Grammar/index.html" title="SqlFaker\Sqlite\Grammar">SqlFaker\Sqlite\Grammar</a></li></ul></nav></nav>
+<div class="page">
+<header class="topbar">
+<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
+<nav class="crumbs"><a href="../../../../k-kinzal/sql-faker/index.html">k-kinzal/sql-faker</a><span class="crumb-sep">::</span><span class="crumb-current">docs/plan.md</span></nav>
+<div class="topbar-tools">
+<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing d56513049 to working tree">d56513049 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><button id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between d56513049 and working tree." data-off="This page documents what d56513049 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Generation plans</h1><div class="symbol-meta"><span class="src-link">docs/plan.md</span></div></div>
+<section class="readme" data-diff="same"><div class="doc-block" data-diff="same"><h2>Generation plans</h2>
+</div><div class="doc-block" data-diff="same"><p>A <code>SqlFaker\Generation\Plan\GenerationPlan</code> selects what to generate and which choices to constrain. Pass it to a provider&#039;s <code>generate()</code> method or to <a href="../../../../k-kinzal/sql-faker/doc/docs/generator.md.html">SqlGenerator</a>.</p>
+</div><div class="doc-block" data-diff="same"><h3>Common</h3>
+</div><div class="doc-block" data-diff="same"><h4>Select a grammar rule</h4>
+</div><div class="doc-block" data-diff="same"><p>Choose a statement or fragment by its rule name. The following Common examples use SQLite expressions:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">Faker\Factory</span>;
+<span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Plan\GenerationPlan</span>;
+<span class="tok-kw">use</span> <span class="tok-id">SqlFaker\Generation\Plan\ProductionPattern</span>;
+<span class="tok-kw">use</span> <span class="tok-id">SqlFaker\SqliteProvider</span>;
+
+<span class="tok-kw">require</span> <span class="tok-str">&#039;vendor/autoload.php&#039;</span>;
+
+<span class="tok-var">$faker</span> = <span class="tok-id">Factory</span>::<span class="tok-id">create</span>();
+<span class="tok-var">$provider</span> = <span class="tok-kw">new</span> <span class="tok-id">SqliteProvider</span>(<span class="tok-var">$faker</span>, <span class="tok-str">&#039;sqlite-3.47.2&#039;</span>);
+<span class="tok-var">$faker</span>-&gt;<span class="tok-id">seed</span>(<span class="tok-num">12345</span>);
+
+<span class="tok-var">$expressionPlan</span> = <span class="tok-id">GenerationPlan</span>::<span class="tok-id">fromRule</span>(<span class="tok-str">&#039;expr&#039;</span>)-&gt;<span class="tok-id">withMaxDepth</span>(<span class="tok-num">3</span>);
+<span class="tok-var">$expression</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$expressionPlan</span>);</code></pre>
+</div><div class="doc-block" data-diff="same"><p>Use an enum value for a statement family, or <code>all()</code> for the grammar&#039;s entry point:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code><span class="tok-var">$selectPlan</span> = <span class="tok-id">GenerationPlan</span>::<span class="tok-id">fromRule</span>(<span class="tok-id">\SqlFaker\Sqlite\StatementType</span>::<span class="tok-id">Select</span>-&gt;<span class="tok-id">value</span>)
+    -&gt;<span class="tok-id">requiringNonEmpty</span>()
+    -&gt;<span class="tok-id">withMaxDepth</span>(<span class="tok-num">3</span>);
+<span class="tok-var">$select</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$selectPlan</span>);
+
+<span class="tok-var">$anyPlan</span> = <span class="tok-id">GenerationPlan</span>::<span class="tok-id">all</span>()-&gt;<span class="tok-id">withMaxDepth</span>(<span class="tok-num">1</span>);
+<span class="tok-var">$anySql</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$anyPlan</span>);</code></pre>
+</div><div class="doc-block" data-diff="same"><p>The start rule determines whether the result is a statement, several statements, or a fragment. An unconstrained optional rule can produce an empty string.</p>
+</div><div class="doc-block" data-diff="same"><h4>Require output</h4>
+</div><div class="doc-block" data-diff="same"><p>Add <code>requiringNonEmpty()</code> when an optional rule must produce text:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code><span class="tok-var">$wherePlan</span> = <span class="tok-id">GenerationPlan</span>::<span class="tok-id">fromRule</span>(<span class="tok-str">&#039;where_opt&#039;</span>)
+    -&gt;<span class="tok-id">requiringNonEmpty</span>()
+    -&gt;<span class="tok-id">withMaxDepth</span>(<span class="tok-num">3</span>);
+
+<span class="tok-var">$where</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$wherePlan</span>);</code></pre>
+</div><div class="doc-block" data-diff="same"><p>This requires a non-empty final string. It does not require every optional part inside a larger statement to be present. <code>GenerationPlan::statement($rule, $maxDepth)</code> is a shortcut for selecting a rule, setting the depth threshold, and requiring non-empty output.</p>
+</div><div class="doc-block" data-diff="same"><h4>Adjust complexity and expansion limits</h4>
+</div><div class="doc-block" data-diff="same"><p>Plan modifiers return new plans. Keep the returned value or chain the calls:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code><span class="tok-var">$shortPlan</span> = <span class="tok-var">$expressionPlan</span>
+    -&gt;<span class="tok-id">withMaxDepth</span>(<span class="tok-num">1</span>)
+    -&gt;<span class="tok-id">withStepBudget</span>()
+    -&gt;<span class="tok-id">withExpansionBudget</span>(<span class="tok-num">50</span>);
+
+<span class="tok-var">$shortExpression</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$shortPlan</span>);
+<span class="tok-var">$originalDepth</span> = <span class="tok-var">$expressionPlan</span>-&gt;<span class="tok-id">maxDepth</span>();
+<span class="tok-var">$shortDepth</span> = <span class="tok-var">$shortPlan</span>-&gt;<span class="tok-id">maxDepth</span>();</code></pre>
+</div><div class="doc-block" data-diff="same"><p>Here <code>$originalDepth</code> remains <code>3</code> and <code>$shortDepth</code> is <code>1</code>.</p>
+</div><div class="doc-block" data-diff="same"><p><code>withMaxDepth()</code> sets the expansion-count threshold at which shorter completions are preferred; values below <code>1</code> become <code>1</code>. <code>withStepBudget()</code> makes that preference minimize remaining expansions before terminal length. <code>withExpansionBudget()</code> sets a positive total expansion limit, replacing the default of 5,000. A limit too small to complete the requested structure raises <code>GenerationException</code>.</p>
+</div><div class="doc-block" data-diff="same"><h4>Select production alternatives</h4>
+</div><div class="doc-block" data-diff="same"><p>Use <code>constrained()</code> to restrict how a grammar rule expands. This expression must expand to an integer term:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code><span class="tok-var">$integerPlan</span> = <span class="tok-id">GenerationPlan</span>::<span class="tok-id">constrained</span>(<span class="tok-str">&#039;expr&#039;</span>, [
+    <span class="tok-str">&#039;expr&#039;</span> =&gt; [<span class="tok-id">ProductionPattern</span>::<span class="tok-id">exactly</span>(<span class="tok-str">&#039;term&#039;</span>)],
+    <span class="tok-str">&#039;term&#039;</span> =&gt; [<span class="tok-id">ProductionPattern</span>::<span class="tok-id">exactly</span>(<span class="tok-str">&#039;INTEGER&#039;</span>)],
+])-&gt;<span class="tok-id">requiringNonEmpty</span>()-&gt;<span class="tok-id">withMaxDepth</span>(<span class="tok-num">3</span>);
+
+<span class="tok-var">$integer</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$integerPlan</span>);</code></pre>
+</div><div class="doc-block" data-diff="same"><p><code>exactly()</code> matches the complete sequence of immediate symbols. <code>containing()</code> accepts an alternative containing all the named symbols, while <code>nonEmpty()</code> excludes a production with no symbols. Rule and symbol names are case-sensitive and belong to the selected grammar.</p>
+</div><div class="doc-block" data-diff="same"><h4>Constrain repeated occurrences</h4>
+</div><div class="doc-block" data-diff="same"><p>Each rule maps to a list of patterns, applied to successive visits during leftmost derivation. This example selects addition, then requires each operand to be a term:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code><span class="tok-var">$sumPlan</span> = <span class="tok-id">GenerationPlan</span>::<span class="tok-id">constrained</span>(<span class="tok-str">&#039;expr&#039;</span>, [
+    <span class="tok-str">&#039;expr&#039;</span> =&gt; [
+        <span class="tok-id">ProductionPattern</span>::<span class="tok-id">exactly</span>(<span class="tok-str">&#039;expr&#039;</span>, <span class="tok-str">&#039;PLUS&#039;</span>, <span class="tok-str">&#039;expr&#039;</span>),
+        <span class="tok-id">ProductionPattern</span>::<span class="tok-id">exactly</span>(<span class="tok-str">&#039;term&#039;</span>),
+        <span class="tok-id">ProductionPattern</span>::<span class="tok-id">exactly</span>(<span class="tok-str">&#039;term&#039;</span>),
+    ],
+])-&gt;<span class="tok-id">withPatternForEveryOccurrence</span>(<span class="tok-str">&#039;term&#039;</span>, <span class="tok-id">ProductionPattern</span>::<span class="tok-id">exactly</span>(<span class="tok-str">&#039;INTEGER&#039;</span>))
+    -&gt;<span class="tok-id">requiringNonEmpty</span>()
+    -&gt;<span class="tok-id">withMaxDepth</span>(<span class="tok-num">6</span>);
+
+<span class="tok-var">$sum</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$sumPlan</span>);</code></pre>
+</div><div class="doc-block" data-diff="same"><p>Occurrence counts start at zero and reset on each call. Once an occurrence-specific list is exhausted, subsequent visits use the every-occurrence pattern if one was supplied. An occurrence-specific pattern takes precedence over that fallback. A condition on a rule that is never visited has no effect.</p>
+</div><div class="doc-block" data-diff="same"><h4>Select token spellings</h4>
+</div><div class="doc-block" data-diff="same"><p>Use <code>withLexemes()</code> to specify text for successive occurrences of a terminal. The addition above can use two fixed integer values:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code><span class="tok-var">$fixedSumPlan</span> = <span class="tok-var">$sumPlan</span>-&gt;<span class="tok-id">withLexemes</span>([
+    <span class="tok-str">&#039;INTEGER&#039;</span> =&gt; [<span class="tok-str">&#039;1&#039;</span>, <span class="tok-str">&#039;2&#039;</span>],
+]);
+
+<span class="tok-var">$fixedSum</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$fixedSumPlan</span>);</code></pre>
+</div><div class="doc-block" data-diff="same"><p>A spelling must be accepted by that token&#039;s lexical candidates or value domain. This controls SQL text; it does not bind database parameters. Calling <code>withLexemes()</code> again replaces the previous spelling map.</p>
+</div><div class="doc-block" data-diff="same"><h4>Generate a lexical value directly</h4>
+</div><div class="doc-block" data-diff="same"><p>Use a lexical plan when only one identifier or literal is needed:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code><span class="tok-var">$literalPlan</span> = <span class="tok-id">GenerationPlan</span>::<span class="tok-id">lexical</span>(<span class="tok-str">&#039;integer_literal&#039;</span>, [
+    <span class="tok-str">&#039;min&#039;</span> =&gt; <span class="tok-num">42</span>,
+    <span class="tok-str">&#039;max&#039;</span> =&gt; <span class="tok-num">42</span>,
+]);
+<span class="tok-var">$literal</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$literalPlan</span>);
+
+<span class="tok-var">$quoted</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">generate</span>(
+    <span class="tok-id">\SqlFaker\Sqlite\GenerationPlans</span>::<span class="tok-id">quotedIdentifier</span>(<span class="tok-id">minLength</span>: <span class="tok-num">4</span>, <span class="tok-id">maxLength</span>: <span class="tok-num">8</span>),
+);</code></pre>
+</div><div class="doc-block" data-diff="same"><p><code>$literal</code> is the string <code>&#039;42&#039;</code>. The dialect factories also provide <code>stringLiteral()</code>, <code>integerLiteral()</code>, and <code>decimalLiteral()</code> with explicit bounds. Lexical plans construct a value directly, so grammar production patterns and expansion limits do not affect them.</p>
+</div><div class="doc-block" data-diff="same"><h4>Compile a plan with callbacks</h4>
+</div><div class="doc-block" data-diff="same"><p>Use <code>planner()-&gt;build()</code> to retain selected productions and lexical candidates. Each callback receives the number of available choices and returns a zero-based index. Returning <code>null</code> for a production asks for a shortest completion:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code><span class="tok-var">$builder</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">planner</span>();
+<span class="tok-var">$budget</span> = <span class="tok-var">$builder</span>-&gt;<span class="tok-id">minimumExpansions</span>(<span class="tok-var">$integerPlan</span>);
+
+<span class="tok-var">$replayPlan</span> = <span class="tok-var">$builder</span>-&gt;<span class="tok-id">build</span>(
+    <span class="tok-var">$integerPlan</span>,
+    <span class="tok-var">$budget</span>,
+    <span class="tok-kw">static</span> <span class="tok-kw">fn</span> (<span class="tok-id">int</span> <span class="tok-var">$count</span>): ?<span class="tok-id">int</span> =&gt; <span class="tok-id">null</span>,
+    <span class="tok-kw">static</span> <span class="tok-kw">fn</span> (<span class="tok-id">int</span> <span class="tok-var">$count</span>): <span class="tok-id">int</span> =&gt; <span class="tok-num">0</span>,
+);
+
+<span class="tok-var">$first</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$replayPlan</span>);
+<span class="tok-var">$second</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$replayPlan</span>);
+<span class="tok-var">$sameSql</span> = <span class="tok-var">$first</span> === <span class="tok-var">$second</span>;</code></pre>
+</div><div class="doc-block" data-diff="same"><p>The compiled plan retains production ordinals, token spellings, and candidate keys, including boundary choices. Keep it with the same dialect, grammar version, and SQL Faker version used to compile it.</p>
+</div><div class="doc-block" data-diff="same"><h4>Compile a plan from bytes</h4>
+</div><div class="doc-block" data-diff="same"><p>To derive those choices from a byte string, use <code>BytePlanCompiler</code> with a planner and a grammar-based constraint plan:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code><span class="tok-var">$compiler</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlFaker\Generation\Choice\BytePlanCompiler</span>();
+<span class="tok-var">$bytePlan</span> = <span class="tok-var">$compiler</span>-&gt;<span class="tok-id">compile</span>(
+    <span class="tok-str">&#039;example&#039;</span>,
+    <span class="tok-var">$provider</span>-&gt;<span class="tok-id">planner</span>(),
+    <span class="tok-var">$integerPlan</span>-&gt;<span class="tok-id">withExpansionBudget</span>(<span class="tok-num">20</span>),
+);
+
+<span class="tok-var">$first</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$bytePlan</span>);
+<span class="tok-var">$second</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$bytePlan</span>);
+<span class="tok-var">$sameSql</span> = <span class="tok-var">$first</span> === <span class="tok-var">$second</span>;</code></pre>
+</div><div class="doc-block" data-diff="same"><p>The first four bytes choose an expansion budget within the feasible range. Remaining bytes supply production and lexical choices; omitted bytes use defaults. The input must be a grammar plan with a feasible positive expansion count and a maximum budget no greater than 1,000,000. Use direct lexical generation for lexical-value plans.</p>
+</div><div class="doc-block" data-diff="same"><h3>MySQL</h3>
+</div><div class="doc-block" data-diff="same"><h4>Require non-empty row values</h4>
+</div><div class="doc-block" data-diff="same"><p>Use <code>withoutEmptyRows()</code> to constrain every row-value list reached during generation:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code><span class="tok-var">$mysqlFaker</span> = <span class="tok-id">\Faker\Factory</span>::<span class="tok-id">create</span>();
+<span class="tok-var">$mysql</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlFaker\MySqlProvider</span>(<span class="tok-var">$mysqlFaker</span>, <span class="tok-str">&#039;mysql-8.4.7&#039;</span>);
+<span class="tok-var">$mysqlFaker</span>-&gt;<span class="tok-id">seed</span>(<span class="tok-num">7</span>);
+
+<span class="tok-var">$rowsPlan</span> = <span class="tok-id">\SqlFaker\MySql\GenerationPlans</span>::<span class="tok-id">withoutEmptyRows</span>(
+    <span class="tok-id">\SqlFaker\MySql\StatementType</span>::<span class="tok-id">Insert</span>-&gt;<span class="tok-id">value</span>,
+)-&gt;<span class="tok-id">withMaxDepth</span>(<span class="tok-num">6</span>);
+
+<span class="tok-var">$sql</span> = <span class="tok-var">$mysql</span>-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$rowsPlan</span>);</code></pre>
+</div><div class="doc-block" data-diff="same"><p>The plan takes a rule-name string; the corresponding Faker <code>sqlWithoutEmptyRows()</code> helper takes the enum itself. The condition concerns row-value syntax, not insert-column counts or query results.</p>
+</div><div class="doc-block" data-diff="same"><h4>Use a MySQL feature preset</h4>
+</div><div class="doc-block" data-diff="same"><p>A preset supplies the production constraints for a particular SQL form:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code><span class="tok-var">$fullTextPlan</span> = <span class="tok-id">\SqlFaker\MySql\GenerationPlans</span>::<span class="tok-id">fullTextSearchStatement</span>()
+    -&gt;<span class="tok-id">withMaxDepth</span>(<span class="tok-num">6</span>);
+
+<span class="tok-var">$sql</span> = <span class="tok-var">$mysql</span>-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$fullTextPlan</span>);</code></pre>
+</div><div class="doc-block" data-diff="same"><p>This selects MATCH ... AGAINST. Other MySQL presets include <code>insertRowAliasUpsertStatement()</code>, <code>multiTableUpdateStatement()</code>, and <code>partitionSelectStatement()</code>. Select a grammar version that supports the requested feature.</p>
+</div><div class="doc-block" data-diff="same"><h3>PostgreSQL</h3>
+</div><div class="doc-block" data-diff="same"><h4>Generate full-text matching syntax</h4>
+</div><div class="doc-block" data-diff="same"><p>Use PostgreSQL&#039;s preset to select a SELECT expression with the <code>@@</code> operator:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code><span class="tok-var">$pgFaker</span> = <span class="tok-id">\Faker\Factory</span>::<span class="tok-id">create</span>();
+<span class="tok-var">$postgres</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlFaker\PostgreSqlProvider</span>(<span class="tok-var">$pgFaker</span>, <span class="tok-str">&#039;pg-17.2&#039;</span>);
+<span class="tok-var">$pgFaker</span>-&gt;<span class="tok-id">seed</span>(<span class="tok-num">7</span>);
+
+<span class="tok-var">$fullTextPlan</span> = <span class="tok-id">\SqlFaker\PostgreSql\GenerationPlans</span>::<span class="tok-id">fullTextSearchStatement</span>()
+    -&gt;<span class="tok-id">withMaxDepth</span>(<span class="tok-num">6</span>);
+
+<span class="tok-var">$sql</span> = <span class="tok-var">$postgres</span>-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$fullTextPlan</span>);</code></pre>
+</div><div class="doc-block" data-diff="same"><p>The preset includes the operator spelling. The names and values remain generated; the preset does not create a full-text index or database columns.</p>
+</div><div class="doc-block" data-diff="same"><h4>Choose a DML plan</h4>
+</div><div class="doc-block" data-diff="same"><p><code>domainDmlStatements()</code> returns three plans, in INSERT, UPDATE, DELETE order. Choose a plan before generating its SQL:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code><span class="tok-var">$plans</span> = <span class="tok-id">\SqlFaker\PostgreSql\GenerationPlans</span>::<span class="tok-id">domainDmlStatements</span>();
+<span class="tok-var">$insertPlan</span> = <span class="tok-var">$plans</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">withMaxDepth</span>(<span class="tok-num">3</span>);
+
+<span class="tok-var">$insert</span> = <span class="tok-var">$postgres</span>-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$insertPlan</span>);</code></pre>
+</div><div class="doc-block" data-diff="same"><p>These plans omit a top-level WITH clause. They do not create a domain or associate columns with one. PostgreSQL also supplies presets such as <code>copyStatement()</code>, <code>tableSampleStatement()</code>, and <code>partialIndexUpsertStatement()</code>.</p>
+</div><div class="doc-block" data-diff="same"><h3>SQLite</h3>
+</div><div class="doc-block" data-diff="same"><h4>Generate a complete CREATE TABLE statement</h4>
+</div><div class="doc-block" data-diff="same"><p>Select the <code>cmd</code> alternative containing both the opening table declaration and its definition:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code><span class="tok-var">$createTablePlan</span> = <span class="tok-id">GenerationPlan</span>::<span class="tok-id">constrained</span>(<span class="tok-str">&#039;cmd&#039;</span>, [
+    <span class="tok-str">&#039;cmd&#039;</span> =&gt; [<span class="tok-id">ProductionPattern</span>::<span class="tok-id">containing</span>(<span class="tok-str">&#039;create_table&#039;</span>, <span class="tok-str">&#039;create_table_args&#039;</span>)],
+])-&gt;<span class="tok-id">requiringNonEmpty</span>()-&gt;<span class="tok-id">withStepBudget</span>()-&gt;<span class="tok-id">withMaxDepth</span>(<span class="tok-num">6</span>);
+
+<span class="tok-var">$createTable</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$createTablePlan</span>);</code></pre>
+</div><div class="doc-block" data-diff="same"><p>Starting at <code>create_table</code> alone selects only the opening fragment. The <code>cmd</code> alternative includes the column definition or AS SELECT portion as well.</p>
+</div><div class="doc-block" data-diff="same"><h4>Choose two DML statements</h4>
+</div><div class="doc-block" data-diff="same"><p>Pass a choice for each statement: <code>0</code> selects INSERT, <code>1</code> UPDATE, and <code>2</code> DELETE.</p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code><span class="tok-var">$twoStatements</span> = <span class="tok-id">\SqlFaker\Sqlite\GenerationPlans</span>::<span class="tok-id">multiDmlStatement</span>(
+    <span class="tok-id">firstChoice</span>: <span class="tok-num">0</span>,
+    <span class="tok-id">secondChoice</span>: <span class="tok-num">1</span>,
+)-&gt;<span class="tok-id">withMaxDepth</span>(<span class="tok-num">6</span>);
+
+<span class="tok-var">$sql</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$twoStatements</span>);</code></pre>
+</div><div class="doc-block" data-diff="same"><p>The result contains two semicolon-terminated statements, first INSERT and then UPDATE. SQLite&#039;s preset plans use <code>withStepBudget()</code> to prefer fewer remaining expansions at the depth threshold.</p>
+</div></section>
+</main>
+<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div>
+<script src="../../../../assets/search-index.js" defer></script>
+<script src="../../../../assets/app.js" defer></script>
+</body>
+</html>
