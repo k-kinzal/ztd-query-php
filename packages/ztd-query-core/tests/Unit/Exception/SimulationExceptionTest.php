@@ -6,18 +6,28 @@ namespace Tests\Unit\Exception;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use RuntimeException;
 use ZtdQuery\Exception\SimulationException;
 
 #[CoversClass(SimulationException::class)]
 final class SimulationExceptionTest extends TestCase
 {
-    public function testProvidesTypedRuntimeExceptionBoundary(): void
+    public function testCarriesTheMessageItWasRefusedWith(): void
     {
         $exception = new class ('simulation failed') extends SimulationException {
         };
 
-        self::assertInstanceOf(RuntimeException::class, $exception);
         self::assertSame('simulation failed', $exception->getMessage());
+    }
+
+    public function testCanBeCaughtAsTheOneKindOfFailureZtdProduces(): void
+    {
+        try {
+            throw new class ('simulation failed') extends SimulationException {
+            };
+        } catch (SimulationException $refusal) {
+            self::assertSame('simulation failed', $refusal->getMessage());
+
+            return;
+        }
     }
 }

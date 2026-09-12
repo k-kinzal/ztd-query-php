@@ -4,18 +4,28 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Connection;
 
+use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use Tests\Fake\FakeConnection;
-use ZtdQuery\Connection\ConnectionInterface;
-use PHPUnit\Framework\Attributes\CoversNothing;
 
 #[CoversNothing]
 final class ConnectionInterfaceTest extends TestCase
 {
-    public function testFakeConnectionImplementsInterface(): void
+    public function testQueryAnswersAStatementOverTheRowsTheConnectionHolds(): void
     {
-        $connection = new FakeConnection([]);
+        $connection = new FakeConnection([], [['id' => 1]]);
 
-        self::assertInstanceOf(ConnectionInterface::class, $connection);
+        $statement = $connection->query('SELECT id FROM users');
+
+        self::assertNotFalse($statement);
+        self::assertSame([['id' => 1]], $statement->fetchAll());
+    }
+
+    public function testQueryAnswersFalseWhereTheStatementCouldNotBeRun(): void
+    {
+        $connection = new FakeConnection();
+        $connection->failOnQuery('SELECT id FROM missing');
+
+        self::assertFalse($connection->query('SELECT id FROM missing'));
     }
 }

@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Rewrite;
 
+/**
+ * Works out what each column of a rewritten INSERT ... VALUES reads back as.
+ */
 final class InsertRowProjectionPlanner
 {
     /**

@@ -9,17 +9,17 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Connection\ResultColumn;
 use ZtdQuery\Connection\ResultSet;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(ResultSet::class)]
-#[UsesClass(ColumnType::class)]
+#[UsesClass(ColumnDeclaration::class)]
 #[UsesClass(ResultColumn::class)]
 final class ResultSetTest extends TestCase
 {
     public function testCarriesEmptyRowsAndColumnsIndependently(): void
     {
-        $column = new ResultColumn('id', new ColumnType(ColumnTypeFamily::INTEGER, 'int4'));
+        $column = new ResultColumn('id', new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'int4'));
         $result = new ResultSet([], [$column]);
 
         self::assertSame([], $result->rows);

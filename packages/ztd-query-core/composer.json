@@ -7,44 +7,82 @@
         "php": "^8.1"
     },
     "require-dev": {
-        "phpstan/phpstan": "^2.1",
-        "phpstan/phpstan-strict-rules": "^2.0",
+        "brianium/paratest": "^7.3",
+        "deptrac/deptrac": "^3.0 || ^4.6",
         "friendsofphp/php-cs-fixer": "^3.92",
+        "k-kinzal/php-ai-toolkit": "dev-main",
+        "nikic/php-fuzzer": "^0.0.11",
+        "phpbench/phpbench": "^1.4",
+        "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
+        "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^10.5 || ^11 || ^12 || ^13",
-        "infection/infection": "^0.28 || ^0.29 || ^0.30 || ^0.31 || ^0.32 || ^0.34.1",
-        "k-kinzal/phpstan-custom-rules": "@dev",
-        "brianium/paratest": "^6.11 || ^7"
+        "squizlabs/php_codesniffer": "^4.0.4"
     },
     "repositories": [
         {
-            "type": "path",
-            "url": "../phpstan-custom-rules"
+            "name": "php-ai-toolkit",
+            "type": "vcs",
+            "url": "https://github.com/k-kinzal/php-ai-toolkit.git"
         }
     ],
     "autoload": {
         "psr-4": {
             "ZtdQuery\\": "src/"
-        }
+        },
+        "files": [
+            "src/Compatibility/ClassAliases.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
-            "Tests\\": "tests/"
+            "Tests\\": "tests/",
+            "Fuzz\\": "fuzz/",
+            "Bench\\": "bench/"
         }
     },
     "scripts": {
-        "test": "paratest --processes=auto",
-        "test:unit": "phpunit tests/Unit/",
+        "test": "@php tests/run.php --parallel",
+        "test:unit": "@php tests/run.php --testsuite unit",
         "lint": [
             "@format:check",
-            "phpstan analyse --memory-limit=512M"
+            "@phpstan",
+            "@loc-guard",
+            "@tree-guard",
+            "@deptrac",
+            "@compat"
         ],
         "format": "php-cs-fixer fix --allow-risky=yes",
         "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
-        "infection": "infection --threads=max --show-mutations --no-progress"
+        "phpstan": "phpstan analyse --memory-limit=512M",
+        "compat": "phpcs",
+        "loc-guard": "loc-guard --config=loc.yaml",
+        "tree-guard": "tree-guard --config=tree.yaml",
+        "deptrac": [
+            "deptrac analyse --config-file=deptrac.yaml",
+            "deptrac debug:unassigned --config-file=deptrac.yaml"
+        ],
+        "doctest": "@php tests/run.php --testsuite doctest",
+        "bench": "phpbench run --report=aggregate",
+        "bench:quick": "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10",
+        "bench:full": "@bench",
+        "fuzz": "@fuzz:token-stream",
+        "fuzz:token-stream": [
+            "@php fuzz/seed-corpus.php",
+            "php-fuzzer fuzz fuzz/fuzz_token_stream.php fuzz/corpus/token-stream/"
+        ],
+        "docgen": "cd ../.. && packages/ztd-query-core/vendor/bin/docgen --packages=packages/ztd-query-core --deptrac=\"$PWD/packages/ztd-query-core/deptrac.yaml\" --output=packages/ztd-query-core/build/docs --cache-dir=packages/ztd-query-core/build/docgen-cache --title=k-kinzal/ztd-query-core",
+        "docgen:serve": "@docgen --serve",
+        "docgen:diff": "@docgen --diff=origin/main --serve",
+        "docgen:fresh": "@docgen --no-cache"
     },
     "config": {
         "allow-plugins": {
-            "infection/extension-installer": true
-        }
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        },
+        "sort-packages": true
+    },
+    "support": {
+        "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-core",
+        "docs": "https://k-kinzal.github.io/ztd-query-php/core/k-kinzal/ztd-query-core/"
     }
 }

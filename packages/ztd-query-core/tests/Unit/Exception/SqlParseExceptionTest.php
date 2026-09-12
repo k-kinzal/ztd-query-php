@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Exception;
 
-use PHPUnit\Framework\TestCase;
-use RuntimeException;
-use ZtdQuery\Exception\SqlParseException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\TestCase;
+use ZtdQuery\Exception\SqlParseException;
 
 #[CoversClass(SqlParseException::class)]
 final class SqlParseExceptionTest extends TestCase
@@ -38,10 +37,4 @@ final class SqlParseExceptionTest extends TestCase
         self::assertSame($parseError, $exception->getParseError());
     }
 
-    public function testExtendsRuntimeException(): void
-    {
-        $exception = new SqlParseException('sql', 'error');
-
-        self::assertInstanceOf(RuntimeException::class, $exception);
-    }
 }

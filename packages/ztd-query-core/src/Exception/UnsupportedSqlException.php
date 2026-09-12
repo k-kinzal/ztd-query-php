@@ -4,34 +4,40 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Exception;
 
+use Throwable;
+
 /**
- * Exception thrown when an unsupported SQL statement is executed.
+ * Refuses a statement ZTD cannot simulate.
+ *
+ * ZTD never writes to the database, so a statement it cannot work out the
+ * effect of is refused rather than run. The statement is carried whole,
+ * because what a caller needs in order to act on this is which statement was
+ * refused, not only that one was.
  */
 final class UnsupportedSqlException extends SimulationException
 {
-    /**
-     * The unsupported SQL statement.
-     */
+    /** @var string The statement being refused, as written */
     private string $sql;
 
-    /**
-     * The category of the unsupported SQL.
-     */
+    /** @var string What about it ZTD cannot simulate */
     private string $category;
 
     /**
-     * @param string $sql The unsupported SQL statement.
-     * @param string $category The category of the unsupported SQL.
+     * @param string $sql The statement being refused, as written
+     * @param string $category What about it ZTD cannot simulate
+     * @param Throwable|null $previous What made this impossible, where something did
      */
-    public function __construct(string $sql, string $category = 'Unsupported')
+    public function __construct(string $sql, string $category = 'Unsupported', ?Throwable $previous = null)
     {
-        parent::__construct(sprintf('ZTD Write Protection: %s SQL statement.', $category));
+        parent::__construct(sprintf('ZTD Write Protection: %s SQL statement.', $category), 0, $previous);
         $this->sql = $sql;
         $this->category = $category;
     }
 
     /**
-     * Get the unsupported SQL statement.
+     * Answers the statement being refused.
+     *
+     * @return string The statement, as written
      */
     public function getSql(): string
     {
@@ -39,7 +45,9 @@ final class UnsupportedSqlException extends SimulationException
     }
 
     /**
-     * Get the category of the unsupported SQL.
+     * Answers what about the statement ZTD cannot simulate.
+     *
+     * @return string What was refused
      */
     public function getCategory(): string
     {

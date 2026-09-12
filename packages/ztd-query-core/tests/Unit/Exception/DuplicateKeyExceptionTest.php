@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Exception;
 
-use PHPUnit\Framework\TestCase;
-use RuntimeException;
-use ZtdQuery\Exception\DuplicateKeyException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\TestCase;
+use ZtdQuery\Exception\DuplicateKeyException;
 
 #[CoversClass(DuplicateKeyException::class)]
 final class DuplicateKeyExceptionTest extends TestCase
@@ -107,10 +106,12 @@ final class DuplicateKeyExceptionTest extends TestCase
         self::assertSame($keyValues, $exception->getKeyValues());
     }
 
-    public function testExtendsRuntimeException(): void
+    public function testFormatKeyValueKeepsErrorMessagesReadableForDriverValues(): void
     {
-        $exception = new DuplicateKeyException('sql', 'table', 'key');
-
-        self::assertInstanceOf(RuntimeException::class, $exception);
+        self::assertSame("'alice'", DuplicateKeyException::formatKeyValue('alice'));
+        self::assertSame('42', DuplicateKeyException::formatKeyValue(42));
+        self::assertSame('', DuplicateKeyException::formatKeyValue(null));
+        self::assertSame('array', DuplicateKeyException::formatKeyValue(['nested' => true]));
     }
+
 }

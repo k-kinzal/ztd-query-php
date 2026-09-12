@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Contract;
 
 use PHPUnit\Framework\TestCase;
+use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Rewrite\QueryKind;
 
 /**
@@ -19,18 +20,51 @@ abstract class QueryClassifierContractTest extends TestCase
     /**
      * Classify a SQL statement into a QueryKind, or return null if unrecognized.
      */
+    /**
+     * @throws UnsupportedSqlException When the statement is not one ZTD can classify at all
+     */
     abstract protected function classify(string $sql): ?QueryKind;
 
+    /**
+     * Answers a SELECT this dialect accepts.
+     *
+     * @return string The statement
+     */
     abstract protected function selectSql(): string;
 
+    /**
+     * Answers an INSERT this dialect accepts.
+     *
+     * @return string The statement
+     */
     abstract protected function insertSql(): string;
 
+    /**
+     * Answers an UPDATE this dialect accepts.
+     *
+     * @return string The statement
+     */
     abstract protected function updateSql(): string;
 
+    /**
+     * Answers a DELETE this dialect accepts.
+     *
+     * @return string The statement
+     */
     abstract protected function deleteSql(): string;
 
+    /**
+     * Answers a CREATE TABLE this dialect accepts.
+     *
+     * @return string The statement
+     */
     abstract protected function createTableSql(): string;
 
+    /**
+     * Answers a DROP TABLE this dialect accepts.
+     *
+     * @return string The statement
+     */
     abstract protected function dropTableSql(): string;
 
     /**
@@ -94,23 +128,17 @@ abstract class QueryClassifierContractTest extends TestCase
     }
 
     /**
-     * Garbage input must return null or throw an exception.
+     * Garbage input must return null or be refused as unclassifiable.
      */
     public function testNullOrExceptionOnGarbageInput(): void
     {
-        $exceptionThrown = false;
-
         try {
-            $kind = $this->classify('NOT VALID SQL %%% @@@');
-        } catch (\Throwable $e) {
-            $exceptionThrown = true;
-            $kind = null;
-        }
-
-        if (!$exceptionThrown) {
-            self::assertNull($kind, 'Garbage input should return null if no exception is thrown');
-        } else {
-            self::addToAssertionCount(1);
+            self::assertNull(
+                $this->classify('NOT VALID SQL %%% @@@'),
+                'Garbage input should return null if it is not refused',
+            );
+        } catch (UnsupportedSqlException $refusal) {
+            self::assertNotSame('', $refusal->getMessage());
         }
     }
 }

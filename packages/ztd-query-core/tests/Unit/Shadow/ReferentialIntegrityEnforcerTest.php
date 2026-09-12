@@ -8,20 +8,23 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\ForeignKeyViolationException;
-use ZtdQuery\Schema\CandidateKeySet;
-use ZtdQuery\Schema\ForeignKeyDefinition;
-use ZtdQuery\Schema\ReferentialAction;
+use ZtdQuery\Schema\Key\CandidateKeySet;
+use ZtdQuery\Schema\Key\ForeignKeyDefinition;
+use ZtdQuery\Schema\Key\ReferentialAction;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
-use ZtdQuery\Shadow\Mutation\DeleteMutation;
-use ZtdQuery\Shadow\Mutation\CreateTableMutation;
-use ZtdQuery\Shadow\Mutation\InsertMutation;
-use ZtdQuery\Shadow\Mutation\MultiTruncateMutation;
-use ZtdQuery\Shadow\Mutation\SynchronizeMutation;
-use ZtdQuery\Shadow\Mutation\UpdateMutation;
+use ZtdQuery\Shadow\CascadedChildren;
+use ZtdQuery\Shadow\FollowedConstraint;
 use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
+use ZtdQuery\Shadow\Mutation\Row\DeleteMutation;
+use ZtdQuery\Shadow\Mutation\Row\InsertMutation;
+use ZtdQuery\Shadow\Mutation\Row\UpdateMutation;
 use ZtdQuery\Shadow\Mutation\ShadowMutation;
+use ZtdQuery\Shadow\Mutation\Table\CreateTableMutation;
+use ZtdQuery\Shadow\Mutation\Table\MultiTruncateMutation;
+use ZtdQuery\Shadow\Mutation\Table\SynchronizeMutation;
 use ZtdQuery\Shadow\ReferentialIntegrityEnforcer;
+use ZtdQuery\Shadow\Row\RowPairing;
 use ZtdQuery\Shadow\ShadowStore;
 
 #[CoversClass(ReferentialIntegrityEnforcer::class)]
@@ -38,6 +41,21 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(UpdateMutation::class)]
 #[UsesClass(MutationRowIdentity::class)]
 #[UsesClass(ShadowStore::class)]
+#[UsesClass(\ZtdQuery\Shadow\ForeignKeyCascade::class)]
+#[UsesClass(\ZtdQuery\Shadow\ForeignKeyEnds::class)]
+#[UsesClass(\ZtdQuery\Shadow\ForeignKeyIntegrity::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\ConflictSearch::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\RowConstraints::class)]
+#[UsesClass(\ZtdQuery\Shadow\ParentKeyLookup::class)]
+#[UsesClass(\ZtdQuery\Shadow\Row\RowChange::class)]
+#[UsesClass(\ZtdQuery\Shadow\Row\RowMatch::class)]
+#[UsesClass(\ZtdQuery\Shadow\Row\RowMultiset::class)]
+#[UsesClass(\ZtdQuery\Shadow\Row\TableTransition::class)]
+#[UsesClass(\ZtdQuery\Shadow\TableTransitions::class)]
+#[UsesClass(CascadedChildren::class)]
+#[UsesClass(FollowedConstraint::class)]
+#[UsesClass(RowPairing::class)]
+#[UsesClass(\ZtdQuery\Schema\RowSet::class)]
 final class ReferentialIntegrityEnforcerTest extends TestCase
 {
     public function testSchemaMutationSkipsRowIntegrityChecks(): void
@@ -77,7 +95,7 @@ final class ReferentialIntegrityEnforcerTest extends TestCase
         self::assertSame([['id' => 1, 'parent_id' => 99]], $store->get('children'));
     }
 
-    public function testSynchronizationCascadesDeletedRows(): void
+    public function testSynchronizeCascadesDeletedRows(): void
     {
         $registry = new TableDefinitionRegistry();
         $parent = new TableDefinition(['id'], ['id' => 'INT'], ['id'], ['id'], []);

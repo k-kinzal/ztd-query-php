@@ -1,0 +1,56 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Sql\Reader;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\TestCase;
+use Tests\Fake\FakeSqlLexerProfiles;
+use ZtdQuery\Sql\LexicalDelimiters;
+use ZtdQuery\Sql\LexicalPattern;
+use ZtdQuery\Sql\Profile\SqlCommentProfile;
+use ZtdQuery\Sql\Profile\SqlParameterProfile;
+use ZtdQuery\Sql\Profile\SqlQuoteProfile;
+use ZtdQuery\Sql\Profile\SqlSymbolProfile;
+use ZtdQuery\Sql\Reader\SqlBlockCommentReader;
+use ZtdQuery\Sql\SqlLexerProfile;
+
+#[CoversClass(SqlBlockCommentReader::class)]
+#[UsesClass(SqlLexerProfile::class)]
+#[UsesClass(LexicalDelimiters::class)]
+#[UsesClass(LexicalPattern::class)]
+#[UsesClass(SqlCommentProfile::class)]
+#[UsesClass(SqlParameterProfile::class)]
+#[UsesClass(SqlQuoteProfile::class)]
+#[UsesClass(SqlSymbolProfile::class)]
+final class SqlBlockCommentReaderTest extends TestCase
+{
+    public function testEndAtAnswersNothingWhereNoCommentBegins(): void
+    {
+        self::assertNull((new SqlBlockCommentReader())->endAt('SELECT 1', 0, FakeSqlLexerProfiles::standard()));
+    }
+
+    public function testEndAtAnswersJustPastTheClosingDelimiter(): void
+    {
+        self::assertSame(9, (new SqlBlockCommentReader())->endAt('/* a b */1', 0, FakeSqlLexerProfiles::standard()));
+    }
+
+    public function testEndAtClosesAtTheFirstDelimiterWhereACommentHoldsNoOther(): void
+    {
+        $profile = FakeSqlLexerProfiles::custom(nestedBlockComments: false);
+
+        self::assertSame(12, (new SqlBlockCommentReader())->endAt('/* a /* b */ */', 0, $profile));
+    }
+
+    public function testEndAtReadsTheWholeOfANestedCommentWhereOneMayHoldAnother(): void
+    {
+        self::assertSame(15, (new SqlBlockCommentReader())->endAt('/* a /* b */ */', 0, FakeSqlLexerProfiles::standard()));
+    }
+
+    public function testEndAtStopsAtTheEndOfAStatementThatNeverClosedTheComment(): void
+    {
+        self::assertSame(4, (new SqlBlockCommentReader())->endAt('/* a', 0, FakeSqlLexerProfiles::standard()));
+    }
+}

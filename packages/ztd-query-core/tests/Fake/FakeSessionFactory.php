@@ -6,10 +6,10 @@ namespace Tests\Fake;
 
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
+use ZtdQuery\Platform\SessionFactory;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Session;
-use ZtdQuery\Platform\SessionFactory;
 use ZtdQuery\Shadow\ShadowStore;
 
 /**
@@ -30,6 +30,13 @@ final class FakeSessionFactory implements SessionFactory
         $this->reflector = $reflector ?? new FakeSchemaReflector();
     }
 
+    /**
+     * Builds.
+     *
+     * @param ConnectionInterface $connection
+     * @param ZtdConfig $config
+     * @return Session
+     */
     public function create(ConnectionInterface $connection, ZtdConfig $config): Session
     {
         $shadowStore = new ShadowStore();
@@ -51,6 +58,7 @@ final class FakeSessionFactory implements SessionFactory
             new ResultSelectRunner(),
             $config,
             $connection,
+            registry: $registry,
         );
     }
 }

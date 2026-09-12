@@ -6,6 +6,8 @@ namespace Tests\Fake;
 
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Schema\RowSet;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * Fake ConnectionInterface that returns pre-configured FakeStatements.
@@ -13,6 +15,8 @@ use ZtdQuery\Connection\StatementInterface;
  * Queries are recorded for inspection. Results can be pre-loaded per SQL string
  * or a default result set can be provided. Specific queries can be configured to
  * fail by returning false, enabling tests for error-handling branches.
+ *
+ * @phpstan-import-type Row from TableDefinition
  */
 final class FakeConnection implements ConnectionInterface
 {
@@ -26,16 +30,15 @@ final class FakeConnection implements ConnectionInterface
     /**
      * Pre-configured results keyed by SQL.
      *
-     * @var array<string, array<int, array<string, mixed>>>
+     * @var array<string, RowSet>
      */
     private array $results;
 
     /**
      * Default rows returned when no specific result is configured.
      *
-     * @var array<int, array<string, mixed>>
      */
-    private array $defaultRows;
+    private RowSet $defaultRows;
 
     /**
      * SQL patterns that should return false (simulating query failure).
@@ -45,15 +48,24 @@ final class FakeConnection implements ConnectionInterface
     private array $failPatterns = [];
 
     /**
-     * @param array<string, array<int, array<string, mixed>>> $results SQL => rows mapping.
-     * @param array<int, array<string, mixed>> $defaultRows Default rows for unconfigured queries.
+     * @param array<string, list<Row>> $results SQL => rows mapping.
+     * @param list<Row> $defaultRows Default rows for unconfigured queries.
      */
     public function __construct(array $results = [], array $defaultRows = [])
     {
-        $this->results = $results;
-        $this->defaultRows = $defaultRows;
+        $this->results = [];
+        foreach ($results as $sql => $rows) {
+            $this->addResult($sql, $rows);
+        }
+        $this->defaultRows = new RowSet($defaultRows);
     }
 
+    /**
+     * Query.
+     *
+     * @param string $sql
+     * @return StatementInterface|false
+     */
     public function query(string $sql): StatementInterface|false
     {
         $this->queries[] = $sql;
@@ -66,17 +78,17 @@ final class FakeConnection implements ConnectionInterface
 
         $rows = $this->results[$sql] ?? $this->defaultRows;
 
-        return new FakeStatement($rows);
+        return new FakeStatement(array_values($rows->rows));
     }
 
     /**
      * Pre-load a result for a specific SQL query.
      *
-     * @param array<int, array<string, mixed>> $rows
+     * @param list<Row> $rows
      */
     public function addResult(string $sql, array $rows): void
     {
-        $this->results[$sql] = $rows;
+        $this->results[$sql] = new RowSet($rows);
     }
 
     /**

@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Config;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Config\SqlBehaviorRule;
 use ZtdQuery\Config\UnsupportedSqlBehavior;
-use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(SqlBehaviorRule::class)]
 final class SqlBehaviorRuleTest extends TestCase
@@ -97,5 +97,13 @@ final class SqlBehaviorRuleTest extends TestCase
             $rule = new SqlBehaviorRule($pattern, UnsupportedSqlBehavior::Ignore);
             self::assertSame($expected, $rule->matches($sql), $label);
         });
+    }
+
+    public function testMatchesAnswersForTheStatementsTheRuleIsWrittenFor(): void
+    {
+        $rule = new SqlBehaviorRule('SELECT', UnsupportedSqlBehavior::Ignore);
+
+        self::assertTrue($rule->matches('select 1'));
+        self::assertFalse($rule->matches('INSERT INTO t VALUES (1)'));
     }
 }

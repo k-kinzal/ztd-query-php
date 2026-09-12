@@ -14,6 +14,11 @@ use ZtdQuery\Platform\IdentifierQuoter;
  */
 abstract class IdentifierQuoterContractTest extends TestCase
 {
+    /**
+     * Answers the quoter this dialect names things with.
+     *
+     * @return IdentifierQuoter The quoter under test
+     */
     abstract protected function createQuoter(): IdentifierQuoter;
 
     /**

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Rewrite;
 
+use RuntimeException;
 use ZtdQuery\Shadow\Mutation\ShadowMutation;
 
 /**
@@ -81,11 +82,41 @@ final class RewritePlan
         return $this->mutation;
     }
 
+    /**
+     * Answers the mutation a simulated write must carry.
+     *
+     * A plan whose kind says the write was simulated and that carries no
+     * mutation describes nothing the shadow could be told, so the statement
+     * is refused rather than read back as though it had been simulated.
+     *
+     * @return ShadowMutation The mutation
+     *
+     * @throws RuntimeException When the plan carries none
+     */
+    public function requireMutation(): ShadowMutation
+    {
+        if ($this->mutation === null) {
+            throw new RuntimeException('ZTD Write Protection: Missing shadow mutation for write simulation.');
+        }
+
+        return $this->mutation;
+    }
+
+    /**
+     * Returning projection.
+     *
+     * @return ?ReturningProjection
+     */
     public function returningProjection(): ?ReturningProjection
     {
         return $this->returningProjection;
     }
 
+    /**
+     * Affected rows mode.
+     *
+     * @return AffectedRowsMode
+     */
     public function affectedRowsMode(): AffectedRowsMode
     {
         return $this->affectedRowsMode;

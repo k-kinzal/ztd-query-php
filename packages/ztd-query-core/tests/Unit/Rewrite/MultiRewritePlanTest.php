@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Rewrite;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Rewrite\MultiRewritePlan;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 
 #[UsesClass(RewritePlan::class)]
 #[CoversClass(MultiRewritePlan::class)]

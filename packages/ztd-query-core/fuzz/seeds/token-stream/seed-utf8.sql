@@ -1,0 +1,1 @@
+SELECT '日本語', café FROM t WHERE name = 'é';

@@ -6,13 +6,13 @@ namespace Tests\Contract;
 
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\SqlRewriter;
-use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\TableDefinitionRegistry;
-use ZtdQuery\Shadow\Mutation\DeleteMutation;
-use ZtdQuery\Shadow\Mutation\InsertMutation;
-use ZtdQuery\Shadow\Mutation\UpdateMutation;
+use ZtdQuery\Shadow\Mutation\Row\DeleteMutation;
+use ZtdQuery\Shadow\Mutation\Row\InsertMutation;
+use ZtdQuery\Shadow\Mutation\Row\UpdateMutation;
 use ZtdQuery\Shadow\ShadowStore;
 
 /**
@@ -23,24 +23,77 @@ use ZtdQuery\Shadow\ShadowStore;
  */
 abstract class RewriterContractTest extends TestCase
 {
+    /**
+     * Answers the rewriter this dialect shadows with.
+     *
+     * @param ShadowStore $store Rows the rewriter will shadow tables with
+     * @param TableDefinitionRegistry $registry What those tables will and will not hold
+     *
+     * @return SqlRewriter The rewriter under test
+     */
     abstract protected function createRewriter(ShadowStore $store, TableDefinitionRegistry $registry): SqlRewriter;
 
+    /**
+     * Answers the parser this dialect reads a declaration with.
+     *
+     * @return SchemaParser The parser the rewriter is fed from
+     */
     abstract protected function createSchemaParser(): SchemaParser;
 
+    /**
+     * Answers a SELECT this dialect accepts.
+     *
+     * @return string The statement
+     */
     abstract protected function selectSql(): string;
 
+    /**
+     * Answers an INSERT this dialect accepts.
+     *
+     * @return string The statement
+     */
     abstract protected function insertSql(): string;
 
+    /**
+     * Answers an UPDATE this dialect accepts.
+     *
+     * @return string The statement
+     */
     abstract protected function updateSql(): string;
 
+    /**
+     * Answers a DELETE this dialect accepts.
+     *
+     * @return string The statement
+     */
     abstract protected function deleteSql(): string;
 
+    /**
+     * Answers a CREATE TABLE this dialect accepts.
+     *
+     * @return string The statement
+     */
     abstract protected function createTableSql(): string;
 
+    /**
+     * Answers a DROP TABLE this dialect accepts.
+     *
+     * @return string The statement
+     */
     abstract protected function dropTableSql(): string;
 
+    /**
+     * Answers a statement this dialect will not rewrite.
+     *
+     * @return string The statement
+     */
     abstract protected function unsupportedSql(): string;
 
+    /**
+     * Answers the CREATE TABLE the shared users fixture is declared by.
+     *
+     * @return string The statement
+     */
     abstract protected function usersCreateTableSql(): string;
 
     /**

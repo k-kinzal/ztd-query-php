@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tests\Fake;
 
 use ZtdQuery\Platform\CastRenderer;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 /**
@@ -13,17 +13,36 @@ use ZtdQuery\Schema\ColumnTypeFamily;
  */
 final class FakeCastRenderer implements CastRenderer
 {
-    public function renderCast(string $expression, ColumnType $type): string
+    /**
+     * Writes cast.
+     *
+     * @param string $expression
+     * @param ColumnDeclaration $type
+     * @return string
+     */
+    public function renderCast(string $expression, ColumnDeclaration $type): string
     {
         return sprintf('CAST(%s AS %s)', $expression, $this->mapType($type));
     }
 
-    public function renderNullCast(ColumnType $type): string
+    /**
+     * Writes null cast.
+     *
+     * @param ColumnDeclaration $type
+     * @return string
+     */
+    public function renderNullCast(ColumnDeclaration $type): string
     {
         return sprintf('CAST(NULL AS %s)', $this->mapType($type));
     }
 
-    private function mapType(ColumnType $type): string
+    /**
+     * Map type.
+     *
+     * @param ColumnDeclaration $type
+     * @return string
+     */
+    public function mapType(ColumnDeclaration $type): string
     {
         return match ($type->family) {
             ColumnTypeFamily::INTEGER => 'INTEGER',
