@@ -36,6 +36,17 @@ use Tests\Fixture\Plan\OrderWithDetailsPlan;
 #[UsesClass(\SqlFixture\Plan\Printing\PlanTables::class)]
 #[UsesClass(\SqlFixture\Plan\Printing\RelationGroups::class)]
 #[UsesClass(\SqlFixture\Plan\Printing\StatementPrinter::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\EmptyPlanException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\EmptyTableNameException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\MissingEndpointColumnsException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\InvalidTableNameException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\UnbalancedBracketsException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\UnexpectedPlanTokenException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\UnsupportedManyToManyException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\CompositeArityMismatchException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\DuplicateColumnBindingException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\CyclicDependencyException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\UnboundedSelfReferenceException::class)]
 final class FixturePlanTest extends TestCase
 {
     #[Test]

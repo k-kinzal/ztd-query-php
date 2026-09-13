@@ -27,6 +27,9 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\TypeParameters::class)]
 #[UsesClass(\SqlFixture\Schema\TypeShape::class)]
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinitionInput::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\InvalidSqlException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\ExpectedCreateTableException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class)]
 final class MySqlSchemaParserTest extends TestCase
 {
     #[Test]
@@ -133,14 +136,14 @@ final class MySqlSchemaParserTest extends TestCase
     #[Test]
     public function testThrowsExceptionForInvalidSql(): void
     {
-        $this->expectException(SchemaParseException::class);
+        $this->expectException(\SqlFixture\Schema\Exception\InvalidSqlException::class);
         (new MySqlSchemaParser())->parse('NOT A VALID SQL STATEMENT');
     }
 
     #[Test]
     public function testThrowsExceptionForNonCreateTable(): void
     {
-        $this->expectException(SchemaParseException::class);
+        $this->expectException(\SqlFixture\Schema\Exception\ExpectedCreateTableException::class);
         (new MySqlSchemaParser())->parse('SELECT * FROM users');
     }
 

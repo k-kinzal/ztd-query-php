@@ -12,3 +12,10 @@ parameters:
         - fuzz
         - tests
         - bench
+
+    ignoreErrors:
+        # Approved read-only ArrayAccess contract: offsetSet and offsetUnset reject writes.
+        - identifier: customRules.noBrokenCodeExpectation
+          message: '#^Delete this test case instead of expecting "LogicException" in expectException\(\):#'
+          path: tests/Unit/Fixture/FixtureSetTest.php
+          count: 2

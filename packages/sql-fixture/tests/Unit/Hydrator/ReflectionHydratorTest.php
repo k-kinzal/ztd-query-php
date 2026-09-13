@@ -34,6 +34,8 @@ use Tests\Fixture\Hydrator\TestEntityWithString;
 #[CoversClass(\SqlFixture\Hydrator\Reflection\PropertyNames::class)]
 #[CoversClass(\SqlFixture\Hydrator\Reflection\ValueConversion::class)]
 #[UsesClass(\SqlFixture\Hydrator\HydratorInterface::class)]
+#[UsesClass(\SqlFixture\Hydrator\Exception\ClassNotFoundException::class)]
+#[UsesClass(\SqlFixture\Hydrator\Exception\MissingConstructorArgumentException::class)]
 final class ReflectionHydratorTest extends TestCase
 {
     /**
@@ -107,7 +109,7 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testThrowsExceptionForMissingRequiredParameter(): void
     {
-        $this->expectException(HydrationException::class);
+        $this->expectException(\SqlFixture\Hydrator\Exception\MissingConstructorArgumentException::class);
         (new ReflectionHydrator())->hydrate(['name' => 'Test'], TestEntity::class);
     }
 
@@ -118,7 +120,7 @@ final class ReflectionHydratorTest extends TestCase
     public function testThrowsExceptionForNonExistentClass(): void
     {
         $hydrator = new ReflectionHydrator();
-        self::expectException(HydrationException::class);
+        self::expectException(\SqlFixture\Hydrator\Exception\ClassNotFoundException::class);
         /**
          * @var class-string<object> $class
          */

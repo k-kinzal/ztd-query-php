@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlFixture\Plan\Parsing;
 
 use SqlFixture\Plan\ColumnRef;
-use SqlFixture\Plan\PlanSyntaxException;
 use SqlFixture\Plan\Relation;
 use SqlFixture\Plan\RelationKind;
 
@@ -54,7 +53,9 @@ final class RelationReader
 
     /**
      * @return list<ColumnRef>
-     * @throws PlanSyntaxException
+     * @throws \SqlFixture\Plan\Exception\EmptyTableNameException
+     * @throws \SqlFixture\Plan\Exception\MissingEndpointColumnsException
+     * @throws \SqlFixture\Plan\Exception\UnexpectedPlanTokenException
      */
     public function readTargets(): array
     {
@@ -81,20 +82,22 @@ final class RelationReader
                 return $targets;
             }
 
-            throw PlanSyntaxException::unexpected($this->cursor->source, $this->cursor->offset, "',' or ']'");
+            throw new \SqlFixture\Plan\Exception\UnexpectedPlanTokenException($this->cursor->source, $this->cursor->offset, "',' or ']'");
         }
     }
 
     /**
      * Reads endpoint.
-     * @throws PlanSyntaxException
+     * @throws \SqlFixture\Plan\Exception\EmptyTableNameException
+     * @throws \SqlFixture\Plan\Exception\MissingEndpointColumnsException
+     * @throws \SqlFixture\Plan\Exception\UnexpectedPlanTokenException
      */
     public function readEndpoint(): ColumnRef
     {
         $table = $this->cursor->readIdentifier('a table name');
 
         if ($this->cursor->peek() !== '.') {
-            throw PlanSyntaxException::unexpected($this->cursor->source, $this->cursor->offset, "'.' after the table name");
+            throw new \SqlFixture\Plan\Exception\UnexpectedPlanTokenException($this->cursor->source, $this->cursor->offset, "'.' after the table name");
         }
         $this->cursor->offset++;
 
@@ -121,7 +124,7 @@ final class RelationReader
                 return new ColumnRef($table, $columns);
             }
 
-            throw PlanSyntaxException::unexpected($this->cursor->source, $this->cursor->offset, "',' or ')'");
+            throw new \SqlFixture\Plan\Exception\UnexpectedPlanTokenException($this->cursor->source, $this->cursor->offset, "',' or ')'");
         }
     }
 

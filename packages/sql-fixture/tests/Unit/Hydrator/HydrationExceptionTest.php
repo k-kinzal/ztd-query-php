@@ -10,26 +10,22 @@ use PHPUnit\Framework\TestCase;
 use SqlFixture\Hydrator\HydrationException;
 
 #[CoversClass(HydrationException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Hydrator\Exception\ClassNotFoundException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Hydrator\Exception\MissingConstructorArgumentException::class)]
 final class HydrationExceptionTest extends TestCase
 {
     #[Test]
     public function testClassNotFound(): void
     {
-        $exception = HydrationException::classNotFound('NonExistentClass');
+        $exception = new \SqlFixture\Hydrator\Exception\ClassNotFoundException('NonExistentClass');
         self::assertSame('Class not found: NonExistentClass', $exception->getMessage());
     }
 
     #[Test]
-    public function testConstructorParameterMissingNamesTheRequiredArgument(): void
+    public function testReportsMissingConstructorArgument(): void
     {
-        $exception = HydrationException::constructorParameterMissing('User', 'name');
+        $exception = new \SqlFixture\Hydrator\Exception\MissingConstructorArgumentException('User', 'name');
         self::assertSame('Missing required constructor parameter "name" for class "User"', $exception->getMessage());
     }
 
-    #[Test]
-    public function testPropertyNotAccessible(): void
-    {
-        $exception = HydrationException::propertyNotAccessible('User', 'password');
-        self::assertSame('Property "password" is not accessible in class "User"', $exception->getMessage());
-    }
 }

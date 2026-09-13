@@ -28,6 +28,14 @@ use SqlFixture\Plan\PlanSyntaxException;
 #[UsesClass(\SqlFixture\Plan\Printing\StatementPrinter::class)]
 #[UsesClass(\SqlFixture\Plan\Validation\PlanValidation::class)]
 #[UsesClass(\SqlFixture\Plan\Validation\TableName::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\EmptyPlanException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\EmptyTableNameException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\MissingEndpointColumnsException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\InvalidTableNameException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\UnbalancedBracketsException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\UnexpectedPlanTokenException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\UnsupportedManyToManyException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\CompositeArityMismatchException::class)]
 final class PlanSyntaxExceptionTest extends TestCase
 {
     #[Test]
@@ -35,7 +43,7 @@ final class PlanSyntaxExceptionTest extends TestCase
     {
         self::assertSame(
             'A fixture plan must name at least one table.',
-            PlanSyntaxException::emptyPlan()->getMessage()
+            (new \SqlFixture\Plan\Exception\EmptyPlanException())->getMessage()
         );
     }
 
@@ -44,7 +52,7 @@ final class PlanSyntaxExceptionTest extends TestCase
     {
         self::assertSame(
             'A relation endpoint must name a table.',
-            PlanSyntaxException::emptyTableName()->getMessage()
+            (new \SqlFixture\Plan\Exception\EmptyTableNameException())->getMessage()
         );
     }
 
@@ -53,14 +61,14 @@ final class PlanSyntaxExceptionTest extends TestCase
     {
         self::assertSame(
             'The endpoint for table order names no columns.',
-            PlanSyntaxException::noColumns('order')->getMessage()
+            (new \SqlFixture\Plan\Exception\MissingEndpointColumnsException('order'))->getMessage()
         );
     }
 
     #[Test]
     public function testUnexpectedReportsTheOffsetAndWhatWasWanted(): void
     {
-        $message = PlanSyntaxException::unexpected('order.id ! x.y', 9, "one of '<', '>' or '-'")->getMessage();
+        $message = (new \SqlFixture\Plan\Exception\UnexpectedPlanTokenException('order.id ! x.y', 9, "one of '<', '>' or '-'"))->getMessage();
 
         self::assertSame(
             "Cannot parse the fixture plan at offset 9: expected one of '<', '>' or '-'. "
@@ -72,7 +80,7 @@ final class PlanSyntaxExceptionTest extends TestCase
     #[Test]
     public function testManyToManyUnsupportedManyToManyPointsAtTheExplicitForm(): void
     {
-        $message = PlanSyntaxException::manyToManyUnsupported('order.id <> product.id')->getMessage();
+        $message = (new \SqlFixture\Plan\Exception\UnsupportedManyToManyException('order.id <> product.id'))->getMessage();
 
         self::assertSame(
             'The <> operator is not supported, because a fixture has to put rows in the '
@@ -86,10 +94,10 @@ final class PlanSyntaxExceptionTest extends TestCase
     #[Test]
     public function testCompositeArityMismatchReportsBothCounts(): void
     {
-        $message = PlanSyntaxException::compositeArityMismatch(
+        $message = (new \SqlFixture\Plan\Exception\CompositeArityMismatchException(
             ColumnRef::of('order', 'shop_id', 'no'),
             ColumnRef::of('order_detail', 'order_no')
-        )->getMessage();
+        ))->getMessage();
 
         self::assertSame(
             'The relation order.(shop_id, no) ... order_detail.order_no names 2 columns on '
@@ -101,7 +109,7 @@ final class PlanSyntaxExceptionTest extends TestCase
     #[Test]
     public function testNotATableNamePointsAtFrom(): void
     {
-        $message = PlanSyntaxException::notATableName('order.id < order_detail.order_id')->getMessage();
+        $message = (new \SqlFixture\Plan\Exception\InvalidTableNameException('order.id < order_detail.order_id'))->getMessage();
 
         self::assertSame(
             'A FixturePlan part must be a Relation or a plain table name, but '
@@ -116,7 +124,7 @@ final class PlanSyntaxExceptionTest extends TestCase
     {
         self::assertSame(
             'The fixture plan closes a bracket it never opened. Plan: a.id < b.a_id]',
-            PlanSyntaxException::unbalancedBrackets('a.id < b.a_id]')->getMessage()
+            (new \SqlFixture\Plan\Exception\UnbalancedBracketsException('a.id < b.a_id]'))->getMessage()
         );
     }
 }

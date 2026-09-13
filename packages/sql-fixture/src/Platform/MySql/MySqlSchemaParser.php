@@ -6,7 +6,6 @@ namespace SqlFixture\Platform\MySql;
 
 use PhpMyAdmin\SqlParser\Parser;
 use PhpMyAdmin\SqlParser\Statements\CreateStatement;
-use SqlFixture\Schema\SchemaParseException;
 use SqlFixture\Schema\SchemaParserInterface;
 use SqlFixture\Schema\TableSchema;
 
@@ -17,19 +16,21 @@ final class MySqlSchemaParser implements SchemaParserInterface
 {
     /**
      * Parses the supplied declaration into its normalized representation.
-     * @throws SchemaParseException
+     * @throws \SqlFixture\Schema\Exception\InvalidSqlException
+     * @throws \SqlFixture\Schema\Exception\ExpectedCreateTableException
+     * @throws \SqlFixture\Schema\Exception\MissingColumnDefinitionsException
      */
     public function parse(string $createTableSql): TableSchema
     {
         $parser = new Parser((new Schema\TableDefinitionInput())->withoutPartitioning($createTableSql));
 
         if ($parser->statements === []) {
-            throw SchemaParseException::invalidSql($createTableSql, 'No statements found');
+            throw new \SqlFixture\Schema\Exception\InvalidSqlException($createTableSql, 'No statements found');
         }
 
         $stmt = $parser->statements[0];
         if (!$stmt instanceof CreateStatement) {
-            throw SchemaParseException::notCreateTable($createTableSql);
+            throw new \SqlFixture\Schema\Exception\ExpectedCreateTableException($createTableSql);
         }
 
         (new Schema\DefinitionIntegrity())->assertNothingWasLost($parser, $stmt, $createTableSql);

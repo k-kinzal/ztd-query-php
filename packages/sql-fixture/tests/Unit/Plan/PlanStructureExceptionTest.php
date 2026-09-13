@@ -28,16 +28,19 @@ use SqlFixture\Plan\PlanStructureException;
 #[UsesClass(\SqlFixture\Plan\Printing\StatementPrinter::class)]
 #[UsesClass(\SqlFixture\Plan\Validation\PlanValidation::class)]
 #[UsesClass(\SqlFixture\Plan\Validation\TableName::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\DuplicateColumnBindingException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\CyclicDependencyException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\UnboundedSelfReferenceException::class)]
 final class PlanStructureExceptionTest extends TestCase
 {
     #[Test]
     public function testColumnsBoundTwiceNamesTheColumnAndBothParents(): void
     {
-        $message = PlanStructureException::columnsBoundTwice(
+        $message = (new \SqlFixture\Plan\Exception\DuplicateColumnBindingException(
             ColumnRef::of('b', 'x'),
             ColumnRef::of('a', 'id'),
             ColumnRef::of('c', 'id')
-        )->getMessage();
+        ))->getMessage();
 
         self::assertSame(
             'b.x is bound to a.id and to c.id. A column can reference one parent, so one of '
@@ -49,11 +52,10 @@ final class PlanStructureExceptionTest extends TestCase
     #[Test]
     public function testCycleShowsTheLoopClosingBackOnItself(): void
     {
-        $message = PlanStructureException::cycle(['a', 'b', 'c'])->getMessage();
+        $message = (new \SqlFixture\Plan\Exception\CyclicDependencyException(['a', 'b', 'c']))->getMessage();
 
         self::assertSame(
-            'The relations form a cycle: a -> b -> c -> a. Each table would have to be '
-            . 'generated before itself, so there is no order that satisfies them.',
+            'The plan contains cyclic dependencies among: a, b, c. No generation order satisfies them.',
             $message
         );
     }
@@ -61,10 +63,10 @@ final class PlanStructureExceptionTest extends TestCase
     #[Test]
     public function testUnboundedSelfReferenceSuggestsTheOptionalMarker(): void
     {
-        $message = PlanStructureException::unboundedSelfReference(
+        $message = (new \SqlFixture\Plan\Exception\UnboundedSelfReferenceException(
             'category',
             'category.id < category.parent_id'
-        )->getMessage();
+        ))->getMessage();
 
         self::assertSame(
             'The relation category.id < category.parent_id makes every category row need '

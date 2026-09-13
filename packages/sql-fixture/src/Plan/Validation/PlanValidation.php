@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlFixture\Plan\Validation;
 
 use SqlFixture\Plan\PlanPrinter;
-use SqlFixture\Plan\PlanStructureException;
 use SqlFixture\Plan\Relation;
 
 /**
@@ -20,7 +19,7 @@ final class PlanValidation
      * whether the two relations agree or not.
      *
      * @param list<Relation> $relations
-     * @throws PlanStructureException
+     * @throws \SqlFixture\Plan\Exception\DuplicateColumnBindingException
      */
     public function rejectColumnsBoundTwice(array $relations): void
     {
@@ -31,7 +30,7 @@ final class PlanValidation
             $key = $child->toString();
 
             if (isset($seen[$key])) {
-                throw PlanStructureException::columnsBoundTwice($child, $seen[$key], $relation->parent());
+                throw new \SqlFixture\Plan\Exception\DuplicateColumnBindingException($child, $seen[$key], $relation->parent());
             }
 
             $seen[$key] = $relation->parent();
@@ -42,7 +41,7 @@ final class PlanValidation
      * A table that requires a row of itself can never finish.
      *
      * @param list<Relation> $relations
-     * @throws PlanStructureException
+     * @throws \SqlFixture\Plan\Exception\UnboundedSelfReferenceException
      */
     public function rejectUnboundedSelfReferences(array $relations): void
     {
@@ -50,7 +49,7 @@ final class PlanValidation
             $isSelfReference = $relation->parent()->table === $relation->child()->table;
 
             if ($isSelfReference && $relation->minimumChildRows() > 0) {
-                throw PlanStructureException::unboundedSelfReference(
+                throw new \SqlFixture\Plan\Exception\UnboundedSelfReferenceException(
                     $relation->parent()->table,
                     (new PlanPrinter())->printRelation($relation)
                 );
@@ -67,7 +66,7 @@ final class PlanValidation
      * @param list<string> $tables
      * @param list<Relation> $relations
      * @return list<string>
-     * @throws PlanStructureException
+     * @throws \SqlFixture\Plan\Exception\CyclicDependencyException
      */
     public function sortByDependency(array $tables, array $relations): array
     {
@@ -88,7 +87,7 @@ final class PlanValidation
             }
 
             if ($ready === []) {
-                throw PlanStructureException::cycle($pending);
+                throw new \SqlFixture\Plan\Exception\CyclicDependencyException($pending);
             }
 
             $ordered = [...$ordered, ...$ready];

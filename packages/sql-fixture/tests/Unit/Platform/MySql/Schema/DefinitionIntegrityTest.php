@@ -10,6 +10,9 @@ use SqlFixture\Platform\MySql\Schema\DefinitionIntegrity as Subject;
 
 #[CoversClass(Subject::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Schema\SchemaParseException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Schema\Exception\InvalidSqlException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Schema\Exception\ExpectedCreateTableException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class)]
 final class DefinitionIntegrityTest extends TestCase
 {
     public function testAssertNothingWasLostAcceptsCompleteDeclarations(): void

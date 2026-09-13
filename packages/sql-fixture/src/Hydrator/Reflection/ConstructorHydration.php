@@ -7,7 +7,6 @@ namespace SqlFixture\Hydrator\Reflection;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionParameter;
-use SqlFixture\Hydrator\HydrationException;
 
 /**
  * Hydrates objects through their declared constructor.
@@ -22,7 +21,7 @@ final class ConstructorHydration
      * @param array<string, mixed> $data
      * @return T
      * @throws ReflectionException When the requested object cannot be reflected or instantiated
-     * @throws HydrationException
+     * @throws \SqlFixture\Hydrator\Exception\MissingConstructorArgumentException
      */
     public function hydrateViaConstructor(
         ReflectionClass $reflection,
@@ -44,7 +43,7 @@ final class ConstructorHydration
             } elseif ($parameter->allowsNull()) {
                 $value = null;
             } else {
-                throw HydrationException::constructorParameterMissing(
+                throw new \SqlFixture\Hydrator\Exception\MissingConstructorArgumentException(
                     $reflection->getName(),
                     $paramName,
                 );

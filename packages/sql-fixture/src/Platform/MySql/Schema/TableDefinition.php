@@ -8,7 +8,6 @@ use PhpMyAdmin\SqlParser\Components\DataType;
 use PhpMyAdmin\SqlParser\Components\OptionsArray;
 use PhpMyAdmin\SqlParser\Statements\CreateStatement;
 use SqlFixture\Schema\ColumnDefinition;
-use SqlFixture\Schema\SchemaParseException;
 
 /**
  * Reads the table name, columns and primary key from a CREATE TABLE statement.
@@ -19,12 +18,12 @@ final class TableDefinition
 {
     /**
      * Reads the declared table identifier.
-     * @throws SchemaParseException
+     * @throws \SqlFixture\Schema\Exception\InvalidSqlException
      */
     public function extractTableName(CreateStatement $stmt, string $sql): string
     {
         if ($stmt->name === null) {
-            throw SchemaParseException::invalidSql($sql, 'Table name not found');
+            throw new \SqlFixture\Schema\Exception\InvalidSqlException($sql, 'Table name not found');
         }
 
         $name = $stmt->name->table ?? '';
@@ -33,12 +32,12 @@ final class TableDefinition
 
     /**
      * @return array<string, ColumnDefinition>
-     * @throws SchemaParseException
+     * @throws \SqlFixture\Schema\Exception\MissingColumnDefinitionsException
      */
     public function extractColumns(CreateStatement $stmt, string $tableName): array
     {
         if (!is_iterable($stmt->fields)) {
-            throw SchemaParseException::noColumns($tableName);
+            throw new \SqlFixture\Schema\Exception\MissingColumnDefinitionsException($tableName);
         }
 
         $columns = [];
@@ -63,7 +62,7 @@ final class TableDefinition
         }
 
         if ($columns === []) {
-            throw SchemaParseException::noColumns($tableName);
+            throw new \SqlFixture\Schema\Exception\MissingColumnDefinitionsException($tableName);
         }
 
         return $columns;

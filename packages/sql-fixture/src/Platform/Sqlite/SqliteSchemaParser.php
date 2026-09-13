@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlFixture\Platform\Sqlite;
 
-use SqlFixture\Schema\SchemaParseException;
 use SqlFixture\Schema\SchemaParserInterface;
 use SqlFixture\Schema\TableSchema;
 
@@ -25,7 +24,8 @@ final class SqliteSchemaParser implements SchemaParserInterface
 {
     /**
      * Parses the supplied declaration into its normalized representation.
-     * @throws SchemaParseException
+     * @throws \SqlFixture\Schema\Exception\InvalidSqlException
+     * @throws \SqlFixture\Schema\Exception\MissingColumnDefinitionsException
      */
     public function parse(string $createTableSql): TableSchema
     {
@@ -33,19 +33,19 @@ final class SqliteSchemaParser implements SchemaParserInterface
 
         $tableName = (new Schema\TableSyntax())->extractTableName($sql);
         if ($tableName === null) {
-            throw SchemaParseException::invalidSql($createTableSql, 'Could not extract table name');
+            throw new \SqlFixture\Schema\Exception\InvalidSqlException($createTableSql, 'Could not extract table name');
         }
 
         $columnsBlock = (new Schema\TableSyntax())->extractColumnsBlock($sql);
         if ($columnsBlock === null) {
-            throw SchemaParseException::noColumns($tableName);
+            throw new \SqlFixture\Schema\Exception\MissingColumnDefinitionsException($tableName);
         }
 
         $primaryKeys = (new Schema\TableSyntax())->extractTablePrimaryKeys($columnsBlock);
         $columns = (new Schema\DefinitionList())->parseColumns($columnsBlock, $tableName, $primaryKeys);
 
         if ($columns === []) {
-            throw SchemaParseException::noColumns($tableName);
+            throw new \SqlFixture\Schema\Exception\MissingColumnDefinitionsException($tableName);
         }
 
         return new TableSchema($tableName, $columns, $primaryKeys);

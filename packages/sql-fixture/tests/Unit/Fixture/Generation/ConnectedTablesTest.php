@@ -27,6 +27,17 @@ use SqlFixture\Plan\FixturePlan;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Plan\Printing\StatementPrinter::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Plan\Validation\PlanValidation::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Plan\Validation\TableName::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Plan\Exception\EmptyPlanException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Plan\Exception\EmptyTableNameException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Plan\Exception\MissingEndpointColumnsException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Plan\Exception\InvalidTableNameException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Plan\Exception\UnbalancedBracketsException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Plan\Exception\UnexpectedPlanTokenException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Plan\Exception\UnsupportedManyToManyException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Plan\Exception\CompositeArityMismatchException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Plan\Exception\DuplicateColumnBindingException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Plan\Exception\CyclicDependencyException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Plan\Exception\UnboundedSelfReferenceException::class)]
 final class ConnectedTablesTest extends TestCase
 {
     public function testConnectedToFollowsBothDirectionsAndSkipsOtherComponents(): void

@@ -80,6 +80,9 @@ use SqlFixture\Platform\Sqlite\SqliteTypeMapper;
 #[UsesClass(\SqlFixture\Schema\TypeShape::class)]
 #[UsesClass(\SqlFixture\TypeMapper\ParagraphGenerator::class)]
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinitionInput::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\InvalidSqlException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\ExpectedCreateTableException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class)]
 final class PlatformFactoryTest extends TestCase
 {
     #[Test]

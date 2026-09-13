@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace SqlFixture\Plan\Parsing;
 
-use SqlFixture\Plan\PlanSyntaxException;
-
 /**
  * Splits DBML at separators outside groups and composite keys.
  *
@@ -17,7 +15,7 @@ final class PlanStatements
      * Split on commas and newlines that are not inside brackets.
      *
      * @return array<int, string>
-     * @throws PlanSyntaxException
+     * @throws \SqlFixture\Plan\Exception\UnbalancedBracketsException
      */
     public function split(string $plan): array
     {
@@ -33,7 +31,7 @@ final class PlanStatements
             }
 
             if ($depth < 0) {
-                throw PlanSyntaxException::unbalancedBrackets($plan);
+                throw new \SqlFixture\Plan\Exception\UnbalancedBracketsException($plan);
             }
 
             if ($depth === 0 && ($character === ',' || $character === "\n" || $character === ';')) {

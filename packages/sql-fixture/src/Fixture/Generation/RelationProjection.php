@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlFixture\Fixture\Generation;
 
-use SqlFixture\Fixture\PlanSchemaException;
 use SqlFixture\Plan\FixturePlan;
 use SqlFixture\Plan\Relation;
 
@@ -51,7 +50,7 @@ final class RelationProjection
     /**
      * @param array<string, mixed> $parentRow
      * @return array<string, mixed>
-     * @throws PlanSchemaException
+     * @throws \SqlFixture\Fixture\Exception\MissingRelationValueException
      */
     public function project(array $parentRow, Relation $relation): array
     {
@@ -59,7 +58,7 @@ final class RelationProjection
 
         foreach ($relation->columnMap() as $childColumn => $parentColumn) {
             if (!array_key_exists($parentColumn, $parentRow)) {
-                throw PlanSchemaException::missingValue($childColumn, $relation->parent(), $parentColumn);
+                throw new \SqlFixture\Fixture\Exception\MissingRelationValueException($childColumn, $relation->parent(), $parentColumn);
             }
 
             $values[$childColumn] = $parentRow[$parentColumn];

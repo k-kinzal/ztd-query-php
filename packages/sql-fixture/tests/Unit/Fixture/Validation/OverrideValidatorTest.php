@@ -14,6 +14,9 @@ use SqlFixture\Schema\TableSchema;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\InvalidOverrideException::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(ColumnDefinition::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(TableSchema::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\Exception\UnknownOverrideColumnException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\Exception\NullOverrideException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\Exception\GeneratedColumnOverrideException::class)]
 final class OverrideValidatorTest extends TestCase
 {
     public function testAssertOverridesFitSchemaAcceptsNullableAndExplicitKeys(): void

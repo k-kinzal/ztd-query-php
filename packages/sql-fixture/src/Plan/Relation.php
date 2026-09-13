@@ -19,7 +19,7 @@ final class Relation
 {
     /**
      * Initializes the collaborators and declared state for this object.
-     * @throws PlanSyntaxException
+     * @throws Exception\CompositeArityMismatchException
      */
     public function __construct(
         public readonly ColumnRef $left,
@@ -29,7 +29,7 @@ final class Relation
         public readonly bool $rightOptional = false,
     ) {
         if (count($left->columns) !== count($right->columns)) {
-            throw PlanSyntaxException::compositeArityMismatch($left, $right);
+            throw new Exception\CompositeArityMismatchException($left, $right);
         }
     }
 

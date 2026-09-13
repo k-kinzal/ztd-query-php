@@ -52,6 +52,8 @@ deptrac:
         - type: directory
           value: 'src/Platform/PlatformFactory\.php$'
         - type: directory
+          value: 'src/Platform/Exception/'
+        - type: directory
           value: 'src/Schema/MySqlSchemaParser\.php$'
         - type: directory
           value: 'src/TypeMapper/MySqlTypeMapper\.php$'

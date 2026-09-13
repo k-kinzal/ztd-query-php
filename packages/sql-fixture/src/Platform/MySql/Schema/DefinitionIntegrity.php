@@ -7,7 +7,6 @@ namespace SqlFixture\Platform\MySql\Schema;
 use PhpMyAdmin\SqlParser\Parser;
 use PhpMyAdmin\SqlParser\Statements\CreateStatement;
 use PhpMyAdmin\SqlParser\Token;
-use SqlFixture\Schema\SchemaParseException;
 
 /**
  * Checks that the native parser retained every declared column.
@@ -27,7 +26,7 @@ final class DefinitionIntegrity
      * Not every error loses something. DEC and FIXED are valid synonyms the
      * parser reports as unrecognised while still reading the column, so the
      * test is what came out rather than whether anything was said.
-     * @throws SchemaParseException
+     * @throws \SqlFixture\Schema\Exception\InvalidSqlException
      */
     public function assertNothingWasLost(Parser $parser, CreateStatement $stmt, string $sql): void
     {
@@ -42,7 +41,7 @@ final class DefinitionIntegrity
             return;
         }
 
-        throw SchemaParseException::invalidSql($sql, $parser->errors[0]->getMessage());
+        throw new \SqlFixture\Schema\Exception\InvalidSqlException($sql, $parser->errors[0]->getMessage());
     }
 
     /**

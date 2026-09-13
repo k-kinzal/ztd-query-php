@@ -52,6 +52,14 @@ use Tests\Fixture\GeneratorTestUser;
 #[UsesClass(\SqlFixture\Schema\TypeShape::class)]
 #[UsesClass(\SqlFixture\TypeMapper\ParagraphGenerator::class)]
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinitionInput::class)]
+#[UsesClass(\SqlFixture\Hydrator\Exception\ClassNotFoundException::class)]
+#[UsesClass(\SqlFixture\Hydrator\Exception\MissingConstructorArgumentException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\UnknownOverrideColumnException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\NullOverrideException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\GeneratedColumnOverrideException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\InvalidSqlException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\ExpectedCreateTableException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class)]
 final class FixtureGeneratorTest extends TestCase
 {
     #[Test]

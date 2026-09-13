@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlFixture\Fixture\Validation;
 
-use SqlFixture\InvalidOverrideException;
 use SqlFixture\Schema\TableSchema;
 
 /**
@@ -21,26 +20,28 @@ final class OverrideValidator
      * insert. Both look like working fixtures right up until they do not.
      *
      * @param array<mixed> $overrides
-     * @throws InvalidOverrideException
+     * @throws \SqlFixture\Fixture\Exception\UnknownOverrideColumnException
+     * @throws \SqlFixture\Fixture\Exception\NullOverrideException
+     * @throws \SqlFixture\Fixture\Exception\GeneratedColumnOverrideException
      */
     public function assertOverridesFitSchema(TableSchema $schema, array $overrides): void
     {
         foreach ($overrides as $columnName => $value) {
             if (!is_string($columnName)) {
-                throw InvalidOverrideException::unknownColumn((string) $columnName, $schema);
+                throw new \SqlFixture\Fixture\Exception\UnknownOverrideColumnException((string) $columnName, $schema);
             }
             $column = $schema->getColumn($columnName);
 
             if ($column === null) {
-                throw InvalidOverrideException::unknownColumn($columnName, $schema);
+                throw new \SqlFixture\Fixture\Exception\UnknownOverrideColumnException($columnName, $schema);
             }
 
             if ($column->generated) {
-                throw InvalidOverrideException::generatedColumn($columnName, $schema);
+                throw new \SqlFixture\Fixture\Exception\GeneratedColumnOverrideException($columnName, $schema);
             }
 
             if ($value === null && !$column->nullable) {
-                throw InvalidOverrideException::notNullable($columnName, $schema);
+                throw new \SqlFixture\Fixture\Exception\NullOverrideException($columnName, $schema);
             }
         }
     }

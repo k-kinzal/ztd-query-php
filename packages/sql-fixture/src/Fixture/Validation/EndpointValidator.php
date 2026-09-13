@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlFixture\Fixture\Validation;
 
-use SqlFixture\Fixture\PlanSchemaException;
 use SqlFixture\Plan\ColumnRef;
 use SqlFixture\Schema\SchemaResolverInterface;
 
@@ -17,7 +16,8 @@ final class EndpointValidator
 {
     /**
      * Rejects unknown or generated columns in a relation endpoint.
-     * @throws PlanSchemaException
+     * @throws \SqlFixture\Fixture\Exception\GeneratedColumnReferenceException
+     * @throws \SqlFixture\Fixture\Exception\UnknownPlanColumnException
      */
     public function checkEndpoint(SchemaResolverInterface $schemas, ColumnRef $reference): void
     {
@@ -27,11 +27,11 @@ final class EndpointValidator
             $definition = $schema->getColumn($column);
 
             if ($definition === null) {
-                throw PlanSchemaException::unknownColumn($reference, $column, $schema);
+                throw new \SqlFixture\Fixture\Exception\UnknownPlanColumnException($reference, $column, $schema);
             }
 
             if ($definition->generated) {
-                throw PlanSchemaException::generatedColumn($reference, $column, $schema);
+                throw new \SqlFixture\Fixture\Exception\GeneratedColumnReferenceException($reference, $column, $schema);
             }
         }
     }

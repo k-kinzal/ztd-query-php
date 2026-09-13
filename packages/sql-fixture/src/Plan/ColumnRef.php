@@ -14,17 +14,18 @@ final class ColumnRef
 {
     /**
      * @param list<string> $columns
-     * @throws PlanSyntaxException If no column is named
+     * @throws Exception\EmptyTableNameException
+     * @throws Exception\MissingEndpointColumnsException
      */
     public function __construct(
         public readonly string $table,
         public readonly array $columns,
     ) {
         if ($table === '') {
-            throw PlanSyntaxException::emptyTableName();
+            throw new Exception\EmptyTableNameException();
         }
         if ($columns === []) {
-            throw PlanSyntaxException::noColumns($table);
+            throw new Exception\MissingEndpointColumnsException($table);
         }
     }
 
@@ -39,13 +40,15 @@ final class ColumnRef
     /**
      * Read an endpoint written as `order.id` or `order.(shop_id, no)`.
      *
-     * @throws PlanSyntaxException
+     * @throws Exception\EmptyTableNameException
+     * @throws Exception\MissingEndpointColumnsException
+     * @throws Exception\UnexpectedPlanTokenException
      */
     public static function from(string $reference): self
     {
         $separator = strpos($reference, '.');
         if ($separator === false) {
-            throw PlanSyntaxException::unexpected($reference, strlen($reference), "'.' after the table name");
+            throw new Exception\UnexpectedPlanTokenException($reference, strlen($reference), "'.' after the table name");
         }
 
         $table = trim(substr($reference, 0, $separator), '`" ');
@@ -53,7 +56,7 @@ final class ColumnRef
 
         if (str_starts_with($columns, '(')) {
             if (!str_ends_with($columns, ')')) {
-                throw PlanSyntaxException::unexpected($reference, strlen($reference), "')'");
+                throw new Exception\UnexpectedPlanTokenException($reference, strlen($reference), "')'");
             }
 
             $columns = substr($columns, 1, -1);

@@ -18,12 +18,13 @@ final class ReflectionHydrator implements HydratorInterface
      * @param class-string<T> $className
      * @return T
      * @throws ReflectionException When the requested object cannot be reflected or instantiated
-     * @throws HydrationException
+     * @throws Exception\ClassNotFoundException
+     * @throws Exception\MissingConstructorArgumentException
      */
     public function hydrate(array $data, string $className): object
     {
         if (!class_exists($className)) {
-            throw HydrationException::classNotFound($className);
+            throw new Exception\ClassNotFoundException($className);
         }
 
         $reflection = new ReflectionClass($className);

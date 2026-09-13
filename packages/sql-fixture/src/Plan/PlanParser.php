@@ -21,17 +21,24 @@ namespace SqlFixture\Plan;
 final class PlanParser
 {
     /**
-     * @throws PlanSyntaxException
+     * @throws Exception\EmptyPlanException
+     * @throws Exception\EmptyTableNameException
+     * @throws Exception\MissingEndpointColumnsException
+     * @throws Exception\InvalidTableNameException
+     * @throws Exception\UnbalancedBracketsException
+     * @throws Exception\UnexpectedPlanTokenException
+     * @throws Exception\UnsupportedManyToManyException
+     * @throws Exception\CompositeArityMismatchException
      */
     public function parse(string $plan): FixturePlan
     {
         if (str_contains($plan, '<>')) {
-            throw PlanSyntaxException::manyToManyUnsupported($plan);
+            throw new Exception\UnsupportedManyToManyException($plan);
         }
 
         $statements = (new Parsing\PlanStatements())->split($plan);
         if ($statements === []) {
-            throw PlanSyntaxException::emptyPlan();
+            throw new Exception\EmptyPlanException();
         }
 
         $parts = [];

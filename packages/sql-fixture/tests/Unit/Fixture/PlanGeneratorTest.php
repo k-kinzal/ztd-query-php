@@ -101,6 +101,28 @@ use Tests\Fixture\Fixture\ShopSchemas;
 #[UsesClass(\SqlFixture\TypeMapper\ParagraphGenerator::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinitionInput::class)]
+#[UsesClass(\SqlFixture\Hydrator\Exception\ClassNotFoundException::class)]
+#[UsesClass(\SqlFixture\Hydrator\Exception\MissingConstructorArgumentException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\UnknownOverrideColumnException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\NullOverrideException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\GeneratedColumnOverrideException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\GeneratedColumnReferenceException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\MissingRelationValueException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\UnknownPlanColumnException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\EmptyPlanException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\EmptyTableNameException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\MissingEndpointColumnsException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\InvalidTableNameException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\UnbalancedBracketsException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\UnexpectedPlanTokenException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\UnsupportedManyToManyException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\CompositeArityMismatchException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\DuplicateColumnBindingException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\CyclicDependencyException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\UnboundedSelfReferenceException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\InvalidSqlException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\ExpectedCreateTableException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class)]
 final class PlanGeneratorTest extends TestCase
 {
     #[Test]
@@ -301,7 +323,7 @@ final class PlanGeneratorTest extends TestCase
     #[Test]
     public function testAPlanNamingAColumnTheTableLacksIsRejectedBeforeGenerating(): void
     {
-        $this->expectException(PlanSchemaException::class);
+        $this->expectException(\SqlFixture\Fixture\Exception\UnknownPlanColumnException::class);
         $this->expectExceptionMessage('order_detail has no column oder_id');
 
         ShopSchemas::generator()->generate(FixturePlan::from('order.id < order_detail.oder_id'));

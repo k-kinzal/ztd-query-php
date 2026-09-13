@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlFixture\Plan\Parsing;
 
-use SqlFixture\Plan\PlanSyntaxException;
 use SqlFixture\Plan\Relation;
 use SqlFixture\Plan\RelationKind;
 
@@ -26,12 +25,12 @@ final class RelationCursor
 
     /**
      * Consumes a quoted or unquoted identifier at the current cursor.
-     * @throws PlanSyntaxException
+     * @throws \SqlFixture\Plan\Exception\UnexpectedPlanTokenException
      */
     public function readIdentifier(string $expected): string
     {
         if (preg_match(self::IDENTIFIER, $this->source, $matches, 0, $this->offset) !== 1) {
-            throw PlanSyntaxException::unexpected($this->source, $this->offset, $expected);
+            throw new \SqlFixture\Plan\Exception\UnexpectedPlanTokenException($this->source, $this->offset, $expected);
         }
 
         $this->offset += strlen($matches[0]);
@@ -42,12 +41,12 @@ final class RelationCursor
             }
         }
 
-        throw PlanSyntaxException::unexpected($this->source, $this->offset, $expected);
+        throw new \SqlFixture\Plan\Exception\UnexpectedPlanTokenException($this->source, $this->offset, $expected);
     }
 
     /**
      * Consumes a supported relation operator.
-     * @throws PlanSyntaxException
+     * @throws \SqlFixture\Plan\Exception\UnexpectedPlanTokenException
      */
     public function readOperator(): RelationKind
     {
@@ -55,7 +54,7 @@ final class RelationCursor
         $kind = $character === null ? null : RelationKind::tryFrom($character);
 
         if ($kind === null) {
-            throw PlanSyntaxException::unexpected($this->source, $this->offset, "one of '<', '>' or '-'");
+            throw new \SqlFixture\Plan\Exception\UnexpectedPlanTokenException($this->source, $this->offset, "one of '<', '>' or '-'");
         }
 
         $this->offset++;
@@ -89,12 +88,12 @@ final class RelationCursor
 
     /**
      * Rejects trailing input after the relation statement.
-     * @throws PlanSyntaxException
+     * @throws \SqlFixture\Plan\Exception\UnexpectedPlanTokenException
      */
     public function expectEnd(): void
     {
         if ($this->offset < strlen($this->source)) {
-            throw PlanSyntaxException::unexpected($this->source, $this->offset, 'the end of the relation');
+            throw new \SqlFixture\Plan\Exception\UnexpectedPlanTokenException($this->source, $this->offset, 'the end of the relation');
         }
     }
 

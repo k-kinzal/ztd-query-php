@@ -63,7 +63,14 @@ class FixturePlan implements Stringable
 
     /**
      * @param Relation|string ...$parts Relations, and the names of tables that stand alone
-     * @throws PlanSyntaxException If a string names anything but a plain table
+     * @throws Exception\EmptyPlanException If a string names anything but a plain table
+     * @throws Exception\EmptyTableNameException
+     * @throws Exception\MissingEndpointColumnsException
+     * @throws Exception\InvalidTableNameException
+     * @throws Exception\UnbalancedBracketsException
+     * @throws Exception\UnexpectedPlanTokenException
+     * @throws Exception\UnsupportedManyToManyException
+     * @throws Exception\CompositeArityMismatchException
      */
     public function __construct(Relation|string ...$parts)
     {
@@ -92,7 +99,14 @@ class FixturePlan implements Stringable
     /**
      * Read a plan written in the DBML relation syntax.
      *
-     * @throws PlanSyntaxException
+     * @throws Exception\EmptyPlanException
+     * @throws Exception\EmptyTableNameException
+     * @throws Exception\MissingEndpointColumnsException
+     * @throws Exception\InvalidTableNameException
+     * @throws Exception\UnbalancedBracketsException
+     * @throws Exception\UnexpectedPlanTokenException
+     * @throws Exception\UnsupportedManyToManyException
+     * @throws Exception\CompositeArityMismatchException
      */
     public static function from(string|self $plan): self
     {

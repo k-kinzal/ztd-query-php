@@ -25,6 +25,9 @@ use SqlFixture\Schema\TableSchema;
 #[CoversClass(\SqlFixture\Schema\DefinitionSegments::class)]
 #[UsesClass(\SqlFixture\Schema\SchemaParserInterface::class)]
 #[UsesClass(\SqlFixture\Schema\TypeShape::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\InvalidSqlException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\ExpectedCreateTableException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class)]
 final class PostgreSqlSchemaParserTest extends TestCase
 {
     #[Test]
@@ -281,14 +284,14 @@ final class PostgreSqlSchemaParserTest extends TestCase
     #[Test]
     public function testThrowsExceptionForInvalidSql(): void
     {
-        $this->expectException(SchemaParseException::class);
+        $this->expectException(\SqlFixture\Schema\Exception\InvalidSqlException::class);
         (new PostgreSqlSchemaParser())->parse('NOT A VALID SQL STATEMENT');
     }
 
     #[Test]
     public function testThrowsExceptionForEmptyTable(): void
     {
-        $this->expectException(SchemaParseException::class);
+        $this->expectException(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class);
         (new PostgreSqlSchemaParser())->parse('CREATE TABLE test ()');
     }
 
@@ -601,7 +604,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     #[Test]
     public function testParseNoParentheses(): void
     {
-        $this->expectException(SchemaParseException::class);
+        $this->expectException(\SqlFixture\Schema\Exception\InvalidSqlException::class);
         (new PostgreSqlSchemaParser())->parse('CREATE TABLE test');
     }
 
@@ -1209,7 +1212,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     #[Test]
     public function testParseParensEqualStartReturnsNull(): void
     {
-        $this->expectException(SchemaParseException::class);
+        $this->expectException(\SqlFixture\Schema\Exception\InvalidSqlException::class);
         (new PostgreSqlSchemaParser())->parse('CREATE TABLE test )( ');
     }
 }

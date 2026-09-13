@@ -33,6 +33,9 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\Plan\Printing\StatementPrinter::class)]
 #[UsesClass(\SqlFixture\Plan\Validation\PlanValidation::class)]
 #[UsesClass(\SqlFixture\Plan\Validation\TableName::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\GeneratedColumnReferenceException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\MissingRelationValueException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\UnknownPlanColumnException::class)]
 final class PlanSchemaExceptionTest extends TestCase
 {
     #[Test]
@@ -43,7 +46,7 @@ final class PlanSchemaExceptionTest extends TestCase
             'status' => new ColumnDefinition('status', 'VARCHAR'),
         ]);
 
-        $message = PlanSchemaException::unknownColumn(ColumnRef::of('order', 'idd'), 'idd', $schema)->getMessage();
+        $message = (new \SqlFixture\Fixture\Exception\UnknownPlanColumnException(ColumnRef::of('order', 'idd'), 'idd', $schema))->getMessage();
 
         self::assertSame(
             'The plan links order.idd, but order has no column idd. Its columns are: id, status.',
@@ -56,7 +59,7 @@ final class PlanSchemaExceptionTest extends TestCase
     {
         $schema = new TableSchema('order', ['code' => new ColumnDefinition('code', 'VARCHAR', generated: true)]);
 
-        $message = PlanSchemaException::generatedColumn(ColumnRef::of('order', 'code'), 'code', $schema)->getMessage();
+        $message = (new \SqlFixture\Fixture\Exception\GeneratedColumnReferenceException(ColumnRef::of('order', 'code'), 'code', $schema))->getMessage();
 
         self::assertSame(
             'The plan links order.code, but order.code is a generated column: the database '
@@ -69,7 +72,7 @@ final class PlanSchemaExceptionTest extends TestCase
     #[Test]
     public function testMissingValueNamesBothEnds(): void
     {
-        $message = PlanSchemaException::missingValue('order_id', ColumnRef::of('order', 'id'), 'id')->getMessage();
+        $message = (new \SqlFixture\Fixture\Exception\MissingRelationValueException('order_id', ColumnRef::of('order', 'id'), 'id'))->getMessage();
 
         self::assertSame('Cannot fill order_id: the generated order row has no id to copy from.', $message);
     }

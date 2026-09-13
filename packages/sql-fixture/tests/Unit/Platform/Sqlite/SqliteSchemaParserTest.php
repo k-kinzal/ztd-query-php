@@ -25,6 +25,9 @@ use SqlFixture\Schema\TableSchema;
 #[CoversClass(\SqlFixture\Schema\DefinitionSegments::class)]
 #[UsesClass(\SqlFixture\Schema\SchemaParserInterface::class)]
 #[UsesClass(\SqlFixture\Schema\TypeShape::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\InvalidSqlException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\ExpectedCreateTableException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class)]
 final class SqliteSchemaParserTest extends TestCase
 {
     #[Test]
@@ -254,14 +257,14 @@ final class SqliteSchemaParserTest extends TestCase
     #[Test]
     public function testThrowsExceptionForInvalidSql(): void
     {
-        $this->expectException(SchemaParseException::class);
+        $this->expectException(\SqlFixture\Schema\Exception\InvalidSqlException::class);
         (new SqliteSchemaParser())->parse('NOT A VALID SQL STATEMENT');
     }
 
     #[Test]
     public function testThrowsExceptionForEmptyTable(): void
     {
-        $this->expectException(SchemaParseException::class);
+        $this->expectException(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class);
         (new SqliteSchemaParser())->parse('CREATE TABLE test ()');
     }
 
@@ -463,7 +466,7 @@ final class SqliteSchemaParserTest extends TestCase
     #[Test]
     public function testParseNoParentheses(): void
     {
-        $this->expectException(SchemaParseException::class);
+        $this->expectException(\SqlFixture\Schema\Exception\InvalidSqlException::class);
         (new SqliteSchemaParser())->parse('CREATE TABLE test');
     }
 
@@ -909,7 +912,7 @@ final class SqliteSchemaParserTest extends TestCase
     #[Test]
     public function testParseColumnParensEqualStartReturnsNull(): void
     {
-        $this->expectException(SchemaParseException::class);
+        $this->expectException(\SqlFixture\Schema\Exception\InvalidSqlException::class);
         (new SqliteSchemaParser())->parse('CREATE TABLE test )( ');
     }
 

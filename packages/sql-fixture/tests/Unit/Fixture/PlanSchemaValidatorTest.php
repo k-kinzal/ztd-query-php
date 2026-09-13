@@ -60,6 +60,23 @@ use Tests\Fixture\Fixture\ShopSchemas;
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\TypeParameters::class)]
 #[UsesClass(\SqlFixture\Schema\TypeShape::class)]
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinitionInput::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\GeneratedColumnReferenceException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\MissingRelationValueException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\UnknownPlanColumnException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\EmptyPlanException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\EmptyTableNameException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\MissingEndpointColumnsException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\InvalidTableNameException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\UnbalancedBracketsException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\UnexpectedPlanTokenException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\UnsupportedManyToManyException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\CompositeArityMismatchException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\DuplicateColumnBindingException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\CyclicDependencyException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\UnboundedSelfReferenceException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\InvalidSqlException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\ExpectedCreateTableException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class)]
 final class PlanSchemaValidatorTest extends TestCase
 {
     #[Test]
@@ -144,7 +161,7 @@ final class PlanSchemaValidatorTest extends TestCase
             ]),
         ]);
 
-        $this->expectException(PlanSchemaException::class);
+        $this->expectException(\SqlFixture\Fixture\Exception\GeneratedColumnReferenceException::class);
         $this->expectExceptionMessage('order.code is a generated column');
 
         (new PlanSchemaValidator($resolver))->validate(FixturePlan::from('order.code < order_detail.order_code'));
@@ -160,7 +177,7 @@ final class PlanSchemaValidatorTest extends TestCase
             ]),
         ]);
 
-        $this->expectException(PlanSchemaException::class);
+        $this->expectException(\SqlFixture\Fixture\Exception\GeneratedColumnReferenceException::class);
         $this->expectExceptionMessage('order_detail.order_id is a generated column');
 
         (new PlanSchemaValidator($resolver))->validate(FixturePlan::from('order.id < order_detail.order_id'));

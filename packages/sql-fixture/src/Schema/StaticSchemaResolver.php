@@ -40,7 +40,7 @@ final class StaticSchemaResolver implements SchemaResolverInterface
     {
         $schema = $this->schemas[(new TableIdentifier())->normalize($tableName)] ?? null;
         if ($schema === null) {
-            throw SchemaNotFoundException::forTable($tableName, $this->tableNames());
+            throw new SchemaNotFoundException($tableName, $this->tableNames());
         }
 
         return $schema;
