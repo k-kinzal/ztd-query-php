@@ -98,9 +98,9 @@
 <span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">schemaParser</span> = <span class="tok-kw">new</span> <span class="tok-id">PgSqlSchemaParser</span>();</span>
 <span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">faker</span> = <span class="tok-id">Factory</span>::<span class="tok-id">create</span>();</span>
 <span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">faker</span>-&gt;<span class="tok-id">seed</span>(<span class="tok-num">20260815</span>);</span>
-<span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">provider</span> = <span class="tok-kw">new</span> <span class="tok-id">PostgreSqlProvider</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">faker</span>);</span>
-<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a>    }</span>
-<span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a></span>
+<span class="src-line" data-diff="removed"><span class="ln">62</span>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">provider</span> = <span class="tok-kw">new</span> <span class="tok-id">PostgreSqlProvider</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">faker</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">63</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">64</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">65</span>    <span class="tok-com">/**</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">66</span><span class="tok-com">     * Build a fresh rewriter with given registry and shadow store.</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">67</span><span class="tok-com">     */</span></span>
@@ -117,11 +117,12 @@
 <span class="src-line" data-diff="removed"><span class="ln">78</span>        <span class="tok-var">$transformer</span> = <span class="tok-kw">new</span> <span class="tok-id">PgSqlTransformer</span>(<span class="tok-var">$parser</span>, <span class="tok-var">$selectTransformer</span>, <span class="tok-var">$insertTransformer</span>, <span class="tok-var">$updateTransformer</span>, <span class="tok-var">$deleteTransformer</span>);</span>
 <span class="src-line" data-diff="removed"><span class="ln">79</span>        <span class="tok-var">$schemaParser</span> = <span class="tok-kw">new</span> <span class="tok-id">PgSqlSchemaParser</span>();</span>
 <span class="src-line" data-diff="removed"><span class="ln">80</span>        <span class="tok-var">$mutationResolver</span> = <span class="tok-kw">new</span> <span class="tok-id">PgSqlMutationResolver</span>(<span class="tok-var">$shadowStore</span>, <span class="tok-var">$registry</span>, <span class="tok-var">$schemaParser</span>, <span class="tok-var">$parser</span>);</span>
-<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a></span>
+<span class="src-line" data-diff="removed"><span class="ln">81</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">82</span>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">PgSqlRewriter</span>(<span class="tok-var">$guard</span>, <span class="tok-var">$shadowStore</span>, <span class="tok-var">$registry</span>, <span class="tok-var">$transformer</span>, <span class="tok-var">$mutationResolver</span>, <span class="tok-var">$parser</span>);</span>
-<span class="src-line" data-diff="removed"><span class="ln">83</span>    }</span>
-<span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a></span>
-<span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">provider</span> = <span class="tok-kw">new</span> <span class="tok-id">PostgreSqlProvider</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">faker</span>, <span class="tok-str">&#039;pg-17.2&#039;</span>);</span>
+<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a>    }</span>
+<span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a></span>
+<span class="src-line" data-diff="removed"><span class="ln">85</span>    <span class="tok-com">/**</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">86</span><span class="tok-com">     * Generate random fixture rows for a table definition.</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">87</span><span class="tok-com">     *</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">88</span><span class="tok-com">     * @return array&lt;int, array&lt;string, mixed&gt;&gt;</span></span>
@@ -137,11 +138,11 @@
 <span class="src-line" data-diff="removed"><span class="ln">98</span>            }</span>
 <span class="src-line" data-diff="removed"><span class="ln">99</span>            <span class="tok-var">$rows</span>[] = <span class="tok-var">$row</span>;</span>
 <span class="src-line" data-diff="removed"><span class="ln">100</span>        }</span>
-<span class="src-line" data-diff="removed"><span class="ln">101</span></span>
+<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a></span>
 <span class="src-line" data-diff="removed"><span class="ln">102</span>        <span class="tok-kw">return</span> <span class="tok-var">$rows</span>;</span>
 <span class="src-line" data-diff="removed"><span class="ln">103</span>    }</span>
-<span class="src-line" data-diff="removed"><span class="ln">104</span></span>
-<span class="src-line" data-diff="removed"><span class="ln">105</span>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a></span>
+<span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">106</span><span class="tok-com">     * Generate a random value appropriate for the given SQL type.</span></span>
 <span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a><span class="tok-com">     * Test create table then select does not crash.</span></span>
 <span class="src-line" id="L56" data-diff="same"><a class="ln" href="#L56">56</a><span class="tok-com">     */</span></span>

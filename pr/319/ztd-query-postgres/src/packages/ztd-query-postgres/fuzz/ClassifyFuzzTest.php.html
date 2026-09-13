@@ -74,7 +74,8 @@
 <span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a>    {</span>
 <span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">guard</span> = <span class="tok-kw">new</span> <span class="tok-id">PgSqlQueryGuard</span>(<span class="tok-kw">new</span> <span class="tok-id">PgSqlParser</span>());</span>
 <span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a>        <span class="tok-var">$faker</span> = <span class="tok-id">Factory</span>::<span class="tok-id">create</span>();</span>
-<span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">provider</span> = <span class="tok-kw">new</span> <span class="tok-id">PostgreSqlProvider</span>(<span class="tok-var">$faker</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">38</span>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">provider</span> = <span class="tok-kw">new</span> <span class="tok-id">PostgreSqlProvider</span>(<span class="tok-var">$faker</span>);</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">provider</span> = <span class="tok-kw">new</span> <span class="tok-id">PostgreSqlProvider</span>(<span class="tok-var">$faker</span>, <span class="tok-str">&#039;pg-17.2&#039;</span>);</span>
 <span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a>        <span class="tok-var">$faker</span>-&gt;<span class="tok-id">seed</span>(<span class="tok-num">20260815</span>);</span>
 <span class="src-line" id="L39" data-diff="same"><a class="ln" href="#L39">39</a>    }</span>
 <span class="src-line" data-diff="removed"><span class="ln">41</span></span>
