@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>packages/ztd-query-sqlite/tests/Unit/SqliteCteShadowComposerTest.php — k-kinzal/ztd-query-sqlite</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/320/sqlite/src/packages/ztd-query-sqlite/tests/Unit/SqliteCteShadowComposerTest.php.html">
+<meta name="description" content="The source of packages/ztd-query-sqlite/tests/Unit/SqliteCteShadowComposerTest.php.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="k-kinzal/ztd-query-sqlite">
+<meta property="og:title" content="packages/ztd-query-sqlite/tests/Unit/SqliteCteShadowComposerTest.php — k-kinzal/ztd-query-sqlite">
+<meta property="og:description" content="The source of packages/ztd-query-sqlite/tests/Unit/SqliteCteShadowComposerTest.php.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/320/sqlite/src/packages/ztd-query-sqlite/tests/Unit/SqliteCteShadowComposerTest.php.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/320/sqlite/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="k-kinzal/ztd-query-sqlite">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../../">
+<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../../../../index.html">k-kinzal/ztd-query-sqlite</a></div><nav class="sb-block"><div class="sb-title">Packages</div><ul class="sb-list"><li data-diff="modified"><a href="../../../../../k-kinzal/ztd-query-sqlite/index.html">k-kinzal/ztd-query-sqlite</a></li></ul></nav></nav>
+<div class="page">
+<header class="topbar">
+<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
+<nav class="crumbs"><a href="../../../../../index.html">src</a><span class="crumb-sep">::</span><span class="crumb-current">packages/ztd-query-sqlite/tests/Unit/SqliteCteShadowComposerTest.php</span></nav>
+<div class="topbar-tools">
+<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing d56513049 to working tree">d56513049 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><button id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between d56513049 and working tree." data-off="This page documents what d56513049 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1 class="source-title">packages/ztd-query-sqlite/tests/Unit/SqliteCteShadowComposerTest.php</h1></div>
+<div class="notice diff-banner" data-diff="removed">Removed in working tree, compared to d56513049.</div>
+<pre class="source" data-diff="removed"><code><span class="src-line" data-diff="removed"><span class="ln">1</span>&lt;?php</span>
+<span class="src-line" data-diff="removed"><span class="ln">2</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">3</span><span class="tok-kw">declare</span>(<span class="tok-id">strict_types</span>=<span class="tok-num">1</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">4</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">5</span><span class="tok-kw">namespace</span> <span class="tok-id">Tests\Unit</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">6</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">7</span><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\Attributes\CoversClass</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">8</span><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\Attributes\UsesClass</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">9</span><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\TestCase</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">10</span><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">11</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">12</span>#[<span class="tok-id">CoversClass</span>(<span class="tok-id">SqliteCteShadowComposer</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">13</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">14</span>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\ZtdQuery\Platform\Sqlite\SqliteLexerProfile</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" data-diff="removed"><span class="ln">15</span><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">SqliteCteShadowComposerTest</span> <span class="tok-kw">extends</span> <span class="tok-id">TestCase</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">16</span>{</span>
+<span class="src-line" data-diff="removed"><span class="ln">17</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testIncludesTransitivelyReferencedShadowCtes</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">18</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">19</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">20</span>            <span class="tok-str">&quot;WITH \&quot;items\&quot; AS (SELECT 1 AS id),\n\&quot;item_view\&quot; AS (SELECT * FROM items)\nSELECT * FROM item_view&quot;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">21</span>            (<span class="tok-kw">new</span> <span class="tok-id">SqliteCteShadowComposer</span>())-&gt;<span class="tok-id">compose</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">22</span>                <span class="tok-str">&#039;SELECT * FROM item_view&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">23</span>                [</span>
+<span class="src-line" data-diff="removed"><span class="ln">24</span>                    <span class="tok-str">&#039;items&#039;</span> =&gt; <span class="tok-str">&#039;&quot;items&quot; AS (SELECT 1 AS id)&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">25</span>                    <span class="tok-str">&#039;item_view&#039;</span> =&gt; <span class="tok-str">&#039;&quot;item_view&quot; AS (SELECT * FROM items)&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">26</span>                    <span class="tok-str">&#039;unrelated&#039;</span> =&gt; <span class="tok-str">&#039;&quot;unrelated&quot; AS (SELECT 2 AS id)&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">27</span>                ],</span>
+<span class="src-line" data-diff="removed"><span class="ln">28</span>            ),</span>
+<span class="src-line" data-diff="removed"><span class="ln">29</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">30</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">31</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">32</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testAddsShadowsAfterRecursiveModifier</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">33</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">34</span>        <span class="tok-var">$sql</span> = <span class="tok-str">&#039;WITH RECURSIVE tree AS (SELECT id FROM nodes UNION ALL SELECT n.id FROM nodes n JOIN tree t ON n.parent_id = t.id) SELECT * FROM tree&#039;</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">35</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">36</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">37</span>            <span class="tok-str">&quot;WITH RECURSIVE \&quot;nodes\&quot; AS (SELECT 1 AS id),\n tree AS (SELECT id FROM nodes UNION ALL SELECT n.id FROM nodes n JOIN tree t ON n.parent_id = t.id) SELECT * FROM tree&quot;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">38</span>            (<span class="tok-kw">new</span> <span class="tok-id">SqliteCteShadowComposer</span>())-&gt;<span class="tok-id">compose</span>(<span class="tok-var">$sql</span>, [<span class="tok-str">&#039;nodes&#039;</span> =&gt; <span class="tok-str">&#039;&quot;nodes&quot; AS (SELECT 1 AS id)&#039;</span>]),</span>
+<span class="src-line" data-diff="removed"><span class="ln">39</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">40</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">41</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">42</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testPreservesUserCteThatOwnsThePhysicalTableName</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">43</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">44</span>        <span class="tok-var">$sql</span> = <span class="tok-str">&#039;WITH users AS (SELECT 1 AS id), filtered AS (SELECT * FROM users) SELECT * FROM filtered&#039;</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">45</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">46</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">47</span>            <span class="tok-var">$sql</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">48</span>            (<span class="tok-kw">new</span> <span class="tok-id">SqliteCteShadowComposer</span>())-&gt;<span class="tok-id">compose</span>(<span class="tok-var">$sql</span>, [<span class="tok-str">&#039;users&#039;</span> =&gt; <span class="tok-str">&#039;&quot;users&quot; AS (SELECT 2 AS id)&#039;</span>]),</span>
+<span class="src-line" data-diff="removed"><span class="ln">49</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">50</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">51</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">52</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testInjectsReferencedBaseTableBeforeUserCtes</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">53</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">54</span>        <span class="tok-var">$sql</span> = <span class="tok-str">&#039;WITH filtered AS (SELECT * FROM users WHERE active) SELECT * FROM filtered&#039;</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">55</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">56</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">57</span>            <span class="tok-str">&quot;WITH \&quot;users\&quot; AS (SELECT 1 AS id),\n filtered AS (SELECT * FROM users WHERE active) SELECT * FROM filtered&quot;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">58</span>            (<span class="tok-kw">new</span> <span class="tok-id">SqliteCteShadowComposer</span>())-&gt;<span class="tok-id">compose</span>(<span class="tok-var">$sql</span>, [<span class="tok-str">&#039;users&#039;</span> =&gt; <span class="tok-str">&#039;&quot;users&quot; AS (SELECT 1 AS id)&#039;</span>]),</span>
+<span class="src-line" data-diff="removed"><span class="ln">59</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">60</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">61</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">62</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testDoesNotTreatLiteralsCommentsOrIdentifierPrefixesAsReferences</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">63</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">64</span>        <span class="tok-var">$sql</span> = <span class="tok-str">&quot;SELECT &#039;users&#039;, superusers.id /* users */ FROM superusers&quot;</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">65</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">66</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">67</span>            <span class="tok-var">$sql</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">68</span>            (<span class="tok-kw">new</span> <span class="tok-id">SqliteCteShadowComposer</span>())-&gt;<span class="tok-id">compose</span>(<span class="tok-var">$sql</span>, [<span class="tok-str">&#039;users&#039;</span> =&gt; <span class="tok-str">&#039;&quot;users&quot; AS (SELECT 1 AS id)&#039;</span>]),</span>
+<span class="src-line" data-diff="removed"><span class="ln">69</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">70</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">71</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">72</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testReadsQuotedAndColumnListedCteNames</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">73</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">74</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">75</span>            [<span class="tok-str">&#039;first&#039;</span>, <span class="tok-str">&#039;second&#039;</span>],</span>
+<span class="src-line" data-diff="removed"><span class="ln">76</span>            (<span class="tok-kw">new</span> <span class="tok-id">SqliteCteShadowComposer</span>())-&gt;<span class="tok-id">declaredCteNames</span>(<span class="tok-str">&#039;WITH &quot;first&quot;(id) AS MATERIALIZED (SELECT 1), second AS (SELECT 2) SELECT * FROM second&#039;</span>),</span>
+<span class="src-line" data-diff="removed"><span class="ln">77</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">78</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">79</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">80</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testCarriesTheCompleteCteHeaderOntoARewrittenDmlProjection</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">81</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">82</span>        <span class="tok-var">$sql</span> = <span class="tok-str">&#039;WITH first AS (SELECT 1), second(id) AS (SELECT * FROM first) UPDATE users SET id = 2&#039;</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">83</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">84</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">85</span>            <span class="tok-str">&quot;WITH first AS (SELECT 1), second(id) AS (SELECT * FROM first)\nSELECT 2 AS id FROM users&quot;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">86</span>            (<span class="tok-kw">new</span> <span class="tok-id">SqliteCteShadowComposer</span>())-&gt;<span class="tok-id">carryPrefix</span>(<span class="tok-var">$sql</span>, <span class="tok-str">&#039;SELECT 2 AS id FROM users&#039;</span>),</span>
+<span class="src-line" data-diff="removed"><span class="ln">87</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">88</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">89</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">90</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testMergesProjectionCtesIntoTheOriginalHeader</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">91</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">92</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">93</span>            <span class="tok-str">&quot;WITH source AS (SELECT 1),\nprojected AS (SELECT * FROM source)\nSELECT * FROM projected&quot;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">94</span>            (<span class="tok-kw">new</span> <span class="tok-id">SqliteCteShadowComposer</span>())-&gt;<span class="tok-id">carryPrefix</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">95</span>                <span class="tok-str">&#039;WITH source AS (SELECT 1) INSERT INTO target SELECT * FROM source&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">96</span>                <span class="tok-str">&#039;WITH projected AS (SELECT * FROM source) SELECT * FROM projected&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">97</span>            ),</span>
+<span class="src-line" data-diff="removed"><span class="ln">98</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">99</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">100</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">101</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testOrdersShadowCtesBeforeUserCtesThatReadThem</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">102</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">103</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">104</span>            <span class="tok-str">&quot;WITH users AS (SELECT 1 AS id),\nchosen AS (SELECT id FROM users)\nSELECT * FROM users WHERE id IN (SELECT id FROM chosen)&quot;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">105</span>            (<span class="tok-kw">new</span> <span class="tok-id">SqliteCteShadowComposer</span>())-&gt;<span class="tok-id">carryPrefix</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">106</span>                <span class="tok-str">&#039;WITH chosen AS (SELECT id FROM users) UPDATE users SET id = 2&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">107</span>                <span class="tok-str">&#039;WITH users AS (SELECT 1 AS id) SELECT * FROM users WHERE id IN (SELECT id FROM chosen)&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">108</span>            ),</span>
+<span class="src-line" data-diff="removed"><span class="ln">109</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">110</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">111</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">112</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testExtractsTheStatementFollowingTheCteHeader</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">113</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">114</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">115</span>            <span class="tok-str">&#039;DELETE FROM users WHERE id IN (SELECT id FROM chosen)&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">116</span>            (<span class="tok-kw">new</span> <span class="tok-id">SqliteCteShadowComposer</span>())-&gt;<span class="tok-id">statementSql</span>(<span class="tok-str">&#039;WITH chosen AS (SELECT 1 AS id) DELETE FROM users WHERE id IN (SELECT id FROM chosen)&#039;</span>),</span>
+<span class="src-line" data-diff="removed"><span class="ln">117</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">118</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">119</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">120</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testComposesAReferencedShadowWithoutAnExistingWithClause</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">121</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">122</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">123</span>            <span class="tok-str">&quot;WITH users AS (SELECT 1 AS id)\nSELECT * FROM users&quot;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">124</span>            (<span class="tok-kw">new</span> <span class="tok-id">SqliteCteShadowComposer</span>())-&gt;<span class="tok-id">compose</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">125</span>                <span class="tok-str">&#039;SELECT * FROM users&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">126</span>                [<span class="tok-str">&#039;users&#039;</span> =&gt; <span class="tok-str">&#039;users AS (SELECT 1 AS id)&#039;</span>],</span>
+<span class="src-line" data-diff="removed"><span class="ln">127</span>            ),</span>
+<span class="src-line" data-diff="removed"><span class="ln">128</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">129</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">130</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">131</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testSkipsEntriesIndependentlyAndMatchesDeclaredNamesCaseInsensitively</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">132</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">133</span>        <span class="tok-var">$composer</span> = <span class="tok-kw">new</span> <span class="tok-id">SqliteCteShadowComposer</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">134</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">135</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">136</span>            <span class="tok-str">&quot;WITH orders AS (SELECT 2 AS id)\nSELECT * FROM orders&quot;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">137</span>            <span class="tok-var">$composer</span>-&gt;<span class="tok-id">compose</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">138</span>                <span class="tok-str">&#039;SELECT * FROM orders&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">139</span>                [</span>
+<span class="src-line" data-diff="removed"><span class="ln">140</span>                    <span class="tok-str">&#039;users&#039;</span> =&gt; <span class="tok-str">&#039;users AS (SELECT 1 AS id)&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">141</span>                    <span class="tok-str">&#039;orders&#039;</span> =&gt; <span class="tok-str">&#039;orders AS (SELECT 2 AS id)&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">142</span>                ],</span>
+<span class="src-line" data-diff="removed"><span class="ln">143</span>            ),</span>
+<span class="src-line" data-diff="removed"><span class="ln">144</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">145</span>        <span class="tok-var">$declared</span> = <span class="tok-str">&#039;WITH users AS (SELECT 1 AS id) SELECT * FROM users&#039;</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">146</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">147</span>            <span class="tok-var">$declared</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">148</span>            <span class="tok-var">$composer</span>-&gt;<span class="tok-id">compose</span>(<span class="tok-var">$declared</span>, [<span class="tok-str">&#039;Users&#039;</span> =&gt; <span class="tok-str">&#039;Users AS (SELECT 2 AS id)&#039;</span>]),</span>
+<span class="src-line" data-diff="removed"><span class="ln">149</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">150</span>        <span class="tok-id">self</span>::<span class="tok-id">assertStringContainsString</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">151</span>            <span class="tok-str">&#039;orders AS (SELECT 2 AS id)&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">152</span>            <span class="tok-var">$composer</span>-&gt;<span class="tok-id">compose</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">153</span>                <span class="tok-str">&#039;WITH users AS (SELECT 1 AS id) SELECT * FROM users JOIN orders ON TRUE&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">154</span>                [</span>
+<span class="src-line" data-diff="removed"><span class="ln">155</span>                    <span class="tok-str">&#039;orders&#039;</span> =&gt; <span class="tok-str">&#039;orders AS (SELECT 2 AS id)&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">156</span>                    <span class="tok-str">&#039;Users&#039;</span> =&gt; <span class="tok-str">&#039;Users AS (SELECT 3 AS id)&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">157</span>                ],</span>
+<span class="src-line" data-diff="removed"><span class="ln">158</span>            ),</span>
+<span class="src-line" data-diff="removed"><span class="ln">159</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">160</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">161</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">162</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testHandlesAWithTokenWithoutFollowingHeaderTokens</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">163</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">164</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">165</span>            <span class="tok-str">&quot;WITH shadow AS (SELECT 1),\n&quot;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">166</span>            (<span class="tok-kw">new</span> <span class="tok-id">SqliteCteShadowComposer</span>())-&gt;<span class="tok-id">compose</span>(<span class="tok-str">&#039;WITH&#039;</span>, [<span class="tok-str">&#039;WITH&#039;</span> =&gt; <span class="tok-str">&#039;shadow AS (SELECT 1)&#039;</span>]),</span>
+<span class="src-line" data-diff="removed"><span class="ln">167</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">168</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">169</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">170</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testCarriesAnEmptyRewriteWithoutDereferencingMissingTokens</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">171</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">172</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">173</span>            <span class="tok-str">&quot;WITH source AS (SELECT 1)\n&quot;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">174</span>            (<span class="tok-kw">new</span> <span class="tok-id">SqliteCteShadowComposer</span>())-&gt;<span class="tok-id">carryPrefix</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">175</span>                <span class="tok-str">&#039;WITH source AS (SELECT 1) UPDATE users SET id = 2&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">176</span>                <span class="tok-str">&#039;&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">177</span>            ),</span>
+<span class="src-line" data-diff="removed"><span class="ln">178</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">179</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">180</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">181</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testMergesRecursiveHeadersAndPreservesLeadingComments</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">182</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">183</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">184</span>            <span class="tok-str">&quot;/* lead */ WITH RECURSIVE projected AS (SELECT 2),\noriginal AS (SELECT 1)\nSELECT * FROM projected&quot;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">185</span>            (<span class="tok-kw">new</span> <span class="tok-id">SqliteCteShadowComposer</span>())-&gt;<span class="tok-id">carryPrefix</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">186</span>                <span class="tok-str">&#039;/* lead */ WITH RECURSIVE original AS (SELECT 1) UPDATE users SET id = 2&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">187</span>                <span class="tok-str">&#039;WITH projected AS (SELECT 2) SELECT * FROM projected&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">188</span>            ),</span>
+<span class="src-line" data-diff="removed"><span class="ln">189</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">190</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">191</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">192</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRecognizesRecursiveRewrittenHeaderDependencies</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">193</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">194</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">195</span>            <span class="tok-str">&quot;WITH source AS (SELECT 1),\nprojected AS (SELECT * FROM source)\nSELECT * FROM projected&quot;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">196</span>            (<span class="tok-kw">new</span> <span class="tok-id">SqliteCteShadowComposer</span>())-&gt;<span class="tok-id">carryPrefix</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">197</span>                <span class="tok-str">&#039;WITH source AS (SELECT 1) INSERT INTO target SELECT * FROM source&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">198</span>                <span class="tok-str">&#039;WITH RECURSIVE projected AS (SELECT * FROM source) SELECT * FROM projected&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">199</span>            ),</span>
+<span class="src-line" data-diff="removed"><span class="ln">200</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">201</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">202</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">203</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testParsesRecursiveMaterializationAndNestedCteBodies</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">204</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">205</span>        <span class="tok-var">$sql</span> = <span class="tok-str">&#039;WITH RECURSIVE &quot;FIRST&quot;(id) AS MATERIALIZED (SELECT (1)), second AS NOT MATERIALIZED (SELECT id FROM &quot;FIRST&quot;) DELETE FROM target&#039;</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">206</span>        <span class="tok-var">$composer</span> = <span class="tok-kw">new</span> <span class="tok-id">SqliteCteShadowComposer</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">207</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">208</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([<span class="tok-str">&#039;first&#039;</span>, <span class="tok-str">&#039;second&#039;</span>], <span class="tok-var">$composer</span>-&gt;<span class="tok-id">declaredCteNames</span>(<span class="tok-var">$sql</span>));</span>
+<span class="src-line" data-diff="removed"><span class="ln">209</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;DELETE FROM target&#039;</span>, <span class="tok-var">$composer</span>-&gt;<span class="tok-id">statementSql</span>(<span class="tok-var">$sql</span>));</span>
+<span class="src-line" data-diff="removed"><span class="ln">210</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">211</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">212</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testHandlesNonHeadersIncompleteHeadersAndEmptyInput</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">213</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">214</span>        <span class="tok-var">$composer</span> = <span class="tok-kw">new</span> <span class="tok-id">SqliteCteShadowComposer</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">215</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">216</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([], <span class="tok-var">$composer</span>-&gt;<span class="tok-id">declaredCteNames</span>(<span class="tok-str">&#039;&#039;</span>));</span>
+<span class="src-line" data-diff="removed"><span class="ln">217</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;SELECT 1&#039;</span>, <span class="tok-var">$composer</span>-&gt;<span class="tok-id">statementSql</span>(<span class="tok-str">&#039;SELECT 1&#039;</span>));</span>
+<span class="src-line" data-diff="removed"><span class="ln">218</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([], <span class="tok-var">$composer</span>-&gt;<span class="tok-id">declaredCteNames</span>(<span class="tok-str">&#039;WITH only_name&#039;</span>));</span>
+<span class="src-line" data-diff="removed"><span class="ln">219</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">220</span>            <span class="tok-str">&#039;WITH x AS (SELECT 1)&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">221</span>            <span class="tok-var">$composer</span>-&gt;<span class="tok-id">statementSql</span>(<span class="tok-str">&#039;WITH x AS (SELECT 1)&#039;</span>),</span>
+<span class="src-line" data-diff="removed"><span class="ln">222</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">223</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([], <span class="tok-var">$composer</span>-&gt;<span class="tok-id">declaredCteNames</span>(<span class="tok-str">&#039;WITH x AS&#039;</span>));</span>
+<span class="src-line" data-diff="removed"><span class="ln">224</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([], <span class="tok-var">$composer</span>-&gt;<span class="tok-id">declaredCteNames</span>(<span class="tok-str">&#039;WITH x AS NOT&#039;</span>));</span>
+<span class="src-line" data-diff="removed"><span class="ln">225</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([], <span class="tok-var">$composer</span>-&gt;<span class="tok-id">declaredCteNames</span>(<span class="tok-str">&#039;WITH x AS (SELECT 1&#039;</span>));</span>
+<span class="src-line" data-diff="removed"><span class="ln">226</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">227</span>            [<span class="tok-str">&#039;first&#039;</span>],</span>
+<span class="src-line" data-diff="removed"><span class="ln">228</span>            <span class="tok-var">$composer</span>-&gt;<span class="tok-id">declaredCteNames</span>(<span class="tok-str">&#039;WITH first AS (SELECT 1), broken&#039;</span>),</span>
+<span class="src-line" data-diff="removed"><span class="ln">229</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">230</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">231</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">232</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testUnquotesEmptyAndEscapedCteIdentifiers</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">233</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">234</span>        <span class="tok-var">$composer</span> = <span class="tok-kw">new</span> <span class="tok-id">SqliteCteShadowComposer</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">235</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">236</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([<span class="tok-str">&#039;&#039;</span>], <span class="tok-var">$composer</span>-&gt;<span class="tok-id">declaredCteNames</span>(<span class="tok-str">&#039;WITH &quot;&quot; AS (SELECT 1) SELECT 1&#039;</span>));</span>
+<span class="src-line" data-diff="removed"><span class="ln">237</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">238</span>            [<span class="tok-str">&#039;a&quot;b&#039;</span>, <span class="tok-str">&#039;c`d&#039;</span>],</span>
+<span class="src-line" data-diff="removed"><span class="ln">239</span>            <span class="tok-var">$composer</span>-&gt;<span class="tok-id">declaredCteNames</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">240</span>                <span class="tok-str">&#039;WITH &quot;a&quot;&quot;b&quot; AS (SELECT 1), `c``d` AS (SELECT 2) SELECT 1&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">241</span>            ),</span>
+<span class="src-line" data-diff="removed"><span class="ln">242</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">243</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">244</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testComposesShadowOverSchemaQualifiedSelectSource</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">245</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">246</span>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">247</span>            <span class="tok-str">&quot;WITH users AS (SELECT 1 AS id)\nSELECT * FROM \&quot;users\&quot;&quot;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">248</span>            (<span class="tok-kw">new</span> <span class="tok-id">SqliteCteShadowComposer</span>())-&gt;<span class="tok-id">compose</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">249</span>                <span class="tok-str">&#039;SELECT * FROM public.&quot;users&quot;&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">250</span>                [<span class="tok-str">&#039;users&#039;</span> =&gt; <span class="tok-str">&#039;users AS (SELECT 1 AS id)&#039;</span>],</span>
+<span class="src-line" data-diff="removed"><span class="ln">251</span>            ),</span>
+<span class="src-line" data-diff="removed"><span class="ln">252</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">253</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">254</span>}</span>
+<span class="src-line" data-diff="removed"><span class="ln">255</span></span>
+</code></pre>
+</main>
+<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div>
+<script src="../../../../../assets/search-index.js" defer></script>
+<script src="../../../../../assets/app.js" defer></script>
+</body>
+</html>
