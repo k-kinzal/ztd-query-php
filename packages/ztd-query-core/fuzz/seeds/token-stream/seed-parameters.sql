@@ -1,1 +1,0 @@
-SELECT :name, @name, @@var, $name::suffix(arg), ?12, ?;

@@ -1,1 +1,0 @@
-SELECT name, 3.5e-2 FROM users WHERE id = :id AND active = ?;

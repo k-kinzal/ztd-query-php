@@ -59,9 +59,6 @@ jobs:
       - name: Check installed platform requirements
         run: composer --working-dir=packages/sql-faker check-platform-reqs
 
-      - name: Select the core PHP dependency lock
-        run: cp packages/ztd-query-core/composer.lock.php-8.3 packages/ztd-query-core/composer.lock
-
       - name: Install core dependencies
         uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
@@ -79,9 +76,9 @@ jobs:
           path: |
             packages/sql-faker/build/docgen-cache
             packages/ztd-query-core/build/docgen-cache
-          key: sql-faker-docgen-${{ runner.os }}-${{ hashFiles('packages/sql-faker/composer.lock', 'packages/ztd-query-core/composer.lock.php-8.3') }}-${{ github.sha }}
+          key: sql-faker-docgen-${{ runner.os }}-${{ hashFiles('packages/sql-faker/composer.lock', 'packages/ztd-query-core/composer.lock') }}-${{ github.sha }}
           restore-keys: |
-            sql-faker-docgen-${{ runner.os }}-${{ hashFiles('packages/sql-faker/composer.lock', 'packages/ztd-query-core/composer.lock.php-8.3') }}-
+            sql-faker-docgen-${{ runner.os }}-${{ hashFiles('packages/sql-faker/composer.lock', 'packages/ztd-query-core/composer.lock') }}-
             sql-faker-docgen-${{ runner.os }}-
 
       - name: Generate the coverage report the preview reads

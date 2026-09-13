@@ -51,9 +51,6 @@ jobs:
           extensions: ${{ matrix.target.extensions }}
           coverage: none
 
-      - name: Select the PHP dependency lock
-        run: cp composer.lock.php-8.5 composer.lock
-
       - name: Validate the Composer manifest and lock file
         run: composer validate --strict --no-check-publish
 
@@ -65,8 +62,8 @@ jobs:
           composer-options: --prefer-dist
           require-lock-file: true
 
-      - name: Check installed platform requirements
-        run: composer check-platform-reqs
+      - name: Check runtime platform requirements
+        run: composer check-platform-reqs --no-dev
 
       - name: Validate the manual run budget
         env:
@@ -96,7 +93,6 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p build/fuzz "$FUZZ_CORPUS"
-          php fuzz/seed-corpus.php
           vendor/bin/php-fuzzer fuzz \
             "$FUZZ_SCRIPT" \
             "$FUZZ_CORPUS/" \

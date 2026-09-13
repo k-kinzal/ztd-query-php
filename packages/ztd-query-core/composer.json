@@ -8,14 +8,14 @@
     },
     "require-dev": {
         "brianium/paratest": "^7.3",
-        "deptrac/deptrac": "^3.0 || ^4.6",
+        "deptrac/deptrac": "^3.0",
         "friendsofphp/php-cs-fixer": "^3.92",
         "k-kinzal/php-ai-toolkit": "dev-main",
         "nikic/php-fuzzer": "^0.0.11",
         "phpbench/phpbench": "^1.4",
         "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
         "phpstan/phpstan": "^2.1",
-        "phpunit/phpunit": "^10.5 || ^11 || ^12 || ^13",
+        "phpunit/phpunit": "^10.5",
         "squizlabs/php_codesniffer": "^4.0.4"
     },
     "repositories": [
@@ -41,8 +41,8 @@
         }
     },
     "scripts": {
-        "test": "@php tests/run.php --parallel",
-        "test:unit": "@php tests/run.php --testsuite unit",
+        "test": "paratest --processes=auto",
+        "test:unit": "phpunit --testsuite unit",
         "lint": [
             "@format:check",
             "@phpstan",
@@ -61,15 +61,14 @@
             "deptrac analyse --config-file=deptrac.yaml",
             "deptrac debug:unassigned --config-file=deptrac.yaml"
         ],
-        "doctest": "@php tests/run.php --testsuite doctest",
+        "doctest": "phpunit --testsuite doctest",
         "bench": "phpbench run --report=aggregate",
         "bench:quick": "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10",
         "bench:full": "@bench",
-        "fuzz": "@fuzz:token-stream",
-        "fuzz:token-stream": [
-            "@php fuzz/seed-corpus.php",
-            "php-fuzzer fuzz fuzz/fuzz_token_stream.php fuzz/corpus/token-stream/"
+        "fuzz": [
+            "@fuzz:token-stream"
         ],
+        "fuzz:token-stream": "php-fuzzer fuzz fuzz/fuzz_token_stream.php fuzz/corpus/token-stream/",
         "docgen": "cd ../.. && packages/ztd-query-core/vendor/bin/docgen --packages=packages/ztd-query-core --deptrac=\"$PWD/packages/ztd-query-core/deptrac.yaml\" --output=packages/ztd-query-core/build/docs --cache-dir=packages/ztd-query-core/build/docgen-cache --title=k-kinzal/ztd-query-core",
         "docgen:serve": "@docgen --serve",
         "docgen:diff": "@docgen --diff=origin/main --serve",
@@ -78,6 +77,9 @@
     "config": {
         "allow-plugins": {
             "dealerdirect/phpcodesniffer-composer-installer": true
+        },
+        "platform": {
+            "php": "8.1.0"
         },
         "sort-packages": true
     },
