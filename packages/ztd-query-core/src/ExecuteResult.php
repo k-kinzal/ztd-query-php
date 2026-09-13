@@ -43,7 +43,7 @@ interface ExecuteResult
     /**
      * Fetch all remaining rows.
      *
-     * @return list<Row>
+     * @return array<int, Row>
      */
     public function fetchAll(): array;
 

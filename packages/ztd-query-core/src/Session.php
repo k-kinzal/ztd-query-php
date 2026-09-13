@@ -374,7 +374,7 @@ final class Session
      *
      * @param RewritePlan $plan The rewrite plan containing the SQL and mutation.
      * @param callable(string): (StatementInterface|false) $executor Function to execute SQL.
-     * @return list<Row> The affected rows.
+     * @return array<int, Row> The affected rows.
      * @throws UnsupportedSqlException When the plan carries no mutation to write.
      *
      * @throws DatabaseException When the shadow refuses the statement

@@ -21,7 +21,7 @@ final class ResultSelectRunner
      * Execute SQL using the provided executor and return result rows.
      *
      * @param callable(string): (StatementInterface|false) $executor
-     * @return list<Row>
+     * @return array<int, Row>
      */
     public function run(
         string $sql,
@@ -51,7 +51,7 @@ final class ResultSelectRunner
      * Execute a prepared statement and return result rows.
      *
      * @param array<int|string, RowValue>|null $params
-     * @return list<Row>
+     * @return array<int, Row>
      */
     public function runStatement(
         StatementInterface $statement,

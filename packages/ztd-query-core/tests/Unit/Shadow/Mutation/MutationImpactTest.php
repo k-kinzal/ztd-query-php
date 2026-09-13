@@ -118,6 +118,18 @@ final class MutationImpactTest extends TestCase
         self::assertFalse($impact->isInsertLike());
     }
 
+    public function testReturningRowsPreserveSparseInputKeys(): void
+    {
+        $impact = new MutationImpact(
+            new UpdateMutation('items', ['id']),
+            [['id' => 1]],
+            [9 => ['id' => 2, '__ztd_original_id' => 1]],
+            [['id' => 2]],
+        );
+
+        self::assertSame([9 => ['id' => 2]], $impact->returningRows());
+    }
+
     public function testIgnoredInsertHasNoReturningRows(): void
     {
         $row = ['id' => 1];

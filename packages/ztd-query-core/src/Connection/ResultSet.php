@@ -14,7 +14,7 @@ use ZtdQuery\Schema\TableDefinition;
 final class ResultSet
 {
     /**
-     * @param list<Row> $rows
+     * @param array<int, Row> $rows
      * @param list<ResultColumn> $columns
      */
     public function __construct(

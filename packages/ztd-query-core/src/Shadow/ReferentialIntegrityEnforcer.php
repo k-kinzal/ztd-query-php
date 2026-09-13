@@ -36,7 +36,7 @@ final class ReferentialIntegrityEnforcer
      * @param ShadowStore $before Shadow as it was
      * @param ShadowStore $after Shadow as it became, written back in place
      * @param ShadowMutation $mutation Statement that was simulated
-     * @param list<Row> $resultRows Rows the rewritten statement read back
+     * @param array<int, Row> $resultRows Rows the rewritten statement read back
      * @param string $sql Statement being simulated, for the refusal
      *
      * @throws ForeignKeyViolationException When a constraint forbids the statement or is left broken

@@ -23,7 +23,7 @@ interface ShadowMutation
      * shadow, not working out the effect a second time.
      *
      * @param ShadowStore $store Shadow to write into
-     * @param list<Row> $rows Rows the rewritten statement read back
+     * @param array<int, Row> $rows Rows the rewritten statement read back
      *
      * @throws SimulationException When the shadow will not take what the statement would write
      */

@@ -14,10 +14,8 @@ use ZtdQuery\Schema\TableDefinition;
  * to work with the ZTD session. It provides a driver-agnostic API for executing
  * prepared statements and fetching results.
  *
- * A column of a row is a scalar or null, which is what every driver behind this
- * interface hands back and what every driver will take on the way in. The row
- * itself is a row of a table, so its shape is stated with the table definition
- * and imported here rather than the other way round.
+ * Rows retain the keys and opaque values supplied by the driver. The platform
+ * owns value interpretation and SQL encoding.
  *
  * @phpstan-import-type Row from TableDefinition
  * @phpstan-import-type RowValue from TableDefinition
@@ -35,7 +33,7 @@ interface StatementInterface
     /**
      * Fetch all rows as associative arrays.
      *
-     * @return list<Row> Array of associative arrays.
+     * @return array<int, Row> Array of associative arrays.
      */
     public function fetchAll(): array;
 

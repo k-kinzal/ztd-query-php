@@ -46,7 +46,7 @@ final class ReturningProjection
     }
 
     /**
-     * @param list<Row> $rows
+     * @param array<int, Row> $rows
      * @return list<Row>
      */
     public function project(array $rows): array

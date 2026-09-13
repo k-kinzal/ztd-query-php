@@ -53,9 +53,9 @@ final class MutationRowIdentity
     /**
      * Takes the carried names back off every one of these rows.
      *
-     * @param list<Row> $rows Rows as the rewritten statement read them back
+     * @param array<int, Row> $rows Rows as the rewritten statement read them back
      *
-     * @return list<Row> The rows as the caller should see them
+     * @return array<int, Row> The rows as the caller should see them
      */
     public function stripAll(array $rows): array
     {

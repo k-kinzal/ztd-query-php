@@ -28,7 +28,7 @@ final class MutationImpact
     /**
      * @param ShadowMutation $mutation The statement whose effect this reports
      * @param array<int, Row> $before The table as it stood
-     * @param list<Row> $input The rows the statement was given
+     * @param array<int, Row> $input The rows the statement was given
      * @param array<int, Row> $after The table as it stands now
      * @param RowMultiset $rows Accounts for rows that repeat
      * @param MutationRowIdentity $identity Takes the carried names back off a row
@@ -74,7 +74,7 @@ final class MutationImpact
     }
 
     /**
-     * @return list<Row>
+     * @return array<int, Row>
      */
     public function returningRows(): array
     {
@@ -82,7 +82,7 @@ final class MutationImpact
             return $this->identity->stripAll($this->mutation->resultRows());
         }
         if ($this->mutation instanceof UpdateMutation || $this->mutation instanceof DeleteMutation) {
-            return $this->identity->stripAll(array_values($this->input->rows));
+            return $this->identity->stripAll($this->input->rows);
         }
 
         $added = $this->rows->difference($this->after->rows, $this->before->rows);

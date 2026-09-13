@@ -19,7 +19,7 @@ final class TableTransition
 {
     /**
      * @param string $table Table this happened to
-     * @param list<Row> $deleted Rows that are no longer there
+     * @param array<int, Row> $deleted Rows that are no longer there
      * @param list<RowChange> $updated Rows that are still there, changed
      */
     public function __construct(

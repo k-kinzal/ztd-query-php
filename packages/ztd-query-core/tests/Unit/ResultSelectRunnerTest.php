@@ -7,6 +7,7 @@ namespace Tests\Unit;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use stdClass;
 use Tests\Fake\FakeStatement;
 use ZtdQuery\Connection\ResultColumn;
 use ZtdQuery\Connection\ResultSet;
@@ -41,6 +42,16 @@ final class ResultSelectRunnerTest extends TestCase
         $result = $runner->run('SELECT * FROM users', fn () => false, $resolver);
 
         self::assertSame([], $result);
+    }
+
+    public function testRunPreservesSparseDriverRowsAndOpaqueValues(): void
+    {
+        $rows = [7 => ['id' => 1, 'payload' => new stdClass()], 12 => ['id' => 2, 'payload' => ['nested']]];
+        $resolver = self::createStub(ResultColumnTypeResolver::class);
+
+        $result = (new ResultSelectRunner())->run('SELECT * FROM users', fn () => new FakeStatement($rows), $resolver);
+
+        self::assertSame($rows, $result);
     }
 
     public function testRunStatementReturnsRows(): void

@@ -51,7 +51,7 @@ final class GenericExecuteResult implements ExecuteResult
      * Every way of building one goes through a named constructor, because what a
      * result is depends on which of them was used.
      *
-     * @param list<Row>|null $bufferedRows
+     * @param array<int, Row>|null $bufferedRows
      */
     public function __construct(
         bool $passthrough,
@@ -111,7 +111,7 @@ final class GenericExecuteResult implements ExecuteResult
     /**
      * Create a result with buffered rows (for simulated WRITE queries).
      *
-     * @param list<Row> $rows
+     * @param array<int, Row> $rows
      */
     public static function fromBufferedRows(
         array $rows,
@@ -133,7 +133,7 @@ final class GenericExecuteResult implements ExecuteResult
     /**
      * Create a result with both a statement and buffered rows.
      *
-     * @param list<Row> $rows
+     * @param array<int, Row> $rows
      */
     public static function fromStatementAndRows(
         StatementInterface $statement,

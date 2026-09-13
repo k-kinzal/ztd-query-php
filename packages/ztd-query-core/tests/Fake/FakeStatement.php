@@ -37,7 +37,7 @@ final class FakeStatement implements StatementInterface
     /**
      * Builds a statement that answers with these rows.
      *
-     * @param list<Row> $rows Rows to answer with
+     * @param array<int, Row> $rows Rows to answer with
      * @param list<ResultColumn> $columns Columns to report
      */
     public function __construct(array $rows = [], array $columns = [])
@@ -63,11 +63,11 @@ final class FakeStatement implements StatementInterface
     /**
      * Answers the rows this statement was built with.
      *
-     * @return list<Row> The rows
+     * @return array<int, Row> The rows
      */
     public function fetchAll(): array
     {
-        return array_values($this->rows->rows);
+        return $this->rows->rows;
     }
 
     /**

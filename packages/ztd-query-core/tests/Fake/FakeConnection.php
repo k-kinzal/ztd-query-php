@@ -48,8 +48,8 @@ final class FakeConnection implements ConnectionInterface
     private array $failPatterns = [];
 
     /**
-     * @param array<string, list<Row>> $results SQL => rows mapping.
-     * @param list<Row> $defaultRows Default rows for unconfigured queries.
+     * @param array<string, array<int, Row>> $results SQL => rows mapping.
+     * @param array<int, Row> $defaultRows Default rows for unconfigured queries.
      */
     public function __construct(array $results = [], array $defaultRows = [])
     {
@@ -78,13 +78,13 @@ final class FakeConnection implements ConnectionInterface
 
         $rows = $this->results[$sql] ?? $this->defaultRows;
 
-        return new FakeStatement(array_values($rows->rows));
+        return new FakeStatement($rows->rows);
     }
 
     /**
      * Pre-load a result for a specific SQL query.
      *
-     * @param list<Row> $rows
+     * @param array<int, Row> $rows
      */
     public function addResult(string $sql, array $rows): void
     {
