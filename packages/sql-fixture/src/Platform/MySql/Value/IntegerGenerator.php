@@ -6,6 +6,8 @@ namespace SqlFixture\Platform\MySql\Value;
 
 use Faker\Generator;
 use SqlFixture\Schema\ColumnDefinition;
+use SqlFixture\TypeMapper\IntegerRange;
+use SqlFixture\TypeMapper\IntegerWidth;
 
 /**
  * Generates MySQL integers within the declared signed or unsigned range.
@@ -23,10 +25,8 @@ final class IntegerGenerator
             return $faker->boolean();
         }
 
-        if ($column->unsigned) {
-            return $faker->numberBetween(0, 255);
-        }
-        return $faker->numberBetween(-128, 127);
+        $range = new IntegerRange(IntegerWidth::Bits8, $column->unsigned);
+        return $faker->numberBetween($range->minimum, $range->maximum);
     }
 
     /**
@@ -34,10 +34,8 @@ final class IntegerGenerator
      */
     public function generateSmallInt(Generator $faker, ColumnDefinition $column): int
     {
-        if ($column->unsigned) {
-            return $faker->numberBetween(0, 65535);
-        }
-        return $faker->numberBetween(-32768, 32767);
+        $range = new IntegerRange(IntegerWidth::Bits16, $column->unsigned);
+        return $faker->numberBetween($range->minimum, $range->maximum);
     }
 
     /**
@@ -45,10 +43,8 @@ final class IntegerGenerator
      */
     public function generateMediumInt(Generator $faker, ColumnDefinition $column): int
     {
-        if ($column->unsigned) {
-            return $faker->numberBetween(0, 16777215);
-        }
-        return $faker->numberBetween(-8388608, 8388607);
+        $range = new IntegerRange(IntegerWidth::Bits24, $column->unsigned);
+        return $faker->numberBetween($range->minimum, $range->maximum);
     }
 
     /**
@@ -56,10 +52,8 @@ final class IntegerGenerator
      */
     public function generateInt(Generator $faker, ColumnDefinition $column): int
     {
-        if ($column->unsigned) {
-            return $faker->numberBetween(0, 4294967295);
-        }
-        return $faker->numberBetween(-2147483648, 2147483647);
+        $range = new IntegerRange(IntegerWidth::Bits32, $column->unsigned);
+        return $faker->numberBetween($range->minimum, $range->maximum);
     }
 
     /**
@@ -67,10 +61,8 @@ final class IntegerGenerator
      */
     public function generateBigInt(Generator $faker, ColumnDefinition $column): int
     {
-        if ($column->unsigned) {
-            return $faker->numberBetween(0, PHP_INT_MAX);
-        }
-        return $faker->numberBetween(PHP_INT_MIN, PHP_INT_MAX);
+        $range = new IntegerRange(IntegerWidth::Bits64, $column->unsigned);
+        return $faker->numberBetween($range->minimum, $range->maximum);
     }
 
     /**

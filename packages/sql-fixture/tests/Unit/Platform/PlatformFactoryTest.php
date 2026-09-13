@@ -83,6 +83,9 @@ use SqlFixture\Platform\Sqlite\SqliteTypeMapper;
 #[UsesClass(\SqlFixture\Schema\Exception\InvalidSqlException::class)]
 #[UsesClass(\SqlFixture\Schema\Exception\ExpectedCreateTableException::class)]
 #[UsesClass(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class)]
+#[UsesClass(\SqlFixture\TypeMapper\IntegerRange::class)]
+#[UsesClass(\SqlFixture\TypeMapper\IntegerWidth::class)]
+#[UsesClass(\SqlFixture\TypeMapper\DecimalRange::class)]
 final class PlatformFactoryTest extends TestCase
 {
     #[Test]

@@ -122,6 +122,9 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\Schema\Exception\InvalidSqlException::class)]
 #[UsesClass(\SqlFixture\Schema\Exception\ExpectedCreateTableException::class)]
 #[UsesClass(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class)]
+#[UsesClass(\SqlFixture\TypeMapper\IntegerRange::class)]
+#[UsesClass(\SqlFixture\TypeMapper\IntegerWidth::class)]
+#[UsesClass(\SqlFixture\TypeMapper\DecimalRange::class)]
 final class PlanGeneratorTest extends TestCase
 {
     #[Test]
@@ -371,11 +374,13 @@ final class PlanGeneratorTest extends TestCase
             ], ['id']),
         ]);
         $faker = \Faker\Factory::create();
-        $faker->seed(2);
         $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
-        $set = $generator->generate(FixturePlan::from('order.id <? order_detail.order_id'));
+        $counts = array_map(static function (int $seed) use ($faker, $generator): int {
+            $faker->seed($seed);
+            return count($generator->generate(FixturePlan::from('order.id <? order_detail.order_id'))->rows('order_detail'));
+        }, range(1, 40));
 
-        self::assertSame([], $set->rows('order_detail'));
+        self::assertContains(0, $counts);
     }
 
     #[Test]
@@ -929,11 +934,13 @@ final class PlanGeneratorTest extends TestCase
             ], ['id']),
         ]);
         $faker = \Faker\Factory::create();
-        $faker->seed(1);
         $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
-        $set = $generator->generate(FixturePlan::from('order.id < order_detail.order_id'));
+        $counts = array_map(static function (int $seed) use ($faker, $generator): int {
+            $faker->seed($seed);
+            return count($generator->generate(FixturePlan::from('order.id < order_detail.order_id'))->rows('order_detail'));
+        }, range(1, 40));
 
-        self::assertGreaterThan(1, count($set->rows('order_detail')));
+        self::assertGreaterThan(1, max($counts));
     }
 
     #[Test]

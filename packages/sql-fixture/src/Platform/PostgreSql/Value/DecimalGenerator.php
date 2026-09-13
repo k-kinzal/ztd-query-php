@@ -19,13 +19,7 @@ final class DecimalGenerator
      */
     public function generateDecimal(Generator $faker, ColumnDefinition $column): float
     {
-        $precision = $column->precision ?? 10;
-        $scale = $column->scale ?? 0;
-        $integerDigits = $precision - $scale;
-
-        $max = (float) pow(10, $integerDigits) - 1;
-        $min = -$max;
-
-        return $faker->randomFloat($scale, $min, $max);
+        $range = new \SqlFixture\TypeMapper\DecimalRange($column);
+        return $faker->randomFloat($range->scale, $range->minimum, $range->maximum);
     }
 }

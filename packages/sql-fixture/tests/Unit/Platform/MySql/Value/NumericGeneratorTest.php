@@ -14,6 +14,9 @@ use SqlFixture\Schema\ColumnDefinition;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Value\DecimalGenerator::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Value\IntegerGenerator::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(ColumnDefinition::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\IntegerRange::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\IntegerWidth::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\DecimalRange::class)]
 final class NumericGeneratorTest extends TestCase
 {
     public function testGenerateHandlesIntegerAndDecimalDeclarations(): void

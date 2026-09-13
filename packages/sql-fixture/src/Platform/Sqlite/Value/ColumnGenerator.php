@@ -6,6 +6,8 @@ namespace SqlFixture\Platform\Sqlite\Value;
 
 use Faker\Generator;
 use SqlFixture\Schema\ColumnDefinition;
+use SqlFixture\TypeMapper\IntegerRange;
+use SqlFixture\TypeMapper\IntegerWidth;
 
 /**
  * Generates values from the dialect column type.
@@ -39,13 +41,15 @@ final class ColumnGenerator
     {
         $type = strtoupper($column->type);
 
-        return match (true) {
-            str_contains($type, 'TINYINT') => $faker->numberBetween(-128, 127),
-            str_contains($type, 'SMALLINT'), str_contains($type, 'INT2') => $faker->numberBetween(-32768, 32767),
-            str_contains($type, 'MEDIUMINT') => $faker->numberBetween(-8388608, 8388607),
-            str_contains($type, 'BIGINT'), str_contains($type, 'INT8') => $faker->numberBetween(PHP_INT_MIN, PHP_INT_MAX),
-            default => $faker->numberBetween(-2147483648, 2147483647),
+        $width = match (true) {
+            str_contains($type, 'TINYINT') => IntegerWidth::Bits8,
+            str_contains($type, 'SMALLINT'), str_contains($type, 'INT2') => IntegerWidth::Bits16,
+            str_contains($type, 'MEDIUMINT') => IntegerWidth::Bits24,
+            str_contains($type, 'BIGINT'), str_contains($type, 'INT8') => IntegerWidth::Bits64,
+            default => IntegerWidth::Bits32,
         };
+        $range = new IntegerRange($width);
+        return $faker->numberBetween($range->minimum, $range->maximum);
     }
 
     /**
@@ -87,9 +91,8 @@ final class ColumnGenerator
         $type = strtoupper($column->type);
 
         if ($column->precision !== null && $column->scale !== null) {
-            $integerDigits = $column->precision - $column->scale;
-            $max = (float) pow(10, $integerDigits) - 1;
-            return $faker->randomFloat($column->scale, -$max, $max);
+            $range = new \SqlFixture\TypeMapper\DecimalRange($column);
+            return $faker->randomFloat($range->scale, $range->minimum, $range->maximum);
         }
 
         return match (true) {
@@ -139,12 +142,7 @@ final class ColumnGenerator
      */
     public function generateDecimal(Generator $faker, ColumnDefinition $column): float
     {
-        $precision = $column->precision ?? 10;
-        $scale = $column->scale ?? 0;
-        $integerDigits = $precision - $scale;
-
-        $max = (float) pow(10, $integerDigits) - 1;
-
-        return $faker->randomFloat($scale, -$max, $max);
+        $range = new \SqlFixture\TypeMapper\DecimalRange($column);
+        return $faker->randomFloat($range->scale, $range->minimum, $range->maximum);
     }
 }

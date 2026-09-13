@@ -26,6 +26,9 @@ use SqlFixture\TypeMapper\MySqlTypeMapper;
 #[UsesClass(\SqlFixture\Platform\MySql\Value\StringGenerator::class)]
 #[UsesClass(\SqlFixture\Platform\MySql\Value\TextGenerator::class)]
 #[UsesClass(\SqlFixture\TypeMapper\ParagraphGenerator::class)]
+#[UsesClass(\SqlFixture\TypeMapper\IntegerRange::class)]
+#[UsesClass(\SqlFixture\TypeMapper\IntegerWidth::class)]
+#[UsesClass(\SqlFixture\TypeMapper\DecimalRange::class)]
 final class MySqlTypeMapperTest extends TestCase
 {
     #[Test]

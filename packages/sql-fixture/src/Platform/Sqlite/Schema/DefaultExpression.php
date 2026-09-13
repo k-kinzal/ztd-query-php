@@ -22,13 +22,6 @@ final class DefaultExpression
 
         $value = trim($matches[1]);
 
-        $value = preg_replace('/\s+(NOT\s+NULL|NULL|PRIMARY|UNIQUE|CHECK|REFERENCES|COLLATE).*$/i', '', $value);
-        $value = trim((string) $value);
-
-        if (str_starts_with($value, '(') && str_ends_with($value, ')')) {
-            return $value;
-        }
-
         if (preg_match("/^['\"](.*)['\"]\s*$/s", $value, $stringMatches) === 1) {
             return $stringMatches[1];
         }
@@ -49,10 +42,6 @@ final class DefaultExpression
                 return (float) $value;
             }
             return (int) $value;
-        }
-
-        if (preg_match('/^CURRENT_(?:TIMESTAMP|DATE|TIME)$/i', $value) === 1) {
-            return $value;
         }
 
         return $value;

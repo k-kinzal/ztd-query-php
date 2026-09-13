@@ -20,6 +20,9 @@ use SqlFixture\Schema\ColumnDefinition;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Value\TextGenerator::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(ColumnDefinition::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\ParagraphGenerator::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\IntegerRange::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\IntegerWidth::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\DecimalRange::class)]
 final class ColumnGeneratorTest extends TestCase
 {
     public function testGenerateValueRespectsStringLength(): void

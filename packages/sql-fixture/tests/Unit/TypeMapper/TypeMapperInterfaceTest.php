@@ -16,6 +16,9 @@ use SqlFixture\TypeMapper\TypeMapperInterface as Subject;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\Sqlite\Value\ColumnGenerator::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\Sqlite\Value\TypeAffinity::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\ParagraphGenerator::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\IntegerRange::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\IntegerWidth::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\DecimalRange::class)]
 final class TypeMapperInterfaceTest extends TestCase
 {
     public function testGenerateReturnsAValueForTheColumn(): void

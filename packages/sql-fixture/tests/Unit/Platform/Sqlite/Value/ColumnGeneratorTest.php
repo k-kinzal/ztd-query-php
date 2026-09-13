@@ -14,6 +14,9 @@ use SqlFixture\Schema\ColumnDefinition;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\Sqlite\Value\TypeAffinity::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(ColumnDefinition::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\ParagraphGenerator::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\IntegerRange::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\IntegerWidth::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\DecimalRange::class)]
 final class ColumnGeneratorTest extends TestCase
 {
     public function testGenerateValueRespectsStringLength(): void
@@ -77,5 +80,17 @@ final class ColumnGeneratorTest extends TestCase
         $value = (new Subject())->generateBlob($faker, new ColumnDefinition('value', 'BLOB', length: 10));
         self::assertNotSame('', $value);
         self::assertLessThanOrEqual(10, strlen($value));
+    }
+    public function testGenerateDecimalProducesNonzeroFractionalValues(): void
+    {
+        $faker = Factory::create();
+        $column = new ColumnDefinition('ratio', 'DECIMAL', precision: 2, scale: 2, nullable: false);
+        $values = array_map(static function (int $seed) use ($faker, $column): float {
+            $faker->seed($seed);
+            return (new Subject())->generateDecimal($faker, $column);
+        }, range(1, 20));
+        self::assertGreaterThan(1, count(array_unique($values)));
+        self::assertGreaterThanOrEqual(-0.99, min($values));
+        self::assertLessThanOrEqual(0.99, max($values));
     }
 }

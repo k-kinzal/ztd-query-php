@@ -12,6 +12,8 @@ use SqlFixture\Schema\ColumnDefinition;
 
 #[CoversClass(Subject::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(ColumnDefinition::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\IntegerRange::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\IntegerWidth::class)]
 final class IntegerGeneratorTest extends TestCase
 {
     public function testGenerateTinyIntStaysWithinDeclaredDomain(): void
