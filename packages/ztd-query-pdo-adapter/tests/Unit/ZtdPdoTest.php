@@ -123,11 +123,10 @@ final class ZtdPdoTest extends TestCase
 
     public function testEnableZtdPutsTheShadowBackInFrontOfTheDatabase(): void
     {
-        $native1 = new PDO('sqlite::memory:');
-        $native1->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native1->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $connection1 = ZtdPdo::fromPdo($native1);
-        $ztdPdo = $connection1;
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
         $ztdPdo->disableZtd();
 
         $ztdPdo->enableZtd();
@@ -137,11 +136,10 @@ final class ZtdPdoTest extends TestCase
 
     public function testDisableZtdLetsStatementsReachTheDatabase(): void
     {
-        $native2 = new PDO('sqlite::memory:');
-        $native2->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native2->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $connection2 = ZtdPdo::fromPdo($native2);
-        $ztdPdo = $connection2;
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
 
         $ztdPdo->disableZtd();
 
@@ -150,22 +148,20 @@ final class ZtdPdoTest extends TestCase
 
     public function testIsZtdEnabledSaysWritesAreShadowedFromTheStart(): void
     {
-        $native3 = new PDO('sqlite::memory:');
-        $native3->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native3->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $connection3 = ZtdPdo::fromPdo($native3);
-        $ztdPdo = $connection3;
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
 
         self::assertTrue($ztdPdo->isZtdEnabled());
     }
 
     public function testPrepareAnswersAStatementThatShadowsWhatItIsRunWith(): void
     {
-        $native4 = new PDO('sqlite::memory:');
-        $native4->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native4->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $connection4 = ZtdPdo::fromPdo($native4);
-        $ztdPdo = $connection4;
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
 
         $statement = $ztdPdo->prepare('SELECT * FROM users');
 
@@ -175,11 +171,10 @@ final class ZtdPdoTest extends TestCase
 
     public function testPrepareHandsTheStatementStraightToPdoWhileZtdIsOff(): void
     {
-        $native5 = new PDO('sqlite::memory:');
-        $native5->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native5->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $connection5 = ZtdPdo::fromPdo($native5);
-        $ztdPdo = $connection5;
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
         $ztdPdo->disableZtd();
 
         $statement = $ztdPdo->prepare('SELECT * FROM users');
@@ -189,11 +184,10 @@ final class ZtdPdoTest extends TestCase
 
     public function testQueryReadsTheShadowRatherThanTheTable(): void
     {
-        $native6 = new PDO('sqlite::memory:');
-        $native6->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native6->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $connection6 = ZtdPdo::fromPdo($native6);
-        $ztdPdo = $connection6;
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
 
         $statement = $ztdPdo->query('SELECT * FROM users');
 
@@ -202,11 +196,10 @@ final class ZtdPdoTest extends TestCase
 
     public function testQueryReadsBackWhatWasWrittenThroughZtd(): void
     {
-        $native7 = new PDO('sqlite::memory:');
-        $native7->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native7->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $connection7 = ZtdPdo::fromPdo($native7);
-        $ztdPdo = $connection7;
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
         $ztdPdo->exec("INSERT INTO users (id, name) VALUES (3, 'linus')");
 
         $statement = $ztdPdo->query('SELECT * FROM users');
@@ -216,11 +209,10 @@ final class ZtdPdoTest extends TestCase
 
     public function testQueryReadsInTheFetchModeItIsGiven(): void
     {
-        $native8 = new PDO('sqlite::memory:');
-        $native8->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native8->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $connection8 = ZtdPdo::fromPdo($native8);
-        $ztdPdo = $connection8;
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
         $ztdPdo->exec("INSERT INTO users (id, name) VALUES (3, 'linus')");
 
         $statement = $ztdPdo->query('SELECT * FROM users', PDO::FETCH_NUM);
@@ -235,22 +227,20 @@ final class ZtdPdoTest extends TestCase
 
     public function testBeginTransactionOpensOneOnTheShadowAsWellAsTheDatabase(): void
     {
-        $native9 = new PDO('sqlite::memory:');
-        $native9->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native9->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $connection9 = ZtdPdo::fromPdo($native9);
-        $ztdPdo = $connection9;
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
 
         self::assertSame([true, true], [$ztdPdo->beginTransaction(), $ztdPdo->inTransaction()]);
     }
 
     public function testCommitKeepsWhatTheTransactionWroteToTheShadow(): void
     {
-        $native10 = new PDO('sqlite::memory:');
-        $native10->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native10->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $connection10 = ZtdPdo::fromPdo($native10);
-        $ztdPdo = $connection10;
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
         $ztdPdo->beginTransaction();
         $ztdPdo->exec("INSERT INTO users (id, name) VALUES (3, 'linus')");
 
@@ -265,11 +255,10 @@ final class ZtdPdoTest extends TestCase
 
     public function testRollBackTakesBackWhatTheTransactionWroteToTheShadow(): void
     {
-        $native11 = new PDO('sqlite::memory:');
-        $native11->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native11->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $connection11 = ZtdPdo::fromPdo($native11);
-        $ztdPdo = $connection11;
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
         $ztdPdo->beginTransaction();
         $ztdPdo->exec("INSERT INTO users (id, name) VALUES (3, 'linus')");
 
@@ -284,22 +273,20 @@ final class ZtdPdoTest extends TestCase
 
     public function testInTransactionSaysNothingIsOpenBeforeOneIsBegun(): void
     {
-        $native12 = new PDO('sqlite::memory:');
-        $native12->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native12->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $connection12 = ZtdPdo::fromPdo($native12);
-        $ztdPdo = $connection12;
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
 
         self::assertFalse($ztdPdo->inTransaction());
     }
 
     public function testLastInsertIdAnswersTheKeyTheShadowGaveTheRowItWrote(): void
     {
-        $native13 = new PDO('sqlite::memory:');
-        $native13->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native13->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $connection13 = ZtdPdo::fromPdo($native13);
-        $ztdPdo = $connection13;
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
         $ztdPdo->exec("INSERT INTO users (name) VALUES ('linus')");
 
         self::assertSame('1', $ztdPdo->lastInsertId());
@@ -307,44 +294,40 @@ final class ZtdPdoTest extends TestCase
 
     public function testErrorCodeAnswersWhatTheDriverSaysWentWrongLast(): void
     {
-        $native14 = new PDO('sqlite::memory:');
-        $native14->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native14->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $connection14 = ZtdPdo::fromPdo($native14);
-        $ztdPdo = $connection14;
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
 
         self::assertSame('00000', $ztdPdo->errorCode());
     }
 
     public function testErrorInfoAnswersWhatTheDriverSaysAboutTheLastFailure(): void
     {
-        $native15 = new PDO('sqlite::memory:');
-        $native15->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native15->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $connection15 = ZtdPdo::fromPdo($native15);
-        $ztdPdo = $connection15;
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
 
         self::assertSame('00000', $ztdPdo->errorInfo()[0]);
     }
 
     public function testGetAttributeReadsTheAttributeOffTheConnectionItWraps(): void
     {
-        $native16 = new PDO('sqlite::memory:');
-        $native16->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native16->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $connection16 = ZtdPdo::fromPdo($native16);
-        $ztdPdo = $connection16;
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
 
         self::assertSame('sqlite', $ztdPdo->getAttribute(PDO::ATTR_DRIVER_NAME));
     }
 
     public function testSetAttributeSetsTheAttributeOnTheConnectionItWraps(): void
     {
-        $native17 = new PDO('sqlite::memory:');
-        $native17->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native17->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $connection17 = ZtdPdo::fromPdo($native17);
-        $ztdPdo = $connection17;
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
 
         $ztdPdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_NUM);
 
@@ -353,11 +336,10 @@ final class ZtdPdoTest extends TestCase
 
     public function testQuoteWritesAValueTheWayTheDriverWouldQuoteIt(): void
     {
-        $native18 = new PDO('sqlite::memory:');
-        $native18->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native18->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $connection18 = ZtdPdo::fromPdo($native18);
-        $ztdPdo = $connection18;
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
 
         self::assertSame("'ada'", $ztdPdo->quote('ada'));
     }
@@ -372,11 +354,10 @@ final class ZtdPdoTest extends TestCase
         $this->expectException(ZtdPdoException::class);
         $this->expectExceptionMessage('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
 
-        $native19 = new PDO('sqlite::memory:');
-        $native19->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native19->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $connection19 = ZtdPdo::fromPdo($native19);
-        $ztdPdo = $connection19;
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
 
         $ztdPdo->pgsqlCopyToArray('users', fields: 'id');
     }
@@ -385,11 +366,10 @@ final class ZtdPdoTest extends TestCase
     {
         $this->expectExceptionMessage('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
 
-        $native20 = new PDO('sqlite::memory:');
-        $native20->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native20->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $connection20 = ZtdPdo::fromPdo($native20);
-        $ztdPdo = $connection20;
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
 
         $ztdPdo->copyToArray('users');
     }
@@ -398,11 +378,10 @@ final class ZtdPdoTest extends TestCase
     {
         $this->expectExceptionMessage('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
 
-        $native21 = new PDO('sqlite::memory:');
-        $native21->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native21->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $connection21 = ZtdPdo::fromPdo($native21);
-        $ztdPdo = $connection21;
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
 
         $ztdPdo->pgsqlCopyFromArray('users', ["1\tada\n"]);
     }
@@ -411,11 +390,10 @@ final class ZtdPdoTest extends TestCase
     {
         $this->expectExceptionMessage('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
 
-        $native22 = new PDO('sqlite::memory:');
-        $native22->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native22->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $connection22 = ZtdPdo::fromPdo($native22);
-        $ztdPdo = $connection22;
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
 
         $ztdPdo->copyFromArray('users', ["1\tada\n"]);
     }
@@ -424,11 +402,10 @@ final class ZtdPdoTest extends TestCase
     {
         $this->expectExceptionMessage('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
 
-        $native23 = new PDO('sqlite::memory:');
-        $native23->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native23->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $connection23 = ZtdPdo::fromPdo($native23);
-        $ztdPdo = $connection23;
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
 
         $ztdPdo->pgsqlCopyToFile('users', '/dev/null', fields: 'id');
     }
@@ -437,11 +414,10 @@ final class ZtdPdoTest extends TestCase
     {
         $this->expectExceptionMessage('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
 
-        $native24 = new PDO('sqlite::memory:');
-        $native24->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native24->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $connection24 = ZtdPdo::fromPdo($native24);
-        $ztdPdo = $connection24;
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
 
         $ztdPdo->copyToFile('users', '/dev/null');
     }
@@ -450,11 +426,10 @@ final class ZtdPdoTest extends TestCase
     {
         $this->expectExceptionMessage('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
 
-        $native25 = new PDO('sqlite::memory:');
-        $native25->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native25->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $connection25 = ZtdPdo::fromPdo($native25);
-        $ztdPdo = $connection25;
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
 
         $ztdPdo->pgsqlCopyFromFile('users', '/dev/null', fields: 'id');
     }
@@ -463,11 +438,10 @@ final class ZtdPdoTest extends TestCase
     {
         $this->expectExceptionMessage('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
 
-        $native26 = new PDO('sqlite::memory:');
-        $native26->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native26->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $connection26 = ZtdPdo::fromPdo($native26);
-        $ztdPdo = $connection26;
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
 
         $ztdPdo->copyFromFile('users', '/dev/null');
     }
