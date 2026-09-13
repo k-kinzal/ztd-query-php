@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Rewrite;
 
-use Override;
 use PhpMyAdmin\SqlParser\Parser;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\TestCase;
 use RuntimeException;
-use Tests\Contract\QueryClassifierContractTest;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlQueryGuard;
 use ZtdQuery\Rewrite\QueryKind;
@@ -21,50 +20,8 @@ use ZtdQuery\Rewrite\QueryKind;
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlReadOnlyDiagnosticStatement::class)]
 #[UsesClass(MySqlParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
-class MySqlQueryGuardTest extends QueryClassifierContractTest
+class MySqlQueryGuardTest extends TestCase
 {
-    #[Override]
-    protected function classify(string $sql): ?QueryKind
-    {
-        return (new MySqlQueryGuard(new MySqlParser()))->classify($sql);
-    }
-
-    #[Override]
-    protected function selectSql(): string
-    {
-        return 'SELECT id, name FROM users WHERE id = 1';
-    }
-
-    #[Override]
-    protected function insertSql(): string
-    {
-        return "INSERT INTO users (id, name) VALUES (1, 'Alice')";
-    }
-
-    #[Override]
-    protected function updateSql(): string
-    {
-        return "UPDATE users SET name = 'Bob' WHERE id = 1";
-    }
-
-    #[Override]
-    protected function deleteSql(): string
-    {
-        return 'DELETE FROM users WHERE id = 1';
-    }
-
-    #[Override]
-    protected function createTableSql(): string
-    {
-        return 'CREATE TABLE orders (id INT PRIMARY KEY, amount DECIMAL(10,2))';
-    }
-
-    #[Override]
-    protected function dropTableSql(): string
-    {
-        return 'DROP TABLE orders';
-    }
-
     public function testClassifiesReadStatements(): void
     {
         $guard = new MySqlQueryGuard(new MySqlParser());
@@ -598,5 +555,46 @@ class MySqlQueryGuardTest extends QueryClassifierContractTest
             QueryKind::READ,
             $guard->classify('WITH `t` AS( SELECT 1 ) GRANT ALL ON t TO admin')
         );
+    }
+
+    public function testSelectClassifiesAsRead(): void
+    {
+        $kind = (new MySqlQueryGuard(new MySqlParser()))->classify('SELECT id, name FROM users WHERE id = 1');
+        self::assertSame(QueryKind::READ, $kind);
+    }
+
+    public function testInsertClassifiesAsWriteSimulated(): void
+    {
+        $kind = (new MySqlQueryGuard(new MySqlParser()))->classify("INSERT INTO users (id, name) VALUES (1, 'Alice')");
+        self::assertSame(QueryKind::WRITE_SIMULATED, $kind);
+    }
+
+    public function testUpdateClassifiesAsWriteSimulated(): void
+    {
+        $kind = (new MySqlQueryGuard(new MySqlParser()))->classify("UPDATE users SET name = 'Bob' WHERE id = 1");
+        self::assertSame(QueryKind::WRITE_SIMULATED, $kind);
+    }
+
+    public function testDeleteClassifiesAsWriteSimulated(): void
+    {
+        $kind = (new MySqlQueryGuard(new MySqlParser()))->classify('DELETE FROM users WHERE id = 1');
+        self::assertSame(QueryKind::WRITE_SIMULATED, $kind);
+    }
+
+    public function testCreateTableClassifiesAsDdlSimulated(): void
+    {
+        $kind = (new MySqlQueryGuard(new MySqlParser()))->classify('CREATE TABLE orders (id INT PRIMARY KEY, amount DECIMAL(10,2))');
+        self::assertSame(QueryKind::DDL_SIMULATED, $kind);
+    }
+
+    public function testDropTableClassifiesAsDdlSimulated(): void
+    {
+        $kind = (new MySqlQueryGuard(new MySqlParser()))->classify('DROP TABLE orders');
+        self::assertSame(QueryKind::DDL_SIMULATED, $kind);
+    }
+
+    public function testClassifyReturnsNullForGarbageInput(): void
+    {
+        self::assertNull((new MySqlQueryGuard(new MySqlParser()))->classify('NOT VALID SQL %%% @@@'));
     }
 }

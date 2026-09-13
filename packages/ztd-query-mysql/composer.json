@@ -53,9 +53,7 @@
         "psr-4": {
             "Tests\\": "tests/",
             "Fuzz\\": "fuzz/",
-            "Bench\\": "bench/",
-            "Tests\\Contract\\": "../ztd-query-core/tests/Contract/",
-            "Tests\\Fake\\": "../ztd-query-core/tests/Fake/"
+            "Bench\\": "bench/"
         }
     },
     "scripts": {

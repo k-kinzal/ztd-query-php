@@ -4,28 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Type;
 
-use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
-use Tests\Contract\IdentifierQuoterContractTest;
-use ZtdQuery\Platform\IdentifierQuoter;
+use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\MySqlIdentifierQuoter;
 
 #[CoversClass(MySqlIdentifierQuoter::class)]
-final class MySqlIdentifierQuoterTest extends IdentifierQuoterContractTest
+final class MySqlIdentifierQuoterTest extends TestCase
 {
-    #[Override]
-    protected function createQuoter(): IdentifierQuoter
-    {
-        return new MySqlIdentifierQuoter();
-    }
-
-    #[Override]
-    protected function quoteCharacter(): string
-    {
-        return '`';
-    }
-
-    #[Override]
     public function testQuoteReturnsNonEmptyString(): void
     {
         $result = (new MySqlIdentifierQuoter())->quote('users');
@@ -55,7 +40,6 @@ final class MySqlIdentifierQuoterTest extends IdentifierQuoterContractTest
         self::assertSame('`col``name`', $result);
     }
 
-    #[Override]
     public function testQuoteIsDeterministic(): void
     {
         $result1 = (new MySqlIdentifierQuoter())->quote('users');
@@ -63,7 +47,6 @@ final class MySqlIdentifierQuoterTest extends IdentifierQuoterContractTest
         self::assertSame($result1, $result2);
     }
 
-    #[Override]
     public function testQuotedIdentifierContainsOriginalName(): void
     {
         $identifier = 'my_table';
@@ -101,5 +84,44 @@ final class MySqlIdentifierQuoterTest extends IdentifierQuoterContractTest
     {
         $result = (new MySqlIdentifierQuoter())->quote('``');
         self::assertSame('``', $result);
+    }
+
+    public function testQuoteWrapsIdentifier(): void
+    {
+        $quoter = new MySqlIdentifierQuoter();
+        $char = '`';
+        $result = $quoter->quote('table_name');
+        self::assertStringStartsWith($char, $result);
+        self::assertStringEndsWith($char, $result);
+    }
+
+    public function testQuoteEscapesQuoteCharacterInIdentifier(): void
+    {
+        $quoter = new MySqlIdentifierQuoter();
+        $char = '`';
+        $identifier = 'col' . $char . 'name';
+        $result = $quoter->quote($identifier);
+        self::assertNotEmpty($result);
+        self::assertStringStartsWith($char, $result);
+        self::assertStringEndsWith($char, $result);
+        $simpleQuoted = $char . $identifier . $char;
+        self::assertGreaterThanOrEqual(strlen($simpleQuoted), strlen($result), 'Escaped identifier should be at least as long as non-escaped form');
+    }
+
+    public function testQuoteProducesExactResult(): void
+    {
+        $quoter = new MySqlIdentifierQuoter();
+        $char = '`';
+        $result = $quoter->quote('users');
+        self::assertSame($char . 'users' . $char, $result);
+    }
+
+    public function testQuoteEscapesEmbeddedQuoteExactly(): void
+    {
+        $quoter = new MySqlIdentifierQuoter();
+        $char = '`';
+        $result = $quoter->quote('col' . $char . 'name');
+        $expected = $char . 'col' . $char . $char . 'name' . $char;
+        self::assertSame($expected, $result);
     }
 }

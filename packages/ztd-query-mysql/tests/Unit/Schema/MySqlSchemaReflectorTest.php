@@ -7,7 +7,6 @@ namespace Tests\Unit\Schema;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use Tests\Fake\FakeConnection;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Connection\StatementInterface;
 use ZtdQuery\Platform\MySql\MySqlSchemaReflector;
@@ -29,19 +28,39 @@ final class MySqlSchemaReflectorTest extends TestCase
 
     public function testReflectViewsSkipsMalformedDefinitions(): void
     {
-        $connection = new FakeConnection([
-            "SHOW FULL TABLES WHERE Table_type = 'VIEW'" => [
-                ['name' => null], ['name' => ''], ['name' => 'query_failed'],
-                ['name' => 'missing_row'], ['name' => 'non_string'], ['name' => 'invalid'],
-                ['name' => 'active`users'], ['name' => 'all_users'],
-            ],
-            'SHOW CREATE VIEW `missing_row`' => [],
-            'SHOW CREATE VIEW `non_string`' => [['Create View' => null]],
-            'SHOW CREATE VIEW `invalid`' => [['Create View' => 'CREATE VIEW invalid']],
-            'SHOW CREATE VIEW `active``users`' => [['Create View' => 'CREATE VIEW `active``users` AS SELECT * FROM app.users']],
-            'SHOW CREATE VIEW `all_users`' => [['Create View' => 'CREATE VIEW all_users AS SELECT * FROM app.users']],
+        $views = self::createStub(StatementInterface::class);
+        $views->method('fetchAll')->willReturn([
+            ['name' => null], ['name' => ''], ['name' => 'query_failed'],
+            ['name' => 'missing_row'], ['name' => 'non_string'], ['name' => 'invalid'],
+            ['name' => 'active`users'], ['name' => 'all_users'],
         ]);
-        $connection->failOnQuery('SHOW CREATE VIEW `query_failed`');
+        $missing = self::createStub(StatementInterface::class);
+        $missing->method('fetchAll')->willReturn([]);
+        $nonString = self::createStub(StatementInterface::class);
+        $nonString->method('fetchAll')->willReturn([['Create View' => null]]);
+        $invalid = self::createStub(StatementInterface::class);
+        $invalid->method('fetchAll')->willReturn([['Create View' => 'CREATE VIEW invalid']]);
+        $active = self::createStub(StatementInterface::class);
+        $active->method('fetchAll')->willReturn([['Create View' => 'CREATE VIEW `active``users` AS SELECT * FROM app.users']]);
+        $all = self::createStub(StatementInterface::class);
+        $all->method('fetchAll')->willReturn([['Create View' => 'CREATE VIEW all_users AS SELECT * FROM app.users']]);
+        $responses = [
+            "SHOW FULL TABLES WHERE Table_type = 'VIEW'" => $views,
+            'SHOW CREATE VIEW `query_failed`' => false,
+            'SHOW CREATE VIEW `missing_row`' => $missing,
+            'SHOW CREATE VIEW `non_string`' => $nonString,
+            'SHOW CREATE VIEW `invalid`' => $invalid,
+            'SHOW CREATE VIEW `active``users`' => $active,
+            'SHOW CREATE VIEW `all_users`' => $all,
+        ];
+        $queries = [];
+        $connection = self::createMock(ConnectionInterface::class);
+        $connection->expects(self::exactly(7))->method('query')->willReturnCallback(
+            static function (string $sql) use ($responses, &$queries): StatementInterface|false {
+                $queries[] = $sql;
+                return $responses[$sql];
+            },
+        );
 
         $definitions = (new MySqlSchemaReflector($connection))->reflectViews();
 
@@ -52,7 +71,7 @@ final class MySqlSchemaReflectorTest extends TestCase
             'SHOW CREATE VIEW `query_failed`', 'SHOW CREATE VIEW `missing_row`',
             'SHOW CREATE VIEW `non_string`', 'SHOW CREATE VIEW `invalid`',
             'SHOW CREATE VIEW `active``users`', 'SHOW CREATE VIEW `all_users`',
-        ], $connection->queries);
+        ], $queries);
     }
 
     public function testGetCreateStatementReturnsNullWhenQueryFails(): void

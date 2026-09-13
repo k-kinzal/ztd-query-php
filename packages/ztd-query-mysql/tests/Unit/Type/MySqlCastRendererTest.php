@@ -5,46 +5,17 @@ declare(strict_types=1);
 namespace Tests\Unit\Type;
 
 use Generator;
-use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
-use Tests\Contract\CastRendererContractTest;
-use ZtdQuery\Platform\CastRenderer;
+use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(\ZtdQuery\Platform\MySql\Type\CastTypeResolver::class)]
 #[CoversClass(MySqlCastRenderer::class)]
-final class MySqlCastRendererTest extends CastRendererContractTest
+final class MySqlCastRendererTest extends TestCase
 {
-    #[Override]
-    protected function createRenderer(): CastRenderer
-    {
-        return new MySqlCastRenderer();
-    }
-
-    #[Override]
-    protected function nativeTypeFor(ColumnTypeFamily $family): string
-    {
-        return match ($family) {
-            ColumnTypeFamily::INTEGER => 'INT',
-            ColumnTypeFamily::FLOAT => 'FLOAT',
-            ColumnTypeFamily::DOUBLE => 'DOUBLE',
-            ColumnTypeFamily::DECIMAL => 'DECIMAL(10,2)',
-            ColumnTypeFamily::STRING => 'VARCHAR(255)',
-            ColumnTypeFamily::TEXT => 'TEXT',
-            ColumnTypeFamily::BOOLEAN => 'TINYINT(1)',
-            ColumnTypeFamily::DATE => 'DATE',
-            ColumnTypeFamily::TIME => 'TIME',
-            ColumnTypeFamily::DATETIME => 'DATETIME',
-            ColumnTypeFamily::TIMESTAMP => 'TIMESTAMP',
-            ColumnTypeFamily::BINARY => 'BLOB',
-            ColumnTypeFamily::JSON => 'JSON',
-            ColumnTypeFamily::UNKNOWN => 'GEOMETRY',
-        };
-    }
-
     public function testRenderCastInteger(): void
     {
         $renderer = new MySqlCastRenderer();
@@ -202,7 +173,6 @@ final class MySqlCastRendererTest extends CastRendererContractTest
         self::assertStringContainsString('CAST(', $result, "renderNullCast() missing CAST keyword for family {$family->value}");
     }
 
-    #[Override]
     public function testRenderCastIsDeterministic(): void
     {
         $type = new ColumnType(ColumnTypeFamily::INTEGER, 'INT');
@@ -488,5 +458,54 @@ final class MySqlCastRendererTest extends CastRendererContractTest
         yield 'JSON' => [ColumnTypeFamily::JSON, 'JSON'];
         yield 'BINARY' => [ColumnTypeFamily::BINARY, 'BINARY'];
         yield 'STRING' => [ColumnTypeFamily::STRING, 'CHAR'];
+    }
+
+    /**
+     * @return iterable<string, array{ColumnTypeFamily, string}>
+     */
+    public static function providerNativeTypes(): iterable
+    {
+        yield 'integer' => [ColumnTypeFamily::INTEGER, 'INT'];
+        yield 'float' => [ColumnTypeFamily::FLOAT, 'FLOAT'];
+        yield 'double' => [ColumnTypeFamily::DOUBLE, 'DOUBLE'];
+        yield 'decimal' => [ColumnTypeFamily::DECIMAL, 'DECIMAL(10,2)'];
+        yield 'string' => [ColumnTypeFamily::STRING, 'VARCHAR(255)'];
+        yield 'text' => [ColumnTypeFamily::TEXT, 'TEXT'];
+        yield 'boolean' => [ColumnTypeFamily::BOOLEAN, 'TINYINT(1)'];
+        yield 'date' => [ColumnTypeFamily::DATE, 'DATE'];
+        yield 'time' => [ColumnTypeFamily::TIME, 'TIME'];
+        yield 'datetime' => [ColumnTypeFamily::DATETIME, 'DATETIME'];
+        yield 'timestamp' => [ColumnTypeFamily::TIMESTAMP, 'TIMESTAMP'];
+        yield 'binary' => [ColumnTypeFamily::BINARY, 'BLOB'];
+        yield 'json' => [ColumnTypeFamily::JSON, 'JSON'];
+        yield 'unknown' => [ColumnTypeFamily::UNKNOWN, 'GEOMETRY'];
+    }
+
+    #[DataProvider('providerNativeTypes')]
+    public function testRenderCastHandlesEveryNativeType(ColumnTypeFamily $family, string $nativeType): void
+    {
+        $renderer = new MySqlCastRenderer();
+        $type = new ColumnType($family, $nativeType);
+
+        self::assertNotEmpty($renderer->renderCast("'test'", $type));
+        self::assertNotEmpty($renderer->renderCast("'value'", $type));
+        self::assertNotEmpty($renderer->renderNullCast($type));
+        self::assertStringContainsString('CAST(', $renderer->renderNullCast($type));
+        self::assertStringContainsString('NULL', $renderer->renderNullCast($type));
+    }
+
+    public function testRenderCastForIntegerProducesExactForm(): void
+    {
+        self::assertSame("CAST('42' AS SIGNED)", (new MySqlCastRenderer())->renderCast("'42'", new ColumnType(ColumnTypeFamily::INTEGER, 'INT')));
+    }
+
+    public function testRenderNullCastProducesExactForm(): void
+    {
+        self::assertSame('CAST(NULL AS SIGNED)', (new MySqlCastRenderer())->renderNullCast(new ColumnType(ColumnTypeFamily::INTEGER, 'INT')));
+    }
+
+    public function testRenderCastForStringUsesCharType(): void
+    {
+        self::assertSame("CAST('hello' AS CHAR)", (new MySqlCastRenderer())->renderCast("'hello'", new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)')));
     }
 }

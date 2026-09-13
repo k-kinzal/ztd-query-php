@@ -14,13 +14,6 @@ $constraints = GenerationPlan::fromRule('simple_statement_or_begin')->requiringN
 $target = new ClassifyTarget();
 
 /**
- * Warm parser tables and instrumented classes before the per-input timeout starts.
- */
-$target('SELECT 1');
-
-/**
- * The process boundary includes SQL, bytes and runtime in every finding.
- *
  * @var PhpFuzzer\Config $config
  */
 $config->setAllowedExceptions([]);
@@ -28,13 +21,5 @@ $config->setMaxLen(2004);
 $config->setTarget(static function (string $input) use ($provider, $planner, $constraints, $target): void {
     $plan = (new BytePlanCompiler())->compile($input, $planner, $constraints);
     $sql = $provider->generate($plan);
-    try {
-        $target($sql);
-    } catch (Throwable $failure) {
-        throw new Error(
-            'ClassifyTarget mysql-8.4.7 PHP ' . PHP_VERSION . "\nInput (base64): " . base64_encode($input) . "\nSQL: " . $sql,
-            0,
-            $failure,
-        );
-    }
+    $target($sql);
 });

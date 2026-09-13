@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Rewrite;
 
-use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
-use Tests\Contract\RewriterContractTest;
+use PHPUnit\Framework\TestCase;
+use Tests\Fixture\MySqlRewriterFactory;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
@@ -31,7 +31,6 @@ use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
 use ZtdQuery\Platform\MySql\UpdateAssignmentExtractor;
 use ZtdQuery\Platform\MySql\UpdateSourceExtractor;
-use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Schema\ViewDefinitionSet;
@@ -85,7 +84,6 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\MySql\Projection\Upsert\MetadataColumns::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Projection\Upsert\QualifiedColumn::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Classification\CteStatementKind::class)]
-
 
 #[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Validation\AlterTableGuard::class)]
 
@@ -151,7 +149,7 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[CoversClass(\ZtdQuery\Platform\MySql\Rewrite\StatementRewriter::class)]
 #[CoversClass(\ZtdQuery\Platform\MySql\Rewrite\Context\TableContext::class)]
 #[CoversClass(\ZtdQuery\Platform\MySql\Rewrite\Validation\ReplaceColumns::class)]
-final class MySqlRewriterTest extends RewriterContractTest
+final class MySqlRewriterTest extends TestCase
 {
     public function testPartitionSelectionUsesRegisteredPartitionMetadata(): void
     {
@@ -161,7 +159,7 @@ final class MySqlRewriterTest extends RewriterContractTest
             ['id' => 2, 'event_date' => '2024-06-01'],
         ]);
         $registry = new TableDefinitionRegistry();
-        $definition = $this->createSchemaParser()->parse(
+        $definition = (new MySqlSchemaParser(new MySqlParser()))->parse(
             'CREATE TABLE events (id INT, event_date DATE) '
             . 'PARTITION BY RANGE (YEAR(event_date)) ('
             . 'PARTITION p2023 VALUES LESS THAN (2024), '
@@ -171,7 +169,7 @@ final class MySqlRewriterTest extends RewriterContractTest
         self::assertNotNull($definition);
         $registry->register('events', $definition);
 
-        $sql = $this->createRewriter($store, $registry)
+        $sql = MySqlRewriterFactory::create($store, $registry)
             ->rewrite('SELECT id FROM events PARTITION (p2024)')
             ->sql();
 
@@ -185,32 +183,31 @@ final class MySqlRewriterTest extends RewriterContractTest
     public function testPartitionSelectionUsesDefinitionWithoutMaterializedRows(): void
     {
         $registry = new TableDefinitionRegistry();
-        $definition = $this->createSchemaParser()->parse(
+        $definition = (new MySqlSchemaParser(new MySqlParser()))->parse(
             'CREATE TABLE events (id INT) PARTITION BY RANGE (id) ('
             . 'PARTITION p0 VALUES LESS THAN (10), PARTITION pmax VALUES LESS THAN MAXVALUE)',
         );
         self::assertNotNull($definition);
         $registry->register('events', $definition);
 
-        $sql = $this->createRewriter(new ShadowStore(), $registry)
+        $sql = MySqlRewriterFactory::create(new ShadowStore(), $registry)
             ->rewrite('SELECT id FROM events PARTITION (p0)')
             ->sql();
 
         self::assertStringContainsString('FROM (SELECT * FROM events WHERE ((id) IS NULL OR (id) < 10)) AS events', $sql);
     }
 
-
     public function testGeneratedExpressionIsPresentBeforeTheFirstShadowWrite(): void
     {
         $store = new ShadowStore();
         $registry = new TableDefinitionRegistry();
-        $definition = $this->createSchemaParser()->parse(
+        $definition = (new MySqlSchemaParser(new MySqlParser()))->parse(
             'CREATE TABLE orders (qty INT, total INT GENERATED ALWAYS AS (qty * 2) STORED)',
         );
         self::assertNotNull($definition);
         $registry->register('orders', $definition);
 
-        $sql = $this->createRewriter($store, $registry)->rewrite('SELECT total FROM orders')->sql();
+        $sql = MySqlRewriterFactory::create($store, $registry)->rewrite('SELECT total FROM orders')->sql();
 
         self::assertStringContainsString('(qty * 2) AS `total`', $sql);
     }
@@ -221,7 +218,14 @@ final class MySqlRewriterTest extends RewriterContractTest
         $registry = new TableDefinitionRegistry();
         $parser = new MySqlParser();
         $schemaParser = new MySqlSchemaParser($parser);
-        $definition = $schemaParser->parse($this->usersCreateTableSql());
+        $definition = $schemaParser->parse(<<<'SQL'
+CREATE TABLE users (
+    id INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    PRIMARY KEY (id)
+)
+SQL);
         self::assertNotNull($definition);
         $registry->register('users', $definition);
         $store->set('users', [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com']]);
@@ -256,11 +260,18 @@ final class MySqlRewriterTest extends RewriterContractTest
         $store = new ShadowStore();
         $store->set('users', [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com']]);
         $registry = new TableDefinitionRegistry();
-        $definition = $this->createSchemaParser()->parse($this->usersCreateTableSql());
+        $definition = (new MySqlSchemaParser(new MySqlParser()))->parse(<<<'SQL'
+CREATE TABLE users (
+    id INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    PRIMARY KEY (id)
+)
+SQL);
         self::assertNotNull($definition);
         $registry->register('users', $definition);
 
-        $plan = $this->createRewriter($store, $registry)->rewrite('SELECT name FROM app.users');
+        $plan = MySqlRewriterFactory::create($store, $registry)->rewrite('SELECT name FROM app.users');
 
         self::assertStringStartsWith('WITH `users` AS', $plan->sql());
         self::assertStringEndsWith('SELECT name FROM users', $plan->sql());
@@ -268,7 +279,7 @@ final class MySqlRewriterTest extends RewriterContractTest
 
     public function testExplainPassesThroughUnchanged(): void
     {
-        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        $rewriter = MySqlRewriterFactory::create(new ShadowStore(), new TableDefinitionRegistry());
         $sql = 'EXPLAIN SELECT * FROM users';
 
         $plan = $rewriter->rewrite($sql);
@@ -279,7 +290,7 @@ final class MySqlRewriterTest extends RewriterContractTest
 
     public function testDescribePassesThroughUnchanged(): void
     {
-        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        $rewriter = MySqlRewriterFactory::create(new ShadowStore(), new TableDefinitionRegistry());
         $sql = 'DESCRIBE users';
 
         $plan = $rewriter->rewrite($sql);
@@ -290,7 +301,7 @@ final class MySqlRewriterTest extends RewriterContractTest
 
     public function testShowCreateTablePassesThroughUnchanged(): void
     {
-        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        $rewriter = MySqlRewriterFactory::create(new ShadowStore(), new TableDefinitionRegistry());
         $sql = 'SHOW CREATE TABLE users';
 
         $plan = $rewriter->rewrite($sql);
@@ -304,11 +315,18 @@ final class MySqlRewriterTest extends RewriterContractTest
         $store = new ShadowStore();
         $store->set('users', [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com']]);
         $registry = new TableDefinitionRegistry();
-        $definition = $this->createSchemaParser()->parse($this->usersCreateTableSql());
+        $definition = (new MySqlSchemaParser(new MySqlParser()))->parse(<<<'SQL'
+CREATE TABLE users (
+    id INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    PRIMARY KEY (id)
+)
+SQL);
         self::assertNotNull($definition);
         $registry->register('users', $definition);
 
-        $plan = $this->createRewriter($store, $registry)->rewrite('SELECT * FROM (SELECT id, name FROM users) AS selected');
+        $plan = MySqlRewriterFactory::create($store, $registry)->rewrite('SELECT * FROM (SELECT id, name FROM users) AS selected');
 
         self::assertStringStartsWith('WITH `users` AS', $plan->sql());
     }
@@ -318,11 +336,18 @@ final class MySqlRewriterTest extends RewriterContractTest
         $store = new ShadowStore();
         $store->set('users', [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com']]);
         $registry = new TableDefinitionRegistry();
-        $definition = $this->createSchemaParser()->parse($this->usersCreateTableSql());
+        $definition = (new MySqlSchemaParser(new MySqlParser()))->parse(<<<'SQL'
+CREATE TABLE users (
+    id INT NOT NULL AUTO_INCREMENT,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    PRIMARY KEY (id)
+)
+SQL);
         self::assertNotNull($definition);
         $registry->register('users', $definition);
 
-        $plan = $this->createRewriter($store, $registry)->rewrite("# SELECT * FROM unknown_table\nSELECT * FROM users");
+        $plan = MySqlRewriterFactory::create($store, $registry)->rewrite("# SELECT * FROM unknown_table\nSELECT * FROM users");
 
         self::assertSame(QueryKind::READ, $plan->kind());
         self::assertStringContainsString('FROM users', $plan->sql());
@@ -331,11 +356,11 @@ final class MySqlRewriterTest extends RewriterContractTest
     public function testCteReferencesAreMatchedCaseInsensitivelyDuringSchemaValidation(): void
     {
         $registry = new TableDefinitionRegistry();
-        $definition = $this->createSchemaParser()->parse('CREATE TABLE known_table (id INT PRIMARY KEY)');
+        $definition = (new MySqlSchemaParser(new MySqlParser()))->parse('CREATE TABLE known_table (id INT PRIMARY KEY)');
         self::assertNotNull($definition);
         $registry->register('known_table', $definition);
 
-        $plan = $this->createRewriter(new ShadowStore(), $registry)->rewrite(
+        $plan = MySqlRewriterFactory::create(new ShadowStore(), $registry)->rewrite(
             'WITH users AS (SELECT 1 AS id) SELECT * FROM Users',
         );
 
@@ -345,94 +370,37 @@ final class MySqlRewriterTest extends RewriterContractTest
     public function testUnknownTableAfterDeclaredCteIsRejected(): void
     {
         $registry = new TableDefinitionRegistry();
-        $definition = $this->createSchemaParser()->parse('CREATE TABLE known_table (id INT PRIMARY KEY)');
+        $definition = (new MySqlSchemaParser(new MySqlParser()))->parse('CREATE TABLE known_table (id INT PRIMARY KEY)');
         self::assertNotNull($definition);
         $registry->register('known_table', $definition);
 
         $this->expectException(UnknownSchemaException::class);
         $this->expectExceptionMessage('missing_table');
 
-        $this->createRewriter(new ShadowStore(), $registry)->rewrite(
+        MySqlRewriterFactory::create(new ShadowStore(), $registry)->rewrite(
             'WITH users AS (SELECT 1 AS id) SELECT * FROM Users JOIN missing_table ON TRUE',
         );
     }
 
-    #[Override]
-    protected function createRewriter(ShadowStore $store, TableDefinitionRegistry $registry): MySqlRewriter
-    {
-        $parser = new MySqlParser();
-        $schemaParser = new MySqlSchemaParser($parser);
-        $selectTransformer = new SelectTransformer();
-        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
-        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
-        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
-        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
-        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
-        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
 
-        return new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
-    }
 
-    #[Override]
-    protected function createSchemaParser(): SchemaParser
-    {
-        return new MySqlSchemaParser(new MySqlParser());
-    }
 
-    #[Override]
-    protected function selectSql(): string
-    {
-        return 'SELECT id, name, email FROM users WHERE id = 1';
-    }
 
-    #[Override]
-    protected function insertSql(): string
-    {
-        return "INSERT INTO users (id, name, email) VALUES (1, 'Alice', 'alice@example.com')";
-    }
 
-    #[Override]
-    protected function updateSql(): string
-    {
-        return "UPDATE users SET name = 'Bob' WHERE id = 1";
-    }
 
-    #[Override]
-    protected function deleteSql(): string
-    {
-        return 'DELETE FROM users WHERE id = 1';
-    }
 
-    #[Override]
-    protected function createTableSql(): string
-    {
-        return 'CREATE TABLE orders (id INT PRIMARY KEY, amount DECIMAL(10,2))';
-    }
 
-    #[Override]
-    protected function dropTableSql(): string
-    {
-        return 'DROP TABLE IF EXISTS orders';
-    }
 
-    #[Override]
-    protected function unsupportedSql(): string
-    {
-        return 'CREATE DATABASE test_db';
-    }
 
-    #[Override]
-    protected function usersCreateTableSql(): string
-    {
-        return <<<'SQL'
-            CREATE TABLE users (
-                id INT NOT NULL AUTO_INCREMENT,
-                name VARCHAR(255) NOT NULL,
-                email VARCHAR(255) NOT NULL,
-                PRIMARY KEY (id)
-            )
-            SQL;
-    }
+
+
+
+
+
+
+
+
+
 
     public function testRewriteReadAddsCte(): void
     {
@@ -462,7 +430,7 @@ final class MySqlRewriterTest extends RewriterContractTest
 
     public function testRewritesSingleSetExpressionsWithoutTreatingThemAsMultipleStatements(): void
     {
-        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        $rewriter = MySqlRewriterFactory::create(new ShadowStore(), new TableDefinitionRegistry());
 
         $except = $rewriter->rewrite('SELECT 1 EXCEPT SELECT 2');
         $intersect = $rewriter->rewrite('SELECT 1 INTERSECT SELECT 2');
@@ -477,7 +445,7 @@ final class MySqlRewriterTest extends RewriterContractTest
 
     public function testCompositeReadRejectsSelectInto(): void
     {
-        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        $rewriter = MySqlRewriterFactory::create(new ShadowStore(), new TableDefinitionRegistry());
 
         $this->expectException(UnsupportedSqlException::class);
         $this->expectExceptionMessage('Statement type not supported');
@@ -487,7 +455,7 @@ final class MySqlRewriterTest extends RewriterContractTest
 
     public function testCompositeReadAllowsTablesWithoutSchemaContext(): void
     {
-        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        $rewriter = MySqlRewriterFactory::create(new ShadowStore(), new TableDefinitionRegistry());
 
         $plan = $rewriter->rewrite('SELECT * FROM missing EXCEPT SELECT * FROM other');
 
@@ -503,7 +471,7 @@ final class MySqlRewriterTest extends RewriterContractTest
         $definition = $schemaParser->parse('CREATE TABLE known (id INT)');
         self::assertNotNull($definition);
         $registry->register('known', $definition);
-        $rewriter = $this->createRewriter(new ShadowStore(), $registry);
+        $rewriter = MySqlRewriterFactory::create(new ShadowStore(), $registry);
 
         $this->expectException(UnknownSchemaException::class);
         $this->expectExceptionMessage('unknown_table');
@@ -513,7 +481,7 @@ final class MySqlRewriterTest extends RewriterContractTest
 
     public function testRewriteMultipleUsesLexicalStatementBoundaries(): void
     {
-        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        $rewriter = MySqlRewriterFactory::create(new ShadowStore(), new TableDefinitionRegistry());
 
         $plan = $rewriter->rewriteMultiple('SELECT 1 EXCEPT SELECT 2; SELECT 3');
 
@@ -584,7 +552,7 @@ final class MySqlRewriterTest extends RewriterContractTest
         self::assertNotNull($definition);
         $registry = new TableDefinitionRegistry();
         $registry->register('settings', $definition);
-        $rewriter = $this->createRewriter(new ShadowStore(), $registry);
+        $rewriter = MySqlRewriterFactory::create(new ShadowStore(), $registry);
 
         $plan = $rewriter->rewrite('INSERT INTO settings (id) VALUES (1)');
 
@@ -599,7 +567,7 @@ final class MySqlRewriterTest extends RewriterContractTest
         self::assertNotNull($definition);
         $registry = new TableDefinitionRegistry();
         $registry->register('users', $definition);
-        $rewriter = $this->createRewriter(new ShadowStore(), $registry);
+        $rewriter = MySqlRewriterFactory::create(new ShadowStore(), $registry);
 
         $plan = $rewriter->rewrite("INSERT INTO users (name) VALUES ('Alice')");
 
@@ -3303,7 +3271,7 @@ final class MySqlRewriterTest extends RewriterContractTest
     {
         $store = new ShadowStore();
         $store->insert('late_table', [['id' => 1, 'name' => 'Alice']]);
-        $rewriter = $this->createRewriter($store, new TableDefinitionRegistry());
+        $rewriter = MySqlRewriterFactory::create($store, new TableDefinitionRegistry());
 
         try {
             $rewriter->rewrite("UPDATE late_table SET name = 'Bob' WHERE id = 1");
@@ -3315,20 +3283,20 @@ final class MySqlRewriterTest extends RewriterContractTest
 
     public function testSplitStatements(): void
     {
-        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        $rewriter = MySqlRewriterFactory::create(new ShadowStore(), new TableDefinitionRegistry());
         self::assertSame(['SELECT 1', "SELECT ';'"], $rewriter->splitStatements("SELECT 1; SELECT ';'"));
     }
 
     public function testTransactionStatement(): void
     {
-        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        $rewriter = MySqlRewriterFactory::create(new ShadowStore(), new TableDefinitionRegistry());
         self::assertNotNull($rewriter->transactionStatement('BEGIN'));
         self::assertNull($rewriter->transactionStatement('SELECT 1'));
     }
 
     public function testEmptyResultSelect(): void
     {
-        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        $rewriter = MySqlRewriterFactory::create(new ShadowStore(), new TableDefinitionRegistry());
         self::assertSame('SELECT 1 WHERE FALSE', $rewriter->emptyResultSelect());
     }
 
@@ -3339,11 +3307,124 @@ final class MySqlRewriterTest extends RewriterContractTest
         $definition = (new MySqlSchemaParser(new MySqlParser()))->parse('CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY, name TEXT)');
         self::assertNotNull($definition);
         $registry->register('users', $definition);
-        $rewriter = $this->createRewriter($store, $registry);
+        $rewriter = MySqlRewriterFactory::create($store, $registry);
         $first = $rewriter->rewrite("INSERT INTO users (name) VALUES ('a')");
         $rewriter->commitRewriteState();
         $second = $rewriter->rewrite("INSERT INTO users (name) VALUES ('b')");
         self::assertStringContainsString('CAST(1 AS SIGNED) AS `id`', $first->sql());
         self::assertStringContainsString('CAST(2 AS SIGNED) AS `id`', $second->sql());
+    }
+
+    public function testSelectReturnsReadKind(): void
+    {
+        $rewriter = MySqlRewriterFactory::withUsers();
+        $plan = $rewriter->rewrite('SELECT id, name, email FROM users WHERE id = 1');
+        self::assertSame(QueryKind::READ, $plan->kind());
+    }
+
+    public function testInsertReturnsWriteSimulatedWithMutation(): void
+    {
+        $rewriter = MySqlRewriterFactory::withUsers();
+        $plan = $rewriter->rewrite("INSERT INTO users (id, name, email) VALUES (1, 'Alice', 'alice@example.com')");
+        self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind());
+        self::assertNotNull($plan->mutation());
+        self::assertInstanceOf(InsertMutation::class, $plan->mutation());
+        self::assertSame('users', $plan->mutation()->tableName());
+    }
+
+    public function testUpdateReturnsWriteSimulatedWithMutation(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com']]);
+        $rewriter = MySqlRewriterFactory::withUsers($store);
+        $plan = $rewriter->rewrite("UPDATE users SET name = 'Bob' WHERE id = 1");
+        self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind());
+        self::assertNotNull($plan->mutation());
+        self::assertInstanceOf(UpdateMutation::class, $plan->mutation());
+        self::assertSame('users', $plan->mutation()->tableName());
+    }
+
+    public function testDeleteReturnsWriteSimulatedWithMutation(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com']]);
+        $rewriter = MySqlRewriterFactory::withUsers($store);
+        $plan = $rewriter->rewrite('DELETE FROM users WHERE id = 1');
+        self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind());
+        self::assertNotNull($plan->mutation());
+        self::assertInstanceOf(DeleteMutation::class, $plan->mutation());
+        self::assertSame('users', $plan->mutation()->tableName());
+    }
+
+    public function testCreateTableReturnsDdlSimulated(): void
+    {
+        $rewriter = MySqlRewriterFactory::withUsers();
+        $plan = $rewriter->rewrite('CREATE TABLE orders (id INT PRIMARY KEY, amount DECIMAL(10,2))');
+        self::assertSame(QueryKind::DDL_SIMULATED, $plan->kind());
+    }
+
+    public function testDropTableReturnsDdlSimulated(): void
+    {
+        $rewriter = MySqlRewriterFactory::withUsers();
+        $plan = $rewriter->rewrite('DROP TABLE IF EXISTS orders');
+        self::assertSame(QueryKind::DDL_SIMULATED, $plan->kind());
+    }
+
+    public function testUnsupportedSqlThrowsException(): void
+    {
+        $this->expectException(UnsupportedSqlException::class);
+        $rewriter = MySqlRewriterFactory::withUsers();
+        $rewriter->rewrite('CREATE DATABASE test_db');
+    }
+
+    public function testEmptyInputThrowsException(): void
+    {
+        $this->expectException(UnsupportedSqlException::class);
+        $rewriter = MySqlRewriterFactory::withUsers();
+        $rewriter->rewrite('');
+    }
+
+    public function testRewriteIsDeterministic(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com']]);
+        $rewriter = MySqlRewriterFactory::withUsers($store);
+        $plan1 = $rewriter->rewrite('SELECT id, name, email FROM users WHERE id = 1');
+        $plan2 = $rewriter->rewrite('SELECT id, name, email FROM users WHERE id = 1');
+        self::assertSame($plan1->sql(), $plan2->sql());
+        self::assertSame($plan1->kind(), $plan2->kind());
+    }
+
+    public function testReadPlanHasNoMutation(): void
+    {
+        $rewriter = MySqlRewriterFactory::withUsers();
+        $plan = $rewriter->rewrite('SELECT id, name, email FROM users WHERE id = 1');
+        self::assertSame(QueryKind::READ, $plan->kind());
+        self::assertNull($plan->mutation());
+    }
+
+    public function testWritePlanHasNonNullMutation(): void
+    {
+        $rewriter = MySqlRewriterFactory::withUsers();
+        $plan = $rewriter->rewrite("INSERT INTO users (id, name, email) VALUES (1, 'Alice', 'alice@example.com')");
+        self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind());
+        self::assertNotNull($plan->mutation());
+        self::assertInstanceOf(InsertMutation::class, $plan->mutation());
+    }
+
+    public function testRewriteOutputIsNonEmpty(): void
+    {
+        $rewriter = MySqlRewriterFactory::withUsers();
+        $plan = $rewriter->rewrite('SELECT id, name, email FROM users WHERE id = 1');
+        self::assertNotEmpty($plan->sql());
+        self::assertStringContainsString('SELECT', strtoupper($plan->sql()));
+    }
+
+    public function testInsertRewriteOutputContainsSelect(): void
+    {
+        $rewriter = MySqlRewriterFactory::withUsers();
+        $plan = $rewriter->rewrite("INSERT INTO users (id, name, email) VALUES (1, 'Alice', 'alice@example.com')");
+        self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind());
+        self::assertMatchesRegularExpression('/^(?:WITH\b|SELECT\b)/i', $plan->sql(), 'INSERT rewrite must produce a result-select query starting with SELECT or WITH...SELECT');
     }
 }

@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Transformer;
 
-use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\TestCase;
 use RuntimeException;
-use Tests\Contract\TransformerContractTest;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
 use ZtdQuery\Platform\MySql\MySqlCastRenderer;
@@ -18,7 +17,6 @@ use ZtdQuery\Platform\MySql\MySqlPartitionSelectionRewriter;
 use ZtdQuery\Platform\MySql\MySqlTypeSemantics;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Platform\ValueRenderer;
-use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\TablePartitioning;
@@ -29,8 +27,6 @@ use ZtdQuery\Schema\TablePartitioning;
 #[UsesClass(\ZtdQuery\Platform\MySql\Projection\FullText\ExpressionEditor::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Projection\Partition\SelectionReader::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Projection\Partition\SourceProjection::class)]
-
-
 
 #[UsesClass(\ZtdQuery\Platform\MySql\Type\CastTypeResolver::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Type\Enum\RankEdits::class)]
@@ -50,7 +46,7 @@ use ZtdQuery\Schema\TablePartitioning;
 #[CoversClass(\ZtdQuery\Platform\MySql\Transformer\Set\OrderRewriter::class)]
 #[CoversClass(\ZtdQuery\Platform\MySql\Transformer\Set\ValueNormalizer::class)]
 #[CoversClass(\ZtdQuery\Platform\MySql\Transformer\Shadow\CteRows::class)]
-final class SelectTransformerTest extends TransformerContractTest
+final class SelectTransformerTest extends TestCase
 {
     public function testTransformsPartitionSelectionBeforeComposingShadowCte(): void
     {
@@ -123,29 +119,13 @@ final class SelectTransformerTest extends TransformerContractTest
         self::assertStringContainsString('CUSTOM_VALUE AS `id`', $transformer->transform('SELECT * FROM users', $tables));
     }
 
-    #[Override]
-    protected function createTransformer(): SqlTransformer
-    {
-        return new SelectTransformer();
-    }
 
-    #[Override]
-    protected function selectSql(): string
-    {
-        return 'SELECT * FROM users WHERE id = 1';
-    }
 
-    #[Override]
-    protected function nativeIntegerType(): string
-    {
-        return 'INT';
-    }
 
-    #[Override]
-    protected function nativeStringType(): string
-    {
-        return 'VARCHAR(255)';
-    }
+
+
+
+
 
     public function testTransformWithNoTablesReturnsOriginalSql(): void
     {
@@ -2350,5 +2330,83 @@ final class SelectTransformerTest extends TransformerContractTest
         self::assertNotFalse($existingPos);
         $between = substr($result, $usersPos, $existingPos - $usersPos);
         self::assertStringContainsString(',', $between);
+    }
+
+    public function testEmptyTableContextReturnsOriginalSql(): void
+    {
+        $transformer = new SelectTransformer();
+        $sql = 'SELECT * FROM users WHERE id = 1';
+        $result = $transformer->transform($sql, []);
+        self::assertSame($sql, $result);
+    }
+
+    public function testCteInjectedSqlStartsWithWith(): void
+    {
+        $transformer = new SelectTransformer();
+        $sql = 'SELECT * FROM users WHERE id = 1';
+        $tables = ['users' => ['rows' => [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com']], 'columns' => ['id', 'name', 'email'], 'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'), 'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'), 'email' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)')]]];
+        $result = $transformer->transform($sql, $tables);
+        self::assertStringStartsWith('WITH', ltrim($result));
+    }
+
+    public function testTableNameUsedAsCte(): void
+    {
+        $transformer = new SelectTransformer();
+        $sql = 'SELECT * FROM users WHERE id = 1';
+        $tables = ['users' => ['rows' => [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com']], 'columns' => ['id', 'name', 'email'], 'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'), 'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'), 'email' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)')]]];
+        $result = $transformer->transform($sql, $tables);
+        self::assertStringContainsString('users', $result);
+        self::assertStringContainsString('SELECT', strtoupper($result));
+    }
+
+    public function testTransformIsDeterministic(): void
+    {
+        $transformer = new SelectTransformer();
+        $sql = 'SELECT * FROM users WHERE id = 1';
+        $tables = ['users' => ['rows' => [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com']], 'columns' => ['id', 'name', 'email'], 'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'), 'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'), 'email' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)')]]];
+        $result1 = $transformer->transform($sql, $tables);
+        $result2 = $transformer->transform($sql, $tables);
+        self::assertSame($result1, $result2);
+    }
+
+    public function testTransformOutputIsNonEmpty(): void
+    {
+        $transformer = new SelectTransformer();
+        $sql = 'SELECT * FROM users WHERE id = 1';
+        $tables = ['users' => ['rows' => [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com']], 'columns' => ['id', 'name', 'email'], 'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'), 'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'), 'email' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)')]]];
+        $result = $transformer->transform($sql, $tables);
+        self::assertNotEmpty($result);
+    }
+
+    public function testCteContainsSelectUnionStructure(): void
+    {
+        $transformer = new SelectTransformer();
+        $sql = 'SELECT * FROM users WHERE id = 1';
+        $tables = ['users' => ['rows' => [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com'], ['id' => 2, 'name' => 'Bob', 'email' => 'bob@example.com']], 'columns' => ['id', 'name', 'email'], 'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'), 'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'), 'email' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)')]]];
+        $result = $transformer->transform($sql, $tables);
+        $upper = strtoupper($result);
+        self::assertStringContainsString('UNION ALL', $upper);
+        self::assertStringContainsString('SELECT', $upper);
+        self::assertStringContainsString(' AS ', $upper, 'CTE must contain AS keyword');
+    }
+
+    public function testCteContainsCastExpressions(): void
+    {
+        $transformer = new SelectTransformer();
+        $sql = 'SELECT * FROM users WHERE id = 1';
+        $tables = ['users' => ['rows' => [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com']], 'columns' => ['id', 'name', 'email'], 'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'), 'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'), 'email' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)')]]];
+        $result = $transformer->transform($sql, $tables);
+        $upper = strtoupper($result);
+        self::assertStringContainsString('CAST(', $upper, 'CTE output must contain CAST expressions for typed columns');
+    }
+
+    public function testEmptyRowsWithColumnsReturnsWithClause(): void
+    {
+        $transformer = new SelectTransformer();
+        $sql = 'SELECT * FROM users WHERE id = 1';
+        $tables = ['users' => ['rows' => [], 'columns' => ['id', 'name', 'email'], 'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INT'), 'name' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)'), 'email' => new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR(255)')]]];
+        $result = $transformer->transform($sql, $tables);
+        self::assertStringStartsWith('WITH', ltrim($result));
+        self::assertNotEmpty($result);
     }
 }

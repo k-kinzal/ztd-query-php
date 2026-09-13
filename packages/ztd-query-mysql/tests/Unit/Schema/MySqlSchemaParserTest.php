@@ -4,14 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Schema;
 
-use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
-use Tests\Contract\SchemaParserContractTest;
+use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlPartitioningParser;
 use ZtdQuery\Platform\MySql\MySqlSchemaParser;
-use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
 
@@ -27,34 +25,8 @@ use ZtdQuery\Schema\IdentityGenerationStrategy;
 #[UsesClass(MySqlPartitioningParser::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
 #[CoversClass(\ZtdQuery\Platform\MySql\Schema\DefinitionBuilder::class)]
-final class MySqlSchemaParserTest extends SchemaParserContractTest
+final class MySqlSchemaParserTest extends TestCase
 {
-    #[Override]
-    protected function createParser(): SchemaParser
-    {
-        return new MySqlSchemaParser(new MySqlParser());
-    }
-
-    #[Override]
-    protected function validCreateTableSql(): string
-    {
-        return <<<'SQL'
-            CREATE TABLE users (
-                id INT NOT NULL AUTO_INCREMENT,
-                name VARCHAR(255) NOT NULL,
-                email VARCHAR(255) NOT NULL,
-                PRIMARY KEY (id),
-                UNIQUE KEY email_unique (email)
-            )
-            SQL;
-    }
-
-    #[Override]
-    protected function nonCreateTableSql(): string
-    {
-        return 'SELECT * FROM users WHERE id = 1';
-    }
-
     public function testParsesStoredAndVirtualGeneratedExpressions(): void
     {
         $definition = (new MySqlSchemaParser(new MySqlParser()))->parse(
@@ -671,5 +643,195 @@ final class MySqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame(['tenant_id', 'id'], $definition->foreignKeys['fk_parent']->referencedColumns);
         self::assertSame('CASCADE', $definition->foreignKeys['fk_parent']->onDelete->value);
         self::assertSame('CASCADE', $definition->foreignKeys['fk_parent']->onUpdate->value);
+    }
+
+    public function testValidCreateTableReturnsNonNull(): void
+    {
+        $parser = new MySqlSchemaParser(new MySqlParser());
+        $result = $parser->parse(<<<'SQL'
+    CREATE TABLE users (
+        id INT NOT NULL AUTO_INCREMENT,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        PRIMARY KEY (id),
+        UNIQUE KEY email_unique (email)
+    )
+    SQL);
+        self::assertNotNull($result);
+    }
+
+    public function testNonCreateTableReturnsNull(): void
+    {
+        $parser = new MySqlSchemaParser(new MySqlParser());
+        $result = $parser->parse('SELECT * FROM users WHERE id = 1');
+        self::assertNull($result);
+    }
+
+    public function testPrimaryKeysSubsetOfColumns(): void
+    {
+        $parser = new MySqlSchemaParser(new MySqlParser());
+        $definition = $parser->parse(<<<'SQL'
+    CREATE TABLE users (
+        id INT NOT NULL AUTO_INCREMENT,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        PRIMARY KEY (id),
+        UNIQUE KEY email_unique (email)
+    )
+    SQL);
+        self::assertNotNull($definition);
+        self::assertSame([], array_diff($definition->primaryKeys, $definition->columns));
+    }
+
+    public function testNotNullSubsetOfColumns(): void
+    {
+        $parser = new MySqlSchemaParser(new MySqlParser());
+        $definition = $parser->parse(<<<'SQL'
+    CREATE TABLE users (
+        id INT NOT NULL AUTO_INCREMENT,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        PRIMARY KEY (id),
+        UNIQUE KEY email_unique (email)
+    )
+    SQL);
+        self::assertNotNull($definition);
+        self::assertSame([], array_diff($definition->notNullColumns, $definition->columns));
+    }
+
+    public function testColumnTypesKeysSubsetOfColumns(): void
+    {
+        $parser = new MySqlSchemaParser(new MySqlParser());
+        $definition = $parser->parse(<<<'SQL'
+    CREATE TABLE users (
+        id INT NOT NULL AUTO_INCREMENT,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        PRIMARY KEY (id),
+        UNIQUE KEY email_unique (email)
+    )
+    SQL);
+        self::assertNotNull($definition);
+        self::assertSame([], array_diff(array_keys($definition->columnTypes), $definition->columns));
+    }
+
+    public function testUniqueConstraintColumnsSubsetOfColumns(): void
+    {
+        $parser = new MySqlSchemaParser(new MySqlParser());
+        $definition = $parser->parse(<<<'SQL'
+    CREATE TABLE users (
+        id INT NOT NULL AUTO_INCREMENT,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        PRIMARY KEY (id),
+        UNIQUE KEY email_unique (email)
+    )
+    SQL);
+        self::assertNotNull($definition);
+        self::assertSame(['email_unique' => ['email']], $definition->uniqueConstraints);
+        self::assertSame([], array_diff(array_merge(...array_values($definition->uniqueConstraints)), $definition->columns));
+    }
+
+    public function testParsedDefinitionHasNonEmptyColumns(): void
+    {
+        $parser = new MySqlSchemaParser(new MySqlParser());
+        $definition = $parser->parse(<<<'SQL'
+    CREATE TABLE users (
+        id INT NOT NULL AUTO_INCREMENT,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        PRIMARY KEY (id),
+        UNIQUE KEY email_unique (email)
+    )
+    SQL);
+        self::assertNotNull($definition);
+        self::assertNotEmpty($definition->columns);
+    }
+
+    public function testParsedColumnsMatchExpected(): void
+    {
+        $parser = new MySqlSchemaParser(new MySqlParser());
+        $definition = $parser->parse(<<<'SQL'
+    CREATE TABLE users (
+        id INT NOT NULL AUTO_INCREMENT,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        PRIMARY KEY (id),
+        UNIQUE KEY email_unique (email)
+    )
+    SQL);
+        self::assertNotNull($definition);
+        self::assertSame(['id', 'name', 'email'], $definition->columns, 'Parsed column names must match expected columns in order');
+    }
+
+    public function testParsedPrimaryKeysMatchExpected(): void
+    {
+        $parser = new MySqlSchemaParser(new MySqlParser());
+        $definition = $parser->parse(<<<'SQL'
+    CREATE TABLE users (
+        id INT NOT NULL AUTO_INCREMENT,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        PRIMARY KEY (id),
+        UNIQUE KEY email_unique (email)
+    )
+    SQL);
+        self::assertNotNull($definition);
+        self::assertSame(['id'], $definition->primaryKeys, 'Parsed primary keys must match expected primary keys');
+    }
+
+    public function testParsedNotNullColumnsMatchExpected(): void
+    {
+        $parser = new MySqlSchemaParser(new MySqlParser());
+        $definition = $parser->parse(<<<'SQL'
+    CREATE TABLE users (
+        id INT NOT NULL AUTO_INCREMENT,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        PRIMARY KEY (id),
+        UNIQUE KEY email_unique (email)
+    )
+    SQL);
+        self::assertNotNull($definition);
+        self::assertSame([], array_diff(['id', 'name', 'email'], $definition->notNullColumns));
+    }
+
+    public function testColumnCountMatchesExpected(): void
+    {
+        $parser = new MySqlSchemaParser(new MySqlParser());
+        $definition = $parser->parse(<<<'SQL'
+    CREATE TABLE users (
+        id INT NOT NULL AUTO_INCREMENT,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        PRIMARY KEY (id),
+        UNIQUE KEY email_unique (email)
+    )
+    SQL);
+        self::assertNotNull($definition);
+        self::assertCount(3, $definition->columns, 'Column count must match expected');
+    }
+
+    public function testMalformedInputReturnsNull(): void
+    {
+        $parser = new MySqlSchemaParser(new MySqlParser());
+        $result = $parser->parse('NOT VALID SQL AT ALL %%%');
+        self::assertNull($result);
+    }
+
+    public function testTypedColumnsKeysSubsetOfColumns(): void
+    {
+        $parser = new MySqlSchemaParser(new MySqlParser());
+        $definition = $parser->parse(<<<'SQL'
+    CREATE TABLE users (
+        id INT NOT NULL AUTO_INCREMENT,
+        name VARCHAR(255) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        PRIMARY KEY (id),
+        UNIQUE KEY email_unique (email)
+    )
+    SQL);
+        self::assertNotNull($definition);
+        self::assertSame([], array_diff(array_keys($definition->typedColumns), $definition->columns));
     }
 }

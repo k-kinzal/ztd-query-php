@@ -14,8 +14,3 @@ parameters:
         - fuzz
         - tests
         - bench
-    toolkit:
-        broadCatchAllowedPaths:
-            - 'fuzz/fuzz_robustness.php'
-            - 'fuzz/fuzz_robustness_classify.php'
-            - 'fuzz/fuzz_robustness_rewrite.php'
