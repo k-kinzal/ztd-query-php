@@ -108,7 +108,7 @@
             "deptrac debug:unassigned --config-file=deptrac.yaml",
             "deptrac debug:unused --config-file=deptrac.yaml"
         ],
-        "docgen": "cd ../.. && packages/ztd-query-postgres/vendor/bin/docgen --packages=packages/ztd-query-postgres --deptrac=packages/ztd-query-postgres/deptrac.yaml --exclude='packages/ztd-query-postgres/../ztd-query-core/tests/*' --output=packages/ztd-query-postgres/build/docs --cache-dir=packages/ztd-query-postgres/build/docgen-cache --title=k-kinzal/ztd-query-postgres",
+        "docgen": "cd ../.. && packages/ztd-query-postgres/vendor/bin/docgen --packages=packages/ztd-query-postgres --deptrac=\"$(pwd)/packages/ztd-query-postgres/deptrac.yaml\" --exclude='packages/ztd-query-postgres/../ztd-query-core/tests/*' --output=packages/ztd-query-postgres/build/docs --cache-dir=packages/ztd-query-postgres/build/docgen-cache --title=k-kinzal/ztd-query-postgres",
         "docgen:serve": "@docgen --serve",
         "docgen:diff": "@docgen --diff=origin/main --serve",
         "docgen:fresh": "@docgen --no-cache"
