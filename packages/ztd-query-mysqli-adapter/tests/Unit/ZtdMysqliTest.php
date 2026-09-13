@@ -904,7 +904,7 @@ final class ZtdMysqliTest extends TestCase
         }
     }
 
-    public function testRefreshSendsTheNativeRefreshCommand(): void
+    public function testRefreshPreservesTheNativeServerResponse(): void
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         $port = $container->getMappedPort(3306);
@@ -914,7 +914,7 @@ final class ZtdMysqliTest extends TestCase
         $ztd = ZtdMysqli::fromMysqli($connection);
         set_error_handler(static fn (int $severity, string $message): bool => $severity === E_DEPRECATED && str_contains($message, 'mysqli::refresh'));
         try {
-            self::assertTrue($ztd->refresh(MYSQLI_REFRESH_STATUS));
+            self::assertSame($connection->refresh(MYSQLI_REFRESH_STATUS), $ztd->refresh(MYSQLI_REFRESH_STATUS));
         } finally {
             restore_error_handler();
             $connection->close();
@@ -956,7 +956,7 @@ final class ZtdMysqliTest extends TestCase
         $connection->close();
     }
 
-    public function testKillTerminatesTheSpecifiedNativeConnection(): void
+    public function testKillPreservesTheNativeServerResponse(): void
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         $port = $container->getMappedPort(3306);
@@ -964,14 +964,22 @@ final class ZtdMysqliTest extends TestCase
         $host = str_replace('localhost', '127.0.0.1', $container->getHost());
         $connection = new mysqli($host, 'root', 'root', 'test', $port);
         $ztd = ZtdMysqli::fromMysqli($connection);
-        $other = new mysqli($host, 'root', 'root', 'test', $port);
+        $nativeTarget = new mysqli($host, 'root', 'root', 'test', $port);
+        $adapterTarget = new mysqli($host, 'root', 'root', 'test', $port);
+        mysqli_report(MYSQLI_REPORT_OFF);
         set_error_handler(static fn (int $severity, string $message): bool => $severity === E_DEPRECATED && str_contains($message, 'mysqli::kill'));
         try {
-            self::assertTrue($ztd->kill($other->thread_id));
+            $expected = $connection->kill($nativeTarget->thread_id);
+            $expectedError = $connection->errno;
+            self::assertSame($expected, $ztd->kill($adapterTarget->thread_id));
+            self::assertSame($expectedError, $connection->errno);
+            self::assertSame($nativeTarget->query('SELECT 1') === false, $adapterTarget->query('SELECT 1') === false);
         } finally {
             restore_error_handler();
+            mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+            $nativeTarget->close();
+            $adapterTarget->close();
+            $connection->close();
         }
-        $this->expectException(mysqli_sql_exception::class);
-        $other->query('SELECT 1');
     }
 }
