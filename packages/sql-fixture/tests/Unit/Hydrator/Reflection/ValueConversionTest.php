@@ -105,7 +105,14 @@ final class ValueConversionTest extends TestCase
      */
     public function testCastValueUsesTheDeclaredType(): void
     {
-        $object = (new \SqlFixture\Hydrator\ReflectionHydrator())->hydrate(['id' => '42', 'name' => 123], \Tests\Fixture\Hydrator\TestEntity::class);
+        $target = new class (0, '') {
+            public function __construct(
+                public readonly int $id,
+                public readonly string $name,
+            ) {
+            }
+        };
+        $object = (new \SqlFixture\Hydrator\ReflectionHydrator())->hydrate(['id' => '42', 'name' => 123], $target::class);
         self::assertSame(42, $object->id);
         self::assertSame('123', $object->name);
     }

@@ -22,7 +22,6 @@ use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\SchemaNotFoundException;
 use SqlFixture\Schema\StaticSchemaResolver;
 use SqlFixture\Schema\TableSchema;
-use Tests\Fixture\Fixture\ShopSchemas;
 
 #[CoversClass(PlanSchemaValidator::class)]
 #[UsesClass(PlanSchemaException::class)]
@@ -82,7 +81,21 @@ final class PlanSchemaValidatorTest extends TestCase
     #[Test]
     public function testValidateAPlanMatchingTheSchemaPasses(): void
     {
-        $validator = new PlanSchemaValidator(ShopSchemas::resolver());
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_detail', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'product_id' => new ColumnDefinition('product_id', 'INT', nullable: false, unsigned: true),
+                'quantity' => new ColumnDefinition('quantity', 'INT', nullable: false),
+            ], ['id']),
+        ]);
+        $validator = new PlanSchemaValidator($schemas);
 
         $validator->validate(FixturePlan::from('order.id < order_detail.order_id'));
 
@@ -93,7 +106,21 @@ final class PlanSchemaValidatorTest extends TestCase
     #[DataProvider('providerMismatchedPlans')]
     public function aColumnTheTableDoesNotHaveIsRejected(string $plan, string $expected): void
     {
-        $validator = new PlanSchemaValidator(ShopSchemas::resolver());
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_detail', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'product_id' => new ColumnDefinition('product_id', 'INT', nullable: false, unsigned: true),
+                'quantity' => new ColumnDefinition('quantity', 'INT', nullable: false),
+            ], ['id']),
+        ]);
+        $validator = new PlanSchemaValidator($schemas);
 
         $this->expectException(PlanSchemaException::class);
         $this->expectExceptionMessage($expected);
@@ -129,7 +156,21 @@ final class PlanSchemaValidatorTest extends TestCase
     #[Test]
     public function testATableTheResolverDoesNotKnowIsRejected(): void
     {
-        $validator = new PlanSchemaValidator(ShopSchemas::resolver());
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_detail', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'product_id' => new ColumnDefinition('product_id', 'INT', nullable: false, unsigned: true),
+                'quantity' => new ColumnDefinition('quantity', 'INT', nullable: false),
+            ], ['id']),
+        ]);
+        $validator = new PlanSchemaValidator($schemas);
 
         $this->expectException(SchemaNotFoundException::class);
         $this->expectExceptionMessage('Schema not found for table: nope');
@@ -140,7 +181,21 @@ final class PlanSchemaValidatorTest extends TestCase
     #[Test]
     public function testATableNamedWithoutAnyRelationIsCheckedToo(): void
     {
-        $validator = new PlanSchemaValidator(ShopSchemas::resolver());
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_detail', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'product_id' => new ColumnDefinition('product_id', 'INT', nullable: false, unsigned: true),
+                'quantity' => new ColumnDefinition('quantity', 'INT', nullable: false),
+            ], ['id']),
+        ]);
+        $validator = new PlanSchemaValidator($schemas);
 
         $this->expectException(SchemaNotFoundException::class);
         $this->expectExceptionMessage('Schema not found for table: nope');

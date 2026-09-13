@@ -20,7 +20,6 @@ use SqlFixture\Platform\Sqlite\SqliteSchemaParser;
 use SqlFixture\Platform\Sqlite\SqliteTypeMapper;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\TableSchema;
-use Tests\Fixture\SqliteUserDto;
 
 #[CoversClass(DatabaseFixtureProvider::class)]
 #[UsesClass(FixtureProvider::class)]
@@ -177,11 +176,7 @@ final class SqliteIntegrationTest extends TestCase
     #[Test]
     public function databaseFixtureProviderWithSqlite(): void
     {
-        $pdo = (static function (): PDO {
-            $pdo = new PDO('sqlite::memory:');
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            return $pdo;
-        })();
+        $pdo = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $pdo->exec(<<<'SQL'
             CREATE TABLE users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -208,11 +203,7 @@ final class SqliteIntegrationTest extends TestCase
     #[Test]
     public function insertAndSelectFixture(): void
     {
-        $pdo = (static function (): PDO {
-            $pdo = new PDO('sqlite::memory:');
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            return $pdo;
-        })();
+        $pdo = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $pdo->exec(<<<'SQL'
             CREATE TABLE products (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -249,11 +240,7 @@ final class SqliteIntegrationTest extends TestCase
     #[Test]
     public function fixtureWithOverrides(): void
     {
-        $pdo = (static function (): PDO {
-            $pdo = new PDO('sqlite::memory:');
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            return $pdo;
-        })();
+        $pdo = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $pdo->exec(<<<'SQL'
             CREATE TABLE users (
                 id INTEGER PRIMARY KEY,
@@ -277,11 +264,15 @@ final class SqliteIntegrationTest extends TestCase
     #[Test]
     public function fixtureWithHydration(): void
     {
-        $pdo = (static function (): PDO {
-            $pdo = new PDO('sqlite::memory:');
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            return $pdo;
-        })();
+        $target = new class (0, '', '') {
+            public function __construct(
+                public int $id,
+                public string $name,
+                public string $email,
+            ) {
+            }
+        };
+        $pdo = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $pdo->exec(<<<'SQL'
             CREATE TABLE users (
                 id INTEGER PRIMARY KEY,
@@ -296,7 +287,7 @@ final class SqliteIntegrationTest extends TestCase
         $user = $provider->fixture(
             'users',
             ['id' => 1],
-            SqliteUserDto::class
+            $target::class
         );
 
         self::assertSame(1, $user->id);
@@ -324,11 +315,7 @@ final class SqliteIntegrationTest extends TestCase
     #[Test]
     public function allSqliteTypesFixture(): void
     {
-        $pdo = (static function (): PDO {
-            $pdo = new PDO('sqlite::memory:');
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            return $pdo;
-        })();
+        $pdo = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $pdo->exec(<<<'SQL'
             CREATE TABLE all_types (
                 col_integer INTEGER NOT NULL,

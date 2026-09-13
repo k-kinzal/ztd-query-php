@@ -11,21 +11,6 @@ use PHPUnit\Framework\TestCase;
 use ReflectionException;
 use SqlFixture\Hydrator\HydrationException;
 use SqlFixture\Hydrator\ReflectionHydrator;
-use Tests\Fixture\Hydrator\TestEntity;
-use Tests\Fixture\Hydrator\TestEntityNoParams;
-use Tests\Fixture\Hydrator\TestEntityViaProperties;
-use Tests\Fixture\Hydrator\TestEntityViaPropertiesCamel;
-use Tests\Fixture\Hydrator\TestEntityViaPropertiesMixed;
-use Tests\Fixture\Hydrator\TestEntityWithArray;
-use Tests\Fixture\Hydrator\TestEntityWithBool;
-use Tests\Fixture\Hydrator\TestEntityWithCamelCase;
-use Tests\Fixture\Hydrator\TestEntityWithDefaults;
-use Tests\Fixture\Hydrator\TestEntityWithFloat;
-use Tests\Fixture\Hydrator\TestEntityWithMixed;
-use Tests\Fixture\Hydrator\TestEntityWithNullable;
-use Tests\Fixture\Hydrator\TestEntityWithoutConstructor;
-use Tests\Fixture\Hydrator\TestEntityWithPropertyMapping;
-use Tests\Fixture\Hydrator\TestEntityWithString;
 
 #[CoversClass(ReflectionHydrator::class)]
 #[UsesClass(HydrationException::class)]
@@ -44,8 +29,15 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testHydrateViaConstructor(): void
     {
+        $target = new class (0, '') {
+            public function __construct(
+                public readonly int $id,
+                public readonly string $name,
+            ) {
+            }
+        };
         $data = ['id' => 1, 'name' => 'Test'];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntity::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame(1, $object->id);
         self::assertSame('Test', $object->name);
@@ -57,8 +49,12 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testHydrateViaProperties(): void
     {
+        $target = new class () {
+            public int $id = 0;
+            public string $name = '';
+        };
         $data = ['id' => 1, 'name' => 'Test'];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityWithoutConstructor::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame(1, $object->id);
         self::assertSame('Test', $object->name);
@@ -70,8 +66,15 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testHydrateWithSnakeCaseToConstructor(): void
     {
+        $target = new class (0, '') {
+            public function __construct(
+                public readonly int $userId,
+                public readonly string $fullName,
+            ) {
+            }
+        };
         $data = ['user_id' => 42, 'full_name' => 'John Doe'];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityWithCamelCase::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame(42, $object->userId);
         self::assertSame('John Doe', $object->fullName);
@@ -83,8 +86,15 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testHydrateWithDefaultValues(): void
     {
+        $target = new class (0) {
+            public function __construct(
+                public readonly int $id,
+                public readonly string $name = 'default',
+            ) {
+            }
+        };
         $data = ['id' => 1];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityWithDefaults::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame(1, $object->id);
         self::assertSame('default', $object->name);
@@ -96,8 +106,15 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testHydrateWithNullableParameter(): void
     {
+        $target = new class (0) {
+            public function __construct(
+                public readonly int $id,
+                public readonly ?string $name = null,
+            ) {
+            }
+        };
         $data = ['id' => 1];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityWithNullable::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame(1, $object->id);
         self::assertNull($object->name);
@@ -109,8 +126,15 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testThrowsExceptionForMissingRequiredParameter(): void
     {
+        $target = new class (0, '') {
+            public function __construct(
+                public readonly int $id,
+                public readonly string $name,
+            ) {
+            }
+        };
         $this->expectException(\SqlFixture\Hydrator\Exception\MissingConstructorArgumentException::class);
-        (new ReflectionHydrator())->hydrate(['name' => 'Test'], TestEntity::class);
+        (new ReflectionHydrator())->hydrate(['name' => 'Test'], $target::class);
     }
 
     /**
@@ -134,8 +158,15 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testCastsIntValue(): void
     {
+        $target = new class (0, '') {
+            public function __construct(
+                public readonly int $id,
+                public readonly string $name,
+            ) {
+            }
+        };
         $data = ['id' => '42', 'name' => 'Test'];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntity::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame(42, $object->id);
         self::assertIsInt($object->id);
@@ -148,8 +179,14 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testCastsFloatValue(): void
     {
+        $target = new class (0.0) {
+            public function __construct(
+                public readonly float $amount,
+            ) {
+            }
+        };
         $data = ['amount' => '99.99'];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityWithFloat::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame(99.99, $object->amount);
         self::assertIsFloat($object->amount);
@@ -162,8 +199,14 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testCastsBoolValue(): void
     {
+        $target = new class (false) {
+            public function __construct(
+                public readonly bool $active,
+            ) {
+            }
+        };
         $data = ['active' => 1];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityWithBool::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertTrue($object->active);
         self::assertIsBool($object->active);
@@ -176,8 +219,14 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testCastsBoolFalseValue(): void
     {
+        $target = new class (false) {
+            public function __construct(
+                public readonly bool $active,
+            ) {
+            }
+        };
         $data = ['active' => 0];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityWithBool::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertFalse($object->active);
         self::assertIsBool($object->active);
@@ -189,8 +238,17 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testCastsArrayValue(): void
     {
+        $target = new class ([]) {
+            /**
+             * @param list<string> $items
+             */
+            public function __construct(
+                public readonly array $items,
+            ) {
+            }
+        };
         $data = ['items' => '["a","b","c"]'];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityWithArray::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame(['a', 'b', 'c'], $object->items);
         self::assertIsArray($object->items);
@@ -202,8 +260,17 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testCastsArrayFromNonJsonString(): void
     {
+        $target = new class ([]) {
+            /**
+             * @param list<string> $items
+             */
+            public function __construct(
+                public readonly array $items,
+            ) {
+            }
+        };
         $data = ['items' => 'single_value'];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityWithArray::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame(['single_value'], $object->items);
         self::assertIsArray($object->items);
@@ -215,8 +282,14 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testCastsStringValue(): void
     {
+        $target = new class ('') {
+            public function __construct(
+                public readonly string $value,
+            ) {
+            }
+        };
         $data = ['value' => 123];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityWithString::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame('123', $object->value);
         self::assertIsString($object->value);
@@ -229,8 +302,14 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testHydrateWithSnakeCaseProperties(): void
     {
+        $target = new class () {
+            public function __construct(
+                public string $userName = '',
+            ) {
+            }
+        };
         $data = ['user_name' => 'John'];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityWithPropertyMapping::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame('John', $object->userName);
     }
@@ -241,8 +320,15 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testHydrateIgnoresExtraData(): void
     {
+        $target = new class (0, '') {
+            public function __construct(
+                public readonly int $id,
+                public readonly string $name,
+            ) {
+            }
+        };
         $data = ['id' => 1, 'name' => 'Test', 'extra' => 'ignored'];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntity::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame(1, $object->id);
         self::assertSame('Test', $object->name);
@@ -254,8 +340,17 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testHydrateWithMixedType(): void
     {
+        $target = new class (null) {
+            /**
+             * @param array{nested: string}|null $value
+             */
+            public function __construct(
+                public readonly mixed $value,
+            ) {
+            }
+        };
         $data = ['value' => ['nested' => 'data']];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityWithMixed::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame(['nested' => 'data'], $object->value);
     }
@@ -266,8 +361,14 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testHydrateViaPropertiesWithCasting(): void
     {
+        $target = new class () {
+            public int $id = 0;
+            public string $name = '';
+            public float $amount = 0.0;
+            public bool $active = false;
+        };
         $data = ['id' => '42', 'name' => 123, 'amount' => '9.5', 'active' => 1];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityViaProperties::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame(42, $object->id);
         self::assertSame('123', $object->name);
@@ -281,8 +382,14 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testHydrateViaPropertiesIgnoresUnknownKeys(): void
     {
+        $target = new class () {
+            public int $id = 0;
+            public string $name = '';
+            public float $amount = 0.0;
+            public bool $active = false;
+        };
         $data = ['unknown_key' => 'value'];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityViaProperties::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame(0, $object->id);
     }
@@ -293,8 +400,14 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testHydrateViaPropertiesSkipsUnknownAndContinues(): void
     {
+        $target = new class () {
+            public int $id = 0;
+            public string $name = '';
+            public float $amount = 0.0;
+            public bool $active = false;
+        };
         $data = ['unknown_key' => 'value', 'id' => 42, 'name' => 'Test'];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityViaProperties::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame(42, $object->id);
         self::assertSame('Test', $object->name);
@@ -306,8 +419,11 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testHydrateViaPropertiesWithSnakeCase(): void
     {
+        $target = new class () {
+            public string $userName = '';
+        };
         $data = ['user_name' => 'John'];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityViaPropertiesCamel::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame('John', $object->userName);
     }
@@ -318,8 +434,11 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testHydrateViaPropertiesDirectKey(): void
     {
+        $target = new class () {
+            public string $userName = '';
+        };
         $data = ['userName' => 'Direct'];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityViaPropertiesCamel::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame('Direct', $object->userName);
     }
@@ -330,8 +449,16 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testHydrateViaConstructorWithEmptyConstructor(): void
     {
+        $target = new class () {
+            public int $id = 0;
+            public string $name = '';
+
+            public function __construct()
+            {
+            }
+        };
         $data = ['id' => 5, 'name' => 'Test'];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityNoParams::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame(5, $object->id);
         self::assertSame('Test', $object->name);
@@ -343,8 +470,15 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testCastNullReturnsNull(): void
     {
+        $target = new class (0) {
+            public function __construct(
+                public readonly int $id,
+                public readonly ?string $name = null,
+            ) {
+            }
+        };
         $data = ['id' => 1, 'name' => null];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityWithNullable::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertNull($object->name);
     }
@@ -355,8 +489,17 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testCastArrayFromAlreadyArray(): void
     {
+        $target = new class ([]) {
+            /**
+             * @param list<string> $items
+             */
+            public function __construct(
+                public readonly array $items,
+            ) {
+            }
+        };
         $data = ['items' => ['existing', 'array']];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityWithArray::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame(['existing', 'array'], $object->items);
     }
@@ -365,10 +508,16 @@ final class ReflectionHydratorTest extends TestCase
      * @throws ReflectionException
      */
     #[Test]
-    public function testCastNonNumericToIntViaProperties(): void
+    public function testHydratePreservesStringInMixedIdProperty(): void
     {
+        $target = new class () {
+            /**
+             * @var string|null
+             */
+            public mixed $id = null;
+        };
         $data = ['id' => 'not_a_number'];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityViaPropertiesMixed::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame('not_a_number', $object->id);
     }
@@ -377,10 +526,16 @@ final class ReflectionHydratorTest extends TestCase
      * @throws ReflectionException
      */
     #[Test]
-    public function testCastNonNumericToFloatViaProperties(): void
+    public function testHydratePreservesStringInMixedAmountProperty(): void
     {
+        $target = new class () {
+            /**
+             * @var string|null
+             */
+            public mixed $amount = null;
+        };
         $data = ['amount' => 'not_a_number'];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityViaPropertiesMixed::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame('not_a_number', $object->amount);
     }
@@ -389,10 +544,16 @@ final class ReflectionHydratorTest extends TestCase
      * @throws ReflectionException
      */
     #[Test]
-    public function testCastNonScalarToStringViaProperties(): void
+    public function testHydratePreservesArrayInMixedNameProperty(): void
     {
+        $target = new class () {
+            /**
+             * @var list<string>|null
+             */
+            public mixed $name = null;
+        };
         $data = ['name' => ['array_value']];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityViaPropertiesMixed::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame(['array_value'], $object->name);
     }
@@ -403,8 +564,17 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testCastIntToArrayViaCastValue(): void
     {
+        $target = new class ([]) {
+            /**
+             * @param list<int> $items
+             */
+            public function __construct(
+                public readonly array $items,
+            ) {
+            }
+        };
         $data = ['items' => 42];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityWithArray::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame([42], $object->items);
     }
@@ -415,8 +585,17 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testCastBoolToArrayViaCastValue(): void
     {
+        $target = new class ([]) {
+            /**
+             * @param list<bool> $items
+             */
+            public function __construct(
+                public readonly array $items,
+            ) {
+            }
+        };
         $data = ['items' => true];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityWithArray::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame([true], $object->items);
     }
@@ -427,8 +606,15 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testCastsIntValueFromNumericString(): void
     {
+        $target = new class (0, '') {
+            public function __construct(
+                public readonly int $id,
+                public readonly string $name,
+            ) {
+            }
+        };
         $data = ['id' => '123', 'name' => 'Test'];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntity::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame(123, $object->id);
     }
@@ -439,8 +625,14 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testCastsFloatValueFromNumericString(): void
     {
+        $target = new class (0.0) {
+            public function __construct(
+                public readonly float $amount,
+            ) {
+            }
+        };
         $data = ['amount' => '3.14'];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityWithFloat::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame(3.14, $object->amount);
     }
@@ -451,8 +643,14 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testCastsStringFromIntValue(): void
     {
+        $target = new class ('') {
+            public function __construct(
+                public readonly string $value,
+            ) {
+            }
+        };
         $data = ['value' => 42];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityWithString::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame('42', $object->value);
     }
@@ -463,8 +661,14 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testCastsBoolFromTruthyValue(): void
     {
+        $target = new class (false) {
+            public function __construct(
+                public readonly bool $active,
+            ) {
+            }
+        };
         $data = ['active' => 'yes'];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityWithBool::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertTrue($object->active);
     }
@@ -475,8 +679,14 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testCastsBoolFromFalsyValue(): void
     {
+        $target = new class (false) {
+            public function __construct(
+                public readonly bool $active,
+            ) {
+            }
+        };
         $data = ['active' => ''];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityWithBool::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertFalse($object->active);
     }
@@ -487,8 +697,15 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testCastIntFromFloat(): void
     {
+        $target = new class (0, '') {
+            public function __construct(
+                public readonly int $id,
+                public readonly string $name,
+            ) {
+            }
+        };
         $data = ['id' => 7.9, 'name' => 'Test'];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntity::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame(7, $object->id);
     }
@@ -499,8 +716,14 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testCastFloatFromInt(): void
     {
+        $target = new class (0.0) {
+            public function __construct(
+                public readonly float $amount,
+            ) {
+            }
+        };
         $data = ['amount' => 10];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityWithFloat::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame(10.0, $object->amount);
     }
@@ -511,8 +734,14 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testCastStringFromBool(): void
     {
+        $target = new class ('') {
+            public function __construct(
+                public readonly string $value,
+            ) {
+            }
+        };
         $data = ['value' => true];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityWithString::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame('1', $object->value);
     }
@@ -523,8 +752,14 @@ final class ReflectionHydratorTest extends TestCase
     #[Test]
     public function testCastStringFromFloat(): void
     {
+        $target = new class ('') {
+            public function __construct(
+                public readonly string $value,
+            ) {
+            }
+        };
         $data = ['value' => 3.14];
-        $object = (new ReflectionHydrator())->hydrate($data, TestEntityWithString::class);
+        $object = (new ReflectionHydrator())->hydrate($data, $target::class);
 
         self::assertSame('3.14', $object->value);
     }

@@ -29,7 +29,6 @@ use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\SchemaNotFoundException;
 use SqlFixture\Schema\StaticSchemaResolver;
 use SqlFixture\Schema\TableSchema;
-use Tests\Fixture\Fixture\ShopSchemas;
 
 #[CoversClass(PlanGenerator::class)]
 #[UsesClass(GenerationRun::class)]
@@ -128,7 +127,24 @@ final class PlanGeneratorTest extends TestCase
     #[Test]
     public function testGenerateTheTableThePlanIsAboutGetsOneRow(): void
     {
-        $set = ShopSchemas::generator()->generate(
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_detail', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'product_id' => new ColumnDefinition('product_id', 'INT', nullable: false, unsigned: true),
+                'quantity' => new ColumnDefinition('quantity', 'INT', nullable: false),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed(20260101);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
+        $set = $generator->generate(
             FixturePlan::from('order.id < order_detail.order_id')
         );
 
@@ -138,7 +154,29 @@ final class PlanGeneratorTest extends TestCase
     #[Test]
     public function testTheSubjectIsOneRowEvenWhenSomethingReferencesIt(): void
     {
-        $set = ShopSchemas::generator()->generate(
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('customer', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'name' => new ColumnDefinition('name', 'VARCHAR', nullable: false, length: 255),
+                'tier' => new ColumnDefinition('tier', 'ENUM', nullable: false, enumValues: ['gold', 'silver']),
+            ], ['id']),
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_detail', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'product_id' => new ColumnDefinition('product_id', 'INT', nullable: false, unsigned: true),
+                'quantity' => new ColumnDefinition('quantity', 'INT', nullable: false),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed(20260101);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
+        $set = $generator->generate(
             FixturePlan::from('order.id < order_detail.order_id, order.customer_id > customer.id')
         );
 
@@ -149,7 +187,24 @@ final class PlanGeneratorTest extends TestCase
     #[Test]
     public function testChildRowsCarryTheParentKey(): void
     {
-        $set = ShopSchemas::generator()->generate(
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_detail', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'product_id' => new ColumnDefinition('product_id', 'INT', nullable: false, unsigned: true),
+                'quantity' => new ColumnDefinition('quantity', 'INT', nullable: false),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed(20260101);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
+        $set = $generator->generate(
             FixturePlan::from('order.id < order_detail.order_id'),
             ['order' => ['id' => 100], 'order_detail' => 3]
         );
@@ -161,7 +216,23 @@ final class PlanGeneratorTest extends TestCase
     #[Test]
     public function testAParentIsGeneratedAndLinkedTo(): void
     {
-        $set = ShopSchemas::generator()->generate(
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('customer', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'name' => new ColumnDefinition('name', 'VARCHAR', nullable: false, length: 255),
+                'tier' => new ColumnDefinition('tier', 'ENUM', nullable: false, enumValues: ['gold', 'silver']),
+            ], ['id']),
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed(20260101);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
+        $set = $generator->generate(
             FixturePlan::from('order.customer_id > customer.id')
         );
 
@@ -171,7 +242,24 @@ final class PlanGeneratorTest extends TestCase
     #[Test]
     public function testACountOfZeroGeneratesNoRows(): void
     {
-        $set = ShopSchemas::generator()->generate(
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_detail', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'product_id' => new ColumnDefinition('product_id', 'INT', nullable: false, unsigned: true),
+                'quantity' => new ColumnDefinition('quantity', 'INT', nullable: false),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed(20260101);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
+        $set = $generator->generate(
             FixturePlan::from('order.id < order_detail.order_id'),
             ['order_detail' => []]
         );
@@ -182,7 +270,24 @@ final class PlanGeneratorTest extends TestCase
     #[Test]
     public function testOneSetOfValuesAppliesToEveryGeneratedRow(): void
     {
-        $set = ShopSchemas::generator()->generate(
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_detail', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'product_id' => new ColumnDefinition('product_id', 'INT', nullable: false, unsigned: true),
+                'quantity' => new ColumnDefinition('quantity', 'INT', nullable: false),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed(20260101);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
+        $set = $generator->generate(
             FixturePlan::from('order.id < order_detail.order_id'),
             ['order_detail' => ['quantity' => 2]]
         );
@@ -196,7 +301,24 @@ final class PlanGeneratorTest extends TestCase
     #[Test]
     public function testAListGivesOneRowPerEntry(): void
     {
-        $set = ShopSchemas::generator()->generate(
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_detail', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'product_id' => new ColumnDefinition('product_id', 'INT', nullable: false, unsigned: true),
+                'quantity' => new ColumnDefinition('quantity', 'INT', nullable: false),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed(20260101);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
+        $set = $generator->generate(
             FixturePlan::from('order.id < order_detail.order_id'),
             ['order_detail' => [['quantity' => 1], ['quantity' => 2]]]
         );
@@ -207,7 +329,24 @@ final class PlanGeneratorTest extends TestCase
     #[Test]
     public function testAnUnmentionedChildIsStillGenerated(): void
     {
-        $set = ShopSchemas::generator()->generate(
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_detail', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'product_id' => new ColumnDefinition('product_id', 'INT', nullable: false, unsigned: true),
+                'quantity' => new ColumnDefinition('quantity', 'INT', nullable: false),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed(20260101);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
+        $set = $generator->generate(
             FixturePlan::from('order.id < order_detail.order_id')
         );
 
@@ -217,19 +356,74 @@ final class PlanGeneratorTest extends TestCase
     #[Test]
     public function testAnOptionalChildMayGenerateNoneAtAll(): void
     {
-        self::assertContains(0, ShopSchemas::childCountsOverSeeds('order.id <? order_detail.order_id'));
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_detail', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'product_id' => new ColumnDefinition('product_id', 'INT', nullable: false, unsigned: true),
+                'quantity' => new ColumnDefinition('quantity', 'INT', nullable: false),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed(2);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
+        $set = $generator->generate(FixturePlan::from('order.id <? order_detail.order_id'));
+
+        self::assertSame([], $set->rows('order_detail'));
     }
 
     #[Test]
-    public function testARequiredChildNeverGeneratesNone(): void
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerGenerationSeeds')]
+    public function testARequiredChildNeverGeneratesNone(int $seed): void
     {
-        self::assertNotContains(0, ShopSchemas::childCountsOverSeeds('order.id < order_detail.order_id'));
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_detail', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'product_id' => new ColumnDefinition('product_id', 'INT', nullable: false, unsigned: true),
+                'quantity' => new ColumnDefinition('quantity', 'INT', nullable: false),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed($seed);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
+        $set = $generator->generate(FixturePlan::from('order.id < order_detail.order_id'));
+
+        self::assertGreaterThanOrEqual(1, count($set->rows('order_detail')));
     }
 
     #[Test]
     public function testAOneToOneChildIsASingleRow(): void
     {
-        $set = ShopSchemas::generator()->generate(
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_shipping', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'carrier' => new ColumnDefinition('carrier', 'VARCHAR', nullable: false, length: 50),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed(20260101);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
+        $set = $generator->generate(
             FixturePlan::from('order.id - order_shipping.order_id'),
             ['order' => ['id' => 5]]
         );
@@ -240,7 +434,23 @@ final class PlanGeneratorTest extends TestCase
     #[Test]
     public function testAnOptionalOneToOneAskedForNoneIsNull(): void
     {
-        $set = ShopSchemas::generator()->generate(
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_shipping', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'carrier' => new ColumnDefinition('carrier', 'VARCHAR', nullable: false, length: 50),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed(20260101);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
+        $set = $generator->generate(
             FixturePlan::from('order.id -? order_shipping.order_id'),
             ['order_shipping' => []]
         );
@@ -251,7 +461,28 @@ final class PlanGeneratorTest extends TestCase
     #[Test]
     public function testEveryChildOfAListGetsItsOwnParent(): void
     {
-        $set = ShopSchemas::generator()->generate(
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_detail', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'product_id' => new ColumnDefinition('product_id', 'INT', nullable: false, unsigned: true),
+                'quantity' => new ColumnDefinition('quantity', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('product', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'name' => new ColumnDefinition('name', 'VARCHAR', nullable: false, length: 255),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed(20260101);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
+        $set = $generator->generate(
             FixturePlan::from('order.id < order_detail.order_id, order_detail.product_id > product.id'),
             ['order_detail' => 3]
         );
@@ -266,7 +497,23 @@ final class PlanGeneratorTest extends TestCase
     #[Test]
     public function testFixingTheLinkingColumnLeavesTheParentAlone(): void
     {
-        $set = ShopSchemas::generator()->generate(
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('customer', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'name' => new ColumnDefinition('name', 'VARCHAR', nullable: false, length: 255),
+                'tier' => new ColumnDefinition('tier', 'ENUM', nullable: false, enumValues: ['gold', 'silver']),
+            ], ['id']),
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed(20260101);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
+        $set = $generator->generate(
             FixturePlan::from('order.customer_id > customer.id'),
             ['order' => ['customer_id' => 77]]
         );
@@ -278,7 +525,29 @@ final class PlanGeneratorTest extends TestCase
     #[Test]
     public function testTablesThatStandAloneAreGeneratedToo(): void
     {
-        $set = ShopSchemas::generator()->generate(
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_detail', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'product_id' => new ColumnDefinition('product_id', 'INT', nullable: false, unsigned: true),
+                'quantity' => new ColumnDefinition('quantity', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('audit_log', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'message' => new ColumnDefinition('message', 'VARCHAR', nullable: false, length: 255),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed(20260101);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
+        $set = $generator->generate(
             FixturePlan::from('order.id < order_detail.order_id, audit_log')
         );
 
@@ -288,7 +557,29 @@ final class PlanGeneratorTest extends TestCase
     #[Test]
     public function testEntriesComeBackInTheOrderThePlanNamesThem(): void
     {
-        $set = ShopSchemas::generator()->generate(
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('customer', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'name' => new ColumnDefinition('name', 'VARCHAR', nullable: false, length: 255),
+                'tier' => new ColumnDefinition('tier', 'ENUM', nullable: false, enumValues: ['gold', 'silver']),
+            ], ['id']),
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_detail', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'product_id' => new ColumnDefinition('product_id', 'INT', nullable: false, unsigned: true),
+                'quantity' => new ColumnDefinition('quantity', 'INT', nullable: false),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed(20260101);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
+        $set = $generator->generate(
             FixturePlan::from('order.id < order_detail.order_id, order.customer_id > customer.id'),
             ['order' => ['id' => 1], 'order_detail' => 2]
         );
@@ -303,7 +594,24 @@ final class PlanGeneratorTest extends TestCase
     #[Test]
     public function testOverridesMayBeGivenAsTableOverrides(): void
     {
-        $set = ShopSchemas::generator()->generate(
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_detail', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'product_id' => new ColumnDefinition('product_id', 'INT', nullable: false, unsigned: true),
+                'quantity' => new ColumnDefinition('quantity', 'INT', nullable: false),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed(20260101);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
+        $set = $generator->generate(
             FixturePlan::from('order.id < order_detail.order_id'),
             ['order' => TableOverrides::of(['status' => 'paid'])]
         );
@@ -314,25 +622,64 @@ final class PlanGeneratorTest extends TestCase
     #[Test]
     public function testAnUnknownTableIsReported(): void
     {
+        $schemas = new StaticSchemaResolver([
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed(20260101);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
         $this->expectException(SchemaNotFoundException::class);
         $this->expectExceptionMessage('Schema not found for table: nope');
 
-        ShopSchemas::generator()->generate(FixturePlan::from('nope'));
+        $generator->generate(FixturePlan::from('nope'));
     }
 
     #[Test]
     public function testAPlanNamingAColumnTheTableLacksIsRejectedBeforeGenerating(): void
     {
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_detail', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'product_id' => new ColumnDefinition('product_id', 'INT', nullable: false, unsigned: true),
+                'quantity' => new ColumnDefinition('quantity', 'INT', nullable: false),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed(20260101);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
         $this->expectException(\SqlFixture\Fixture\Exception\UnknownPlanColumnException::class);
         $this->expectExceptionMessage('order_detail has no column oder_id');
 
-        ShopSchemas::generator()->generate(FixturePlan::from('order.id < order_detail.oder_id'));
+        $generator->generate(FixturePlan::from('order.id < order_detail.oder_id'));
     }
 
     #[Test]
     public function testTheSubjectHonoursACountItWasGiven(): void
     {
-        $set = ShopSchemas::generator()->generate(
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_detail', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'product_id' => new ColumnDefinition('product_id', 'INT', nullable: false, unsigned: true),
+                'quantity' => new ColumnDefinition('quantity', 'INT', nullable: false),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed(20260101);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
+        $set = $generator->generate(
             FixturePlan::from('order.id < order_detail.order_id'),
             ['order' => 2, 'order_detail' => 1]
         );
@@ -343,7 +690,28 @@ final class PlanGeneratorTest extends TestCase
     #[Test]
     public function testARowCarriesBothItsInheritedKeyAndItsOwnParentKey(): void
     {
-        $set = ShopSchemas::generator()->generate(
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_detail', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'product_id' => new ColumnDefinition('product_id', 'INT', nullable: false, unsigned: true),
+                'quantity' => new ColumnDefinition('quantity', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('product', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'name' => new ColumnDefinition('name', 'VARCHAR', nullable: false, length: 255),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed(20260101);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
+        $set = $generator->generate(
             FixturePlan::from('order.id < order_detail.order_id, order_detail.product_id > product.id'),
             ['order' => ['id' => 42], 'order_detail' => 1]
         );
@@ -357,7 +725,28 @@ final class PlanGeneratorTest extends TestCase
     #[Test]
     public function testEveryOtherRelationOfAParentIsStillFollowed(): void
     {
-        $set = ShopSchemas::generator()->generate(
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('customer', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'name' => new ColumnDefinition('name', 'VARCHAR', nullable: false, length: 255),
+                'tier' => new ColumnDefinition('tier', 'ENUM', nullable: false, enumValues: ['gold', 'silver']),
+            ], ['id']),
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('audit_log', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'message' => new ColumnDefinition('message', 'VARCHAR', nullable: false, length: 255),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed(20260101);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
+        $set = $generator->generate(
             FixturePlan::from('order.customer_id > customer.id, customer.id < audit_log.customer_id')
         );
 
@@ -367,7 +756,23 @@ final class PlanGeneratorTest extends TestCase
     #[Test]
     public function testAnOptionalParentIsGeneratedWhenTheCallerAsksForIt(): void
     {
-        $set = ShopSchemas::generator()->generate(
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('customer', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'name' => new ColumnDefinition('name', 'VARCHAR', nullable: false, length: 255),
+                'tier' => new ColumnDefinition('tier', 'ENUM', nullable: false, enumValues: ['gold', 'silver']),
+            ], ['id']),
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed(20260101);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
+        $set = $generator->generate(
             FixturePlan::from('order.customer_id >? customer.id'),
             ['customer' => ['tier' => 'gold']]
         );
@@ -379,7 +784,21 @@ final class PlanGeneratorTest extends TestCase
     #[Test]
     public function testACompositeRelationCarriesEveryColumn(): void
     {
-        $set = ShopSchemas::generator()->generate(
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('shop_order', [
+                'shop_id' => new ColumnDefinition('shop_id', 'INT', nullable: false, unsigned: true),
+                'no' => new ColumnDefinition('no', 'INT', nullable: false, unsigned: true),
+            ], ['shop_id', 'no']),
+            new TableSchema('shop_order_line', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'shop_id' => new ColumnDefinition('shop_id', 'INT', nullable: false, unsigned: true),
+                'order_no' => new ColumnDefinition('order_no', 'INT', nullable: false, unsigned: true),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed(20260101);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
+        $set = $generator->generate(
             FixturePlan::from('shop_order.(shop_id, no) < shop_order_line.(shop_id, order_no)'),
             ['shop_order' => ['shop_id' => 7, 'no' => 9], 'shop_order_line' => 1]
         );
@@ -393,7 +812,23 @@ final class PlanGeneratorTest extends TestCase
     #[Test]
     public function testAOneToOneChildIsGeneratedExactlyOnce(): void
     {
-        $set = ShopSchemas::generator()->generate(
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_shipping', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'carrier' => new ColumnDefinition('carrier', 'VARCHAR', nullable: false, length: 50),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed(20260101);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
+        $set = $generator->generate(
             FixturePlan::from('order.id - order_shipping.order_id')
         );
 
@@ -403,7 +838,24 @@ final class PlanGeneratorTest extends TestCase
     #[Test]
     public function testKeysAreStoodInForEveryColumnARelationReads(): void
     {
-        $set = ShopSchemas::generator()->generate(
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('twin', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'other_id' => new ColumnDefinition('other_id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+            ], ['id']),
+            new TableSchema('twin_child', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'twin_id' => new ColumnDefinition('twin_id', 'INT', nullable: false, unsigned: true),
+            ], ['id']),
+            new TableSchema('twin_other', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'twin_other_id' => new ColumnDefinition('twin_other_id', 'INT', nullable: false, unsigned: true),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed(20260101);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
+        $set = $generator->generate(
             FixturePlan::from('twin.id < twin_child.twin_id, twin.other_id < twin_other.twin_other_id')
         );
 
@@ -414,7 +866,23 @@ final class PlanGeneratorTest extends TestCase
     #[Test]
     public function testARequiredParentIsGeneratedWhetherOrNotItWasAskedFor(): void
     {
-        $set = ShopSchemas::generator()->generate(FixturePlan::from('order.customer_id > customer.id'));
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('customer', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'name' => new ColumnDefinition('name', 'VARCHAR', nullable: false, length: 255),
+                'tier' => new ColumnDefinition('tier', 'ENUM', nullable: false, enumValues: ['gold', 'silver']),
+            ], ['id']),
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed(20260101);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
+        $set = $generator->generate(FixturePlan::from('order.customer_id > customer.id'));
 
         self::assertNotSame([], $set->rows('customer'));
     }
@@ -422,7 +890,23 @@ final class PlanGeneratorTest extends TestCase
     #[Test]
     public function testAnOptionalParentNobodyAskedForIsLeftOut(): void
     {
-        $set = ShopSchemas::generator()->generate(FixturePlan::from('order.customer_id >? customer.id'));
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('customer', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'name' => new ColumnDefinition('name', 'VARCHAR', nullable: false, length: 255),
+                'tier' => new ColumnDefinition('tier', 'ENUM', nullable: false, enumValues: ['gold', 'silver']),
+            ], ['id']),
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed(20260101);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
+        $set = $generator->generate(FixturePlan::from('order.customer_id >? customer.id'));
 
         self::assertSame([], $set->rows('customer'));
     }
@@ -430,30 +914,88 @@ final class PlanGeneratorTest extends TestCase
     #[Test]
     public function testAnUnboundedChildCountCanExceedItsMinimum(): void
     {
-        self::assertNotSame(
-            [1],
-            array_values(array_unique(ShopSchemas::childCountsOverSeeds('order.id < order_detail.order_id')))
-        );
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_detail', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'product_id' => new ColumnDefinition('product_id', 'INT', nullable: false, unsigned: true),
+                'quantity' => new ColumnDefinition('quantity', 'INT', nullable: false),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed(1);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
+        $set = $generator->generate(FixturePlan::from('order.id < order_detail.order_id'));
+
+        self::assertGreaterThan(1, count($set->rows('order_detail')));
     }
 
     #[Test]
-    public function testAOneToOneChildIsNeverGeneratedMoreThanOnce(): void
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerGenerationSeeds')]
+    public function testAOneToOneChildIsNeverGeneratedMoreThanOnce(int $seed): void
     {
-        self::assertSame(
-            [1],
-            array_values(array_unique(
-                ShopSchemas::rowCountsOverSeeds('order.id - order_shipping.order_id', 'order_shipping')
-            ))
-        );
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_shipping', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'carrier' => new ColumnDefinition('carrier', 'VARCHAR', nullable: false, length: 50),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed($seed);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
+        $set = $generator->generate(FixturePlan::from('order.id - order_shipping.order_id'));
+
+        self::assertCount(1, $set->rows('order_shipping'));
     }
 
     #[Test]
     public function testATableReachableOnlyBackwardsAlongARelationIsStillPartOfTheWalk(): void
     {
-        $set = ShopSchemas::generator()->generate(
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_detail', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'product_id' => new ColumnDefinition('product_id', 'INT', nullable: false, unsigned: true),
+                'quantity' => new ColumnDefinition('quantity', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('product', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'name' => new ColumnDefinition('name', 'VARCHAR', nullable: false, length: 255),
+            ], ['id']),
+        ]);
+        $faker = \Faker\Factory::create();
+        $faker->seed(20260101);
+        $generator = new PlanGenerator($schemas, new FixtureGenerator($faker), $faker);
+        $set = $generator->generate(
             FixturePlan::from('order.id < order_detail.order_id, product.id ?< order_detail.product_id')
         );
 
         self::assertSame([], $set->rows('product'));
+    }
+    /**
+     * @return list<array{int}>
+     */
+    public static function providerGenerationSeeds(): array
+    {
+        return array_map(static fn (int $seed): array => [$seed], range(1, 40));
     }
 }

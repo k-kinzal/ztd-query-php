@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Platform\PostgreSql\Schema;
 
+use PDO;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Platform\PostgreSql\Schema\CatalogSchema as Subject;
@@ -18,7 +19,12 @@ final class CatalogSchemaTest extends TestCase
 {
     public function testFetchSchemaFromInformationSchemaRetainsColumnMetadata(): void
     {
-        $pdo = \Tests\Fixture\Database::postgres();
+        $pdo = new PDO(
+            (string) getenv('SQL_FIXTURE_PGSQL_DSN'),
+            (string) getenv('SQL_FIXTURE_PGSQL_USER'),
+            (string) getenv('SQL_FIXTURE_PGSQL_PASSWORD'),
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_EMULATE_PREPARES => false],
+        );
         $pdo->exec('CREATE TEMPORARY TABLE users (id INTEGER PRIMARY KEY, name VARCHAR(30) NOT NULL DEFAULT \'ready\')');
         $statement = $pdo->query('SELECT pg_my_temp_schema()::regnamespace::text');
         self::assertNotFalse($statement);

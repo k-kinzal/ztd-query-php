@@ -105,7 +105,10 @@ final class PropertyHydrationTest extends TestCase
      */
     public function testHydrateViaPropertiesMapsSnakeCaseToCamelCase(): void
     {
-        $object = (new \SqlFixture\Hydrator\ReflectionHydrator())->hydrate(['user_name' => 'Alice', 'unknown' => 'ignored'], \Tests\Fixture\Hydrator\TestEntityViaPropertiesCamel::class);
+        $target = new class () {
+            public string $userName = '';
+        };
+        $object = (new \SqlFixture\Hydrator\ReflectionHydrator())->hydrate(['user_name' => 'Alice', 'unknown' => 'ignored'], $target::class);
         self::assertSame('Alice', $object->userName);
     }
 
@@ -114,7 +117,10 @@ final class PropertyHydrationTest extends TestCase
      */
     public function testSetPropertyConvertsTheDatabaseValue(): void
     {
-        $object = (new \SqlFixture\Hydrator\ReflectionHydrator())->hydrate(['user_name' => 42], \Tests\Fixture\Hydrator\TestEntityViaPropertiesCamel::class);
+        $target = new class () {
+            public string $userName = '';
+        };
+        $object = (new \SqlFixture\Hydrator\ReflectionHydrator())->hydrate(['user_name' => 42], $target::class);
         self::assertSame('42', $object->userName);
     }
 }

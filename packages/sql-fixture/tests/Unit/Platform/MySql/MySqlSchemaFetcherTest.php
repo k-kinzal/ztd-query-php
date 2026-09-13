@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Platform\MySql;
 
+use PDO;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Platform\MySql\MySqlSchemaFetcher as Subject;
@@ -32,7 +33,12 @@ final class MySqlSchemaFetcherTest extends TestCase
 {
     public function testFetchSchemaParsesLiveDatabaseDdl(): void
     {
-        $pdo = \Tests\Fixture\Database::mysql();
+        $pdo = new PDO(
+            (string) getenv('SQL_FIXTURE_MYSQL_DSN'),
+            (string) getenv('SQL_FIXTURE_MYSQL_USER'),
+            (string) getenv('SQL_FIXTURE_MYSQL_PASSWORD'),
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_EMULATE_PREPARES => false],
+        );
         $pdo->exec('CREATE TEMPORARY TABLE users (id INT PRIMARY KEY, name VARCHAR(30) NOT NULL)');
         $schema = (new Subject())->fetchSchema($pdo, 'users');
         self::assertSame('users', $schema->tableName);

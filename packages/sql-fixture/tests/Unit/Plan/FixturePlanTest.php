@@ -17,7 +17,6 @@ use SqlFixture\Plan\PlanSyntaxException;
 use SqlFixture\Plan\Relation;
 use SqlFixture\Plan\RelationKind;
 use SqlFixture\Plan\RelationSide;
-use Tests\Fixture\Plan\OrderWithDetailsPlan;
 
 #[CoversClass(FixturePlan::class)]
 #[UsesClass(PlanParser::class)]
@@ -282,7 +281,16 @@ final class FixturePlanTest extends TestCase
     #[Test]
     public function testAPlanCanBeDeclaredAsAType(): void
     {
-        $plan = new OrderWithDetailsPlan();
+        $declaredPlan = new class () extends FixturePlan {
+            public function __construct()
+            {
+                parent::__construct(
+                    Relation::oneToMany('order.id', 'order_detail.order_id'),
+                    Relation::manyToOne('order.customer_id', 'customer.id'),
+                );
+            }
+        };
+        $plan = $declaredPlan;
 
         self::assertSame(['order', 'order_detail', 'customer'], $plan->tables);
     }
@@ -290,16 +298,34 @@ final class FixturePlanTest extends TestCase
     #[Test]
     public function testADeclaredPlanWritesOutAsTheSameRelationString(): void
     {
+        $declaredPlan = new class () extends FixturePlan {
+            public function __construct()
+            {
+                parent::__construct(
+                    Relation::oneToMany('order.id', 'order_detail.order_id'),
+                    Relation::manyToOne('order.customer_id', 'customer.id'),
+                );
+            }
+        };
         self::assertSame(
             'order.id < order_detail.order_id, order.customer_id > customer.id',
-            (new OrderWithDetailsPlan())->toString()
+            ($declaredPlan)->toString()
         );
     }
 
     #[Test]
     public function testADeclaredPlanEqualsTheParsedString(): void
     {
-        $declared = new OrderWithDetailsPlan();
+        $declaredPlan = new class () extends FixturePlan {
+            public function __construct()
+            {
+                parent::__construct(
+                    Relation::oneToMany('order.id', 'order_detail.order_id'),
+                    Relation::manyToOne('order.customer_id', 'customer.id'),
+                );
+            }
+        };
+        $declared = $declaredPlan;
         $parsed = FixturePlan::from('order.id < order_detail.order_id, order.customer_id > customer.id');
 
         self::assertSame($parsed->toString(), $declared->toString());
@@ -332,9 +358,18 @@ final class FixturePlanTest extends TestCase
     #[Test]
     public function testAlteringADeclaredPlanGivesAPlainPlan(): void
     {
-        $plan = (new OrderWithDetailsPlan())->withTable('audit_log');
+        $declaredPlan = new class () extends FixturePlan {
+            public function __construct()
+            {
+                parent::__construct(
+                    Relation::oneToMany('order.id', 'order_detail.order_id'),
+                    Relation::manyToOne('order.customer_id', 'customer.id'),
+                );
+            }
+        };
+        $plan = ($declaredPlan)->withTable('audit_log');
 
-        self::assertNotInstanceOf(OrderWithDetailsPlan::class, $plan);
+        self::assertNotInstanceOf($declaredPlan::class, $plan);
         self::assertSame(['order', 'order_detail', 'customer', 'audit_log'], $plan->tables);
     }
 

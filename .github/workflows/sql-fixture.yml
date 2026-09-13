@@ -121,6 +121,48 @@ jobs:
       - name: Check the architecture layers
         run: composer deptrac
 
+  docgen:
+    name: Generate documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+        with:
+          php-version: '8.3'
+          extensions: gd, mbstring, pcntl
+          coverage: none
+      - name: Install dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+        with:
+          working-directory: packages/sql-fixture
+          dependency-versions: locked
+          composer-options: --prefer-dist
+          require-lock-file: true
+      - name: Check installed platform requirements
+        run: composer check-platform-reqs
+      - name: Restore the DocGen cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: packages/sql-fixture/build/docgen-cache
+          key: sql-fixture-docgen-${{ runner.os }}-${{ hashFiles('packages/sql-fixture/composer.lock') }}-${{ github.sha }}
+          restore-keys: |
+            sql-fixture-docgen-${{ runner.os }}-${{ hashFiles('packages/sql-fixture/composer.lock') }}-
+            sql-fixture-docgen-${{ runner.os }}-
+      - name: Generate the documentation
+        run: composer docgen
+      - name: Upload the documentation
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: sql-fixture-docs
+          path: packages/sql-fixture/build/docs/
+          include-hidden-files: true
+          if-no-files-found: error
+
   bench:
     name: Benchmark
     runs-on: ubuntu-latest

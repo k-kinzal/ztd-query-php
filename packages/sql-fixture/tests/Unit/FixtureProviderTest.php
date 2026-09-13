@@ -21,8 +21,6 @@ use SqlFixture\Platform\Sqlite\SqliteTypeMapper;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\StaticSchemaResolver;
 use SqlFixture\Schema\TableSchema;
-use Tests\Fixture\TestableFixtureProvider;
-use Tests\Fixture\UserDto;
 
 #[CoversClass(FixtureProvider::class)]
 #[UsesClass(FixtureGenerator::class)]
@@ -159,11 +157,9 @@ final class FixtureProviderTest extends TestCase
     #[Test]
     public function testFixtureReturnsArray(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture(
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture(
             'CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255) NOT NULL)',
         );
 
@@ -174,11 +170,9 @@ final class FixtureProviderTest extends TestCase
     #[Test]
     public function testFixtureWithOverrides(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture(
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture(
             'CREATE TABLE users (id INT, name VARCHAR(255))',
             ['name' => 'Overridden'],
         );
@@ -189,14 +183,19 @@ final class FixtureProviderTest extends TestCase
     #[Test]
     public function testFixtureHydratesClass(): void
     {
-        $user = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture(
+        $target = new class (0, '') {
+            public function __construct(
+                public readonly int $id,
+                public readonly string $name,
+            ) {
+            }
+        };
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $user = (new FixtureProvider($faker))->fixture(
             'CREATE TABLE users (id INT, name VARCHAR(255))',
             ['id' => 1, 'name' => 'Test User'],
-            UserDto::class,
+            $target::class,
         );
 
         self::assertSame(1, $user->id);
@@ -206,11 +205,9 @@ final class FixtureProviderTest extends TestCase
     #[Test]
     public function testFixtureSkipsAutoIncrement(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture(
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture(
             'CREATE TABLE users (id INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(255))',
         );
 
@@ -221,11 +218,9 @@ final class FixtureProviderTest extends TestCase
     #[Test]
     public function testFixtureCanOverrideAutoIncrement(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture(
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture(
             'CREATE TABLE users (id INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(255))',
             ['id' => 42],
         );
@@ -236,11 +231,9 @@ final class FixtureProviderTest extends TestCase
     #[Test]
     public function testFixtureWithAllNumericTypes(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture(<<<'SQL'
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture(<<<'SQL'
             CREATE TABLE numbers (
                 col_tinyint TINYINT NOT NULL,
                 col_smallint SMALLINT NOT NULL,
@@ -266,11 +259,9 @@ final class FixtureProviderTest extends TestCase
     #[Test]
     public function testFixtureWithStringTypes(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture(<<<'SQL'
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture(<<<'SQL'
             CREATE TABLE strings (
                 col_char CHAR(10) NOT NULL,
                 col_varchar VARCHAR(100) NOT NULL,
@@ -290,11 +281,9 @@ final class FixtureProviderTest extends TestCase
     #[Test]
     public function testFixtureWithDateTypes(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture(<<<'SQL'
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture(<<<'SQL'
             CREATE TABLE dates (
                 col_date DATE NOT NULL,
                 col_time TIME NOT NULL,
@@ -316,11 +305,9 @@ final class FixtureProviderTest extends TestCase
     #[Test]
     public function testFixtureWithEnum(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture(<<<'SQL'
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture(<<<'SQL'
             CREATE TABLE statuses (
                 status ENUM('active','inactive','pending') NOT NULL
             )
@@ -332,11 +319,9 @@ final class FixtureProviderTest extends TestCase
     #[Test]
     public function testFixtureWithSet(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture(<<<'SQL'
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture(<<<'SQL'
             CREATE TABLE permissions (
                 perms SET('read','write','delete') NOT NULL
             )
@@ -352,11 +337,9 @@ final class FixtureProviderTest extends TestCase
     #[Test]
     public function testFixtureWithJson(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture('CREATE TABLE jsons (data JSON NOT NULL)');
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture('CREATE TABLE jsons (data JSON NOT NULL)');
 
         self::assertIsString($data['data']);
         $decoded = json_decode($data['data'], true);
@@ -366,11 +349,9 @@ final class FixtureProviderTest extends TestCase
     #[Test]
     public function testFixtureWithSpatialTypes(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture(<<<'SQL'
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture(<<<'SQL'
             CREATE TABLE geo (
                 col_point POINT NOT NULL,
                 col_linestring LINESTRING NOT NULL,
@@ -432,30 +413,25 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function testFixtureWithNullableColumns(): void
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerNullableSeeds')]
+    public function testFixtureWithNullableColumns(int $seed): void
     {
         $faker = Factory::create();
-        $faker->seed(12345);
+        $faker->seed($seed);
         $provider = new FixtureProvider($faker);
         $sql = 'CREATE TABLE test (id INT NOT NULL, name VARCHAR(255) DEFAULT NULL, notes TEXT)';
 
-        (static function () use ($provider, $sql): void {
-            for ($i = 0; $i < 20; $i++) {
-                $data = $provider->fixture($sql);
-                self::assertArrayHasKey('id', $data);
-                self::assertIsInt($data['id']);
-            }
-        })();
+        $data = $provider->fixture($sql);
+        self::assertArrayHasKey('id', $data);
+        self::assertIsInt($data['id']);
     }
 
     #[Test]
     public function testFixtureWithBinaryColumns(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture(<<<'SQL'
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture(<<<'SQL'
             CREATE TABLE bins (
                 col_binary BINARY(16) NOT NULL,
                 col_varbinary VARBINARY(100) NOT NULL,
@@ -473,22 +449,18 @@ final class FixtureProviderTest extends TestCase
     #[Test]
     public function testFixtureWithBooleanType(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture('CREATE TABLE test (active BOOLEAN NOT NULL)');
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture('CREATE TABLE test (active BOOLEAN NOT NULL)');
         self::assertIsBool($data['active']);
     }
 
     #[Test]
     public function testFixtureWithBitType(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture('CREATE TABLE test (flags BIT(8) NOT NULL)');
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture('CREATE TABLE test (flags BIT(8) NOT NULL)');
         self::assertIsInt($data['flags']);
         self::assertGreaterThanOrEqual(0, $data['flags']);
         self::assertLessThanOrEqual(255, $data['flags']);
@@ -497,11 +469,9 @@ final class FixtureProviderTest extends TestCase
     #[Test]
     public function testFixtureWithGeneratedColumnSkipped(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture(<<<'SQL'
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture(<<<'SQL'
             CREATE TABLE test (
                 a INT,
                 b INT,
@@ -517,11 +487,9 @@ final class FixtureProviderTest extends TestCase
     #[Test]
     public function testFixtureWithUnsignedTypes(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture(<<<'SQL'
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture(<<<'SQL'
             CREATE TABLE test (
                 col_uint INT UNSIGNED NOT NULL,
                 col_utinyint TINYINT UNSIGNED NOT NULL
@@ -776,13 +744,13 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function testGetSchemaIsAccessibleFromSubclass(): void
+    public function testRegisterSchemaReturnsTheParsedTable(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
-        $provider = new TestableFixtureProvider($faker);
+        $provider = new FixtureProvider($faker);
 
-        $schema = $provider->exposeGetSchema('CREATE TABLE test (id INT NOT NULL, name VARCHAR(255) NOT NULL)');
+        $schema = $provider->registerSchema('CREATE TABLE test (id INT NOT NULL, name VARCHAR(255) NOT NULL)');
 
         self::assertSame('test', $schema->tableName);
         self::assertCount(2, $schema->columns);
@@ -817,5 +785,12 @@ final class FixtureProviderTest extends TestCase
         $provider->registerSchema('CREATE TABLE posts (user_id INT)');
         $fixtures = $provider->fixtures('users.id < posts.user_id', ['users' => ['id' => 9], 'posts' => 2]);
         self::assertSame([['user_id' => 9], ['user_id' => 9]], $fixtures->rows('posts'));
+    }
+    /**
+     * @return list<array{int}>
+     */
+    public static function providerNullableSeeds(): array
+    {
+        return array_map(static fn (int $seed): array => [$seed], range(1, 20));
     }
 }

@@ -25,7 +25,14 @@ final class HydratorInterfaceTest extends TestCase
      */
     public function testHydrateConvertsDatabaseScalarValues(): void
     {
-        $object = (new \SqlFixture\Hydrator\ReflectionHydrator())->hydrate(['id' => '42', 'name' => 'Alice'], \Tests\Fixture\Hydrator\TestEntity::class);
+        $target = new class (0, '') {
+            public function __construct(
+                public readonly int $id,
+                public readonly string $name,
+            ) {
+            }
+        };
+        $object = (new \SqlFixture\Hydrator\ReflectionHydrator())->hydrate(['id' => '42', 'name' => 'Alice'], $target::class);
         self::assertSame(42, $object->id);
         self::assertSame('Alice', $object->name);
     }

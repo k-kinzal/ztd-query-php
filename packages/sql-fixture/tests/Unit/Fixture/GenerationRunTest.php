@@ -13,7 +13,6 @@ use SqlFixture\Fixture\RowSpec;
 use SqlFixture\Plan\FixturePlan;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\TableSchema;
-use Tests\Fixture\Fixture\OrderSchema;
 
 #[CoversClass(GenerationRun::class)]
 #[UsesClass(RowSpec::class)]
@@ -78,9 +77,13 @@ final class GenerationRunTest extends TestCase
     #[Test]
     public function testToSetATableReachedOnlyAsASingleRowReadsBackAsOne(): void
     {
+        $schema = new TableSchema('order', [
+            'id' => new ColumnDefinition('id', 'INT', autoIncrement: true),
+            'status' => new ColumnDefinition('status', 'VARCHAR', length: 20),
+        ], ['id']);
         $run = new GenerationRun([]);
         $run->reached('order', false);
-        $run->record(OrderSchema::create(), ['status' => 'paid']);
+        $run->record($schema, ['status' => 'paid']);
 
         self::assertSame(
             ['status' => 'paid'],
@@ -91,34 +94,50 @@ final class GenerationRunTest extends TestCase
     #[Test]
     public function testAKeyNothingReadsIsLeftToTheDatabase(): void
     {
+        $schema = new TableSchema('order', [
+            'id' => new ColumnDefinition('id', 'INT', autoIncrement: true),
+            'status' => new ColumnDefinition('status', 'VARCHAR', length: 20),
+        ], ['id']);
         $run = new GenerationRun([]);
 
-        self::assertArrayNotHasKey('id', $run->record(OrderSchema::create(), ['status' => 'paid']));
+        self::assertArrayNotHasKey('id', $run->record($schema, ['status' => 'paid']));
     }
 
     #[Test]
     public function testAKeyARelationReadsIsStoodInFor(): void
     {
+        $schema = new TableSchema('order', [
+            'id' => new ColumnDefinition('id', 'INT', autoIncrement: true),
+            'status' => new ColumnDefinition('status', 'VARCHAR', length: 20),
+        ], ['id']);
         $run = new GenerationRun([]);
 
-        self::assertSame(1, $run->record(OrderSchema::create(), [], ['id'])['id']);
-        self::assertSame(2, $run->record(OrderSchema::create(), [], ['id'])['id']);
+        self::assertSame(1, $run->record($schema, [], ['id'])['id']);
+        self::assertSame(2, $run->record($schema, [], ['id'])['id']);
     }
 
     #[Test]
     public function testRecordKeepsAKeyTheCallerSupplied(): void
     {
+        $schema = new TableSchema('order', [
+            'id' => new ColumnDefinition('id', 'INT', autoIncrement: true),
+            'status' => new ColumnDefinition('status', 'VARCHAR', length: 20),
+        ], ['id']);
         $run = new GenerationRun([]);
 
-        self::assertSame(100, $run->record(OrderSchema::create(), ['id' => 100], ['id'])['id']);
+        self::assertSame(100, $run->record($schema, ['id' => 100], ['id'])['id']);
     }
 
     #[Test]
     public function testOnlyAutoIncrementColumnsAreStoodInFor(): void
     {
+        $schema = new TableSchema('order', [
+            'id' => new ColumnDefinition('id', 'INT', autoIncrement: true),
+            'status' => new ColumnDefinition('status', 'VARCHAR', length: 20),
+        ], ['id']);
         $run = new GenerationRun([]);
 
-        self::assertArrayNotHasKey('status', $run->record(OrderSchema::create(), [], ['status']));
+        self::assertArrayNotHasKey('status', $run->record($schema, [], ['status']));
     }
 
     #[Test]
@@ -150,10 +169,14 @@ final class GenerationRunTest extends TestCase
     #[Test]
     public function testClaimingDoesNotUndoWhatTheWalkAlreadyLearnt(): void
     {
+        $schema = new TableSchema('order', [
+            'id' => new ColumnDefinition('id', 'INT', autoIncrement: true),
+            'status' => new ColumnDefinition('status', 'VARCHAR', length: 20),
+        ], ['id']);
         $run = new GenerationRun([]);
         $run->reached('order', true);
         $run->claim(['order']);
-        $run->record(OrderSchema::create(), ['status' => 'paid']);
+        $run->record($schema, ['status' => 'paid']);
 
         self::assertSame(
             [['status' => 'paid']],
@@ -173,9 +196,13 @@ final class GenerationRunTest extends TestCase
     #[Test]
     public function testEveryReferencedColumnIsConsideredNotJustTheFirst(): void
     {
+        $schema = new TableSchema('order', [
+            'id' => new ColumnDefinition('id', 'INT', autoIncrement: true),
+            'status' => new ColumnDefinition('status', 'VARCHAR', length: 20),
+        ], ['id']);
         $run = new GenerationRun([]);
 
-        $row = $run->record(OrderSchema::create(), [], ['status', 'id']);
+        $row = $run->record($schema, [], ['status', 'id']);
 
         self::assertSame(1, $row['id']);
     }
@@ -183,18 +210,26 @@ final class GenerationRunTest extends TestCase
     #[Test]
     public function testRecordReturnsTheWholeRow(): void
     {
+        $schema = new TableSchema('order', [
+            'id' => new ColumnDefinition('id', 'INT', autoIncrement: true),
+            'status' => new ColumnDefinition('status', 'VARCHAR', length: 20),
+        ], ['id']);
         $run = new GenerationRun([]);
 
         self::assertSame(
             ['status' => 'paid', 'id' => 1],
-            $run->record(OrderSchema::create(), ['status' => 'paid'], ['id'])
+            $run->record($schema, ['status' => 'paid'], ['id'])
         );
     }
     public function testLastRowReturnsTheMostRecentRecordedValues(): void
     {
+        $schema = new TableSchema('order', [
+            'id' => new ColumnDefinition('id', 'INT', autoIncrement: true),
+            'status' => new ColumnDefinition('status', 'VARCHAR', length: 20),
+        ], ['id']);
         $run = new GenerationRun([]);
-        $run->record(OrderSchema::create(), ['status' => 'new']);
-        $run->record(OrderSchema::create(), ['status' => 'paid']);
+        $run->record($schema, ['status' => 'new']);
+        $run->record($schema, ['status' => 'paid']);
         self::assertSame(['status' => 'paid'], $run->lastRow('order'));
         self::assertSame([], $run->lastRow('unknown'));
     }

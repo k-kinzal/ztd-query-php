@@ -26,8 +26,8 @@ final class PlanSchemaValidator
     }
 
     /**
-     * @throws Exception\GeneratedColumnReferenceException If a relation names a column that is not there
-     * @throws Exception\UnknownPlanColumnException
+     * @throws Exception\GeneratedColumnReferenceException If a relation references a generated column
+     * @throws Exception\UnknownPlanColumnException If a relation names a column the table lacks
      * @throws \SqlFixture\Schema\SchemaNotFoundException If a table is not there
      */
     public function validate(FixturePlan $plan): void

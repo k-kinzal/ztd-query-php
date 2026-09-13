@@ -17,6 +17,14 @@
          timeoutForSmallTests="1"
          timeoutForMediumTests="10"
          timeoutForLargeTests="60">
+    <php>
+        <env name="SQL_FIXTURE_MYSQL_DSN" value="mysql:host=127.0.0.1;port=13316;dbname=sql_fixture"/>
+        <env name="SQL_FIXTURE_MYSQL_USER" value="root"/>
+        <env name="SQL_FIXTURE_MYSQL_PASSWORD" value="toolkit"/>
+        <env name="SQL_FIXTURE_PGSQL_DSN" value="pgsql:host=127.0.0.1;port=15432;dbname=sql_fixture"/>
+        <env name="SQL_FIXTURE_PGSQL_USER" value="postgres"/>
+        <env name="SQL_FIXTURE_PGSQL_PASSWORD" value="toolkit"/>
+    </php>
     <testsuites>
         <testsuite name="unit">
             <directory>tests/Unit</directory>

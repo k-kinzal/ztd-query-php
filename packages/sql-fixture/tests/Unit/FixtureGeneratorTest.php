@@ -16,7 +16,6 @@ use SqlFixture\Platform\MySql\MySqlSchemaParser;
 use SqlFixture\Platform\MySql\MySqlTypeMapper;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\TableSchema;
-use Tests\Fixture\GeneratorTestUser;
 
 #[CoversClass(FixtureGenerator::class)]
 #[UsesClass(InvalidOverrideException::class)]
@@ -131,6 +130,13 @@ final class FixtureGeneratorTest extends TestCase
     #[Test]
     public function testGenerateWithHydration(): void
     {
+        $target = new class (0, '') {
+            public function __construct(
+                public readonly int $id,
+                public readonly string $name,
+            ) {
+            }
+        };
         $schema = new TableSchema('users', [
             'id' => new ColumnDefinition('id', 'INT'),
             'name' => new ColumnDefinition('name', 'VARCHAR', length: 255),
@@ -138,7 +144,7 @@ final class FixtureGeneratorTest extends TestCase
 
         $faker = Factory::create();
         $faker->seed(12345);
-        $user = (new FixtureGenerator($faker))->generate($schema, ['id' => 1, 'name' => 'Test'], GeneratorTestUser::class);
+        $user = (new FixtureGenerator($faker))->generate($schema, ['id' => 1, 'name' => 'Test'], $target::class);
 
         self::assertSame(1, $user->id);
         self::assertSame('Test', $user->name);

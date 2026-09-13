@@ -9,14 +9,14 @@ composer fuzz:insert-select -- --max-runs=10000
 ```
 
 The insert/select target starts a disposable MySQL 8.4.7 Testcontainers instance,
-so Docker and `pdo_mysql` are required. Both targets initialize their corpus from
-`fuzz/seeds/`; PHP-Fuzzer evolves the separate, ignored `fuzz/corpus/` directories.
+so Docker and `pdo_mysql` are required. The commands create empty corpus directories when needed;
+PHP-Fuzzer owns input mutation and the ignored `fuzz/corpus/` contents.
 
 The CREATE TABLE target uses sql-faker's `BytePlanCompiler`: the input controls
 expansion count, grammar choices and lexical values. `MYSQL_VERSION` selects the
 grammar (default `mysql-8.4.7`), and `MAX_EXPANSIONS` bounds expansion (default 128).
 The SQL parser supports a subset of that grammar, so `SchemaParseException` is an
-expected rejection. For accepted schemas, the oracle checks that every writable
+expected rejection. For accepted schemas, the target checks that every writable
 column is generated and explicit overrides are preserved exactly. Other exceptions
 and engine errors are findings.
 
@@ -35,6 +35,6 @@ vendor/bin/php-fuzzer run-single fuzz/fuzz_create_table.php crash-INPUT.txt
 vendor/bin/php-fuzzer run-single fuzz/fuzz_insert_select.php crash-INPUT.txt
 ```
 
-Keep a minimized regression input in the matching `fuzz/seeds/` directory after
-fixing a finding. Corpus cache keys include a format revision because the CREATE
-TABLE input now carries structural choices instead of only a random seed.
+Add a focused regression test after fixing a finding. Corpus cache keys include
+a format revision because the CREATE TABLE input carries structural choices
+instead of only a random seed.

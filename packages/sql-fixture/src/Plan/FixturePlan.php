@@ -63,7 +63,7 @@ class FixturePlan implements Stringable
 
     /**
      * @param Relation|string ...$parts Relations, and the names of tables that stand alone
-     * @throws Exception\EmptyPlanException If a string names anything but a plain table
+     * @throws Exception\EmptyPlanException If a table declaration is empty
      * @throws Exception\EmptyTableNameException
      * @throws Exception\MissingEndpointColumnsException
      * @throws Exception\InvalidTableNameException

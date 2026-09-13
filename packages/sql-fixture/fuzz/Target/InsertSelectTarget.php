@@ -116,7 +116,30 @@ final class InsertSelectTarget
             foreach ($fixture as $column => $expected) {
                 $actual = $result[$column] ?? null;
 
-                if (!(new \Fuzz\Oracle\StoredValueComparator())->compare($expected, $actual, $column)) {
+                if ($column === 'col_bit' && is_string($actual) && strlen($actual) === 1) {
+                    $actual = ord($actual);
+                }
+                if ($column === 'col_json' && is_string($expected) && is_string($actual)) {
+                    $expected = json_decode($expected, true, 512, JSON_THROW_ON_ERROR);
+                    $actual = json_decode($actual, true, 512, JSON_THROW_ON_ERROR);
+                }
+                if ($column === 'col_set' && is_string($expected) && is_string($actual)) {
+                    $expected = explode(',', $expected);
+                    $actual = explode(',', $actual);
+                    sort($expected);
+                    sort($actual);
+                }
+                $matches = match (true) {
+                    $expected === null || $actual === null => $expected === $actual,
+                    is_float($expected) && is_numeric($actual) => $expected === 0.0
+                        ? abs((float) $actual) < 0.0001
+                        : abs($expected - (float) $actual) / abs($expected) < 0.001,
+                    is_int($expected) && is_numeric($actual) => $expected === (int) $actual,
+                    is_bool($expected) && is_numeric($actual) => $expected === (bool) $actual,
+                    default => $expected === $actual,
+                };
+
+                if (!$matches) {
                     throw new Error(
                         "Value mismatch\n" .
                         "Seed: $seed\n" .
@@ -131,8 +154,4 @@ final class InsertSelectTarget
             $this->pdo->rollBack();
         }
     }
-
-
-
-
 }

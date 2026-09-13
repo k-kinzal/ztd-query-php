@@ -59,8 +59,8 @@
         ],
         "format": "php-cs-fixer fix --allow-risky=yes",
         "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
-        "fuzz:create-table": "php-fuzzer fuzz fuzz/fuzz_create_table.php fuzz/corpus/create-table/",
-        "fuzz:insert-select": "php-fuzzer fuzz fuzz/fuzz_insert_select.php fuzz/corpus/insert-select/",
+        "fuzz:create-table": "mkdir -p fuzz/corpus/create-table && php-fuzzer fuzz fuzz/fuzz_create_table.php fuzz/corpus/create-table/",
+        "fuzz:insert-select": "mkdir -p fuzz/corpus/insert-select && php-fuzzer fuzz fuzz/fuzz_insert_select.php fuzz/corpus/insert-select/",
         "bench": "phpbench run --report=aggregate",
         "bench:quick": "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10",
         "bench:full": "@bench",
@@ -96,7 +96,6 @@
         "sort-packages": true
     },
     "support": {
-        "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-fixture",
-        "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-fixture/"
+        "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-fixture"
     }
 }

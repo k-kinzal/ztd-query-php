@@ -38,8 +38,8 @@ final class PlanGenerator
 
     /**
      * @param array<string, int|array<mixed>|TableOverrides> $overrides Table name => what to override
-     * @throws Exception\GeneratedColumnReferenceException If the plan names a column the schema does not have
-     * @throws Exception\UnknownPlanColumnException
+     * @throws Exception\GeneratedColumnReferenceException If a relation references a generated column
+     * @throws Exception\UnknownPlanColumnException If a relation names a column the table lacks
      */
     public function generate(FixturePlan $plan, array $overrides = []): FixtureSet
     {
