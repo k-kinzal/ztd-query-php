@@ -511,4 +511,68 @@ final class ZtdPdoStatementTest extends TestCase
             $statement->fetchAll(PDO::FETCH_ASSOC),
         );
     }
+    /**
+     * @throws ReflectionException
+     */
+    public function testSimulatedWritesWithoutReturningHaveNoFetchableRows(): void
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY)');
+        $statement = ZtdPdo::fromPdo($pdo)->prepare('INSERT INTO users VALUES (1)');
+        self::assertInstanceOf(ZtdPdoStatement::class, $statement);
+        self::assertTrue($statement->execute());
+        self::assertSame(1, $statement->rowCount());
+        self::assertFalse($statement->fetch());
+        self::assertSame([], $statement->fetchAll());
+        self::assertFalse($statement->fetchColumn());
+        self::assertFalse($statement->fetchObject());
+    }
+
+    public function testBufferedColumnFetchDefaultsToTheFirstColumnAndThenExhausts(): void
+    {
+        $statement = $this->providerReturningInsert();
+        self::assertSame(1, $statement->fetchColumn());
+        self::assertFalse($statement->fetchColumn());
+        self::assertSame([1], $this->providerReturningInsert()->fetchAll(PDO::FETCH_COLUMN));
+    }
+
+    public function testPassthroughFetchAllPreservesKeyPairKeys(): void
+    {
+        $statement = $this->providerPlainStatement("SELECT 'alice' AS name, 7 AS score UNION ALL SELECT 'bob', 9");
+        self::assertTrue($statement->execute());
+        self::assertSame(['alice' => 7, 'bob' => 9], $statement->fetchAll(PDO::FETCH_KEY_PAIR));
+    }
+
+    public function testPassthroughFetchAllForwardsColumnAndCallbackArguments(): void
+    {
+        $statement = $this->providerPlainStatement("SELECT 1 AS id, 'alice' AS name");
+        self::assertTrue($statement->execute());
+        self::assertSame(['alice'], $statement->fetchAll(PDO::FETCH_COLUMN, 1));
+        self::assertTrue($statement->execute());
+        self::assertSame(['1:alice'], $statement->fetchAll(PDO::FETCH_FUNC, static fn (int $id, string $name): string => $id . ':' . $name));
+    }
+
+    /**
+     * @throws ReflectionException
+     */
+    public function testBufferedObjectHydrationUsesTheRequestedClassAndConstructor(): void
+    {
+        $statement = $this->providerReturningInsert();
+        $object = $statement->fetchObject(\Tests\Fixtures\FetchedUser::class, ['prefix']);
+        self::assertInstanceOf(\Tests\Fixtures\FetchedUser::class, $object);
+        self::assertSame(1, $object->id);
+        self::assertSame('linus', $object->name);
+        self::assertSame('prefix', $object->label);
+    }
+
+    public function testPassthroughFetchAllForwardsConstructorArguments(): void
+    {
+        $statement = $this->providerPlainStatement("SELECT 1 AS id, 'alice' AS name");
+        self::assertTrue($statement->execute());
+        $objects = $statement->fetchAll(PDO::FETCH_CLASS, \Tests\Fixtures\FetchedUser::class, ['prefix']);
+        self::assertCount(1, $objects);
+        self::assertInstanceOf(\Tests\Fixtures\FetchedUser::class, $objects[0]);
+        self::assertSame('prefix', $objects[0]->label);
+        self::assertSame('alice', $objects[0]->name);
+    }
 }

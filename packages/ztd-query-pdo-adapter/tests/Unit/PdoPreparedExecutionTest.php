@@ -129,4 +129,15 @@ final class PdoPreparedExecutionTest extends TestCase
         yield 'a number' => [PDO::CURSOR_FWDONLY];
         yield 'a word' => ['forward'];
     }
+    public function testPrepareReportsASilentDriverFailure(): void
+    {
+        $pdo = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT]);
+        $rewriter = self::createStub(SqlRewriter::class);
+        $rewriter->method('rewrite')->willReturn(new RewritePlan('SELECT * FROM missing_table', QueryKind::READ));
+        $session = new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), ZtdConfig::default(), self::createStub(ConnectionInterface::class));
+        $execution = new PdoPreparedExecution($pdo, $session, 'SELECT * FROM missing_table');
+        $this->expectException(ZtdPdoException::class);
+        $this->expectExceptionMessage('PDO failed to prepare rewritten SQL.');
+        $execution->prepare(null);
+    }
 }

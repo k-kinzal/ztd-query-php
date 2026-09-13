@@ -163,7 +163,7 @@
         "bench": "phpbench run --report=aggregate",
         "bench:quick": "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10",
         "bench:full": "@bench",
-        "docgen": "cd ../.. && packages/ztd-query-pdo-adapter/vendor/bin/docgen --packages=packages/ztd-query-pdo-adapter --deptrac=packages/ztd-query-pdo-adapter/deptrac.yaml --output=packages/ztd-query-pdo-adapter/build/docs --cache-dir=packages/ztd-query-pdo-adapter/build/docgen-cache --title=k-kinzal/ztd-query-pdo-adapter",
+        "docgen": "cd ../.. && packages/ztd-query-pdo-adapter/vendor/bin/docgen --packages=packages/ztd-query-pdo-adapter --deptrac=\"$PWD/packages/ztd-query-pdo-adapter/deptrac.yaml\" --output=packages/ztd-query-pdo-adapter/build/docs --cache-dir=packages/ztd-query-pdo-adapter/build/docgen-cache --title=k-kinzal/ztd-query-pdo-adapter",
         "docgen:serve": "@docgen --serve",
         "docgen:diff": "@docgen --diff=origin/main --serve",
         "docgen:fresh": "@docgen --no-cache",

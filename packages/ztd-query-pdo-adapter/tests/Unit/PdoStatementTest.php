@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use PDO;
+use PDOException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Tests\Fixtures\RecordingColumnTypeResolver;
@@ -97,4 +98,20 @@ final class PdoStatementTest extends TestCase
         self::assertSame(ColumnTypeFamily::FLOAT, $columns[2]->type->family);
     }
 
+    public function testExecutePreservesTheNativeFailureDetails(): void
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY)');
+        $pdo->exec('INSERT INTO users VALUES (1)');
+        $native = $pdo->prepare('INSERT INTO users VALUES (1)');
+        self::assertNotFalse($native);
+        try {
+            (new PdoStatement($native))->execute();
+            self::fail('A duplicate primary key must fail.');
+        } catch (\ZtdQuery\Connection\Exception\DatabaseException $exception) {
+            self::assertSame(23000, $exception->getCode());
+            self::assertSame(19, $exception->getDriverErrorCode());
+            self::assertInstanceOf(PDOException::class, $exception->getPrevious());
+        }
+    }
 }

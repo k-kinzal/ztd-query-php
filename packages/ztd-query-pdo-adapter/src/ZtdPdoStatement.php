@@ -334,7 +334,7 @@ final class ZtdPdoStatement extends NativePdoStatement
      *
      * @param mixed ...$args The rest of what the fetch mode reads
      *
-     * @return array<int, mixed> Every remaining row, as that mode reads them
+     * @return array<array-key, mixed> Every remaining row, as that mode reads them
      */
     #[Override]
     public function fetchAll(int $mode = PDO::FETCH_DEFAULT, mixed ...$args): array
@@ -366,13 +366,7 @@ final class ZtdPdoStatement extends NativePdoStatement
         }
 
         /** @see NativePdoStatement */
-        $forwardArgs = [];
-        foreach ($args as $arg) {
-            if (is_int($arg) || is_string($arg) || is_callable($arg)) {
-                $forwardArgs[] = $arg;
-            }
-        }
-        return array_values($this->statement->fetchAll($mode, ...$forwardArgs));
+        return $this->statement->fetchAll($mode, ...$args);
     }
 
     /**
