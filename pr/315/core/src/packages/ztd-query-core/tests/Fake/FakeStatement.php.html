@@ -81,7 +81,7 @@
 <span class="src-line" data-diff="removed"><span class="ln">28</span><span class="tok-com">     * @param list&lt;ResultColumn&gt; $columns</span></span>
 <span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a><span class="tok-com">     * Builds a statement that answers with these rows.</span></span>
 <span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a><span class="tok-com">     * @param list&lt;Row&gt; $rows Rows to answer with</span></span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a><span class="tok-com">     * @param array&lt;int, Row&gt; $rows Rows to answer with</span></span>
 <span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a><span class="tok-com">     * @param list&lt;ResultColumn&gt; $columns Columns to report</span></span>
 <span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">array</span> <span class="tok-var">$rows</span> = [], <span class="tok-kw">array</span> <span class="tok-var">$columns</span> = [])</span>
@@ -108,12 +108,12 @@
 <span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a><span class="tok-com">     * Answers the rows this statement was built with.</span></span>
 <span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a><span class="tok-com">     * @return list&lt;Row&gt; The rows</span></span>
+<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a><span class="tok-com">     * @return array&lt;int, Row&gt; The rows</span></span>
 <span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L68" data-diff="same"><a class="ln" href="#L68">68</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">fetchAll</span>(): <span class="tok-kw">array</span></span>
 <span class="src-line" id="L69" data-diff="same"><a class="ln" href="#L69">69</a>    {</span>
 <span class="src-line" data-diff="removed"><span class="ln">45</span>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">rows</span>;</span>
-<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>        <span class="tok-kw">return</span> <span class="tok-id">array_values</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">rows</span>-&gt;<span class="tok-id">rows</span>);</span>
+<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">rows</span>-&gt;<span class="tok-id">rows</span>;</span>
 <span class="src-line" id="L71" data-diff="same"><a class="ln" href="#L71">71</a>    }</span>
 <span class="src-line" id="L72" data-diff="same"><a class="ln" href="#L72">72</a></span>
 <span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>    <span class="tok-com">/**</span></span>

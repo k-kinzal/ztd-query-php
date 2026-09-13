@@ -89,8 +89,8 @@
 <span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">48</span><span class="tok-com">     * @param array&lt;string, array&lt;int, array&lt;string, mixed&gt;&gt;&gt; $results SQL =&gt; rows mapping.</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">49</span><span class="tok-com">     * @param array&lt;int, array&lt;string, mixed&gt;&gt; $defaultRows Default rows for unconfigured queries.</span></span>
-<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a><span class="tok-com">     * @param array&lt;string, list&lt;Row&gt;&gt; $results SQL =&gt; rows mapping.</span></span>
-<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a><span class="tok-com">     * @param list&lt;Row&gt; $defaultRows Default rows for unconfigured queries.</span></span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a><span class="tok-com">     * @param array&lt;string, array&lt;int, Row&gt;&gt; $results SQL =&gt; rows mapping.</span></span>
+<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a><span class="tok-com">     * @param array&lt;int, Row&gt; $defaultRows Default rows for unconfigured queries.</span></span>
 <span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">array</span> <span class="tok-var">$results</span> = [], <span class="tok-kw">array</span> <span class="tok-var">$defaultRows</span> = [])</span>
 <span class="src-line" id="L55" data-diff="same"><a class="ln" href="#L55">55</a>    {</span>
@@ -122,14 +122,14 @@
 <span class="src-line" id="L79" data-diff="same"><a class="ln" href="#L79">79</a>        <span class="tok-var">$rows</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">results</span>[<span class="tok-var">$sql</span>] ?? <span class="tok-var">$this</span>-&gt;<span class="tok-id">defaultRows</span>;</span>
 <span class="src-line" id="L80" data-diff="same"><a class="ln" href="#L80">80</a></span>
 <span class="src-line" data-diff="removed"><span class="ln">69</span>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">FakeStatement</span>(<span class="tok-var">$rows</span>);</span>
-<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">FakeStatement</span>(<span class="tok-id">array_values</span>(<span class="tok-var">$rows</span>-&gt;<span class="tok-id">rows</span>));</span>
+<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">FakeStatement</span>(<span class="tok-var">$rows</span>-&gt;<span class="tok-id">rows</span>);</span>
 <span class="src-line" id="L82" data-diff="same"><a class="ln" href="#L82">82</a>    }</span>
 <span class="src-line" id="L83" data-diff="same"><a class="ln" href="#L83">83</a></span>
 <span class="src-line" id="L84" data-diff="same"><a class="ln" href="#L84">84</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L85" data-diff="same"><a class="ln" href="#L85">85</a><span class="tok-com">     * Pre-load a result for a specific SQL query.</span></span>
 <span class="src-line" id="L86" data-diff="same"><a class="ln" href="#L86">86</a><span class="tok-com">     *</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">75</span><span class="tok-com">     * @param array&lt;int, array&lt;string, mixed&gt;&gt; $rows</span></span>
-<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a><span class="tok-com">     * @param list&lt;Row&gt; $rows</span></span>
+<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a><span class="tok-com">     * @param array&lt;int, Row&gt; $rows</span></span>
 <span class="src-line" id="L88" data-diff="same"><a class="ln" href="#L88">88</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L89" data-diff="same"><a class="ln" href="#L89">89</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">addResult</span>(<span class="tok-id">string</span> <span class="tok-var">$sql</span>, <span class="tok-kw">array</span> <span class="tok-var">$rows</span>): <span class="tok-id">void</span></span>
 <span class="src-line" id="L90" data-diff="same"><a class="ln" href="#L90">90</a>    {</span>

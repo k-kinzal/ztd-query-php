@@ -50,48 +50,46 @@
 <span class="src-line" id="L14" data-diff="same"><a class="ln" href="#L14">14</a><span class="tok-com"> * to work with the ZTD session. It provides a driver-agnostic API for executing</span></span>
 <span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-com"> * prepared statements and fetching results.</span></span>
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * A column of a row is a scalar or null, which is what every driver behind this</span></span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> * interface hands back and what every driver will take on the way in. The row</span></span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> * itself is a row of a table, so its shape is stated with the table definition</span></span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * and imported here rather than the other way round.</span></span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com"> * @phpstan-import-type Row from TableDefinition</span></span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> * @phpstan-import-type RowValue from TableDefinition</span></span>
-<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a><span class="tok-kw">interface</span> <span class="tok-id">StatementInterface</span></span>
-<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a>{</span>
-<span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a><span class="tok-com">     * Execute the prepared statement.</span></span>
-<span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * Rows retain the keys and opaque values supplied by the driver. The platform</span></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> * owns value interpretation and SQL encoding.</span></span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> *</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> * @phpstan-import-type Row from TableDefinition</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> * @phpstan-import-type RowValue from TableDefinition</span></span>
+<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a><span class="tok-kw">interface</span> <span class="tok-id">StatementInterface</span></span>
+<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a>{</span>
+<span class="src-line" id="L25" data-diff="same"><a class="ln" href="#L25">25</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a><span class="tok-com">     * Execute the prepared statement.</span></span>
+<span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a><span class="tok-com">     *</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">21</span><span class="tok-com">     * @param array&lt;int|string, mixed&gt;|null $params Optional parameters to bind.</span></span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com">     * @param array&lt;int|string, RowValue&gt;|null $params Optional parameters to bind.</span></span>
-<span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a><span class="tok-com">     * @return bool True on success, false on failure.</span></span>
-<span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">execute</span>(?<span class="tok-kw">array</span> <span class="tok-var">$params</span> = <span class="tok-id">null</span>): <span class="tok-id">bool</span>;</span>
-<span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a></span>
-<span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a><span class="tok-com">     * Fetch all rows as associative arrays.</span></span>
-<span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com">     * @param array&lt;int|string, RowValue&gt;|null $params Optional parameters to bind.</span></span>
+<span class="src-line" id="L29" data-diff="same"><a class="ln" href="#L29">29</a><span class="tok-com">     * @return bool True on success, false on failure.</span></span>
+<span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">execute</span>(?<span class="tok-kw">array</span> <span class="tok-var">$params</span> = <span class="tok-id">null</span>): <span class="tok-id">bool</span>;</span>
+<span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a></span>
+<span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a><span class="tok-com">     * Fetch all rows as associative arrays.</span></span>
+<span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a><span class="tok-com">     *</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">29</span><span class="tok-com">     * @return array&lt;int, array&lt;string, mixed&gt;&gt; Array of associative arrays.</span></span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a><span class="tok-com">     * @return list&lt;Row&gt; Array of associative arrays.</span></span>
-<span class="src-line" id="L39" data-diff="same"><a class="ln" href="#L39">39</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L40" data-diff="same"><a class="ln" href="#L40">40</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">fetchAll</span>(): <span class="tok-kw">array</span>;</span>
-<span class="src-line" id="L41" data-diff="same"><a class="ln" href="#L41">41</a></span>
-<span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a><span class="tok-com">     * Return result-set columns in projection order.</span></span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a><span class="tok-com">     * @return array&lt;int, Row&gt; Array of associative arrays.</span></span>
+<span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">fetchAll</span>(): <span class="tok-kw">array</span>;</span>
+<span class="src-line" id="L39" data-diff="same"><a class="ln" href="#L39">39</a></span>
+<span class="src-line" id="L40" data-diff="same"><a class="ln" href="#L40">40</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L41" data-diff="same"><a class="ln" href="#L41">41</a><span class="tok-com">     * Return result-set columns in projection order.</span></span>
+<span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a><span class="tok-com">     * Metadata must remain available when the result contains no rows.</span></span>
 <span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a><span class="tok-com">     * Metadata must remain available when the result contains no rows.</span></span>
-<span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a><span class="tok-com">     * @return list&lt;ResultColumn&gt;</span></span>
-<span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">resultColumns</span>(<span class="tok-id">ResultColumnTypeResolver</span> <span class="tok-var">$typeResolver</span>): <span class="tok-kw">array</span>;</span>
-<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a></span>
-<span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a><span class="tok-com">     * Return the number of affected rows.</span></span>
-<span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">rowCount</span>(): <span class="tok-id">int</span>;</span>
-<span class="src-line" id="L55" data-diff="same"><a class="ln" href="#L55">55</a>}</span>
-<span class="src-line" id="L56" data-diff="same"><a class="ln" href="#L56">56</a></span>
+<span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a><span class="tok-com">     * @return list&lt;ResultColumn&gt;</span></span>
+<span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">resultColumns</span>(<span class="tok-id">ResultColumnTypeResolver</span> <span class="tok-var">$typeResolver</span>): <span class="tok-kw">array</span>;</span>
+<span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a></span>
+<span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a><span class="tok-com">     * Return the number of affected rows.</span></span>
+<span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">rowCount</span>(): <span class="tok-id">int</span>;</span>
+<span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a>}</span>
+<span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a></span>
 </code></pre>
 </main>
 <footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

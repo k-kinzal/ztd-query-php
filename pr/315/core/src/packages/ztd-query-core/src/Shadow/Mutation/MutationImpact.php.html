@@ -67,7 +67,7 @@
 <span class="src-line" data-diff="removed"><span class="ln">17</span><span class="tok-com">     * @param array&lt;int, array&lt;string, mixed&gt;&gt; $after</span></span>
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com">     * @param ShadowMutation $mutation The statement whose effect this reports</span></span>
 <span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com">     * @param array&lt;int, Row&gt; $before The table as it stood</span></span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     * @param list&lt;Row&gt; $input The rows the statement was given</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     * @param array&lt;int, Row&gt; $input The rows the statement was given</span></span>
 <span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com">     * @param array&lt;int, Row&gt; $after The table as it stands now</span></span>
 <span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-com">     * @param RowMultiset $rows Accounts for rows that repeat</span></span>
 <span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-com">     * @param MutationRowIdentity $identity Takes the carried names back off a row</span></span>
@@ -121,7 +121,7 @@
 <span class="src-line" id="L75" data-diff="same"><a class="ln" href="#L75">75</a></span>
 <span class="src-line" id="L76" data-diff="same"><a class="ln" href="#L76">76</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">49</span><span class="tok-com">     * @return array&lt;int, array&lt;string, mixed&gt;&gt;</span></span>
-<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a><span class="tok-com">     * @return list&lt;Row&gt;</span></span>
+<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a><span class="tok-com">     * @return array&lt;int, Row&gt;</span></span>
 <span class="src-line" id="L78" data-diff="same"><a class="ln" href="#L78">78</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L79" data-diff="same"><a class="ln" href="#L79">79</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">returningRows</span>(): <span class="tok-kw">array</span></span>
 <span class="src-line" id="L80" data-diff="same"><a class="ln" href="#L80">80</a>    {</span>
@@ -131,7 +131,7 @@
 <span class="src-line" id="L83" data-diff="same"><a class="ln" href="#L83">83</a>        }</span>
 <span class="src-line" id="L84" data-diff="same"><a class="ln" href="#L84">84</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">mutation</span> <span class="tok-kw">instanceof</span> <span class="tok-id">UpdateMutation</span> || <span class="tok-var">$this</span>-&gt;<span class="tok-id">mutation</span> <span class="tok-kw">instanceof</span> <span class="tok-id">DeleteMutation</span>) {</span>
 <span class="src-line" data-diff="removed"><span class="ln">57</span>            <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">clean</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">input</span>);</span>
-<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>            <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">identity</span>-&gt;<span class="tok-id">stripAll</span>(<span class="tok-id">array_values</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">input</span>-&gt;<span class="tok-id">rows</span>));</span>
+<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>            <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">identity</span>-&gt;<span class="tok-id">stripAll</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">input</span>-&gt;<span class="tok-id">rows</span>);</span>
 <span class="src-line" id="L86" data-diff="same"><a class="ln" href="#L86">86</a>        }</span>
 <span class="src-line" id="L87" data-diff="same"><a class="ln" href="#L87">87</a></span>
 <span class="src-line" data-diff="removed"><span class="ln">60</span>        <span class="tok-var">$added</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">difference</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">after</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">before</span>);</span>
