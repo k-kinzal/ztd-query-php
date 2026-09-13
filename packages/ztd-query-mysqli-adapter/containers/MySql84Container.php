@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Fuzz\Container;
+namespace Containers;
 
 use Override;
 use Testcontainers\Containers\GenericContainer\GenericContainer;
@@ -10,14 +10,14 @@ use Testcontainers\Containers\WaitStrategy\PDO\MySQLDSN;
 use Testcontainers\Containers\WaitStrategy\PDO\PDOConnectWaitStrategy;
 
 /**
- * Starts the pinned MySQL 8.0 service used by differential fuzzing.
+ * Starts the pinned MySQL 8.4 service used by the package tools.
  */
-final class MySql80Container extends GenericContainer
+final class MySql84Container extends GenericContainer
 {
     /**
      * @var null|string
      */
-    protected static $IMAGE = 'mysql:8.0.44';
+    protected static $IMAGE = 'mysql:8.4.7';
 
     /**
      * @var null|string
@@ -34,12 +34,18 @@ final class MySql80Container extends GenericContainer
      */
     protected static $ENVIRONMENTS = [
         'MYSQL_ROOT_PASSWORD' => 'root',
+        'MYSQL_DATABASE' => 'test',
     ];
 
     /**
      * @var null|int
      */
     protected static $STARTUP_TIMEOUT = 300;
+
+    /**
+     * @var bool|null
+     */
+    protected static $AUTO_REMOVE_ON_EXIT = true;
 
     #[Override]
     protected function waitStrategy($instance): PDOConnectWaitStrategy
@@ -52,13 +58,5 @@ final class MySql80Container extends GenericContainer
             ->withPassword('root')
             ->withTimeoutSeconds(120)
             ->withRetryInterval(250000);
-    }
-
-    /**
-     * Return the SQL Faker grammar matching this server image.
-     */
-    public static function getGrammarVersion(): string
-    {
-        return 'mysql-8.0.44';
     }
 }

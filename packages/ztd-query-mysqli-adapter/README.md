@@ -153,7 +153,7 @@ $mysqli = new ZtdMysqli('localhost', 'user', 'password', 'test', config: $config
 | `prepare($query)` | Prepare a statement (rewritten if ZTD enabled) |
 | `query($query, $resultMode)` | Execute a query with ZTD processing |
 | `real_query($query)` | Execute a query without fetching results |
-| `execute_query($query, $params)` | Execute a parameterized query (PHP 8.2+) |
+| `execute_query($query, $params)` | Execute a parameterized query |
 
 All other mysqli methods (`begin_transaction`, `commit`, `rollback`, `real_escape_string`, etc.) are delegated to the inner mysqli instance. Properties are delegated via `__get`/`__isset`.
 

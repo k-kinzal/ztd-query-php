@@ -87,7 +87,7 @@ final class MysqliStatement implements StatementInterface
             return [];
         }
 
-        $rows = $result->fetch_all(MYSQLI_ASSOC);
+        $rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
 
         /**
          * Free the result to avoid "Commands out of sync" errors

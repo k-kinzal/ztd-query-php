@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Containers\MySql80Container;
+use Containers\MySql84Container;
+use mysqli;
 use mysqli_result;
 use mysqli_stmt;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
-use Tests\Fixtures\MySqlContainer;
+use Testcontainers\Testcontainers;
 use ZtdQuery\Adapter\Mysqli\MysqliStatementBindingBridge;
 
 #[CoversClass(MysqliStatementBindingBridge::class)]
@@ -18,7 +21,15 @@ final class MysqliStatementBindingBridgeTest extends TestCase
 {
     public function testBind_paramRetainsReferencesAcrossExecutions(): void
     {
-        [$database, $connection] = MySqlContainer::createTestDatabase();
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $connection = new mysqli($host, 'root', 'root', '', $port);
+        $connection->set_charset('utf8mb4');
+        $database = 'ztd_' . bin2hex(random_bytes(8));
+        $connection->query('CREATE DATABASE `' . $database . '` CHARACTER SET utf8mb4');
+        $connection->select_db($database);
         try {
             $statement = $connection->prepare('SELECT ? AS value');
             self::assertInstanceOf(mysqli_stmt::class, $statement);
@@ -38,7 +49,15 @@ final class MysqliStatementBindingBridgeTest extends TestCase
 
     public function testBind_resultWritesBackToCallerVariables(): void
     {
-        [$database, $connection] = MySqlContainer::createTestDatabase();
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $connection = new mysqli($host, 'root', 'root', '', $port);
+        $connection->set_charset('utf8mb4');
+        $database = 'ztd_' . bin2hex(random_bytes(8));
+        $connection->query('CREATE DATABASE `' . $database . '` CHARACTER SET utf8mb4');
+        $connection->select_db($database);
         try {
             $statement = $connection->prepare("SELECT 7 AS id, 'Alice' AS name");
             self::assertInstanceOf(mysqli_stmt::class, $statement);

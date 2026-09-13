@@ -30,6 +30,7 @@ policies:
     limits:
       file: { lines: 1000, ncloc: 650 }
       class: { lines: 900 }
+      method: { lines: 20, cyclomatic_complexity: 20 }
 
 apply:
   default: standard

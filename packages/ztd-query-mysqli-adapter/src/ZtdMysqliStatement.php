@@ -9,7 +9,6 @@ use mysqli_stmt;
 use mysqli_warning;
 use Override;
 use ReturnTypeWillChange;
-use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\ExecuteResult;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Session;
@@ -85,18 +84,8 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
      */
     public function __get(string $name): mixed
     {
-        if ($this->result !== null && !$this->result->isPassthrough()) {
-            if ($name === 'affected_rows') {
-                return $this->result->rowCount();
-            }
-
-            if ($name === 'num_rows') {
-                return $this->result->rowCount();
-            }
-
-            if ($name === 'insert_id') {
-                return $this->delegate->insert_id;
-            }
+        if ($this->result !== null && !$this->result->isPassthrough() && in_array($name, ['affected_rows', 'num_rows'], true)) {
+            return $this->result->rowCount();
         }
 
         return match ($name) {
@@ -162,51 +151,17 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     public function execute(?array $params = null): bool
     {
         $this->result = null;
-
-        if ($this->plan === null) {
-            if ($params !== null) {
-                return $this->delegate->execute($params);
-            }
-            return $this->delegate->execute();
-        }
-
-        if (!$this->session->shouldExecute($this->plan)) {
+        if ($this->plan !== null && !$this->session->shouldExecute($this->plan)) {
             return false;
         }
-
-        if (!$this->session->needsPostProcessing($this->plan)) {
-            if ($params !== null) {
-                return $this->delegate->execute($params);
-            }
-            return $this->delegate->execute();
+        if ($this->plan === null || !$this->session->needsPostProcessing($this->plan)) {
+            return $this->delegate->execute($params);
         }
-
-        if ($params !== null) {
-            if (!$this->delegate->execute($params)) {
-                return false;
-            }
-        } else {
-            if (!$this->delegate->execute()) {
-                return false;
-            }
+        if (!$this->delegate->execute($params)) {
+            return false;
         }
-
         $this->cachedMysqliResult = $this->delegate->get_result();
-
-        if ($this->cachedMysqliResult !== false) {
-            try {
-                /** @throws DatabaseException */
-                $this->result = $this->session->processExecutedStatement(
-                    $this->plan,
-                    new MysqliResultStatement($this->cachedMysqliResult, $this->delegate->affected_rows)
-                );
-            } catch (DatabaseException $e) {
-                throw new ZtdMysqliException($e->getMessage(), 0, $e);
-            }
-        } else {
-            $this->result = $this->session->createEmptyWriteResult();
-        }
-
+        $this->result = (new MysqliResultProcessor())->process($this->session, $this->plan, $this->cachedMysqliResult, $this->delegate->affected_rows);
         return $this->result->isSuccess();
     }
 
@@ -386,5 +341,4 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     {
         return $this->delegate->send_long_data($param_num, $data);
     }
-
 }

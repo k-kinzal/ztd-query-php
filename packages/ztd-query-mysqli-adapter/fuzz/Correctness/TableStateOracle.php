@@ -31,8 +31,8 @@ final class TableStateOracle
         if (!$raw instanceof mysqli_result || !$ztd instanceof mysqli_result) {
             throw new Error("Table snapshot failed\nSeed: $seed\nSQL: $sql");
         }
-        $rawRows = $raw->fetch_all(MYSQLI_ASSOC);
-        $ztdRows = $ztd->fetch_all(MYSQLI_ASSOC);
+        $rawRows = mysqli_fetch_all($raw, MYSQLI_ASSOC);
+        $ztdRows = mysqli_fetch_all($ztd, MYSQLI_ASSOC);
         $raw->free();
         $ztd->free();
         if (!(new ResultComparator())->compareRows($rawRows, $ztdRows, $schema->primaryKeys)) {

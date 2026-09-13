@@ -10,9 +10,9 @@
         "k-kinzal/ztd-query-mysql": "dev-main"
     },
     "require-dev": {
-        "brianium/paratest": "^6.11 || ^7",
-        "deptrac/deptrac": "^3.0 || ^4.7",
-        "friendsofphp/php-cs-fixer": "^3.92",
+        "brianium/paratest": "^7",
+        "deptrac/deptrac": "^3.0",
+        "friendsofphp/php-cs-fixer": "^3.95.24",
         "k-kinzal/php-ai-toolkit": "dev-main",
         "k-kinzal/sql-faker": "dev-main",
         "k-kinzal/sql-fixture": "dev-main",
@@ -21,7 +21,7 @@
         "phpbench/phpbench": "^1.4",
         "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
         "phpstan/phpstan": "^2.1",
-        "phpunit/phpunit": "^10.5 || ^11 || ^12 || ^13",
+        "phpunit/phpunit": "^10.5",
         "squizlabs/php_codesniffer": "^4.0.4"
     },
     "repositories": [
@@ -84,13 +84,13 @@
                 "tests/Unit/",
                 "tests/Unit/Driver/"
             ],
-            "Quality\\Mysqli\\": "phpstan/"
+            "Containers\\": "containers/"
         }
     },
     "scripts": {
-        "test": "@php -d memory_limit=512M tests/run.php --parallel --processes=4",
-        "test:unit": "@php -d memory_limit=512M tests/run.php --testsuite unit",
-        "test:integration": "@php -d memory_limit=512M tests/run.php --testsuite integration",
+        "test": "paratest --processes=4",
+        "test:unit": "phpunit --testsuite unit",
+        "test:integration": "phpunit --testsuite integration",
         "lint": [
             "@format:check",
             "@phpstan",
@@ -133,8 +133,8 @@
             "Composer\\Config::disableProcessTimeout",
             "php-fuzzer fuzz fuzz/fuzz_correctness_delete.php fuzz/corpus/correctness-delete --timeout=15"
         ],
-        "test:coverage": "@php -d memory_limit=1G tests/run.php --coverage-xml build/coverage-xml --log-junit build/junit.xml",
-        "doctest": "@php -d memory_limit=512M tests/run.php --testsuite doctest",
+        "test:coverage": "phpunit --coverage-xml build/coverage-xml --log-junit build/junit.xml",
+        "doctest": "phpunit --testsuite doctest",
         "phpstan": "phpstan analyse --memory-limit=512M",
         "compat": "phpcs",
         "loc-guard": "loc-guard --config=loc.yaml",
@@ -171,9 +171,13 @@
         "allow-plugins": {
             "dealerdirect/phpcodesniffer-composer-installer": true
         },
-        "sort-packages": true
+        "sort-packages": true,
+        "platform": {
+            "php": "8.1.0"
+        }
     },
     "support": {
-        "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-mysqli-adapter"
+        "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-mysqli-adapter",
+        "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/ztd-query-mysqli-adapter/"
     }
 }

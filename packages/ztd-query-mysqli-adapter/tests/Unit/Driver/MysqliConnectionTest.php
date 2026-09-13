@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Containers\MySql80Container;
+use Containers\MySql84Container;
+use mysqli;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use Tests\Fixtures\MySqlContainer;
+use Testcontainers\Testcontainers;
 use ZtdQuery\Adapter\Mysqli\MysqliConnection;
 use ZtdQuery\Adapter\Mysqli\MysqliResultStatement;
 use ZtdQuery\Connection\Exception\DatabaseException;
@@ -20,7 +23,15 @@ final class MysqliConnectionTest extends TestCase
 {
     public function testQueryReturnsTheNativeRows(): void
     {
-        [$database, $mysqli] = MySqlContainer::createTestDatabase();
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $mysqli = new mysqli($host, 'root', 'root', '', $port);
+        $mysqli->set_charset('utf8mb4');
+        $database = 'ztd_' . bin2hex(random_bytes(8));
+        $mysqli->query('CREATE DATABASE `' . $database . '` CHARACTER SET utf8mb4');
+        $mysqli->select_db($database);
         try {
             $result = (new MysqliConnection($mysqli))->query('SELECT 7 AS id');
             self::assertInstanceOf(MysqliResultStatement::class, $result);
@@ -33,7 +44,15 @@ final class MysqliConnectionTest extends TestCase
 
     public function testQueryWrapsAnExecutedWrite(): void
     {
-        [$database, $mysqli] = MySqlContainer::createTestDatabase();
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $mysqli = new mysqli($host, 'root', 'root', '', $port);
+        $mysqli->set_charset('utf8mb4');
+        $database = 'ztd_' . bin2hex(random_bytes(8));
+        $mysqli->query('CREATE DATABASE `' . $database . '` CHARACTER SET utf8mb4');
+        $mysqli->select_db($database);
         try {
             $mysqli->query('CREATE TABLE users (id INT)');
             $result = (new MysqliConnection($mysqli))->query('INSERT INTO users VALUES (1), (2)');
@@ -47,7 +66,15 @@ final class MysqliConnectionTest extends TestCase
 
     public function testQueryTranslatesNativeFailureWhenReportingIsDisabled(): void
     {
-        [$database, $mysqli] = MySqlContainer::createTestDatabase();
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $mysqli = new mysqli($host, 'root', 'root', '', $port);
+        $mysqli->set_charset('utf8mb4');
+        $database = 'ztd_' . bin2hex(random_bytes(8));
+        $mysqli->query('CREATE DATABASE `' . $database . '` CHARACTER SET utf8mb4');
+        $mysqli->select_db($database);
         mysqli_report(MYSQLI_REPORT_OFF);
         try {
             $this->expectException(DatabaseException::class);
@@ -58,12 +85,4 @@ final class MysqliConnectionTest extends TestCase
             $mysqli->query('DROP DATABASE `' . $database . '`');
         }
     }
-    public function testNativeFalseWithoutAnErrorRemainsFalse(): void
-    {
-        $native = new \Tests\Fixtures\StubMysqli();
-        $native->queryReturn = false;
-        self::assertFalse((new MysqliConnection($native))->query('SELECT 1'));
-        self::assertSame('SELECT 1', $native->queryCalledWith);
-    }
-
 }

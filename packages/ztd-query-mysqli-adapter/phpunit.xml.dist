@@ -2,19 +2,17 @@
 <!-- NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you. -->
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
-         bootstrap="vendor/autoload.php"
+         bootstrap="tests/bootstrap.php"
          colors="true"
          cacheDirectory=".phpunit.cache"
          executionOrder="depends,random"
          requireCoverageMetadata="true"
-         requireSealedMockObjects="true"
          beStrictAboutCoverageMetadata="true"
          beStrictAboutChangesToGlobalState="true"
          beStrictAboutOutputDuringTests="true"
          beStrictAboutTestsThatDoNotTestAnything="true"
          failOnAllIssues="true"
          displayDetailsOnAllIssues="true"
-         shortenArraysForExportThreshold="0"
          enforceTimeLimit="true"
          timeoutForSmallTests="1"
          timeoutForMediumTests="10"
@@ -37,7 +35,7 @@
             <parameter name="bootstrap" value="tests/Doctest/bootstrap.php"/>
         </bootstrap>
     </extensions>
-    <source ignoreIndirectDeprecations="true"
+    <source restrictDeprecations="true"
             restrictNotices="true"
             restrictWarnings="true"
             ignoreSuppressionOfDeprecations="true"

@@ -52,6 +52,7 @@ final class InsertCorrectnessTarget
 
             $rawError = null;
             try {
+                /** @throws mysqli_sql_exception */
                 $this->harness->getRawMysqli()->query($sql);
             } catch (mysqli_sql_exception $e) {
                 $rawError = $e;

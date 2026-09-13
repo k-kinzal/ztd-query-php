@@ -35,10 +35,11 @@ final class SelectResultOracle
         $rawResult = null;
         $rawError = null;
         try {
+            /** @throws mysqli_sql_exception */
             $result = $this->harness->getRawMysqli()->query($sql);
             if ($result instanceof mysqli_result) {
 
-                $rawResult = $result->fetch_all(MYSQLI_ASSOC);
+                $rawResult = mysqli_fetch_all($result, MYSQLI_ASSOC);
             }
         } catch (mysqli_sql_exception $e) {
             $rawError = $e;
@@ -50,7 +51,7 @@ final class SelectResultOracle
             $result = $this->harness->getZtdMysqli()->query($sql);
             if ($result instanceof mysqli_result) {
 
-                $ztdResult = $result->fetch_all(MYSQLI_ASSOC);
+                $ztdResult = mysqli_fetch_all($result, MYSQLI_ASSOC);
             }
         } catch (ZtdMysqliException $e) {
             if ($rawError !== null) {

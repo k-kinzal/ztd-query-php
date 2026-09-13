@@ -51,8 +51,9 @@ final class ExecutionTarget
             }
         }
         try {
+            /** @throws mysqli_sql_exception */
             $physical = $this->native->query('SELECT id, name FROM users ORDER BY id');
-            if (!$physical instanceof mysqli_result || $physical->fetch_all(MYSQLI_ASSOC) !== [['id' => '1', 'name' => 'Alice'], ['id' => '2', 'name' => 'Bob']]) {
+            if (!$physical instanceof mysqli_result || mysqli_fetch_all($physical, MYSQLI_ASSOC) !== [['id' => '1', 'name' => 'Alice'], ['id' => '2', 'name' => 'Bob']]) {
                 throw new Error("Physical table changed\nInput: " . bin2hex($input) . "\nSQL: $sql");
             }
             $physical->free();

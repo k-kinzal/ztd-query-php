@@ -50,20 +50,7 @@ jobs:
           - {script: fuzz:correctness:replace, corpus: correctness-replace}
           - {script: fuzz:correctness:update, corpus: correctness-update}
           - {script: fuzz:correctness:delete, corpus: correctness-delete}
-    services:
-      mysql:
-        image: mysql:${{ matrix.mysql }}
-        env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_ROOT_HOST: '%'
-        ports:
-          - 3306:3306
-        options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
-          --health-interval=10s --health-timeout=5s --health-retries=20
     env:
-      MYSQL_HOST: 127.0.0.1
-      MYSQL_PORT: '3306'
       MYSQL_VERSION: ${{ matrix.mysql }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -71,7 +58,7 @@ jobs:
           fetch-depth: 0
       - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:
-          php-version: '8.5'
+          php-version: '8.3'
           extensions: mbstring, mysqli, pdo_mysql, pcntl, dom, xml, xmlwriter, gd
           coverage: none
           ini-values: memory_limit=1G
@@ -80,8 +67,9 @@ jobs:
       - uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
           working-directory: packages/ztd-query-mysqli-adapter
-          dependency-versions: highest
+          dependency-versions: locked
           composer-options: --prefer-dist
+          require-lock-file: true
       - name: Check dependency consistency and platform requirements
         run: |
           composer validate --strict --no-check-publish

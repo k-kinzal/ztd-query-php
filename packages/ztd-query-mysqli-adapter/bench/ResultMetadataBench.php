@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Bench;
 
+use Containers\MySql80Container;
 use mysqli;
 use mysqli_result;
 use PhpBench\Attributes as Bench;
 use RuntimeException;
-use Tests\Fixtures\MySqlContainer;
+use Testcontainers\Testcontainers;
 use ZtdQuery\Adapter\Mysqli\MysqliResultColumnExtractor;
 use ZtdQuery\Platform\MySql\MySqlResultColumnTypeResolver;
 
@@ -33,7 +34,9 @@ final class ResultMetadataBench
      */
     public function setUp(array $params): void
     {
-        $this->connection = new mysqli(...MySqlContainer::connectionParameters());
+        $container = Testcontainers::run(MySql80Container::class);
+        $port = $container->getMappedPort(3306) ?? throw new RuntimeException('MySQL port was not mapped.');
+        $this->connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', '', $port);
         $projection = [];
         for ($column = 0; $column < $params['columns']; $column++) {
             $projection[] = $column . ' AS column_' . $column;

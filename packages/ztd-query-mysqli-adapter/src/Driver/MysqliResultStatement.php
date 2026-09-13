@@ -49,7 +49,7 @@ final class MysqliResultStatement implements StatementInterface
             return [];
         }
 
-        $rows = $this->result->fetch_all(MYSQLI_ASSOC);
+        $rows = mysqli_fetch_all($this->result, MYSQLI_ASSOC);
 
         return $rows;
     }

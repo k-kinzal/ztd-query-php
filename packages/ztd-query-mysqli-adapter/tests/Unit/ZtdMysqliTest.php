@@ -4,20 +4,33 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Containers\MySql80Container;
+use Containers\MySql84Container;
 use mysqli;
 use mysqli_result;
+use mysqli_sql_exception;
+use mysqli_stmt;
+use mysqli_warning;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use Tests\Fixtures\RecordingSessionFactory;
-use Tests\Fixtures\StubMysqli;
-use Tests\Fixtures\StubMysqliStmt;
+use Testcontainers\Testcontainers;
 use ZtdQuery\Adapter\Mysqli\MysqliConnection;
+use ZtdQuery\Adapter\Mysqli\MysqliResultColumnExtractor;
+use ZtdQuery\Adapter\Mysqli\MysqliResultProcessor;
+use ZtdQuery\Adapter\Mysqli\MysqliResultStatement;
+use ZtdQuery\Adapter\Mysqli\MysqliStatementBindingBridge;
+use ZtdQuery\Adapter\Mysqli\Native\MysqliPropertyReader;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqliException;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqliStatement;
 use ZtdQuery\Config\ZtdConfig;
+use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\MySql\MySqlTransactionStatementParser;
+use ZtdQuery\Platform\SessionFactory;
+use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
@@ -25,800 +38,935 @@ use ZtdQuery\Session;
 use ZtdQuery\Shadow\ShadowStore;
 
 #[CoversClass(ZtdMysqli::class)]
-#[\PHPUnit\Framework\Attributes\Large]
-#[UsesClass(\ZtdQuery\Adapter\Mysqli\Native\MysqliPropertyReader::class)]
+#[Large]
 #[UsesClass(MysqliConnection::class)]
+#[UsesClass(MysqliPropertyReader::class)]
 #[UsesClass(ZtdMysqliStatement::class)]
 #[UsesClass(ZtdMysqliException::class)]
-#[UsesClass(\ZtdQuery\Adapter\Mysqli\MysqliStatementBindingBridge::class)]
+#[UsesClass(MysqliStatementBindingBridge::class)]
+#[UsesClass(MysqliResultProcessor::class)]
+#[UsesClass(MysqliResultStatement::class)]
+#[UsesClass(MysqliResultColumnExtractor::class)]
 final class ZtdMysqliTest extends TestCase
 {
-    public function testFromMysqliCreatesInstanceWithFactory(): void
+    public function testFromMysqliPassesTheConnectionAndConfigurationToItsFactory(): void
     {
-        $innerMysqli = new StubMysqli();
-        $rewriter = static::createStub(SqlRewriter::class);
-        $factory = new RecordingSessionFactory($rewriter, new ShadowStore());
-        $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
-
-        self::assertTrue($ztd->isZtdEnabled());
-        self::assertSame(1, $factory->calls);
-        self::assertInstanceOf(MysqliConnection::class, $factory->connection);
-    }
-
-    public function testFromMysqliUsesExplicitConfig(): void
-    {
-        $innerMysqli = new StubMysqli();
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
         $config = ZtdConfig::default();
-        $rewriter = static::createStub(SqlRewriter::class);
-
-        $factory = new RecordingSessionFactory($rewriter, new ShadowStore());
-
-        ZtdMysqli::fromMysqli($innerMysqli, $config, $factory);
-
-        self::assertSame($config, $factory->config);
-        self::assertSame(1, $factory->calls);
+        $rewriter = self::createStub(SqlRewriter::class);
+        $factory = self::createMock(SessionFactory::class);
+        $factory->expects(self::once())->method('create')->with(self::isInstanceOf(MysqliConnection::class), self::identicalTo($config))
+            ->willReturnCallback(static fn (ConnectionInterface $native, ZtdConfig $resolved): Session => new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $resolved, $native));
+        $ztd = ZtdMysqli::fromMysqli($connection, $config, $factory);
+        self::assertTrue($ztd->isZtdEnabled());
+        $connection->close();
     }
 
-    public function testEnableZtdRestoresTheSession(): void
+    public function testEnableZtdRestoresDisabledMode(): void
     {
-        $innerMysqli = new StubMysqli();
-        $rewriter = static::createStub(SqlRewriter::class);
-        $factory = new RecordingSessionFactory($rewriter, new ShadowStore());
-        $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
-
-        self::assertTrue($ztd->isZtdEnabled());
-
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
         $ztd->disableZtd();
         self::assertFalse($ztd->isZtdEnabled());
-
         $ztd->enableZtd();
         self::assertTrue($ztd->isZtdEnabled());
+        $connection->close();
     }
 
-    public function testPrepareWhenZtdDisabledDelegatesToInner(): void
+    public function testDisableZtdDisablesRewriting(): void
     {
-        $innerMysqli = new StubMysqli();
-        $rewriter = static::createStub(SqlRewriter::class);
-        $factory = new RecordingSessionFactory($rewriter, new ShadowStore());
-        $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
-        $ztd->disableZtd();
-
-        $nativeStmt = StubMysqliStmt::create();
-        $innerMysqli->prepareReturn = $nativeStmt;
-
-        $result = $ztd->prepare('SELECT 1');
-
-        self::assertSame($nativeStmt, $result);
-    }
-
-    public function testPrepareWhenZtdEnabledReturnsZtdStatement(): void
-    {
-        $rewriter = static::createStub(SqlRewriter::class);
-        $innerMysqli = new StubMysqli();
-        $factory = new RecordingSessionFactory($rewriter, new ShadowStore());
-        $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
-
-        $nativeStmt = StubMysqliStmt::create();
-        $plan = new RewritePlan('SELECT 1 /* rewritten */', QueryKind::READ);
-
-        $rewriter->method('rewrite')
-            ->willReturn($plan);
-
-        $innerMysqli->prepareReturn = $nativeStmt;
-
-        $result = $ztd->prepare('SELECT 1');
-
-        self::assertInstanceOf(ZtdMysqliStatement::class, $result);
-    }
-
-    public function testPrepareWhenRewriteThrowsWrapsAsZtdException(): void
-    {
-        $innerMysqli = new StubMysqli();
-        $rewriter = static::createStub(SqlRewriter::class);
-        $factory = new RecordingSessionFactory($rewriter, new ShadowStore());
-        $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
-
-        /**
-         * Default config uses Exception behavior for unsupported SQL.
-         */
-        /**
-         * Session::rewrite catches UnsupportedSqlException and throws DatabaseException.
-         */
-        /**
-         * ZtdMysqli::prepare catches DatabaseException and wraps as ZtdMysqliException.
-         */
-        $rewriter->method('rewrite')
-            ->willThrowException(new UnsupportedSqlException('DROP DATABASE foo', 'Unsupported'));
-
-        try {
-            $ztd->prepare('DROP DATABASE foo');
-            self::fail('Expected ZtdMysqliException');
-        } catch (ZtdMysqliException $e) {
-            self::assertStringContainsString('ZTD Write Protection', $e->getMessage());
-            self::assertSame(0, $e->getCode());
-            self::assertNotNull($e->getPrevious());
-        }
-    }
-
-    public function testPrepareWhenInnerPrepareFails(): void
-    {
-        $innerMysqli = new StubMysqli();
-        $rewriter = static::createStub(SqlRewriter::class);
-        $factory = new RecordingSessionFactory($rewriter, new ShadowStore());
-        $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
-
-        $plan = new RewritePlan('SELECT 1', QueryKind::READ);
-
-        $rewriter->method('rewrite')->willReturn($plan);
-        $innerMysqli->prepareReturn = false;
-
-        $result = $ztd->prepare('SELECT 1');
-
-        self::assertFalse($result);
-    }
-
-    public function testQueryWhenZtdDisabledDelegatesToInner(): void
-    {
-        $innerMysqli = new StubMysqli();
-        $rewriter = static::createStub(SqlRewriter::class);
-        $factory = new RecordingSessionFactory($rewriter, new ShadowStore());
-        $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
-        $ztd->disableZtd();
-
-        $innerMysqli->queryReturn = true;
-
-        $result = $ztd->query('SELECT 1');
-
-        self::assertTrue($result);
-    }
-
-    public function testReal_queryWhenZtdDisabledDelegatesToInner(): void
-    {
-        $innerMysqli = new StubMysqli();
-        $rewriter = static::createStub(SqlRewriter::class);
-        $factory = new RecordingSessionFactory($rewriter, new ShadowStore());
-        $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
-        $ztd->disableZtd();
-
-        $innerMysqli->realQueryReturn = true;
-
-        self::assertTrue($ztd->real_query('SELECT 1'));
-    }
-
-    public function testMulti_queryDelegatesToInner(): void
-    {
-        $innerMysqli = new StubMysqli();
-        $rewriter = static::createStub(SqlRewriter::class);
-        $factory = new RecordingSessionFactory($rewriter, new ShadowStore());
-        $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
-
-        $innerMysqli->multiQueryReturn = true;
-
-        self::assertTrue($ztd->multi_query('SELECT 1; SELECT 2'));
-    }
-
-    public function testBegin_transactionDelegatesToInner(): void
-    {
-        $innerMysqli = new StubMysqli();
-        $store = new ShadowStore();
-        $store->set('items', [['id' => 1]]);
-        $rewriter = static::createStub(SqlRewriter::class);
-        $factory = new RecordingSessionFactory($rewriter, $store);
-        $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
-
-        $innerMysqli->beginTransactionReturn = true;
-
-        self::assertTrue($ztd->begin_transaction());
-        self::assertSame(0, $innerMysqli->beginTransactionCalledWithFlags);
-        $store->insert('items', [['id' => 2]]);
-        self::assertTrue($ztd->rollback());
-        self::assertSame([['id' => 1]], $store->get('items'));
-    }
-
-    public function testCommitDelegatesToInner(): void
-    {
-        $innerMysqli = new StubMysqli();
-        $store = new ShadowStore();
-        $store->set('items', [['id' => 1]]);
-        $rewriter = static::createStub(SqlRewriter::class);
-        $factory = new RecordingSessionFactory($rewriter, $store);
-        $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
-
-        $innerMysqli->commitReturn = true;
-
-        self::assertTrue($ztd->begin_transaction());
-        $store->insert('items', [['id' => 2]]);
-        self::assertTrue($ztd->commit());
-        self::assertSame(0, $innerMysqli->commitCalledWithFlags);
-        self::assertTrue($ztd->rollback());
-        self::assertSame([['id' => 1], ['id' => 2]], $store->get('items'));
-    }
-
-    public function testRollbackDelegatesToInner(): void
-    {
-        $innerMysqli = new StubMysqli();
-        $store = new ShadowStore();
-        $store->set('items', [['id' => 1]]);
-        $rewriter = static::createStub(SqlRewriter::class);
-        $factory = new RecordingSessionFactory($rewriter, $store);
-        $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
-
-        $innerMysqli->rollbackReturn = true;
-
-        self::assertTrue($ztd->begin_transaction());
-        $store->insert('items', [['id' => 2]]);
-        self::assertTrue($ztd->rollback());
-        self::assertSame(0, $innerMysqli->rollbackCalledWithFlags);
-        self::assertSame([['id' => 1]], $store->get('items'));
-    }
-
-    public function testCloseDelegatesToInner(): void
-    {
-        $innerMysqli = new StubMysqli();
-        $rewriter = static::createStub(SqlRewriter::class);
-        $factory = new RecordingSessionFactory($rewriter, new ShadowStore());
-        $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
-
-        self::assertTrue($ztd->close());
-
-        self::assertTrue($innerMysqli->closeCalled);
-    }
-
-    public function testSelect_dbDelegatesToInner(): void
-    {
-        $innerMysqli = new StubMysqli();
-        $rewriter = static::createStub(SqlRewriter::class);
-        $factory = new RecordingSessionFactory($rewriter, new ShadowStore());
-        $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
-
-        $innerMysqli->selectDbReturn = true;
-
-        self::assertTrue($ztd->select_db('test_db'));
-    }
-
-    public function testReal_escape_stringDelegatesToInner(): void
-    {
-        $innerMysqli = new StubMysqli();
-        $rewriter = static::createStub(SqlRewriter::class);
-        $factory = new RecordingSessionFactory($rewriter, new ShadowStore());
-        $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
-
-        $innerMysqli->realEscapeStringReturn = "O\\'Reilly";
-
-        self::assertSame("O\\'Reilly", $ztd->real_escape_string("O'Reilly"));
-    }
-
-    public function testExecute_queryWhenZtdDisabledDelegatesToInner(): void
-    {
-        $innerMysqli = new StubMysqli();
-        $rewriter = static::createStub(SqlRewriter::class);
-        $factory = new RecordingSessionFactory($rewriter, new ShadowStore());
-        $ztd = ZtdMysqli::fromMysqli($innerMysqli, null, $factory);
-        $ztd->disableZtd();
-
-        $innerMysqli->executeQueryReturn = true;
-
-        self::assertTrue($ztd->execute_query('SELECT ?', [1]));
-    }
-
-    public function testSet_charsetPreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame(true, $ztd->set_charset('latin1'));
-        self::assertSame([['set_charset', ['latin1']]], $native->calls);
-    }
-
-    public function testEscape_stringPreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $native->realEscapeStringReturn = 'escaped';
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame('escaped', $ztd->escape_string('quoted'));
-        self::assertSame([['escape_string', ['quoted']]], $native->calls);
-    }
-
-    public function testPingPreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame(true, $ztd->ping());
-        self::assertSame([['ping', []]], $native->calls);
-    }
-
-    public function testCharacter_set_namePreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame('utf8mb4', $ztd->character_set_name());
-        self::assertSame([['character_set_name', []]], $native->calls);
-    }
-
-    public function testChange_userPreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame(true, $ztd->change_user('user', 'password', 'database'));
-        self::assertSame([['change_user', ['user', 'password', 'database']]], $native->calls);
-    }
-
-    public function testConnectPreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame(true, $ztd->connect('host', 'user', 'password', 'database', 13306, '/socket'));
-        self::assertSame([['connect', ['host', 'user', 'password', 'database', 13306, '/socket']]], $native->calls);
-    }
-
-    public function testDebugPreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame(true, $ztd->debug('d:t:o,/tmp/mysqli.trace'));
-        self::assertSame([['debug', ['d:t:o,/tmp/mysqli.trace']]], $native->calls);
-    }
-
-    public function testDump_debug_infoPreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame(true, $ztd->dump_debug_info());
-        self::assertSame([['dump_debug_info', []]], $native->calls);
-    }
-
-    public function testGet_charsetPreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame(null, $ztd->get_charset());
-        self::assertSame([['get_charset', []]], $native->calls);
-    }
-
-    public function testGet_client_infoPreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame('test-client', $ztd->get_client_info());
-        self::assertSame([['get_client_info', []]], $native->calls);
-    }
-
-    public function testGet_connection_statsPreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame(['bytes_sent' => '123'], $ztd->get_connection_stats());
-        self::assertSame([['get_connection_stats', []]], $native->calls);
-    }
-
-    public function testGet_server_infoPreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame('8.4.7', $ztd->get_server_info());
-        self::assertSame([['get_server_info', []]], $native->calls);
-    }
-
-    public function testGet_warningsPreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame(false, $ztd->get_warnings());
-        self::assertSame([['get_warnings', []]], $native->calls);
-    }
-
-    public function testInitPreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame(true, $ztd->init());
-        self::assertSame([['init', []]], $native->calls);
-    }
-
-    public function testKillPreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame(true, $ztd->kill(77));
-        self::assertSame([['kill', [77]]], $native->calls);
-    }
-
-    public function testMore_resultsPreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame(false, $ztd->more_results());
-        self::assertSame([['more_results', []]], $native->calls);
-    }
-
-    public function testNext_resultPreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame(false, $ztd->next_result());
-        self::assertSame([['next_result', []]], $native->calls);
-    }
-
-    public function testOptionsPreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame(true, $ztd->options(MYSQLI_OPT_CONNECT_TIMEOUT, 5));
-        self::assertSame([['options', [MYSQLI_OPT_CONNECT_TIMEOUT, 5]]], $native->calls);
-    }
-
-    public function testReal_connectPreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame(true, $ztd->real_connect('host', 'user', 'password', 'database', 13306, '/socket', MYSQLI_CLIENT_COMPRESS));
-        self::assertSame([['real_connect', ['host', 'user', 'password', 'database', 13306, '/socket', MYSQLI_CLIENT_COMPRESS]]], $native->calls);
-    }
-
-    public function testReap_async_queryPreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame(false, $ztd->reap_async_query());
-        self::assertSame([['reap_async_query', []]], $native->calls);
-    }
-
-    public function testRefreshPreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame(true, $ztd->refresh(4));
-        self::assertSame([['refresh', [4]]], $native->calls);
-    }
-
-    public function testRelease_savepointPreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame(true, $ztd->release_savepoint('point'));
-        self::assertSame([['release_savepoint', ['point']]], $native->calls);
-    }
-
-    public function testSavepointPreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame(true, $ztd->savepoint('point'));
-        self::assertSame([['savepoint', ['point']]], $native->calls);
-    }
-
-    public function testSsl_setPreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame(true, $ztd->ssl_set('/key', '/certificate', '/ca', '/ca-path', 'cipher'));
-        self::assertSame([['ssl_set', ['/key', '/certificate', '/ca', '/ca-path', 'cipher']]], $native->calls);
-    }
-
-    public function testStatPreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame('Threads: 1', $ztd->stat());
-        self::assertSame([['stat', []]], $native->calls);
-    }
-
-    public function testStmt_initPreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertFalse($ztd->stmt_init()->get_result());
-        self::assertSame([['stmt_init', []]], $native->calls);
-    }
-
-    public function testStore_resultPreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame(false, $ztd->store_result(1));
-        self::assertSame([['store_result', [1]]], $native->calls);
-    }
-
-    public function testThread_safePreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame(false, $ztd->thread_safe());
-        self::assertSame([['thread_safe', []]], $native->calls);
-    }
-
-    public function testUse_resultPreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame(false, $ztd->use_result());
-        self::assertSame([['use_result', []]], $native->calls);
-    }
-
-    public function testSet_optPreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame(true, $ztd->set_opt(MYSQLI_OPT_CONNECT_TIMEOUT, 5));
-        self::assertSame([['set_opt', [MYSQLI_OPT_CONNECT_TIMEOUT, 5]]], $native->calls);
-    }
-
-    public function testAutocommitPreservesNativeArgumentsAndResult(): void
-    {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        $ztd->disableZtd();
-
-        self::assertSame(true, $ztd->autocommit(false));
-        self::assertSame([['autocommit', [false]]], $native->calls);
-    }
-
-    public function testDisableZtdTurnsOffTheSession(): void
-    {
-        $ztd = ZtdMysqli::fromMysqli(new StubMysqli(), null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        self::assertTrue($ztd->isZtdEnabled());
         $ztd->disableZtd();
         self::assertFalse($ztd->isZtdEnabled());
+        $connection->close();
     }
 
     public function testIsZtdEnabledDefaultsToTrue(): void
     {
-        $ztd = ZtdMysqli::fromMysqli(new StubMysqli(), null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
         self::assertTrue($ztd->isZtdEnabled());
+        $connection->close();
     }
 
-    public function testLastAffectedRowsFallsBackToTheNativeHandle(): void
+    public function testPrepareReturnsTheNativeStatementWhenDisabled(): void
     {
-        $native = new StubMysqli();
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory(self::createStub(SqlRewriter::class), new ShadowStore()));
-        self::assertSame($native->affected_rows, $ztd->lastAffectedRows());
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        $ztd->disableZtd();
+        $statement = $ztd->prepare('SELECT 7 AS id');
+        self::assertInstanceOf(mysqli_stmt::class, $statement);
+        self::assertNotInstanceOf(ZtdMysqliStatement::class, $statement);
+        self::assertTrue($statement->execute());
+        $result = $statement->get_result();
+        self::assertInstanceOf(mysqli_result::class, $result);
+        self::assertSame([['id' => 7]], $result->fetch_all(MYSQLI_ASSOC));
+        $connection->close();
     }
 
-    public function testPollPreservesTheNativeAsyncReferenceLists(): void
+    public function testPrepareReturnsASimulatedStatementWhenEnabled(): void
     {
-        $native = new mysqli(...\Tests\Fixtures\MySqlContainer::connectionParameters());
-        self::assertTrue($native->query('SELECT 7 AS id', MYSQLI_ASYNC));
-        $read = [$native];
-        $error = [];
-        $reject = [];
-        self::assertSame(1, ZtdMysqli::poll($read, $error, $reject, 5));
-        self::assertSame([$native], $read);
-        self::assertSame([], $error);
-        self::assertSame([], $reject);
-        $result = $native->reap_async_query();
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        $statement = $ztd->prepare('SELECT 7 AS id');
+        self::assertInstanceOf(ZtdMysqliStatement::class, $statement);
+        self::assertTrue($statement->execute());
+        $result = $statement->get_result();
+        self::assertInstanceOf(mysqli_result::class, $result);
+        self::assertSame([['id' => 7]], $result->fetch_all(MYSQLI_ASSOC));
+        $connection->close();
+    }
+
+    public function testPrepareWrapsRewriteFailures(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $store = new ShadowStore();
+        $rewriter = self::createStub(SqlRewriter::class);
+        $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
+        $factory = self::createStub(SessionFactory::class);
+        $factory->method('create')->willReturnCallback(static fn (ConnectionInterface $native, ZtdConfig $config): Session => new Session($rewriter, $store, new ResultSelectRunner(), $config, $native));
+        $ztd = ZtdMysqli::fromMysqli($connection, null, $factory);
+        $rewriter->method('rewrite')->willThrowException(new UnsupportedSqlException('DROP DATABASE forbidden', 'Unsupported'));
+        try {
+            $ztd->prepare('DROP DATABASE forbidden');
+            self::fail('Expected write protection.');
+        } catch (ZtdMysqliException $exception) {
+            self::assertStringContainsString('ZTD Write Protection', $exception->getMessage());
+            self::assertSame(0, $exception->getCode());
+            self::assertNotNull($exception->getPrevious());
+        } finally {
+            $connection->close();
+        }
+    }
+
+    public function testPrepareAndQueriesPreserveNativeFalseResults(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $store = new ShadowStore();
+        $rewriter = self::createStub(SqlRewriter::class);
+        $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
+        $factory = self::createStub(SessionFactory::class);
+        $factory->method('create')->willReturnCallback(static fn (ConnectionInterface $native, ZtdConfig $config): Session => new Session($rewriter, $store, new ResultSelectRunner(), $config, $native));
+        $ztd = ZtdMysqli::fromMysqli($connection, null, $factory);
+        $rewriter->method('rewrite')->willReturn(new RewritePlan('SELECT missing_column', QueryKind::READ));
+        mysqli_report(MYSQLI_REPORT_OFF);
+        try {
+            self::assertFalse($ztd->prepare('SELECT missing_column'));
+            self::assertFalse($ztd->query('SELECT missing_column'));
+            self::assertFalse($ztd->real_query('SELECT missing_column'));
+            self::assertFalse($ztd->execute_query('SELECT missing_column'));
+        } finally {
+            mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+            $connection->close();
+        }
+    }
+
+    public function testQueryReadsTheNativeResultWhenDisabled(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        $ztd->disableZtd();
+        $result = $ztd->query('SELECT 7 AS id', MYSQLI_USE_RESULT);
         self::assertInstanceOf(mysqli_result::class, $result);
         self::assertSame([['id' => '7']], $result->fetch_all(MYSQLI_ASSOC));
-        $native->close();
-    }
-    public function testQueryReturnsFalseWhenPrepareFails(): void
-    {
-        $native = new StubMysqli();
-        $rewriter = self::createStub(SqlRewriter::class);
-        $rewriter->method('rewrite')->willReturn(new RewritePlan('SELECT 1', QueryKind::READ));
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory($rewriter, new ShadowStore()));
-        self::assertFalse($ztd->query('SELECT 1'));
-        self::assertSame('SELECT 1', $native->prepareCalledWith);
+        $connection->close();
     }
 
-    public function testQueryReturnsFalseWhenExecutionFails(): void
+    public function testQueryReturnsFalseWhenThePreparedExecutionFails(): void
     {
-        $native = new StubMysqli();
-        $rewriter = self::createStub(SqlRewriter::class);
-        $rewriter->method('rewrite')->willReturn(new RewritePlan('SELECT 1', QueryKind::READ));
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory($rewriter, new ShadowStore()));
-        $statement = StubMysqliStmt::create();
-        $statement->executeReturn = false;
-        $native->prepareReturn = $statement;
-        self::assertFalse($ztd->query('SELECT 1'));
-        self::assertSame(1, $statement->executeCallCount);
-    }
-
-    public function testQueryReturnsTrueWhenExecutionHasNoResultSet(): void
-    {
-        $native = new StubMysqli();
-        $rewriter = self::createStub(SqlRewriter::class);
-        $rewriter->method('rewrite')->willReturn(new RewritePlan('SELECT 1', QueryKind::READ));
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory($rewriter, new ShadowStore()));
-        $statement = StubMysqliStmt::create();
-        $native->prepareReturn = $statement;
-        self::assertTrue($ztd->query('SELECT 1'));
-        self::assertSame(1, $statement->executeCallCount);
-    }
-
-    public function testRealQueryReturnsFalseWhenPrepareFails(): void
-    {
-        $native = new StubMysqli();
-        $rewriter = self::createStub(SqlRewriter::class);
-        $rewriter->method('rewrite')->willReturn(new RewritePlan('SELECT 1', QueryKind::READ));
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory($rewriter, new ShadowStore()));
-        self::assertFalse($ztd->real_query('SELECT 1'));
-        self::assertSame('SELECT 1', $native->prepareCalledWith);
-    }
-
-    public function testExecuteQueryWithParametersReturnsFalseWhenPrepareFails(): void
-    {
-        $native = new StubMysqli();
-        $rewriter = self::createStub(SqlRewriter::class);
-        $rewriter->method('rewrite')->willReturn(new RewritePlan('SELECT 1', QueryKind::READ));
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory($rewriter, new ShadowStore()));
-        self::assertFalse($ztd->execute_query('SELECT 1', [7]));
-        self::assertSame('SELECT 1', $native->prepareCalledWith);
-    }
-
-    public function testExecuteQueryWithParametersReturnsFalseWhenExecutionFails(): void
-    {
-        $native = new StubMysqli();
-        $rewriter = self::createStub(SqlRewriter::class);
-        $rewriter->method('rewrite')->willReturn(new RewritePlan('SELECT 1', QueryKind::READ));
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory($rewriter, new ShadowStore()));
-        $statement = StubMysqliStmt::create();
-        $statement->executeReturn = false;
-        $native->prepareReturn = $statement;
-        self::assertFalse($ztd->execute_query('SELECT 1', [7]));
-        self::assertSame(1, $statement->executeCallCount);
-    }
-
-    public function testExecuteQueryWithParametersReturnsTrueWhenExecutionHasNoResultSet(): void
-    {
-        $native = new StubMysqli();
-        $rewriter = self::createStub(SqlRewriter::class);
-        $rewriter->method('rewrite')->willReturn(new RewritePlan('SELECT 1', QueryKind::READ));
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory($rewriter, new ShadowStore()));
-        $statement = StubMysqliStmt::create();
-        $native->prepareReturn = $statement;
-        self::assertTrue($ztd->execute_query('SELECT 1', [7]));
-        self::assertSame(1, $statement->executeCallCount);
-    }
-
-    public function testExecuteQueryWithoutParametersReturnsFalseWhenPrepareFails(): void
-    {
-        $native = new StubMysqli();
-        $rewriter = self::createStub(SqlRewriter::class);
-        $rewriter->method('rewrite')->willReturn(new RewritePlan('SELECT 1', QueryKind::READ));
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory($rewriter, new ShadowStore()));
-        self::assertFalse($ztd->execute_query('SELECT 1'));
-        self::assertSame('SELECT 1', $native->prepareCalledWith);
-    }
-
-    public function testExecuteQueryWithoutParametersReturnsFalseWhenExecutionFails(): void
-    {
-        $native = new StubMysqli();
-        $rewriter = self::createStub(SqlRewriter::class);
-        $rewriter->method('rewrite')->willReturn(new RewritePlan('SELECT 1', QueryKind::READ));
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory($rewriter, new ShadowStore()));
-        $statement = StubMysqliStmt::create();
-        $statement->executeReturn = false;
-        $native->prepareReturn = $statement;
-        self::assertFalse($ztd->execute_query('SELECT 1'));
-        self::assertSame(1, $statement->executeCallCount);
-    }
-
-    public function testExecuteQueryWithoutParametersReturnsTrueWhenExecutionHasNoResultSet(): void
-    {
-        $native = new StubMysqli();
-        $rewriter = self::createStub(SqlRewriter::class);
-        $rewriter->method('rewrite')->willReturn(new RewritePlan('SELECT 1', QueryKind::READ));
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory($rewriter, new ShadowStore()));
-        $statement = StubMysqliStmt::create();
-        $native->prepareReturn = $statement;
-        self::assertTrue($ztd->execute_query('SELECT 1'));
-        self::assertSame(1, $statement->executeCallCount);
-    }
-
-    public function testAutocommitStartsRollbackScope(): void
-    {
-        $native = new StubMysqli();
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
         $store = new ShadowStore();
-        $store->set('items', [['id' => 1]]);
         $rewriter = self::createStub(SqlRewriter::class);
-        $rewriter->method('transactionStatement')->willReturnCallback((new \ZtdQuery\Platform\MySql\MySqlTransactionStatementParser())->parse(...));
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory($rewriter, $store));
-        self::assertTrue($ztd->autocommit(false));
+        $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
+        $factory = self::createStub(SessionFactory::class);
+        $factory->method('create')->willReturnCallback(static fn (ConnectionInterface $native, ZtdConfig $config): Session => new Session($rewriter, $store, new ResultSelectRunner(), $config, $native));
+        $ztd = ZtdMysqli::fromMysqli($connection, null, $factory);
+        $connection->query('CREATE TEMPORARY TABLE duplicate_keys (id INT PRIMARY KEY)');
+        $connection->query('INSERT INTO duplicate_keys VALUES (1)');
+        $rewriter->method('rewrite')->willReturn(new RewritePlan('INSERT INTO duplicate_keys VALUES (1)', QueryKind::READ));
+        mysqli_report(MYSQLI_REPORT_OFF);
+        try {
+            self::assertFalse($ztd->query('INSERT INTO duplicate_keys VALUES (1)'));
+            self::assertFalse($ztd->execute_query('INSERT INTO duplicate_keys VALUES (1)'));
+        } finally {
+            mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+            $connection->close();
+        }
+    }
+
+    public function testQueryReturnsTrueWithoutAResultSet(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $store = new ShadowStore();
+        $rewriter = self::createStub(SqlRewriter::class);
+        $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
+        $factory = self::createStub(SessionFactory::class);
+        $factory->method('create')->willReturnCallback(static fn (ConnectionInterface $native, ZtdConfig $config): Session => new Session($rewriter, $store, new ResultSelectRunner(), $config, $native));
+        $ztd = ZtdMysqli::fromMysqli($connection, null, $factory);
+        $rewriter->method('rewrite')->willReturn(new RewritePlan('DO 1', QueryKind::READ));
+        self::assertTrue($ztd->query('DO 1'));
+        $connection->close();
+    }
+
+    public function testExecute_queryBindsParametersInBothModes(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        $result = $ztd->execute_query('SELECT ? AS value', ['enabled']);
+        self::assertInstanceOf(mysqli_result::class, $result);
+        self::assertSame([['value' => 'enabled']], $result->fetch_all(MYSQLI_ASSOC));
+        $ztd->disableZtd();
+        $result = $ztd->execute_query('SELECT ? AS value', ['disabled']);
+        self::assertInstanceOf(mysqli_result::class, $result);
+        self::assertSame([['value' => 'disabled']], $result->fetch_all(MYSQLI_ASSOC));
+        $connection->close();
+    }
+
+    public function testLastAffectedRowsUsesTheNativeCountWhenDisabled(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        $ztd->disableZtd();
+        $ztd->query('CREATE TEMPORARY TABLE counts (id INT)');
+        self::assertTrue($ztd->query('INSERT INTO counts VALUES (1), (2)'));
+        self::assertSame(2, $ztd->lastAffectedRows());
+        $connection->close();
+    }
+
+    public function testBegin_transactionCreatesAShadowRollbackScope(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $store = new ShadowStore();
+        $rewriter = self::createStub(SqlRewriter::class);
+        $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
+        $factory = self::createStub(SessionFactory::class);
+        $factory->method('create')->willReturnCallback(static fn (ConnectionInterface $native, ZtdConfig $config): Session => new Session($rewriter, $store, new ResultSelectRunner(), $config, $native));
+        $ztd = ZtdMysqli::fromMysqli($connection, null, $factory);
+        $store->set('items', [['id' => 1]]);
+        self::assertTrue($ztd->begin_transaction(MYSQLI_TRANS_START_READ_WRITE, 'scope'));
         $store->insert('items', [['id' => 2]]);
         self::assertTrue($ztd->rollback());
         self::assertSame([['id' => 1]], $store->get('items'));
+        $connection->close();
     }
 
-    public function testAutocommitCommitsShadowRows(): void
+    public function testCommitRetainsTheShadowRows(): void
     {
-        $native = new StubMysqli();
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
         $store = new ShadowStore();
-        $store->set('items', [['id' => 1]]);
         $rewriter = self::createStub(SqlRewriter::class);
-        $rewriter->method('transactionStatement')->willReturnCallback((new \ZtdQuery\Platform\MySql\MySqlTransactionStatementParser())->parse(...));
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory($rewriter, $store));
-        self::assertTrue($ztd->begin_transaction());
+        $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
+        $factory = self::createStub(SessionFactory::class);
+        $factory->method('create')->willReturnCallback(static fn (ConnectionInterface $native, ZtdConfig $config): Session => new Session($rewriter, $store, new ResultSelectRunner(), $config, $native));
+        $ztd = ZtdMysqli::fromMysqli($connection, null, $factory);
+        $store->set('items', [['id' => 1]]);
+        $ztd->begin_transaction();
         $store->insert('items', [['id' => 2]]);
-        self::assertTrue($ztd->autocommit(true));
-        self::assertTrue($ztd->rollback());
+        self::assertTrue($ztd->commit(0, 'commit_scope'));
+        $ztd->rollback();
         self::assertSame([['id' => 1], ['id' => 2]], $store->get('items'));
+        $connection->close();
     }
 
-    public function testRealQueryRollbackRestoresShadowRows(): void
+    public function testRollbackRestoresTheShadowSnapshot(): void
     {
-        $native = new StubMysqli();
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
         $store = new ShadowStore();
-        $store->set('items', [['id' => 1]]);
         $rewriter = self::createStub(SqlRewriter::class);
-        $rewriter->method('transactionStatement')->willReturnCallback((new \ZtdQuery\Platform\MySql\MySqlTransactionStatementParser())->parse(...));
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory($rewriter, $store));
+        $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
+        $factory = self::createStub(SessionFactory::class);
+        $factory->method('create')->willReturnCallback(static fn (ConnectionInterface $native, ZtdConfig $config): Session => new Session($rewriter, $store, new ResultSelectRunner(), $config, $native));
+        $ztd = ZtdMysqli::fromMysqli($connection, null, $factory);
+        $store->set('items', [['id' => 1]]);
+        $ztd->begin_transaction();
+        $store->insert('items', [['id' => 2]]);
+        self::assertTrue($ztd->rollback(0, 'rollback_scope'));
+        self::assertSame([['id' => 1]], $store->get('items'));
+        $connection->close();
+    }
+
+    public function testAutocommitCommitsOrRollsBackTheShadowScope(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $store = new ShadowStore();
+        $rewriter = self::createStub(SqlRewriter::class);
+        $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
+        $factory = self::createStub(SessionFactory::class);
+        $factory->method('create')->willReturnCallback(static fn (ConnectionInterface $native, ZtdConfig $config): Session => new Session($rewriter, $store, new ResultSelectRunner(), $config, $native));
+        $ztd = ZtdMysqli::fromMysqli($connection, null, $factory);
+        $store->set('items', [['id' => 1]]);
+        self::assertTrue($ztd->autocommit(false));
+        $store->insert('items', [['id' => 2]]);
+        $ztd->rollback();
+        self::assertSame([['id' => 1]], $store->get('items'));
+        $store->insert('items', [['id' => 3]]);
+        self::assertTrue($ztd->autocommit(true));
+        $ztd->rollback();
+        self::assertSame([['id' => 1], ['id' => 3]], $store->get('items'));
+        $connection->close();
+    }
+
+    public function testReal_queryAppliesTransactionStatements(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $store = new ShadowStore();
+        $rewriter = self::createStub(SqlRewriter::class);
+        $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
+        $factory = self::createStub(SessionFactory::class);
+        $factory->method('create')->willReturnCallback(static fn (ConnectionInterface $native, ZtdConfig $config): Session => new Session($rewriter, $store, new ResultSelectRunner(), $config, $native));
+        $ztd = ZtdMysqli::fromMysqli($connection, null, $factory);
+        $store->set('items', [['id' => 1]]);
         self::assertTrue($ztd->real_query('BEGIN'));
         $store->insert('items', [['id' => 2]]);
         self::assertTrue($ztd->real_query('ROLLBACK'));
         self::assertSame([['id' => 1]], $store->get('items'));
+        $connection->close();
     }
 
-    public function testSavepointRestoresItsSnapshot(): void
+    public function testSavepointPreservesItsShadowSnapshot(): void
     {
-        $native = new StubMysqli();
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
         $store = new ShadowStore();
-        $store->set('items', [['id' => 1]]);
         $rewriter = self::createStub(SqlRewriter::class);
-        $rewriter->method('transactionStatement')->willReturnCallback((new \ZtdQuery\Platform\MySql\MySqlTransactionStatementParser())->parse(...));
-        $ztd = ZtdMysqli::fromMysqli($native, null, new RecordingSessionFactory($rewriter, $store));
-        self::assertTrue($ztd->begin_transaction());
-        self::assertTrue($ztd->savepoint('sp'));
+        $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
+        $factory = self::createStub(SessionFactory::class);
+        $factory->method('create')->willReturnCallback(static fn (ConnectionInterface $native, ZtdConfig $config): Session => new Session($rewriter, $store, new ResultSelectRunner(), $config, $native));
+        $ztd = ZtdMysqli::fromMysqli($connection, null, $factory);
+        $store->set('items', [['id' => 1]]);
+        $ztd->begin_transaction();
+        self::assertTrue($ztd->savepoint('scope'));
         $store->insert('items', [['id' => 2]]);
-        self::assertTrue($ztd->query('ROLLBACK TO SAVEPOINT sp'));
+        self::assertTrue($ztd->query('ROLLBACK TO SAVEPOINT scope'));
         self::assertSame([['id' => 1]], $store->get('items'));
+        $connection->close();
     }
 
+    public function testRelease_savepointRemovesTheNativeSavepoint(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $store = new ShadowStore();
+        $rewriter = self::createStub(SqlRewriter::class);
+        $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
+        $factory = self::createStub(SessionFactory::class);
+        $factory->method('create')->willReturnCallback(static fn (ConnectionInterface $native, ZtdConfig $config): Session => new Session($rewriter, $store, new ResultSelectRunner(), $config, $native));
+        $ztd = ZtdMysqli::fromMysqli($connection, null, $factory);
+        $ztd->begin_transaction();
+        $ztd->savepoint('scope');
+        self::assertTrue($ztd->release_savepoint('scope'));
+        $this->expectException(mysqli_sql_exception::class);
+        $ztd->query('ROLLBACK TO SAVEPOINT scope');
+        $connection->close();
+    }
+
+    public function testReal_queryExecutesTheNativeQueryWhenDisabled(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        $ztd->disableZtd();
+        self::assertTrue($ztd->real_query('SELECT 7 AS id'));
+        $result = $connection->store_result();
+        self::assertInstanceOf(mysqli_result::class, $result);
+        self::assertSame([['id' => '7']], $result->fetch_all(MYSQLI_ASSOC));
+        $connection->close();
+    }
+
+    public function testMulti_queryExposesEachNativeResult(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        self::assertTrue($ztd->multi_query('SELECT 1 AS id; SELECT 2 AS id'));
+        $first = $ztd->store_result();
+        self::assertInstanceOf(mysqli_result::class, $first);
+        self::assertSame([['id' => '1']], $first->fetch_all(MYSQLI_ASSOC));
+        self::assertTrue($ztd->more_results());
+        self::assertTrue($ztd->next_result());
+        $second = $ztd->store_result();
+        self::assertInstanceOf(mysqli_result::class, $second);
+        self::assertSame([['id' => '2']], $second->fetch_all(MYSQLI_ASSOC));
+        $connection->close();
+    }
+
+    public function testMore_resultsObservesPendingNativeStatements(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        $connection->multi_query('SELECT 1; SELECT 2');
+        $first = $connection->store_result();
+        self::assertInstanceOf(mysqli_result::class, $first);
+        $first->free();
+        self::assertTrue($ztd->more_results());
+        $connection->next_result();
+        $second = $connection->store_result();
+        self::assertInstanceOf(mysqli_result::class, $second);
+        $second->free();
+        self::assertFalse($ztd->more_results());
+        $connection->close();
+    }
+
+    public function testNext_resultAdvancesTheNativeResultSequence(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        $connection->multi_query('SELECT 1; SELECT 2');
+        $first = $connection->store_result();
+        self::assertInstanceOf(mysqli_result::class, $first);
+        $first->free();
+        self::assertTrue($ztd->next_result());
+        $second = $connection->store_result();
+        self::assertInstanceOf(mysqli_result::class, $second);
+        $second->free();
+        self::assertFalse($ztd->next_result());
+        $connection->close();
+    }
+
+    public function testSelect_dbChangesTheNativeDatabase(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        self::assertTrue($ztd->select_db('information_schema'));
+        $result = $connection->query('SELECT DATABASE() AS name');
+        self::assertInstanceOf(mysqli_result::class, $result);
+        self::assertSame([['name' => 'information_schema']], $result->fetch_all(MYSQLI_ASSOC));
+        $connection->close();
+    }
+
+    public function testSet_charsetChangesTheNativeEncoding(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        self::assertTrue($ztd->set_charset('latin1'));
+        self::assertSame('latin1', $connection->character_set_name());
+        $connection->close();
+    }
+
+    public function testCharacter_set_nameReadsTheNativeEncoding(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        $connection->set_charset('latin1');
+        self::assertSame('latin1', $ztd->character_set_name());
+        $connection->close();
+    }
+
+    public function testReal_escape_stringEscapesWithTheNativeConnection(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        self::assertSame("O\\'Reilly", $ztd->real_escape_string("O'Reilly"));
+        $connection->close();
+    }
+
+    public function testEscape_stringRetainsTheNativeAliasBehavior(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        self::assertSame("O\\'Reilly", $ztd->escape_string("O'Reilly"));
+        $connection->close();
+    }
+
+    public function testChange_userChangesTheSelectedDatabase(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        self::assertTrue($ztd->change_user('root', 'root', 'information_schema'));
+        $result = $connection->query('SELECT DATABASE() AS name');
+        self::assertInstanceOf(mysqli_result::class, $result);
+        self::assertSame([['name' => 'information_schema']], $result->fetch_all(MYSQLI_ASSOC));
+        $connection->close();
+    }
+
+    public function testGet_charsetReturnsTheNativeCharacterSet(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        $connection->set_charset('latin1');
+        $charset = $ztd->get_charset();
+        self::assertNotNull($charset);
+        self::assertSame('latin1', get_object_vars($charset)['charset']);
+        $connection->close();
+    }
+
+    public function testGet_server_infoReturnsTheNativeServerVersion(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        self::assertSame($connection->server_info, $ztd->get_server_info());
+        $connection->close();
+    }
+
+    public function testGet_connection_statsReturnsNativeMeasurements(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        $stats = $ztd->get_connection_stats();
+        self::assertArrayHasKey('bytes_sent', $stats);
+        self::assertGreaterThan(0, $stats['bytes_sent']);
+        $connection->close();
+    }
+
+    public function testGet_warningsReturnsTheNativeWarning(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        $connection->query("SELECT CAST('invalid' AS UNSIGNED)");
+        $warning = $ztd->get_warnings();
+        self::assertInstanceOf(mysqli_warning::class, $warning);
+        self::assertSame(1292, $warning->errno);
+        $connection->close();
+    }
+
+    public function testDump_debug_infoRequestsServerDiagnostics(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        self::assertTrue($ztd->dump_debug_info());
+        $connection->close();
+    }
+
+    public function testDebugAcceptsNativeTraceOptions(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        self::assertTrue($ztd->debug(''));
+        $connection->close();
+    }
+
+    public function testOptionsConfiguresTheNativeConnection(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        self::assertTrue($ztd->options(MYSQLI_OPT_CONNECT_TIMEOUT, 5));
+        $connection->close();
+    }
+
+    public function testSet_optPreservesTheNativeOptionsAlias(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        self::assertTrue($ztd->set_opt(MYSQLI_OPT_CONNECT_TIMEOUT, 5));
+        $connection->close();
+    }
+
+    public function testStatReturnsNativeServerStatus(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        $status = $ztd->stat();
+        self::assertIsString($status);
+        self::assertStringContainsString('Uptime:', $status);
+        $connection->close();
+    }
+
+    public function testStmt_initCreatesAUsableNativeStatement(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        $statement = $ztd->stmt_init();
+        self::assertTrue($statement->prepare('SELECT 7 AS id'));
+        self::assertTrue($statement->execute());
+        $result = $statement->get_result();
+        self::assertInstanceOf(mysqli_result::class, $result);
+        self::assertSame([['id' => 7]], $result->fetch_all(MYSQLI_ASSOC));
+        $connection->close();
+    }
+
+    public function testStore_resultReadsTheNativeBufferedResult(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        $connection->real_query('SELECT 7 AS id');
+        $result = $ztd->store_result();
+        self::assertInstanceOf(mysqli_result::class, $result);
+        self::assertSame([['id' => '7']], $result->fetch_all(MYSQLI_ASSOC));
+        $connection->close();
+    }
+
+    public function testUse_resultReadsTheNativeUnbufferedResult(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        $connection->real_query('SELECT 7 AS id');
+        $result = $ztd->use_result();
+        self::assertInstanceOf(mysqli_result::class, $result);
+        self::assertSame([['id' => '7']], $result->fetch_all(MYSQLI_ASSOC));
+        $connection->close();
+    }
+
+    public function testThread_safeMatchesTheNativeDriver(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        self::assertSame($connection->thread_safe(), $ztd->thread_safe());
+        $connection->close();
+    }
+
+    public function testPollUsesAndUpdatesNativeConnectionArrays(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        $connection->query('SELECT 7 AS id', MYSQLI_ASYNC);
+        $read = [$connection];
+        $error = [];
+        $reject = [];
+        self::assertSame(1, ZtdMysqli::poll($read, $error, $reject, 5));
+        self::assertSame([$connection], $read);
+        self::assertSame([], $error);
+        self::assertSame([], $reject);
+        $result = $connection->reap_async_query();
+        self::assertInstanceOf(mysqli_result::class, $result);
+        self::assertSame([['id' => '7']], $result->fetch_all(MYSQLI_ASSOC));
+        $connection->close();
+    }
+
+    public function testReap_async_queryReadsTheCompletedNativeResult(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        $connection->query('SELECT 7 AS id', MYSQLI_ASYNC);
+        $read = [$connection];
+        $error = [];
+        $reject = [];
+        self::assertSame(1, mysqli::poll($read, $error, $reject, 5));
+        $result = $ztd->reap_async_query();
+        self::assertInstanceOf(mysqli_result::class, $result);
+        self::assertSame([['id' => '7']], $result->fetch_all(MYSQLI_ASSOC));
+        $connection->close();
+    }
+
+    public function testCloseReleasesTheNativeConnection(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        $thread = $connection->thread_id;
+        self::assertTrue($ztd->close());
+        $observer = new mysqli($host, 'root', 'root', 'test', $port);
+        $result = $observer->query('SELECT ID FROM information_schema.PROCESSLIST WHERE ID = ' . $thread);
+        self::assertInstanceOf(mysqli_result::class, $result);
+        self::assertSame([], $result->fetch_all(MYSQLI_ASSOC));
+        $observer->close();
+    }
+
+    public function testReal_connectConnectsAnInitializedNativeHandle(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $connection->close();
+        $connection = new mysqli();
+        $rewriter = self::createStub(SqlRewriter::class);
+        $factory = self::createStub(SessionFactory::class);
+        $factory->method('create')->willReturnCallback(static fn (ConnectionInterface $native, ZtdConfig $config): Session => new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $native));
+        $ztd = ZtdMysqli::fromMysqli($connection, null, $factory);
+        self::assertTrue($ztd->real_connect($host, 'root', 'root', 'test', $port));
+        $ztd->disableZtd();
+        $result = $ztd->query('SELECT DATABASE() AS name');
+        self::assertInstanceOf(mysqli_result::class, $result);
+        self::assertSame([['name' => 'test']], $result->fetch_all(MYSQLI_ASSOC));
+        $connection->close();
+    }
+
+    public function testPingChecksTheNativeConnection(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        set_error_handler(static fn (int $severity, string $message): bool => $severity === E_DEPRECATED && str_contains($message, 'mysqli::ping'));
+        try {
+            self::assertTrue($ztd->ping());
+        } finally {
+            restore_error_handler();
+            $connection->close();
+        }
+    }
+
+    public function testGet_client_infoReportsTheClientLibrary(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        set_error_handler(static fn (int $severity, string $message): bool => $severity === E_DEPRECATED && str_contains($message, 'mysqli::get_client_info'));
+        try {
+            self::assertSame(mysqli_get_client_info(), $ztd->get_client_info());
+        } finally {
+            restore_error_handler();
+            $connection->close();
+        }
+    }
+
+    public function testInitRetainsTheNativeInitializationContract(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        set_error_handler(static fn (int $severity, string $message): bool => $severity === E_DEPRECATED && str_contains($message, 'mysqli::init'));
+        try {
+            self::assertTrue($ztd->init());
+        } finally {
+            restore_error_handler();
+            $connection->close();
+        }
+    }
+
+    public function testRefreshSendsTheNativeRefreshCommand(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        set_error_handler(static fn (int $severity, string $message): bool => $severity === E_DEPRECATED && str_contains($message, 'mysqli::refresh'));
+        try {
+            self::assertTrue($ztd->refresh(MYSQLI_REFRESH_STATUS));
+        } finally {
+            restore_error_handler();
+            $connection->close();
+        }
+    }
+
+    public function testSsl_setAcceptsNativeTlsConfiguration(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        set_error_handler(static fn (int $severity, string $message): bool => $severity === E_DEPRECATED && str_contains($message, 'mysqli::ssl_set'));
+        try {
+            self::assertTrue($ztd->ssl_set(null, null, null, null, null));
+        } finally {
+            restore_error_handler();
+            $connection->close();
+        }
+    }
+
+    public function testConnectUsesTheSuppliedNativeCredentials(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli();
+        $factory = self::createStub(SessionFactory::class);
+        $rewriter = self::createStub(SqlRewriter::class);
+        $factory->method('create')->willReturnCallback(static fn (ConnectionInterface $native, ZtdConfig $config): Session => new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $native));
+        $ztd = ZtdMysqli::fromMysqli($connection, null, $factory);
+        self::assertTrue($ztd->connect($host, 'root', 'root', 'test', $port));
+        $result = $connection->query('SELECT DATABASE() AS name');
+        self::assertInstanceOf(mysqli_result::class, $result);
+        self::assertSame([['name' => 'test']], $result->fetch_all(MYSQLI_ASSOC));
+        $connection->close();
+    }
+
+    public function testKillTerminatesTheSpecifiedNativeConnection(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        $other = new mysqli($host, 'root', 'root', 'test', $port);
+        self::assertTrue($ztd->kill($other->thread_id));
+        $this->expectException(mysqli_sql_exception::class);
+        $other->query('SELECT 1');
+    }
 }

@@ -1,0 +1,11 @@
+<?php
+
+/**
+ * Associative result rows use column names; numeric and combined modes retain numeric keys.
+ *
+ * @return ($mode is 1 ? list<array<string, int|float|string|null>> : list<array<int|string, int|float|string|null>>)
+ */
+function mysqli_fetch_all(mysqli_result $result, int $mode = MYSQLI_NUM): array {}
+
+/** @return array<string, int|string> */
+function mysqli_get_connection_stats(mysqli $mysql): array {}

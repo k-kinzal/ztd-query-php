@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Fuzz\Container;
 
+use Containers\MySql80Container;
+use Containers\MySql84Container;
 use RuntimeException;
 use Testcontainers\Testcontainers;
 
@@ -13,7 +15,7 @@ use Testcontainers\Testcontainers;
 final class MysqliConnector
 {
     /**
-     * Use the explicitly supplied local service, or start a pinned container.
+     * Start a pinned container and return its mapped endpoint.
      *
      * @return array{string, int}
      * @throws RuntimeException If the requested server version or port is invalid.
@@ -26,15 +28,6 @@ final class MysqliConnector
             '8.4.7' => MySql84Container::class,
             default => throw new RuntimeException('Unsupported MYSQL_VERSION.'),
         };
-        $host = getenv('MYSQL_HOST');
-        if ($host !== false) {
-            $configuredPort = getenv('MYSQL_PORT');
-            $port = filter_var($configuredPort === false ? '3306' : $configuredPort, FILTER_VALIDATE_INT);
-            if ($port === false) {
-                throw new RuntimeException('MYSQL_PORT must be an integer.');
-            }
-            return [$host, $port];
-        }
         $instance = Testcontainers::run($container);
         return [str_replace('localhost', '127.0.0.1', $instance->getHost()), $instance->getMappedPort(3306) ?? throw new RuntimeException('MySQL port was not mapped.')];
     }

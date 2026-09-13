@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Native;
 
+use Containers\MySql80Container;
+use Containers\MySql84Container;
 use mysqli;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
-use Tests\Fixtures\MySqlContainer;
+use Testcontainers\Testcontainers;
 use ZtdQuery\Adapter\Mysqli\Native\MysqliPropertyReader;
 
 #[CoversClass(MysqliPropertyReader::class)]
@@ -17,7 +19,10 @@ final class MysqliPropertyReaderTest extends TestCase
 {
     public function testReadReturnsNativePropertiesAndNullForUnknownNames(): void
     {
-        $connection = new mysqli(...MySqlContainer::connectionParameters());
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', '', $port);
         $reader = new MysqliPropertyReader();
         self::assertSame($connection->affected_rows, $reader->read($connection, 'affected_rows'));
         self::assertSame($connection->client_info, $reader->read($connection, 'client_info'));

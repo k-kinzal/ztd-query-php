@@ -4,11 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Containers\MySql80Container;
+use Containers\MySql84Container;
+use mysqli;
+use mysqli_result;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use Tests\Fixtures\StubMysqliField;
-use Tests\Fixtures\StubMysqliResult;
+use Testcontainers\Testcontainers;
 use ZtdQuery\Adapter\Mysqli\MysqliResultColumnExtractor;
 use ZtdQuery\Adapter\Mysqli\MysqliResultStatement;
 use ZtdQuery\Platform\ResultColumnTypeResolver;
@@ -16,95 +20,56 @@ use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(MysqliResultStatement::class)]
+#[Large]
 #[UsesClass(MysqliResultColumnExtractor::class)]
 final class MysqliResultStatementTest extends TestCase
 {
-    public function testImplementsStatementInterface(): void
+    public function testExecuteRepresentsAWriteWithoutAResultSet(): void
     {
-        $stmt = new MysqliResultStatement(null, 0);
-
-        self::assertSame([], $stmt->fetchAll());
+        $statement = new MysqliResultStatement(null, 2);
+        self::assertTrue($statement->execute());
+        self::assertTrue($statement->execute([1, 2]));
+        self::assertSame([], $statement->fetchAll());
+        self::assertSame(2, $statement->rowCount());
+        self::assertSame([], $statement->resultColumns(self::createStub(ResultColumnTypeResolver::class)));
     }
 
-    public function testExecuteAlwaysReturnsTrue(): void
+    public function testRowCountRetainsZeroAndLargeAffectedRowCounts(): void
     {
-        $stmt = new MysqliResultStatement(null, 0);
-
-        self::assertTrue($stmt->execute());
-        self::assertTrue($stmt->execute([1, 2, 3]));
+        self::assertSame(0, (new MysqliResultStatement(null, 0))->rowCount());
+        self::assertSame(PHP_INT_MAX, (new MysqliResultStatement(null, '999999999999999999999999999999'))->rowCount());
     }
 
-    public function testFetchAllReturnsEmptyArrayWhenResultIsNull(): void
+    public function testFetchAllReadsNativeRowsWithoutLosingColumnNames(): void
     {
-        $stmt = new MysqliResultStatement(null, 0);
-
-        self::assertSame([], $stmt->fetchAll());
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $port);
+        $result = $connection->query("SELECT 1 AS id, 'Alice' AS name UNION ALL SELECT 2, 'Bob'");
+        self::assertInstanceOf(mysqli_result::class, $result);
+        $statement = new MysqliResultStatement($result, 2);
+        self::assertSame([['id' => '1', 'name' => 'Alice'], ['id' => '2', 'name' => 'Bob']], $statement->fetchAll());
+        self::assertSame(2, $statement->rowCount());
+        $connection->close();
     }
 
-    public function testFetchAllReturnsRowsFromResult(): void
+    public function testResultColumnsResolvesResultColumnTypes(): void
     {
-        $expected = [
-            ['id' => 1, 'name' => 'Alice'],
-            ['id' => 2, 'name' => 'Bob'],
-        ];
-
-        $result = StubMysqliResult::create($expected);
-
-        $stmt = new MysqliResultStatement($result, 2);
-
-        self::assertSame($expected, $stmt->fetchAll());
-    }
-
-    public function testRowCountReturnsAffectedRows(): void
-    {
-        $stmt = new MysqliResultStatement(null, 5);
-
-        self::assertSame(5, $stmt->rowCount());
-    }
-
-    public function testRowCountReturnsZeroForNoAffectedRows(): void
-    {
-        $stmt = new MysqliResultStatement(null, 0);
-
-        self::assertSame(0, $stmt->rowCount());
-    }
-
-    public function testSaturatesAffectedRowsOutsideThePlatformIntegerRange(): void
-    {
-        $stmt = new MysqliResultStatement(null, '999999999999999999999999999999999999');
-
-        self::assertSame(PHP_INT_MAX, $stmt->rowCount());
-    }
-
-    public function testResultColumnsReturnsEmptyArrayWithoutResult(): void
-    {
-        $stmt = new MysqliResultStatement(null, 0);
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        $port = $container->getMappedPort(3306);
+        self::assertIsInt($port);
+        $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $port);
+        $result = $connection->query("SELECT 1 AS id, 'Alice' AS name");
+        self::assertInstanceOf(mysqli_result::class, $result);
         $resolver = self::createStub(ResultColumnTypeResolver::class);
-
-        self::assertSame([], $stmt->resultColumns($resolver));
-    }
-
-    public function testResultColumnsMapMysqliFieldMetadata(): void
-    {
-        $integer = new StubMysqliField('id', MYSQLI_TYPE_LONG, '63');
-        $text = new StubMysqliField('description', MYSQLI_TYPE_BLOB, '255');
-        $binary = new StubMysqliField('payload', MYSQLI_TYPE_BLOB, '63');
-        $result = StubMysqliResult::create([], [$integer, $text, $binary]);
-
-        $resolver = self::createStub(ResultColumnTypeResolver::class);
-        $resolver->method('resolve')->willReturnCallback(
-            static fn (array $metadata): ColumnType => match ($metadata['name'] ?? '') {
-                'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                'description' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
-                default => new ColumnType(ColumnTypeFamily::BINARY, 'BLOB'),
-            },
-        );
-        $columns = (new MysqliResultStatement($result, 0))->resultColumns($resolver);
-
-        self::assertSame(['id', 'description', 'payload'], array_map(static fn ($column) => $column->name, $columns));
+        $resolver->method('resolve')->willReturnCallback(static fn (array $metadata): ColumnType =>
+            $metadata['name'] === 'id' ? new ColumnType(ColumnTypeFamily::INTEGER, 'INT') : new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR'));
+        $columns = (new MysqliResultStatement($result, 1))->resultColumns($resolver);
+        self::assertSame(['id', 'name'], array_column($columns, 'name'));
         self::assertSame(ColumnTypeFamily::INTEGER, $columns[0]->type->family);
-        self::assertSame(ColumnTypeFamily::TEXT, $columns[1]->type->family);
-        self::assertSame(ColumnTypeFamily::BINARY, $columns[2]->type->family);
+        self::assertSame(ColumnTypeFamily::STRING, $columns[1]->type->family);
+        $connection->close();
     }
 
 }

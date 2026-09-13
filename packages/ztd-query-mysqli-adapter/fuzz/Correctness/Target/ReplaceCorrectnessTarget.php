@@ -10,6 +10,7 @@ use Fuzz\Correctness\MysqliCorrectnessHarness;
 use Fuzz\Correctness\SchemaPool;
 use Fuzz\Correctness\TableStateOracle;
 use mysqli_sql_exception;
+use RuntimeException;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqliException;
 
 /**
@@ -29,6 +30,7 @@ final class ReplaceCorrectnessTarget
     /**
      * Execute one seeded scenario and reset all mutable database state.
      *
+     * @throws RuntimeException If the native statement cannot be prepared.
      * @throws Error When native and simulated behavior differ.
      */
     public function __invoke(string $input): void
@@ -52,7 +54,11 @@ final class ReplaceCorrectnessTarget
         $params = array_values($row);
 
         try {
-            $this->harness->getRawMysqli()->execute_query($sql, $params);
+            $statement = $this->harness->getRawMysqli()->prepare($sql);
+            if ($statement === false) {
+                throw new RuntimeException('Native REPLACE could not be prepared.');
+            }
+            $statement->execute($params);
             try {
                 $this->harness->getZtdMysqli()->execute_query($sql, $params);
             } catch (ZtdMysqliException | mysqli_sql_exception $exception) {

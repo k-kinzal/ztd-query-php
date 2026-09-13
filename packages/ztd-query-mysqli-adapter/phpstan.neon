@@ -6,28 +6,19 @@ includes:
     - vendor/k-kinzal/php-ai-toolkit/rules.neon
 
 parameters:
+    toolkit:
+        forbiddenNamespacePrefixes:
+            - 'Tests\Fixture'
+            - 'Tests\Fixtures'
     level: max
+    stubFiles:
+        - stubs/MysqliFunctions.stub
     paths:
         - src
         - tests
         - fuzz
         - bench
-        - phpstan
+        - containers
     excludePaths:
         # PHPStan 2.2.14 still models bind_param() without reference parameters.
         - src/MysqliStatementBindingBridge.php
-
-services:
-    -
-        class: Quality\Mysqli\MysqliTypeExtension
-        arguments:
-            className: mysqli
-        tags:
-            - phpstan.broker.dynamicMethodReturnTypeExtension
-            - phpstan.dynamicMethodThrowTypeExtension
-    -
-        class: Quality\Mysqli\MysqliTypeExtension
-        arguments:
-            className: mysqli_result
-        tags:
-            - phpstan.broker.dynamicMethodReturnTypeExtension

@@ -229,33 +229,7 @@ class ZtdMysqli extends mysqli
             return $result;
         }
 
-        $stmt = $this->prepare($query);
-        if ($stmt === false) {
-            return false;
-        }
-
-        if (!$stmt->execute()) {
-            return false;
-        }
-
-        /**
-         * Cannot use $stmt->affected_rows because mysqli_stmt's C extension
-         */
-        /**
-         * property handler takes precedence over __get when parent constructor was not called.
-         */
-        if ($stmt instanceof ZtdMysqliStatement) {
-            $this->ztdAffectedRowCount = $stmt->ztdAffectedRows();
-        } else {
-            $this->ztdAffectedRowCount = null;
-        }
-
-        $result = $stmt->get_result();
-        if ($result === false) {
-            return true;
-        }
-
-        return $result;
+        return $this->execute_query($query);
     }
 
     /**
@@ -282,11 +256,7 @@ class ZtdMysqli extends mysqli
         }
 
         $stmt = $this->prepare($query);
-        if ($stmt === false) {
-            return false;
-        }
-
-        return $stmt->execute();
+        return $stmt !== false && $stmt->execute();
     }
 
     /**
@@ -499,7 +469,7 @@ class ZtdMysqli extends mysqli
     public function get_connection_stats(): array
     {
 
-        return $this->innerMysqli->get_connection_stats();
+        return mysqli_get_connection_stats($this->innerMysqli);
     }
 
     /**
@@ -671,7 +641,8 @@ class ZtdMysqli extends mysqli
     #[Override]
     public function store_result(int $mode = 0): mysqli_result|false
     {
-        return $this->innerMysqli->store_result($mode);
+        unset($mode);
+        return $this->innerMysqli->store_result();
     }
 
     /**
@@ -727,39 +698,14 @@ class ZtdMysqli extends mysqli
      * @throws ZtdMysqliException When ZTD-specific exception occurs (wraps DatabaseException).
      * @throws mysqli_sql_exception When native execution fails.
      */
-    #[Override]
     public function execute_query(string $query, ?array $params = null): mysqli_result|bool
     {
-        if (!$this->session->isEnabled()) {
-            return $this->innerMysqli->execute_query($query, $params);
-        }
-
         $stmt = $this->prepare($query);
-        if ($stmt === false) {
+        if ($stmt === false || !$stmt->execute($params)) {
             return false;
         }
-
-        if ($params !== null) {
-            if (!$stmt->execute($params)) {
-                return false;
-            }
-        } else {
-            if (!$stmt->execute()) {
-                return false;
-            }
-        }
-
-        if ($stmt instanceof ZtdMysqliStatement) {
-            $this->ztdAffectedRowCount = $stmt->ztdAffectedRows();
-        } else {
-            $this->ztdAffectedRowCount = null;
-        }
-
+        $this->ztdAffectedRowCount = $stmt instanceof ZtdMysqliStatement ? $stmt->ztdAffectedRows() : null;
         $result = $stmt->get_result();
-        if ($result === false) {
-            return true;
-        }
-
-        return $result;
+        return $result === false ? true : $result;
     }
 }
