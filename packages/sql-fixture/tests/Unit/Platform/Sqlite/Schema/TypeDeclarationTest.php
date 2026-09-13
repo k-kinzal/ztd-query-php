@@ -25,4 +25,14 @@ final class TypeDeclarationTest extends TestCase
         self::assertSame(2, $decimal->scale);
         self::assertSame(10, (new Subject())->parse('VARCHAR(10)')->length);
     }
+
+    public function testParseDoesNotConsumeAConstraintAsATypeParameter(): void
+    {
+        $shape = (new Subject())->parse('INTEGER CHECK (value IN (1, 2))');
+        self::assertSame('INTEGER', $shape->type);
+        self::assertNull($shape->length);
+        self::assertNull($shape->precision);
+        self::assertNull($shape->scale);
+        self::assertSame('BLOB', (new Subject())->extractType(''));
+    }
 }

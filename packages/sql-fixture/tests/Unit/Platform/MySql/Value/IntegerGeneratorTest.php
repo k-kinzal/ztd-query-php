@@ -70,4 +70,34 @@ final class IntegerGeneratorTest extends TestCase
         self::assertGreaterThanOrEqual(0, $value);
         self::assertLessThanOrEqual(255, $value);
     }
+
+    public function testGenerateBitUsesOneBitWhenLengthIsOmitted(): void
+    {
+        $faker = Factory::create();
+        $generator = new Subject();
+        $values = array_map(static function (int $seed) use ($faker, $generator): int {
+            $faker->seed($seed);
+            return $generator->generateBit($faker, new ColumnDefinition('flag', 'BIT'));
+        }, range(1, 32));
+        self::assertSame(0, min($values));
+        self::assertSame(1, max($values));
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerFullWidthBitSeeds')]
+    public function testGenerateBitAvoidsOverflowForFullWidthBitColumns(int $seed): void
+    {
+        $faker = Factory::create();
+        $generator = new Subject();
+        $faker->seed($seed);
+        $value = $generator->generateBit($faker, new ColumnDefinition('flags', 'BIT', length: 64));
+        self::assertGreaterThanOrEqual(0, $value);
+        self::assertLessThanOrEqual(PHP_INT_MAX, $value);
+    }
+    /**
+     * @return list<array{int}>
+     */
+    public static function providerFullWidthBitSeeds(): array
+    {
+        return array_map(static fn (int $seed): array => [$seed], range(1, 32));
+    }
 }

@@ -6,6 +6,7 @@ namespace SqlFixture\Hydrator\Reflection;
 
 use ReflectionClass;
 use ReflectionException;
+use ReflectionNamedType;
 use ReflectionProperty;
 
 /**
@@ -47,6 +48,8 @@ final class PropertyHydration
      */
     public function setProperty(object $instance, ReflectionProperty $property, mixed $value): void
     {
-        $property->setValue($instance, (new ValueConversion())->castValue($value, $property->getType()));
+        $type = $property->getType();
+        $builtinType = $type instanceof ReflectionNamedType ? ConversionTarget::tryFrom($type->getName()) : null;
+        $property->setValue($instance, (new ValueConversion())->castValue($value, $builtinType));
     }
 }

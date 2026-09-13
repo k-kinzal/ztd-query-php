@@ -142,6 +142,7 @@ use SqlFixture\Provider\SqlSchemaProvider as Subject;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\IntegerRange::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\IntegerWidth::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\DecimalRange::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Hydrator\Reflection\ConversionTarget::class)]
 final class SqlSchemaProviderTest extends TestCase
 {
     public function testCachesSchemasThroughThePublicProviderContract(): void

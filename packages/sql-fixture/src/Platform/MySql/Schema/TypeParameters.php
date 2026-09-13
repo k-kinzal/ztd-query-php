@@ -22,14 +22,6 @@ final class TypeParameters
     }
 
     /**
-     * Recognizes the bit type whose parameter measures bits.
-     */
-    public function isBitType(string $type): bool
-    {
-        return $type === 'BIT';
-    }
-
-    /**
      * @template TParameter
      * @param array<TParameter> $parameters
      * @return list<string>
@@ -55,15 +47,14 @@ final class TypeParameters
         $precision = null;
         $scale = null;
 
-        $parameters = $type->parameters;
+        $parameters = array_values($type->parameters);
         if ($parameters !== []) {
-            if ((new TypeParameters())->isDecimalType(strtoupper($type->name))) {
-                $precision = isset($parameters[0]) ? (int) $parameters[0] : 10;
+            if ($this->isDecimalType(strtoupper($type->name))) {
+                $precision = (int) $parameters[0];
                 $scale = isset($parameters[1]) ? (int) $parameters[1] : 0;
-            } elseif ((new TypeParameters())->isBitType(strtoupper($type->name))) {
-                $length = isset($parameters[0]) ? (int) $parameters[0] : 1;
+
             } else {
-                $length = isset($parameters[0]) ? (int) $parameters[0] : null;
+                $length = (int) $parameters[0];
             }
         }
         return new \SqlFixture\Schema\TypeShape(strtoupper($type->name), $length, $precision, $scale);

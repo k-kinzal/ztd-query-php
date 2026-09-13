@@ -16,12 +16,8 @@ final class TypeDeclaration
      */
     public function extractType(string $rest): string
     {
-        if ($rest === '') {
-            return 'BLOB';
-        }
-
-        if (preg_match('/^(\w+)/i', $rest, $matches) === 1) {
-            return strtoupper($matches[1]);
+        if (preg_match('/^\w+/', $rest, $matches) === 1) {
+            return strtoupper($matches[0]);
         }
 
         return 'BLOB';
@@ -32,12 +28,12 @@ final class TypeDeclaration
      */
     public function parse(string $rest): \SqlFixture\Schema\TypeShape
     {
-        $type = (new TypeDeclaration())->extractType($rest);
+        $type = $this->extractType($rest);
         $length = null;
         $precision = null;
         $scale = null;
 
-        if (preg_match('/^(\w+)\s*\(\s*(\d+)\s*(?:,\s*(\d+)\s*)?\)/i', $rest, $typeMatches) === 1) {
+        if (preg_match('/^(\w+)\s*\(\s*(\d+)\s*(?:,\s*(\d+)\s*)?\)/', $rest, $typeMatches) === 1) {
             $type = strtoupper($typeMatches[1]);
             if (isset($typeMatches[3])) {
                 $precision = (int) $typeMatches[2];

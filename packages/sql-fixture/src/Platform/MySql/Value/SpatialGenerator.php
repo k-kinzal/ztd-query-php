@@ -94,17 +94,8 @@ final class SpatialGenerator
     {
         $polygons = [];
         for ($i = 0; $i < 2; $i++) {
-            $baseLon = $faker->longitude(-170, 170);
-            $baseLat = $faker->latitude(-80, 80);
-            $offset = $faker->randomFloat(2, 0.1, 0.5);
-
-            $points = [
-                sprintf('%f %f', $baseLon, $baseLat),
-                sprintf('%f %f', $baseLon + $offset, $baseLat),
-                sprintf('%f %f', $baseLon + $offset, $baseLat + $offset),
-                sprintf('%f %f', $baseLon, $baseLat),
-            ];
-            $polygons[] = '((' . implode(',', $points) . '))';
+            $polygon = $this->generatePolygon($faker);
+            $polygons[] = substr($polygon, strlen('POLYGON'));
         }
         return 'MULTIPOLYGON(' . implode(',', $polygons) . ')';
     }

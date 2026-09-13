@@ -103,6 +103,7 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\TypeMapper\IntegerRange::class)]
 #[UsesClass(\SqlFixture\TypeMapper\IntegerWidth::class)]
 #[UsesClass(\SqlFixture\TypeMapper\DecimalRange::class)]
+#[UsesClass(\SqlFixture\Hydrator\Reflection\ConversionTarget::class)]
 final class DatabaseFixtureProviderTest extends TestCase
 {
     #[Test]

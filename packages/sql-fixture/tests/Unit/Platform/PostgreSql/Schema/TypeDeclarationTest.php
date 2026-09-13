@@ -39,4 +39,14 @@ final class TypeDeclarationTest extends TestCase
         self::assertSame('BIGINT', (new Subject())->parse('BIGSERIAL')->type);
         self::assertSame('INTEGER_ARRAY', (new Subject())->parse('INTEGER[]')->type);
     }
+
+    public function testParseDoesNotConsumeAConstraintAsATypeParameter(): void
+    {
+        $shape = (new Subject())->parse('INTEGER CHECK (value IN (1, 2))');
+        self::assertSame('INTEGER', $shape->type);
+        self::assertNull($shape->length);
+        self::assertNull($shape->precision);
+        self::assertNull($shape->scale);
+        self::assertSame('TEXT', (new Subject())->extractType(''));
+    }
 }

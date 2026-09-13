@@ -16,10 +16,6 @@ final class TypeDeclaration
      */
     public function extractType(string $rest): string
     {
-        if ($rest === '') {
-            return 'TEXT';
-        }
-
         $multiWordTypes = [
             'DOUBLE PRECISION',
             'TIMESTAMP WITH TIME ZONE',
@@ -36,8 +32,8 @@ final class TypeDeclaration
             }
         }
 
-        if (preg_match('/^(\w+(?:\[\])?)/i', $rest, $matches) === 1) {
-            return strtoupper($matches[1]);
+        if (preg_match('/^\w+(?:\[\])?/', $rest, $matches) === 1) {
+            return strtoupper($matches[0]);
         }
 
         return 'TEXT';
@@ -56,23 +52,22 @@ final class TypeDeclaration
      */
     public function parse(string $rest): \SqlFixture\Schema\TypeShape
     {
-        $type = (new TypeDeclaration())->extractType($rest);
+        $type = $this->extractType($rest);
         $length = null;
         $precision = null;
         $scale = null;
         $autoIncrement = false;
 
-        $upperType = strtoupper($type);
-        if (in_array($upperType, ['SERIAL', 'BIGSERIAL', 'SMALLSERIAL'], true)) {
+        if (in_array($type, ['SERIAL', 'BIGSERIAL', 'SMALLSERIAL'], true)) {
             $autoIncrement = true;
-            $type = match ($upperType) {
+            $type = match ($type) {
                 'SERIAL' => 'INTEGER',
                 'BIGSERIAL' => 'BIGINT',
                 'SMALLSERIAL' => 'SMALLINT',
             };
         }
 
-        if (preg_match('/^(\w+(?:\s+\w+)?)\s*\(\s*(\d+)\s*(?:,\s*(\d+)\s*)?\)/i', $rest, $typeMatches) === 1) {
+        if (preg_match('/^(\w+(?:\s+\w+)?)\s*\(\s*(\d+)\s*(?:,\s*(\d+)\s*)?\)/', $rest, $typeMatches) === 1) {
             $parsedType = strtoupper($typeMatches[1]);
             if (!$autoIncrement) {
                 $type = $parsedType;

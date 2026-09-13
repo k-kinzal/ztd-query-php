@@ -105,6 +105,7 @@ use SqlFixture\Schema\TableSchema;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\IntegerRange::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\IntegerWidth::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\DecimalRange::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Hydrator\Reflection\ConversionTarget::class)]
 final class RowMaterializerTest extends TestCase
 {
     public function testMaterializeLinksEveryChildToTheGeneratedParent(): void

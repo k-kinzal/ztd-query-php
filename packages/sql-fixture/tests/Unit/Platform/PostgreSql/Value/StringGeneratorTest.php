@@ -31,4 +31,25 @@ final class StringGeneratorTest extends TestCase
         self::assertNotSame('', $value);
         self::assertLessThanOrEqual(12, strlen($value));
     }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerShortVarchars')]
+    public function testGenerateVarcharSupportsColumnsShorterThanAFakerWord(int $length): void
+    {
+        $value = (new Subject())->generateVarchar(Factory::create(), new ColumnDefinition('code', 'VARCHAR', length: $length));
+        self::assertNotSame('', $value);
+        self::assertLessThanOrEqual($length, strlen($value));
+    }
+
+    public function testGenerateVarcharSupportsAZeroLengthColumn(): void
+    {
+        self::assertSame('', (new Subject())->generateVarchar(Factory::create(), new ColumnDefinition('code', 'VARCHAR', length: 0)));
+    }
+
+    /**
+     * @return list<array{int}>
+     */
+    public static function providerShortVarchars(): array
+    {
+        return [[1], [2], [3], [4]];
+    }
 }

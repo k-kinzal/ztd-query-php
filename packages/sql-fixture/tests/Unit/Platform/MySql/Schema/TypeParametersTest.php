@@ -18,12 +18,6 @@ final class TypeParametersTest extends TestCase
         self::assertFalse((new Subject())->isDecimalType('INT'));
     }
 
-    public function testIsBitTypeRecognizesOnlyBit(): void
-    {
-        self::assertTrue((new Subject())->isBitType('BIT'));
-        self::assertFalse((new Subject())->isBitType('BINARY'));
-    }
-
     public function testExtractEnumValuesStripsQuotesAndSkipsNonStrings(): void
     {
         self::assertSame(['open', 'closed'], (new Subject())->extractEnumValues(["'open'", '"closed"', 3]));
@@ -42,5 +36,21 @@ final class TypeParametersTest extends TestCase
         self::assertSame('DECIMAL', $shape->type);
         self::assertSame(8, $shape->precision);
         self::assertSame(2, $shape->scale);
+    }
+
+    public function testParseNormalizesLowercaseNativeTypeNames(): void
+    {
+        $decimal = new \PhpMyAdmin\SqlParser\Components\DataType();
+        $decimal->name = 'decimal';
+        $decimal->parameters = ['8', '2'];
+        $shape = (new Subject())->parse($decimal);
+        self::assertSame('DECIMAL', $shape->type);
+        self::assertNull($shape->length);
+        self::assertSame(8, $shape->precision);
+        self::assertSame(2, $shape->scale);
+        $bit = new \PhpMyAdmin\SqlParser\Components\DataType();
+        $bit->name = 'bit';
+        $bit->parameters = ['3'];
+        self::assertSame(3, (new Subject())->parse($bit)->length);
     }
 }

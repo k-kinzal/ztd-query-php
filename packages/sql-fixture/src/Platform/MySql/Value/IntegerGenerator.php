@@ -71,7 +71,7 @@ final class IntegerGenerator
     public function generateBit(Generator $faker, ColumnDefinition $column): int
     {
         $length = $column->length ?? 1;
-        $max = (int) pow(2, $length) - 1;
+        $max = $length >= PHP_INT_SIZE * 8 - 1 ? PHP_INT_MAX : (1 << $length) - 1;
         return $faker->numberBetween(0, $max);
     }
 }

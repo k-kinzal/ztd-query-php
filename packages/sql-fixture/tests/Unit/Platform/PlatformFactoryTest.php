@@ -86,6 +86,7 @@ use SqlFixture\Platform\Sqlite\SqliteTypeMapper;
 #[UsesClass(\SqlFixture\TypeMapper\IntegerRange::class)]
 #[UsesClass(\SqlFixture\TypeMapper\IntegerWidth::class)]
 #[UsesClass(\SqlFixture\TypeMapper\DecimalRange::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class PlatformFactoryTest extends TestCase
 {
     #[Test]
@@ -178,5 +179,26 @@ final class PlatformFactoryTest extends TestCase
         self::assertContains(PlatformFactory::DRIVER_MYSQL, $drivers);
         self::assertContains(PlatformFactory::DRIVER_SQLITE, $drivers);
         self::assertContains(PlatformFactory::DRIVER_PGSQL, $drivers);
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerDatabaseDrivers')]
+    public function testDetectDriverReadsTheNativeConnection(string $prefix, string $expected): void
+    {
+        $pdo = new PDO(
+            (string) getenv($prefix . '_DSN'),
+            (string) getenv($prefix . '_USER'),
+            (string) getenv($prefix . '_PASSWORD'),
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_EMULATE_PREPARES => false],
+        );
+        self::assertSame($expected, PlatformFactory::detectDriver($pdo));
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerDatabaseDrivers(): iterable
+    {
+        yield 'mysql' => ['SQL_FIXTURE_MYSQL', 'mysql'];
+        yield 'postgres' => ['SQL_FIXTURE_PGSQL', 'pgsql'];
     }
 }

@@ -6,6 +6,7 @@ namespace SqlFixture\Hydrator\Reflection;
 
 use ReflectionClass;
 use ReflectionException;
+use ReflectionNamedType;
 use ReflectionParameter;
 
 /**
@@ -49,7 +50,9 @@ final class ConstructorHydration
                 );
             }
 
-            $args[] = (new ValueConversion())->castValue($value, $parameter->getType());
+            $type = $parameter->getType();
+            $builtinType = $type instanceof ReflectionNamedType ? ConversionTarget::tryFrom($type->getName()) : null;
+            $args[] = (new ValueConversion())->castValue($value, $builtinType);
         }
 
         return $reflection->newInstanceArgs($args);

@@ -31,7 +31,7 @@ final class StringGenerator
     public function generateVarchar(Generator $faker, ColumnDefinition $column): string
     {
         $maxLength = $column->length ?? 255;
-        $text = $faker->text(min($maxLength, 200));
+        $text = $faker->text();
         return substr($text, 0, $maxLength);
     }
 }

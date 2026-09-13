@@ -31,6 +31,7 @@ final class CatalogDdlTest extends TestCase
         $sql = (new Subject())->reconstructCreateTable($pdo, $namespace . '.users');
         self::assertNotNull($sql);
         self::assertStringContainsString('"name" VARCHAR(30) NOT NULL', $sql);
+        self::assertStringContainsString("DEFAULT 'ready'::character varying", $sql);
         self::assertStringContainsString('PRIMARY KEY ("id")', $sql);
     }
 }
