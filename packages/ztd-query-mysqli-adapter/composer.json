@@ -25,12 +25,7 @@
     "repositories": [
         {
             "type": "path",
-            "url": "../ztd-query-core",
-            "options": {
-                "versions": {
-                    "k-kinzal/ztd-query-core": "dev-main"
-                }
-            }
+            "url": "../ztd-query-core"
         },
         {
             "type": "path",

@@ -42,12 +42,10 @@ jobs:
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:
           php-version: ${{ matrix.php }}
-          extensions: dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
+          extensions: mysqli, pcntl
           coverage: none
-      - name: Select the runtime dependency lock
-        run: cp composer.lock.php-${{ matrix.php }} composer.lock
       - name: Validate the Composer manifest and lock file
-        run: composer validate --strict --no-check-publish
+        run: composer validate --strict --no-check-publish --no-check-all
       - name: Install dependencies
         uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
@@ -56,7 +54,11 @@ jobs:
           composer-options: --prefer-dist
           require-lock-file: true
       - name: Check installed platform requirements
+        if: matrix.php == '8.1' || matrix.php == '8.2' || matrix.php == '8.3'
         run: composer check-platform-reqs
+      - name: Check library requirements outside the locked ParaTest PHP range
+        if: matrix.php == '8.4' || matrix.php == '8.5'
+        run: composer check-platform-reqs --no-dev
       - name: Run the tests in parallel
         run: composer test
 
@@ -70,13 +72,10 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:
-          php-version: '8.5'
-          extensions: dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
+          php-version: '8.3'
           coverage: none
-      - name: Select the runtime dependency lock
-        run: cp composer.lock.php-8.5 composer.lock
       - name: Validate the Composer manifest and lock file
-        run: composer validate --strict --no-check-publish
+        run: composer validate --strict --no-check-publish --no-check-all
       - name: Install dependencies
         uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
@@ -109,13 +108,10 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:
-          php-version: '8.5'
-          extensions: dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
+          php-version: '8.3'
           coverage: none
-      - name: Select the runtime dependency lock
-        run: cp composer.lock.php-8.5 composer.lock
       - name: Validate the Composer manifest and lock file
-        run: composer validate --strict --no-check-publish
+        run: composer validate --strict --no-check-publish --no-check-all
       - name: Install dependencies
         uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
@@ -140,15 +136,13 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:
-          php-version: '8.5'
-          extensions: ctype, date, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
+          php-version: '8.3'
+          extensions: mysqli, pcntl
           coverage: pcov
           tools: infection:0.35.4
           ini-values: memory_limit=1G
-      - name: Select the runtime dependency lock
-        run: cp composer.lock.php-8.5 composer.lock
       - name: Validate the Composer manifest and lock file
-        run: composer validate --strict --no-check-publish
+        run: composer validate --strict --no-check-publish --no-check-all
       - name: Install package dependencies
         uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
