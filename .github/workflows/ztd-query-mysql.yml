@@ -42,7 +42,6 @@ jobs:
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:
           php-version: ${{ matrix.php }}
-          extensions: mysqli, pcntl
           coverage: none
       - name: Validate the Composer manifest and lock file
         run: composer validate --strict --no-check-publish --no-check-all
@@ -137,7 +136,6 @@ jobs:
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:
           php-version: '8.3'
-          extensions: mysqli, pcntl
           coverage: pcov
           tools: infection:0.35.4
           ini-values: memory_limit=1G
