@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Bench;
 
+use PhpBench\Attributes as Benchmark;
 use ZtdQuery\Platform\Sqlite\SqliteMutationResolver;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
 use ZtdQuery\Platform\Sqlite\SqliteQueryGuard;
@@ -18,6 +19,9 @@ use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
 
+/**
+ * Measures fixed rewrite workloads with construction outside the timed subjects.
+ */
 final class RewriterBench
 {
     private SqliteRewriter $rewriter;
@@ -26,6 +30,9 @@ final class RewriterBench
 
     private string $insertSql = "INSERT INTO users (id, name, email) VALUES (1, 'Alice', 'alice@example.com')";
 
+    /**
+     * Recreates dependencies before each benchmark iteration.
+     */
     public function setUp(): void
     {
         $store = new ShadowStore();
@@ -67,22 +74,22 @@ final class RewriterBench
     }
 
     /**
-     * @BeforeMethods({"setUp"})
-     * @Revs(100)
-     * @Iterations(5)
+     * Measures one operation over the fixed SQL fixture.
      */
-    public function benchRewriteSelect(): void
+    #[Benchmark\BeforeMethods('setUp')]
+    #[Benchmark\Revs(100)]
+    public function benchRewriteSelect(): \ZtdQuery\Rewrite\RewritePlan
     {
-        $this->rewriter->rewrite($this->selectSql);
+        return $this->rewriter->rewrite($this->selectSql);
     }
 
     /**
-     * @BeforeMethods({"setUp"})
-     * @Revs(100)
-     * @Iterations(5)
+     * Measures one operation over the fixed SQL fixture.
      */
-    public function benchRewriteInsert(): void
+    #[Benchmark\BeforeMethods('setUp')]
+    #[Benchmark\Revs(100)]
+    public function benchRewriteInsert(): \ZtdQuery\Rewrite\RewritePlan
     {
-        $this->rewriter->rewrite($this->insertSql);
+        return $this->rewriter->rewrite($this->insertSql);
     }
 }

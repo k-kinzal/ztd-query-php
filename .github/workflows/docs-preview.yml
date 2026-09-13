@@ -18,6 +18,7 @@ permissions:
 concurrency:
   group: sql-faker-docs-publish
   cancel-in-progress: false
+  queue: max
 
 env:
   COMPOSER_NO_INTERACTION: '1'
@@ -96,7 +97,7 @@ jobs:
           set -euo pipefail
 
           mkdir -p "pr/${PR_NUMBER}"
-          rsync -a --checksum --delete ../packages/sql-faker/build/docs/ "pr/${PR_NUMBER}/"
+          rsync -a --checksum --delete --exclude '/sqlite/' ../packages/sql-faker/build/docs/ "pr/${PR_NUMBER}/"
           touch .nojekyll
 
           git add --all

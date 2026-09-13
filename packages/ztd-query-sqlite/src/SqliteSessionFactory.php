@@ -26,6 +26,13 @@ final class SqliteSessionFactory implements SessionFactory
 {
     /**
      * {@inheritDoc}
+     *
+     * @visibility public
+     * @example Create a session when the connection has no reflected tables
+     *     $connection = new class implements \ZtdQuery\Connection\ConnectionInterface { public function query(string $sql): \ZtdQuery\Connection\StatementInterface|false { return false; } };
+     *     $session = (new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->create($connection, new \ZtdQuery\Config\ZtdConfig());
+     *     $session->isEnabled() // => true
+     *     $session->rewrite('SELECT 1')->sql() // => 'SELECT 1'
      */
     public function create(ConnectionInterface $connection, ZtdConfig $config): Session
     {

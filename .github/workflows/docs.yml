@@ -16,6 +16,7 @@ permissions:
 concurrency:
   group: sql-faker-docs-publish
   cancel-in-progress: false
+  queue: max
 
 env:
   COMPOSER_NO_INTERACTION: '1'
@@ -83,7 +84,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          rsync -a --checksum --delete --exclude '/.git/' --exclude '/pr/' --exclude '/CNAME' ../packages/sql-faker/build/docs/ ./
+          rsync -a --checksum --delete --exclude '/.git/' --exclude '/pr/' --exclude '/CNAME' --exclude '/sqlite/' ../packages/sql-faker/build/docs/ ./
 
           git add --all
           if git diff --cached --quiet; then

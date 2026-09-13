@@ -1,0 +1,47 @@
+# NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
+# Public facade names are stable; directory collectors own their implementation stages.
+deptrac:
+  paths:
+    - ./src
+  analyser:
+    types:
+      - class
+      - use
+  layers:
+    - name: Parsing
+      collectors:
+        - type: directory
+          value: 'src/Parsing/'
+        - type: directory
+          value: 'src/Sqlite(Parser|QueryGuard)\.php$'
+    - name: Schema
+      collectors:
+        - type: directory
+          value: 'src/Schema/'
+        - type: directory
+          value: 'src/SqliteSchema(Parser|Reflector)\.php$'
+    - name: Rewriting
+      collectors:
+        - type: directory
+          value: 'src/Rewriting/'
+        - type: directory
+          value: 'src/Sqlite(Rewriter|MutationResolver)\.php$'
+    - name: Binding
+      collectors:
+        - type: directory
+          value: 'src/Binding/'
+    - name: Session
+      collectors:
+        - type: directory
+          value: 'src/SqliteSessionFactory\.php$'
+    - name: Core
+      collectors:
+        - type: classLike
+          value: '^ZtdQuery\\(?!Platform\\Sqlite\\)'
+  ruleset:
+    Parsing: [Core]
+    Schema: [Parsing, Core]
+    Rewriting: [Parsing, Schema, Core]
+    Binding: [Parsing, Schema, Rewriting, Core]
+    Session: [Parsing, Schema, Rewriting, Binding, Core]
+    Core: []

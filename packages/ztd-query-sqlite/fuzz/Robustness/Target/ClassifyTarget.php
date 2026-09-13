@@ -5,66 +5,40 @@ declare(strict_types=1);
 namespace Fuzz\Robustness\Target;
 
 use Error;
-use Faker\Generator;
-use Fuzz\Robustness\Invariant\ClassifyDeterministicChecker;
-use Fuzz\Robustness\Invariant\ClassifyNeverThrowsChecker;
-use Fuzz\Robustness\Invariant\InvariantChecker;
-use SqlFaker\SqliteProvider;
-use ZtdQuery\Platform\Sqlite\SqliteParser;
-use ZtdQuery\Platform\Sqlite\SqliteQueryGuard;
 
+/**
+ * Checks classification determinism using raw SQL and structural grammar mutations.
+ */
 final class ClassifyTarget
 {
-    private Generator $faker;
-    private SqliteProvider $provider;
-    /** @var array<int, InvariantChecker> */
-    private array $checkers;
+    private \Fuzz\Robustness\Input\SqlInput $input;
 
-    public function __construct(Generator $faker, SqliteProvider $provider)
+    /**
+     * Retains immutable grammar planning; generated plans do not use Faker's later state.
+     */
+    public function __construct(\SqlFaker\SqliteProvider $provider)
     {
-        $this->faker = $faker;
-        $this->provider = $provider;
-
-        $guard = new SqliteQueryGuard(new SqliteParser());
-        $this->checkers = [
-            new ClassifyNeverThrowsChecker($guard),
-            new ClassifyDeterministicChecker($guard),
-        ];
-    }
-
-    public function __invoke(string $input): void
-    {
-        $seed = crc32(str_pad($input, 4, "\0"));
-        $this->faker->seed($seed);
-
-        $sql = $this->selectGenerator($input)();
-
-        foreach ($this->checkers as $checker) {
-            $violation = $checker->check($sql);
-            if ($violation !== null) {
-                throw new Error("Invariant violation: seed=$seed\n$violation");
-            }
-        }
+        $this->input = new \Fuzz\Robustness\Input\SqlInput($provider);
     }
 
     /**
-     * @return callable(): string
+     * Runs the contract in a fresh fixture environment for this input.
      */
-    private function selectGenerator(string $input): callable
+    public function __invoke(string $input): void
     {
-        $generators = [
-            fn () => $this->provider->sql(maxDepth: 8),
-            fn () => $this->provider->selectStatement(maxDepth: 8),
-            fn () => $this->provider->insertStatement(maxDepth: 8),
-            fn () => $this->provider->updateStatement(maxDepth: 8),
-            fn () => $this->provider->deleteStatement(maxDepth: 8),
-            fn () => $this->provider->createTableStatement(maxDepth: 5),
-            fn () => $this->provider->alterTableStatement(maxDepth: 5),
-            fn () => $this->provider->dropTableStatement(maxDepth: 3),
-            fn (): string => $this->provider->fullTextSearchStatement(),
-        ];
-
-        $index = ord($input[0] ?? "\0") % count($generators);
-        return $generators[$index];
+        $sql = $this->input->sql($input);
+        FuzzBoundary::run('ClassifyTarget', $input, $sql, function () use ($sql): void {
+            $guard = new \ZtdQuery\Platform\Sqlite\SqliteQueryGuard(new \ZtdQuery\Platform\Sqlite\SqliteParser());
+            $checkers = [
+                new \Fuzz\Robustness\Invariant\ClassifyNeverThrowsChecker($guard),
+                new \Fuzz\Robustness\Invariant\ClassifyDeterministicChecker($guard),
+            ];
+            foreach ($checkers as $checker) {
+                $violation = $checker->check($sql);
+                if ($violation !== null) {
+                    throw new Error((string) $violation);
+                }
+            }
+        });
     }
 }

@@ -13,12 +13,27 @@ use ZtdQuery\Platform\Sqlite\SqliteLexicalMasker;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
 
 #[CoversClass(SqliteParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser::class)]
-#[UsesClass(SqliteLexicalMasker::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Expression\AssignmentColumnParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Expression\AssignmentParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Expression\ValueListParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Insert\InsertClauseParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Lexing\ExpressionSpan::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Lexing\IdentifierDecoder::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Lexing\LiteralMasker::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Lexing\OpaqueSqlSpan::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Lexing\QuotedSpan::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Lexing\TopLevelKeywordScanner::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Relation\RelationSourceParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Statement\StatementClassifier::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Statement\StatementStructure::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Statement\TargetTableParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Update\UpdateClauseParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
+#[UsesClass(SqliteLexicalMasker::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser::class)]
 final class SqliteParserTest extends TestCase
 {
-    public function testExtractsOnConflictUpdateWhereAfterInsertSelectWhere(): void
+    public function testExtractOnConflictUpdateWhereExtractsOnConflictUpdateWhereAfterInsertSelectWhere(): void
     {
         $parser = new SqliteParser();
         $sql = 'INSERT INTO items SELECT * FROM source WHERE active ON CONFLICT (id) DO UPDATE SET score = excluded.score WHERE items.score >= 80 RETURNING id';

@@ -38,15 +38,53 @@ use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTableState;
 
 #[CoversClass(SqliteMutationResolver::class)]
+#[UsesClass(AlterTableMutation::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Mutation\Alter\AddColumnResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Mutation\Alter\AlteredTableProjection::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Mutation\Alter\ColumnDefinitionEditor::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Mutation\Alter\DropColumnResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Mutation\Alter\RenameResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Mutation\Resolution\InsertMutationResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Mutation\Resolution\MutationTableLookup::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Mutation\Resolution\RowMutationResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Mutation\Resolution\TableMutationResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Alter\AlterOperationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Expression\AssignmentColumnParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Expression\AssignmentParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Expression\ValueListParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Insert\InsertClauseParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Lexing\ExpressionSpan::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Lexing\IdentifierDecoder::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Lexing\LiteralMasker::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Lexing\OpaqueSqlSpan::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Lexing\QuotedSpan::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Lexing\TopLevelKeywordScanner::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Relation\RelationSourceParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Statement\StatementClassifier::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Statement\StatementStructure::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Statement\TargetTableParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Update\UpdateClauseParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Upsert\ArithmeticExpressionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Upsert\ComparisonExpressionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Upsert\ExpressionCursor::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Upsert\ExpressionTokenDecoder::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Upsert\LogicalExpressionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Upsert\PrimaryExpressionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Schema\Create\ColumnDefinitionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Schema\Create\TableBodyParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Schema\Create\TableDefinitionBuilder::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Schema\Create\VirtualTableParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Schema\ForeignKey\ForeignKeyEntryParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Schema\ForeignKey\ForeignKeyTokens::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteColumnTypeMapper::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteForeignKeyDefinitionParser::class)]
 #[UsesClass(SqliteIdentifierQuoter::class)]
-#[UsesClass(SqliteLexicalMasker::class)]
-#[UsesClass(AlterTableMutation::class)]
-#[UsesClass(SqliteParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteUpsertExpressionParser::class)]
-#[UsesClass(SqliteSchemaParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
+#[UsesClass(SqliteLexicalMasker::class)]
+#[UsesClass(SqliteParser::class)]
+#[UsesClass(SqliteSchemaParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteUpsertExpressionParser::class)]
 final class SqliteMutationResolverTest extends TestCase
 {
     public function testResolveInsert(): void
@@ -2771,7 +2809,9 @@ final class SqliteMutationResolverTest extends TestCase
         $resolver->resolve($sql, QueryKind::WRITE_SIMULATED);
     }
 
-    /** @return Generator<string, array{string}> */
+    /**
+     * @return Generator<string, array{string}>
+     */
     public static function providerRemovedTableMutations(): Generator
     {
         yield 'update' => ['UPDATE records SET id = 2'];
@@ -2999,7 +3039,9 @@ final class SqliteMutationResolverTest extends TestCase
         $resolver->resolve($sql, QueryKind::DDL_SIMULATED);
     }
 
-    /** @return Generator<string, array{string}> */
+    /**
+     * @return Generator<string, array{string}>
+     */
     public static function providerMalformedAlterIdentifierClauses(): Generator
     {
         yield 'missing operation' => ['ALTER TABLE records'];

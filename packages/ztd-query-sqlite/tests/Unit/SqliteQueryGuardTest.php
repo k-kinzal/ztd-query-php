@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use RuntimeException;
@@ -15,66 +16,94 @@ use ZtdQuery\Platform\Sqlite\SqliteQueryGuard;
 use ZtdQuery\Rewrite\QueryKind;
 
 #[CoversClass(SqliteQueryGuard::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteReadOnlyDiagnosticStatement::class)]
-#[UsesClass(SqliteLexicalMasker::class)]
-#[UsesClass(SqliteParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Attach\AttachTokens::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Expression\AssignmentColumnParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Expression\AssignmentParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Expression\ValueListParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Insert\InsertClauseParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Lexing\ExpressionSpan::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Lexing\IdentifierDecoder::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Lexing\LiteralMasker::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Lexing\OpaqueSqlSpan::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Lexing\QuotedSpan::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Lexing\TopLevelKeywordScanner::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Relation\RelationSourceParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Statement\StatementClassifier::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Statement\StatementStructure::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Statement\TargetTableParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Update\UpdateClauseParser::class)]
 #[UsesClass(SqliteInMemoryAttachStatement::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
+#[UsesClass(SqliteLexicalMasker::class)]
+#[UsesClass(SqliteParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteReadOnlyDiagnosticStatement::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser::class)]
 final class SqliteQueryGuardTest extends QueryClassifierContractTest
 {
+    #[Override]
     protected function classify(string $sql): ?QueryKind
     {
         return (new SqliteQueryGuard(new SqliteParser()))->classify($sql);
     }
 
+    #[Override]
     protected function selectSql(): string
     {
         return 'SELECT * FROM users';
     }
 
+    #[Override]
     protected function insertSql(): string
     {
         return "INSERT INTO users (name) VALUES ('Alice')";
     }
 
+    #[Override]
     protected function updateSql(): string
     {
         return "UPDATE users SET name = 'Bob' WHERE id = 1";
     }
 
+    #[Override]
     protected function deleteSql(): string
     {
         return 'DELETE FROM users WHERE id = 1';
     }
 
+    #[Override]
     protected function createTableSql(): string
     {
         return 'CREATE TABLE test (id INTEGER PRIMARY KEY)';
     }
 
+    #[Override]
     protected function dropTableSql(): string
     {
         return 'DROP TABLE test';
     }
 
+    #[Override]
     public function testSelectClassifiesAsRead(): void
     {
         $guard = new SqliteQueryGuard(new SqliteParser());
         self::assertSame(QueryKind::READ, $guard->classify('SELECT * FROM users'));
     }
 
+    #[Override]
     public function testInsertClassifiesAsWriteSimulated(): void
     {
         $guard = new SqliteQueryGuard(new SqliteParser());
         self::assertSame(QueryKind::WRITE_SIMULATED, $guard->classify("INSERT INTO users (name) VALUES ('Alice')"));
     }
 
+    #[Override]
     public function testUpdateClassifiesAsWriteSimulated(): void
     {
         $guard = new SqliteQueryGuard(new SqliteParser());
         self::assertSame(QueryKind::WRITE_SIMULATED, $guard->classify("UPDATE users SET name = 'Bob' WHERE id = 1"));
     }
 
+    #[Override]
     public function testDeleteClassifiesAsWriteSimulated(): void
     {
         $guard = new SqliteQueryGuard(new SqliteParser());
@@ -93,12 +122,14 @@ final class SqliteQueryGuardTest extends QueryClassifierContractTest
         self::assertSame(QueryKind::WRITE_SIMULATED, $guard->classify("INSERT OR REPLACE INTO users (id, name) VALUES (1, 'Alice')"));
     }
 
+    #[Override]
     public function testCreateTableClassifiesAsDdlSimulated(): void
     {
         $guard = new SqliteQueryGuard(new SqliteParser());
         self::assertSame(QueryKind::DDL_SIMULATED, $guard->classify('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)'));
     }
 
+    #[Override]
     public function testDropTableClassifiesAsDdlSimulated(): void
     {
         $guard = new SqliteQueryGuard(new SqliteParser());

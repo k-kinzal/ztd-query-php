@@ -5,150 +5,50 @@ declare(strict_types=1);
 namespace Fuzz\Robustness\Target;
 
 use Error;
-use Faker\Generator;
-use Fuzz\Robustness\Invariant\ClassifyDeterministicChecker;
-use Fuzz\Robustness\Invariant\ClassifyNeverThrowsChecker;
-use Fuzz\Robustness\Invariant\ClassifyRewriteAgreementChecker;
-use Fuzz\Robustness\Invariant\InvariantChecker;
-use Fuzz\Robustness\Invariant\RewriteExceptionTypeChecker;
-use Fuzz\Robustness\Invariant\RewritePlanConsistencyChecker;
-use SqlFaker\SqliteProvider;
-use ZtdQuery\Platform\Sqlite\SqliteMutationResolver;
-use ZtdQuery\Platform\Sqlite\SqliteParser;
-use ZtdQuery\Platform\Sqlite\SqliteQueryGuard;
-use ZtdQuery\Platform\Sqlite\SqliteRewriter;
-use ZtdQuery\Platform\Sqlite\SqliteSchemaParser;
-use ZtdQuery\Platform\Sqlite\Transformer\DeleteTransformer;
-use ZtdQuery\Platform\Sqlite\Transformer\InsertTransformer;
-use ZtdQuery\Platform\Sqlite\Transformer\SelectTransformer;
-use ZtdQuery\Platform\Sqlite\Transformer\SqliteTransformer;
-use ZtdQuery\Platform\Sqlite\Transformer\UpdateTransformer;
-use ZtdQuery\Schema\TableDefinitionRegistry;
-use ZtdQuery\Shadow\ShadowStore;
 
+/**
+ * Checks rewrite-plan invariants using raw SQL and structural grammar mutations.
+ */
 final class RewriteTarget
 {
-    private Generator $faker;
-    private SqliteProvider $provider;
-    private SqliteRewriter $rewriter;
-    /** @var array<int, InvariantChecker> */
-    private array $checkers;
+    private \Fuzz\Robustness\Input\SqlInput $input;
 
-    public function __construct(Generator $faker, SqliteProvider $provider)
+    /**
+     * Retains immutable grammar planning; generated plans do not use Faker's later state.
+     */
+    public function __construct(\SqlFaker\SqliteProvider $provider)
     {
-        $this->faker = $faker;
-        $this->provider = $provider;
-
-        $parser = new SqliteParser();
-        $schemaParser = new SqliteSchemaParser();
-        $guard = new SqliteQueryGuard($parser);
-        $shadowStore = new ShadowStore();
-        $registry = new TableDefinitionRegistry();
-
-        $this->registerFixtureSchemas($registry, $schemaParser);
-        $this->populateFixtureData($shadowStore);
-
-        $selectTransformer = new SelectTransformer();
-        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
-        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
-        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
-        $transformer = new SqliteTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer);
-        $mutationResolver = new SqliteMutationResolver($shadowStore, $registry, $schemaParser, $parser);
-        $this->rewriter = new SqliteRewriter($guard, $shadowStore, $registry, $transformer, $mutationResolver, $parser);
-
-        $this->checkers = [
-            new ClassifyNeverThrowsChecker($guard),
-            new ClassifyDeterministicChecker($guard),
-            new RewriteExceptionTypeChecker($this->rewriter),
-            new RewritePlanConsistencyChecker($this->rewriter),
-            new ClassifyRewriteAgreementChecker($guard, $this->rewriter),
-        ];
-    }
-
-    public function __invoke(string $input): void
-    {
-        $seed = crc32(str_pad($input, 4, "\0"));
-        $this->faker->seed($seed);
-
-        $sql = $this->selectGenerator($input)();
-
-        foreach ($this->checkers as $checker) {
-            $violation = $checker->check($sql);
-            if ($violation !== null) {
-                throw new Error("Invariant violation: seed=$seed\n$violation");
-            }
-        }
-
-        $batch = $this->provider->multiDmlStatement();
-        $statements = $this->rewriter->splitStatements($batch);
-        $plans = $this->rewriter->rewriteMultiple($batch);
-        if (count($statements) !== 2 || $plans->count() !== 2) {
-            throw new Error("Invariant violation: seed=$seed\nMulti-statement DML batch was not split into two plans: $batch");
-        }
-    }
-
-    private function registerFixtureSchemas(TableDefinitionRegistry $registry, SqliteSchemaParser $schemaParser): void
-    {
-        $schemas = [
-            'users' => 'CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, email TEXT, status TEXT)',
-            'orders' => 'CREATE TABLE orders (id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL, amount REAL, created_at TEXT)',
-            'order_items' => 'CREATE TABLE order_items (order_id INTEGER NOT NULL, product_id INTEGER NOT NULL, quantity INTEGER NOT NULL DEFAULT 1, PRIMARY KEY (order_id, product_id))',
-            'products' => 'CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT NOT NULL, price REAL, category TEXT)',
-        ];
-
-        foreach ($schemas as $tableName => $createSql) {
-            $definition = $schemaParser->parse($createSql);
-            if ($definition !== null) {
-                $registry->register($tableName, $definition);
-            }
-        }
-    }
-
-    private function populateFixtureData(ShadowStore $store): void
-    {
-        $store->set('users', [
-            ['id' => '1', 'name' => 'Alice', 'email' => 'alice@example.com', 'status' => 'active'],
-            ['id' => '2', 'name' => 'Bob', 'email' => 'bob@example.com', 'status' => 'pending'],
-            ['id' => '3', 'name' => 'Charlie', 'email' => null, 'status' => 'active'],
-        ]);
-        $store->set('orders', [
-            ['id' => '1', 'user_id' => '1', 'amount' => '100.00', 'created_at' => '2024-01-01 00:00:00'],
-            ['id' => '2', 'user_id' => '2', 'amount' => '250.50', 'created_at' => '2024-01-02 12:30:00'],
-        ]);
-        $store->set('order_items', [
-            ['order_id' => '1', 'product_id' => '1', 'quantity' => '2'],
-            ['order_id' => '1', 'product_id' => '2', 'quantity' => '1'],
-            ['order_id' => '2', 'product_id' => '1', 'quantity' => '3'],
-        ]);
-        $store->set('products', [
-            ['id' => '1', 'name' => 'Widget', 'price' => '19.99', 'category' => 'tools'],
-            ['id' => '2', 'name' => 'Gadget', 'price' => '49.99', 'category' => 'electronics'],
-        ]);
+        $this->input = new \Fuzz\Robustness\Input\SqlInput($provider);
     }
 
     /**
-     * @return callable(): string
+     * Runs the contract in a fresh fixture environment for this input.
      */
-    private function selectGenerator(string $input): callable
+    public function __invoke(string $input): void
     {
-        $generators = [
-            fn () => $this->provider->sql(maxDepth: 8),
-            fn () => $this->provider->selectStatement(maxDepth: 8),
-            fn () => $this->provider->insertStatement(maxDepth: 8),
-            fn () => $this->provider->updateStatement(maxDepth: 8),
-            fn () => $this->provider->deleteStatement(maxDepth: 8),
-            fn () => $this->provider->createTableStatement(maxDepth: 5),
-            fn () => $this->provider->alterTableStatement(maxDepth: 5),
-            fn () => $this->provider->dropTableStatement(maxDepth: 3),
-            fn (): string => $this->provider->insertFunctionUpsertStatement(),
-            fn (): string => $this->provider->temporaryTableStatement(),
-            fn (): string => $this->provider->viewStatement(),
-            fn (): string => $this->provider->generatedColumnStatement(),
-            fn (): string => $this->provider->foreignKeyCascadeStatement(),
-            fn (): string => $this->provider->fullTextSearchStatement(),
-        ];
-
-        $index = ord($input[0] ?? "\0") % count($generators);
-        return $generators[$index];
+        $sql = $this->input->sql($input);
+        FuzzBoundary::run('RewriteTarget', $input, $sql, function () use ($sql): void {
+            $guard = new \ZtdQuery\Platform\Sqlite\SqliteQueryGuard(new \ZtdQuery\Platform\Sqlite\SqliteParser());
+            $store = new \ZtdQuery\Shadow\ShadowStore();
+            $registry = new \ZtdQuery\Schema\TableDefinitionRegistry();
+            \Fuzz\Support\FixtureDatabase::registerFixtureSchemas($registry, new \ZtdQuery\Platform\Sqlite\SqliteSchemaParser());
+            foreach (\Fuzz\Support\FixtureDatabase::buildFixtureData() as $table => $rows) {
+                $store->set($table, $rows);
+            }
+            $rewriter = \Fuzz\Support\RewriteFactory::create($store, $registry);
+            $checkers = [
+                new \Fuzz\Robustness\Invariant\ClassifyNeverThrowsChecker($guard),
+                new \Fuzz\Robustness\Invariant\ClassifyDeterministicChecker($guard),
+                new \Fuzz\Robustness\Invariant\RewriteExceptionTypeChecker($rewriter),
+                new \Fuzz\Robustness\Invariant\RewritePlanConsistencyChecker($rewriter),
+                new \Fuzz\Robustness\Invariant\ClassifyRewriteAgreementChecker($guard, $rewriter),
+            ];
+            foreach ($checkers as $checker) {
+                $violation = $checker->check($sql);
+                if ($violation !== null) {
+                    throw new Error((string) $violation);
+                }
+            }
+        });
     }
 }

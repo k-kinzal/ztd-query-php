@@ -4,26 +4,30 @@ declare(strict_types=1);
 
 namespace Fuzz\Robustness\Invariant;
 
-use Throwable;
 use ZtdQuery\Platform\Sqlite\SqliteQueryGuard;
 
+/**
+ * Checks classify deterministic invariants.
+ */
 final class ClassifyDeterministicChecker implements InvariantChecker
 {
     private SqliteQueryGuard $guard;
 
+    /**
+     * Binds the dependencies used by this operation.
+     */
     public function __construct(SqliteQueryGuard $guard)
     {
         $this->guard = $guard;
     }
 
+    /**
+     * Returns check.
+     */
     public function check(string $sql): ?InvariantViolation
     {
-        try {
-            $result1 = $this->guard->classify($sql);
-            $result2 = $this->guard->classify($sql);
-        } catch (Throwable $e) {
-            return null;
-        }
+        $result1 = $this->guard->classify($sql);
+        $result2 = $this->guard->classify($sql);
 
         if ($result1 !== $result2) {
             return new InvariantViolation(

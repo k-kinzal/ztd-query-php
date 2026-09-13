@@ -6,10 +6,16 @@ namespace Fuzz\Robustness\Invariant;
 
 use ZtdQuery\Shadow\ShadowStore;
 
+/**
+ * Checks that mutation results preserve valid shadow-table names.
+ */
 final class ShadowStoreConsistencyChecker
 {
     private ShadowStore $store;
 
+    /**
+     * Binds the collaborator used by this invariant check.
+     */
     public function __construct(ShadowStore $store)
     {
         $this->store = $store;

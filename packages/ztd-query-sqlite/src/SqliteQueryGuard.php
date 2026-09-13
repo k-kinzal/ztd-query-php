@@ -14,6 +14,9 @@ final class SqliteQueryGuard
 {
     private SqliteParser $parser;
 
+    /**
+     * Binds the dependencies used by this operation.
+     */
     public function __construct(SqliteParser $parser)
     {
         $this->parser = $parser;
@@ -47,6 +50,12 @@ final class SqliteQueryGuard
      * Assert that the SQL is allowed by the guard.
      *
      * @throws RuntimeException When the SQL is not allowed.
+     *
+     * @visibility public
+     * @example Reject operations that would modify the physical database
+     *     $guard = new \ZtdQuery\Platform\Sqlite\SqliteQueryGuard(new \ZtdQuery\Platform\Sqlite\SqliteParser());
+     *     $guard->assertAllowed('SELECT 1');
+     *     $guard->assertAllowed('VACUUM') // throws \RuntimeException: ZTD Write Protection
      */
     public function assertAllowed(string $sql): void
     {

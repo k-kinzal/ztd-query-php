@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Override;
+use PDO;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\Contract\RewriterContractTest;
@@ -27,7 +29,6 @@ use ZtdQuery\Platform\Sqlite\Transformer\SelectTransformer;
 use ZtdQuery\Platform\Sqlite\Transformer\SqliteTransformer;
 use ZtdQuery\Platform\Sqlite\Transformer\UpdateTransformer;
 use ZtdQuery\Rewrite\QueryKind;
-use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Schema\ViewDefinitionSet;
@@ -42,38 +43,96 @@ use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTableState;
 
 #[CoversClass(SqliteRewriter::class)]
+#[UsesClass(AlterTableMutation::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Mutation\Alter\AddColumnResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Mutation\Alter\AlteredTableProjection::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Mutation\Alter\ColumnDefinitionEditor::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Mutation\Alter\DropColumnResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Mutation\Alter\RenameResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Mutation\Resolution\InsertMutationResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Mutation\Resolution\MutationTableLookup::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Mutation\Resolution\RowMutationResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Mutation\Resolution\TableMutationResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Alter\AlterOperationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Attach\AttachTokens::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Expression\AssignmentColumnParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Expression\AssignmentParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Expression\ValueListParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Insert\InsertClauseParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Lexing\ExpressionSpan::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Lexing\IdentifierDecoder::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Lexing\LiteralMasker::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Lexing\OpaqueSqlSpan::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Lexing\QuotedSpan::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Lexing\TopLevelKeywordScanner::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Relation\RelationSourceParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Returning\ReturningItemParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Statement\StatementClassifier::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Statement\StatementStructure::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Statement\TargetTableParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Transaction\TransactionTokens::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Update\UpdateClauseParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Upsert\ArithmeticExpressionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Upsert\ComparisonExpressionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Upsert\ExpressionCursor::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Upsert\ExpressionTokenDecoder::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Upsert\LogicalExpressionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Upsert\PrimaryExpressionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\Context\ReferencedTableLookup::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\Context\TableContextBuilder::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\Cte\CteDependencies::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\Cte\CteHeaderParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\Cte\CtePrefixMerger::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\Cte\CteReferences::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\FullText\FullTextColumns::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\FullText\MatchExpressionRewriter::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\Index\IndexHintTokens::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\Rendering\CastTypeMapper::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\Rendering\ValueExpressionRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\Rendering\ValueLiteralRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\SqlEdits::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\Statement\StatementRewriter::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\Upsert\UpsertConflictPredicate::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\Upsert\UpsertExpressionBinder::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Schema\Create\ColumnDefinitionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Schema\Create\TableBodyParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Schema\Create\TableDefinitionBuilder::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Schema\Create\VirtualTableParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Schema\ForeignKey\ForeignKeyEntryParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Schema\ForeignKey\ForeignKeyTokens::class)]
+#[UsesClass(SqliteCastRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteColumnTypeMapper::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteForeignKeyDefinitionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteFullTextSearchRewriter::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteGeneratedColumnProjector::class)]
+#[UsesClass(SqliteIdentifierQuoter::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteInMemoryAttachStatement::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteIndexHintStripper::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
 #[UsesClass(SqliteLexicalMasker::class)]
+#[UsesClass(SqliteMutationResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteNativeUpsertProjector::class)]
 #[UsesClass(SqliteParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteUpsertExpressionParser::class)]
 #[UsesClass(SqliteQueryGuard::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteReadOnlyDiagnosticStatement::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteTransactionStatementParser::class)]
 #[UsesClass(SqliteReturningProjectionParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteInMemoryAttachStatement::class)]
 #[UsesClass(SqliteSchemaParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser::class)]
-#[UsesClass(SqliteMutationResolver::class)]
-#[UsesClass(AlterTableMutation::class)]
-#[UsesClass(SqliteTransformer::class)]
-#[UsesClass(SelectTransformer::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteFullTextSearchRewriter::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteIndexHintStripper::class)]
-#[UsesClass(InsertTransformer::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\Transformer\InsertRowRenderer::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\Transformer\InsertSelectRenderer::class)]
-#[UsesClass(UpdateTransformer::class)]
-#[UsesClass(DeleteTransformer::class)]
-#[UsesClass(SqliteCastRenderer::class)]
-#[UsesClass(SqliteIdentifierQuoter::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteTransactionStatementParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteUpsertExpressionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteValueRenderer::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteNativeUpsertProjector::class)]
 #[UsesClass(SqliteViewDefinitionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteViewShadowRenderer::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteGeneratedColumnProjector::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
+#[UsesClass(DeleteTransformer::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Transformer\InsertRowRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Transformer\InsertSelectRenderer::class)]
+#[UsesClass(InsertTransformer::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Transformer\Insert\InsertProjectionBuilder::class)]
+#[UsesClass(SelectTransformer::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Transformer\Select\ShadowCteRenderer::class)]
+#[UsesClass(SqliteTransformer::class)]
+#[UsesClass(UpdateTransformer::class)]
 final class SqliteRewriterTest extends RewriterContractTest
 {
     public function testGeneratedExpressionIsPresentBeforeTheFirstShadowWrite(): void
@@ -201,7 +260,8 @@ final class SqliteRewriterTest extends RewriterContractTest
         self::assertSame($sql, $plan->sql());
     }
 
-    protected function createRewriter(ShadowStore $store, TableDefinitionRegistry $registry): SqlRewriter
+    #[Override]
+    protected function createRewriter(ShadowStore $store, TableDefinitionRegistry $registry): SqliteRewriter
     {
         $parser = new SqliteParser();
         $schemaParser = new SqliteSchemaParser();
@@ -215,51 +275,61 @@ final class SqliteRewriterTest extends RewriterContractTest
         return new SqliteRewriter(new SqliteQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
     }
 
+    #[Override]
     protected function createSchemaParser(): SchemaParser
     {
         return new SqliteSchemaParser();
     }
 
+    #[Override]
     protected function selectSql(): string
     {
         return 'SELECT id, name, email FROM users WHERE id = 1';
     }
 
+    #[Override]
     protected function insertSql(): string
     {
         return "INSERT INTO users (id, name, email) VALUES (1, 'Alice', 'alice@example.com')";
     }
 
+    #[Override]
     protected function updateSql(): string
     {
         return "UPDATE users SET name = 'Bob' WHERE id = 1";
     }
 
+    #[Override]
     protected function deleteSql(): string
     {
         return 'DELETE FROM users WHERE id = 1';
     }
 
+    #[Override]
     protected function createTableSql(): string
     {
         return 'CREATE TABLE orders (id INTEGER PRIMARY KEY, amount REAL)';
     }
 
+    #[Override]
     protected function dropTableSql(): string
     {
         return 'DROP TABLE IF EXISTS orders';
     }
 
+    #[Override]
     protected function unsupportedSql(): string
     {
         return 'CREATE INDEX idx ON users (name)';
     }
 
+    #[Override]
     protected function usersCreateTableSql(): string
     {
         return 'CREATE TABLE users (id INTEGER PRIMARY KEY NOT NULL, name TEXT NOT NULL, email TEXT NOT NULL)';
     }
 
+    #[Override]
     public function testSelectReturnsReadKind(): void
     {
         $registry = new TableDefinitionRegistry();
@@ -289,6 +359,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         self::assertStringContainsString('SELECT', strtoupper($plan->sql()));
     }
 
+    #[Override]
     public function testInsertReturnsWriteSimulatedWithMutation(): void
     {
         $registry = new TableDefinitionRegistry();
@@ -319,6 +390,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         self::assertMatchesRegularExpression('/^(?:WITH\b|SELECT\b)/i', $plan->sql());
     }
 
+    #[Override]
     public function testUpdateReturnsWriteSimulatedWithMutation(): void
     {
         $registry = new TableDefinitionRegistry();
@@ -351,6 +423,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         self::assertMatchesRegularExpression('/^(?:WITH\b|SELECT\b)/i', $plan->sql());
     }
 
+    #[Override]
     public function testDeleteReturnsWriteSimulatedWithMutation(): void
     {
         $registry = new TableDefinitionRegistry();
@@ -497,6 +570,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         self::assertStringNotContainsString('excluded.', $plan->sql());
     }
 
+    #[Override]
     public function testCreateTableReturnsDdlSimulated(): void
     {
         $store = new ShadowStore();
@@ -518,6 +592,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         self::assertInstanceOf(CreateTableMutation::class, $plan->mutation());
     }
 
+    #[Override]
     public function testDropTableReturnsDdlSimulated(): void
     {
         $registry = new TableDefinitionRegistry();
@@ -546,6 +621,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         self::assertInstanceOf(DropTableMutation::class, $plan->mutation());
     }
 
+    #[Override]
     public function testUnsupportedSqlThrowsException(): void
     {
         $store = new ShadowStore();
@@ -565,6 +641,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         $rewriter->rewrite('CREATE INDEX idx ON users (name)');
     }
 
+    #[Override]
     public function testEmptyInputThrowsException(): void
     {
         $store = new ShadowStore();
@@ -603,6 +680,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         $rewriter->rewrite('SELECT 1; SELECT 2');
     }
 
+    #[Override]
     public function testRewriteIsDeterministic(): void
     {
         $registry = new TableDefinitionRegistry();
@@ -632,6 +710,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         self::assertSame($plan1->kind(), $plan2->kind());
     }
 
+    #[Override]
     public function testReadPlanHasNoMutation(): void
     {
         $registry = new TableDefinitionRegistry();
@@ -660,6 +739,7 @@ final class SqliteRewriterTest extends RewriterContractTest
         self::assertNull($plan->mutation());
     }
 
+    #[Override]
     public function testWritePlanHasNonNullMutation(): void
     {
         $registry = new TableDefinitionRegistry();
@@ -1901,4 +1981,49 @@ final class SqliteRewriterTest extends RewriterContractTest
             self::assertSame(ShadowTableState::Materialized, $store->state('late_table'));
         }
     }
+    public function testTransactionStatementRestoresSnapshotOnRollback(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1]]);
+        $rewriter = $this->createRewriter($store, new TableDefinitionRegistry());
+        $transactions = new \ZtdQuery\Shadow\ShadowTransactionManager($store);
+        $begin = $rewriter->transactionStatement('BEGIN');
+        $rollback = $rewriter->transactionStatement('ROLLBACK');
+        self::assertNotNull($begin);
+        self::assertNotNull($rollback);
+        $begin->apply($transactions);
+        $store->set('users', [['id' => 2]]);
+        $rollback->apply($transactions);
+        self::assertSame([['id' => 1]], $store->get('users'));
+        self::assertNull($rewriter->transactionStatement('SELECT 1'));
+    }
+
+    public function testSplitStatementsPreservesQuotedSemicolons(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        self::assertSame(["SELECT 'a;b'", 'SELECT 2'], $rewriter->splitStatements("SELECT 'a;b'; SELECT 2;"));
+    }
+
+    public function testEmptyResultSelectProducesNoRows(): void
+    {
+        $rewriter = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry());
+        $statement = (new PDO('sqlite::memory:'))->query($rewriter->emptyResultSelect());
+        self::assertNotFalse($statement);
+        self::assertSame([], $statement->fetchAll());
+    }
+
+    public function testCommitRewriteStateKeepsGeneratedIdentitiesAcrossRewrites(): void
+    {
+        $registry = new TableDefinitionRegistry();
+        $definition = (new SqliteSchemaParser())->parse('CREATE TABLE users(id INTEGER PRIMARY KEY, name TEXT)');
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+        $rewriter = $this->createRewriter(new ShadowStore(), $registry);
+        $first = $rewriter->rewrite("INSERT INTO users(name) VALUES ('Alice')");
+        $rewriter->commitRewriteState();
+        $second = $rewriter->rewrite("INSERT INTO users(name) VALUES ('Bob')");
+        self::assertStringContainsString('CAST(1 AS INTEGER) AS "id"', $first->sql());
+        self::assertStringContainsString('CAST(2 AS INTEGER) AS "id"', $second->sql());
+    }
+
 }

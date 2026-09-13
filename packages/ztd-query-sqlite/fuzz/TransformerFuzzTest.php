@@ -1,15 +1,15 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace Fuzz;
 
 use Faker\Factory;
+use Override;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\SqliteProvider;
-use Throwable;
 use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
 use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
 use ZtdQuery\Platform\Sqlite\Transformer\SelectTransformer;
@@ -30,11 +30,9 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 final class TransformerFuzzTest extends TestCase
 {
     private const ITERATIONS = 100;
-
     private SelectTransformer $transformer;
-
     private SqliteProvider $provider;
-
+    #[Override]
     protected function setUp(): void
     {
         $this->transformer = new SelectTransformer(new SqliteCastRenderer(), new SqliteIdentifierQuoter());
@@ -42,80 +40,47 @@ final class TransformerFuzzTest extends TestCase
         $this->provider = new SqliteProvider($faker);
         $faker->seed(20260815);
     }
-
+    /**
+     * Checks transform does not crash on random select with empty tables.
+     */
     public function testTransformDoesNotCrashOnRandomSelectWithEmptyTables(): void
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
             $sql = $this->provider->selectStatement(maxDepth: 8);
-            try {
-                $result = $this->transformer->transform($sql, []);
-                self::assertNotEmpty($result, "transform() returned empty string on iteration $i");
-                self::assertSame($sql, $result);
-            } catch (Throwable $e) {
-                self::fail("transform() crashed on iteration $i with SQL: $sql\nError: " . $e->getMessage());
-            }
+            $result = $this->transformer->transform($sql, []);
+            self::assertNotEmpty($result, "transform() returned empty string on iteration {$i}");
+            self::assertSame($sql, $result);
         }
         self::addToAssertionCount(self::ITERATIONS);
     }
-
+    /**
+     * Checks transform with shadow data contains with clause.
+     */
     public function testTransformWithShadowDataContainsWithClause(): void
     {
-        /** @var array<string, array{rows: array<int, array<string, mixed>>, columns: array<int, string>, columnTypes: array<string, ColumnType>}> $tables */
-        $tables = [
-            'users' => [
-                'rows' => [
-                    ['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com'],
-                    ['id' => 2, 'name' => 'Bob', 'email' => 'bob@example.com'],
-                ],
-                'columns' => ['id', 'name', 'email'],
-                'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                    'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
-                    'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
-                ],
-            ],
-        ];
-
+        $tables = ['users' => ['rows' => [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com'], ['id' => 2, 'name' => 'Bob', 'email' => 'bob@example.com']], 'columns' => ['id', 'name', 'email'], 'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'), 'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'), 'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT')]]];
         for ($i = 0; $i < self::ITERATIONS; $i++) {
             $sql = $this->provider->selectStatement(maxDepth: 8);
-            try {
-                $result = $this->transformer->transform($sql, $tables);
-                self::assertNotEmpty($result, "transform() returned empty string on iteration $i");
-                if (stripos($sql, 'users') !== false) {
-                    self::assertStringContainsString('WITH', $result, "transform() should inject CTE when SQL references shadowed table on iteration $i");
-                }
-            } catch (Throwable $e) {
-                self::fail("transform() crashed on iteration $i with SQL: $sql\nError: " . $e->getMessage());
+            $result = $this->transformer->transform($sql, $tables);
+            self::assertNotEmpty($result, "transform() returned empty string on iteration {$i}");
+            if (stripos($sql, 'users') !== false) {
+                self::assertStringContainsString('WITH', $result, "transform() should inject CTE when SQL references shadowed table on iteration {$i}");
             }
         }
         self::addToAssertionCount(self::ITERATIONS);
     }
-
+    /**
+     * Checks transform with empty rows contains with clause.
+     */
     public function testTransformWithEmptyRowsContainsWithClause(): void
     {
-        /** @var array<string, array{rows: array<int, array<string, mixed>>, columns: array<int, string>, columnTypes: array<string, ColumnType>}> $tables */
-        $tables = [
-            'users' => [
-                'rows' => [],
-                'columns' => ['id', 'name', 'email'],
-                'columnTypes' => [
-                    'id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'),
-                    'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
-                    'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
-                ],
-            ],
-        ];
-
+        $tables = ['users' => ['rows' => [], 'columns' => ['id', 'name', 'email'], 'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'), 'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'), 'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT')]]];
         for ($i = 0; $i < self::ITERATIONS; $i++) {
             $sql = $this->provider->selectStatement(maxDepth: 8);
-            try {
-                $result = $this->transformer->transform($sql, $tables);
-                self::assertNotEmpty($result, "transform() returned empty string on iteration $i");
-                if (stripos($sql, 'users') !== false) {
-                    self::assertStringContainsString('WITH', $result, "transform() should inject CTE when SQL references shadowed table on iteration $i");
-                }
-            } catch (Throwable $e) {
-                self::fail("transform() crashed on iteration $i with SQL: $sql\nError: " . $e->getMessage());
+            $result = $this->transformer->transform($sql, $tables);
+            self::assertNotEmpty($result, "transform() returned empty string on iteration {$i}");
+            if (stripos($sql, 'users') !== false) {
+                self::assertStringContainsString('WITH', $result, "transform() should inject CTE when SQL references shadowed table on iteration {$i}");
             }
         }
         self::addToAssertionCount(self::ITERATIONS);

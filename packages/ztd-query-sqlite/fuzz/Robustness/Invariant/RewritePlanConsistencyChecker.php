@@ -4,32 +4,43 @@ declare(strict_types=1);
 
 namespace Fuzz\Robustness\Invariant;
 
-use Throwable;
 use ZtdQuery\Platform\Sqlite\SqliteIndexHintStripper;
+use ZtdQuery\Platform\Sqlite\SqliteRewriter;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
-use ZtdQuery\Rewrite\SqlRewriter;
 
+/**
+ * Checks rewrite plan consistency invariants.
+ */
 final class RewritePlanConsistencyChecker implements InvariantChecker
 {
-    private SqlRewriter $rewriter;
+    private SqliteRewriter $rewriter;
 
-    public function __construct(SqlRewriter $rewriter)
+    /**
+     * Binds the dependencies used by this operation.
+     */
+    public function __construct(SqliteRewriter $rewriter)
     {
         $this->rewriter = $rewriter;
     }
 
+    /**
+     * Returns check.
+     */
     public function check(string $sql): ?InvariantViolation
     {
         try {
             $plan = $this->rewriter->rewrite($sql);
-        } catch (Throwable) {
+        } catch (\ZtdQuery\Exception\UnsupportedSqlException | \ZtdQuery\Exception\UnknownSchemaException) {
             return null;
         }
 
         return $this->checkPlan($plan, $sql);
     }
 
+    /**
+     * Returns check plan.
+     */
     public function checkPlan(RewritePlan $plan, string $sql): ?InvariantViolation
     {
         $kind = $plan->kind();
