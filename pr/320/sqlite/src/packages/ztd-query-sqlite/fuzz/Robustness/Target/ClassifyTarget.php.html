@@ -44,16 +44,17 @@
 <span class="src-line" data-diff="removed"><span class="ln">8</span><span class="tok-kw">use</span> <span class="tok-id">Fuzz\Robustness\Invariant\ClassifyDeterministicChecker</span>;</span>
 <span class="src-line" data-diff="removed"><span class="ln">9</span><span class="tok-kw">use</span> <span class="tok-id">Fuzz\Robustness\Invariant\ClassifyNeverThrowsChecker</span>;</span>
 <span class="src-line" data-diff="removed"><span class="ln">10</span><span class="tok-kw">use</span> <span class="tok-id">Fuzz\Robustness\Invariant\InvariantChecker</span>;</span>
-<span class="src-line" data-diff="removed"><span class="ln">11</span><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\SqliteProvider</span>;</span>
-<span class="src-line" data-diff="removed"><span class="ln">12</span><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Platform\Sqlite\SqliteParser</span>;</span>
-<span class="src-line" data-diff="removed"><span class="ln">13</span><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Platform\Sqlite\SqliteQueryGuard</span>;</span>
 <span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">Error</span>;</span>
-<span class="src-line" id="L8" data-diff="same"><a class="ln" href="#L8">8</a></span>
-<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-com"> * Checks classification determinism using raw SQL and structural grammar mutations.</span></span>
-<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">ClassifyTarget</span></span>
-<span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a>{</span>
+<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">Fuzz\Robustness\Input\SqlInput</span>;</span>
+<span class="src-line" id="L9" data-diff="same"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlFaker\SqliteProvider</span>;</span>
+<span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Platform\Sqlite\SqliteParser</span>;</span>
+<span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Platform\Sqlite\SqliteQueryGuard</span>;</span>
+<span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a></span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com">/**</span></span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> * Checks that arbitrary SQL can be classified without exceptions or state-dependent results.</span></span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">ClassifyTarget</span></span>
+<span class="src-line" id="L17" data-diff="same"><a class="ln" href="#L17">17</a>{</span>
 <span class="src-line" data-diff="removed"><span class="ln">17</span>    <span class="tok-kw">private</span> <span class="tok-id">Generator</span> <span class="tok-var">$faker</span>;</span>
 <span class="src-line" data-diff="removed"><span class="ln">18</span>    <span class="tok-kw">private</span> <span class="tok-id">SqliteProvider</span> <span class="tok-var">$provider</span>;</span>
 <span class="src-line" data-diff="removed"><span class="ln">19</span>    <span class="tok-com">/** @var array&lt;int, InvariantChecker&gt; */</span></span>
@@ -70,14 +71,14 @@
 <span class="src-line" data-diff="removed"><span class="ln">30</span>            <span class="tok-kw">new</span> <span class="tok-id">ClassifyDeterministicChecker</span>(<span class="tok-var">$guard</span>),</span>
 <span class="src-line" data-diff="removed"><span class="ln">31</span>        ];</span>
 <span class="src-line" data-diff="removed"><span class="ln">32</span>    }</span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a>    <span class="tok-kw">private</span> <span class="tok-id">\Fuzz\Robustness\Input\SqlInput</span> <span class="tok-var">$input</span>;</span>
-<span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a>    <span class="tok-kw">private</span> <span class="tok-kw">readonly</span> <span class="tok-id">SqlInput</span> <span class="tok-var">$input</span>;</span>
+<span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a></span>
 <span class="src-line" data-diff="removed"><span class="ln">34</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__invoke</span>(<span class="tok-id">string</span> <span class="tok-var">$input</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com">     * Retains immutable grammar planning; generated plans do not use Faker&#039;s later state.</span></span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-id">\SqlFaker\SqliteProvider</span> <span class="tok-var">$provider</span>)</span>
-<span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a>    {</span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com">     * Keeps SQLFaker grammar analysis outside the per-input callable.</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-id">SqliteProvider</span> <span class="tok-var">$provider</span>)</span>
+<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a>    {</span>
 <span class="src-line" data-diff="removed"><span class="ln">36</span>        <span class="tok-var">$seed</span> = <span class="tok-id">crc32</span>(<span class="tok-id">str_pad</span>(<span class="tok-var">$input</span>, <span class="tok-num">4</span>, <span class="tok-str">&quot;\0&quot;</span>));</span>
 <span class="src-line" data-diff="removed"><span class="ln">37</span>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">faker</span>-&gt;<span class="tok-id">seed</span>(<span class="tok-var">$seed</span>);</span>
 <span class="src-line" data-diff="removed"><span class="ln">38</span></span>
@@ -89,16 +90,16 @@
 <span class="src-line" data-diff="removed"><span class="ln">44</span>                <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">\Error</span>(&quot;<span class="tok-str">Invariant violation: seed=</span><span class="tok-var">$seed</span><span class="tok-str">\n</span><span class="tok-var">$violation</span>&quot;);</span>
 <span class="src-line" data-diff="removed"><span class="ln">45</span>            }</span>
 <span class="src-line" data-diff="removed"><span class="ln">46</span>        }</span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">input</span> = <span class="tok-kw">new</span> <span class="tok-id">\Fuzz\Robustness\Input\SqlInput</span>(<span class="tok-var">$provider</span>);</span>
-<span class="src-line" id="L22" data-diff="same"><a class="ln" href="#L22">22</a>    }</span>
-<span class="src-line" id="L23" data-diff="same"><a class="ln" href="#L23">23</a></span>
-<span class="src-line" id="L24" data-diff="same"><a class="ln" href="#L24">24</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">input</span> = <span class="tok-kw">new</span> <span class="tok-id">SqlInput</span>(<span class="tok-var">$provider</span>);</span>
+<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a>    }</span>
+<span class="src-line" id="L27" data-diff="same"><a class="ln" href="#L27">27</a></span>
+<span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">50</span><span class="tok-com">     * @return callable(): string</span></span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com">     * Runs the contract in a fresh fixture environment for this input.</span></span>
-<span class="src-line" id="L26" data-diff="same"><a class="ln" href="#L26">26</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com">     * Runs classification twice on the same input and reports every unexpected failure.</span></span>
+<span class="src-line" id="L30" data-diff="same"><a class="ln" href="#L30">30</a><span class="tok-com">     */</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">52</span>    <span class="tok-kw">private</span> <span class="tok-kw">function</span> <span class="tok-id">selectGenerator</span>(<span class="tok-id">string</span> <span class="tok-var">$input</span>): <span class="tok-kw">callable</span></span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__invoke</span>(<span class="tok-id">string</span> <span class="tok-var">$input</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L28" data-diff="same"><a class="ln" href="#L28">28</a>    {</span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__invoke</span>(<span class="tok-id">string</span> <span class="tok-var">$input</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a>    {</span>
 <span class="src-line" data-diff="removed"><span class="ln">54</span>        <span class="tok-var">$generators</span> = [</span>
 <span class="src-line" data-diff="removed"><span class="ln">55</span>            <span class="tok-kw">fn</span> () =&gt; <span class="tok-var">$this</span>-&gt;<span class="tok-id">provider</span>-&gt;<span class="tok-id">sql</span>(<span class="tok-id">maxDepth</span>: <span class="tok-num">8</span>),</span>
 <span class="src-line" data-diff="removed"><span class="ln">56</span>            <span class="tok-kw">fn</span> () =&gt; <span class="tok-var">$this</span>-&gt;<span class="tok-id">provider</span>-&gt;<span class="tok-id">selectStatement</span>(<span class="tok-id">maxDepth</span>: <span class="tok-num">8</span>),</span>
@@ -113,23 +114,16 @@
 <span class="src-line" data-diff="removed"><span class="ln">65</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">66</span>        <span class="tok-var">$index</span> = <span class="tok-id">ord</span>(<span class="tok-var">$input</span>[<span class="tok-num">0</span>] ?? <span class="tok-str">&quot;\0&quot;</span>) % <span class="tok-id">count</span>(<span class="tok-var">$generators</span>);</span>
 <span class="src-line" data-diff="removed"><span class="ln">67</span>        <span class="tok-kw">return</span> <span class="tok-var">$generators</span>[<span class="tok-var">$index</span>];</span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>        <span class="tok-var">$sql</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">input</span>-&gt;<span class="tok-id">sql</span>(<span class="tok-var">$input</span>);</span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>        <span class="tok-id">FuzzBoundary</span>::<span class="tok-id">run</span>(<span class="tok-str">&#039;ClassifyTarget&#039;</span>, <span class="tok-var">$input</span>, <span class="tok-var">$sql</span>, <span class="tok-kw">function</span> () <span class="tok-kw">use</span> (<span class="tok-var">$sql</span>): <span class="tok-id">void</span> {</span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>            <span class="tok-var">$guard</span> = <span class="tok-kw">new</span> <span class="tok-id">\ZtdQuery\Platform\Sqlite\SqliteQueryGuard</span>(<span class="tok-kw">new</span> <span class="tok-id">\ZtdQuery\Platform\Sqlite\SqliteParser</span>());</span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>            <span class="tok-var">$checkers</span> = [</span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>                <span class="tok-kw">new</span> <span class="tok-id">\Fuzz\Robustness\Invariant\ClassifyNeverThrowsChecker</span>(<span class="tok-var">$guard</span>),</span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>                <span class="tok-kw">new</span> <span class="tok-id">\Fuzz\Robustness\Invariant\ClassifyDeterministicChecker</span>(<span class="tok-var">$guard</span>),</span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>            ];</span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>            <span class="tok-kw">foreach</span> (<span class="tok-var">$checkers</span> <span class="tok-kw">as</span> <span class="tok-var">$checker</span>) {</span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>                <span class="tok-var">$violation</span> = <span class="tok-var">$checker</span>-&gt;<span class="tok-id">check</span>(<span class="tok-var">$sql</span>);</span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>                <span class="tok-kw">if</span> (<span class="tok-var">$violation</span> !== <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>                    <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">Error</span>((string) <span class="tok-var">$violation</span>);</span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>                }</span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>            }</span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>        });</span>
-<span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a>    }</span>
-<span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a>}</span>
-<span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a></span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>        <span class="tok-var">$sql</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">input</span>-&gt;<span class="tok-id">sql</span>(<span class="tok-var">$input</span>);</span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>        <span class="tok-id">FuzzBoundary</span>::<span class="tok-id">run</span>(<span class="tok-str">&#039;classification&#039;</span>, <span class="tok-var">$input</span>, <span class="tok-var">$sql</span>, <span class="tok-kw">static</span> <span class="tok-kw">function</span> () <span class="tok-kw">use</span> (<span class="tok-var">$sql</span>): <span class="tok-id">void</span> {</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>            <span class="tok-var">$guard</span> = <span class="tok-kw">new</span> <span class="tok-id">SqliteQueryGuard</span>(<span class="tok-kw">new</span> <span class="tok-id">SqliteParser</span>());</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>            <span class="tok-kw">if</span> (<span class="tok-var">$guard</span>-&gt;<span class="tok-id">classify</span>(<span class="tok-var">$sql</span>) !== <span class="tok-var">$guard</span>-&gt;<span class="tok-id">classify</span>(<span class="tok-var">$sql</span>)) {</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>                <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">Error</span>(<span class="tok-str">&#039;Classification changed for identical SQL&#039;</span>);</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>            }</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>        });</span>
+<span class="src-line" id="L40" data-diff="same"><a class="ln" href="#L40">40</a>    }</span>
+<span class="src-line" id="L41" data-diff="same"><a class="ln" href="#L41">41</a>}</span>
+<span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a></span>
 </code></pre>
 </main>
 <footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

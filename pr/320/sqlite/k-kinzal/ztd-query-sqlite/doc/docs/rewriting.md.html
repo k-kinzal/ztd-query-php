@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sessions and simulated writes — k-kinzal/ztd-query-sqlite</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/320/sqlite/k-kinzal/ztd-query-sqlite/doc/docs/rewriting.md.html">
+<meta name="description" content="Sessions and simulated writes, a document of the k-kinzal/ztd-query-sqlite package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="k-kinzal/ztd-query-sqlite">
+<meta property="og:title" content="Sessions and simulated writes — k-kinzal/ztd-query-sqlite">
+<meta property="og:description" content="Sessions and simulated writes, a document of the k-kinzal/ztd-query-sqlite package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/320/sqlite/k-kinzal/ztd-query-sqlite/doc/docs/rewriting.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/320/sqlite/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="k-kinzal/ztd-query-sqlite">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../">
+<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../../../index.html">k-kinzal/ztd-query-sqlite</a></div><div class="sb-pkg"><a href="../../../../k-kinzal/ztd-query-sqlite/index.html">k-kinzal/ztd-query-sqlite</a></div><nav class="sb-block"><div class="sb-title">Package</div><ul class="sb-list"><li data-diff="modified"><a href="../../../../k-kinzal/ztd-query-sqlite/all-items.html">All items</a></li><li data-diff="modified"><a href="../../../../k-kinzal/ztd-query-sqlite/index.html#documents">Documents</a></li></ul><div class="sb-kind" data-diff="modified">Layers</div><ul class="sb-list"><li data-diff="modified"><a href="../../../../k-kinzal/ztd-query-sqlite/layer.Binding.html">Binding</a></li><li data-diff="modified"><a href="../../../../k-kinzal/ztd-query-sqlite/layer.Parsing.html">Parsing</a></li><li data-diff="modified"><a href="../../../../k-kinzal/ztd-query-sqlite/layer.Rewriting.html">Rewriting</a></li><li data-diff="modified"><a href="../../../../k-kinzal/ztd-query-sqlite/layer.Schema.html">Schema</a></li><li data-diff="modified"><a href="../../../../k-kinzal/ztd-query-sqlite/layer.Session.html">Session</a></li></ul></nav><nav class="sb-block"><div class="sb-title">Namespaces</div><ul class="sb-list"><li data-diff="modified"><a href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/index.html" title="ZtdQuery\Platform\Sqlite">ZtdQuery\Platform\Sqlite</a></li><li data-diff="added"><a href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/Binding/index.html" title="ZtdQuery\Platform\Sqlite\Binding">ZtdQuery\Platform\Sqlite\Binding</a></li><li data-diff="modified"><a href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/Mutation/index.html" title="ZtdQuery\Platform\Sqlite\Mutation">ZtdQuery\Platform\Sqlite\Mutation</a></li><li data-diff="added"><a href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/Parsing/Alter/index.html" title="ZtdQuery\Platform\Sqlite\Parsing\Alter">ZtdQuery\Platform\Sqlite\Parsing\Alter</a></li><li data-diff="added"><a href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/Parsing/Attach/index.html" title="ZtdQuery\Platform\Sqlite\Parsing\Attach">ZtdQuery\Platform\Sqlite\Parsing\Attach</a></li><li data-diff="added"><a href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/Parsing/Expression/index.html" title="ZtdQuery\Platform\Sqlite\Parsing\Expression">ZtdQuery\Platform\Sqlite\Parsing\Expression</a></li><li data-diff="added"><a href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/Parsing/Insert/index.html" title="ZtdQuery\Platform\Sqlite\Parsing\Insert">ZtdQuery\Platform\Sqlite\Parsing\Insert</a></li><li data-diff="added"><a href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/Parsing/Lexing/index.html" title="ZtdQuery\Platform\Sqlite\Parsing\Lexing">ZtdQuery\Platform\Sqlite\Parsing\Lexing</a></li><li data-diff="added"><a href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/Parsing/Relation/index.html" title="ZtdQuery\Platform\Sqlite\Parsing\Relation">ZtdQuery\Platform\Sqlite\Parsing\Relation</a></li><li data-diff="added"><a href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/Parsing/Returning/index.html" title="ZtdQuery\Platform\Sqlite\Parsing\Returning">ZtdQuery\Platform\Sqlite\Parsing\Returning</a></li><li data-diff="added"><a href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/Parsing/Statement/index.html" title="ZtdQuery\Platform\Sqlite\Parsing\Statement">ZtdQuery\Platform\Sqlite\Parsing\Statement</a></li><li data-diff="added"><a href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/Parsing/Transaction/index.html" title="ZtdQuery\Platform\Sqlite\Parsing\Transaction">ZtdQuery\Platform\Sqlite\Parsing\Transaction</a></li><li data-diff="added"><a href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/Parsing/Update/index.html" title="ZtdQuery\Platform\Sqlite\Parsing\Update">ZtdQuery\Platform\Sqlite\Parsing\Update</a></li><li data-diff="added"><a href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/Parsing/Upsert/index.html" title="ZtdQuery\Platform\Sqlite\Parsing\Upsert">ZtdQuery\Platform\Sqlite\Parsing\Upsert</a></li><li data-diff="added"><a href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/Rewriting/index.html" title="ZtdQuery\Platform\Sqlite\Rewriting">ZtdQuery\Platform\Sqlite\Rewriting</a></li><li data-diff="added"><a href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/Rewriting/Context/index.html" title="ZtdQuery\Platform\Sqlite\Rewriting\Context">ZtdQuery\Platform\Sqlite\Rewriting\Context</a></li><li data-diff="added"><a href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/Rewriting/Cte/index.html" title="ZtdQuery\Platform\Sqlite\Rewriting\Cte">ZtdQuery\Platform\Sqlite\Rewriting\Cte</a></li><li data-diff="added"><a href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/Rewriting/FullText/index.html" title="ZtdQuery\Platform\Sqlite\Rewriting\FullText">ZtdQuery\Platform\Sqlite\Rewriting\FullText</a></li><li data-diff="added"><a href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/Rewriting/Index/index.html" title="ZtdQuery\Platform\Sqlite\Rewriting\Index">ZtdQuery\Platform\Sqlite\Rewriting\Index</a></li><li data-diff="added"><a href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/Rewriting/Mutation/Alter/index.html" title="ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Alter">ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Alter</a></li><li data-diff="added"><a href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/Rewriting/Mutation/Resolution/index.html" title="ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Resolution">ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Resolution</a></li><li data-diff="added"><a href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/Rewriting/Rendering/index.html" title="ZtdQuery\Platform\Sqlite\Rewriting\Rendering">ZtdQuery\Platform\Sqlite\Rewriting\Rendering</a></li><li data-diff="added"><a href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/Rewriting/Statement/index.html" title="ZtdQuery\Platform\Sqlite\Rewriting\Statement">ZtdQuery\Platform\Sqlite\Rewriting\Statement</a></li><li data-diff="added"><a href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/Rewriting/Transformer/Insert/index.html" title="ZtdQuery\Platform\Sqlite\Rewriting\Transformer\Insert">ZtdQuery\Platform\Sqlite\Rewriting\Transformer\Insert</a></li><li data-diff="added"><a href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/Rewriting/Transformer/Select/index.html" title="ZtdQuery\Platform\Sqlite\Rewriting\Transformer\Select">ZtdQuery\Platform\Sqlite\Rewriting\Transformer\Select</a></li><li data-diff="added"><a href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/Rewriting/Upsert/index.html" title="ZtdQuery\Platform\Sqlite\Rewriting\Upsert">ZtdQuery\Platform\Sqlite\Rewriting\Upsert</a></li><li data-diff="added"><a href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/Schema/Create/index.html" title="ZtdQuery\Platform\Sqlite\Schema\Create">ZtdQuery\Platform\Sqlite\Schema\Create</a></li><li data-diff="added"><a href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/Schema/ForeignKey/index.html" title="ZtdQuery\Platform\Sqlite\Schema\ForeignKey">ZtdQuery\Platform\Sqlite\Schema\ForeignKey</a></li><li data-diff="modified"><a href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/Transformer/index.html" title="ZtdQuery\Platform\Sqlite\Transformer">ZtdQuery\Platform\Sqlite\Transformer</a></li></ul></nav></nav>
+<div class="page">
+<header class="topbar">
+<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
+<nav class="crumbs"><a href="../../../../k-kinzal/ztd-query-sqlite/index.html">k-kinzal/ztd-query-sqlite</a><span class="crumb-sep">::</span><span class="crumb-current">docs/rewriting.md</span></nav>
+<div class="topbar-tools">
+<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing d56513049 to working tree">d56513049 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><button id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between d56513049 and working tree." data-off="This page documents what d56513049 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Sessions and simulated writes</h1><div class="symbol-meta"><span class="src-link">docs/rewriting.md</span></div></div>
+<div class="notice diff-banner" data-diff="added">Added in working tree, compared to d56513049.</div>
+<section class="readme" data-diff="added"><div class="doc-block" data-diff="added"><h2>Sessions and simulated writes</h2>
+</div><div class="doc-block" data-diff="added"><p><code>SqliteSessionFactory</code> is the entry point for custom adapters. Its <code>create()</code> method is an <strong>instance method</strong> accepting a core <code>ConnectionInterface</code> and <code>ZtdConfig</code>. The returned session owns the schema registry, shadow data, and virtual transaction state.</p>
+</div><div class="doc-block" data-diff="added"><p>The <a href="https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-pdo-adapter">PDO adapter</a> supplies connection and statement adapters for ordinary PDO use. When implementing another adapter, provide the core connection and statement interfaces. This minimal example shows session creation without reflected tables:</p>
+</div><div class="doc-block" data-diff="added"><pre class="code-block"><code><span class="tok-kw">require</span> <span class="tok-str">&#039;vendor/autoload.php&#039;</span>;
+
+<span class="tok-var">$connection</span> = <span class="tok-kw">new</span> <span class="tok-kw">class</span> <span class="tok-kw">implements</span> <span class="tok-id">\ZtdQuery\Connection\ConnectionInterface</span> {
+    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">query</span>(<span class="tok-id">string</span> <span class="tok-var">$sql</span>): <span class="tok-id">\ZtdQuery\Connection\StatementInterface</span>|<span class="tok-id">false</span>
+    {
+        <span class="tok-kw">return</span> <span class="tok-id">false</span>;
+    }
+};
+<span class="tok-var">$session</span> = (<span class="tok-kw">new</span> <span class="tok-id">\ZtdQuery\Platform\Sqlite\SqliteSessionFactory</span>())-&gt;<span class="tok-id">create</span>(
+    <span class="tok-var">$connection</span>,
+    <span class="tok-kw">new</span> <span class="tok-id">\ZtdQuery\Config\ZtdConfig</span>(),
+);
+<span class="tok-var">$session</span>-&gt;<span class="tok-id">rewrite</span>(<span class="tok-str">&#039;SELECT 1&#039;</span>)-&gt;<span class="tok-id">sql</span>(); <span class="tok-com">// &#039;SELECT 1&#039;</span></code></pre>
+</div><div class="doc-block" data-diff="added"><p>A real connection must execute schema queries and return statement adapters; the minimal connection above deliberately has no tables or query execution. Session creation reflects definitions, not physical table rows. Fixture writes populate the shadow state used by subsequent reads.</p>
+</div><div class="doc-block" data-diff="added"><h3>Composing a rewrite pipeline</h3>
+</div><div class="doc-block" data-diff="added"><p>Use the lower-level components when the caller must own the <code>ShadowStore</code> and <code>TableDefinitionRegistry</code>. The following example shares those same objects between the rewriter and mutation resolver:</p>
+</div><div class="doc-block" data-diff="added"><pre class="code-block"><code><span class="tok-var">$store</span> = <span class="tok-kw">new</span> <span class="tok-id">\ZtdQuery\Shadow\ShadowStore</span>();
+<span class="tok-var">$registry</span> = <span class="tok-kw">new</span> <span class="tok-id">\ZtdQuery\Schema\TableDefinitionRegistry</span>();
+<span class="tok-var">$schemaParser</span> = <span class="tok-kw">new</span> <span class="tok-id">\ZtdQuery\Platform\Sqlite\SqliteSchemaParser</span>();
+<span class="tok-var">$schema</span> = <span class="tok-var">$schemaParser</span>-&gt;<span class="tok-id">parse</span>(<span class="tok-str">&#039;CREATE TABLE users(id INTEGER PRIMARY KEY, name TEXT)&#039;</span>);
+<span class="tok-kw">if</span> (<span class="tok-var">$schema</span> === <span class="tok-id">null</span>) {
+    <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">\RuntimeException</span>(<span class="tok-str">&#039;The fixture schema was not recognized&#039;</span>);
+}
+<span class="tok-var">$registry</span>-&gt;<span class="tok-id">register</span>(<span class="tok-str">&#039;users&#039;</span>, <span class="tok-var">$schema</span>);
+<span class="tok-var">$store</span>-&gt;<span class="tok-id">set</span>(<span class="tok-str">&#039;users&#039;</span>, [[<span class="tok-str">&#039;id&#039;</span> =&gt; <span class="tok-num">1</span>, <span class="tok-str">&#039;name&#039;</span> =&gt; <span class="tok-str">&#039;Alice&#039;</span>]]);
+
+<span class="tok-var">$parser</span> = <span class="tok-kw">new</span> <span class="tok-id">\ZtdQuery\Platform\Sqlite\SqliteParser</span>();
+<span class="tok-var">$select</span> = <span class="tok-kw">new</span> <span class="tok-id">\ZtdQuery\Platform\Sqlite\Transformer\SelectTransformer</span>();
+<span class="tok-var">$transformer</span> = <span class="tok-kw">new</span> <span class="tok-id">\ZtdQuery\Platform\Sqlite\Transformer\SqliteTransformer</span>(
+    <span class="tok-var">$parser</span>,
+    <span class="tok-var">$select</span>,
+    <span class="tok-kw">new</span> <span class="tok-id">\ZtdQuery\Platform\Sqlite\Transformer\InsertTransformer</span>(<span class="tok-var">$parser</span>, <span class="tok-var">$select</span>),
+    <span class="tok-kw">new</span> <span class="tok-id">\ZtdQuery\Platform\Sqlite\Transformer\UpdateTransformer</span>(<span class="tok-var">$parser</span>, <span class="tok-var">$select</span>),
+    <span class="tok-kw">new</span> <span class="tok-id">\ZtdQuery\Platform\Sqlite\Transformer\DeleteTransformer</span>(<span class="tok-var">$parser</span>, <span class="tok-var">$select</span>),
+);
+<span class="tok-var">$resolver</span> = <span class="tok-kw">new</span> <span class="tok-id">\ZtdQuery\Platform\Sqlite\SqliteMutationResolver</span>(<span class="tok-var">$store</span>, <span class="tok-var">$registry</span>, <span class="tok-var">$schemaParser</span>, <span class="tok-var">$parser</span>);
+<span class="tok-var">$rewriter</span> = <span class="tok-kw">new</span> <span class="tok-id">\ZtdQuery\Platform\Sqlite\SqliteRewriter</span>(
+    <span class="tok-kw">new</span> <span class="tok-id">\ZtdQuery\Platform\Sqlite\SqliteQueryGuard</span>(<span class="tok-var">$parser</span>),
+    <span class="tok-var">$store</span>,
+    <span class="tok-var">$registry</span>,
+    <span class="tok-var">$transformer</span>,
+    <span class="tok-var">$resolver</span>,
+    <span class="tok-var">$parser</span>,
+);</code></pre>
+</div><div class="doc-block" data-diff="added"><h3>Execute the result SELECT before applying a mutation</h3>
+</div><div class="doc-block" data-diff="added"><p>For a simulated write, <code>RewritePlan::sql()</code> selects the rows to change. Execute that SQL, apply the plan&#039;s mutation to the resulting rows, and commit rewrite state. Executing the original INSERT would modify the physical database.</p>
+</div><div class="doc-block" data-diff="added"><pre class="code-block"><code><span class="tok-var">$pdo</span> = <span class="tok-kw">new</span> <span class="tok-id">\PDO</span>(<span class="tok-str">&#039;sqlite::memory:&#039;</span>, <span class="tok-id">options</span>: [<span class="tok-id">\PDO</span>::<span class="tok-id">ATTR_ERRMODE</span> =&gt; <span class="tok-id">\PDO</span>::<span class="tok-id">ERRMODE_EXCEPTION</span>]);
+<span class="tok-var">$pdo</span>-&gt;<span class="tok-id">exec</span>(<span class="tok-str">&#039;CREATE TABLE users(id INTEGER PRIMARY KEY, name TEXT)&#039;</span>);
+<span class="tok-var">$pdo</span>-&gt;<span class="tok-id">exec</span>(<span class="tok-str">&quot;INSERT INTO users VALUES (9000, &#039;physical&#039;)&quot;</span>);
+
+<span class="tok-var">$plan</span> = <span class="tok-var">$rewriter</span>-&gt;<span class="tok-id">rewrite</span>(<span class="tok-str">&quot;INSERT INTO users VALUES (2, &#039;Bob&#039;)&quot;</span>);
+<span class="tok-var">$rows</span> = <span class="tok-var">$pdo</span>-&gt;<span class="tok-id">query</span>(<span class="tok-var">$plan</span>-&gt;<span class="tok-id">sql</span>())-&gt;<span class="tok-id">fetchAll</span>(<span class="tok-id">\PDO</span>::<span class="tok-id">FETCH_ASSOC</span>);
+<span class="tok-var">$plan</span>-&gt;<span class="tok-id">mutation</span>()?-&gt;<span class="tok-id">apply</span>(<span class="tok-var">$store</span>, <span class="tok-var">$rows</span>);
+<span class="tok-var">$rewriter</span>-&gt;<span class="tok-id">commitRewriteState</span>();
+
+<span class="tok-var">$read</span> = <span class="tok-var">$rewriter</span>-&gt;<span class="tok-id">rewrite</span>(<span class="tok-str">&#039;SELECT id, name FROM users ORDER BY id&#039;</span>);
+<span class="tok-var">$pdo</span>-&gt;<span class="tok-id">query</span>(<span class="tok-var">$read</span>-&gt;<span class="tok-id">sql</span>())-&gt;<span class="tok-id">fetchAll</span>(<span class="tok-id">\PDO</span>::<span class="tok-id">FETCH_ASSOC</span>);
+<span class="tok-com">// [[&#039;id&#039; =&gt; 1, &#039;name&#039; =&gt; &#039;Alice&#039;], [&#039;id&#039; =&gt; 2, &#039;name&#039; =&gt; &#039;Bob&#039;]]</span>
+<span class="tok-var">$pdo</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&#039;SELECT id, name FROM users&#039;</span>)-&gt;<span class="tok-id">fetchAll</span>(<span class="tok-id">\PDO</span>::<span class="tok-id">FETCH_ASSOC</span>);
+<span class="tok-com">// [[&#039;id&#039; =&gt; 9000, &#039;name&#039; =&gt; &#039;physical&#039;]]</span></code></pre>
+</div><div class="doc-block" data-diff="added"><p>The low-level example covers ordinary DML. Prefer a session for adapter execution, result metadata, RETURNING projections, affected-row conventions, configuration policies, and virtual transactions.</p>
+</div><div class="doc-block" data-diff="added"><h3>Multiple statements and failures</h3>
+</div><div class="doc-block" data-diff="added"><p><code>rewrite()</code> accepts one statement. <code>rewriteMultiple()</code> returns a <code>MultiRewritePlan</code>, whose <code>plans()</code> are ordered <code>RewritePlan</code> objects. It does not execute them. For operations whose later SQL depends on an earlier mutation, split with <code>splitStatements()</code>, then rewrite, execute, and apply each statement in order.</p>
+</div><div class="doc-block" data-diff="added"><p>Unsupported SQL raises <code>UnsupportedSqlException</code>; references absent from the supplied registry raise <code>UnknownSchemaException</code>. A guard classifying a statement does not guarantee that the complete statement is supported by the rewriter.</p>
+</div><div class="doc-block" data-diff="added"><p>The public entry points documented here, the parser, query guard, schema parser/reflector, error classifier, and SELECT transformer retain their existing class names. Extracted collaborators under the parsing, schema, rewriting, and binding directories implement those entry points. Use the <a href="https://k-kinzal.github.io/ztd-query-php/sqlite/k-kinzal/ztd-query-sqlite/">generated API reference</a> for signatures and executable examples, and the <a href="https://github.com/k-kinzal/ztd-query-php/blob/main/docs/sqlite-spec.md">SQLite specification</a> for feature-specific behavior.</p>
+</div></section>
+</main>
+<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div>
+<script src="../../../../assets/search-index.js" defer></script>
+<script src="../../../../assets/app.js" defer></script>
+</body>
+</html>
