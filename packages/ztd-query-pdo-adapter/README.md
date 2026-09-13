@@ -151,22 +151,41 @@ Extends `PDOStatement` with ZTD-aware behavior. All fetch methods (`fetch`, `fet
 
 ## Development
 
+Run these commands from this package after `composer update`. The development tooling uses the latest `k-kinzal/php-ai-toolkit` main branch. The test runner selects the PHPUnit 10–13 configuration supported by the installed PHP version; `composer test` runs unit, integration, and doctest suites with four ParaTest workers.
+
 ```bash
-# Run unit tests
-composer test:unit
-
-# Run integration tests (requires Docker)
-composer test:integration
-
-# Run all tests
 composer test
-
-# Run linter (PHP-CS-Fixer + PHPStan level max)
+composer test:unit
+composer test:integration
+composer doctest
 composer lint
-
-# Fix code style
 composer format
+composer bench:quick
+composer bench
+composer docgen
+composer docgen:serve
+composer docgen:diff
 ```
+
+`composer lint` checks formatting, PHPStan at maximum level with toolkit rules, PHP 8.1 compatibility, source metrics, directory layout, and architecture boundaries. DocGen writes to `build/docs`; `docgen:diff` compares against `origin/main` and starts its preview server.
+
+Integration tests and MySQL/PostgreSQL fuzz targets start disposable Testcontainers by default. Existing test services can be selected with `MYSQL_HOST` / `MYSQL_PORT` and `PG_HOST` / `PG_PORT`. MySQL uses `root` / `root`; PostgreSQL uses `test` / `test` with database `ztd_test` for tests and `fuzz_test` for fuzzing. SQLite runs in memory. Use dedicated test databases because the fixtures create and drop tables.
+
+```bash
+composer fuzz:correctness:sqlite:select -- --max-runs=100
+composer fuzz:robustness -- --max-runs=100
+```
+
+The fuzz workflow runs all 15 targets across 20 jobs, including MySQL 8.0 and 8.4. Fuzzer findings are saved as crash input artifacts; the workflow's successful exit does not imply that no findings were recorded. Replay an input with `vendor/bin/php-fuzzer run-single <target.php> <crash-file>`.
+
+Mutation testing uses the standalone [Infection PHAR](https://github.com/infection/infection/releases/tag/0.35.4), installed as `infection` on `PATH`, with PCOV or Xdebug coverage enabled:
+
+```bash
+composer infection
+composer test:coverage
+```
+
+CI installs Infection 0.35.4. It checks all source, including uncovered code, against MSI and covered MSI thresholds of 80%; pull requests check changed lines at 85%. Reports are written under `build/infection`. Benchmarks measure buffered row formatting with database preparation outside the timed operation.
 
 ## License
 
