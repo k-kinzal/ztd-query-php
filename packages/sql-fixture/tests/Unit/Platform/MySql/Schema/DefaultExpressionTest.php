@@ -21,4 +21,25 @@ final class DefaultExpressionTest extends TestCase
         self::assertSame(12.5, (new Subject())->extractDefault($statement->fields[1]->options));
         self::assertNull((new Subject())->extractDefault(null));
     }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerDefaultValues')]
+    public function testExtractDefaultDistinguishesLiteralsFromSqlExpressions(string $input, int|float|bool|string|null $expected): void
+    {
+        $options = new \PhpMyAdmin\SqlParser\Components\OptionsArray([['name' => 'DEFAULT', 'value' => $input]]);
+        self::assertSame($expected, (new Subject())->extractDefault($options));
+    }
+
+    /**
+     * @return list<array{string, int|float|bool|string|null}>
+     */
+    public static function providerDefaultValues(): array
+    {
+        return [
+            ["'line\nbreak'", "line\nbreak"],
+            ["(concat('a','b'))", "(concat('a','b'))"],
+            ['CURRENT_TIMESTAMP', 'CURRENT_TIMESTAMP'],
+            ['false', false],
+            ['NULL', null],
+        ];
+    }
 }

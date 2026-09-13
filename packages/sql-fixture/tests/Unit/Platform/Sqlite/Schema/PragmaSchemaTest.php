@@ -33,4 +33,27 @@ final class PragmaSchemaTest extends TestCase
         self::assertNull($parser->parseDefaultValue('NULL'));
         self::assertSame('CURRENT_DATE', $parser->parseDefaultValue('CURRENT_DATE'));
     }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerDefaultValues')]
+    public function testParseDefaultValuePreservesExpressionsAndDecodesLiterals(?string $input, int|float|string|null $expected): void
+    {
+        self::assertSame($expected, (new Subject())->parseDefaultValue($input));
+    }
+
+    /**
+     * @return list<array{?string, int|float|string|null}>
+     */
+    public static function providerDefaultValues(): array
+    {
+        return [
+            [null, null],
+            ['null', null],
+            ["'line\nbreak'", "line\nbreak"],
+            ["('part')", "('part')"],
+            ["CURRENT_DATE || 'tail'", "CURRENT_DATE || 'tail'"],
+            ["'head' || CURRENT_DATE", "'head' || CURRENT_DATE"],
+            ["strftime('%Y', 'now')", "strftime('%Y', 'now')"],
+            ['-3', -3],
+        ];
+    }
 }

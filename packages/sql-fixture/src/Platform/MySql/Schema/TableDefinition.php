@@ -27,7 +27,7 @@ final class TableDefinition
         }
 
         $name = $stmt->name->table ?? '';
-        return str_replace('`', '', $name);
+        return $name;
     }
 
     /**
@@ -53,7 +53,7 @@ final class TableDefinition
                 continue;
             }
 
-            $columnName = str_replace('`', '', $name);
+            $columnName = $name;
             $column = (new ColumnParser())->parseColumnDefinition($field, $columnName, $primaryKeyColumns);
 
             if ($column !== null) {
@@ -82,7 +82,7 @@ final class TableDefinition
             if ($field->options instanceof OptionsArray && $field->options->has('PRIMARY KEY') !== false) {
                 $name = $field->name;
                 if (is_string($name) && $name !== '') {
-                    $primaryKeys[] = str_replace('`', '', $name);
+                    $primaryKeys[] = $name;
                 }
             }
 
@@ -90,7 +90,7 @@ final class TableDefinition
                 foreach ($field->key->columns as $col) {
                     $colName = $col['name'] ?? null;
                     if (is_string($colName) && $colName !== '') {
-                        $primaryKeys[] = str_replace('`', '', $colName);
+                        $primaryKeys[] = $colName;
                     }
                 }
             }

@@ -23,7 +23,7 @@ final class CatalogSchemaTest extends TestCase
             (string) getenv('SQL_FIXTURE_PGSQL_DSN'),
             (string) getenv('SQL_FIXTURE_PGSQL_USER'),
             (string) getenv('SQL_FIXTURE_PGSQL_PASSWORD'),
-            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_EMULATE_PREPARES => false],
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_EMULATE_PREPARES => false, PDO::ATTR_STRINGIFY_FETCHES => true],
         );
         $pdo->exec('CREATE TEMPORARY TABLE users (id INTEGER PRIMARY KEY, name VARCHAR(30) NOT NULL DEFAULT \'ready\')');
         $statement = $pdo->query('SELECT pg_my_temp_schema()::regnamespace::text');
@@ -43,7 +43,7 @@ final class CatalogSchemaTest extends TestCase
             (string) getenv('SQL_FIXTURE_PGSQL_DSN'),
             (string) getenv('SQL_FIXTURE_PGSQL_USER'),
             (string) getenv('SQL_FIXTURE_PGSQL_PASSWORD'),
-            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_EMULATE_PREPARES => false],
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_EMULATE_PREPARES => false, PDO::ATTR_STRINGIFY_FETCHES => true],
         );
         $pdo->exec('CREATE TEMPORARY TABLE prices (id SERIAL, amount NUMERIC(7,2), note TEXT)');
         $statement = $pdo->query('SELECT pg_my_temp_schema()::regnamespace::text');
@@ -60,6 +60,8 @@ final class CatalogSchemaTest extends TestCase
         self::assertNull($schema->columns['amount']->length);
         self::assertSame(7, $schema->columns['amount']->precision);
         self::assertSame(2, $schema->columns['amount']->scale);
+        self::assertFalse($schema->columns['amount']->unsigned);
+        self::assertFalse($schema->columns['amount']->generated);
         self::assertNull($schema->columns['note']->precision);
         self::assertNull($schema->columns['note']->scale);
         self::assertNull($schema->columns['note']->default);

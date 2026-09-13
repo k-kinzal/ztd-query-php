@@ -49,4 +49,16 @@ final class TableDefinitionTest extends TestCase
         self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\CreateStatement::class, $statement);
         self::assertSame(['id'], (new Subject())->extractPrimaryKeys($statement));
     }
+
+    public function testNativeDecodedIdentifiersPreserveEmbeddedBackticks(): void
+    {
+        $sql = 'CREATE TABLE `user``data` (`user``id` INT, PRIMARY KEY (`user``id`))';
+        $parser = new \PhpMyAdmin\SqlParser\Parser($sql);
+        $statement = $parser->statements[0];
+        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\CreateStatement::class, $statement);
+        $definition = new Subject();
+        self::assertSame('user`data', $definition->extractTableName($statement, $sql));
+        self::assertSame(['user`id'], array_keys($definition->extractColumns($statement, 'user`data')));
+        self::assertSame(['user`id'], $definition->extractPrimaryKeys($statement));
+    }
 }
