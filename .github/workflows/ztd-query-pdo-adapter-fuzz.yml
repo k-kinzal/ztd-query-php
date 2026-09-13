@@ -73,6 +73,11 @@ jobs:
         name: fuzz-crashes-robustness-execute-pdo-${{ matrix.mysql }}
         path: packages/ztd-query-pdo-adapter/crash-*
       name: Upload crash inputs
+    - name: Fail when the fuzzer reports findings
+      if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/crash-*') != '' }}
+      run: |
+        echo 'Fuzzing found a counterexample. Download the crash input artifact and replay it before accepting this run.' >&2
+        exit 1
     timeout-minutes: 60
     services:
       mysql:
@@ -170,6 +175,11 @@ jobs:
         name: fuzz-crashes-${{ matrix.target.name }}-pdo-${{ matrix.mysql }}
         path: packages/ztd-query-pdo-adapter/crash-*
       name: Upload crash inputs
+    - name: Fail when the fuzzer reports findings
+      if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/crash-*') != '' }}
+      run: |
+        echo 'Fuzzing found a counterexample. Download the crash input artifact and replay it before accepting this run.' >&2
+        exit 1
     timeout-minutes: 60
     services:
       mysql:
@@ -266,6 +276,11 @@ jobs:
         name: fuzz-crashes-${{ matrix.target.name }}-pdo-sqlite
         path: packages/ztd-query-pdo-adapter/crash-*
       name: Upload crash inputs
+    - name: Fail when the fuzzer reports findings
+      if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/crash-*') != '' }}
+      run: |
+        echo 'Fuzzing found a counterexample. Download the crash input artifact and replay it before accepting this run.' >&2
+        exit 1
     timeout-minutes: 60
   correctness-pg:
     name: Correctness / ${{ matrix.target.name }}-pdo-pg
@@ -350,6 +365,11 @@ jobs:
         name: fuzz-crashes-${{ matrix.target.name }}-pdo-pg
         path: packages/ztd-query-pdo-adapter/crash-*
       name: Upload crash inputs
+    - name: Fail when the fuzzer reports findings
+      if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/crash-*') != '' }}
+      run: |
+        echo 'Fuzzing found a counterexample. Download the crash input artifact and replay it before accepting this run.' >&2
+        exit 1
     timeout-minutes: 60
     services:
       postgres:
