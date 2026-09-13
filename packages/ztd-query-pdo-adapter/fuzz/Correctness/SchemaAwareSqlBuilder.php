@@ -172,7 +172,7 @@ final class SchemaAwareSqlBuilder
             $literal = $this->generateLiteral($pk, $schema);
             $conditions[] = "`$pk` = $literal";
         }
-        return implode(' AND ', $conditions);
+        return $conditions === [] ? '1 = 1' : implode(' AND ', $conditions);
     }
 
     /**

@@ -213,7 +213,7 @@ final class PgSchemaAwareSqlBuilder
             $literal = $this->generateLiteral($pk);
             $conditions[] = $this->quoteIdentifier($pk) . " = $literal";
         }
-        return implode(' AND ', $conditions);
+        return $conditions === [] ? '1 = 1' : implode(' AND ', $conditions);
     }
 
     /**

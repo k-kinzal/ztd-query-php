@@ -57,27 +57,29 @@ jobs:
         MYSQL_VERSION: ${{ matrix.mysql }}
         MAX_RUNS: ${{ inputs.max_runs || '10000' }}
       run: |
-        mkdir -p fuzz/corpus/robustness-execute
+        mkdir -p build/fuzz fuzz/corpus/robustness-execute
         vendor/bin/php-fuzzer fuzz fuzz/fuzz_robustness_execute.php \
           fuzz/corpus/robustness-execute/ \
-          --max-runs="$MAX_RUNS"
+          --max-runs="$MAX_RUNS" 2>&1 | tee build/fuzz/run.log
+        if grep -Eq '^(CORPUS )?CRASH in ' build/fuzz/run.log; then
+          echo 'Fuzzing found a counterexample; download the run artifacts and replay the input.' >&2
+          exit 1
+        fi
     - if: always()
       uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
       with:
         path: packages/ztd-query-pdo-adapter/fuzz/corpus/robustness-execute
         key: fuzz-robustness-execute-pdo-${{ matrix.mysql }}-${{ github.run_id }}
       name: Save the corpus
-    - if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/crash-*') != '' }}
+    - if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/build/fuzz/run.log') != '' }}
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: fuzz-crashes-robustness-execute-pdo-${{ matrix.mysql }}
-        path: packages/ztd-query-pdo-adapter/crash-*
-      name: Upload crash inputs
-    - name: Fail when the fuzzer reports findings
-      if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/crash-*') != '' }}
-      run: |
-        echo 'Fuzzing found a counterexample. Download the crash input artifact and replay it before accepting this run.' >&2
-        exit 1
+        name: fuzz-results-robustness-execute-pdo-${{ matrix.mysql }}
+        path: |
+          packages/ztd-query-pdo-adapter/crash-*
+          packages/ztd-query-pdo-adapter/build/fuzz/run.log
+          packages/ztd-query-pdo-adapter/fuzz/corpus/
+      name: Upload run log and replay inputs
     timeout-minutes: 60
     services:
       mysql:
@@ -159,27 +161,29 @@ jobs:
         MYSQL_VERSION: ${{ matrix.mysql }}
         MAX_RUNS: ${{ inputs.max_runs || '10000' }}
       run: |
-        mkdir -p fuzz/corpus/${{ matrix.target.corpus }}
+        mkdir -p build/fuzz fuzz/corpus/${{ matrix.target.corpus }}
         vendor/bin/php-fuzzer fuzz fuzz/${{ matrix.target.script }} \
           fuzz/corpus/${{ matrix.target.corpus }}/ \
-          --max-runs="$MAX_RUNS"
+          --max-runs="$MAX_RUNS" 2>&1 | tee build/fuzz/run.log
+        if grep -Eq '^(CORPUS )?CRASH in ' build/fuzz/run.log; then
+          echo 'Fuzzing found a counterexample; download the run artifacts and replay the input.' >&2
+          exit 1
+        fi
     - if: always()
       uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
       with:
         path: packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}
         key: fuzz-${{ matrix.target.corpus }}-pdo-${{ matrix.mysql }}-${{ github.run_id }}
       name: Save the corpus
-    - if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/crash-*') != '' }}
+    - if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/build/fuzz/run.log') != '' }}
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: fuzz-crashes-${{ matrix.target.name }}-pdo-${{ matrix.mysql }}
-        path: packages/ztd-query-pdo-adapter/crash-*
-      name: Upload crash inputs
-    - name: Fail when the fuzzer reports findings
-      if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/crash-*') != '' }}
-      run: |
-        echo 'Fuzzing found a counterexample. Download the crash input artifact and replay it before accepting this run.' >&2
-        exit 1
+        name: fuzz-results-${{ matrix.target.name }}-pdo-${{ matrix.mysql }}
+        path: |
+          packages/ztd-query-pdo-adapter/crash-*
+          packages/ztd-query-pdo-adapter/build/fuzz/run.log
+          packages/ztd-query-pdo-adapter/fuzz/corpus/
+      name: Upload run log and replay inputs
     timeout-minutes: 60
     services:
       mysql:
@@ -258,10 +262,14 @@ jobs:
       name: Restore the corpus
     - name: Run the fuzz target
       run: |
-        mkdir -p fuzz/corpus/${{ matrix.target.corpus }}
+        mkdir -p build/fuzz fuzz/corpus/${{ matrix.target.corpus }}
         vendor/bin/php-fuzzer fuzz fuzz/${{ matrix.target.script }} \
           fuzz/corpus/${{ matrix.target.corpus }}/ \
-          --max-runs="$MAX_RUNS"
+          --max-runs="$MAX_RUNS" 2>&1 | tee build/fuzz/run.log
+        if grep -Eq '^(CORPUS )?CRASH in ' build/fuzz/run.log; then
+          echo 'Fuzzing found a counterexample; download the run artifacts and replay the input.' >&2
+          exit 1
+        fi
       env:
         MAX_RUNS: ${{ inputs.max_runs || '10000' }}
     - if: always()
@@ -270,17 +278,15 @@ jobs:
         path: packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}
         key: fuzz-${{ matrix.target.corpus }}-pdo-sqlite-${{ github.run_id }}
       name: Save the corpus
-    - if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/crash-*') != '' }}
+    - if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/build/fuzz/run.log') != '' }}
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: fuzz-crashes-${{ matrix.target.name }}-pdo-sqlite
-        path: packages/ztd-query-pdo-adapter/crash-*
-      name: Upload crash inputs
-    - name: Fail when the fuzzer reports findings
-      if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/crash-*') != '' }}
-      run: |
-        echo 'Fuzzing found a counterexample. Download the crash input artifact and replay it before accepting this run.' >&2
-        exit 1
+        name: fuzz-results-${{ matrix.target.name }}-pdo-sqlite
+        path: |
+          packages/ztd-query-pdo-adapter/crash-*
+          packages/ztd-query-pdo-adapter/build/fuzz/run.log
+          packages/ztd-query-pdo-adapter/fuzz/corpus/
+      name: Upload run log and replay inputs
     timeout-minutes: 60
   correctness-pg:
     name: Correctness / ${{ matrix.target.name }}-pdo-pg
@@ -347,10 +353,14 @@ jobs:
       name: Restore the corpus
     - name: Run the fuzz target
       run: |
-        mkdir -p fuzz/corpus/${{ matrix.target.corpus }}
+        mkdir -p build/fuzz fuzz/corpus/${{ matrix.target.corpus }}
         vendor/bin/php-fuzzer fuzz fuzz/${{ matrix.target.script }} \
           fuzz/corpus/${{ matrix.target.corpus }}/ \
-          --max-runs="$MAX_RUNS"
+          --max-runs="$MAX_RUNS" 2>&1 | tee build/fuzz/run.log
+        if grep -Eq '^(CORPUS )?CRASH in ' build/fuzz/run.log; then
+          echo 'Fuzzing found a counterexample; download the run artifacts and replay the input.' >&2
+          exit 1
+        fi
       env:
         MAX_RUNS: ${{ inputs.max_runs || '10000' }}
     - if: always()
@@ -359,17 +369,15 @@ jobs:
         path: packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}
         key: fuzz-${{ matrix.target.corpus }}-pdo-pg-${{ github.run_id }}
       name: Save the corpus
-    - if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/crash-*') != '' }}
+    - if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/build/fuzz/run.log') != '' }}
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: fuzz-crashes-${{ matrix.target.name }}-pdo-pg
-        path: packages/ztd-query-pdo-adapter/crash-*
-      name: Upload crash inputs
-    - name: Fail when the fuzzer reports findings
-      if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/crash-*') != '' }}
-      run: |
-        echo 'Fuzzing found a counterexample. Download the crash input artifact and replay it before accepting this run.' >&2
-        exit 1
+        name: fuzz-results-${{ matrix.target.name }}-pdo-pg
+        path: |
+          packages/ztd-query-pdo-adapter/crash-*
+          packages/ztd-query-pdo-adapter/build/fuzz/run.log
+          packages/ztd-query-pdo-adapter/fuzz/corpus/
+      name: Upload run log and replay inputs
     timeout-minutes: 60
     services:
       postgres:

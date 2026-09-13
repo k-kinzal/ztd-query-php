@@ -170,7 +170,7 @@ final class SqliteSchemaAwareSqlBuilder
             }
             $conditions[] = $column . " = $literal";
         }
-        return implode(' AND ', $conditions);
+        return $conditions === [] ? '1 = 1' : implode(' AND ', $conditions);
     }
 
     /**

@@ -182,6 +182,8 @@ final class PgCorrectnessHarness
                 $row[$col] = $index + 1;
             } elseif (str_contains($colLower, 'real') || str_contains($colLower, 'float') || str_contains($colLower, 'double')) {
                 $row[$col] = round($this->faker->randomFloat(2, 0, 999), 2);
+            } elseif (str_contains($colLower, 'bit')) {
+                $row[$col] = $this->faker->regexify('[01]{8}');
             } elseif (str_contains($colLower, 'bool')) {
                 $row[$col] = $this->faker->boolean();
             } elseif (str_contains($colLower, 'smallint') || str_contains($colLower, 'int') || str_contains($colLower, 'quantity') || str_contains($colLower, 'bigint')) {
