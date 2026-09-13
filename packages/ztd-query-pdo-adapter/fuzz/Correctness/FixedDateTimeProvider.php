@@ -17,7 +17,7 @@ final class FixedDateTimeProvider
      */
     public function date(string $format = 'Y-m-d'): string
     {
-        return NativeDateTimeProvider::date($format, 1577836800);
+        return NativeDateTimeProvider::dateTime(1577836800, 'UTC')->format($format);
     }
 
     /**
@@ -25,7 +25,7 @@ final class FixedDateTimeProvider
      */
     public function time(string $format = 'H:i:s'): string
     {
-        return NativeDateTimeProvider::time($format, 1577836800);
+        return NativeDateTimeProvider::dateTime(1577836800, 'UTC')->format($format);
     }
 
     /**
