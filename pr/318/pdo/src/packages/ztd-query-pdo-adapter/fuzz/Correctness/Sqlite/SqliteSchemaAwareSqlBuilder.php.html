@@ -209,7 +209,8 @@
 <span class="src-line" id="L170" data-diff="same"><a class="ln" href="#L170">170</a>            }</span>
 <span class="src-line" id="L171" data-diff="same"><a class="ln" href="#L171">171</a>            <span class="tok-var">$conditions</span>[] = <span class="tok-var">$column</span> . &quot;<span class="tok-str"> = </span><span class="tok-var">$literal</span>&quot;;</span>
 <span class="src-line" id="L172" data-diff="same"><a class="ln" href="#L172">172</a>        }</span>
-<span class="src-line" id="L173" data-diff="same"><a class="ln" href="#L173">173</a>        <span class="tok-kw">return</span> <span class="tok-id">implode</span>(<span class="tok-str">&#039; AND &#039;</span>, <span class="tok-var">$conditions</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">133</span>        <span class="tok-kw">return</span> <span class="tok-id">implode</span>(<span class="tok-str">&#039; AND &#039;</span>, <span class="tok-var">$conditions</span>);</span>
+<span class="src-line" id="L173" data-diff="added"><a class="ln" href="#L173">173</a>        <span class="tok-kw">return</span> <span class="tok-var">$conditions</span> === [] ? <span class="tok-str">&#039;1 = 1&#039;</span> : <span class="tok-id">implode</span>(<span class="tok-str">&#039; AND &#039;</span>, <span class="tok-var">$conditions</span>);</span>
 <span class="src-line" id="L174" data-diff="same"><a class="ln" href="#L174">174</a>    }</span>
 <span class="src-line" id="L175" data-diff="same"><a class="ln" href="#L175">175</a></span>
 <span class="src-line" data-diff="removed"><span class="ln">136</span>    <span class="tok-kw">private</span> <span class="tok-kw">function</span> <span class="tok-id">buildGroupedSubqueryWhere</span>(<span class="tok-id">SchemaDefinition</span> <span class="tok-var">$schema</span>): <span class="tok-id">string</span></span>
