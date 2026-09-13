@@ -46,7 +46,7 @@ final class FullPipelineFuzzTest extends TestCase
         $this->schemaParser = new PgSqlSchemaParser();
         $this->faker = Factory::create();
         $this->faker->seed(20260815);
-        $this->provider = new PostgreSqlProvider($this->faker);
+        $this->provider = new PostgreSqlProvider($this->faker, 'pg-17.2');
     }
 
 

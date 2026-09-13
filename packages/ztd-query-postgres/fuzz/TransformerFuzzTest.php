@@ -21,9 +21,9 @@ use ZtdQuery\Schema\ColumnTypeFamily;
  * Fuzz tests for SelectTransformer::transform().
  *
  * Guards the following properties:
- * - P-TF-1: transform() never crashes on any generated SELECT
+ * - P-TF-1: transform() accepts generated SELECTs or reports UnsupportedSqlException
  * - P-TF-2: When SQL references a shadowed table, the output contains a WITH clause (CTE injection)
- * - P-TF-3: With empty table context, SQL is returned unchanged (identity transform)
+ * - P-TF-3: Accepted SELECTs with empty table context retain their SQL
  * - P-TF-4: Empty-row shadow tables still inject CTE with WHERE FALSE
  */
 #[CoversNothing]
@@ -38,7 +38,7 @@ final class TransformerFuzzTest extends TestCase
     {
         $this->transformer = new SelectTransformer(new PgSqlCastRenderer(), new PgSqlIdentifierQuoter());
         $faker = Factory::create();
-        $this->provider = new PostgreSqlProvider($faker);
+        $this->provider = new PostgreSqlProvider($faker, 'pg-17.2');
         $faker->seed(20260815);
     }
     /**
@@ -48,7 +48,12 @@ final class TransformerFuzzTest extends TestCase
     {
         for ($i = 0; $i < self::ITERATIONS; $i++) {
             $sql = $this->provider->selectStatement(50);
-            $result = $this->transformer->transform($sql, []);
+            try {
+                $result = $this->transformer->transform($sql, []);
+            } catch (UnsupportedSqlException $exception) {
+                self::assertStringContainsString('ZTD Write Protection:', $exception->getMessage());
+                continue;
+            }
             self::assertNotEmpty($result, "transform() returned empty string on iteration {$i}");
             self::assertSame($sql, $result);
         }

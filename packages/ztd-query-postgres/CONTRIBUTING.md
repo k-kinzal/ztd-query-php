@@ -49,6 +49,7 @@ The four PHPUnit XML files match the majors actually installed by those graphs;
 | Parallel unit tests and executable API examples | `composer test` |
 | Unit tests only | `composer test:unit` |
 | Executable API examples only | `composer doctest` |
+| SQLFaker property tests (also in PHP 8.5 CI) | `composer test:fuzz` |
 | Strict coding standards | `composer format:check` |
 | PHPStan max, strict and toolkit rules | `composer phpstan` |
 | PHP 8.1–8.99 syntax compatibility | `composer compat` |

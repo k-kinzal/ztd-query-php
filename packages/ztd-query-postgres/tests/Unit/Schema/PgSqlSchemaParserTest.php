@@ -1840,4 +1840,10 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         );
         self::assertSame(['id'], $def->primaryKeys);
     }
+    public function testParseRejectsPrimaryKeysReferencingUndeclaredColumns(): void
+    {
+        $parser = new PgSqlSchemaParser();
+        self::assertNull($parser->parse('CREATE TABLE users (id INTEGER, PRIMARY KEY (missing_id))'));
+        self::assertNull($parser->parse('CREATE TABLE users (id INTEGER, PRIMARY KEY (id, missing_id))'));
+    }
 }

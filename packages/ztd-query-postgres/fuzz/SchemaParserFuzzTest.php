@@ -38,7 +38,7 @@ final class SchemaParserFuzzTest extends TestCase
     {
         $this->parser = new PgSqlSchemaParser();
         $faker = Factory::create();
-        $this->provider = new PostgreSqlProvider($faker);
+        $this->provider = new PostgreSqlProvider($faker, 'pg-17.2');
         $faker->seed(20260815);
     }
     /**
@@ -56,7 +56,10 @@ final class SchemaParserFuzzTest extends TestCase
         self::addToAssertionCount(self::ITERATIONS);
     }
     /**
-     * Test parse structural invariants on random create table.
+     * Check that accepted definitions retain consistent column references.
+     *
+     * SQLFaker can generate constraints naming undeclared columns. The parser
+     * may reject these definitions; accepted metadata must satisfy its contract.
      */
     public function testParseStructuralInvariantsOnRandomCreateTable(): void
     {

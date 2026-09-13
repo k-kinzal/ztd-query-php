@@ -34,7 +34,7 @@ final class ClassifyFuzzTest extends TestCase
     {
         $this->guard = new PgSqlQueryGuard(new PgSqlParser());
         $faker = Factory::create();
-        $this->provider = new PostgreSqlProvider($faker);
+        $this->provider = new PostgreSqlProvider($faker, 'pg-17.2');
         $faker->seed(20260815);
     }
     /**

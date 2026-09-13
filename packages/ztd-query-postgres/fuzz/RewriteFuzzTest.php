@@ -67,7 +67,7 @@ final class RewriteFuzzTest extends TestCase
         $mutationResolver = new PgSqlMutationResolver($shadowStore, $registry, $schemaParser, $parser);
         $this->rewriter = new PgSqlRewriter($this->guard, $shadowStore, $registry, $transformer, $mutationResolver, $parser);
         $faker = Factory::create();
-        $this->provider = new PostgreSqlProvider($faker);
+        $this->provider = new PostgreSqlProvider($faker, 'pg-17.2');
         $faker->seed(20260815);
     }
     /**

@@ -64,6 +64,9 @@ jobs:
         run: composer check-platform-reqs
       - name: Run the tests in parallel
         run: composer test
+      - name: Run the SQLFaker property tests
+        if: matrix.php == '8.5'
+        run: composer test:fuzz
 
   lint:
     name: Lint

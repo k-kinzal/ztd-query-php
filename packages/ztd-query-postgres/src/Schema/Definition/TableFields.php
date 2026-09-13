@@ -115,7 +115,7 @@ final class TableFields
     }
 
     /**
-     * Validates referenced unique columns and produces the complete table definition.
+     * Validates referenced primary and unique columns and produces the complete table definition.
      * @param array<string, \ZtdQuery\Schema\ForeignKeyDefinition> $foreignKeys
      */
     public function definition(string $createTableSql, array $foreignKeys): ?TableDefinition
@@ -124,7 +124,7 @@ final class TableFields
             return null;
         }
 
-        foreach ($this->uniqueConstraints as $constraintColumns) {
+        foreach ([$this->primaryKeys, ...array_values($this->uniqueConstraints)] as $constraintColumns) {
             foreach ($constraintColumns as $col) {
                 if (!in_array($col, $this->columns, true)) {
                     return null;

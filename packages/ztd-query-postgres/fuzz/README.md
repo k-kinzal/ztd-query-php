@@ -70,5 +70,6 @@ generator revision change gets a separate coverage history.
 
 Set `SQLFAKER_COVERAGE=0` to disable measurement during diagnosis. Recording does
 not change the compiled plan or generated SQL. The seeded PHPUnit property tests
-in this directory remain available through `composer test:fuzz`; native targets
+in this directory accept parser rejection of invalid column references and require
+consistent metadata for accepted definitions. They remain available through `composer test:fuzz`; native targets
 provide the evolving coverage-guided search.
