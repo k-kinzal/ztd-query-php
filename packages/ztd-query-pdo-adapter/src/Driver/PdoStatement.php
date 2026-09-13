@@ -61,8 +61,17 @@ final class PdoStatement implements StatementInterface
      */
     public function fetchAll(): array
     {
-        /** @var array<int, array<string, mixed>> $rows */
-        $rows = $this->statement->fetchAll(PDO::FETCH_ASSOC);
+        $rows = [];
+        while (($row = $this->statement->fetch(PDO::FETCH_ASSOC)) !== false) {
+            if (!is_array($row)) {
+                throw new DatabaseException('PDO returned a non-array row for FETCH_ASSOC.');
+            }
+            $columns = [];
+            foreach ($row as $name => $value) {
+                $columns["{$name}"] = $value;
+            }
+            $rows[] = $columns;
+        }
 
         return $rows;
     }

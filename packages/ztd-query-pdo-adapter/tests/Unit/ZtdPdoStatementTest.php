@@ -488,9 +488,12 @@ final class ZtdPdoStatementTest extends TestCase
 
         ob_start();
         $dumped = $statement->debugDumpParams();
-        ob_end_clean();
+        $output = ob_get_clean();
 
         self::assertTrue($dumped);
+        self::assertIsString($output);
+        self::assertStringContainsString('SELECT 1 AS id', $output);
+        self::assertStringContainsString('Params:  0', $output);
     }
 
     public function testGetIteratorWalksTheRowsZtdBuffered(): void
@@ -609,4 +612,30 @@ final class ZtdPdoStatementTest extends TestCase
 
 
 
+
+    public function testBufferedColumnFetchAllReturnsEveryRow(): void
+    {
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+        $statement = ZtdPdo::fromPdo($native)->query("INSERT INTO users VALUES (1, 'Ada'), (2, 'Grace') RETURNING id, name");
+        self::assertInstanceOf(ZtdPdoStatement::class, $statement);
+        self::assertSame(['Ada', 'Grace'], $statement->fetchAll(PDO::FETCH_COLUMN, 1));
+        self::assertSame([], $statement->fetchAll(PDO::FETCH_COLUMN, 1));
+    }
+
+    /**
+     * @throws ReflectionException When object hydration fails.
+     */
+    public function testFetchObjectDelegatesWithoutABufferedResult(): void
+    {
+        $native = new PDO('sqlite::memory:');
+        $inner = $native->query("SELECT 7 AS id, 'Ada' AS name");
+        self::assertNotFalse($inner);
+        $session = (new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->create(new \ZtdQuery\Adapter\Pdo\Driver\PdoConnection($native), ZtdConfig::default());
+        $statement = new ZtdPdoStatement($inner, $session, null);
+        $row = $statement->fetchObject();
+        self::assertIsObject($row);
+        self::assertSame(['id' => 7, 'name' => 'Ada'], get_object_vars($row));
+        self::assertFalse($statement->fetchObject());
+    }
 }

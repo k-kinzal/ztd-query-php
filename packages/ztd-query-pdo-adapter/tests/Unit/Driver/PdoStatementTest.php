@@ -128,4 +128,12 @@ final class PdoStatementTest extends TestCase
         self::assertSame([['mixedname' => 9, 'optionalvalue' => null]], (new PdoStatement($statement))->fetchAll());
     }
 
+
+    public function testFetchAllPreservesNumericColumnLabelsAndValueTypes(): void
+    {
+        $native = new PDO('sqlite::memory:');
+        $statement = $native->query('SELECT 7 AS "12", 1.5 AS amount, NULL AS optional');
+        self::assertNotFalse($statement);
+        self::assertSame([[12 => 7, 'amount' => 1.5, 'optional' => null]], (new PdoStatement($statement))->fetchAll());
+    }
 }

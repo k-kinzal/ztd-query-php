@@ -378,7 +378,7 @@ final class ZtdPdoTest extends TestCase
         $connection19 = ZtdPdo::fromPdo($native19);
         $ztdPdo = $connection19;
 
-        $ztdPdo->pgsqlCopyToArray('users');
+        $ztdPdo->pgsqlCopyToArray('users', fields: 'id');
     }
 
     public function testCopyToArrayRefusesADialectWithNoCopy(): void
@@ -430,7 +430,7 @@ final class ZtdPdoTest extends TestCase
         $connection23 = ZtdPdo::fromPdo($native23);
         $ztdPdo = $connection23;
 
-        $ztdPdo->pgsqlCopyToFile('users', '/dev/null');
+        $ztdPdo->pgsqlCopyToFile('users', '/dev/null', fields: 'id');
     }
 
     public function testCopyToFileRefusesADialectWithNoCopy(): void
@@ -456,7 +456,7 @@ final class ZtdPdoTest extends TestCase
         $connection25 = ZtdPdo::fromPdo($native25);
         $ztdPdo = $connection25;
 
-        $ztdPdo->pgsqlCopyFromFile('users', '/dev/null');
+        $ztdPdo->pgsqlCopyFromFile('users', '/dev/null', fields: 'id');
     }
 
     public function testCopyFromFileRefusesADialectWithNoCopy(): void
@@ -542,8 +542,33 @@ final class ZtdPdoTest extends TestCase
             self::fail('Unsupported maintenance statements must be rejected.');
         } catch (ZtdPdoException $failure) {
             self::assertStringContainsString('Statement type not supported', $failure->getMessage());
+            self::assertSame(0, $failure->getCode());
             self::assertInstanceOf(\ZtdQuery\Connection\Exception\DatabaseException::class, $failure->getPrevious());
         }
     }
 
+
+    public function testPgsqlCopyToArrayRejectsInvalidFieldLists(): void
+    {
+        $pdo = ZtdPdo::fromPdo(new PDO('sqlite::memory:'));
+        $this->expectException(ZtdPdoException::class);
+        $this->expectExceptionMessage('PostgreSQL COPY argument $fields must be a string, float given.');
+        $pdo->pgsqlCopyToArray('items', fields: 1.5);
+    }
+
+    public function testPgsqlCopyToFileRejectsInvalidFieldLists(): void
+    {
+        $pdo = ZtdPdo::fromPdo(new PDO('sqlite::memory:'));
+        $this->expectException(ZtdPdoException::class);
+        $this->expectExceptionMessage('PostgreSQL COPY argument $fields must be a string, float given.');
+        $pdo->pgsqlCopyToFile('items', '/dev/null', fields: 1.5);
+    }
+
+    public function testPgsqlCopyFromFileRejectsInvalidFieldLists(): void
+    {
+        $pdo = ZtdPdo::fromPdo(new PDO('sqlite::memory:'));
+        $this->expectException(ZtdPdoException::class);
+        $this->expectExceptionMessage('PostgreSQL COPY argument $fields must be a string, float given.');
+        $pdo->pgsqlCopyFromFile('items', '/dev/null', fields: 1.5);
+    }
 }
