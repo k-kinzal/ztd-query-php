@@ -1,0 +1,22 @@
+sql-fakerのdocs関係を再編します。
+README.mdで下記の変更をしてください
+・バッヂでdeepwikiのバッヂを入れてください
+・セクションなしのOverviewとして文法に基づいたSQLの生成器であると説明を入れてください
+・Overviewセクションは削除してください
+・Requirementsの次にSupport Syntaxをいれ、サブセクションでMySQL、PostgreSQL、SQLiteのバージョンをテーブルで入れてください
+・UsageはMySqlProviderを使った簡単なSQL生成例のみでOKです。他は消してください
+
+次にdocsを再編します。docsは製品面であり利用者向けの情報を入れる場所になります。SQLFakerの開発者向け情報を入れるところではないので注意ください。この注意をドキュメントに入れることは許しません。
+・README.mdは不要です
+・algorithm.mdにSQLFakerのアルゴリズムを提示しSQLFakerの限界を明記してください
+・faker.mdにSQLFakerの公開インターフェースとしてFakerインターフェースの説明を入れてください。共通、MySQL、PostgreSQL、SQLiteと記載してください。DB特有の記載がなければそのDBはなしとしてください
+・generator.mdにSQLFakerの公開インターフェースとしてSQLGeneratorの説明をいれてください。共通、MySQL、PostgreSQL、SQLiteと記載してください。DB特有の記載がなければそのDBはなしとしてください
+・plan.mdにSQLFakerの生成計画に関する説明を入れてください。共通、MySQL、PostgreSQL、SQLiteと記載してください。DB特有の記載がなければそのDBはなしとしてください
+
+---
+
+PRを作成ください。
+
+---
+
+README.mdにDocumentationを書くという指示はありません。削除してください。packages/sql-faker/docs/algorithm.mdの内容が少しおかしいです。アルゴリズムの話をするのにSQLGeneratorの実装、インターフェース、計画などの話になっています。そういうのは他ファイルでやってほしく、ここは純粋にどう生成するのかのアルゴリズムの話でなければなりません。また限界の話がかなりズレてます。ここで生成できるのSQLの限界の話をしています。例えばDBで常に実行可能であるかなどは正しい限界です。対してSyntax coverageなどはただのバグであり、そういう予防線が欲しいわけではないです。別の言い方をすると限界というのはSQLFakerのサポート範囲の線引きです。何でも書けばいいというわけではありません。faker/generator/plan.mdはコードを書いてください。期待しているのはhttps://github.com/k-kinzal/testcontainers-php/blob/main/docs/container-configuration.mdのようなどう使うかという説明になります。

@@ -1,0 +1,66 @@
+{
+  "cli_version": "0.10.3",
+  "checkpoint_id": "01M2DQ5S558N9FA023V5BSFGZV",
+  "session_id": "01a09586-d829-7563-875c-d9b3b87bbd48",
+  "strategy": "manual-commit",
+  "created_at": "2026-09-13T15:46:34.267096Z",
+  "branch": "main",
+  "checkpoints_count": 3,
+  "save_step_count": 3,
+  "files_touched": [
+    "packages/sql-faker/README.md",
+    "packages/sql-faker/docs/algorithm.md",
+    "packages/sql-faker/docs/faker.md",
+    "packages/sql-faker/docs/generator.md",
+    "packages/sql-faker/docs/plan.md"
+  ],
+  "agent": "Codex",
+  "model": "gpt-6-astra",
+  "turn_id": "cb3f6a52f3ec",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 478768,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 7462784,
+    "output_tokens": 57498,
+    "api_call_count": 69
+  },
+  "session_metrics": {
+    "turn_count": 3
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-09-13T15:46:34.142391Z",
+    "agent_lines": 227,
+    "agent_removed": 175,
+    "human_added": 66649,
+    "human_modified": 398,
+    "human_removed": 0,
+    "total_committed": 67274,
+    "total_lines_changed": 105063,
+    "agent_percentage": 0.38262756631735245,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    },
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 625,
+      "agent_lines_removed": 175
+    },
+    {
+      "checkpoint_number": 3,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 625,
+      "agent_lines_removed": 175
+    }
+  ]
+}
