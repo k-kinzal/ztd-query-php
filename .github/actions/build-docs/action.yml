@@ -70,5 +70,5 @@ runs:
         packages/ztd-query-mysqli-adapter/vendor/bin/docgen \
           --packages=packages/sql-faker,packages/ztd-query-mysqli-adapter \
           --title=ztd-query-php --output=build/docs --cache-dir=build/docgen-cache \
-          --deptrac=build/docgen-inputs/deptrac.yaml --coverage=build/docgen-inputs/coverage \
+          --deptrac="$PWD/build/docgen-inputs/deptrac.yaml" --coverage=build/docgen-inputs/coverage \
           --base-url="$base_url" "${arguments[@]}"
