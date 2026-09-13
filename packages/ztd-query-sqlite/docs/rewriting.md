@@ -2,7 +2,7 @@
 
 `SqliteSessionFactory` is the entry point for custom adapters. Its `create()` method is an **instance method** accepting a core `ConnectionInterface` and `ZtdConfig`. The returned session owns the schema registry, shadow data, and virtual transaction state.
 
-The [PDO adapter](../../ztd-query-pdo-adapter) supplies connection and statement adapters for ordinary PDO use. When implementing another adapter, provide the core connection and statement interfaces. This minimal example shows session creation without reflected tables:
+The [PDO adapter](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-pdo-adapter) supplies connection and statement adapters for ordinary PDO use. When implementing another adapter, provide the core connection and statement interfaces. This minimal example shows session creation without reflected tables:
 
 ```php
 require 'vendor/autoload.php';
@@ -86,4 +86,4 @@ The low-level example covers ordinary DML. Prefer a session for adapter executio
 
 Unsupported SQL raises `UnsupportedSqlException`; references absent from the supplied registry raise `UnknownSchemaException`. A guard classifying a statement does not guarantee that the complete statement is supported by the rewriter.
 
-The public entry points documented here, the parser, query guard, schema parser/reflector, error classifier, and SELECT transformer retain their existing class names. Extracted collaborators under the parsing, schema, rewriting, and binding directories implement those entry points. Use the [generated API reference](https://k-kinzal.github.io/ztd-query-php/sqlite/k-kinzal/ztd-query-sqlite/) for signatures and executable examples, and the [SQLite specification](../../../docs/sqlite-spec.md) for feature-specific behavior.
+The public entry points documented here, the parser, query guard, schema parser/reflector, error classifier, and SELECT transformer retain their existing class names. Extracted collaborators under the parsing, schema, rewriting, and binding directories implement those entry points. Use the [generated API reference](https://k-kinzal.github.io/ztd-query-php/sqlite/k-kinzal/ztd-query-sqlite/) for signatures and executable examples, and the [SQLite specification](https://github.com/k-kinzal/ztd-query-php/blob/main/docs/sqlite-spec.md) for feature-specific behavior.

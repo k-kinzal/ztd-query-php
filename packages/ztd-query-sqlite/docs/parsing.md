@@ -29,7 +29,7 @@ try {
 }
 ```
 
-Transaction commands use the session's `transactionStatement()` API. They are not DML classifications. Some read-only diagnostics and in-memory attachments have explicit passthrough handling; see the [SQLite specification](../../../docs/sqlite-spec.md) for those boundaries.
+Transaction commands use the session's `transactionStatement()` API. They are not DML classifications. Some read-only diagnostics and in-memory attachments have explicit passthrough handling; see the [SQLite specification](https://github.com/k-kinzal/ztd-query-php/blob/main/docs/sqlite-spec.md) for those boundaries.
 
 ## Extracting clauses
 

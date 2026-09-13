@@ -16,12 +16,12 @@ This package implements the SQLite-specific operations used by ZTD (Zero Table D
 - Reflect SQLite table and view definitions and track virtual schema changes.
 - Classify missing-schema errors reported by SQLite.
 
-The [PDO adapter](../ztd-query-pdo-adapter) provides the usual PDO interface. Custom adapters can compose this package directly through `SqliteSessionFactory` or the lower-level rewrite components.
+The [PDO adapter](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-pdo-adapter) provides the usual PDO interface. Custom adapters can compose this package directly through `SqliteSessionFactory` or the lower-level rewrite components.
 
 ## Requirements
 
 - PHP 8.1 or higher
-- [k-kinzal/ztd-query-core](../ztd-query-core)
+- [k-kinzal/ztd-query-core](https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-core)
 - PDO SQLite to execute the examples below
 
 ## Installation
@@ -56,8 +56,8 @@ For writes and transaction state, use a session or the complete rewrite pipeline
 - [Parsing, classification, schema inspection, and errors](docs/parsing.md)
 - [Sessions, shadow reads, and simulated writes](docs/rewriting.md)
 - [Generated API reference and executable examples](https://k-kinzal.github.io/ztd-query-php/sqlite/k-kinzal/ztd-query-sqlite/)
-- [Detailed SQLite behavior and limitations](../../docs/sqlite-spec.md)
-- [SQL support matrix](../../docs/sql-support-matrix.md)
+- [Detailed SQLite behavior and limitations](https://github.com/k-kinzal/ztd-query-php/blob/main/docs/sqlite-spec.md)
+- [SQL support matrix](https://github.com/k-kinzal/ztd-query-php/blob/main/docs/sql-support-matrix.md)
 
 ## License
 
