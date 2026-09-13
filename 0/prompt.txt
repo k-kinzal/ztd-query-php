@@ -1,0 +1,5 @@
+sql-fakerでk-kinzal/php-ai-toolkitのsetup-toolkit-actionsスキルを使ってSQLFakerのGitHub Actionsを整備してください。基本的には整っている理解ではあり最終チェック、調整ぐらいの位置付けで考えています。修正が必要であるならWorktreeで修正を行いPRを作成ください。
+
+---
+
+コンフリクトしたので解消ください。
