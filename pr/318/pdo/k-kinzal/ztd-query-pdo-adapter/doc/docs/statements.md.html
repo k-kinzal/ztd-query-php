@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Statements and transactions — k-kinzal/ztd-query-pdo-adapter</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/318/pdo/k-kinzal/ztd-query-pdo-adapter/doc/docs/statements.md.html">
+<meta name="description" content="Statements and transactions, a document of the k-kinzal/ztd-query-pdo-adapter package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="k-kinzal/ztd-query-pdo-adapter">
+<meta property="og:title" content="Statements and transactions — k-kinzal/ztd-query-pdo-adapter">
+<meta property="og:description" content="Statements and transactions, a document of the k-kinzal/ztd-query-pdo-adapter package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/318/pdo/k-kinzal/ztd-query-pdo-adapter/doc/docs/statements.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/318/pdo/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="k-kinzal/ztd-query-pdo-adapter">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../">
+<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../../../index.html">k-kinzal/ztd-query-pdo-adapter</a></div><div class="sb-pkg"><a href="../../../../k-kinzal/ztd-query-pdo-adapter/index.html">k-kinzal/ztd-query-pdo-adapter</a></div><nav class="sb-block"><div class="sb-title">Package</div><ul class="sb-list"><li data-diff="modified"><a href="../../../../k-kinzal/ztd-query-pdo-adapter/all-items.html">All items</a></li><li data-diff="modified"><a href="../../../../k-kinzal/ztd-query-pdo-adapter/index.html#documents">Documents</a></li></ul><div class="sb-kind" data-diff="modified">Layers</div><ul class="sb-list"><li data-diff="modified"><a href="../../../../k-kinzal/ztd-query-pdo-adapter/layer.Adapter.html">Adapter</a></li><li data-diff="added"><a href="../../../../k-kinzal/ztd-query-pdo-adapter/layer.Driver.html">Driver</a></li><li data-diff="modified"><a href="../../../../k-kinzal/ztd-query-pdo-adapter/layer.Session.html">Session</a></li></ul></nav><nav class="sb-block"><div class="sb-title">Namespaces</div><ul class="sb-list"><li data-diff="modified"><a href="../../../../k-kinzal/ztd-query-pdo-adapter/ZtdQuery/Adapter/Pdo/index.html" title="ZtdQuery\Adapter\Pdo">ZtdQuery\Adapter\Pdo</a></li><li data-diff="added"><a href="../../../../k-kinzal/ztd-query-pdo-adapter/ZtdQuery/Adapter/Pdo/Driver/index.html" title="ZtdQuery\Adapter\Pdo\Driver">ZtdQuery\Adapter\Pdo\Driver</a></li><li data-diff="added"><a href="../../../../k-kinzal/ztd-query-pdo-adapter/ZtdQuery/Adapter/Pdo/Session/index.html" title="ZtdQuery\Adapter\Pdo\Session">ZtdQuery\Adapter\Pdo\Session</a></li></ul></nav></nav>
+<div class="page">
+<header class="topbar">
+<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
+<nav class="crumbs"><a href="../../../../k-kinzal/ztd-query-pdo-adapter/index.html">k-kinzal/ztd-query-pdo-adapter</a><span class="crumb-sep">::</span><span class="crumb-current">docs/statements.md</span></nav>
+<div class="topbar-tools">
+<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing d56513049 to working tree">d56513049 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><button id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between d56513049 and working tree." data-off="This page documents what d56513049 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Statements and transactions</h1><div class="symbol-meta"><span class="src-link">docs/statements.md</span></div></div>
+<div class="notice diff-banner" data-diff="added">Added in working tree, compared to d56513049.</div>
+<section class="readme" data-diff="added"><div class="doc-block" data-diff="added"><h2>Statements and transactions</h2>
+</div><div class="doc-block" data-diff="added"><p>Prepared statements are rewritten again at execution time so that a statement prepared earlier sees subsequent shadow changes. <code>bindValue()</code> retains a value; <code>bindParam()</code> retains a reference and observes changes made before the next execution. Driver options and fetch modes are reapplied when the native statement is replaced.</p>
+</div><div class="doc-block" data-diff="added"><pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Adapter\Pdo\ZtdPdo</span>;
+
+<span class="tok-var">$native</span> = <span class="tok-kw">new</span> <span class="tok-id">PDO</span>(<span class="tok-str">&#039;sqlite::memory:&#039;</span>);
+<span class="tok-var">$native</span>-&gt;<span class="tok-id">exec</span>(<span class="tok-str">&#039;CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)&#039;</span>);
+<span class="tok-var">$pdo</span> = <span class="tok-id">ZtdPdo</span>::<span class="tok-id">fromPdo</span>(<span class="tok-var">$native</span>);
+<span class="tok-var">$pdo</span>-&gt;<span class="tok-id">exec</span>(<span class="tok-str">&quot;INSERT INTO users VALUES (1, &#039;Ada&#039;), (2, &#039;Grace&#039;)&quot;</span>);
+<span class="tok-var">$select</span> = <span class="tok-var">$pdo</span>-&gt;<span class="tok-id">prepare</span>(<span class="tok-str">&#039;SELECT name FROM users WHERE id = ?&#039;</span>);
+<span class="tok-var">$id</span> = <span class="tok-num">1</span>;
+<span class="tok-var">$select</span>-&gt;<span class="tok-id">bindParam</span>(<span class="tok-num">1</span>, <span class="tok-var">$id</span>, <span class="tok-id">PDO</span>::<span class="tok-id">PARAM_INT</span>);
+<span class="tok-var">$select</span>-&gt;<span class="tok-id">execute</span>();
+<span class="tok-id">assert</span>(<span class="tok-var">$select</span>-&gt;<span class="tok-id">fetchColumn</span>() === <span class="tok-str">&#039;Ada&#039;</span>);
+<span class="tok-var">$id</span> = <span class="tok-num">2</span>;
+<span class="tok-var">$select</span>-&gt;<span class="tok-id">execute</span>();
+<span class="tok-id">assert</span>(<span class="tok-var">$select</span>-&gt;<span class="tok-id">fetchColumn</span>() === <span class="tok-str">&#039;Grace&#039;</span>);
+<span class="tok-var">$pdo</span>-&gt;<span class="tok-id">exec</span>(<span class="tok-str">&quot;UPDATE users SET name = &#039;Grace Hopper&#039; WHERE id = 2&quot;</span>);
+<span class="tok-var">$select</span>-&gt;<span class="tok-id">execute</span>();
+<span class="tok-id">assert</span>(<span class="tok-var">$select</span>-&gt;<span class="tok-id">fetchColumn</span>() === <span class="tok-str">&#039;Grace Hopper&#039;</span>);</code></pre>
+</div><div class="doc-block" data-diff="added"><p>A normal write has no fetchable result set. <code>rowCount()</code> reports affected shadow rows. PostgreSQL and SQLite writes with a supported <code>RETURNING</code> clause expose buffered rows through the statement&#039;s fetch methods.</p>
+</div><div class="doc-block" data-diff="added"><pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Adapter\Pdo\ZtdPdo</span>;
+
+<span class="tok-var">$native</span> = <span class="tok-kw">new</span> <span class="tok-id">PDO</span>(<span class="tok-str">&#039;sqlite::memory:&#039;</span>);
+<span class="tok-var">$native</span>-&gt;<span class="tok-id">exec</span>(<span class="tok-str">&#039;CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)&#039;</span>);
+<span class="tok-var">$pdo</span> = <span class="tok-id">ZtdPdo</span>::<span class="tok-id">fromPdo</span>(<span class="tok-var">$native</span>);
+<span class="tok-var">$write</span> = <span class="tok-var">$pdo</span>-&gt;<span class="tok-id">prepare</span>(<span class="tok-str">&#039;INSERT INTO users (name) VALUES (?) RETURNING id, name&#039;</span>);
+<span class="tok-var">$write</span>-&gt;<span class="tok-id">execute</span>([<span class="tok-str">&#039;Ada&#039;</span>]);
+<span class="tok-id">assert</span>(<span class="tok-var">$write</span>-&gt;<span class="tok-id">rowCount</span>() === <span class="tok-num">1</span>);
+<span class="tok-id">assert</span>(<span class="tok-var">$write</span>-&gt;<span class="tok-id">fetch</span>(<span class="tok-id">PDO</span>::<span class="tok-id">FETCH_ASSOC</span>) === [<span class="tok-str">&#039;id&#039;</span> =&gt; <span class="tok-num">1</span>, <span class="tok-str">&#039;name&#039;</span> =&gt; <span class="tok-str">&#039;Ada&#039;</span>]);
+<span class="tok-id">assert</span>(<span class="tok-var">$write</span>-&gt;<span class="tok-id">fetch</span>() === <span class="tok-id">false</span>);
+<span class="tok-id">assert</span>(<span class="tok-var">$native</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&#039;SELECT COUNT(*) FROM users&#039;</span>)-&gt;<span class="tok-id">fetchColumn</span>() === <span class="tok-num">0</span>);</code></pre>
+</div><div class="doc-block" data-diff="added"><p><code>beginTransaction()</code>, <code>commit()</code>, and <code>rollBack()</code> coordinate native transaction state and shadow state. Committing simulated writes retains them in the shadow; rolling back removes changes made in that transaction.</p>
+</div><div class="doc-block" data-diff="added"><pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Adapter\Pdo\ZtdPdo</span>;
+
+<span class="tok-var">$native</span> = <span class="tok-kw">new</span> <span class="tok-id">PDO</span>(<span class="tok-str">&#039;sqlite::memory:&#039;</span>);
+<span class="tok-var">$native</span>-&gt;<span class="tok-id">exec</span>(<span class="tok-str">&#039;CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)&#039;</span>);
+<span class="tok-var">$pdo</span> = <span class="tok-id">ZtdPdo</span>::<span class="tok-id">fromPdo</span>(<span class="tok-var">$native</span>);
+<span class="tok-var">$pdo</span>-&gt;<span class="tok-id">beginTransaction</span>();
+<span class="tok-var">$pdo</span>-&gt;<span class="tok-id">exec</span>(<span class="tok-str">&quot;INSERT INTO users VALUES (1, &#039;Ada&#039;)&quot;</span>);
+<span class="tok-id">assert</span>(<span class="tok-var">$pdo</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&#039;SELECT COUNT(*) FROM users&#039;</span>)-&gt;<span class="tok-id">fetchColumn</span>() === <span class="tok-num">1</span>);
+<span class="tok-var">$pdo</span>-&gt;<span class="tok-id">rollBack</span>();
+<span class="tok-id">assert</span>(!<span class="tok-var">$pdo</span>-&gt;<span class="tok-id">inTransaction</span>());
+<span class="tok-id">assert</span>(<span class="tok-var">$pdo</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&#039;SELECT COUNT(*) FROM users&#039;</span>)-&gt;<span class="tok-id">fetchColumn</span>() === <span class="tok-num">0</span>);
+<span class="tok-id">assert</span>(<span class="tok-var">$native</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&#039;SELECT COUNT(*) FROM users&#039;</span>)-&gt;<span class="tok-id">fetchColumn</span>() === <span class="tok-num">0</span>);</code></pre>
+</div><div class="doc-block" data-diff="added"><p>Fetch behavior that depends on driver capabilities remains driver-specific. For example, SQLite does not support multiple rowsets or arbitrary statement attributes. Check the native driver contract when using these methods.</p>
+</div></section>
+</main>
+<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div>
+<script src="../../../../assets/search-index.js" defer></script>
+<script src="../../../../assets/app.js" defer></script>
+</body>
+</html>

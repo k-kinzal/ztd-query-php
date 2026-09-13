@@ -43,7 +43,8 @@
 <span class="src-line" id="L7" data-diff="same"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\Attributes\CoversNothing</span>;</span>
 <span class="src-line" id="L8" data-diff="same"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\Attributes\Large</span>;</span>
 <span class="src-line" id="L9" data-diff="same"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\TestCase</span>;</span>
-<span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">Tests\Fixtures\PostgreSqlContainer</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">10</span><span class="tok-kw">use</span> <span class="tok-id">Tests\Fixtures\PostgreSqlContainer</span>;</span>
+<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">Tests\Container\PostgreSqlContainer</span>;</span>
 <span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Adapter\Pdo\ZtdPdo</span>;</span>
 <span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a></span>
 <span class="src-line" id="L13" data-diff="same"><a class="ln" href="#L13">13</a><span class="tok-com">/**</span></span>
@@ -51,7 +52,7 @@
 <span class="src-line" id="L15" data-diff="same"><a class="ln" href="#L15">15</a><span class="tok-com"> * @group integration</span></span>
 <span class="src-line" id="L16" data-diff="same"><a class="ln" href="#L16">16</a><span class="tok-com"> * @group postgres</span></span>
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> *</span></span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> * @phpstan-import-type Row from \ZtdQuery\Adapter\Pdo\PdoStatement</span></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> * @phpstan-type Row array&lt;string, mixed&gt;</span></span>
 <span class="src-line" id="L19" data-diff="same"><a class="ln" href="#L19">19</a><span class="tok-com"> */</span></span>
 <span class="src-line" id="L20" data-diff="same"><a class="ln" href="#L20">20</a>#[<span class="tok-id">CoversNothing</span>]</span>
 <span class="src-line" id="L21" data-diff="same"><a class="ln" href="#L21">21</a>#[<span class="tok-id">Large</span>]</span>
