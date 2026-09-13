@@ -44,4 +44,43 @@ final class MysqliPropertyReaderTest extends TestCase
         self::assertNull($reader->read($connection, 'unsupported'));
         $connection->close();
     }
+
+    public function testReadPreservesFailedConnectionDetails(): void
+    {
+        $host = getenv('ZTD_TEST_MYSQL_HOST');
+        $port = getenv('ZTD_TEST_MYSQL_PORT');
+        self::assertIsString($host);
+        self::assertIsString($port);
+        mysqli_report(MYSQLI_REPORT_OFF);
+        try {
+            $connection = new mysqli($host, 'missing_' . bin2hex(random_bytes(8)), 'invalid', 'test', (int) $port);
+            $reader = new MysqliPropertyReader();
+            $error = $connection->connect_error;
+            self::assertIsString($error);
+            self::assertNotSame('', $error);
+            self::assertSame(1045, $reader->read($connection, 'connect_errno'));
+            self::assertSame($error, $reader->read($connection, 'connect_error'));
+        } finally {
+            mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+        }
+    }
+
+    public function testReadPreservesInformationFromMultipleWrites(): void
+    {
+        $host = getenv('ZTD_TEST_MYSQL_HOST');
+        $port = getenv('ZTD_TEST_MYSQL_PORT');
+        self::assertIsString($host);
+        self::assertIsString($port);
+        $connection = new mysqli($host, 'root', 'root', 'test', (int) $port);
+        $connection->query('CREATE TEMPORARY TABLE info_rows (id INT PRIMARY KEY)');
+        $connection->query('INSERT INTO info_rows VALUES (1), (2)');
+        $reader = new MysqliPropertyReader();
+        $info = $connection->info;
+        self::assertIsString($info);
+        self::assertNotSame('', $info);
+        self::assertSame($info, $reader->read($connection, 'info'));
+        self::assertSame(2, $reader->read($connection, 'affected_rows'));
+        $connection->close();
+    }
+
 }

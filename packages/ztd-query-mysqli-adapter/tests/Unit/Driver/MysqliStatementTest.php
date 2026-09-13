@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use mysqli;
+use mysqli_result;
 use mysqli_stmt;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Large;
@@ -65,7 +66,7 @@ final class MysqliStatementTest extends TestCase
         self::assertIsString($port);
         $port = (int) $port;
         $connection = new mysqli($host, 'root', 'root', 'test', $port);
-        $native = $connection->prepare('SELECT 7 AS id');
+        $native = $connection->prepare('SELECT 7 AS id UNION ALL SELECT 9 AS id');
         self::assertInstanceOf(mysqli_stmt::class, $native);
         $statement = new MysqliStatement($native, $connection);
         self::assertTrue($statement->execute());
@@ -73,8 +74,11 @@ final class MysqliStatementTest extends TestCase
         $resolver->method('resolve')->willReturn(new ColumnType(ColumnTypeFamily::INTEGER, 'INT'));
         self::assertSame('id', $statement->resultColumns($resolver)[0]->name);
         self::assertSame('id', $statement->resultColumns($resolver)[0]->name);
-        self::assertSame(1, $statement->rowCount());
-        self::assertSame([['id' => 7]], $statement->fetchAll());
+        self::assertSame(2, $statement->rowCount());
+        self::assertSame([['id' => 7], ['id' => 9]], $statement->fetchAll());
+        $status = $connection->query("SHOW SESSION STATUS LIKE 'Com_stmt_close'");
+        self::assertInstanceOf(mysqli_result::class, $status);
+        self::assertSame([['Variable_name' => 'Com_stmt_close', 'Value' => '1']], $status->fetch_all(MYSQLI_ASSOC));
         $connection->close();
     }
 
@@ -94,6 +98,9 @@ final class MysqliStatementTest extends TestCase
         self::assertSame(2, $statement->rowCount());
         self::assertSame([], $statement->resultColumns(self::createStub(ResultColumnTypeResolver::class)));
         self::assertSame([], $statement->fetchAll());
+        $status = $connection->query("SHOW SESSION STATUS LIKE 'Com_stmt_close'");
+        self::assertInstanceOf(mysqli_result::class, $status);
+        self::assertSame([['Variable_name' => 'Com_stmt_close', 'Value' => '1']], $status->fetch_all(MYSQLI_ASSOC));
         $connection->close();
     }
 

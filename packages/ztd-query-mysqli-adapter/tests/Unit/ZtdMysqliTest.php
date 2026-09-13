@@ -25,6 +25,7 @@ use ZtdQuery\Adapter\Mysqli\ZtdMysqliStatement;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\MySql\MySqlSessionFactory;
 use ZtdQuery\Platform\MySql\MySqlTransactionStatementParser;
 use ZtdQuery\Platform\SessionFactory;
 use ZtdQuery\ResultSelectRunner;
@@ -33,6 +34,7 @@ use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Session;
 use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Sql\TransactionStatement;
 
 #[CoversClass(ZtdMysqli::class)]
 #[Large]
@@ -46,6 +48,53 @@ use ZtdQuery\Shadow\ShadowStore;
 #[UsesClass(MysqliResultColumnExtractor::class)]
 final class ZtdMysqliTest extends TestCase
 {
+    public function testConstructorUsesTheProvidedFactoryAndConfiguration(): void
+    {
+        $host = getenv('ZTD_TEST_MYSQL_HOST');
+        $port = getenv('ZTD_TEST_MYSQL_PORT');
+        self::assertIsString($host);
+        self::assertIsString($port);
+        $config = new ZtdConfig();
+        $factory = self::createMock(SessionFactory::class);
+        $factory->expects(self::once())->method('create')
+            ->with(self::isInstanceOf(MysqliConnection::class), self::identicalTo($config))
+            ->willReturnCallback((new MySqlSessionFactory())->create(...));
+        $ztd = new ZtdMysqli($host, 'root', 'root', 'test', (int) $port, null, $config, $factory);
+        self::assertSame(mysqli_get_client_info(), $ztd->client_info);
+        $result = $ztd->query('SELECT 42 AS id');
+        self::assertInstanceOf(mysqli_result::class, $result);
+        self::assertSame([['id' => 42]], $result->fetch_all(MYSQLI_ASSOC));
+        $ztd->close();
+    }
+
+    public function testBegin_transactionDefersTheDefaultSnapshotUntilTheFirstRead(): void
+    {
+        $host = getenv('ZTD_TEST_MYSQL_HOST');
+        $port = getenv('ZTD_TEST_MYSQL_PORT');
+        self::assertIsString($host);
+        self::assertIsString($port);
+        $connection = new mysqli($host, 'root', 'root', '', (int) $port);
+        $database = 'ztd_' . bin2hex(random_bytes(8));
+        $connection->query('CREATE DATABASE `' . $database . '`');
+        $connection->select_db($database);
+        $other = new mysqli($host, 'root', 'root', $database, (int) $port);
+        try {
+            $connection->query('CREATE TABLE snapshot_rows (id INT PRIMARY KEY) ENGINE=InnoDB');
+            $connection->query('SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ');
+            $ztd = ZtdMysqli::fromMysqli($connection);
+            self::assertTrue($ztd->begin_transaction());
+            $other->query('INSERT INTO snapshot_rows VALUES (1)');
+            $result = $connection->query('SELECT id FROM snapshot_rows');
+            self::assertInstanceOf(mysqli_result::class, $result);
+            self::assertSame([['id' => '1']], $result->fetch_all(MYSQLI_ASSOC));
+        } finally {
+            $connection->rollback();
+            $connection->query('DROP DATABASE `' . $database . '`');
+            $other->close();
+            $connection->close();
+        }
+    }
+
     public function testFromMysqliPassesTheConnectionAndConfigurationToItsFactory(): void
     {
         $host = getenv('ZTD_TEST_MYSQL_HOST');
@@ -319,6 +368,23 @@ final class ZtdMysqliTest extends TestCase
         $connection->close();
     }
 
+    public function testCommitAndRollbackEndNativeTransactionsByDefault(): void
+    {
+        $host = getenv('ZTD_TEST_MYSQL_HOST');
+        $port = getenv('ZTD_TEST_MYSQL_PORT');
+        self::assertIsString($host);
+        self::assertIsString($port);
+        $connection = new mysqli($host, 'root', 'root', 'test', (int) $port);
+        $ztd = ZtdMysqli::fromMysqli($connection);
+        self::assertTrue($ztd->begin_transaction());
+        self::assertTrue($ztd->commit());
+        self::assertTrue($connection->query('SET TRANSACTION ISOLATION LEVEL READ COMMITTED'));
+        self::assertTrue($ztd->begin_transaction());
+        self::assertTrue($ztd->rollback());
+        self::assertTrue($connection->query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ'));
+        $connection->close();
+    }
+
     public function testCommitRetainsTheShadowRows(): void
     {
         $host = getenv('ZTD_TEST_MYSQL_HOST');
@@ -383,6 +449,7 @@ final class ZtdMysqliTest extends TestCase
         $store->insert('items', [['id' => 2]]);
         $ztd->rollback();
         self::assertSame([['id' => 1]], $store->get('items'));
+        self::assertTrue($ztd->autocommit(false));
         $store->insert('items', [['id' => 3]]);
         self::assertTrue($ztd->autocommit(true));
         $ztd->rollback();
@@ -435,7 +502,7 @@ final class ZtdMysqliTest extends TestCase
         $connection->close();
     }
 
-    public function testRelease_savepointRemovesTheNativeSavepoint(): void
+    public function testRelease_savepointRemovesTheNativeAndShadowSavepoints(): void
     {
         $host = getenv('ZTD_TEST_MYSQL_HOST');
         $port = getenv('ZTD_TEST_MYSQL_PORT');
@@ -446,15 +513,23 @@ final class ZtdMysqliTest extends TestCase
         $store = new ShadowStore();
         $rewriter = self::createStub(SqlRewriter::class);
         $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
+        $session = new Session($rewriter, $store, new ResultSelectRunner(), new ZtdConfig(), new MysqliConnection($connection));
         $factory = self::createStub(SessionFactory::class);
-        $factory->method('create')->willReturnCallback(static fn (ConnectionInterface $native, ZtdConfig $config): Session => new Session($rewriter, $store, new ResultSelectRunner(), $config, $native));
+        $factory->method('create')->willReturn($session);
         $ztd = ZtdMysqli::fromMysqli($connection, null, $factory);
+        $store->set('items', [['id' => 1]]);
         $ztd->begin_transaction();
         $ztd->savepoint('scope');
+        $store->insert('items', [['id' => 2]]);
         self::assertTrue($ztd->release_savepoint('scope'));
+        $session->applyTransactionStatement(TransactionStatement::rollbackTo('scope'));
+        self::assertSame([['id' => 1], ['id' => 2]], $store->get('items'));
         $this->expectException(mysqli_sql_exception::class);
-        $ztd->query('ROLLBACK TO SAVEPOINT scope');
-        $connection->close();
+        try {
+            $ztd->query('ROLLBACK TO SAVEPOINT scope');
+        } finally {
+            $connection->close();
+        }
     }
 
     public function testReal_queryExecutesTheNativeQueryWhenDisabled(): void
