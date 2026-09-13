@@ -9,7 +9,6 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
 use ZtdQuery\Platform\Sqlite\SqlitePdoParameterBindingCompiler;
-use ZtdQuery\Schema\ColumnType;
 
 #[CoversClass(SqlitePdoParameterBindingCompiler::class)]
 #[UsesClass(SqliteCastRenderer::class)]

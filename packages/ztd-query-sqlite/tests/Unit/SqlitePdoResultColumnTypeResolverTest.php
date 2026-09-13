@@ -7,8 +7,8 @@ namespace Tests\Unit;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ZtdQuery\Platform\Sqlite\SqlitePdoResultColumnTypeResolver;
 use ZtdQuery\Platform\Sqlite\SqliteColumnTypeMapper;
+use ZtdQuery\Platform\Sqlite\SqlitePdoResultColumnTypeResolver;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(SqlitePdoResultColumnTypeResolver::class)]

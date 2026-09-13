@@ -99,7 +99,7 @@ final class SqliteFullTextSearchRewriterTest extends TestCase
         );
 
         self::assertSame(
-            "SELECT title FROM fts_articles WHERE missing MATCH ? OR "
+            'SELECT title FROM fts_articles WHERE missing MATCH ? OR '
             . "(INSTR(LOWER(COALESCE(CAST(\"body\" AS TEXT), '')), "
             . "LOWER(NULLIF(TRIM(CAST(('needle') AS TEXT)), ''))) > 0)",
             $result,

@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Sqlite\Transformer;
 
+use InvalidArgumentException;
+use RuntimeException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
-use ZtdQuery\Platform\Sqlite\SqliteNativeUpsertProjector;
-use ZtdQuery\Platform\Sqlite\SqliteLexerProfile;
-use ZtdQuery\Platform\Sqlite\SqliteParser;
 use ZtdQuery\Platform\Sqlite\SqliteCteShadowComposer;
+use ZtdQuery\Platform\Sqlite\SqliteLexerProfile;
+use ZtdQuery\Platform\Sqlite\SqliteNativeUpsertProjector;
+use ZtdQuery\Platform\Sqlite\SqliteParser;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
@@ -130,7 +132,7 @@ final class InsertTransformer implements SqlTransformer
         if ($this->parser->hasInsertSelect($sql)) {
             $selectSql = $this->parser->extractInsertSelect($sql);
             if ($selectSql === null) {
-                throw new \RuntimeException('Failed to extract SELECT from INSERT ... SELECT.');
+                throw new RuntimeException('Failed to extract SELECT from INSERT ... SELECT.');
             }
 
             $sourceColumns = $insertColumns !== [] ? $insertColumns : $tableColumns;
@@ -171,7 +173,7 @@ final class InsertTransformer implements SqlTransformer
             return implode(' UNION ALL ', $rows);
         }
 
-        throw new \RuntimeException('Insert statement has no values to project.');
+        throw new RuntimeException('Insert statement has no values to project.');
     }
 
     /**
@@ -197,8 +199,8 @@ final class InsertTransformer implements SqlTransformer
         $sourceColumns = $insertColumns !== [] || $values === [] ? $insertColumns : $tableColumns;
         try {
             $providedExpressions = $this->rowRenderer->providedExpressions($sourceColumns, $values);
-        } catch (\InvalidArgumentException $exception) {
-            throw new \RuntimeException($exception->getMessage(), 0, $exception);
+        } catch (InvalidArgumentException $exception) {
+            throw new RuntimeException($exception->getMessage(), 0, $exception);
         }
         $generatedValues = $this->identityAllocator->allocateMissing(
             $tableName,

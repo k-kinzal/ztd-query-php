@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Sqlite;
 
-use ZtdQuery\Platform\ErrorClassifier;
 use ZtdQuery\Connection\Exception\DatabaseException;
+use ZtdQuery\Platform\ErrorClassifier;
 
 /**
  * SQLite-specific error classifier.

@@ -4,18 +4,19 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Transformer;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CastRenderer;
+use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
+use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
 use ZtdQuery\Platform\Sqlite\SqliteLexicalMasker;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
 use ZtdQuery\Platform\Sqlite\Transformer\InsertSelectRenderer;
 use ZtdQuery\Platform\Sqlite\Transformer\InsertTransformer;
 use ZtdQuery\Platform\Sqlite\Transformer\SelectTransformer;
-use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
-use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
@@ -222,7 +223,7 @@ final class InsertTransformerTest extends TestCase
 
         $sql = "INSERT INTO users (id, name, email) VALUES (1, 'Alice')";
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $this->expectExceptionCode(0);
         $transformer->transform($sql, []);
     }
@@ -235,7 +236,7 @@ final class InsertTransformerTest extends TestCase
 
         $sql = 'INSERT INTO users (id) DEFAULT VALUES';
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $transformer->transform($sql, []);
     }
 
@@ -293,7 +294,7 @@ final class InsertTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new InsertTransformer($parser, $selectTransformer);
 
-        $sql = "INSERT INTO t (col1, col2) VALUES (10, 20)";
+        $sql = 'INSERT INTO t (col1, col2) VALUES (10, 20)';
         $result = $transformer->transform($sql, []);
         self::assertStringContainsString('10 AS "col1"', $result);
         self::assertStringContainsString('20 AS "col2"', $result);
@@ -333,7 +334,7 @@ final class InsertTransformerTest extends TestCase
             ],
         ];
 
-        $result = $transformer->transform("INSERT INTO t VALUES (1, 2)", $tables);
+        $result = $transformer->transform('INSERT INTO t VALUES (1, 2)', $tables);
         self::assertStringContainsString('1 AS "a"', $result);
         self::assertStringContainsString('2 AS "b"', $result);
     }
@@ -344,7 +345,7 @@ final class InsertTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new InsertTransformer($parser, $selectTransformer);
 
-        $result = $transformer->transform("INSERT INTO t (a) VALUES (1), (2), (3)", []);
+        $result = $transformer->transform('INSERT INTO t (a) VALUES (1), (2), (3)', []);
         self::assertStringContainsString('UNION ALL', $result);
         self::assertSame(2, substr_count($result, 'UNION ALL'));
     }
@@ -355,7 +356,7 @@ final class InsertTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new InsertTransformer($parser, $selectTransformer);
 
-        $result = $transformer->transform("INSERT INTO t (a) VALUES ( 1 )", []);
+        $result = $transformer->transform('INSERT INTO t (a) VALUES ( 1 )', []);
         self::assertStringContainsString('1 AS "a"', $result);
     }
 
@@ -383,7 +384,7 @@ final class InsertTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new InsertTransformer($parser, $selectTransformer);
 
-        $sql = "INSERT INTO t (a) VALUES (  hello  )";
+        $sql = 'INSERT INTO t (a) VALUES (  hello  )';
         $result = $transformer->transform($sql, []);
         self::assertStringContainsString('hello AS "a"', $result);
         self::assertStringNotContainsString('  hello  ', $result);
@@ -395,7 +396,7 @@ final class InsertTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new InsertTransformer($parser, $selectTransformer);
 
-        $sql = "INSERT INTO t (a) VALUES (1)";
+        $sql = 'INSERT INTO t (a) VALUES (1)';
         $result = $transformer->transform($sql, []);
         self::assertStringStartsWith('SELECT ', $result);
     }

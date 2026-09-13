@@ -4,16 +4,17 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Transformer;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use ZtdQuery\Exception\UnsupportedSqlException;
+use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
+use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
 use ZtdQuery\Platform\Sqlite\SqliteLexicalMasker;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
 use ZtdQuery\Platform\Sqlite\Transformer\SelectTransformer;
 use ZtdQuery\Platform\Sqlite\Transformer\UpdateTransformer;
-use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
-use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 
 #[CoversClass(UpdateTransformer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser::class)]
@@ -140,7 +141,7 @@ final class UpdateTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new UpdateTransformer($parser, $selectTransformer);
 
-        $projection = $transformer->buildProjection("UPDATE t SET a = 1", 't', []);
+        $projection = $transformer->buildProjection('UPDATE t SET a = 1', 't', []);
         self::assertStringContainsString('SELECT', $projection);
     }
 
@@ -161,7 +162,7 @@ final class UpdateTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new UpdateTransformer($parser, $selectTransformer);
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $transformer->buildProjectionMeta('UPDATE', []);
     }
 
@@ -281,7 +282,7 @@ final class UpdateTransformerTest extends TestCase
         $selectTransformer = new SelectTransformer();
         $transformer = new UpdateTransformer($parser, $selectTransformer);
 
-        $projection = $transformer->buildProjection("UPDATE users SET", 'users', []);
+        $projection = $transformer->buildProjection('UPDATE users SET', 'users', []);
         self::assertStringContainsString('*', $projection);
     }
 

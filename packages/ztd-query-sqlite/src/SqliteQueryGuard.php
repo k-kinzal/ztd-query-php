@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Sqlite;
 
+use RuntimeException;
 use ZtdQuery\Rewrite\QueryKind;
 
 /**
@@ -45,13 +46,13 @@ final class SqliteQueryGuard
     /**
      * Assert that the SQL is allowed by the guard.
      *
-     * @throws \RuntimeException When the SQL is not allowed.
+     * @throws RuntimeException When the SQL is not allowed.
      */
     public function assertAllowed(string $sql): void
     {
         $kind = $this->classify($sql);
         if ($kind === null) {
-            throw new \RuntimeException('ZTD Write Protection: Unsupported or unsafe SQL statement.');
+            throw new RuntimeException('ZTD Write Protection: Unsupported or unsafe SQL statement.');
         }
     }
 }

@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Generator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 use ZtdQuery\Platform\Sqlite\SqliteIndexHintStripper;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
@@ -81,8 +83,8 @@ final class SqliteIndexHintStripperTest extends TestCase
         self::assertSame($sql, (new SqliteIndexHintStripper())->strip($sql, ['products']));
     }
 
-    /** @return \Generator<string, array{string}> */
-    public static function providerIncompleteAndMalformedHints(): \Generator
+    /** @return Generator<string, array{string}> */
+    public static function providerIncompleteAndMalformedHints(): Generator
     {
         yield 'no hint' => ['SELECT * FROM products'];
         yield 'not without indexed' => ['SELECT * FROM products NOT'];
@@ -117,7 +119,7 @@ final class SqliteIndexHintStripperTest extends TestCase
 
     public function testIdentifierEndAcceptsBracketSymbolTokens(): void
     {
-        $method = new \ReflectionMethod(SqliteIndexHintStripper::class, 'identifierEndIndex');
+        $method = new ReflectionMethod(SqliteIndexHintStripper::class, 'identifierEndIndex');
         $tokens = [
             new SqlToken(SqlTokenKind::Symbol, '[', 0, 0, 0),
             new SqlToken(SqlTokenKind::Symbol, ']', 1, 0, 0),

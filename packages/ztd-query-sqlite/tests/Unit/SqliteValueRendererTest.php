@@ -7,6 +7,8 @@ namespace Tests\Unit;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
+use Stringable;
 use ZtdQuery\Platform\Sqlite\SqliteValueRenderer;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
@@ -88,7 +90,7 @@ final class SqliteValueRendererTest extends TestCase
 
     public function testInferredAndDeclaredStringableRemainDistinct(): void
     {
-        $value = new class () implements \Stringable {
+        $value = new class () implements Stringable {
             public function __toString(): string
             {
                 return 'CURRENT_TIMESTAMP';
@@ -105,7 +107,7 @@ final class SqliteValueRendererTest extends TestCase
 
     public function testUntypedArrayIsRejected(): void
     {
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
 
         (new SqliteValueRenderer())->renderValue(['value']);
     }
@@ -135,7 +137,7 @@ final class SqliteValueRendererTest extends TestCase
 
     public function testBinaryRejectsNonStringableNonResource(): void
     {
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
 
         (new SqliteValueRenderer())->renderValue(
             ['value'],

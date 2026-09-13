@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\SqliteProvider;
+use Throwable;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Sqlite\SqliteCastRenderer;
@@ -184,7 +185,7 @@ final class FullPipelineFuzzTest extends TestCase
                 self::assertSame(QueryKind::READ, $plan->kind());
                 self::assertNull($plan->mutation());
             } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 self::fail("Full pipeline SELECT crashed on iteration $i\nCREATE: $createSql\nSELECT: $selectSql\nError: " . $e->getMessage());
             }
         }
@@ -236,7 +237,7 @@ final class FullPipelineFuzzTest extends TestCase
                     );
                 }
             } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 self::fail("Full pipeline INSERT crashed on iteration $i\nCREATE: $createSql\nINSERT: $insertSql\nError: " . $e->getMessage());
             }
         }
@@ -287,7 +288,7 @@ final class FullPipelineFuzzTest extends TestCase
                     );
                 }
             } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 self::fail("Full pipeline UPDATE crashed on iteration $i\nCREATE: $createSql\nUPDATE: $updateSql\nError: " . $e->getMessage());
             }
         }
@@ -330,7 +331,7 @@ final class FullPipelineFuzzTest extends TestCase
                     $shadowStore->get($tableName);
                 }
             } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 self::fail("Full pipeline DELETE crashed on iteration $i\nCREATE: $createSql\nDELETE: $deleteSql\nError: " . $e->getMessage());
             }
         }
@@ -370,7 +371,7 @@ final class FullPipelineFuzzTest extends TestCase
                 self::assertNotEmpty($selectPlan->sql());
                 self::assertSame(QueryKind::READ, $selectPlan->kind());
             } catch (UnsupportedSqlException|UnknownSchemaException) {
-            } catch (\Throwable $e) {
+            } catch (Throwable $e) {
                 self::fail("Full pipeline CREATE->SELECT crashed on iteration $i\nCREATE: $createSql\nError: " . $e->getMessage());
             }
         }
@@ -425,18 +426,18 @@ final class FullPipelineFuzzTest extends TestCase
 
                     $allData = $shadowStore->getAll();
                     foreach ($allData as $tblName => $tblRows) {
-                        self::assertNotEmpty($tblName, "ShadowStore contains empty table name key");
+                        self::assertNotEmpty($tblName, 'ShadowStore contains empty table name key');
                     }
 
                     self::assertArrayHasKey($tableName, $allData);
 
                     if ($plan->kind() === QueryKind::READ) {
-                        self::assertNull($plan->mutation(), "READ plan must have no mutation");
+                        self::assertNull($plan->mutation(), 'READ plan must have no mutation');
                     } elseif ($plan->kind() === QueryKind::WRITE_SIMULATED || $plan->kind() === QueryKind::DDL_SIMULATED) {
                         self::assertNotNull($plan->mutation(), "{$plan->kind()->value} plan must have a mutation");
                     }
                 } catch (UnsupportedSqlException|UnknownSchemaException) {
-                } catch (\Throwable $e) {
+                } catch (Throwable $e) {
                     self::fail("ShadowStore integrity check failed on iteration $i with SQL: $sql\nCREATE: $createSql\nError: " . $e->getMessage());
                 }
             }

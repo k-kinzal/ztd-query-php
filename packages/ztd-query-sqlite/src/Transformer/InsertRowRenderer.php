@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Sqlite\Transformer;
 
+use InvalidArgumentException;
 use ZtdQuery\Rewrite\InsertRowProjectionPlanner;
 
 final class InsertRowRenderer
@@ -23,7 +24,7 @@ final class InsertRowRenderer
     public function providedExpressions(array $insertColumns, array $values): array
     {
         if (count($insertColumns) !== count($values)) {
-            throw new \InvalidArgumentException('Insert values count does not match column count.');
+            throw new InvalidArgumentException('Insert values count does not match column count.');
         }
 
         $provided = [];

@@ -7,7 +7,6 @@ namespace ZtdQuery\Platform\Sqlite;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Platform\SchemaReflector;
 use ZtdQuery\Platform\ViewReflector;
-use ZtdQuery\Schema\ViewDefinition;
 
 /**
  * Fetches SQLite schema information via sqlite_master and PRAGMA queries.
@@ -27,7 +26,7 @@ final class SqliteSchemaReflector implements SchemaReflector, ViewReflector
     public function getCreateStatement(string $tableName): ?string
     {
         $stmt = $this->connection->query(
-            "SELECT sql FROM ("
+            'SELECT sql FROM ('
             . "SELECT sql, 0 AS precedence FROM sqlite_temp_master WHERE type='table' AND name='"
             . str_replace("'", "''", $tableName)
             . "' UNION ALL SELECT sql, 1 AS precedence FROM sqlite_master WHERE type='table' AND name='"
@@ -52,10 +51,10 @@ final class SqliteSchemaReflector implements SchemaReflector, ViewReflector
     public function reflectAll(): array
     {
         $stmt = $this->connection->query(
-            "SELECT name, sql FROM ("
-            . "SELECT name, sql, 0 AS precedence FROM sqlite_temp_master "
+            'SELECT name, sql FROM ('
+            . 'SELECT name, sql, 0 AS precedence FROM sqlite_temp_master '
             . "WHERE type='table' AND name NOT LIKE 'sqlite_%' UNION ALL "
-            . "SELECT name, sql, 1 AS precedence FROM sqlite_master "
+            . 'SELECT name, sql, 1 AS precedence FROM sqlite_master '
             . "WHERE type='table' AND name NOT LIKE 'sqlite_%'"
             . ') ORDER BY precedence, name'
         );
@@ -87,7 +86,7 @@ final class SqliteSchemaReflector implements SchemaReflector, ViewReflector
     public function reflectViews(): array
     {
         $stmt = $this->connection->query(
-            "SELECT name, sql FROM (SELECT name, sql, 0 AS precedence FROM sqlite_temp_master "
+            'SELECT name, sql FROM (SELECT name, sql, 0 AS precedence FROM sqlite_temp_master '
             . "WHERE type='view' UNION ALL SELECT name, sql, 1 AS precedence FROM sqlite_master "
             . "WHERE type='view') ORDER BY precedence, name",
         );

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Generator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -15,15 +16,15 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Platform\Sqlite\Mutation\AlterTableMutation;
 use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
-use ZtdQuery\Platform\Sqlite\SqliteMutationResolver;
 use ZtdQuery\Platform\Sqlite\SqliteLexicalMasker;
+use ZtdQuery\Platform\Sqlite\SqliteMutationResolver;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
 use ZtdQuery\Platform\Sqlite\SqliteSchemaParser;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
-use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Schema\ForeignKeyDefinition;
+use ZtdQuery\Schema\IdentityGenerationStrategy;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\Mutation\CreateTableMutation;
@@ -562,7 +563,7 @@ final class SqliteMutationResolverTest extends TestCase
     {
         $resolver = new SqliteMutationResolver(new ShadowStore(), new TableDefinitionRegistry(), new SqliteSchemaParser(), new SqliteParser());
         $mutation = $resolver->resolve(
-            "INSERT INTO t (id) VALUES (1) ON CONFLICT (id) DO NOTHING",
+            'INSERT INTO t (id) VALUES (1) ON CONFLICT (id) DO NOTHING',
             QueryKind::WRITE_SIMULATED
         );
         self::assertInstanceOf(InsertMutation::class, $mutation);
@@ -896,7 +897,7 @@ final class SqliteMutationResolverTest extends TestCase
             ['id'],
             [],
             [],
-            ['id' => new \ZtdQuery\Schema\ColumnType(\ZtdQuery\Schema\ColumnTypeFamily::INTEGER, 'INTEGER'), 'val' => new \ZtdQuery\Schema\ColumnType(\ZtdQuery\Schema\ColumnTypeFamily::FLOAT, 'REAL')],
+            ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'), 'val' => new ColumnType(ColumnTypeFamily::FLOAT, 'REAL')],
         ));
         $store = new ShadowStore();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
@@ -1021,7 +1022,7 @@ final class SqliteMutationResolverTest extends TestCase
     public function testResolveInsertTableName(): void
     {
         $resolver = new SqliteMutationResolver(new ShadowStore(), new TableDefinitionRegistry(), new SqliteSchemaParser(), new SqliteParser());
-        $mutation = $resolver->resolve("INSERT INTO orders (id) VALUES (1)", QueryKind::WRITE_SIMULATED);
+        $mutation = $resolver->resolve('INSERT INTO orders (id) VALUES (1)', QueryKind::WRITE_SIMULATED);
         self::assertInstanceOf(InsertMutation::class, $mutation);
         self::assertSame('orders', $mutation->tableName());
     }
@@ -1032,7 +1033,7 @@ final class SqliteMutationResolverTest extends TestCase
         $registry = new TableDefinitionRegistry();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
         $this->expectException(UnknownSchemaException::class);
-        $resolver->resolve("UPDATE t SET x = 1", QueryKind::WRITE_SIMULATED);
+        $resolver->resolve('UPDATE t SET x = 1', QueryKind::WRITE_SIMULATED);
     }
 
     public function testResolveDeleteTableName(): void
@@ -1042,7 +1043,7 @@ final class SqliteMutationResolverTest extends TestCase
         $store->set('orders', [['id' => 1]]);
         $registry = new TableDefinitionRegistry();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
-        $mutation = $resolver->resolve("DELETE FROM orders WHERE id = 1", QueryKind::WRITE_SIMULATED);
+        $mutation = $resolver->resolve('DELETE FROM orders WHERE id = 1', QueryKind::WRITE_SIMULATED);
         self::assertInstanceOf(DeleteMutation::class, $mutation);
         self::assertSame('orders', $mutation->tableName());
     }
@@ -1165,7 +1166,7 @@ final class SqliteMutationResolverTest extends TestCase
             ['id'],
             [],
             [],
-            ['id' => new \ZtdQuery\Schema\ColumnType(\ZtdQuery\Schema\ColumnTypeFamily::INTEGER, 'INTEGER'), 'val' => new \ZtdQuery\Schema\ColumnType(\ZtdQuery\Schema\ColumnTypeFamily::TEXT, 'TEXT')],
+            ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'), 'val' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT')],
         ));
         $store = new ShadowStore();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
@@ -1188,7 +1189,7 @@ final class SqliteMutationResolverTest extends TestCase
             ['id'],
             [],
             [],
-            ['id' => new \ZtdQuery\Schema\ColumnType(\ZtdQuery\Schema\ColumnTypeFamily::INTEGER, 'INTEGER')],
+            ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER')],
         ));
         $store = new ShadowStore();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
@@ -1322,7 +1323,7 @@ final class SqliteMutationResolverTest extends TestCase
         $store = new ShadowStore();
         $registry = new TableDefinitionRegistry();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
-        $this->expectException(\ZtdQuery\Exception\UnknownSchemaException::class);
+        $this->expectException(UnknownSchemaException::class);
         $resolver->resolve('DELETE FROM unknown_table WHERE id = 1', QueryKind::WRITE_SIMULATED);
     }
 
@@ -1373,7 +1374,7 @@ final class SqliteMutationResolverTest extends TestCase
         $registry = new TableDefinitionRegistry();
         $registry->register('t', new TableDefinition(['id'], ['id' => 'INTEGER'], ['id'], [], []));
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
-        $this->expectException(\ZtdQuery\Exception\UnsupportedSqlException::class);
+        $this->expectException(UnsupportedSqlException::class);
         $resolver->resolve('CREATE TABLE t (id INTEGER)', QueryKind::DDL_SIMULATED);
     }
 
@@ -1382,7 +1383,7 @@ final class SqliteMutationResolverTest extends TestCase
         $store = new ShadowStore();
         $registry = new TableDefinitionRegistry();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
-        $this->expectException(\ZtdQuery\Exception\UnknownSchemaException::class);
+        $this->expectException(UnknownSchemaException::class);
         $resolver->resolve('ALTER TABLE nonexistent ADD COLUMN a INTEGER', QueryKind::DDL_SIMULATED);
     }
 
@@ -1392,7 +1393,7 @@ final class SqliteMutationResolverTest extends TestCase
         $registry = new TableDefinitionRegistry();
         $registry->register('t', new TableDefinition(['id'], ['id' => 'INTEGER'], ['id'], [], []));
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
-        $this->expectException(\ZtdQuery\Exception\UnsupportedSqlException::class);
+        $this->expectException(UnsupportedSqlException::class);
         $resolver->resolve('ALTER TABLE t WHATEVER', QueryKind::DDL_SIMULATED);
     }
 
@@ -1512,7 +1513,7 @@ final class SqliteMutationResolverTest extends TestCase
         $store = new ShadowStore();
         $registry = new TableDefinitionRegistry();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
-        $this->expectException(\ZtdQuery\Exception\UnknownSchemaException::class);
+        $this->expectException(UnknownSchemaException::class);
         $resolver->resolve('DROP TABLE nonexistent', QueryKind::DDL_SIMULATED);
     }
 
@@ -1714,7 +1715,7 @@ final class SqliteMutationResolverTest extends TestCase
             [],
         ));
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
-        $mutation = $resolver->resolve("ALTER TABLE t ADD COLUMN active DEFAULT 1", QueryKind::DDL_SIMULATED);
+        $mutation = $resolver->resolve('ALTER TABLE t ADD COLUMN active DEFAULT 1', QueryKind::DDL_SIMULATED);
         self::assertNotNull($mutation);
         $registry->unregister('t');
         $mutation->apply($store, []);
@@ -1736,7 +1737,7 @@ final class SqliteMutationResolverTest extends TestCase
             [],
         ));
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
-        $mutation = $resolver->resolve("ALTER TABLE t ADD COLUMN active NOT NULL", QueryKind::DDL_SIMULATED);
+        $mutation = $resolver->resolve('ALTER TABLE t ADD COLUMN active NOT NULL', QueryKind::DDL_SIMULATED);
         self::assertNotNull($mutation);
         $registry->unregister('t');
         $mutation->apply($store, []);
@@ -1795,7 +1796,7 @@ final class SqliteMutationResolverTest extends TestCase
         $registry = new TableDefinitionRegistry();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
         $this->expectException(UnknownSchemaException::class);
-        $resolver->resolve("UPDATE users SET x = 1", QueryKind::WRITE_SIMULATED);
+        $resolver->resolve('UPDATE users SET x = 1', QueryKind::WRITE_SIMULATED);
     }
 
     public function testResolveInsertIsReplaceReturnsPrimaryKeys(): void
@@ -2258,7 +2259,7 @@ final class SqliteMutationResolverTest extends TestCase
         $store = new ShadowStore();
         $registry = new TableDefinitionRegistry();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
-        $mutation = $resolver->resolve("INSERT INTO t (id) VALUES (1) ON CONFLICT DO NOTHING", QueryKind::WRITE_SIMULATED);
+        $mutation = $resolver->resolve('INSERT INTO t (id) VALUES (1) ON CONFLICT DO NOTHING', QueryKind::WRITE_SIMULATED);
         self::assertInstanceOf(InsertMutation::class, $mutation);
     }
 
@@ -2577,7 +2578,7 @@ final class SqliteMutationResolverTest extends TestCase
         $registry = new TableDefinitionRegistry();
         $resolver = new SqliteMutationResolver($store, $registry, new SqliteSchemaParser(), new SqliteParser());
         try {
-            $resolver->resolve("UPDATE t SET x = 1", QueryKind::WRITE_SIMULATED);
+            $resolver->resolve('UPDATE t SET x = 1', QueryKind::WRITE_SIMULATED);
             self::fail('Expected an unknown schema exception.');
         } catch (UnknownSchemaException) {
             self::assertSame([], $store->getAll());
@@ -2770,8 +2771,8 @@ final class SqliteMutationResolverTest extends TestCase
         $resolver->resolve($sql, QueryKind::WRITE_SIMULATED);
     }
 
-    /** @return \Generator<string, array{string}> */
-    public static function providerRemovedTableMutations(): \Generator
+    /** @return Generator<string, array{string}> */
+    public static function providerRemovedTableMutations(): Generator
     {
         yield 'update' => ['UPDATE records SET id = 2'];
         yield 'delete' => ['DELETE FROM records'];
@@ -2998,8 +2999,8 @@ final class SqliteMutationResolverTest extends TestCase
         $resolver->resolve($sql, QueryKind::DDL_SIMULATED);
     }
 
-    /** @return \Generator<string, array{string}> */
-    public static function providerMalformedAlterIdentifierClauses(): \Generator
+    /** @return Generator<string, array{string}> */
+    public static function providerMalformedAlterIdentifierClauses(): Generator
     {
         yield 'missing operation' => ['ALTER TABLE records'];
         yield 'missing add clause' => ['ALTER TABLE records ADD'];

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Generator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -148,7 +149,7 @@ SELECT * FROM users'));
     public function testSplitMultipleStatements(): void
     {
         $parser = new SqliteParser();
-        $result = $parser->splitStatements("SELECT 1; SELECT 2");
+        $result = $parser->splitStatements('SELECT 1; SELECT 2');
         self::assertCount(2, $result);
         self::assertSame('SELECT 1', $result[0]);
         self::assertSame('SELECT 2', $result[1]);
@@ -564,9 +565,9 @@ SELECT * FROM users'));
     }
 
     /**
-     * @return \Generator<string, array{string, string}>
+     * @return Generator<string, array{string, string}>
      */
-    public static function providerStringLiteralMasks(): \Generator
+    public static function providerStringLiteralMasks(): Generator
     {
         yield 'empty query' => ['', ''];
         yield 'query without strings' => ['SELECT value FROM items', 'SELECT value FROM items'];
@@ -680,9 +681,9 @@ SELECT * FROM users'));
     }
 
     /**
-     * @return \Generator<string, array{string, ?string}>
+     * @return Generator<string, array{string, ?string}>
      */
-    public static function providerLexicalClassificationBoundaries(): \Generator
+    public static function providerLexicalClassificationBoundaries(): Generator
     {
         yield 'with requires completed group' => ['WITH SELECT', null];
         yield 'line comment with newline' => ["-- SELECT\nUPDATE name SET value = 1", 'UPDATE'];
@@ -798,19 +799,19 @@ SELECT * FROM users'));
     public function testExtractInsertTargetReplaceInto(): void
     {
         $parser = new SqliteParser();
-        self::assertSame('users', $parser->extractTargetTable("REPLACE INTO users (id) VALUES (1)"));
+        self::assertSame('users', $parser->extractTargetTable('REPLACE INTO users (id) VALUES (1)'));
     }
 
     public function testExtractInsertTargetWithBackticks(): void
     {
         $parser = new SqliteParser();
-        self::assertSame('my table', $parser->extractTargetTable("INSERT INTO `my table` (id) VALUES (1)"));
+        self::assertSame('my table', $parser->extractTargetTable('INSERT INTO `my table` (id) VALUES (1)'));
     }
 
     public function testExtractInsertTargetWithBrackets(): void
     {
         $parser = new SqliteParser();
-        self::assertSame('my table', $parser->extractTargetTable("INSERT INTO [my table] (id) VALUES (1)"));
+        self::assertSame('my table', $parser->extractTargetTable('INSERT INTO [my table] (id) VALUES (1)'));
     }
 
     public function testExtractUpdateTargetQuoted(): void
@@ -977,7 +978,7 @@ SELECT * FROM users'));
     public function testExtractUpdateAssignmentsWithOrderBy(): void
     {
         $parser = new SqliteParser();
-        $assignments = $parser->extractUpdateAssignments("UPDATE t SET x = 1 ORDER BY id");
+        $assignments = $parser->extractUpdateAssignments('UPDATE t SET x = 1 ORDER BY id');
         self::assertArrayHasKey('x', $assignments);
         self::assertSame('1', $assignments['x']);
     }
@@ -985,7 +986,7 @@ SELECT * FROM users'));
     public function testExtractUpdateAssignmentsWithLimit(): void
     {
         $parser = new SqliteParser();
-        $assignments = $parser->extractUpdateAssignments("UPDATE t SET x = 1 LIMIT 5");
+        $assignments = $parser->extractUpdateAssignments('UPDATE t SET x = 1 LIMIT 5');
         self::assertArrayHasKey('x', $assignments);
         self::assertSame('1', $assignments['x']);
     }
@@ -1077,13 +1078,13 @@ SELECT * FROM users'));
     public function testHasInsertSelectFalseWithValues(): void
     {
         $parser = new SqliteParser();
-        self::assertFalse($parser->hasInsertSelect("INSERT INTO t (id) VALUES (1)"));
+        self::assertFalse($parser->hasInsertSelect('INSERT INTO t (id) VALUES (1)'));
     }
 
     public function testExtractInsertSelectNull(): void
     {
         $parser = new SqliteParser();
-        self::assertNull($parser->extractInsertSelect("INSERT INTO t (id) VALUES (1)"));
+        self::assertNull($parser->extractInsertSelect('INSERT INTO t (id) VALUES (1)'));
     }
 
     public function testExtractInsertSelectWithColumns(): void
@@ -1115,13 +1116,13 @@ SELECT * FROM users'));
     public function testIsReplaceWithComment(): void
     {
         $parser = new SqliteParser();
-        self::assertTrue($parser->isReplace("/* comment */ REPLACE INTO t (id) VALUES (1)"));
+        self::assertTrue($parser->isReplace('/* comment */ REPLACE INTO t (id) VALUES (1)'));
     }
 
     public function testIsInsertIgnoreWithComment(): void
     {
         $parser = new SqliteParser();
-        self::assertTrue($parser->isInsertIgnore("/* comment */ INSERT OR IGNORE INTO t (id) VALUES (1)"));
+        self::assertTrue($parser->isInsertIgnore('/* comment */ INSERT OR IGNORE INTO t (id) VALUES (1)'));
     }
 
     public function testExtractUpdateAssignmentsWithQuotedValue(): void
@@ -1179,7 +1180,7 @@ SELECT * FROM users'));
     public function testExtractInsertValuesMultipleWithWhitespace(): void
     {
         $parser = new SqliteParser();
-        $values = $parser->extractInsertValues("INSERT INTO t (a, b) VALUES (1, 2) , (3, 4)");
+        $values = $parser->extractInsertValues('INSERT INTO t (a, b) VALUES (1, 2) , (3, 4)');
         self::assertCount(2, $values);
         self::assertSame(['1', '2'], $values[0]);
         self::assertSame(['3', '4'], $values[1]);
@@ -1436,14 +1437,14 @@ SELECT * FROM users'));
     public function testExtractUpdateAssignmentsWithLimitLowercase(): void
     {
         $parser = new SqliteParser();
-        $assignments = $parser->extractUpdateAssignments("update t set x = 1 limit 5");
+        $assignments = $parser->extractUpdateAssignments('update t set x = 1 limit 5');
         self::assertArrayHasKey('x', $assignments);
     }
 
     public function testExtractUpdateAssignmentsWithOrderByLowercase(): void
     {
         $parser = new SqliteParser();
-        $assignments = $parser->extractUpdateAssignments("update t set x = 1 order by id");
+        $assignments = $parser->extractUpdateAssignments('update t set x = 1 order by id');
         self::assertArrayHasKey('x', $assignments);
     }
 
@@ -1517,7 +1518,7 @@ SELECT * FROM users'));
     public function testExtractReplaceTableTarget(): void
     {
         $parser = new SqliteParser();
-        self::assertSame('users', $parser->extractTargetTable("REPLACE users (id) VALUES (1)"));
+        self::assertSame('users', $parser->extractTargetTable('REPLACE users (id) VALUES (1)'));
     }
 
     public function testStripCommentsPreservesContent(): void
@@ -2055,13 +2056,13 @@ SELECT * FROM users'));
     public function testHasOnConflictTrue(): void
     {
         $parser = new SqliteParser();
-        self::assertTrue($parser->hasOnConflict("INSERT INTO t (a) VALUES (1) ON CONFLICT (a) DO UPDATE SET a = 2"));
+        self::assertTrue($parser->hasOnConflict('INSERT INTO t (a) VALUES (1) ON CONFLICT (a) DO UPDATE SET a = 2'));
     }
 
     public function testHasOnConflictFalse(): void
     {
         $parser = new SqliteParser();
-        self::assertFalse($parser->hasOnConflict("INSERT INTO t (a) VALUES (1)"));
+        self::assertFalse($parser->hasOnConflict('INSERT INTO t (a) VALUES (1)'));
     }
 
     public function testIsReplaceWithReplace(): void
@@ -2097,14 +2098,14 @@ SELECT * FROM users'));
     public function testExtractOnConflictUpdatesV2(): void
     {
         $parser = new SqliteParser();
-        $result = $parser->extractOnConflictUpdates("INSERT INTO t (a) VALUES (1) ON CONFLICT (a) DO UPDATE SET b = 2, c = 3");
+        $result = $parser->extractOnConflictUpdates('INSERT INTO t (a) VALUES (1) ON CONFLICT (a) DO UPDATE SET b = 2, c = 3');
         self::assertSame(['b' => '2', 'c' => '3'], $result);
     }
 
     public function testExtractOnConflictUpdatesDoNothingV2(): void
     {
         $parser = new SqliteParser();
-        $result = $parser->extractOnConflictUpdates("INSERT INTO t (a) VALUES (1) ON CONFLICT (a) DO NOTHING");
+        $result = $parser->extractOnConflictUpdates('INSERT INTO t (a) VALUES (1) ON CONFLICT (a) DO NOTHING');
         self::assertSame([], $result);
     }
 
@@ -2362,19 +2363,19 @@ SELECT * FROM users'));
     public function testClassifyNonKeywordContainingCreateTableReturnsNull(): void
     {
         $parser = new SqliteParser();
-        self::assertNull($parser->classifyStatement("PRAGMA CREATE TABLE foo"));
+        self::assertNull($parser->classifyStatement('PRAGMA CREATE TABLE foo'));
     }
 
     public function testClassifyNonKeywordContainingDropTableReturnsNull(): void
     {
         $parser = new SqliteParser();
-        self::assertNull($parser->classifyStatement("PRAGMA DROP TABLE foo"));
+        self::assertNull($parser->classifyStatement('PRAGMA DROP TABLE foo'));
     }
 
     public function testClassifyNonKeywordContainingAlterTableReturnsNull(): void
     {
         $parser = new SqliteParser();
-        self::assertNull($parser->classifyStatement("PRAGMA ALTER TABLE foo"));
+        self::assertNull($parser->classifyStatement('PRAGMA ALTER TABLE foo'));
     }
 
     public function testClassifyCreateTableCaseInsensitive(): void
@@ -2728,7 +2729,7 @@ SELECT * FROM users'));
     public function testClassifyWithUpdateCte(): void
     {
         $parser = new SqliteParser();
-        self::assertSame('UPDATE', $parser->classifyStatement("WITH cte AS (SELECT 1) UPDATE t SET a = 1"));
+        self::assertSame('UPDATE', $parser->classifyStatement('WITH cte AS (SELECT 1) UPDATE t SET a = 1'));
     }
 
     public function testClassifyWithDeleteCte(): void
@@ -2820,7 +2821,7 @@ SELECT * FROM users'));
     public function testExtractUpdateTableCaseInsensitive(): void
     {
         $parser = new SqliteParser();
-        self::assertSame('t', $parser->extractTargetTable("update t set a = 1"));
+        self::assertSame('t', $parser->extractTargetTable('update t set a = 1'));
     }
 
     public function testExtractInsertTableWithoutIntoReturnsNull(): void
@@ -3021,7 +3022,7 @@ SELECT * FROM users'));
     public function testUpdateClausesIgnoreKeywordsInsideExpressionsAndSubqueries(): void
     {
         $parser = new SqliteParser();
-        $sql = "UPDATE products SET price = CAST(raw AS NUMERIC(10,2)), maximum = (SELECT MAX(price) FROM products p2 WHERE p2.category_id = products.category_id) FROM categories c WHERE products.category_id = c.id ORDER BY products.id LIMIT 1 RETURNING *";
+        $sql = 'UPDATE products SET price = CAST(raw AS NUMERIC(10,2)), maximum = (SELECT MAX(price) FROM products p2 WHERE p2.category_id = products.category_id) FROM categories c WHERE products.category_id = c.id ORDER BY products.id LIMIT 1 RETURNING *';
 
         self::assertSame([
             'price' => 'CAST(raw AS NUMERIC(10,2))',

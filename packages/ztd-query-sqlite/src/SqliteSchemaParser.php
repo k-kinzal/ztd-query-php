@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Sqlite;
 
+use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
-use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
