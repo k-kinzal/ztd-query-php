@@ -9,7 +9,9 @@ use PHPUnit\Framework\TestCase;
 use ZtdQuery\Schema\CandidateKeySet;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
+use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\Mutation\InsertMutation;
+use ZtdQuery\Shadow\Mutation\Table\DropTableMutation;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTransactionManager;
 
@@ -38,5 +40,12 @@ final class ClassAliasesTest extends TestCase
         $transactions->rollBack();
 
         self::assertSame([['id' => 1]], $store->get('users'));
+    }
+    public function testFormerNameTypeAcceptsTheRelocatedClassBeforeTheFormerNameIsUsed(): void
+    {
+        $mutation = new DropTableMutation('users', new TableDefinitionRegistry(), 'DROP TABLE users');
+        $accept = static fn (\ZtdQuery\Shadow\Mutation\DropTableMutation $received): \ZtdQuery\Shadow\Mutation\DropTableMutation => $received;
+
+        self::assertSame($mutation, $accept($mutation));
     }
 }
