@@ -3,3 +3,4 @@
 /.deptrac.cache
 /phpbench.json
 /phpunit.xml
+!/composer.lock

@@ -13,7 +13,7 @@ use ZtdQuery\Adapter\Pdo\ZtdPdo;
 /**
  * @requires extension pdo_sqlite
  *
- * @phpstan-import-type Row from \ZtdQuery\Adapter\Pdo\PdoStatement
+ * @phpstan-type Row array<string, mixed>
  */
 #[CoversNothing]
 #[Large]

@@ -7,7 +7,7 @@ namespace Tests\Integration\MySql;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
-use Tests\Fixtures\MySqlContainer;
+use Tests\Container\MySqlContainer;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 
 #[CoversNothing]

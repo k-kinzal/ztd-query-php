@@ -8,14 +8,14 @@ use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
-use Tests\Fixtures\PostgreSqlContainer;
+use Tests\Container\PostgreSqlContainer;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 
 /**
  * @requires extension pdo_pgsql
  * @group integration
  * @group postgres
- * @phpstan-import-type Row from \ZtdQuery\Adapter\Pdo\PdoStatement
+ * @phpstan-type Row array<string, mixed>
  */
 #[CoversNothing]
 #[Large]

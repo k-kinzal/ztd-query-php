@@ -4,30 +4,21 @@ deptrac:
   analyser:
     types: [class, use]
   layers:
-    - name: PublicApi
+    - name: Adapter
       collectors:
-        - type: bool
-          must:
-            - type: directory
-              value: 'src/[^/]+\.php$'
-          must_not:
-            - type: directory
-              value: 'src/(PdoConnection|PdoStatement|PdoParameterBinder|PdoParameterType|ZtdPdoException)\.php$'
+        - type: directory
+          value: 'src/(ZtdPdo|ZtdPdoStatement)\.php$'
+    - name: Session
+      collectors:
+        - type: directory
+          value: 'src/Session/'
+        # The exception is a consumer contract raised by session operations.
+        - type: directory
+          value: 'src/ZtdPdoException\.php$'
     - name: Driver
       collectors:
         - type: directory
           value: 'src/Driver/'
-        # Existing public driver classes keep their published namespace.
-        - type: directory
-          value: 'src/(PdoConnection|PdoStatement|PdoParameterBinder|PdoParameterType)\.php$'
-        - type: classLike
-          value: '^ZtdQuery\\Adapter\\Pdo\\(Row|RowValue)$'
-        - type: classLike
-          value: '^ZtdQuery\\Adapter\\Pdo\\Driver\\BindableValue$'
-    - name: ErrorContract
-      collectors:
-        - type: directory
-          value: 'src/ZtdPdoException\.php$'
     - name: Core
       collectors:
         - type: bool
@@ -44,8 +35,8 @@ deptrac:
         - type: classLike
           value: '^ZtdQuery\\Platform\\(MySql|Postgres|Sqlite)\\'
   ruleset:
-    PublicApi: [Driver, ErrorContract, Core, Platforms]
-    Driver: [ErrorContract, Core]
-    ErrorContract: []
+    Adapter: [Session, Driver, Core]
+    Session: [Driver, Core, Platforms]
+    Driver: [Core]
     Core: []
-    Platforms: [Core]
+    Platforms: []

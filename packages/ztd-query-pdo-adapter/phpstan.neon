@@ -6,28 +6,14 @@ includes:
     - vendor/k-kinzal/php-ai-toolkit/rules.neon
 
 parameters:
+    toolkit:
+        forbiddenNamespacePrefixes:
+            - 'Tests\Fixture'
+            - 'Tests\Fixtures'
+    phpVersion: 80100
     level: max
     paths:
         - src
         - tests
         - fuzz
         - bench
-    ignoreErrors:
-        # PDO exposes these methods only on some supported runtimes. Override
-        # on connect is fatal on PHP 8.3; the pgsql methods are dynamic PDO 8.1-8.3 methods.
-        -
-            identifier: customRules.overrideMustHaveAttribute
-            message: '#^Add \#\[\\Override\] to override method (pgsqlCopy(ToArray|FromArray|ToFile|FromFile)|connect)\(\)\.$#'
-            path: src/ZtdPdo.php
-            count: 5
-        # This existing public class name is retained for consumer compatibility.
-        -
-            identifier: customRules.forbiddenClassLikeNameSuffix
-            path: src/PdoParameterType.php
-            count: 1
-        # PHPStan's PDO::connect dynamic return extension infers driver subclasses
-        # even for this override; the runtime return is covered on PHP 8.1-8.5.
-        -
-            identifier: class.notFound
-            path: tests/Unit/ZtdPdoTest.php
-            count: 1

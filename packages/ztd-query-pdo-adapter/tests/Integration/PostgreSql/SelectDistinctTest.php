@@ -7,7 +7,7 @@ namespace Tests\Integration\PostgreSql;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
-use Tests\Fixtures\PostgreSqlContainer;
+use Tests\Container\PostgreSqlContainer;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 
 /**
@@ -15,7 +15,7 @@ use ZtdQuery\Adapter\Pdo\ZtdPdo;
  * @group integration
  * @group postgres
  *
- * @phpstan-import-type Row from \ZtdQuery\Adapter\Pdo\PdoStatement
+ * @phpstan-type Row array<string, mixed>
  */
 #[CoversNothing]
 #[Large]

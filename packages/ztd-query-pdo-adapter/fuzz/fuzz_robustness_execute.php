@@ -9,25 +9,10 @@ register_shutdown_function(static function (): void {
 });
 
 use Faker\Factory;
-use Fuzz\Robustness\Target\ExecutionTarget;
+use Fuzz\Robustness\ExecutionCheck;
+use SqlFaker\Generation\Choice\BytePlanCompiler;
+use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\MySqlProvider;
-use ZtdQuery\Adapter\Pdo\ZtdPdo;
-use ZtdQuery\Config\UnknownSchemaBehavior;
-use ZtdQuery\Config\UnsupportedSqlBehavior;
-use ZtdQuery\Config\ZtdConfig;
-use ZtdQuery\Platform\MySql\MySqlMutationResolver;
-use ZtdQuery\Platform\MySql\MySqlParser;
-use ZtdQuery\Platform\MySql\MySqlQueryGuard;
-use ZtdQuery\Platform\MySql\MySqlRewriter;
-use ZtdQuery\Platform\MySql\MySqlSchemaParser;
-use ZtdQuery\Platform\MySql\Transformer\DeleteTransformer;
-use ZtdQuery\Platform\MySql\Transformer\InsertTransformer;
-use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
-use ZtdQuery\Platform\MySql\Transformer\ReplaceTransformer;
-use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
-use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
-use ZtdQuery\Schema\TableDefinitionRegistry;
-use ZtdQuery\Shadow\ShadowStore;
 
 [$host, $port] = Fuzz\Container\DatabaseEndpoint::mysql();
 $dsn = "mysql:host=$host;port=$port;charset=utf8mb4";
@@ -57,78 +42,16 @@ $rawPdo->exec('INSERT INTO order_items VALUES (1, 1, 2), (1, 2, 1), (2, 1, 3)');
 $rawPdo->exec('CREATE TABLE products (id INT PRIMARY KEY, name VARCHAR(255) NOT NULL, price DECIMAL(10,2), category VARCHAR(100))');
 $rawPdo->exec("INSERT INTO products VALUES (1, 'Widget', 19.99, 'tools'), (2, 'Gadget', 49.99, 'electronics')");
 
-$parser = new MySqlParser();
-$schemaParser = new MySqlSchemaParser($parser);
-$shadowStore = new ShadowStore();
-$registry = new TableDefinitionRegistry();
-
-$schemas = [
-    'users' => 'CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255) NOT NULL, email VARCHAR(255), status VARCHAR(50))',
-    'orders' => 'CREATE TABLE orders (id INT PRIMARY KEY, user_id INT NOT NULL, amount DECIMAL(10,2), created_at DATETIME)',
-    'order_items' => 'CREATE TABLE order_items (order_id INT NOT NULL, product_id INT NOT NULL, quantity INT NOT NULL DEFAULT 1, PRIMARY KEY (order_id, product_id))',
-    'products' => 'CREATE TABLE products (id INT PRIMARY KEY, name VARCHAR(255) NOT NULL, price DECIMAL(10,2), category VARCHAR(100))',
-];
-
-foreach ($schemas as $tableName => $createSql) {
-    $definition = $schemaParser->parse($createSql);
-    if ($definition !== null) {
-        $registry->register($tableName, $definition);
-    }
-}
-
-$shadowStore->set('users', [
-    ['id' => '1', 'name' => 'Alice', 'email' => 'alice@example.com', 'status' => 'active'],
-    ['id' => '2', 'name' => 'Bob', 'email' => 'bob@example.com', 'status' => 'pending'],
-    ['id' => '3', 'name' => 'Charlie', 'email' => null, 'status' => 'active'],
-]);
-$shadowStore->set('orders', [
-    ['id' => '1', 'user_id' => '1', 'amount' => '100.00', 'created_at' => '2024-01-01 00:00:00'],
-    ['id' => '2', 'user_id' => '2', 'amount' => '250.50', 'created_at' => '2024-01-02 12:30:00'],
-]);
-$shadowStore->set('order_items', [
-    ['order_id' => '1', 'product_id' => '1', 'quantity' => '2'],
-    ['order_id' => '1', 'product_id' => '2', 'quantity' => '1'],
-    ['order_id' => '2', 'product_id' => '1', 'quantity' => '3'],
-]);
-$shadowStore->set('products', [
-    ['id' => '1', 'name' => 'Widget', 'price' => '19.99', 'category' => 'tools'],
-    ['id' => '2', 'name' => 'Gadget', 'price' => '49.99', 'category' => 'electronics'],
-]);
-
-$guard = new MySqlQueryGuard($parser);
-$selectTransformer = new SelectTransformer();
-$insertTransformer = new InsertTransformer($parser, $selectTransformer);
-$updateTransformer = new UpdateTransformer($parser, $selectTransformer);
-$deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
-$replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
-$transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
-$mutationResolver = new MySqlMutationResolver($shadowStore, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
-$rewriter = new MySqlRewriter($guard, $shadowStore, $registry, $transformer, $mutationResolver, $parser);
-
-$faker = Factory::create();
 $version = getenv('MYSQL_VERSION') === '8.4.7' ? 'mysql-8.4.7' : 'mysql-8.0.44';
-$provider = new MySqlProvider($faker, $version);
-$factory = new Fuzz\Robustness\SharedSessionFactory($rewriter, $shadowStore, $registry);
-$initialShadow = $shadowStore->snapshot();
-$initialRegistry = $registry->snapshot();
+$provider = new MySqlProvider(Factory::create(), $version);
+$planner = $provider->planner();
+$constraints = GenerationPlan::fromRule('simple_statement_or_begin')->requiringNonEmpty();
+$check = new ExecutionCheck($rawPdo);
 
 /** @var PhpFuzzer\Config $config */
-$config->setMaxLen(1024);
-$config->setTarget(static function (string $input) use ($faker, $provider, $rawPdo, $shadowStore, $registry, $rewriter, $guard, $factory, $initialShadow, $initialRegistry, $schemas): void {
-    $shadowStore->restore($initialShadow);
-    $registry->restore($initialRegistry);
-    $ztdPdo = ZtdPdo::fromPdo($rawPdo, new ZtdConfig(UnsupportedSqlBehavior::Ignore, UnknownSchemaBehavior::Exception), $factory);
-    $snapshots = [];
-    foreach (array_keys($schemas) as $table) {
-        $snapshots[$table] = Fuzz\Correctness\PhysicalTableSnapshot::capture($rawPdo, $table);
-    }
-    try {
-        (new ExecutionTarget($faker, $provider, $rawPdo, $ztdPdo, $shadowStore, $rewriter, $guard))($input);
-    } finally {
-        $shadowStore->restore($initialShadow);
-        $registry->restore($initialRegistry);
-        foreach ($snapshots as $table => $snapshot) {
-            Fuzz\Correctness\PhysicalTableSnapshot::assertUnchanged($rawPdo, $table, $snapshot, 'robustness input ' . bin2hex($input), crc32(str_pad($input, 4, "\0")));
-        }
-    }
+$config->setAllowedExceptions([]);
+$config->setMaxLen(80004);
+$config->setTarget(static function (string $input) use ($provider, $planner, $constraints, $check): void {
+    $plan = (new BytePlanCompiler())->compile($input, $planner, $constraints);
+    $check->verify($provider->generate($plan), $input);
 });

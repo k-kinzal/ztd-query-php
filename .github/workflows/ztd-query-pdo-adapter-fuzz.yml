@@ -20,7 +20,7 @@ jobs:
     - name: Set up PHP
       uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
       with:
-        php-version: '8.5'
+        php-version: '8.3'
         extensions: ctype, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, pdo_mysql, pdo_pgsql, pdo_sqlite,
           phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
         coverage: none
@@ -31,7 +31,8 @@ jobs:
       uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
       with:
         working-directory: packages/ztd-query-pdo-adapter
-        dependency-versions: highest
+        dependency-versions: locked
+        require-lock-file: true
         composer-options: --prefer-dist
     - name: Check installed platform requirements
       run: composer check-platform-reqs
@@ -116,7 +117,7 @@ jobs:
     - name: Set up PHP
       uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
       with:
-        php-version: '8.5'
+        php-version: '8.3'
         extensions: ctype, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, pdo_mysql, pdo_pgsql, pdo_sqlite,
           phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
         coverage: none
@@ -127,7 +128,8 @@ jobs:
       uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
       with:
         working-directory: packages/ztd-query-pdo-adapter
-        dependency-versions: highest
+        dependency-versions: locked
+        require-lock-file: true
         composer-options: --prefer-dist
     - name: Check installed platform requirements
       run: composer check-platform-reqs
@@ -212,7 +214,7 @@ jobs:
     - name: Set up PHP
       uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
       with:
-        php-version: '8.5'
+        php-version: '8.3'
         extensions: ctype, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, pdo_mysql, pdo_pgsql, pdo_sqlite,
           phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
         coverage: none
@@ -223,7 +225,8 @@ jobs:
       uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
       with:
         working-directory: packages/ztd-query-pdo-adapter
-        dependency-versions: highest
+        dependency-versions: locked
+        require-lock-file: true
         composer-options: --prefer-dist
     - name: Check installed platform requirements
       run: composer check-platform-reqs
@@ -245,7 +248,6 @@ jobs:
       name: Restore the corpus
     - name: Run the fuzz target
       run: |
-        mkdir -p fuzz/corpus/${{ matrix.target.corpus }}
         mkdir -p fuzz/corpus/${{ matrix.target.corpus }}
         vendor/bin/php-fuzzer fuzz fuzz/${{ matrix.target.script }} \
           fuzz/corpus/${{ matrix.target.corpus }}/ \
@@ -296,7 +298,7 @@ jobs:
     - name: Set up PHP
       uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
       with:
-        php-version: '8.5'
+        php-version: '8.3'
         extensions: ctype, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, pdo_mysql, pdo_pgsql, pdo_sqlite,
           phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
         coverage: none
@@ -307,7 +309,8 @@ jobs:
       uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
       with:
         working-directory: packages/ztd-query-pdo-adapter
-        dependency-versions: highest
+        dependency-versions: locked
+        require-lock-file: true
         composer-options: --prefer-dist
     - name: Check installed platform requirements
       run: composer check-platform-reqs
@@ -329,7 +332,6 @@ jobs:
       name: Restore the corpus
     - name: Run the fuzz target
       run: |
-        mkdir -p fuzz/corpus/${{ matrix.target.corpus }}
         mkdir -p fuzz/corpus/${{ matrix.target.corpus }}
         vendor/bin/php-fuzzer fuzz fuzz/${{ matrix.target.script }} \
           fuzz/corpus/${{ matrix.target.corpus }}/ \
