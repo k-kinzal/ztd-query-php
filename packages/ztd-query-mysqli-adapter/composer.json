@@ -149,11 +149,11 @@
         ],
         "bench": [
             "Composer\\Config::disableProcessTimeout",
-            "phpbench run --report=aggregate --store"
+            "phpbench run --report=timing --store"
         ],
         "bench:quick": [
             "Composer\\Config::disableProcessTimeout",
-            "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10 --store"
+            "phpbench run --report=timing --warmup=1 --iterations=3 --retry-threshold=10 --store"
         ],
         "bench:full": "@bench",
         "docgen": "cd ../.. && packages/ztd-query-mysqli-adapter/vendor/bin/docgen --packages=packages/ztd-query-mysqli-adapter --deptrac=\"$PWD/packages/ztd-query-mysqli-adapter/deptrac.yaml\" --output=packages/ztd-query-mysqli-adapter/build/docs --cache-dir=packages/ztd-query-mysqli-adapter/build/docgen-cache --title=k-kinzal/ztd-query-mysqli-adapter --coverage=packages/ztd-query-mysqli-adapter/build/coverage-xml",

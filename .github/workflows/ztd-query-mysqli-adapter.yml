@@ -179,7 +179,7 @@ jobs:
         if: github.event_name == 'pull_request'
         run: >-
           php -d memory_limit=4G "$(command -v infection)"
-          --configuration=infection.json5 --with-uncovered --threads=4 --only-covering-test-cases
+          --configuration=infection.json5 --with-uncovered --threads=2 --only-covering-test-cases
           --git-diff-lines --git-diff-base="origin/${GITHUB_BASE_REF}"
           --min-msi=85 --min-covered-msi=85 --ignore-msi-with-no-mutations
           --no-progress --logger-github
@@ -187,7 +187,7 @@ jobs:
         if: github.event_name != 'pull_request'
         run: >-
           php -d memory_limit=4G "$(command -v infection)"
-          --configuration=infection.json5 --with-uncovered --threads=4 --only-covering-test-cases
+          --configuration=infection.json5 --with-uncovered --threads=2 --only-covering-test-cases
           --no-progress --logger-github
       - name: Reject skipped whole-tree mutants
         if: github.event_name != 'pull_request'

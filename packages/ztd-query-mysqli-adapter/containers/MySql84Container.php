@@ -30,11 +30,17 @@ final class MySql84Container extends GenericContainer
     protected static $EXPOSED_PORTS = [3306];
 
     /**
+     * @var list<string>|null
+     */
+    protected static $MOUNTS = ['type=tmpfs,destination=/var/lib/mysql'];
+
+    /**
      * @var array<string, string>|null
      */
     protected static $ENVIRONMENTS = [
         'MYSQL_ROOT_PASSWORD' => 'root',
         'MYSQL_DATABASE' => 'test',
+        'MYSQL_INITDB_SKIP_TZINFO' => '1',
     ];
 
     /**

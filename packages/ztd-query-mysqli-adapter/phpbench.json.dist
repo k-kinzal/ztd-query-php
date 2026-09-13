@@ -11,5 +11,19 @@
         "opcache.enable_cli": "0"
     },
     "storage.xml_storage_path": "build/phpbench/storage",
-    "console.ansi": false
+    "console.ansi": false,
+    "report.generators": {
+        "timing": {
+            "extends": "aggregate",
+            "cols": [
+                "benchmark",
+                "subject",
+                "set",
+                "revs",
+                "its",
+                "mode",
+                "rstdev"
+            ]
+        }
+    }
 }
