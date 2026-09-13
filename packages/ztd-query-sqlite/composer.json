@@ -123,7 +123,7 @@
         "loc-guard": "loc-guard --config=loc.yaml",
         "tree-guard": "tree-guard --config=tree.yaml",
         "deptrac": [
-            "deptrac analyse --config-file=deptrac.yaml",
+            "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered",
             "deptrac debug:unassigned --config-file=deptrac.yaml"
         ],
         "deptrac:debug": [

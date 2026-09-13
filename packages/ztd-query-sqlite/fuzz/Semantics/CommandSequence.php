@@ -32,7 +32,7 @@ final class CommandSequence
             $operation = ord($bytes[0]) % 6;
             $id = $operation === 1 ? $nextId++ : ord($bytes[1] ?? "\0") % $nextId + 1;
             $value = ord($bytes[2] ?? "\0");
-            $name = ["'Alice'", "'O''Brien'", "'雪'", "''"][ord($bytes[3] ?? "\0") % 4];
+            $name = ["'Alice'", "'O''Brien'", "'\u{2603}'", "''"][ord($bytes[3] ?? "\0") % 4];
             $constraints = StatementPlans::operation($operation, $id, $value, $name);
             $plan = (new BytePlanCompiler())->compile($bytes, $this->provider->planner(), $constraints);
             $commands[] = $this->provider->generate($plan);
