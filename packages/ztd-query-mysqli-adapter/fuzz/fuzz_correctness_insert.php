@@ -34,7 +34,3 @@ $target = new InsertCorrectnessTarget($harness, $sqlBuilder, $faker);
 $config->setMaxLen(4096);
 $config->setAllowedExceptions([]);
 $config->setTarget(Closure::fromCallable($target));
-
-register_shutdown_function(static function () use ($rawMysqli, $db): void {
-    $rawMysqli->query("DROP DATABASE IF EXISTS `$db`");
-});

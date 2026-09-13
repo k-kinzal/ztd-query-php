@@ -32,7 +32,3 @@ $target = new ReplaceCorrectnessTarget($harness, $faker);
 $config->setMaxLen(4096);
 $config->setAllowedExceptions([]);
 $config->setTarget(Closure::fromCallable($target));
-
-register_shutdown_function(static function () use ($rawMysqli, $database): void {
-    $rawMysqli->query("DROP DATABASE IF EXISTS `$database`");
-});

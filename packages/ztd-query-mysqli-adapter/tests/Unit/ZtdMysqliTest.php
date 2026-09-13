@@ -965,7 +965,12 @@ final class ZtdMysqliTest extends TestCase
         $connection = new mysqli($host, 'root', 'root', 'test', $port);
         $ztd = ZtdMysqli::fromMysqli($connection);
         $other = new mysqli($host, 'root', 'root', 'test', $port);
-        self::assertTrue($ztd->kill($other->thread_id));
+        set_error_handler(static fn (int $severity, string $message): bool => $severity === E_DEPRECATED && str_contains($message, 'mysqli::kill'));
+        try {
+            self::assertTrue($ztd->kill($other->thread_id));
+        } finally {
+            restore_error_handler();
+        }
         $this->expectException(mysqli_sql_exception::class);
         $other->query('SELECT 1');
     }

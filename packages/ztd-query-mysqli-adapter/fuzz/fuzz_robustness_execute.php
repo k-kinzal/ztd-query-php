@@ -25,9 +25,6 @@ $version = getenv('MYSQL_VERSION');
 $provider = new MySqlProvider(Factory::create(), 'mysql-' . ($version === false ? '8.0.44' : $version));
 $target = new ExecutionTarget($provider, $native);
 
-register_shutdown_function(static function () use ($native, $database): void {
-    $native->query("DROP DATABASE IF EXISTS `$database`");
-});
 
 /**
  * @var Config $config

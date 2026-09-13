@@ -15,7 +15,9 @@ use ZtdQuery\Platform\MySql\MySqlResultColumnTypeResolver;
 
 /**
  * Measures metadata adaptation independently of database round trips.
+ * The local executor lets Testcontainers reuse one server across iterations.
  */
+#[Bench\Executor('local')]
 #[Bench\BeforeMethods('setUp')]
 #[Bench\AfterMethods('tearDown')]
 #[Bench\ParamProviders('columns')]
