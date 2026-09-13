@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\Contract\RewriterContractTest;
 use ZtdQuery\Exception\UnknownSchemaException;
-use ZtdQuery\Platform\SchemaParser;
-use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
 use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\Postgres\PgSqlMutationResolver;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
+use ZtdQuery\Platform\Postgres\PgSqlPartitionParser;
 use ZtdQuery\Platform\Postgres\PgSqlQueryGuard;
 use ZtdQuery\Platform\Postgres\PgSqlReturningProjectionParser;
 use ZtdQuery\Platform\Postgres\PgSqlRewriter;
 use ZtdQuery\Platform\Postgres\PgSqlSchemaParser;
-use ZtdQuery\Platform\Postgres\PgSqlPartitionParser;
 use ZtdQuery\Platform\Postgres\PgSqlTransformer;
 use ZtdQuery\Platform\Postgres\PgSqlViewDefinitionParser;
 use ZtdQuery\Platform\Postgres\Transformer\DeleteTransformer;
@@ -25,14 +25,15 @@ use ZtdQuery\Platform\Postgres\Transformer\InsertTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\MergeTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
-use ZtdQuery\Rewrite\QueryKind;
+use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Rewrite\AffectedRowsMode;
+use ZtdQuery\Rewrite\QueryKind;
+use ZtdQuery\Rewrite\SqlRewriter;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Schema\TablePartitionRelation;
-use ZtdQuery\Schema\ViewDefinition;
 use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Shadow\Mutation\CreateTableMutation;
 use ZtdQuery\Shadow\Mutation\DeleteMutation;
@@ -43,8 +44,6 @@ use ZtdQuery\Shadow\Mutation\TruncateMutation;
 use ZtdQuery\Shadow\Mutation\UpdateMutation;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTableState;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 
 #[CoversClass(PgSqlRewriter::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlColumnTypeMapper::class)]
@@ -81,7 +80,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlValueRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlNativeUpsertProjector::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlViewDefinitionParser::class)]
+#[UsesClass(PgSqlViewDefinitionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlViewShadowRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlGeneratedColumnProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlPartitionPredicateRenderer::class)]
@@ -118,7 +117,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
 
     public function testDoBlockPassesThroughWithoutInspectingBodyTables(): void
     {
-        $sql = "DO \$body\$ BEGIN INSERT INTO physical_only VALUES (1); END \$body\$ LANGUAGE plpgsql";
+        $sql = 'DO $body$ BEGIN INSERT INTO physical_only VALUES (1); END $body$ LANGUAGE plpgsql';
         $plan = $this->createRewriter(new ShadowStore(), new TableDefinitionRegistry())->rewrite($sql);
 
         self::assertSame(QueryKind::READ, $plan->kind());
@@ -1240,7 +1239,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
         $schemaParser = new PgSqlSchemaParser();
         $mutationResolver = new PgSqlMutationResolver($shadowStore, $registry, $schemaParser, $parser);
         $rewriter = new PgSqlRewriter($guard, $shadowStore, $registry, $transformer, $mutationResolver, $parser);
-        $this->expectException(\ZtdQuery\Exception\UnknownSchemaException::class);
+        $this->expectException(UnknownSchemaException::class);
         $rewriter->rewrite('SELECT * FROM nonexistent_table');
     }
 
@@ -1925,7 +1924,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
         $schemaParser = new PgSqlSchemaParser();
         $mutationResolver = new PgSqlMutationResolver($shadowStore, $registry, $schemaParser, $parser);
         $rewriter = new PgSqlRewriter($guard, $shadowStore, $registry, $transformer, $mutationResolver, $parser);
-        $multiPlan = $rewriter->rewriteMultiple("SELECT 1; CREATE TABLE t (id INTEGER); DROP TABLE users");
+        $multiPlan = $rewriter->rewriteMultiple('SELECT 1; CREATE TABLE t (id INTEGER); DROP TABLE users');
         self::assertSame(3, $multiPlan->count());
         self::assertSame(QueryKind::READ, $multiPlan->get(0)?->kind());
         self::assertSame(QueryKind::DDL_SIMULATED, $multiPlan->get(1)?->kind());
@@ -2606,7 +2605,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
 
         $shadowStore->set('known_table', [['x' => 1]]);
 
-        $this->expectException(\ZtdQuery\Exception\UnknownSchemaException::class);
+        $this->expectException(UnknownSchemaException::class);
         $rewriter->rewrite('SELECT * FROM unknown_table');
     }
 

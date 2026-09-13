@@ -6,7 +6,6 @@ namespace ZtdQuery\Platform\Postgres;
 
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Sql\SqlToken;
-use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
 final class PgSqlTableSampleParser

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Postgres;
 
+use InvalidArgumentException;
+
 final class PgSqlTableSample
 {
     public function __construct(
@@ -17,10 +19,10 @@ final class PgSqlTableSample
         public readonly int $endOffset,
     ) {
         if ($tableName === '' || $sourceSql === '' || $percentageSql === '') {
-            throw new \InvalidArgumentException('TABLESAMPLE fields must not be empty');
+            throw new InvalidArgumentException('TABLESAMPLE fields must not be empty');
         }
         if ($startOffset < 0 || $endOffset <= $startOffset) {
-            throw new \InvalidArgumentException('TABLESAMPLE offsets are invalid');
+            throw new InvalidArgumentException('TABLESAMPLE offsets are invalid');
         }
     }
 }

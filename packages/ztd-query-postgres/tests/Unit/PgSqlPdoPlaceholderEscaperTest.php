@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Generator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -99,9 +100,9 @@ final class PgSqlPdoPlaceholderEscaperTest extends TestCase
     }
 
     /**
-     * @return \Generator<string, array{string, string}>
+     * @return Generator<string, array{string, string}>
      */
-    public static function providerQuestionMarkBoundaries(): \Generator
+    public static function providerQuestionMarkBoundaries(): Generator
     {
         yield 'empty query' => ['', ''];
         yield 'placeholder' => ['?', '?'];
@@ -121,9 +122,9 @@ final class PgSqlPdoPlaceholderEscaperTest extends TestCase
     }
 
     /**
-     * @return \Generator<string, array{string, string}>
+     * @return Generator<string, array{string, string}>
      */
-    public static function providerCommentForms(): \Generator
+    public static function providerCommentForms(): Generator
     {
         yield 'line comment' => ['-- ?', '-- ?'];
         yield 'line comment with carriage return' => ["-- ?\rSELECT ?", "-- ?\rSELECT ?"];
@@ -148,9 +149,9 @@ final class PgSqlPdoPlaceholderEscaperTest extends TestCase
     }
 
     /**
-     * @return \Generator<string, array{string, string}>
+     * @return Generator<string, array{string, string}>
      */
-    public static function providerQuotedForms(): \Generator
+    public static function providerQuotedForms(): Generator
     {
         yield 'single quoted question mark' => ["'?' ? 'key'", "'?' ?? 'key'"];
         yield 'single quoted expression' => ["'meta ?' ? 'key'", "'meta ?' ?? 'key'"];
@@ -179,26 +180,26 @@ final class PgSqlPdoPlaceholderEscaperTest extends TestCase
         yield 'unterminated doubled double quote' => ['"a""', '"a""'];
         yield 'unterminated single quote' => ["'unterminated ?", "'unterminated ?"];
         yield 'unterminated single quoted expression' => ["'unterminated meta ?", "'unterminated meta ?"];
-        yield 'unterminated double quote' => ["\"unterminated ?", "\"unterminated ?"];
-        yield 'unterminated double quoted expression' => ["\"unterminated meta ?", "\"unterminated meta ?"];
+        yield 'unterminated double quote' => ['"unterminated ?', '"unterminated ?'];
+        yield 'unterminated double quoted expression' => ['"unterminated meta ?', '"unterminated meta ?'];
     }
 
     /**
-     * @return \Generator<string, array{string, string}>
+     * @return Generator<string, array{string, string}>
      */
-    public static function providerDollarQuotedStringsAndNativeParameters(): \Generator
+    public static function providerDollarQuotedStringsAndNativeParameters(): Generator
     {
         yield 'untagged dollar quote' => ["\$\$meta ?\$\$ ? 'key'", "\$\$meta ?\$\$ ?? 'key'"];
-        yield 'unterminated dollar quote' => ["\$tag\$ ?", "\$tag\$ ?"];
-        yield 'prefixed unterminated dollar quote' => ["prefix \$tag\$meta ?", "prefix \$tag\$meta ?"];
+        yield 'unterminated dollar quote' => ['$tag$ ?', '$tag$ ?'];
+        yield 'prefixed unterminated dollar quote' => ['prefix $tag$meta ?', 'prefix $tag$meta ?'];
         yield 'tagged dollar quote' => ["\$tag\$meta ?\$tag\$ ? 'key'", "\$tag\$meta ?\$tag\$ ?? 'key'"];
         yield 'prefixed tagged dollar quote' => ["prefix \$A\$meta ?\$A\$ ? 'key'", "prefix \$A\$meta ?\$A\$ ?? 'key'"];
         yield 'standalone dollar' => ['$', '$'];
         yield 'unterminated dollar tag' => ['$A', '$A'];
         yield 'empty dollar quoted string' => ['$A$', '$A$'];
         yield 'empty dollar quote followed by dollar identifier' => ['$A$$A$B$?', '$A$$A$B$??'];
-        yield 'one digit native parameter' => ["\$1 ? ?", "\$1 ?? ?"];
-        yield 'two digit native parameter' => ["\$19 ? ?", "\$19 ?? ?"];
+        yield 'one digit native parameter' => ['$1 ? ?', '$1 ?? ?'];
+        yield 'two digit native parameter' => ['$19 ? ?', '$19 ?? ?'];
         yield 'zero native parameter boundary' => ["\$0? 'key'", "\$0?? 'key'"];
         yield 'nine native parameter boundary' => ["\$9? 'key'", "\$9?? 'key'"];
         yield 'ten native parameter boundary' => ["\$10? 'key'", "\$10?? 'key'"];
@@ -213,9 +214,9 @@ final class PgSqlPdoPlaceholderEscaperTest extends TestCase
     }
 
     /**
-     * @return \Generator<string, array{string, string}>
+     * @return Generator<string, array{string, string}>
      */
-    public static function providerOperands(): \Generator
+    public static function providerOperands(): Generator
     {
         foreach ([':name', ':a_b9$', 'A', 'Z', 'a', 'z', '_value', 'value0', 'value9', 'value$', '0', '9', '123.45'] as $operand) {
             yield $operand . ' separated' => [$operand . " ? 'key'", $operand . " ?? 'key'"];
@@ -232,9 +233,9 @@ final class PgSqlPdoPlaceholderEscaperTest extends TestCase
     }
 
     /**
-     * @return \Generator<string, array{string}>
+     * @return Generator<string, array{string}>
      */
-    public static function providerKeywords(): \Generator
+    public static function providerKeywords(): Generator
     {
         $keywords = [
             'ALL',
@@ -287,9 +288,9 @@ final class PgSqlPdoPlaceholderEscaperTest extends TestCase
     }
 
     /**
-     * @return \Generator<string, array{string, string}>
+     * @return Generator<string, array{string, string}>
      */
-    public static function providerPunctuation(): \Generator
+    public static function providerPunctuation(): Generator
     {
         foreach (['(', '[', ',', ';', '.', '=', '<', '>', '!', '~', '+', '-', '*', '/', '%', '^', '|', '&', '#', '@'] as $prefix) {
             yield $prefix => ['meta' . $prefix . '?', 'meta' . $prefix . '?'];

@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Postgres\Transformer;
 
+use InvalidArgumentException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
-use ZtdQuery\Platform\Postgres\PgSqlNativeUpsertProjector;
-use ZtdQuery\Platform\Postgres\PgSqlLexerProfile;
-use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer;
+use ZtdQuery\Platform\Postgres\PgSqlLexerProfile;
+use ZtdQuery\Platform\Postgres\PgSqlNativeUpsertProjector;
+use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Rewrite\ShadowIdentityAllocator;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\CandidateKeySet;
@@ -109,7 +110,7 @@ final class InsertTransformer implements SqlTransformer
             $sourceColumns = $insertColumns !== [] || $values === [] ? $insertColumns : $tableColumns;
             try {
                 $providedExpressions = $this->rowRenderer->providedExpressions($sourceColumns, $values);
-            } catch (\InvalidArgumentException) {
+            } catch (InvalidArgumentException) {
                 throw new UnsupportedSqlException($sql, 'Insert values count does not match column count');
             }
             $generatedValues = $this->identityAllocator->allocateMissing(

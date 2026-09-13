@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Postgres;
 
+use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\IdentityGenerationStrategy;
-use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;

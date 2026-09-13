@@ -6,8 +6,8 @@ namespace ZtdQuery\Platform\Postgres;
 
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Platform\SchemaParser;
+use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\TableDefinitionRegistry;

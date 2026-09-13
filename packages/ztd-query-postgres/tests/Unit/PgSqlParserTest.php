@@ -4,13 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use PHPUnit\Framework\TestCase;
-use ZtdQuery\Platform\Postgres\PgSqlParser;
-use ZtdQuery\Platform\Postgres\PgSqlConflictTarget;
-use ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
+use ZtdQuery\Platform\Postgres\PgSqlConflictTarget;
+use ZtdQuery\Platform\Postgres\PgSqlParser;
+use ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker;
 
 #[CoversClass(PgSqlParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]
@@ -22,7 +23,7 @@ final class PgSqlParserTest extends TestCase
     public function testClassifiesAnonymousDoBlockWithoutSplittingItsBody(): void
     {
         $parser = new PgSqlParser();
-        $sql = "DO \$body\$ BEGIN INSERT INTO users VALUES (1); UPDATE users SET id = 2; END \$body\$";
+        $sql = 'DO $body$ BEGIN INSERT INTO users VALUES (1); UPDATE users SET id = 2; END $body$';
 
         self::assertSame('DO', $parser->classifyStatement($sql));
         self::assertSame([$sql], $parser->splitStatements($sql));
@@ -66,7 +67,7 @@ final class PgSqlParserTest extends TestCase
     public function testClassifyInsert(): void
     {
         $parser = new PgSqlParser();
-        self::assertSame('INSERT', $parser->classifyStatement("INSERT INTO users (id) VALUES (1)"));
+        self::assertSame('INSERT', $parser->classifyStatement('INSERT INTO users (id) VALUES (1)'));
     }
 
     public function testClassifyUpdate(): void
@@ -189,7 +190,7 @@ SELECT * FROM users'));
     public function testExtractInsertTable(): void
     {
         $parser = new PgSqlParser();
-        self::assertSame('users', $parser->extractInsertTable("INSERT INTO users (id) VALUES (1)"));
+        self::assertSame('users', $parser->extractInsertTable('INSERT INTO users (id) VALUES (1)'));
     }
 
     public function testExtractInsertTableQuoted(): void
@@ -229,20 +230,20 @@ SELECT * FROM users'));
     public function testExtractInsertValuesMultiple(): void
     {
         $parser = new PgSqlParser();
-        $rows = $parser->extractInsertValues("INSERT INTO users (id) VALUES (1), (2), (3)");
+        $rows = $parser->extractInsertValues('INSERT INTO users (id) VALUES (1), (2), (3)');
         self::assertCount(3, $rows);
     }
 
     public function testHasOnConflict(): void
     {
         $parser = new PgSqlParser();
-        self::assertTrue($parser->hasOnConflict("INSERT INTO users (id) VALUES (1) ON CONFLICT (id) DO NOTHING"));
+        self::assertTrue($parser->hasOnConflict('INSERT INTO users (id) VALUES (1) ON CONFLICT (id) DO NOTHING'));
     }
 
     public function testHasOnConflictFalse(): void
     {
         $parser = new PgSqlParser();
-        self::assertFalse($parser->hasOnConflict("INSERT INTO users (id) VALUES (1)"));
+        self::assertFalse($parser->hasOnConflict('INSERT INTO users (id) VALUES (1)'));
     }
 
     public function testExtractOnConflictUpdateColumns(): void
@@ -648,7 +649,7 @@ SELECT * FROM users'));
     public function testExtractInsertValuesWithSubquery(): void
     {
         $parser = new PgSqlParser();
-        $rows = $parser->extractInsertValues("INSERT INTO t (id, v) VALUES (1, (SELECT max(id) FROM t2))");
+        $rows = $parser->extractInsertValues('INSERT INTO t (id, v) VALUES (1, (SELECT max(id) FROM t2))');
         self::assertSame(1, count($rows));
         self::assertSame('1', $rows[0][0]);
         self::assertSame('(SELECT max(id) FROM t2)', $rows[0][1]);
@@ -665,7 +666,7 @@ SELECT * FROM users'));
     public function testExtractOnConflictUpdateColumnsNoConflict(): void
     {
         $parser = new PgSqlParser();
-        $result = $parser->extractOnConflictUpdateColumns("INSERT INTO t (id) VALUES (1)");
+        $result = $parser->extractOnConflictUpdateColumns('INSERT INTO t (id) VALUES (1)');
         self::assertSame([], $result['columns']);
         self::assertSame([], $result['values']);
     }
@@ -674,7 +675,7 @@ SELECT * FROM users'));
     {
         $parser = new PgSqlParser();
         $result = $parser->extractOnConflictUpdateColumns(
-            "INSERT INTO t (id, a, b) VALUES (1, 2, 3) ON CONFLICT (id) DO UPDATE SET a = EXCLUDED.a, b = EXCLUDED.b"
+            'INSERT INTO t (id, a, b) VALUES (1, 2, 3) ON CONFLICT (id) DO UPDATE SET a = EXCLUDED.a, b = EXCLUDED.b'
         );
         self::assertSame(['a', 'b'], $result['columns']);
         self::assertSame('EXCLUDED.a', $result['values']['a']);
@@ -685,7 +686,7 @@ SELECT * FROM users'));
     {
         $parser = new PgSqlParser();
         $result = $parser->extractOnConflictUpdateColumns(
-            "INSERT INTO t (id, v) VALUES (1, 2) ON CONFLICT (id) DO UPDATE SET v = EXCLUDED.v WHERE t.v < EXCLUDED.v"
+            'INSERT INTO t (id, v) VALUES (1, 2) ON CONFLICT (id) DO UPDATE SET v = EXCLUDED.v WHERE t.v < EXCLUDED.v'
         );
         self::assertSame(['v'], $result['columns']);
         self::assertSame('EXCLUDED.v', $result['values']['v']);
@@ -695,7 +696,7 @@ SELECT * FROM users'));
     {
         $parser = new PgSqlParser();
         $result = $parser->extractOnConflictUpdateColumns(
-            "INSERT INTO t (id, v) VALUES (1, 2) ON CONFLICT (id) DO UPDATE SET v = EXCLUDED.v RETURNING id"
+            'INSERT INTO t (id, v) VALUES (1, 2) ON CONFLICT (id) DO UPDATE SET v = EXCLUDED.v RETURNING id'
         );
 
         self::assertSame(['v'], $result['columns']);
@@ -727,7 +728,7 @@ SELECT * FROM users'));
     {
         $parser = new PgSqlParser();
         self::assertTrue($parser->hasInsertSelect('INSERT INTO t SELECT * FROM old'));
-        self::assertFalse($parser->hasInsertSelect("INSERT INTO t VALUES (1)"));
+        self::assertFalse($parser->hasInsertSelect('INSERT INTO t VALUES (1)'));
     }
 
     public function testHasInsertSelectWithValueLookingLikeSelect(): void
@@ -788,7 +789,7 @@ SELECT * FROM users'));
     public function testExtractUpdateSetsWithFrom(): void
     {
         $parser = new PgSqlParser();
-        $sets = $parser->extractUpdateSets("UPDATE users SET name = o.name FROM other o WHERE users.id = o.id");
+        $sets = $parser->extractUpdateSets('UPDATE users SET name = o.name FROM other o WHERE users.id = o.id');
         self::assertSame(['name' => 'o.name'], $sets);
     }
 
@@ -837,7 +838,7 @@ SELECT * FROM users'));
     public function testExtractWhereClauseWithOrderBy(): void
     {
         $parser = new PgSqlParser();
-        $where = $parser->extractWhereClause("DELETE FROM users WHERE active = true ORDER BY id");
+        $where = $parser->extractWhereClause('DELETE FROM users WHERE active = true ORDER BY id');
         self::assertNotNull($where);
         self::assertStringNotContainsString('ORDER', $where);
     }
@@ -845,7 +846,7 @@ SELECT * FROM users'));
     public function testExtractWhereClauseWithLimit(): void
     {
         $parser = new PgSqlParser();
-        $where = $parser->extractWhereClause("DELETE FROM users WHERE active = true LIMIT 10");
+        $where = $parser->extractWhereClause('DELETE FROM users WHERE active = true LIMIT 10');
         self::assertNotNull($where);
         self::assertStringNotContainsString('LIMIT', $where);
     }
@@ -853,7 +854,7 @@ SELECT * FROM users'));
     public function testExtractUpdateFromClause(): void
     {
         $parser = new PgSqlParser();
-        $from = $parser->extractUpdateFromClause("UPDATE users SET name = o.name FROM other o WHERE users.id = o.id");
+        $from = $parser->extractUpdateFromClause('UPDATE users SET name = o.name FROM other o WHERE users.id = o.id');
         self::assertSame('other o', $from);
     }
 
@@ -1097,7 +1098,7 @@ SELECT * FROM users'));
     public function testExtractUpdateSetsWithSubquery(): void
     {
         $parser = new PgSqlParser();
-        $sets = $parser->extractUpdateSets("UPDATE t SET v = (SELECT max(id)) WHERE id = 1");
+        $sets = $parser->extractUpdateSets('UPDATE t SET v = (SELECT max(id)) WHERE id = 1');
         self::assertArrayHasKey('v', $sets);
         self::assertSame('(SELECT max(id))', $sets['v']);
     }
@@ -1130,14 +1131,14 @@ SELECT * FROM users'));
     public function testExtractUpdateFromClauseWithReturning(): void
     {
         $parser = new PgSqlParser();
-        $from = $parser->extractUpdateFromClause("UPDATE users SET name = o.name FROM other o WHERE 1=1 RETURNING *");
+        $from = $parser->extractUpdateFromClause('UPDATE users SET name = o.name FROM other o WHERE 1=1 RETURNING *');
         self::assertSame('other o', $from);
     }
 
     public function testExtractInsertValuesWithWhitespace(): void
     {
         $parser = new PgSqlParser();
-        $rows = $parser->extractInsertValues("INSERT INTO t (id) VALUES (1) , (2)");
+        $rows = $parser->extractInsertValues('INSERT INTO t (id) VALUES (1) , (2)');
         self::assertSame(2, count($rows));
         self::assertSame(['1'], $rows[0]);
         self::assertSame(['2'], $rows[1]);
@@ -1175,7 +1176,7 @@ SELECT * FROM users'));
     {
         $parser = new PgSqlParser();
         $result = $parser->extractOnConflictUpdateColumns(
-            "INSERT INTO t (id) VALUES (1) ON CONFLICT (id) DO NOTHING"
+            'INSERT INTO t (id) VALUES (1) ON CONFLICT (id) DO NOTHING'
         );
         self::assertSame([], $result['columns']);
     }
@@ -1263,7 +1264,7 @@ SELECT * FROM users'));
     public function testExtractInsertValuesLowercase(): void
     {
         $parser = new PgSqlParser();
-        $rows = $parser->extractInsertValues("insert into t (id) values (1)");
+        $rows = $parser->extractInsertValues('insert into t (id) values (1)');
         self::assertSame(1, count($rows));
         self::assertSame(['1'], $rows[0]);
     }
@@ -1278,7 +1279,7 @@ SELECT * FROM users'));
     {
         $parser = new PgSqlParser();
         $result = $parser->extractOnConflictUpdateColumns(
-            "insert into t (id, v) values (1, 2) on conflict (id) do update set v = excluded.v"
+            'insert into t (id, v) values (1, 2) on conflict (id) do update set v = excluded.v'
         );
         self::assertSame(['v'], $result['columns']);
     }
@@ -1312,21 +1313,21 @@ SELECT * FROM users'));
     public function testExtractUpdateSetsLowercase(): void
     {
         $parser = new PgSqlParser();
-        $sets = $parser->extractUpdateSets("update t set v = 1 where id = 2");
+        $sets = $parser->extractUpdateSets('update t set v = 1 where id = 2');
         self::assertSame(['v' => '1'], $sets);
     }
 
     public function testExtractWhereClauseLowercase(): void
     {
         $parser = new PgSqlParser();
-        $where = $parser->extractWhereClause("delete from users where id = 1 returning *");
+        $where = $parser->extractWhereClause('delete from users where id = 1 returning *');
         self::assertSame('id = 1', $where);
     }
 
     public function testExtractUpdateFromClauseLowercase(): void
     {
         $parser = new PgSqlParser();
-        $from = $parser->extractUpdateFromClause("update users set name = o.name from other o where users.id = o.id");
+        $from = $parser->extractUpdateFromClause('update users set name = o.name from other o where users.id = o.id');
         self::assertSame('other o', $from);
     }
 
@@ -1468,7 +1469,7 @@ SELECT * FROM users'));
     {
         $parser = new PgSqlParser();
         $result = $parser->extractOnConflictUpdateColumns(
-            "INSERT INTO t (id, v) VALUES (1, 2) ON CONFLICT (id) DO UPDATE SET v = EXCLUDED.v;"
+            'INSERT INTO t (id, v) VALUES (1, 2) ON CONFLICT (id) DO UPDATE SET v = EXCLUDED.v;'
         );
         self::assertSame(['v'], $result['columns']);
         self::assertSame('EXCLUDED.v', $result['values']['v']);
@@ -1536,7 +1537,7 @@ SELECT * FROM users'));
     public function testStripLeadingBlockCommentOnly(): void
     {
         $parser = new PgSqlParser();
-        self::assertSame('SELECT', $parser->classifyStatement("/* block */ SELECT 1"));
+        self::assertSame('SELECT', $parser->classifyStatement('/* block */ SELECT 1'));
     }
 
     public function testStripLeadingMixedComments(): void
@@ -1550,7 +1551,7 @@ SELECT * FROM users'));
         $parser = new PgSqlParser();
         self::assertSame('SELECT', $parser->classifyStatement('Select * From users'));
         self::assertSame('INSERT', $parser->classifyStatement('Insert Into t (id) Values (1)'));
-        self::assertSame('UPDATE', $parser->classifyStatement("Update t Set x = 1"));
+        self::assertSame('UPDATE', $parser->classifyStatement('Update t Set x = 1'));
         self::assertSame('DELETE', $parser->classifyStatement('Delete From t Where id = 1'));
     }
 
@@ -1563,7 +1564,7 @@ SELECT * FROM users'));
     public function testExtractInsertColumnsWithSelectKeyword(): void
     {
         $parser = new PgSqlParser();
-        $cols = $parser->extractInsertColumns("INSERT INTO t (id, name) SELECT id, name FROM old");
+        $cols = $parser->extractInsertColumns('INSERT INTO t (id, name) SELECT id, name FROM old');
         self::assertSame(['id', 'name'], $cols);
     }
 
@@ -1593,7 +1594,7 @@ SELECT * FROM users'));
     public function testExtractWhereClauseFromUpdateWithFrom(): void
     {
         $parser = new PgSqlParser();
-        $where = $parser->extractWhereClause("UPDATE t SET v = o.v FROM other o WHERE t.id = o.id");
+        $where = $parser->extractWhereClause('UPDATE t SET v = o.v FROM other o WHERE t.id = o.id');
         self::assertNotNull($where);
         self::assertStringContainsString('t.id = o.id', $where);
     }
@@ -1607,13 +1608,13 @@ SELECT * FROM users'));
     public function testHasInsertSelectWithValuesFalse(): void
     {
         $parser = new PgSqlParser();
-        self::assertFalse($parser->hasInsertSelect("INSERT INTO t (id) VALUES (1)"));
+        self::assertFalse($parser->hasInsertSelect('INSERT INTO t (id) VALUES (1)'));
     }
 
     public function testExtractUpdateSetsLowercaseReturning(): void
     {
         $parser = new PgSqlParser();
-        $sets = $parser->extractUpdateSets("update t set v = 1 returning *");
+        $sets = $parser->extractUpdateSets('update t set v = 1 returning *');
         self::assertSame(['v' => '1'], $sets);
     }
 
@@ -1785,40 +1786,40 @@ SELECT * FROM users'));
     public function testExtractInsertValuesWithLeadingWhitespace(): void
     {
         $parser = new PgSqlParser();
-        $values = $parser->extractInsertValues("INSERT INTO t (a) VALUES ( 1 )");
+        $values = $parser->extractInsertValues('INSERT INTO t (a) VALUES ( 1 )');
         self::assertSame([['1']], $values);
     }
 
     public function testExtractInsertValuesMultipleRows(): void
     {
         $parser = new PgSqlParser();
-        $values = $parser->extractInsertValues("INSERT INTO t (a) VALUES (1), (2)");
+        $values = $parser->extractInsertValues('INSERT INTO t (a) VALUES (1), (2)');
         self::assertSame([['1'], ['2']], $values);
     }
 
     public function testExtractUpdateSetsOnlySetColumns(): void
     {
         $parser = new PgSqlParser();
-        $sets = $parser->extractUpdateSets("UPDATE t SET a = 1, b = 2 FROM s WHERE t.id = s.id");
+        $sets = $parser->extractUpdateSets('UPDATE t SET a = 1, b = 2 FROM s WHERE t.id = s.id');
         self::assertSame(['a' => '1', 'b' => '2'], $sets);
     }
 
     public function testExtractWhereClauseTrimmed(): void
     {
         $parser = new PgSqlParser();
-        self::assertSame('id = 1', $parser->extractWhereClause("DELETE FROM t WHERE   id = 1  "));
+        self::assertSame('id = 1', $parser->extractWhereClause('DELETE FROM t WHERE   id = 1  '));
     }
 
     public function testExtractUpdateFromClauseTrimmed(): void
     {
         $parser = new PgSqlParser();
-        self::assertSame('orders', $parser->extractUpdateFromClause("UPDATE users SET name = orders.name FROM  orders  WHERE users.id = orders.user_id"));
+        self::assertSame('orders', $parser->extractUpdateFromClause('UPDATE users SET name = orders.name FROM  orders  WHERE users.id = orders.user_id'));
     }
 
     public function testExtractDeleteUsingClauseTrimmed(): void
     {
         $parser = new PgSqlParser();
-        self::assertSame('orders', $parser->extractDeleteUsingClause("DELETE FROM users USING  orders  WHERE users.id = orders.user_id"));
+        self::assertSame('orders', $parser->extractDeleteUsingClause('DELETE FROM users USING  orders  WHERE users.id = orders.user_id'));
     }
 
     public function testHasCreateTableAsSelectTemporary(): void
@@ -1868,7 +1869,7 @@ SELECT * FROM users'));
             "INSERT INTO t (id, name) VALUES (1, 'a') ON CONFLICT (id) DO UPDATE SET name =\nEXCLUDED.name"
         );
         self::assertSame(['name'], $info['columns']);
-        self::assertSame("EXCLUDED.name", $info['values']['name']);
+        self::assertSame('EXCLUDED.name', $info['values']['name']);
     }
 
     public function testExtractUpdateSetsNewlineInAssignment(): void
@@ -1985,7 +1986,7 @@ SELECT * FROM users'));
     {
         $parser = new PgSqlParser();
         $info = $parser->extractOnConflictUpdateColumns(
-            "INSERT INTO t (id, a, b) VALUES (1, 2, 3) ON CONFLICT (id) DO UPDATE SET a = EXCLUDED.a, b = EXCLUDED.b"
+            'INSERT INTO t (id, a, b) VALUES (1, 2, 3) ON CONFLICT (id) DO UPDATE SET a = EXCLUDED.a, b = EXCLUDED.b'
         );
         self::assertSame(['a', 'b'], $info['columns']);
         self::assertSame(['a' => 'EXCLUDED.a', 'b' => 'EXCLUDED.b'], $info['values']);
@@ -2002,14 +2003,14 @@ SELECT * FROM users'));
     public function testExtractSelectTableNamesWithCrossJoin(): void
     {
         $parser = new PgSqlParser();
-        $tables = $parser->extractSelectTableNames("SELECT * FROM users CROSS JOIN orders");
+        $tables = $parser->extractSelectTableNames('SELECT * FROM users CROSS JOIN orders');
         self::assertContains('users', $tables);
     }
 
     public function testExtractSelectTableNamesWithNaturalJoin(): void
     {
         $parser = new PgSqlParser();
-        $tables = $parser->extractSelectTableNames("SELECT * FROM users NATURAL JOIN orders");
+        $tables = $parser->extractSelectTableNames('SELECT * FROM users NATURAL JOIN orders');
         self::assertContains('users', $tables);
     }
 
@@ -2093,7 +2094,7 @@ SELECT * FROM users'));
     public function testExtractUpdateSetsReturningSensitive(): void
     {
         $parser = new PgSqlParser();
-        $sets = $parser->extractUpdateSets("UPDATE t SET a = 1 RETURNING *");
+        $sets = $parser->extractUpdateSets('UPDATE t SET a = 1 RETURNING *');
         self::assertSame(['a' => '1'], $sets);
     }
 
@@ -2171,7 +2172,7 @@ SELECT * FROM users'));
     public function testExtractWhereClauseWithOrderByMultiWord(): void
     {
         $parser = new PgSqlParser();
-        self::assertSame('id > 0', $parser->extractWhereClause("DELETE FROM t WHERE id > 0 ORDER  BY id"));
+        self::assertSame('id > 0', $parser->extractWhereClause('DELETE FROM t WHERE id > 0 ORDER  BY id'));
     }
 
     public function testExtractSelectTableNamesSchemaQualifiedInFrom(): void
@@ -2224,7 +2225,7 @@ SELECT * FROM users'));
     public function testExtractUpdateSetsWithSubqueryInValue(): void
     {
         $parser = new PgSqlParser();
-        $sets = $parser->extractUpdateSets("UPDATE t SET count = (SELECT COUNT(*) FROM other) WHERE id = 1");
+        $sets = $parser->extractUpdateSets('UPDATE t SET count = (SELECT COUNT(*) FROM other) WHERE id = 1');
         self::assertArrayHasKey('count', $sets);
     }
 
@@ -2282,7 +2283,7 @@ SELECT * FROM users'));
     public function testExtractInsertValuesMultipleRowsWithSpaces(): void
     {
         $parser = new PgSqlParser();
-        $values = $parser->extractInsertValues("INSERT INTO t (a) VALUES  ( 1 ) , ( 2 )");
+        $values = $parser->extractInsertValues('INSERT INTO t (a) VALUES  ( 1 ) , ( 2 )');
         self::assertSame([['1'], ['2']], $values);
     }
 
@@ -2301,7 +2302,7 @@ SELECT * FROM users'));
     public function testExtractInsertSelectSqlReturnsNullNoSelect(): void
     {
         $parser = new PgSqlParser();
-        self::assertNull($parser->extractInsertSelectSql("INSERT INTO t (a) VALUES (1)"));
+        self::assertNull($parser->extractInsertSelectSql('INSERT INTO t (a) VALUES (1)'));
     }
 
     public function testExtractCreateTableLikeSourceReturnsNullNoLike(): void
@@ -2399,7 +2400,7 @@ SELECT * FROM users'));
     public function testSplitByTopLevelCommaViaUpdateSetsWithParentheses(): void
     {
         $parser = new PgSqlParser();
-        $sets = $parser->extractUpdateSets("UPDATE t SET a = fn(1, 2), b = 3 WHERE id = 1");
+        $sets = $parser->extractUpdateSets('UPDATE t SET a = fn(1, 2), b = 3 WHERE id = 1');
         self::assertSame(['a' => 'fn(1, 2)', 'b' => '3'], $sets);
     }
 
@@ -2456,7 +2457,7 @@ SELECT * FROM users'));
     public function testHasInsertSelectFalseForInsertValues(): void
     {
         $parser = new PgSqlParser();
-        self::assertFalse($parser->hasInsertSelect("INSERT INTO t (id) VALUES (1)"));
+        self::assertFalse($parser->hasInsertSelect('INSERT INTO t (id) VALUES (1)'));
     }
 
     public function testHasOnConflictFalseForPlainInsert(): void
@@ -2533,7 +2534,7 @@ SELECT * FROM users'));
     public function testExtractUpdateFromClauseWithMultipleTables(): void
     {
         $parser = new PgSqlParser();
-        $from = $parser->extractUpdateFromClause("UPDATE t SET a = s.a FROM s, r WHERE t.id = s.id");
+        $from = $parser->extractUpdateFromClause('UPDATE t SET a = s.a FROM s, r WHERE t.id = s.id');
         self::assertNotNull($from);
         self::assertStringContainsString('s', $from);
     }
@@ -2541,28 +2542,28 @@ SELECT * FROM users'));
     public function testExtractWhereClauseExactTrimming(): void
     {
         $parser = new PgSqlParser();
-        $where = $parser->extractWhereClause("DELETE FROM t WHERE    id = 1   ");
+        $where = $parser->extractWhereClause('DELETE FROM t WHERE    id = 1   ');
         self::assertSame('id = 1', $where);
     }
 
     public function testExtractUpdateFromClauseExactTrimming(): void
     {
         $parser = new PgSqlParser();
-        $from = $parser->extractUpdateFromClause("UPDATE t SET a = s.a FROM   other_table   WHERE t.id = other_table.id");
+        $from = $parser->extractUpdateFromClause('UPDATE t SET a = s.a FROM   other_table   WHERE t.id = other_table.id');
         self::assertSame('other_table', $from);
     }
 
     public function testExtractDeleteUsingClauseExactTrimming(): void
     {
         $parser = new PgSqlParser();
-        $using = $parser->extractDeleteUsingClause("DELETE FROM t USING   other_table   WHERE t.id = other_table.id");
+        $using = $parser->extractDeleteUsingClause('DELETE FROM t USING   other_table   WHERE t.id = other_table.id');
         self::assertSame('other_table', $using);
     }
 
     public function testExtractCreateTableSelectSqlExactTrimming(): void
     {
         $parser = new PgSqlParser();
-        self::assertSame('SELECT 1', $parser->extractCreateTableSelectSql("CREATE TABLE t AS   SELECT 1  "));
+        self::assertSame('SELECT 1', $parser->extractCreateTableSelectSql('CREATE TABLE t AS   SELECT 1  '));
     }
 
     public function testClassifyEmptyStringReturnsNull(): void
@@ -2603,7 +2604,7 @@ SELECT * FROM users'));
     public function testHasInsertSelectLowercaseValues(): void
     {
         $parser = new PgSqlParser();
-        self::assertFalse($parser->hasInsertSelect("INSERT INTO users (id) values (1)"));
+        self::assertFalse($parser->hasInsertSelect('INSERT INTO users (id) values (1)'));
     }
 
     public function testExtractWhereClauseWithMultilineReturning(): void
@@ -2715,7 +2716,7 @@ SELECT * FROM users'));
     public function testClassifyWithStatementStartAnchor(): void
     {
         $parser = new PgSqlParser();
-        self::assertSame('SELECT', $parser->classifyStatement("SELECT * FROM with_data"));
+        self::assertSame('SELECT', $parser->classifyStatement('SELECT * FROM with_data'));
     }
 
     public function testExtractOnConflictColumnsLowercaseAs(): void
@@ -2816,14 +2817,14 @@ SELECT * FROM users'));
     public function testClassifyCreateTableContainingSelectKeyword(): void
     {
         $parser = new PgSqlParser();
-        self::assertSame('CREATE_TABLE', $parser->classifyStatement("CREATE TABLE select_log (id INTEGER, query TEXT)"));
+        self::assertSame('CREATE_TABLE', $parser->classifyStatement('CREATE TABLE select_log (id INTEGER, query TEXT)'));
     }
 
     public function testHasInsertSelectCaseInsensitive(): void
     {
         $parser = new PgSqlParser();
         self::assertTrue($parser->hasInsertSelect('INSERT INTO archive SELECT * FROM users'));
-        self::assertFalse($parser->hasInsertSelect("INSERT INTO users (id) VALUES (1)"));
+        self::assertFalse($parser->hasInsertSelect('INSERT INTO users (id) VALUES (1)'));
     }
 
     public function testSplitStatementsSemicolonInsideLineComment(): void
@@ -2990,7 +2991,7 @@ SELECT * FROM users'));
     public function testStripStringLiteralsHandlesEscapedString(): void
     {
         $parser = new PgSqlParser();
-        $ref = new \ReflectionMethod($parser, 'stripStringLiterals');
+        $ref = new ReflectionMethod($parser, 'stripStringLiterals');
         $stripped = $ref->invoke($parser, "SELECT E'hello\\'world'");
         self::assertIsString($stripped);
         self::assertStringNotContainsString('hello', $stripped);
@@ -2999,8 +3000,8 @@ SELECT * FROM users'));
     public function testStripStringLiteralsDollarQuoted(): void
     {
         $parser = new PgSqlParser();
-        $ref = new \ReflectionMethod($parser, 'stripStringLiterals');
-        $stripped = $ref->invoke($parser, "SELECT \$\$hello world\$\$");
+        $ref = new ReflectionMethod($parser, 'stripStringLiterals');
+        $stripped = $ref->invoke($parser, 'SELECT $$hello world$$');
         self::assertIsString($stripped);
         self::assertStringNotContainsString('hello', $stripped);
     }
@@ -3060,14 +3061,14 @@ SELECT * FROM users'));
     public function testSplitStatementsPreservesSemicolonInsideDollarQuote(): void
     {
         $parser = new PgSqlParser();
-        $stmts = $parser->splitStatements("SELECT \$\$a;b\$\$; SELECT 2");
+        $stmts = $parser->splitStatements('SELECT $$a;b$$; SELECT 2');
         self::assertCount(2, $stmts);
     }
 
     public function testSplitStatementsPreservesSemicolonInsideBlockComment(): void
     {
         $parser = new PgSqlParser();
-        $stmts = $parser->splitStatements("SELECT 1 /* comment ; here */; SELECT 2");
+        $stmts = $parser->splitStatements('SELECT 1 /* comment ; here */; SELECT 2');
         self::assertCount(2, $stmts);
     }
 
@@ -3156,7 +3157,7 @@ SELECT * FROM users'));
     public function testExtractOnConflictColumnsAssignmentWithPaddedEquals(): void
     {
         $parser = new PgSqlParser();
-        $sql = "INSERT INTO t (id, x) VALUES (1, 2) ON CONFLICT (id) DO UPDATE SET  x  =  3 ";
+        $sql = 'INSERT INTO t (id, x) VALUES (1, 2) ON CONFLICT (id) DO UPDATE SET  x  =  3 ';
         $result = $parser->extractOnConflictUpdateColumns($sql);
         self::assertSame(['x'], $result['columns']);
         self::assertSame('3', $result['values']['x']);
@@ -3177,13 +3178,13 @@ SELECT * FROM users'));
     public function testHasInsertSelectWithValuesReturnsFalse(): void
     {
         $parser = new PgSqlParser();
-        self::assertFalse($parser->hasInsertSelect("INSERT INTO t (id) VALUES (1)"));
+        self::assertFalse($parser->hasInsertSelect('INSERT INTO t (id) VALUES (1)'));
     }
 
     public function testExtractUpdateSetsWithPaddedAssignment(): void
     {
         $parser = new PgSqlParser();
-        $result = $parser->extractUpdateSets("UPDATE t SET  x  =  1  ,  y  =  2  WHERE id = 3");
+        $result = $parser->extractUpdateSets('UPDATE t SET  x  =  1  ,  y  =  2  WHERE id = 3');
         self::assertSame(['x', 'y'], array_keys($result));
         self::assertSame('1', $result['x']);
         self::assertSame('2', $result['y']);
@@ -3264,7 +3265,7 @@ SELECT * FROM users'));
     public function testSplitByTopLevelCommaTrimsResults(): void
     {
         $parser = new PgSqlParser();
-        $result = $parser->extractUpdateSets("UPDATE t SET x = 1 , y = 2 WHERE id = 1");
+        $result = $parser->extractUpdateSets('UPDATE t SET x = 1 , y = 2 WHERE id = 1');
         self::assertSame('1', $result['x']);
         self::assertSame('2', $result['y']);
     }
@@ -3272,7 +3273,7 @@ SELECT * FROM users'));
     public function testSplitByTopLevelCommaTrimsLastItem(): void
     {
         $parser = new PgSqlParser();
-        $result = $parser->extractUpdateSets("UPDATE t SET x = 1 WHERE id = 1");
+        $result = $parser->extractUpdateSets('UPDATE t SET x = 1 WHERE id = 1');
         self::assertSame('1', $result['x']);
     }
 
@@ -3308,7 +3309,7 @@ SELECT * FROM users'));
     public function testHasInsertSelectWithLowercaseValues(): void
     {
         $parser = new PgSqlParser();
-        self::assertFalse($parser->hasInsertSelect("INSERT INTO t (id) values ((SELECT 1))"));
+        self::assertFalse($parser->hasInsertSelect('INSERT INTO t (id) values ((SELECT 1))'));
     }
 
     public function testExtractWhereClauseNewlineBeforeReturningKeyword(): void
@@ -3355,7 +3356,7 @@ SELECT * FROM users'));
     public function testExtractUpdateFromClauseTrimmedResult(): void
     {
         $parser = new PgSqlParser();
-        $from = $parser->extractUpdateFromClause("UPDATE t SET x = s.x FROM  src s  WHERE t.id = s.id");
+        $from = $parser->extractUpdateFromClause('UPDATE t SET x = s.x FROM  src s  WHERE t.id = s.id');
         self::assertNotNull($from);
         self::assertSame('src s', $from);
     }
@@ -3363,7 +3364,7 @@ SELECT * FROM users'));
     public function testExtractDeleteUsingClauseTrimmedOutput(): void
     {
         $parser = new PgSqlParser();
-        $using = $parser->extractDeleteUsingClause("DELETE FROM t USING  src s  WHERE t.id = src.id");
+        $using = $parser->extractDeleteUsingClause('DELETE FROM t USING  src s  WHERE t.id = src.id');
         self::assertNotNull($using);
         self::assertSame('src s', $using);
     }
@@ -3459,7 +3460,7 @@ SELECT * FROM users'));
     public function testExtractOnConflictUpdateColumnsAssignmentPregDollar(): void
     {
         $parser = new PgSqlParser();
-        $info = $parser->extractOnConflictUpdateColumns("INSERT INTO t (id, x) VALUES (1, 2) ON CONFLICT (id) DO UPDATE SET x = t.x + 1");
+        $info = $parser->extractOnConflictUpdateColumns('INSERT INTO t (id, x) VALUES (1, 2) ON CONFLICT (id) DO UPDATE SET x = t.x + 1');
         self::assertContains('x', $info['columns']);
         self::assertSame('t.x + 1', $info['values']['x']);
     }
@@ -3467,7 +3468,7 @@ SELECT * FROM users'));
     public function testExtractUpdateSetsPregDollarAnchor(): void
     {
         $parser = new PgSqlParser();
-        $sets = $parser->extractUpdateSets("UPDATE t SET x = y + 1");
+        $sets = $parser->extractUpdateSets('UPDATE t SET x = y + 1');
         self::assertNotEmpty($sets);
         self::assertSame('y + 1', $sets['x']);
     }
@@ -3732,7 +3733,7 @@ SELECT * FROM users'));
     public function testConflictTargetSkipsNestedAnchorsAndStopsAtTheActionBoundary(): void
     {
         $target = (new PgSqlParser())->extractOnConflictTarget(
-            "INSERT INTO users VALUES ((on conflict)) ON CONFLICT (email)"
+            'INSERT INTO users VALUES ((on conflict)) ON CONFLICT (email)'
                 . " WHERE coalesce((status = 'active'), false)"
                 . ' DO UPDATE SET do = lower(EXCLUDED.email)',
         );

@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Postgres\Transformer;
 
+use InvalidArgumentException;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer;
 use ZtdQuery\Platform\Postgres\PgSqlGeneratedColumnProjector;
+use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\Postgres\PgSqlMergeActionKind;
 use ZtdQuery\Platform\Postgres\PgSqlMergeClause;
 use ZtdQuery\Platform\Postgres\PgSqlMergeMatchKind;
@@ -231,7 +232,7 @@ final class MergeTransformer implements SqlTransformer
 
         try {
             $providedExpressions = $this->rowRenderer->providedExpressions($sourceColumns, $clause->insertValues);
-        } catch (\InvalidArgumentException) {
+        } catch (InvalidArgumentException) {
             throw new UnsupportedSqlException($sql, 'MERGE INSERT values count does not match column count');
         }
         $generatedStarts = (new ShadowIdentityAllocator())->allocateSelectStarts(

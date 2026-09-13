@@ -4,22 +4,20 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Tests\Fake\FakeStatement;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Connection\StatementInterface;
-use ZtdQuery\Platform\Postgres\PgSqlSessionFactory;
-use ZtdQuery\Platform\Postgres\PgSqlPartitionParser;
-use ZtdQuery\Platform\Postgres\PgSqlPartitionReflector;
-use ZtdQuery\Session;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
 use ZtdQuery\Platform\Postgres\PgSqlCopySupport;
 use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 use ZtdQuery\Platform\Postgres\PgSqlMutationResolver;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
+use ZtdQuery\Platform\Postgres\PgSqlPartitionParser;
+use ZtdQuery\Platform\Postgres\PgSqlPartitionReflector;
 use ZtdQuery\Platform\Postgres\PgSqlPdoParameterBindingCompiler;
 use ZtdQuery\Platform\Postgres\PgSqlPdoPlaceholderEscaper;
 use ZtdQuery\Platform\Postgres\PgSqlPdoResultColumnTypeResolver;
@@ -27,11 +25,13 @@ use ZtdQuery\Platform\Postgres\PgSqlQueryGuard;
 use ZtdQuery\Platform\Postgres\PgSqlRewriter;
 use ZtdQuery\Platform\Postgres\PgSqlSchemaParser;
 use ZtdQuery\Platform\Postgres\PgSqlSchemaReflector;
+use ZtdQuery\Platform\Postgres\PgSqlSessionFactory;
 use ZtdQuery\Platform\Postgres\PgSqlTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\InsertTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
+use ZtdQuery\Session;
 
 #[CoversClass(PgSqlSessionFactory::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlColumnTypeMapper::class)]
