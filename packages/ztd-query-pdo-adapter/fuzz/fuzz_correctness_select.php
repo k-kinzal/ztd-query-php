@@ -22,10 +22,12 @@ $db = 'fuzz_' . bin2hex(random_bytes(4));
 $rawPdo->exec("CREATE DATABASE `$db`");
 
 $faker = Factory::create();
+$faker->addProvider(new Fuzz\Correctness\FixedDateTimeProvider());
 $harness = new CorrectnessHarness($host, $port, $db, 'root', 'root');
 $sqlBuilder = new SchemaAwareSqlBuilder($faker);
 $target = new SelectCorrectnessTarget($harness, $sqlBuilder, $faker);
 
 /** @var PhpFuzzer\Config $config */
+$config->setAllowedExceptions([]);
 $config->setMaxLen(1024);
 $config->setTarget(Closure::fromCallable($target));

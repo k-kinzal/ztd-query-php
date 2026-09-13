@@ -74,6 +74,13 @@ final class DeleteCorrectnessTarget
                     \Fuzz\Correctness\PhysicalTableSnapshot::assertUnchanged($this->harness->getRawPdo(), $schema->name, $snapshot, $sql, $seed);
                 }
             } catch (UnsupportedSqlException | UnknownSchemaException | DatabaseException | PDOException $e) {
+                if ($schema->primaryKeys === []) {
+                    for ($cause = $e; $cause !== null; $cause = $cause->getPrevious()) {
+                        if ($cause instanceof \ZtdQuery\Exception\MissingPrimaryKeyException) {
+                            return;
+                        }
+                    }
+                }
                 if ($rawError !== null) {
                     return;
                 }
@@ -81,7 +88,7 @@ final class DeleteCorrectnessTarget
             }
 
             if ($rawError !== null) {
-                return;
+                throw new Error("ZTD DELETE accepted a native-rejected query\nSeed: $seed\nSQL: $sql\n" . $rawError->getMessage(), 0, $rawError);
             }
 
             $this->compareTableState($schema, $seed);

@@ -74,6 +74,13 @@ final class UpdateCorrectnessTarget
                     \Fuzz\Correctness\PhysicalTableSnapshot::assertUnchanged($this->harness->getRawPdo(), $schema->name, $snapshot, $sql, $seed);
                 }
             } catch (UnsupportedSqlException | UnknownSchemaException | DatabaseException | PDOException $e) {
+                if ($schema->primaryKeys === []) {
+                    for ($cause = $e; $cause !== null; $cause = $cause->getPrevious()) {
+                        if ($cause instanceof \ZtdQuery\Exception\MissingPrimaryKeyException) {
+                            return;
+                        }
+                    }
+                }
                 if ($schema->primaryKeys === [] && $e->getPrevious()?->getPrevious() instanceof \ZtdQuery\Exception\MissingPrimaryKeyException) {
                     return;
                 }
@@ -84,7 +91,7 @@ final class UpdateCorrectnessTarget
             }
 
             if ($rawError !== null) {
-                return;
+                throw new Error("ZTD UPDATE accepted a native-rejected query\nSeed: $seed\nSQL: $sql\n" . $rawError->getMessage(), 0, $rawError);
             }
 
             $this->compareTableState($schema, $seed);

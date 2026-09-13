@@ -234,10 +234,10 @@ final class SchemaAwareSqlBuilder
         }
 
         if (str_contains($col, 'date') && str_contains($col, 'time')) {
-            return "'" . $this->faker->dateTimeBetween('-1 year', 'now')->format('Y-m-d H:i:s') . "'";
+            return "'" . $this->faker->dateTimeBetween('2019-01-01 00:00:00', '2020-01-01 00:00:00', 'UTC')->format('Y-m-d H:i:s') . "'";
         }
         if (str_contains($col, 'timestamp')) {
-            return "'" . $this->faker->dateTimeBetween('-1 year', 'now')->format('Y-m-d H:i:s') . "'";
+            return "'" . $this->faker->dateTimeBetween('2019-01-01 00:00:00', '2020-01-01 00:00:00', 'UTC')->format('Y-m-d H:i:s') . "'";
         }
         if (str_contains($col, 'date')) {
             return "'" . $this->faker->date('Y-m-d') . "'";
