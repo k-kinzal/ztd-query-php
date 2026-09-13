@@ -4,51 +4,45 @@ declare(strict_types=1);
 
 namespace Fuzz\Robustness\Target;
 
-use Error;
+use Fuzz\Robustness\Input\SqlInput;
+use Fuzz\Support\FixtureDatabase;
+use Fuzz\Support\RewriteFactory;
+use SqlFaker\SqliteProvider;
+use ZtdQuery\Platform\Sqlite\SqliteParser;
+use ZtdQuery\Platform\Sqlite\SqliteQueryGuard;
+use ZtdQuery\Platform\Sqlite\SqliteSchemaParser;
+use ZtdQuery\Schema\TableDefinitionRegistry;
+use ZtdQuery\Shadow\ShadowStore;
 
 /**
- * Checks rewrite-plan invariants using raw SQL and structural grammar mutations.
+ * Verifies each rewrite once against a fresh schema registry and shadow store.
  */
 final class RewriteTarget
 {
-    private \Fuzz\Robustness\Input\SqlInput $input;
+    private readonly SqlInput $input;
 
     /**
-     * Retains immutable grammar planning; generated plans do not use Faker's later state.
+     * Keeps SQLFaker grammar analysis outside the per-input callable.
      */
-    public function __construct(\SqlFaker\SqliteProvider $provider)
+    public function __construct(SqliteProvider $provider)
     {
-        $this->input = new \Fuzz\Robustness\Input\SqlInput($provider);
+        $this->input = new SqlInput($provider);
     }
 
     /**
-     * Runs the contract in a fresh fixture environment for this input.
+     * Discards all rewrite and mutation state after this input, including on failure.
      */
     public function __invoke(string $input): void
     {
         $sql = $this->input->sql($input);
-        FuzzBoundary::run('RewriteTarget', $input, $sql, function () use ($sql): void {
-            $guard = new \ZtdQuery\Platform\Sqlite\SqliteQueryGuard(new \ZtdQuery\Platform\Sqlite\SqliteParser());
-            $store = new \ZtdQuery\Shadow\ShadowStore();
-            $registry = new \ZtdQuery\Schema\TableDefinitionRegistry();
-            \Fuzz\Support\FixtureDatabase::registerFixtureSchemas($registry, new \ZtdQuery\Platform\Sqlite\SqliteSchemaParser());
-            foreach (\Fuzz\Support\FixtureDatabase::buildFixtureData() as $table => $rows) {
+        FuzzBoundary::run('rewrite plan', $input, $sql, static function () use ($sql): void {
+            $store = new ShadowStore();
+            $registry = new TableDefinitionRegistry();
+            FixtureDatabase::registerFixtureSchemas($registry, new SqliteSchemaParser());
+            foreach (FixtureDatabase::buildFixtureData() as $table => $rows) {
                 $store->set($table, $rows);
             }
-            $rewriter = \Fuzz\Support\RewriteFactory::create($store, $registry);
-            $checkers = [
-                new \Fuzz\Robustness\Invariant\ClassifyNeverThrowsChecker($guard),
-                new \Fuzz\Robustness\Invariant\ClassifyDeterministicChecker($guard),
-                new \Fuzz\Robustness\Invariant\RewriteExceptionTypeChecker($rewriter),
-                new \Fuzz\Robustness\Invariant\RewritePlanConsistencyChecker($rewriter),
-                new \Fuzz\Robustness\Invariant\ClassifyRewriteAgreementChecker($guard, $rewriter),
-            ];
-            foreach ($checkers as $checker) {
-                $violation = $checker->check($sql);
-                if ($violation !== null) {
-                    throw new Error((string) $violation);
-                }
-            }
+            RewriteCheck::verify(new SqliteQueryGuard(new SqliteParser()), RewriteFactory::create($store, $registry), $sql);
         });
     }
 }

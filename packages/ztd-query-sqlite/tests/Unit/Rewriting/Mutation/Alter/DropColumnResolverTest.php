@@ -7,8 +7,8 @@ namespace Tests\Unit\Rewriting\Mutation\Alter;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ZtdQuery\Platform\Sqlite\Mutation\Alter\DropColumnResolver;
 use ZtdQuery\Platform\Sqlite\Mutation\AlterTableMutation;
+use ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Alter\DropColumnResolver;
 use ZtdQuery\Schema\ForeignKeyDefinition;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
@@ -16,9 +16,9 @@ use ZtdQuery\Shadow\ShadowStore;
 
 #[CoversClass(DropColumnResolver::class)]
 #[UsesClass(AlterTableMutation::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\Mutation\Alter\AlteredTableProjection::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\Mutation\Alter\ColumnDefinitionEditor::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\Mutation\Resolution\MutationTableLookup::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Alter\AlteredTableProjection::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Alter\ColumnDefinitionEditor::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Resolution\MutationTableLookup::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Alter\AlterOperationParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]

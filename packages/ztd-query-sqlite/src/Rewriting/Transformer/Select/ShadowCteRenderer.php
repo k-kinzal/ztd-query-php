@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Platform\Sqlite\Transformer\Select;
+namespace ZtdQuery\Platform\Sqlite\Rewriting\Transformer\Select;
 
 use RuntimeException;
 use ZtdQuery\Platform\CastRenderer;

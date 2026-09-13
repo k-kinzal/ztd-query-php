@@ -54,7 +54,7 @@ use ZtdQuery\Platform\Sqlite\Transformer\UpdateTransformer;
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteValueRenderer::class)]
 #[UsesClass(SelectTransformer::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\Transformer\Select\ShadowCteRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\Transformer\Select\ShadowCteRenderer::class)]
 final class UpdateTransformerTest extends TestCase
 {
     public function testTransformSimpleUpdate(): void

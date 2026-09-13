@@ -13,6 +13,7 @@ ZTD Query PHP wraps PDO/MySQLi to intercept and transform SQL queries using CTE 
 |---------|-------------|
 | [ztd-query-core](packages/ztd-query-core/) | Core library: interfaces, session management, query routing |
 | [ztd-query-mysql](packages/ztd-query-mysql/) | MySQL platform: SQL parsing, classification, rewriting, schema reflection |
+| [ztd-query-sqlite](packages/ztd-query-sqlite/) | SQLite platform: parsing, rewriting, and schema reflection · [Documentation](https://k-kinzal.github.io/ztd-query-php/sqlite/k-kinzal/ztd-query-sqlite/) |
 | [ztd-query-pdo-adapter](packages/ztd-query-pdo-adapter/) | PDO adapter: drop-in `ZtdPdo` / `ZtdPdoStatement` |
 | [ztd-query-mysqli-adapter](packages/ztd-query-mysqli-adapter/) | MySQLi adapter: drop-in `ZtdMysqli` / `ZtdMysqliStatement` |
 | [sql-faker](packages/sql-faker/) | Faker provider for generating syntactically valid SQL · [Documentation](https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-faker/) |

@@ -8,7 +8,7 @@ use PDO;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ZtdQuery\Platform\Sqlite\Transformer\Insert\InsertProjectionBuilder;
+use ZtdQuery\Platform\Sqlite\Rewriting\Transformer\Insert\InsertProjectionBuilder;
 
 #[CoversClass(InsertProjectionBuilder::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Expression\AssignmentColumnParser::class)]

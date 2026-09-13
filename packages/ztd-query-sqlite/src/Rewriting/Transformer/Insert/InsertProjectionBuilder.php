@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Platform\Sqlite\Transformer\Insert;
+namespace ZtdQuery\Platform\Sqlite\Rewriting\Transformer\Insert;
 
 use RuntimeException;
 use ZtdQuery\Exception\UnsupportedSqlException;

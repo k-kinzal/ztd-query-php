@@ -5,39 +5,36 @@ declare(strict_types=1);
 namespace Fuzz\Robustness\Target;
 
 use Error;
+use Fuzz\Robustness\Input\SqlInput;
+use SqlFaker\SqliteProvider;
+use ZtdQuery\Platform\Sqlite\SqliteParser;
+use ZtdQuery\Platform\Sqlite\SqliteQueryGuard;
 
 /**
- * Checks classification determinism using raw SQL and structural grammar mutations.
+ * Checks that arbitrary SQL can be classified without exceptions or state-dependent results.
  */
 final class ClassifyTarget
 {
-    private \Fuzz\Robustness\Input\SqlInput $input;
+    private readonly SqlInput $input;
 
     /**
-     * Retains immutable grammar planning; generated plans do not use Faker's later state.
+     * Keeps SQLFaker grammar analysis outside the per-input callable.
      */
-    public function __construct(\SqlFaker\SqliteProvider $provider)
+    public function __construct(SqliteProvider $provider)
     {
-        $this->input = new \Fuzz\Robustness\Input\SqlInput($provider);
+        $this->input = new SqlInput($provider);
     }
 
     /**
-     * Runs the contract in a fresh fixture environment for this input.
+     * Runs classification twice on the same input and reports every unexpected failure.
      */
     public function __invoke(string $input): void
     {
         $sql = $this->input->sql($input);
-        FuzzBoundary::run('ClassifyTarget', $input, $sql, function () use ($sql): void {
-            $guard = new \ZtdQuery\Platform\Sqlite\SqliteQueryGuard(new \ZtdQuery\Platform\Sqlite\SqliteParser());
-            $checkers = [
-                new \Fuzz\Robustness\Invariant\ClassifyNeverThrowsChecker($guard),
-                new \Fuzz\Robustness\Invariant\ClassifyDeterministicChecker($guard),
-            ];
-            foreach ($checkers as $checker) {
-                $violation = $checker->check($sql);
-                if ($violation !== null) {
-                    throw new Error((string) $violation);
-                }
+        FuzzBoundary::run('classification', $input, $sql, static function () use ($sql): void {
+            $guard = new SqliteQueryGuard(new SqliteParser());
+            if ($guard->classify($sql) !== $guard->classify($sql)) {
+                throw new Error('Classification changed for identical SQL');
             }
         });
     }

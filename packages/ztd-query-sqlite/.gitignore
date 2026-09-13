@@ -9,3 +9,5 @@ composer.lock
 /.deptrac.cache
 /fuzz/corpus/
 /crash-*
+
+/fuzz/coverage/

@@ -64,9 +64,9 @@ use ZtdQuery\Schema\IdentityGenerationStrategy;
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteValueRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\Transformer\InsertRowRenderer::class)]
 #[UsesClass(InsertSelectRenderer::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\Transformer\Insert\InsertProjectionBuilder::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\Transformer\Insert\InsertProjectionBuilder::class)]
 #[UsesClass(SelectTransformer::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\Transformer\Select\ShadowCteRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\Transformer\Select\ShadowCteRenderer::class)]
 final class InsertTransformerTest extends TestCase
 {
     public function testProjectsConflictExpressionUsingCandidateKeys(): void

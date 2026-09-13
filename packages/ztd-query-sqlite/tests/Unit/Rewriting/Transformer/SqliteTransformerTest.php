@@ -63,9 +63,9 @@ use ZtdQuery\Platform\Sqlite\Transformer\UpdateTransformer;
 #[UsesClass(\ZtdQuery\Platform\Sqlite\Transformer\InsertRowRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\Transformer\InsertSelectRenderer::class)]
 #[UsesClass(InsertTransformer::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\Transformer\Insert\InsertProjectionBuilder::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\Transformer\Insert\InsertProjectionBuilder::class)]
 #[UsesClass(SelectTransformer::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\Transformer\Select\ShadowCteRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\Transformer\Select\ShadowCteRenderer::class)]
 #[UsesClass(UpdateTransformer::class)]
 final class SqliteTransformerTest extends TestCase
 {

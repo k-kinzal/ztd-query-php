@@ -9,7 +9,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
-use ZtdQuery\Platform\Sqlite\Transformer\Select\ShadowCteRenderer;
+use ZtdQuery\Platform\Sqlite\Rewriting\Transformer\Select\ShadowCteRenderer;
 
 #[CoversClass(ShadowCteRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\Rendering\CastTypeMapper::class)]

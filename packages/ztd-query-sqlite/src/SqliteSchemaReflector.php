@@ -10,6 +10,11 @@ use ZtdQuery\Platform\ViewReflector;
 
 /**
  * Fetches SQLite schema information via sqlite_master and PRAGMA queries.
+ * @visibility public
+ * @example Reflect an empty connection
+ *     $connection = new class implements \ZtdQuery\Connection\ConnectionInterface { public function query(string $sql): \ZtdQuery\Connection\StatementInterface|false { return false; } };
+ *     $reflector = new \ZtdQuery\Platform\Sqlite\SqliteSchemaReflector($connection);
+ *     $reflector->reflectAll() // => []
  */
 final class SqliteSchemaReflector implements SchemaReflector, ViewReflector
 {
@@ -17,6 +22,11 @@ final class SqliteSchemaReflector implements SchemaReflector, ViewReflector
 
     /**
      * Binds the dependencies used by this operation.
+     * @visibility public
+     * @example Bind a connection to schema reflection
+     *     $connection = new class implements \ZtdQuery\Connection\ConnectionInterface { public function query(string $sql): \ZtdQuery\Connection\StatementInterface|false { return false; } };
+     *     $reflector = new \ZtdQuery\Platform\Sqlite\SqliteSchemaReflector($connection);
+     *     $reflector->getCreateStatement("missing") // => null
      */
     public function __construct(ConnectionInterface $connection)
     {
@@ -25,6 +35,11 @@ final class SqliteSchemaReflector implements SchemaReflector, ViewReflector
 
     /**
      * {@inheritDoc}
+     * @visibility public
+     * @example Return null when a table is absent
+     *     $connection = new class implements \ZtdQuery\Connection\ConnectionInterface { public function query(string $sql): \ZtdQuery\Connection\StatementInterface|false { return false; } };
+     *     $reflector = new \ZtdQuery\Platform\Sqlite\SqliteSchemaReflector($connection);
+     *     $reflector->getCreateStatement("missing") // => null
      */
     public function getCreateStatement(string $tableName): ?string
     {
@@ -50,6 +65,11 @@ final class SqliteSchemaReflector implements SchemaReflector, ViewReflector
 
     /**
      * {@inheritDoc}
+     * @visibility public
+     * @example Return no tables when the connection yields none
+     *     $connection = new class implements \ZtdQuery\Connection\ConnectionInterface { public function query(string $sql): \ZtdQuery\Connection\StatementInterface|false { return false; } };
+     *     $reflector = new \ZtdQuery\Platform\Sqlite\SqliteSchemaReflector($connection);
+     *     $reflector->reflectAll() // => []
      */
     public function reflectAll(): array
     {
@@ -87,6 +107,11 @@ final class SqliteSchemaReflector implements SchemaReflector, ViewReflector
 
     /**
      * {@inheritDoc}
+     * @visibility public
+     * @example Return no views when the connection yields none
+     *     $connection = new class implements \ZtdQuery\Connection\ConnectionInterface { public function query(string $sql): \ZtdQuery\Connection\StatementInterface|false { return false; } };
+     *     $reflector = new \ZtdQuery\Platform\Sqlite\SqliteSchemaReflector($connection);
+     *     $reflector->reflectViews() // => []
      */
     public function reflectViews(): array
     {

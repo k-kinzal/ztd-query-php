@@ -21,11 +21,32 @@ use ZtdQuery\Sql\TransactionStatement;
  *
  * Orchestrates parsing, classification, transformation, and mutation resolution.
  * Uses Result Select Query approach (not RETURNING) for consistency.
+ * @visibility public
+ * @example Compose a SQLite rewriter with caller-owned state
+ *     $parser = new \ZtdQuery\Platform\Sqlite\SqliteParser();
+ *     $store = new \ZtdQuery\Shadow\ShadowStore();
+ *     $registry = new \ZtdQuery\Schema\TableDefinitionRegistry();
+ *     $select = new \ZtdQuery\Platform\Sqlite\Transformer\SelectTransformer();
+ *     $transformer = new \ZtdQuery\Platform\Sqlite\Transformer\SqliteTransformer($parser, $select, new \ZtdQuery\Platform\Sqlite\Transformer\InsertTransformer($parser, $select), new \ZtdQuery\Platform\Sqlite\Transformer\UpdateTransformer($parser, $select), new \ZtdQuery\Platform\Sqlite\Transformer\DeleteTransformer($parser, $select));
+ *     $resolver = new \ZtdQuery\Platform\Sqlite\SqliteMutationResolver($store, $registry, new \ZtdQuery\Platform\Sqlite\SqliteSchemaParser(), $parser);
+ *     $rewriter = new \ZtdQuery\Platform\Sqlite\SqliteRewriter(new \ZtdQuery\Platform\Sqlite\SqliteQueryGuard($parser), $store, $registry, $transformer, $resolver, $parser);
+ *     $rewriter->rewrite('SELECT 1')->sql() // => 'SELECT 1'
  */
 final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
 {
     /**
      * Returns transaction statement.
+     * @visibility public
+     * @example Recognize transaction commands independently of query classification
+     *     $parser = new \ZtdQuery\Platform\Sqlite\SqliteParser();
+     *     $store = new \ZtdQuery\Shadow\ShadowStore();
+     *     $registry = new \ZtdQuery\Schema\TableDefinitionRegistry();
+     *     $select = new \ZtdQuery\Platform\Sqlite\Transformer\SelectTransformer();
+     *     $transformer = new \ZtdQuery\Platform\Sqlite\Transformer\SqliteTransformer($parser, $select, new \ZtdQuery\Platform\Sqlite\Transformer\InsertTransformer($parser, $select), new \ZtdQuery\Platform\Sqlite\Transformer\UpdateTransformer($parser, $select), new \ZtdQuery\Platform\Sqlite\Transformer\DeleteTransformer($parser, $select));
+     *     $resolver = new \ZtdQuery\Platform\Sqlite\SqliteMutationResolver($store, $registry, new \ZtdQuery\Platform\Sqlite\SqliteSchemaParser(), $parser);
+     *     $rewriter = new \ZtdQuery\Platform\Sqlite\SqliteRewriter(new \ZtdQuery\Platform\Sqlite\SqliteQueryGuard($parser), $store, $registry, $transformer, $resolver, $parser);
+     *     $rewriter->transactionStatement('BEGIN') instanceof \ZtdQuery\Sql\TransactionStatement // => true
+     *     $rewriter->transactionStatement('SELECT 1') // => null
      */
     public function transactionStatement(string $sql): ?TransactionStatement
     {
@@ -44,6 +65,16 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
 
     /**
      * Binds the dependencies used by this operation.
+     * @visibility public
+     * @example Bind schema, shadow data and transformers
+     *     $parser = new \ZtdQuery\Platform\Sqlite\SqliteParser();
+     *     $store = new \ZtdQuery\Shadow\ShadowStore();
+     *     $registry = new \ZtdQuery\Schema\TableDefinitionRegistry();
+     *     $select = new \ZtdQuery\Platform\Sqlite\Transformer\SelectTransformer();
+     *     $transformer = new \ZtdQuery\Platform\Sqlite\Transformer\SqliteTransformer($parser, $select, new \ZtdQuery\Platform\Sqlite\Transformer\InsertTransformer($parser, $select), new \ZtdQuery\Platform\Sqlite\Transformer\UpdateTransformer($parser, $select), new \ZtdQuery\Platform\Sqlite\Transformer\DeleteTransformer($parser, $select));
+     *     $resolver = new \ZtdQuery\Platform\Sqlite\SqliteMutationResolver($store, $registry, new \ZtdQuery\Platform\Sqlite\SqliteSchemaParser(), $parser);
+     *     $rewriter = new \ZtdQuery\Platform\Sqlite\SqliteRewriter(new \ZtdQuery\Platform\Sqlite\SqliteQueryGuard($parser), $store, $registry, $transformer, $resolver, $parser);
+     *     $rewriter->rewrite('SELECT 1')->kind() // => \ZtdQuery\Rewrite\QueryKind::READ
      */
     public function __construct(
         SqliteQueryGuard $guard,
@@ -70,6 +101,16 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
      *
      * @throws UnsupportedSqlException When SQL is empty, unparseable, or multi-statement.
      * @throws UnknownSchemaException When SQL references unknown tables/columns.
+     * @visibility public
+     * @example Reject multiple statements on the single-statement API
+     *     $parser = new \ZtdQuery\Platform\Sqlite\SqliteParser();
+     *     $store = new \ZtdQuery\Shadow\ShadowStore();
+     *     $registry = new \ZtdQuery\Schema\TableDefinitionRegistry();
+     *     $select = new \ZtdQuery\Platform\Sqlite\Transformer\SelectTransformer();
+     *     $transformer = new \ZtdQuery\Platform\Sqlite\Transformer\SqliteTransformer($parser, $select, new \ZtdQuery\Platform\Sqlite\Transformer\InsertTransformer($parser, $select), new \ZtdQuery\Platform\Sqlite\Transformer\UpdateTransformer($parser, $select), new \ZtdQuery\Platform\Sqlite\Transformer\DeleteTransformer($parser, $select));
+     *     $resolver = new \ZtdQuery\Platform\Sqlite\SqliteMutationResolver($store, $registry, new \ZtdQuery\Platform\Sqlite\SqliteSchemaParser(), $parser);
+     *     $rewriter = new \ZtdQuery\Platform\Sqlite\SqliteRewriter(new \ZtdQuery\Platform\Sqlite\SqliteQueryGuard($parser), $store, $registry, $transformer, $resolver, $parser);
+     *     $rewriter->rewrite('SELECT 1; SELECT 2') // throws \ZtdQuery\Exception\UnsupportedSqlException: Multi-statement
      */
     public function rewrite(string $sql): RewritePlan
     {
@@ -90,6 +131,18 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
      *
      * @throws UnsupportedSqlException When SQL is empty or unparseable.
      * @throws UnknownSchemaException When SQL references unknown tables/columns.
+     * @visibility public
+     * @example Produce an ordered multi-statement plan
+     *     $parser = new \ZtdQuery\Platform\Sqlite\SqliteParser();
+     *     $store = new \ZtdQuery\Shadow\ShadowStore();
+     *     $registry = new \ZtdQuery\Schema\TableDefinitionRegistry();
+     *     $select = new \ZtdQuery\Platform\Sqlite\Transformer\SelectTransformer();
+     *     $transformer = new \ZtdQuery\Platform\Sqlite\Transformer\SqliteTransformer($parser, $select, new \ZtdQuery\Platform\Sqlite\Transformer\InsertTransformer($parser, $select), new \ZtdQuery\Platform\Sqlite\Transformer\UpdateTransformer($parser, $select), new \ZtdQuery\Platform\Sqlite\Transformer\DeleteTransformer($parser, $select));
+     *     $resolver = new \ZtdQuery\Platform\Sqlite\SqliteMutationResolver($store, $registry, new \ZtdQuery\Platform\Sqlite\SqliteSchemaParser(), $parser);
+     *     $rewriter = new \ZtdQuery\Platform\Sqlite\SqliteRewriter(new \ZtdQuery\Platform\Sqlite\SqliteQueryGuard($parser), $store, $registry, $transformer, $resolver, $parser);
+     *     $plans = $rewriter->rewriteMultiple('SELECT 1; SELECT 2');
+     *     $plans->count() // => 2
+     *     $plans->get(1)?->sql() // => 'SELECT 2'
      */
     public function rewriteMultiple(string $sql): MultiRewritePlan
     {
@@ -109,6 +162,16 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
 
     /**
      * {@inheritDoc}
+     * @visibility public
+     * @example Split statements while preserving quoted semicolons
+     *     $parser = new \ZtdQuery\Platform\Sqlite\SqliteParser();
+     *     $store = new \ZtdQuery\Shadow\ShadowStore();
+     *     $registry = new \ZtdQuery\Schema\TableDefinitionRegistry();
+     *     $select = new \ZtdQuery\Platform\Sqlite\Transformer\SelectTransformer();
+     *     $transformer = new \ZtdQuery\Platform\Sqlite\Transformer\SqliteTransformer($parser, $select, new \ZtdQuery\Platform\Sqlite\Transformer\InsertTransformer($parser, $select), new \ZtdQuery\Platform\Sqlite\Transformer\UpdateTransformer($parser, $select), new \ZtdQuery\Platform\Sqlite\Transformer\DeleteTransformer($parser, $select));
+     *     $resolver = new \ZtdQuery\Platform\Sqlite\SqliteMutationResolver($store, $registry, new \ZtdQuery\Platform\Sqlite\SqliteSchemaParser(), $parser);
+     *     $rewriter = new \ZtdQuery\Platform\Sqlite\SqliteRewriter(new \ZtdQuery\Platform\Sqlite\SqliteQueryGuard($parser), $store, $registry, $transformer, $resolver, $parser);
+     *     $rewriter->splitStatements("SELECT ';'; SELECT 2") // => ["SELECT ';'", 'SELECT 2']
      */
     public function splitStatements(string $sql): array
     {
@@ -117,6 +180,18 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
 
     /**
      * Commits the transformer state after a rewrite completes.
+     * @visibility public
+     * @example Commit rewrite state after execution
+     *     $parser = new \ZtdQuery\Platform\Sqlite\SqliteParser();
+     *     $store = new \ZtdQuery\Shadow\ShadowStore();
+     *     $registry = new \ZtdQuery\Schema\TableDefinitionRegistry();
+     *     $select = new \ZtdQuery\Platform\Sqlite\Transformer\SelectTransformer();
+     *     $transformer = new \ZtdQuery\Platform\Sqlite\Transformer\SqliteTransformer($parser, $select, new \ZtdQuery\Platform\Sqlite\Transformer\InsertTransformer($parser, $select), new \ZtdQuery\Platform\Sqlite\Transformer\UpdateTransformer($parser, $select), new \ZtdQuery\Platform\Sqlite\Transformer\DeleteTransformer($parser, $select));
+     *     $resolver = new \ZtdQuery\Platform\Sqlite\SqliteMutationResolver($store, $registry, new \ZtdQuery\Platform\Sqlite\SqliteSchemaParser(), $parser);
+     *     $rewriter = new \ZtdQuery\Platform\Sqlite\SqliteRewriter(new \ZtdQuery\Platform\Sqlite\SqliteQueryGuard($parser), $store, $registry, $transformer, $resolver, $parser);
+     *     $rewriter->rewrite('SELECT 1');
+     *     $rewriter->commitRewriteState();
+     *     $rewriter->rewrite('SELECT 2')->sql() // => 'SELECT 2'
      */
     public function commitRewriteState(): void
     {
@@ -125,6 +200,18 @@ final class SqliteRewriter implements SqlRewriter, RewriteStateCommitter
 
     /**
      * Returns a SELECT that produces no result rows.
+     * @visibility public
+     * @example Produce a SELECT with no rows
+     *     $parser = new \ZtdQuery\Platform\Sqlite\SqliteParser();
+     *     $store = new \ZtdQuery\Shadow\ShadowStore();
+     *     $registry = new \ZtdQuery\Schema\TableDefinitionRegistry();
+     *     $select = new \ZtdQuery\Platform\Sqlite\Transformer\SelectTransformer();
+     *     $transformer = new \ZtdQuery\Platform\Sqlite\Transformer\SqliteTransformer($parser, $select, new \ZtdQuery\Platform\Sqlite\Transformer\InsertTransformer($parser, $select), new \ZtdQuery\Platform\Sqlite\Transformer\UpdateTransformer($parser, $select), new \ZtdQuery\Platform\Sqlite\Transformer\DeleteTransformer($parser, $select));
+     *     $resolver = new \ZtdQuery\Platform\Sqlite\SqliteMutationResolver($store, $registry, new \ZtdQuery\Platform\Sqlite\SqliteSchemaParser(), $parser);
+     *     $rewriter = new \ZtdQuery\Platform\Sqlite\SqliteRewriter(new \ZtdQuery\Platform\Sqlite\SqliteQueryGuard($parser), $store, $registry, $transformer, $resolver, $parser);
+     *     $sql = $rewriter->emptyResultSelect();
+     *     $pdo = new \PDO('sqlite::memory:');
+     *     $pdo->query($sql)->fetchAll() // => []
      */
     public function emptyResultSelect(): string
     {

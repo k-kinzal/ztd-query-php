@@ -14,6 +14,11 @@ use ZtdQuery\Platform\ErrorClassifier;
  * SQLite uses SQLITE_ERROR (1) for general SQL errors including
  * unknown columns and tables. More specific codes are available
  * via extended error codes.
+ * @visibility public
+ * @example Recognize a missing table from a driver exception
+ *     $classifier = new \ZtdQuery\Platform\Sqlite\SqliteErrorClassifier();
+ *     $error = new \ZtdQuery\Connection\Exception\DatabaseException("no such table: users", 1);
+ *     $classifier->isUnknownSchemaError($error) // => true
  */
 final class SqliteErrorClassifier implements ErrorClassifier
 {
@@ -24,6 +29,12 @@ final class SqliteErrorClassifier implements ErrorClassifier
 
     /**
      * {@inheritDoc}
+     * @visibility public
+     * @example Distinguish missing schema from other SQLite errors
+     *     $classifier = new \ZtdQuery\Platform\Sqlite\SqliteErrorClassifier();
+     *     $error = new \ZtdQuery\Connection\Exception\DatabaseException("no such table: users", 1);
+     *     $classifier->isUnknownSchemaError($error) // => true
+     *     $classifier->isUnknownSchemaError(new \ZtdQuery\Connection\Exception\DatabaseException("syntax error", 1)) // => false
      */
     public function isUnknownSchemaError(DatabaseException $e): bool
     {

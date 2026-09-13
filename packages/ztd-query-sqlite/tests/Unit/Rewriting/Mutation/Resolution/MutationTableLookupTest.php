@@ -6,7 +6,7 @@ namespace Tests\Unit\Rewriting\Mutation\Resolution;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use ZtdQuery\Platform\Sqlite\Mutation\Resolution\MutationTableLookup;
+use ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Resolution\MutationTableLookup;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Platform\Sqlite\Mutation\Alter;
+namespace ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Alter;
 
 use ZtdQuery\Schema\ForeignKeyDefinition;
 

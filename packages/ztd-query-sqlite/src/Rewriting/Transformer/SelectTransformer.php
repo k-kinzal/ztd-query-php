@@ -20,6 +20,10 @@ use ZtdQuery\Rewrite\SqlTransformer;
  *
  * Generates WITH clauses that shadow referenced tables using in-memory data.
  * Uses double-quote identifiers and SQLite-compatible CAST types.
+ * @visibility public
+ * @example Transform a table-free query
+ *     $transformer = new \ZtdQuery\Platform\Sqlite\Transformer\SelectTransformer();
+ *     $transformer->transform("SELECT 1", []) // => 'SELECT 1'
  */
 final class SelectTransformer implements SqlTransformer
 {
@@ -33,6 +37,10 @@ final class SelectTransformer implements SqlTransformer
 
     /**
      * Binds the dependencies used by this operation.
+     * @visibility public
+     * @example Use the SQLite renderers by default
+     *     $transformer = new \ZtdQuery\Platform\Sqlite\Transformer\SelectTransformer();
+     *     $transformer->transform("SELECT 1", []) // => 'SELECT 1'
      */
     public function __construct(
         ?CastRenderer $castRenderer = null,
@@ -88,7 +96,7 @@ final class SelectTransformer implements SqlTransformer
                 continue;
             }
 
-            $ctes[$tableName] = (new Select\ShadowCteRenderer($this->castRenderer, $this->generatedColumnProjector, $this->quoter, $this->valueRenderer))->generateCte(
+            $ctes[$tableName] = (new \ZtdQuery\Platform\Sqlite\Rewriting\Transformer\Select\ShadowCteRenderer($this->castRenderer, $this->generatedColumnProjector, $this->quoter, $this->valueRenderer))->generateCte(
                 $tableName,
                 $rows,
                 $columns,

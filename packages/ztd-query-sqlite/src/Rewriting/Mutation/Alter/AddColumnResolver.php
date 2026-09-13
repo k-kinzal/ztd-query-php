@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Platform\Sqlite\Mutation\Alter;
+namespace ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Alter;
 
 use ZtdQuery\Exception\ColumnAlreadyExistsException;
 use ZtdQuery\Exception\UnsupportedSqlException;
@@ -34,7 +34,7 @@ final class AddColumnResolver
      */
     public function resolveAlterAddColumn(string $sql, string $tableName, string $columnSql): ShadowMutation
     {
-        $existing = (new \ZtdQuery\Platform\Sqlite\Mutation\Resolution\MutationTableLookup($this->registry))->definition($sql, $tableName);
+        $existing = (new \ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Resolution\MutationTableLookup($this->registry))->definition($sql, $tableName);
         $added = $this->schemaParser->parse('CREATE TABLE "__ztd_alter" (' . $columnSql . ')');
         if ($added === null) {
             throw new UnsupportedSqlException($sql, 'Cannot parse ADD COLUMN');

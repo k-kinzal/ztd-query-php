@@ -60,7 +60,7 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[UsesClass(SqliteParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteValueRenderer::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\Transformer\Select\ShadowCteRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\Transformer\Select\ShadowCteRenderer::class)]
 final class SelectTransformerTest extends TransformerContractTest
 {
     public function testGeneratedColumnsAreRecomputedFromBaseRow(): void

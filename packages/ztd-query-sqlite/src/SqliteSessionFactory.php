@@ -21,6 +21,11 @@ use ZtdQuery\Shadow\ShadowTransactionManager;
 
 /**
  * Factory for creating Session instances pre-configured for SQLite.
+ * @visibility public
+ * @example Create a session for a custom connection
+ *     $connection = new class implements \ZtdQuery\Connection\ConnectionInterface { public function query(string $sql): \ZtdQuery\Connection\StatementInterface|false { return false; } };
+ *     $session = (new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->create($connection, new \ZtdQuery\Config\ZtdConfig());
+ *     $session->rewrite("SELECT 1")->sql() // => 'SELECT 1'
  */
 final class SqliteSessionFactory implements SessionFactory
 {

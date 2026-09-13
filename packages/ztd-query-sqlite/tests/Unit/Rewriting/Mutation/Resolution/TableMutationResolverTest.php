@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Sqlite\Mutation\AlterTableMutation;
-use ZtdQuery\Platform\Sqlite\Mutation\Resolution\TableMutationResolver;
+use ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Resolution\TableMutationResolver;
 use ZtdQuery\Platform\Sqlite\SqliteIdentifierQuoter;
 use ZtdQuery\Platform\Sqlite\SqliteLexicalMasker;
 use ZtdQuery\Platform\Sqlite\SqliteParser;
@@ -25,12 +25,12 @@ use ZtdQuery\Shadow\ShadowStore;
 
 #[CoversClass(TableMutationResolver::class)]
 #[UsesClass(AlterTableMutation::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\Mutation\Alter\AddColumnResolver::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\Mutation\Alter\AlteredTableProjection::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\Mutation\Alter\ColumnDefinitionEditor::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\Mutation\Alter\DropColumnResolver::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\Mutation\Alter\RenameResolver::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\Mutation\Resolution\MutationTableLookup::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Alter\AddColumnResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Alter\AlteredTableProjection::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Alter\ColumnDefinitionEditor::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Alter\DropColumnResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Alter\RenameResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Resolution\MutationTableLookup::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Alter\AlterOperationParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Expression\AssignmentColumnParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Expression\AssignmentParser::class)]

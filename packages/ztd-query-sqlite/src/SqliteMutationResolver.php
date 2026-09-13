@@ -51,12 +51,12 @@ final class SqliteMutationResolver
         }
 
         return match ($type) {
-            'UPDATE' => (new Mutation\Resolution\RowMutationResolver($this->parser, $this->registry, $this->shadowStore))->resolveUpdate($sql),
-            'DELETE' => (new Mutation\Resolution\RowMutationResolver($this->parser, $this->registry, $this->shadowStore))->resolveDelete($sql),
-            'INSERT' => (new Mutation\Resolution\InsertMutationResolver($this->parser, $this->registry))->resolveInsert($sql),
-            'CREATE_TABLE' => (new Mutation\Resolution\TableMutationResolver($this->parser, $this->registry, $this->schemaParser))->resolveCreateTable($sql),
-            'DROP_TABLE' => (new Mutation\Resolution\TableMutationResolver($this->parser, $this->registry, $this->schemaParser))->resolveDropTable($sql),
-            'ALTER_TABLE' => (new Mutation\Resolution\TableMutationResolver($this->parser, $this->registry, $this->schemaParser))->resolveAlterTable($sql),
+            'UPDATE' => (new Rewriting\Mutation\Resolution\RowMutationResolver($this->parser, $this->registry, $this->shadowStore))->resolveUpdate($sql),
+            'DELETE' => (new Rewriting\Mutation\Resolution\RowMutationResolver($this->parser, $this->registry, $this->shadowStore))->resolveDelete($sql),
+            'INSERT' => (new Rewriting\Mutation\Resolution\InsertMutationResolver($this->parser, $this->registry))->resolveInsert($sql),
+            'CREATE_TABLE' => (new Rewriting\Mutation\Resolution\TableMutationResolver($this->parser, $this->registry, $this->schemaParser))->resolveCreateTable($sql),
+            'DROP_TABLE' => (new Rewriting\Mutation\Resolution\TableMutationResolver($this->parser, $this->registry, $this->schemaParser))->resolveDropTable($sql),
+            'ALTER_TABLE' => (new Rewriting\Mutation\Resolution\TableMutationResolver($this->parser, $this->registry, $this->schemaParser))->resolveAlterTable($sql),
             default => null,
         };
     }

@@ -11,6 +11,10 @@ use ZtdQuery\Schema\TableDefinition;
  * SQLite implementation of SchemaParser.
  *
  * Parses CREATE TABLE statements while preserving nested SQL expressions.
+ * @visibility public
+ * @example Inspect a CREATE TABLE definition
+ *     $schema = (new \ZtdQuery\Platform\Sqlite\SqliteSchemaParser())->parse('CREATE TABLE users(id INTEGER PRIMARY KEY)');
+ *     $schema?->primaryKeys // => ['id']
  */
 final class SqliteSchemaParser implements SchemaParser
 {

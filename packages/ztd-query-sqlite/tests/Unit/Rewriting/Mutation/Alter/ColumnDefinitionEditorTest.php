@@ -7,7 +7,7 @@ namespace Tests\Unit\Rewriting\Mutation\Alter;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use stdClass;
-use ZtdQuery\Platform\Sqlite\Mutation\Alter\ColumnDefinitionEditor;
+use ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Alter\ColumnDefinitionEditor;
 use ZtdQuery\Schema\ForeignKeyDefinition;
 use ZtdQuery\Schema\ReferentialAction;
 

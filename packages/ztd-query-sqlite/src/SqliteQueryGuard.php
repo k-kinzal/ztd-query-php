@@ -9,6 +9,10 @@ use ZtdQuery\Rewrite\QueryKind;
 
 /**
  * Classifies SQL and enforces ZTD write-protection rules for SQLite.
+ * @visibility public
+ * @example Identify simulated writes
+ *     $guard = new \ZtdQuery\Platform\Sqlite\SqliteQueryGuard(new \ZtdQuery\Platform\Sqlite\SqliteParser());
+ *     $guard->classify("DELETE FROM users") // => \ZtdQuery\Rewrite\QueryKind::WRITE_SIMULATED
  */
 final class SqliteQueryGuard
 {
@@ -16,6 +20,10 @@ final class SqliteQueryGuard
 
     /**
      * Binds the dependencies used by this operation.
+     * @visibility public
+     * @example Use the SQLite parser for classification
+     *     $guard = new \ZtdQuery\Platform\Sqlite\SqliteQueryGuard(new \ZtdQuery\Platform\Sqlite\SqliteParser());
+     *     $guard->classify("SELECT 1") // => \ZtdQuery\Rewrite\QueryKind::READ
      */
     public function __construct(SqliteParser $parser)
     {
@@ -24,6 +32,11 @@ final class SqliteQueryGuard
 
     /**
      * Classify a SQL string into READ/WRITE_SIMULATED/DDL_SIMULATED or null if unsupported.
+     * @visibility public
+     * @example Distinguish reads, virtual DDL and unsupported operations
+     *     $guard = new \ZtdQuery\Platform\Sqlite\SqliteQueryGuard(new \ZtdQuery\Platform\Sqlite\SqliteParser());
+     *     $guard->classify("CREATE TABLE users(id INTEGER)") // => \ZtdQuery\Rewrite\QueryKind::DDL_SIMULATED
+     *     $guard->classify("VACUUM") // => null
      */
     public function classify(string $sql): ?QueryKind
     {

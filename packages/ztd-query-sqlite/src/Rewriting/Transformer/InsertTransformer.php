@@ -70,8 +70,8 @@ final class InsertTransformer implements SqlTransformer
             throw new UnsupportedSqlException($sql, 'Cannot resolve INSERT target');
         }
 
-        $insertColumns = Insert\InsertProjectionBuilder::orderedValues($this->parser->extractInsertColumns($sql));
-        $tableColumns = Insert\InsertProjectionBuilder::orderedValues($tables[$tableName]['columns'] ?? $insertColumns);
+        $insertColumns = \ZtdQuery\Platform\Sqlite\Rewriting\Transformer\Insert\InsertProjectionBuilder::orderedValues($this->parser->extractInsertColumns($sql));
+        $tableColumns = \ZtdQuery\Platform\Sqlite\Rewriting\Transformer\Insert\InsertProjectionBuilder::orderedValues($tables[$tableName]['columns'] ?? $insertColumns);
         if ($tableColumns === []) {
             throw new UnsupportedSqlException($sql, 'Cannot determine columns');
         }
@@ -80,7 +80,7 @@ final class InsertTransformer implements SqlTransformer
         $columnDefaults = $tables[$tableName]['columnDefaults'] ?? [];
         $identityStrategies = $tables[$tableName]['identityStrategies'] ?? [];
         $existingRows = $tables[$tableName]['rows'] ?? [];
-        $selectSql = (new Insert\InsertProjectionBuilder($this->castRenderer, $this->identityAllocator, $this->insertSelectRenderer, $this->parser, $this->rowRenderer))->buildInsertSelect(
+        $selectSql = (new \ZtdQuery\Platform\Sqlite\Rewriting\Transformer\Insert\InsertProjectionBuilder($this->castRenderer, $this->identityAllocator, $this->insertSelectRenderer, $this->parser, $this->rowRenderer))->buildInsertSelect(
             $sql,
             $tableName,
             $tableColumns,

@@ -18,11 +18,18 @@ use ZtdQuery\Shadow\ShadowStore;
 final class SemanticsTarget
 {
     /**
+     * Retains SQLFaker's grammar analysis between independent command sequences.
+     */
+    public function __construct(private readonly CommandSequence $sequence)
+    {
+    }
+
+    /**
      * Runs one bounded sequence; local connections and all mutable state expire on return or failure.
      */
     public function __invoke(string $input): void
     {
-        $commands = CommandSequence::compile($input);
+        $commands = $this->sequence->compile($input);
         FuzzBoundary::run('SemanticsTarget', $input, implode(";\n", $commands), static function () use ($commands): void {
             $schema = 'CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT NOT NULL, score INTEGER NOT NULL)';
             $databases = new DatabasePair($schema);

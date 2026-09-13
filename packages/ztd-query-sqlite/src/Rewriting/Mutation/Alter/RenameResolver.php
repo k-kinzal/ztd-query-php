@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Platform\Sqlite\Mutation\Alter;
+namespace ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Alter;
 
 use ZtdQuery\Exception\ColumnAlreadyExistsException;
 use ZtdQuery\Exception\ColumnNotFoundException;
@@ -38,7 +38,7 @@ final class RenameResolver
             throw new UnsupportedSqlException($sql, 'Cannot parse RENAME TO');
         }
 
-        $existing = (new \ZtdQuery\Platform\Sqlite\Mutation\Resolution\MutationTableLookup($this->registry))->definition($sql, $tableName);
+        $existing = (new \ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Resolution\MutationTableLookup($this->registry))->definition($sql, $tableName);
 
         return (new AlteredTableProjection($this->registry))->alterMutation(
             $sql,
@@ -63,7 +63,7 @@ final class RenameResolver
         }
 
         [$requestedName, $newName] = $renamed;
-        $existing = (new \ZtdQuery\Platform\Sqlite\Mutation\Resolution\MutationTableLookup($this->registry))->definition($sql, $tableName);
+        $existing = (new \ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Resolution\MutationTableLookup($this->registry))->definition($sql, $tableName);
         $oldName = (new AlteredTableProjection($this->registry))->existingColumn($existing, $requestedName);
         if ($oldName === null) {
             throw new ColumnNotFoundException($sql, $tableName, $requestedName);

@@ -41,7 +41,7 @@ deptrac:
   ruleset:
     Parsing: [Core]
     Schema: [Parsing, Core]
-    Rewriting: [Parsing, Schema, Core]
+    Rewriting: [Parsing, Core]
     Binding: [Parsing, Schema, Rewriting, Core]
     Session: [Parsing, Schema, Rewriting, Binding, Core]
     Core: []

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Platform\Sqlite\Mutation\Alter;
+namespace ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Alter;
 
 use ZtdQuery\Exception\ColumnNotFoundException;
 use ZtdQuery\Exception\UnsupportedSqlException;
@@ -38,7 +38,7 @@ final class DropColumnResolver
             throw new UnsupportedSqlException($sql, 'Cannot parse DROP COLUMN');
         }
 
-        $existing = (new \ZtdQuery\Platform\Sqlite\Mutation\Resolution\MutationTableLookup($this->registry))->definition($sql, $tableName);
+        $existing = (new \ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Resolution\MutationTableLookup($this->registry))->definition($sql, $tableName);
         $columnName = (new AlteredTableProjection($this->registry))->existingColumn($existing, $requestedName);
         if ($columnName === null) {
             throw new ColumnNotFoundException($sql, $tableName, $requestedName);

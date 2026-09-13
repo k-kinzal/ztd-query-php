@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Platform\Sqlite\Mutation\Resolution;
+namespace ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Resolution;
 
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
@@ -103,10 +103,10 @@ final class TableMutationResolver
         }
 
         return match ($operation['kind']) {
-            'add' => (new \ZtdQuery\Platform\Sqlite\Mutation\Alter\AddColumnResolver($this->registry, $this->schemaParser))->resolveAlterAddColumn($sql, $tableName, $operation['clause']),
-            'drop' => (new \ZtdQuery\Platform\Sqlite\Mutation\Alter\DropColumnResolver($this->registry))->resolveAlterDropColumn($sql, $tableName, $operation['clause']),
-            'rename_table' => (new \ZtdQuery\Platform\Sqlite\Mutation\Alter\RenameResolver($this->registry))->resolveAlterRenameTable($sql, $tableName, $operation['clause']),
-            'rename_column' => (new \ZtdQuery\Platform\Sqlite\Mutation\Alter\RenameResolver($this->registry))->resolveAlterRenameColumn($sql, $tableName, $operation['clause']),
+            'add' => (new \ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Alter\AddColumnResolver($this->registry, $this->schemaParser))->resolveAlterAddColumn($sql, $tableName, $operation['clause']),
+            'drop' => (new \ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Alter\DropColumnResolver($this->registry))->resolveAlterDropColumn($sql, $tableName, $operation['clause']),
+            'rename_table' => (new \ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Alter\RenameResolver($this->registry))->resolveAlterRenameTable($sql, $tableName, $operation['clause']),
+            'rename_column' => (new \ZtdQuery\Platform\Sqlite\Rewriting\Mutation\Alter\RenameResolver($this->registry))->resolveAlterRenameColumn($sql, $tableName, $operation['clause']),
         };
     }
 }
