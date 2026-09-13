@@ -11,6 +11,7 @@
     },
     "minMsi": 80,
     "minCoveredMsi": 80,
+    "bootstrap": "tests/bootstrap.php",
     "timeout": 120,
     "timeoutsAsEscaped": true,
     "tmpDir": "build/infection-tmp",

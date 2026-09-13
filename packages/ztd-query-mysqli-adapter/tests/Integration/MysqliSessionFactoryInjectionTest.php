@@ -4,13 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
-use Containers\MySql80Container;
-use Containers\MySql84Container;
 use mysqli;
 use mysqli_result;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
-use Testcontainers\Testcontainers;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 use ZtdQuery\Platform\MySql\MySqlSessionFactory;
 
@@ -28,10 +25,11 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
 {
     public function testExplicitMySqlSessionFactoryInjectionWorks(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
-        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
-        $port = $container->getMappedPort(3306);
-        self::assertIsInt($port);
+        $host = getenv('ZTD_TEST_MYSQL_HOST');
+        $port = getenv('ZTD_TEST_MYSQL_PORT');
+        self::assertIsString($host);
+        self::assertIsString($port);
+        $port = (int) $port;
         $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
         $rawMysqli->set_charset('utf8mb4');
         $databaseName = 'ztd_' . bin2hex(random_bytes(8));
@@ -57,10 +55,11 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
 
     public function testInjectedFactoryInsertIsVisibleViaSelect(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
-        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
-        $port = $container->getMappedPort(3306);
-        self::assertIsInt($port);
+        $host = getenv('ZTD_TEST_MYSQL_HOST');
+        $port = getenv('ZTD_TEST_MYSQL_PORT');
+        self::assertIsString($host);
+        self::assertIsString($port);
+        $port = (int) $port;
         $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
         $rawMysqli->set_charset('utf8mb4');
         $databaseName = 'ztd_' . bin2hex(random_bytes(8));
@@ -92,10 +91,11 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
 
     public function testInjectedFactoryDoesNotModifyPhysicalDatabase(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
-        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
-        $port = $container->getMappedPort(3306);
-        self::assertIsInt($port);
+        $host = getenv('ZTD_TEST_MYSQL_HOST');
+        $port = getenv('ZTD_TEST_MYSQL_PORT');
+        self::assertIsString($host);
+        self::assertIsString($port);
+        $port = (int) $port;
         $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
         $rawMysqli->set_charset('utf8mb4');
         $databaseName = 'ztd_' . bin2hex(random_bytes(8));
@@ -128,10 +128,11 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
 
     public function testInjectedFactoryPreparedStatementWorks(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
-        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
-        $port = $container->getMappedPort(3306);
-        self::assertIsInt($port);
+        $host = getenv('ZTD_TEST_MYSQL_HOST');
+        $port = getenv('ZTD_TEST_MYSQL_PORT');
+        self::assertIsString($host);
+        self::assertIsString($port);
+        $port = (int) $port;
         $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
         $rawMysqli->set_charset('utf8mb4');
         $databaseName = 'ztd_' . bin2hex(random_bytes(8));
@@ -168,10 +169,11 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
 
     public function testInjectedFactoryAffectedRowsTracking(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
-        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
-        $port = $container->getMappedPort(3306);
-        self::assertIsInt($port);
+        $host = getenv('ZTD_TEST_MYSQL_HOST');
+        $port = getenv('ZTD_TEST_MYSQL_PORT');
+        self::assertIsString($host);
+        self::assertIsString($port);
+        $port = (int) $port;
         $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
         $rawMysqli->set_charset('utf8mb4');
         $databaseName = 'ztd_' . bin2hex(random_bytes(8));
@@ -197,10 +199,11 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
 
     public function testDefaultFactoryBehaviorMatchesExplicitInjection(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
-        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
-        $port = $container->getMappedPort(3306);
-        self::assertIsInt($port);
+        $host = getenv('ZTD_TEST_MYSQL_HOST');
+        $port = getenv('ZTD_TEST_MYSQL_PORT');
+        self::assertIsString($host);
+        self::assertIsString($port);
+        $port = (int) $port;
         $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
         $rawMysqli->set_charset('utf8mb4');
         $databaseName = 'ztd_' . bin2hex(random_bytes(8));

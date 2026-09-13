@@ -4,15 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use Containers\MySql80Container;
-use Containers\MySql84Container;
 use mysqli;
 use mysqli_result;
 use mysqli_stmt;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
-use Testcontainers\Testcontainers;
 use ZtdQuery\Adapter\Mysqli\MysqliStatementBindingBridge;
 
 #[CoversClass(MysqliStatementBindingBridge::class)]
@@ -21,10 +18,11 @@ final class MysqliStatementBindingBridgeTest extends TestCase
 {
     public function testBind_paramRetainsReferencesAcrossExecutions(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
-        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
-        $port = $container->getMappedPort(3306);
-        self::assertIsInt($port);
+        $host = getenv('ZTD_TEST_MYSQL_HOST');
+        $port = getenv('ZTD_TEST_MYSQL_PORT');
+        self::assertIsString($host);
+        self::assertIsString($port);
+        $port = (int) $port;
         $connection = new mysqli($host, 'root', 'root', '', $port);
         $connection->set_charset('utf8mb4');
         $database = 'ztd_' . bin2hex(random_bytes(8));
@@ -49,10 +47,11 @@ final class MysqliStatementBindingBridgeTest extends TestCase
 
     public function testBind_resultWritesBackToCallerVariables(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
-        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
-        $port = $container->getMappedPort(3306);
-        self::assertIsInt($port);
+        $host = getenv('ZTD_TEST_MYSQL_HOST');
+        $port = getenv('ZTD_TEST_MYSQL_PORT');
+        self::assertIsString($host);
+        self::assertIsString($port);
+        $port = (int) $port;
         $connection = new mysqli($host, 'root', 'root', '', $port);
         $connection->set_charset('utf8mb4');
         $database = 'ztd_' . bin2hex(random_bytes(8));

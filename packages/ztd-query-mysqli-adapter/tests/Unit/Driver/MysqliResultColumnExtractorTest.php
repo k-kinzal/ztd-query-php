@@ -4,14 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use Containers\MySql80Container;
-use Containers\MySql84Container;
 use mysqli;
 use mysqli_result;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
-use Testcontainers\Testcontainers;
 use ZtdQuery\Adapter\Mysqli\MysqliResultColumnExtractor;
 use ZtdQuery\Platform\ResultColumnTypeResolver;
 use ZtdQuery\Schema\ColumnType;
@@ -23,10 +20,12 @@ final class MysqliResultColumnExtractorTest extends TestCase
 {
     public function testExtractPassesNativeFieldMetadataToTheTypeResolver(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
-        $port = $container->getMappedPort(3306);
-        self::assertIsInt($port);
-        $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $port);
+        $host = getenv('ZTD_TEST_MYSQL_HOST');
+        $port = getenv('ZTD_TEST_MYSQL_PORT');
+        self::assertIsString($host);
+        self::assertIsString($port);
+        $port = (int) $port;
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
         $result = $connection->query('SELECT CAST(7 AS SIGNED) AS value');
         self::assertInstanceOf(mysqli_result::class, $result);
         $resolver = self::createMock(ResultColumnTypeResolver::class);
@@ -42,10 +41,12 @@ final class MysqliResultColumnExtractorTest extends TestCase
 
     public function testExtractPreservesEveryColumnAndItsOrder(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
-        $port = $container->getMappedPort(3306);
-        self::assertIsInt($port);
-        $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $port);
+        $host = getenv('ZTD_TEST_MYSQL_HOST');
+        $port = getenv('ZTD_TEST_MYSQL_PORT');
+        self::assertIsString($host);
+        self::assertIsString($port);
+        $port = (int) $port;
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
         $result = $connection->query("SELECT 1 AS id, 'Alice' AS name");
         self::assertInstanceOf(mysqli_result::class, $result);
         $resolver = self::createStub(ResultColumnTypeResolver::class);

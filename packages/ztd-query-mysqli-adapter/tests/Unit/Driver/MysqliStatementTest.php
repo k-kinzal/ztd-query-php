@@ -4,15 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use Containers\MySql80Container;
-use Containers\MySql84Container;
 use mysqli;
 use mysqli_stmt;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use Testcontainers\Testcontainers;
 use ZtdQuery\Adapter\Mysqli\MysqliResultColumnExtractor;
 use ZtdQuery\Adapter\Mysqli\MysqliStatement;
 use ZtdQuery\Connection\Exception\DatabaseException;
@@ -27,10 +24,12 @@ final class MysqliStatementTest extends TestCase
 {
     public function testExecutesExplicitParameters(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
-        $port = $container->getMappedPort(3306);
-        self::assertIsInt($port);
-        $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $port);
+        $host = getenv('ZTD_TEST_MYSQL_HOST');
+        $port = getenv('ZTD_TEST_MYSQL_PORT');
+        self::assertIsString($host);
+        self::assertIsString($port);
+        $port = (int) $port;
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
         $native = $connection->prepare('SELECT ? AS value');
         self::assertInstanceOf(mysqli_stmt::class, $native);
         $statement = new MysqliStatement($native, $connection);
@@ -41,10 +40,12 @@ final class MysqliStatementTest extends TestCase
 
     public function testPreservesBindingsWithAnEmptyParameterArray(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
-        $port = $container->getMappedPort(3306);
-        self::assertIsInt($port);
-        $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $port);
+        $host = getenv('ZTD_TEST_MYSQL_HOST');
+        $port = getenv('ZTD_TEST_MYSQL_PORT');
+        self::assertIsString($host);
+        self::assertIsString($port);
+        $port = (int) $port;
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
         $native = $connection->prepare('SELECT ? AS value');
         self::assertInstanceOf(mysqli_stmt::class, $native);
         $value = 7;
@@ -58,10 +59,12 @@ final class MysqliStatementTest extends TestCase
 
     public function testResultColumnsKeepsTheResultAvailableAfterReadingMetadata(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
-        $port = $container->getMappedPort(3306);
-        self::assertIsInt($port);
-        $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $port);
+        $host = getenv('ZTD_TEST_MYSQL_HOST');
+        $port = getenv('ZTD_TEST_MYSQL_PORT');
+        self::assertIsString($host);
+        self::assertIsString($port);
+        $port = (int) $port;
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
         $native = $connection->prepare('SELECT 7 AS id');
         self::assertInstanceOf(mysqli_stmt::class, $native);
         $statement = new MysqliStatement($native, $connection);
@@ -77,10 +80,12 @@ final class MysqliStatementTest extends TestCase
 
     public function testFetchAllReturnsNoRowsOrMetadataForAWrite(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
-        $port = $container->getMappedPort(3306);
-        self::assertIsInt($port);
-        $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $port);
+        $host = getenv('ZTD_TEST_MYSQL_HOST');
+        $port = getenv('ZTD_TEST_MYSQL_PORT');
+        self::assertIsString($host);
+        self::assertIsString($port);
+        $port = (int) $port;
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
         $connection->query('CREATE TEMPORARY TABLE counts (id INT)');
         $native = $connection->prepare('INSERT INTO counts VALUES (1), (2)');
         self::assertInstanceOf(mysqli_stmt::class, $native);
@@ -94,10 +99,12 @@ final class MysqliStatementTest extends TestCase
 
     public function testReportsNativeExecutionErrorsWithoutParameters(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
-        $port = $container->getMappedPort(3306);
-        self::assertIsInt($port);
-        $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $port);
+        $host = getenv('ZTD_TEST_MYSQL_HOST');
+        $port = getenv('ZTD_TEST_MYSQL_PORT');
+        self::assertIsString($host);
+        self::assertIsString($port);
+        $port = (int) $port;
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
         $connection->query('CREATE TEMPORARY TABLE duplicate_keys (id INT PRIMARY KEY)');
         $connection->query('INSERT INTO duplicate_keys VALUES (1)');
         $native = $connection->prepare('INSERT INTO duplicate_keys VALUES (1)');
@@ -115,10 +122,12 @@ final class MysqliStatementTest extends TestCase
 
     public function testReportsNativeExecutionErrorsWithParameters(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
-        $port = $container->getMappedPort(3306);
-        self::assertIsInt($port);
-        $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $port);
+        $host = getenv('ZTD_TEST_MYSQL_HOST');
+        $port = getenv('ZTD_TEST_MYSQL_PORT');
+        self::assertIsString($host);
+        self::assertIsString($port);
+        $port = (int) $port;
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
         $connection->query('CREATE TEMPORARY TABLE duplicate_keys (id INT PRIMARY KEY)');
         $connection->query('INSERT INTO duplicate_keys VALUES (1)');
         $native = $connection->prepare('INSERT INTO duplicate_keys VALUES (?)');
@@ -136,10 +145,12 @@ final class MysqliStatementTest extends TestCase
 
     public function testRowCountReportsNativeAffectedRows(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
-        $port = $container->getMappedPort(3306);
-        self::assertIsInt($port);
-        $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $port);
+        $host = getenv('ZTD_TEST_MYSQL_HOST');
+        $port = getenv('ZTD_TEST_MYSQL_PORT');
+        self::assertIsString($host);
+        self::assertIsString($port);
+        $port = (int) $port;
+        $connection = new mysqli($host, 'root', 'root', 'test', $port);
         $connection->query('CREATE TEMPORARY TABLE row_counts (id INT)');
         $native = $connection->prepare('INSERT INTO row_counts VALUES (1), (2)');
         self::assertInstanceOf(mysqli_stmt::class, $native);

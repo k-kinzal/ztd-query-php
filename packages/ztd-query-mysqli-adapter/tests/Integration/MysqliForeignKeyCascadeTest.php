@@ -4,13 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
-use Containers\MySql80Container;
-use Containers\MySql84Container;
 use mysqli;
 use mysqli_result;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
-use Testcontainers\Testcontainers;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqliException;
 
@@ -28,10 +25,11 @@ final class MysqliForeignKeyCascadeTest extends TestCase
 {
     public function testForeignKeysValidateAndCascadeUpdatesAndDeletes(): void
     {
-        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
-        $host = str_replace('localhost', '127.0.0.1', $container->getHost());
-        $port = $container->getMappedPort(3306);
-        self::assertIsInt($port);
+        $host = getenv('ZTD_TEST_MYSQL_HOST');
+        $port = getenv('ZTD_TEST_MYSQL_PORT');
+        self::assertIsString($host);
+        self::assertIsString($port);
+        $port = (int) $port;
         $mysqli = new mysqli($host, 'root', 'root', '', $port);
         $mysqli->set_charset('utf8mb4');
         $databaseName = 'ztd_' . bin2hex(random_bytes(8));

@@ -30,7 +30,7 @@ final class MySql84Container extends GenericContainer
     protected static $EXPOSED_PORTS = [3306];
 
     /**
-     * @var list<string>|null
+     * @var array<string>|null
      */
     protected static $MOUNTS = ['type=tmpfs,destination=/var/lib/mysql'];
 
