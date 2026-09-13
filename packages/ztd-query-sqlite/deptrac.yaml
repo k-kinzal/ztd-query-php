@@ -28,7 +28,7 @@ deptrac:
           value: 'src/Sqlite(Rewriter|MutationResolver)\.php$'
         # Imported PHPDoc alias declared by the full-text rewrite implementation.
         - type: classLike
-          value: '^ZtdQuery\\Platform\\Sqlite\\Rewriting\\FullText\\TableContext$'
+          value: '^ZtdQuery\\Platform\\Sqlite\\(?:Rewriting\\FullText\\)?TableContext$'
     - name: Binding
       collectors:
         - type: directory
