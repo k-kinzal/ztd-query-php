@@ -25,8 +25,11 @@ final class PgSqlTransformer implements SqlTransformer
     private InsertTransformer $insertTransformer;
     private UpdateTransformer $updateTransformer;
     private DeleteTransformer $deleteTransformer;
-    private ?MergeTransformer $mergeTransformer = null;
+    private MergeTransformer $mergeTransformer;
 
+    /**
+     * Initializes the collaborators and state used by this transformer.
+     */
     public function __construct(
         PgSqlParser $parser,
         SelectTransformer $selectTransformer,
@@ -39,10 +42,12 @@ final class PgSqlTransformer implements SqlTransformer
         $this->insertTransformer = $insertTransformer;
         $this->updateTransformer = $updateTransformer;
         $this->deleteTransformer = $deleteTransformer;
+        $this->mergeTransformer = new MergeTransformer(new PgSqlMergeParser(), $selectTransformer);
     }
 
     /**
      * {@inheritDoc}
+     * @throws UnsupportedSqlException
      */
     public function transform(string $sql, array $tables): string
     {
@@ -53,22 +58,16 @@ final class PgSqlTransformer implements SqlTransformer
             'INSERT' => $this->insertTransformer->transform($sql, $tables),
             'UPDATE' => $this->updateTransformer->transform($sql, $tables),
             'DELETE' => $this->deleteTransformer->transform($sql, $tables),
-            'MERGE' => $this->mergeTransformer()->transform($sql, $tables),
-            default => throw new UnsupportedSqlException($sql, 'Statement type not supported by transformer'),
+            'MERGE' => $this->mergeTransformer->transform($sql, $tables),
+            'TRUNCATE', 'CREATE_TABLE', 'DROP_TABLE', 'ALTER_TABLE', 'DO', 'TCL', null => throw new UnsupportedSqlException($sql, 'Statement type not supported by transformer'),
         };
     }
 
+    /**
+     * Commits staged generated identity values after a successful rewrite.
+     */
     public function commitRewriteState(): void
     {
         $this->insertTransformer->commitRewriteState();
-    }
-
-    private function mergeTransformer(): MergeTransformer
-    {
-        if ($this->mergeTransformer === null) {
-            $this->mergeTransformer = new MergeTransformer(new PgSqlMergeParser(), $this->selectTransformer);
-        }
-
-        return $this->mergeTransformer;
     }
 }

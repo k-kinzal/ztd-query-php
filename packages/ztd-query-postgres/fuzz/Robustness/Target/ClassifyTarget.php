@@ -6,73 +6,41 @@ namespace Fuzz\Robustness\Target;
 
 use Error;
 use Faker\Generator;
+use Fuzz\Input\SqlInput;
 use Fuzz\Robustness\Invariant\ClassifyDeterministicChecker;
 use Fuzz\Robustness\Invariant\ClassifyNeverThrowsChecker;
-use Fuzz\Robustness\Invariant\InvariantChecker;
 use SqlFaker\PostgreSqlProvider;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Platform\Postgres\PgSqlQueryGuard;
 
+/**
+ * Executes the classify invariant target for coverage-guided fuzzing.
+ */
 final class ClassifyTarget
 {
-    private Generator $faker;
-    private PostgreSqlProvider $provider;
-    /** @var array<int, InvariantChecker> */
-    private array $checkers;
+    private readonly SqlInput $input;
 
+    /**
+     * Supplies deterministic SQL generation for this fuzz target.
+     */
     public function __construct(Generator $faker, PostgreSqlProvider $provider)
     {
-        $this->faker = $faker;
-        $this->provider = $provider;
-
-        $guard = new PgSqlQueryGuard(new PgSqlParser());
-        $this->checkers = [
-            new ClassifyNeverThrowsChecker($guard),
-            new ClassifyDeterministicChecker($guard),
-        ];
-    }
-
-    public function __invoke(string $input): void
-    {
-        $seed = crc32(str_pad($input, 4, "\0"));
-        $this->faker->seed($seed);
-
-        $sql = $this->selectGenerator($input)();
-
-        foreach ($this->checkers as $checker) {
-            $violation = $checker->check($sql);
-            if ($violation !== null) {
-                throw new Error("Invariant violation: seed=$seed\n$violation");
-            }
-        }
+        $this->input = new SqlInput($faker, $provider);
     }
 
     /**
-     * @return callable(): string
+     * Checks the target invariants for one reproducible fuzzer input.
+     * @throws Error
      */
-    private function selectGenerator(string $input): callable
+    public function __invoke(string $input): void
     {
-        $generators = [
-            fn (): string => $this->provider->sql(maxDepth: 8),
-            fn (): string => $this->provider->selectStatement(maxDepth: 8),
-            fn (): string => $this->provider->insertStatement(maxDepth: 8),
-            fn (): string => $this->provider->updateStatement(maxDepth: 8),
-            fn (): string => $this->provider->deleteStatement(maxDepth: 8),
-            fn (): string => $this->provider->createTableStatement(maxDepth: 5),
-            fn (): string => $this->provider->alterTableStatement(maxDepth: 5),
-            fn (): string => $this->provider->dropTableStatement(maxDepth: 3),
-            fn (): string => $this->provider->partitionOfStatement(),
-            fn (): string => $this->provider->tableSampleStatement(),
-            fn (): string => $this->provider->doStatement(),
-            fn (): string => $this->provider->mergeStatement(),
-            fn (): string => $this->provider->copyStatement(maxDepth: 8),
-            fn (): string => $this->provider->partialIndexUpsertStatement(),
-            fn (): string => $this->provider->createDomainStatement(maxDepth: 8),
-            fn (): string => $this->provider->domainDmlStatement(),
-            fn (): string => $this->provider->fullTextSearchStatement(),
-        ];
-
-        $index = ord($input[0] ?? "\0") % count($generators);
-        return $generators[$index];
+        $sql = $this->input->classify($input);
+        $guard = new PgSqlQueryGuard(new PgSqlParser());
+        foreach ([new ClassifyNeverThrowsChecker($guard), new ClassifyDeterministicChecker($guard)] as $checker) {
+            $violation = $checker->check($sql);
+            if ($violation !== null) {
+                throw new Error((string) $violation);
+            }
+        }
     }
 }

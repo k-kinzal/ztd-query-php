@@ -12,7 +12,7 @@ use ZtdQuery\Platform\Postgres\PgSqlErrorClassifier;
 #[CoversClass(PgSqlErrorClassifier::class)]
 final class PgSqlErrorClassifierTest extends TestCase
 {
-    public function testUndefinedColumnError(): void
+    public function testIsUnknownSchemaErrorUndefinedColumnError(): void
     {
         $classifier = new PgSqlErrorClassifier();
         $e = new DatabaseException('ERROR: column "unknown_col" does not exist (42703)', 7);

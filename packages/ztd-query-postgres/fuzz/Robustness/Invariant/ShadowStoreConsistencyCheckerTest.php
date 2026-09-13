@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare (strict_types=1);
 
 namespace Fuzz\Robustness\Invariant;
 
@@ -8,24 +8,29 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Shadow\ShadowStore;
 
+/**
+ * Verifies that invalid shadow table names are reported with their SQL context.
+ */
 #[CoversNothing]
 final class ShadowStoreConsistencyCheckerTest extends TestCase
 {
+    /**
+     * Test allows empty initialized table.
+     */
     public function testAllowsEmptyInitializedTable(): void
     {
         $store = new ShadowStore();
         $store->ensure('events');
-
         self::assertNull((new ShadowStoreConsistencyChecker($store))->check('CREATE TABLE events (id INT)'));
     }
-
+    /**
+     * Test rejects empty table name.
+     */
     public function testRejectsEmptyTableName(): void
     {
         $store = new ShadowStore();
         $store->ensure('');
-
         $violation = (new ShadowStoreConsistencyChecker($store))->check('SELECT 1');
-
         self::assertNotNull($violation);
         self::assertSame('SHADOW_EMPTY_KEY', $violation->id());
     }

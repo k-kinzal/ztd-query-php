@@ -22,6 +22,9 @@ final class DeleteTransformer implements SqlTransformer
     private SelectTransformer $selectTransformer;
     private PgSqlCteShadowComposer $cteComposer;
 
+    /**
+     * Initializes the collaborators and state used by this delete transformer.
+     */
     public function __construct(
         PgSqlParser $parser,
         SelectTransformer $selectTransformer,
@@ -33,6 +36,7 @@ final class DeleteTransformer implements SqlTransformer
 
     /**
      * {@inheritDoc}
+     * @throws UnsupportedSqlException
      */
     public function transform(string $sql, array $tables): string
     {
@@ -89,7 +93,9 @@ final class DeleteTransformer implements SqlTransformer
 
         $resultSql = "SELECT $selectList FROM \"$targetTable\"$aliasClause$usingClause$whereClause";
 
-        /** @var array<string, array{alias: string}> $allTables */
+        /**
+         * @var array<string, array{alias: string}> $allTables
+         */
         $allTables = [$targetTable => ['alias' => $qualifier]];
 
         return ['sql' => $resultSql, 'table' => $targetTable, 'tables' => $allTables];

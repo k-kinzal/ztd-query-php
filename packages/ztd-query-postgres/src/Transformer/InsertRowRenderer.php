@@ -7,10 +7,16 @@ namespace ZtdQuery\Platform\Postgres\Transformer;
 use InvalidArgumentException;
 use ZtdQuery\Rewrite\InsertRowProjectionPlanner;
 
+/**
+ * Insert row renderer for PostgreSQL queries.
+ */
 final class InsertRowRenderer
 {
     private InsertRowProjectionPlanner $projectionPlanner;
 
+    /**
+     * Initializes the collaborators and state used by this insert row renderer.
+     */
     public function __construct()
     {
         $this->projectionPlanner = new InsertRowProjectionPlanner();
@@ -20,6 +26,7 @@ final class InsertRowRenderer
      * @param list<string> $insertColumns
      * @param list<string> $values
      * @return array<string, string>
+     * @throws InvalidArgumentException
      */
     public function providedExpressions(array $insertColumns, array $values): array
     {

@@ -1,0 +1,55 @@
+# NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
+deptrac:
+  paths:
+    - ./src
+  analyser:
+    types: [class, use]
+  layers:
+    - name: Sql
+      collectors:
+        - type: directory
+          value: 'src/Sql/'
+    - name: Parsing
+      collectors:
+        - type: directory
+          value: 'src/Parsing/'
+    - name: Schema
+      collectors:
+        - type: directory
+          value: 'src/Schema/'
+    - name: Reflection
+      collectors:
+        - type: directory
+          value: 'src/Reflection/'
+    - name: Rewrite
+      collectors:
+        - type: directory
+          value: 'src/(Rewrite|Transformer)/'
+    - name: Driver
+      collectors:
+        - type: directory
+          value: 'src/Driver/'
+    - name: Mutation
+      collectors:
+        - type: directory
+          value: 'src/Mutation/'
+    - name: Session
+      collectors:
+        - type: directory
+          value: 'src/[^/]+\.php$'
+        - type: directory
+          value: 'src/Session/'
+    - name: Core
+      collectors:
+        - type: classLike
+          value: '^ZtdQuery\\(?!Platform\\Postgres\\)'
+  ruleset:
+    Sql: [Core]
+    Parsing: [Sql, Core]
+    Schema: [Sql, Parsing, Core]
+    Reflection: [Sql, Parsing, Schema, Core]
+    Rewrite: [Sql, Parsing, Schema, Core]
+    Driver: [Sql, Core]
+    Mutation: [Sql, Parsing, Schema, Core]
+    Session: [Sql, Parsing, Schema, Reflection, Rewrite, Driver, Mutation, Core]
+    Core: []

@@ -37,9 +37,41 @@ use ZtdQuery\Schema\PartialUniqueIndex;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlNativeUpsertProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlGeneratedColumnProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
+#[CoversClass(\ZtdQuery\Platform\Postgres\Transformer\Insert\ExpressionCast::class)]
+#[CoversClass(\ZtdQuery\Platform\Postgres\Transformer\Insert\OrderedExpressions::class)]
+#[CoversClass(\ZtdQuery\Platform\Postgres\Transformer\Insert\UpsertProjection::class)]
+#[CoversClass(\ZtdQuery\Platform\Postgres\Transformer\Insert\ValueProjection::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Conflict\ColumnSet::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Cte\HeaderParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Cte\IdentifierReferences::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Cte\PrefixMerge::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Cte\ShadowDependencies::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Relation\FromClause::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Relation\RelationReference::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Sampling\SampleClause::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Sampling\SampleTokens::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Statement\Classification::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Statement\ConflictClause::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Statement\Identifiers::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Statement\InsertSource::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Statement\TableDefinitionClauses::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlTableSample::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlTableSampleMethod::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\Sampling\SampleProjection::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\Sampling\TableColumns::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\Upsert\ConflictPredicate::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\Upsert\ExpressionBinder::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Sql\CastTypeMapper::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Sql\Lexing\CommentSpan::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Sql\Lexing\QuotedSpan::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Sql\NativeCastTarget::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Sql\Value\BinaryStream::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Sql\Value\LiteralText::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\Cte\RowSourceRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\Insert\SelectProjection::class)]
 final class InsertTransformerTest extends TestCase
 {
-    public function testProjectsConflictExpressionUsingCandidateKeys(): void
+    public function testTransformProjectsConflictExpressionUsingCandidateKeys(): void
     {
         $transformer = new InsertTransformer(new PgSqlParser(), new SelectTransformer());
         $tables = [
@@ -415,7 +447,7 @@ final class InsertTransformerTest extends TestCase
         self::assertStringContainsString("'Alice' AS \"name\"", $result);
     }
 
-    public function testInsertAllocatesSerialValuesWithoutPhysicalSequence(): void
+    public function testCommitRewriteStateInsertAllocatesSerialValuesWithoutPhysicalSequence(): void
     {
         $transformer = new InsertTransformer(new PgSqlParser(), new SelectTransformer());
         $tables = ['users' => [

@@ -8,11 +8,17 @@ use InvalidArgumentException;
 use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
 use ZtdQuery\Rewrite\InsertSelectProjectionPlanner;
 
+/**
+ * Insert select renderer for PostgreSQL queries.
+ */
 final class InsertSelectRenderer
 {
     private PgSqlIdentifierQuoter $quoter;
     private InsertSelectProjectionPlanner $projectionPlanner;
 
+    /**
+     * Initializes the collaborators and state used by this insert select renderer.
+     */
     public function __construct()
     {
         $this->quoter = new PgSqlIdentifierQuoter();
@@ -57,6 +63,10 @@ final class InsertSelectRenderer
             . $selectSql . ') SELECT ' . implode(', ', $selects) . ' FROM ' . $sourceName;
     }
 
+    /**
+     * Builds an identity expression for rows returned by INSERT SELECT.
+     * @throws InvalidArgumentException
+     */
     public function renderGeneratedIdentity(int $start): string
     {
         if ($start < 1) {

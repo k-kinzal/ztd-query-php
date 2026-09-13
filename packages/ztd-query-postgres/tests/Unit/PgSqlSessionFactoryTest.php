@@ -31,7 +31,6 @@ use ZtdQuery\Platform\Postgres\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\InsertTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
 use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
-use ZtdQuery\Session;
 
 #[CoversClass(PgSqlSessionFactory::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlColumnTypeMapper::class)]
@@ -73,6 +72,93 @@ use ZtdQuery\Session;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlReturningProjectionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlUpsertExpressionParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
+#[CoversClass(\ZtdQuery\Platform\Postgres\Session\SchemaInitializer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Driver\Copy\TargetColumns::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Driver\Copy\TargetSql::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Driver\Copy\TextFields::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Driver\Placeholder\EscapeCursor::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Driver\Placeholder\OperandInput::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Driver\Placeholder\QuotedInput::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Driver\Placeholder\TokenBoundary::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Mutation\DdlResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Mutation\DmlResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Conflict\ColumnSet::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Cte\HeaderParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Cte\IdentifierReferences::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Cte\PrefixMerge::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Cte\ShadowDependencies::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Diagnostic\KeywordSearch::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Expression\ComparisonOperator::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Expression\ExpressionCursor::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Expression\ExpressionLexeme::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Expression\PrecedenceParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Expression\PrimaryParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Merge\ActionClause::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Merge\BranchTokens::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Merge\RelationTarget::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Merge\StatementParts::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Relation\FromClause::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Relation\RelationReference::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Returning\ProjectionItem::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Sampling\SampleClause::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Sampling\SampleTokens::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Statement\Classification::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Statement\ConflictClause::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Statement\Identifiers::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Statement\InsertSource::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Statement\SelectColumns::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Statement\TableDefinitionClauses::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Transaction\KeywordForm::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlMergeActionKind::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlMergeClause::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlMergeMatchKind::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlMergeParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlMergeStatement::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlTableSample::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlTableSampleMethod::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlTransactionStatementParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Reflection\Catalog\PartitionKeys::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Reflection\Catalog\TableQueries::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Reflection\Column\ColumnDefinitionSql::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Reflection\Column\NativeTypeSql::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Reflection\Key\ForeignKeyRow::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Reflection\Key\ForeignKeys::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Reflection\Key\IndexDefinitions::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Reflection\Key\IndexRows::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Reflection\Key\PrimaryColumns::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Reflection\Key\UniqueIndexes::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\Sampling\SampleProjection::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\Sampling\TableColumns::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\Upsert\ConflictPredicate::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\Upsert\ExpressionBinder::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Schema\Definition\ColumnDefinition::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Schema\Definition\ColumnTypeDeclaration::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Schema\Definition\TableBody::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Schema\Definition\TableConstraint::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Schema\Definition\TableFields::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Schema\ForeignKey\DefinitionEntry::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Schema\ForeignKey\DefinitionTokens::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Schema\Partition\BoundPredicate::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Schema\Partition\ClauseTokens::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Schema\Partition\StorageTable::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Session\SchemaContext::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Session\StatementRewriter::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Sql\CastTypeMapper::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Sql\Lexing\CommentSpan::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Sql\Lexing\QuotedSpan::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Sql\NativeCastTarget::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Sql\Value\BinaryStream::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Sql\Value\LiteralText::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\Cte\RowSourceRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\Insert\ExpressionCast::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\Insert\OrderedExpressions::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\Insert\SelectProjection::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\Insert\UpsertProjection::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\Insert\ValueProjection::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\MergeTransformer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\Merge\MatchConditions::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\Merge\RowActions::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\Update\ColumnProjection::class)]
 final class PgSqlSessionFactoryTest extends TestCase
 {
     public function testCreateRegistersReflectedPartitionMetadata(): void
@@ -186,7 +272,7 @@ final class PgSqlSessionFactoryTest extends TestCase
         $factory = new PgSqlSessionFactory();
         $session = $factory->create($connection, ZtdConfig::default());
 
-        self::assertInstanceOf(Session::class, $session);
+        self::assertTrue($session->isEnabled());
         self::assertInstanceOf(PgSqlCopySupport::class, $session->copySupport());
         self::assertInstanceOf(PgSqlPdoParameterBindingCompiler::class, $session->parameterBindingCompiler());
         self::assertInstanceOf(PgSqlPdoResultColumnTypeResolver::class, $session->resultColumnTypeResolver());
@@ -270,7 +356,7 @@ final class PgSqlSessionFactoryTest extends TestCase
         $factory = new PgSqlSessionFactory();
         $session = $factory->create($connection, ZtdConfig::default());
 
-        self::assertInstanceOf(Session::class, $session);
+        self::assertTrue($session->isEnabled());
     }
 
     public function testCreateWithEmptyDatabaseReturnsSession(): void
@@ -282,7 +368,7 @@ final class PgSqlSessionFactoryTest extends TestCase
         $factory = new PgSqlSessionFactory();
         $session = $factory->create($connection, ZtdConfig::default());
 
-        self::assertInstanceOf(Session::class, $session);
+        self::assertTrue($session->isEnabled());
     }
 
     public function testSessionCanBeEnabledAfterCreation(): void
@@ -393,7 +479,7 @@ final class PgSqlSessionFactoryTest extends TestCase
 
         $factory = new PgSqlSessionFactory();
         $session = $factory->create($connection, ZtdConfig::default());
-        self::assertInstanceOf(Session::class, $session);
+        self::assertTrue($session->isEnabled());
     }
 
     public function testCreateRegistersReflectedPartialUniqueIndexes(): void

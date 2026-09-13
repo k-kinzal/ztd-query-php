@@ -32,6 +32,22 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 #[UsesClass(PgSqlTableSampleRewriter::class)]
 #[UsesClass(PgSqlTableSample::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
+#[CoversClass(\ZtdQuery\Platform\Postgres\Transformer\Cte\RowSourceRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Cte\HeaderParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Cte\IdentifierReferences::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Cte\PrefixMerge::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Cte\ShadowDependencies::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Relation\FromClause::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Relation\RelationReference::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Sampling\SampleClause::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Sampling\SampleTokens::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlTableSampleMethod::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\Sampling\SampleProjection::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\Sampling\TableColumns::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Sql\CastTypeMapper::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Sql\NativeCastTarget::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Sql\Value\BinaryStream::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Sql\Value\LiteralText::class)]
 final class SelectTransformerTest extends TransformerContractTest
 {
     public function testTableSampleReadsFromGeneratedShadowCte(): void
@@ -103,11 +119,13 @@ final class SelectTransformerTest extends TransformerContractTest
         self::assertStringContainsString('CUSTOM_VALUE', $transformer->transform('SELECT * FROM users', $tables));
     }
 
+    #[Override]
     protected function createTransformer(): SqlTransformer
     {
         return new SelectTransformer();
     }
 
+    #[Override]
     protected function selectSql(): string
     {
         return 'SELECT * FROM users WHERE id = 1';

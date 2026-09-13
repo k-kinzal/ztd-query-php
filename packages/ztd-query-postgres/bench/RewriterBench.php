@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Bench;
 
+use PhpBench\Attributes as Bench;
 use ZtdQuery\Platform\Postgres\PgSqlMutationResolver;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Platform\Postgres\PgSqlQueryGuard;
@@ -66,21 +67,15 @@ final class RewriterBench
         );
     }
 
-    /**
-     * @BeforeMethods({"setUp"})
-     * @Revs(100)
-     * @Iterations(5)
-     */
+    #[Bench\BeforeMethods('setUp')]
+    #[Bench\Revs(100)]
     public function benchRewriteSelect(): void
     {
         $this->rewriter->rewrite($this->selectSql);
     }
 
-    /**
-     * @BeforeMethods({"setUp"})
-     * @Revs(100)
-     * @Iterations(5)
-     */
+    #[Bench\BeforeMethods('setUp')]
+    #[Bench\Revs(100)]
     public function benchRewriteInsert(): void
     {
         $this->rewriter->rewrite($this->insertSql);

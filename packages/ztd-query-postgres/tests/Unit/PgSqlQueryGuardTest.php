@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\Contract\QueryClassifierContractTest;
@@ -16,61 +17,85 @@ use ZtdQuery\Rewrite\QueryKind;
 #[UsesClass(PgSqlParser::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Conflict\ColumnSet::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Diagnostic\KeywordSearch::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Relation\FromClause::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Relation\RelationReference::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Statement\Classification::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Statement\ConflictClause::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Statement\Identifiers::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Statement\InsertSource::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Statement\TableDefinitionClauses::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlConflictTarget::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Sql\Lexing\CommentSpan::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Sql\Lexing\QuotedSpan::class)]
 final class PgSqlQueryGuardTest extends QueryClassifierContractTest
 {
+    #[Override]
     protected function classify(string $sql): ?QueryKind
     {
         return (new PgSqlQueryGuard(new PgSqlParser()))->classify($sql);
     }
 
+    #[Override]
     protected function selectSql(): string
     {
         return 'SELECT * FROM users';
     }
 
+    #[Override]
     protected function insertSql(): string
     {
         return "INSERT INTO users (name) VALUES ('Alice')";
     }
 
+    #[Override]
     protected function updateSql(): string
     {
         return "UPDATE users SET name = 'Bob' WHERE id = 1";
     }
 
+    #[Override]
     protected function deleteSql(): string
     {
         return 'DELETE FROM users WHERE id = 1';
     }
 
+    #[Override]
     protected function createTableSql(): string
     {
         return 'CREATE TABLE test (id INTEGER PRIMARY KEY)';
     }
 
+    #[Override]
     protected function dropTableSql(): string
     {
         return 'DROP TABLE test';
     }
 
+    #[Override]
     public function testSelectClassifiesAsRead(): void
     {
         $guard = new PgSqlQueryGuard(new PgSqlParser());
         self::assertSame(QueryKind::READ, $guard->classify('SELECT * FROM users'));
     }
 
+    #[Override]
     public function testInsertClassifiesAsWriteSimulated(): void
     {
         $guard = new PgSqlQueryGuard(new PgSqlParser());
         self::assertSame(QueryKind::WRITE_SIMULATED, $guard->classify("INSERT INTO users (id, name) VALUES (1, 'Alice')"));
     }
 
+    #[Override]
     public function testUpdateClassifiesAsWriteSimulated(): void
     {
         $guard = new PgSqlQueryGuard(new PgSqlParser());
         self::assertSame(QueryKind::WRITE_SIMULATED, $guard->classify("UPDATE users SET name = 'Bob' WHERE id = 1"));
     }
 
+    #[Override]
     public function testDeleteClassifiesAsWriteSimulated(): void
     {
         $guard = new PgSqlQueryGuard(new PgSqlParser());
@@ -92,12 +117,14 @@ final class PgSqlQueryGuardTest extends QueryClassifierContractTest
         self::assertSame(QueryKind::WRITE_SIMULATED, $guard->classify('TRUNCATE TABLE users'));
     }
 
+    #[Override]
     public function testCreateTableClassifiesAsDdlSimulated(): void
     {
         $guard = new PgSqlQueryGuard(new PgSqlParser());
         self::assertSame(QueryKind::DDL_SIMULATED, $guard->classify('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)'));
     }
 
+    #[Override]
     public function testDropTableClassifiesAsDdlSimulated(): void
     {
         $guard = new PgSqlQueryGuard(new PgSqlParser());

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Postgres\Transformer;
 
-use RuntimeException;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\IdentifierQuoter;
 use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
@@ -15,7 +14,6 @@ use ZtdQuery\Platform\Postgres\PgSqlTableSampleRewriter;
 use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Rewrite\SqlTransformer;
 use ZtdQuery\Schema\ColumnType;
-use ZtdQuery\Schema\ColumnTypeFamily;
 
 /**
  * Applies CTE shadowing to SELECT statements for PostgreSQL.
@@ -36,6 +34,9 @@ final class SelectTransformer implements SqlTransformer
     private PgSqlGeneratedColumnProjector $generatedColumnProjector;
     private PgSqlTableSampleRewriter $tableSampleRewriter;
 
+    /**
+     * Initializes the collaborators and state used by this select transformer.
+     */
     public function __construct(
         ?CastRenderer $castRenderer = null,
         ?IdentifierQuoter $quoter = null,
@@ -51,6 +52,7 @@ final class SelectTransformer implements SqlTransformer
 
     /**
      * {@inheritDoc}
+     * @throws \ZtdQuery\Exception\UnsupportedSqlException when a shadow relation uses an unsupported TABLESAMPLE method.
      */
     public function transform(string $sql, array $tables): string
     {
@@ -68,7 +70,9 @@ final class SelectTransformer implements SqlTransformer
 
             $rows = $tableContext['rows'];
             $columns = $tableContext['columns'];
-            /** @var array<string, ColumnType> $columnTypes */
+            /**
+             * @var array<string, ColumnType> $columnTypes
+             */
             $columnTypes = $tableContext['columnTypes'];
             $generatedExpressions = $tableContext['generatedExpressions'] ?? [];
 
@@ -87,7 +91,7 @@ final class SelectTransformer implements SqlTransformer
                 continue;
             }
 
-            $ctes[$tableName] = $this->generateCte(
+            $ctes[$tableName] = (new Cte\RowSourceRenderer($this->castRenderer, $this->generatedColumnProjector, $this->quoter, $this->valueRenderer))->generateCte(
                 $tableName,
                 $rows,
                 $columns,
@@ -98,140 +102,4 @@ final class SelectTransformer implements SqlTransformer
 
         return $this->cteComposer->compose($sql, $ctes);
     }
-
-    /**
-     * @param array<int, array<string, mixed>> $rows
-     * @param array<int, string> $columns
-     * @param array<string, ColumnType> $columnTypes
-     * @param array<string, string> $generatedExpressions
-     */
-    private function generateCte(
-        string $tableName,
-        array $rows,
-        array $columns,
-        array $columnTypes,
-        array $generatedExpressions,
-    ): string {
-        $quotedTable = $this->quoter->quote($tableName);
-
-        if ($columns !== []) {
-            if ($rows === []) {
-                $selects = [];
-                foreach ($columns as $col) {
-                    $type = $columnTypes[$col] ?? null;
-                    $nullCast = $type !== null
-                        ? $this->castRenderer->renderNullCast($type)
-                        : $this->renderFallbackNullCast();
-                    $selects[] = "$nullCast AS " . $this->quoter->quote($col);
-                }
-
-                return $this->wrapCte(
-                    $quotedTable,
-                    'SELECT ' . implode(', ', $selects) . ' WHERE FALSE',
-                    $columns,
-                    $generatedExpressions,
-                );
-            }
-
-            if (count($rows) === 1) {
-                $selects = [];
-                $row = $rows[0];
-                foreach ($columns as $col) {
-                    $colType = $columnTypes[$col] ?? null;
-                    $valStr = $this->formatValue($row[$col] ?? null, $colType);
-                    $selects[] = "$valStr AS " . $this->quoter->quote($col);
-                }
-
-                return $this->wrapCte(
-                    $quotedTable,
-                    'SELECT ' . implode(', ', $selects),
-                    $columns,
-                    $generatedExpressions,
-                );
-            }
-
-            $baseSql = $this->generateMultiRowSource($rows, $columns, $columnTypes);
-
-            return $this->wrapCte($quotedTable, $baseSql, $columns, $generatedExpressions);
-        }
-
-        if ($rows === []) {
-            throw new RuntimeException("Cannot shadow table '$tableName' with empty data (columns unknown).");
-        }
-
-        $ctes = [];
-        foreach ($rows as $row) {
-            $selects = [];
-            foreach ($row as $col => $val) {
-                $colName = $col;
-                $colType = $columnTypes[$colName] ?? null;
-                $valStr = $this->formatValue($val, $colType);
-                $selects[] = "$valStr AS " . $this->quoter->quote($colName);
-            }
-            $ctes[] = 'SELECT ' . implode(', ', $selects);
-        }
-
-        $union = implode(' UNION ALL ', $ctes);
-
-        return $this->wrapCte($quotedTable, $union, array_keys($rows[0]), $generatedExpressions);
-    }
-
-    /**
-     * @param array<int, array<string, mixed>> $rows
-     * @param array<int, string> $columns
-     * @param array<string, ColumnType> $columnTypes
-     */
-    private function generateMultiRowSource(
-        array $rows,
-        array $columns,
-        array $columnTypes
-    ): string {
-        $valueRows = [];
-        foreach ($rows as $row) {
-            $values = [];
-            foreach ($columns as $col) {
-                $colType = $columnTypes[$col] ?? null;
-                $values[] = $this->formatValue($row[$col] ?? null, $colType);
-            }
-            $valueRows[] = '(' . implode(', ', $values) . ')';
-        }
-
-        $quotedColumns = [];
-        foreach ($columns as $col) {
-            $quotedColumns[] = $this->quoter->quote($col);
-        }
-
-        $valuesClause = implode(",\n    ", $valueRows);
-        $columnList = implode(', ', $quotedColumns);
-
-        return "\n  SELECT * FROM (VALUES\n    $valuesClause\n  ) AS t($columnList)\n";
-    }
-
-    /**
-     * @param array<int, string> $columns
-     * @param array<string, string> $generatedExpressions
-     */
-    private function wrapCte(
-        string $quotedTable,
-        string $baseSql,
-        array $columns,
-        array $generatedExpressions,
-    ): string {
-        $sql = $this->generatedColumnProjector->project($baseSql, $columns, $generatedExpressions);
-
-        return "$quotedTable AS MATERIALIZED ($sql)";
-    }
-
-    private function formatValue(mixed $val, ?ColumnType $colType = null): string
-    {
-        return $this->valueRenderer->renderValue($val, $colType);
-    }
-
-    private function renderFallbackNullCast(): string
-    {
-        return $this->castRenderer->renderNullCast(
-            new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
-        );
-    }
-
 }

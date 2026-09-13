@@ -8,7 +8,6 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\Postgres\PgSqlCteShadowComposer;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
 use ZtdQuery\Rewrite\SqlTransformer;
-use ZtdQuery\Shadow\Mutation\MutationRowIdentity;
 
 /**
  * Transforms UPDATE statements into SELECT projections with CTE shadowing.
@@ -23,6 +22,9 @@ final class UpdateTransformer implements SqlTransformer
     private SelectTransformer $selectTransformer;
     private PgSqlCteShadowComposer $cteComposer;
 
+    /**
+     * Initializes the collaborators and state used by this update transformer.
+     */
     public function __construct(
         PgSqlParser $parser,
         SelectTransformer $selectTransformer,
@@ -34,6 +36,7 @@ final class UpdateTransformer implements SqlTransformer
 
     /**
      * {@inheritDoc}
+     * @throws UnsupportedSqlException
      */
     public function transform(string $sql, array $tables): string
     {
@@ -74,30 +77,7 @@ final class UpdateTransformer implements SqlTransformer
 
         $sets = $this->parser->extractUpdateSets($sql);
 
-        $selectCols = [];
-        $coveredCols = [];
-
-        foreach ($sets as $colName => $value) {
-            $selectCols[] = $value . ' AS "' . $colName . '"';
-            $coveredCols[$colName] = true;
-        }
-
-        foreach ($columns as $col) {
-            if (!isset($coveredCols[$col])) {
-                $selectCols[] = "\"$qualifier\".\"$col\"";
-            }
-        }
-
-        $identity = new MutationRowIdentity();
-        foreach ($primaryKeys as $primaryKey) {
-            $selectCols[] = '"' . $qualifier . '"."' . $primaryKey . '" AS "' . $identity->column($primaryKey) . '"';
-        }
-
-        if ($selectCols === []) {
-            $selectCols[] = '*';
-        }
-
-        $selectList = implode(', ', $selectCols);
+        $selectList = (new Update\ColumnProjection())->render($qualifier, $sets, $columns, $primaryKeys);
 
         $aliasClause = '';
         if ($alias !== null) {
@@ -118,7 +98,9 @@ final class UpdateTransformer implements SqlTransformer
 
         $resultSql = "SELECT $selectList FROM \"$targetTable\"$aliasClause$additionalFrom$whereClause";
 
-        /** @var array<string, array{alias: string}> $allTables */
+        /**
+         * @var array<string, array{alias: string}> $allTables
+         */
         $allTables = [$targetTable => ['alias' => $qualifier]];
 
         return ['sql' => $resultSql, 'table' => $targetTable, 'tables' => $allTables];

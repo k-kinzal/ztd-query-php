@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Transformer;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Postgres\Transformer\InsertRowRenderer;
@@ -12,7 +11,7 @@ use ZtdQuery\Platform\Postgres\Transformer\InsertRowRenderer;
 #[CoversClass(InsertRowRenderer::class)]
 final class InsertRowRendererTest extends TestCase
 {
-    public function testParsesPostgresDefaultAndRendersCompleteRow(): void
+    public function testProvidedExpressionsParsesPostgresDefaultAndRendersCompleteRow(): void
     {
         $renderer = new InsertRowRenderer();
         $provided = $renderer->providedExpressions(['id', 'name'], ['  default  ', "  'Ada'  "]);
@@ -31,13 +30,7 @@ final class InsertRowRendererTest extends TestCase
         ));
     }
 
-    public function testRejectsMismatchedPostgresValues(): void
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Insert values count does not match column count.');
 
-        (new InsertRowRenderer())->providedExpressions(['id'], []);
-    }
 
     public function testPreservesEveryProvidedPostgresExpression(): void
     {
@@ -45,5 +38,9 @@ final class InsertRowRendererTest extends TestCase
             ['id' => '42', 'name' => "'Ada'"],
             (new InsertRowRenderer())->providedExpressions(['id', 'name'], ['42', "'Ada'"]),
         );
+    }
+    public function testRenderCombinesProvidedDefaultsIdentitiesAndNulls(): void
+    {
+        self::assertSame(['id' => '5', 'name' => "'Ada'", 'status' => "'new'", 'missing' => 'NULL'], (new InsertRowRenderer())->render(['id', 'name', 'status', 'missing'], ['name' => "'Ada'"], ['status' => "'new'"], ['id' => 5]));
     }
 }

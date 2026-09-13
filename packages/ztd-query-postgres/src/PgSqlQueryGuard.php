@@ -13,6 +13,9 @@ final class PgSqlQueryGuard
 {
     private PgSqlParser $parser;
 
+    /**
+     * Initializes the collaborators and state used by this query guard.
+     */
     public function __construct(PgSqlParser $parser)
     {
         $this->parser = $parser;

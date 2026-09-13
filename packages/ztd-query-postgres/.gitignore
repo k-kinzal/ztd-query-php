@@ -5,3 +5,6 @@
 .phpstan.cache/
 .php-cs-fixer.cache
 composer.lock
+/phpbench.json
+/crash-*
+/.deptrac.cache

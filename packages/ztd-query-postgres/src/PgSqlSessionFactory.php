@@ -20,6 +20,13 @@ use ZtdQuery\Shadow\ShadowTransactionManager;
 
 /**
  * Factory for creating Session instances pre-configured for PostgreSQL.
+ *
+ * @visibility public
+ * @example Build a session with an empty catalog connection
+ *     $connection = new class implements \ZtdQuery\Connection\ConnectionInterface { public function query(string $sql): \ZtdQuery\Connection\StatementInterface|false { return false; } };
+ *     $session = (new \ZtdQuery\Platform\Postgres\PgSqlSessionFactory())->create($connection, new \ZtdQuery\Config\ZtdConfig());
+ *     $session->isEnabled() // => true
+ *     $session->splitStatements('SELECT 1; SELECT 2') // => ['SELECT 1', 'SELECT 2']
  */
 final class PgSqlSessionFactory implements SessionFactory
 {
@@ -34,35 +41,7 @@ final class PgSqlSessionFactory implements SessionFactory
         $registry = new TableDefinitionRegistry();
 
         $reflector = new PgSqlSchemaReflector($connection);
-        foreach ($reflector->reflectAll() as $tableName => $createSql) {
-            $definition = $schemaParser->parse($createSql);
-            if ($definition !== null) {
-                $registry->register($tableName, $definition);
-            }
-        }
-        foreach ($reflector->partialUniqueIndexes() as $tableName => $indexes) {
-            $definition = $registry->get($tableName);
-            if ($definition === null) {
-                continue;
-            }
-            foreach ($indexes as $index) {
-                $definition = $definition->withPartialUniqueIndex($index);
-            }
-            $registry->register($tableName, $definition);
-        }
-        $partitionMetadata = (new PgSqlPartitionReflector($connection))->reflect();
-        foreach ($partitionMetadata['keys'] as $tableName => $partitionKey) {
-            $definition = $registry->get($tableName);
-            if ($definition !== null) {
-                $registry->register($tableName, $definition->withPartitionKey($partitionKey));
-            }
-        }
-        foreach ($partitionMetadata['relations'] as $tableName => $partitionRelation) {
-            $definition = $registry->get($tableName);
-            if ($definition !== null) {
-                $registry->register($tableName, $definition->withPartitionRelation($partitionRelation));
-            }
-        }
+        (new \ZtdQuery\Platform\Postgres\Session\SchemaInitializer())->populate($connection, $reflector, $schemaParser, $registry);
         $views = new ViewDefinitionSet();
         foreach ($reflector->reflectViews() as $viewName => $definition) {
             $views->register($viewName, $definition);

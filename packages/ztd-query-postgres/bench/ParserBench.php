@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Bench;
 
+use PhpBench\Attributes as Bench;
 use ZtdQuery\Platform\Postgres\PgSqlParser;
 
 final class ParserBench
@@ -19,21 +20,15 @@ final class ParserBench
         $this->parser = new PgSqlParser();
     }
 
-    /**
-     * @BeforeMethods({"setUp"})
-     * @Revs(250)
-     * @Iterations(5)
-     */
+    #[Bench\BeforeMethods('setUp')]
+    #[Bench\Revs(250)]
     public function benchClassifySelect(): void
     {
         $this->parser->classifyStatement($this->selectSql);
     }
 
-    /**
-     * @BeforeMethods({"setUp"})
-     * @Revs(250)
-     * @Iterations(5)
-     */
+    #[Bench\BeforeMethods('setUp')]
+    #[Bench\Revs(250)]
     public function benchSplitInsert(): void
     {
         $this->parser->splitStatements($this->insertSql);

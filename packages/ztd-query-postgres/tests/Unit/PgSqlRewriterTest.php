@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use Tests\Contract\RewriterContractTest;
@@ -85,6 +86,68 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlGeneratedColumnProjector::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlPartitionPredicateRenderer::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
+#[CoversClass(\ZtdQuery\Platform\Postgres\Schema\Partition\StorageTable::class)]
+#[CoversClass(\ZtdQuery\Platform\Postgres\Session\SchemaContext::class)]
+#[CoversClass(\ZtdQuery\Platform\Postgres\Session\StatementRewriter::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Mutation\DdlResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Mutation\DmlResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Conflict\ColumnSet::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Cte\HeaderParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Cte\IdentifierReferences::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Cte\PrefixMerge::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Cte\ShadowDependencies::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Diagnostic\KeywordSearch::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Expression\ComparisonOperator::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Expression\ExpressionCursor::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Expression\ExpressionLexeme::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Expression\PrecedenceParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Expression\PrimaryParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Merge\ActionClause::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Merge\BranchTokens::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Merge\RelationTarget::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Merge\StatementParts::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Relation\FromClause::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Relation\RelationReference::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Returning\ProjectionItem::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Sampling\SampleClause::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Sampling\SampleTokens::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Statement\Classification::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Statement\ConflictClause::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Statement\Identifiers::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Statement\InsertSource::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Statement\SelectColumns::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Statement\TableDefinitionClauses::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Transaction\KeywordForm::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlTableSample::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlTableSampleMethod::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\Sampling\SampleProjection::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\Sampling\TableColumns::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\Upsert\ConflictPredicate::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Rewrite\Upsert\ExpressionBinder::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Schema\Definition\ColumnDefinition::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Schema\Definition\ColumnTypeDeclaration::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Schema\Definition\TableBody::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Schema\Definition\TableConstraint::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Schema\Definition\TableFields::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Schema\ForeignKey\DefinitionEntry::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Schema\ForeignKey\DefinitionTokens::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Schema\Partition\BoundPredicate::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Schema\Partition\ClauseTokens::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Sql\CastTypeMapper::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Sql\Lexing\CommentSpan::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Sql\Lexing\QuotedSpan::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Sql\NativeCastTarget::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Sql\Value\BinaryStream::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Sql\Value\LiteralText::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\Cte\RowSourceRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\Insert\ExpressionCast::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\Insert\OrderedExpressions::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\Insert\SelectProjection::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\Insert\UpsertProjection::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\Insert\ValueProjection::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\Merge\MatchConditions::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\Merge\RowActions::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Transformer\Update\ColumnProjection::class)]
 final class PgSqlRewriterTest extends RewriterContractTest
 {
     public function testMergeBuildsAtomicSynchronizationPlan(): void
@@ -413,6 +476,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
         );
     }
 
+    #[Override]
     protected function createRewriter(ShadowStore $store, TableDefinitionRegistry $registry): SqlRewriter
     {
         $parser = new PgSqlParser();
@@ -427,46 +491,55 @@ final class PgSqlRewriterTest extends RewriterContractTest
         return new PgSqlRewriter(new PgSqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
     }
 
+    #[Override]
     protected function createSchemaParser(): SchemaParser
     {
         return new PgSqlSchemaParser();
     }
 
+    #[Override]
     protected function selectSql(): string
     {
         return 'SELECT id, name, email FROM users WHERE id = 1';
     }
 
+    #[Override]
     protected function insertSql(): string
     {
         return "INSERT INTO users (id, name, email) VALUES (1, 'Alice', 'alice@example.com')";
     }
 
+    #[Override]
     protected function updateSql(): string
     {
         return "UPDATE users SET name = 'Bob' WHERE id = 1";
     }
 
+    #[Override]
     protected function deleteSql(): string
     {
         return 'DELETE FROM users WHERE id = 1';
     }
 
+    #[Override]
     protected function createTableSql(): string
     {
         return 'CREATE TABLE orders (id INTEGER PRIMARY KEY, amount NUMERIC(10,2))';
     }
 
+    #[Override]
     protected function dropTableSql(): string
     {
         return 'DROP TABLE IF EXISTS orders';
     }
 
+    #[Override]
     protected function unsupportedSql(): string
     {
         return 'CREATE DATABASE test_db';
     }
 
+    #[Override]
     protected function usersCreateTableSql(): string
     {
         return <<<'SQL'
@@ -479,6 +552,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
             SQL;
     }
 
+    #[Override]
     public function testSelectReturnsReadKind(): void
     {
         $shadowStore = new ShadowStore();
@@ -547,6 +621,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
         self::assertStringContainsString('"users"', $plan->sql());
     }
 
+    #[Override]
     public function testInsertReturnsWriteSimulatedWithMutation(): void
     {
         $shadowStore = new ShadowStore();
@@ -579,6 +654,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
         self::assertInstanceOf(InsertMutation::class, $plan->mutation());
     }
 
+    #[Override]
     public function testUpdateReturnsWriteSimulatedWithMutation(): void
     {
         $shadowStore = new ShadowStore();
@@ -612,6 +688,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
         self::assertStringContainsString('"users"."id" AS "__ztd_original_id"', $plan->sql());
     }
 
+    #[Override]
     public function testDeleteReturnsWriteSimulatedWithMutation(): void
     {
         $shadowStore = new ShadowStore();
@@ -676,6 +753,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
         self::assertInstanceOf(TruncateMutation::class, $plan->mutation());
     }
 
+    #[Override]
     public function testCreateTableReturnsDdlSimulated(): void
     {
         $shadowStore = new ShadowStore();
@@ -708,6 +786,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
         self::assertInstanceOf(CreateTableMutation::class, $plan->mutation());
     }
 
+    #[Override]
     public function testDropTableReturnsDdlSimulated(): void
     {
         $shadowStore = new ShadowStore();
@@ -740,6 +819,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
         self::assertInstanceOf(DropTableMutation::class, $plan->mutation());
     }
 
+    #[Override]
     public function testUnsupportedSqlThrowsException(): void
     {
         $shadowStore = new ShadowStore();
@@ -770,6 +850,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
         $rewriter->rewrite('CREATE DATABASE test');
     }
 
+    #[Override]
     public function testEmptyInputThrowsException(): void
     {
         $shadowStore = new ShadowStore();
@@ -830,6 +911,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
         $rewriter->rewrite('SELECT 1; SELECT 2');
     }
 
+    #[Override]
     public function testRewriteIsDeterministic(): void
     {
         $shadowStore = new ShadowStore();
@@ -864,6 +946,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
         self::assertSame($plan1->kind(), $plan2->kind());
     }
 
+    #[Override]
     public function testReadPlanHasNoMutation(): void
     {
         $shadowStore = new ShadowStore();
@@ -894,6 +977,7 @@ final class PgSqlRewriterTest extends RewriterContractTest
         self::assertNull($plan->mutation());
     }
 
+    #[Override]
     public function testWritePlanHasNonNullMutation(): void
     {
         $shadowStore = new ShadowStore();
@@ -3405,11 +3489,90 @@ final class PgSqlRewriterTest extends RewriterContractTest
         $store->insert('late_table', [['id' => 1, 'name' => 'Alice']]);
         $rewriter = $this->createRewriter($store, new TableDefinitionRegistry());
 
+        $this->expectException(UnknownSchemaException::class);
         try {
             $rewriter->rewrite("UPDATE late_table SET name = 'Bob' WHERE id = 1");
-            self::fail('Expected an unknown schema exception.');
-        } catch (UnknownSchemaException) {
+        } finally {
             self::assertSame(ShadowTableState::Materialized, $store->state('late_table'));
         }
+    }
+    public function testTransactionStatementParsesShadowTransactionOperations(): void
+    {
+        $parser = new PgSqlParser();
+        $schemaParser = new PgSqlSchemaParser();
+        $registry = new TableDefinitionRegistry();
+        $definition = $schemaParser->parse('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+        $store = new ShadowStore();
+        $views = new ViewDefinitionSet();
+        $guard = new PgSqlQueryGuard($parser);
+        $select = new SelectTransformer();
+        $transformer = new PgSqlTransformer($parser, $select, new InsertTransformer($parser, $select), new UpdateTransformer($parser, $select), new DeleteTransformer($parser, $select));
+        $resolver = new PgSqlMutationResolver($store, $registry, $schemaParser, $parser);
+        $rewriter = new PgSqlRewriter($guard, $store, $registry, $transformer, $resolver, $parser, $views);
+        self::assertEquals(\ZtdQuery\Sql\TransactionStatement::begin(), $rewriter->transactionStatement('BEGIN'));
+        self::assertNull($rewriter->transactionStatement('SELECT 1'));
+    }
+
+    public function testSplitStatementsPreservesQuotedSemicolons(): void
+    {
+        $parser = new PgSqlParser();
+        $schemaParser = new PgSqlSchemaParser();
+        $registry = new TableDefinitionRegistry();
+        $definition = $schemaParser->parse('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+        $store = new ShadowStore();
+        $views = new ViewDefinitionSet();
+        $guard = new PgSqlQueryGuard($parser);
+        $select = new SelectTransformer();
+        $transformer = new PgSqlTransformer($parser, $select, new InsertTransformer($parser, $select), new UpdateTransformer($parser, $select), new DeleteTransformer($parser, $select));
+        $resolver = new PgSqlMutationResolver($store, $registry, $schemaParser, $parser);
+        $rewriter = new PgSqlRewriter($guard, $store, $registry, $transformer, $resolver, $parser, $views);
+        self::assertSame(["SELECT ';'", 'SELECT 2'], $rewriter->splitStatements("SELECT ';'; SELECT 2"));
+    }
+
+    public function testEmptyResultSelectProducesNoRows(): void
+    {
+        $parser = new PgSqlParser();
+        $schemaParser = new PgSqlSchemaParser();
+        $registry = new TableDefinitionRegistry();
+        $definition = $schemaParser->parse('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+        $store = new ShadowStore();
+        $views = new ViewDefinitionSet();
+        $guard = new PgSqlQueryGuard($parser);
+        $select = new SelectTransformer();
+        $transformer = new PgSqlTransformer($parser, $select, new InsertTransformer($parser, $select), new UpdateTransformer($parser, $select), new DeleteTransformer($parser, $select));
+        $resolver = new PgSqlMutationResolver($store, $registry, $schemaParser, $parser);
+        $rewriter = new PgSqlRewriter($guard, $store, $registry, $transformer, $resolver, $parser, $views);
+        self::assertSame('SELECT 1 WHERE FALSE', $rewriter->emptyResultSelect());
+    }
+
+    public function testCommitRewriteStateRetainsAllocatedSequenceValues(): void
+    {
+        $parser = new PgSqlParser();
+        $schemaParser = new PgSqlSchemaParser();
+        $registry = new TableDefinitionRegistry();
+        $definition = $schemaParser->parse('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+        $store = new ShadowStore();
+        $views = new ViewDefinitionSet();
+        $guard = new PgSqlQueryGuard($parser);
+        $select = new SelectTransformer();
+        $transformer = new PgSqlTransformer($parser, $select, new InsertTransformer($parser, $select), new UpdateTransformer($parser, $select), new DeleteTransformer($parser, $select));
+        $resolver = new PgSqlMutationResolver($store, $registry, $schemaParser, $parser);
+        $rewriter = new PgSqlRewriter($guard, $store, $registry, $transformer, $resolver, $parser, $views);
+        $serial = $schemaParser->parse('CREATE TABLE users (id SERIAL PRIMARY KEY, name TEXT)');
+        self::assertNotNull($serial);
+        $registry->register('users', $serial);
+        $first = $rewriter->rewrite("INSERT INTO users (name) VALUES ('Ada')");
+        self::assertStringContainsString('CAST(1 AS INTEGER) AS "id"', $first->sql());
+        $rewriter->commitRewriteState();
+        $second = $rewriter->rewrite("INSERT INTO users (name) VALUES ('Bob')");
+        self::assertStringContainsString('CAST(2 AS INTEGER) AS "id"', $second->sql());
     }
 }
