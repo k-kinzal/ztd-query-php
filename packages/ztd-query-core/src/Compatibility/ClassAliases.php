@@ -3,42 +3,46 @@
 declare(strict_types=1);
 
 /**
- * Resolve former public names on demand, without loading implementations during Composer bootstrap.
+ * Former public names of classes moved into responsibility namespaces.
+ *
+ * Registered while Composer bootstraps so that parameter and return types
+ * declared with a former name accept the relocated class.
+ *
+ * @var array<string, class-string>
  */
 $classAliases = [
-    'ztdquery\shadow\mutation\multitablemutationrow' => ZtdQuery\Shadow\Mutation\Row\MultiTableMutationRow::class,
-    'ztdquery\shadow\mutation\updatemutation' => ZtdQuery\Shadow\Mutation\Row\UpdateMutation::class,
-    'ztdquery\shadow\mutation\insertmutation' => ZtdQuery\Shadow\Mutation\Row\InsertMutation::class,
-    'ztdquery\shadow\mutation\multitablemutationtarget' => ZtdQuery\Shadow\Mutation\Row\MultiTableMutationTarget::class,
-    'ztdquery\shadow\mutation\deletemutation' => ZtdQuery\Shadow\Mutation\Row\DeleteMutation::class,
-    'ztdquery\shadow\mutation\multiupdatemutation' => ZtdQuery\Shadow\Mutation\Row\MultiUpdateMutation::class,
-    'ztdquery\shadow\mutation\replacemutation' => ZtdQuery\Shadow\Mutation\Row\ReplaceMutation::class,
-    'ztdquery\shadow\mutation\resultsetmutation' => ZtdQuery\Shadow\Mutation\Row\ResultSetMutation::class,
-    'ztdquery\shadow\mutation\multideletemutation' => ZtdQuery\Shadow\Mutation\Row\MultiDeleteMutation::class,
-    'ztdquery\shadow\mutation\createtablelikemutation' => ZtdQuery\Shadow\Mutation\Table\CreateTableLikeMutation::class,
-    'ztdquery\shadow\mutation\createtableasselectmutation' => ZtdQuery\Shadow\Mutation\Table\CreateTableAsSelectMutation::class,
-    'ztdquery\shadow\mutation\truncatemutation' => ZtdQuery\Shadow\Mutation\Table\TruncateMutation::class,
-    'ztdquery\shadow\mutation\createtablemutation' => ZtdQuery\Shadow\Mutation\Table\CreateTableMutation::class,
-    'ztdquery\shadow\mutation\multitruncatemutation' => ZtdQuery\Shadow\Mutation\Table\MultiTruncateMutation::class,
-    'ztdquery\shadow\mutation\synchronizemutation' => ZtdQuery\Shadow\Mutation\Table\SynchronizeMutation::class,
-    'ztdquery\shadow\mutation\droptablemutation' => ZtdQuery\Shadow\Mutation\Table\DropTableMutation::class,
-    'ztdquery\shadow\shadowtransactionmanager' => ZtdQuery\Shadow\ShadowTransactions::class,
-    'ztdquery\schema\referentialaction' => ZtdQuery\Schema\Key\ReferentialAction::class,
-    'ztdquery\schema\partialuniqueindex' => ZtdQuery\Schema\Key\PartialUniqueIndex::class,
-    'ztdquery\schema\identitygenerationstrategy' => ZtdQuery\Schema\Key\IdentityGenerationStrategy::class,
-    'ztdquery\schema\candidatekeyset' => ZtdQuery\Schema\Key\CandidateKeySet::class,
-    'ztdquery\schema\foreignkeydefinition' => ZtdQuery\Schema\Key\ForeignKeyDefinition::class,
-    'ztdquery\schema\candidatekeyconflict' => ZtdQuery\Schema\Key\CandidateKeyConflict::class,
-    'ztdquery\schema\tablepartitionkey' => ZtdQuery\Schema\Partition\TablePartitionKey::class,
-    'ztdquery\schema\tablepartitionstrategy' => ZtdQuery\Schema\Partition\TablePartitionStrategy::class,
-    'ztdquery\schema\tablepartitionrelation' => ZtdQuery\Schema\Partition\TablePartitionRelation::class,
-    'ztdquery\schema\tablepartitioning' => ZtdQuery\Schema\Partition\TablePartitioning::class,
-    'ztdquery\schema\columntype' => ZtdQuery\Schema\ColumnDeclaration::class,
+    'ZtdQuery\\Shadow\\Mutation\\MultiTableMutationRow' => ZtdQuery\Shadow\Mutation\Row\MultiTableMutationRow::class,
+    'ZtdQuery\\Shadow\\Mutation\\UpdateMutation' => ZtdQuery\Shadow\Mutation\Row\UpdateMutation::class,
+    'ZtdQuery\\Shadow\\Mutation\\InsertMutation' => ZtdQuery\Shadow\Mutation\Row\InsertMutation::class,
+    'ZtdQuery\\Shadow\\Mutation\\MultiTableMutationTarget' => ZtdQuery\Shadow\Mutation\Row\MultiTableMutationTarget::class,
+    'ZtdQuery\\Shadow\\Mutation\\DeleteMutation' => ZtdQuery\Shadow\Mutation\Row\DeleteMutation::class,
+    'ZtdQuery\\Shadow\\Mutation\\MultiUpdateMutation' => ZtdQuery\Shadow\Mutation\Row\MultiUpdateMutation::class,
+    'ZtdQuery\\Shadow\\Mutation\\ReplaceMutation' => ZtdQuery\Shadow\Mutation\Row\ReplaceMutation::class,
+    'ZtdQuery\\Shadow\\Mutation\\ResultSetMutation' => ZtdQuery\Shadow\Mutation\Row\ResultSetMutation::class,
+    'ZtdQuery\\Shadow\\Mutation\\MultiDeleteMutation' => ZtdQuery\Shadow\Mutation\Row\MultiDeleteMutation::class,
+    'ZtdQuery\\Shadow\\Mutation\\CreateTableLikeMutation' => ZtdQuery\Shadow\Mutation\Table\CreateTableLikeMutation::class,
+    'ZtdQuery\\Shadow\\Mutation\\CreateTableAsSelectMutation' => ZtdQuery\Shadow\Mutation\Table\CreateTableAsSelectMutation::class,
+    'ZtdQuery\\Shadow\\Mutation\\TruncateMutation' => ZtdQuery\Shadow\Mutation\Table\TruncateMutation::class,
+    'ZtdQuery\\Shadow\\Mutation\\CreateTableMutation' => ZtdQuery\Shadow\Mutation\Table\CreateTableMutation::class,
+    'ZtdQuery\\Shadow\\Mutation\\MultiTruncateMutation' => ZtdQuery\Shadow\Mutation\Table\MultiTruncateMutation::class,
+    'ZtdQuery\\Shadow\\Mutation\\SynchronizeMutation' => ZtdQuery\Shadow\Mutation\Table\SynchronizeMutation::class,
+    'ZtdQuery\\Shadow\\Mutation\\DropTableMutation' => ZtdQuery\Shadow\Mutation\Table\DropTableMutation::class,
+    'ZtdQuery\\Shadow\\ShadowTransactionManager' => ZtdQuery\Shadow\ShadowTransactions::class,
+    'ZtdQuery\\Schema\\ReferentialAction' => ZtdQuery\Schema\Key\ReferentialAction::class,
+    'ZtdQuery\\Schema\\PartialUniqueIndex' => ZtdQuery\Schema\Key\PartialUniqueIndex::class,
+    'ZtdQuery\\Schema\\IdentityGenerationStrategy' => ZtdQuery\Schema\Key\IdentityGenerationStrategy::class,
+    'ZtdQuery\\Schema\\CandidateKeySet' => ZtdQuery\Schema\Key\CandidateKeySet::class,
+    'ZtdQuery\\Schema\\ForeignKeyDefinition' => ZtdQuery\Schema\Key\ForeignKeyDefinition::class,
+    'ZtdQuery\\Schema\\CandidateKeyConflict' => ZtdQuery\Schema\Key\CandidateKeyConflict::class,
+    'ZtdQuery\\Schema\\TablePartitionKey' => ZtdQuery\Schema\Partition\TablePartitionKey::class,
+    'ZtdQuery\\Schema\\TablePartitionStrategy' => ZtdQuery\Schema\Partition\TablePartitionStrategy::class,
+    'ZtdQuery\\Schema\\TablePartitionRelation' => ZtdQuery\Schema\Partition\TablePartitionRelation::class,
+    'ZtdQuery\\Schema\\TablePartitioning' => ZtdQuery\Schema\Partition\TablePartitioning::class,
+    'ZtdQuery\\Schema\\ColumnType' => ZtdQuery\Schema\ColumnDeclaration::class,
 ];
 
-spl_autoload_register(static function (string $class) use ($classAliases): void {
-    $target = $classAliases[strtolower($class)] ?? null;
-    if ($target !== null) {
-        class_alias($target, $class);
+foreach ($classAliases as $formerName => $currentClass) {
+    if (!class_exists($formerName, false) && !enum_exists($formerName, false)) {
+        class_alias($currentClass, $formerName);
     }
-});
+}
