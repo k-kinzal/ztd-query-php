@@ -22,7 +22,7 @@ final class ColumnNotFoundTest extends MySqlIntegrationTestCase
         $this->rawPdo->exec("INSERT INTO `{$table}` (id, name) VALUES (1, 'Alice')");
 
         $this->expectException(PDOException::class);
-        $this->expectExceptionMessageMatches("/Unknown column/");
+        $this->expectExceptionMessageMatches('/Unknown column/');
 
         $this->ztdQuery("SELECT nonexistent_column FROM `{$table}`");
     }
@@ -71,7 +71,7 @@ final class ColumnNotFoundTest extends MySqlIntegrationTestCase
         $this->rawPdo->exec("INSERT INTO `{$table}` (id, name) VALUES (1, 'Alice')");
 
         $this->expectException(PDOException::class);
-        $this->expectExceptionMessageMatches("/Unknown column/");
+        $this->expectExceptionMessageMatches('/Unknown column/');
 
         $this->ztdQuery("SELECT * FROM `{$table}` WHERE nonexistent_column = 'value'");
     }
@@ -83,7 +83,7 @@ final class ColumnNotFoundTest extends MySqlIntegrationTestCase
         $this->rawPdo->exec("INSERT INTO `{$table}` (id, name) VALUES (1, 'Alice')");
 
         $this->expectException(PDOException::class);
-        $this->expectExceptionMessageMatches("/Unknown column/");
+        $this->expectExceptionMessageMatches('/Unknown column/');
 
         $this->ztdQuery("SELECT * FROM `{$table}` ORDER BY nonexistent_column");
     }
@@ -95,7 +95,7 @@ final class ColumnNotFoundTest extends MySqlIntegrationTestCase
         $this->rawPdo->exec("INSERT INTO `{$table}` (id, name) VALUES (1, 'Alice')");
 
         $this->expectException(PDOException::class);
-        $this->expectExceptionMessageMatches("/Unknown column/");
+        $this->expectExceptionMessageMatches('/Unknown column/');
 
         $this->ztdQuery("SELECT nonexistent_column FROM `{$table}` GROUP BY nonexistent_column");
     }

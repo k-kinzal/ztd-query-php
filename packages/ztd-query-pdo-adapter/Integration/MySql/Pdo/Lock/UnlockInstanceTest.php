@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Tests\Integration\MySql\Pdo\Lock;
 
 use Tests\Support\MySqlIntegrationTestCase;
+use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 use ZtdQuery\Config\UnsupportedSqlBehavior;
 use ZtdQuery\Config\ZtdConfig;
-use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 
 final class UnlockInstanceTest extends MySqlIntegrationTestCase
 {

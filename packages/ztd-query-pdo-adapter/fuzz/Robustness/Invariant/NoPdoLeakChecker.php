@@ -18,6 +18,9 @@ use ZtdQuery\Exception\TableAlreadyExistsException;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 
+/**
+ * The no pdo leak checker.
+ */
 final class NoPdoLeakChecker
 {
     private const ALLOWED_RAW_PDO_ERRORS = [
@@ -38,6 +41,12 @@ final class NoPdoLeakChecker
         $this->executor = $executor;
     }
 
+    /**
+     * Check.
+     *
+     * @param string $sql
+     * @return ?InvariantViolation
+     */
     public function check(string $sql): ?InvariantViolation
     {
         try {
@@ -76,7 +85,14 @@ final class NoPdoLeakChecker
                }
     }
 
-    private function isAllowedRawPdoException(PDOException $e): bool
+    /**
+     * Answers whether a raw PDO exception is one ZTD is allowed to let through.
+     *
+     * @param PDOException $e The e
+     *
+     * @return bool What it answers
+     */
+    public function isAllowedRawPdoException(PDOException $e): bool
     {
         $sqlState = is_scalar($e->errorInfo[0] ?? '') ? (string) ($e->errorInfo[0] ?? '') : '';
         $driverCode = $e->errorInfo[1] ?? null;

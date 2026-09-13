@@ -12,7 +12,7 @@ use ZtdQuery\Adapter\Pdo\PdoParameterType;
 #[CoversClass(PdoParameterType::class)]
 final class PdoParameterTypeTest extends TestCase
 {
-    public function testMapsPhpValuesToPdoParameterTypes(): void
+    public function testFromValueMapsPhpValuesToPdoParameterTypes(): void
     {
         $resource = fopen('php://memory', 'r');
         self::assertIsResource($resource);

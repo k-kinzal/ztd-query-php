@@ -103,7 +103,7 @@ final class UnknownSchemaPassthroughTest extends MySqlIntegrationTestCase
         $this->rawPdo->exec("CREATE TABLE `{$table}` (id INT PRIMARY KEY, name VARCHAR(255))");
 
         $this->expectException(PDOException::class);
-        $this->expectExceptionMessageMatches("/Unknown column/");
+        $this->expectExceptionMessageMatches('/Unknown column/');
 
         $this->ztdQuery("SELECT unknown_column FROM `{$table}`");
     }

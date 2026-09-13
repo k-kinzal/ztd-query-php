@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Integration\MySql\Pdo\Error;
 
-use PDOException;
 use Tests\Support\MySqlIntegrationTestCase;
 
 /**

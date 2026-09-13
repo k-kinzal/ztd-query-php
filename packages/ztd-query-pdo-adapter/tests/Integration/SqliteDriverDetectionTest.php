@@ -13,8 +13,6 @@ use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Platform\Sqlite\SqliteSessionFactory;
 
 /**
- * Integration tests for ZtdPdo driver auto-detection with a real SQLite database.
- *
  * @requires extension pdo_sqlite
  */
 #[CoversNothing]
@@ -44,7 +42,7 @@ final class SqliteDriverDetectionTest extends TestCase
         self::assertTrue($ztdPdo->isZtdEnabled());
     }
 
-    public function testConstructorWithAutoDetection(): void
+    public function testAConnectionOpenedByDsnReadsItsPlatformOffTheDriver(): void
     {
         $ztdPdo = new ZtdPdo('sqlite::memory:', null, null, [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
@@ -53,7 +51,7 @@ final class SqliteDriverDetectionTest extends TestCase
         self::assertTrue($ztdPdo->isZtdEnabled());
     }
 
-    public function testConstructorWithExplicitFactory(): void
+    public function testAConnectionOpenedByDsnUsesThePlatformItIsGiven(): void
     {
         $factory = new SqliteSessionFactory();
         $ztdPdo = new ZtdPdo('sqlite::memory:', null, null, [

@@ -10,12 +10,25 @@ use Fuzz\Correctness\Postgres\PgCorrectnessHarness;
 use Fuzz\Correctness\Postgres\PgSchemaPool;
 use Fuzz\Correctness\ResultComparator;
 use Fuzz\Correctness\SchemaDefinition;
+use JsonException;
 use PDO;
 use PDOException;
-use Throwable;
+use ZtdQuery\Connection\Exception\DatabaseException;
+use ZtdQuery\Exception\UnknownSchemaException;
+use ZtdQuery\Exception\UnsupportedSqlException;
 
+/**
+ * @phpstan-import-type Row from \Fuzz\Correctness\CorrectnessHarness
+ */
 final class CreateTableAsCorrectnessTarget
 {
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param PgCorrectnessHarness $harness
+     * @param Generator $faker
+     * @param ResultComparator $comparator
+     */
     public function __construct(
         private readonly PgCorrectnessHarness $harness,
         private readonly Generator $faker,
@@ -23,6 +36,10 @@ final class CreateTableAsCorrectnessTarget
     ) {
     }
 
+    /**
+     * @throws Error
+     * @throws JsonException
+     */
     public function __invoke(string $input): void
     {
         $seed = crc32(str_pad($input, 4, "\0"));
@@ -38,7 +55,7 @@ final class CreateTableAsCorrectnessTarget
 
             try {
                 $this->harness->getZtdPdo()->exec($case['sql']);
-            } catch (Throwable $exception) {
+            } catch (UnsupportedSqlException | UnknownSchemaException | DatabaseException | PDOException $exception) {
                 throw new Error("ZTD CTAS failed after native success\nSeed: $seed\nSQL: {$case['sql']}", 0, $exception);
             }
 
@@ -58,9 +75,14 @@ final class CreateTableAsCorrectnessTarget
     }
 
     /**
-     * @return array{sql: string, predicate: string}
+     * Answers one case to run, as the statement and what it runs against.
+     *
+     * @param SchemaDefinition $schema The schema
+     * @param string $copy The copy
+     *
+     * @return array{sql: string, predicate: string} What it answers
      */
-    private function buildCase(SchemaDefinition $schema, string $copy): array
+    public function buildCase(SchemaDefinition $schema, string $copy): array
     {
         $table = $this->quote($schema->name);
         $target = $this->quote($copy);
@@ -91,12 +113,23 @@ final class CreateTableAsCorrectnessTarget
         };
     }
 
-    private function compareQuery(string $query, string $createSql, int $seed, SchemaDefinition $schema): void
+    /**
+     * Runs the query on both sides and fails if they disagree.
+     *
+     * @param string $query The query
+     * @param string $createSql The create sql
+     * @param int $seed The seed
+     * @param SchemaDefinition $schema The schema
+     *
+     * @throws Error
+     * @throws JsonException
+     */
+    public function compareQuery(string $query, string $createSql, int $seed, SchemaDefinition $schema): void
     {
         $rawRows = $this->fetchAll($this->harness->getRawPdo(), $query);
         try {
             $ztdRows = $this->fetchAll($this->harness->getZtdPdo(), $query);
-        } catch (Throwable $exception) {
+        } catch (UnsupportedSqlException | UnknownSchemaException | DatabaseException | PDOException $exception) {
             throw new Error(
                 "ZTD CTAS query failed after native success\nSeed: $seed\nSQL: $createSql\nQuery: $query",
                 0,
@@ -116,8 +149,17 @@ final class CreateTableAsCorrectnessTarget
         }
     }
 
-    /** @return array<int, array<string, mixed>> */
-    private function fetchAll(PDO $pdo, string $query): array
+    /**
+     * Answers every row the connection reads.
+     *
+     * @param PDO $pdo The pdo
+     * @param string $query The query
+     *
+     * @return list<Row> What it answers
+     *
+     * @throws Error
+     */
+    public function fetchAll(PDO $pdo, string $query): array
     {
         $statement = $pdo->query($query);
         if ($statement === false) {
@@ -134,6 +176,9 @@ final class CreateTableAsCorrectnessTarget
                 if (!is_string($column)) {
                     throw new Error('CTAS correctness query returned a non-string column');
                 }
+                if ($value !== null && !is_scalar($value)) {
+                    throw new Error('CTAS correctness query returned a value no comparison can read');
+                }
                 $normalized[$column] = $value;
             }
             $rows[] = $normalized;
@@ -142,7 +187,14 @@ final class CreateTableAsCorrectnessTarget
         return $rows;
     }
 
-    private function quote(string $identifier): string
+    /**
+     * Answers the identifier as the dialect quotes it.
+     *
+     * @param string $identifier Name, as it was written
+     *
+     * @return string What it answers
+     */
+    public function quote(string $identifier): string
     {
         return '"' . str_replace('"', '""', $identifier) . '"';
     }

@@ -14,6 +14,8 @@ use ZtdQuery\Adapter\Pdo\ZtdPdo;
  * @requires extension pdo_pgsql
  * @group integration
  * @group postgres
+ *
+ * @phpstan-import-type Row from \ZtdQuery\Adapter\Pdo\PdoStatement
  */
 #[CoversNothing]
 #[Large]
@@ -36,12 +38,12 @@ final class SelectHavingTest extends TestCase
 
             $stmt = $rawPdo->query($sql);
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rawRows = $stmt->fetchAll();
 
             $stmt = $ztdPdo->query($sql);
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $ztdRows = $stmt->fetchAll();
 
             self::assertSame($rawRows, $ztdRows);
@@ -67,12 +69,12 @@ final class SelectHavingTest extends TestCase
 
             $stmt = $rawPdo->query($sql);
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rawRows = $stmt->fetchAll();
 
             $stmt = $ztdPdo->query($sql);
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $ztdRows = $stmt->fetchAll();
 
             self::assertSame($rawRows, $ztdRows);

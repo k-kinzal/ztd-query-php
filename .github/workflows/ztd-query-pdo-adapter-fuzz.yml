@@ -1,24 +1,6 @@
 name: Fuzz (ztd-query-pdo-adapter)
-
-on:
-  schedule:
-    - cron: '0 5 * * *'
-  workflow_dispatch:
-    inputs:
-      max_runs:
-        description: 'Max fuzzing iterations'
-        default: '10000'
-        type: string
-      mysql_version:
-        description: 'MySQL version for DB targets (leave empty for matrix)'
-        default: ''
-        type: string
-
 permissions:
-  actions: read
   contents: read
-  issues: write
-
 jobs:
   robustness-execute:
     name: Robustness / execute (MySQL ${{ matrix.mysql }})
@@ -26,105 +8,179 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        mysql: ${{ inputs.mysql_version && fromJson(format('["{0}"]', inputs.mysql_version)) || fromJson('["8.0.44", "8.4.7"]') }}
+        mysql:
+        - 8.0.44
+        - 8.4.7
     defaults:
       run:
         working-directory: packages/ztd-query-pdo-adapter
     steps:
-      - uses: actions/checkout@v6
-
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.5'
-          extensions: mbstring, pdo, pdo_mysql, pcntl
-          coverage: none
-
-      - uses: ramsey/composer-install@v3
-        with:
-          working-directory: packages/ztd-query-pdo-adapter
-
-      - uses: actions/cache/restore@v5
-        with:
-          path: packages/ztd-query-pdo-adapter/fuzz/corpus/robustness-execute
-          key: fuzz-robustness-execute-pdo-${{ matrix.mysql }}-${{ github.run_id }}
-          restore-keys: |
-            fuzz-robustness-execute-pdo-${{ matrix.mysql }}-
-
-      - name: fuzzer
+    - name: Check out the repository
+      uses: actions/checkout@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+    - name: Set up PHP
+      uses: shivammathur/setup-php@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        php-version: '8.5'
+        extensions: ctype, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, pdo_mysql, pdo_pgsql, pdo_sqlite,
+          phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
+        coverage: none
+        ini-values: memory_limit=512M
+    - name: Validate Composer metadata
+      run: composer validate --strict --no-check-publish
+    - name: Install dependencies
+      uses: ramsey/composer-install@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        working-directory: packages/ztd-query-pdo-adapter
+        dependency-versions: highest
+        composer-options: --prefer-dist
+    - name: Check installed platform requirements
+      run: composer check-platform-reqs
+    - name: Validate the run budget
+      env:
+        MAX_RUNS: ${{ inputs.max_runs || '10000' }}
+      run: |
+        if [[ ! "$MAX_RUNS" =~ ^[1-9][0-9]{0,6}$ ]]; then
+          echo 'max_runs must be an integer between 1 and 1000000.' >&2
+          exit 1
+        fi
+        if (( MAX_RUNS > 1000000 )); then exit 1; fi
+    - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      with:
+        path: packages/ztd-query-pdo-adapter/fuzz/corpus/robustness-execute
+        key: fuzz-robustness-execute-pdo-${{ matrix.mysql }}-${{ github.run_id }}
+        restore-keys: |
+          fuzz-robustness-execute-pdo-${{ matrix.mysql }}-
+      name: Restore the corpus
+    - name: Run the fuzz target
+      env:
+        MYSQL_VERSION: ${{ matrix.mysql }}
+        MAX_RUNS: ${{ inputs.max_runs || '10000' }}
+      run: |
+        mkdir -p fuzz/corpus/robustness-execute
+        vendor/bin/php-fuzzer fuzz fuzz/fuzz_robustness_execute.php \
+          fuzz/corpus/robustness-execute/ \
+          --max-runs="$MAX_RUNS"
+    - if: always()
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      with:
+        path: packages/ztd-query-pdo-adapter/fuzz/corpus/robustness-execute
+        key: fuzz-robustness-execute-pdo-${{ matrix.mysql }}-${{ github.run_id }}
+      name: Save the corpus
+    - if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/crash-*') != '' }}
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: fuzz-crashes-robustness-execute-pdo-${{ matrix.mysql }}
+        path: packages/ztd-query-pdo-adapter/crash-*
+      name: Upload crash inputs
+    timeout-minutes: 60
+    services:
+      mysql:
+        image: mysql:${{ matrix.mysql }}
         env:
-          MYSQL_VERSION: ${{ matrix.mysql }}
-        run: |
-          vendor/bin/php-fuzzer fuzz fuzz/fuzz_robustness_execute.php \
-            fuzz/corpus/robustness-execute/ \
-            --max-runs=${{ inputs.max_runs || '10000' }}
-
-      - if: always()
-        uses: actions/cache/save@v5
-        with:
-          path: packages/ztd-query-pdo-adapter/fuzz/corpus/robustness-execute
-          key: fuzz-robustness-execute-pdo-${{ matrix.mysql }}-${{ github.run_id }}
-
-      - if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/crash-*') != '' }}
-        uses: actions/upload-artifact@v6
-        with:
-          name: fuzz-crashes-robustness-execute-pdo-${{ matrix.mysql }}
-          path: packages/ztd-query-pdo-adapter/crash-*
-
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_ROOT_HOST: '%'
+        ports:
+        - 3306:3306
+        options: --health-cmd="mysqladmin ping -h 127.0.0.1 -proot" --health-interval=10s --health-timeout=5s --health-retries=20
+    env:
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_PORT: '3306'
   correctness-mysql:
     name: Correctness / ${{ matrix.target.name }}-pdo (MySQL ${{ matrix.mysql }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        mysql: ${{ inputs.mysql_version && fromJson(format('["{0}"]', inputs.mysql_version)) || fromJson('["8.0.44", "8.4.7"]') }}
+        mysql:
+        - 8.0.44
+        - 8.4.7
         target:
-          - { name: select, script: fuzz_correctness_select.php, corpus: correctness-select }
-          - { name: insert, script: fuzz_correctness_insert.php, corpus: correctness-insert }
-          - { name: update, script: fuzz_correctness_update.php, corpus: correctness-update }
-          - { name: delete, script: fuzz_correctness_delete.php, corpus: correctness-delete }
+        - name: select
+          script: fuzz_correctness_select.php
+          corpus: correctness-select
+        - name: insert
+          script: fuzz_correctness_insert.php
+          corpus: correctness-insert
+        - name: update
+          script: fuzz_correctness_update.php
+          corpus: correctness-update
+        - name: delete
+          script: fuzz_correctness_delete.php
+          corpus: correctness-delete
     defaults:
       run:
         working-directory: packages/ztd-query-pdo-adapter
     steps:
-      - uses: actions/checkout@v6
-
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.5'
-          extensions: mbstring, pdo, pdo_mysql, pcntl
-          coverage: none
-
-      - uses: ramsey/composer-install@v3
-        with:
-          working-directory: packages/ztd-query-pdo-adapter
-
-      - uses: actions/cache/restore@v5
-        with:
-          path: packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}
-          key: fuzz-${{ matrix.target.corpus }}-pdo-${{ matrix.mysql }}-${{ github.run_id }}
-          restore-keys: |
-            fuzz-${{ matrix.target.corpus }}-pdo-${{ matrix.mysql }}-
-
-      - name: fuzzer
+    - name: Check out the repository
+      uses: actions/checkout@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+    - name: Set up PHP
+      uses: shivammathur/setup-php@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        php-version: '8.5'
+        extensions: ctype, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, pdo_mysql, pdo_pgsql, pdo_sqlite,
+          phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
+        coverage: none
+        ini-values: memory_limit=512M
+    - name: Validate Composer metadata
+      run: composer validate --strict --no-check-publish
+    - name: Install dependencies
+      uses: ramsey/composer-install@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        working-directory: packages/ztd-query-pdo-adapter
+        dependency-versions: highest
+        composer-options: --prefer-dist
+    - name: Check installed platform requirements
+      run: composer check-platform-reqs
+    - name: Validate the run budget
+      env:
+        MAX_RUNS: ${{ inputs.max_runs || '10000' }}
+      run: |
+        if [[ ! "$MAX_RUNS" =~ ^[1-9][0-9]{0,6}$ ]]; then
+          echo 'max_runs must be an integer between 1 and 1000000.' >&2
+          exit 1
+        fi
+        if (( MAX_RUNS > 1000000 )); then exit 1; fi
+    - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      with:
+        path: packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}
+        key: fuzz-${{ matrix.target.corpus }}-pdo-${{ matrix.mysql }}-${{ github.run_id }}
+        restore-keys: |
+          fuzz-${{ matrix.target.corpus }}-pdo-${{ matrix.mysql }}-
+      name: Restore the corpus
+    - name: Run the fuzz target
+      env:
+        MYSQL_VERSION: ${{ matrix.mysql }}
+        MAX_RUNS: ${{ inputs.max_runs || '10000' }}
+      run: |
+        mkdir -p fuzz/corpus/${{ matrix.target.corpus }}
+        vendor/bin/php-fuzzer fuzz fuzz/${{ matrix.target.script }} \
+          fuzz/corpus/${{ matrix.target.corpus }}/ \
+          --max-runs="$MAX_RUNS"
+    - if: always()
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      with:
+        path: packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}
+        key: fuzz-${{ matrix.target.corpus }}-pdo-${{ matrix.mysql }}-${{ github.run_id }}
+      name: Save the corpus
+    - if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/crash-*') != '' }}
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: fuzz-crashes-${{ matrix.target.name }}-pdo-${{ matrix.mysql }}
+        path: packages/ztd-query-pdo-adapter/crash-*
+      name: Upload crash inputs
+    timeout-minutes: 60
+    services:
+      mysql:
+        image: mysql:${{ matrix.mysql }}
         env:
-          MYSQL_VERSION: ${{ matrix.mysql }}
-        run: |
-          vendor/bin/php-fuzzer fuzz fuzz/${{ matrix.target.script }} \
-            fuzz/corpus/${{ matrix.target.corpus }}/ \
-            --max-runs=${{ inputs.max_runs || '10000' }}
-
-      - if: always()
-        uses: actions/cache/save@v5
-        with:
-          path: packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}
-          key: fuzz-${{ matrix.target.corpus }}-pdo-${{ matrix.mysql }}-${{ github.run_id }}
-
-      - if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/crash-*') != '' }}
-        uses: actions/upload-artifact@v6
-        with:
-          name: fuzz-crashes-${{ matrix.target.name }}-pdo-${{ matrix.mysql }}
-          path: packages/ztd-query-pdo-adapter/crash-*
-
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_ROOT_HOST: '%'
+        ports:
+        - 3306:3306
+        options: --health-cmd="mysqladmin ping -h 127.0.0.1 -proot" --health-interval=10s --health-timeout=5s --health-retries=20
+    env:
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_PORT: '3306'
   correctness-sqlite:
     name: Correctness / ${{ matrix.target.name }}-pdo-sqlite
     runs-on: ubuntu-latest
@@ -132,53 +188,83 @@ jobs:
       fail-fast: false
       matrix:
         target:
-          - { name: select, script: fuzz_correctness_sqlite_select.php, corpus: correctness-sqlite-select }
-          - { name: insert, script: fuzz_correctness_sqlite_insert.php, corpus: correctness-sqlite-insert }
-          - { name: update, script: fuzz_correctness_sqlite_update.php, corpus: correctness-sqlite-update }
-          - { name: delete, script: fuzz_correctness_sqlite_delete.php, corpus: correctness-sqlite-delete }
-          - { name: alter, script: fuzz_correctness_sqlite_alter.php, corpus: correctness-sqlite-alter }
+        - name: select
+          script: fuzz_correctness_sqlite_select.php
+          corpus: correctness-sqlite-select
+        - name: insert
+          script: fuzz_correctness_sqlite_insert.php
+          corpus: correctness-sqlite-insert
+        - name: update
+          script: fuzz_correctness_sqlite_update.php
+          corpus: correctness-sqlite-update
+        - name: delete
+          script: fuzz_correctness_sqlite_delete.php
+          corpus: correctness-sqlite-delete
+        - name: alter
+          script: fuzz_correctness_sqlite_alter.php
+          corpus: correctness-sqlite-alter
     defaults:
       run:
         working-directory: packages/ztd-query-pdo-adapter
     steps:
-      - uses: actions/checkout@v6
-
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.5'
-          extensions: mbstring, pdo, pdo_sqlite, pcntl
-          coverage: none
-
-      - uses: ramsey/composer-install@v3
-        with:
-          working-directory: packages/ztd-query-pdo-adapter
-
-      - uses: actions/cache/restore@v5
-        with:
-          path: packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}
-          key: fuzz-${{ matrix.target.corpus }}-pdo-sqlite-${{ github.run_id }}
-          restore-keys: |
-            fuzz-${{ matrix.target.corpus }}-pdo-sqlite-
-
-      - name: fuzzer
-        run: |
-          mkdir -p fuzz/corpus/${{ matrix.target.corpus }}
-          vendor/bin/php-fuzzer fuzz fuzz/${{ matrix.target.script }} \
-            fuzz/corpus/${{ matrix.target.corpus }}/ \
-            --max-runs=${{ inputs.max_runs || '10000' }}
-
-      - if: always()
-        uses: actions/cache/save@v5
-        with:
-          path: packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}
-          key: fuzz-${{ matrix.target.corpus }}-pdo-sqlite-${{ github.run_id }}
-
-      - if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/crash-*') != '' }}
-        uses: actions/upload-artifact@v6
-        with:
-          name: fuzz-crashes-${{ matrix.target.name }}-pdo-sqlite
-          path: packages/ztd-query-pdo-adapter/crash-*
-
+    - name: Check out the repository
+      uses: actions/checkout@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+    - name: Set up PHP
+      uses: shivammathur/setup-php@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        php-version: '8.5'
+        extensions: ctype, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, pdo_mysql, pdo_pgsql, pdo_sqlite,
+          phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
+        coverage: none
+        ini-values: memory_limit=512M
+    - name: Validate Composer metadata
+      run: composer validate --strict --no-check-publish
+    - name: Install dependencies
+      uses: ramsey/composer-install@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        working-directory: packages/ztd-query-pdo-adapter
+        dependency-versions: highest
+        composer-options: --prefer-dist
+    - name: Check installed platform requirements
+      run: composer check-platform-reqs
+    - name: Validate the run budget
+      env:
+        MAX_RUNS: ${{ inputs.max_runs || '10000' }}
+      run: |
+        if [[ ! "$MAX_RUNS" =~ ^[1-9][0-9]{0,6}$ ]]; then
+          echo 'max_runs must be an integer between 1 and 1000000.' >&2
+          exit 1
+        fi
+        if (( MAX_RUNS > 1000000 )); then exit 1; fi
+    - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      with:
+        path: packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}
+        key: fuzz-${{ matrix.target.corpus }}-pdo-sqlite-${{ github.run_id }}
+        restore-keys: |
+          fuzz-${{ matrix.target.corpus }}-pdo-sqlite-
+      name: Restore the corpus
+    - name: Run the fuzz target
+      run: |
+        mkdir -p fuzz/corpus/${{ matrix.target.corpus }}
+        mkdir -p fuzz/corpus/${{ matrix.target.corpus }}
+        vendor/bin/php-fuzzer fuzz fuzz/${{ matrix.target.script }} \
+          fuzz/corpus/${{ matrix.target.corpus }}/ \
+          --max-runs="$MAX_RUNS"
+      env:
+        MAX_RUNS: ${{ inputs.max_runs || '10000' }}
+    - if: always()
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      with:
+        path: packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}
+        key: fuzz-${{ matrix.target.corpus }}-pdo-sqlite-${{ github.run_id }}
+      name: Save the corpus
+    - if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/crash-*') != '' }}
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: fuzz-crashes-${{ matrix.target.name }}-pdo-sqlite
+        path: packages/ztd-query-pdo-adapter/crash-*
+      name: Upload crash inputs
+    timeout-minutes: 60
   correctness-pg:
     name: Correctness / ${{ matrix.target.name }}-pdo-pg
     runs-on: ubuntu-latest
@@ -186,88 +272,105 @@ jobs:
       fail-fast: false
       matrix:
         target:
-          - { name: select, script: fuzz_correctness_pg_select.php, corpus: correctness-pg-select }
-          - { name: insert, script: fuzz_correctness_pg_insert.php, corpus: correctness-pg-insert }
-          - { name: update, script: fuzz_correctness_pg_update.php, corpus: correctness-pg-update }
-          - { name: delete, script: fuzz_correctness_pg_delete.php, corpus: correctness-pg-delete }
-          - { name: ctas, script: fuzz_correctness_pg_ctas.php, corpus: correctness-pg-ctas }
+        - name: select
+          script: fuzz_correctness_pg_select.php
+          corpus: correctness-pg-select
+        - name: insert
+          script: fuzz_correctness_pg_insert.php
+          corpus: correctness-pg-insert
+        - name: update
+          script: fuzz_correctness_pg_update.php
+          corpus: correctness-pg-update
+        - name: delete
+          script: fuzz_correctness_pg_delete.php
+          corpus: correctness-pg-delete
+        - name: ctas
+          script: fuzz_correctness_pg_ctas.php
+          corpus: correctness-pg-ctas
     defaults:
       run:
         working-directory: packages/ztd-query-pdo-adapter
     steps:
-      - uses: actions/checkout@v6
-
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.5'
-          extensions: mbstring, pdo, pdo_pgsql, pcntl
-          coverage: none
-
-      - uses: ramsey/composer-install@v3
-        with:
-          working-directory: packages/ztd-query-pdo-adapter
-
-      - uses: actions/cache/restore@v5
-        with:
-          path: packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}
-          key: fuzz-${{ matrix.target.corpus }}-pdo-pg-${{ github.run_id }}
-          restore-keys: |
-            fuzz-${{ matrix.target.corpus }}-pdo-pg-
-
-      - name: fuzzer
-        run: |
-          mkdir -p fuzz/corpus/${{ matrix.target.corpus }}
-          vendor/bin/php-fuzzer fuzz fuzz/${{ matrix.target.script }} \
-            fuzz/corpus/${{ matrix.target.corpus }}/ \
-            --max-runs=${{ inputs.max_runs || '10000' }}
-
-      - if: always()
-        uses: actions/cache/save@v5
-        with:
-          path: packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}
-          key: fuzz-${{ matrix.target.corpus }}-pdo-pg-${{ github.run_id }}
-
-      - if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/crash-*') != '' }}
-        uses: actions/upload-artifact@v6
-        with:
-          name: fuzz-crashes-${{ matrix.target.name }}-pdo-pg
-          path: packages/ztd-query-pdo-adapter/crash-*
-
-  notify:
-    name: Notify on crash
-    runs-on: ubuntu-latest
-    needs:
-      - robustness-execute
-      - correctness-mysql
-      - correctness-sqlite
-      - correctness-pg
-    steps:
-      - uses: actions/github-script@v8
-        with:
-          script: |
-            const { data } = await github.rest.actions.listWorkflowRunArtifacts({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              run_id: context.runId
-            });
-            if (!data.artifacts.some(({ name }) => name.startsWith('fuzz-crashes-'))) {
-              console.log('No fuzz crash artifacts found');
-              return;
-            }
-            const { data: issues } = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              labels: 'fuzz',
-              state: 'open'
-            });
-            if (issues.length > 0) {
-              console.log('Open fuzz issue already exists, skipping creation');
-              return;
-            }
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: `Fuzz: Crash detected (ztd-query-pdo-adapter)`,
-              body: `Fuzzing found a crash.\n\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nCheck the uploaded artifacts for crash details.`,
-              labels: ['bug', 'fuzz']
-            });
+    - name: Check out the repository
+      uses: actions/checkout@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+    - name: Set up PHP
+      uses: shivammathur/setup-php@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        php-version: '8.5'
+        extensions: ctype, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, pdo_mysql, pdo_pgsql, pdo_sqlite,
+          phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
+        coverage: none
+        ini-values: memory_limit=512M
+    - name: Validate Composer metadata
+      run: composer validate --strict --no-check-publish
+    - name: Install dependencies
+      uses: ramsey/composer-install@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        working-directory: packages/ztd-query-pdo-adapter
+        dependency-versions: highest
+        composer-options: --prefer-dist
+    - name: Check installed platform requirements
+      run: composer check-platform-reqs
+    - name: Validate the run budget
+      env:
+        MAX_RUNS: ${{ inputs.max_runs || '10000' }}
+      run: |
+        if [[ ! "$MAX_RUNS" =~ ^[1-9][0-9]{0,6}$ ]]; then
+          echo 'max_runs must be an integer between 1 and 1000000.' >&2
+          exit 1
+        fi
+        if (( MAX_RUNS > 1000000 )); then exit 1; fi
+    - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      with:
+        path: packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}
+        key: fuzz-${{ matrix.target.corpus }}-pdo-pg-${{ github.run_id }}
+        restore-keys: |
+          fuzz-${{ matrix.target.corpus }}-pdo-pg-
+      name: Restore the corpus
+    - name: Run the fuzz target
+      run: |
+        mkdir -p fuzz/corpus/${{ matrix.target.corpus }}
+        mkdir -p fuzz/corpus/${{ matrix.target.corpus }}
+        vendor/bin/php-fuzzer fuzz fuzz/${{ matrix.target.script }} \
+          fuzz/corpus/${{ matrix.target.corpus }}/ \
+          --max-runs="$MAX_RUNS"
+      env:
+        MAX_RUNS: ${{ inputs.max_runs || '10000' }}
+    - if: always()
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      with:
+        path: packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}
+        key: fuzz-${{ matrix.target.corpus }}-pdo-pg-${{ github.run_id }}
+      name: Save the corpus
+    - if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/crash-*') != '' }}
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: fuzz-crashes-${{ matrix.target.name }}-pdo-pg
+        path: packages/ztd-query-pdo-adapter/crash-*
+      name: Upload crash inputs
+    timeout-minutes: 60
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: fuzz_test
+        ports:
+        - 5432:5432
+        options: --health-cmd="pg_isready -U test -d fuzz_test" --health-interval=10s --health-timeout=5s --health-retries=20
+    env:
+      PG_HOST: 127.0.0.1
+      PG_PORT: '5432'
+'on':
+  schedule:
+  - cron: 23 5 * * *
+  workflow_dispatch:
+    inputs:
+      max_runs:
+        description: Max fuzzing iterations
+        default: '10000'
+        type: string
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true

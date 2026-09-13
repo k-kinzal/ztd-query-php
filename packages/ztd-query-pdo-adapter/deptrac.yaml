@@ -1,0 +1,51 @@
+# NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
+deptrac:
+  paths: [./src]
+  analyser:
+    types: [class, use]
+  layers:
+    - name: PublicApi
+      collectors:
+        - type: bool
+          must:
+            - type: directory
+              value: 'src/[^/]+\.php$'
+          must_not:
+            - type: directory
+              value: 'src/(PdoConnection|PdoStatement|PdoParameterBinder|PdoParameterType|ZtdPdoException)\.php$'
+    - name: Driver
+      collectors:
+        - type: directory
+          value: 'src/Driver/'
+        # Existing public driver classes keep their published namespace.
+        - type: directory
+          value: 'src/(PdoConnection|PdoStatement|PdoParameterBinder|PdoParameterType)\.php$'
+        - type: classLike
+          value: '^ZtdQuery\\Adapter\\Pdo\\(Row|RowValue)$'
+        - type: classLike
+          value: '^ZtdQuery\\Adapter\\Pdo\\Driver\\BindableValue$'
+    - name: ErrorContract
+      collectors:
+        - type: directory
+          value: 'src/ZtdPdoException\.php$'
+    - name: Core
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: '^ZtdQuery\\'
+          must_not:
+            - type: classLike
+              value: '^ZtdQuery\\Adapter\\'
+            - type: classLike
+              value: '^ZtdQuery\\Platform\\(MySql|Postgres|Sqlite)\\'
+    - name: Platforms
+      collectors:
+        - type: classLike
+          value: '^ZtdQuery\\Platform\\(MySql|Postgres|Sqlite)\\'
+  ruleset:
+    PublicApi: [Driver, ErrorContract, Core, Platforms]
+    Driver: [ErrorContract, Core]
+    ErrorContract: []
+    Core: []
+    Platforms: [Core]

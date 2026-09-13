@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Tests\Integration\MySql\Pdo\CreateOther;
 
 use Tests\Support\MySqlIntegrationTestCase;
+use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 use ZtdQuery\Config\UnsupportedSqlBehavior;
 use ZtdQuery\Config\ZtdConfig;
-use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 
 final class CreateEventTest extends MySqlIntegrationTestCase
 {
@@ -19,7 +19,7 @@ final class CreateEventTest extends MySqlIntegrationTestCase
 
         $this->expectException(ZtdPdoException::class);
 
-        $ztdPdo->exec("CREATE EVENT test_event ON SCHEDULE EVERY 1 HOUR DO SELECT 1");
+        $ztdPdo->exec('CREATE EVENT test_event ON SCHEDULE EVERY 1 HOUR DO SELECT 1');
     }
 
     public function testCreateEventIsIgnoredInIgnoreMode(): void
@@ -28,7 +28,7 @@ final class CreateEventTest extends MySqlIntegrationTestCase
             unsupportedBehavior: UnsupportedSqlBehavior::Ignore
         ));
 
-        $result = $ztdPdo->exec("CREATE EVENT test_event ON SCHEDULE EVERY 1 HOUR DO SELECT 1");
+        $result = $ztdPdo->exec('CREATE EVENT test_event ON SCHEDULE EVERY 1 HOUR DO SELECT 1');
 
         $this->assertSame(0, $result);
     }
@@ -49,7 +49,7 @@ final class CreateEventTest extends MySqlIntegrationTestCase
         }, E_USER_NOTICE);
 
         try {
-            $result = $ztdPdo->exec("CREATE EVENT test_event ON SCHEDULE EVERY 1 HOUR DO SELECT 1");
+            $result = $ztdPdo->exec('CREATE EVENT test_event ON SCHEDULE EVERY 1 HOUR DO SELECT 1');
 
             $this->assertSame(0, $result);
             $this->assertCount(1, $capturedNotices);

@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Tests\Integration\MySql\Pdo\UnknownSchema;
 
 use Tests\Support\MySqlIntegrationTestCase;
+use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 use ZtdQuery\Config\UnknownSchemaBehavior;
 use ZtdQuery\Config\ZtdConfig;
-use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 
 /**
  * Tests for UnknownSchemaBehavior::Exception mode.

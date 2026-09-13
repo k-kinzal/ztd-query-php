@@ -4,10 +4,14 @@ declare(strict_types=1);
 
 namespace Fuzz\Container;
 
+use Override;
 use Testcontainers\Containers\GenericContainer\GenericContainer;
 use Testcontainers\Containers\WaitStrategy\PDO\MySQLDSN;
 use Testcontainers\Containers\WaitStrategy\PDO\PDOConnectWaitStrategy;
 
+/**
+ * The my sql84 container.
+ */
 final class MySql84Container extends GenericContainer
 {
     /**
@@ -37,6 +41,7 @@ final class MySql84Container extends GenericContainer
      */
     protected static $STARTUP_TIMEOUT = 300;
 
+    #[Override]
     protected function waitStrategy($instance): PDOConnectWaitStrategy
     {
         unset($instance);
@@ -49,6 +54,11 @@ final class MySql84Container extends GenericContainer
             ->withRetryInterval(250000);
     }
 
+    /**
+     * Answers grammar version.
+     *
+     * @return string
+     */
     public static function getGrammarVersion(): string
     {
         return 'mysql-8.4.7';

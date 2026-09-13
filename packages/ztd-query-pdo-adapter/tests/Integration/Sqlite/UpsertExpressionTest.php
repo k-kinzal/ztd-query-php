@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Sqlite;
 
+use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -18,9 +19,9 @@ final class UpsertExpressionTest extends TestCase
 {
     public function testSelfReferencingUpsertMatchesNativeSqlite(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        $rawPdo = new PDO('sqlite::memory:', null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
         $rawPdo->exec('CREATE TABLE native_items (id INTEGER PRIMARY KEY, quantity INTEGER NOT NULL)');
         $rawPdo->exec('CREATE TABLE shadow_items (id INTEGER PRIMARY KEY, quantity INTEGER NOT NULL)');
@@ -43,9 +44,9 @@ final class UpsertExpressionTest extends TestCase
 
     public function testConditionalUpsertAndReturningMatchNativeSqlite(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        $rawPdo = new PDO('sqlite::memory:', null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
         $rawPdo->exec('CREATE TABLE native_items (id INTEGER PRIMARY KEY, name TEXT, score INTEGER)');
         $rawPdo->exec('CREATE TABLE shadow_items (id INTEGER PRIMARY KEY, name TEXT, score INTEGER)');

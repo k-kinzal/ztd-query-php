@@ -6,7 +6,11 @@ namespace Fuzz\Correctness\Sqlite;
 
 use Faker\Generator;
 use Fuzz\Correctness\SchemaDefinition;
+use InvalidArgumentException;
 
+/**
+ * The sqlite schema pool.
+ */
 final class SqliteSchemaPool
 {
     /** @var array<string, SchemaDefinition> */
@@ -14,7 +18,10 @@ final class SqliteSchemaPool
 
     private static bool $initialized = false;
 
-    private static function initialize(): void
+    /**
+     * Fills the pool the first time it is asked for.
+     */
+    public static function initialize(): void
     {
         if (self::$initialized) {
             return;
@@ -67,6 +74,12 @@ final class SqliteSchemaPool
         self::$initialized = true;
     }
 
+    /**
+     * Random.
+     *
+     * @param Generator $faker
+     * @return SchemaDefinition
+     */
     public static function random(Generator $faker): SchemaDefinition
     {
         self::initialize();
@@ -85,11 +98,14 @@ final class SqliteSchemaPool
         return self::$schemas;
     }
 
+    /**
+     * @throws InvalidArgumentException
+     */
     public static function get(string $name): SchemaDefinition
     {
         self::initialize();
         if (!isset(self::$schemas[$name])) {
-            throw new \InvalidArgumentException("Unknown schema: $name");
+            throw new InvalidArgumentException("Unknown schema: $name");
         }
         return self::$schemas[$name];
     }

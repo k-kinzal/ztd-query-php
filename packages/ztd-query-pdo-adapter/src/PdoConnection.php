@@ -20,6 +20,11 @@ final class PdoConnection implements ConnectionInterface
 {
     private PDO $pdo;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param PDO $pdo
+     */
     public function __construct(PDO $pdo)
     {
         $this->pdo = $pdo;

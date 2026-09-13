@@ -14,6 +14,8 @@ use ZtdQuery\Adapter\Pdo\ZtdPdo;
  * @requires extension pdo_pgsql
  * @group integration
  * @group postgres
+ *
+ * @phpstan-import-type Row from \ZtdQuery\Adapter\Pdo\PdoStatement
  */
 #[CoversNothing]
 #[Large]
@@ -34,12 +36,12 @@ final class SelectOrderByTest extends TestCase
 
             $stmt = $rawPdo->query("SELECT * FROM {$table} ORDER BY age ASC");
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rawRows = $stmt->fetchAll();
 
             $stmt = $ztdPdo->query("SELECT * FROM {$table} ORDER BY age ASC");
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $ztdRows = $stmt->fetchAll();
 
             self::assertSame($rawRows, $ztdRows);
@@ -63,12 +65,12 @@ final class SelectOrderByTest extends TestCase
 
             $stmt = $rawPdo->query("SELECT * FROM {$table} ORDER BY age DESC");
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rawRows = $stmt->fetchAll();
 
             $stmt = $ztdPdo->query("SELECT * FROM {$table} ORDER BY age DESC");
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $ztdRows = $stmt->fetchAll();
 
             self::assertSame($rawRows, $ztdRows);
@@ -92,12 +94,12 @@ final class SelectOrderByTest extends TestCase
 
             $stmt = $rawPdo->query("SELECT * FROM {$table} ORDER BY val ASC NULLS FIRST");
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rawRows = $stmt->fetchAll();
 
             $stmt = $ztdPdo->query("SELECT * FROM {$table} ORDER BY val ASC NULLS FIRST");
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $ztdRows = $stmt->fetchAll();
 
             self::assertSame($rawRows, $ztdRows);
@@ -121,12 +123,12 @@ final class SelectOrderByTest extends TestCase
 
             $stmt = $rawPdo->query("SELECT * FROM {$table} ORDER BY val ASC NULLS LAST");
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rawRows = $stmt->fetchAll();
 
             $stmt = $ztdPdo->query("SELECT * FROM {$table} ORDER BY val ASC NULLS LAST");
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $ztdRows = $stmt->fetchAll();
 
             self::assertSame($rawRows, $ztdRows);

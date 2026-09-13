@@ -4,9 +4,18 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Adapter\Pdo;
 
+use ArrayIterator;
 use Iterator;
+use Override;
 use PDO;
 use PDOStatement as NativePdoStatement;
+use ReflectionException;
+use ReflectionObject;
+use ReturnTypeWillChange;
+use stdClass;
+use ZtdQuery\Adapter\Pdo\Driver\BufferedRow;
+use ZtdQuery\Adapter\Pdo\Driver\PdoBinding;
+use ZtdQuery\Adapter\Pdo\Driver\PdoFetchMode;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\ExecuteResult;
 use ZtdQuery\Rewrite\RewritePlan;
@@ -23,6 +32,19 @@ use ZtdQuery\Session;
  * - $session: Session for ZTD logic
  * - $plan: RewritePlan from prepare time (null when ZTD disabled)
  * - $result: Last execution result (temporary)
+ *
+ * @phpstan-import-type Row from \ZtdQuery\Adapter\Pdo\PdoStatement
+ * @phpstan-import-type RowValue from \ZtdQuery\Adapter\Pdo\PdoStatement
+ * @phpstan-import-type BindableValue from PdoBinding
+ *
+ * @example Fetch a row through the PDO statement interface
+ *     $native = new \PDO('sqlite::memory:');
+ *     $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+ *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo($native);
+ *     $pdo->exec("INSERT INTO users VALUES (1, 'Alice')");
+ *     $statement = $pdo->query('SELECT id, name FROM users');
+ *     $statement->fetch(\PDO::FETCH_ASSOC) // => ['id' => 1, 'name' => 'Alice']
+ *     $statement->fetch() // => false
  */
 final class ZtdPdoStatement extends NativePdoStatement
 {
@@ -51,42 +73,86 @@ final class ZtdPdoStatement extends NativePdoStatement
 
     private int $defaultFetchMode;
 
-    /** @var array<int|string, array{value: mixed, type: int}> */
+    /**
+     * Shapes a buffered row for the fetch mode it is read in.
+     */
+    private BufferedRow $bufferedRow;
+
+    /**
+     * Values bound by bindValue(), keyed by the placeholder they were bound to.
+     *
+     * @var array<int|string, PdoBinding>
+     */
     private array $boundValues = [];
 
-    /** @var array<int|string, array{value: mixed, type: int, maxLength: int, driverOptions: mixed}> */
+    /**
+     * Variables bound by bindParam(), keyed by the placeholder they were bound to.
+     *
+     * @var array<int|string, PdoBinding>
+     */
     private array $boundParams = [];
 
-    /** @var array{mode: int, args: array<mixed>}|null */
-    private ?array $fetchMode = null;
+    /**
+     * The fetch mode a caller set, or null where none was set.
+     */
+    private ?PdoFetchMode $fetchMode = null;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param NativePdoStatement $statement Statement the driver prepared
+     * @param Session $session Session that says what ZTD does with it
+     * @param RewritePlan|null $plan What ZTD will carry out instead of it, or null where ZTD is not shadowing
+     * @param PdoPreparedExecution|null $preparedExecution What prepares the statement again for each set of parameters, or null where it is prepared once
+     * @param int $defaultFetchMode The connection's own fetch mode, used where the caller names none
+     * @param BufferedRow $bufferedRow Shapes a buffered row for the mode it is read in
+     */
     public function __construct(
         NativePdoStatement $statement,
         Session $session,
         ?RewritePlan $plan,
         ?PdoPreparedExecution $preparedExecution = null,
         int $defaultFetchMode = PDO::FETCH_BOTH,
+        BufferedRow $bufferedRow = new BufferedRow(),
     ) {
         $this->statement = $statement;
         $this->session = $session;
         $this->plan = $plan;
         $this->preparedExecution = $preparedExecution;
         $this->defaultFetchMode = $defaultFetchMode;
+        $this->bufferedRow = $bufferedRow;
     }
 
     /**
      * {@inheritDoc}
+     *
+     * The binding is remembered as well as made, because ZTD prepares the
+     * statement again on each execute() and a statement prepared again has
+     * nothing bound to it.
+     *
+     * @return bool Whether the value was bound
+     *
+     * @throws ZtdPdoException When PDO cannot bind a value of that type
      */
+    #[Override]
     public function bindValue(int|string $param, mixed $value, int $type = PDO::PARAM_STR): bool
     {
-        $this->boundValues[$param] = ['value' => $value, 'type' => $type];
+        $this->boundValues[$param] = new PdoBinding(PdoBinding::bindable($value, $param), $type);
 
         return $this->statement->bindValue($param, $value, $type);
     }
 
     /**
      * {@inheritDoc}
+     *
+     * The variable is remembered by reference, so that what the caller changes
+     * between executions is what the next execution sends.
+     *
+     * @return bool Whether the variable was bound
+     *
+     * @throws ZtdPdoException When PDO cannot bind a value of that type
      */
+    #[Override]
     public function bindParam(
         int|string $param,
         mixed &$var,
@@ -94,19 +160,27 @@ final class ZtdPdoStatement extends NativePdoStatement
         int $maxLength = 0,
         mixed $driverOptions = null
     ): bool {
-        $this->boundParams[$param] = [
-            'value' => &$var,
-            'type' => $type,
-            'maxLength' => $maxLength,
-            'driverOptions' => $driverOptions,
-        ];
+        $binding = new PdoBinding(
+            PdoBinding::bindable($var, $param),
+            $type,
+            $maxLength,
+            PdoBinding::bindable($driverOptions, $param),
+        );
+        $binding->value = &$var;
+        $this->boundParams[$param] = $binding;
 
         return $this->statement->bindParam($param, $var, $type, $maxLength, $driverOptions);
     }
 
     /**
      * {@inheritDoc}
+     *
+     * A column is bound on the statement the driver prepared, which is the one
+     * that fills the variable when a row is read from it.
+     *
+     * @return bool Whether the column was bound
      */
+    #[Override]
     public function bindColumn(
         int|string $column,
         mixed &$var,
@@ -120,8 +194,13 @@ final class ZtdPdoStatement extends NativePdoStatement
     /**
      * Execute the statement, applying ZTD simulation as needed.
      *
-     * @param array<int|string, mixed>|null $params
+     * @param array<int|string, mixed>|null $params Parameters to run it with, or null for those already bound
+     *
+     * @return bool Whether the statement ran
+     *
+     * @throws ZtdPdoException When ZTD cannot carry the statement out
      */
+    #[Override]
     public function execute(?array $params = null): bool
     {
         $this->result = null;
@@ -133,7 +212,7 @@ final class ZtdPdoStatement extends NativePdoStatement
             $params = $prepared['params'];
             $this->rebindParameters();
             if ($this->fetchMode !== null) {
-                $this->statement->setFetchMode($this->fetchMode['mode'], ...$this->fetchMode['args']);
+                $this->statement->setFetchMode($this->fetchMode->mode, ...$this->fetchMode->arguments);
             }
         }
 
@@ -152,14 +231,27 @@ final class ZtdPdoStatement extends NativePdoStatement
         return $this->executeStatement($params);
     }
 
-    /** @param array<int|string, mixed>|null $params */
-    private function executeAndPostProcess(RewritePlan $plan, ?array $params): bool
+    /**
+     * Runs the statement and lets ZTD read what came back off it.
+     *
+     * A simulated write runs as a SELECT that answers the rows it would have
+     * touched; reading those rows is what applies the write to the shadow.
+     *
+     * @param RewritePlan $plan What ZTD is carrying out instead of the statement
+     * @param array<int|string, mixed>|null $params Parameters to run it with, or null for those already bound
+     *
+     * @return bool Whether the statement ran and ZTD could read its result
+     *
+     * @throws ZtdPdoException When ZTD cannot read what the statement answered
+     */
+    public function executeAndPostProcess(RewritePlan $plan, ?array $params): bool
     {
         if (!$this->executeStatement($params)) {
             return false;
         }
 
         try {
+            /** @throws DatabaseException */
             $this->result = $this->session->processExecutedStatement(
                 $plan,
                 new PdoStatement($this->statement)
@@ -171,8 +263,14 @@ final class ZtdPdoStatement extends NativePdoStatement
         return $this->result->isSuccess();
     }
 
-    /** @param array<int|string, mixed>|null $params */
-    private function executeStatement(?array $params): bool
+    /**
+     * Runs the prepared statement, binding the parameters it was given.
+     *
+     * @param array<int|string, mixed>|null $params Parameters to run it with, or null for those already bound
+     *
+     * @return bool Whether the statement ran
+     */
+    public function executeStatement(?array $params): bool
     {
         if ($this->preparedExecution === null) {
             return $this->statement->execute($params);
@@ -181,26 +279,37 @@ final class ZtdPdoStatement extends NativePdoStatement
         return $this->preparedExecution->parameterBinder()->execute($this->statement, $params);
     }
 
-    private function rebindParameters(): void
+    /**
+     * Binds everything a caller bound to whatever statement is prepared now.
+     *
+     * ZTD prepares the statement again on each execute(), and the new one has
+     * nothing bound to it; this is what puts the bindings back.
+     */
+    public function rebindParameters(): void
     {
         foreach ($this->boundValues as $parameter => $binding) {
-            $this->statement->bindValue($parameter, $binding['value'], $binding['type']);
+            $this->statement->bindValue($parameter, $binding->value, $binding->type);
         }
-        foreach (array_keys($this->boundParams) as $parameter) {
-            $binding = &$this->boundParams[$parameter];
+        foreach ($this->boundParams as $parameter => $binding) {
             $this->statement->bindParam(
                 $parameter,
-                $binding['value'],
-                $binding['type'],
-                $binding['maxLength'],
-                $binding['driverOptions'],
+                $binding->value,
+                $binding->type,
+                $binding->maxLength,
+                $binding->driverOptions,
             );
         }
     }
 
     /**
      * {@inheritDoc}
+     *
+     * A row ZTD buffered is shaped here for the mode it is read in; a row the
+     * driver holds is read off the driver, which shapes it itself.
+     *
+     * @return mixed The next row as that mode reads it, or false where there is none
      */
+    #[Override]
     public function fetch(int $mode = PDO::FETCH_DEFAULT, int $cursorOrientation = PDO::FETCH_ORI_NEXT, int $cursorOffset = 0): mixed
     {
         if ($this->result !== null && !$this->result->isPassthrough()) {
@@ -213,7 +322,7 @@ final class ZtdPdoStatement extends NativePdoStatement
                 return false;
             }
 
-            return $this->formatBufferedRow($row, $mode);
+            return $this->bufferedRow->inMode($row, $this->resolveFetchMode($mode));
         }
 
         /** @see NativePdoStatement */
@@ -223,8 +332,11 @@ final class ZtdPdoStatement extends NativePdoStatement
     /**
      * {@inheritDoc}
      *
-     * @return array<int, mixed>
+     * @param mixed ...$args The rest of what the fetch mode reads
+     *
+     * @return array<int, mixed> Every remaining row, as that mode reads them
      */
+    #[Override]
     public function fetchAll(int $mode = PDO::FETCH_DEFAULT, mixed ...$args): array
     {
         if ($this->result !== null && !$this->result->isPassthrough()) {
@@ -233,16 +345,24 @@ final class ZtdPdoStatement extends NativePdoStatement
             }
 
             $rows = $this->result->fetchAll();
-            if ($this->resolveFetchMode($mode) === PDO::FETCH_COLUMN) {
+            $resolvedMode = $this->resolveFetchMode($mode);
+            if ($resolvedMode === PDO::FETCH_COLUMN) {
                 $column = is_int($args[0] ?? null) ? $args[0] : 0;
 
-                return array_map(
-                    static fn (array $row): mixed => array_values($row)[$column] ?? false,
-                    $rows,
-                );
+                $values = [];
+                foreach ($rows as $row) {
+                    $values[] = array_values($row)[$column] ?? false;
+                }
+
+                return $values;
             }
 
-            return array_map(fn (array $row): mixed => $this->formatBufferedRow($row, $mode), $rows);
+            $shaped = [];
+            foreach ($rows as $row) {
+                $shaped[] = $this->bufferedRow->inMode($row, $resolvedMode);
+            }
+
+            return $shaped;
         }
 
         /** @see NativePdoStatement */
@@ -252,15 +372,15 @@ final class ZtdPdoStatement extends NativePdoStatement
                 $forwardArgs[] = $arg;
             }
         }
-        /** @var array<int, mixed> $rows */
-        $rows = $this->statement->fetchAll($mode, ...$forwardArgs);
-
-        return $rows;
+        return array_values($this->statement->fetchAll($mode, ...$forwardArgs));
     }
 
     /**
      * {@inheritDoc}
+     *
+     * @return mixed The column's value in the next row, or false where there is none
      */
+    #[Override]
     public function fetchColumn(int $column = 0): mixed
     {
         if ($this->result !== null && !$this->result->isPassthrough()) {
@@ -280,11 +400,19 @@ final class ZtdPdoStatement extends NativePdoStatement
     /**
      * {@inheritDoc}
      *
+     * A row ZTD buffered never reached the driver, so nothing hydrated an
+     * object from it; the object is built here and its properties written from
+     * the row, which is what the driver would have done.
+     *
      * @template T of object
-     * @param class-string<T>|null $class
-     * @param array<mixed> $constructorArgs
-     * @return T|false
+     * @param class-string<T>|null $class Class to build, or null for stdClass
+     * @param array<mixed> $constructorArgs Arguments to build it with
+     *
+     * @return T|false The object, or false where there is no row
+     *
+     * @throws ReflectionException When the class will not let a property be written
      */
+    #[Override]
     public function fetchObject(?string $class = 'stdClass', array $constructorArgs = []): object|false
     {
         /** @var class-string<T> $resolvedClass */
@@ -300,14 +428,14 @@ final class ZtdPdoStatement extends NativePdoStatement
                 return false;
             }
             $object = new $resolvedClass(...$constructorArgs);
-            if ($object instanceof \stdClass) {
+            if ($object instanceof stdClass) {
                 foreach ($row as $property => $value) {
                     $object->{$property} = $value;
                 }
 
                 return $object;
             }
-            $reflection = new \ReflectionObject($object);
+            $reflection = new ReflectionObject($object);
             foreach ($row as $property => $value) {
                 if ($reflection->hasProperty($property)) {
                     $reflection->getProperty($property)->setValue($object, $value);
@@ -323,7 +451,10 @@ final class ZtdPdoStatement extends NativePdoStatement
 
     /**
      * {@inheritDoc}
+     *
+     * @return int Rows the statement answered or affected
      */
+    #[Override]
     public function rowCount(): int
     {
         if ($this->result !== null && !$this->result->isPassthrough()) {
@@ -335,7 +466,10 @@ final class ZtdPdoStatement extends NativePdoStatement
 
     /**
      * {@inheritDoc}
+     *
+     * @return bool Whether the cursor was closed
      */
+    #[Override]
     public function closeCursor(): bool
     {
         return $this->statement->closeCursor();
@@ -343,18 +477,30 @@ final class ZtdPdoStatement extends NativePdoStatement
 
     /**
      * {@inheritDoc}
+     *
+     * The mode is remembered as well as set, because ZTD prepares the
+     * statement again on each execute() and a statement prepared again is back
+     * on the connection's own mode.
+     *
+     * @param mixed ...$args The rest of what that mode reads
+     *
+     * @return bool Whether the mode was set
      */
-    #[\ReturnTypeWillChange]
+    #[ReturnTypeWillChange]
+    #[Override]
     public function setFetchMode(int $mode, mixed ...$args): bool
     {
-        $this->fetchMode = ['mode' => $mode, 'args' => $args];
+        $this->fetchMode = new PdoFetchMode($mode, array_values($args));
 
         return $this->statement->setFetchMode($mode, ...$args);
     }
 
     /**
      * {@inheritDoc}
+     *
+     * @return string The driver's code for what went wrong last, or an empty string where nothing did
      */
+    #[Override]
     public function errorCode(): string
     {
         return $this->statement->errorCode() ?? '';
@@ -365,6 +511,7 @@ final class ZtdPdoStatement extends NativePdoStatement
      *
      * @return array{0: string|null, 1: int|null, 2: string|null}
      */
+    #[Override]
     public function errorInfo(): array
     {
         /** @var array{0: string|null, 1: int|null, 2: string|null} */
@@ -373,7 +520,10 @@ final class ZtdPdoStatement extends NativePdoStatement
 
     /**
      * {@inheritDoc}
+     *
+     * @return mixed What the driver has that attribute set to
      */
+    #[Override]
     public function getAttribute(int $name): mixed
     {
         return $this->statement->getAttribute($name);
@@ -381,7 +531,10 @@ final class ZtdPdoStatement extends NativePdoStatement
 
     /**
      * {@inheritDoc}
+     *
+     * @return bool Whether the attribute was set
      */
+    #[Override]
     public function setAttribute(int $attribute, mixed $value): bool
     {
         return $this->statement->setAttribute($attribute, $value);
@@ -389,7 +542,10 @@ final class ZtdPdoStatement extends NativePdoStatement
 
     /**
      * {@inheritDoc}
+     *
+     * @return int Columns in the result the statement answered
      */
+    #[Override]
     public function columnCount(): int
     {
         return $this->statement->columnCount();
@@ -397,7 +553,11 @@ final class ZtdPdoStatement extends NativePdoStatement
 
     /**
      * {@inheritDoc}
+     *
+     * The metadata is the driver's own; a statement ZTD simulated has none,
+     * because nothing the driver prepared answered its columns.
      */
+    #[Override]
     public function getColumnMeta(int $column): array|false
     {
         return $this->statement->getColumnMeta($column);
@@ -405,7 +565,10 @@ final class ZtdPdoStatement extends NativePdoStatement
 
     /**
      * {@inheritDoc}
+     *
+     * @return bool Whether there was another result to move to
      */
+    #[Override]
     public function nextRowset(): bool
     {
         return $this->statement->nextRowset();
@@ -413,8 +576,11 @@ final class ZtdPdoStatement extends NativePdoStatement
 
     /**
      * {@inheritDoc}
+     *
+     * @return bool|null Always true, because the dump is written rather than answered
      */
-    #[\ReturnTypeWillChange]
+    #[ReturnTypeWillChange]
+    #[Override]
     public function debugDumpParams(): bool|null
     {
         $this->statement->debugDumpParams();
@@ -424,59 +590,38 @@ final class ZtdPdoStatement extends NativePdoStatement
 
     /**
      * {@inheritDoc}
+     *
+     * Rows ZTD buffered are walked from what it buffered; anything else is
+     * walked off the driver's own cursor.
+     *
+     * @return Iterator<mixed, mixed> Every remaining row
      */
+    #[Override]
     public function getIterator(): Iterator
     {
         if ($this->result !== null && !$this->result->isPassthrough() && $this->result->hasResultSet()) {
-            /** @var Iterator<mixed, array<int|string, mixed>> $iterator */
-            $iterator = new \ArrayIterator($this->fetchAll());
-
-            return $iterator;
+            return new ArrayIterator($this->fetchAll());
         }
 
-        /** @var Iterator<mixed, array<int|string, mixed>> $iterator */
-        $iterator = $this->statement->getIterator();
-
-        return $iterator;
+        return $this->statement->getIterator();
     }
 
     /**
-     * @param array<string, mixed> $row
+     * Answers the fetch mode a read will actually be made in.
+     *
+     * A caller who names no mode is answered in the one they last set on the
+     * statement, or failing that in the connection's own.
+     *
+     * @param int $mode Mode the read was asked for in, which may be PDO::FETCH_DEFAULT
+     *
+     * @return int The mode the read is made in
      */
-    private function formatBufferedRow(array $row, int $mode): mixed
-    {
-        return match ($this->resolveFetchMode($mode)) {
-            PDO::FETCH_ASSOC, PDO::FETCH_NAMED => $row,
-            PDO::FETCH_NUM => array_values($row),
-            PDO::FETCH_OBJ => (object) $row,
-            PDO::FETCH_COLUMN => array_values($row)[0] ?? false,
-            default => $this->both($row),
-        };
-    }
-
-    private function resolveFetchMode(int $mode): int
+    public function resolveFetchMode(int $mode): int
     {
         if ($mode !== PDO::FETCH_DEFAULT) {
             return $mode;
         }
 
-        return $this->fetchMode['mode'] ?? $this->defaultFetchMode;
-    }
-
-    /**
-     * @param array<string, mixed> $row
-     * @return array<int|string, mixed>
-     */
-    private function both(array $row): array
-    {
-        $both = [];
-        $index = 0;
-        foreach ($row as $column => $value) {
-            $both[$column] = $value;
-            $both[$index] = $value;
-            $index++;
-        }
-
-        return $both;
+        return $this->fetchMode === null ? $this->defaultFetchMode : $this->fetchMode->mode;
     }
 }

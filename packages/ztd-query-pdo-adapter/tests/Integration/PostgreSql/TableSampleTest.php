@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\PostgreSql;
 
+use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -34,17 +35,17 @@ final class TableSampleTest extends TestCase
                 'SELECT sampled.id FROM sample_data AS sampled TABLESAMPLE BERNOULLI (100) ORDER BY sampled.id',
             );
             self::assertNotFalse($bernoulli);
-            self::assertSame([1, 2, 3, 4], $bernoulli->fetchAll(\PDO::FETCH_COLUMN));
+            self::assertSame([1, 2, 3, 4], $bernoulli->fetchAll(PDO::FETCH_COLUMN));
 
             $system = $ztdPdo->query(
                 'SELECT id FROM sample_data TABLESAMPLE SYSTEM (100) REPEATABLE (17.5) ORDER BY id',
             );
             self::assertNotFalse($system);
-            self::assertSame([1, 2, 3, 4], $system->fetchAll(\PDO::FETCH_COLUMN));
+            self::assertSame([1, 2, 3, 4], $system->fetchAll(PDO::FETCH_COLUMN));
 
             $empty = $ztdPdo->query('SELECT id FROM sample_data TABLESAMPLE BERNOULLI (0)');
             self::assertNotFalse($empty);
-            self::assertSame([], $empty->fetchAll(\PDO::FETCH_COLUMN));
+            self::assertSame([], $empty->fetchAll(PDO::FETCH_COLUMN));
 
             $first = $ztdPdo->query(
                 'SELECT id FROM sample_data TABLESAMPLE BERNOULLI (50) REPEATABLE (42) ORDER BY id',
@@ -54,7 +55,7 @@ final class TableSampleTest extends TestCase
             );
             self::assertNotFalse($first);
             self::assertNotFalse($second);
-            self::assertSame($first->fetchAll(\PDO::FETCH_COLUMN), $second->fetchAll(\PDO::FETCH_COLUMN));
+            self::assertSame($first->fetchAll(PDO::FETCH_COLUMN), $second->fetchAll(PDO::FETCH_COLUMN));
 
             $physical = $pdo->query('SELECT COUNT(*) FROM sample_data');
             self::assertNotFalse($physical);

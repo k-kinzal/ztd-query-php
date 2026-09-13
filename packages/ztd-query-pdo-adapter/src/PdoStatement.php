@@ -17,11 +17,19 @@ use ZtdQuery\Platform\ResultColumnTypeResolver;
  *
  * This class wraps a PDOStatement and provides the minimal interface
  * required by the ZTD session for executing statements and fetching results.
+ *
+ * @phpstan-type RowValue mixed
+ * @phpstan-type Row array<string, RowValue>
  */
 final class PdoStatement implements StatementInterface
 {
     private NativePdoStatement $statement;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param NativePdoStatement $statement
+     */
     public function __construct(NativePdoStatement $statement)
     {
         $this->statement = $statement;
@@ -51,7 +59,7 @@ final class PdoStatement implements StatementInterface
      */
     public function fetchAll(): array
     {
-        /** @var array<int, array<string, mixed>> $rows */
+        /** @var list<Row> $rows */
         $rows = $this->statement->fetchAll(PDO::FETCH_ASSOC);
 
         return $rows;

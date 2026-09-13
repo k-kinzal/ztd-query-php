@@ -4,41 +4,73 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Adapter\Pdo;
 
+use Closure;
 use PDO;
 use PDOStatement;
-use RuntimeException;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Session;
 
+/**
+ * Prepares one statement again for every set of parameters it is run with.
+ *
+ * What ZTD rewrites a statement into depends on the values bound to it: a
+ * shadow is built from the rows the parameters name, and a statement prepared
+ * once cannot carry a shadow built later. So the statement is rewritten and
+ * prepared afresh on each execute(), and this is what remembers enough about
+ * the original to do that.
+ */
 final class PdoPreparedExecution
 {
-    /** @param array<mixed> $options */
+    /** @var Closure(string): (PDOStatement|false) */
+    private readonly Closure $prepareStatement;
+
+    /**
+     * Binds the execution to the statement it will keep preparing.
+     *
+     * @param PDO $pdo Connection the rewritten statement is prepared on
+     * @param Session $session Session that rewrites the statement
+     * @param string $sql Statement as it was written
+     * @param array<mixed> $options Driver options, as PDO::prepare() takes them
+     * @param PdoParameterBinder $parameterBinder Binds the caller's parameters to the rewritten statement
+     *
+     */
     public function __construct(
-        private readonly PDO $pdo,
+        PDO $pdo,
         private readonly Session $session,
         private readonly string $sql,
-        private readonly array $options,
+        array $options = [],
         private readonly PdoParameterBinder $parameterBinder = new PdoParameterBinder(),
     ) {
+        $this->prepareStatement = static fn (string $query): PDOStatement|false => $pdo->prepare($query, $options);
     }
 
     /**
-     * @param array<int|string, mixed>|null $params
-     * @return array{statement: PDOStatement, plan: RewritePlan, params: array<int|string, mixed>|null}
+     * Rewrites the statement for these parameters and prepares it.
+     *
+     * @param array<int|string, mixed>|null $params Parameters the statement is about to be run with, or null for those already bound
+     *
+     * @return array{statement: PDOStatement, plan: RewritePlan, params: array<int|string, mixed>|null} The prepared statement, what ZTD will carry out, and the parameters as the rewrite left them
+     *
+     * @throws ZtdPdoException When the driver will not prepare the rewritten statement
      */
     public function prepare(?array $params): array
     {
         $plan = $this->session->rewrite($this->sql);
         $compiled = $this->session->parameterBindingCompiler()?->compile($plan->sql(), $params)
             ?? ['sql' => $plan->sql(), 'params' => $params];
-        $statement = $this->pdo->prepare($compiled['sql'], $this->options);
+        $statement = ($this->prepareStatement)($compiled['sql']);
         if ($statement === false) {
-            throw new RuntimeException('PDO failed to prepare rewritten SQL.');
+            throw new ZtdPdoException('PDO failed to prepare rewritten SQL.');
         }
 
         return ['statement' => $statement, 'plan' => $plan, 'params' => $compiled['params']];
     }
 
+    /**
+     * Answers what binds the caller's parameters to the rewritten statement.
+     *
+     * @return PdoParameterBinder The binder this execution was built with
+     */
     public function parameterBinder(): PdoParameterBinder
     {
         return $this->parameterBinder;

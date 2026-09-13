@@ -9,10 +9,8 @@ register_shutdown_function(static function (): void {
 });
 
 use Faker\Factory;
-use Fuzz\Container\MySql80Container;
 use Fuzz\Robustness\Target\ExecutionTarget;
 use SqlFaker\MySqlProvider;
-use Testcontainers\Testcontainers;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 use ZtdQuery\Config\UnknownSchemaBehavior;
 use ZtdQuery\Config\UnsupportedSqlBehavior;
@@ -22,18 +20,16 @@ use ZtdQuery\Platform\MySql\MySqlParser;
 use ZtdQuery\Platform\MySql\MySqlQueryGuard;
 use ZtdQuery\Platform\MySql\MySqlRewriter;
 use ZtdQuery\Platform\MySql\MySqlSchemaParser;
-use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
 use ZtdQuery\Platform\MySql\Transformer\DeleteTransformer;
 use ZtdQuery\Platform\MySql\Transformer\InsertTransformer;
+use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
 use ZtdQuery\Platform\MySql\Transformer\ReplaceTransformer;
 use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
 use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
 
-$instance = Testcontainers::run(MySql80Container::class);
-$port = $instance->getMappedPort(3306);
-$host = str_replace('localhost', '127.0.0.1', $instance->getHost());
+[$host, $port] = Fuzz\Container\DatabaseEndpoint::mysql();
 $dsn = "mysql:host=$host;port=$port;charset=utf8mb4";
 
 $rawPdo = new PDO($dsn, 'root', 'root', [
@@ -60,20 +56,6 @@ $rawPdo->exec('INSERT INTO order_items VALUES (1, 1, 2), (1, 2, 1), (2, 1, 3)');
 
 $rawPdo->exec('CREATE TABLE products (id INT PRIMARY KEY, name VARCHAR(255) NOT NULL, price DECIMAL(10,2), category VARCHAR(100))');
 $rawPdo->exec("INSERT INTO products VALUES (1, 'Widget', 19.99, 'tools'), (2, 'Gadget', 49.99, 'electronics')");
-
-$ztdPdo = new ZtdPdo($dbDsn, 'root', 'root', [
-    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-], new ZtdConfig(UnsupportedSqlBehavior::Ignore, UnknownSchemaBehavior::Exception));
-
-$ztdPdo->exec('CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255) NOT NULL, email VARCHAR(255), status VARCHAR(50))');
-$ztdPdo->exec("INSERT INTO users VALUES (1, 'Alice', 'alice@example.com', 'active'), (2, 'Bob', 'bob@example.com', 'pending'), (3, 'Charlie', NULL, 'active')");
-$ztdPdo->exec('CREATE TABLE orders (id INT PRIMARY KEY, user_id INT NOT NULL, amount DECIMAL(10,2), created_at DATETIME)');
-$ztdPdo->exec("INSERT INTO orders VALUES (1, 1, 100.00, '2024-01-01 00:00:00'), (2, 2, 250.50, '2024-01-02 12:30:00')");
-$ztdPdo->exec('CREATE TABLE order_items (order_id INT NOT NULL, product_id INT NOT NULL, quantity INT NOT NULL DEFAULT 1, PRIMARY KEY (order_id, product_id))');
-$ztdPdo->exec('INSERT INTO order_items VALUES (1, 1, 2), (1, 2, 1), (2, 1, 3)');
-$ztdPdo->exec('CREATE TABLE products (id INT PRIMARY KEY, name VARCHAR(255) NOT NULL, price DECIMAL(10,2), category VARCHAR(100))');
-$ztdPdo->exec("INSERT INTO products VALUES (1, 'Widget', 19.99, 'tools'), (2, 'Gadget', 49.99, 'electronics')");
 
 $parser = new MySqlParser();
 $schemaParser = new MySqlSchemaParser($parser);
@@ -124,8 +106,29 @@ $mutationResolver = new MySqlMutationResolver($shadowStore, $registry, $schemaPa
 $rewriter = new MySqlRewriter($guard, $shadowStore, $registry, $transformer, $mutationResolver, $parser);
 
 $faker = Factory::create();
-$provider = new MySqlProvider($faker, 'mysql-8.0.44');
-$target = new ExecutionTarget($faker, $provider, $rawPdo, $ztdPdo, $shadowStore, $rewriter, $guard);
+$version = getenv('MYSQL_VERSION') === '8.4.7' ? 'mysql-8.4.7' : 'mysql-8.0.44';
+$provider = new MySqlProvider($faker, $version);
+$factory = new Fuzz\Robustness\SharedSessionFactory($rewriter, $shadowStore, $registry);
+$initialShadow = $shadowStore->snapshot();
+$initialRegistry = $registry->snapshot();
 
-/** @var \PhpFuzzer\Config $config */
-$config->setTarget(\Closure::fromCallable($target));
+/** @var PhpFuzzer\Config $config */
+$config->setMaxLen(1024);
+$config->setTarget(static function (string $input) use ($faker, $provider, $rawPdo, $shadowStore, $registry, $rewriter, $guard, $factory, $initialShadow, $initialRegistry, $schemas): void {
+    $shadowStore->restore($initialShadow);
+    $registry->restore($initialRegistry);
+    $ztdPdo = ZtdPdo::fromPdo($rawPdo, new ZtdConfig(UnsupportedSqlBehavior::Ignore, UnknownSchemaBehavior::Exception), $factory);
+    $snapshots = [];
+    foreach (array_keys($schemas) as $table) {
+        $snapshots[$table] = Fuzz\Correctness\PhysicalTableSnapshot::capture($rawPdo, $table);
+    }
+    try {
+        (new ExecutionTarget($faker, $provider, $rawPdo, $ztdPdo, $shadowStore, $rewriter, $guard))($input);
+    } finally {
+        $shadowStore->restore($initialShadow);
+        $registry->restore($initialRegistry);
+        foreach ($snapshots as $table => $snapshot) {
+            Fuzz\Correctness\PhysicalTableSnapshot::assertUnchanged($rawPdo, $table, $snapshot, 'robustness input ' . bin2hex($input), crc32(str_pad($input, 4, "\0")));
+        }
+    }
+});

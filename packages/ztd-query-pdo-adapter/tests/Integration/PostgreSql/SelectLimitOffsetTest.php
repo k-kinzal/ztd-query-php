@@ -14,6 +14,8 @@ use ZtdQuery\Adapter\Pdo\ZtdPdo;
  * @requires extension pdo_pgsql
  * @group integration
  * @group postgres
+ *
+ * @phpstan-import-type Row from \ZtdQuery\Adapter\Pdo\PdoStatement
  */
 #[CoversNothing]
 #[Large]
@@ -34,12 +36,12 @@ final class SelectLimitOffsetTest extends TestCase
 
             $stmt = $rawPdo->query("SELECT * FROM {$table} ORDER BY id LIMIT 2");
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rawRows = $stmt->fetchAll();
 
             $stmt = $ztdPdo->query("SELECT * FROM {$table} ORDER BY id LIMIT 2");
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $ztdRows = $stmt->fetchAll();
 
             self::assertSame($rawRows, $ztdRows);
@@ -63,12 +65,12 @@ final class SelectLimitOffsetTest extends TestCase
 
             $stmt = $rawPdo->query("SELECT * FROM {$table} ORDER BY id LIMIT 2 OFFSET 2");
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rawRows = $stmt->fetchAll();
 
             $stmt = $ztdPdo->query("SELECT * FROM {$table} ORDER BY id LIMIT 2 OFFSET 2");
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $ztdRows = $stmt->fetchAll();
 
             self::assertSame($rawRows, $ztdRows);

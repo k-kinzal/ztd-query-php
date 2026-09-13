@@ -14,6 +14,8 @@ use ZtdQuery\Adapter\Pdo\ZtdPdo;
  * @requires extension pdo_pgsql
  * @group integration
  * @group postgres
+ *
+ * @phpstan-import-type Row from \ZtdQuery\Adapter\Pdo\PdoStatement
  */
 #[CoversNothing]
 #[Large]
@@ -34,7 +36,7 @@ final class DropTableTest extends TestCase
 
             $stmt = $ztdPdo->query("SELECT * FROM {$table}");
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rows = $stmt->fetchAll();
 
             self::assertCount(1, $rows);
@@ -43,7 +45,7 @@ final class DropTableTest extends TestCase
 
             $stmt = $rawPdo->query("SELECT * FROM {$table}");
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rawRows = $stmt->fetchAll();
 
             self::assertCount(1, $rawRows);

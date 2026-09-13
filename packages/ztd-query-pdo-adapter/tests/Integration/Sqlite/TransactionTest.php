@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Sqlite;
 
+use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -18,7 +19,7 @@ final class TransactionTest extends TestCase
 {
     public function testRollbackRestoresInsertUpdateAndDeleteTogether(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $rawPdo->exec('CREATE TABLE items (id INTEGER PRIMARY KEY, name TEXT)');
         $pdo = ZtdPdo::fromPdo($rawPdo);
         $pdo->exec("INSERT INTO items VALUES (1, 'one')");
@@ -35,12 +36,12 @@ final class TransactionTest extends TestCase
         self::assertSame([
             ['id' => 1, 'name' => 'one'],
             ['id' => 2, 'name' => 'two'],
-        ], $statement->fetchAll(\PDO::FETCH_ASSOC));
+        ], $statement->fetchAll(PDO::FETCH_ASSOC));
     }
 
     public function testRollbackToSavepointRestoresOnlyNestedMutations(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $rawPdo->exec('CREATE TABLE items (id INTEGER PRIMARY KEY, name TEXT)');
         $pdo = ZtdPdo::fromPdo($rawPdo);
         $pdo->exec("INSERT INTO items VALUES (1, 'one')");
@@ -58,12 +59,12 @@ final class TransactionTest extends TestCase
         self::assertSame([
             ['id' => 1, 'name' => 'one'],
             ['id' => 2, 'name' => 'two'],
-        ], $statement->fetchAll(\PDO::FETCH_ASSOC));
+        ], $statement->fetchAll(PDO::FETCH_ASSOC));
     }
 
     public function testSqlTransactionStatementsUseTheSameShadowSnapshots(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $rawPdo->exec('CREATE TABLE items (id INTEGER PRIMARY KEY, name TEXT)');
         $pdo = ZtdPdo::fromPdo($rawPdo);
 
@@ -73,12 +74,12 @@ final class TransactionTest extends TestCase
 
         $statement = $pdo->query('SELECT * FROM items');
         self::assertNotFalse($statement);
-        self::assertSame([], $statement->fetchAll(\PDO::FETCH_ASSOC));
+        self::assertSame([], $statement->fetchAll(PDO::FETCH_ASSOC));
     }
 
     public function testRollbackRestoresVirtualSchemaRegistry(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $pdo = ZtdPdo::fromPdo($rawPdo);
 
         $pdo->beginTransaction();
@@ -89,6 +90,6 @@ final class TransactionTest extends TestCase
 
         $statement = $pdo->query('SELECT * FROM virtual_items');
         self::assertNotFalse($statement);
-        self::assertSame([['id' => 1]], $statement->fetchAll(\PDO::FETCH_ASSOC));
+        self::assertSame([['id' => 1]], $statement->fetchAll(PDO::FETCH_ASSOC));
     }
 }

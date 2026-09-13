@@ -15,23 +15,23 @@ use ZtdQuery\Adapter\Pdo\PdoParameterType;
 #[UsesClass(PdoParameterType::class)]
 final class PdoParameterBinderTest extends TestCase
 {
-    public function testBindsExecuteArrayUsingPhpValueTypes(): void
+    public function testExecuteBindsEachValueAsTheKindPdoReadsItAs(): void
     {
         $pdo = new PDO('sqlite::memory:');
         $statement = $pdo->prepare('SELECT typeof(?), typeof(?), typeof(?)');
-        self::assertInstanceOf(\PDOStatement::class, $statement);
+        self::assertNotFalse($statement);
 
         self::assertTrue((new PdoParameterBinder())->execute($statement, [1, null, '1']));
         self::assertSame(['integer', 'null', 'text'], $statement->fetch(PDO::FETCH_NUM));
     }
 
-    public function testBindsEveryPhpValueTypeAndNormalizesNamedParameters(): void
+    public function testExecuteBindsEveryKindAndNamesEveryNamedPlaceholder(): void
     {
         $pdo = new PDO('sqlite::memory:');
         $statement = $pdo->prepare(
             'SELECT typeof(?), typeof(?), typeof(?), typeof(?), typeof(:name), typeof(:ratio)',
         );
-        self::assertInstanceOf(\PDOStatement::class, $statement);
+        self::assertNotFalse($statement);
         $resource = fopen('php://memory', 'r');
         self::assertIsResource($resource);
 
@@ -49,5 +49,23 @@ final class PdoParameterBinderTest extends TestCase
             $statement->fetch(PDO::FETCH_NUM),
         );
         fclose($resource);
+    }
+    public function testExecuteRunsWhatIsAlreadyBoundWhereItIsGivenNothing(): void
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $statement = $pdo->prepare('SELECT 1');
+        self::assertNotFalse($statement);
+
+        self::assertTrue((new PdoParameterBinder())->execute($statement, null));
+    }
+
+    public function testParameterNameWritesAPlainNameAsAPlaceholder(): void
+    {
+        self::assertSame(':name', (new PdoParameterBinder())->parameterName('name'));
+    }
+
+    public function testParameterNameLeavesANameThatIsAlreadyAPlaceholderAlone(): void
+    {
+        self::assertSame(':name', (new PdoParameterBinder())->parameterName(':name'));
     }
 }

@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Tests\Integration\MySql\Pdo\CreateOther;
 
 use Tests\Support\MySqlIntegrationTestCase;
+use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 use ZtdQuery\Config\UnsupportedSqlBehavior;
 use ZtdQuery\Config\ZtdConfig;
-use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 
 final class CreateResourceGroupTest extends MySqlIntegrationTestCase
 {
@@ -19,7 +19,7 @@ final class CreateResourceGroupTest extends MySqlIntegrationTestCase
 
         $this->expectException(ZtdPdoException::class);
 
-        $ztdPdo->exec("CREATE RESOURCE GROUP test_rg TYPE=USER");
+        $ztdPdo->exec('CREATE RESOURCE GROUP test_rg TYPE=USER');
     }
 
     public function testCreateResourceGroupIsIgnoredInIgnoreMode(): void
@@ -28,7 +28,7 @@ final class CreateResourceGroupTest extends MySqlIntegrationTestCase
             unsupportedBehavior: UnsupportedSqlBehavior::Ignore
         ));
 
-        $result = $ztdPdo->exec("CREATE RESOURCE GROUP test_rg TYPE=USER");
+        $result = $ztdPdo->exec('CREATE RESOURCE GROUP test_rg TYPE=USER');
 
         $this->assertSame(0, $result);
     }
@@ -49,7 +49,7 @@ final class CreateResourceGroupTest extends MySqlIntegrationTestCase
         }, E_USER_NOTICE);
 
         try {
-            $result = $ztdPdo->exec("CREATE RESOURCE GROUP test_rg TYPE=USER");
+            $result = $ztdPdo->exec('CREATE RESOURCE GROUP test_rg TYPE=USER');
 
             $this->assertSame(0, $result);
             $this->assertCount(1, $capturedNotices);

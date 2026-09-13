@@ -14,6 +14,8 @@ use ZtdQuery\Adapter\Pdo\ZtdPdo;
  * @requires extension pdo_pgsql
  * @group integration
  * @group postgres
+ *
+ * @phpstan-import-type Row from \ZtdQuery\Adapter\Pdo\PdoStatement
  */
 #[CoversNothing]
 #[Large]
@@ -34,12 +36,12 @@ final class SelectDistinctTest extends TestCase
 
             $stmt = $rawPdo->query("SELECT DISTINCT category FROM {$table} ORDER BY category");
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rawRows = $stmt->fetchAll();
 
             $stmt = $ztdPdo->query("SELECT DISTINCT category FROM {$table} ORDER BY category");
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $ztdRows = $stmt->fetchAll();
 
             self::assertSame($rawRows, $ztdRows);

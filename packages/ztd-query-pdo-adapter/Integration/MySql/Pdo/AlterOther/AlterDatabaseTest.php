@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace Tests\Integration\MySql\Pdo\AlterOther;
 
 use Tests\Support\MySqlIntegrationTestCase;
+use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 use ZtdQuery\Config\UnsupportedSqlBehavior;
 use ZtdQuery\Config\ZtdConfig;
-use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 
 final class AlterDatabaseTest extends MySqlIntegrationTestCase
 {
@@ -19,7 +19,7 @@ final class AlterDatabaseTest extends MySqlIntegrationTestCase
 
         $this->expectException(ZtdPdoException::class);
 
-        $ztdPdo->exec("ALTER DATABASE CHARACTER SET utf8mb4");
+        $ztdPdo->exec('ALTER DATABASE CHARACTER SET utf8mb4');
     }
 
     public function testAlterDatabaseIsIgnoredInIgnoreMode(): void
@@ -28,7 +28,7 @@ final class AlterDatabaseTest extends MySqlIntegrationTestCase
             unsupportedBehavior: UnsupportedSqlBehavior::Ignore
         ));
 
-        $result = $ztdPdo->exec("ALTER DATABASE CHARACTER SET utf8mb4");
+        $result = $ztdPdo->exec('ALTER DATABASE CHARACTER SET utf8mb4');
 
         $this->assertSame(0, $result);
     }
@@ -49,7 +49,7 @@ final class AlterDatabaseTest extends MySqlIntegrationTestCase
         }, E_USER_NOTICE);
 
         try {
-            $result = $ztdPdo->exec("ALTER DATABASE CHARACTER SET utf8mb4");
+            $result = $ztdPdo->exec('ALTER DATABASE CHARACTER SET utf8mb4');
 
             $this->assertSame(0, $result);
             $this->assertCount(1, $capturedNotices);

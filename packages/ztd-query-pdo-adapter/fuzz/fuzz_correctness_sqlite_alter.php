@@ -17,5 +17,6 @@ $faker = Factory::create();
 $harness = new SqliteCorrectnessHarness();
 $target = new AlterCorrectnessTarget($harness, $faker, new ResultComparator());
 
-/** @var \PhpFuzzer\Config $config */
-$config->setTarget(\Closure::fromCallable($target));
+/** @var PhpFuzzer\Config $config */
+$config->setMaxLen(1024);
+$config->setTarget(Closure::fromCallable($target));
