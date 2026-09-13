@@ -58,7 +58,8 @@ final class MysqliPropertyReaderTest extends TestCase
             $error = $connection->connect_error;
             self::assertIsString($error);
             self::assertNotSame('', $error);
-            self::assertSame(1045, $reader->read($connection, 'connect_errno'));
+            self::assertGreaterThan(0, $connection->connect_errno);
+            self::assertSame($connection->connect_errno, $reader->read($connection, 'connect_errno'));
             self::assertSame($error, $reader->read($connection, 'connect_error'));
         } finally {
             mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);

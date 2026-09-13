@@ -48,7 +48,7 @@ use ZtdQuery\Sql\TransactionStatement;
 #[UsesClass(MysqliResultColumnExtractor::class)]
 final class ZtdMysqliTest extends TestCase
 {
-    public function testConstructorUsesTheProvidedFactoryAndConfiguration(): void
+    public function testQueryUsesTheProvidedFactoryAndConfiguration(): void
     {
         $host = getenv('ZTD_TEST_MYSQL_HOST');
         $port = getenv('ZTD_TEST_MYSQL_PORT');
