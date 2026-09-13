@@ -73,7 +73,8 @@ normal unit/doctest suite.
 ## Public API documentation
 
 `PgSqlSessionFactory` is the adapter entry point. The parser, query guard,
-rewriter, schema parser, error classifier, identifier quoter and value renderer
+rewriter, schema parser, error classifier, identifier quoter, value renderer and
+structured conflict target
 also expose documented contracts for custom composition. Their public entry
 points carry `@visibility public` and runnable PHPDoc examples. Internal helpers
 retain their package visibility. Existing production class names and method

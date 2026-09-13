@@ -100,7 +100,7 @@ final class PgSqlParser
      * Parses ON CONFLICT columns, predicates, or a named constraint.
      * @visibility public
      * @example Parses ON CONFLICT columns, predicates, or a named constraint
-     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->extractOnConflictTarget('INSERT INTO users VALUES (1)') // => null
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->extractOnConflictTarget('INSERT INTO users VALUES (1) ON CONFLICT (id) DO NOTHING')?->columns // => ['id']
      */
     public function extractOnConflictTarget(string $sql): ?PgSqlConflictTarget
     {
@@ -266,7 +266,7 @@ final class PgSqlParser
     /**
      * @return list<string>
      * @visibility public
-     * @example @return list<string>
+     * @example Extract every table in a TRUNCATE statement
      *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->extractTruncateTables('TRUNCATE TABLE users, archive') // => ['users', 'archive']
      */
     public function extractTruncateTables(string $sql): array

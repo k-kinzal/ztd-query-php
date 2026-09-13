@@ -11,6 +11,12 @@ use ZtdQuery\Schema\PartialUniqueIndex;
 
 /**
  * Structured ON CONFLICT arbiter target.
+ *
+ * @visibility public
+ * @example Represent a column-based conflict target
+ *     $target = new \ZtdQuery\Platform\Postgres\PgSqlConflictTarget(true, ['id']);
+ *     $target->columns // => ['id']
+ *     $target->constraint // => null
  */
 final class PgSqlConflictTarget
 {
@@ -33,6 +39,13 @@ final class PgSqlConflictTarget
      * @param array<string, PartialUniqueIndex> $partialIndexes
      * @return array{keys: CandidateKeySet, predicate: string|null}
      * @throws UnsupportedSqlException
+     * @visibility public
+     * @example Resolve a conflict target against the catalog's candidate keys
+     *     $target = new \ZtdQuery\Platform\Postgres\PgSqlConflictTarget(true, ['id']);
+     *     $keys = new \ZtdQuery\Schema\CandidateKeySet(['users_pkey' => ['id'], 'users_email_key' => ['email']]);
+     *     $resolved = $target->resolve($keys, [], 'INSERT INTO users VALUES (1) ON CONFLICT (id) DO NOTHING');
+     *     $resolved['keys']->keys() // => ['users_pkey' => ['id']]
+     *     $resolved['predicate'] // => null
      */
     public function resolve(CandidateKeySet $candidateKeys, array $partialIndexes, string $sql): array
     {
