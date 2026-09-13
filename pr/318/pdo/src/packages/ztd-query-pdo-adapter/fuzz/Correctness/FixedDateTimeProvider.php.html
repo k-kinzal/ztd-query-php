@@ -54,7 +54,7 @@
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">date</span>(<span class="tok-id">string</span> <span class="tok-var">$format</span> = <span class="tok-str">&#039;Y-m-d&#039;</span>): <span class="tok-id">string</span></span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a>    {</span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>        <span class="tok-kw">return</span> <span class="tok-id">NativeDateTimeProvider</span>::<span class="tok-id">date</span>(<span class="tok-var">$format</span>, <span class="tok-num">1577836800</span>);</span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>        <span class="tok-kw">return</span> <span class="tok-id">NativeDateTimeProvider</span>::<span class="tok-id">dateTime</span>(<span class="tok-num">1577836800</span>, <span class="tok-str">&#039;UTC&#039;</span>)-&gt;<span class="tok-id">format</span>(<span class="tok-var">$format</span>);</span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>    }</span>
 <span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a></span>
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>    <span class="tok-com">/**</span></span>
@@ -62,7 +62,7 @@
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">time</span>(<span class="tok-id">string</span> <span class="tok-var">$format</span> = <span class="tok-str">&#039;H:i:s&#039;</span>): <span class="tok-id">string</span></span>
 <span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>    {</span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>        <span class="tok-kw">return</span> <span class="tok-id">NativeDateTimeProvider</span>::<span class="tok-id">time</span>(<span class="tok-var">$format</span>, <span class="tok-num">1577836800</span>);</span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>        <span class="tok-kw">return</span> <span class="tok-id">NativeDateTimeProvider</span>::<span class="tok-id">dateTime</span>(<span class="tok-num">1577836800</span>, <span class="tok-str">&#039;UTC&#039;</span>)-&gt;<span class="tok-id">format</span>(<span class="tok-var">$format</span>);</span>
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>    }</span>
 <span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a></span>
 <span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>    <span class="tok-com">/**</span></span>
