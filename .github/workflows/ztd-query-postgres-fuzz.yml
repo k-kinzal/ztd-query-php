@@ -47,10 +47,15 @@ jobs:
           extensions: dom, mbstring, pcntl, pdo, xml, xmlwriter
           coverage: none
 
+      - name: Validate the Composer manifest
+        run: composer validate --strict --no-check-all --no-check-publish
+
       - name: Install dependencies
         uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
           working-directory: packages/ztd-query-postgres
+          dependency-versions: locked
+          require-lock-file: true
           composer-options: --prefer-dist
 
       - name: Check installed platform requirements
@@ -72,9 +77,17 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: packages/ztd-query-postgres/fuzz/corpus/${{ matrix.target.corpus }}
-          key: fuzz-ztd-query-postgres-v2-${{ matrix.target.corpus }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: fuzz-ztd-query-postgres-v3-${{ matrix.target.corpus }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            fuzz-ztd-query-postgres-v2-${{ matrix.target.corpus }}-
+            fuzz-ztd-query-postgres-v3-${{ matrix.target.corpus }}-
+
+      - name: Restore SQLFaker grammar coverage
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: packages/ztd-query-postgres/fuzz/coverage/${{ matrix.target.name }}
+          key: postgres-grammar-pg-17.2-${{ matrix.target.name }}-${{ hashFiles('packages/sql-faker/src/**', 'packages/sql-faker/resources/**') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            postgres-grammar-pg-17.2-${{ matrix.target.name }}-${{ hashFiles('packages/sql-faker/src/**', 'packages/sql-faker/resources/**') }}-
 
       - name: Run PHP-Fuzzer
         env:
@@ -93,7 +106,14 @@ jobs:
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: packages/ztd-query-postgres/fuzz/corpus/${{ matrix.target.corpus }}
-          key: fuzz-ztd-query-postgres-v2-${{ matrix.target.corpus }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: fuzz-ztd-query-postgres-v3-${{ matrix.target.corpus }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Save SQLFaker grammar coverage
+        if: always()
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: packages/ztd-query-postgres/fuzz/coverage/${{ matrix.target.name }}
+          key: postgres-grammar-pg-17.2-${{ matrix.target.name }}-${{ hashFiles('packages/sql-faker/src/**', 'packages/sql-faker/resources/**') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Upload crash inputs
         if: ${{ always() && hashFiles('packages/ztd-query-postgres/crash-*') != '' }}
@@ -108,7 +128,9 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: postgres-fuzz-${{ matrix.target.name }}
-          path: packages/ztd-query-postgres/build/fuzz/
+          path: |
+            packages/ztd-query-postgres/build/fuzz/
+            packages/ztd-query-postgres/fuzz/coverage/${{ matrix.target.name }}/
           if-no-files-found: ignore
 
   notify:
@@ -141,7 +163,7 @@ jobs:
               labels: 'fuzz',
               state: 'open'
             });
-            if (issues.length > 0) {
+            if (issues.some(({ title }) => title === 'Fuzz: Crash detected (ztd-query-postgres)')) {
               console.log('Open fuzz issue already exists, skipping creation');
               return;
             }
@@ -149,6 +171,6 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: `Fuzz: Crash detected (ztd-query-postgres)`,
-              body: `Fuzzing found a crash.\n\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nCheck the uploaded artifacts for crash details.`,
+              body: `Fuzzing found a crash.\n\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nDownload the crash and log artifacts, check out commit ${context.sha}, and follow packages/ztd-query-postgres/fuzz/README.md to replay the input with the named target.`,
               labels: ['bug', 'fuzz']
             });

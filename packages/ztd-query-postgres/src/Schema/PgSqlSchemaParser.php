@@ -11,6 +11,10 @@ use ZtdQuery\Schema\TableDefinition;
  * PostgreSQL implementation of SchemaParser.
  *
  * Parses CREATE TABLE statements into structured schema metadata.
+ *
+ * @visibility public
+ * @example Read primary keys from table DDL
+ *     (new \ZtdQuery\Platform\Postgres\PgSqlSchemaParser())->parse('CREATE TABLE users (id INTEGER PRIMARY KEY)')?->primaryKeys // => ['id']
  */
 final class PgSqlSchemaParser implements SchemaParser
 {

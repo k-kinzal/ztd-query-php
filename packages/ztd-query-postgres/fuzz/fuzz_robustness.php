@@ -1,16 +1,34 @@
 <?php
 
-declare (strict_types=1);
+declare(strict_types=1);
+
 use Faker\Factory;
-use Fuzz\Robustness\Target\RobustnessTarget;
+use Fuzz\Input\SqlInput;
+use Fuzz\RewriteCheck;
+use SqlFaker\Generation\Coverage\GrammarCoverage;
 use SqlFaker\PostgreSqlProvider;
 
-$faker = Factory::create();
-$provider = new PostgreSqlProvider($faker);
-$target = new RobustnessTarget($faker, $provider);
-/**
- * @var PhpFuzzer\Config $config
- */
+register_shutdown_function(static function (): void {
+    if (function_exists('pcntl_alarm')) {
+        pcntl_alarm(0);
+    }
+});
+
+$coverage = getenv('SQLFAKER_COVERAGE') === '0' ? null : new GrammarCoverage(__DIR__ . '/coverage/full');
+$input = new SqlInput(new PostgreSqlProvider(Factory::create(), 'pg-17.2', $coverage));
+/** @var PhpFuzzer\Config $config */
 $config->setAllowedExceptions([]);
-$config->setMaxLen(4096);
-$config->setTarget(Closure::fromCallable($target));
+$config->setMaxLen(20005);
+$config->setTarget(static function (string $bytes) use ($input): void {
+    $sql = '';
+    $completed = false;
+    try {
+        $sql = $input->generate($bytes);
+        (new RewriteCheck())->verify($sql, true);
+        $completed = true;
+    } finally {
+        if (!$completed) {
+            fwrite(STDERR, "PostgreSQL grammar: pg-17.2\nInput (hex): " . bin2hex($bytes) . "\nSQL:\n" . $sql . "\n");
+        }
+    }
+});

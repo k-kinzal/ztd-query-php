@@ -20,11 +20,32 @@ use ZtdQuery\Sql\TransactionStatement;
  *
  * Orchestrates parsing, classification, transformation, and mutation resolution.
  * Uses Result Select Query approach (not RETURNING) for consistency across platforms.
+ *
+ * @visibility public
+ * @example Compose a rewriter for an empty catalog
+ *     $parser = new \ZtdQuery\Platform\Postgres\PgSqlParser();
+ *     $store = new \ZtdQuery\Shadow\ShadowStore();
+ *     $registry = new \ZtdQuery\Schema\TableDefinitionRegistry();
+ *     $select = new \ZtdQuery\Platform\Postgres\Transformer\SelectTransformer();
+ *     $transformer = new \ZtdQuery\Platform\Postgres\PgSqlTransformer($parser, $select, new \ZtdQuery\Platform\Postgres\Transformer\InsertTransformer($parser, $select), new \ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer($parser, $select), new \ZtdQuery\Platform\Postgres\Transformer\DeleteTransformer($parser, $select));
+ *     $resolver = new \ZtdQuery\Platform\Postgres\PgSqlMutationResolver($store, $registry, new \ZtdQuery\Platform\Postgres\PgSqlSchemaParser(), $parser);
+ *     $rewriter = new \ZtdQuery\Platform\Postgres\PgSqlRewriter(new \ZtdQuery\Platform\Postgres\PgSqlQueryGuard($parser), $store, $registry, $transformer, $resolver, $parser);
+ *     $rewriter->rewrite('SELECT 1')->sql() // => 'SELECT 1'
  */
 final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
 {
     /**
      * Parses a transaction control statement into a shadow transaction operation.
+     * @visibility public
+     * @example Ignore nontransaction statements
+     *     $parser = new \ZtdQuery\Platform\Postgres\PgSqlParser();
+     *     $store = new \ZtdQuery\Shadow\ShadowStore();
+     *     $registry = new \ZtdQuery\Schema\TableDefinitionRegistry();
+     *     $select = new \ZtdQuery\Platform\Postgres\Transformer\SelectTransformer();
+     *     $transformer = new \ZtdQuery\Platform\Postgres\PgSqlTransformer($parser, $select, new \ZtdQuery\Platform\Postgres\Transformer\InsertTransformer($parser, $select), new \ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer($parser, $select), new \ZtdQuery\Platform\Postgres\Transformer\DeleteTransformer($parser, $select));
+     *     $resolver = new \ZtdQuery\Platform\Postgres\PgSqlMutationResolver($store, $registry, new \ZtdQuery\Platform\Postgres\PgSqlSchemaParser(), $parser);
+     *     $rewriter = new \ZtdQuery\Platform\Postgres\PgSqlRewriter(new \ZtdQuery\Platform\Postgres\PgSqlQueryGuard($parser), $store, $registry, $transformer, $resolver, $parser);
+     *     $rewriter->transactionStatement('SELECT 1') // => null
      */
     public function transactionStatement(string $sql): ?TransactionStatement
     {
@@ -71,6 +92,18 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
      *
      * @throws UnsupportedSqlException When SQL is empty, unparseable, or multi-statement.
      * @throws UnknownSchemaException When SQL references unknown tables/columns.
+     * @visibility public
+     * @example Rewrite a constant read
+     *     $parser = new \ZtdQuery\Platform\Postgres\PgSqlParser();
+     *     $store = new \ZtdQuery\Shadow\ShadowStore();
+     *     $registry = new \ZtdQuery\Schema\TableDefinitionRegistry();
+     *     $select = new \ZtdQuery\Platform\Postgres\Transformer\SelectTransformer();
+     *     $transformer = new \ZtdQuery\Platform\Postgres\PgSqlTransformer($parser, $select, new \ZtdQuery\Platform\Postgres\Transformer\InsertTransformer($parser, $select), new \ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer($parser, $select), new \ZtdQuery\Platform\Postgres\Transformer\DeleteTransformer($parser, $select));
+     *     $resolver = new \ZtdQuery\Platform\Postgres\PgSqlMutationResolver($store, $registry, new \ZtdQuery\Platform\Postgres\PgSqlSchemaParser(), $parser);
+     *     $rewriter = new \ZtdQuery\Platform\Postgres\PgSqlRewriter(new \ZtdQuery\Platform\Postgres\PgSqlQueryGuard($parser), $store, $registry, $transformer, $resolver, $parser);
+     *     $plan = $rewriter->rewrite('SELECT 1');
+     *     $plan->sql() // => 'SELECT 1'
+     *     $plan->kind() === \ZtdQuery\Rewrite\QueryKind::READ // => true
      */
     public function rewrite(string $sql): RewritePlan
     {
@@ -96,6 +129,16 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
      *
      * @throws UnsupportedSqlException When SQL is empty or unparseable.
      * @throws UnknownSchemaException When SQL references unknown tables/columns.
+     * @visibility public
+     * @example Build ordered plans for multiple reads
+     *     $parser = new \ZtdQuery\Platform\Postgres\PgSqlParser();
+     *     $store = new \ZtdQuery\Shadow\ShadowStore();
+     *     $registry = new \ZtdQuery\Schema\TableDefinitionRegistry();
+     *     $select = new \ZtdQuery\Platform\Postgres\Transformer\SelectTransformer();
+     *     $transformer = new \ZtdQuery\Platform\Postgres\PgSqlTransformer($parser, $select, new \ZtdQuery\Platform\Postgres\Transformer\InsertTransformer($parser, $select), new \ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer($parser, $select), new \ZtdQuery\Platform\Postgres\Transformer\DeleteTransformer($parser, $select));
+     *     $resolver = new \ZtdQuery\Platform\Postgres\PgSqlMutationResolver($store, $registry, new \ZtdQuery\Platform\Postgres\PgSqlSchemaParser(), $parser);
+     *     $rewriter = new \ZtdQuery\Platform\Postgres\PgSqlRewriter(new \ZtdQuery\Platform\Postgres\PgSqlQueryGuard($parser), $store, $registry, $transformer, $resolver, $parser);
+     *     count($rewriter->rewriteMultiple('SELECT 1; SELECT 2')->plans()) // => 2
      */
     public function rewriteMultiple(string $sql): MultiRewritePlan
     {
@@ -119,6 +162,16 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
 
     /**
      * {@inheritDoc}
+     * @visibility public
+     * @example Keep statement delimiters inside strings
+     *     $parser = new \ZtdQuery\Platform\Postgres\PgSqlParser();
+     *     $store = new \ZtdQuery\Shadow\ShadowStore();
+     *     $registry = new \ZtdQuery\Schema\TableDefinitionRegistry();
+     *     $select = new \ZtdQuery\Platform\Postgres\Transformer\SelectTransformer();
+     *     $transformer = new \ZtdQuery\Platform\Postgres\PgSqlTransformer($parser, $select, new \ZtdQuery\Platform\Postgres\Transformer\InsertTransformer($parser, $select), new \ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer($parser, $select), new \ZtdQuery\Platform\Postgres\Transformer\DeleteTransformer($parser, $select));
+     *     $resolver = new \ZtdQuery\Platform\Postgres\PgSqlMutationResolver($store, $registry, new \ZtdQuery\Platform\Postgres\PgSqlSchemaParser(), $parser);
+     *     $rewriter = new \ZtdQuery\Platform\Postgres\PgSqlRewriter(new \ZtdQuery\Platform\Postgres\PgSqlQueryGuard($parser), $store, $registry, $transformer, $resolver, $parser);
+     *     $rewriter->splitStatements("SELECT ';'; SELECT 2") // => ["SELECT ';'", 'SELECT 2']
      */
     public function splitStatements(string $sql): array
     {
@@ -127,6 +180,18 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
 
     /**
      * Commits staged generated identity values after a successful rewrite.
+     * @visibility public
+     * @example Commit after a successful read
+     *     $parser = new \ZtdQuery\Platform\Postgres\PgSqlParser();
+     *     $store = new \ZtdQuery\Shadow\ShadowStore();
+     *     $registry = new \ZtdQuery\Schema\TableDefinitionRegistry();
+     *     $select = new \ZtdQuery\Platform\Postgres\Transformer\SelectTransformer();
+     *     $transformer = new \ZtdQuery\Platform\Postgres\PgSqlTransformer($parser, $select, new \ZtdQuery\Platform\Postgres\Transformer\InsertTransformer($parser, $select), new \ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer($parser, $select), new \ZtdQuery\Platform\Postgres\Transformer\DeleteTransformer($parser, $select));
+     *     $resolver = new \ZtdQuery\Platform\Postgres\PgSqlMutationResolver($store, $registry, new \ZtdQuery\Platform\Postgres\PgSqlSchemaParser(), $parser);
+     *     $rewriter = new \ZtdQuery\Platform\Postgres\PgSqlRewriter(new \ZtdQuery\Platform\Postgres\PgSqlQueryGuard($parser), $store, $registry, $transformer, $resolver, $parser);
+     *     $rewriter->rewrite('SELECT 1');
+     *     $rewriter->commitRewriteState();
+     *     $rewriter->rewrite('SELECT 2')->sql() // => 'SELECT 2'
      */
     public function commitRewriteState(): void
     {
@@ -135,6 +200,16 @@ final class PgSqlRewriter implements SqlRewriter, RewriteStateCommitter
 
     /**
      * Returns a PostgreSQL SELECT that produces no rows.
+     * @visibility public
+     * @example Produce an empty result query
+     *     $parser = new \ZtdQuery\Platform\Postgres\PgSqlParser();
+     *     $store = new \ZtdQuery\Shadow\ShadowStore();
+     *     $registry = new \ZtdQuery\Schema\TableDefinitionRegistry();
+     *     $select = new \ZtdQuery\Platform\Postgres\Transformer\SelectTransformer();
+     *     $transformer = new \ZtdQuery\Platform\Postgres\PgSqlTransformer($parser, $select, new \ZtdQuery\Platform\Postgres\Transformer\InsertTransformer($parser, $select), new \ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer($parser, $select), new \ZtdQuery\Platform\Postgres\Transformer\DeleteTransformer($parser, $select));
+     *     $resolver = new \ZtdQuery\Platform\Postgres\PgSqlMutationResolver($store, $registry, new \ZtdQuery\Platform\Postgres\PgSqlSchemaParser(), $parser);
+     *     $rewriter = new \ZtdQuery\Platform\Postgres\PgSqlRewriter(new \ZtdQuery\Platform\Postgres\PgSqlQueryGuard($parser), $store, $registry, $transformer, $resolver, $parser);
+     *     $rewriter->emptyResultSelect() // => 'SELECT 1 WHERE FALSE'
      */
     public function emptyResultSelect(): string
     {

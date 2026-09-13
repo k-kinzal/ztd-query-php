@@ -8,6 +8,10 @@ use ZtdQuery\Platform\IdentifierQuoter;
 
 /**
  * PostgreSQL identifier quoting using double quotes.
+ *
+ * @visibility public
+ * @example Quote reserved identifiers
+ *     (new \ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter())->quote('select') // => '"select"'
  */
 final class PgSqlIdentifierQuoter implements IdentifierQuoter
 {

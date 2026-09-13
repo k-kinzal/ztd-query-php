@@ -245,4 +245,13 @@ final class ConflictClause
 
         return new PgSqlConflictTarget(true, $columns, $predicate);
     }
+
+    /**
+     * Check if INSERT has ON CONFLICT clause.
+     */
+    public function hasOnConflict(string $sql): bool
+    {
+        $sql = \ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker::maskComments($sql);
+        return preg_match('/\bON\s+CONFLICT\b/i', $sql) === 1;
+    }
 }

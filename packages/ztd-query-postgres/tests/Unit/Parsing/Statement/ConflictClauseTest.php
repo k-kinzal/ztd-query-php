@@ -12,6 +12,9 @@ use PHPUnit\Framework\TestCase;
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Statement\Identifiers::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\PgSqlConflictTarget::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Sql\Lexing\CommentSpan::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Sql\Lexing\QuotedSpan::class)]
 final class ConflictClauseTest extends TestCase
 {
     public function testExtractOnConflictTarget(): void
@@ -92,5 +95,12 @@ final class ConflictClauseTest extends TestCase
         self::assertNotNull($target);
         self::assertSame(['id'], $target->columns);
         self::assertSame('active', $target->predicate);
+    }
+
+    public function testHasOnConflictIgnoresCommentedClauses(): void
+    {
+        $parser = new \ZtdQuery\Platform\Postgres\Parsing\Statement\ConflictClause();
+        self::assertSame(true, $parser->hasOnConflict('INSERT INTO users VALUES (1) ON CONFLICT DO NOTHING'));
+        self::assertSame(false, $parser->hasOnConflict('INSERT INTO users VALUES (1) /* ON CONFLICT DO NOTHING */'));
     }
 }

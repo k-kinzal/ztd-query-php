@@ -138,4 +138,21 @@ final class Classification
 
         return ['keyword' => $result, 'end' => $j];
     }
+
+    /**
+     * Classify a SQL statement type.
+     *
+     * @return 'SELECT'|'INSERT'|'UPDATE'|'DELETE'|'MERGE'|'TRUNCATE'|'CREATE_TABLE'|'DROP_TABLE'|'ALTER_TABLE'|'DO'|'TCL'|null
+     *
+     */
+    public function classifyStatement(string $sql): ?string
+    {
+        $trimmed = PostgreSqlLexicalMasker::maskComments($sql);
+
+        if (preg_match('/^\s*WITH\b/i', $trimmed) === 1) {
+            return $this->classifyWithStatement($trimmed);
+        }
+
+        return $this->classifySimpleStatement($trimmed);
+    }
 }

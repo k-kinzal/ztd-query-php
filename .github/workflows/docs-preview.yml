@@ -57,10 +57,17 @@ jobs:
           composer-options: --prefer-dist
           require-lock-file: true
 
+      - name: Select the PostgreSQL PHP 8.3 dependency graph
+        run: |
+          composer --working-dir=packages/ztd-query-postgres config platform.php 8.3.0
+          cp packages/ztd-query-postgres/composer.lock.php-8.3 packages/ztd-query-postgres/composer.lock
+
       - name: Install PostgreSQL package dependencies
         uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
           working-directory: packages/ztd-query-postgres
+          dependency-versions: locked
+          require-lock-file: true
           composer-options: --prefer-dist
 
       - name: Check installed platform requirements
@@ -81,9 +88,9 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: packages/ztd-query-postgres/build/docgen-cache
-          key: postgres-docgen-${{ runner.os }}-${{ hashFiles('packages/ztd-query-postgres/composer.json') }}-${{ github.sha }}
+          key: postgres-docgen-${{ runner.os }}-${{ hashFiles('packages/ztd-query-postgres/composer.lock.php-8.3') }}-${{ github.sha }}
           restore-keys: |
-            postgres-docgen-${{ runner.os }}-${{ hashFiles('packages/ztd-query-postgres/composer.json') }}-
+            postgres-docgen-${{ runner.os }}-${{ hashFiles('packages/ztd-query-postgres/composer.lock.php-8.3') }}-
             postgres-docgen-${{ runner.os }}-
 
       - name: Generate the coverage report the preview reads

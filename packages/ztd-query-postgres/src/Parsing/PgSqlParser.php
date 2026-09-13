@@ -14,6 +14,10 @@ use ZtdQuery\Sql\SqlTokenStream;
  *
  * Uses regex + recursive descent hybrid approach to extract structural
  * information without a full PostgreSQL grammar parser.
+ *
+ * @visibility public
+ * @example Identify a SELECT statement
+ *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->classifyStatement('SELECT 1') // => 'SELECT'
  */
 final class PgSqlParser
 {
@@ -28,19 +32,16 @@ final class PgSqlParser
      */
     public function classifyStatement(string $sql): ?string
     {
-        $trimmed = PostgreSqlLexicalMasker::maskComments($sql);
-
-        if (preg_match('/^\s*WITH\b/i', $trimmed) === 1) {
-            return (new Parsing\Statement\Classification())->classifyWithStatement($trimmed);
-        }
-
-        return (new Parsing\Statement\Classification())->classifySimpleStatement($trimmed);
+        return (new Parsing\Statement\Classification())->classifyStatement($sql);
     }
 
     /**
      * Split SQL string into individual statements.
      *
      * @return list<string>
+     * @visibility public
+     * @example Split SQL string into individual statements
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->splitStatements("SELECT ';'; SELECT 2") // => ["SELECT ';'", 'SELECT 2']
      */
     public function splitStatements(string $sql): array
     {
@@ -49,36 +50,35 @@ final class PgSqlParser
 
     /**
      * Extract table name from INSERT statement.
+     * @visibility public
+     * @example Extract table name from INSERT statement
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->extractInsertTable('INSERT INTO public.users (id) VALUES (1)') // => 'users'
      */
     public function extractInsertTable(string $sql): ?string
     {
-        $sql = PostgreSqlLexicalMasker::maskComments($sql);
-        if (preg_match('/INSERT\s+INTO\s+(?:ONLY\s+)?("[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)(?:\s+AS\s+"?(\w+)"?)?/i', $sql, $m) === 1) {
-            return (new Parsing\Statement\Identifiers())->unquoteIdentifier((new Parsing\Statement\Identifiers())->stripSchemaPrefix($m[1]));
-        }
-
-        return null;
+        return (new Parsing\Statement\Identifiers())->extractInsertTable($sql);
     }
 
     /**
      * Extract column list from INSERT statement.
      *
      * @return list<string>
+     * @visibility public
+     * @example Extract column list from INSERT statement
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->extractInsertColumns('INSERT INTO users (id, name) VALUES (1, NULL)') // => ['id', 'name']
      */
     public function extractInsertColumns(string $sql): array
     {
-        $sql = PostgreSqlLexicalMasker::maskComments($sql);
-        if (preg_match('/INSERT\s+INTO\s+(?:ONLY\s+)?(?:"[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)\s*\(([^)]+)\)\s*(?:VALUES|SELECT|DEFAULT)/i', $sql, $m) === 1) {
-            return (new Parsing\Statement\Identifiers())->parseColumnList($m[1]);
-        }
-
-        return [];
+        return (new Parsing\Statement\Identifiers())->extractInsertColumns($sql);
     }
 
     /**
      * Extract VALUES rows from INSERT statement.
      *
      * @return list<list<string>>
+     * @visibility public
+     * @example Extract VALUES rows from INSERT statement
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->extractInsertValues('INSERT INTO users (id) VALUES (1), (2)') // => [['1'], ['2']]
      */
     public function extractInsertValues(string $sql): array
     {
@@ -87,15 +87,20 @@ final class PgSqlParser
 
     /**
      * Check if INSERT has ON CONFLICT clause.
+     * @visibility public
+     * @example Check if INSERT has ON CONFLICT clause
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->hasOnConflict('INSERT INTO users VALUES (1) ON CONFLICT DO NOTHING') // => true
      */
     public function hasOnConflict(string $sql): bool
     {
-        $sql = PostgreSqlLexicalMasker::maskComments($sql);
-        return preg_match('/\bON\s+CONFLICT\b/i', $sql) === 1;
+        return (new Parsing\Statement\ConflictClause())->hasOnConflict($sql);
     }
 
     /**
      * Parses ON CONFLICT columns, predicates, or a named constraint.
+     * @visibility public
+     * @example Parses ON CONFLICT columns, predicates, or a named constraint
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->extractOnConflictTarget('INSERT INTO users VALUES (1)') // => null
      */
     public function extractOnConflictTarget(string $sql): ?PgSqlConflictTarget
     {
@@ -106,6 +111,9 @@ final class PgSqlParser
      * Extract ON CONFLICT ... DO UPDATE SET columns and values.
      *
      * @return array{columns: list<string>, values: array<string, string>}
+     * @visibility public
+     * @example Extract ON CONFLICT ... DO UPDATE SET columns and values
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->extractOnConflictUpdateColumns('INSERT INTO users VALUES (1) ON CONFLICT (id) DO UPDATE SET id = 2') // => ['columns' => ['id'], 'values' => ['id' => '2']]
      */
     public function extractOnConflictUpdateColumns(string $sql): array
     {
@@ -114,6 +122,9 @@ final class PgSqlParser
 
     /**
      * Returns the predicate limiting an ON CONFLICT update, when present.
+     * @visibility public
+     * @example Returns the predicate limiting an ON CONFLICT update, when present
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->extractOnConflictUpdateWhere('INSERT INTO users VALUES (1) ON CONFLICT (id) DO UPDATE SET id = 2 WHERE users.id = 1') // => 'users.id = 1'
      */
     public function extractOnConflictUpdateWhere(string $sql): ?string
     {
@@ -122,6 +133,9 @@ final class PgSqlParser
 
     /**
      * Check if INSERT has a SELECT subquery (INSERT ... SELECT).
+     * @visibility public
+     * @example Check if INSERT has a SELECT subquery (INSERT ... SELECT)
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->hasInsertSelect('INSERT INTO users (id) SELECT id FROM archive') // => true
      */
     public function hasInsertSelect(string $sql): bool
     {
@@ -130,6 +144,9 @@ final class PgSqlParser
 
     /**
      * Extract the SELECT part from INSERT ... SELECT.
+     * @visibility public
+     * @example Extract the SELECT part from INSERT ... SELECT
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->extractInsertSelectSql('INSERT INTO users (id) SELECT id FROM archive') // => 'SELECT id FROM archive'
      */
     public function extractInsertSelectSql(string $sql): ?string
     {
@@ -138,61 +155,44 @@ final class PgSqlParser
 
     /**
      * Extract table name from UPDATE statement.
+     * @visibility public
+     * @example Extract table name from UPDATE statement
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->extractUpdateTable('UPDATE public.users SET id = 2') // => 'users'
      */
     public function extractUpdateTable(string $sql): ?string
     {
-        $sql = PostgreSqlLexicalMasker::maskComments($sql);
-        if (preg_match('/UPDATE\s+(?:ONLY\s+)?("[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)(?:\s+(?:AS\s+)?("[^"]+"|[a-zA-Z_]\w*))?/i', $sql, $m) === 1) {
-            return (new Parsing\Statement\Identifiers())->unquoteIdentifier((new Parsing\Statement\Identifiers())->stripSchemaPrefix($m[1]));
-        }
-
-        return null;
+        return (new Parsing\Statement\Identifiers())->extractUpdateTable($sql);
     }
 
     /**
      * Extract table alias from UPDATE statement.
+     * @visibility public
+     * @example Extract table alias from UPDATE statement
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->extractUpdateAlias('UPDATE users AS u SET id = 2') // => 'u'
      */
     public function extractUpdateAlias(string $sql): ?string
     {
-        $sql = PostgreSqlLexicalMasker::maskComments($sql);
-        if (preg_match('/UPDATE\s+(?:ONLY\s+)?(?:"[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)\s+(?:AS\s+)?("[^"]+"|[a-zA-Z_]\w*)\s+SET\b/i', $sql, $m) === 1) {
-            return (new Parsing\Statement\Identifiers())->unquoteIdentifier($m[1]);
-        }
-
-        return null;
+        return (new Parsing\Statement\Identifiers())->extractUpdateAlias($sql);
     }
 
     /**
      * Extract SET assignments from UPDATE statement.
      *
      * @return array<string, string> column => value expression
+     * @visibility public
+     * @example Extract SET assignments from UPDATE statement
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->extractUpdateSets('UPDATE users SET id = 2, name = NULL WHERE id = 1') // => ['id' => '2', 'name' => 'NULL']
      */
     public function extractUpdateSets(string $sql): array
     {
-        $setClause = SqlTokenStream::tokenize($sql, PgSqlLexerProfile::create())->topLevelClause(
-            ['SET'],
-            [['FROM'], ['WHERE'], ['RETURNING']],
-        );
-        if ($setClause === null) {
-            return [];
-        }
-
-        $assignments = SqlTokenStream::tokenize($setClause, PgSqlLexerProfile::create())->splitTopLevel();
-        $result = [];
-
-        foreach ($assignments as $assignment) {
-            $assignment = trim($assignment);
-            if (preg_match('/^("[^"]+"|[a-zA-Z_]\w*)\s*=\s*(.+)$/s', $assignment, $parts) === 1) {
-                $colName = (new Parsing\Statement\Identifiers())->unquoteIdentifier($parts[1]);
-                $result[$colName] = trim($parts[2]);
-            }
-        }
-
-        return $result;
+        return (new Parsing\Statement\Identifiers())->extractUpdateSets($sql);
     }
 
     /**
      * Extract WHERE clause from UPDATE or DELETE statement.
+     * @visibility public
+     * @example Extract WHERE clause from UPDATE or DELETE statement
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->extractWhereClause('DELETE FROM users WHERE id = 1 RETURNING id') // => 'id = 1'
      */
     public function extractWhereClause(string $sql): ?string
     {
@@ -204,6 +204,9 @@ final class PgSqlParser
 
     /**
      * Extract FROM clause from UPDATE statement (PostgreSQL extension).
+     * @visibility public
+     * @example Extract FROM clause from UPDATE statement (PostgreSQL extension)
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->extractUpdateFromClause('UPDATE users SET id = a.id FROM archive AS a WHERE users.id = a.id') // => 'archive AS a'
      */
     public function extractUpdateFromClause(string $sql): ?string
     {
@@ -215,32 +218,31 @@ final class PgSqlParser
 
     /**
      * Extract table name from DELETE statement.
+     * @visibility public
+     * @example Extract table name from DELETE statement
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->extractDeleteTable('DELETE FROM public.users WHERE id = 1') // => 'users'
      */
     public function extractDeleteTable(string $sql): ?string
     {
-        $sql = PostgreSqlLexicalMasker::maskComments($sql);
-        if (preg_match('/DELETE\s+FROM\s+(?:ONLY\s+)?("[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)(?:\s+(?:AS\s+)?("[^"]+"|[a-zA-Z_]\w*))?/i', $sql, $m) === 1) {
-            return (new Parsing\Statement\Identifiers())->unquoteIdentifier((new Parsing\Statement\Identifiers())->stripSchemaPrefix($m[1]));
-        }
-
-        return null;
+        return (new Parsing\Statement\Identifiers())->extractDeleteTable($sql);
     }
 
     /**
      * Extract table alias from DELETE statement.
+     * @visibility public
+     * @example Extract table alias from DELETE statement
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->extractDeleteAlias('DELETE FROM users AS u WHERE u.id = 1') // => 'u'
      */
     public function extractDeleteAlias(string $sql): ?string
     {
-        $sql = PostgreSqlLexicalMasker::maskComments($sql);
-        if (preg_match('/DELETE\s+FROM\s+(?:ONLY\s+)?(?:"[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)\s+(?:AS\s+)?("[^"]+"|[a-zA-Z_]\w*)\s+(?:USING\b|WHERE\b|RETURNING\b|$)/i', $sql, $m) === 1) {
-            return (new Parsing\Statement\Identifiers())->unquoteIdentifier($m[1]);
-        }
-
-        return null;
+        return (new Parsing\Statement\Identifiers())->extractDeleteAlias($sql);
     }
 
     /**
      * Extract USING clause from DELETE statement.
+     * @visibility public
+     * @example Extract USING clause from DELETE statement
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->extractDeleteUsingClause('DELETE FROM users USING archive WHERE users.id = archive.id') // => 'archive'
      */
     public function extractDeleteUsingClause(string $sql): ?string
     {
@@ -252,6 +254,9 @@ final class PgSqlParser
 
     /**
      * Extract table name from TRUNCATE statement.
+     * @visibility public
+     * @example Extract table name from TRUNCATE statement
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->extractTruncateTable('TRUNCATE TABLE users, archive') // => 'users'
      */
     public function extractTruncateTable(string $sql): ?string
     {
@@ -260,6 +265,9 @@ final class PgSqlParser
 
     /**
      * @return list<string>
+     * @visibility public
+     * @example @return list<string>
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->extractTruncateTables('TRUNCATE TABLE users, archive') // => ['users', 'archive']
      */
     public function extractTruncateTables(string $sql): array
     {
@@ -268,6 +276,9 @@ final class PgSqlParser
 
     /**
      * Extract table name from CREATE TABLE statement.
+     * @visibility public
+     * @example Extract table name from CREATE TABLE statement
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->extractCreateTableName('CREATE TABLE IF NOT EXISTS users (id INTEGER)') // => 'users'
      */
     public function extractCreateTableName(string $sql): ?string
     {
@@ -276,6 +287,9 @@ final class PgSqlParser
 
     /**
      * Check if CREATE TABLE has IF NOT EXISTS.
+     * @visibility public
+     * @example Check if CREATE TABLE has IF NOT EXISTS
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->hasIfNotExists('CREATE TABLE IF NOT EXISTS users (id INTEGER)') // => true
      */
     public function hasIfNotExists(string $sql): bool
     {
@@ -284,6 +298,9 @@ final class PgSqlParser
 
     /**
      * Check if CREATE TABLE has AS SELECT.
+     * @visibility public
+     * @example Check if CREATE TABLE has AS SELECT
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->hasCreateTableAsSelect('CREATE TABLE archive AS SELECT id FROM users') // => true
      */
     public function hasCreateTableAsSelect(string $sql): bool
     {
@@ -292,6 +309,9 @@ final class PgSqlParser
 
     /**
      * Extract the SELECT SQL from CREATE TABLE ... AS SELECT.
+     * @visibility public
+     * @example Extract the SELECT SQL from CREATE TABLE ... AS SELECT
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->extractCreateTableSelectSql('CREATE TABLE archive AS SELECT id FROM users') // => 'SELECT id FROM users'
      */
     public function extractCreateTableSelectSql(string $sql): ?string
     {
@@ -300,6 +320,9 @@ final class PgSqlParser
 
     /**
      * Check if CREATE TABLE has LIKE clause.
+     * @visibility public
+     * @example Check if CREATE TABLE has LIKE clause
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->hasCreateTableLike('CREATE TABLE archive (LIKE users INCLUDING ALL)') // => true
      */
     public function hasCreateTableLike(string $sql): bool
     {
@@ -308,6 +331,9 @@ final class PgSqlParser
 
     /**
      * Extract the LIKE source table name.
+     * @visibility public
+     * @example Extract the LIKE source table name
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->extractCreateTableLikeSource('CREATE TABLE archive (LIKE users INCLUDING ALL)') // => 'users'
      */
     public function extractCreateTableLikeSource(string $sql): ?string
     {
@@ -316,6 +342,9 @@ final class PgSqlParser
 
     /**
      * Extract table name from DROP TABLE statement.
+     * @visibility public
+     * @example Extract table name from DROP TABLE statement
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->extractDropTableName('DROP TABLE IF EXISTS users') // => 'users'
      */
     public function extractDropTableName(string $sql): ?string
     {
@@ -324,6 +353,9 @@ final class PgSqlParser
 
     /**
      * Check if DROP TABLE has IF EXISTS.
+     * @visibility public
+     * @example Check if DROP TABLE has IF EXISTS
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->hasDropTableIfExists('DROP TABLE IF EXISTS users') // => true
      */
     public function hasDropTableIfExists(string $sql): bool
     {
@@ -332,6 +364,9 @@ final class PgSqlParser
 
     /**
      * Extract table name from ALTER TABLE statement.
+     * @visibility public
+     * @example Extract table name from ALTER TABLE statement
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->extractAlterTableName('ALTER TABLE users ADD COLUMN name TEXT') // => 'users'
      */
     public function extractAlterTableName(string $sql): ?string
     {
@@ -340,6 +375,9 @@ final class PgSqlParser
 
     /**
      * Unquote a PostgreSQL identifier (remove double quotes).
+     * @visibility public
+     * @example Unquote a PostgreSQL identifier (remove double quotes)
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->unquoteIdentifier('"order""items"') // => 'order"items'
      */
     public function unquoteIdentifier(string $identifier): string
     {
@@ -349,6 +387,9 @@ final class PgSqlParser
     /**
      * Strip schema prefix from a potentially schema-qualified name.
      * "public"."users" -> "users", public.users -> users
+     * @visibility public
+     * @example Strip schema prefix from a potentially schema-qualified name
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->stripSchemaPrefix('public.users') // => 'users'
      */
     public function stripSchemaPrefix(string $name): string
     {
@@ -359,6 +400,9 @@ final class PgSqlParser
      * Extract table names referenced in a SELECT statement.
      *
      * @return list<string>
+     * @visibility public
+     * @example Extract table names referenced in a SELECT statement
+     *     (new \ZtdQuery\Platform\Postgres\PgSqlParser())->extractSelectTableNames('SELECT u.id FROM users u JOIN orders o ON u.id = o.user_id') // => ['users', 'orders']
      */
     public function extractSelectTableNames(string $sql): array
     {

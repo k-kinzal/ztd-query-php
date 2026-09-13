@@ -1,6 +1,7 @@
 # ZTD Query PostgreSQL
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Documentation](https://img.shields.io/badge/docs-API-blue)](https://k-kinzal.github.io/ztd-query-php/ztd-query-postgres/k-kinzal/ztd-query-postgres/)
 [![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 
 PostgreSQL platform support for [ZTD Query PHP](https://github.com/k-kinzal/ztd-query-core). Provides SQL parsing, classification, rewriting, and schema management for PostgreSQL.
@@ -40,7 +41,7 @@ use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Platform\Postgres\PgSqlSessionFactory;
 
 // $connection implements ZtdQuery\Connection\ConnectionInterface
-$session = PgSqlSessionFactory::create($connection, ZtdConfig::default());
+$session = (new PgSqlSessionFactory())->create($connection, ZtdConfig::default());
 ```
 
 The factory automatically:
@@ -70,7 +71,7 @@ $guard->classify('CREATE TABLE logs (id INT)');
 // => QueryKind::DDL_SIMULATED
 
 $guard->classify('BEGIN');
-// => null (unsupported)
+// => QueryKind::SKIPPED
 ```
 
 ### SQL Rewriting
@@ -98,9 +99,9 @@ use ZtdQuery\Platform\Postgres\PgSqlErrorClassifier;
 
 $classifier = new PgSqlErrorClassifier();
 
-$classifier->isUnknownSchemaError('42P01'); // true (Undefined table)
-$classifier->isUnknownSchemaError('42703'); // true (Undefined column)
-$classifier->isUnknownSchemaError('42601'); // false (Syntax error)
+$classifier->isUnknownSchemaError(new \ZtdQuery\Connection\Exception\DatabaseException('42P01: undefined table')); // true
+$classifier->isUnknownSchemaError(new \ZtdQuery\Connection\Exception\DatabaseException('42703: undefined column')); // true
+$classifier->isUnknownSchemaError(new \ZtdQuery\Connection\Exception\DatabaseException('42601: syntax error')); // false
 ```
 
 ## Architecture
@@ -143,6 +144,8 @@ PgSqlSessionFactory
 - Server operations (VACUUM, ANALYZE, REINDEX, etc.)
 
 ## Development
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for locked PHP dependency graphs and all quality gates.
 
 ```bash
 # Run tests

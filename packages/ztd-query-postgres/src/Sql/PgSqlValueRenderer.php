@@ -13,6 +13,10 @@ use ZtdQuery\Schema\ColumnTypeFamily;
 
 /**
  * Encodes shadow values using PostgreSQL's typed literal semantics.
+ *
+ * @visibility public
+ * @example Encode boolean values
+ *     (new \ZtdQuery\Platform\Postgres\PgSqlValueRenderer())->renderValue(true) // => 'TRUE'
  */
 final class PgSqlValueRenderer implements ValueRenderer
 {

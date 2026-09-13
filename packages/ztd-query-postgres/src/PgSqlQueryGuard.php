@@ -8,6 +8,14 @@ use ZtdQuery\Rewrite\QueryKind;
 
 /**
  * Classifies PostgreSQL SQL statements into QueryKind categories.
+ *
+ * @visibility public
+ * @example Route reads, simulated writes and transactions
+ *     $guard = new \ZtdQuery\Platform\Postgres\PgSqlQueryGuard(new \ZtdQuery\Platform\Postgres\PgSqlParser());
+ *     $guard->classify('SELECT 1') === \ZtdQuery\Rewrite\QueryKind::READ // => true
+ *     $guard->classify('DELETE FROM users') === \ZtdQuery\Rewrite\QueryKind::WRITE_SIMULATED // => true
+ *     $guard->classify('BEGIN') === \ZtdQuery\Rewrite\QueryKind::SKIPPED // => true
+ *     $guard->classify('VACUUM') // => null
  */
 final class PgSqlQueryGuard
 {
@@ -23,6 +31,13 @@ final class PgSqlQueryGuard
 
     /**
      * Classify a SQL string into READ/WRITE_SIMULATED/DDL_SIMULATED/SKIPPED or null.
+     * @visibility public
+     * @example Route reads, simulated writes and transactions
+     *     $guard = new \ZtdQuery\Platform\Postgres\PgSqlQueryGuard(new \ZtdQuery\Platform\Postgres\PgSqlParser());
+     *     $guard->classify('SELECT 1') === \ZtdQuery\Rewrite\QueryKind::READ // => true
+     *     $guard->classify('DELETE FROM users') === \ZtdQuery\Rewrite\QueryKind::WRITE_SIMULATED // => true
+     *     $guard->classify('BEGIN') === \ZtdQuery\Rewrite\QueryKind::SKIPPED // => true
+     *     $guard->classify('VACUUM') // => null
      */
     public function classify(string $sql): ?QueryKind
     {

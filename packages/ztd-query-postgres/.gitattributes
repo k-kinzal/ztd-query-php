@@ -16,3 +16,5 @@ phpbench.json.dist export-ignore
 deptrac.yaml export-ignore
 loc.yaml export-ignore
 tree.yaml export-ignore
+composer.lock* export-ignore
+CONTRIBUTING.md export-ignore

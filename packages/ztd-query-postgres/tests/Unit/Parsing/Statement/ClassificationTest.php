@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Sql\Lexing\CommentSpan::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Sql\Lexing\QuotedSpan::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
 final class ClassificationTest extends TestCase
 {
     public function testClassifyWithStatement(): void
@@ -32,5 +33,12 @@ final class ClassificationTest extends TestCase
         self::assertSame(['keyword' => 'SELECT', 'end' => 6], $classification->keywordAt('SELECT *', 0));
         self::assertNull($classification->keywordAt('xSELECT', 1));
         self::assertSame(['keyword' => null, 'end' => 6], $classification->keywordAt('VACUUM', 0));
+    }
+
+    public function testClassifyStatementSkipsCommentsBeforeWith(): void
+    {
+        $parser = new \ZtdQuery\Platform\Postgres\Parsing\Statement\Classification();
+        self::assertSame('SELECT', $parser->classifyStatement('/* lead */ WITH selected AS (SELECT 1) SELECT * FROM selected'));
+        self::assertSame(null, $parser->classifyStatement('VACUUM users'));
     }
 }

@@ -10,8 +10,7 @@
     "require-dev": {
         "brianium/paratest": "^6.11 || ^7",
         "deptrac/deptrac": "^3.0 || ^4.6",
-        "friendsofphp/php-cs-fixer": "^3.92",
-        "giorgiosironi/eris": "^1.0",
+        "friendsofphp/php-cs-fixer": "^3.95.24",
         "k-kinzal/php-ai-toolkit": "dev-main",
         "k-kinzal/sql-faker": "@dev",
         "nikic/php-fuzzer": "^0.0.11",
@@ -19,7 +18,7 @@
         "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
         "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^10.5 || ^11 || ^12 || >=13.0 <13.3",
-        "squizlabs/php_codesniffer": "^4.0"
+        "squizlabs/php_codesniffer": "^4.0.4"
     },
     "repositories": [
         {
@@ -56,18 +55,7 @@
                 "tests/",
                 "../ztd-query-core/tests/"
             ],
-            "Fuzz\\": "fuzz/",
-            "Tests\\Unit\\": [
-                "tests/Unit/",
-                "tests/Unit/Sql/",
-                "tests/Unit/Parsing/",
-                "tests/Unit/Parsing/Merge/",
-                "tests/Unit/Parsing/Sampling/",
-                "tests/Unit/Schema/",
-                "tests/Unit/Reflection/",
-                "tests/Unit/Rewrite/",
-                "tests/Unit/Driver/"
-            ]
+            "Fuzz\\": "fuzz/"
         }
     },
     "scripts": {
@@ -118,5 +106,9 @@
             "dealerdirect/phpcodesniffer-composer-installer": true
         },
         "sort-packages": true
+    },
+    "support": {
+        "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-postgres",
+        "docs": "https://k-kinzal.github.io/ztd-query-php/ztd-query-postgres/k-kinzal/ztd-query-postgres/"
     }
 }

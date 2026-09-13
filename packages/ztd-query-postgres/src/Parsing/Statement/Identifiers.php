@@ -89,4 +89,113 @@ final class Identifiers
 
         return $stream->identifierAt($index);
     }
+
+    /**
+     * Extract table name from INSERT statement.
+     */
+    public function extractInsertTable(string $sql): ?string
+    {
+        $sql = \ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker::maskComments($sql);
+        if (preg_match('/INSERT\s+INTO\s+(?:ONLY\s+)?("[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)(?:\s+AS\s+"?(\w+)"?)?/i', $sql, $m) === 1) {
+            return $this->unquoteIdentifier($this->stripSchemaPrefix($m[1]));
+        }
+
+        return null;
+    }
+
+    /**
+     * Extract column list from INSERT statement.
+     *
+     * @return list<string>
+     */
+    public function extractInsertColumns(string $sql): array
+    {
+        $sql = \ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker::maskComments($sql);
+        if (preg_match('/INSERT\s+INTO\s+(?:ONLY\s+)?(?:"[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)\s*\(([^)]+)\)\s*(?:VALUES|SELECT|DEFAULT)/i', $sql, $m) === 1) {
+            return $this->parseColumnList($m[1]);
+        }
+
+        return [];
+    }
+
+    /**
+     * Extract table name from UPDATE statement.
+     */
+    public function extractUpdateTable(string $sql): ?string
+    {
+        $sql = \ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker::maskComments($sql);
+        if (preg_match('/UPDATE\s+(?:ONLY\s+)?("[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)(?:\s+(?:AS\s+)?("[^"]+"|[a-zA-Z_]\w*))?/i', $sql, $m) === 1) {
+            return $this->unquoteIdentifier($this->stripSchemaPrefix($m[1]));
+        }
+
+        return null;
+    }
+
+    /**
+     * Extract table alias from UPDATE statement.
+     */
+    public function extractUpdateAlias(string $sql): ?string
+    {
+        $sql = \ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker::maskComments($sql);
+        if (preg_match('/UPDATE\s+(?:ONLY\s+)?(?:"[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)\s+(?:AS\s+)?("[^"]+"|[a-zA-Z_]\w*)\s+SET\b/i', $sql, $m) === 1) {
+            return $this->unquoteIdentifier($m[1]);
+        }
+
+        return null;
+    }
+
+    /**
+     * Extract SET assignments from UPDATE statement.
+     *
+     * @return array<string, string> column => value expression
+     */
+    public function extractUpdateSets(string $sql): array
+    {
+        $setClause = SqlTokenStream::tokenize($sql, \ZtdQuery\Platform\Postgres\PgSqlLexerProfile::create())->topLevelClause(
+            ['SET'],
+            [['FROM'], ['WHERE'], ['RETURNING']],
+        );
+        if ($setClause === null) {
+            return [];
+        }
+
+        $assignments = SqlTokenStream::tokenize($setClause, \ZtdQuery\Platform\Postgres\PgSqlLexerProfile::create())->splitTopLevel();
+        $result = [];
+
+        foreach ($assignments as $assignment) {
+            $assignment = trim($assignment);
+            if (preg_match('/^("[^"]+"|[a-zA-Z_]\w*)\s*=\s*(.+)$/s', $assignment, $parts) === 1) {
+                $colName = $this->unquoteIdentifier($parts[1]);
+                $result[$colName] = trim($parts[2]);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Extract table name from DELETE statement.
+     */
+    public function extractDeleteTable(string $sql): ?string
+    {
+        $sql = \ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker::maskComments($sql);
+        if (preg_match('/DELETE\s+FROM\s+(?:ONLY\s+)?("[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)(?:\s+(?:AS\s+)?("[^"]+"|[a-zA-Z_]\w*))?/i', $sql, $m) === 1) {
+            return $this->unquoteIdentifier($this->stripSchemaPrefix($m[1]));
+        }
+
+        return null;
+    }
+
+    /**
+     * Extract table alias from DELETE statement.
+     */
+    public function extractDeleteAlias(string $sql): ?string
+    {
+        $sql = \ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker::maskComments($sql);
+        if (preg_match('/DELETE\s+FROM\s+(?:ONLY\s+)?(?:"[^"]+"|[a-zA-Z_]\w*(?:\."[^"]+"|\.(?:[a-zA-Z_]\w*))?)\s+(?:AS\s+)?("[^"]+"|[a-zA-Z_]\w*)\s+(?:USING\b|WHERE\b|RETURNING\b|$)/i', $sql, $m) === 1) {
+            return $this->unquoteIdentifier($m[1]);
+        }
+
+        return null;
+    }
 }

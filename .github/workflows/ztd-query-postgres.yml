@@ -44,12 +44,21 @@ jobs:
           php-version: ${{ matrix.php }}
           extensions: dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
           coverage: none
+      - name: Select the locked dependency graph for this PHP version
+        if: matrix.php != '8.5'
+        env:
+          TEST_PHP: ${{ matrix.php }}
+        run: |
+          composer config platform.php "${TEST_PHP}.0"
+          cp "composer.lock.php-${TEST_PHP}" composer.lock
       - name: Validate the Composer manifest
         run: composer validate --strict --no-check-all --no-check-publish
       - name: Install dependencies
         uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
           working-directory: packages/ztd-query-postgres
+          dependency-versions: locked
+          require-lock-file: true
           composer-options: --prefer-dist
       - name: Check installed platform requirements
         run: composer check-platform-reqs
@@ -75,6 +84,8 @@ jobs:
         uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
           working-directory: packages/ztd-query-postgres
+          dependency-versions: locked
+          require-lock-file: true
           composer-options: --prefer-dist
       - name: Check installed platform requirements
         run: composer check-platform-reqs
@@ -110,15 +121,13 @@ jobs:
         uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
           working-directory: packages/ztd-query-postgres
+          dependency-versions: locked
+          require-lock-file: true
           composer-options: --prefer-dist
       - name: Check installed platform requirements
         run: composer check-platform-reqs
-      - name: Run the quick benchmark on pull requests
-        if: github.event_name == 'pull_request'
-        run: composer bench:quick
       - name: Run the full benchmark
-        if: github.event_name != 'pull_request'
-        run: composer bench:full
+        run: composer bench
 
   mutation:
     name: Mutation Testing
@@ -143,6 +152,8 @@ jobs:
         uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
           working-directory: packages/ztd-query-postgres
+          dependency-versions: locked
+          require-lock-file: true
           composer-options: --prefer-dist
       - name: Check installed platform requirements
         run: |

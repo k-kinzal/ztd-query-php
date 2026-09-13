@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit;
+namespace Tests\Unit\Sql;
 
 use Generator;
 use PHPUnit\Framework\Attributes\CoversClass;

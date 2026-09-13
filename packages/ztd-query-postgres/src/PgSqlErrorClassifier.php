@@ -12,6 +12,12 @@ use ZtdQuery\Platform\ErrorClassifier;
  *
  * Classifies PostgreSQL SQLSTATE codes to determine the type of error.
  * PostgreSQL uses 5-character SQLSTATE codes; driver error codes are mapped from these.
+ *
+ * @visibility public
+ * @example Distinguish schema errors from syntax errors
+ *     $classifier = new \ZtdQuery\Platform\Postgres\PgSqlErrorClassifier();
+ *     $classifier->isUnknownSchemaError(new \ZtdQuery\Connection\Exception\DatabaseException('42P01: relation "users" does not exist')) // => true
+ *     $classifier->isUnknownSchemaError(new \ZtdQuery\Connection\Exception\DatabaseException('42601: syntax error')) // => false
  */
 final class PgSqlErrorClassifier implements ErrorClassifier
 {
@@ -36,6 +42,11 @@ final class PgSqlErrorClassifier implements ErrorClassifier
 
     /**
      * {@inheritDoc}
+     * @visibility public
+     * @example Distinguish schema errors from syntax errors
+     *     $classifier = new \ZtdQuery\Platform\Postgres\PgSqlErrorClassifier();
+     *     $classifier->isUnknownSchemaError(new \ZtdQuery\Connection\Exception\DatabaseException('42P01: relation "users" does not exist')) // => true
+     *     $classifier->isUnknownSchemaError(new \ZtdQuery\Connection\Exception\DatabaseException('42601: syntax error')) // => false
      */
     public function isUnknownSchemaError(DatabaseException $e): bool
     {

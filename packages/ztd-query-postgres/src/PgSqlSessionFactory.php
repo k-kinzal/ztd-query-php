@@ -22,8 +22,9 @@ use ZtdQuery\Shadow\ShadowTransactionManager;
  * Factory for creating Session instances pre-configured for PostgreSQL.
  *
  * @visibility public
- * @example Build a session with an empty catalog connection
- *     $connection = new class implements \ZtdQuery\Connection\ConnectionInterface { public function query(string $sql): \ZtdQuery\Connection\StatementInterface|false { return false; } };
+ * @example Create a session with a successful empty catalog connection
+ *     $statement = new class implements \ZtdQuery\Connection\StatementInterface { public function execute(?array $params = null): bool { return true; } public function fetchAll(): array { return []; } public function resultColumns(\ZtdQuery\Platform\ResultColumnTypeResolver $typeResolver): array { return []; } public function rowCount(): int { return 0; } };
+ *     $connection = new class($statement) implements \ZtdQuery\Connection\ConnectionInterface { public function __construct(private \ZtdQuery\Connection\StatementInterface $statement) {} public function query(string $sql): \ZtdQuery\Connection\StatementInterface|false { return $this->statement; } };
  *     $session = (new \ZtdQuery\Platform\Postgres\PgSqlSessionFactory())->create($connection, new \ZtdQuery\Config\ZtdConfig());
  *     $session->isEnabled() // => true
  *     $session->splitStatements('SELECT 1; SELECT 2') // => ['SELECT 1', 'SELECT 2']
@@ -32,6 +33,13 @@ final class PgSqlSessionFactory implements SessionFactory
 {
     /**
      * {@inheritDoc}
+     * @visibility public
+     * @example Configure a session for a custom connection adapter
+     *     $statement = new class implements \ZtdQuery\Connection\StatementInterface { public function execute(?array $params = null): bool { return true; } public function fetchAll(): array { return []; } public function resultColumns(\ZtdQuery\Platform\ResultColumnTypeResolver $typeResolver): array { return []; } public function rowCount(): int { return 0; } };
+     *     $connection = new class($statement) implements \ZtdQuery\Connection\ConnectionInterface { public function __construct(private \ZtdQuery\Connection\StatementInterface $statement) {} public function query(string $sql): \ZtdQuery\Connection\StatementInterface|false { return $this->statement; } };
+     *     $session = (new \ZtdQuery\Platform\Postgres\PgSqlSessionFactory())->create($connection, new \ZtdQuery\Config\ZtdConfig());
+     *     $session->isEnabled() // => true
+     *     $session->splitStatements('SELECT 1; SELECT 2') // => ['SELECT 1', 'SELECT 2']
      */
     public function create(ConnectionInterface $connection, ZtdConfig $config): Session
     {
