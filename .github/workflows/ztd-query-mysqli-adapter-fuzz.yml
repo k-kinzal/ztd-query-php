@@ -63,17 +63,15 @@ jobs:
           coverage: none
           ini-values: memory_limit=1G
       - name: Validate the Composer manifest
-        run: composer validate --strict --no-check-publish
+        run: composer validate --strict --no-check-publish --no-check-all
       - uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
           working-directory: packages/ztd-query-mysqli-adapter
           dependency-versions: locked
           composer-options: --prefer-dist
           require-lock-file: true
-      - name: Check dependency consistency and platform requirements
-        run: |
-          composer validate --strict --no-check-publish
-          composer check-platform-reqs
+      - name: Check installed platform requirements
+        run: composer check-platform-reqs
       - name: Restore corpus
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:

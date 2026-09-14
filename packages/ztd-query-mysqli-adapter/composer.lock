@@ -4,15 +4,15 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ffe0232421dc18976cadfd61f512f6cb",
+    "content-hash": "64fbcaeebce3e639bd0cbf3ef7a19859",
     "packages": [
         {
             "name": "k-kinzal/ztd-query-core",
-            "version": "dev-main",
+            "version": "dev-chore/ztd-query-mysqli-toolkit-latest",
             "dist": {
                 "type": "path",
                 "url": "../ztd-query-core",
-                "reference": "479e9dce89e2b3e5177406496af1f29410a47763"
+                "reference": "9a98d275782c4ffa0fbb751b585c8132b89fc8fd"
             },
             "require": {
                 "php": "^8.1"
@@ -127,11 +127,11 @@
         },
         {
             "name": "k-kinzal/ztd-query-mysql",
-            "version": "dev-main",
+            "version": "dev-chore/ztd-query-mysqli-toolkit-latest",
             "dist": {
                 "type": "path",
                 "url": "../ztd-query-mysql",
-                "reference": "5fdfe7f2fc45560925b2063ece99616904d9d6ad"
+                "reference": "c90828900d98bc4906344786a355ca19b2e077b0"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "@dev",
@@ -1754,11 +1754,11 @@
         },
         {
             "name": "k-kinzal/sql-faker",
-            "version": "dev-main",
+            "version": "dev-chore/ztd-query-mysqli-toolkit-latest",
             "dist": {
                 "type": "path",
                 "url": "../sql-faker",
-                "reference": "22d1034e3ec494aa20e45f678c27e3bef0d29b9a"
+                "reference": "54b537b9673b578e5f2ff2ed957fc9e301060b21"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -1898,11 +1898,11 @@
         },
         {
             "name": "k-kinzal/sql-fixture",
-            "version": "dev-main",
+            "version": "dev-chore/ztd-query-mysqli-toolkit-latest",
             "dist": {
                 "type": "path",
                 "url": "../sql-fixture",
-                "reference": "e9358727886b759dfe6018f19514e34d715d6750"
+                "reference": "0ab8c90c93ea736fb845228360bc7bcb139be805"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
