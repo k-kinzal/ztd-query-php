@@ -9,25 +9,26 @@ register_shutdown_function(static function (): void {
 });
 
 use Faker\Factory;
-use Fuzz\Container\MySql80Container;
+use Fuzz\Container\MysqliConnector;
 use Fuzz\Correctness\MysqliCorrectnessHarness;
 use Fuzz\Correctness\SchemaAwareSqlBuilder;
 use Fuzz\Correctness\Target\SelectCorrectnessTarget;
-use Testcontainers\Testcontainers;
 
-$instance = Testcontainers::run(MySql80Container::class);
-$port = $instance->getMappedPort(3306);
-$host = str_replace('localhost', '127.0.0.1', $instance->getHost());
+date_default_timezone_set('UTC');
 
-$rawMysqli = new mysqli($host, 'root', 'root', '', $port);
+[$host, $port] = MysqliConnector::endpoint();
+
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
-$db = 'fuzz_' . bin2hex(random_bytes(4));
-$rawMysqli->query("CREATE DATABASE `$db`");
+$db = 'test';
 
 $faker = Factory::create();
-$harness = new MysqliCorrectnessHarness($host, (int) $port, $db, 'root', 'root');
+$harness = new MysqliCorrectnessHarness($host, $port, $db, 'root', 'root');
 $sqlBuilder = new SchemaAwareSqlBuilder($faker);
 $target = new SelectCorrectnessTarget($harness, $sqlBuilder, $faker);
 
-/** @var \PhpFuzzer\Config $config */
-$config->setTarget(\Closure::fromCallable($target));
+/**
+ * @var PhpFuzzer\Config $config
+ */
+$config->setMaxLen(4096);
+$config->setAllowedExceptions([]);
+$config->setTarget(Closure::fromCallable($target));

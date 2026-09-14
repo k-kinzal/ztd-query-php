@@ -120,4 +120,18 @@ final class MySqlValueRendererTest extends TestCase
         $this->expectException(RuntimeException::class);
         $renderer->renderValue([]);
     }
+    public function testStoredYearZeroIsNotReinterpretedAsAStringYear(): void
+    {
+        $renderer = new MySqlValueRenderer();
+        $year = new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'year(4)');
+        self::assertSame("CAST('0' AS SIGNED)", $renderer->renderValue(0, $year));
+        self::assertSame("CAST('0' AS SIGNED)", $renderer->renderValue('0', $year));
+        self::assertSame("CAST('1978' AS SIGNED)", $renderer->renderValue(1978, $year));
+    }
+
+    public function testStringFamilyYearRemainsTextual(): void
+    {
+        self::assertSame("CAST('0' AS CHAR)", (new MySqlValueRenderer())->renderValue('0', new ColumnDeclaration(ColumnTypeFamily::STRING, 'YEAR')));
+    }
+
 }

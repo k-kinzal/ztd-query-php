@@ -8,6 +8,7 @@ use Stringable;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\ValueRenderer;
 use ZtdQuery\Schema\ColumnDeclaration;
+use ZtdQuery\Schema\ColumnTypeFamily;
 
 /**
  * Encodes shadow values without relying on MySQL string escape modes.
@@ -43,6 +44,9 @@ final class MySqlValueRenderer implements ValueRenderer
         }
 
         $resolvedType = $type ?? (new ScalarExpression())->inferType($value);
+        if ($resolvedType->family === ColumnTypeFamily::INTEGER && in_array(strtoupper($resolvedType->nativeType), ['YEAR', 'YEAR(4)'], true)) {
+            $resolvedType = new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT');
+        }
         $expression = (new ScalarExpression())->renderExpression($value, $resolvedType, $type !== null);
 
         return $this->castRenderer->renderCast($expression, $resolvedType);

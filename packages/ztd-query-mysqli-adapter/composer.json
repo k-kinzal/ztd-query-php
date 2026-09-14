@@ -10,17 +10,19 @@
         "k-kinzal/ztd-query-mysql": "@dev"
     },
     "require-dev": {
-        "friendsofphp/php-cs-fixer": "^3.92",
-        "infection/infection": "^0.28 || ^0.29 || ^0.30 || ^0.31 || ^0.32 || ^0.34.1",
+        "brianium/paratest": "^7.3",
+        "deptrac/deptrac": "^3.0",
+        "friendsofphp/php-cs-fixer": "^3.95.24",
+        "k-kinzal/php-ai-toolkit": "dev-main",
         "k-kinzal/sql-faker": "@dev",
         "k-kinzal/sql-fixture": "@dev",
         "k-kinzal/testcontainers-php": "^0.5.1",
         "nikic/php-fuzzer": "^0.0.11",
+        "phpbench/phpbench": "^1.4",
+        "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
         "phpstan/phpstan": "^2.1",
-        "phpstan/phpstan-strict-rules": "^2.0",
-        "phpunit/phpunit": "^10.5 || ^11 || ^12 || ^13",
-        "k-kinzal/phpstan-custom-rules": "@dev",
-        "brianium/paratest": "^6.11 || ^7"
+        "phpunit/phpunit": "^10.5",
+        "squizlabs/php_codesniffer": "^4.0.4"
     },
     "repositories": [
         {
@@ -40,8 +42,9 @@
             "url": "../sql-fixture"
         },
         {
-            "type": "path",
-            "url": "../phpstan-custom-rules"
+            "name": "php-ai-toolkit",
+            "type": "vcs",
+            "url": "https://github.com/k-kinzal/php-ai-toolkit.git"
         }
     ],
     "autoload": {
@@ -52,16 +55,22 @@
     "autoload-dev": {
         "psr-4": {
             "Tests\\": "tests/",
-            "Fuzz\\": "fuzz/"
+            "Fuzz\\": "fuzz/",
+            "Bench\\": "bench/",
+            "Containers\\": "containers/"
         }
     },
     "scripts": {
         "test": "paratest --processes=auto",
-        "test:unit": "phpunit tests/Unit/",
-        "test:integration": "phpunit tests/Integration/",
+        "test:unit": "phpunit --testsuite unit",
+        "test:integration": "phpunit --testsuite integration",
         "lint": [
             "@format:check",
-            "phpstan analyse --memory-limit=512M"
+            "@phpstan",
+            "@loc-guard",
+            "@tree-guard",
+            "@deptrac",
+            "@compat"
         ],
         "format": "php-cs-fixer fix --allow-risky=yes",
         "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
@@ -73,17 +82,44 @@
             "@fuzz:correctness:update",
             "@fuzz:correctness:delete"
         ],
-        "fuzz:robustness": "php-fuzzer fuzz fuzz/fuzz_robustness_execute.php --corpus=fuzz/corpus/robustness-execute",
-        "fuzz:correctness:select": "php-fuzzer fuzz fuzz/fuzz_correctness_select.php --corpus=fuzz/corpus/correctness-select",
-        "fuzz:correctness:insert": "php-fuzzer fuzz fuzz/fuzz_correctness_insert.php --corpus=fuzz/corpus/correctness-insert",
-        "fuzz:correctness:replace": "php-fuzzer fuzz fuzz/fuzz_correctness_replace.php fuzz/corpus/correctness-replace",
-        "fuzz:correctness:update": "php-fuzzer fuzz fuzz/fuzz_correctness_update.php --corpus=fuzz/corpus/correctness-update",
-        "fuzz:correctness:delete": "php-fuzzer fuzz fuzz/fuzz_correctness_delete.php --corpus=fuzz/corpus/correctness-delete",
-        "infection": "infection --threads=max --show-mutations --no-progress"
+        "fuzz:robustness": "mkdir -p fuzz/corpus/robustness-execute && php-fuzzer fuzz fuzz/fuzz_robustness_execute.php fuzz/corpus/robustness-execute/",
+        "fuzz:correctness:select": "mkdir -p fuzz/corpus/correctness-select && php-fuzzer fuzz fuzz/fuzz_correctness_select.php fuzz/corpus/correctness-select/",
+        "fuzz:correctness:insert": "mkdir -p fuzz/corpus/correctness-insert && php-fuzzer fuzz fuzz/fuzz_correctness_insert.php fuzz/corpus/correctness-insert/",
+        "fuzz:correctness:replace": "mkdir -p fuzz/corpus/correctness-replace && php-fuzzer fuzz fuzz/fuzz_correctness_replace.php fuzz/corpus/correctness-replace/",
+        "fuzz:correctness:update": "mkdir -p fuzz/corpus/correctness-update && php-fuzzer fuzz fuzz/fuzz_correctness_update.php fuzz/corpus/correctness-update/",
+        "fuzz:correctness:delete": "mkdir -p fuzz/corpus/correctness-delete && php-fuzzer fuzz fuzz/fuzz_correctness_delete.php fuzz/corpus/correctness-delete/",
+        "doctest": "phpunit --testsuite doctest",
+        "phpstan": "phpstan analyse --memory-limit=512M",
+        "compat": "phpcs",
+        "loc-guard": "loc-guard --config=loc.yaml",
+        "tree-guard": "tree-guard --config=tree.yaml",
+        "deptrac": [
+            "deptrac analyse --config-file=deptrac.yaml",
+            "deptrac debug:unassigned --config-file=deptrac.yaml"
+        ],
+        "deptrac:debug": [
+            "deptrac debug:unassigned --config-file=deptrac.yaml",
+            "deptrac debug:unused --config-file=deptrac.yaml"
+        ],
+        "bench": "phpbench run --report=aggregate",
+        "bench:quick": "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10",
+        "bench:full": "@bench",
+        "docgen": "cd ../.. && packages/ztd-query-mysqli-adapter/vendor/bin/docgen --packages=packages/ztd-query-mysqli-adapter --deptrac=\"$PWD/packages/ztd-query-mysqli-adapter/deptrac.yaml\" --output=packages/ztd-query-mysqli-adapter/build/docs --cache-dir=packages/ztd-query-mysqli-adapter/build/docgen-cache --title=k-kinzal/ztd-query-mysqli-adapter",
+        "docgen:serve": "@docgen --serve",
+        "docgen:diff": "@docgen --diff=origin/main --serve",
+        "docgen:fresh": "@docgen --no-cache"
     },
     "config": {
         "allow-plugins": {
-            "infection/extension-installer": true
-        }
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        },
+        "platform": {
+            "php": "8.1.0"
+        },
+        "sort-packages": true
+    },
+    "support": {
+        "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-mysqli-adapter",
+        "docs": "https://k-kinzal.github.io/ztd-query-php/mysqli/k-kinzal/ztd-query-mysqli-adapter/"
     }
 }

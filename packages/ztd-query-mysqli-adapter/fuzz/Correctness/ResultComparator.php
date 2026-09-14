@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Fuzz\Correctness;
 
+/**
+ * Compares SQL row values while accounting for database type representations.
+ */
 final class ResultComparator
 {
     /**
@@ -27,8 +30,8 @@ final class ResultComparator
         }
 
         if (!$ordered && $primaryKeys !== []) {
-            $expected = $this->sortByKeys($expected, $primaryKeys);
-            $actual = $this->sortByKeys($actual, $primaryKeys);
+            $expected = (new RowOrdering())->sortByKeys($expected, $primaryKeys);
+            $actual = (new RowOrdering())->sortByKeys($actual, $primaryKeys);
         }
 
         foreach ($expected as $i => $expectedRow) {
@@ -84,73 +87,31 @@ final class ResultComparator
         assert(is_scalar($actual));
 
         if (str_contains($type, 'FLOAT') || str_contains($type, 'DOUBLE')) {
-            return $this->compareFloat((float) $expected, (float) $actual);
+            return (new ScalarComparison())->compareFloat((float) $expected, (float) $actual);
         }
 
         if (str_contains($type, 'DECIMAL') || str_contains($type, 'NUMERIC')) {
-            return $this->compareDecimal((string) $expected, (string) $actual);
+            return (new ScalarComparison())->compareDecimal((string) $expected, (string) $actual);
         }
 
         if ($type === 'JSON') {
-            return $this->compareJson((string) $expected, (string) $actual);
+            return (new ScalarComparison())->compareJson((string) $expected, (string) $actual);
         }
 
         if (str_starts_with($type, 'SET')) {
-            return $this->compareSet((string) $expected, (string) $actual);
+            return (new ScalarComparison())->compareSet((string) $expected, (string) $actual);
         }
 
         return (string) $expected === (string) $actual;
     }
 
-    private function compareFloat(float $expected, float $actual): bool
-    {
-        if ($expected === 0.0) {
-            return abs($actual) < 0.0001;
-        }
-        return abs($expected - $actual) / abs($expected) < 0.001;
-    }
 
-    private function compareDecimal(string $expected, string $actual): bool
-    {
-        $expected = rtrim(rtrim($expected, '0'), '.');
-        $actual = rtrim(rtrim($actual, '0'), '.');
-        return $expected === $actual;
-    }
 
-    private function compareJson(string $expected, string $actual): bool
-    {
-        $expectedDecoded = json_decode($expected, true);
-        $actualDecoded = json_decode($actual, true);
-        return $expectedDecoded === $actualDecoded;
-    }
 
-    private function compareSet(string $expected, string $actual): bool
-    {
-        $expectedParts = explode(',', $expected);
-        $actualParts = explode(',', $actual);
-        sort($expectedParts);
-        sort($actualParts);
-        return $expectedParts === $actualParts;
-    }
 
-    /**
-     * Sort rows by primary key columns.
-     *
-     * @param array<int, array<string, mixed>> $rows
-     * @param array<int, string> $keys
-     * @return array<int, array<string, mixed>>
-     */
-    private function sortByKeys(array $rows, array $keys): array
-    {
-        usort($rows, function (array $a, array $b) use ($keys): int {
-            foreach ($keys as $key) {
-                $cmp = ($a[$key] ?? '') <=> ($b[$key] ?? '');
-                if ($cmp !== 0) {
-                    return $cmp;
-                }
-            }
-            return 0;
-        });
-        return $rows;
-    }
+
+
+
+
+
 }

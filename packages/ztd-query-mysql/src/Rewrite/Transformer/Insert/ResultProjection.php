@@ -7,6 +7,7 @@ namespace ZtdQuery\Platform\MySql\Rewrite\Transformer\Insert;
 use PhpMyAdmin\SqlParser\Components\ArrayObj;
 use PhpMyAdmin\SqlParser\Components\SetOperation;
 use PhpMyAdmin\SqlParser\Statements\InsertStatement;
+use PhpMyAdmin\SqlParser\Statements\SelectStatement;
 use RuntimeException;
 use ZtdQuery\Platform\CastRenderer;
 use ZtdQuery\Platform\MySql\Rewrite\Transformer\InsertRowRenderer;
@@ -56,21 +57,7 @@ final class ResultProjection
         }
 
         if ($statement->select !== null) {
-            $sourceColumns = $target->insertColumns !== [] ? $target->insertColumns : $target->tableColumns;
-            $generatedIdentityStarts = $this->identityAllocator->allocateSelectStarts(
-                $target->tableName,
-                $target->identityStrategies,
-                $sourceColumns,
-                $target->existingRows,
-            );
-
-            return $this->insertSelectRenderer->render(
-                $sourceSelectSql ?? $statement->select->build(),
-                $target->tableColumns,
-                $sourceColumns,
-                $target->columnDefaults,
-                $generatedIdentityStarts,
-            );
+            return $this->buildInsertSourceSelect($statement->select, $target, $sourceSelectSql);
         }
 
         throw new RuntimeException('Insert statement has no values to project.');
@@ -148,6 +135,42 @@ final class ResultProjection
         }
 
         return 'SELECT ' . implode(', ', $selects);
+    }
+
+    /**
+     * Project an INSERT SELECT source using the destination column types.
+     */
+    public function buildInsertSourceSelect(SelectStatement $statement, InsertTarget $target, ?string $sourceSelectSql): string
+    {
+        $sourceColumns = $target->insertColumns !== [] ? $target->insertColumns : $target->tableColumns;
+        $generatedIdentityStarts = $this->identityAllocator->allocateSelectStarts(
+            $target->tableName,
+            $target->identityStrategies,
+            $sourceColumns,
+            $target->existingRows,
+        );
+        $select = $this->insertSelectRenderer->render(
+            $sourceSelectSql ?? $statement->build(),
+            $target->tableColumns,
+            $sourceColumns,
+            $target->columnDefaults,
+            $generatedIdentityStarts,
+        );
+        if ($target->columnTypes === []) {
+            return $select;
+        }
+        $projections = [];
+        foreach ($target->tableColumns as $column) {
+            $quoted = '`' . str_replace('`', '``', $column) . '`';
+            $expression = '_ztd_insert_cast.' . $quoted;
+            $type = $target->columnTypes[$column] ?? null;
+            if ($type instanceof ColumnDeclaration) {
+                $expression = $this->castRenderer->renderCast($expression, $type);
+            }
+            $projections[] = $expression . ' AS ' . $quoted;
+        }
+
+        return 'SELECT ' . implode(', ', $projections) . ' FROM (' . $select . ') AS _ztd_insert_cast';
     }
 
     /**

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Adapter\Mysqli;
+namespace ZtdQuery\Adapter\Mysqli\Driver;
 
 use mysqli;
 use ZtdQuery\Connection\ConnectionInterface;
@@ -19,6 +19,9 @@ final class MysqliConnection implements ConnectionInterface
 {
     private mysqli $mysqli;
 
+    /**
+     * Adapt an existing native connection for the ZTD session.
+     */
     public function __construct(mysqli $mysqli)
     {
         $this->mysqli = $mysqli;

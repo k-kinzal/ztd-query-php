@@ -49,6 +49,18 @@ final class ResultProjectionTest extends TestCase
         self::assertSame("SELECT 8 AS `id`, 'a' AS `name`", $projection->buildInsertSetSelect(array_values($statement->set), $target));
     }
 
+    public function testBuildInsertSourceSelectCastsDestinationColumns(): void
+    {
+        $projection = new ResultProjection(new \ZtdQuery\Platform\MySql\Sql\Value\MySqlCastRenderer(), new \ZtdQuery\Rewrite\ShadowIdentityAllocator(), new \ZtdQuery\Platform\MySql\Rewrite\Transformer\InsertSelectRenderer(), new \ZtdQuery\Platform\MySql\Rewrite\Transformer\InsertRowRenderer());
+        $target = new \ZtdQuery\Platform\MySql\Rewrite\Transformer\Insert\InsertTarget('years', ['year', 'note`tag'], [], ['year' => new \ZtdQuery\Schema\ColumnDeclaration(\ZtdQuery\Schema\ColumnTypeFamily::INTEGER, 'YEAR')], [], [], [], []);
+        $statement = (new \PhpMyAdmin\SqlParser\Parser("SELECT 93, 'ok'"))->statements[0];
+        self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\SelectStatement::class, $statement);
+        self::assertStringStartsWith(
+            'SELECT CAST(CAST(_ztd_insert_cast.`year` AS YEAR) AS SIGNED) AS `year`, _ztd_insert_cast.`note``tag` AS `note``tag` FROM (',
+            $projection->buildInsertSourceSelect($statement, $target, null),
+        );
+    }
+
     public function testOrderedValues(): void
     {
         self::assertSame(['first', 'second'], ResultProjection::orderedValues([8 => 'first', 2 => 'second']));
