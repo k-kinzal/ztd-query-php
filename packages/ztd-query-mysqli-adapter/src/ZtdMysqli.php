@@ -6,14 +6,19 @@ namespace ZtdQuery\Adapter\Mysqli;
 
 use mysqli;
 use mysqli_result;
+use mysqli_sql_exception;
 use mysqli_stmt;
 use mysqli_warning;
+use Override;
 use ReflectionClass;
+use ReturnTypeWillChange;
+use SensitiveParameter;
+use ZtdQuery\Adapter\Mysqli\Driver\MysqliConnection;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Platform\MySql\MySqlSessionFactory;
-use ZtdQuery\Session;
 use ZtdQuery\Platform\SessionFactory;
+use ZtdQuery\Session;
 use ZtdQuery\Sql\TransactionStatement;
 
 /**
@@ -29,6 +34,20 @@ use ZtdQuery\Sql\TransactionStatement;
  *
  * Supports optional SessionFactory injection. If no factory is provided,
  * MySqlSessionFactory is used by default (mysqli is MySQL-only).
+ *
+ * @visibility public
+ * @example Simulate writes without changing the native table
+ *     $container = \Testcontainers\Testcontainers::run(\Containers\MySql80Container::class);
+ *     $native = $container->getData(\mysqli::class);
+ *     $native->query('CREATE TABLE accounts (id INT PRIMARY KEY, balance INT)');
+ *     $native->query('INSERT INTO accounts VALUES (1, 10)');
+ *     $ztd = \ZtdQuery\Adapter\Mysqli\ZtdMysqli::fromMysqli($native);
+ *     $ztd->query('INSERT INTO accounts VALUES (2, 20)');
+ *     $ztd->lastAffectedRows() // => 1
+ *     $ztd->query('SELECT id FROM accounts')->fetch_all(MYSQLI_ASSOC) // => [['id' => 2]]
+ *     $native->query('SELECT id FROM accounts')->fetch_all(MYSQLI_ASSOC) // => [['id' => '1']]
+ *     $native->query('DROP TABLE accounts');
+ *     $container->stop();
  */
 class ZtdMysqli extends mysqli
 {
@@ -63,7 +82,9 @@ class ZtdMysqli extends mysqli
         ?ZtdConfig $config = null,
         ?SessionFactory $factory = null
     ) {
-        // Parent is initialized without connection; innerMysqli handles the real connection
+        /**
+         * Parent is initialized without connection; innerMysqli handles the real connection
+         */
         parent::__construct();
         $this->innerMysqli = new mysqli($hostname, $username, $password, $database, $port ?? 3306, $socket);
 
@@ -83,7 +104,9 @@ class ZtdMysqli extends mysqli
      */
     public static function fromMysqli(mysqli $mysqli, ?ZtdConfig $config = null, ?SessionFactory $factory = null): self
     {
-        /** @var self $instance */
+        /**
+         * @var self $instance
+         */
         $instance = (new ReflectionClass(self::class))->newInstanceWithoutConstructor();
         $instance->innerMysqli = $mysqli;
 
@@ -147,7 +170,7 @@ class ZtdMysqli extends mysqli
             return $this->ztdAffectedRowCount;
         }
 
-        return $this->readMysqliProperty($name);
+        return (new Native\MysqliPropertyReader())->read($this->innerMysqli, $name);
     }
 
     /**
@@ -155,42 +178,16 @@ class ZtdMysqli extends mysqli
      */
     public function __isset(string $name): bool
     {
-        return $this->readMysqliProperty($name) !== null;
-    }
-
-    /**
-     * Read a known mysqli property from the inner instance.
-     */
-    private function readMysqliProperty(string $name): mixed
-    {
-        return match ($name) {
-            'affected_rows' => $this->innerMysqli->affected_rows,
-            'client_info' => $this->innerMysqli->client_info,
-            'client_version' => $this->innerMysqli->client_version,
-            'connect_errno' => $this->innerMysqli->connect_errno,
-            'connect_error' => $this->innerMysqli->connect_error,
-            'errno' => $this->innerMysqli->errno,
-            'error' => $this->innerMysqli->error,
-            'error_list' => $this->innerMysqli->error_list,
-            'field_count' => $this->innerMysqli->field_count,
-            'host_info' => $this->innerMysqli->host_info,
-            'info' => $this->innerMysqli->info,
-            'insert_id' => $this->innerMysqli->insert_id,
-            'server_info' => $this->innerMysqli->server_info,
-            'server_version' => $this->innerMysqli->server_version,
-            'sqlstate' => $this->innerMysqli->sqlstate,
-            'protocol_version' => $this->innerMysqli->protocol_version,
-            'thread_id' => $this->innerMysqli->thread_id,
-            'warning_count' => $this->innerMysqli->warning_count,
-            default => null,
-        };
+        return (new Native\MysqliPropertyReader())->read($this->innerMysqli, $name) !== null;
     }
 
     /**
      * {@inheritDoc}
      *
      * @throws ZtdMysqliException When ZTD-specific exception occurs (wraps DatabaseException).
+     * @throws mysqli_sql_exception When native execution fails.
      */
+    #[Override]
     public function prepare(string $query): mysqli_stmt|false
     {
         if (!$this->session->isEnabled()) {
@@ -215,7 +212,9 @@ class ZtdMysqli extends mysqli
      * {@inheritDoc}
      *
      * @throws ZtdMysqliException When ZTD-specific exception occurs (wraps DatabaseException).
+     * @throws mysqli_sql_exception When native execution fails.
      */
+    #[Override]
     public function query(string $query, int $resultMode = MYSQLI_STORE_RESULT): mysqli_result|bool
     {
         if (!$this->session->isEnabled()) {
@@ -233,36 +232,16 @@ class ZtdMysqli extends mysqli
             return $result;
         }
 
-        $stmt = $this->prepare($query);
-        if ($stmt === false) {
-            return false;
-        }
-
-        if (!$stmt->execute()) {
-            return false;
-        }
-
-        // Cannot use $stmt->affected_rows because mysqli_stmt's C extension
-        // property handler takes precedence over __get when parent constructor was not called.
-        if ($stmt instanceof ZtdMysqliStatement) {
-            $this->ztdAffectedRowCount = $stmt->ztdAffectedRows();
-        } else {
-            $this->ztdAffectedRowCount = null;
-        }
-
-        $result = $stmt->get_result();
-        if ($result === false) {
-            return true;
-        }
-
-        return $result;
+        return $this->execute_query($query);
     }
 
     /**
      * {@inheritDoc}
      *
      * @throws ZtdMysqliException When ZTD-specific exception occurs (wraps DatabaseException).
+     * @throws mysqli_sql_exception When native execution fails.
      */
+    #[Override]
     public function real_query(string $query): bool
     {
         if (!$this->session->isEnabled()) {
@@ -280,16 +259,13 @@ class ZtdMysqli extends mysqli
         }
 
         $stmt = $this->prepare($query);
-        if ($stmt === false) {
-            return false;
-        }
-
-        return $stmt->execute();
+        return $stmt !== false && $stmt->execute();
     }
 
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function multi_query(string $query): bool
     {
         return $this->innerMysqli->multi_query($query);
@@ -298,6 +274,7 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function begin_transaction(int $flags = 0, ?string $name = null): bool
     {
         $result = $this->innerMysqli->begin_transaction($flags, $name);
@@ -311,6 +288,7 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function commit(int $flags = 0, ?string $name = null): bool
     {
         $result = $this->innerMysqli->commit($flags, $name);
@@ -324,6 +302,7 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function rollback(int $flags = 0, ?string $name = null): bool
     {
         $result = $this->innerMysqli->rollback($flags, $name);
@@ -337,6 +316,7 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function autocommit(bool $enable): bool
     {
         $result = $this->innerMysqli->autocommit($enable);
@@ -354,7 +334,8 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
-    #[\ReturnTypeWillChange]
+    #[Override]
+    #[ReturnTypeWillChange]
     public function close()
     {
         $this->innerMysqli->close();
@@ -364,6 +345,7 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function select_db(string $database): bool
     {
         return $this->innerMysqli->select_db($database);
@@ -372,6 +354,7 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function set_charset(string $charset): bool
     {
         return $this->innerMysqli->set_charset($charset);
@@ -380,6 +363,7 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function real_escape_string(string $string): string
     {
         return $this->innerMysqli->real_escape_string($string);
@@ -388,6 +372,7 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function escape_string(string $string): string
     {
         return $this->innerMysqli->escape_string($string);
@@ -396,6 +381,7 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function ping(): bool
     {
         return $this->innerMysqli->ping();
@@ -404,6 +390,7 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function character_set_name(): string
     {
         return $this->innerMysqli->character_set_name();
@@ -412,7 +399,8 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
-    public function change_user(string $username, #[\SensitiveParameter] string $password, ?string $database): bool
+    #[Override]
+    public function change_user(string $username, #[SensitiveParameter] string $password, ?string $database): bool
     {
         return $this->innerMysqli->change_user($username, $password, $database);
     }
@@ -420,22 +408,26 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function connect(
         ?string $hostname = null,
         ?string $username = null,
-        #[\SensitiveParameter] ?string $password = null,
+        #[SensitiveParameter] ?string $password = null,
         ?string $database = null,
         ?int $port = null,
         ?string $socket = null
     ): bool {
-        /** @var bool */
+        /**
+         * @var bool
+         */
         return $this->innerMysqli->connect($hostname, $username, $password, $database, $port, $socket);
     }
 
     /**
      * {@inheritDoc}
      */
-    #[\ReturnTypeWillChange]
+    #[Override]
+    #[ReturnTypeWillChange]
     public function debug(string $options)
     {
         $this->innerMysqli->debug($options);
@@ -445,6 +437,7 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function dump_debug_info(): bool
     {
         return $this->innerMysqli->dump_debug_info();
@@ -453,6 +446,7 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function get_charset(): ?object
     {
         return $this->innerMysqli->get_charset();
@@ -463,6 +457,7 @@ class ZtdMysqli extends mysqli
      *
      * @deprecated 8.1
      */
+    #[Override]
     public function get_client_info(): string
     {
         return $this->innerMysqli->get_client_info();
@@ -473,15 +468,17 @@ class ZtdMysqli extends mysqli
      *
      * @return array<string, mixed>
      */
+    #[Override]
     public function get_connection_stats(): array
     {
-        /** @var array<string, mixed> */
-        return $this->innerMysqli->get_connection_stats();
+
+        return mysqli_get_connection_stats($this->innerMysqli);
     }
 
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function get_server_info(): string
     {
         return $this->innerMysqli->get_server_info();
@@ -490,6 +487,7 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function get_warnings(): mysqli_warning|false
     {
         return $this->innerMysqli->get_warnings();
@@ -500,6 +498,7 @@ class ZtdMysqli extends mysqli
      *
      * @deprecated 8.1
      */
+    #[Override]
     public function init(): ?bool
     {
         $this->innerMysqli->init();
@@ -510,6 +509,7 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function kill(int $process_id): bool
     {
         return $this->innerMysqli->kill($process_id);
@@ -518,6 +518,7 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function more_results(): bool
     {
         return $this->innerMysqli->more_results();
@@ -526,6 +527,7 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function next_result(): bool
     {
         return $this->innerMysqli->next_result();
@@ -534,6 +536,7 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function options(int $option, mixed $value): bool
     {
         return $this->innerMysqli->options($option, $value);
@@ -542,10 +545,11 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function real_connect(
         ?string $hostname = null,
         ?string $username = null,
-        #[\SensitiveParameter] ?string $password = null,
+        #[SensitiveParameter] ?string $password = null,
         ?string $database = null,
         ?int $port = null,
         ?string $socket = null,
@@ -557,6 +561,7 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function reap_async_query(): mysqli_result|bool
     {
         return $this->innerMysqli->reap_async_query();
@@ -565,6 +570,7 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function refresh(int $flags): bool
     {
         return $this->innerMysqli->refresh($flags);
@@ -573,6 +579,7 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function release_savepoint(string $name): bool
     {
         $result = $this->innerMysqli->release_savepoint($name);
@@ -586,6 +593,7 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function savepoint(string $name): bool
     {
         $result = $this->innerMysqli->savepoint($name);
@@ -599,7 +607,8 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
-    #[\ReturnTypeWillChange]
+    #[Override]
+    #[ReturnTypeWillChange]
     public function ssl_set(
         ?string $key,
         ?string $certificate,
@@ -614,6 +623,7 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function stat(): string|false
     {
         return $this->innerMysqli->stat();
@@ -622,6 +632,7 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function stmt_init(): mysqli_stmt
     {
         return $this->innerMysqli->stmt_init();
@@ -630,14 +641,17 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function store_result(int $mode = 0): mysqli_result|false
     {
-        return $this->innerMysqli->store_result($mode);
+        unset($mode);
+        return $this->innerMysqli->store_result();
     }
 
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function thread_safe(): bool
     {
         return $this->innerMysqli->thread_safe();
@@ -646,6 +660,7 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function use_result(): mysqli_result|false
     {
         return $this->innerMysqli->use_result();
@@ -654,6 +669,7 @@ class ZtdMysqli extends mysqli
     /**
      * {@inheritDoc}
      */
+    #[Override]
     public function set_opt(int $option, mixed $value): bool
     {
         return $this->innerMysqli->set_opt($option, $value);
@@ -669,9 +685,12 @@ class ZtdMysqli extends mysqli
      * @param-out mixed $error
      * @param-out mixed $reject
      */
+    #[Override]
     public static function poll(?array &$read, ?array &$error, array &$reject, int $seconds, int $microseconds = 0): int|false
     {
-        /** @var int|false */
+        /**
+         * @var int|false
+         */
         return mysqli::poll($read, $error, $reject, $seconds, $microseconds);
     }
 
@@ -680,39 +699,16 @@ class ZtdMysqli extends mysqli
      *
      * @param array<mixed, mixed>|null $params
      * @throws ZtdMysqliException When ZTD-specific exception occurs (wraps DatabaseException).
+     * @throws mysqli_sql_exception When native execution fails.
      */
     public function execute_query(string $query, ?array $params = null): mysqli_result|bool
     {
-        if (!$this->session->isEnabled()) {
-            return $this->innerMysqli->execute_query($query, $params);
-        }
-
         $stmt = $this->prepare($query);
-        if ($stmt === false) {
+        if ($stmt === false || !$stmt->execute($params)) {
             return false;
         }
-
-        if ($params !== null) {
-            if (!$stmt->execute($params)) {
-                return false;
-            }
-        } else {
-            if (!$stmt->execute()) {
-                return false;
-            }
-        }
-
-        if ($stmt instanceof ZtdMysqliStatement) {
-            $this->ztdAffectedRowCount = $stmt->ztdAffectedRows();
-        } else {
-            $this->ztdAffectedRowCount = null;
-        }
-
+        $this->ztdAffectedRowCount = $stmt instanceof ZtdMysqliStatement ? $stmt->ztdAffectedRows() : null;
         $result = $stmt->get_result();
-        if ($result === false) {
-            return true;
-        }
-
-        return $result;
+        return $result === false ? true : $result;
     }
 }

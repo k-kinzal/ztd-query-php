@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Adapter\Mysqli;
+namespace ZtdQuery\Adapter\Mysqli\Driver;
 
 use mysqli_result;
 use ZtdQuery\Connection\StatementInterface;
@@ -20,6 +20,9 @@ final class MysqliResultStatement implements StatementInterface
 
     private int $affectedRows;
 
+    /**
+     * Wrap an executed result and normalize its affected row count.
+     */
     public function __construct(?mysqli_result $result, int|string $affectedRows)
     {
         $this->result = $result;
@@ -46,8 +49,7 @@ final class MysqliResultStatement implements StatementInterface
             return [];
         }
 
-        /** @var array<int, array<string, mixed>> $rows */
-        $rows = $this->result->fetch_all(MYSQLI_ASSOC);
+        $rows = mysqli_fetch_all($this->result, MYSQLI_ASSOC);
 
         return $rows;
     }

@@ -8,6 +8,9 @@ on:
       - 'packages/sql-faker/**'
       - 'packages/ztd-query-core/**'
       - 'packages/ztd-query-postgres/**'
+      - 'packages/ztd-query-mysqli-adapter/**'
+      - 'packages/ztd-query-mysql/**'
+      - 'packages/sql-fixture/**'
       - '.github/workflows/docs.yml'
       - '.github/workflows/docs-preview.yml'
   workflow_dispatch:
@@ -40,7 +43,7 @@ jobs:
         with:
           # The locked ParaTest version supports PHP 8.1 through 8.3.
           php-version: '8.3'
-          extensions: mbstring, pcntl, gd
+          extensions: mbstring, pcntl, gd, mysqli, pdo_mysql
           coverage: pcov
 
       - name: Install dependencies
@@ -76,6 +79,17 @@ jobs:
       - name: Check PostgreSQL platform requirements
         run: composer --working-dir=packages/ztd-query-postgres check-platform-reqs
 
+      - name: Install mysqli adapter dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+        with:
+          working-directory: packages/ztd-query-mysqli-adapter
+          dependency-versions: locked
+          composer-options: --prefer-dist
+          require-lock-file: true
+
+      - name: Check mysqli adapter platform requirements
+        run: composer --working-dir=packages/ztd-query-mysqli-adapter check-platform-reqs
+
       - name: Restore the DocGen cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
@@ -83,9 +97,10 @@ jobs:
             packages/sql-faker/build/docgen-cache
             packages/ztd-query-core/build/docgen-cache
             packages/ztd-query-postgres/build/docgen-cache
-          key: sql-faker-docgen-${{ runner.os }}-${{ hashFiles('packages/sql-faker/composer.lock', 'packages/ztd-query-core/composer.lock', 'packages/ztd-query-postgres/composer.lock') }}-${{ github.sha }}
+            packages/ztd-query-mysqli-adapter/build/docgen-cache
+          key: sql-faker-docgen-${{ runner.os }}-${{ hashFiles('packages/sql-faker/composer.lock', 'packages/ztd-query-core/composer.lock', 'packages/ztd-query-postgres/composer.lock', 'packages/ztd-query-mysqli-adapter/composer.lock') }}-${{ github.sha }}
           restore-keys: |
-            sql-faker-docgen-${{ runner.os }}-${{ hashFiles('packages/sql-faker/composer.lock', 'packages/ztd-query-core/composer.lock', 'packages/ztd-query-postgres/composer.lock') }}-
+            sql-faker-docgen-${{ runner.os }}-${{ hashFiles('packages/sql-faker/composer.lock', 'packages/ztd-query-core/composer.lock', 'packages/ztd-query-postgres/composer.lock', 'packages/ztd-query-mysqli-adapter/composer.lock') }}-
             sql-faker-docgen-${{ runner.os }}-
 
       - name: Generate the coverage report the site reads
@@ -96,6 +111,9 @@ jobs:
 
       - name: Generate PostgreSQL coverage
         run: composer --working-dir=packages/ztd-query-postgres test -- --coverage-xml build/coverage-xml
+
+      - name: Generate mysqli adapter coverage
+        run: composer --working-dir=packages/ztd-query-mysqli-adapter run-script --timeout=1800 test -- --coverage-xml build/coverage-xml
 
       - name: Generate the documentation
         run: |
@@ -108,6 +126,8 @@ jobs:
             --base-url="https://${repository%%/*}.github.io/${repository#*/}/core"
           composer --working-dir=packages/ztd-query-postgres docgen -- --coverage=packages/ztd-query-postgres/build/coverage-xml \
             --base-url="https://${repository%%/*}.github.io/${repository#*/}/ztd-query-postgres"
+          composer --working-dir=packages/ztd-query-mysqli-adapter docgen -- --coverage=packages/ztd-query-mysqli-adapter/build/coverage-xml \
+            --base-url="https://${repository%%/*}.github.io/${repository#*/}/mysqli"
 
       - name: Check out the documentation branch
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -120,11 +140,13 @@ jobs:
         run: |
           set -euo pipefail
 
-          rsync -a --checksum --delete --exclude '/.git/' --exclude '/pr/' --exclude '/CNAME' --exclude '/core/' --exclude '/ztd-query-postgres/' ../packages/sql-faker/build/docs/ ./
+          rsync -a --checksum --delete --exclude '/.git/' --exclude '/pr/' --exclude '/CNAME' --exclude '/core/' --exclude '/ztd-query-postgres/' --exclude '/mysqli/' ../packages/sql-faker/build/docs/ ./
           mkdir -p core
           rsync -a --checksum --delete ../packages/ztd-query-core/build/docs/ core/
           mkdir -p ztd-query-postgres
           rsync -a --checksum --delete ../packages/ztd-query-postgres/build/docs/ ztd-query-postgres/
+          mkdir -p mysqli
+          rsync -a --checksum --delete ../packages/ztd-query-mysqli-adapter/build/docs/ mysqli/
 
           git add --all
           if git diff --cached --quiet; then
