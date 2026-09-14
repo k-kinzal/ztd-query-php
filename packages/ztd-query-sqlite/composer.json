@@ -8,11 +8,11 @@
         "k-kinzal/ztd-query-core": "@dev"
     },
     "require-dev": {
-        "brianium/paratest": "^7.3",
+        "brianium/paratest": "^6.11 || ^7",
         "deptrac/deptrac": "^3.0",
         "friendsofphp/php-cs-fixer": "^3.95.25",
         "k-kinzal/php-ai-toolkit": "dev-main",
-        "k-kinzal/sql-faker": "dev-main",
+        "k-kinzal/sql-faker": "@dev",
         "nikic/php-fuzzer": "^0.0.11",
         "phpbench/phpbench": "^1.4",
         "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
@@ -23,21 +23,11 @@
     "repositories": [
         {
             "type": "path",
-            "url": "../ztd-query-core",
-            "options": {
-                "versions": {
-                    "k-kinzal/ztd-query-core": "dev-main"
-                }
-            }
+            "url": "../ztd-query-core"
         },
         {
             "type": "path",
-            "url": "../sql-faker",
-            "options": {
-                "versions": {
-                    "k-kinzal/sql-faker": "dev-main"
-                }
-            }
+            "url": "../sql-faker"
         },
         {
             "name": "php-ai-toolkit",
@@ -49,47 +39,15 @@
         "psr-4": {
             "ZtdQuery\\Platform\\Sqlite\\": "src/"
         },
-        "classmap": [
-            "src/Binding/SqliteErrorClassifier.php",
-            "src/Binding/SqlitePdoParameterBindingCompiler.php",
-            "src/Binding/SqlitePdoResultColumnTypeResolver.php",
-            "src/Parsing/SqliteInMemoryAttachStatement.php",
-            "src/Parsing/SqliteLexerProfile.php",
-            "src/Parsing/SqliteLexicalMasker.php",
-            "src/Parsing/SqliteReadOnlyDiagnosticStatement.php",
-            "src/Parsing/SqliteReturningProjectionParser.php",
-            "src/Parsing/SqliteSelectRelationParser.php",
-            "src/Parsing/SqliteTransactionStatementParser.php",
-            "src/Parsing/SqliteUpsertExpressionParser.php",
-            "src/Rewriting/Mutation/AlterTableMutation.php",
-            "src/Rewriting/Rendering/SqliteCastRenderer.php",
-            "src/Rewriting/Rendering/SqliteIdentifierQuoter.php",
-            "src/Rewriting/Rendering/SqliteValueRenderer.php",
-            "src/Rewriting/SqliteCteShadowComposer.php",
-            "src/Rewriting/SqliteFullTextSearchRewriter.php",
-            "src/Rewriting/SqliteGeneratedColumnProjector.php",
-            "src/Rewriting/SqliteIndexHintStripper.php",
-            "src/Rewriting/SqliteNativeUpsertProjector.php",
-            "src/Rewriting/SqliteViewShadowRenderer.php",
-            "src/Rewriting/Transformer/DeleteTransformer.php",
-            "src/Rewriting/Transformer/InsertRowRenderer.php",
-            "src/Rewriting/Transformer/InsertSelectRenderer.php",
-            "src/Rewriting/Transformer/InsertTransformer.php",
-            "src/Rewriting/Transformer/SelectTransformer.php",
-            "src/Rewriting/Transformer/SqliteTransformer.php",
-            "src/Rewriting/Transformer/UpdateTransformer.php",
-            "src/Schema/SqliteColumnTypeMapper.php",
-            "src/Schema/SqliteForeignKeyDefinitionParser.php",
-            "src/Schema/SqliteViewDefinitionParser.php"
+        "files": [
+            "src/Compatibility/ClassAliases.php"
         ]
     },
     "autoload-dev": {
         "psr-4": {
             "Tests\\": "tests/",
             "Fuzz\\": "fuzz/",
-            "Bench\\": "bench/",
-            "Tests\\Contract\\": "../ztd-query-core/tests/Contract/",
-            "Tests\\Fake\\": "../ztd-query-core/tests/Fake/"
+            "Bench\\": "bench/"
         }
     },
     "scripts": {
@@ -100,10 +58,10 @@
         "lint": [
             "@format:check",
             "@phpstan",
-            "@compat",
             "@loc-guard",
             "@tree-guard",
-            "@deptrac"
+            "@deptrac",
+            "@compat"
         ],
         "format": "php-cs-fixer fix --allow-risky=yes",
         "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
@@ -113,28 +71,43 @@
             "@fuzz:semantics"
         ],
         "fuzz:robustness": "@fuzz:semantics",
-        "fuzz:robustness:classify": "php-fuzzer fuzz fuzz/fuzz_robustness_classify.php fuzz/corpus/robustness-classify/",
-        "fuzz:robustness:rewrite": "php-fuzzer fuzz fuzz/fuzz_robustness_rewrite.php fuzz/corpus/robustness-rewrite/",
+        "fuzz:robustness:classify": [
+            "@php -r \"is_dir('fuzz/corpus/robustness-classify') || mkdir('fuzz/corpus/robustness-classify', 0777, true);\" --",
+            "php-fuzzer fuzz fuzz/fuzz_robustness_classify.php fuzz/corpus/robustness-classify/"
+        ],
+        "fuzz:robustness:rewrite": [
+            "@php -r \"is_dir('fuzz/corpus/robustness-rewrite') || mkdir('fuzz/corpus/robustness-rewrite', 0777, true);\" --",
+            "php-fuzzer fuzz fuzz/fuzz_robustness_rewrite.php fuzz/corpus/robustness-rewrite/"
+        ],
         "test:unit": "phpunit --testsuite unit",
-        "test:fuzz": "@php -d memory_limit=512M vendor/bin/phpunit --testsuite fuzz",
         "doctest": "phpunit --testsuite doctest",
         "phpstan": "phpstan analyse --memory-limit=512M",
         "compat": "phpcs",
         "loc-guard": "loc-guard --config=loc.yaml",
         "tree-guard": "tree-guard --config=tree.yaml",
         "deptrac": [
-            "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered",
+            "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered",
             "deptrac debug:unassigned --config-file=deptrac.yaml"
         ],
         "deptrac:debug": [
             "deptrac debug:unassigned --config-file=deptrac.yaml",
             "deptrac debug:unused --config-file=deptrac.yaml"
         ],
-        "docgen": "cd ../.. && packages/ztd-query-sqlite/vendor/bin/docgen --packages=packages/ztd-query-sqlite --deptrac=\"$(pwd)/packages/ztd-query-sqlite/deptrac.yaml\" --exclude='packages/ztd-query-sqlite/../ztd-query-core/tests/*' --output=packages/ztd-query-sqlite/build/docs --cache-dir=packages/ztd-query-sqlite/build/docgen-cache --title=k-kinzal/ztd-query-sqlite",
-        "docgen:serve": "@docgen --serve",
-        "docgen:diff": "@docgen --diff=origin/main --serve",
+        "docgen": "cd ../.. && packages/ztd-query-sqlite/vendor/bin/docgen --packages=packages/ztd-query-sqlite --exclude=packages/ztd-query-sqlite/src/Compatibility/ClassAliases.php --deptrac=\"$PWD/packages/ztd-query-sqlite/deptrac.yaml\" --output=packages/ztd-query-sqlite/build/docs --cache-dir=packages/ztd-query-sqlite/build/docgen-cache --title=k-kinzal/ztd-query-sqlite --coverage=packages/ztd-query-sqlite/build/coverage-xml",
+        "docgen:serve": [
+            "Composer\\Config::disableProcessTimeout",
+            "@docgen --serve"
+        ],
+        "docgen:diff": [
+            "Composer\\Config::disableProcessTimeout",
+            "@docgen --diff=origin/main --serve"
+        ],
         "docgen:fresh": "@docgen --no-cache",
-        "fuzz:semantics": "php-fuzzer fuzz fuzz/fuzz_semantics.php fuzz/corpus/semantics/"
+        "fuzz:semantics": [
+            "@php -r \"is_dir('fuzz/corpus/semantics') || mkdir('fuzz/corpus/semantics', 0777, true);\" --",
+            "php-fuzzer fuzz fuzz/fuzz_semantics.php fuzz/corpus/semantics/"
+        ],
+        "test:coverage": "phpunit --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
     },
     "config": {
         "allow-plugins": {
@@ -146,7 +119,6 @@
         "sort-packages": true
     },
     "support": {
-        "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-sqlite",
-        "docs": "https://k-kinzal.github.io/ztd-query-php/sqlite/k-kinzal/ztd-query-sqlite/"
+        "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-sqlite"
     }
 }

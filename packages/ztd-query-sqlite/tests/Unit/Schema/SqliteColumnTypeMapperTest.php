@@ -6,7 +6,7 @@ namespace Tests\Unit\Schema;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use ZtdQuery\Platform\Sqlite\SqliteColumnTypeMapper;
+use ZtdQuery\Platform\Sqlite\Schema\SqliteColumnTypeMapper;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversClass(SqliteColumnTypeMapper::class)]

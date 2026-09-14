@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Bench;
 
 use PhpBench\Attributes as Benchmark;
-use ZtdQuery\Platform\Sqlite\SqliteParser;
+use ZtdQuery\Platform\Sqlite\Sql\SqliteParser;
 
 /**
  * Measures fixed parser workloads with construction outside the timed subjects.

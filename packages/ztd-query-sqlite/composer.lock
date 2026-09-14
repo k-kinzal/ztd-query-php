@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "02cbdfc5d875afe2e21eaa3e744c08a7",
+    "content-hash": "bb3e0e165e7ef86d255d43c1acf410f8",
     "packages": [
         {
             "name": "k-kinzal/ztd-query-core",
@@ -12,7 +12,7 @@
             "dist": {
                 "type": "path",
                 "url": "../ztd-query-core",
-                "reference": "479e9dce89e2b3e5177406496af1f29410a47763"
+                "reference": "9a98d275782c4ffa0fbb751b585c8132b89fc8fd"
             },
             "require": {
                 "php": "^8.1"
@@ -1364,7 +1364,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-faker",
-                "reference": "22d1034e3ec494aa20e45f678c27e3bef0d29b9a"
+                "reference": "54b537b9673b578e5f2ff2ed957fc9e301060b21"
             },
             "require": {
                 "fakerphp/faker": "^1.23",

@@ -12,6 +12,3 @@ parameters:
         - tests
         - fuzz
         - bench
-    toolkit:
-        broadCatchAllowedPaths:
-            - fuzz/Robustness/Target/FuzzBoundary.php

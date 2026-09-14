@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Sqlite\Schema\Create;
 
-use ZtdQuery\Platform\Sqlite\SqliteLexerProfile;
+use ZtdQuery\Platform\Sqlite\Sql\SqliteLexerProfile;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;
 
@@ -123,7 +123,7 @@ final class TableBodyParser
         $index = 0;
         $length = strlen($body);
         while ($index < $length) {
-            $end = (new \ZtdQuery\Platform\Sqlite\Parsing\Lexing\ExpressionSpan())->end($body, $index, false);
+            $end = (new \ZtdQuery\Platform\Sqlite\Sql\Lexing\ExpressionSpan())->end($body, $index, false);
             $definition = trim(substr($body, $index, $end - $index));
             if ($end < $length || $definition !== '') {
                 $definitions[] = $definition;

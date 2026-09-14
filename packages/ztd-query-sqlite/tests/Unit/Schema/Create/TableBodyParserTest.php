@@ -10,9 +10,9 @@ use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\Sqlite\Schema\Create\TableBodyParser;
 
 #[CoversClass(TableBodyParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Lexing\ExpressionSpan::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\Parsing\Lexing\QuotedSpan::class)]
-#[UsesClass(\ZtdQuery\Platform\Sqlite\SqliteLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Sql\Lexing\ExpressionSpan::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Sql\Lexing\QuotedSpan::class)]
+#[UsesClass(\ZtdQuery\Platform\Sqlite\Sql\SqliteLexerProfile::class)]
 final class TableBodyParserTest extends TestCase
 {
     public function testTableBodyValidatesFramingAndOptions(): void

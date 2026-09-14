@@ -19,7 +19,6 @@ permissions:
 concurrency:
   group: sql-faker-docs-publish
   cancel-in-progress: false
-  queue: max
 
 env:
   COMPOSER_NO_INTERACTION: '1'
@@ -116,7 +115,7 @@ jobs:
           set -euo pipefail
 
           mkdir -p "pr/${PR_NUMBER}"
-          rsync -a --checksum --delete --exclude '/core/' --exclude '/sqlite/' ../packages/sql-faker/build/docs/ "pr/${PR_NUMBER}/"
+          rsync -a --checksum --delete --exclude '/core/' ../packages/sql-faker/build/docs/ "pr/${PR_NUMBER}/"
           mkdir -p "pr/${PR_NUMBER}/core"
           rsync -a --checksum --delete ../packages/ztd-query-core/build/docs/ "pr/${PR_NUMBER}/core/"
           touch .nojekyll

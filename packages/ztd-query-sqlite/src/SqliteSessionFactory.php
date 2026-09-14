@@ -7,17 +7,17 @@ namespace ZtdQuery\Platform\Sqlite;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Platform\SessionFactory;
-use ZtdQuery\Platform\Sqlite\Transformer\DeleteTransformer;
-use ZtdQuery\Platform\Sqlite\Transformer\InsertTransformer;
-use ZtdQuery\Platform\Sqlite\Transformer\SelectTransformer;
-use ZtdQuery\Platform\Sqlite\Transformer\SqliteTransformer;
-use ZtdQuery\Platform\Sqlite\Transformer\UpdateTransformer;
+use ZtdQuery\Platform\Sqlite\Rewrite\Transformer\DeleteTransformer;
+use ZtdQuery\Platform\Sqlite\Rewrite\Transformer\InsertTransformer;
+use ZtdQuery\Platform\Sqlite\Rewrite\Transformer\SelectTransformer;
+use ZtdQuery\Platform\Sqlite\Rewrite\Transformer\SqliteTransformer;
+use ZtdQuery\Platform\Sqlite\Rewrite\Transformer\UpdateTransformer;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Session;
 use ZtdQuery\Shadow\ShadowStore;
-use ZtdQuery\Shadow\ShadowTransactionManager;
+use ZtdQuery\Shadow\ShadowTransactions;
 
 /**
  * Factory for creating Session instances pre-configured for SQLite.
@@ -42,11 +42,11 @@ final class SqliteSessionFactory implements SessionFactory
     public function create(ConnectionInterface $connection, ZtdConfig $config): Session
     {
         $shadowStore = new ShadowStore();
-        $parser = new SqliteParser();
-        $schemaParser = new SqliteSchemaParser();
+        $parser = new Sql\SqliteParser();
+        $schemaParser = new Schema\SqliteSchemaParser();
         $registry = new TableDefinitionRegistry();
 
-        $reflector = new SqliteSchemaReflector($connection);
+        $reflector = new Schema\SqliteSchemaReflector($connection);
         foreach ($reflector->reflectAll() as $tableName => $createSql) {
             $definition = $schemaParser->parse($createSql);
             if ($definition !== null) {
@@ -58,14 +58,14 @@ final class SqliteSessionFactory implements SessionFactory
             $views->register($viewName, $definition);
         }
 
-        $guard = new SqliteQueryGuard($parser);
+        $guard = new Rewrite\SqliteQueryGuard($parser);
         $selectTransformer = new SelectTransformer();
         $insertTransformer = new InsertTransformer($parser, $selectTransformer);
         $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
         $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
         $transformer = new SqliteTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer);
-        $mutationResolver = new SqliteMutationResolver($shadowStore, $registry, $schemaParser, $parser);
-        $rewriter = new SqliteRewriter($guard, $shadowStore, $registry, $transformer, $mutationResolver, $parser, $views);
+        $mutationResolver = new Shadow\SqliteMutationResolver($shadowStore, $registry, $schemaParser, $parser);
+        $rewriter = new Rewrite\SqliteRewriter($guard, $shadowStore, $registry, $transformer, $mutationResolver, $parser, $views);
 
         return new Session(
             $rewriter,
@@ -73,10 +73,10 @@ final class SqliteSessionFactory implements SessionFactory
             new ResultSelectRunner(),
             $config,
             $connection,
-            transactions: new ShadowTransactionManager($shadowStore, $registry),
+            transactions: new ShadowTransactions($shadowStore, $registry),
             registry: $registry,
-            parameterBindingCompiler: new SqlitePdoParameterBindingCompiler(),
-            resultColumnTypeResolver: new SqlitePdoResultColumnTypeResolver(),
+            parameterBindingCompiler: new Connection\Parameter\SqlitePdoParameterBindingCompiler(),
+            resultColumnTypeResolver: new Connection\Result\SqlitePdoResultColumnTypeResolver(),
         );
     }
 }

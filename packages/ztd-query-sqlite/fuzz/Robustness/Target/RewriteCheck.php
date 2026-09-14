@@ -7,12 +7,12 @@ namespace Fuzz\Robustness\Target;
 use Error;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\Sqlite\SqliteIndexHintStripper;
-use ZtdQuery\Platform\Sqlite\SqliteInMemoryAttachStatement;
-use ZtdQuery\Platform\Sqlite\SqliteQueryGuard;
-use ZtdQuery\Platform\Sqlite\SqliteReadOnlyDiagnosticStatement;
-use ZtdQuery\Platform\Sqlite\SqliteRewriter;
-use ZtdQuery\Platform\Sqlite\SqliteSelectRelationParser;
+use ZtdQuery\Platform\Sqlite\Rewrite\Index\SqliteIndexHintStripper;
+use ZtdQuery\Platform\Sqlite\Rewrite\SqliteQueryGuard;
+use ZtdQuery\Platform\Sqlite\Rewrite\SqliteRewriter;
+use ZtdQuery\Platform\Sqlite\Sql\Attach\SqliteInMemoryAttachStatement;
+use ZtdQuery\Platform\Sqlite\Sql\Diagnostic\SqliteReadOnlyDiagnosticStatement;
+use ZtdQuery\Platform\Sqlite\Sql\Relation\SqliteSelectRelationParser;
 use ZtdQuery\Rewrite\QueryKind;
 
 /**

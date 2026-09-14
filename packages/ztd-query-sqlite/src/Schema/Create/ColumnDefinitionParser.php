@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Sqlite\Schema\Create;
 
-use ZtdQuery\Platform\Sqlite\SqliteLexerProfile;
-use ZtdQuery\Platform\Sqlite\SqliteParser;
+use ZtdQuery\Platform\Sqlite\Sql\SqliteLexerProfile;
+use ZtdQuery\Platform\Sqlite\Sql\SqliteParser;
 use ZtdQuery\Sql\SqlTokenStream;
 
 /**

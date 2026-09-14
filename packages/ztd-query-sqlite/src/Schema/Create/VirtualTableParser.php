@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Sqlite\Schema\Create;
 
-use ZtdQuery\Platform\Sqlite\SqliteLexerProfile;
-use ZtdQuery\Platform\Sqlite\SqliteParser;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Platform\Sqlite\Sql\SqliteLexerProfile;
+use ZtdQuery\Platform\Sqlite\Sql\SqliteParser;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Sql\SqlTokenKind;
@@ -62,7 +62,7 @@ final class VirtualTableParser
         $columnTypes = array_fill_keys($columns, 'TEXT');
         $typedColumns = array_fill_keys(
             $columns,
-            new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'),
+            new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'),
         );
 
         return new TableDefinition($columns, $columnTypes, [], [], [], $typedColumns);

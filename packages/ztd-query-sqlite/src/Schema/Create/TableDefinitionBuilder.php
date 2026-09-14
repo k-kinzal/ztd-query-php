@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Sqlite\Schema\Create;
 
-use ZtdQuery\Platform\Sqlite\SqliteColumnTypeMapper;
-use ZtdQuery\Schema\ColumnType;
-use ZtdQuery\Schema\IdentityGenerationStrategy;
+use ZtdQuery\Platform\Sqlite\Schema\SqliteColumnTypeMapper;
+use ZtdQuery\Schema\ColumnDeclaration;
+use ZtdQuery\Schema\Key\IdentityGenerationStrategy;
 use ZtdQuery\Schema\TableDefinition;
 
 /**
@@ -146,7 +146,7 @@ final class TableDefinitionBuilder
         }
 
         /**
-         * @var array<string, ColumnType> $typedColumns
+         * @var array<string, ColumnDeclaration> $typedColumns
          */
         $typedColumns = [];
         foreach ($this->columnTypes as $colName => $nativeType) {
@@ -172,7 +172,7 @@ final class TableDefinitionBuilder
             $this->columnDefaults,
             $identityStrategies,
             $this->generatedExpressions,
-            (new \ZtdQuery\Platform\Sqlite\SqliteForeignKeyDefinitionParser())->parseCreateTable($sql),
+            (new \ZtdQuery\Platform\Sqlite\Schema\Key\SqliteForeignKeyDefinitionParser())->parseCreateTable($sql),
         );
     }
 }
