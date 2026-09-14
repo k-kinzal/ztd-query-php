@@ -13,13 +13,13 @@ use SqlFixture\Plan\RelationSide;
 final class RelationSideTest extends TestCase
 {
     #[Test]
-    public function hasTwoSides(): void
+    public function testHasTwoSides(): void
     {
         self::assertSame([RelationSide::Left, RelationSide::Right], RelationSide::cases());
     }
 
     #[Test]
-    public function oppositeFlipsTheSide(): void
+    public function testOppositeFlipsTheSide(): void
     {
         self::assertSame(RelationSide::Right, RelationSide::Left->opposite());
         self::assertSame(RelationSide::Left, RelationSide::Right->opposite());
