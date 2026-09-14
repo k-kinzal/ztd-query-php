@@ -43,7 +43,7 @@ deptrac:
     - name: CoreContract
       collectors:
         - type: classLike
-          value: ^ZtdQuery\\Platform\\(?!MySql\\|SessionFactory$)
+          value: ^ZtdQuery\\Platform\\(?!SessionFactory$)[^\\]+$
     - name: CoreConnection
       collectors:
         - type: classLike
