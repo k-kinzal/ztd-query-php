@@ -88,9 +88,18 @@
         }
     },
     "scripts": {
-        "test": "paratest --processes=4",
-        "test:unit": "phpunit --testsuite unit",
-        "test:integration": "phpunit --testsuite integration",
+        "test": [
+            "Composer\\Config::disableProcessTimeout",
+            "paratest --processes=4"
+        ],
+        "test:unit": [
+            "Composer\\Config::disableProcessTimeout",
+            "phpunit --testsuite unit"
+        ],
+        "test:integration": [
+            "Composer\\Config::disableProcessTimeout",
+            "phpunit --testsuite integration"
+        ],
         "lint": [
             "@format:check",
             "@phpstan",
@@ -133,8 +142,14 @@
             "Composer\\Config::disableProcessTimeout",
             "php-fuzzer fuzz fuzz/fuzz_correctness_delete.php fuzz/corpus/correctness-delete --timeout=15"
         ],
-        "test:coverage": "phpunit --coverage-xml build/coverage-xml --log-junit build/junit.xml",
-        "doctest": "phpunit --testsuite doctest",
+        "test:coverage": [
+            "Composer\\Config::disableProcessTimeout",
+            "phpunit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+        ],
+        "doctest": [
+            "Composer\\Config::disableProcessTimeout",
+            "phpunit --testsuite doctest"
+        ],
         "phpstan": "phpstan analyse --memory-limit=512M",
         "compat": "phpcs",
         "loc-guard": "loc-guard --config=loc.yaml",
