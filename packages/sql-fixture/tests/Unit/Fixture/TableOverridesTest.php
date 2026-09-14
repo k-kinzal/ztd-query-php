@@ -13,7 +13,7 @@ use SqlFixture\Fixture\TableOverrides;
 final class TableOverridesTest extends TestCase
 {
     #[Test]
-    public function keepsTheValuesGiven(): void
+    public function testOfKeepsTheValuesGiven(): void
     {
         self::assertSame(
             ['status' => 'paid', 'total' => 10],
@@ -22,7 +22,7 @@ final class TableOverridesTest extends TestCase
     }
 
     #[Test]
-    public function dropsArgumentsLeftUnset(): void
+    public function testToArrayDropsArgumentsLeftUnset(): void
     {
         self::assertSame(
             ['status' => 'paid'],
@@ -31,7 +31,7 @@ final class TableOverridesTest extends TestCase
     }
 
     #[Test]
-    public function keepsFalseAndZeroWhichAreRealValues(): void
+    public function testKeepsFalseAndZeroWhichAreRealValues(): void
     {
         self::assertSame(
             ['flag' => false, 'total' => 0, 'name' => ''],
@@ -40,7 +40,7 @@ final class TableOverridesTest extends TestCase
     }
 
     #[Test]
-    public function withNullSetsAColumnDeliberately(): void
+    public function testWithNullSetsAColumnDeliberately(): void
     {
         self::assertSame(
             ['status' => 'paid', 'note' => null],
@@ -49,7 +49,7 @@ final class TableOverridesTest extends TestCase
     }
 
     #[Test]
-    public function withNullTakesSeveralColumns(): void
+    public function testWithNullTakesSeveralColumns(): void
     {
         self::assertSame(
             ['a' => null, 'b' => null],
@@ -58,7 +58,7 @@ final class TableOverridesTest extends TestCase
     }
 
     #[Test]
-    public function withNullReturnsANewInstance(): void
+    public function testWithNullReturnsANewInstance(): void
     {
         $base = TableOverrides::of(['status' => 'paid']);
 
@@ -67,13 +67,13 @@ final class TableOverridesTest extends TestCase
     }
 
     #[Test]
-    public function anEmptySetOfOverridesIsEmpty(): void
+    public function testAnEmptySetOfOverridesIsEmpty(): void
     {
         self::assertSame([], TableOverrides::of()->toArray());
     }
 
     #[Test]
-    public function withNullKeepsEveryColumnAlreadyMarked(): void
+    public function testWithNullKeepsEveryColumnAlreadyMarked(): void
     {
         self::assertSame(
             ['a' => null, 'b' => null],
@@ -82,7 +82,7 @@ final class TableOverridesTest extends TestCase
     }
 
     #[Test]
-    public function withNullReindexesColumnsSpreadFromAKeyedArray(): void
+    public function testWithNullReindexesColumnsSpreadFromAKeyedArray(): void
     {
         self::assertSame(
             ['a' => null, 'b' => null],

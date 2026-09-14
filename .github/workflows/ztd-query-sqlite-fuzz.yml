@@ -56,10 +56,8 @@ jobs:
           extensions: ${{ matrix.target.extensions }}
           coverage: none
 
-      - name: Select and validate the locked PHP dependency graph
-        run: |
-          cp composer.lock.php-8.5 composer.lock
-          composer validate --strict --no-check-publish --no-check-all
+      - name: Validate the Composer manifest and lock file
+        run: composer validate --strict --no-check-publish
 
       - name: Install dependencies
         uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
@@ -69,8 +67,8 @@ jobs:
           composer-options: --prefer-dist
           require-lock-file: true
 
-      - name: Check installed platform requirements
-        run: composer check-platform-reqs
+      - name: Check library platform requirements
+        run: composer check-platform-reqs --no-dev
 
       - name: Report the fuzz environment
         run: |
@@ -82,10 +80,10 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: packages/ztd-query-sqlite/${{ matrix.target.corpus }}
-          key: fuzz-${{ matrix.target.name }}-${{ runner.os }}-${{ hashFiles('packages/ztd-query-sqlite/composer.lock.php-8.5') }}-${{ hashFiles('packages/ztd-query-sqlite/fuzz/**/*.php') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: fuzz-${{ matrix.target.name }}-${{ runner.os }}-${{ hashFiles('packages/ztd-query-sqlite/composer.lock') }}-${{ hashFiles('packages/ztd-query-sqlite/fuzz/**/*.php') }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            fuzz-${{ matrix.target.name }}-${{ runner.os }}-${{ hashFiles('packages/ztd-query-sqlite/composer.lock.php-8.5') }}-${{ hashFiles('packages/ztd-query-sqlite/fuzz/**/*.php') }}-
-            fuzz-${{ matrix.target.name }}-${{ runner.os }}-${{ hashFiles('packages/ztd-query-sqlite/composer.lock.php-8.5') }}-
+            fuzz-${{ matrix.target.name }}-${{ runner.os }}-${{ hashFiles('packages/ztd-query-sqlite/composer.lock') }}-${{ hashFiles('packages/ztd-query-sqlite/fuzz/**/*.php') }}-
+            fuzz-${{ matrix.target.name }}-${{ runner.os }}-${{ hashFiles('packages/ztd-query-sqlite/composer.lock') }}-
             fuzz-${{ matrix.target.name }}-${{ runner.os }}-
 
       - name: Run the fuzz target
@@ -116,7 +114,7 @@ jobs:
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: packages/ztd-query-sqlite/${{ matrix.target.corpus }}
-          key: fuzz-${{ matrix.target.name }}-${{ runner.os }}-${{ hashFiles('packages/ztd-query-sqlite/composer.lock.php-8.5') }}-${{ hashFiles('packages/ztd-query-sqlite/fuzz/**/*.php') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: fuzz-${{ matrix.target.name }}-${{ runner.os }}-${{ hashFiles('packages/ztd-query-sqlite/composer.lock') }}-${{ hashFiles('packages/ztd-query-sqlite/fuzz/**/*.php') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Upload crash inputs
         if: always()

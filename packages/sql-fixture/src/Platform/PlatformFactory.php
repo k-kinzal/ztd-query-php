@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace SqlFixture\Platform;
 
-use InvalidArgumentException;
 use PDO;
+use SqlFixture\Platform\Exception\DriverDetectionException;
+use SqlFixture\Platform\Exception\UnsupportedDriverException;
 use SqlFixture\Platform\MySql\MySqlSchemaFetcher;
 use SqlFixture\Platform\MySql\MySqlSchemaParser;
 use SqlFixture\Platform\MySql\MySqlTypeMapper;
@@ -24,14 +25,23 @@ use SqlFixture\TypeMapper\TypeMapperInterface;
  */
 final class PlatformFactory
 {
+    /**
+     * PDO driver name for MySQL.
+     */
     public const DRIVER_MYSQL = 'mysql';
+    /**
+     * PDO driver name for SQLite.
+     */
     public const DRIVER_SQLITE = 'sqlite';
+    /**
+     * PDO driver name for PostgreSQL.
+     */
     public const DRIVER_PGSQL = 'pgsql';
 
     /**
      * Create a schema parser for the given driver.
      *
-     * @throws InvalidArgumentException If the driver is not supported
+     * @throws UnsupportedDriverException If the driver is not supported
      */
     public static function createSchemaParser(string $driver): SchemaParserInterface
     {
@@ -39,14 +49,14 @@ final class PlatformFactory
             self::DRIVER_MYSQL => new MySqlSchemaParser(),
             self::DRIVER_SQLITE => new SqliteSchemaParser(),
             self::DRIVER_PGSQL => new PostgreSqlSchemaParser(),
-            default => throw new InvalidArgumentException("Unsupported driver: {$driver}"),
+            default => throw new UnsupportedDriverException($driver),
         };
     }
 
     /**
      * Create a type mapper for the given driver.
      *
-     * @throws InvalidArgumentException If the driver is not supported
+     * @throws UnsupportedDriverException If the driver is not supported
      */
     public static function createTypeMapper(string $driver): TypeMapperInterface
     {
@@ -54,14 +64,14 @@ final class PlatformFactory
             self::DRIVER_MYSQL => new MySqlTypeMapper(),
             self::DRIVER_SQLITE => new SqliteTypeMapper(),
             self::DRIVER_PGSQL => new PostgreSqlTypeMapper(),
-            default => throw new InvalidArgumentException("Unsupported driver: {$driver}"),
+            default => throw new UnsupportedDriverException($driver),
         };
     }
 
     /**
      * Create a schema fetcher for the given driver.
      *
-     * @throws InvalidArgumentException If the driver is not supported
+     * @throws UnsupportedDriverException If the driver is not supported
      */
     public static function createSchemaFetcher(string $driver): SchemaFetcherInterface
     {
@@ -69,28 +79,29 @@ final class PlatformFactory
             self::DRIVER_MYSQL => new MySqlSchemaFetcher(),
             self::DRIVER_SQLITE => new SqliteSchemaFetcher(),
             self::DRIVER_PGSQL => new PostgreSqlSchemaFetcher(),
-            default => throw new InvalidArgumentException("Unsupported driver: {$driver}"),
+            default => throw new UnsupportedDriverException($driver),
         };
     }
 
     /**
      * Detect the driver name from a PDO connection.
      *
-     * @throws InvalidArgumentException If the driver cannot be detected
+     * @throws DriverDetectionException If the connection does not report a driver name
+     * @throws UnsupportedDriverException If the reported driver is not supported
      */
     public static function detectDriver(PDO $pdo): string
     {
         $driverName = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
 
         if (!is_string($driverName)) {
-            throw new InvalidArgumentException('Unable to detect PDO driver');
+            throw new DriverDetectionException();
         }
 
         return match ($driverName) {
             'mysql' => self::DRIVER_MYSQL,
             'sqlite' => self::DRIVER_SQLITE,
             'pgsql' => self::DRIVER_PGSQL,
-            default => throw new InvalidArgumentException("Unsupported PDO driver: {$driverName}"),
+            default => throw new UnsupportedDriverException($driverName),
         };
     }
 

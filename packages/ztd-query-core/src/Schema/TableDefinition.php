@@ -4,35 +4,68 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Schema;
 
+use ZtdQuery\Schema\Key\CandidateKeySet;
+use ZtdQuery\Schema\Key\ForeignKeyDefinition;
+use ZtdQuery\Schema\Key\IdentityGenerationStrategy;
+use ZtdQuery\Schema\Key\PartialUniqueIndex;
+use ZtdQuery\Schema\Partition\TablePartitioning;
+use ZtdQuery\Schema\Partition\TablePartitionKey;
+use ZtdQuery\Schema\Partition\TablePartitionRelation;
+
 /**
  * Structured representation of a table's schema metadata.
+ *
+ * Values remain opaque to the neutral core until a platform interprets them.
+ * This also preserves driver values such as LOB streams and caller literals.
+ *
+ * @phpstan-type RowValue mixed
+ * @phpstan-type Row array<string, RowValue>
  */
 final class TableDefinition
 {
     /**
-     * @var array<string, ColumnType>
+     * @var array<string, ColumnDeclaration>
      */
     public readonly array $typedColumns;
 
-    /** @var array<string, string> */
+    /**
+     * @var array<string, string>
+     */
     public readonly array $columnDefaults;
 
-    /** @var array<string, IdentityGenerationStrategy> */
+    /**
+     * @var array<string, IdentityGenerationStrategy>
+     */
     public readonly array $identityStrategies;
 
-    /** @var array<string, string> */
+    /**
+     * @var array<string, string>
+     */
     public readonly array $generatedExpressions;
 
-    /** @var array<string, ForeignKeyDefinition> */
+    /**
+     * @var array<string, ForeignKeyDefinition>
+     */
     public readonly array $foreignKeys;
 
+    /**
+     * @var TablePartitioning|null How the table is divided, or null when it is not
+     */
     public readonly ?TablePartitioning $partitioning;
 
+    /**
+     * @var TablePartitionKey|null What the division is by, or null when there is none
+     */
     public readonly ?TablePartitionKey $partitionKey;
 
+    /**
+     * @var TablePartitionRelation|null The table this one is a partition of, or null when it is not one
+     */
     public readonly ?TablePartitionRelation $partitionRelation;
 
-    /** @var array<string, PartialUniqueIndex> */
+    /**
+     * @var array<string, PartialUniqueIndex>
+     */
     public readonly array $partialUniqueIndexes;
 
     /**
@@ -41,7 +74,7 @@ final class TableDefinition
      * @param list<string> $primaryKeys Primary key column names.
      * @param list<string> $notNullColumns Columns with NOT NULL constraint.
      * @param array<string, list<string>> $uniqueConstraints Key name => column list.
-     * @param array<string, ColumnType> $typedColumns Column name => structured ColumnType.
+     * @param array<string, ColumnDeclaration> $typedColumns Column name => structured ColumnDeclaration.
      * @param array<string, string> $columnDefaults Column name => SQL default expression.
      * @param array<string, IdentityGenerationStrategy> $identityStrategies Column name => shadow generation strategy.
      * @param array<string, string> $generatedExpressions Column name => database generated expression.
@@ -78,11 +111,22 @@ final class TableDefinition
         $this->partialUniqueIndexes = $partialUniqueIndexes;
     }
 
+    /**
+     * Candidate keys.
+     *
+     * @return CandidateKeySet
+     */
     public function candidateKeys(): CandidateKeySet
     {
         return CandidateKeySet::fromSchema($this->primaryKeys, $this->uniqueConstraints);
     }
 
+    /**
+     * With partitioning.
+     *
+     * @param ?TablePartitioning $partitioning
+     * @return self
+     */
     public function withPartitioning(?TablePartitioning $partitioning): self
     {
         return new self(
@@ -103,6 +147,12 @@ final class TableDefinition
         );
     }
 
+    /**
+     * With partition key.
+     *
+     * @param ?TablePartitionKey $partitionKey
+     * @return self
+     */
     public function withPartitionKey(?TablePartitionKey $partitionKey): self
     {
         return new self(
@@ -123,6 +173,12 @@ final class TableDefinition
         );
     }
 
+    /**
+     * With partition relation.
+     *
+     * @param ?TablePartitionRelation $partitionRelation
+     * @return self
+     */
     public function withPartitionRelation(?TablePartitionRelation $partitionRelation): self
     {
         return new self(
@@ -143,6 +199,12 @@ final class TableDefinition
         );
     }
 
+    /**
+     * With partial unique index.
+     *
+     * @param PartialUniqueIndex $index
+     * @return self
+     */
     public function withPartialUniqueIndex(PartialUniqueIndex $index): self
     {
         $indexes = $this->partialUniqueIndexes;

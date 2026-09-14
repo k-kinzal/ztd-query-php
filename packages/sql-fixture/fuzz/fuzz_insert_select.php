@@ -43,5 +43,7 @@ fwrite(STDERR, "Starting fuzzer...\n\n");
 
 $target = new InsertSelectTarget($pdo);
 
-/** @var \PhpFuzzer\Config $config */
+/** @var PhpFuzzer\Config $config */
+$config->setMaxLen(4096);
+$config->setAllowedExceptions([]);
 $config->setTarget(Closure::fromCallable($target));

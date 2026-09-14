@@ -6,21 +6,20 @@ namespace Tests\Integration\Sqlite;
 
 use Faker\Factory;
 use PDO;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\DatabaseFixtureProvider;
-use SqlFixture\FixtureProvider;
-use SqlFixture\Platform\PlatformFactory;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use SqlFixture\FixtureGenerator;
+use SqlFixture\FixtureProvider;
+use SqlFixture\Hydrator\ReflectionHydrator;
+use SqlFixture\Platform\PlatformFactory;
 use SqlFixture\Platform\Sqlite\SqliteSchemaFetcher;
 use SqlFixture\Platform\Sqlite\SqliteSchemaParser;
 use SqlFixture\Platform\Sqlite\SqliteTypeMapper;
 use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\TableSchema;
-use SqlFixture\Hydrator\ReflectionHydrator;
-use Tests\Fixture\SqliteUserDto;
 
 #[CoversClass(DatabaseFixtureProvider::class)]
 #[UsesClass(FixtureProvider::class)]
@@ -32,6 +31,132 @@ use Tests\Fixture\SqliteUserDto;
 #[UsesClass(ColumnDefinition::class)]
 #[UsesClass(TableSchema::class)]
 #[UsesClass(ReflectionHydrator::class)]
+#[CoversClass(\SqlFixture\Provider\DatabaseSchemaCache::class)]
+#[UsesClass(\SqlFixture\Fixture\FixtureSet::class)]
+#[UsesClass(\SqlFixture\Fixture\GenerationRun::class)]
+#[UsesClass(\SqlFixture\Fixture\OverrideRows::class)]
+#[UsesClass(\SqlFixture\Fixture\PlanGenerator::class)]
+#[UsesClass(\SqlFixture\Fixture\PlanSchemaException::class)]
+#[UsesClass(\SqlFixture\Fixture\PlanSchemaValidator::class)]
+#[UsesClass(\SqlFixture\Fixture\RowSpec::class)]
+#[UsesClass(\SqlFixture\Fixture\TableOverrides::class)]
+#[UsesClass(\SqlFixture\Hydrator\HydrationException::class)]
+#[UsesClass(\SqlFixture\Hydrator\HydratorInterface::class)]
+#[UsesClass(\SqlFixture\Plan\ColumnRef::class)]
+#[UsesClass(\SqlFixture\Plan\FixturePlan::class)]
+#[UsesClass(\SqlFixture\Plan\PlanParser::class)]
+#[UsesClass(\SqlFixture\Plan\PlanPrinter::class)]
+#[UsesClass(\SqlFixture\Plan\PlanSyntaxException::class)]
+#[UsesClass(\SqlFixture\Plan\Relation::class)]
+#[UsesClass(\SqlFixture\Plan\RelationKind::class)]
+#[UsesClass(\SqlFixture\Plan\RelationSide::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\MySqlSchemaFetcher::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\MySqlSchemaParser::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\MySqlTypeMapper::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\PostgreSqlSchemaFetcher::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\PostgreSqlSchemaParser::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\PostgreSqlTypeMapper::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaFetcherInterface::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaNotFoundException::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaParseException::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaParserInterface::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaResolverInterface::class)]
+#[UsesClass(\SqlFixture\Schema\StaticSchemaResolver::class)]
+#[UsesClass(\SqlFixture\Schema\TableIdentifier::class)]
+#[UsesClass(\SqlFixture\TypeMapper\TypeMapperInterface::class)]
+#[UsesClass(\SqlFixture\Fixture\Generation\ConnectedTables::class)]
+#[UsesClass(\SqlFixture\Fixture\Generation\OverrideSpecs::class)]
+#[UsesClass(\SqlFixture\Fixture\Generation\RelationCounts::class)]
+#[UsesClass(\SqlFixture\Fixture\Generation\RelationProjection::class)]
+#[UsesClass(\SqlFixture\Fixture\Generation\RowMaterializer::class)]
+#[UsesClass(\SqlFixture\Fixture\RowGeneration::class)]
+#[UsesClass(\SqlFixture\Fixture\Validation\EndpointValidator::class)]
+#[UsesClass(\SqlFixture\Fixture\Validation\OverrideValidator::class)]
+#[UsesClass(\SqlFixture\Hydrator\Reflection\ConstructorHydration::class)]
+#[UsesClass(\SqlFixture\Hydrator\Reflection\PropertyHydration::class)]
+#[UsesClass(\SqlFixture\Hydrator\Reflection\PropertyNames::class)]
+#[UsesClass(\SqlFixture\Hydrator\Reflection\ValueConversion::class)]
+#[UsesClass(\SqlFixture\InvalidOverrideException::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\PlanStatements::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\RelationCursor::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\RelationReader::class)]
+#[UsesClass(\SqlFixture\Plan\PlanStructureException::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\PlanTables::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\RelationGroups::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\StatementPrinter::class)]
+#[UsesClass(\SqlFixture\Plan\Validation\PlanValidation::class)]
+#[UsesClass(\SqlFixture\Plan\Validation\TableName::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\ColumnParser::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\CreateTableQuery::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\DefaultExpression::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\DefinitionIntegrity::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\IdentifierQuoter::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinition::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TypeParameters::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\ColumnGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\DecimalGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\GeometryGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\IntegerGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\NumericGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\SpatialGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\StringGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\TextGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\CatalogColumn::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\CatalogDdl::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\CatalogQuery::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\CatalogSchema::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\ColumnParser::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\DefaultExpression::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\DefinitionList::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\TableSyntax::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\TypeDeclaration::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Value\ColumnGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Value\DecimalGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Value\NumericGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Value\StringGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Value\StructuredGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Value\TemporalGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\ColumnParser::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\CreateTableQuery::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\DefaultExpression::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\DefinitionList::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\PragmaColumn::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\PragmaSchema::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\TableSyntax::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\TypeDeclaration::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Value\ColumnGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Value\TypeAffinity::class)]
+#[UsesClass(\SqlFixture\Provider\SqlSchemaProvider::class)]
+#[UsesClass(\SqlFixture\Schema\DefinitionSegments::class)]
+#[UsesClass(\SqlFixture\Schema\TypeShape::class)]
+#[UsesClass(\SqlFixture\TypeMapper\ParagraphGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinitionInput::class)]
+#[UsesClass(\SqlFixture\Hydrator\Exception\ClassNotFoundException::class)]
+#[UsesClass(\SqlFixture\Hydrator\Exception\MissingConstructorArgumentException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\UnknownOverrideColumnException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\NullOverrideException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\GeneratedColumnOverrideException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\GeneratedColumnReferenceException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\MissingRelationValueException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\UnknownPlanColumnException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\EmptyPlanException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\EmptyTableNameException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\MissingEndpointColumnsException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\InvalidTableNameException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\UnbalancedBracketsException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\UnexpectedPlanTokenException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\UnsupportedManyToManyException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\CompositeArityMismatchException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\DuplicateColumnBindingException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\CyclicDependencyException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\UnboundedSelfReferenceException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\InvalidSqlException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\ExpectedCreateTableException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class)]
+#[UsesClass(\SqlFixture\TypeMapper\IntegerRange::class)]
+#[UsesClass(\SqlFixture\TypeMapper\IntegerWidth::class)]
+#[UsesClass(\SqlFixture\TypeMapper\DecimalRange::class)]
+#[UsesClass(\SqlFixture\Hydrator\Reflection\ConversionTarget::class)]
 final class SqliteIntegrationTest extends TestCase
 {
     #[Test]
@@ -55,11 +180,7 @@ final class SqliteIntegrationTest extends TestCase
     #[Test]
     public function databaseFixtureProviderWithSqlite(): void
     {
-        $pdo = (static function (): PDO {
-            $pdo = new PDO('sqlite::memory:');
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            return $pdo;
-        })();
+        $pdo = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $pdo->exec(<<<'SQL'
             CREATE TABLE users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -86,11 +207,7 @@ final class SqliteIntegrationTest extends TestCase
     #[Test]
     public function insertAndSelectFixture(): void
     {
-        $pdo = (static function (): PDO {
-            $pdo = new PDO('sqlite::memory:');
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            return $pdo;
-        })();
+        $pdo = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $pdo->exec(<<<'SQL'
             CREATE TABLE products (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -127,11 +244,7 @@ final class SqliteIntegrationTest extends TestCase
     #[Test]
     public function fixtureWithOverrides(): void
     {
-        $pdo = (static function (): PDO {
-            $pdo = new PDO('sqlite::memory:');
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            return $pdo;
-        })();
+        $pdo = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $pdo->exec(<<<'SQL'
             CREATE TABLE users (
                 id INTEGER PRIMARY KEY,
@@ -155,11 +268,15 @@ final class SqliteIntegrationTest extends TestCase
     #[Test]
     public function fixtureWithHydration(): void
     {
-        $pdo = (static function (): PDO {
-            $pdo = new PDO('sqlite::memory:');
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            return $pdo;
-        })();
+        $target = new class (0, '', '') {
+            public function __construct(
+                public int $id,
+                public string $name,
+                public string $email,
+            ) {
+            }
+        };
+        $pdo = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $pdo->exec(<<<'SQL'
             CREATE TABLE users (
                 id INTEGER PRIMARY KEY,
@@ -174,10 +291,9 @@ final class SqliteIntegrationTest extends TestCase
         $user = $provider->fixture(
             'users',
             ['id' => 1],
-            SqliteUserDto::class
+            $target::class
         );
 
-        self::assertInstanceOf(SqliteUserDto::class, $user);
         self::assertSame(1, $user->id);
         self::assertNotEmpty($user->name);
         self::assertNotEmpty($user->email);
@@ -203,11 +319,7 @@ final class SqliteIntegrationTest extends TestCase
     #[Test]
     public function allSqliteTypesFixture(): void
     {
-        $pdo = (static function (): PDO {
-            $pdo = new PDO('sqlite::memory:');
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            return $pdo;
-        })();
+        $pdo = new PDO('sqlite::memory:', options: [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $pdo->exec(<<<'SQL'
             CREATE TABLE all_types (
                 col_integer INTEGER NOT NULL,

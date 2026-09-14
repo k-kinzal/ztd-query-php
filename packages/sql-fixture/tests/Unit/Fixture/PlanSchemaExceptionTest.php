@@ -17,17 +17,36 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(ColumnRef::class)]
 #[UsesClass(TableSchema::class)]
 #[UsesClass(ColumnDefinition::class)]
+#[UsesClass(\SqlFixture\Plan\FixturePlan::class)]
+#[UsesClass(\SqlFixture\Plan\PlanParser::class)]
+#[UsesClass(\SqlFixture\Plan\PlanPrinter::class)]
+#[UsesClass(\SqlFixture\Plan\PlanSyntaxException::class)]
+#[UsesClass(\SqlFixture\Plan\Relation::class)]
+#[UsesClass(\SqlFixture\Plan\RelationKind::class)]
+#[UsesClass(\SqlFixture\Plan\RelationSide::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\PlanStatements::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\RelationCursor::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\RelationReader::class)]
+#[UsesClass(\SqlFixture\Plan\PlanStructureException::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\PlanTables::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\RelationGroups::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\StatementPrinter::class)]
+#[UsesClass(\SqlFixture\Plan\Validation\PlanValidation::class)]
+#[UsesClass(\SqlFixture\Plan\Validation\TableName::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\GeneratedColumnReferenceException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\MissingRelationValueException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\UnknownPlanColumnException::class)]
 final class PlanSchemaExceptionTest extends TestCase
 {
     #[Test]
-    public function namesTheLinkTheTableAndWhatItDoesHave(): void
+    public function testUnknownColumnNamesTheLinkTheTableAndWhatItDoesHave(): void
     {
         $schema = new TableSchema('order', [
             'id' => new ColumnDefinition('id', 'INT'),
             'status' => new ColumnDefinition('status', 'VARCHAR'),
         ]);
 
-        $message = PlanSchemaException::unknownColumn(ColumnRef::of('order', 'idd'), 'idd', $schema)->getMessage();
+        $message = (new \SqlFixture\Fixture\Exception\UnknownPlanColumnException(ColumnRef::of('order', 'idd'), 'idd', $schema))->getMessage();
 
         self::assertSame(
             'The plan links order.idd, but order has no column idd. Its columns are: id, status.',
@@ -36,22 +55,11 @@ final class PlanSchemaExceptionTest extends TestCase
     }
 
     #[Test]
-    public function isRuntimeException(): void
-    {
-        $schema = new TableSchema('order', ['id' => new ColumnDefinition('id', 'INT')]);
-
-        self::assertInstanceOf(
-            \RuntimeException::class,
-            PlanSchemaException::unknownColumn(ColumnRef::of('order', 'x'), 'x', $schema)
-        );
-    }
-
-    #[Test]
-    public function generatedColumnExplainsWhyItCannotCarryAValue(): void
+    public function testGeneratedColumnExplainsWhyItCannotCarryAValue(): void
     {
         $schema = new TableSchema('order', ['code' => new ColumnDefinition('code', 'VARCHAR', generated: true)]);
 
-        $message = PlanSchemaException::generatedColumn(ColumnRef::of('order', 'code'), 'code', $schema)->getMessage();
+        $message = (new \SqlFixture\Fixture\Exception\GeneratedColumnReferenceException(ColumnRef::of('order', 'code'), 'code', $schema))->getMessage();
 
         self::assertSame(
             'The plan links order.code, but order.code is a generated column: the database '
@@ -62,9 +70,9 @@ final class PlanSchemaExceptionTest extends TestCase
     }
 
     #[Test]
-    public function missingValueNamesBothEnds(): void
+    public function testMissingValueNamesBothEnds(): void
     {
-        $message = PlanSchemaException::missingValue('order_id', ColumnRef::of('order', 'id'), 'id')->getMessage();
+        $message = (new \SqlFixture\Fixture\Exception\MissingRelationValueException('order_id', ColumnRef::of('order', 'id'), 'id'))->getMessage();
 
         self::assertSame('Cannot fill order_id: the generated order row has no id to copy from.', $message);
     }

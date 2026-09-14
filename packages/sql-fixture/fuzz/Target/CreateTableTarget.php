@@ -7,89 +7,63 @@ namespace Fuzz\Target;
 use Error;
 use Faker\Factory;
 use Faker\Generator;
+use SqlFaker\Generation\Choice\BytePlanCompiler;
+use SqlFaker\Generation\Choice\PlanBuilder;
+use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\MySqlProvider;
-use SqlFixture\FixtureProvider;
+use SqlFixture\FixtureGenerator;
+use SqlFixture\Platform\MySql\MySqlSchemaParser;
+use SqlFixture\Schema\SchemaParseException;
 
 /**
- * Fuzz target for CREATE TABLE parsing and fixture generation.
- *
- * This target uses sql-faker to generate CREATE TABLE statements,
- * then validates that sql-fixture can parse them and generate fixtures.
+ * Mutates SQL structure and lexical choices, then checks the accepted-schema row contract.
  */
 final class CreateTableTarget
 {
-    private Generator $faker;
-    private MySqlProvider $sqlFakerProvider;
-    private FixtureProvider $fixtureProvider;
+    private readonly Generator $faker;
+    private readonly MySqlProvider $sqlProvider;
+    private readonly PlanBuilder $planner;
 
-    public function __construct(
-        string $grammarVersion,
-        private readonly int $maxDepth = 5,
-    ) {
+    /**
+     * @var GenerationPlan<bool>
+     */
+    private readonly GenerationPlan $constraints;
+
+    /**
+     * Bounds grammar expansion while keeping raw input choices available to the planner.
+     */
+    public function __construct(private readonly string $grammarVersion, int $maxExpansions = 128)
+    {
         $this->faker = Factory::create();
-        $this->sqlFakerProvider = new MySqlProvider($this->faker, $grammarVersion);
-        $this->fixtureProvider = new FixtureProvider($this->faker);
+        $this->sqlProvider = new MySqlProvider($this->faker, $grammarVersion);
+        $this->planner = $this->sqlProvider->planner();
+        $this->constraints = GenerationPlan::fromRule('create_table_stmt')->requiringNonEmpty()->withExpansionBudget($maxExpansions);
     }
 
     /**
-     * Fuzz target callable.
+     * Accepted schemas must generate exactly their writable columns, including explicit overrides.
      *
-     * @param string $input Raw fuzzer input (mutated bytes)
-     * @throws Error On parsing or fixture generation failure
+     * @throws Error When generated fixture columns differ from the parsed schema
      */
     public function __invoke(string $input): void
     {
-        $seed = $this->inputToSeed($input);
-        $this->faker->seed($seed);
-
-        $createTableSql = $this->sqlFakerProvider->createTableStatement(maxDepth: $this->maxDepth);
-
+        $plan = (new BytePlanCompiler())->compile($input, $this->planner, $this->constraints);
+        $sql = $this->sqlProvider->generate($plan);
         try {
-            $this->fixtureProvider->fixture($createTableSql);
-        } catch (\Throwable $e) {
-            if ($e instanceof Error) {
-                throw $e;
-            }
-
-            if ($this->isExpectedParserLimitation($createTableSql, $e)) {
-                return;
-            }
-
-            throw new Error(
-                "Failed to generate fixture\n" .
-                "Seed: $seed\n" .
-                "SQL: $createTableSql\n" .
-                "Error: {$e->getMessage()}\n" .
-                "Exception: " . get_class($e)
-            );
+            $schema = (new MySqlSchemaParser())->parse($sql);
+        } catch (SchemaParseException) {
+            return;
         }
-    }
-
-    private function inputToSeed(string $input): int
-    {
-        if (strlen($input) < 4) {
-            $input = str_pad($input, 4, "\0");
+        $this->faker->seed(crc32(str_pad($input, 4, "\0")));
+        $generator = new FixtureGenerator($this->faker);
+        $row = $generator->generate($schema);
+        $writable = array_filter($schema->columns, static fn ($column): bool => !$column->autoIncrement && !$column->generated);
+        if (array_keys($row) !== array_keys($writable)) {
+            throw new Error("Writable column mismatch; grammar={$this->grammarVersion}; input=" . bin2hex($input) . "\nSQL: " . $sql);
         }
-        return crc32($input);
-    }
-
-    /**
-     * Check if the failure is an expected limitation of the parser.
-     */
-    private function isExpectedParserLimitation(string $sql, \Throwable $e): bool
-    {
-        $message = $e->getMessage();
-
-        if (str_contains($message, 'No columns found')) {
-            return true;
+        $overridden = $generator->generate($schema, $row);
+        if ($overridden !== $row) {
+            throw new Error('Override preservation mismatch; input=' . bin2hex($input) . "\nSQL: " . $sql);
         }
-        if (str_contains($message, 'Table name not found')) {
-            return true;
-        }
-        if (str_contains($message, 'No statements found')) {
-            return true;
-        }
-
-        return false;
     }
 }

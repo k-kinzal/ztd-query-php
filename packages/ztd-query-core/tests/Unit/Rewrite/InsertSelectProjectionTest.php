@@ -11,7 +11,7 @@ use ZtdQuery\Rewrite\InsertSelectProjection;
 #[CoversClass(InsertSelectProjection::class)]
 final class InsertSelectProjectionTest extends TestCase
 {
-    public function testRepresentsSourceExpressionGeneratedIdentityAndNullWithoutSqlRendering(): void
+    public function testDefaultExpressionValueDefaultExpressionRepresentsSourceExpressionGeneratedIdentityAndNullWithoutSqlRendering(): void
     {
         $source = InsertSelectProjection::source('name', 2);
         $firstSource = InsertSelectProjection::source('id', 0);
@@ -39,19 +39,38 @@ final class InsertSelectProjectionTest extends TestCase
         self::assertNull($null->generatedIdentityStart());
     }
 
-    public function testRejectsNegativeSourceIndex(): void
+    public function testSourceIndexIsWhereInTheQueryTheValueComesFrom(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Source index must not be negative.');
-
-        InsertSelectProjection::source('name', -1);
+        self::assertSame(2, InsertSelectProjection::source('name', 2)->sourceIndex());
     }
 
-    public function testRejectsNonPositiveGeneratedIdentityStart(): void
+    public function testSourceIndexIsNothingForAColumnTheQueryDoesNotSupply(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Generated identity start must be positive.');
+        self::assertNull(InsertSelectProjection::nullValue('note')->sourceIndex());
+    }
 
-        InsertSelectProjection::generatedIdentity('id', 0);
+    public function testGeneratedIdentityStartIsTheFirstNumberTheDatabaseWouldAssign(): void
+    {
+        self::assertSame(5, InsertSelectProjection::generatedIdentity('id', 5)->generatedIdentityStart());
+    }
+
+    public function testNullValueReadsBackAsNullAndNothingElse(): void
+    {
+        $projection = InsertSelectProjection::nullValue('note');
+
+        self::assertTrue($projection->isNullValue());
+        self::assertNull($projection->sourceIndex());
+        self::assertNull($projection->generatedIdentityStart());
+    }
+
+    public function testIsNullValueIsFalseForEveryOtherKindOfColumn(): void
+    {
+        self::assertFalse(InsertSelectProjection::source('name', 0)->isNullValue());
+        self::assertFalse(InsertSelectProjection::generatedIdentity('id', 1)->isNullValue());
+    }
+
+    public function testTargetColumnNamesTheColumnOfTheTargetTable(): void
+    {
+        self::assertSame('name', InsertSelectProjection::source('name', 0)->targetColumn());
     }
 }

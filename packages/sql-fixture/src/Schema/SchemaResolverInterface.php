@@ -17,5 +17,8 @@ interface SchemaResolverInterface
      */
     public function resolve(string $tableName): TableSchema;
 
+    /**
+     * Reports whether the named table is registered.
+     */
     public function has(string $tableName): bool;
 }
