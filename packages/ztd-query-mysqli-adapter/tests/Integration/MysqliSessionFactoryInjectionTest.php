@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
+use Containers\MySql80Container;
+use Containers\MySql84Container;
 use mysqli;
 use mysqli_result;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
+use Testcontainers\Testcontainers;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 use ZtdQuery\Platform\MySql\MySqlSessionFactory;
 
@@ -25,20 +28,12 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
 {
     public function testExplicitMySqlSessionFactoryInjectionWorks(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL)', $table));
-        $rawMysqli->query(sprintf("INSERT INTO `%s` (name) VALUES ('Alice'), ('Bob')", $table));
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL)', $table));
+            $rawMysqli->query(sprintf("INSERT INTO `%s` (name) VALUES ('Alice'), ('Bob')", $table));
             $factory = new MySqlSessionFactory();
             $ztd = ZtdMysqli::fromMysqli($rawMysqli, null, $factory);
 
@@ -49,26 +44,18 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
             $rows = $result->fetch_all(MYSQLI_ASSOC);
             self::assertCount(0, $rows);
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testInjectedFactoryInsertIsVisibleViaSelect(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL)', $table));
-        $rawMysqli->query(sprintf("INSERT INTO `%s` (name) VALUES ('Alice'), ('Bob')", $table));
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL)', $table));
+            $rawMysqli->query(sprintf("INSERT INTO `%s` (name) VALUES ('Alice'), ('Bob')", $table));
             $factory = new MySqlSessionFactory();
             $ztd = ZtdMysqli::fromMysqli($rawMysqli, null, $factory);
 
@@ -85,26 +72,18 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
             self::assertCount(1, $rows);
             self::assertSame('Charlie', $rows[0]['name']);
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testInjectedFactoryDoesNotModifyPhysicalDatabase(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL)', $table));
-        $rawMysqli->query(sprintf("INSERT INTO `%s` (name) VALUES ('Alice'), ('Bob')", $table));
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL)', $table));
+            $rawMysqli->query(sprintf("INSERT INTO `%s` (name) VALUES ('Alice'), ('Bob')", $table));
             $factory = new MySqlSessionFactory();
             $ztd = ZtdMysqli::fromMysqli($rawMysqli, null, $factory);
 
@@ -122,26 +101,18 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
             self::assertSame('Alice', $rows[0]['name']);
             self::assertSame('Bob', $rows[1]['name']);
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testInjectedFactoryPreparedStatementWorks(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL)', $table));
-        $rawMysqli->query(sprintf("INSERT INTO `%s` (name) VALUES ('Alice'), ('Bob')", $table));
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL)', $table));
+            $rawMysqli->query(sprintf("INSERT INTO `%s` (name) VALUES ('Alice'), ('Bob')", $table));
             $factory = new MySqlSessionFactory();
             $ztd = ZtdMysqli::fromMysqli($rawMysqli, null, $factory);
 
@@ -163,26 +134,18 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
             self::assertCount(1, $rows);
             self::assertSame('Charlie', $rows[0]['name']);
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testInjectedFactoryAffectedRowsTracking(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL)', $table));
-        $rawMysqli->query(sprintf("INSERT INTO `%s` (name) VALUES ('Alice'), ('Bob')", $table));
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL)', $table));
+            $rawMysqli->query(sprintf("INSERT INTO `%s` (name) VALUES ('Alice'), ('Bob')", $table));
             $factory = new MySqlSessionFactory();
             $ztd = ZtdMysqli::fromMysqli($rawMysqli, null, $factory);
 
@@ -193,26 +156,18 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
 
             self::assertSame(1, $ztd->lastAffectedRows());
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testDefaultFactoryBehaviorMatchesExplicitInjection(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL)', $table));
-        $rawMysqli->query(sprintf("INSERT INTO `%s` (name) VALUES ('Alice'), ('Bob')", $table));
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL)', $table));
+            $rawMysqli->query(sprintf("INSERT INTO `%s` (name) VALUES ('Alice'), ('Bob')", $table));
             $ztdDefault = ZtdMysqli::fromMysqli($rawMysqli);
 
             $resultDefault = $ztdDefault->query(sprintf('SELECT * FROM `%s`', $table));
@@ -222,7 +177,7 @@ final class MysqliSessionFactoryInjectionTest extends TestCase
             $rowsDefault = $resultDefault->fetch_all(MYSQLI_ASSOC);
             self::assertCount(0, $rowsDefault);
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 }

@@ -14,10 +14,7 @@ register_shutdown_function(static function (): void {
 
 [$host, $port] = MysqliConnector::endpoint();
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
-$native = new mysqli($host, 'root', 'root', '', $port);
-$database = 'fuzz_' . bin2hex(random_bytes(8));
-$native->query("CREATE DATABASE `$database`");
-$native->select_db($database);
+$native = new mysqli($host, 'root', 'root', 'test', $port);
 $native->set_charset('utf8mb4');
 $native->query('CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255))');
 $native->query("INSERT INTO users VALUES (1, 'Alice'), (2, 'Bob')");

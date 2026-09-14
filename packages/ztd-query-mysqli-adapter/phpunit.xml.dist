@@ -2,7 +2,7 @@
 <!-- NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you. -->
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
-         bootstrap="tests/bootstrap.php"
+         bootstrap="vendor/autoload.php"
          colors="true"
          cacheDirectory=".phpunit.cache"
          executionOrder="depends,random"
@@ -32,7 +32,6 @@
         <bootstrap class="Toolkit\PhpUnit\TestReporter\AiTestReporterExtension"/>
         <bootstrap class="Toolkit\Doctest\DoctestExtension">
             <parameter name="directories" value="src"/>
-            <parameter name="bootstrap" value="tests/Doctest/bootstrap.php"/>
         </bootstrap>
     </extensions>
     <source restrictDeprecations="true"

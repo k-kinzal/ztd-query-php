@@ -36,7 +36,8 @@ use ZtdQuery\Sql\TransactionStatement;
  *
  * @visibility public
  * @example Simulate writes without changing the native table
- *     $native = new \mysqli(getenv('ZTD_EXAMPLE_HOST'), 'root', 'root', getenv('ZTD_EXAMPLE_DATABASE'), (int) getenv('ZTD_EXAMPLE_PORT'));
+ *     $container = \Testcontainers\Testcontainers::run(\Containers\MySql80Container::class);
+ *     $native = $container->getData(\mysqli::class);
  *     $native->query('CREATE TABLE accounts (id INT PRIMARY KEY, balance INT)');
  *     $native->query('INSERT INTO accounts VALUES (1, 10)');
  *     $ztd = \ZtdQuery\Adapter\Mysqli\ZtdMysqli::fromMysqli($native);
@@ -45,6 +46,7 @@ use ZtdQuery\Sql\TransactionStatement;
  *     $ztd->query('SELECT id FROM accounts')->fetch_all(MYSQLI_ASSOC) // => [['id' => 2]]
  *     $native->query('SELECT id FROM accounts')->fetch_all(MYSQLI_ASSOC) // => [['id' => '1']]
  *     $native->query('DROP TABLE accounts');
+ *     $container->stop();
  */
 class ZtdMysqli extends mysqli
 {

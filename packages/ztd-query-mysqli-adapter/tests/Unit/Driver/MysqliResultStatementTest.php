@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use Containers\MySql80Container;
+use Containers\MySql84Container;
 use mysqli;
 use mysqli_result;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use Testcontainers\Testcontainers;
 use ZtdQuery\Adapter\Mysqli\MysqliResultColumnExtractor;
 use ZtdQuery\Adapter\Mysqli\MysqliResultStatement;
 use ZtdQuery\Platform\ResultColumnTypeResolver;
@@ -39,38 +42,38 @@ final class MysqliResultStatementTest extends TestCase
 
     public function testFetchAllReadsNativeRowsWithoutLosingColumnNames(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $connection = new mysqli($host, 'root', 'root', 'test', $port);
-        $result = $connection->query("SELECT 1 AS id, 'Alice' AS name UNION ALL SELECT 2, 'Bob'");
-        self::assertInstanceOf(mysqli_result::class, $result);
-        $statement = new MysqliResultStatement($result, 2);
-        self::assertSame([['id' => '1', 'name' => 'Alice'], ['id' => '2', 'name' => 'Bob']], $statement->fetchAll());
-        self::assertSame(2, $statement->rowCount());
-        $connection->close();
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        try {
+            $connection = $container->getData(mysqli::class);
+            $result = $connection->query("SELECT 1 AS id, 'Alice' AS name UNION ALL SELECT 2, 'Bob'");
+            self::assertInstanceOf(mysqli_result::class, $result);
+            $statement = new MysqliResultStatement($result, 2);
+            self::assertSame([['id' => '1', 'name' => 'Alice'], ['id' => '2', 'name' => 'Bob']], $statement->fetchAll());
+            self::assertSame(2, $statement->rowCount());
+            $connection->close();
+        } finally {
+            $container->stop();
+        }
     }
 
     public function testResultColumnsResolvesResultColumnTypes(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $connection = new mysqli($host, 'root', 'root', 'test', $port);
-        $result = $connection->query("SELECT 1 AS id, 'Alice' AS name");
-        self::assertInstanceOf(mysqli_result::class, $result);
-        $resolver = self::createStub(ResultColumnTypeResolver::class);
-        $resolver->method('resolve')->willReturnCallback(static fn (array $metadata): ColumnType =>
-            $metadata['name'] === 'id' ? new ColumnType(ColumnTypeFamily::INTEGER, 'INT') : new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR'));
-        $columns = (new MysqliResultStatement($result, 1))->resultColumns($resolver);
-        self::assertSame(['id', 'name'], array_column($columns, 'name'));
-        self::assertSame(ColumnTypeFamily::INTEGER, $columns[0]->type->family);
-        self::assertSame(ColumnTypeFamily::STRING, $columns[1]->type->family);
-        $connection->close();
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        try {
+            $connection = $container->getData(mysqli::class);
+            $result = $connection->query("SELECT 1 AS id, 'Alice' AS name");
+            self::assertInstanceOf(mysqli_result::class, $result);
+            $resolver = self::createStub(ResultColumnTypeResolver::class);
+            $resolver->method('resolve')->willReturnCallback(static fn (array $metadata): ColumnType =>
+                $metadata['name'] === 'id' ? new ColumnType(ColumnTypeFamily::INTEGER, 'INT') : new ColumnType(ColumnTypeFamily::STRING, 'VARCHAR'));
+            $columns = (new MysqliResultStatement($result, 1))->resultColumns($resolver);
+            self::assertSame(['id', 'name'], array_column($columns, 'name'));
+            self::assertSame(ColumnTypeFamily::INTEGER, $columns[0]->type->family);
+            self::assertSame(ColumnTypeFamily::STRING, $columns[1]->type->family);
+            $connection->close();
+        } finally {
+            $container->stop();
+        }
     }
 
 }

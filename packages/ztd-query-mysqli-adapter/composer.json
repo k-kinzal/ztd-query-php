@@ -178,6 +178,6 @@
     },
     "support": {
         "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-mysqli-adapter",
-        "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/ztd-query-mysqli-adapter/"
+        "docs": "https://k-kinzal.github.io/ztd-query-php/mysqli/k-kinzal/ztd-query-mysqli-adapter/"
     }
 }

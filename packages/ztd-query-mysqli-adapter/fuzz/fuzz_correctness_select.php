@@ -18,10 +18,8 @@ date_default_timezone_set('UTC');
 
 [$host, $port] = MysqliConnector::endpoint();
 
-$rawMysqli = new mysqli($host, 'root', 'root', '', $port);
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
-$db = 'fuzz_' . bin2hex(random_bytes(4));
-$rawMysqli->query("CREATE DATABASE `$db`");
+$db = 'test';
 
 $faker = Factory::create();
 $harness = new MysqliCorrectnessHarness($host, $port, $db, 'root', 'root');

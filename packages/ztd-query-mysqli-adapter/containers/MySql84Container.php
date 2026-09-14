@@ -4,16 +4,21 @@ declare(strict_types=1);
 
 namespace Containers;
 
+use mysqli;
 use Override;
+use RuntimeException;
 use Testcontainers\Containers\GenericContainer\GenericContainer;
 use Testcontainers\Containers\WaitStrategy\PDO\MySQLDSN;
 use Testcontainers\Containers\WaitStrategy\PDO\PDOConnectWaitStrategy;
+use Testcontainers\Hook\AfterStartHook;
 
 /**
  * Starts the pinned MySQL 8.4 service used by the package tools.
  */
 final class MySql84Container extends GenericContainer
 {
+    use AfterStartHook;
+
     /**
      * @var null|string
      */
@@ -22,7 +27,7 @@ final class MySql84Container extends GenericContainer
     /**
      * @var null|string
      */
-    protected static $REUSE_MODE = 'reuse';
+    protected static $REUSE_MODE = 'restart';
 
     /**
      * @var array<int>|null
@@ -39,7 +44,6 @@ final class MySql84Container extends GenericContainer
      */
     protected static $ENVIRONMENTS = [
         'MYSQL_ROOT_PASSWORD' => 'root',
-        'MYSQL_DATABASE' => 'test',
         'MYSQL_INITDB_SKIP_TZINFO' => '1',
     ];
 
@@ -52,6 +56,22 @@ final class MySql84Container extends GenericContainer
      * @var bool|null
      */
     protected static $AUTO_REMOVE_ON_EXIT = true;
+
+    /**
+     * Prepare a fresh database and expose its native connection to the caller.
+     *
+     * @throws RuntimeException If MySQL has no mapped port.
+     */
+    public function afterStart($instance): void
+    {
+        $port = $instance->getMappedPort(3306) ?? throw new RuntimeException('MySQL port was not mapped.');
+        $host = str_replace('localhost', '127.0.0.1', $instance->getHost());
+        $connection = new mysqli($host, 'root', 'root', '', $port);
+        $connection->query('CREATE DATABASE test CHARACTER SET utf8mb4');
+        $connection->select_db('test');
+        $connection->set_charset('utf8mb4');
+        $instance->setData($connection);
+    }
 
     #[Override]
     protected function waitStrategy($instance): PDOConnectWaitStrategy

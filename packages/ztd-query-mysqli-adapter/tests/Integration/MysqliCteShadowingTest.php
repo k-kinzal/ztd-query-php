@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
+use Containers\MySql80Container;
+use Containers\MySql84Container;
 use mysqli;
 use mysqli_result;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
+use Testcontainers\Testcontainers;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(ZtdMysqli::class)]
@@ -24,23 +27,15 @@ final class MysqliCteShadowingTest extends TestCase
 {
     public function testUpdatesAndDeletesEveryListedTable(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $users = 'users_' . bin2hex(random_bytes(8));
-        $orders = 'orders_' . bin2hex(random_bytes(8));
-        $rawMysqli->query("CREATE TABLE `{$users}` (id INT PRIMARY KEY, name VARCHAR(50))");
-        $rawMysqli->query("CREATE TABLE `{$orders}` (order_id INT PRIMARY KEY, user_id INT, status VARCHAR(50))");
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
-
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $users = 'users_' . bin2hex(random_bytes(8));
+            $orders = 'orders_' . bin2hex(random_bytes(8));
+            $rawMysqli->query("CREATE TABLE `{$users}` (id INT PRIMARY KEY, name VARCHAR(50))");
+            $rawMysqli->query("CREATE TABLE `{$orders}` (order_id INT PRIMARY KEY, user_id INT, status VARCHAR(50))");
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
             self::assertNotFalse($ztdMysqli->query("INSERT INTO `{$users}` VALUES (1, 'Alice'), (2, 'Bob')"));
             self::assertNotFalse($ztdMysqli->query("INSERT INTO `{$orders}` VALUES (10, 1, 'pending'), (20, 2, 'pending')"));
             self::assertNotFalse($ztdMysqli->query(
@@ -79,27 +74,19 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertSame([], $physicalUsers->fetch_all(MYSQLI_ASSOC));
             self::assertSame([], $physicalOrders->fetch_all(MYSQLI_ASSOC));
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testExecuteQueryReplaceRemovesExistingPrimaryKey(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, name VARCHAR(50))', $table));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
-
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, name VARCHAR(50))', $table));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
             $ztdMysqli->query(sprintf("INSERT INTO `%s` VALUES (1, 'original')", $table));
             self::assertNotFalse($ztdMysqli->execute_query(
                 sprintf('REPLACE INTO `%s` VALUES (?, ?)', $table),
@@ -110,27 +97,19 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertInstanceOf(mysqli_result::class, $rows);
             self::assertSame([['id' => 1, 'name' => 'replaced']], $rows->fetch_all(MYSQLI_ASSOC));
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testExecuteQueryOnDuplicateKeyUpdateReplacesExistingValues(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, name VARCHAR(50))', $table));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
-
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, name VARCHAR(50))', $table));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
             $ztdMysqli->query(sprintf("INSERT INTO `%s` VALUES (1, 'original')", $table));
             self::assertNotFalse($ztdMysqli->execute_query(
                 sprintf('INSERT INTO `%s` VALUES (?, ?) ON DUPLICATE KEY UPDATE name = VALUES(name)', $table),
@@ -141,27 +120,19 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertInstanceOf(mysqli_result::class, $rows);
             self::assertSame([['id' => 1, 'name' => 'updated']], $rows->fetch_all(MYSQLI_ASSOC));
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testUpdateReplacesExistingTextWithEmptyString(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, name VARCHAR(100), notes TEXT)', $table));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
-
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, name VARCHAR(100), notes TEXT)', $table));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
             self::assertNotFalse($ztdMysqli->query(sprintf("INSERT INTO `%s` VALUES (1, 'Alice', 'some notes')", $table)));
             self::assertNotFalse($ztdMysqli->query(sprintf("UPDATE `%s` SET notes = '' WHERE name = 'Alice'", $table)));
 
@@ -169,27 +140,19 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertInstanceOf(mysqli_result::class, $result);
             self::assertSame([['notes' => '']], $result->fetch_all(MYSQLI_ASSOC));
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testUpdatePreservesIntroducedHexLiteral(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, payload VARBINARY(255))', $table));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
-
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, payload VARBINARY(255))', $table));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
             self::assertNotFalse($ztdMysqli->query(sprintf("INSERT INTO `%s` VALUES (1, X'48656C6C6F')", $table)));
             self::assertNotFalse($ztdMysqli->query(sprintf("UPDATE `%s` SET payload = X'576F726C64' WHERE id = 1", $table)));
 
@@ -201,27 +164,19 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertInstanceOf(mysqli_result::class, $physical);
             self::assertSame([], $physical->fetch_all(MYSQLI_ASSOC));
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testUpdatePreservesIntervalUnit(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, created_at DATETIME NOT NULL, due_at DATETIME)', $table));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
-
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, created_at DATETIME NOT NULL, due_at DATETIME)', $table));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
             self::assertNotFalse($ztdMysqli->query(sprintf("INSERT INTO `%s` VALUES (1, '2025-01-01 10:00:00', NULL)", $table)));
             self::assertNotFalse($ztdMysqli->query(sprintf('UPDATE `%s` SET due_at = created_at + INTERVAL 30 DAY WHERE id = 1', $table)));
 
@@ -233,29 +188,21 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertInstanceOf(mysqli_result::class, $physical);
             self::assertSame([], $physical->fetch_all(MYSQLI_ASSOC));
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testUpdateAndDeleteRestrictRowsWithCaseExpression(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $updates = 'prefix_' . bin2hex(random_bytes(8));
-        $deletes = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, score INT)', $updates));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, score INT)', $deletes));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
-
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $updates = 'prefix_' . bin2hex(random_bytes(8));
+            $deletes = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, score INT)', $updates));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, score INT)', $deletes));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
             $rows = 'VALUES (1, 85), (2, 60), (3, 95), (4, 45)';
             self::assertNotFalse($ztdMysqli->query(sprintf('INSERT INTO `%s` %s', $updates, $rows)));
             self::assertNotFalse($ztdMysqli->query(sprintf('INSERT INTO `%s` %s', $deletes, $rows)));
@@ -286,29 +233,21 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertSame([], $physicalUpdates->fetch_all(MYSQLI_ASSOC));
             self::assertSame([], $physicalDeletes->fetch_all(MYSQLI_ASSOC));
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testInsertWithoutColumnListIgnoresNamedForeignKeyConstraint(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $parent = 'prefix_' . bin2hex(random_bytes(8));
-        $child = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, name VARCHAR(50)) ENGINE=InnoDB', $parent));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, parent_id INT NOT NULL, label VARCHAR(50) NOT NULL, CONSTRAINT `fk_parent` FOREIGN KEY (parent_id) REFERENCES `%s`(id)) ENGINE=InnoDB', $child, $parent));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
-
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $parent = 'prefix_' . bin2hex(random_bytes(8));
+            $child = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, name VARCHAR(50)) ENGINE=InnoDB', $parent));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, parent_id INT NOT NULL, label VARCHAR(50) NOT NULL, CONSTRAINT `fk_parent` FOREIGN KEY (parent_id) REFERENCES `%s`(id)) ENGINE=InnoDB', $child, $parent));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
             self::assertNotFalse($ztdMysqli->query(sprintf("INSERT INTO `%s` VALUES (1, 'Parent')", $parent)));
             self::assertNotFalse($ztdMysqli->query(sprintf("INSERT INTO `%s` VALUES (10, 1, 'Child')", $child)));
 
@@ -320,29 +259,21 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertInstanceOf(mysqli_result::class, $physical);
             self::assertSame([], $physical->fetch_all(MYSQLI_ASSOC));
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testSelfReferencingUpsertMatchesNativeMySql(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $nativeTable = 'prefix_' . bin2hex(random_bytes(8));
-        $shadowTable = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, quantity INT NOT NULL)', $nativeTable));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, quantity INT NOT NULL)', $shadowTable));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
-
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $nativeTable = 'prefix_' . bin2hex(random_bytes(8));
+            $shadowTable = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, quantity INT NOT NULL)', $nativeTable));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, quantity INT NOT NULL)', $shadowTable));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
             $rawMysqli->query(sprintf('INSERT INTO `%s` VALUES (1, 100)', $nativeTable));
             $ztdMysqli->query(sprintf('INSERT INTO `%s` VALUES (1, 100)', $shadowTable));
             $rawMysqli->query(sprintf('INSERT INTO `%1$s` VALUES (1, 5), (1, 7) ON DUPLICATE KEY UPDATE quantity = `%1$s`.quantity + VALUES(quantity)', $nativeTable));
@@ -357,54 +288,38 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertEquals($rawRows->fetch_all(MYSQLI_ASSOC), $ztdRows->fetch_all(MYSQLI_ASSOC));
             self::assertSame([], $physicalShadowRows->fetch_all(MYSQLI_ASSOC));
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testAffectedRowsCountsOnlyChangedMySqlRows(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, score INT)', $table));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
-
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, score INT)', $table));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
             $ztdMysqli->query(sprintf('INSERT INTO `%s` VALUES (1, 10)', $table));
             $ztdMysqli->query(sprintf('UPDATE `%s` SET score = 10 WHERE id = 1', $table));
             self::assertSame(0, $ztdMysqli->lastAffectedRows());
             $ztdMysqli->query(sprintf('UPDATE `%s` SET score = 11 WHERE id = 1', $table));
             self::assertSame(1, $ztdMysqli->lastAffectedRows());
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testTransactionsAndSavepointsRestoreShadowRows(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, name VARCHAR(20))', $table));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
-
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, name VARCHAR(20))', $table));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
             $ztdMysqli->query(sprintf("INSERT INTO `%s` VALUES (1, 'one')", $table));
             $ztdMysqli->begin_transaction();
             $ztdMysqli->query(sprintf("INSERT INTO `%s` VALUES (2, 'two')", $table));
@@ -430,27 +345,19 @@ final class MysqliCteShadowingTest extends TestCase
                 ['id' => 2, 'name' => 'two'],
             ], $rolledBack->fetch_all(MYSQLI_ASSOC));
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testRecursiveAndUserOwnedCteNamespacesRemainValid(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, parent_id INT)', $table));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
-
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, parent_id INT)', $table));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
             $ztdMysqli->query(sprintf('INSERT INTO `%s` VALUES (1, NULL), (2, 1), (3, 2)', $table));
             $recursive = $ztdMysqli->query(sprintf(
                 'WITH RECURSIVE tree AS (SELECT id, parent_id FROM `%1$s` WHERE parent_id IS NULL UNION ALL SELECT n.id, n.parent_id FROM `%1$s` n JOIN tree t ON n.parent_id = t.id) SELECT id FROM tree ORDER BY id',
@@ -463,27 +370,19 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertInstanceOf(mysqli_result::class, $owned);
             self::assertSame([['id' => 9]], $owned->fetch_all(MYSQLI_ASSOC));
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testCteDefinitionsRemainVisibleToSimulatedDml(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, value VARCHAR(20))', $table));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
-
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, value VARCHAR(20))', $table));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
             self::assertNotFalse($ztdMysqli->query(sprintf("WITH source AS (SELECT 1 AS id, 'one' AS value UNION ALL SELECT 2, 'two') INSERT INTO `%s` SELECT * FROM source", $table)));
             self::assertNotFalse($ztdMysqli->query(sprintf("WITH chosen AS (SELECT id FROM `%1\$s` WHERE value = 'two') UPDATE `%1\$s` SET value = 'changed' WHERE id IN (SELECT id FROM chosen)", $table)));
             self::assertNotFalse($ztdMysqli->query(sprintf("WITH chosen AS (SELECT id FROM `%1\$s` WHERE value = 'one') DELETE FROM `%1\$s` WHERE id IN (SELECT id FROM chosen)", $table)));
@@ -492,27 +391,19 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertInstanceOf(mysqli_result::class, $result);
             self::assertSame([['id' => 2, 'value' => 'changed']], $result->fetch_all(MYSQLI_ASSOC));
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testOrderedLimitedUpdateKeepsOriginalIdentityAndSwapSnapshot(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, left_value VARCHAR(20), right_value VARCHAR(20))', $table));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
-
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, left_value VARCHAR(20), right_value VARCHAR(20))', $table));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
             $ztdMysqli->query(sprintf("INSERT INTO `%s` VALUES (1, 'a1', 'b1'), (2, 'a2', 'b2'), (3, 'a3', 'b3')", $table));
             $ztdMysqli->query(sprintf('UPDATE `%s` SET id = 30, left_value = right_value, right_value = left_value ORDER BY id DESC LIMIT 1', $table));
 
@@ -524,35 +415,27 @@ final class MysqliCteShadowingTest extends TestCase
                 ['id' => 30, 'left_value' => 'b3', 'right_value' => 'a3'],
             ], $result->fetch_all(MYSQLI_ASSOC));
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testInsertSelectPreservesStarJoinsAggregatesDistinctAndRollup(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $source = 'prefix_' . bin2hex(random_bytes(8));
-        $target = 'prefix_' . bin2hex(random_bytes(8));
-        $orders = 'prefix_' . bin2hex(random_bytes(8));
-        $summary = 'prefix_' . bin2hex(random_bytes(8));
-        $regions = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, region VARCHAR(20), amount INT)', $source));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, region VARCHAR(20), amount INT)', $target));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, source_id INT)', $orders));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (region VARCHAR(20), order_count INT, total_amount INT)', $summary));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(20))', $regions));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
-
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $source = 'prefix_' . bin2hex(random_bytes(8));
+            $target = 'prefix_' . bin2hex(random_bytes(8));
+            $orders = 'prefix_' . bin2hex(random_bytes(8));
+            $summary = 'prefix_' . bin2hex(random_bytes(8));
+            $regions = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, region VARCHAR(20), amount INT)', $source));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, region VARCHAR(20), amount INT)', $target));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, source_id INT)', $orders));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (region VARCHAR(20), order_count INT, total_amount INT)', $summary));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(20))', $regions));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
             $ztdMysqli->query(sprintf("INSERT INTO `%s` VALUES (1, 'east', 100), (2, 'east', 200), (3, 'west', 300)", $source));
             $ztdMysqli->query(sprintf('INSERT INTO `%s` VALUES (1, 1), (2, 1), (3, 3)', $orders));
             $ztdMysqli->query(sprintf('INSERT INTO `%s` SELECT * FROM `%s`', $target, $source));
@@ -582,28 +465,20 @@ final class MysqliCteShadowingTest extends TestCase
             ], $summaryRows->fetch_all(MYSQLI_ASSOC));
             self::assertEquals([['id' => 1, 'name' => 'east'], ['id' => 2, 'name' => 'west']], $regionRows->fetch_all(MYSQLI_ASSOC));
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testGroupedSelfReferencingSubqueryRestrictsUpdate(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $definition = '(id INT PRIMARY KEY, name VARCHAR(50), dept_id INT, salary DECIMAL(10,2), active TINYINT DEFAULT 1)';
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` %s', $table, $definition));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
-
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $definition = '(id INT PRIMARY KEY, name VARCHAR(50), dept_id INT, salary DECIMAL(10,2), active TINYINT DEFAULT 1)';
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` %s', $table, $definition));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
             $rows = "VALUES (1, 'Alice', 1, 120000, 1), (2, 'Bob', 1, 110000, 1), (3, 'Charlie', 2, 90000, 1), (4, 'Diana', 3, 95000, 1), (5, 'Eve', 1, 130000, 1)";
             $ztdMysqli->query(sprintf('INSERT INTO `%s` %s', $table, $rows));
 
@@ -619,28 +494,20 @@ final class MysqliCteShadowingTest extends TestCase
                 ['id' => 5, 'active' => 0],
             ], $result->fetch_all(MYSQLI_ASSOC));
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testGroupedSelfReferencingSubqueryRestrictsDelete(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $definition = '(id INT PRIMARY KEY, customer_id INT, amount DECIMAL(10,2), status VARCHAR(20))';
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` %s', $table, $definition));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
-
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $definition = '(id INT PRIMARY KEY, customer_id INT, amount DECIMAL(10,2), status VARCHAR(20))';
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` %s', $table, $definition));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
             $rows = "VALUES (1, 1, 50, 'completed'), (2, 1, 75, 'completed'), (3, 1, 30, 'cancelled'), (4, 2, 200, 'completed'), (5, 3, 10, 'completed'), (6, 3, 15, 'completed')";
             $ztdMysqli->query(sprintf('INSERT INTO `%s` %s', $table, $rows));
 
@@ -654,27 +521,19 @@ final class MysqliCteShadowingTest extends TestCase
                 ['id' => 6, 'customer_id' => 3, 'amount' => '15.00', 'status' => 'completed'],
             ], $result->fetch_all(MYSQLI_ASSOC));
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testAutoIncrementUsesShadowCounterWithoutModifyingPhysicalTable(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(20) NOT NULL)', $table));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
-
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(20) NOT NULL)', $table));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
             $ztdMysqli->query(sprintf("INSERT INTO `%s` (name) VALUES ('Alice'), ('Bob')", $table));
 
             $ztdRows = $ztdMysqli->query(sprintf('SELECT id, name FROM `%s` ORDER BY id', $table));
@@ -684,30 +543,22 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertEquals([['id' => 1, 'name' => 'Alice'], ['id' => 2, 'name' => 'Bob']], $ztdRows->fetch_all(MYSQLI_ASSOC));
             self::assertSame([], $rawRows->fetch_all(MYSQLI_ASSOC));
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testOmittedExplicitAndDefaultOnlyValuesMatchMySql(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf(
-            "CREATE TABLE `%s` (id INT DEFAULT 7, status ENUM('new','active') DEFAULT 'active', note VARCHAR(20) DEFAULT NULL)",
-            $table,
-        ));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
-
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf(
+                "CREATE TABLE `%s` (id INT DEFAULT 7, status ENUM('new','active') DEFAULT 'active', note VARCHAR(20) DEFAULT NULL)",
+                $table,
+            ));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
             $rawMysqli->query(sprintf('INSERT INTO `%s` (id, status) VALUES (1, DEFAULT)', $table));
             $rawMysqli->query(sprintf('INSERT INTO `%s` () VALUES ()', $table));
             $ztdMysqli->query(sprintf('INSERT INTO `%s` (id, status) VALUES (1, DEFAULT)', $table));
@@ -721,27 +572,19 @@ final class MysqliCteShadowingTest extends TestCase
             $ztdRows = $ztd->fetch_all(MYSQLI_ASSOC);
             self::assertEquals($rawRows, $ztdRows);
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testEnumUsesDeclarationRanksForOrderingAndComparison(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf("CREATE TABLE `%s` (id INT PRIMARY KEY, size ENUM('small','medium','large'))", $table));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
-
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf("CREATE TABLE `%s` (id INT PRIMARY KEY, size ENUM('small','medium','large'))", $table));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
             $ztdMysqli->query(sprintf("INSERT INTO `%s` VALUES (1, 'large'), (2, 'small'), (3, 'medium')", $table));
 
             $ordered = $ztdMysqli->query(sprintf('SELECT size FROM `%s` ORDER BY size', $table));
@@ -751,29 +594,21 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertSame(['small', 'medium', 'large'], array_column($ordered->fetch_all(MYSQLI_ASSOC), 'size'));
             self::assertSame(['medium', 'large'], array_column($compared->fetch_all(MYSQLI_ASSOC), 'size'));
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testSetExpressionsRemainSingleStatements(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $users = 'prefix_' . bin2hex(random_bytes(8));
-        $vip = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (name VARCHAR(255) PRIMARY KEY)', $users));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (name VARCHAR(255) PRIMARY KEY)', $vip));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
-
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $users = 'prefix_' . bin2hex(random_bytes(8));
+            $vip = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (name VARCHAR(255) PRIMARY KEY)', $users));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (name VARCHAR(255) PRIMARY KEY)', $vip));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
             $ztdMysqli->query(sprintf("INSERT INTO `%s` (name) VALUES ('Alice'), ('Bob')", $users));
             $ztdMysqli->query(sprintf("INSERT INTO `%s` (name) VALUES ('Alice')", $vip));
 
@@ -792,27 +627,19 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertSame([['name' => 'Bob']], $except->fetch_all(MYSQLI_ASSOC));
             self::assertSame([['name' => 'Alice']], $intersect->fetch_all(MYSQLI_ASSOC));
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testSelectOnCleanShadowReturnsEmpty(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
-        $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
+            $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
             $result = $ztdMysqli->query(sprintf('SELECT * FROM `%s` ORDER BY id', $table));
             self::assertNotFalse($result);
             self::assertInstanceOf(mysqli_result::class, $result);
@@ -820,27 +647,19 @@ final class MysqliCteShadowingTest extends TestCase
             $rows = $result->fetch_all(MYSQLI_ASSOC);
             self::assertCount(0, $rows);
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testInsertDoesNotModifyPhysicalDatabase(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
-        $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
+            $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
             $ztdMysqli->query(sprintf(
                 "INSERT INTO `%s` (name, age) VALUES ('Charlie', 35)",
                 $table
@@ -853,27 +672,19 @@ final class MysqliCteShadowingTest extends TestCase
             $rows = $result->fetch_all(MYSQLI_ASSOC);
             self::assertCount(2, $rows);
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testInsertIsVisibleViaZtdSelect(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
-        $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
+            $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
             $ztdMysqli->query(sprintf(
                 "INSERT INTO `%s` (name, age) VALUES ('Charlie', 35)",
                 $table
@@ -892,27 +703,19 @@ final class MysqliCteShadowingTest extends TestCase
             $age = $rows[0]['age'];
             self::assertSame('35', (string) $age);
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testMultipleInsertsAccumulate(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
-        $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
+            $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
             $ztdMysqli->query(sprintf(
                 "INSERT INTO `%s` (name, age) VALUES ('Charlie', 35)",
                 $table
@@ -933,27 +736,19 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertContains('Charlie', $names);
             self::assertContains('Diana', $names);
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testSelectWithWhereOnShadowData(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
-        $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
+            $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
             $ztdMysqli->query(sprintf(
                 "INSERT INTO `%s` (name, age) VALUES ('Charlie', 35)",
                 $table
@@ -971,27 +766,19 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertCount(1, $rows);
             self::assertSame('Charlie', $rows[0]['name']);
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testPhysicalDatabaseRemainsUnchangedAfterMutations(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
-        $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
+            $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
             $ztdMysqli->query(sprintf(
                 "INSERT INTO `%s` (name, age) VALUES ('Charlie', 35)",
                 $table
@@ -1010,27 +797,19 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertSame('Alice', $rows[0]['name']);
             self::assertSame('Bob', $rows[1]['name']);
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testEnableDisableToggle(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
-        $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
+            $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
             self::assertTrue($ztdMysqli->isZtdEnabled());
 
             $ztdMysqli->disableZtd();
@@ -1039,27 +818,19 @@ final class MysqliCteShadowingTest extends TestCase
             $ztdMysqli->enableZtd();
             self::assertTrue($ztdMysqli->isZtdEnabled());
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testDisableZtdBypassesRewriting(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
-        $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
+            $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
             $ztdMysqli->disableZtd();
 
             $ztdMysqli->query(sprintf(
@@ -1076,27 +847,19 @@ final class MysqliCteShadowingTest extends TestCase
 
             $rawMysqli->query(sprintf("DELETE FROM `%s` WHERE name = 'Direct'", $table));
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testPreparedStatementSelectWithZtd(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
-        $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
+            $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
             $ztdMysqli->query(sprintf(
                 "INSERT INTO `%s` (name, age) VALUES ('Charlie', 35)",
                 $table
@@ -1115,27 +878,19 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertCount(1, $rows);
             self::assertSame('Charlie', $rows[0]['name']);
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testPreparedStatementSelectNonExistent(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
-        $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
+            $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
             $ztdMysqli->query(sprintf(
                 "INSERT INTO `%s` (name, age) VALUES ('Charlie', 35)",
                 $table
@@ -1153,27 +908,19 @@ final class MysqliCteShadowingTest extends TestCase
             $rows = $result->fetch_all(MYSQLI_ASSOC);
             self::assertCount(0, $rows);
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testAffectedRowsAfterInsert(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
-        $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
+            $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
             $ztdMysqli->query(sprintf(
                 "INSERT INTO `%s` (name, age) VALUES ('Charlie', 35)",
                 $table
@@ -1181,27 +928,19 @@ final class MysqliCteShadowingTest extends TestCase
 
             self::assertSame(1, $ztdMysqli->lastAffectedRows());
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testAffectedRowsAfterMultipleInserts(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
-        $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
+            $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
             $ztdMysqli->query(sprintf(
                 "INSERT INTO `%s` (name, age) VALUES ('Charlie', 35)",
                 $table
@@ -1214,27 +953,19 @@ final class MysqliCteShadowingTest extends TestCase
             ));
             self::assertSame(1, $ztdMysqli->lastAffectedRows());
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testExecuteQuerySelect(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
-        $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
+            $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
             $ztdMysqli->query(sprintf(
                 "INSERT INTO `%s` (name, age) VALUES ('Charlie', 35)",
                 $table
@@ -1251,27 +982,19 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertCount(1, $rows);
             self::assertSame('Charlie', $rows[0]['name']);
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testRealQueryInsert(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'prefix_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
-        $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'prefix_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
+            $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
             $result = $ztdMysqli->real_query(sprintf(
                 "INSERT INTO `%s` (name, age) VALUES ('Charlie', 35)",
                 $table
@@ -1285,27 +1008,19 @@ final class MysqliCteShadowingTest extends TestCase
             $rows = $selectResult->fetch_all(MYSQLI_ASSOC);
             self::assertCount(1, $rows);
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testPreparedBackslashesRoundTripWithoutMysqlEscapeCorruption(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $table = 'typed_' . bin2hex(random_bytes(8));
-        $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, value VARCHAR(255))', $table));
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
-
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $table = 'typed_' . bin2hex(random_bytes(8));
+            $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, value VARCHAR(255))', $table));
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
             $insert = $ztdMysqli->prepare(sprintf('INSERT INTO `%s` (id, value) VALUES (?, ?)', $table));
             self::assertNotFalse($insert);
             $id = 1;
@@ -1318,30 +1033,22 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertInstanceOf(mysqli_result::class, $result);
             self::assertSame([['value' => $value]], $result->fetch_all(MYSQLI_ASSOC));
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 
     public function testRangePartitionSelectionMatchesShadowRows(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $rawMysqli = new mysqli($host, 'root', 'root', '', $port);
-        $rawMysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $rawMysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $rawMysqli->select_db($databaseName);
-        $rawMysqli->query('CREATE TABLE events (id INT NOT NULL, event_date DATE NOT NULL, '
-            . 'PRIMARY KEY (id, event_date)) PARTITION BY RANGE (YEAR(event_date)) ('
-            . 'PARTITION p2023 VALUES LESS THAN (2024), '
-            . 'PARTITION p2024 VALUES LESS THAN (2025), '
-            . 'PARTITION pmax VALUES LESS THAN MAXVALUE)');
-        $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
-
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli->query('CREATE TABLE events (id INT NOT NULL, event_date DATE NOT NULL, '
+                . 'PRIMARY KEY (id, event_date)) PARTITION BY RANGE (YEAR(event_date)) ('
+                . 'PARTITION p2023 VALUES LESS THAN (2024), '
+                . 'PARTITION p2024 VALUES LESS THAN (2025), '
+                . 'PARTITION pmax VALUES LESS THAN MAXVALUE)');
+            $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
+
             self::assertNotFalse($ztdMysqli->query('INSERT INTO events VALUES '
                 . "(1, '2023-06-01'), (2, '2024-01-15'), (3, '2024-11-20'), (4, '2025-02-01')"));
 
@@ -1357,22 +1064,14 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertInstanceOf(mysqli_result::class, $physical);
             self::assertSame([['total' => '0']], $physical->fetch_all(MYSQLI_ASSOC));
         } finally {
-            $rawMysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
     public function testYearShorthandMatchesNativeCoercionWithoutPhysicalWrites(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $native = new mysqli($host, 'root', 'root', '', $port);
-        $native->set_charset('utf8mb4');
-        $database = 'ztd_' . bin2hex(random_bytes(8));
-        $native->query('CREATE DATABASE `' . $database . '` CHARACTER SET utf8mb4');
-        $native->select_db($database);
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $native = $container->getData(mysqli::class);
             $native->query('CREATE TABLE years (id INT PRIMARY KEY, value YEAR)');
             $ztd = ZtdMysqli::fromMysqli($native);
             self::assertNotFalse($ztd->query("INSERT INTO years VALUES (1, 78), (2, 69), (3, 0), (4, '0')"));
@@ -1384,23 +1083,19 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertInstanceOf(mysqli_result::class, $physical);
             self::assertSame([], $physical->fetch_all(MYSQLI_ASSOC));
         } finally {
-            $native->query('DROP DATABASE `' . $database . '`');
+            $container->stop();
         }
     }
 
     public function testNativeConstructorCreatesAnIsolatedDefaultSession(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $native = new mysqli($host, 'root', 'root', '', $port);
-        $native->set_charset('utf8mb4');
-        $database = 'ztd_' . bin2hex(random_bytes(8));
-        $native->query('CREATE DATABASE `' . $database . '` CHARACTER SET utf8mb4');
-        $native->select_db($database);
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $host = str_replace('localhost', '127.0.0.1', $container->getHost());
+            $port = $container->getMappedPort(3306);
+            self::assertNotNull($port);
+            $native = $container->getData(mysqli::class);
+            $database = 'test';
             $native->query('CREATE TABLE users (id INT)');
             $ztd = new ZtdMysqli($host, 'root', 'root', $database, $port);
             self::assertTrue($ztd->isZtdEnabled());
@@ -1413,7 +1108,7 @@ final class MysqliCteShadowingTest extends TestCase
             self::assertSame([], $physical->fetch_all(MYSQLI_ASSOC));
             self::assertTrue($ztd->close());
         } finally {
-            $native->query('DROP DATABASE `' . $database . '`');
+            $container->stop();
         }
     }
 

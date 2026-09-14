@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
+use Containers\MySql80Container;
+use Containers\MySql84Container;
 use mysqli;
 use mysqli_result;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
+use Testcontainers\Testcontainers;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqliException;
 
@@ -25,18 +28,10 @@ final class MysqliForeignKeyCascadeTest extends TestCase
 {
     public function testForeignKeysValidateAndCascadeUpdatesAndDeletes(): void
     {
-        $host = getenv('ZTD_TEST_MYSQL_HOST');
-        $port = getenv('ZTD_TEST_MYSQL_PORT');
-        self::assertIsString($host);
-        self::assertIsString($port);
-        $port = (int) $port;
-        $mysqli = new mysqli($host, 'root', 'root', '', $port);
-        $mysqli->set_charset('utf8mb4');
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $mysqli->query('CREATE DATABASE `' . $databaseName . '` CHARACTER SET utf8mb4');
-        $mysqli->select_db($databaseName);
-
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
+            $mysqli = $container->getData(mysqli::class);
+
             $mysqli->query('CREATE TABLE departments (id INT PRIMARY KEY, name VARCHAR(50)) ENGINE=InnoDB');
             $mysqli->query('CREATE TABLE employees (id INT PRIMARY KEY, department_id INT, '
                 . 'CONSTRAINT fk_department FOREIGN KEY (department_id) REFERENCES departments (id) '
@@ -81,7 +76,7 @@ final class MysqliForeignKeyCascadeTest extends TestCase
             self::assertInstanceOf(mysqli_result::class, $physical);
             self::assertSame([['row_count' => '0']], $physical->fetch_all(MYSQLI_ASSOC));
         } finally {
-            $mysqli->query(sprintf('DROP DATABASE IF EXISTS `%s`', $databaseName));
+            $container->stop();
         }
     }
 }

@@ -15,9 +15,7 @@ use ZtdQuery\Platform\MySql\MySqlResultColumnTypeResolver;
 
 /**
  * Measures metadata adaptation independently of database round trips.
- * The local executor lets Testcontainers reuse one server across iterations.
  */
-#[Bench\Executor('local')]
 #[Bench\BeforeMethods('setUp')]
 #[Bench\AfterMethods('tearDown')]
 #[Bench\ParamProviders('columns')]
@@ -37,8 +35,7 @@ final class ResultMetadataBench
     public function setUp(array $params): void
     {
         $container = Testcontainers::run(MySql80Container::class);
-        $port = $container->getMappedPort(3306) ?? throw new RuntimeException('MySQL port was not mapped.');
-        $this->connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', '', $port);
+        $this->connection = $container->getData(mysqli::class);
         $projection = [];
         for ($column = 0; $column < $params['columns']; $column++) {
             $projection[] = $column . ' AS column_' . $column;
@@ -58,6 +55,7 @@ final class ResultMetadataBench
     {
         $this->result->free();
         $this->connection->close();
+        Testcontainers::stop();
     }
 
     /**
