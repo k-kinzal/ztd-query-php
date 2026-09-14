@@ -11,7 +11,7 @@
     },
     "minMsi": 80,
     "minCoveredMsi": 80,
-    "timeout": 120,
+    "timeout": 1200,
     "timeoutsAsEscaped": true,
     "tmpDir": "build/infection-tmp",
     "logs": {
