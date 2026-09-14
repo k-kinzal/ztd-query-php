@@ -7,19 +7,27 @@ namespace ZtdQuery\Platform\MySql;
 use PhpMyAdmin\SqlParser\Context;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
-use ZtdQuery\Platform\MySql\Transformer\DeleteTransformer;
-use ZtdQuery\Platform\MySql\Transformer\InsertTransformer;
-use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
-use ZtdQuery\Platform\MySql\Transformer\ReplaceTransformer;
-use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
-use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
+use ZtdQuery\Platform\MySql\Connection\MySqlSessionSqlModeReflector;
+use ZtdQuery\Platform\MySql\Connection\Result\MySqlResultColumnTypeResolver;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlQueryGuard;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlRewriter;
+use ZtdQuery\Platform\MySql\Rewrite\Transformer\DeleteTransformer;
+use ZtdQuery\Platform\MySql\Rewrite\Transformer\InsertTransformer;
+use ZtdQuery\Platform\MySql\Rewrite\Transformer\MySqlTransformer;
+use ZtdQuery\Platform\MySql\Rewrite\Transformer\ReplaceTransformer;
+use ZtdQuery\Platform\MySql\Rewrite\Transformer\SelectTransformer;
+use ZtdQuery\Platform\MySql\Rewrite\Transformer\UpdateTransformer;
+use ZtdQuery\Platform\MySql\Schema\MySqlSchemaParser;
+use ZtdQuery\Platform\MySql\Schema\MySqlSchemaReflector;
+use ZtdQuery\Platform\MySql\Shadow\MySqlMutationResolver;
+use ZtdQuery\Platform\MySql\Sql\MySqlParser;
+use ZtdQuery\Platform\SessionFactory;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Session;
-use ZtdQuery\Platform\SessionFactory;
 use ZtdQuery\Shadow\ShadowStore;
-use ZtdQuery\Shadow\ShadowTransactionManager;
+use ZtdQuery\Shadow\ShadowTransactions;
 
 /**
  * Factory for creating Session instances pre-configured for MySQL.
@@ -66,7 +74,7 @@ final class MySqlSessionFactory implements SessionFactory
             new ResultSelectRunner(),
             $config,
             $connection,
-            new ShadowTransactionManager($shadowStore, $registry),
+            new ShadowTransactions($shadowStore, $registry),
             $registry,
             resultColumnTypeResolver: new MySqlResultColumnTypeResolver(),
         );

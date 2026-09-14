@@ -4,11 +4,22 @@ declare(strict_types=1);
 
 use Faker\Factory;
 use Fuzz\Robustness\Target\ClassifyTarget;
+use SqlFaker\Generation\Choice\BytePlanCompiler;
+use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\MySqlProvider;
 
-$faker = Factory::create();
-$provider = new MySqlProvider($faker, 'mysql-8.0.44');
-$target = new ClassifyTarget($faker, $provider);
+$provider = new MySqlProvider(Factory::create(), 'mysql-8.4.7');
+$planner = $provider->planner();
+$constraints = GenerationPlan::fromRule('simple_statement_or_begin')->requiringNonEmpty()->withExpansionBudget(500);
+$target = new ClassifyTarget();
 
-/** @var \PhpFuzzer\Config $config */
-$config->setTarget(\Closure::fromCallable($target));
+/**
+ * @var PhpFuzzer\Config $config
+ */
+$config->setAllowedExceptions([]);
+$config->setMaxLen(2004);
+$config->setTarget(static function (string $input) use ($provider, $planner, $constraints, $target): void {
+    $plan = (new BytePlanCompiler())->compile($input, $planner, $constraints);
+    $sql = $provider->generate($plan);
+    $target($sql);
+});
