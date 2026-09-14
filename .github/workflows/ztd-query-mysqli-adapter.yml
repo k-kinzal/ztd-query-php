@@ -175,11 +175,14 @@ jobs:
         run: |
           composer validate --strict --no-check-publish
           composer check-platform-reqs --no-dev
+      - name: Run tests and generate mutation coverage
+        run: composer test:coverage -- --testsuite=unit,integration
       - name: Mutation testing on changed lines
         if: github.event_name == 'pull_request'
         run: >-
           php -d memory_limit=4G "$(command -v infection)"
           --configuration=infection.json5 --with-uncovered --threads=2 --only-covering-test-cases
+          --coverage=build --skip-initial-tests
           --git-diff-lines --git-diff-base="origin/${GITHUB_BASE_REF}"
           --min-msi=85 --min-covered-msi=85 --ignore-msi-with-no-mutations
           --no-progress --logger-github
@@ -188,6 +191,7 @@ jobs:
         run: >-
           php -d memory_limit=4G "$(command -v infection)"
           --configuration=infection.json5 --with-uncovered --threads=2 --only-covering-test-cases
+          --coverage=build --skip-initial-tests
           --no-progress --logger-github
       - name: Reject skipped whole-tree mutants
         if: github.event_name != 'pull_request'

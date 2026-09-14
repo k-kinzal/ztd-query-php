@@ -144,7 +144,7 @@
         ],
         "test:coverage": [
             "Composer\\Config::disableProcessTimeout",
-            "phpunit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+            "paratest --processes=4 --coverage-xml build/coverage-xml --log-junit build/junit.xml"
         ],
         "doctest": [
             "Composer\\Config::disableProcessTimeout",
