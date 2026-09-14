@@ -7,6 +7,9 @@ namespace SqlFixture\TypeMapper;
 use Faker\Generator;
 use SqlFixture\Schema\ColumnDefinition;
 
+/**
+ * Generates one value matching the declared SQL column.
+ */
 interface TypeMapperInterface
 {
     /**

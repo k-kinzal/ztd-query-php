@@ -4,23 +4,34 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Platform\PostgreSql;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Platform\PostgreSql\PostgreSqlSchemaParser;
-use SqlFixture\Schema\SchemaParseException;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use SqlFixture\Schema\ColumnDefinition;
+use SqlFixture\Schema\SchemaParseException;
 use SqlFixture\Schema\TableSchema;
 
 #[CoversClass(PostgreSqlSchemaParser::class)]
 #[UsesClass(ColumnDefinition::class)]
 #[UsesClass(TableSchema::class)]
 #[UsesClass(SchemaParseException::class)]
+#[CoversClass(\SqlFixture\Platform\PostgreSql\Schema\ColumnParser::class)]
+#[CoversClass(\SqlFixture\Platform\PostgreSql\Schema\DefaultExpression::class)]
+#[CoversClass(\SqlFixture\Platform\PostgreSql\Schema\DefinitionList::class)]
+#[CoversClass(\SqlFixture\Platform\PostgreSql\Schema\TableSyntax::class)]
+#[CoversClass(\SqlFixture\Platform\PostgreSql\Schema\TypeDeclaration::class)]
+#[CoversClass(\SqlFixture\Schema\DefinitionSegments::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaParserInterface::class)]
+#[UsesClass(\SqlFixture\Schema\TypeShape::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\InvalidSqlException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\ExpectedCreateTableException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class)]
 final class PostgreSqlSchemaParserTest extends TestCase
 {
     #[Test]
-    public function parseSimpleTable(): void
+    public function testParseSimpleTable(): void
     {
         $sql = 'CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -32,7 +43,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseColumnTypes(): void
+    public function testParseColumnTypes(): void
     {
         $sql = <<<'SQL'
             CREATE TABLE test (
@@ -72,7 +83,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseSerialType(): void
+    public function testParseSerialType(): void
     {
         $sql = 'CREATE TABLE test (id SERIAL PRIMARY KEY, name TEXT)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -82,7 +93,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseBigSerialType(): void
+    public function testParseBigSerialType(): void
     {
         $sql = 'CREATE TABLE test (id BIGSERIAL PRIMARY KEY)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -92,7 +103,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseSmallSerialType(): void
+    public function testParseSmallSerialType(): void
     {
         $sql = 'CREATE TABLE test (id SMALLSERIAL PRIMARY KEY)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -102,7 +113,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseVarcharWithLength(): void
+    public function testParseVarcharWithLength(): void
     {
         $sql = 'CREATE TABLE test (name VARCHAR(100))';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -112,7 +123,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseNumericWithPrecisionAndScale(): void
+    public function testParseNumericWithPrecisionAndScale(): void
     {
         $sql = 'CREATE TABLE test (price NUMERIC(10, 2))';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -123,7 +134,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseNotNullConstraint(): void
+    public function testParseNotNullConstraint(): void
     {
         $sql = 'CREATE TABLE test (id INTEGER NOT NULL, name TEXT)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -133,7 +144,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parsePrimaryKey(): void
+    public function testParsePrimaryKey(): void
     {
         $sql = 'CREATE TABLE test (id INTEGER PRIMARY KEY)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -142,7 +153,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseTableLevelPrimaryKey(): void
+    public function testParseTableLevelPrimaryKey(): void
     {
         $sql = 'CREATE TABLE test (a INTEGER, b TEXT, PRIMARY KEY (a, b))';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -153,7 +164,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultString(): void
+    public function testParseDefaultString(): void
     {
         $sql = "CREATE TABLE test (name TEXT DEFAULT 'default_value')";
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -162,7 +173,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultNull(): void
+    public function testParseDefaultNull(): void
     {
         $sql = 'CREATE TABLE test (name TEXT DEFAULT NULL)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -171,7 +182,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultInteger(): void
+    public function testParseDefaultInteger(): void
     {
         $sql = 'CREATE TABLE test (count INTEGER DEFAULT 42)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -180,7 +191,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultBoolean(): void
+    public function testParseDefaultBoolean(): void
     {
         $sql = 'CREATE TABLE test (active BOOLEAN DEFAULT TRUE)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -189,7 +200,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultFunctionCall(): void
+    public function testParseDefaultFunctionCall(): void
     {
         $sql = 'CREATE TABLE test (id UUID DEFAULT gen_random_uuid())';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -198,7 +209,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultTypeCast(): void
+    public function testParseDefaultTypeCast(): void
     {
         $sql = "CREATE TABLE test (data JSONB DEFAULT '{}'::jsonb)";
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -207,7 +218,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseIfNotExists(): void
+    public function testParseIfNotExists(): void
     {
         $sql = 'CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -216,7 +227,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseQuotedTableName(): void
+    public function testParseQuotedTableName(): void
     {
         $sql = 'CREATE TABLE "my_table" ("my_column" INTEGER)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -226,7 +237,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseSchemaQualifiedTableName(): void
+    public function testParseSchemaQualifiedTableName(): void
     {
         $sql = 'CREATE TABLE public.users (id INTEGER PRIMARY KEY)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -235,7 +246,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseSkipsTableConstraints(): void
+    public function testParseSkipsTableConstraints(): void
     {
         $sql = <<<'SQL'
             CREATE TABLE test (
@@ -256,7 +267,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseComments(): void
+    public function testParseComments(): void
     {
         $sql = <<<'SQL'
             -- This is a comment
@@ -271,21 +282,21 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function throwsExceptionForInvalidSql(): void
+    public function testThrowsExceptionForInvalidSql(): void
     {
-        $this->expectException(SchemaParseException::class);
+        $this->expectException(\SqlFixture\Schema\Exception\InvalidSqlException::class);
         (new PostgreSqlSchemaParser())->parse('NOT A VALID SQL STATEMENT');
     }
 
     #[Test]
-    public function throwsExceptionForEmptyTable(): void
+    public function testThrowsExceptionForEmptyTable(): void
     {
-        $this->expectException(SchemaParseException::class);
+        $this->expectException(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class);
         (new PostgreSqlSchemaParser())->parse('CREATE TABLE test ()');
     }
 
     #[Test]
-    public function parseUnsignedAlwaysFalse(): void
+    public function testParseUnsignedAlwaysFalse(): void
     {
         $sql = 'CREATE TABLE test (id INTEGER, price NUMERIC(10, 2))';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -295,7 +306,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseGeneratedColumn(): void
+    public function testParseGeneratedColumn(): void
     {
         $sql = 'CREATE TABLE test (a INTEGER, b INTEGER, c INTEGER GENERATED ALWAYS AS (a + b) STORED)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -304,7 +315,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseArrayType(): void
+    public function testParseArrayType(): void
     {
         $sql = 'CREATE TABLE test (tags TEXT[])';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -313,7 +324,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseIntegerArrayType(): void
+    public function testParseIntegerArrayType(): void
     {
         $sql = 'CREATE TABLE test (ids INTEGER[])';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -322,7 +333,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseTimestampWithTimeZone(): void
+    public function testParseTimestampWithTimeZone(): void
     {
         $sql = 'CREATE TABLE test (created_at TIMESTAMP WITH TIME ZONE)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -331,7 +342,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseTimestampWithoutTimeZone(): void
+    public function testParseTimestampWithoutTimeZone(): void
     {
         $sql = 'CREATE TABLE test (created_at TIMESTAMP WITHOUT TIME ZONE)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -340,7 +351,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseTimeWithTimeZone(): void
+    public function testParseTimeWithTimeZone(): void
     {
         $sql = 'CREATE TABLE test (t TIME WITH TIME ZONE)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -349,7 +360,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDoublePrecision(): void
+    public function testParseDoublePrecision(): void
     {
         $sql = 'CREATE TABLE test (val DOUBLE PRECISION)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -358,7 +369,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseCharacterVarying(): void
+    public function testParseCharacterVarying(): void
     {
         $sql = 'CREATE TABLE test (name CHARACTER VARYING(100))';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -368,7 +379,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseNumericWithPrecisionOnly(): void
+    public function testParseNumericWithPrecisionOnly(): void
     {
         $sql = 'CREATE TABLE test (val NUMERIC(8))';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -379,7 +390,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseUuidType(): void
+    public function testParseUuidType(): void
     {
         $sql = 'CREATE TABLE test (id UUID NOT NULL)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -389,7 +400,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseJsonbType(): void
+    public function testParseJsonbType(): void
     {
         $sql = 'CREATE TABLE test (data JSONB)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -398,7 +409,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseByteaType(): void
+    public function testParseByteaType(): void
     {
         $sql = 'CREATE TABLE test (content BYTEA)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -407,7 +418,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseInetType(): void
+    public function testParseInetType(): void
     {
         $sql = 'CREATE TABLE test (ip INET)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -416,7 +427,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseCidrType(): void
+    public function testParseCidrType(): void
     {
         $sql = 'CREATE TABLE test (network CIDR)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -425,7 +436,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseMacaddrType(): void
+    public function testParseMacaddrType(): void
     {
         $sql = 'CREATE TABLE test (mac MACADDR)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -434,7 +445,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseMoneyType(): void
+    public function testParseMoneyType(): void
     {
         $sql = 'CREATE TABLE test (price MONEY)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -443,7 +454,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseIntervalType(): void
+    public function testParseIntervalType(): void
     {
         $sql = 'CREATE TABLE test (duration INTERVAL)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -452,7 +463,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseXmlType(): void
+    public function testParseXmlType(): void
     {
         $sql = 'CREATE TABLE test (data XML)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -461,7 +472,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseExcludeConstraintSkipped(): void
+    public function testParseExcludeConstraintSkipped(): void
     {
         $sql = <<<'SQL'
             CREATE TABLE test (
@@ -479,7 +490,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultCurrentTimestamp(): void
+    public function testParseDefaultCurrentTimestamp(): void
     {
         $sql = 'CREATE TABLE test (created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -488,7 +499,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseMultipleSerialColumns(): void
+    public function testParseMultipleSerialColumns(): void
     {
         $sql = <<<'SQL'
             CREATE TABLE test (
@@ -509,7 +520,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultFalseValue(): void
+    public function testParseDefaultFalseValue(): void
     {
         $sql = 'CREATE TABLE test (active BOOLEAN DEFAULT FALSE)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -518,7 +529,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultFloatValue(): void
+    public function testParseDefaultFloatValue(): void
     {
         $sql = 'CREATE TABLE test (price NUMERIC(10,2) DEFAULT 9.99)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -527,7 +538,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultIntegerValue(): void
+    public function testParseDefaultIntegerValue(): void
     {
         $sql = 'CREATE TABLE test (count INTEGER DEFAULT 0)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -536,7 +547,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultNow(): void
+    public function testParseDefaultNow(): void
     {
         $sql = 'CREATE TABLE test (created_at TIMESTAMP DEFAULT NOW())';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -545,7 +556,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseNonGeneratedColumn(): void
+    public function testParseNonGeneratedColumn(): void
     {
         $sql = 'CREATE TABLE test (id INTEGER, name TEXT)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -555,7 +566,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseNonAutoIncrementColumn(): void
+    public function testParseNonAutoIncrementColumn(): void
     {
         $sql = 'CREATE TABLE test (id INTEGER, name TEXT)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -564,7 +575,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseEnumValuesAlwaysNull(): void
+    public function testParseEnumValuesAlwaysNull(): void
     {
         $sql = 'CREATE TABLE test (id INTEGER)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -573,7 +584,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseColumnWithEmptyType(): void
+    public function testParseColumnWithEmptyType(): void
     {
         $sql = 'CREATE TABLE test (id)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -582,23 +593,23 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseBlockComment(): void
+    public function testParseBlockComment(): void
     {
-        $sql = "/* comment */ CREATE TABLE test (id INTEGER)";
+        $sql = '/* comment */ CREATE TABLE test (id INTEGER)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
         self::assertSame('test', $schema->tableName);
     }
 
     #[Test]
-    public function parseNoParentheses(): void
+    public function testParseNoParentheses(): void
     {
-        $this->expectException(SchemaParseException::class);
+        $this->expectException(\SqlFixture\Schema\Exception\InvalidSqlException::class);
         (new PostgreSqlSchemaParser())->parse('CREATE TABLE test');
     }
 
     #[Test]
-    public function parseDefaultExpressionParenthesized(): void
+    public function testParseDefaultExpressionParenthesized(): void
     {
         $sql = 'CREATE TABLE test (val INTEGER DEFAULT (1+2))';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -607,7 +618,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDecimalWithPrecisionOnly(): void
+    public function testParseDecimalWithPrecisionOnly(): void
     {
         $sql = 'CREATE TABLE test (val DECIMAL(8))';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -618,7 +629,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseTimeWithoutTimeZone(): void
+    public function testParseTimeWithoutTimeZone(): void
     {
         $sql = 'CREATE TABLE test (t TIME WITHOUT TIME ZONE)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -627,7 +638,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultNullValueExplicit(): void
+    public function testParseDefaultNullValueExplicit(): void
     {
         $sql = 'CREATE TABLE test (val VARCHAR(100) DEFAULT NULL)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -636,7 +647,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseQuotedPrimaryKeyColumns(): void
+    public function testParseQuotedPrimaryKeyColumns(): void
     {
         $sql = 'CREATE TABLE test ("a" INTEGER, "b" TEXT, PRIMARY KEY ("a", "b"))';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -645,16 +656,16 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseMultilineWithWhitespace(): void
+    public function testParseMultilineWithWhitespace(): void
     {
-        $sql = "  CREATE   TABLE   test  (  id   INTEGER  NOT  NULL  ) ";
+        $sql = '  CREATE   TABLE   test  (  id   INTEGER  NOT  NULL  ) ';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
         self::assertSame('test', $schema->tableName);
         self::assertFalse($schema->columns['id']->nullable);
     }
 
     #[Test]
-    public function parseDecPrecisionOnly(): void
+    public function testParseDecPrecisionOnly(): void
     {
         $sql = 'CREATE TABLE test (val DEC(6))';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -663,7 +674,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultStringDoubleQuotes(): void
+    public function testParseDefaultStringDoubleQuotes(): void
     {
         $sql = 'CREATE TABLE test (name TEXT DEFAULT "hello")';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -671,7 +682,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseColumnWithNoTypeGetsTextDefault(): void
+    public function testParseColumnWithNoTypeGetsTextDefault(): void
     {
         $sql = 'CREATE TABLE test (col)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -679,7 +690,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseColumnNotAutoIncrementByDefault(): void
+    public function testParseColumnNotAutoIncrementByDefault(): void
     {
         $sql = 'CREATE TABLE test (id INTEGER NOT NULL, name TEXT)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -687,7 +698,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultLocaltimeValue(): void
+    public function testParseDefaultLocaltimeValue(): void
     {
         $sql = 'CREATE TABLE test (t TIME DEFAULT LOCALTIME)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -695,7 +706,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultLocaltimestampValue(): void
+    public function testParseDefaultLocaltimestampValue(): void
     {
         $sql = 'CREATE TABLE test (ts TIMESTAMP DEFAULT LOCALTIMESTAMP)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -703,7 +714,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultCurrentDateValue(): void
+    public function testParseDefaultCurrentDateValue(): void
     {
         $sql = 'CREATE TABLE test (d DATE DEFAULT CURRENT_DATE)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -711,7 +722,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultCurrentTimeValue(): void
+    public function testParseDefaultCurrentTimeValue(): void
     {
         $sql = 'CREATE TABLE test (t TIME DEFAULT CURRENT_TIME)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -719,7 +730,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseSerialWithPrecision(): void
+    public function testParseSerialWithPrecision(): void
     {
         $sql = 'CREATE TABLE test (id SERIAL(10) PRIMARY KEY, name TEXT)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -728,7 +739,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultStringWithTrailingConstraints(): void
+    public function testParseDefaultStringWithTrailingConstraints(): void
     {
         $sql = "CREATE TABLE test (name TEXT DEFAULT 'test' NOT NULL UNIQUE)";
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -736,7 +747,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseCharWithLength(): void
+    public function testParseCharWithLength(): void
     {
         $sql = 'CREATE TABLE test (code CHAR(3))';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -745,7 +756,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseInlineComment(): void
+    public function testParseInlineComment(): void
     {
         $sql = "CREATE TABLE test (id INTEGER -- this is pk\n)";
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -753,7 +764,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseLowercaseCreateTable(): void
+    public function testParseLowercaseCreateTable(): void
     {
         $sql = 'create table users (id integer primary key, name text not null)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -766,7 +777,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseLowercaseSerialType(): void
+    public function testParseLowercaseSerialType(): void
     {
         $sql = 'create table test (id serial primary key)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -776,7 +787,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseLowercaseBigserialType(): void
+    public function testParseLowercaseBigserialType(): void
     {
         $sql = 'create table test (id bigserial primary key)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -786,7 +797,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseLowercaseSmallserialType(): void
+    public function testParseLowercaseSmallserialType(): void
     {
         $sql = 'create table test (id smallserial primary key)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -796,7 +807,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseLowercaseIfNotExists(): void
+    public function testParseLowercaseIfNotExists(): void
     {
         $sql = 'create table if not exists users (id integer primary key)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -805,7 +816,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseLowercaseConstraints(): void
+    public function testParseLowercaseConstraints(): void
     {
         $sql = <<<'SQL'
             create table test (
@@ -825,7 +836,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseLowercaseTablePrimaryKey(): void
+    public function testParseLowercaseTablePrimaryKey(): void
     {
         $sql = 'create table test (a integer, b text, primary key (a, b))';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -835,7 +846,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseLowercaseMultiWordTypes(): void
+    public function testParseLowercaseMultiWordTypes(): void
     {
         $sql = <<<'SQL'
             create table test (
@@ -860,7 +871,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseLowercaseDecimalType(): void
+    public function testParseLowercaseDecimalType(): void
     {
         $sql = 'create table test (val decimal(10, 2))';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -871,7 +882,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseLowercaseNumericType(): void
+    public function testParseLowercaseNumericType(): void
     {
         $sql = 'create table test (val numeric(8))';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -881,7 +892,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseLowercaseDecType(): void
+    public function testParseLowercaseDecType(): void
     {
         $sql = 'create table test (val dec(6))';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -890,7 +901,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseLowercaseGeneratedColumn(): void
+    public function testParseLowercaseGeneratedColumn(): void
     {
         $sql = 'create table test (a integer, b integer, c integer generated always as (a + b) stored)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -899,7 +910,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseLowercaseDefaultValues(): void
+    public function testParseLowercaseDefaultValues(): void
     {
         $sql = <<<'SQL'
             create table test (
@@ -941,7 +952,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseLowercaseArrayTypes(): void
+    public function testParseLowercaseArrayTypes(): void
     {
         $sql = 'create table test (tags text[], ids integer[])';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -951,7 +962,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseLowercaseDefaultWithTrailingConstraints(): void
+    public function testParseLowercaseDefaultWithTrailingConstraints(): void
     {
         $sql = "create table test (name text default 'test' not null unique)";
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -961,7 +972,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseWithLeadingTrailingWhitespace(): void
+    public function testParseWithLeadingTrailingWhitespace(): void
     {
         $sql = "  \n  create table test ( \n  id integer , \n  name text \n ) \n ";
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -971,7 +982,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseMixedCaseKeywords(): void
+    public function testParseMixedCaseKeywords(): void
     {
         $sql = 'Create Table test (id Integer Primary Key, name Varchar(100) Not Null)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -984,7 +995,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultStringWithConstraintsAfter(): void
+    public function testParseDefaultStringWithConstraintsAfter(): void
     {
         $sql = "CREATE TABLE test (val TEXT DEFAULT 'hello' NOT NULL CHECK (val <> ''))";
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -993,7 +1004,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseConstraintBeforeColumn(): void
+    public function testParseConstraintBeforeColumn(): void
     {
         $sql = <<<'SQL'
             CREATE TABLE test (
@@ -1013,7 +1024,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseMultipleConstraintsBetweenColumns(): void
+    public function testParseMultipleConstraintsBetweenColumns(): void
     {
         $sql = <<<'SQL'
             CREATE TABLE test (
@@ -1037,7 +1048,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultExpressionWithOnlyOpeningParen(): void
+    public function testParseDefaultExpressionWithOnlyOpeningParen(): void
     {
         $sql = "CREATE TABLE test (val TEXT DEFAULT 'value(test')";
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -1046,7 +1057,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseColumnWithNoTypeReturnsTextViaExtractType(): void
+    public function testParseColumnWithNoTypeReturnsTextViaExtractType(): void
     {
         $sql = 'CREATE TABLE test (col1, col2 INTEGER)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -1056,7 +1067,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultExpressionWrappedInParens(): void
+    public function testParseDefaultExpressionWrappedInParens(): void
     {
         $sql = 'CREATE TABLE test (val INTEGER DEFAULT (10 * 2))';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -1065,7 +1076,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultExpressionOnlyClosingParen(): void
+    public function testParseDefaultExpressionOnlyClosingParen(): void
     {
         $sql = "CREATE TABLE test (val TEXT DEFAULT 'test)')";
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -1074,7 +1085,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultTypeCastIsPreserved(): void
+    public function testParseDefaultTypeCastIsPreserved(): void
     {
         $sql = "CREATE TABLE test (val TEXT DEFAULT 'hello'::text)";
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -1083,7 +1094,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultFunctionCallPreserved(): void
+    public function testParseDefaultFunctionCallPreserved(): void
     {
         $sql = 'CREATE TABLE test (id UUID DEFAULT uuid_generate_v4())';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -1092,9 +1103,9 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseTrimsDefinitionsInSplitColumnDefinitions(): void
+    public function testParseTrimsDefinitionsInSplitColumnDefinitions(): void
     {
-        $sql = "CREATE TABLE test (  id INTEGER  ,  name TEXT  )";
+        $sql = 'CREATE TABLE test (  id INTEGER  ,  name TEXT  )';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
         self::assertCount(2, $schema->columns);
@@ -1103,9 +1114,9 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseColumnDefinitionTrimsRest(): void
+    public function testParseColumnDefinitionTrimsRest(): void
     {
-        $sql = "CREATE TABLE test (id   INTEGER   NOT NULL)";
+        $sql = 'CREATE TABLE test (id   INTEGER   NOT NULL)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
         self::assertSame('INTEGER', $schema->columns['id']->type);
@@ -1113,7 +1124,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultTrimsValue(): void
+    public function testParseDefaultTrimsValue(): void
     {
         $sql = "CREATE TABLE test (val TEXT DEFAULT 'trimmed' NOT NULL)";
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -1123,7 +1134,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseIsTableConstraintWithLeadingWhitespace(): void
+    public function testParseIsTableConstraintWithLeadingWhitespace(): void
     {
         $sql = "CREATE TABLE test (id INTEGER, \n  PRIMARY KEY (id))";
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -1132,7 +1143,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseIsDecimalTypeCaseInsensitive(): void
+    public function testParseIsDecimalTypeCaseInsensitive(): void
     {
         $sql = 'CREATE TABLE test (val decimal(5))';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -1143,7 +1154,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultCurrentTimestampNotPartOfLargerWord(): void
+    public function testParseDefaultCurrentTimestampNotPartOfLargerWord(): void
     {
         $sql = "CREATE TABLE test (ts TEXT DEFAULT 'NOT_CURRENT_TIMESTAMP_EXTRA')";
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -1152,9 +1163,9 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseNormalizeSqlRemovesBlockComments(): void
+    public function testParseNormalizeSqlRemovesBlockComments(): void
     {
-        $sql = "CREATE TABLE /* block comment */ test (id /* another */ INTEGER)";
+        $sql = 'CREATE TABLE /* block comment */ test (id /* another */ INTEGER)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
         self::assertSame('test', $schema->tableName);
@@ -1162,7 +1173,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseNormalizeSqlTrimsWhitespace(): void
+    public function testParseNormalizeSqlTrimsWhitespace(): void
     {
         $sql = "\n\n   CREATE TABLE test (id INTEGER)   \n\n";
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -1171,7 +1182,7 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultStringWithDoubleQuotes(): void
+    public function testParseDefaultStringWithDoubleQuotes(): void
     {
         $sql = 'CREATE TABLE test (name TEXT DEFAULT "value_here")';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
@@ -1180,18 +1191,18 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultReferencesConstraint(): void
+    public function testParseDefaultReferencesConstraint(): void
     {
-        $sql = "CREATE TABLE test (user_id INTEGER DEFAULT 1 REFERENCES users(id))";
+        $sql = 'CREATE TABLE test (user_id INTEGER DEFAULT 1 REFERENCES users(id))';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
         self::assertSame(1, $schema->columns['user_id']->default);
     }
 
     #[Test]
-    public function parseDefaultWithGeneratedKeyword(): void
+    public function testParseDefaultWithGeneratedKeyword(): void
     {
-        $sql = "CREATE TABLE test (val INTEGER DEFAULT 5, gen INTEGER GENERATED ALWAYS AS (val * 2) STORED)";
+        $sql = 'CREATE TABLE test (val INTEGER DEFAULT 5, gen INTEGER GENERATED ALWAYS AS (val * 2) STORED)';
         $schema = (new PostgreSqlSchemaParser())->parse($sql);
 
         self::assertSame(5, $schema->columns['val']->default);
@@ -1199,9 +1210,9 @@ final class PostgreSqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseParensEqualStartReturnsNull(): void
+    public function testParseParensEqualStartReturnsNull(): void
     {
-        $this->expectException(SchemaParseException::class);
+        $this->expectException(\SqlFixture\Schema\Exception\InvalidSqlException::class);
         (new PostgreSqlSchemaParser())->parse('CREATE TABLE test )( ');
     }
 }

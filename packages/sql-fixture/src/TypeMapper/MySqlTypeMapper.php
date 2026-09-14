@@ -15,11 +15,17 @@ final class MySqlTypeMapper implements TypeMapperInterface
 {
     private PlatformMySqlTypeMapper $mapper;
 
+    /**
+     * Initializes the collaborators and declared state for this object.
+     */
     public function __construct()
     {
         $this->mapper = new PlatformMySqlTypeMapper();
     }
 
+    /**
+     * Generates fixture data according to the supplied schema or plan.
+     */
     public function generate(Generator $faker, ColumnDefinition $column): mixed
     {
         return $this->mapper->generate($faker, $column);

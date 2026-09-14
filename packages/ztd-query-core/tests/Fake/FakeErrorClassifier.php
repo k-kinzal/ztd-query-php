@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
-use ZtdQuery\Platform\ErrorClassifier;
 use ZtdQuery\Connection\Exception\DatabaseException;
+use ZtdQuery\Platform\ErrorClassifier;
 
 /**
  * Fake ErrorClassifier that classifies errors based on driver error code.
@@ -14,6 +14,12 @@ use ZtdQuery\Connection\Exception\DatabaseException;
  */
 final class FakeErrorClassifier implements ErrorClassifier
 {
+    /**
+     * Reports whether unknown schema error.
+     *
+     * @param DatabaseException $e
+     * @return bool
+     */
     public function isUnknownSchemaError(DatabaseException $e): bool
     {
         $code = $e->getDriverErrorCode();

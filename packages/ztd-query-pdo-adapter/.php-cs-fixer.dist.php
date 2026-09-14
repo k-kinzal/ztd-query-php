@@ -1,10 +1,12 @@
 <?php
+
 # NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
 
 declare(strict_types=1);
 
 $finder = (new PhpCsFixer\Finder())
-    ->in(__DIR__)
+    ->in([__DIR__ . '/src', __DIR__ . '/tests', __DIR__ . '/fuzz', __DIR__ . '/bench'])
+    ->append([__FILE__])
     ->exclude('build')
     ->exclude('cache')
     ->exclude('node_modules')

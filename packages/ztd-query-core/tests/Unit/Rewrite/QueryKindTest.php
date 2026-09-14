@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Rewrite;
 
-use ZtdQuery\Rewrite\QueryKind;
-use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\TestCase;
+use ZtdQuery\Rewrite\QueryKind;
 
 #[CoversClass(QueryKind::class)]
 final class QueryKindTest extends TestCase

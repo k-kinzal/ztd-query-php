@@ -5,20 +5,30 @@ declare(strict_types=1);
 namespace Tests\Unit\Platform\PostgreSql;
 
 use Faker\Factory;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Platform\PostgreSql\PostgreSqlTypeMapper;
 use SqlFixture\Schema\ColumnDefinition;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
-use Tests\Fixture\SpyGenerator;
 
 #[CoversClass(PostgreSqlTypeMapper::class)]
 #[UsesClass(ColumnDefinition::class)]
+#[CoversClass(\SqlFixture\Platform\PostgreSql\Value\ColumnGenerator::class)]
+#[CoversClass(\SqlFixture\Platform\PostgreSql\Value\DecimalGenerator::class)]
+#[CoversClass(\SqlFixture\Platform\PostgreSql\Value\NumericGenerator::class)]
+#[CoversClass(\SqlFixture\Platform\PostgreSql\Value\StringGenerator::class)]
+#[CoversClass(\SqlFixture\Platform\PostgreSql\Value\StructuredGenerator::class)]
+#[CoversClass(\SqlFixture\Platform\PostgreSql\Value\TemporalGenerator::class)]
+#[UsesClass(\SqlFixture\TypeMapper\ParagraphGenerator::class)]
+#[UsesClass(\SqlFixture\TypeMapper\TypeMapperInterface::class)]
+#[UsesClass(\SqlFixture\TypeMapper\IntegerRange::class)]
+#[UsesClass(\SqlFixture\TypeMapper\IntegerWidth::class)]
+#[UsesClass(\SqlFixture\TypeMapper\DecimalRange::class)]
 final class PostgreSqlTypeMapperTest extends TestCase
 {
     #[Test]
-    public function generateInteger(): void
+    public function testGenerateInteger(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -33,7 +43,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateSmallInt(): void
+    public function testGenerateSmallInt(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -48,7 +58,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateBigInt(): void
+    public function testGenerateBigInt(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -61,7 +71,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateReal(): void
+    public function testGenerateReal(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -76,7 +86,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateDoublePrecision(): void
+    public function testGenerateDoublePrecision(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -91,7 +101,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateNumeric(): void
+    public function testGenerateNumeric(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -106,7 +116,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateBoolean(): void
+    public function testGenerateBoolean(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -119,7 +129,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateText(): void
+    public function testGenerateText(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -132,7 +142,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateVarchar(): void
+    public function testGenerateVarchar(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -146,7 +156,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateChar(): void
+    public function testGenerateChar(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -160,7 +170,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateDate(): void
+    public function testGenerateDate(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -174,7 +184,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateTime(): void
+    public function testGenerateTime(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -188,7 +198,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateTimestamp(): void
+    public function testGenerateTimestamp(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -202,7 +212,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateTimestamptz(): void
+    public function testGenerateTimestamptz(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -216,7 +226,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateUuid(): void
+    public function testGenerateUuid(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -230,7 +240,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateJsonb(): void
+    public function testGenerateJsonb(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -247,7 +257,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateJson(): void
+    public function testGenerateJson(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -264,21 +274,23 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateBytea(): void
+    public function testGenerateBytea(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
         $mapper = new PostgreSqlTypeMapper();
 
         $column = new ColumnDefinition('col', 'BYTEA', nullable: false);
-        /** @var string $value */
+        /**
+         * @var string $value
+         */
         $value = $mapper->generate($faker, $column);
         self::assertStringStartsWith('\\x', $value);
         self::assertGreaterThan(2, strlen($value));
     }
 
     #[Test]
-    public function generateInet(): void
+    public function testGenerateInet(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -292,7 +304,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateCidr(): void
+    public function testGenerateCidr(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -306,7 +318,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateMacaddr(): void
+    public function testGenerateMacaddr(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -320,7 +332,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateMoney(): void
+    public function testGenerateMoney(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -335,7 +347,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateInterval(): void
+    public function testGenerateInterval(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -349,7 +361,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateIntegerArray(): void
+    public function testGenerateIntegerArray(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -363,7 +375,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateTextArray(): void
+    public function testGenerateTextArray(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -377,7 +389,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateAutoIncrementReturnsNull(): void
+    public function testGenerateAutoIncrementReturnsNull(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -390,7 +402,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateGeneratedColumnReturnsNull(): void
+    public function testGenerateGeneratedColumnReturnsNull(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -403,7 +415,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateNullable(): void
+    public function testGenerateNullable(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -435,7 +447,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateNonNullableNeverReturnsNull(): void
+    public function testGenerateNonNullableNeverReturnsNull(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -453,7 +465,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateDecimalBoundaryValues(): void
+    public function testGenerateDecimalBoundaryValues(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -468,7 +480,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateSmallIntBoundaryValues(): void
+    public function testGenerateSmallIntBoundaryValues(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -483,7 +495,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateMoneyBoundaryValues(): void
+    public function testGenerateMoneyBoundaryValues(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -498,7 +510,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateUuidFormat(): void
+    public function testGenerateUuidFormat(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -512,7 +524,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateInetFormat(): void
+    public function testGenerateInetFormat(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -526,7 +538,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateCidrFormat(): void
+    public function testGenerateCidrFormat(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -540,7 +552,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateMacaddrFormat(): void
+    public function testGenerateMacaddrFormat(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -554,7 +566,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateIntervalFormat(): void
+    public function testGenerateIntervalFormat(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -568,14 +580,16 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateByteaFormat(): void
+    public function testGenerateByteaFormat(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
         $mapper = new PostgreSqlTypeMapper();
 
         $column = new ColumnDefinition('col', 'BYTEA', nullable: false);
-        /** @var string $value */
+        /**
+         * @var string $value
+         */
         $value = $mapper->generate($faker, $column);
         self::assertStringStartsWith('\\x', $value);
         self::assertGreaterThan(2, strlen($value));
@@ -583,7 +597,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateXmlFormat(): void
+    public function testGenerateXmlFormat(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -598,7 +612,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateTimetzFormat(): void
+    public function testGenerateTimetzFormat(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -612,7 +626,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateCharacterType(): void
+    public function testGenerateCharacterType(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -626,7 +640,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateCharacterVaryingType(): void
+    public function testGenerateCharacterVaryingType(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -640,7 +654,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateXml(): void
+    public function testGenerateXml(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -655,7 +669,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateInt2Alias(): void
+    public function testGenerateInt2Alias(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -669,7 +683,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateInt4Alias(): void
+    public function testGenerateInt4Alias(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -683,7 +697,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateInt8Alias(): void
+    public function testGenerateInt8Alias(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -695,7 +709,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateFloat4Alias(): void
+    public function testGenerateFloat4Alias(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -709,7 +723,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateFloat8Alias(): void
+    public function testGenerateFloat8Alias(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -723,7 +737,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateBoolAlias(): void
+    public function testGenerateBoolAlias(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -735,7 +749,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateDecAlias(): void
+    public function testGenerateDecAlias(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -749,7 +763,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateTimeWithoutTimeZone(): void
+    public function testGenerateTimeWithoutTimeZone(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -762,7 +776,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateTimeWithTimeZone(): void
+    public function testGenerateTimeWithTimeZone(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -775,7 +789,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateTimestampWithoutTimeZone(): void
+    public function testGenerateTimestampWithoutTimeZone(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -788,7 +802,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateTimestampWithTimeZone(): void
+    public function testGenerateTimestampWithTimeZone(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -801,7 +815,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateIntArrayAlias(): void
+    public function testGenerateIntArrayAlias(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -814,7 +828,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateDecimalDefaultPrecision(): void
+    public function testGenerateDecimalDefaultPrecision(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -828,7 +842,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateCharDefaultLength(): void
+    public function testGenerateCharDefaultLength(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -841,7 +855,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateVarcharDefaultLength(): void
+    public function testGenerateVarcharDefaultLength(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -854,7 +868,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateUnknownTypeReturnsText(): void
+    public function testGenerateUnknownTypeReturnsText(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -867,7 +881,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateLowercaseTypeWorks(): void
+    public function testGenerateLowercaseTypeWorks(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -881,7 +895,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateJsonHasKeyValue(): void
+    public function testGenerateJsonHasKeyValue(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -897,7 +911,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateIntervalValueRange(): void
+    public function testGenerateIntervalValueRange(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -910,7 +924,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateIntArrayContainsNumbers(): void
+    public function testGenerateIntArrayContainsNumbers(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -923,7 +937,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateTextArrayContainsQuotedStrings(): void
+    public function testGenerateTextArrayContainsQuotedStrings(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -936,7 +950,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotSmallInt(): void
+    public function testSnapshotSmallInt(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -950,7 +964,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotInt2(): void
+    public function testSnapshotInt2(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -964,7 +978,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotInteger(): void
+    public function testSnapshotInteger(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -978,7 +992,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotInt(): void
+    public function testSnapshotInt(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -992,7 +1006,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotInt4(): void
+    public function testSnapshotInt4(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1006,7 +1020,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotBigInt(): void
+    public function testSnapshotBigInt(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1018,7 +1032,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotInt8(): void
+    public function testSnapshotInt8(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1030,7 +1044,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotReal(): void
+    public function testSnapshotReal(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1044,7 +1058,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotFloat4(): void
+    public function testSnapshotFloat4(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1058,7 +1072,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotDoublePrecision(): void
+    public function testSnapshotDoublePrecision(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1072,7 +1086,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotFloat8(): void
+    public function testSnapshotFloat8(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1086,7 +1100,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotDecimal(): void
+    public function testSnapshotDecimal(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1100,7 +1114,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotNumeric(): void
+    public function testSnapshotNumeric(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1114,7 +1128,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotDec(): void
+    public function testSnapshotDec(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1128,7 +1142,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotMoney(): void
+    public function testSnapshotMoney(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1142,7 +1156,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotBoolean(): void
+    public function testSnapshotBoolean(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1154,7 +1168,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotBool(): void
+    public function testSnapshotBool(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1166,7 +1180,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotChar(): void
+    public function testSnapshotChar(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1179,7 +1193,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotCharacter(): void
+    public function testSnapshotCharacter(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1192,7 +1206,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotDate(): void
+    public function testSnapshotDate(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1205,7 +1219,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotTime(): void
+    public function testSnapshotTime(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1218,7 +1232,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotTimeWithoutTimeZone(): void
+    public function testSnapshotTimeWithoutTimeZone(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1231,7 +1245,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotTimeWithTimeZone(): void
+    public function testSnapshotTimeWithTimeZone(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1244,7 +1258,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotTimetz(): void
+    public function testSnapshotTimetz(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1257,7 +1271,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotTimestamp(): void
+    public function testSnapshotTimestamp(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1270,7 +1284,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotTimestampWithoutTimeZone(): void
+    public function testSnapshotTimestampWithoutTimeZone(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1283,7 +1297,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotTimestampWithTimeZone(): void
+    public function testSnapshotTimestampWithTimeZone(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1296,7 +1310,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotTimestamptz(): void
+    public function testSnapshotTimestamptz(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1309,7 +1323,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotInterval(): void
+    public function testSnapshotInterval(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1322,7 +1336,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotJson(): void
+    public function testSnapshotJson(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1338,7 +1352,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotJsonb(): void
+    public function testSnapshotJsonb(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1354,7 +1368,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotUuid(): void
+    public function testSnapshotUuid(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1367,7 +1381,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotInet(): void
+    public function testSnapshotInet(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1380,7 +1394,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotCidr(): void
+    public function testSnapshotCidr(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1393,7 +1407,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotMacaddr(): void
+    public function testSnapshotMacaddr(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1406,7 +1420,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotIntegerArray(): void
+    public function testSnapshotIntegerArray(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1419,7 +1433,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotIntArray(): void
+    public function testSnapshotIntArray(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1432,7 +1446,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotTextArray(): void
+    public function testSnapshotTextArray(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1445,7 +1459,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotXml(): void
+    public function testSnapshotXml(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1459,20 +1473,22 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotBytea(): void
+    public function testSnapshotBytea(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
         $mapper = new PostgreSqlTypeMapper();
         $column = new ColumnDefinition('col', 'BYTEA', nullable: false);
-        /** @var string $value */
+        /**
+         * @var string $value
+         */
         $value = $mapper->generate($faker, $column);
         self::assertStringStartsWith('\\x', $value);
         self::assertGreaterThan(2, strlen($value));
     }
 
     #[Test]
-    public function snapshotUnknownType(): void
+    public function testSnapshotUnknownType(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1485,7 +1501,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotDecimalDefaultPrecisionExact(): void
+    public function testSnapshotDecimalDefaultPrecisionExact(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1499,7 +1515,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotDecimalWithPrecisionExact(): void
+    public function testSnapshotDecimalWithPrecisionExact(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1513,7 +1529,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotNumericDefaultPrecision(): void
+    public function testSnapshotNumericDefaultPrecision(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1527,7 +1543,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotDecExact(): void
+    public function testSnapshotDecExact(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1541,7 +1557,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotCharExact(): void
+    public function testSnapshotCharExact(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1554,7 +1570,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotCharDefaultLength(): void
+    public function testSnapshotCharDefaultLength(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1567,7 +1583,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotVarcharExact(): void
+    public function testSnapshotVarcharExact(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1580,7 +1596,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotVarcharDefaultLength(): void
+    public function testSnapshotVarcharDefaultLength(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1593,7 +1609,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotCharacterVarying(): void
+    public function testSnapshotCharacterVarying(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1606,13 +1622,15 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotByteaFormat(): void
+    public function testSnapshotByteaFormat(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
         $mapper = new PostgreSqlTypeMapper();
         $column = new ColumnDefinition('col', 'BYTEA', nullable: false);
-        /** @var string $value */
+        /**
+         * @var string $value
+         */
         $value = $mapper->generate($faker, $column);
         self::assertStringStartsWith('\\x', $value);
         $hexPart = substr($value, 2);
@@ -1621,7 +1639,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotIntegerArrayExact(): void
+    public function testSnapshotIntegerArrayExact(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1634,7 +1652,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotTextArrayExact(): void
+    public function testSnapshotTextArrayExact(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1647,7 +1665,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotXmlExact(): void
+    public function testSnapshotXmlExact(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1661,7 +1679,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotIntervalExact(): void
+    public function testSnapshotIntervalExact(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1674,7 +1692,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotMoneyExact(): void
+    public function testSnapshotMoneyExact(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1688,7 +1706,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function nullableColumnReturnsDefault(): void
+    public function testNullableColumnReturnsDefault(): void
     {
         $faker = Factory::create();
         $mapper = new PostgreSqlTypeMapper();
@@ -1717,7 +1735,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function nullableColumnReturnsDefaultWithSpecificSeed(): void
+    public function testNullableColumnReturnsDefaultWithSpecificSeed(): void
     {
         $faker = Factory::create();
         $faker->seed(10);
@@ -1733,7 +1751,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function nullableColumnReturnsGeneratedWithSpecificSeed(): void
+    public function testNullableColumnReturnsGeneratedWithSpecificSeed(): void
     {
         $faker = Factory::create();
         $faker->seed(0);
@@ -1749,7 +1767,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function nullableColumnSeed28ReturnsDefault(): void
+    public function testNullableColumnSeed28ReturnsDefault(): void
     {
         $faker = Factory::create();
         $faker->seed(28);
@@ -1765,7 +1783,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function nullableColumnSeed285ReturnsGenerated(): void
+    public function testNullableColumnSeed285ReturnsGenerated(): void
     {
         $faker = Factory::create();
         $faker->seed(285);
@@ -1781,7 +1799,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateCharacterVaryingShortLength(): void
+    public function testGenerateCharacterVaryingShortLength(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1795,7 +1813,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateTextArraySeed5Has3Elements(): void
+    public function testGenerateTextArraySeed5Has3Elements(): void
     {
         $faker = Factory::create();
         $faker->seed(5);
@@ -1809,333 +1827,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function spySmallIntBoundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'SMALLINT', nullable: false));
-        self::assertSame([-32768, 32767], $spy->numberBetweenCalls[0]);
-    }
-
-    #[Test]
-    public function spyInt2Boundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'INT2', nullable: false));
-        self::assertSame([-32768, 32767], $spy->numberBetweenCalls[0]);
-    }
-
-    #[Test]
-    public function spyIntegerBoundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'INTEGER', nullable: false));
-        self::assertSame([-2147483648, 2147483647], $spy->numberBetweenCalls[0]);
-    }
-
-    #[Test]
-    public function spyIntBoundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'INT', nullable: false));
-        self::assertSame([-2147483648, 2147483647], $spy->numberBetweenCalls[0]);
-    }
-
-    #[Test]
-    public function spyInt4Boundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'INT4', nullable: false));
-        self::assertSame([-2147483648, 2147483647], $spy->numberBetweenCalls[0]);
-    }
-
-    #[Test]
-    public function spyBigIntBoundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'BIGINT', nullable: false));
-        self::assertSame([PHP_INT_MIN, PHP_INT_MAX], $spy->numberBetweenCalls[0]);
-    }
-
-    #[Test]
-    public function spyInt8Boundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'INT8', nullable: false));
-        self::assertSame([PHP_INT_MIN, PHP_INT_MAX], $spy->numberBetweenCalls[0]);
-    }
-
-    #[Test]
-    public function spyRealBoundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'REAL', nullable: false));
-        self::assertSame([2, -1000.0, 1000.0], $spy->randomFloatCalls[0]);
-    }
-
-    #[Test]
-    public function spyFloat4Boundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'FLOAT4', nullable: false));
-        self::assertSame([2, -1000.0, 1000.0], $spy->randomFloatCalls[0]);
-    }
-
-    #[Test]
-    public function spyDoublePrecisionBoundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'DOUBLE PRECISION', nullable: false));
-        self::assertSame([4, -1000000.0, 1000000.0], $spy->randomFloatCalls[0]);
-    }
-
-    #[Test]
-    public function spyFloat8Boundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'FLOAT8', nullable: false));
-        self::assertSame([4, -1000000.0, 1000000.0], $spy->randomFloatCalls[0]);
-    }
-
-    #[Test]
-    public function spyMoneyBoundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'MONEY', nullable: false));
-        self::assertSame([2, 0.0, 99999.99], $spy->randomFloatCalls[0]);
-    }
-
-    #[Test]
-    public function spyDecimalBoundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'DECIMAL', precision: 5, scale: 2, nullable: false));
-        self::assertSame([2, -999.0, 999.0], $spy->randomFloatCalls[0]);
-    }
-
-    #[Test]
-    public function spyDecimalDefaultPrecision(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'DECIMAL', nullable: false));
-        self::assertSame([0, -9999999999.0, 9999999999.0], $spy->randomFloatCalls[0]);
-    }
-
-    #[Test]
-    public function spyNumericBoundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'NUMERIC', precision: 8, scale: 3, nullable: false));
-        self::assertSame([3, -99999.0, 99999.0], $spy->randomFloatCalls[0]);
-    }
-
-    #[Test]
-    public function spyDecTypeBoundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'DEC', precision: 6, scale: 1, nullable: false));
-        self::assertSame([1, -99999.0, 99999.0], $spy->randomFloatCalls[0]);
-    }
-
-    #[Test]
-    public function spyBooleanCallsBoolean(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'BOOLEAN', nullable: false));
-        self::assertSame([50], $spy->booleanCalls[0]);
-    }
-
-    #[Test]
-    public function spyBoolCallsBoolean(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'BOOL', nullable: false));
-        self::assertSame([50], $spy->booleanCalls[0]);
-    }
-
-    #[Test]
-    public function spyByteaBoundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'BYTEA', nullable: false));
-        self::assertSame([1, 100], $spy->numberBetweenCalls[0]);
-    }
-
-    #[Test]
-    public function spyIntervalValueBoundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'INTERVAL', nullable: false));
-        self::assertSame([1, 30], $spy->numberBetweenCalls[0]);
-    }
-
-    #[Test]
-    public function spyJsonValueBoundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'JSON', nullable: false));
-        self::assertContains([1, 100], $spy->numberBetweenCalls);
-        self::assertContains([20], $spy->methodCalls['text']);
-    }
-
-    #[Test]
-    public function spyJsonbValueBoundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'JSONB', nullable: false));
-        self::assertContains([1, 100], $spy->numberBetweenCalls);
-        self::assertContains([20], $spy->methodCalls['text']);
-    }
-
-    #[Test]
-    public function spyIntArrayCountBoundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'INT_ARRAY', nullable: false));
-        self::assertSame([1, 5], $spy->numberBetweenCalls[0]);
-    }
-
-    #[Test]
-    public function spyIntArrayElementBoundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'INT_ARRAY', nullable: false));
-        self::assertContains([1, 1000], $spy->numberBetweenCalls);
-    }
-
-    #[Test]
-    public function spyTextArrayCountBoundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'TEXT_ARRAY', nullable: false));
-        self::assertSame([1, 3], $spy->numberBetweenCalls[0]);
-    }
-
-    #[Test]
-    public function spyTextCallsParagraphs2(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'TEXT', nullable: false));
-        self::assertSame([2, true], $spy->methodCalls['paragraphs'][0]);
-    }
-
-    #[Test]
-    public function spyXmlCallsText50(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'XML', nullable: false));
-        self::assertContains([50], $spy->methodCalls['text']);
-    }
-
-    #[Test]
-    public function spyDefaultCallsText50(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'UNKNOWN_TYPE', nullable: false));
-        self::assertContains([50], $spy->methodCalls['text']);
-    }
-
-    #[Test]
-    public function spyVarcharTextBoundary(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'VARCHAR', length: 100, nullable: false));
-        self::assertSame([100], $spy->methodCalls['text'][0]);
-    }
-
-    #[Test]
-    public function spyVarcharTextCapAt200(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'VARCHAR', length: 500, nullable: false));
-        self::assertSame([200], $spy->methodCalls['text'][0]);
-    }
-
-    #[Test]
-    public function spyCharLexifyPattern(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'CHAR', length: 5, nullable: false));
-        self::assertSame(['?????'], $spy->methodCalls['lexify'][0]);
-    }
-
-    #[Test]
-    public function spyCharDefaultLengthLexify(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'CHAR', nullable: false));
-        self::assertSame(['?'], $spy->methodCalls['lexify'][0]);
-    }
-
-    #[Test]
-    public function spyNullableCallsBooleanWithTen(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'INT', nullable: true));
-        self::assertContains([10], $spy->booleanCalls);
-    }
-
-    #[Test]
-    public function spyIntegerArrayAlias(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'INTEGER_ARRAY', nullable: false));
-        self::assertSame([1, 5], $spy->numberBetweenCalls[0]);
-    }
-
-    #[Test]
-    public function spyCharacterVaryingVarchar(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'CHARACTER VARYING', length: 50, nullable: false));
-        self::assertSame([50], $spy->methodCalls['text'][0]);
-    }
-
-    #[Test]
-    public function spyCharacterAlias(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new PostgreSqlTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'CHARACTER', length: 3, nullable: false));
-        self::assertSame(['???'], $spy->methodCalls['lexify'][0]);
-    }
-
-    #[Test]
-    public function generateCharExactLength(): void
+    public function testGenerateCharExactLength(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -2148,7 +1840,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateVarcharMaxLength(): void
+    public function testGenerateVarcharMaxLength(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -2161,7 +1853,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateVarcharDefaultLengthOutput(): void
+    public function testGenerateVarcharDefaultLengthOutput(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -2174,7 +1866,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateVarcharStartsFromBeginning(): void
+    public function testGenerateVarcharStartsFromBeginning(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -2190,7 +1882,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateByteaNonEmpty(): void
+    public function testGenerateByteaNonEmpty(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -2204,7 +1896,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateIntArrayFormat(): void
+    public function testGenerateIntArrayFormat(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -2225,7 +1917,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateTextArrayFormat(): void
+    public function testGenerateTextArrayFormat(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -2241,7 +1933,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateIntervalContainsUnit(): void
+    public function testGenerateIntervalContainsUnit(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -2254,23 +1946,23 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function nullableColumnDefaultRatioIsLow(): void
+    public function testNullableColumnDefaultRatioIsLow(): void
     {
         $faker = Factory::create();
         $mapper = new PostgreSqlTypeMapper();
         $column = new ColumnDefinition('col', 'INTEGER', nullable: true, default: 'MARKER');
 
         $total = 500;
-        $defaultCount = count(array_filter(array_map(function (int $i) use ($faker, $mapper, $column): mixed {
+        $defaultCount = count(array_filter(array_map(function (int $i) use ($faker, $mapper, $column) {
             $faker->seed($i);
 
             return $mapper->generate($faker, $column);
-        }, range(0, $total - 1)), fn (mixed $value): bool => $value === 'MARKER'));
+        }, range(0, $total - 1)), fn ($value): bool => $value === 'MARKER'));
         self::assertLessThan((int) ($total * 0.5), $defaultCount, 'Default should be returned rarely (10% chance), not often (90%)');
     }
 
     #[Test]
-    public function generateIntArrayExactCount(): void
+    public function testGenerateIntArrayExactCount(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -2288,7 +1980,7 @@ final class PostgreSqlTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateTextArrayExactCount(): void
+    public function testGenerateTextArrayExactCount(): void
     {
         $faker = Factory::create();
         $faker->seed(42);

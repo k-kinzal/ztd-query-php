@@ -16,7 +16,7 @@ use SqlFixture\Plan\RelationSide;
 final class RelationKindTest extends TestCase
 {
     #[Test]
-    public function eachCaseIsSpeltAsItsDbmlOperator(): void
+    public function testEachCaseIsSpeltAsItsDbmlOperator(): void
     {
         self::assertSame('<', RelationKind::OneToMany->value);
         self::assertSame('>', RelationKind::ManyToOne->value);
@@ -24,7 +24,7 @@ final class RelationKindTest extends TestCase
     }
 
     #[Test]
-    public function manyToManyIsNotAnOperator(): void
+    public function testManyToManyIsNotAnOperator(): void
     {
         $operators = array_map(
             static fn (RelationKind $kind): string => $kind->value,
@@ -35,28 +35,28 @@ final class RelationKindTest extends TestCase
     }
 
     #[Test]
-    public function oneToManyPutsTheParentOnTheLeft(): void
+    public function testParentSideOneToManyPutsTheParentOnTheLeft(): void
     {
         self::assertSame(RelationSide::Left, RelationKind::OneToMany->parentSide());
         self::assertSame(RelationSide::Right, RelationKind::OneToMany->childSide());
     }
 
     #[Test]
-    public function manyToOnePutsTheParentOnTheRight(): void
+    public function testChildSideManyToOnePutsTheParentOnTheRight(): void
     {
         self::assertSame(RelationSide::Right, RelationKind::ManyToOne->parentSide());
         self::assertSame(RelationSide::Left, RelationKind::ManyToOne->childSide());
     }
 
     #[Test]
-    public function oneToOnePutsTheParentOnTheLeft(): void
+    public function testOneToOnePutsTheParentOnTheLeft(): void
     {
         self::assertSame(RelationSide::Left, RelationKind::OneToOne->parentSide());
         self::assertSame(RelationSide::Right, RelationKind::OneToOne->childSide());
     }
 
     #[Test]
-    public function onlyOneToOneHoldsASingleChildRow(): void
+    public function testChildIsCollectionOnlyOneToOneHoldsASingleChildRow(): void
     {
         self::assertTrue(RelationKind::OneToMany->childIsCollection());
         self::assertTrue(RelationKind::ManyToOne->childIsCollection());

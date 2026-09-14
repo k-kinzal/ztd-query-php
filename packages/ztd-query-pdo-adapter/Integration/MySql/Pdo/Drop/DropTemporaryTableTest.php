@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Integration\MySql\Pdo\Drop;
 
-use RuntimeException;
 use Tests\Support\MySqlIntegrationTestCase;
 
 final class DropTemporaryTableTest extends MySqlIntegrationTestCase
@@ -18,7 +17,7 @@ final class DropTemporaryTableTest extends MySqlIntegrationTestCase
 
         $this->ztdPdo->exec("DROP TEMPORARY TABLE `{$table}`");
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(\RuntimeException::class);
         $this->ztdPdo->query("SELECT * FROM `{$table}`");
     }
 }

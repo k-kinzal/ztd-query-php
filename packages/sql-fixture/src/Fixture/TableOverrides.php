@@ -11,14 +11,15 @@ namespace SqlFixture\Fixture;
  * names and their types are checked where they are written rather than when
  * the fixture runs. A null argument means "leave this column to the
  * generator"; withNull() is how a column is deliberately set to NULL.
+ * @template TValue = mixed
  */
 final class TableOverrides
 {
     /**
-     * @param array<string, mixed> $values
+     * @param array<string, TValue> $values
      * @param array<array-key, string> $nulls Columns to set to NULL rather than generate
      */
-    private function __construct(
+    public function __construct(
         private readonly array $values,
         private readonly array $nulls,
     ) {
@@ -27,18 +28,26 @@ final class TableOverrides
     /**
      * Keep only the arguments that were actually given.
      *
-     * @param array<string, mixed> $values
+     * @template TColumn
+     * @param array<string, TColumn> $values
+     * @return self<TColumn>
      */
     public static function of(array $values = []): self
     {
-        return new self(
-            array_filter($values, static fn (mixed $value): bool => $value !== null),
-            []
-        );
+        $provided = [];
+        foreach ($values as $column => $value) {
+            if ($value !== null) {
+                $provided[$column] = $value;
+            }
+        }
+
+        return new self($provided, []);
     }
 
     /**
      * Set a column to NULL rather than leaving it to the generator.
+     *
+     * @return self<TValue>
      */
     public function withNull(string ...$columns): self
     {
@@ -46,7 +55,7 @@ final class TableOverrides
     }
 
     /**
-     * @return array<string, mixed>
+     * @return array<string, TValue|null>
      */
     public function toArray(): array
     {

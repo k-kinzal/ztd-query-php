@@ -14,10 +14,14 @@ namespace SqlFixture\Plan;
  */
 enum RelationKind: string
 {
-    /** The left side is the one, the right side is the many. */
+    /**
+     * The left side is the one, the right side is the many.
+     */
     case OneToMany = '<';
 
-    /** The left side is the many, the right side is the one. */
+    /**
+     * The left side is the many, the right side is the one.
+     */
     case ManyToOne = '>';
 
     case OneToOne = '-';

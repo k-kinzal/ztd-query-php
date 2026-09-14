@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
-use ZtdQuery\Schema\ColumnType;
-use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Platform\SchemaParser;
+use ZtdQuery\Schema\ColumnDeclaration;
+use ZtdQuery\Schema\ColumnTypeFamily;
 use ZtdQuery\Schema\TableDefinition;
 
 /**
@@ -17,6 +17,12 @@ use ZtdQuery\Schema\TableDefinition;
  */
 final class FakeSchemaParser implements SchemaParser
 {
+    /**
+     * Reads.
+     *
+     * @param string $createTableSql
+     * @return ?TableDefinition
+     */
     public function parse(string $createTableSql): ?TableDefinition
     {
         $sql = trim($createTableSql);
@@ -68,7 +74,7 @@ final class FakeSchemaParser implements SchemaParser
 
                 $columns[] = $colName;
                 $columnTypes[$colName] = $colType;
-                $typedColumns[$colName] = new ColumnType(
+                $typedColumns[$colName] = new ColumnDeclaration(
                     $this->mapTypeFamily($colType),
                     $colType
                 );
@@ -104,7 +110,13 @@ final class FakeSchemaParser implements SchemaParser
         );
     }
 
-    private function mapTypeFamily(string $type): ColumnTypeFamily
+    /**
+     * Map type family.
+     *
+     * @param string $type
+     * @return ColumnTypeFamily
+     */
+    public function mapTypeFamily(string $type): ColumnTypeFamily
     {
         $base = preg_replace('/\(.*\)/', '', $type) ?? $type;
         $base = strtoupper(trim($base));
@@ -132,7 +144,7 @@ final class FakeSchemaParser implements SchemaParser
      *
      * @return array<int, string>
      */
-    private function splitColumns(string $body): array
+    public function splitColumns(string $body): array
     {
         $parts = [];
         $depth = 0;
