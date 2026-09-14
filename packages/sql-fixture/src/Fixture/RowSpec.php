@@ -19,20 +19,24 @@ use InvalidArgumentException;
  *
  * An absent table is not described at all, and everything about it, count
  * included, is generated.
+ * @template TValue = mixed
  */
 final class RowSpec
 {
     /**
-     * @param list<array<string, mixed>>|null $rows Overrides per row, or null when the count is free
-     * @param array<string, mixed> $sharedOverrides
+     * @param list<array<TValue>>|null $rows Overrides per row, or null when the count is free
+     * @param array<TValue> $sharedOverrides
      */
-    private function __construct(
+    public function __construct(
         public readonly ?int $count,
         private readonly ?array $rows,
         private readonly array $sharedOverrides,
     ) {
     }
 
+    /**
+     * Leaves both the row count and column values to generation.
+     */
     public static function unspecified(): self
     {
         return new self(null, null, []);
@@ -58,19 +62,18 @@ final class RowSpec
             return new self(null, null, $spec->toArray());
         }
 
-        $rows = self::asRows($spec);
+        $rows = (new OverrideRows())->asRows($spec);
         if ($rows !== null) {
             return new self(count($rows), $rows, []);
         }
 
-        /** @var array<string, mixed> $spec */
         return new self(null, null, $spec);
     }
 
     /**
      * Overrides for one row of the given index.
      *
-     * @return array<string, mixed>
+     * @return array<mixed>
      */
     public function overridesFor(int $index): array
     {
@@ -81,34 +84,4 @@ final class RowSpec
         return $this->rows[$index] ?? [];
     }
 
-    /**
-     * A list of arrays is one entry per row; anything else is one set of
-     * column values that every row shares.
-     *
-     * @param array<mixed> $spec
-     * @return list<array<string, mixed>>|null
-     */
-    private static function asRows(array $spec): ?array
-    {
-        if (!array_is_list($spec)) {
-            return null;
-        }
-
-        $rows = [];
-        foreach ($spec as $entry) {
-            if ($entry instanceof TableOverrides) {
-                $rows[] = $entry->toArray();
-                continue;
-            }
-
-            if (!is_array($entry)) {
-                return null;
-            }
-
-            /** @var array<string, mixed> $entry */
-            $rows[] = $entry;
-        }
-
-        return $rows;
-    }
 }

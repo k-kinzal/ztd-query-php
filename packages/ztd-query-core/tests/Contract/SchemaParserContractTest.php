@@ -6,6 +6,8 @@ namespace Tests\Contract;
 
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\SchemaParser;
+use ZtdQuery\Schema\ColumnDeclaration;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * Abstract contract test for SchemaParser implementations.
@@ -14,6 +16,11 @@ use ZtdQuery\Platform\SchemaParser;
  */
 abstract class SchemaParserContractTest extends TestCase
 {
+    /**
+     * Answers the parser this dialect reads a declaration with.
+     *
+     * @return SchemaParser The parser under test
+     */
     abstract protected function createParser(): SchemaParser;
 
     /**
@@ -213,7 +220,7 @@ abstract class SchemaParserContractTest extends TestCase
     /**
      * Return expected column names in order for the validCreateTableSql fixture.
      *
-     * @return array<int, string>
+     * @return list<string>
      */
     protected function expectedColumns(): array
     {
@@ -223,7 +230,7 @@ abstract class SchemaParserContractTest extends TestCase
     /**
      * Return expected primary key column names.
      *
-     * @return array<int, string>
+     * @return list<string>
      */
     protected function expectedPrimaryKeys(): array
     {
@@ -233,7 +240,7 @@ abstract class SchemaParserContractTest extends TestCase
     /**
      * Return columns that must be NOT NULL.
      *
-     * @return array<int, string>
+     * @return list<string>
      */
     protected function expectedNotNullColumns(): array
     {
@@ -252,7 +259,7 @@ abstract class SchemaParserContractTest extends TestCase
     }
 
     /**
-     * Every key in typedColumns must exist in columns (structural invariant for ColumnType migration).
+     * Every key in typedColumns must exist in columns (structural invariant for ColumnDeclaration migration).
      */
     public function testTypedColumnsKeysSubsetOfColumns(): void
     {

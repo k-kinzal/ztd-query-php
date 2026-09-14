@@ -4,22 +4,24 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Platform;
 
+use Override;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use Tests\Contract\CastRendererContractTest;
 use Tests\Fake\FakeCastRenderer;
 use ZtdQuery\Platform\CastRenderer;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 #[CoversNothing]
 final class CastRendererTest extends CastRendererContractTest
 {
-    protected function createRenderer(): CastRenderer
+    public function createRenderer(): CastRenderer
     {
         return new FakeCastRenderer();
     }
 
-    #[\Override]
-    protected function nativeTypeFor(ColumnTypeFamily $family): string
+    #[Override]
+    public function nativeTypeFor(ColumnTypeFamily $family): string
     {
         return match ($family) {
             ColumnTypeFamily::INTEGER => 'INTEGER',
@@ -37,5 +39,21 @@ final class CastRendererTest extends CastRendererContractTest
             ColumnTypeFamily::JSON => 'TEXT',
             ColumnTypeFamily::UNKNOWN => 'CUSTOM_TYPE',
         };
+    }
+
+    public function testRenderCastWritesTheExpressionAsTheTypeItIsBeingReadFor(): void
+    {
+        $renderer = $this->createRenderer();
+        $type = new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER');
+
+        self::assertStringContainsString('1', $renderer->renderCast('1', $type));
+    }
+
+    public function testRenderNullCastWritesANullTheServerWillReadAsThatType(): void
+    {
+        $renderer = $this->createRenderer();
+        $type = new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT');
+
+        self::assertStringContainsStringIgnoringCase('null', $renderer->renderNullCast($type));
     }
 }

@@ -8,8 +8,8 @@
         "k-kinzal/ztd-query-core": "@dev"
     },
     "require-dev": {
-        "brianium/paratest": "^6.11 || ^7",
-        "deptrac/deptrac": "^3.0 || ^4.6",
+        "brianium/paratest": "^7.3",
+        "deptrac/deptrac": "^3.0",
         "friendsofphp/php-cs-fixer": "^3.95.24",
         "k-kinzal/php-ai-toolkit": "dev-main",
         "k-kinzal/sql-faker": "@dev",
@@ -17,7 +17,7 @@
         "phpbench/phpbench": "^1.4",
         "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
         "phpstan/phpstan": "^2.1",
-        "phpunit/phpunit": "^10.5 || ^11 || ^12 || >=13.0 <13.3",
+        "phpunit/phpunit": "^10.5",
         "squizlabs/php_codesniffer": "^4.0.4"
     },
     "repositories": [
@@ -62,9 +62,9 @@
         "bench": "phpbench run --report=aggregate",
         "bench:quick": "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10",
         "bench:full": "@bench",
-        "test": "@php tests/run.php --parallel --processes=auto",
-        "test:unit": "@php tests/run.php --testsuite unit",
-        "test:fuzz": "@php tests/run.php fuzz/",
+        "test": "paratest --processes=auto",
+        "test:unit": "phpunit --testsuite unit",
+        "test:fuzz": "phpunit fuzz/",
         "lint": [
             "@format:check",
             "@phpstan",
@@ -83,7 +83,7 @@
         "fuzz:robustness": "php-fuzzer fuzz fuzz/fuzz_robustness.php fuzz/corpus/robustness/",
         "fuzz:robustness:classify": "php-fuzzer fuzz fuzz/fuzz_robustness_classify.php fuzz/corpus/robustness-classify/",
         "fuzz:robustness:rewrite": "php-fuzzer fuzz fuzz/fuzz_robustness_rewrite.php fuzz/corpus/robustness-rewrite/",
-        "doctest": "@php tests/run.php --testsuite doctest",
+        "doctest": "phpunit --testsuite doctest",
         "phpstan": "phpstan analyse --memory-limit=512M",
         "compat": "phpcs",
         "loc-guard": "loc-guard --config=loc.yaml",
@@ -105,7 +105,10 @@
         "allow-plugins": {
             "dealerdirect/phpcodesniffer-composer-installer": true
         },
-        "sort-packages": true
+        "sort-packages": true,
+        "platform": {
+            "php": "8.1.0"
+        }
     },
     "support": {
         "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-postgres",

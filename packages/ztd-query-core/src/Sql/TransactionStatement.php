@@ -4,50 +4,94 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Sql;
 
-use ZtdQuery\Shadow\ShadowTransactionManager;
+use ZtdQuery\Exception\InvalidDefinitionException;
 
 /**
  * A structure-aware transaction-control statement.
  */
 final class TransactionStatement
 {
-    private function __construct(
+    /**
+     * Binds a statement to what it does, and to the savepoint it names.
+     *
+     * Every way of building one goes through a named constructor, because which
+     * operation it is decides whether a name means anything.
+     */
+    public function __construct(
         private readonly TransactionOperation $operation,
         private readonly string $savepointName = '',
     ) {
     }
 
+    /**
+     * Begin.
+     *
+     * @return self
+     */
     public static function begin(): self
     {
         return new self(TransactionOperation::Begin);
     }
 
+    /**
+     * Commit.
+     *
+     * @return self
+     */
     public static function commit(): self
     {
         return new self(TransactionOperation::Commit);
     }
 
+    /**
+     * Rollback.
+     *
+     * @return self
+     */
     public static function rollback(): self
     {
         return new self(TransactionOperation::Rollback);
     }
 
+    /**
+     * Savepoint.
+     *
+     * @param string $name
+     * @return self
+     */
     public static function savepoint(string $name): self
     {
         return new self(TransactionOperation::Savepoint, self::requiredName($name));
     }
 
+    /**
+     * Rollback to.
+     *
+     * @param string $name
+     * @return self
+     */
     public static function rollbackTo(string $name): self
     {
         return new self(TransactionOperation::RollbackTo, self::requiredName($name));
     }
 
+    /**
+     * Release.
+     *
+     * @param string $name
+     * @return self
+     */
     public static function release(string $name): self
     {
         return new self(TransactionOperation::Release, self::requiredName($name));
     }
 
-    public function apply(ShadowTransactionManager $transactions): void
+    /**
+     * Applies.
+     *
+     * @param TransactionTarget $transactions
+     */
+    public function apply(TransactionTarget $transactions): void
     {
         match ($this->operation) {
             TransactionOperation::Begin => $transactions->begin(),
@@ -59,10 +103,19 @@ final class TransactionStatement
         };
     }
 
-    private static function requiredName(string $name): string
+    /**
+     * Answers a savepoint name, refusing one the statement never gave.
+     *
+     * @param string $name Name the statement carried
+     *
+     * @return string The same name, once it is one
+     *
+     * @throws InvalidDefinitionException When the statement named no savepoint
+     */
+    public static function requiredName(string $name): string
     {
         if ($name === '') {
-            throw new \InvalidArgumentException('Savepoint name must not be empty.');
+            throw new InvalidDefinitionException('Savepoint name must not be empty.');
         }
 
         return $name;

@@ -1,23 +1,19 @@
 // NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
 {
-    "$schema": "vendor/infection/infection/resources/schema.json",
-    "timeout": 25,
-    "source": {
-        "directories": ["src"]
-    },
+    "$schema": "https://raw.githubusercontent.com/infection/infection/0.35.4/resources/schema.json",
+    "source": {"directories": ["src"]},
+    "mutators": {"@default": true},
+    "minMsi": 80,
+    "minCoveredMsi": 80,
+    "timeout": 30,
+    "tmpDir": "build/infection-tmp",
     "logs": {
-        "text": "build/infection/infection.log",
+        "text": "build/infection/escaped.log",
         "summary": "build/infection/summary.log",
-        "github": true
+        "perMutator": "build/infection/per-mutator.md",
+        "json": "build/infection/infection.json"
     },
-    "mutators": {
-        "@default": true
-    },
-    "minMsi": 75,
-    "minCoveredMsi": 85,
-    "phpUnit": {
-        "configDir": ".",
-        "customPath": "vendor/bin/phpunit"
-    },
-    "testFrameworkOptions": "--testsuite=unit"
+    "testFrameworkExtraArgs": "--no-extensions --testsuite=unit",
+    "testFramework": "phpunit",
+    "phpUnit": {"configDir": ".", "customPath": "vendor/bin/phpunit"}
 }

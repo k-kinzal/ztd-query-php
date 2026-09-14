@@ -8,13 +8,9 @@ phpunit.xml.dist    export-ignore
 /bench/             export-ignore
 /fuzz/              export-ignore
 .php-cs-fixer.dist.php export-ignore
-phpunit10.xml.dist export-ignore
-phpunit11.xml.dist export-ignore
-phpunit12.xml.dist export-ignore
 phpcs.xml.dist export-ignore
 phpbench.json.dist export-ignore
 deptrac.yaml export-ignore
 loc.yaml export-ignore
 tree.yaml export-ignore
-composer.lock* export-ignore
-CONTRIBUTING.md export-ignore
+composer.lock export-ignore

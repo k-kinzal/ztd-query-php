@@ -14,13 +14,18 @@ use SqlFixture\Schema\TableSchema;
  * Whether a table reads back as a list is decided by how the walk reached it,
  * not by the relation on its own: the table a plan is about is one row even
  * when something else references it.
+ * @template TValue = mixed
  */
 final class GenerationRun
 {
-    /** @var array<string, list<array<string, mixed>>> */
+    /**
+     * @var array<string, list<array<string, TValue|int>>>
+     */
     private array $rows = [];
 
-    /** @var array<string, bool> Table => reads back as a list */
+    /**
+     * @var array<string, bool> Table => reads back as a list
+     */
     private array $visited = [];
 
     /**
@@ -51,6 +56,9 @@ final class GenerationRun
         $this->visited[$table] = ($this->visited[$table] ?? false) || $asList;
     }
 
+    /**
+     * Reports whether the current generation walk has reached or claimed a table.
+     */
     public function hasVisited(string $table): bool
     {
         return isset($this->visited[$table]);
@@ -64,6 +72,9 @@ final class GenerationRun
         return isset($this->specs[$table]);
     }
 
+    /**
+     * Returns the explicit row request or an unspecified request for this table.
+     */
     public function specFor(string $table): RowSpec
     {
         return $this->specs[$table] ?? RowSpec::unspecified();
@@ -77,9 +88,9 @@ final class GenerationRun
      * at reads back the way fixture() has always returned one, with the
      * auto-increment column absent because the database supplies it.
      *
-     * @param array<string, mixed> $row
+     * @param array<string, TValue> $row
      * @param list<string> $referencedColumns Columns a relation reads off this table
-     * @return array<string, mixed>
+     * @return array<string, TValue|int>
      */
     public function record(TableSchema $schema, array $row, array $referencedColumns = []): array
     {
@@ -102,7 +113,7 @@ final class GenerationRun
      * The row most recently kept for a table, which is the one a relation
      * walked into it will read its key from.
      *
-     * @return array<string, mixed>
+     * @return array<string, TValue|int>
      */
     public function lastRow(string $table): array
     {

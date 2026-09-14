@@ -43,7 +43,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:
-          php-version: '8.5'
+          php-version: '8.3'
           extensions: dom, mbstring, pcntl, pdo, xml, xmlwriter
           coverage: none
 
@@ -171,6 +171,6 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: `Fuzz: Crash detected (ztd-query-postgres)`,
-              body: `Fuzzing found a crash.\n\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nDownload the crash and log artifacts, check out commit ${context.sha}, and follow packages/ztd-query-postgres/fuzz/README.md to replay the input with the named target.`,
+              body: `Fuzzing found a crash.\n\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nDownload the crash and log artifacts, check out commit ${context.sha}, and replay the input with vendor/bin/php-fuzzer run-single fuzz/<target-script>.php crash-<hash>. The target script is listed in the job matrix.`,
               labels: ['bug', 'fuzz']
             });

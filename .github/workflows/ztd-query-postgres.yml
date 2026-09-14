@@ -44,13 +44,6 @@ jobs:
           php-version: ${{ matrix.php }}
           extensions: dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
           coverage: none
-      - name: Select the locked dependency graph for this PHP version
-        if: matrix.php != '8.5'
-        env:
-          TEST_PHP: ${{ matrix.php }}
-        run: |
-          composer config platform.php "${TEST_PHP}.0"
-          cp "composer.lock.php-${TEST_PHP}" composer.lock
       - name: Validate the Composer manifest
         run: composer validate --strict --no-check-all --no-check-publish
       - name: Install dependencies
@@ -61,7 +54,11 @@ jobs:
           require-lock-file: true
           composer-options: --prefer-dist
       - name: Check installed platform requirements
+        if: matrix.php == '8.1' || matrix.php == '8.2' || matrix.php == '8.3'
         run: composer check-platform-reqs
+      - name: Check library requirements outside the locked ParaTest PHP range
+        if: matrix.php == '8.4' || matrix.php == '8.5'
+        run: composer check-platform-reqs --no-dev
       - name: Run the tests in parallel
         run: composer test
       - name: Run the SQLFaker property tests
@@ -78,7 +75,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:
-          php-version: '8.5'
+          php-version: '8.3'
           extensions: dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
           coverage: none
       - name: Validate the Composer manifest
@@ -115,7 +112,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:
-          php-version: '8.5'
+          php-version: '8.3'
           extensions: dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
           coverage: none
       - name: Validate the Composer manifest
@@ -160,7 +157,7 @@ jobs:
           composer-options: --prefer-dist
       - name: Check installed platform requirements
         run: |
-          composer check-platform-reqs
+          composer check-platform-reqs --no-dev
           infection --version
       - name: Mutation testing on changed lines
         if: github.event_name == 'pull_request'

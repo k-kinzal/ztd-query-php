@@ -13,16 +13,34 @@ use SqlFixture\Plan\PlanStructureException;
 
 #[CoversClass(PlanStructureException::class)]
 #[UsesClass(ColumnRef::class)]
+#[UsesClass(\SqlFixture\Plan\FixturePlan::class)]
+#[UsesClass(\SqlFixture\Plan\PlanParser::class)]
+#[UsesClass(\SqlFixture\Plan\PlanPrinter::class)]
+#[UsesClass(\SqlFixture\Plan\PlanSyntaxException::class)]
+#[UsesClass(\SqlFixture\Plan\Relation::class)]
+#[UsesClass(\SqlFixture\Plan\RelationKind::class)]
+#[UsesClass(\SqlFixture\Plan\RelationSide::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\PlanStatements::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\RelationCursor::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\RelationReader::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\PlanTables::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\RelationGroups::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\StatementPrinter::class)]
+#[UsesClass(\SqlFixture\Plan\Validation\PlanValidation::class)]
+#[UsesClass(\SqlFixture\Plan\Validation\TableName::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\DuplicateColumnBindingException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\CyclicDependencyException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\UnboundedSelfReferenceException::class)]
 final class PlanStructureExceptionTest extends TestCase
 {
     #[Test]
-    public function columnsBoundTwiceNamesTheColumnAndBothParents(): void
+    public function testColumnsBoundTwiceNamesTheColumnAndBothParents(): void
     {
-        $message = PlanStructureException::columnsBoundTwice(
+        $message = (new \SqlFixture\Plan\Exception\DuplicateColumnBindingException(
             ColumnRef::of('b', 'x'),
             ColumnRef::of('a', 'id'),
             ColumnRef::of('c', 'id')
-        )->getMessage();
+        ))->getMessage();
 
         self::assertSame(
             'b.x is bound to a.id and to c.id. A column can reference one parent, so one of '
@@ -32,24 +50,23 @@ final class PlanStructureExceptionTest extends TestCase
     }
 
     #[Test]
-    public function cycleShowsTheLoopClosingBackOnItself(): void
+    public function testCycleShowsTheLoopClosingBackOnItself(): void
     {
-        $message = PlanStructureException::cycle(['a', 'b', 'c'])->getMessage();
+        $message = (new \SqlFixture\Plan\Exception\CyclicDependencyException(['a', 'b', 'c']))->getMessage();
 
         self::assertSame(
-            'The relations form a cycle: a -> b -> c -> a. Each table would have to be '
-            . 'generated before itself, so there is no order that satisfies them.',
+            'The plan contains cyclic dependencies among: a, b, c. No generation order satisfies them.',
             $message
         );
     }
 
     #[Test]
-    public function unboundedSelfReferenceSuggestsTheOptionalMarker(): void
+    public function testUnboundedSelfReferenceSuggestsTheOptionalMarker(): void
     {
-        $message = PlanStructureException::unboundedSelfReference(
+        $message = (new \SqlFixture\Plan\Exception\UnboundedSelfReferenceException(
             'category',
             'category.id < category.parent_id'
-        )->getMessage();
+        ))->getMessage();
 
         self::assertSame(
             'The relation category.id < category.parent_id makes every category row need '
@@ -58,9 +75,4 @@ final class PlanStructureExceptionTest extends TestCase
         );
     }
 
-    #[Test]
-    public function isLogicException(): void
-    {
-        self::assertInstanceOf(\LogicException::class, PlanStructureException::cycle(['a', 'b']));
-    }
 }

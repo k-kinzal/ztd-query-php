@@ -4,16 +4,16 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Schema;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Schema\ColumnDefinition;
-use PHPUnit\Framework\Attributes\CoversClass;
 
 #[CoversClass(ColumnDefinition::class)]
 final class ColumnDefinitionTest extends TestCase
 {
     #[Test]
-    public function constructsWithDefaults(): void
+    public function testStoresDefaults(): void
     {
         $column = new ColumnDefinition('id', 'INT');
         self::assertSame('id', $column->name);
@@ -30,7 +30,7 @@ final class ColumnDefinitionTest extends TestCase
     }
 
     #[Test]
-    public function constructsWithAllParameters(): void
+    public function testStoresAllParameters(): void
     {
         $column = new ColumnDefinition(
             name: 'price',
@@ -55,7 +55,7 @@ final class ColumnDefinitionTest extends TestCase
     }
 
     #[Test]
-    public function constructsWithEnumValues(): void
+    public function testStoresEnumValues(): void
     {
         $column = new ColumnDefinition(
             name: 'status',
@@ -66,7 +66,7 @@ final class ColumnDefinitionTest extends TestCase
     }
 
     #[Test]
-    public function constructsWithAutoIncrement(): void
+    public function testStoresAutoIncrement(): void
     {
         $column = new ColumnDefinition(
             name: 'id',
@@ -77,7 +77,7 @@ final class ColumnDefinitionTest extends TestCase
     }
 
     #[Test]
-    public function constructsWithGenerated(): void
+    public function testStoresGenerated(): void
     {
         $column = new ColumnDefinition(
             name: 'full_name',
