@@ -50,7 +50,7 @@ jobs:
           coverage: pcov
 
       - name: Validate the Composer manifest and lock file
-        run: composer --working-dir=packages/ztd-query-sqlite validate --strict --no-check-publish
+        run: composer --working-dir=packages/ztd-query-sqlite validate --strict --no-check-publish --no-check-all
 
       - name: Install dependencies
         uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda

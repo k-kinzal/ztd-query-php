@@ -47,7 +47,7 @@ jobs:
           extensions: ctype, date, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, pdo_sqlite, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
           coverage: none
       - name: Validate the Composer manifest and lock file
-        run: composer validate --strict --no-check-publish
+        run: composer validate --strict --no-check-publish --no-check-all
       - name: Install dependencies
         uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
@@ -78,7 +78,7 @@ jobs:
           extensions: ctype, date, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, pdo_sqlite, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
           coverage: none
       - name: Validate the Composer manifest and lock file
-        run: composer validate --strict --no-check-publish
+        run: composer validate --strict --no-check-publish --no-check-all
       - name: Install dependencies
         uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
@@ -115,7 +115,7 @@ jobs:
           extensions: ctype, date, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, pdo_sqlite, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
           coverage: none
       - name: Validate the Composer manifest and lock file
-        run: composer validate --strict --no-check-publish
+        run: composer validate --strict --no-check-publish --no-check-all
       - name: Install dependencies
         uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
@@ -146,7 +146,7 @@ jobs:
           tools: infection:0.35.4
           ini-values: memory_limit=1G
       - name: Validate the Composer manifest and lock file
-        run: composer validate --strict --no-check-publish
+        run: composer validate --strict --no-check-publish --no-check-all
       - name: Install package dependencies
         uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:

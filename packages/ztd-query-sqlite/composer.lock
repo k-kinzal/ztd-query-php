@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "cd6d1db4ee8f807e9978f527ca123414",
+    "content-hash": "02cbdfc5d875afe2e21eaa3e744c08a7",
     "packages": [
         {
             "name": "k-kinzal/ztd-query-core",
