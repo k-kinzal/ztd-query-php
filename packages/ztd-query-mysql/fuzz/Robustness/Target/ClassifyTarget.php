@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Fuzz\Robustness\Target;
 
 use Error;
-use ZtdQuery\Platform\MySql\MySqlParser;
-use ZtdQuery\Platform\MySql\MySqlQueryGuard;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlQueryGuard;
+use ZtdQuery\Platform\MySql\Sql\MySqlParser;
 
 /**
  * Checks deterministic classification of generated MySQL statements.

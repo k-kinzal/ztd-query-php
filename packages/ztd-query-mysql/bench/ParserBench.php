@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Bench;
 
 use PhpBench\Attributes as Bench;
-use ZtdQuery\Platform\MySql\MySqlParser;
+use ZtdQuery\Platform\MySql\Sql\MySqlParser;
 
 /**
  * Implements the Parser Bench contract for MySQL.

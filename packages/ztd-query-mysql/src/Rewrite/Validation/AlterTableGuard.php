@@ -47,11 +47,11 @@ final class AlterTableGuard
             'ALTER' => ['SET DEFAULT', 'DROP DEFAULT'],
         ];
         foreach ($forbidden as $verb => $keywords) {
-            if ($options->has($verb) !== false && \ZtdQuery\Platform\MySql\Parsing\Alter\OptionList::hasAny($options, $keywords)) {
+            if ($options->has($verb) !== false && \ZtdQuery\Platform\MySql\Sql\Alter\OptionList::hasAny($options, $keywords)) {
                 return true;
             }
         }
-        if (\ZtdQuery\Platform\MySql\Parsing\Alter\OptionList::hasAny($options, [
+        if (\ZtdQuery\Platform\MySql\Sql\Alter\OptionList::hasAny($options, [
             'ORDER', 'ORDER BY', 'CONVERT', 'ENGINE', 'PARTITION', 'ADD PARTITION',
             'DROP PARTITION', 'TRUNCATE PARTITION', 'COALESCE PARTITION',
             'REORGANIZE PARTITION', 'EXCHANGE PARTITION', 'ANALYZE PARTITION',
@@ -60,7 +60,7 @@ final class AlterTableGuard
         ])) {
             return true;
         }
-        foreach (\ZtdQuery\Platform\MySql\Parsing\Alter\OptionList::unknownKeywords($operation) as $keyword) {
+        foreach (\ZtdQuery\Platform\MySql\Sql\Alter\OptionList::unknownKeywords($operation) as $keyword) {
             if (in_array($keyword, ['ORDER', 'ORDER BY'], true)) {
                 return true;
             }

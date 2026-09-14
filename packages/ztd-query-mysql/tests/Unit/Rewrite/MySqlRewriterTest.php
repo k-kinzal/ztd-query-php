@@ -10,124 +10,124 @@ use PHPUnit\Framework\TestCase;
 use Tests\Fixture\MySqlRewriterFactory;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\MySql\DmlWhereClauseExtractor;
-use ZtdQuery\Platform\MySql\InsertSelectSourceExtractor;
-use ZtdQuery\Platform\MySql\Mutation\AlterTableMutation;
-use ZtdQuery\Platform\MySql\MySqlLoadDataProjector;
-use ZtdQuery\Platform\MySql\MySqlMutationResolver;
-use ZtdQuery\Platform\MySql\MySqlParser;
-use ZtdQuery\Platform\MySql\MySqlPartitioningParser;
-use ZtdQuery\Platform\MySql\MySqlPartitionSelectionRewriter;
-use ZtdQuery\Platform\MySql\MySqlQueryGuard;
-use ZtdQuery\Platform\MySql\MySqlRewriter;
-use ZtdQuery\Platform\MySql\MySqlSchemaParser;
-use ZtdQuery\Platform\MySql\MySqlUpsertAssignmentExtractor;
-use ZtdQuery\Platform\MySql\MySqlViewDefinitionParser;
-use ZtdQuery\Platform\MySql\Transformer\DeleteTransformer;
-use ZtdQuery\Platform\MySql\Transformer\InsertTransformer;
-use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
-use ZtdQuery\Platform\MySql\Transformer\ReplaceTransformer;
-use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
-use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
-use ZtdQuery\Platform\MySql\UpdateAssignmentExtractor;
-use ZtdQuery\Platform\MySql\UpdateSourceExtractor;
+use ZtdQuery\Platform\MySql\Rewrite\LoadData\MySqlLoadDataProjector;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlQueryGuard;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlRewriter;
+use ZtdQuery\Platform\MySql\Rewrite\Partition\MySqlPartitionSelectionRewriter;
+use ZtdQuery\Platform\MySql\Rewrite\Transformer\DeleteTransformer;
+use ZtdQuery\Platform\MySql\Rewrite\Transformer\InsertTransformer;
+use ZtdQuery\Platform\MySql\Rewrite\Transformer\MySqlTransformer;
+use ZtdQuery\Platform\MySql\Rewrite\Transformer\ReplaceTransformer;
+use ZtdQuery\Platform\MySql\Rewrite\Transformer\SelectTransformer;
+use ZtdQuery\Platform\MySql\Rewrite\Transformer\UpdateTransformer;
+use ZtdQuery\Platform\MySql\Schema\MySqlSchemaParser;
+use ZtdQuery\Platform\MySql\Schema\Partition\MySqlPartitioningParser;
+use ZtdQuery\Platform\MySql\Schema\View\MySqlViewDefinitionParser;
+use ZtdQuery\Platform\MySql\Shadow\Mutation\Table\AlterTableMutation;
+use ZtdQuery\Platform\MySql\Shadow\MySqlMutationResolver;
+use ZtdQuery\Platform\MySql\Sql\Dml\DmlWhereClauseExtractor;
+use ZtdQuery\Platform\MySql\Sql\Dml\InsertSelectSourceExtractor;
+use ZtdQuery\Platform\MySql\Sql\Dml\UpdateAssignmentExtractor;
+use ZtdQuery\Platform\MySql\Sql\Dml\UpdateSourceExtractor;
+use ZtdQuery\Platform\MySql\Sql\MySqlParser;
+use ZtdQuery\Platform\MySql\Sql\Upsert\MySqlUpsertAssignmentExtractor;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Schema\ViewDefinitionSet;
-use ZtdQuery\Shadow\Mutation\CreateTableAsSelectMutation;
-use ZtdQuery\Shadow\Mutation\CreateTableLikeMutation;
-use ZtdQuery\Shadow\Mutation\CreateTableMutation;
-use ZtdQuery\Shadow\Mutation\DeleteMutation;
-use ZtdQuery\Shadow\Mutation\DropTableMutation;
-use ZtdQuery\Shadow\Mutation\InsertMutation;
-use ZtdQuery\Shadow\Mutation\ReplaceMutation;
-use ZtdQuery\Shadow\Mutation\TruncateMutation;
-use ZtdQuery\Shadow\Mutation\UpdateMutation;
+use ZtdQuery\Shadow\Mutation\Row\DeleteMutation;
+use ZtdQuery\Shadow\Mutation\Row\InsertMutation;
+use ZtdQuery\Shadow\Mutation\Row\ReplaceMutation;
+use ZtdQuery\Shadow\Mutation\Row\UpdateMutation;
+use ZtdQuery\Shadow\Mutation\Table\CreateTableAsSelectMutation;
+use ZtdQuery\Shadow\Mutation\Table\CreateTableLikeMutation;
+use ZtdQuery\Shadow\Mutation\Table\CreateTableMutation;
+use ZtdQuery\Shadow\Mutation\Table\DropTableMutation;
+use ZtdQuery\Shadow\Mutation\Table\TruncateMutation;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTableState;
 
-#[UsesClass(\ZtdQuery\Platform\MySql\Mutation\Alter\ColumnAction::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Mutation\Alter\ColumnAlteration::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Mutation\Alter\ColumnDefinitionParser::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Mutation\Alter\CreateTableRenderer::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Mutation\Alter\OperationApplier::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Mutation\Alter\PrimaryKeyAlteration::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Mutation\Alter\StoredColumns::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Mutation\Alter\UnsupportedKeyword::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Mutation\Statement\RowMutation::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Mutation\Statement\SchemaMutation::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Mutation\Statement\TargetName::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\Alter\OptionList::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\AssignmentExpression::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\Cte\HeaderParser::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\Cte\IdentifierReferences::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\DiagnosticKeywords::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\OptionalInsertIntoNormalizer::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\Relation\ExpressionNames::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\Relation\ReferenceReader::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\Transaction\TokenReader::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\Upsert\AssignmentReader::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\Upsert\ExpressionReader::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\Upsert\LiteralReader::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\Upsert\StringLiteral::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Projection\FullText\ExpressionEditor::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Projection\LoadData\ColumnMapping::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Projection\LoadData\InputFile::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Projection\LoadData\InputFormat::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Projection\LoadData\InsertQuery::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Projection\LoadData\RecordParser::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Projection\LoadData\RowProjector::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Projection\Partition\SelectionReader::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Projection\Partition\SourceProjection::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Projection\Upsert\ConflictPredicate::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Projection\Upsert\ExpressionBinder::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Projection\Upsert\MetadataColumns::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Projection\Upsert\QualifiedColumn::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Shadow\Mutation\Table\Alter\ColumnAction::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Shadow\Mutation\Table\Alter\ColumnAlteration::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Shadow\Mutation\Table\Alter\ColumnDefinitionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Shadow\Mutation\Table\Alter\CreateTableRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Shadow\Mutation\Table\Alter\OperationApplier::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Shadow\Mutation\Table\Alter\PrimaryKeyAlteration::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Shadow\Mutation\Table\Alter\StoredColumns::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Shadow\Mutation\Table\Alter\UnsupportedKeyword::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Shadow\Mutation\Row\RowMutationResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Shadow\Mutation\Table\TableMutationResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Sql\Dml\TargetName::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Sql\Alter\OptionList::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Sql\Dml\AssignmentExpression::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Sql\Cte\HeaderParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Sql\Cte\IdentifierReferences::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Sql\Diagnostic\DiagnosticKeywords::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Sql\OptionalInsertIntoNormalizer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Sql\Relation\ExpressionNames::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Sql\Relation\ReferenceReader::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Sql\Transaction\TokenReader::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Sql\Upsert\AssignmentReader::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Shadow\Mutation\Upsert\ExpressionReader::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Shadow\Mutation\Upsert\LiteralReader::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Shadow\Mutation\Upsert\StringLiteral::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\FullText\ExpressionEditor::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\LoadData\ColumnMapping::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\LoadData\InputFile::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\LoadData\InputFormat::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\LoadData\InsertQuery::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\LoadData\RecordParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\LoadData\RowProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Partition\SelectionReader::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Partition\SourceProjection::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Upsert\ConflictPredicate::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Upsert\ExpressionBinder::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Upsert\MetadataColumns::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Upsert\QualifiedColumn::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Classification\CteStatementKind::class)]
 
 #[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Validation\AlterTableGuard::class)]
 
 #[UsesClass(\ZtdQuery\Platform\MySql\Schema\DefinitionBuilder::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Schema\ForeignKey\DefinitionReader::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Schema\ForeignKey\TokenReader::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Schema\Key\DefinitionReader::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Schema\Key\TokenReader::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Schema\Partition\PredicateCompiler::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\Delete\ResultSelect::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\Delete\TargetProjection::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\Insert\InsertTarget::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\Insert\ReplaceStatementConverter::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\Insert\ResultProjection::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\Select\ExpressionAliaser::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\Set\OrderRewriter::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\Set\ValueNormalizer::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\Shadow\CteRows::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\Update\ResultSelect::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\Update\TargetProjection::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Type\CastTypeResolver::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Type\Enum\RankEdits::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Type\Value\ScalarExpression::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Type\Value\StringCoercion::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Transformer\Delete\ResultSelect::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Transformer\Delete\TargetProjection::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Transformer\Insert\InsertTarget::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Transformer\Insert\ReplaceStatementConverter::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Transformer\Insert\ResultProjection::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Transformer\Select\ExpressionAliaser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Transformer\Set\OrderRewriter::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Transformer\Set\ValueNormalizer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Transformer\Shadow\CteRows::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Transformer\Update\ResultSelect::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Transformer\Update\TargetProjection::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Sql\Value\CastTypeResolver::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Type\RankEdits::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Sql\Value\ScalarExpression::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Sql\Value\StringCoercion::class)]
 #[CoversClass(MySqlRewriter::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlColumnTypeMapper::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlForeignKeyDefinitionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Schema\MySqlColumnTypeMapper::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Schema\Key\MySqlForeignKeyDefinitionParser::class)]
 #[UsesClass(MySqlParser::class)]
 #[UsesClass(MySqlMutationResolver::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlUpsertExpressionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Shadow\Mutation\Upsert\MySqlUpsertExpressionParser::class)]
 #[UsesClass(MySqlLoadDataProjector::class)]
 #[UsesClass(MySqlSchemaParser::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Sql\Relation\MySqlSelectRelationParser::class)]
 #[UsesClass(MySqlPartitioningParser::class)]
 #[UsesClass(MySqlPartitionSelectionRewriter::class)]
 #[UsesClass(MySqlUpsertAssignmentExtractor::class)]
 #[UsesClass(MySqlQueryGuard::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlReadOnlyDiagnosticStatement::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlTransactionStatementParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Sql\Diagnostic\MySqlReadOnlyDiagnosticStatement::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Sql\Transaction\MySqlTransactionStatementParser::class)]
 #[UsesClass(MySqlTransformer::class)]
 #[UsesClass(SelectTransformer::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlFullTextSearchRewriter::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\FullText\MySqlFullTextSearchRewriter::class)]
 #[UsesClass(InsertTransformer::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\InsertRowRenderer::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\InsertSelectRenderer::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Transformer\MySqlSelectListAliaser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Transformer\InsertRowRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Transformer\InsertSelectRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Transformer\MySqlSelectListAliaser::class)]
 #[UsesClass(InsertSelectSourceExtractor::class)]
 #[UsesClass(UpdateTransformer::class)]
 #[UsesClass(UpdateAssignmentExtractor::class)]
@@ -136,16 +136,16 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[UsesClass(DmlWhereClauseExtractor::class)]
 #[UsesClass(ReplaceTransformer::class)]
 #[UsesClass(AlterTableMutation::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlCastRenderer::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlIdentifierQuoter::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlValueRenderer::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlTypeSemantics::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlNativeUpsertProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Sql\Value\MySqlCastRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Sql\MySqlIdentifierQuoter::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Sql\Value\MySqlValueRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Type\MySqlTypeSemantics::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Cte\MySqlCteShadowComposer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Upsert\MySqlNativeUpsertProjector::class)]
 #[UsesClass(MySqlViewDefinitionParser::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlViewShadowRenderer::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlGeneratedColumnProjector::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\View\MySqlViewShadowRenderer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\GeneratedColumn\MySqlGeneratedColumnProjector::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Sql\MySqlLexerProfile::class)]
 #[CoversClass(\ZtdQuery\Platform\MySql\Rewrite\StatementRewriter::class)]
 #[CoversClass(\ZtdQuery\Platform\MySql\Rewrite\Context\TableContext::class)]
 #[CoversClass(\ZtdQuery\Platform\MySql\Rewrite\Validation\ReplaceColumns::class)]

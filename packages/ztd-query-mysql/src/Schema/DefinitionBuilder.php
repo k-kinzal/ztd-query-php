@@ -5,12 +5,11 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\MySql\Schema;
 
 use PhpMyAdmin\SqlParser\Components\CreateDefinition;
-use ZtdQuery\Platform\MySql\MySqlColumnTypeMapper;
-use ZtdQuery\Schema\ColumnType;
-use ZtdQuery\Schema\ForeignKeyDefinition;
-use ZtdQuery\Schema\IdentityGenerationStrategy;
+use ZtdQuery\Schema\ColumnDeclaration;
+use ZtdQuery\Schema\Key\ForeignKeyDefinition;
+use ZtdQuery\Schema\Key\IdentityGenerationStrategy;
+use ZtdQuery\Schema\Partition\TablePartitioning;
 use ZtdQuery\Schema\TableDefinition;
-use ZtdQuery\Schema\TablePartitioning;
 
 /**
  * Accumulates column and key declarations into a shadow table definition.
@@ -30,7 +29,7 @@ final class DefinitionBuilder
     private array $columnTypes = [];
 
     /**
-     * @var array<string, ColumnType>
+     * @var array<string, ColumnDeclaration>
      */
     private array $typedColumns = [];
 

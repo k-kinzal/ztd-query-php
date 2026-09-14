@@ -31,7 +31,7 @@ final class CteStatementKind
             'DROP' => QueryKind::DDL_SIMULATED,
             'ALTER' => QueryKind::DDL_SIMULATED,
         ];
-        $tokens = \ZtdQuery\Sql\SqlTokenStream::tokenize($sql, \ZtdQuery\Platform\MySql\MySqlLexerProfile::create())->significantTokens();
+        $tokens = \ZtdQuery\Sql\SqlTokenStream::tokenize($sql, \ZtdQuery\Platform\MySql\Sql\MySqlLexerProfile::create())->significantTokens();
         foreach ($tokens as $token) {
             if ($token->text === '(') {
                 $seenBody = true;

@@ -2,13 +2,19 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Platform\MySql;
+namespace ZtdQuery\Platform\MySql\Rewrite;
 
 use PhpMyAdmin\SqlParser\Statement;
 use PhpMyAdmin\SqlParser\Statements\LoadStatement;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
+use ZtdQuery\Platform\MySql\Rewrite\Cte\MySqlCteShadowComposer;
+use ZtdQuery\Platform\MySql\Rewrite\LoadData\MySqlLoadDataProjector;
+use ZtdQuery\Platform\MySql\Rewrite\Transformer\MySqlTransformer;
+use ZtdQuery\Platform\MySql\Shadow\MySqlMutationResolver;
+use ZtdQuery\Platform\MySql\Sql\Diagnostic\MySqlReadOnlyDiagnosticStatement;
+use ZtdQuery\Platform\MySql\Sql\MySqlParser;
+use ZtdQuery\Platform\MySql\Sql\Transaction\MySqlTransactionStatementParser;
 use ZtdQuery\Rewrite\MultiRewritePlan;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
@@ -93,7 +99,7 @@ final class MySqlRewriter implements SqlRewriter, RewriteStateCommitter
             return $this->rewrite((new MySqlLoadDataProjector($this->registry))->project($sql, $statement));
         }
 
-        return (new Rewrite\StatementRewriter($this->cteComposer, $this->guard, $this->mutationResolver, $this->parser, $this->registry, $this->shadowStore, $this->transformer, $this->views))->rewriteStatement($statement, $sql);
+        return (new StatementRewriter($this->cteComposer, $this->guard, $this->mutationResolver, $this->parser, $this->registry, $this->shadowStore, $this->transformer, $this->views))->rewriteStatement($statement, $sql);
     }
 
     /**

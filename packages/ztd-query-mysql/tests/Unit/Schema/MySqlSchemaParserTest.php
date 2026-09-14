@@ -7,23 +7,23 @@ namespace Tests\Unit\Schema;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ZtdQuery\Platform\MySql\MySqlParser;
-use ZtdQuery\Platform\MySql\MySqlPartitioningParser;
-use ZtdQuery\Platform\MySql\MySqlSchemaParser;
+use ZtdQuery\Platform\MySql\Schema\MySqlSchemaParser;
+use ZtdQuery\Platform\MySql\Schema\Partition\MySqlPartitioningParser;
+use ZtdQuery\Platform\MySql\Sql\MySqlParser;
 use ZtdQuery\Schema\ColumnTypeFamily;
-use ZtdQuery\Schema\IdentityGenerationStrategy;
+use ZtdQuery\Schema\Key\IdentityGenerationStrategy;
 
-#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\OptionalInsertIntoNormalizer::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Sql\OptionalInsertIntoNormalizer::class)]
 
-#[UsesClass(\ZtdQuery\Platform\MySql\Schema\ForeignKey\DefinitionReader::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\Schema\ForeignKey\TokenReader::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Schema\Key\DefinitionReader::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Schema\Key\TokenReader::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Schema\Partition\PredicateCompiler::class)]
 #[CoversClass(MySqlSchemaParser::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlColumnTypeMapper::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlForeignKeyDefinitionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Schema\MySqlColumnTypeMapper::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Schema\Key\MySqlForeignKeyDefinitionParser::class)]
 #[UsesClass(MySqlParser::class)]
 #[UsesClass(MySqlPartitioningParser::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Sql\MySqlLexerProfile::class)]
 #[CoversClass(\ZtdQuery\Platform\MySql\Schema\DefinitionBuilder::class)]
 final class MySqlSchemaParserTest extends TestCase
 {

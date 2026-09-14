@@ -2,9 +2,12 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Platform\MySql;
+namespace ZtdQuery\Platform\MySql\Schema;
 
 use PhpMyAdmin\SqlParser\Statements\CreateStatement;
+use ZtdQuery\Platform\MySql\Schema\Key\MySqlForeignKeyDefinitionParser;
+use ZtdQuery\Platform\MySql\Schema\Partition\MySqlPartitioningParser;
+use ZtdQuery\Platform\MySql\Sql\MySqlParser;
 use ZtdQuery\Platform\SchemaParser;
 use ZtdQuery\Schema\TableDefinition;
 
@@ -42,7 +45,7 @@ final class MySqlSchemaParser implements SchemaParser
             return null;
         }
 
-        $builder = new Schema\DefinitionBuilder();
+        $builder = new DefinitionBuilder();
         foreach ($stmt->fields as $field) {
             if ($field->type !== null && ($field->name ?? '') === '') {
                 continue;

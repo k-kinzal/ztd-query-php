@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Platform\MySql;
+namespace ZtdQuery\Platform\MySql\Rewrite;
 
 use PhpMyAdmin\SqlParser\Statement;
 use PhpMyAdmin\SqlParser\Statements\AlterStatement;
@@ -17,6 +17,8 @@ use PhpMyAdmin\SqlParser\Statements\TruncateStatement;
 use PhpMyAdmin\SqlParser\Statements\UpdateStatement;
 use PhpMyAdmin\SqlParser\Statements\WithStatement;
 use RuntimeException;
+use ZtdQuery\Platform\MySql\Sql\Diagnostic\MySqlReadOnlyDiagnosticStatement;
+use ZtdQuery\Platform\MySql\Sql\MySqlParser;
 use ZtdQuery\Rewrite\QueryKind;
 
 /**
@@ -47,7 +49,7 @@ final class MySqlQueryGuard
             return null;
         }
         if ($statement instanceof WithStatement) {
-            $kind = (new Rewrite\Classification\CteStatementKind())->classifyWithFallback($sql);
+            $kind = (new Classification\CteStatementKind())->classifyWithFallback($sql);
             if ($kind !== null) {
                 return $kind;
             }

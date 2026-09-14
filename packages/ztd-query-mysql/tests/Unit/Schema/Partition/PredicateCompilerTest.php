@@ -8,9 +8,9 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\Schema\Partition\PredicateCompiler;
 
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\MySqlParser::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\Parsing\OptionalInsertIntoNormalizer::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\Sql\MySqlLexerProfile::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\Sql\MySqlParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\Sql\OptionalInsertIntoNormalizer::class)]
 #[CoversClass(PredicateCompiler::class)]
 final class PredicateCompilerTest extends TestCase
 {
@@ -62,7 +62,7 @@ final class PredicateCompilerTest extends TestCase
     public function testRangePredicates(): void
     {
         $sql = 'CREATE TABLE t (id INT) PARTITION BY RANGE (id) (PARTITION p0 VALUES LESS THAN (10), PARTITION p1 VALUES LESS THAN (20), PARTITION p2 VALUES LESS THAN MAXVALUE)';
-        $statement = (new \ZtdQuery\Platform\MySql\MySqlParser())->parseSingleLogicalStatement($sql);
+        $statement = (new \ZtdQuery\Platform\MySql\Sql\MySqlParser())->parseSingleLogicalStatement($sql);
         self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\CreateStatement::class, $statement);
         $partitions = $statement->partitions;
         self::assertNotNull($partitions);
@@ -72,7 +72,7 @@ final class PredicateCompilerTest extends TestCase
     public function testListPredicates(): void
     {
         $sql = 'CREATE TABLE t (id INT) PARTITION BY LIST (id) (PARTITION p0 VALUES IN (1, 2, NULL), PARTITION p1 VALUES IN (3))';
-        $statement = (new \ZtdQuery\Platform\MySql\MySqlParser())->parseSingleLogicalStatement($sql);
+        $statement = (new \ZtdQuery\Platform\MySql\Sql\MySqlParser())->parseSingleLogicalStatement($sql);
         self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\CreateStatement::class, $statement);
         $partitions = $statement->partitions;
         self::assertNotNull($partitions);

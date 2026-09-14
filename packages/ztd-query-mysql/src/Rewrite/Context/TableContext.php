@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\MySql\Rewrite\Context;
 
-use ZtdQuery\Platform\MySql\MySqlCteShadowComposer;
-use ZtdQuery\Platform\MySql\MySqlSelectRelationParser;
-use ZtdQuery\Platform\MySql\MySqlViewShadowRenderer;
+use ZtdQuery\Platform\MySql\Rewrite\Cte\MySqlCteShadowComposer;
+use ZtdQuery\Platform\MySql\Rewrite\View\MySqlViewShadowRenderer;
+use ZtdQuery\Platform\MySql\Sql\Relation\MySqlSelectRelationParser;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Shadow\ShadowStore;
@@ -19,7 +19,7 @@ use ZtdQuery\Shadow\ShadowStore;
  *     $store = new \ZtdQuery\Shadow\ShadowStore();
  *     $store->set('users', [['id' => 1]]);
  *     $tableContext = new \ZtdQuery\Platform\MySql\Rewrite\Context\TableContext(
- *         new \ZtdQuery\Platform\MySql\MySqlCteShadowComposer(),
+ *         new \ZtdQuery\Platform\MySql\Rewrite\Cte\MySqlCteShadowComposer(),
  *         new \ZtdQuery\Schema\TableDefinitionRegistry(),
  *         $store,
  *         new \ZtdQuery\Schema\ViewDefinitionSet());
@@ -39,11 +39,11 @@ final class TableContext
      * @return array<string, array{viewSql: string}|array{
      *     rows: array<int, array<string, mixed>>,
      *     columns: array<int, string>,
-     *     columnTypes: array<string, \ZtdQuery\Schema\ColumnType>,
+     *     columnTypes: array<string, \ZtdQuery\Schema\ColumnDeclaration>,
      *     columnDefaults: array<string, string>,
-     *     identityStrategies: array<string, \ZtdQuery\Schema\IdentityGenerationStrategy>,
+     *     identityStrategies: array<string, \ZtdQuery\Schema\Key\IdentityGenerationStrategy>,
      *     generatedExpressions: array<string, string>,
-     *     partitioning: \ZtdQuery\Schema\TablePartitioning|null
+     *     partitioning: \ZtdQuery\Schema\Partition\TablePartitioning|null
      * }>
      */
     public function buildTableContext(): array

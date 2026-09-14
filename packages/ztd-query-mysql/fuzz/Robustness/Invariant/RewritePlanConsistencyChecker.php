@@ -6,11 +6,11 @@ namespace Fuzz\Robustness\Invariant;
 
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\MySql\MySqlRewriter;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlRewriter;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
-use ZtdQuery\Shadow\Mutation\MultiDeleteMutation;
-use ZtdQuery\Shadow\Mutation\MultiUpdateMutation;
+use ZtdQuery\Shadow\Mutation\Row\MultiDeleteMutation;
+use ZtdQuery\Shadow\Mutation\Row\MultiUpdateMutation;
 
 /**
  * Implements the Rewrite Plan Consistency Checker contract for MySQL.
@@ -94,7 +94,7 @@ final class RewritePlanConsistencyChecker implements InvariantChecker
         }
 
         $shadowTables = ['users', 'orders', 'order_items', 'products'];
-        $relationParser = new \ZtdQuery\Platform\MySql\MySqlSelectRelationParser();
+        $relationParser = new \ZtdQuery\Platform\MySql\Sql\Relation\MySqlSelectRelationParser();
         $normalizedInput = $relationParser->unqualify($sql, $shadowTables);
         $normalizedPlan = $relationParser->unqualify($plan->sql(), $shadowTables);
         if ($normalizedInput !== $sql && $normalizedPlan !== $plan->sql()) {

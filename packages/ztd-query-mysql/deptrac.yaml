@@ -8,52 +8,105 @@ deptrac:
       - use
       - file
   layers:
-    - name: SessionFactory
+    - name: Session
       collectors:
         - type: directory
           value: src/MySqlSessionFactory.php$
-    - name: Rewrite
+        - type: directory
+          value: src/Compatibility/.*
+    - name: Simulation
       collectors:
         - type: directory
           value: src/Rewrite/.*
-    - name: Mutation
+        - type: directory
+          value: src/Shadow/.*
+    - name: Connection
       collectors:
         - type: directory
-          value: src/Mutation/.*
-    - name: Transformer
-      collectors:
-        - type: directory
-          value: src/Transformer/.*
-    - name: Projection
-      collectors:
-        - type: directory
-          value: src/Projection/.*
+          value: src/Connection/.*
     - name: Schema
       collectors:
         - type: directory
           value: src/Schema/.*
-    - name: Type
+    - name: Sql
       collectors:
         - type: directory
-          value: src/Type/.*
-    - name: Parsing
-      collectors:
-        - type: directory
-          value: src/Parsing/.*
-    - name: Core
+          value: src/Sql/.*
+    - name: CoreSession
       collectors:
         - type: classLike
-          value: ^ZtdQuery\\(?!Platform\\MySql\\).*
+          value: ^ZtdQuery\\(?:[^\\]+|Platform\\SessionFactory)$
+    - name: CoreSimulation
+      collectors:
+        - type: classLike
+          value: ^ZtdQuery\\(?:Rewrite|Shadow)\\
+    - name: CoreContract
+      collectors:
+        - type: classLike
+          value: ^ZtdQuery\\Platform\\(?!MySql\\|SessionFactory$)
+    - name: CoreConnection
+      collectors:
+        - type: classLike
+          value: ^ZtdQuery\\Connection\\
+    - name: CoreSchema
+      collectors:
+        - type: classLike
+          value: ^ZtdQuery\\Schema\\
+    - name: CoreSql
+      collectors:
+        - type: classLike
+          value: ^ZtdQuery\\Sql\\
+    - name: CoreConfig
+      collectors:
+        - type: classLike
+          value: ^ZtdQuery\\Config\\
+    - name: CoreException
+      collectors:
+        - type: classLike
+          value: ^ZtdQuery\\Exception\\
     - name: SqlParser
       collectors:
         - type: classLike
-          value: ^PhpMyAdmin\\SqlParser\\.*
+          value: ^PhpMyAdmin\\SqlParser\\
+    - name: Composer
+      collectors:
+        - type: classLike
+          value: ^Composer\\Autoload\\
   ruleset:
-    SessionFactory: [Rewrite, Mutation, Transformer, Schema, Type, Parsing, Core, SqlParser]
-    Rewrite: [Mutation, Transformer, Projection, Schema, Parsing, Core, SqlParser]
-    Mutation: [Transformer, Schema, Parsing, Core, SqlParser]
-    Transformer: [Projection, Type, Parsing, Core, SqlParser]
-    Projection: [Type, Parsing, Core, SqlParser]
-    Schema: [Type, Parsing, Core, SqlParser]
-    Type: [Parsing, Core]
-    Parsing: [Core, SqlParser]
+    Session:
+      - Simulation
+      - Connection
+      - Schema
+      - Sql
+      - CoreSession
+      - CoreSimulation
+      - CoreConnection
+      - CoreSchema
+      - CoreConfig
+      - SqlParser
+      - Composer
+    Simulation:
+      - Sql
+      - CoreSimulation
+      - CoreContract
+      - CoreSchema
+      - CoreSql
+      - CoreException
+      - SqlParser
+    Connection:
+      - Schema
+      - CoreContract
+      - CoreConnection
+      - CoreSchema
+    Schema:
+      - Sql
+      - CoreContract
+      - CoreConnection
+      - CoreSchema
+      - CoreSql
+      - SqlParser
+    Sql:
+      - CoreContract
+      - CoreSchema
+      - CoreSql
+      - SqlParser

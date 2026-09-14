@@ -9,13 +9,13 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Connection\StatementInterface;
-use ZtdQuery\Platform\MySql\MySqlSchemaReflector;
+use ZtdQuery\Platform\MySql\Schema\MySqlSchemaReflector;
 
-#[UsesClass(\ZtdQuery\Platform\MySql\Parsing\Relation\ReferenceReader::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Sql\Relation\ReferenceReader::class)]
 #[CoversClass(MySqlSchemaReflector::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlSelectRelationParser::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlViewDefinitionParser::class)]
-#[UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Sql\Relation\MySqlSelectRelationParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Schema\View\MySqlViewDefinitionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\MySql\Sql\MySqlLexerProfile::class)]
 final class MySqlSchemaReflectorTest extends TestCase
 {
     public function testReflectViewsReturnsEmptyWhenQueryFails(): void

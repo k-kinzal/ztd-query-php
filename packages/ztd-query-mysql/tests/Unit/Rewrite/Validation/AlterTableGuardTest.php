@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\Rewrite\Validation\AlterTableGuard;
 
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\Parsing\Alter\OptionList::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\Sql\Alter\OptionList::class)]
 #[CoversClass(AlterTableGuard::class)]
 final class AlterTableGuardTest extends TestCase
 {

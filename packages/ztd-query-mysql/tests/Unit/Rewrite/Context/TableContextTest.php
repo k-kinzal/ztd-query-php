@@ -8,13 +8,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\Rewrite\Context\TableContext;
 
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\MySqlCteShadowComposer::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\MySqlSelectRelationParser::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\MySqlViewShadowRenderer::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\Parsing\Cte\HeaderParser::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\Parsing\Cte\IdentifierReferences::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\Parsing\Relation\ReferenceReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Cte\MySqlCteShadowComposer::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\Sql\MySqlLexerProfile::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\Sql\Relation\MySqlSelectRelationParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\Rewrite\View\MySqlViewShadowRenderer::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\Sql\Cte\HeaderParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\Sql\Cte\IdentifierReferences::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\Sql\Relation\ReferenceReader::class)]
 #[CoversClass(TableContext::class)]
 final class TableContextTest extends TestCase
 {
@@ -22,7 +22,7 @@ final class TableContextTest extends TestCase
     {
         $store = new \ZtdQuery\Shadow\ShadowStore();
         $registry = new \ZtdQuery\Schema\TableDefinitionRegistry();
-        $context = new TableContext(new \ZtdQuery\Platform\MySql\MySqlCteShadowComposer(), $registry, $store, new \ZtdQuery\Schema\ViewDefinitionSet());
+        $context = new TableContext(new \ZtdQuery\Platform\MySql\Rewrite\Cte\MySqlCteShadowComposer(), $registry, $store, new \ZtdQuery\Schema\ViewDefinitionSet());
         $store->set('users', [['id' => 1], ['name' => 'a']]);
         $registry->register('empty', new \ZtdQuery\Schema\TableDefinition(['code'], [], [], [], []));
         $tables = $context->buildTableContext();
@@ -38,7 +38,7 @@ final class TableContextTest extends TestCase
     {
         $store = new \ZtdQuery\Shadow\ShadowStore();
         $registry = new \ZtdQuery\Schema\TableDefinitionRegistry();
-        $context = new TableContext(new \ZtdQuery\Platform\MySql\MySqlCteShadowComposer(), $registry, $store, new \ZtdQuery\Schema\ViewDefinitionSet());
+        $context = new TableContext(new \ZtdQuery\Platform\MySql\Rewrite\Cte\MySqlCteShadowComposer(), $registry, $store, new \ZtdQuery\Schema\ViewDefinitionSet());
         $store->set('users', [['id' => 1]]);
         self::assertNull($context->findUnknownTable('WITH c AS (SELECT * FROM users) SELECT * FROM c'));
         self::assertSame('missing', $context->findUnknownTable('SELECT * FROM users JOIN missing ON TRUE'));
@@ -48,7 +48,7 @@ final class TableContextTest extends TestCase
     {
         $store = new \ZtdQuery\Shadow\ShadowStore();
         $registry = new \ZtdQuery\Schema\TableDefinitionRegistry();
-        $context = new TableContext(new \ZtdQuery\Platform\MySql\MySqlCteShadowComposer(), $registry, $store, new \ZtdQuery\Schema\ViewDefinitionSet());
+        $context = new TableContext(new \ZtdQuery\Platform\MySql\Rewrite\Cte\MySqlCteShadowComposer(), $registry, $store, new \ZtdQuery\Schema\ViewDefinitionSet());
         self::assertFalse($context->tableExists('users'));
         $store->set('users', []);
         self::assertTrue($context->tableExists('users'));
@@ -60,7 +60,7 @@ final class TableContextTest extends TestCase
     {
         $store = new \ZtdQuery\Shadow\ShadowStore();
         $registry = new \ZtdQuery\Schema\TableDefinitionRegistry();
-        $context = new TableContext(new \ZtdQuery\Platform\MySql\MySqlCteShadowComposer(), $registry, $store, new \ZtdQuery\Schema\ViewDefinitionSet());
+        $context = new TableContext(new \ZtdQuery\Platform\MySql\Rewrite\Cte\MySqlCteShadowComposer(), $registry, $store, new \ZtdQuery\Schema\ViewDefinitionSet());
         self::assertFalse($context->hasSchemaContext());
         $store->set('users', []);
         self::assertTrue($context->hasSchemaContext());
@@ -70,7 +70,7 @@ final class TableContextTest extends TestCase
     {
         $store = new \ZtdQuery\Shadow\ShadowStore();
         $registry = new \ZtdQuery\Schema\TableDefinitionRegistry();
-        $context = new TableContext(new \ZtdQuery\Platform\MySql\MySqlCteShadowComposer(), $registry, $store, new \ZtdQuery\Schema\ViewDefinitionSet());
+        $context = new TableContext(new \ZtdQuery\Platform\MySql\Rewrite\Cte\MySqlCteShadowComposer(), $registry, $store, new \ZtdQuery\Schema\ViewDefinitionSet());
         $store->set('users', []);
         $this->expectException(\ZtdQuery\Exception\UnknownSchemaException::class);
         $this->expectExceptionMessage('missing');

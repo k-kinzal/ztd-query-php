@@ -40,7 +40,7 @@ use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Platform\MySql\MySqlSessionFactory;
 
 // $connection implements ZtdQuery\Connection\ConnectionInterface
-$session = MySqlSessionFactory::create($connection, ZtdConfig::default());
+$session = (new MySqlSessionFactory())->create($connection, ZtdConfig::default());
 ```
 
 The factory automatically:
@@ -53,8 +53,8 @@ The factory automatically:
 `MySqlQueryGuard` classifies SQL statements into query kinds:
 
 ```php
-use ZtdQuery\Platform\MySql\MySqlQueryGuard;
-use ZtdQuery\Platform\MySql\MySqlParser;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlQueryGuard;
+use ZtdQuery\Platform\MySql\Sql\MySqlParser;
 use ZtdQuery\Rewrite\QueryKind;
 
 $parser = new MySqlParser();
@@ -78,7 +78,7 @@ $guard->classify('BEGIN');
 `MySqlRewriter` transforms SQL statements for ZTD execution:
 
 ```php
-use ZtdQuery\Platform\MySql\MySqlRewriter;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlRewriter;
 
 // Rewrite a single statement
 $plan = $rewriter->rewrite('SELECT email FROM users WHERE id = 1');
@@ -94,7 +94,7 @@ $plans = $rewriter->rewriteMultiple('SELECT 1; SELECT 2');
 `MySqlErrorClassifier` identifies MySQL error codes related to unknown schemas:
 
 ```php
-use ZtdQuery\Platform\MySql\MySqlErrorClassifier;
+use ZtdQuery\Platform\MySql\Connection\MySqlErrorClassifier;
 
 $classifier = new MySqlErrorClassifier();
 

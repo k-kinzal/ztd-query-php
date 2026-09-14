@@ -12,29 +12,37 @@
             "dist": {
                 "type": "path",
                 "url": "../ztd-query-core",
-                "reference": "93f512da36c499ec6234abd57da42a35273a293c"
+                "reference": "9a98d275782c4ffa0fbb751b585c8132b89fc8fd"
             },
             "require": {
                 "php": "^8.1"
             },
             "require-dev": {
-                "brianium/paratest": "^6.11 || ^7",
+                "brianium/paratest": "^7.3",
+                "deptrac/deptrac": "^3.0",
                 "friendsofphp/php-cs-fixer": "^3.92",
-                "infection/infection": "^0.28 || ^0.29 || ^0.30 || ^0.31 || ^0.32 || ^0.34.1",
-                "k-kinzal/phpstan-custom-rules": "@dev",
+                "k-kinzal/php-ai-toolkit": "dev-main",
+                "nikic/php-fuzzer": "^0.0.11",
+                "phpbench/phpbench": "^1.4",
+                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
                 "phpstan/phpstan": "^2.1",
-                "phpstan/phpstan-strict-rules": "^2.0",
-                "phpunit/phpunit": "^10.5 || ^11 || ^12 || ^13"
+                "phpunit/phpunit": "^10.5",
+                "squizlabs/php_codesniffer": "^4.0.4"
             },
             "type": "library",
             "autoload": {
                 "psr-4": {
                     "ZtdQuery\\": "src/"
-                }
+                },
+                "files": [
+                    "src/Compatibility/ClassAliases.php"
+                ]
             },
             "autoload-dev": {
                 "psr-4": {
-                    "Tests\\": "tests/"
+                    "Tests\\": "tests/",
+                    "Fuzz\\": "fuzz/",
+                    "Bench\\": "bench/"
                 }
             },
             "scripts": {
@@ -42,11 +50,15 @@
                     "paratest --processes=auto"
                 ],
                 "test:unit": [
-                    "phpunit tests/Unit/"
+                    "phpunit --testsuite unit"
                 ],
                 "lint": [
                     "@format:check",
-                    "phpstan analyse --memory-limit=512M"
+                    "@phpstan",
+                    "@loc-guard",
+                    "@tree-guard",
+                    "@deptrac",
+                    "@compat"
                 ],
                 "format": [
                     "php-cs-fixer fix --allow-risky=yes"
@@ -54,14 +66,61 @@
                 "format:check": [
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
                 ],
-                "infection": [
-                    "infection --threads=max --show-mutations --no-progress"
+                "phpstan": [
+                    "phpstan analyse --memory-limit=512M"
+                ],
+                "compat": [
+                    "phpcs"
+                ],
+                "loc-guard": [
+                    "loc-guard --config=loc.yaml"
+                ],
+                "tree-guard": [
+                    "tree-guard --config=tree.yaml"
+                ],
+                "deptrac": [
+                    "deptrac analyse --config-file=deptrac.yaml",
+                    "deptrac debug:unassigned --config-file=deptrac.yaml"
+                ],
+                "doctest": [
+                    "phpunit --testsuite doctest"
+                ],
+                "bench": [
+                    "phpbench run --report=aggregate"
+                ],
+                "bench:quick": [
+                    "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
+                ],
+                "bench:full": [
+                    "@bench"
+                ],
+                "fuzz": [
+                    "@fuzz:token-stream"
+                ],
+                "fuzz:token-stream": [
+                    "php-fuzzer fuzz fuzz/fuzz_token_stream.php fuzz/corpus/token-stream/"
+                ],
+                "docgen": [
+                    "cd ../.. && packages/ztd-query-core/vendor/bin/docgen --packages=packages/ztd-query-core --deptrac=\"$PWD/packages/ztd-query-core/deptrac.yaml\" --output=packages/ztd-query-core/build/docs --cache-dir=packages/ztd-query-core/build/docgen-cache --title=k-kinzal/ztd-query-core"
+                ],
+                "docgen:serve": [
+                    "@docgen --serve"
+                ],
+                "docgen:diff": [
+                    "@docgen --diff=origin/main --serve"
+                ],
+                "docgen:fresh": [
+                    "@docgen --no-cache"
                 ]
             },
             "license": [
                 "MIT"
             ],
             "description": "Zero Table Dependencies query layer for PHP",
+            "support": {
+                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-core",
+                "docs": "https://k-kinzal.github.io/ztd-query-php/core/k-kinzal/ztd-query-core/"
+            },
             "transport-options": {
                 "relative": true
             }

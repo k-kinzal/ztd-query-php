@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Platform\MySql;
+namespace ZtdQuery\Platform\MySql\Schema;
 
 use ZtdQuery\Connection\ConnectionInterface;
+use ZtdQuery\Platform\MySql\Schema\View\MySqlViewDefinitionParser;
 use ZtdQuery\Platform\SchemaReflector;
 use ZtdQuery\Platform\ViewReflector;
 

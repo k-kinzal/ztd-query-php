@@ -8,17 +8,17 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Platform\MySql\Schema\DefinitionBuilder;
 
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\MySqlColumnTypeMapper::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\MySqlLexerProfile::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\MySqlParser::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\Parsing\OptionalInsertIntoNormalizer::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\Schema\MySqlColumnTypeMapper::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\Sql\MySqlLexerProfile::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\Sql\MySqlParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\MySql\Sql\OptionalInsertIntoNormalizer::class)]
 #[CoversClass(DefinitionBuilder::class)]
 final class DefinitionBuilderTest extends TestCase
 {
     public function testAddColumn(): void
     {
         $sql = 'CREATE TABLE t (id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY, name VARCHAR(20))';
-        $statement = (new \ZtdQuery\Platform\MySql\MySqlParser())->parseSingleLogicalStatement($sql);
+        $statement = (new \ZtdQuery\Platform\MySql\Sql\MySqlParser())->parseSingleLogicalStatement($sql);
         self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\CreateStatement::class, $statement);
         self::assertIsArray($statement->fields);
         $builder = new DefinitionBuilder();
@@ -29,13 +29,13 @@ final class DefinitionBuilderTest extends TestCase
         self::assertSame(['id' => 'BIGINT', 'name' => 'VARCHAR(20)'], $definition->columnTypes);
         self::assertSame(['id'], $definition->notNullColumns);
         self::assertSame(['id'], $definition->primaryKeys);
-        self::assertSame(['id' => \ZtdQuery\Schema\IdentityGenerationStrategy::MaxValue], $definition->identityStrategies);
+        self::assertSame(['id' => \ZtdQuery\Schema\Key\IdentityGenerationStrategy::MaxValue], $definition->identityStrategies);
     }
 
     public function testAddColumnOptions(): void
     {
         $sql = 'CREATE TABLE t (id INT NOT NULL UNIQUE DEFAULT 7)';
-        $statement = (new \ZtdQuery\Platform\MySql\MySqlParser())->parseSingleLogicalStatement($sql);
+        $statement = (new \ZtdQuery\Platform\MySql\Sql\MySqlParser())->parseSingleLogicalStatement($sql);
         self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\CreateStatement::class, $statement);
         self::assertIsArray($statement->fields);
         $options = $statement->fields[0]->options;
@@ -51,7 +51,7 @@ final class DefinitionBuilderTest extends TestCase
     public function testAddKey(): void
     {
         $sql = 'CREATE TABLE t (id INT, code INT, PRIMARY KEY (id, code), UNIQUE KEY uq (code))';
-        $statement = (new \ZtdQuery\Platform\MySql\MySqlParser())->parseSingleLogicalStatement($sql);
+        $statement = (new \ZtdQuery\Platform\MySql\Sql\MySqlParser())->parseSingleLogicalStatement($sql);
         self::assertInstanceOf(\PhpMyAdmin\SqlParser\Statements\CreateStatement::class, $statement);
         self::assertIsArray($statement->fields);
         $builder = new DefinitionBuilder();
@@ -64,7 +64,7 @@ final class DefinitionBuilderTest extends TestCase
 
     public function testBuild(): void
     {
-        $foreignKey = new \ZtdQuery\Schema\ForeignKeyDefinition(['pid'], 'p', ['id']);
+        $foreignKey = new \ZtdQuery\Schema\Key\ForeignKeyDefinition(['pid'], 'p', ['id']);
         $definition = (new DefinitionBuilder())->build(['fk' => $foreignKey], null);
         self::assertSame([], $definition->columns);
         self::assertSame(['fk' => $foreignKey], $definition->foreignKeys);

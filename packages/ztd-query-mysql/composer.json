@@ -38,16 +38,11 @@
     ],
     "autoload": {
         "psr-4": {
-            "ZtdQuery\\Platform\\MySql\\": [
-                "src/",
-                "src/Parsing/",
-                "src/Schema/",
-                "src/Type/",
-                "src/Rewrite/",
-                "src/Mutation/",
-                "src/Projection/"
-            ]
-        }
+            "ZtdQuery\\Platform\\MySql\\": "src/"
+        },
+        "files": [
+            "src/Compatibility/ClassAliases.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

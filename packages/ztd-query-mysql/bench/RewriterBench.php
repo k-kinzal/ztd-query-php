@@ -6,17 +6,17 @@ namespace Bench;
 
 use LogicException;
 use PhpBench\Attributes as Bench;
-use ZtdQuery\Platform\MySql\MySqlMutationResolver;
-use ZtdQuery\Platform\MySql\MySqlParser;
-use ZtdQuery\Platform\MySql\MySqlQueryGuard;
-use ZtdQuery\Platform\MySql\MySqlRewriter;
-use ZtdQuery\Platform\MySql\MySqlSchemaParser;
-use ZtdQuery\Platform\MySql\Transformer\DeleteTransformer;
-use ZtdQuery\Platform\MySql\Transformer\InsertTransformer;
-use ZtdQuery\Platform\MySql\Transformer\MySqlTransformer;
-use ZtdQuery\Platform\MySql\Transformer\ReplaceTransformer;
-use ZtdQuery\Platform\MySql\Transformer\SelectTransformer;
-use ZtdQuery\Platform\MySql\Transformer\UpdateTransformer;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlQueryGuard;
+use ZtdQuery\Platform\MySql\Rewrite\MySqlRewriter;
+use ZtdQuery\Platform\MySql\Rewrite\Transformer\DeleteTransformer;
+use ZtdQuery\Platform\MySql\Rewrite\Transformer\InsertTransformer;
+use ZtdQuery\Platform\MySql\Rewrite\Transformer\MySqlTransformer;
+use ZtdQuery\Platform\MySql\Rewrite\Transformer\ReplaceTransformer;
+use ZtdQuery\Platform\MySql\Rewrite\Transformer\SelectTransformer;
+use ZtdQuery\Platform\MySql\Rewrite\Transformer\UpdateTransformer;
+use ZtdQuery\Platform\MySql\Schema\MySqlSchemaParser;
+use ZtdQuery\Platform\MySql\Shadow\MySqlMutationResolver;
+use ZtdQuery\Platform\MySql\Sql\MySqlParser;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
 
