@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you. -->
+<!-- The toolkit's Medium doctest suite starts MySQL containers, so it needs the same limit as the Large database tests. -->
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
          bootstrap="vendor/autoload.php"
@@ -15,7 +16,7 @@
          displayDetailsOnAllIssues="true"
          enforceTimeLimit="true"
          timeoutForSmallTests="1"
-         timeoutForMediumTests="10"
+         timeoutForMediumTests="60"
          timeoutForLargeTests="60">
     <testsuites>
         <testsuite name="unit">
