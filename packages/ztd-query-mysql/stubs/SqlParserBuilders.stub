@@ -1,0 +1,64 @@
+<?php
+
+namespace PhpMyAdmin\SqlParser\Components;
+
+/**
+ * Concrete serializers in sql-parser 5.11 implement Component::build().
+ * Component's inherited @throws Exception describes its unimplemented fallback,
+ * which these overrides never call. Their implementations serialize already parsed
+ * components without throwing that checked exception.
+ */
+class Expression
+{
+    /**
+     * @param self|array<self> $component
+     * @param array<string, mixed> $options
+     * @return string
+     * @throws void
+     */
+    public static function build($component, array $options = []) {}
+}
+
+class JoinKeyword
+{
+    /**
+     * @param self|array<self> $component
+     * @param array<string, mixed> $options
+     * @return string
+     * @throws void
+     */
+    public static function build($component, array $options = []) {}
+}
+
+class OrderKeyword
+{
+    /**
+     * @param self|array<self> $component
+     * @param array<string, mixed> $options
+     * @return string
+     * @throws void
+     */
+    public static function build($component, array $options = []) {}
+}
+
+class Limit
+{
+    /**
+     * @param self|array<self> $component
+     * @param array<string, mixed> $options
+     * @return string
+     * @throws void
+     */
+    public static function build($component, array $options = []) {}
+}
+
+class Condition
+{
+    /**
+     * @param self|array<self> $component
+     * @param array<string, mixed> $options
+     * @return string
+     * @throws void
+     */
+    public static function build($component, array $options = []) {}
+}
