@@ -1,0 +1,55 @@
+<?php
+
+declare(strict_types=1);
+
+namespace ZtdQuery\Platform\MySql\Sql\Value;
+
+use Stringable;
+use ZtdQuery\Platform\CastRenderer;
+use ZtdQuery\Platform\ValueRenderer;
+use ZtdQuery\Schema\ColumnDeclaration;
+use ZtdQuery\Schema\ColumnTypeFamily;
+
+/**
+ * Encodes shadow values without relying on MySQL string escape modes.
+ */
+final class MySqlValueRenderer implements ValueRenderer
+{
+    /**
+     * Configure the dependencies used by this operation.
+     */
+    public function __construct(private readonly CastRenderer $castRenderer = new MySqlCastRenderer())
+    {
+    }
+
+    /**
+     * Render Value for the supplied MySQL input.
+     */
+    public function renderValue(mixed $value, ?ColumnDeclaration $type = null): string
+    {
+        if ($value === null) {
+            return 'NULL';
+        }
+
+        if ($type === null && is_bool($value)) {
+            return $value ? 'TRUE' : 'FALSE';
+        }
+
+        if ($type === null && is_float($value)) {
+            return var_export($value, true);
+        }
+
+        if ($type === null && $value instanceof Stringable) {
+            return (string) $value;
+        }
+
+        $resolvedType = $type ?? (new ScalarExpression())->inferType($value);
+        if ($resolvedType->family === ColumnTypeFamily::INTEGER && in_array(strtoupper($resolvedType->nativeType), ['YEAR', 'YEAR(4)'], true)) {
+            $resolvedType = new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INT');
+        }
+        $expression = (new ScalarExpression())->renderExpression($value, $resolvedType, $type !== null);
+
+        return $this->castRenderer->renderCast($expression, $resolvedType);
+    }
+
+}
