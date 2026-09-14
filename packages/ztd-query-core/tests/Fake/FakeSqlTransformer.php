@@ -4,14 +4,20 @@ declare(strict_types=1);
 
 namespace Tests\Fake;
 
+use RuntimeException;
+use Stringable;
 use ZtdQuery\Rewrite\SqlTransformer;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Schema\ColumnDeclaration;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * Fake SqlTransformer that injects CTEs for shadow tables.
  *
  * Generates simplified CTE syntax using double-quoted identifiers
  * and generic CAST expressions.
+ *
+ * @phpstan-import-type Row from TableDefinition
+ * @phpstan-import-type ShadowRows from SqlTransformer
  */
 final class FakeSqlTransformer implements SqlTransformer
 {
@@ -19,12 +25,22 @@ final class FakeSqlTransformer implements SqlTransformer
 
     private FakeIdentifierQuoter $quoter;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     */
     public function __construct()
     {
         $this->castRenderer = new FakeCastRenderer();
         $this->quoter = new FakeIdentifierQuoter();
     }
 
+    /**
+     * Transform.
+     *
+     * @param string $sql
+     * @return string
+     */
     public function transform(string $sql, array $tables): string
     {
         if ($tables === []) {
@@ -45,9 +61,11 @@ final class FakeSqlTransformer implements SqlTransformer
     }
 
     /**
-     * @param array{rows: array<int, array<string, mixed>>, columns: array<int, string>, columnTypes: array<string, ColumnType>} $tableData
+     * @param ShadowRows $tableData
+     *
+     * @throws RuntimeException When the fixture contains a value the fake renderer cannot encode.
      */
-    private function buildCte(string $tableName, array $tableData): string
+    public function buildCte(string $tableName, array $tableData): string
     {
         $quotedName = $this->quoter->quote($tableName);
         $columns = $tableData['columns'];
@@ -57,7 +75,7 @@ final class FakeSqlTransformer implements SqlTransformer
         if ($rows === []) {
             $nullSelects = [];
             foreach ($columns as $col) {
-                $type = $columnTypes[$col] ?? new ColumnType(\ZtdQuery\Schema\ColumnTypeFamily::TEXT, 'TEXT');
+                $type = $columnTypes[$col] ?? new ColumnDeclaration(\ZtdQuery\Schema\ColumnTypeFamily::TEXT, 'TEXT');
                 $nullSelects[] = $this->castRenderer->renderNullCast($type) . ' AS ' . $this->quoter->quote($col);
             }
 
@@ -65,23 +83,23 @@ final class FakeSqlTransformer implements SqlTransformer
         }
 
         $rowSelects = [];
-        foreach ($rows as $i => $row) {
+        foreach (array_values($rows) as $i => $row) {
             $colSelects = [];
             foreach ($columns as $col) {
                 $value = $row[$col] ?? null;
-                $type = $columnTypes[$col] ?? new ColumnType(\ZtdQuery\Schema\ColumnTypeFamily::TEXT, 'TEXT');
+                $type = $columnTypes[$col] ?? new ColumnDeclaration(\ZtdQuery\Schema\ColumnTypeFamily::TEXT, 'TEXT');
 
                 if ($value === null) {
                     $expr = $this->castRenderer->renderNullCast($type);
                 } else {
                     if (is_string($value)) {
                         $literal = "'" . str_replace("'", "''", $value) . "'";
-                    } elseif (is_int($value) || is_float($value)) {
-                        $literal = (string) $value;
                     } elseif (is_bool($value)) {
                         $literal = $value ? '1' : '0';
+                    } elseif (is_int($value) || is_float($value) || is_resource($value) || $value instanceof Stringable) {
+                        $literal = (string) $value;
                     } else {
-                        $literal = "'" . str_replace("'", "''", (string) json_encode($value)) . "'";
+                        throw new RuntimeException('The fake transformer requires a renderable SQL value.');
                     }
                     $expr = $this->castRenderer->renderCast($literal, $type);
                 }

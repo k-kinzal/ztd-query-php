@@ -1,7 +1,14 @@
 /tests/             export-ignore
 /build/             export-ignore
+/bench/             export-ignore
+/fuzz/              export-ignore
 .gitattributes      export-ignore
 .gitignore          export-ignore
+deptrac.yaml        export-ignore
 infection.json5     export-ignore
+loc.yaml            export-ignore
+phpbench.json.dist  export-ignore
+phpcs.xml.dist      export-ignore
 phpstan.neon        export-ignore
 phpunit.xml.dist    export-ignore
+tree.yaml           export-ignore

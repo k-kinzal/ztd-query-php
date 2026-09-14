@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Rewrite;
 
+use Override;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use Tests\Contract\TransformerContractTest;
 use Tests\Fake\FakeSqlTransformer;
@@ -12,17 +13,17 @@ use ZtdQuery\Rewrite\SqlTransformer;
 #[CoversNothing]
 final class SqlTransformerTest extends TransformerContractTest
 {
-    protected function createTransformer(): SqlTransformer
+    public function createTransformer(): SqlTransformer
     {
         return new FakeSqlTransformer();
     }
 
-    protected function selectSql(): string
+    public function selectSql(): string
     {
         return 'SELECT * FROM users WHERE id = 1';
     }
 
-    public function testViewContextIsRenderedAsCte(): void
+    public function testTransformViewContextIsRenderedAsCte(): void
     {
         $result = $this->createTransformer()->transform(
             'SELECT * FROM active_users',
@@ -35,14 +36,14 @@ final class SqlTransformerTest extends TransformerContractTest
         );
     }
 
-    #[\Override]
-    protected function nativeIntegerType(): string
+    #[Override]
+    public function nativeIntegerType(): string
     {
         return 'INTEGER';
     }
 
-    #[\Override]
-    protected function nativeStringType(): string
+    #[Override]
+    public function nativeStringType(): string
     {
         return 'TEXT';
     }

@@ -7,6 +7,7 @@ namespace Tests\Unit\Shadow;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use stdClass;
 use ZtdQuery\Exception\MissingPrimaryKeyException;
 use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Shadow\ShadowTableState;
@@ -14,9 +15,11 @@ use ZtdQuery\Shadow\ShadowTableState;
 #[CoversClass(ShadowStore::class)]
 #[UsesClass(MissingPrimaryKeyException::class)]
 #[UsesClass(ShadowTableState::class)]
+#[UsesClass(\ZtdQuery\Shadow\Row\RowMatch::class)]
+#[UsesClass(\ZtdQuery\Schema\RowSet::class)]
 class ShadowStoreTest extends TestCase
 {
-    public function testSnapshotRestoreIncludesRowsAndInitializedPresence(): void
+    public function testRestoreSnapshotRestoreSnapshotRestoreIncludesRowsAndInitializedPresence(): void
     {
         $store = new ShadowStore();
         $store->set('users', [['id' => 1]]);
@@ -187,4 +190,53 @@ class ShadowStoreTest extends TestCase
 
         self::assertSame([['id' => 1, 'name' => 'Alice']], $store->get('users'));
     }
+
+    public function testSetPreservesTheCallersSparseRowKeys(): void
+    {
+        $store = new ShadowStore();
+
+        $store->set('order', [4 => ['id' => 1], 9 => ['id' => 2]]);
+
+        self::assertSame([4 => ['id' => 1], 9 => ['id' => 2]], $store->get('order'));
+    }
+
+    public function testSnapshotIsARecordOfTheRowsRatherThanAViewOfThem(): void
+    {
+        $store = new ShadowStore();
+        $store->set('order', [['id' => 1]]);
+
+        $snapshot = $store->snapshot();
+        $store->set('order', []);
+
+        self::assertSame([['id' => 1]], $snapshot->get('order'));
+    }
+
+    public function testUpdateIdentifiedWritesTheRowTheOldKeyPointsAt(): void
+    {
+        $store = new ShadowStore();
+        $store->set('order', [['id' => 1, 'total' => 100]]);
+
+        $store->updateIdentified(
+            'order',
+            [['identity' => ['id' => 1], 'row' => ['id' => 2, 'total' => 200]]],
+            ['id'],
+        );
+
+        self::assertSame([['id' => 2, 'total' => 200]], $store->get('order'));
+    }
+    public function testSnapshotPreservesOpaqueValuesAndSparseKeysThroughUpdates(): void
+    {
+        $payload = new stdClass();
+        $rows = [7 => ['id' => 1, 'payload' => ['object' => $payload]]];
+        $store = new ShadowStore();
+        $store->set('users', $rows);
+        $snapshot = $store->snapshot();
+
+        $store->update('users', [['id' => 1, 'payload' => null]], ['id']);
+
+        self::assertSame([7 => ['id' => 1, 'payload' => null]], $store->get('users'));
+        $store->restore($snapshot);
+        self::assertSame($rows, $store->get('users'));
+    }
+
 }

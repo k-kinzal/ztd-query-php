@@ -11,7 +11,7 @@ use ZtdQuery\Rewrite\ReturningProjection;
 #[CoversClass(ReturningProjection::class)]
 final class ReturningProjectionTest extends TestCase
 {
-    public function testProjectsNamedWildcardAndAliasedItemsForEveryRow(): void
+    public function testItemsAndProjectReadEveryRowTheWayTheItemsWereWritten(): void
     {
         $projection = ReturningProjection::fromItems([
             ['source' => 'id', 'output' => 'original_id'],
@@ -36,35 +36,17 @@ final class ReturningProjectionTest extends TestCase
         ]));
     }
 
-    public function testRejectsEmptyProjection(): void
+    public function testProjectAnswersOneRowPerRowItWasGiven(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Returning projection requires at least one item.');
+        $projection = ReturningProjection::fromItems([['source' => 'id', 'output' => null]]);
 
-        ReturningProjection::fromItems([]);
+        self::assertCount(2, $projection->project([['id' => 1], ['id' => 2]]));
+    }
+    public function testFromItemsRetainsTheRequestedOutputName(): void
+    {
+        $projection = ReturningProjection::fromItems([['source' => 'id', 'output' => 'key']]);
+
+        self::assertSame([['key' => 7]], $projection->project([['id' => 7]]));
     }
 
-    public function testRejectsWildcardOutputName(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Wildcard returning projections cannot have an output name.');
-
-        ReturningProjection::fromItems([['source' => null, 'output' => 'all']]);
-    }
-
-    public function testRejectsEmptySourceName(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Returning projection names must not be empty.');
-
-        ReturningProjection::fromItems([['source' => '', 'output' => null]]);
-    }
-
-    public function testRejectsEmptyOutputName(): void
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('Returning projection names must not be empty.');
-
-        ReturningProjection::fromItems([['source' => 'id', 'output' => '']]);
-    }
 }

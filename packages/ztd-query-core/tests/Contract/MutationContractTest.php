@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Tests\Contract;
 
 use PHPUnit\Framework\TestCase;
-use ZtdQuery\Shadow\Mutation\DeleteMutation;
-use ZtdQuery\Shadow\Mutation\InsertMutation;
-use ZtdQuery\Shadow\Mutation\TruncateMutation;
-use ZtdQuery\Shadow\Mutation\UpdateMutation;
+use ZtdQuery\Schema\TableDefinition;
+use ZtdQuery\Shadow\Mutation\Row\DeleteMutation;
+use ZtdQuery\Shadow\Mutation\Row\InsertMutation;
+use ZtdQuery\Shadow\Mutation\Row\UpdateMutation;
+use ZtdQuery\Shadow\Mutation\ShadowMutation;
+use ZtdQuery\Shadow\Mutation\Table\TruncateMutation;
 use ZtdQuery\Shadow\ShadowStore;
 
 /**
@@ -16,34 +18,37 @@ use ZtdQuery\Shadow\ShadowStore;
  *
  * Tests universal mutation properties that must hold for any platform.
  * Enforces contracts defined in quality-standards.md Section 1.2 and properties P-SM-1 through P-SM-6.
+ *
+ * @phpstan-import-type Row from TableDefinition
  */
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Schema\RowSet::class)]
 abstract class MutationContractTest extends TestCase
 {
     /**
      * Create initial rows to seed the shadow store for testing.
      *
-     * @return array<int, array<string, mixed>>
+     * @return list<Row>
      */
     abstract protected function initialRows(): array;
 
     /**
      * Create rows to insert for testing.
      *
-     * @return array<int, array<string, mixed>>
+     * @return list<Row>
      */
     abstract protected function insertRows(): array;
 
     /**
      * Create rows representing a delete result set (rows that were deleted).
      *
-     * @return array<int, array<string, mixed>>
+     * @return list<Row>
      */
     abstract protected function deleteRows(): array;
 
     /**
      * Create rows representing an update result set (rows after update).
      *
-     * @return array<int, array<string, mixed>>
+     * @return list<Row>
      */
     abstract protected function updateRows(): array;
 
@@ -119,7 +124,7 @@ abstract class MutationContractTest extends TestCase
         $countBefore = count($store->get($this->tableName()));
 
         $updateRows = $this->updateRows();
-        $mutation = new UpdateMutation($this->tableName(), $this->primaryKeys());
+        $mutation = new UpdateMutation($this->tableName(), array_values($this->primaryKeys()));
         $mutation->apply($store, $updateRows);
 
         $countAfter = count($store->get($this->tableName()));
@@ -280,7 +285,7 @@ abstract class MutationContractTest extends TestCase
         $store = new ShadowStore();
         $store->set($this->tableName(), []);
 
-        $mutation = new UpdateMutation($this->tableName(), $this->primaryKeys());
+        $mutation = new UpdateMutation($this->tableName(), array_values($this->primaryKeys()));
         $mutation->apply($store, $this->updateRows());
 
         self::assertSame(0, count($store->get($this->tableName())));
