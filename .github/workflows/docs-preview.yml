@@ -103,7 +103,7 @@ jobs:
         run: composer --working-dir=packages/ztd-query-core test -- --coverage-xml build/coverage-xml
 
       - name: Generate mysqli adapter coverage
-        run: composer --working-dir=packages/ztd-query-mysqli-adapter test:coverage
+        run: composer --working-dir=packages/ztd-query-mysqli-adapter run-script --timeout=1800 test -- --coverage-xml build/coverage-xml
 
       - name: Generate the documentation in diff mode
         env:

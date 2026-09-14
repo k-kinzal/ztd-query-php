@@ -13,6 +13,7 @@ use Override;
 use ReflectionClass;
 use ReturnTypeWillChange;
 use SensitiveParameter;
+use ZtdQuery\Adapter\Mysqli\Driver\MysqliConnection;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Platform\MySql\MySqlSessionFactory;

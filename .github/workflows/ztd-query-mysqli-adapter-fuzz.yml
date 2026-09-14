@@ -44,12 +44,12 @@ jobs:
       matrix:
         mysql: ${{ inputs.mysql_version && inputs.mysql_version != 'all' && fromJson(format('["{0}"]', inputs.mysql_version)) || fromJson('["8.0.44", "8.4.7"]') }}
         target:
-          - {script: fuzz:robustness, corpus: robustness-execute}
-          - {script: fuzz:correctness:select, corpus: correctness-select}
-          - {script: fuzz:correctness:insert, corpus: correctness-insert}
-          - {script: fuzz:correctness:replace, corpus: correctness-replace}
-          - {script: fuzz:correctness:update, corpus: correctness-update}
-          - {script: fuzz:correctness:delete, corpus: correctness-delete}
+          - {script: fuzz_robustness_execute.php, corpus: robustness-execute}
+          - {script: fuzz_correctness_select.php, corpus: correctness-select}
+          - {script: fuzz_correctness_insert.php, corpus: correctness-insert}
+          - {script: fuzz_correctness_replace.php, corpus: correctness-replace}
+          - {script: fuzz_correctness_update.php, corpus: correctness-update}
+          - {script: fuzz_correctness_delete.php, corpus: correctness-delete}
     env:
       MYSQL_VERSION: ${{ matrix.mysql }}
     steps:
@@ -89,7 +89,7 @@ jobs:
           set -euo pipefail
           [[ "$MAX_RUNS" =~ ^[1-9][0-9]*$ ]] || { echo 'max_runs must be a positive integer' >&2; exit 1; }
           mkdir -p "fuzz/corpus/$CORPUS"
-          composer "$FUZZ_SCRIPT" -- --max-runs="$MAX_RUNS"
+          vendor/bin/php-fuzzer fuzz "fuzz/$FUZZ_SCRIPT" "fuzz/corpus/$CORPUS/" --timeout=15 --max-runs="$MAX_RUNS"
           if compgen -G 'crash-*' > /dev/null; then
             echo 'Fuzzing produced crash artifacts; replay the uploaded inputs.' >&2
             exit 1

@@ -8,3 +8,4 @@
 /.deptrac.cache
 /fuzz/corpus/
 /crash-*
+/minimized-*

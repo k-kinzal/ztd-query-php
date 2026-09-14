@@ -10,7 +10,7 @@ use mysqli_result;
 use PhpBench\Attributes as Bench;
 use RuntimeException;
 use Testcontainers\Testcontainers;
-use ZtdQuery\Adapter\Mysqli\MysqliResultColumnExtractor;
+use ZtdQuery\Adapter\Mysqli\Driver\MysqliResultColumnExtractor;
 use ZtdQuery\Platform\MySql\MySqlResultColumnTypeResolver;
 
 /**

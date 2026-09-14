@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit;
+namespace Tests\Unit\Driver;
 
 use Containers\MySql80Container;
 use Containers\MySql84Container;
@@ -13,8 +13,8 @@ use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Testcontainers\Testcontainers;
-use ZtdQuery\Adapter\Mysqli\MysqliResultColumnExtractor;
-use ZtdQuery\Adapter\Mysqli\MysqliResultStatement;
+use ZtdQuery\Adapter\Mysqli\Driver\MysqliResultColumnExtractor;
+use ZtdQuery\Adapter\Mysqli\Driver\MysqliResultStatement;
 use ZtdQuery\Platform\ResultColumnTypeResolver;
 use ZtdQuery\Schema\ColumnType;
 use ZtdQuery\Schema\ColumnTypeFamily;

@@ -72,7 +72,7 @@ jobs:
           composer validate --strict --no-check-publish
           composer check-platform-reqs --no-dev
       - name: Unit, integration and documentation examples
-        run: composer test
+        run: composer run-script --timeout=1800 test
 
   lint:
     name: Static quality gates
@@ -139,14 +139,7 @@ jobs:
         run: |
           composer validate --strict --no-check-publish
           composer check-platform-reqs
-      - run: composer bench
-      - name: Upload benchmark measurements
-        if: always()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: mysqli-benchmarks
-          path: packages/ztd-query-mysqli-adapter/build/phpbench/
-          if-no-files-found: error
+      - run: composer run-script --timeout=1200 bench
 
   mutation:
     name: Mutation testing
@@ -176,7 +169,7 @@ jobs:
           composer validate --strict --no-check-publish
           composer check-platform-reqs --no-dev
       - name: Run tests and generate mutation coverage
-        run: composer test:coverage -- --testsuite=unit,integration
+        run: composer run-script --timeout=1800 test -- --testsuite=unit,integration --coverage-xml build/coverage-xml --log-junit build/junit.xml
       - name: Mutation testing on changed lines
         if: github.event_name == 'pull_request'
         run: >-

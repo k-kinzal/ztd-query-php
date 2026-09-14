@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Adapter\Mysqli;
+namespace ZtdQuery\Adapter\Mysqli\Driver;
 
 use mysqli;
 use ZtdQuery\Connection\ConnectionInterface;

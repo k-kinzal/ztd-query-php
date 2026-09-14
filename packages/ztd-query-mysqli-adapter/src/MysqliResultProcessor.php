@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ZtdQuery\Adapter\Mysqli;
 
 use mysqli_result;
+use ZtdQuery\Adapter\Mysqli\Driver\MysqliResultStatement;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\ExecuteResult;
 use ZtdQuery\Rewrite\RewritePlan;

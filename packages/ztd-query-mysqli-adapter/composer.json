@@ -10,7 +10,7 @@
         "k-kinzal/ztd-query-mysql": "dev-main"
     },
     "require-dev": {
-        "brianium/paratest": "^7",
+        "brianium/paratest": "^7.3",
         "deptrac/deptrac": "^3.0",
         "friendsofphp/php-cs-fixer": "^3.95.24",
         "k-kinzal/php-ai-toolkit": "dev-main",
@@ -69,10 +69,7 @@
     ],
     "autoload": {
         "psr-4": {
-            "ZtdQuery\\Adapter\\Mysqli\\": [
-                "src/",
-                "src/Driver/"
-            ]
+            "ZtdQuery\\Adapter\\Mysqli\\": "src/"
         }
     },
     "autoload-dev": {
@@ -80,33 +77,20 @@
             "Tests\\": "tests/",
             "Fuzz\\": "fuzz/",
             "Bench\\": "bench/",
-            "Tests\\Unit\\": [
-                "tests/Unit/",
-                "tests/Unit/Driver/"
-            ],
             "Containers\\": "containers/"
         }
     },
     "scripts": {
-        "test": [
-            "Composer\\Config::disableProcessTimeout",
-            "paratest --processes=4"
-        ],
-        "test:unit": [
-            "Composer\\Config::disableProcessTimeout",
-            "phpunit --testsuite unit"
-        ],
-        "test:integration": [
-            "Composer\\Config::disableProcessTimeout",
-            "phpunit --testsuite integration"
-        ],
+        "test": "paratest --processes=auto",
+        "test:unit": "phpunit --testsuite unit",
+        "test:integration": "phpunit --testsuite integration",
         "lint": [
             "@format:check",
             "@phpstan",
-            "@compat",
             "@loc-guard",
             "@tree-guard",
-            "@deptrac"
+            "@deptrac",
+            "@compat"
         ],
         "format": "php-cs-fixer fix --allow-risky=yes",
         "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
@@ -118,38 +102,13 @@
             "@fuzz:correctness:update",
             "@fuzz:correctness:delete"
         ],
-        "fuzz:robustness": [
-            "Composer\\Config::disableProcessTimeout",
-            "php-fuzzer fuzz fuzz/fuzz_robustness_execute.php fuzz/corpus/robustness-execute --timeout=15"
-        ],
-        "fuzz:correctness:select": [
-            "Composer\\Config::disableProcessTimeout",
-            "php-fuzzer fuzz fuzz/fuzz_correctness_select.php fuzz/corpus/correctness-select --timeout=15"
-        ],
-        "fuzz:correctness:insert": [
-            "Composer\\Config::disableProcessTimeout",
-            "php-fuzzer fuzz fuzz/fuzz_correctness_insert.php fuzz/corpus/correctness-insert --timeout=15"
-        ],
-        "fuzz:correctness:replace": [
-            "Composer\\Config::disableProcessTimeout",
-            "php-fuzzer fuzz fuzz/fuzz_correctness_replace.php fuzz/corpus/correctness-replace --timeout=15"
-        ],
-        "fuzz:correctness:update": [
-            "Composer\\Config::disableProcessTimeout",
-            "php-fuzzer fuzz fuzz/fuzz_correctness_update.php fuzz/corpus/correctness-update --timeout=15"
-        ],
-        "fuzz:correctness:delete": [
-            "Composer\\Config::disableProcessTimeout",
-            "php-fuzzer fuzz fuzz/fuzz_correctness_delete.php fuzz/corpus/correctness-delete --timeout=15"
-        ],
-        "test:coverage": [
-            "Composer\\Config::disableProcessTimeout",
-            "paratest --processes=4 --coverage-xml build/coverage-xml --log-junit build/junit.xml"
-        ],
-        "doctest": [
-            "Composer\\Config::disableProcessTimeout",
-            "phpunit --testsuite doctest"
-        ],
+        "fuzz:robustness": "mkdir -p fuzz/corpus/robustness-execute && php-fuzzer fuzz fuzz/fuzz_robustness_execute.php fuzz/corpus/robustness-execute/",
+        "fuzz:correctness:select": "mkdir -p fuzz/corpus/correctness-select && php-fuzzer fuzz fuzz/fuzz_correctness_select.php fuzz/corpus/correctness-select/",
+        "fuzz:correctness:insert": "mkdir -p fuzz/corpus/correctness-insert && php-fuzzer fuzz fuzz/fuzz_correctness_insert.php fuzz/corpus/correctness-insert/",
+        "fuzz:correctness:replace": "mkdir -p fuzz/corpus/correctness-replace && php-fuzzer fuzz fuzz/fuzz_correctness_replace.php fuzz/corpus/correctness-replace/",
+        "fuzz:correctness:update": "mkdir -p fuzz/corpus/correctness-update && php-fuzzer fuzz fuzz/fuzz_correctness_update.php fuzz/corpus/correctness-update/",
+        "fuzz:correctness:delete": "mkdir -p fuzz/corpus/correctness-delete && php-fuzzer fuzz fuzz/fuzz_correctness_delete.php fuzz/corpus/correctness-delete/",
+        "doctest": "phpunit --testsuite doctest",
         "phpstan": "phpstan analyse --memory-limit=512M",
         "compat": "phpcs",
         "loc-guard": "loc-guard --config=loc.yaml",
@@ -162,34 +121,22 @@
             "deptrac debug:unassigned --config-file=deptrac.yaml",
             "deptrac debug:unused --config-file=deptrac.yaml"
         ],
-        "bench": [
-            "Composer\\Config::disableProcessTimeout",
-            "phpbench run --report=timing --store"
-        ],
-        "bench:quick": [
-            "Composer\\Config::disableProcessTimeout",
-            "phpbench run --report=timing --warmup=1 --iterations=3 --retry-threshold=10 --store"
-        ],
+        "bench": "phpbench run --report=aggregate",
+        "bench:quick": "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10",
         "bench:full": "@bench",
-        "docgen": "cd ../.. && packages/ztd-query-mysqli-adapter/vendor/bin/docgen --packages=packages/ztd-query-mysqli-adapter --deptrac=\"$PWD/packages/ztd-query-mysqli-adapter/deptrac.yaml\" --output=packages/ztd-query-mysqli-adapter/build/docs --cache-dir=packages/ztd-query-mysqli-adapter/build/docgen-cache --title=k-kinzal/ztd-query-mysqli-adapter --coverage=packages/ztd-query-mysqli-adapter/build/coverage-xml",
-        "docgen:serve": [
-            "Composer\\Config::disableProcessTimeout",
-            "@docgen --serve"
-        ],
-        "docgen:diff": [
-            "Composer\\Config::disableProcessTimeout",
-            "@docgen --diff=origin/main --serve"
-        ],
+        "docgen": "cd ../.. && packages/ztd-query-mysqli-adapter/vendor/bin/docgen --packages=packages/ztd-query-mysqli-adapter --deptrac=\"$PWD/packages/ztd-query-mysqli-adapter/deptrac.yaml\" --output=packages/ztd-query-mysqli-adapter/build/docs --cache-dir=packages/ztd-query-mysqli-adapter/build/docgen-cache --title=k-kinzal/ztd-query-mysqli-adapter",
+        "docgen:serve": "@docgen --serve",
+        "docgen:diff": "@docgen --diff=origin/main --serve",
         "docgen:fresh": "@docgen --no-cache"
     },
     "config": {
         "allow-plugins": {
             "dealerdirect/phpcodesniffer-composer-installer": true
         },
-        "sort-packages": true,
         "platform": {
             "php": "8.1.0"
-        }
+        },
+        "sort-packages": true
     },
     "support": {
         "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-mysqli-adapter",
