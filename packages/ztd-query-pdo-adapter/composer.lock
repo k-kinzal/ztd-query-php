@@ -1825,62 +1825,67 @@
             "dist": {
                 "type": "path",
                 "url": "../ztd-query-postgres",
-                "reference": "91db44375ea2e86ab2f8eb2906ed648bda324ae4"
+                "reference": "9821cdf4122458cd5407bdb88d26232053ffb0bc"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "@dev",
                 "php": "^8.1"
             },
             "require-dev": {
-                "brianium/paratest": "^6.11 || ^7",
-                "friendsofphp/php-cs-fixer": "^3.92",
-                "giorgiosironi/eris": "^1.0",
-                "infection/infection": "^0.28 || ^0.29 || ^0.30 || ^0.31 || ^0.32 || ^0.34.1",
-                "k-kinzal/phpstan-custom-rules": "@dev",
+                "brianium/paratest": "^7.3",
+                "deptrac/deptrac": "^3.0",
+                "friendsofphp/php-cs-fixer": "^3.95.24",
+                "k-kinzal/php-ai-toolkit": "dev-main",
                 "k-kinzal/sql-faker": "@dev",
                 "nikic/php-fuzzer": "^0.0.11",
                 "phpbench/phpbench": "^1.4",
+                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
                 "phpstan/phpstan": "^2.1",
-                "phpstan/phpstan-strict-rules": "^2.0",
-                "phpunit/phpunit": "^10.5 || ^11 || ^12 || >=13.0 <13.3"
+                "phpunit/phpunit": "^10.5",
+                "squizlabs/php_codesniffer": "^4.0.4"
             },
             "type": "library",
             "autoload": {
                 "psr-4": {
                     "ZtdQuery\\Platform\\Postgres\\": "src/"
-                }
+                },
+                "files": [
+                    "src/Compatibility/ClassAliases.php"
+                ]
             },
             "autoload-dev": {
                 "psr-4": {
-                    "Tests\\": [
-                        "tests/",
-                        "../ztd-query-core/tests/"
-                    ],
-                    "Fuzz\\": "fuzz/"
+                    "Tests\\": "tests/",
+                    "Fuzz\\": "fuzz/",
+                    "Bench\\": "bench/"
                 }
             },
             "scripts": {
                 "bench": [
-                    "@bench:quick"
+                    "phpbench run --report=aggregate"
                 ],
                 "bench:quick": [
-                    "phpbench run bench --bootstrap=vendor/autoload.php --report=aggregate --php-config='{\"memory_limit\":\"512M\"}' --warmup=1 --iterations=3 --revs=25"
+                    "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
                 ],
                 "bench:full": [
-                    "phpbench run bench --bootstrap=vendor/autoload.php --report=aggregate --php-config='{\"memory_limit\":\"512M\"}' --warmup=2 --iterations=8 --revs=100"
+                    "@bench"
                 ],
                 "test": [
                     "paratest --processes=auto"
                 ],
                 "test:unit": [
-                    "phpunit tests/Unit/"
+                    "phpunit --testsuite unit"
                 ],
                 "test:fuzz": [
                     "phpunit fuzz/"
                 ],
                 "lint": [
                     "@format:check",
-                    "phpstan analyse --memory-limit=512M"
+                    "@phpstan",
+                    "@compat",
+                    "@loc-guard",
+                    "@tree-guard",
+                    "@deptrac"
                 ],
                 "format": [
                     "php-cs-fixer fix --allow-risky=yes"
@@ -1902,14 +1907,50 @@
                 "fuzz:robustness:rewrite": [
                     "php-fuzzer fuzz fuzz/fuzz_robustness_rewrite.php fuzz/corpus/robustness-rewrite/"
                 ],
-                "infection": [
-                    "infection --threads=max --show-mutations --no-progress"
+                "doctest": [
+                    "phpunit --testsuite doctest"
+                ],
+                "phpstan": [
+                    "phpstan analyse --memory-limit=512M"
+                ],
+                "compat": [
+                    "phpcs"
+                ],
+                "loc-guard": [
+                    "loc-guard --config=loc.yaml"
+                ],
+                "tree-guard": [
+                    "tree-guard --config=tree.yaml"
+                ],
+                "deptrac": [
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered",
+                    "deptrac debug:unassigned --config-file=deptrac.yaml"
+                ],
+                "deptrac:debug": [
+                    "deptrac debug:unassigned --config-file=deptrac.yaml",
+                    "deptrac debug:unused --config-file=deptrac.yaml"
+                ],
+                "docgen": [
+                    "cd ../.. && packages/ztd-query-postgres/vendor/bin/docgen --packages=packages/ztd-query-postgres --deptrac=\"$(pwd)/packages/ztd-query-postgres/deptrac.yaml\" --exclude=packages/ztd-query-postgres/src/Compatibility/ClassAliases.php --exclude='packages/ztd-query-postgres/../ztd-query-core/tests/*' --output=packages/ztd-query-postgres/build/docs --cache-dir=packages/ztd-query-postgres/build/docgen-cache --title=k-kinzal/ztd-query-postgres"
+                ],
+                "docgen:serve": [
+                    "@docgen --serve"
+                ],
+                "docgen:diff": [
+                    "@docgen --diff=origin/main --serve"
+                ],
+                "docgen:fresh": [
+                    "@docgen --no-cache"
                 ]
             },
             "license": [
                 "MIT"
             ],
             "description": "PostgreSQL platform support for ZTD Query",
+            "support": {
+                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-postgres",
+                "docs": "https://k-kinzal.github.io/ztd-query-php/ztd-query-postgres/k-kinzal/ztd-query-postgres/"
+            },
             "transport-options": {
                 "relative": true
             }
@@ -1920,7 +1961,7 @@
             "dist": {
                 "type": "path",
                 "url": "../ztd-query-sqlite",
-                "reference": "eb0dc999bae8b46104a53284957d26efa2be2055"
+                "reference": "fd2a686364914505c6e02b897c4c0facc1399e23"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "@dev",
@@ -1928,47 +1969,53 @@
             },
             "require-dev": {
                 "brianium/paratest": "^6.11 || ^7",
-                "friendsofphp/php-cs-fixer": "^3.92",
-                "infection/infection": "^0.28 || ^0.29 || ^0.30 || ^0.31 || ^0.32 || ^0.34.1",
-                "k-kinzal/phpstan-custom-rules": "@dev",
+                "deptrac/deptrac": "^3.0",
+                "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/php-ai-toolkit": "dev-main",
                 "k-kinzal/sql-faker": "@dev",
                 "nikic/php-fuzzer": "^0.0.11",
                 "phpbench/phpbench": "^1.4",
+                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
                 "phpstan/phpstan": "^2.1",
-                "phpstan/phpstan-strict-rules": "^2.0",
-                "phpunit/phpunit": "^10.5 || ^11 || ^12 || >=13.0 <13.3"
+                "phpunit/phpunit": "^10.5",
+                "squizlabs/php_codesniffer": "^4.0.4"
             },
             "type": "library",
             "autoload": {
                 "psr-4": {
                     "ZtdQuery\\Platform\\Sqlite\\": "src/"
-                }
+                },
+                "files": [
+                    "src/Compatibility/ClassAliases.php"
+                ]
             },
             "autoload-dev": {
                 "psr-4": {
-                    "Tests\\": [
-                        "tests/",
-                        "../ztd-query-core/tests/"
-                    ],
-                    "Fuzz\\": "fuzz/"
+                    "Tests\\": "tests/",
+                    "Fuzz\\": "fuzz/",
+                    "Bench\\": "bench/"
                 }
             },
             "scripts": {
                 "bench": [
-                    "@bench:quick"
+                    "phpbench run --report=aggregate"
                 ],
                 "bench:quick": [
-                    "phpbench run bench --bootstrap=vendor/autoload.php --report=aggregate --php-config='{\"memory_limit\":\"512M\"}' --warmup=1 --iterations=3 --revs=25"
+                    "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
                 ],
                 "bench:full": [
-                    "phpbench run bench --bootstrap=vendor/autoload.php --report=aggregate --php-config='{\"memory_limit\":\"512M\"}' --warmup=2 --iterations=8 --revs=100"
+                    "@bench"
                 ],
                 "test": [
                     "paratest --processes=auto"
                 ],
                 "lint": [
                     "@format:check",
-                    "phpstan analyse --memory-limit=512M"
+                    "@phpstan",
+                    "@loc-guard",
+                    "@tree-guard",
+                    "@deptrac",
+                    "@compat"
                 ],
                 "format": [
                     "php-cs-fixer fix --allow-risky=yes"
@@ -1977,33 +2024,76 @@
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
                 ],
                 "fuzz": [
-                    "@fuzz:robustness",
                     "@fuzz:robustness:classify",
-                    "@fuzz:robustness:rewrite"
+                    "@fuzz:robustness:rewrite",
+                    "@fuzz:semantics"
                 ],
                 "fuzz:robustness": [
-                    "php-fuzzer fuzz fuzz/fuzz_robustness.php fuzz/corpus/robustness/"
+                    "@fuzz:semantics"
                 ],
                 "fuzz:robustness:classify": [
+                    "@php -r \"is_dir('fuzz/corpus/robustness-classify') || mkdir('fuzz/corpus/robustness-classify', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_robustness_classify.php fuzz/corpus/robustness-classify/"
                 ],
                 "fuzz:robustness:rewrite": [
+                    "@php -r \"is_dir('fuzz/corpus/robustness-rewrite') || mkdir('fuzz/corpus/robustness-rewrite', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_robustness_rewrite.php fuzz/corpus/robustness-rewrite/"
                 ],
-                "infection": [
-                    "infection --threads=max --show-mutations --no-progress"
-                ],
                 "test:unit": [
-                    "phpunit tests/Unit/"
+                    "phpunit --testsuite unit"
                 ],
-                "test:fuzz": [
-                    "phpunit fuzz/"
+                "doctest": [
+                    "phpunit --testsuite doctest"
+                ],
+                "phpstan": [
+                    "phpstan analyse --memory-limit=512M"
+                ],
+                "compat": [
+                    "phpcs"
+                ],
+                "loc-guard": [
+                    "loc-guard --config=loc.yaml"
+                ],
+                "tree-guard": [
+                    "tree-guard --config=tree.yaml"
+                ],
+                "deptrac": [
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered",
+                    "deptrac debug:unassigned --config-file=deptrac.yaml"
+                ],
+                "deptrac:debug": [
+                    "deptrac debug:unassigned --config-file=deptrac.yaml",
+                    "deptrac debug:unused --config-file=deptrac.yaml"
+                ],
+                "docgen": [
+                    "cd ../.. && packages/ztd-query-sqlite/vendor/bin/docgen --packages=packages/ztd-query-sqlite --exclude=packages/ztd-query-sqlite/src/Compatibility/ClassAliases.php --deptrac=\"$PWD/packages/ztd-query-sqlite/deptrac.yaml\" --output=packages/ztd-query-sqlite/build/docs --cache-dir=packages/ztd-query-sqlite/build/docgen-cache --title=k-kinzal/ztd-query-sqlite --coverage=packages/ztd-query-sqlite/build/coverage-xml"
+                ],
+                "docgen:serve": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --serve"
+                ],
+                "docgen:diff": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --diff=origin/main --serve"
+                ],
+                "docgen:fresh": [
+                    "@docgen --no-cache"
+                ],
+                "fuzz:semantics": [
+                    "@php -r \"is_dir('fuzz/corpus/semantics') || mkdir('fuzz/corpus/semantics', 0777, true);\" --",
+                    "php-fuzzer fuzz fuzz/fuzz_semantics.php fuzz/corpus/semantics/"
+                ],
+                "test:coverage": [
+                    "phpunit --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
                 ]
             },
             "license": [
                 "MIT"
             ],
             "description": "SQLite platform support for ZTD Query",
+            "support": {
+                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-sqlite"
+            },
             "transport-options": {
                 "relative": true
             }
