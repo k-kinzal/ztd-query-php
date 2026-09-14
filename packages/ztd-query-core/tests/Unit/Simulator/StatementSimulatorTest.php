@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Simulator;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use Tests\Fake\ExceptionThrowingRewriter;
 use Tests\Fake\FixedRewriter;
 use ZtdQuery\Config\ZtdConfig;
@@ -15,18 +19,16 @@ use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Rewrite\RewritePlan;
-use ZtdQuery\Schema\CandidateKeySet;
+use ZtdQuery\RewriteRefusal;
+use ZtdQuery\Schema\Key\CandidateKeySet;
 use ZtdQuery\Schema\TableDefinitionRegistry;
-use ZtdQuery\Shadow\Mutation\InsertMutation;
+use ZtdQuery\Session;
 use ZtdQuery\Shadow\Mutation\MutationImpact;
+use ZtdQuery\Shadow\Mutation\Row\InsertMutation;
 use ZtdQuery\Shadow\ReferentialIntegrityEnforcer;
 use ZtdQuery\Shadow\ShadowStore;
-use ZtdQuery\Shadow\ShadowTransactionManager;
+use ZtdQuery\Shadow\ShadowTransactions;
 use ZtdQuery\Simulator\StatementSimulator;
-use ZtdQuery\Session;
-use PHPUnit\Framework\TestCase;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 
 #[UsesClass(ZtdConfig::class)]
 #[UsesClass(DatabaseException::class)]
@@ -39,10 +41,21 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(CandidateKeySet::class)]
 #[UsesClass(TableDefinitionRegistry::class)]
 #[UsesClass(ShadowStore::class)]
-#[UsesClass(ShadowTransactionManager::class)]
+#[UsesClass(ShadowTransactions::class)]
 #[UsesClass(ReferentialIntegrityEnforcer::class)]
 #[UsesClass(Session::class)]
 #[CoversClass(StatementSimulator::class)]
+#[UsesClass(\ZtdQuery\Shadow\ForeignKeyCascade::class)]
+#[UsesClass(\ZtdQuery\Shadow\ForeignKeyEnds::class)]
+#[UsesClass(\ZtdQuery\Shadow\ForeignKeyIntegrity::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\ConflictSearch::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\RowConstraints::class)]
+#[UsesClass(\ZtdQuery\Shadow\ParentKeyLookup::class)]
+#[UsesClass(\ZtdQuery\Shadow\Row\RowMultiset::class)]
+#[UsesClass(\ZtdQuery\Shadow\ShadowApplication::class)]
+#[UsesClass(\ZtdQuery\Shadow\TableTransitions::class)]
+#[UsesClass(RewriteRefusal::class)]
+#[UsesClass(\ZtdQuery\Schema\RowSet::class)]
 final class StatementSimulatorTest extends TestCase
 {
     public function testUnsupportedSqlThrows(): void
@@ -140,7 +153,7 @@ final class StatementSimulatorTest extends TestCase
         self::assertSame(2, $rows[0]['id']);
     }
 
-    public function testWriteStatementWithoutMutationThrows(): void
+    public function testSimulateRefusesAWriteThePlanCarriesNoMutationFor(): void
     {
         $shadowStore = new ShadowStore();
         $connection = static::createStub(ConnectionInterface::class);
@@ -153,7 +166,7 @@ final class StatementSimulatorTest extends TestCase
         );
         $simulator = new StatementSimulator($session);
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Missing shadow mutation');
 
         $simulator->simulate('UPDATE users SET name = \'Bob\' WHERE id = 1', fn () => false);

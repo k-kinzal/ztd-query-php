@@ -6,3 +6,11 @@ infection.json5     export-ignore
 phpstan.neon        export-ignore
 phpunit.xml.dist    export-ignore
 /fuzz/              export-ignore
+/bench/             export-ignore
+.php-cs-fixer.dist.php export-ignore
+composer.lock       export-ignore
+deptrac.yaml        export-ignore
+loc.yaml            export-ignore
+tree.yaml           export-ignore
+phpcs.xml.dist      export-ignore
+phpbench.json.dist  export-ignore

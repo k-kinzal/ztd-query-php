@@ -17,10 +17,12 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(TableSchema::class)]
 #[UsesClass(ColumnDefinition::class)]
 #[UsesClass(SchemaNotFoundException::class)]
+#[CoversClass(\SqlFixture\Schema\TableIdentifier::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaResolverInterface::class)]
 final class StaticSchemaResolverTest extends TestCase
 {
     #[Test]
-    public function resolvesARegisteredSchema(): void
+    public function testResolvesARegisteredSchema(): void
     {
         $schema = new TableSchema('order', ['id' => new ColumnDefinition('id', 'INT')]);
 
@@ -28,7 +30,7 @@ final class StaticSchemaResolverTest extends TestCase
     }
 
     #[Test]
-    public function resolvesIgnoringCaseQuotingAndSchemaQualifier(): void
+    public function testResolvesIgnoringCaseQuotingAndSchemaQualifier(): void
     {
         $schema = new TableSchema('Order', ['id' => new ColumnDefinition('id', 'INT')]);
         $resolver = new StaticSchemaResolver([$schema]);
@@ -38,7 +40,7 @@ final class StaticSchemaResolverTest extends TestCase
     }
 
     #[Test]
-    public function registerAddsAfterConstruction(): void
+    public function testRegisterAddsAfterConstruction(): void
     {
         $resolver = new StaticSchemaResolver();
         $resolver->register(new TableSchema('order', ['id' => new ColumnDefinition('id', 'INT')]));
@@ -47,7 +49,7 @@ final class StaticSchemaResolverTest extends TestCase
     }
 
     #[Test]
-    public function registerReplacesASchemaOfTheSameName(): void
+    public function testRegisterReplacesASchemaOfTheSameName(): void
     {
         $resolver = new StaticSchemaResolver([
             new TableSchema('order', ['id' => new ColumnDefinition('id', 'INT')]),
@@ -60,13 +62,13 @@ final class StaticSchemaResolverTest extends TestCase
     }
 
     #[Test]
-    public function hasReportsAnUnknownTable(): void
+    public function testHasReportsAnUnknownTable(): void
     {
         self::assertFalse((new StaticSchemaResolver())->has('order'));
     }
 
     #[Test]
-    public function tableNamesAreLowerCased(): void
+    public function testTableNamesAreLowerCased(): void
     {
         $resolver = new StaticSchemaResolver([
             new TableSchema('Order', ['id' => new ColumnDefinition('id', 'INT')]),
@@ -76,7 +78,7 @@ final class StaticSchemaResolverTest extends TestCase
     }
 
     #[Test]
-    public function resolveThrowsListingWhatIsKnown(): void
+    public function testResolveThrowsListingWhatIsKnown(): void
     {
         $resolver = new StaticSchemaResolver([
             new TableSchema('customer', ['id' => new ColumnDefinition('id', 'INT')]),

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ZtdQuery\Connection;
 
 use ZtdQuery\Platform\ResultColumnTypeResolver;
+use ZtdQuery\Schema\TableDefinition;
 
 /**
  * Minimal statement interface for ZTD layer.
@@ -12,13 +13,19 @@ use ZtdQuery\Platform\ResultColumnTypeResolver;
  * This interface defines the contract that all statement adapters must implement
  * to work with the ZTD session. It provides a driver-agnostic API for executing
  * prepared statements and fetching results.
+ *
+ * Rows retain the keys and opaque values supplied by the driver. The platform
+ * owns value interpretation and SQL encoding.
+ *
+ * @phpstan-import-type Row from TableDefinition
+ * @phpstan-import-type RowValue from TableDefinition
  */
 interface StatementInterface
 {
     /**
      * Execute the prepared statement.
      *
-     * @param array<int|string, mixed>|null $params Optional parameters to bind.
+     * @param array<int|string, RowValue>|null $params Optional parameters to bind.
      * @return bool True on success, false on failure.
      */
     public function execute(?array $params = null): bool;
@@ -26,7 +33,7 @@ interface StatementInterface
     /**
      * Fetch all rows as associative arrays.
      *
-     * @return array<int, array<string, mixed>> Array of associative arrays.
+     * @return array<int, Row> Array of associative arrays.
      */
     public function fetchAll(): array;
 

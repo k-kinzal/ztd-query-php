@@ -22,7 +22,6 @@ use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\SchemaNotFoundException;
 use SqlFixture\Schema\StaticSchemaResolver;
 use SqlFixture\Schema\TableSchema;
-use Tests\Fixture\Fixture\ShopSchemas;
 
 #[CoversClass(PlanSchemaValidator::class)]
 #[UsesClass(PlanSchemaException::class)]
@@ -37,12 +36,66 @@ use Tests\Fixture\Fixture\ShopSchemas;
 #[UsesClass(SchemaNotFoundException::class)]
 #[UsesClass(TableSchema::class)]
 #[UsesClass(ColumnDefinition::class)]
+#[CoversClass(\SqlFixture\Fixture\Validation\EndpointValidator::class)]
+#[UsesClass(\SqlFixture\Plan\PlanPrinter::class)]
+#[UsesClass(\SqlFixture\Plan\PlanSyntaxException::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaParseException::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaParserInterface::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaResolverInterface::class)]
+#[UsesClass(\SqlFixture\Schema\TableIdentifier::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\PlanStatements::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\RelationCursor::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\RelationReader::class)]
+#[UsesClass(\SqlFixture\Plan\PlanStructureException::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\PlanTables::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\RelationGroups::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\StatementPrinter::class)]
+#[UsesClass(\SqlFixture\Plan\Validation\PlanValidation::class)]
+#[UsesClass(\SqlFixture\Plan\Validation\TableName::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\ColumnParser::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\DefaultExpression::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\DefinitionIntegrity::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinition::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TypeParameters::class)]
+#[UsesClass(\SqlFixture\Schema\TypeShape::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinitionInput::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\GeneratedColumnReferenceException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\MissingRelationValueException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\UnknownPlanColumnException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\EmptyPlanException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\EmptyTableNameException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\MissingEndpointColumnsException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\InvalidTableNameException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\UnbalancedBracketsException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\UnexpectedPlanTokenException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\UnsupportedManyToManyException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\CompositeArityMismatchException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\DuplicateColumnBindingException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\CyclicDependencyException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\UnboundedSelfReferenceException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\InvalidSqlException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\ExpectedCreateTableException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class)]
 final class PlanSchemaValidatorTest extends TestCase
 {
     #[Test]
-    public function aPlanMatchingTheSchemaPasses(): void
+    public function testValidateAPlanMatchingTheSchemaPasses(): void
     {
-        $validator = new PlanSchemaValidator(ShopSchemas::resolver());
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_detail', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'product_id' => new ColumnDefinition('product_id', 'INT', nullable: false, unsigned: true),
+                'quantity' => new ColumnDefinition('quantity', 'INT', nullable: false),
+            ], ['id']),
+        ]);
+        $validator = new PlanSchemaValidator($schemas);
 
         $validator->validate(FixturePlan::from('order.id < order_detail.order_id'));
 
@@ -53,7 +106,21 @@ final class PlanSchemaValidatorTest extends TestCase
     #[DataProvider('providerMismatchedPlans')]
     public function aColumnTheTableDoesNotHaveIsRejected(string $plan, string $expected): void
     {
-        $validator = new PlanSchemaValidator(ShopSchemas::resolver());
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_detail', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'product_id' => new ColumnDefinition('product_id', 'INT', nullable: false, unsigned: true),
+                'quantity' => new ColumnDefinition('quantity', 'INT', nullable: false),
+            ], ['id']),
+        ]);
+        $validator = new PlanSchemaValidator($schemas);
 
         $this->expectException(PlanSchemaException::class);
         $this->expectExceptionMessage($expected);
@@ -87,9 +154,23 @@ final class PlanSchemaValidatorTest extends TestCase
     }
 
     #[Test]
-    public function aTableTheResolverDoesNotKnowIsRejected(): void
+    public function testATableTheResolverDoesNotKnowIsRejected(): void
     {
-        $validator = new PlanSchemaValidator(ShopSchemas::resolver());
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_detail', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'product_id' => new ColumnDefinition('product_id', 'INT', nullable: false, unsigned: true),
+                'quantity' => new ColumnDefinition('quantity', 'INT', nullable: false),
+            ], ['id']),
+        ]);
+        $validator = new PlanSchemaValidator($schemas);
 
         $this->expectException(SchemaNotFoundException::class);
         $this->expectExceptionMessage('Schema not found for table: nope');
@@ -98,9 +179,23 @@ final class PlanSchemaValidatorTest extends TestCase
     }
 
     #[Test]
-    public function aTableNamedWithoutAnyRelationIsCheckedToo(): void
+    public function testATableNamedWithoutAnyRelationIsCheckedToo(): void
     {
-        $validator = new PlanSchemaValidator(ShopSchemas::resolver());
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('order', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'customer_id' => new ColumnDefinition('customer_id', 'INT', nullable: false, unsigned: true),
+                'status' => new ColumnDefinition('status', 'VARCHAR', nullable: false, length: 20),
+                'total' => new ColumnDefinition('total', 'INT', nullable: false),
+            ], ['id']),
+            new TableSchema('order_detail', [
+                'id' => new ColumnDefinition('id', 'INT', nullable: false, unsigned: true, autoIncrement: true),
+                'order_id' => new ColumnDefinition('order_id', 'INT', nullable: false, unsigned: true),
+                'product_id' => new ColumnDefinition('product_id', 'INT', nullable: false, unsigned: true),
+                'quantity' => new ColumnDefinition('quantity', 'INT', nullable: false),
+            ], ['id']),
+        ]);
+        $validator = new PlanSchemaValidator($schemas);
 
         $this->expectException(SchemaNotFoundException::class);
         $this->expectExceptionMessage('Schema not found for table: nope');
@@ -109,7 +204,7 @@ final class PlanSchemaValidatorTest extends TestCase
     }
 
     #[Test]
-    public function aGeneratedColumnCannotBeLinked(): void
+    public function testAGeneratedColumnCannotBeLinked(): void
     {
         $resolver = new StaticSchemaResolver([
             new TableSchema('order', [
@@ -121,14 +216,14 @@ final class PlanSchemaValidatorTest extends TestCase
             ]),
         ]);
 
-        $this->expectException(PlanSchemaException::class);
+        $this->expectException(\SqlFixture\Fixture\Exception\GeneratedColumnReferenceException::class);
         $this->expectExceptionMessage('order.code is a generated column');
 
         (new PlanSchemaValidator($resolver))->validate(FixturePlan::from('order.code < order_detail.order_code'));
     }
 
     #[Test]
-    public function aGeneratedColumnCannotBeWrittenIntoEither(): void
+    public function testAGeneratedColumnCannotBeWrittenIntoEither(): void
     {
         $resolver = new StaticSchemaResolver([
             new TableSchema('order', ['id' => new ColumnDefinition('id', 'INT', autoIncrement: true)], ['id']),
@@ -137,7 +232,7 @@ final class PlanSchemaValidatorTest extends TestCase
             ]),
         ]);
 
-        $this->expectException(PlanSchemaException::class);
+        $this->expectException(\SqlFixture\Fixture\Exception\GeneratedColumnReferenceException::class);
         $this->expectExceptionMessage('order_detail.order_id is a generated column');
 
         (new PlanSchemaValidator($resolver))->validate(FixturePlan::from('order.id < order_detail.order_id'));

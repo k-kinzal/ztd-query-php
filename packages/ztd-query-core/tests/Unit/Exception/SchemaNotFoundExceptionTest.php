@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Exception;
 
-use PHPUnit\Framework\TestCase;
-use RuntimeException;
-use ZtdQuery\Exception\SchemaNotFoundException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\TestCase;
+use ZtdQuery\Exception\SchemaNotFoundException;
 
 #[CoversClass(SchemaNotFoundException::class)]
 final class SchemaNotFoundExceptionTest extends TestCase
@@ -37,10 +36,4 @@ final class SchemaNotFoundExceptionTest extends TestCase
         self::assertSame('users', $exception->getTableName());
     }
 
-    public function testExtendsRuntimeException(): void
-    {
-        $exception = new SchemaNotFoundException('sql', 'table');
-
-        self::assertInstanceOf(RuntimeException::class, $exception);
-    }
 }

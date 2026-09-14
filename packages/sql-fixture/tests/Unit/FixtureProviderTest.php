@@ -5,24 +5,22 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use Faker\Factory;
-use PHPUnit\Framework\Attributes\Test;
-use PHPUnit\Framework\TestCase;
-use SqlFixture\FixtureProvider;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\TestCase;
 use SqlFixture\FixtureGenerator;
-use SqlFixture\Platform\PlatformFactory;
+use SqlFixture\FixtureProvider;
+use SqlFixture\Hydrator\ReflectionHydrator;
 use SqlFixture\Platform\MySql\MySqlSchemaParser;
 use SqlFixture\Platform\MySql\MySqlTypeMapper;
-use SqlFixture\Schema\ColumnDefinition;
-use SqlFixture\Schema\StaticSchemaResolver;
-use SqlFixture\Schema\TableSchema;
-use SqlFixture\Hydrator\ReflectionHydrator;
+use SqlFixture\Platform\PlatformFactory;
 use SqlFixture\Platform\PostgreSql\PostgreSqlTypeMapper;
 use SqlFixture\Platform\Sqlite\SqliteSchemaParser;
 use SqlFixture\Platform\Sqlite\SqliteTypeMapper;
-use Tests\Fixture\TestableFixtureProvider;
-use Tests\Fixture\UserDto;
+use SqlFixture\Schema\ColumnDefinition;
+use SqlFixture\Schema\StaticSchemaResolver;
+use SqlFixture\Schema\TableSchema;
 
 #[CoversClass(FixtureProvider::class)]
 #[UsesClass(FixtureGenerator::class)]
@@ -36,16 +34,136 @@ use Tests\Fixture\UserDto;
 #[UsesClass(PostgreSqlTypeMapper::class)]
 #[UsesClass(SqliteSchemaParser::class)]
 #[UsesClass(SqliteTypeMapper::class)]
+#[CoversClass(\SqlFixture\Provider\SqlSchemaProvider::class)]
+#[UsesClass(\SqlFixture\Fixture\FixtureSet::class)]
+#[UsesClass(\SqlFixture\Fixture\GenerationRun::class)]
+#[UsesClass(\SqlFixture\Fixture\OverrideRows::class)]
+#[UsesClass(\SqlFixture\Fixture\PlanGenerator::class)]
+#[UsesClass(\SqlFixture\Fixture\PlanSchemaException::class)]
+#[UsesClass(\SqlFixture\Fixture\PlanSchemaValidator::class)]
+#[UsesClass(\SqlFixture\Fixture\RowSpec::class)]
+#[UsesClass(\SqlFixture\Fixture\TableOverrides::class)]
+#[UsesClass(\SqlFixture\Hydrator\HydrationException::class)]
+#[UsesClass(\SqlFixture\Hydrator\HydratorInterface::class)]
+#[UsesClass(\SqlFixture\Plan\ColumnRef::class)]
+#[UsesClass(\SqlFixture\Plan\FixturePlan::class)]
+#[UsesClass(\SqlFixture\Plan\PlanParser::class)]
+#[UsesClass(\SqlFixture\Plan\PlanPrinter::class)]
+#[UsesClass(\SqlFixture\Plan\PlanSyntaxException::class)]
+#[UsesClass(\SqlFixture\Plan\Relation::class)]
+#[UsesClass(\SqlFixture\Plan\RelationKind::class)]
+#[UsesClass(\SqlFixture\Plan\RelationSide::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\MySqlSchemaFetcher::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\PostgreSqlSchemaFetcher::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\PostgreSqlSchemaParser::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\SqliteSchemaFetcher::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaFetcherInterface::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaNotFoundException::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaParseException::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaParserInterface::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaResolverInterface::class)]
+#[UsesClass(\SqlFixture\Schema\TableIdentifier::class)]
+#[UsesClass(\SqlFixture\TypeMapper\TypeMapperInterface::class)]
+#[UsesClass(\SqlFixture\Fixture\Generation\ConnectedTables::class)]
+#[UsesClass(\SqlFixture\Fixture\Generation\OverrideSpecs::class)]
+#[UsesClass(\SqlFixture\Fixture\Generation\RelationCounts::class)]
+#[UsesClass(\SqlFixture\Fixture\Generation\RelationProjection::class)]
+#[UsesClass(\SqlFixture\Fixture\Generation\RowMaterializer::class)]
+#[UsesClass(\SqlFixture\Fixture\RowGeneration::class)]
+#[UsesClass(\SqlFixture\Fixture\Validation\EndpointValidator::class)]
+#[UsesClass(\SqlFixture\Fixture\Validation\OverrideValidator::class)]
+#[UsesClass(\SqlFixture\Hydrator\Reflection\ConstructorHydration::class)]
+#[UsesClass(\SqlFixture\Hydrator\Reflection\PropertyHydration::class)]
+#[UsesClass(\SqlFixture\Hydrator\Reflection\PropertyNames::class)]
+#[UsesClass(\SqlFixture\Hydrator\Reflection\ValueConversion::class)]
+#[UsesClass(\SqlFixture\InvalidOverrideException::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\PlanStatements::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\RelationCursor::class)]
+#[UsesClass(\SqlFixture\Plan\Parsing\RelationReader::class)]
+#[UsesClass(\SqlFixture\Plan\PlanStructureException::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\PlanTables::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\RelationGroups::class)]
+#[UsesClass(\SqlFixture\Plan\Printing\StatementPrinter::class)]
+#[UsesClass(\SqlFixture\Plan\Validation\PlanValidation::class)]
+#[UsesClass(\SqlFixture\Plan\Validation\TableName::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\ColumnParser::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\CreateTableQuery::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\DefaultExpression::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\DefinitionIntegrity::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\IdentifierQuoter::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinition::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TypeParameters::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\ColumnGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\DecimalGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\GeometryGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\IntegerGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\NumericGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\SpatialGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\StringGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Value\TextGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\CatalogColumn::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\CatalogDdl::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\CatalogQuery::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\CatalogSchema::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\ColumnParser::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\DefaultExpression::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\DefinitionList::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\TableSyntax::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Schema\TypeDeclaration::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Value\ColumnGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Value\DecimalGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Value\NumericGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Value\StringGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Value\StructuredGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\PostgreSql\Value\TemporalGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\ColumnParser::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\CreateTableQuery::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\DefaultExpression::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\DefinitionList::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\PragmaColumn::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\PragmaSchema::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\TableSyntax::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Schema\TypeDeclaration::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Value\ColumnGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\Sqlite\Value\TypeAffinity::class)]
+#[UsesClass(\SqlFixture\Schema\DefinitionSegments::class)]
+#[UsesClass(\SqlFixture\Schema\TypeShape::class)]
+#[UsesClass(\SqlFixture\TypeMapper\ParagraphGenerator::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinitionInput::class)]
+#[UsesClass(\SqlFixture\Hydrator\Exception\ClassNotFoundException::class)]
+#[UsesClass(\SqlFixture\Hydrator\Exception\MissingConstructorArgumentException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\UnknownOverrideColumnException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\NullOverrideException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\GeneratedColumnOverrideException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\GeneratedColumnReferenceException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\MissingRelationValueException::class)]
+#[UsesClass(\SqlFixture\Fixture\Exception\UnknownPlanColumnException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\EmptyPlanException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\EmptyTableNameException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\MissingEndpointColumnsException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\InvalidTableNameException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\UnbalancedBracketsException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\UnexpectedPlanTokenException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\UnsupportedManyToManyException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\CompositeArityMismatchException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\DuplicateColumnBindingException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\CyclicDependencyException::class)]
+#[UsesClass(\SqlFixture\Plan\Exception\UnboundedSelfReferenceException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\InvalidSqlException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\ExpectedCreateTableException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class)]
+#[UsesClass(\SqlFixture\TypeMapper\IntegerRange::class)]
+#[UsesClass(\SqlFixture\TypeMapper\IntegerWidth::class)]
+#[UsesClass(\SqlFixture\TypeMapper\DecimalRange::class)]
+#[UsesClass(\SqlFixture\Hydrator\Reflection\ConversionTarget::class)]
 final class FixtureProviderTest extends TestCase
 {
     #[Test]
-    public function fixtureReturnsArray(): void
+    public function testFixtureReturnsArray(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture(
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture(
             'CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255) NOT NULL)',
         );
 
@@ -54,13 +172,11 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function fixtureWithOverrides(): void
+    public function testFixtureWithOverrides(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture(
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture(
             'CREATE TABLE users (id INT, name VARCHAR(255))',
             ['name' => 'Overridden'],
         );
@@ -69,31 +185,33 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function fixtureHydratesClass(): void
+    public function testFixtureHydratesClass(): void
     {
-        $user = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture(
+        $target = new class (0, '') {
+            public function __construct(
+                public readonly int $id,
+                public readonly string $name,
+            ) {
+            }
+        };
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $user = (new FixtureProvider($faker))->fixture(
             'CREATE TABLE users (id INT, name VARCHAR(255))',
             ['id' => 1, 'name' => 'Test User'],
-            UserDto::class,
+            $target::class,
         );
 
-        self::assertInstanceOf(UserDto::class, $user);
         self::assertSame(1, $user->id);
         self::assertSame('Test User', $user->name);
     }
 
     #[Test]
-    public function fixtureSkipsAutoIncrement(): void
+    public function testFixtureSkipsAutoIncrement(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture(
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture(
             'CREATE TABLE users (id INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(255))',
         );
 
@@ -102,13 +220,11 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function fixtureCanOverrideAutoIncrement(): void
+    public function testFixtureCanOverrideAutoIncrement(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture(
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture(
             'CREATE TABLE users (id INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(255))',
             ['id' => 42],
         );
@@ -117,13 +233,11 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function fixtureWithAllNumericTypes(): void
+    public function testFixtureWithAllNumericTypes(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture(<<<'SQL'
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture(<<<'SQL'
             CREATE TABLE numbers (
                 col_tinyint TINYINT NOT NULL,
                 col_smallint SMALLINT NOT NULL,
@@ -147,13 +261,11 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function fixtureWithStringTypes(): void
+    public function testFixtureWithStringTypes(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture(<<<'SQL'
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture(<<<'SQL'
             CREATE TABLE strings (
                 col_char CHAR(10) NOT NULL,
                 col_varchar VARCHAR(100) NOT NULL,
@@ -171,13 +283,11 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function fixtureWithDateTypes(): void
+    public function testFixtureWithDateTypes(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture(<<<'SQL'
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture(<<<'SQL'
             CREATE TABLE dates (
                 col_date DATE NOT NULL,
                 col_time TIME NOT NULL,
@@ -197,13 +307,11 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function fixtureWithEnum(): void
+    public function testFixtureWithEnum(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture(<<<'SQL'
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture(<<<'SQL'
             CREATE TABLE statuses (
                 status ENUM('active','inactive','pending') NOT NULL
             )
@@ -213,13 +321,11 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function fixtureWithSet(): void
+    public function testFixtureWithSet(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture(<<<'SQL'
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture(<<<'SQL'
             CREATE TABLE permissions (
                 perms SET('read','write','delete') NOT NULL
             )
@@ -233,13 +339,11 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function fixtureWithJson(): void
+    public function testFixtureWithJson(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture('CREATE TABLE jsons (data JSON NOT NULL)');
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture('CREATE TABLE jsons (data JSON NOT NULL)');
 
         self::assertIsString($data['data']);
         $decoded = json_decode($data['data'], true);
@@ -247,13 +351,11 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function fixtureWithSpatialTypes(): void
+    public function testFixtureWithSpatialTypes(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture(<<<'SQL'
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture(<<<'SQL'
             CREATE TABLE geo (
                 col_point POINT NOT NULL,
                 col_linestring LINESTRING NOT NULL,
@@ -270,7 +372,7 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function fixtureResultIsReproducibleWithSeed(): void
+    public function testFixtureResultIsReproducibleWithSeed(): void
     {
         $faker1 = Factory::create();
         $faker1->seed(99999);
@@ -283,7 +385,7 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function fixtureCachesSchema(): void
+    public function testFixtureCachesSchema(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -298,16 +400,16 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function getFixtureGenerator(): void
+    public function testGetFixtureGenerator(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
         $generator = (new FixtureProvider($faker))->getFixtureGenerator();
-        self::assertInstanceOf(\SqlFixture\FixtureGenerator::class, $generator);
+        self::assertSame(['id' => 7], $generator->generate(new TableSchema('sample', ['id' => new ColumnDefinition('id', 'INT')]), ['id' => 7]));
     }
 
     #[Test]
-    public function getDialectDefaultsToMysql(): void
+    public function testGetDialectDefaultsToMysql(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -315,30 +417,25 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function fixtureWithNullableColumns(): void
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerNullableSeeds')]
+    public function testFixtureWithNullableColumns(int $seed): void
     {
         $faker = Factory::create();
-        $faker->seed(12345);
+        $faker->seed($seed);
         $provider = new FixtureProvider($faker);
         $sql = 'CREATE TABLE test (id INT NOT NULL, name VARCHAR(255) DEFAULT NULL, notes TEXT)';
 
-        (static function () use ($provider, $sql): void {
-            for ($i = 0; $i < 20; $i++) {
-                $data = $provider->fixture($sql);
-                self::assertArrayHasKey('id', $data);
-                self::assertIsInt($data['id']);
-            }
-        })();
+        $data = $provider->fixture($sql);
+        self::assertArrayHasKey('id', $data);
+        self::assertIsInt($data['id']);
     }
 
     #[Test]
-    public function fixtureWithBinaryColumns(): void
+    public function testFixtureWithBinaryColumns(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture(<<<'SQL'
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture(<<<'SQL'
             CREATE TABLE bins (
                 col_binary BINARY(16) NOT NULL,
                 col_varbinary VARBINARY(100) NOT NULL,
@@ -354,37 +451,31 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function fixtureWithBooleanType(): void
+    public function testFixtureWithBooleanType(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture('CREATE TABLE test (active BOOLEAN NOT NULL)');
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture('CREATE TABLE test (active BOOLEAN NOT NULL)');
         self::assertIsBool($data['active']);
     }
 
     #[Test]
-    public function fixtureWithBitType(): void
+    public function testFixtureWithBitType(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture('CREATE TABLE test (flags BIT(8) NOT NULL)');
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture('CREATE TABLE test (flags BIT(8) NOT NULL)');
         self::assertIsInt($data['flags']);
         self::assertGreaterThanOrEqual(0, $data['flags']);
         self::assertLessThanOrEqual(255, $data['flags']);
     }
 
     #[Test]
-    public function fixtureWithGeneratedColumnSkipped(): void
+    public function testFixtureWithGeneratedColumnSkipped(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture(<<<'SQL'
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture(<<<'SQL'
             CREATE TABLE test (
                 a INT,
                 b INT,
@@ -398,13 +489,11 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function fixtureWithUnsignedTypes(): void
+    public function testFixtureWithUnsignedTypes(): void
     {
-        $data = (static function (): FixtureProvider {
-            $faker = Factory::create();
-            $faker->seed(12345);
-            return new FixtureProvider($faker);
-        })()->fixture(<<<'SQL'
+        $faker = Factory::create();
+        $faker->seed(12345);
+        $data = (new FixtureProvider($faker))->fixture(<<<'SQL'
             CREATE TABLE test (
                 col_uint INT UNSIGNED NOT NULL,
                 col_utinyint TINYINT UNSIGNED NOT NULL
@@ -419,7 +508,7 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function fixtureWithDialectOverride(): void
+    public function testFixtureWithDialectOverride(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -436,7 +525,7 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function fixtureWithSqliteDialect(): void
+    public function testFixtureWithSqliteDialect(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -452,7 +541,7 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function fixtureWithCustomTypeMapper(): void
+    public function testFixtureWithCustomTypeMapper(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -465,7 +554,7 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function fixtureWithCustomSchemaParser(): void
+    public function testFixtureWithCustomSchemaParser(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -478,7 +567,7 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function schemaCacheUsesDialectInKey(): void
+    public function testSchemaCacheUsesDialectInKey(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -493,7 +582,7 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function schemaCacheDistinguishesDifferentDialects(): void
+    public function testSchemaCacheDistinguishesDifferentDialects(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -512,7 +601,7 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function defaultDialectIsUsedWhenNullDialectPassed(): void
+    public function testDefaultDialectIsUsedWhenNullDialectPassed(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -530,7 +619,7 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function fixtureSameDialectUsesInternalParser(): void
+    public function testFixtureSameDialectUsesInternalParser(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -547,7 +636,7 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function cacheDistinguishesDifferentSqlSameDialect(): void
+    public function testCacheDistinguishesDifferentSqlSameDialect(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -567,7 +656,7 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function cacheKeyIncludesDialect(): void
+    public function testCacheKeyIncludesDialect(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -585,7 +674,7 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function dialectOverrideUsesOverrideNotDefault(): void
+    public function testDialectOverrideUsesOverrideNotDefault(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -600,7 +689,7 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function cachedSchemaDistinguishesDialects(): void
+    public function testCachedSchemaDistinguishesDialects(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -617,7 +706,7 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function cacheSeparatesDefaultAndOverrideDialect(): void
+    public function testCacheSeparatesDefaultAndOverrideDialect(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -633,7 +722,7 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function customTypeMapperIsPreserved(): void
+    public function testCustomTypeMapperIsPreserved(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -645,7 +734,7 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function customSchemaParserIsPreserved(): void
+    public function testCustomSchemaParserIsPreserved(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -659,20 +748,20 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function getSchemaIsAccessibleFromSubclass(): void
+    public function testRegisterSchemaReturnsTheParsedTable(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
-        $provider = new TestableFixtureProvider($faker);
+        $provider = new FixtureProvider($faker);
 
-        $schema = $provider->exposeGetSchema('CREATE TABLE test (id INT NOT NULL, name VARCHAR(255) NOT NULL)');
+        $schema = $provider->registerSchema('CREATE TABLE test (id INT NOT NULL, name VARCHAR(255) NOT NULL)');
 
         self::assertSame('test', $schema->tableName);
         self::assertCount(2, $schema->columns);
     }
 
     #[Test]
-    public function aRegisteredSchemaBecomesAvailableToFixtures(): void
+    public function testRegisterSchemaARegisteredSchemaBecomesAvailableToFixtures(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -684,7 +773,7 @@ final class FixtureProviderTest extends TestCase
     }
 
     #[Test]
-    public function generatingAFixtureAlsoMakesItAvailableToFixtures(): void
+    public function testGetSchemaResolverGeneratingAFixtureAlsoMakesItAvailableToFixtures(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -692,5 +781,20 @@ final class FixtureProviderTest extends TestCase
         $provider->fixture('CREATE TABLE orders (id INT AUTO_INCREMENT PRIMARY KEY, status VARCHAR(20) NOT NULL)');
 
         self::assertTrue($provider->getSchemaResolver()->has('orders'));
+    }
+    public function testFixturesGeneratesLinkedRowsFromRegisteredSchemas(): void
+    {
+        $provider = new FixtureProvider(Factory::create());
+        $provider->registerSchema('CREATE TABLE users (id INT PRIMARY KEY)');
+        $provider->registerSchema('CREATE TABLE posts (user_id INT)');
+        $fixtures = $provider->fixtures('users.id < posts.user_id', ['users' => ['id' => 9], 'posts' => 2]);
+        self::assertSame([['user_id' => 9], ['user_id' => 9]], $fixtures->rows('posts'));
+    }
+    /**
+     * @return list<array{int}>
+     */
+    public static function providerNullableSeeds(): array
+    {
+        return array_map(static fn (int $seed): array => [$seed], range(1, 20));
     }
 }

@@ -1,0 +1,76 @@
+# NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
+deptrac:
+  paths:
+    - ./src
+  layers:
+    - name: Simulator
+      collectors:
+        - type: directory
+          value: src/Simulator/.*
+    - name: Session
+      collectors:
+        - type: directory
+          value: src/[^/]+\.php
+        - type: classLike
+          value: ^ZtdQuery\\Platform\\SessionFactory$
+    - name: Simulation
+      collectors:
+        - type: directory
+          value: src/Rewrite/.*
+        - type: directory
+          value: src/Shadow/.*
+    - name: Contract
+      collectors:
+        - type: directory
+          value: src/Connection/.*
+        - type: bool
+          must:
+            - type: directory
+              value: src/Platform/.*
+          must_not:
+            - type: classLike
+              value: ^ZtdQuery\\Platform\\SessionFactory$
+    - name: Schema
+      collectors:
+        - type: directory
+          value: src/Schema/.*
+    - name: Sql
+      collectors:
+        - type: directory
+          value: src/Sql/.*
+    - name: Config
+      collectors:
+        - type: directory
+          value: src/Config/.*
+    - name: Exception
+      collectors:
+        - type: directory
+          value: src/Exception/.*
+  ruleset:
+    Simulator:
+      - Session
+      - Simulation
+      - Contract
+      - Exception
+    Session:
+      - Simulation
+      - Contract
+      - Schema
+      - Sql
+      - Config
+      - Exception
+    Simulation:
+      - Contract
+      - Schema
+      - Sql
+      - Exception
+    Contract:
+      - Schema
+      - Config
+      - Exception
+    Schema:
+      - Exception
+    Sql:
+      - Exception
+    Config: ~
+    Exception: ~

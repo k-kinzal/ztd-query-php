@@ -4,19 +4,21 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Shadow\Mutation;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Schema\CandidateKeyConflict;
-use ZtdQuery\Schema\CandidateKeySet;
+use ZtdQuery\Schema\Key\CandidateKeyConflict;
+use ZtdQuery\Schema\Key\CandidateKeySet;
 use ZtdQuery\Schema\TableDefinition;
-use ZtdQuery\Shadow\Mutation\UpsertMutation;
+use ZtdQuery\Shadow\Mutation\Upsert\UpsertOperator;
 use ZtdQuery\Shadow\Mutation\UpsertColumnSource;
 use ZtdQuery\Shadow\Mutation\UpsertExpression;
 use ZtdQuery\Shadow\Mutation\UpsertExpressionKind;
+use ZtdQuery\Shadow\Mutation\UpsertMutation;
 use ZtdQuery\Shadow\Mutation\UpsertMutationRow;
+use ZtdQuery\Shadow\Mutation\UpsertUpdate;
 use ZtdQuery\Shadow\ShadowStore;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 
 #[UsesClass(ShadowStore::class)]
 #[UsesClass(UnsupportedSqlException::class)]
@@ -26,6 +28,16 @@ use PHPUnit\Framework\Attributes\UsesClass;
 #[UsesClass(UpsertExpression::class)]
 #[UsesClass(UpsertMutationRow::class)]
 #[CoversClass(UpsertMutation::class)]
+#[UsesClass(\ZtdQuery\Schema\Key\CandidateKeyMatch::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\ConflictSearch::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertColumn::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertComparison::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertNumber::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertTruth::class)]
+#[UsesClass(UpsertUpdate::class)]
+#[UsesClass(UpsertOperator::class)]
+#[UsesClass(\ZtdQuery\Schema\RowSet::class)]
+#[UsesClass(\ZtdQuery\Shadow\Mutation\Upsert\UpsertLiteral::class)]
 final class UpsertMutationTest extends TestCase
 {
     public function testApplyInsertsNewRowWhenNoDuplicate(): void
@@ -530,4 +542,29 @@ final class UpsertMutationTest extends TestCase
             ['email' => 'alice@example.com', 'status' => 'inactive', 'login_count' => 9],
         ], $store->get('users'));
     }
+    public function testResultRowsAnswersNothingUntilTheStatementHasBeenApplied(): void
+    {
+        self::assertSame([], (new UpsertMutation('users', ['id']))->resultRows());
+    }
+
+    public function testResultRowsAnswersEveryRowTheStatementWroteOrLeftAsItWas(): void
+    {
+        $store = new ShadowStore();
+        $store->set('users', [['id' => 1, 'name' => 'a']]);
+        $mutation = new UpsertMutation(
+            'users',
+            ['id'],
+            ['name'],
+            ['name' => UpsertExpression::literal('b')],
+            CandidateKeySet::fromSchema(['id']),
+        );
+
+        $mutation->apply($store, [['id' => 1, 'name' => 'incoming'], ['id' => 2, 'name' => 'c']]);
+
+        self::assertSame(
+            [['id' => 1, 'name' => 'b'], ['id' => 2, 'name' => 'c']],
+            $mutation->resultRows(),
+        );
+    }
+
 }
