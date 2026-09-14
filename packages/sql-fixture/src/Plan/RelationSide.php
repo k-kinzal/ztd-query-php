@@ -16,6 +16,9 @@ enum RelationSide
     case Left;
     case Right;
 
+    /**
+     * Returns opposite.
+     */
     public function opposite(): self
     {
         return $this === self::Left ? self::Right : self::Left;

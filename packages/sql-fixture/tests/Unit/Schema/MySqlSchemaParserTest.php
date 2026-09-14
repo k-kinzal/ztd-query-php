@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Schema;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Platform\MySql\MySqlSchemaParser as PlatformMySqlSchemaParser;
+use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\MySqlSchemaParser;
 use SqlFixture\Schema\SchemaParseException;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
-use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\TableSchema;
 
 #[CoversClass(MySqlSchemaParser::class)]
@@ -19,10 +19,21 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(TableSchema::class)]
 #[UsesClass(SchemaParseException::class)]
 #[UsesClass(PlatformMySqlSchemaParser::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaParserInterface::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\ColumnParser::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\DefaultExpression::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\DefinitionIntegrity::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinition::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TypeParameters::class)]
+#[UsesClass(\SqlFixture\Schema\TypeShape::class)]
+#[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinitionInput::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\InvalidSqlException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\ExpectedCreateTableException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class)]
 final class MySqlSchemaParserTest extends TestCase
 {
     #[Test]
-    public function parseSimpleTable(): void
+    public function testParseSimpleTable(): void
     {
         $sql = 'CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255))';
         $schema = (new MySqlSchemaParser())->parse($sql);
@@ -35,7 +46,7 @@ final class MySqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseColumnTypes(): void
+    public function testParseColumnTypes(): void
     {
         $sql = <<<'SQL'
             CREATE TABLE test (
@@ -56,7 +67,7 @@ final class MySqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseNotNullConstraint(): void
+    public function testParseNotNullConstraint(): void
     {
         $sql = 'CREATE TABLE test (id INT NOT NULL, name VARCHAR(255))';
         $schema = (new MySqlSchemaParser())->parse($sql);
@@ -66,7 +77,7 @@ final class MySqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseUnsigned(): void
+    public function testParseUnsigned(): void
     {
         $sql = 'CREATE TABLE test (id INT UNSIGNED, age TINYINT UNSIGNED)';
         $schema = (new MySqlSchemaParser())->parse($sql);
@@ -76,7 +87,7 @@ final class MySqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseAutoIncrement(): void
+    public function testParseAutoIncrement(): void
     {
         $sql = 'CREATE TABLE test (id INT PRIMARY KEY AUTO_INCREMENT)';
         $schema = (new MySqlSchemaParser())->parse($sql);
@@ -85,7 +96,7 @@ final class MySqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseEnum(): void
+    public function testParseEnum(): void
     {
         $sql = "CREATE TABLE test (status ENUM('active','inactive','pending'))";
         $schema = (new MySqlSchemaParser())->parse($sql);
@@ -95,7 +106,7 @@ final class MySqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseSet(): void
+    public function testParseSet(): void
     {
         $sql = "CREATE TABLE test (permissions SET('read','write','delete'))";
         $schema = (new MySqlSchemaParser())->parse($sql);
@@ -105,7 +116,7 @@ final class MySqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseCompositePrimaryKey(): void
+    public function testParseCompositePrimaryKey(): void
     {
         $sql = 'CREATE TABLE test (a INT, b INT, PRIMARY KEY (a, b))';
         $schema = (new MySqlSchemaParser())->parse($sql);
@@ -114,7 +125,7 @@ final class MySqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parsePrimaryKeyImpliesNotNull(): void
+    public function testParsePrimaryKeyImpliesNotNull(): void
     {
         $sql = 'CREATE TABLE test (id INT PRIMARY KEY)';
         $schema = (new MySqlSchemaParser())->parse($sql);
@@ -123,21 +134,21 @@ final class MySqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function throwsExceptionForInvalidSql(): void
+    public function testThrowsExceptionForInvalidSql(): void
     {
-        $this->expectException(SchemaParseException::class);
+        $this->expectException(\SqlFixture\Schema\Exception\InvalidSqlException::class);
         (new MySqlSchemaParser())->parse('NOT A VALID SQL STATEMENT');
     }
 
     #[Test]
-    public function throwsExceptionForNonCreateTable(): void
+    public function testThrowsExceptionForNonCreateTable(): void
     {
-        $this->expectException(SchemaParseException::class);
+        $this->expectException(\SqlFixture\Schema\Exception\ExpectedCreateTableException::class);
         (new MySqlSchemaParser())->parse('SELECT * FROM users');
     }
 
     #[Test]
-    public function parseDefaultString(): void
+    public function testParseDefaultString(): void
     {
         $sql = "CREATE TABLE test (name VARCHAR(255) DEFAULT 'default_value')";
         $schema = (new MySqlSchemaParser())->parse($sql);
@@ -146,7 +157,7 @@ final class MySqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultNull(): void
+    public function testParseDefaultNull(): void
     {
         $sql = 'CREATE TABLE test (name VARCHAR(255) DEFAULT NULL)';
         $schema = (new MySqlSchemaParser())->parse($sql);
@@ -155,7 +166,7 @@ final class MySqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultInteger(): void
+    public function testParseDefaultInteger(): void
     {
         $sql = 'CREATE TABLE test (count INT DEFAULT 42)';
         $schema = (new MySqlSchemaParser())->parse($sql);
@@ -164,7 +175,7 @@ final class MySqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDecimalPrecisionAndScale(): void
+    public function testParseDecimalPrecisionAndScale(): void
     {
         $sql = 'CREATE TABLE test (price DECIMAL(10,2))';
         $schema = (new MySqlSchemaParser())->parse($sql);
@@ -174,7 +185,7 @@ final class MySqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseBitLength(): void
+    public function testParseBitLength(): void
     {
         $sql = 'CREATE TABLE test (flags BIT(8))';
         $schema = (new MySqlSchemaParser())->parse($sql);
@@ -183,7 +194,7 @@ final class MySqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseTableWithQuotedNames(): void
+    public function testParseTableWithQuotedNames(): void
     {
         $sql = 'CREATE TABLE `my_table` (`my_column` INT PRIMARY KEY)';
         $schema = (new MySqlSchemaParser())->parse($sql);
@@ -193,7 +204,7 @@ final class MySqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultBoolean(): void
+    public function testParseDefaultBoolean(): void
     {
         $sql = 'CREATE TABLE test (active TINYINT(1) DEFAULT TRUE)';
         $schema = (new MySqlSchemaParser())->parse($sql);
@@ -202,7 +213,7 @@ final class MySqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultFalseBoolean(): void
+    public function testParseDefaultFalseBoolean(): void
     {
         $sql = 'CREATE TABLE test (active TINYINT(1) DEFAULT FALSE)';
         $schema = (new MySqlSchemaParser())->parse($sql);
@@ -211,7 +222,7 @@ final class MySqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultFloat(): void
+    public function testParseDefaultFloat(): void
     {
         $sql = 'CREATE TABLE test (price DECIMAL(10,2) DEFAULT 9.99)';
         $schema = (new MySqlSchemaParser())->parse($sql);
@@ -220,7 +231,7 @@ final class MySqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseGeneratedColumn(): void
+    public function testParseGeneratedColumn(): void
     {
         $sql = 'CREATE TABLE test (a INT, b INT, c INT GENERATED ALWAYS AS (a + b) STORED)';
         $schema = (new MySqlSchemaParser())->parse($sql);
@@ -230,7 +241,7 @@ final class MySqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseJsonType(): void
+    public function testParseJsonType(): void
     {
         $sql = 'CREATE TABLE test (data JSON)';
         $schema = (new MySqlSchemaParser())->parse($sql);
@@ -240,7 +251,7 @@ final class MySqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseSpatialTypes(): void
+    public function testParseSpatialTypes(): void
     {
         $sql = <<<'SQL'
             CREATE TABLE geo (
@@ -264,7 +275,7 @@ final class MySqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseBinaryTypes(): void
+    public function testParseBinaryTypes(): void
     {
         $sql = <<<'SQL'
             CREATE TABLE bins (
@@ -287,7 +298,7 @@ final class MySqlSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseMultipleDataTypes(): void
+    public function testParseMultipleDataTypes(): void
     {
         $sql = <<<'SQL'
             CREATE TABLE all_types (

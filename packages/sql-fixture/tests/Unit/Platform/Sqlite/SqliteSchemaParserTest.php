@@ -4,23 +4,34 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Platform\Sqlite;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Platform\Sqlite\SqliteSchemaParser;
-use SqlFixture\Schema\SchemaParseException;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use SqlFixture\Schema\ColumnDefinition;
+use SqlFixture\Schema\SchemaParseException;
 use SqlFixture\Schema\TableSchema;
 
 #[CoversClass(SqliteSchemaParser::class)]
 #[UsesClass(ColumnDefinition::class)]
 #[UsesClass(TableSchema::class)]
 #[UsesClass(SchemaParseException::class)]
+#[CoversClass(\SqlFixture\Platform\Sqlite\Schema\ColumnParser::class)]
+#[CoversClass(\SqlFixture\Platform\Sqlite\Schema\DefaultExpression::class)]
+#[CoversClass(\SqlFixture\Platform\Sqlite\Schema\DefinitionList::class)]
+#[CoversClass(\SqlFixture\Platform\Sqlite\Schema\TableSyntax::class)]
+#[CoversClass(\SqlFixture\Platform\Sqlite\Schema\TypeDeclaration::class)]
+#[CoversClass(\SqlFixture\Schema\DefinitionSegments::class)]
+#[UsesClass(\SqlFixture\Schema\SchemaParserInterface::class)]
+#[UsesClass(\SqlFixture\Schema\TypeShape::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\InvalidSqlException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\ExpectedCreateTableException::class)]
+#[UsesClass(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class)]
 final class SqliteSchemaParserTest extends TestCase
 {
     #[Test]
-    public function parseSimpleTable(): void
+    public function testParseSimpleTable(): void
     {
         $sql = 'CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -32,7 +43,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseColumnTypes(): void
+    public function testParseColumnTypes(): void
     {
         $sql = <<<'SQL'
             CREATE TABLE test (
@@ -52,7 +63,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseVarcharWithLength(): void
+    public function testParseVarcharWithLength(): void
     {
         $sql = 'CREATE TABLE test (name VARCHAR(100))';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -62,7 +73,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDecimalWithPrecisionAndScale(): void
+    public function testParseDecimalWithPrecisionAndScale(): void
     {
         $sql = 'CREATE TABLE test (price DECIMAL(10, 2))';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -73,7 +84,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseNotNullConstraint(): void
+    public function testParseNotNullConstraint(): void
     {
         $sql = 'CREATE TABLE test (id INTEGER NOT NULL, name TEXT)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -83,7 +94,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parsePrimaryKey(): void
+    public function testParsePrimaryKey(): void
     {
         $sql = 'CREATE TABLE test (id INTEGER PRIMARY KEY)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -92,7 +103,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parsePrimaryKeyAutoincrement(): void
+    public function testParsePrimaryKeyAutoincrement(): void
     {
         $sql = 'CREATE TABLE test (id INTEGER PRIMARY KEY AUTOINCREMENT)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -101,7 +112,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseTableLevelPrimaryKey(): void
+    public function testParseTableLevelPrimaryKey(): void
     {
         $sql = 'CREATE TABLE test (a INTEGER, b TEXT, PRIMARY KEY (a, b))';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -112,7 +123,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultString(): void
+    public function testParseDefaultString(): void
     {
         $sql = "CREATE TABLE test (name TEXT DEFAULT 'default_value')";
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -121,7 +132,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultNull(): void
+    public function testParseDefaultNull(): void
     {
         $sql = 'CREATE TABLE test (name TEXT DEFAULT NULL)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -130,7 +141,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultInteger(): void
+    public function testParseDefaultInteger(): void
     {
         $sql = 'CREATE TABLE test (count INTEGER DEFAULT 42)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -139,7 +150,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseIfNotExists(): void
+    public function testParseIfNotExists(): void
     {
         $sql = 'CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -148,7 +159,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseQuotedTableName(): void
+    public function testParseQuotedTableName(): void
     {
         $sql = 'CREATE TABLE "my_table" ("my_column" INTEGER)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -158,7 +169,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseMultipleConstraints(): void
+    public function testParseMultipleConstraints(): void
     {
         $sql = 'CREATE TABLE test (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -168,7 +179,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseTypeAffinity(): void
+    public function testParseTypeAffinity(): void
     {
         $sql = <<<'SQL'
             CREATE TABLE test (
@@ -209,7 +220,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseSkipsTableConstraints(): void
+    public function testParseSkipsTableConstraints(): void
     {
         $sql = <<<'SQL'
             CREATE TABLE test (
@@ -229,7 +240,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseComments(): void
+    public function testParseComments(): void
     {
         $sql = <<<'SQL'
             -- This is a comment
@@ -244,21 +255,21 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function throwsExceptionForInvalidSql(): void
+    public function testThrowsExceptionForInvalidSql(): void
     {
-        $this->expectException(SchemaParseException::class);
+        $this->expectException(\SqlFixture\Schema\Exception\InvalidSqlException::class);
         (new SqliteSchemaParser())->parse('NOT A VALID SQL STATEMENT');
     }
 
     #[Test]
-    public function throwsExceptionForEmptyTable(): void
+    public function testThrowsExceptionForEmptyTable(): void
     {
-        $this->expectException(SchemaParseException::class);
+        $this->expectException(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class);
         (new SqliteSchemaParser())->parse('CREATE TABLE test ()');
     }
 
     #[Test]
-    public function parseDefaultExpression(): void
+    public function testParseDefaultExpression(): void
     {
         $sql = 'CREATE TABLE test (created_at TEXT DEFAULT CURRENT_TIMESTAMP)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -267,7 +278,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseGeneratedColumn(): void
+    public function testParseGeneratedColumn(): void
     {
         $sql = 'CREATE TABLE test (a INTEGER, b INTEGER, c INTEGER AS (a + b))';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -277,7 +288,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultBooleanTrue(): void
+    public function testParseDefaultBooleanTrue(): void
     {
         $sql = 'CREATE TABLE test (active INTEGER DEFAULT TRUE)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -286,7 +297,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultBooleanFalse(): void
+    public function testParseDefaultBooleanFalse(): void
     {
         $sql = 'CREATE TABLE test (active INTEGER DEFAULT FALSE)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -295,7 +306,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultNumericOne(): void
+    public function testParseDefaultNumericOne(): void
     {
         $sql = 'CREATE TABLE test (flag INTEGER DEFAULT 1)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -304,7 +315,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultNumericZero(): void
+    public function testParseDefaultNumericZero(): void
     {
         $sql = 'CREATE TABLE test (flag INTEGER DEFAULT 0)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -313,7 +324,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultFloat(): void
+    public function testParseDefaultFloat(): void
     {
         $sql = 'CREATE TABLE test (price REAL DEFAULT 9.99)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -322,7 +333,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultCurrentDate(): void
+    public function testParseDefaultCurrentDate(): void
     {
         $sql = 'CREATE TABLE test (d TEXT DEFAULT CURRENT_DATE)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -331,7 +342,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultCurrentTime(): void
+    public function testParseDefaultCurrentTime(): void
     {
         $sql = 'CREATE TABLE test (t TEXT DEFAULT CURRENT_TIME)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -340,7 +351,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultExpression2(): void
+    public function testParseDefaultExpression2(): void
     {
         $sql = 'CREATE TABLE test (val INTEGER DEFAULT (1+2))';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -349,7 +360,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseIntegerPrimaryKeyNotAutoincrement(): void
+    public function testParseIntegerPrimaryKeyNotAutoincrement(): void
     {
         $sql = 'CREATE TABLE test (id INTEGER PRIMARY KEY, name TEXT)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -359,7 +370,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseIntegerPrimaryKeyAutoincrement(): void
+    public function testParseIntegerPrimaryKeyAutoincrement(): void
     {
         $sql = 'CREATE TABLE test (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -368,7 +379,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseNonIntegerPrimaryKeyAutoincrement(): void
+    public function testParseNonIntegerPrimaryKeyAutoincrement(): void
     {
         $sql = 'CREATE TABLE test (code TEXT PRIMARY KEY, name TEXT)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -378,7 +389,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseColumnWithNoType(): void
+    public function testParseColumnWithNoType(): void
     {
         $sql = 'CREATE TABLE test (val)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -387,16 +398,16 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseBlockComment(): void
+    public function testParseBlockComment(): void
     {
-        $sql = "/* comment */ CREATE TABLE test (id INTEGER)";
+        $sql = '/* comment */ CREATE TABLE test (id INTEGER)';
         $schema = (new SqliteSchemaParser())->parse($sql);
 
         self::assertSame('test', $schema->tableName);
     }
 
     #[Test]
-    public function parseNonGeneratedColumn(): void
+    public function testParseNonGeneratedColumn(): void
     {
         $sql = 'CREATE TABLE test (id INTEGER, name TEXT)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -406,7 +417,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseUnsignedAlwaysFalse(): void
+    public function testParseUnsignedAlwaysFalse(): void
     {
         $sql = 'CREATE TABLE test (id INTEGER)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -415,7 +426,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseEnumValuesAlwaysNull(): void
+    public function testParseEnumValuesAlwaysNull(): void
     {
         $sql = 'CREATE TABLE test (id INTEGER)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -424,7 +435,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseConstraintKeyword(): void
+    public function testParseConstraintKeyword(): void
     {
         $sql = 'CREATE TABLE test (id INTEGER, CONSTRAINT pk PRIMARY KEY (id))';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -434,7 +445,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultWithNotNull(): void
+    public function testParseDefaultWithNotNull(): void
     {
         $sql = "CREATE TABLE test (name TEXT NOT NULL DEFAULT 'test_val')";
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -444,7 +455,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseSchemaQualifiedTableName(): void
+    public function testParseSchemaQualifiedTableName(): void
     {
         $sql = 'CREATE TABLE main.users (id INTEGER PRIMARY KEY)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -453,14 +464,14 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseNoParentheses(): void
+    public function testParseNoParentheses(): void
     {
-        $this->expectException(SchemaParseException::class);
+        $this->expectException(\SqlFixture\Schema\Exception\InvalidSqlException::class);
         (new SqliteSchemaParser())->parse('CREATE TABLE test');
     }
 
     #[Test]
-    public function parseIsTableConstraintCaseInsensitive(): void
+    public function testParseIsTableConstraintCaseInsensitive(): void
     {
         $sql = 'CREATE TABLE test (id INTEGER, foreign key (id) REFERENCES other(id))';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -468,7 +479,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseBacktickedColumn(): void
+    public function testParseBacktickedColumn(): void
     {
         $sql = 'CREATE TABLE test (`col` INTEGER NOT NULL)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -476,7 +487,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseQuotedPrimaryKeyColumns(): void
+    public function testParseQuotedPrimaryKeyColumns(): void
     {
         $sql = 'CREATE TABLE test ("a" INTEGER, "b" TEXT, PRIMARY KEY ("a", "b"))';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -484,7 +495,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultStringWithNotNull(): void
+    public function testParseDefaultStringWithNotNull(): void
     {
         $sql = "CREATE TABLE test (col TEXT DEFAULT 'hello' NOT NULL)";
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -493,7 +504,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultWithCollate(): void
+    public function testParseDefaultWithCollate(): void
     {
         $sql = "CREATE TABLE test (col TEXT DEFAULT 'val' COLLATE NOCASE)";
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -501,16 +512,16 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseMultilineWithWhitespace(): void
+    public function testParseMultilineWithWhitespace(): void
     {
-        $sql = "  CREATE   TABLE   test  (  id   INTEGER  NOT  NULL  ) ";
+        $sql = '  CREATE   TABLE   test  (  id   INTEGER  NOT  NULL  ) ';
         $schema = (new SqliteSchemaParser())->parse($sql);
         self::assertSame('test', $schema->tableName);
         self::assertFalse($schema->columns['id']->nullable);
     }
 
     #[Test]
-    public function parseLengthOnlyColumn(): void
+    public function testParseLengthOnlyColumn(): void
     {
         $sql = 'CREATE TABLE test (col VARCHAR(50) NOT NULL)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -519,7 +530,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseIntegerPrimaryKeyWithoutAutoincrementIsNotAutoIncrement(): void
+    public function testParseIntegerPrimaryKeyWithoutAutoincrementIsNotAutoIncrement(): void
     {
         $sql = 'CREATE TABLE test (id INTEGER PRIMARY KEY)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -527,7 +538,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseTextPrimaryKeyNoAutoIncrement(): void
+    public function testParseTextPrimaryKeyNoAutoIncrement(): void
     {
         $sql = 'CREATE TABLE test (code TEXT PRIMARY KEY, name TEXT)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -536,7 +547,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultInteger42(): void
+    public function testParseDefaultInteger42(): void
     {
         $sql = 'CREATE TABLE test (count INTEGER DEFAULT 42)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -544,7 +555,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseLowercaseCreateTable(): void
+    public function testParseLowercaseCreateTable(): void
     {
         $sql = 'create table users (id integer primary key, name text not null)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -557,7 +568,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseLowercaseIfNotExists(): void
+    public function testParseLowercaseIfNotExists(): void
     {
         $sql = 'create table if not exists users (id integer primary key)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -566,7 +577,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseLowercaseAutoincrement(): void
+    public function testParseLowercaseAutoincrement(): void
     {
         $sql = 'create table test (id integer primary key autoincrement)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -575,7 +586,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseLowercaseConstraints(): void
+    public function testParseLowercaseConstraints(): void
     {
         $sql = <<<'SQL'
             create table test (
@@ -594,7 +605,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseLowercaseTablePrimaryKey(): void
+    public function testParseLowercaseTablePrimaryKey(): void
     {
         $sql = 'create table test (a integer, b text, primary key (a, b))';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -604,7 +615,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseLowercaseDecimalType(): void
+    public function testParseLowercaseDecimalType(): void
     {
         $sql = 'create table test (val decimal(10, 2))';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -615,7 +626,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseLowercaseVarcharWithLength(): void
+    public function testParseLowercaseVarcharWithLength(): void
     {
         $sql = 'create table test (name varchar(100))';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -625,7 +636,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseLowercaseGeneratedColumn(): void
+    public function testParseLowercaseGeneratedColumn(): void
     {
         $sql = 'create table test (a integer, b integer, c integer as (a + b))';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -634,7 +645,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseLowercaseDefaultValues(): void
+    public function testParseLowercaseDefaultValues(): void
     {
         $sql = <<<'SQL'
             create table test (
@@ -666,7 +677,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseLowercaseDefaultWithTrailingConstraints(): void
+    public function testParseLowercaseDefaultWithTrailingConstraints(): void
     {
         $sql = "create table test (name text default 'test' not null collate nocase)";
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -676,7 +687,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseLowercaseTypeAffinity(): void
+    public function testParseLowercaseTypeAffinity(): void
     {
         $sql = <<<'SQL'
             create table test (
@@ -708,7 +719,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseWithLeadingTrailingWhitespace(): void
+    public function testParseWithLeadingTrailingWhitespace(): void
     {
         $sql = "  \n  create table test ( \n  id integer , \n  name text \n ) \n ";
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -718,7 +729,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseMixedCaseKeywords(): void
+    public function testParseMixedCaseKeywords(): void
     {
         $sql = 'Create Table test (id Integer Primary Key, name Varchar(100) Not Null)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -731,7 +742,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseLowercaseSchemaQualified(): void
+    public function testParseLowercaseSchemaQualified(): void
     {
         $sql = 'create table main.users (id integer primary key)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -740,7 +751,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultStringWithCheckConstraint(): void
+    public function testParseDefaultStringWithCheckConstraint(): void
     {
         $sql = "CREATE TABLE test (val TEXT DEFAULT 'hello' CHECK (val <> ''))";
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -749,7 +760,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseConstraintBeforeColumn(): void
+    public function testParseConstraintBeforeColumn(): void
     {
         $sql = <<<'SQL'
             CREATE TABLE test (
@@ -769,7 +780,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseMultipleConstraintsBetweenColumns(): void
+    public function testParseMultipleConstraintsBetweenColumns(): void
     {
         $sql = <<<'SQL'
             CREATE TABLE test (
@@ -793,7 +804,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseNonIntegerPrimaryKeyIsNotAutoIncrement(): void
+    public function testParseNonIntegerPrimaryKeyIsNotAutoIncrement(): void
     {
         $sql = 'CREATE TABLE test (code TEXT PRIMARY KEY, name TEXT)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -804,7 +815,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultExpressionWithOnlyOpeningParen(): void
+    public function testParseDefaultExpressionWithOnlyOpeningParen(): void
     {
         $sql = "CREATE TABLE test (val TEXT DEFAULT 'value(test')";
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -813,7 +824,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseColumnWithNoTypeReturnsBlobViaExtractType(): void
+    public function testParseColumnWithNoTypeReturnsBlobViaExtractType(): void
     {
         $sql = 'CREATE TABLE test (col1, col2 INTEGER)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -823,7 +834,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultExpressionWrappedInParens(): void
+    public function testParseDefaultExpressionWrappedInParens(): void
     {
         $sql = 'CREATE TABLE test (val INTEGER DEFAULT (10 * 2))';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -832,7 +843,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultExpressionOnlyClosingParen(): void
+    public function testParseDefaultExpressionOnlyClosingParen(): void
     {
         $sql = "CREATE TABLE test (val TEXT DEFAULT 'test)')";
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -841,7 +852,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultCurrentTimestampUpperCase(): void
+    public function testParseDefaultCurrentTimestampUpperCase(): void
     {
         $sql = 'CREATE TABLE test (ts TEXT DEFAULT CURRENT_TIMESTAMP)';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -850,7 +861,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultCurrentTimestampNotPartOfLargerWord(): void
+    public function testParseDefaultCurrentTimestampNotPartOfLargerWord(): void
     {
         $sql = "CREATE TABLE test (ts TEXT DEFAULT 'NOT_CURRENT_TIMESTAMP_EXTRA')";
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -859,9 +870,9 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseTrimsDefinitionsInSplitColumnDefinitions(): void
+    public function testParseTrimsDefinitionsInSplitColumnDefinitions(): void
     {
-        $sql = "CREATE TABLE test (  id INTEGER  ,  name TEXT  )";
+        $sql = 'CREATE TABLE test (  id INTEGER  ,  name TEXT  )';
         $schema = (new SqliteSchemaParser())->parse($sql);
 
         self::assertCount(2, $schema->columns);
@@ -870,9 +881,9 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseColumnDefinitionTrimsRest(): void
+    public function testParseColumnDefinitionTrimsRest(): void
     {
-        $sql = "CREATE TABLE test (id   INTEGER   NOT NULL)";
+        $sql = 'CREATE TABLE test (id   INTEGER   NOT NULL)';
         $schema = (new SqliteSchemaParser())->parse($sql);
 
         self::assertSame('INTEGER', $schema->columns['id']->type);
@@ -880,7 +891,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultTrimsValue(): void
+    public function testParseDefaultTrimsValue(): void
     {
         $sql = "CREATE TABLE test (val TEXT DEFAULT 'trimmed' NOT NULL)";
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -890,7 +901,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseIsTableConstraintWithLeadingWhitespace(): void
+    public function testParseIsTableConstraintWithLeadingWhitespace(): void
     {
         $sql = "CREATE TABLE test (id INTEGER, \n  PRIMARY KEY (id))";
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -899,14 +910,14 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseColumnParensEqualStartReturnsNull(): void
+    public function testParseColumnParensEqualStartReturnsNull(): void
     {
-        $this->expectException(SchemaParseException::class);
+        $this->expectException(\SqlFixture\Schema\Exception\InvalidSqlException::class);
         (new SqliteSchemaParser())->parse('CREATE TABLE test )( ');
     }
 
     #[Test]
-    public function parseIntegerPrimaryKeyWithTextPrimaryKeyElseBranch(): void
+    public function testParseIntegerPrimaryKeyWithTextPrimaryKeyElseBranch(): void
     {
         $sql = <<<'SQL'
             CREATE TABLE test (
@@ -923,7 +934,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultStringWithDoubleQuotes(): void
+    public function testParseDefaultStringWithDoubleQuotes(): void
     {
         $sql = 'CREATE TABLE test (name TEXT DEFAULT "hello_world")';
         $schema = (new SqliteSchemaParser())->parse($sql);
@@ -932,18 +943,18 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseDefaultReferencesConstraint(): void
+    public function testParseDefaultReferencesConstraint(): void
     {
-        $sql = "CREATE TABLE test (user_id INTEGER DEFAULT 1 REFERENCES users(id))";
+        $sql = 'CREATE TABLE test (user_id INTEGER DEFAULT 1 REFERENCES users(id))';
         $schema = (new SqliteSchemaParser())->parse($sql);
 
         self::assertTrue($schema->columns['user_id']->default);
     }
 
     #[Test]
-    public function parseDefaultWithGeneratedKeyword(): void
+    public function testParseDefaultWithGeneratedKeyword(): void
     {
-        $sql = "CREATE TABLE test (val INTEGER DEFAULT 5, gen INTEGER AS (val * 2))";
+        $sql = 'CREATE TABLE test (val INTEGER DEFAULT 5, gen INTEGER AS (val * 2))';
         $schema = (new SqliteSchemaParser())->parse($sql);
 
         self::assertSame(5, $schema->columns['val']->default);
@@ -951,9 +962,9 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseNormalizeSqlRemovesBlockComments(): void
+    public function testParseNormalizeSqlRemovesBlockComments(): void
     {
-        $sql = "CREATE TABLE /* block comment */ test (id /* another */ INTEGER)";
+        $sql = 'CREATE TABLE /* block comment */ test (id /* another */ INTEGER)';
         $schema = (new SqliteSchemaParser())->parse($sql);
 
         self::assertSame('test', $schema->tableName);
@@ -961,7 +972,7 @@ final class SqliteSchemaParserTest extends TestCase
     }
 
     #[Test]
-    public function parseNormalizeSqlTrimsWhitespace(): void
+    public function testParseNormalizeSqlTrimsWhitespace(): void
     {
         $sql = "\n\n   CREATE TABLE test (id INTEGER)   \n\n";
         $schema = (new SqliteSchemaParser())->parse($sql);

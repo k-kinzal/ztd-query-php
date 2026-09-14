@@ -5,20 +5,26 @@ declare(strict_types=1);
 namespace Tests\Unit\Platform\Sqlite;
 
 use Faker\Factory;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Platform\Sqlite\SqliteTypeMapper;
 use SqlFixture\Schema\ColumnDefinition;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
-use Tests\Fixture\SpyGenerator;
 
 #[CoversClass(SqliteTypeMapper::class)]
 #[UsesClass(ColumnDefinition::class)]
+#[CoversClass(\SqlFixture\Platform\Sqlite\Value\ColumnGenerator::class)]
+#[CoversClass(\SqlFixture\Platform\Sqlite\Value\TypeAffinity::class)]
+#[UsesClass(\SqlFixture\TypeMapper\ParagraphGenerator::class)]
+#[UsesClass(\SqlFixture\TypeMapper\TypeMapperInterface::class)]
+#[UsesClass(\SqlFixture\TypeMapper\IntegerRange::class)]
+#[UsesClass(\SqlFixture\TypeMapper\IntegerWidth::class)]
+#[UsesClass(\SqlFixture\TypeMapper\DecimalRange::class)]
 final class SqliteTypeMapperTest extends TestCase
 {
     #[Test]
-    public function generateIntegerAffinity(): void
+    public function testGenerateIntegerAffinity(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -32,7 +38,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateInt(): void
+    public function testGenerateInt(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -46,7 +52,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateTinyInt(): void
+    public function testGenerateTinyInt(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -60,7 +66,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateSmallInt(): void
+    public function testGenerateSmallInt(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -74,7 +80,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateBigInt(): void
+    public function testGenerateBigInt(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -86,7 +92,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateTextAffinity(): void
+    public function testGenerateTextAffinity(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -99,7 +105,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateVarchar(): void
+    public function testGenerateVarchar(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -112,7 +118,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateChar(): void
+    public function testGenerateChar(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -125,7 +131,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateRealAffinity(): void
+    public function testGenerateRealAffinity(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -139,7 +145,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateFloat(): void
+    public function testGenerateFloat(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -153,7 +159,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateDouble(): void
+    public function testGenerateDouble(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -167,7 +173,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateBlobAffinity(): void
+    public function testGenerateBlobAffinity(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -181,7 +187,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateBlobWithLength(): void
+    public function testGenerateBlobWithLength(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -195,7 +201,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateNumericAffinityBoolean(): void
+    public function testGenerateNumericAffinityBoolean(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -207,7 +213,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateNumericAffinityDate(): void
+    public function testGenerateNumericAffinityDate(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -220,7 +226,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateNumericAffinityTime(): void
+    public function testGenerateNumericAffinityTime(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -233,7 +239,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateNumericAffinityDatetime(): void
+    public function testGenerateNumericAffinityDatetime(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -246,7 +252,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateDecimal(): void
+    public function testGenerateDecimal(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -260,7 +266,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateAutoIncrementReturnsNull(): void
+    public function testGenerateAutoIncrementReturnsNull(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -273,7 +279,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateGeneratedColumnReturnsNull(): void
+    public function testGenerateGeneratedColumnReturnsNull(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -286,7 +292,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateNullable(): void
+    public function testGenerateNullable(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -318,7 +324,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateNonNullableNeverReturnsNull(): void
+    public function testGenerateNonNullableNeverReturnsNull(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -336,7 +342,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateDecimalBoundaryValues(): void
+    public function testGenerateDecimalBoundaryValues(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -350,7 +356,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateIntegerBoundaryValues(): void
+    public function testGenerateIntegerBoundaryValues(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -364,7 +370,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateTinyText(): void
+    public function testGenerateTinyText(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -378,7 +384,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateMediumText(): void
+    public function testGenerateMediumText(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -391,7 +397,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateClob(): void
+    public function testGenerateClob(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -404,7 +410,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateTimestamp(): void
+    public function testGenerateTimestamp(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -417,7 +423,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateNumeric(): void
+    public function testGenerateNumeric(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -431,7 +437,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateMediumInt(): void
+    public function testGenerateMediumInt(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -444,7 +450,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateInt2Alias(): void
+    public function testGenerateInt2Alias(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -457,7 +463,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateInt8Alias(): void
+    public function testGenerateInt8Alias(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -468,7 +474,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateLongText(): void
+    public function testGenerateLongText(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -480,7 +486,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateTextWithLength(): void
+    public function testGenerateTextWithLength(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -492,7 +498,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateRealWithPrecisionScale(): void
+    public function testGenerateRealWithPrecisionScale(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -505,7 +511,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateFloatRange(): void
+    public function testGenerateFloatRange(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -518,7 +524,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateDecimalDefaultPrecision(): void
+    public function testGenerateDecimalDefaultPrecision(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -531,7 +537,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateNumericDefaultAffinity(): void
+    public function testGenerateNumericDefaultAffinity(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -544,7 +550,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateEmptyTypeBlobAffinity(): void
+    public function testGenerateEmptyTypeBlobAffinity(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -557,7 +563,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateLowercaseTypeWorks(): void
+    public function testGenerateLowercaseTypeWorks(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -570,7 +576,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateSmallIntBoundary(): void
+    public function testGenerateSmallIntBoundary(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -583,7 +589,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotInteger(): void
+    public function testSnapshotInteger(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -596,7 +602,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotInt(): void
+    public function testSnapshotInt(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -609,7 +615,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotTinyInt(): void
+    public function testSnapshotTinyInt(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -622,7 +628,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotSmallInt(): void
+    public function testSnapshotSmallInt(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -635,7 +641,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotInt2(): void
+    public function testSnapshotInt2(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -648,7 +654,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotMediumInt(): void
+    public function testSnapshotMediumInt(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -661,7 +667,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotBigInt(): void
+    public function testSnapshotBigInt(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -672,7 +678,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotInt8(): void
+    public function testSnapshotInt8(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -683,7 +689,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotChar(): void
+    public function testSnapshotChar(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -695,7 +701,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotReal(): void
+    public function testSnapshotReal(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -708,7 +714,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotFloatValue(): void
+    public function testSnapshotFloatValue(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -721,7 +727,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotDouble(): void
+    public function testSnapshotDouble(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -734,7 +740,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotRealWithPrecision(): void
+    public function testSnapshotRealWithPrecision(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -747,7 +753,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotBoolean(): void
+    public function testSnapshotBoolean(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -758,7 +764,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotDate(): void
+    public function testSnapshotDate(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -770,7 +776,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotTime(): void
+    public function testSnapshotTime(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -782,7 +788,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotDatetime(): void
+    public function testSnapshotDatetime(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -794,7 +800,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotTimestamp(): void
+    public function testSnapshotTimestamp(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -806,7 +812,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotDecimal(): void
+    public function testSnapshotDecimal(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -819,7 +825,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotNumeric(): void
+    public function testSnapshotNumeric(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -832,7 +838,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotAnytype(): void
+    public function testSnapshotAnytype(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -845,7 +851,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotBlobWithLength(): void
+    public function testSnapshotBlobWithLength(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -857,7 +863,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotBlobWithoutLength(): void
+    public function testSnapshotBlobWithoutLength(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -870,7 +876,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotEmptyType(): void
+    public function testSnapshotEmptyType(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -883,7 +889,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotDecimalDefaultPrecision(): void
+    public function testSnapshotDecimalDefaultPrecision(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -896,7 +902,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotBooleanValues(): void
+    public function testSnapshotBooleanValues(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -911,7 +917,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotBlobExactLength(): void
+    public function testSnapshotBlobExactLength(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -924,7 +930,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotAnytypeExact(): void
+    public function testSnapshotAnytypeExact(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -937,7 +943,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotFloatExact(): void
+    public function testSnapshotFloatExact(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -950,7 +956,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function snapshotDecimalExact(): void
+    public function testSnapshotDecimalExact(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -963,7 +969,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function lowercaseTypeUsesStrtoupper(): void
+    public function testLowercaseTypeUsesStrtoupper(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -981,7 +987,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function lowercaseTinyintGeneratesSameAsUppercase(): void
+    public function testLowercaseTinyintGeneratesSameAsUppercase(): void
     {
         $faker = Factory::create();
         $mapper = new SqliteTypeMapper();
@@ -995,7 +1001,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function lowercaseSmallintGeneratesSameAsUppercase(): void
+    public function testLowercaseSmallintGeneratesSameAsUppercase(): void
     {
         $faker = Factory::create();
         $mapper = new SqliteTypeMapper();
@@ -1009,7 +1015,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function lowercaseInt2GeneratesSameAsUppercase(): void
+    public function testLowercaseInt2GeneratesSameAsUppercase(): void
     {
         $faker = Factory::create();
         $mapper = new SqliteTypeMapper();
@@ -1023,7 +1029,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function lowercaseMediumintGeneratesSameAsUppercase(): void
+    public function testLowercaseMediumintGeneratesSameAsUppercase(): void
     {
         $faker = Factory::create();
         $mapper = new SqliteTypeMapper();
@@ -1037,7 +1043,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function lowercaseBigintGeneratesSameAsUppercase(): void
+    public function testLowercaseBigintGeneratesSameAsUppercase(): void
     {
         $faker = Factory::create();
         $mapper = new SqliteTypeMapper();
@@ -1051,7 +1057,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function lowercaseInt8GeneratesSameAsUppercase(): void
+    public function testLowercaseInt8GeneratesSameAsUppercase(): void
     {
         $faker = Factory::create();
         $mapper = new SqliteTypeMapper();
@@ -1065,7 +1071,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function lowercaseCharGeneratesSameAsUppercase(): void
+    public function testLowercaseCharGeneratesSameAsUppercase(): void
     {
         $faker = Factory::create();
         $mapper = new SqliteTypeMapper();
@@ -1079,7 +1085,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function lowercaseTinytextGeneratesSameAsUppercase(): void
+    public function testLowercaseTinytextGeneratesSameAsUppercase(): void
     {
         $faker = Factory::create();
         $mapper = new SqliteTypeMapper();
@@ -1093,7 +1099,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function lowercaseMediumtextGeneratesSameAsUppercase(): void
+    public function testLowercaseMediumtextGeneratesSameAsUppercase(): void
     {
         $faker = Factory::create();
         $mapper = new SqliteTypeMapper();
@@ -1107,7 +1113,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function lowercaseLongtextGeneratesSameAsUppercase(): void
+    public function testLowercaseLongtextGeneratesSameAsUppercase(): void
     {
         $faker = Factory::create();
         $mapper = new SqliteTypeMapper();
@@ -1121,7 +1127,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function lowercaseClobGeneratesSameAsUppercase(): void
+    public function testLowercaseClobGeneratesSameAsUppercase(): void
     {
         $faker = Factory::create();
         $mapper = new SqliteTypeMapper();
@@ -1135,7 +1141,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function lowercaseFloatGeneratesSameAsUppercase(): void
+    public function testLowercaseFloatGeneratesSameAsUppercase(): void
     {
         $faker = Factory::create();
         $mapper = new SqliteTypeMapper();
@@ -1149,7 +1155,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function lowercaseDoubleGeneratesSameAsUppercase(): void
+    public function testLowercaseDoubleGeneratesSameAsUppercase(): void
     {
         $faker = Factory::create();
         $mapper = new SqliteTypeMapper();
@@ -1163,7 +1169,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function lowercaseDecimalGeneratesSameAsUppercase(): void
+    public function testLowercaseDecimalGeneratesSameAsUppercase(): void
     {
         $faker = Factory::create();
         $mapper = new SqliteTypeMapper();
@@ -1177,7 +1183,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function lowercaseDateGeneratesSameAsUppercase(): void
+    public function testLowercaseDateGeneratesSameAsUppercase(): void
     {
         $faker = Factory::create();
         $mapper = new SqliteTypeMapper();
@@ -1191,7 +1197,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function lowercaseTimeGeneratesSameAsUppercase(): void
+    public function testLowercaseTimeGeneratesSameAsUppercase(): void
     {
         $faker = Factory::create();
         $mapper = new SqliteTypeMapper();
@@ -1205,7 +1211,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function lowercaseDatetimeGeneratesSameAsUppercase(): void
+    public function testLowercaseDatetimeGeneratesSameAsUppercase(): void
     {
         $faker = Factory::create();
         $mapper = new SqliteTypeMapper();
@@ -1219,7 +1225,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function lowercaseTimestampGeneratesSameAsUppercase(): void
+    public function testLowercaseTimestampGeneratesSameAsUppercase(): void
     {
         $faker = Factory::create();
         $mapper = new SqliteTypeMapper();
@@ -1233,7 +1239,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function nullableColumnReturnsDefault(): void
+    public function testNullableColumnReturnsDefault(): void
     {
         $faker = Factory::create();
         $mapper = new SqliteTypeMapper();
@@ -1262,7 +1268,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function nullableColumnReturnsDefaultWithSpecificSeed(): void
+    public function testNullableColumnReturnsDefaultWithSpecificSeed(): void
     {
         $faker = Factory::create();
         $mapper = new SqliteTypeMapper();
@@ -1283,7 +1289,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function nullableColumnReturnsGeneratedWithSpecificSeed(): void
+    public function testNullableColumnReturnsGeneratedWithSpecificSeed(): void
     {
         $faker = Factory::create();
         $mapper = new SqliteTypeMapper();
@@ -1304,7 +1310,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function nullableColumnSeed28ReturnsDefault(): void
+    public function testNullableColumnSeed28ReturnsDefault(): void
     {
         $faker = Factory::create();
         $mapper = new SqliteTypeMapper();
@@ -1325,7 +1331,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function nullableColumnSeed285ReturnsGenerated(): void
+    public function testNullableColumnSeed285ReturnsGenerated(): void
     {
         $faker = Factory::create();
         $mapper = new SqliteTypeMapper();
@@ -1346,7 +1352,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateTextWithLengthSeed12345(): void
+    public function testGenerateTextWithLengthSeed12345(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -1360,7 +1366,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateDoublePrecisionOnlySeed12345(): void
+    public function testGenerateDoublePrecisionOnlySeed12345(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -1374,142 +1380,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function spyTinyIntBoundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new SqliteTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'TINYINT', nullable: false));
-        self::assertSame([-128, 127], $spy->numberBetweenCalls[0]);
-    }
-
-    #[Test]
-    public function spySmallIntBoundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new SqliteTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'SMALLINT', nullable: false));
-        self::assertSame([-32768, 32767], $spy->numberBetweenCalls[0]);
-    }
-
-    #[Test]
-    public function spyInt2Boundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new SqliteTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'INT2', nullable: false));
-        self::assertSame([-32768, 32767], $spy->numberBetweenCalls[0]);
-    }
-
-    #[Test]
-    public function spyMediumIntBoundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new SqliteTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'MEDIUMINT', nullable: false));
-        self::assertSame([-8388608, 8388607], $spy->numberBetweenCalls[0]);
-    }
-
-    #[Test]
-    public function spyIntegerDefaultBoundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new SqliteTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'INTEGER', nullable: false));
-        self::assertSame([-2147483648, 2147483647], $spy->numberBetweenCalls[0]);
-    }
-
-    #[Test]
-    public function spyBigIntBoundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new SqliteTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'BIGINT', nullable: false));
-        self::assertSame([PHP_INT_MIN, PHP_INT_MAX], $spy->numberBetweenCalls[0]);
-    }
-
-    #[Test]
-    public function spyInt8Boundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new SqliteTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'INT8', nullable: false));
-        self::assertSame([PHP_INT_MIN, PHP_INT_MAX], $spy->numberBetweenCalls[0]);
-    }
-
-    #[Test]
-    public function spyFloatBoundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new SqliteTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'FLOAT', nullable: false));
-        self::assertSame([2, -1000.0, 1000.0], $spy->randomFloatCalls[0]);
-    }
-
-    #[Test]
-    public function spyDoubleDefaultBoundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new SqliteTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'DOUBLE', nullable: false));
-        self::assertSame([4, -1000000.0, 1000000.0], $spy->randomFloatCalls[0]);
-    }
-
-    #[Test]
-    public function spyRealDefaultBoundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new SqliteTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'REAL', nullable: false));
-        self::assertSame([4, -1000000.0, 1000000.0], $spy->randomFloatCalls[0]);
-    }
-
-    #[Test]
-    public function spyRealWithPrecisionScale(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new SqliteTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'REAL', precision: 5, scale: 2, nullable: false));
-        self::assertSame([2, -999.0, 999.0], $spy->randomFloatCalls[0]);
-    }
-
-    #[Test]
-    public function spyDecimalBoundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new SqliteTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'DECIMAL', precision: 5, scale: 2, nullable: false));
-        self::assertSame([2, -999.0, 999.0], $spy->randomFloatCalls[0]);
-    }
-
-    #[Test]
-    public function spyDecimalDefaultPrecision(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new SqliteTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'DECIMAL', nullable: false));
-        self::assertSame([0, -9999999999.0, 9999999999.0], $spy->randomFloatCalls[0]);
-    }
-
-    #[Test]
-    public function spyNumericBoundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new SqliteTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'NUMERIC', precision: 8, scale: 3, nullable: false));
-        self::assertSame([3, -99999.0, 99999.0], $spy->randomFloatCalls[0]);
-    }
-
-    #[Test]
-    public function spyBooleanCallsBoolean(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new SqliteTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'BOOLEAN', nullable: false));
-        self::assertSame([50], $spy->booleanCalls[0]);
-    }
-
-    #[Test]
-    public function booleanProducesBothZeroAndOne(): void
+    public function testBooleanProducesBothZeroAndOne(): void
     {
         $faker = Factory::create();
         $mapper = new SqliteTypeMapper();
@@ -1538,115 +1409,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function spyBlobWithoutLengthBoundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new SqliteTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'BLOB', nullable: false));
-        self::assertSame([1, 1000], $spy->numberBetweenCalls[0]);
-    }
-
-    #[Test]
-    public function spyTinyTextCallsText255(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new SqliteTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'TINYTEXT', nullable: false));
-        self::assertSame([255], $spy->methodCalls['text'][0]);
-    }
-
-    #[Test]
-    public function spyTextCallsParagraphs2(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new SqliteTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'TEXT', nullable: false));
-        self::assertSame([2, true], $spy->methodCalls['paragraphs'][0]);
-    }
-
-    #[Test]
-    public function spyMediumTextCallsParagraphs3(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new SqliteTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'MEDIUMTEXT', nullable: false));
-        self::assertSame([3, true], $spy->methodCalls['paragraphs'][0]);
-    }
-
-    #[Test]
-    public function spyLongTextCallsParagraphs5(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new SqliteTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'LONGTEXT', nullable: false));
-        self::assertSame([5, true], $spy->methodCalls['paragraphs'][0]);
-    }
-
-    #[Test]
-    public function spyClobCallsParagraphs5(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new SqliteTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'CLOB', nullable: false));
-        self::assertSame([5, true], $spy->methodCalls['paragraphs'][0]);
-    }
-
-    #[Test]
-    public function spyCharLexifyPattern(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new SqliteTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'CHAR', length: 5, nullable: false));
-        self::assertSame(['?????'], $spy->methodCalls['lexify'][0]);
-    }
-
-    #[Test]
-    public function spyVarcharLexifyPattern(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new SqliteTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'VARCHAR', length: 3, nullable: false));
-        self::assertSame(['???'], $spy->methodCalls['lexify'][0]);
-    }
-
-    #[Test]
-    public function spyTextWithLengthBoundary(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new SqliteTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'TEXT', length: 100, nullable: false));
-        self::assertSame([100], $spy->methodCalls['text'][0]);
-    }
-
-    #[Test]
-    public function spyTextWithLengthCapAt200(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new SqliteTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'TEXT', length: 500, nullable: false));
-        self::assertSame([200], $spy->methodCalls['text'][0]);
-    }
-
-    #[Test]
-    public function spyNumericDefaultBoundaries(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new SqliteTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'ANYTYPE', nullable: false));
-        self::assertSame([2, -1000.0, 1000.0], $spy->randomFloatCalls[0]);
-    }
-
-    #[Test]
-    public function spyNullableCallsBooleanWithTen(): void
-    {
-        $spy = SpyGenerator::create();
-        $mapper = new SqliteTypeMapper();
-        $mapper->generate($spy, new ColumnDefinition('col', 'INTEGER', nullable: true));
-        self::assertContains([10], $spy->booleanCalls);
-    }
-
-    #[Test]
-    public function generateTinyTextLength(): void
+    public function testGenerateTinyTextLength(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -1659,7 +1422,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateTextWithLengthLimit(): void
+    public function testGenerateTextWithLengthLimit(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -1672,7 +1435,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateTextWithLengthStartsFromBeginning(): void
+    public function testGenerateTextWithLengthStartsFromBeginning(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -1688,7 +1451,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateCharExactLength(): void
+    public function testGenerateCharExactLength(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -1701,7 +1464,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateBlobExactLengthOutput(): void
+    public function testGenerateBlobExactLengthOutput(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -1714,7 +1477,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateBlobWithoutLengthNonEmpty(): void
+    public function testGenerateBlobWithoutLengthNonEmpty(): void
     {
         $faker = Factory::create();
         $faker->seed(12345);
@@ -1727,12 +1490,12 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateBooleanReturnsOneOrZero(): void
+    public function testGenerateBooleanReturnsOneOrZero(): void
     {
         $faker = Factory::create();
         $mapper = new SqliteTypeMapper();
 
-        $results = array_map(function (int $i) use ($faker, $mapper): mixed {
+        $results = array_map(function (int $i) use ($faker, $mapper) {
             $faker->seed($i);
             $column = new ColumnDefinition('col', 'BOOLEAN', nullable: false);
             $value = $mapper->generate($faker, $column);
@@ -1745,23 +1508,23 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function nullableColumnDefaultRatioIsLow(): void
+    public function testNullableColumnDefaultRatioIsLow(): void
     {
         $faker = Factory::create();
         $mapper = new SqliteTypeMapper();
         $column = new ColumnDefinition('col', 'INTEGER', nullable: true, default: 'MARKER');
 
         $total = 500;
-        $defaultCount = count(array_filter(array_map(function (int $i) use ($faker, $mapper, $column): mixed {
+        $defaultCount = count(array_filter(array_map(function (int $i) use ($faker, $mapper, $column) {
             $faker->seed($i);
 
             return $mapper->generate($faker, $column);
-        }, range(0, $total - 1)), fn (mixed $value): bool => $value === 'MARKER'));
+        }, range(0, $total - 1)), fn ($value): bool => $value === 'MARKER'));
         self::assertLessThan((int) ($total * 0.5), $defaultCount, 'Default should be returned rarely (10% chance), not often (90%)');
     }
 
     #[Test]
-    public function generateCharSubstrStartsAtZero(): void
+    public function testGenerateCharSubstrStartsAtZero(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1779,7 +1542,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateTextWithLengthSubstrStartsAtZero(): void
+    public function testGenerateTextWithLengthSubstrStartsAtZero(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
@@ -1796,7 +1559,7 @@ final class SqliteTypeMapperTest extends TestCase
     }
 
     #[Test]
-    public function generateTinyTextStartsFromBeginning(): void
+    public function testGenerateTinyTextStartsFromBeginning(): void
     {
         $faker = Factory::create();
         $faker->seed(42);
