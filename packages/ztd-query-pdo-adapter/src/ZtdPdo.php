@@ -11,13 +11,12 @@ use ReflectionClass;
 use RuntimeException;
 use SensitiveParameter;
 use Traversable;
-use ZtdQuery\Adapter\Pdo\Driver\PdoConnection;
-use ZtdQuery\Adapter\Pdo\Session\DriverSessionFactory;
-use ZtdQuery\Adapter\Pdo\Session\PostgreSqlCopy;
+use ZtdQuery\Adapter\Pdo\Session\ConnectionExecution;
+use ZtdQuery\Adapter\Pdo\Session\CopyArguments;
 use ZtdQuery\Adapter\Pdo\Session\PreparedQuery;
 use ZtdQuery\Config\ZtdConfig;
-use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Platform\SessionFactory;
+use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Session;
 
 /**
@@ -42,20 +41,7 @@ use ZtdQuery\Session;
  */
 class ZtdPdo extends PDO
 {
-    /**
-     * ZTD session context for this connection.
-     */
-    private Session $session;
-
-    /**
-     * Inner PDO instance for delegation.
-     */
-    private PDO $pdo;
-
-    /**
-     * PostgreSQL COPY, carried out through ZTD rather than by the server.
-     */
-    private PostgreSqlCopy $copy;
+    private ConnectionExecution $execution;
 
     /**
      * Configure a new ZTD-enabled PDO wrapper.
@@ -76,12 +62,7 @@ class ZtdPdo extends PDO
     public function __construct(string $dsn, ?string $username = null, ?string $password = null, ?array $options = null, ?ZtdConfig $config = null, ?SessionFactory $factory = null)
     {
         parent::__construct($dsn, $username, $password, $options);
-        $this->pdo = new PDO($dsn, $username, $password, $options);
-
-        $resolvedFactory = $factory ?? (new DriverSessionFactory())->forConnection($this->pdo);
-        $connection = new PdoConnection($this->pdo);
-        $this->session = $resolvedFactory->create($connection, $config ?? ZtdConfig::default());
-        $this->copy = new PostgreSqlCopy($this->session);
+        $this->execution = new ConnectionExecution(new PDO($dsn, $username, $password, $options), $config, $factory);
     }
 
     /**
@@ -109,15 +90,8 @@ class ZtdPdo extends PDO
      */
     public static function fromPdo(PDO $pdo, ?ZtdConfig $config = null, ?SessionFactory $factory = null): static
     {
-        /** @var static $instance */
         $instance = (new ReflectionClass(static::class))->newInstanceWithoutConstructor();
-        $instance->pdo = $pdo;
-
-        $resolvedFactory = $factory ?? (new DriverSessionFactory())->forConnection($instance->pdo);
-        $connection = new PdoConnection($instance->pdo);
-        $instance->session = $resolvedFactory->create($connection, $config ?? ZtdConfig::default());
-        $instance->copy = new PostgreSqlCopy($instance->session);
-
+        $instance->execution = new ConnectionExecution($pdo, $config, $factory);
         return $instance;
     }
 
@@ -135,7 +109,7 @@ class ZtdPdo extends PDO
      */
     public function enableZtd(): void
     {
-        $this->session->enable();
+        $this->execution->session()->enable();
     }
 
     /**
@@ -154,7 +128,7 @@ class ZtdPdo extends PDO
      */
     public function disableZtd(): void
     {
-        $this->session->disable();
+        $this->execution->session()->disable();
     }
 
     /**
@@ -168,7 +142,7 @@ class ZtdPdo extends PDO
      */
     public function isZtdEnabled(): bool
     {
-        return $this->session->isEnabled();
+        return $this->execution->session()->isEnabled();
     }
 
     /**
@@ -193,30 +167,11 @@ class ZtdPdo extends PDO
     #[Override]
     public function prepare(string $query, array $options = []): PDOStatement|false
     {
-        if (!$this->session->isEnabled()) {
-            return $this->pdo->prepare($query, $options);
-        }
-
-        $this->copy->guardRaw($query);
-
-        try {
-            $native = $this->pdo;
-            $execution = new PreparedQuery($this->session, $query, static fn (string $sql): PDOStatement|false => $native->prepare($sql, $options));
-            $plan = $execution->rewrite();
-            $compiled = $this->session->parameterBindingCompiler()?->compile($plan->sql(), null);
-            $statement = $execution->prepare($compiled['sql'] ?? $plan->sql());
-        } catch (DatabaseException $exception) {
-            throw new ZtdPdoException($exception->getMessage(), 0, $exception);
-        }
-
-        $defaultFetchMode = $this->pdo->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE);
-
-        return new ZtdPdoStatement(
-            $statement,
-            $this->session,
-            $plan,
-            $execution,
-            is_int($defaultFetchMode) ? $defaultFetchMode : PDO::FETCH_BOTH,
+        return $this->execution->prepare(
+            $query,
+            $options,
+            static fn (PDOStatement $statement, Session $session, RewritePlan $plan, PreparedQuery $prepared, int $mode): PDOStatement =>
+                new ZtdPdoStatement($statement, $session, $plan, $prepared, $mode),
         );
     }
 
@@ -240,32 +195,7 @@ class ZtdPdo extends PDO
     #[Override]
     public function query(string $query, ?int $fetchMode = null, mixed ...$fetchModeArgs): PDOStatement|false
     {
-        if ($this->session->isEnabled()) {
-            $transactionStatement = $this->session->transactionStatement($query);
-            if ($transactionStatement !== null) {
-                $statement = $this->pdo->query($query, $fetchMode, ...$fetchModeArgs);
-                if ($statement !== false) {
-                    $this->session->applyTransactionStatement($transactionStatement);
-                }
-
-                return $statement;
-            }
-        }
-
-        $stmt = $this->prepare($query);
-        if ($stmt === false) {
-            return false;
-        }
-
-        if ($fetchMode !== null) {
-            $stmt->setFetchMode($fetchMode, ...$fetchModeArgs);
-        }
-
-        if (!$stmt->execute()) {
-            return false;
-        }
-
-        return $stmt;
+        return $this->execution->query($query, $fetchMode, $fetchModeArgs, $this->prepare(...));
     }
 
     /**
@@ -290,41 +220,7 @@ class ZtdPdo extends PDO
     #[Override]
     public function exec(string $statement): int|false
     {
-        if (!$this->session->isEnabled()) {
-            return $this->pdo->exec($statement);
-        }
-
-        $statements = $this->session->splitStatements($statement);
-        if (count($statements) > 1) {
-            $affectedRows = 0;
-            foreach ($statements as $one) {
-                $result = $this->exec($one);
-                if ($result === false) {
-                    return false;
-                }
-                $affectedRows = $result;
-            }
-
-            return $affectedRows;
-        }
-
-        $this->copy->guardRaw($statement);
-
-        $transactionStatement = $this->session->transactionStatement($statement);
-        if ($transactionStatement !== null) {
-            $result = $this->pdo->exec($statement);
-            if ($result !== false) {
-                $this->session->applyTransactionStatement($transactionStatement);
-            }
-
-            return $result;
-        }
-
-        try {
-            return $this->session->execStatement($statement);
-        } catch (DatabaseException $e) {
-            throw new ZtdPdoException($e->getMessage(), 0, $e);
-        }
+        return $this->execution->exec($statement, $this->exec(...));
     }
 
     /**
@@ -371,12 +267,7 @@ class ZtdPdo extends PDO
     #[Override]
     public function beginTransaction(): bool
     {
-        $result = $this->pdo->beginTransaction();
-        if ($result) {
-            $this->session->beginTransaction();
-        }
-
-        return $result;
+        return $this->execution->beginTransaction();
     }
 
     /**
@@ -395,12 +286,7 @@ class ZtdPdo extends PDO
     #[Override]
     public function commit(): bool
     {
-        $result = $this->pdo->commit();
-        if ($result) {
-            $this->session->commitTransaction();
-        }
-
-        return $result;
+        return $this->execution->commit();
     }
 
     /**
@@ -418,12 +304,7 @@ class ZtdPdo extends PDO
     #[Override]
     public function rollBack(): bool
     {
-        $result = $this->pdo->rollBack();
-        if ($result) {
-            $this->session->rollBackTransaction();
-        }
-
-        return $result;
+        return $this->execution->rollBack();
     }
 
     /**
@@ -439,7 +320,7 @@ class ZtdPdo extends PDO
     #[Override]
     public function inTransaction(): bool
     {
-        return $this->pdo->inTransaction();
+        return $this->execution->native()->inTransaction();
     }
 
     /**
@@ -455,14 +336,7 @@ class ZtdPdo extends PDO
     #[Override]
     public function lastInsertId(?string $name = null): string|false
     {
-        if ($this->session->isEnabled() && $name === null) {
-            $lastInsertId = $this->session->lastInsertId();
-            if ($lastInsertId !== false) {
-                return $lastInsertId;
-            }
-        }
-
-        return $this->pdo->lastInsertId($name);
+        return $this->execution->lastInsertId($name);
     }
 
     /**
@@ -477,7 +351,7 @@ class ZtdPdo extends PDO
     #[Override]
     public function errorCode(): ?string
     {
-        return $this->pdo->errorCode();
+        return $this->execution->native()->errorCode();
     }
 
     /**
@@ -495,7 +369,7 @@ class ZtdPdo extends PDO
     public function errorInfo(): array
     {
         /** @var array{0: string|null, 1: int|null, 2: string|null} */
-        return $this->pdo->errorInfo();
+        return $this->execution->native()->errorInfo();
     }
 
     /**
@@ -508,7 +382,7 @@ class ZtdPdo extends PDO
     #[Override]
     public function getAttribute(int $attribute): mixed
     {
-        return $this->pdo->getAttribute($attribute);
+        return $this->execution->native()->getAttribute($attribute);
     }
 
     /**
@@ -522,7 +396,7 @@ class ZtdPdo extends PDO
     #[Override]
     public function setAttribute(int $attribute, mixed $value): bool
     {
-        return $this->pdo->setAttribute($attribute, $value);
+        return $this->execution->native()->setAttribute($attribute, $value);
     }
 
     /**
@@ -535,7 +409,7 @@ class ZtdPdo extends PDO
     #[Override]
     public function quote(string $string, int $type = PDO::PARAM_STR): string|false
     {
-        return $this->pdo->quote($string, $type);
+        return $this->execution->native()->quote($string, $type);
     }
 
     /**
@@ -563,17 +437,8 @@ class ZtdPdo extends PDO
         mixed $nullAs = '\\N',
         mixed $fields = null,
     ): array|false {
-        $strings = [];
-        foreach (['tableName' => $tableName, 'separator' => $separator, 'nullAs' => $nullAs] as $name => $value) {
-            if (!is_string($value)) {
-                throw new ZtdPdoException(sprintf('PostgreSQL COPY argument $%s must be a string, %s given.', $name, get_debug_type($value)));
-            }
-            $strings[$name] = $value;
-        }
-        if ($fields !== null && !is_string($fields)) {
-            throw new ZtdPdoException(sprintf('PostgreSQL COPY argument $fields must be a string, %s given.', get_debug_type($fields)));
-        }
-        return $this->copyToArray($strings['tableName'], $strings['separator'], $strings['nullAs'], $fields);
+        $strings = (new CopyArguments())->strings(['tableName' => $tableName, 'separator' => $separator, 'nullAs' => $nullAs]);
+        return $this->copyToArray($strings['tableName'], $strings['separator'], $strings['nullAs'], (new CopyArguments())->fields($fields));
     }
 
     /**
@@ -598,7 +463,7 @@ class ZtdPdo extends PDO
         string $nullAs = '\\N',
         ?string $fields = null,
     ): array|false {
-        return $this->copy->toArray($this, $tableName, $separator, $nullAs, $fields);
+        return $this->execution->copy()->toArray($this, $tableName, $separator, $nullAs, $fields);
     }
 
     /**
@@ -625,17 +490,8 @@ class ZtdPdo extends PDO
         mixed $nullAs = '\\N',
         mixed $fields = null,
     ): bool {
-        $strings = [];
-        foreach (['tableName' => $tableName, 'separator' => $separator, 'nullAs' => $nullAs] as $name => $value) {
-            if (!is_string($value)) {
-                throw new ZtdPdoException(sprintf('PostgreSQL COPY argument $%s must be a string, %s given.', $name, get_debug_type($value)));
-            }
-            $strings[$name] = $value;
-        }
-        if ($fields !== null && !is_string($fields)) {
-            throw new ZtdPdoException(sprintf('PostgreSQL COPY argument $fields must be a string, %s given.', get_debug_type($fields)));
-        }
-        return $this->copyFromArray($strings['tableName'], $rows, $strings['separator'], $strings['nullAs'], $fields);
+        $strings = (new CopyArguments())->strings(['tableName' => $tableName, 'separator' => $separator, 'nullAs' => $nullAs]);
+        return $this->copyFromArray($strings['tableName'], $rows, $strings['separator'], $strings['nullAs'], (new CopyArguments())->fields($fields));
     }
 
     /**
@@ -662,14 +518,7 @@ class ZtdPdo extends PDO
         string $nullAs = '\\N',
         ?string $fields = null,
     ): bool {
-        $lines = [];
-        foreach ($rows as $row) {
-            if (!is_string($row)) {
-                throw new ZtdPdoException(sprintf('PostgreSQL COPY rows must be strings, %s given.', get_debug_type($row)));
-            }
-            $lines[] = $row;
-        }
-        return $this->copy->fromArray($this, $tableName, $lines, $separator, $nullAs, $fields);
+        return $this->execution->copy()->fromArray($this, $tableName, (new CopyArguments())->rows($rows), $separator, $nullAs, $fields);
     }
 
     /**
@@ -696,17 +545,8 @@ class ZtdPdo extends PDO
         mixed $nullAs = '\\N',
         mixed $fields = null,
     ): bool {
-        $strings = [];
-        foreach (['tableName' => $tableName, 'filename' => $filename, 'separator' => $separator, 'nullAs' => $nullAs] as $name => $value) {
-            if (!is_string($value)) {
-                throw new ZtdPdoException(sprintf('PostgreSQL COPY argument $%s must be a string, %s given.', $name, get_debug_type($value)));
-            }
-            $strings[$name] = $value;
-        }
-        if ($fields !== null && !is_string($fields)) {
-            throw new ZtdPdoException(sprintf('PostgreSQL COPY argument $fields must be a string, %s given.', get_debug_type($fields)));
-        }
-        return $this->copyToFile($strings['tableName'], $strings['filename'], $strings['separator'], $strings['nullAs'], $fields);
+        $strings = (new CopyArguments())->strings(['tableName' => $tableName, 'filename' => $filename, 'separator' => $separator, 'nullAs' => $nullAs]);
+        return $this->copyToFile($strings['tableName'], $strings['filename'], $strings['separator'], $strings['nullAs'], (new CopyArguments())->fields($fields));
     }
 
     /**
@@ -733,7 +573,7 @@ class ZtdPdo extends PDO
         string $nullAs = '\\N',
         ?string $fields = null,
     ): bool {
-        return $this->copy->toFile($this, $tableName, $filename, $separator, $nullAs, $fields);
+        return $this->execution->copy()->toFile($this, $tableName, $filename, $separator, $nullAs, $fields);
     }
 
     /**
@@ -763,17 +603,8 @@ class ZtdPdo extends PDO
         mixed $nullAs = '\\N',
         mixed $fields = null,
     ): bool {
-        $strings = [];
-        foreach (['tableName' => $tableName, 'filename' => $filename, 'separator' => $separator, 'nullAs' => $nullAs] as $name => $value) {
-            if (!is_string($value)) {
-                throw new ZtdPdoException(sprintf('PostgreSQL COPY argument $%s must be a string, %s given.', $name, get_debug_type($value)));
-            }
-            $strings[$name] = $value;
-        }
-        if ($fields !== null && !is_string($fields)) {
-            throw new ZtdPdoException(sprintf('PostgreSQL COPY argument $fields must be a string, %s given.', get_debug_type($fields)));
-        }
-        return $this->copyFromFile($strings['tableName'], $strings['filename'], $strings['separator'], $strings['nullAs'], $fields);
+        $strings = (new CopyArguments())->strings(['tableName' => $tableName, 'filename' => $filename, 'separator' => $separator, 'nullAs' => $nullAs]);
+        return $this->copyFromFile($strings['tableName'], $strings['filename'], $strings['separator'], $strings['nullAs'], (new CopyArguments())->fields($fields));
     }
 
     /**
@@ -803,7 +634,7 @@ class ZtdPdo extends PDO
         string $nullAs = '\\N',
         ?string $fields = null,
     ): bool {
-        return $this->copy->fromFile($this, $tableName, $filename, $separator, $nullAs, $fields);
+        return $this->execution->copy()->fromFile($this, $tableName, $filename, $separator, $nullAs, $fields);
     }
 
     /**

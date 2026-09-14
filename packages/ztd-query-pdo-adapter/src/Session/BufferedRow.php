@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace ZtdQuery\Adapter\Pdo\Session;
 
 use PDO;
+use ReflectionException;
+use ReflectionObject;
 use stdClass;
 
 /**
@@ -68,5 +70,84 @@ final class BufferedRow
     public function resolveMode(int $mode, int $connectionMode, ?int $statementMode): int
     {
         return $mode === PDO::FETCH_DEFAULT ? ($statementMode ?? $connectionMode) : $mode;
+    }
+
+    /**
+     * Shape a buffered row while preserving the exhausted-cursor marker.
+     *
+     * @template TValue
+     * @param array<string, TValue>|false $row
+     * @return array<int|string, TValue>|TValue|stdClass|false
+     */
+    public function fetch(array|false $row, int $mode): mixed
+    {
+        return $row === false ? false : $this->inMode($row, $mode);
+    }
+
+    /**
+     * Shape all remaining rows, including column selection arguments.
+     *
+     * @template TValue
+     * @template TArgument
+     * @param array<int, array<string, TValue>> $rows
+     * @param array<TArgument> $arguments
+     * @return list<array<int|string, TValue>|TValue|stdClass|false>
+     */
+    public function all(array $rows, int $mode, array $arguments): array
+    {
+        $shaped = [];
+        $column = is_int($arguments[0] ?? null) ? $arguments[0] : 0;
+        foreach ($rows as $row) {
+            $shaped[] = $mode === PDO::FETCH_COLUMN
+                ? $this->column($row, $column)
+                : $this->inMode($row, $mode);
+        }
+        return $shaped;
+    }
+
+    /**
+     * Read one positional column while preserving the exhausted-cursor marker.
+     *
+     * @template TValue
+     * @param array<string, TValue>|false $row
+     * @return TValue|false
+     */
+    public function column(array|false $row, int $column): mixed
+    {
+        return $row === false ? false : (array_values($row)[$column] ?? false);
+    }
+
+    /**
+     * Hydrate a buffered row after invoking its constructor.
+     *
+     * @template TValue
+     * @template TObject of object
+     * @template TArgument
+     * @param array<string, TValue>|false $row
+     * @param class-string<TObject>|null $class
+     * @param array<TArgument> $constructorArgs
+     * @return ($class is null ? stdClass : TObject)|false
+     * @throws ReflectionException When a declared property cannot be written.
+     */
+    public function object(array|false $row, ?string $class, array $constructorArgs): object|false
+    {
+        if ($row === false) {
+            return false;
+        }
+        $resolvedClass = $class ?? stdClass::class;
+        $object = new $resolvedClass(...$constructorArgs);
+        if ($object instanceof stdClass) {
+            foreach ($row as $property => $value) {
+                $object->{$property} = $value;
+            }
+            return $object;
+        }
+        $reflection = new ReflectionObject($object);
+        foreach ($row as $property => $value) {
+            if ($reflection->hasProperty($property)) {
+                $reflection->getProperty($property)->setValue($object, $value);
+            }
+        }
+        return $object;
     }
 }

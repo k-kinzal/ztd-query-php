@@ -26,7 +26,7 @@ policies:
         cyclomatic_complexity: 20
 
   # PDO's inherited API requires these facades to declare many forwarding methods.
-  # Keep code volume and method complexity at the standard limits.
+  # Require short methods with limited boundary dispatch for the larger native API surface.
   native-pdo-api:
     extends: standard
     limits:
@@ -34,6 +34,12 @@ policies:
         lines: 1000
       class:
         lines: 900
+      function:
+        lines: 10
+        cyclomatic_complexity: 5
+      method:
+        lines: 10
+        cyclomatic_complexity: 5
 
 apply:
   default: standard

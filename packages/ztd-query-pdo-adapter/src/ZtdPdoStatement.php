@@ -10,7 +10,6 @@ use Override;
 use PDO;
 use PDOStatement as NativePdoStatement;
 use ReflectionException;
-use ReflectionObject;
 use ReturnTypeWillChange;
 use stdClass;
 use ZtdQuery\Adapter\Pdo\Session\BufferedRow;
@@ -41,8 +40,6 @@ final class ZtdPdoStatement extends NativePdoStatement
 
     private BufferedRow $bufferedRow;
 
-    private int $defaultFetchMode;
-
     private ?int $fetchMode = null;
 
     /**
@@ -55,11 +52,10 @@ final class ZtdPdoStatement extends NativePdoStatement
         Session $session,
         ?RewritePlan $plan,
         ?PreparedQuery $preparedExecution = null,
-        int $defaultFetchMode = PDO::FETCH_BOTH,
+        private readonly int $defaultFetchMode = PDO::FETCH_BOTH,
     ) {
         $this->execution = new StatementExecution($statement, $session, $plan, $preparedExecution);
         $this->bufferedRow = new BufferedRow();
-        $this->defaultFetchMode = $defaultFetchMode;
     }
 
 
@@ -110,17 +106,11 @@ final class ZtdPdoStatement extends NativePdoStatement
      *     $statement->fetchColumn() // => 9
      */
     #[Override]
-    public function bindParam(
-        int|string $param,
-        mixed &$var,
-        int $type = PDO::PARAM_STR,
-        int $maxLength = 0,
-        mixed $driverOptions = null
-    ): bool {
-        $this->execution->bindings()->parameter($param, static function (NativePdoStatement $statement) use ($param, &$var, $type, $maxLength, $driverOptions): bool {
+    public function bindParam(int|string $param, mixed &$var, int $type = PDO::PARAM_STR, int $maxLength = 0, mixed $driverOptions = null): bool
+    {
+        return $this->execution->bindParameter($param, static function (NativePdoStatement $statement) use ($param, &$var, $type, $maxLength, $driverOptions): bool {
             return $statement->bindParam($param, $var, $type, $maxLength, $driverOptions);
         });
-        return $this->execution->native()->bindParam($param, $var, $type, $maxLength, $driverOptions);
     }
 
     /**
@@ -194,20 +184,11 @@ final class ZtdPdoStatement extends NativePdoStatement
     #[Override]
     public function fetch(int $mode = PDO::FETCH_DEFAULT, int $cursorOrientation = PDO::FETCH_ORI_NEXT, int $cursorOffset = 0): mixed
     {
-        if ($this->execution->result() !== null && !$this->execution->result()->isPassthrough()) {
-            if (!$this->execution->result()->hasResultSet()) {
-                return false;
-            }
-
-            $row = $this->execution->result()->fetch();
-            if ($row === false) {
-                return false;
-            }
-
-            return $this->bufferedRow->inMode($row, $this->bufferedRow->resolveMode($mode, $this->defaultFetchMode, $this->fetchMode));
+        $result = $this->execution->result();
+        if ($result !== null && !$result->isPassthrough()) {
+            $resolvedMode = $this->bufferedRow->resolveMode($mode, $this->defaultFetchMode, $this->fetchMode);
+            return $this->bufferedRow->fetch($result->hasResultSet() ? $result->fetch() : false, $resolvedMode);
         }
-
-        /** @see NativePdoStatement */
         return $this->execution->native()->fetch($mode, $cursorOrientation, $cursorOffset);
     }
 
@@ -226,33 +207,11 @@ final class ZtdPdoStatement extends NativePdoStatement
     #[Override]
     public function fetchAll(int $mode = PDO::FETCH_DEFAULT, mixed ...$args): array
     {
-        if ($this->execution->result() !== null && !$this->execution->result()->isPassthrough()) {
-            if (!$this->execution->result()->hasResultSet()) {
-                return [];
-            }
-
-            $rows = $this->execution->result()->fetchAll();
+        $result = $this->execution->result();
+        if ($result !== null && !$result->isPassthrough()) {
             $resolvedMode = $this->bufferedRow->resolveMode($mode, $this->defaultFetchMode, $this->fetchMode);
-            if ($resolvedMode === PDO::FETCH_COLUMN) {
-                $column = is_int($args[0] ?? null) ? $args[0] : 0;
-
-                $values = [];
-                foreach ($rows as $row) {
-                    $values[] = array_values($row)[$column] ?? false;
-                }
-
-                return $values;
-            }
-
-            $shaped = [];
-            foreach ($rows as $row) {
-                $shaped[] = $this->bufferedRow->inMode($row, $resolvedMode);
-            }
-
-            return $shaped;
+            return $this->bufferedRow->all($result->hasResultSet() ? $result->fetchAll() : [], $resolvedMode, $args);
         }
-
-        /** @see NativePdoStatement */
         return $this->execution->native()->fetchAll($mode, ...$args);
     }
 
@@ -270,17 +229,10 @@ final class ZtdPdoStatement extends NativePdoStatement
     #[Override]
     public function fetchColumn(int $column = 0): mixed
     {
-        if ($this->execution->result() !== null && !$this->execution->result()->isPassthrough()) {
-            if (!$this->execution->result()->hasResultSet()) {
-                return false;
-            }
-
-            $row = $this->execution->result()->fetch();
-
-            return $row === false ? false : (array_values($row)[$column] ?? false);
+        $result = $this->execution->result();
+        if ($result !== null && !$result->isPassthrough()) {
+            return $this->bufferedRow->column($result->hasResultSet() ? $result->fetch() : false, $column);
         }
-
-        /** @see NativePdoStatement */
         return $this->execution->native()->fetchColumn($column);
     }
 
@@ -295,7 +247,7 @@ final class ZtdPdoStatement extends NativePdoStatement
      * @param class-string<T>|null $class Class to build, or null for stdClass
      * @param array<mixed> $constructorArgs Arguments to build it with
      *
-     * @return T|false The object, or false where there is no row
+     * @return ($class is null ? stdClass : T)|false The object, or false where there is no row
      *
      * @throws ReflectionException When the class will not let a property be written
      * @visibility public
@@ -309,38 +261,11 @@ final class ZtdPdoStatement extends NativePdoStatement
     #[Override]
     public function fetchObject(?string $class = 'stdClass', array $constructorArgs = []): object|false
     {
-        /** @var class-string<T> $resolvedClass */
-        $resolvedClass = $class ?? 'stdClass';
-
-        if ($this->execution->result() !== null && !$this->execution->result()->isPassthrough()) {
-            if (!$this->execution->result()->hasResultSet()) {
-                return false;
-            }
-
-            $row = $this->execution->result()->fetch();
-            if ($row === false) {
-                return false;
-            }
-            $object = new $resolvedClass(...$constructorArgs);
-            if ($object instanceof stdClass) {
-                foreach ($row as $property => $value) {
-                    $object->{$property} = $value;
-                }
-
-                return $object;
-            }
-            $reflection = new ReflectionObject($object);
-            foreach ($row as $property => $value) {
-                if ($reflection->hasProperty($property)) {
-                    $reflection->getProperty($property)->setValue($object, $value);
-                }
-            }
-
-            return $object;
+        $result = $this->execution->result();
+        if ($result !== null && !$result->isPassthrough()) {
+            return $this->bufferedRow->object($result->hasResultSet() ? $result->fetch() : false, $class, $constructorArgs);
         }
-
-        /** @see NativePdoStatement */
-        return $this->execution->native()->fetchObject($resolvedClass, $constructorArgs);
+        return $this->execution->native()->fetchObject($class ?? 'stdClass', $constructorArgs);
     }
 
     /**

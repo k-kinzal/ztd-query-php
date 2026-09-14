@@ -32,6 +32,8 @@ use ZtdQuery\Shadow\ShadowStore;
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\ParameterBinder::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\PreparedQuery::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\ConnectionExecution::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\CopyArguments::class)]
 final class PostgreSqlCopyTest extends TestCase
 {
     public function testGuardRawLetsAStatementThatIsNotACopyThrough(): void

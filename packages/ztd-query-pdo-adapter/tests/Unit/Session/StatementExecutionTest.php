@@ -30,6 +30,8 @@ use ZtdQuery\Platform\Sqlite\SqliteSessionFactory;
 #[UsesClass(\ZtdQuery\Adapter\Pdo\Session\ParameterBinder::class)]
 #[UsesClass(PreparedQuery::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
+#[UsesClass(\ZtdQuery\Adapter\Pdo\Session\ConnectionExecution::class)]
+#[UsesClass(\ZtdQuery\Adapter\Pdo\Session\CopyArguments::class)]
 final class StatementExecutionTest extends TestCase
 {
     public function testExecutePreparedRefreshesShadowReadsAndReplaysBindings(): void
@@ -167,4 +169,23 @@ final class StatementExecutionTest extends TestCase
         self::assertSame('Ada', $read->fetchColumn());
     }
 
+
+    public function testBindParameterRetainsReferencesAcrossRepreparation(): void
+    {
+        $native = new PDO('sqlite::memory:');
+        $session = (new SqliteSessionFactory())->create(new PdoConnection($native), ZtdConfig::default());
+        $statement = $native->prepare('SELECT :id AS id');
+        self::assertNotFalse($statement);
+        $prepared = new PreparedQuery($session, 'SELECT :id AS id', $native->prepare(...));
+        $execution = new StatementExecution($statement, $session, null, $prepared);
+        $id = 7;
+        self::assertTrue($execution->bindParameter(':id', static function (PDOStatement $target) use (&$id): bool {
+            return $target->bindParam(':id', $id, PDO::PARAM_INT);
+        }));
+        self::assertTrue($execution->execute());
+        self::assertSame(7, $execution->native()->fetchColumn());
+        $id = 9;
+        self::assertTrue($execution->execute());
+        self::assertSame(9, $execution->native()->fetchColumn());
+    }
 }

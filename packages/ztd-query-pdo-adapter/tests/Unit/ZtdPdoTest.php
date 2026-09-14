@@ -35,6 +35,8 @@ use ZtdQuery\Shadow\ShadowStore;
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\ParameterBinder::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\PreparedQuery::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
+#[CoversClass(\ZtdQuery\Adapter\Pdo\Session\ConnectionExecution::class)]
+#[CoversClass(\ZtdQuery\Adapter\Pdo\Session\CopyArguments::class)]
 final class ZtdPdoTest extends TestCase
 {
     public function testExplicitPlatformFactoryCreatesAnIsolatedSession(): void

@@ -40,12 +40,14 @@ use ZtdQuery\Shadow\ShadowStore;
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\PostgreSqlCopy::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\StatementExecution::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\Bindings::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(BufferedRow::class)]
+#[CoversClass(BufferedRow::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\DriverSessionFactory::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(ParameterKind::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(ParameterBinder::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(PreparedQuery::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\ConnectionExecution::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\CopyArguments::class)]
 final class ZtdPdoStatementTest extends TestCase
 {
     /**

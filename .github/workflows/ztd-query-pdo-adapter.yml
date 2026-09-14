@@ -118,12 +118,12 @@ jobs:
       run: composer check-platform-reqs
     - name: Check formatting
       run: composer format:check
+    - name: Check source metrics
+      run: composer loc-guard
     - name: Run PHPStan and toolkit rules
       run: composer phpstan
     - name: Check PHP compatibility
       run: composer compat
-    - name: Check source metrics
-      run: composer loc-guard
     - name: Check source tree
       run: composer tree-guard
     - name: Check architecture boundaries

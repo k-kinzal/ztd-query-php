@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Adapter\Pdo\Session;
 
+use Closure;
 use PDOStatement as NativePdoStatement;
 use ZtdQuery\Adapter\Pdo\Driver\PdoStatement;
 use ZtdQuery\Adapter\Pdo\ZtdPdoException;
@@ -34,6 +35,17 @@ final class StatementExecution implements StatementInterface
         private readonly ?PreparedQuery $prepared = null,
         private readonly Bindings $bindings = new Bindings(),
     ) {
+    }
+
+    /**
+     * Retain a parameter binding and apply it to the current native statement.
+     *
+     * @param Closure(NativePdoStatement): bool $binding
+     */
+    public function bindParameter(int|string $parameter, Closure $binding): bool
+    {
+        $this->bindings->parameter($parameter, $binding);
+        return $binding($this->statement);
     }
 
     /**
