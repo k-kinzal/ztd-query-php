@@ -6,19 +6,26 @@ on:
   workflow_dispatch:
     inputs:
       max_runs:
-        description: 'Max fuzzing iterations'
+        description: Maximum mutation iterations after replaying the corpus
+        required: true
         default: '10000'
         type: string
 
 permissions:
-  actions: read
   contents: read
-  issues: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  COMPOSER_NO_INTERACTION: '1'
 
 jobs:
   robustness:
     name: Robustness / ${{ matrix.target.name }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
@@ -30,49 +37,115 @@ jobs:
       run:
         working-directory: packages/ztd-query-postgres
     steps:
-      - uses: actions/checkout@v6
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - uses: shivammathur/setup-php@v2
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:
-          php-version: '8.5'
-          extensions: mbstring, pcntl
+          php-version: '8.3'
+          extensions: dom, mbstring, pcntl, pdo, xml, xmlwriter
           coverage: none
 
-      - uses: ramsey/composer-install@v3
+      - name: Validate the Composer manifest
+        run: composer validate --strict --no-check-all --no-check-publish
+
+      - name: Install dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
           working-directory: packages/ztd-query-postgres
+          dependency-versions: locked
+          require-lock-file: true
+          composer-options: --prefer-dist
 
-      - uses: actions/cache/restore@v5
-        with:
-          path: packages/ztd-query-postgres/fuzz/corpus/${{ matrix.target.corpus }}
-          key: fuzz-ztd-query-postgres-${{ matrix.target.corpus }}-${{ github.run_id }}
-          restore-keys: |
-            fuzz-ztd-query-postgres-${{ matrix.target.corpus }}-
+      - name: Check installed platform requirements
+        run: composer check-platform-reqs
 
-      - name: fuzzer
+      - name: Validate the manual run budget
+        env:
+          FUZZ_MAX_RUNS: ${{ inputs.max_runs || '10000' }}
         run: |
-          vendor/bin/php-fuzzer fuzz fuzz/${{ matrix.target.script }} \
-            fuzz/corpus/${{ matrix.target.corpus }}/ \
-            --max-runs=${{ inputs.max_runs || '10000' }}
+          case "$FUZZ_MAX_RUNS" in
+            ''|*[!0-9]*) echo 'max_runs must be a positive integer.' >&2; exit 2 ;;
+          esac
+          if [ "${#FUZZ_MAX_RUNS}" -gt 8 ] || [ "$FUZZ_MAX_RUNS" -lt 1 ]; then
+            echo 'max_runs must be between 1 and 99999999.' >&2
+            exit 2
+          fi
 
-      - if: always()
-        uses: actions/cache/save@v5
+      - name: Restore the evolving corpus
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: packages/ztd-query-postgres/fuzz/corpus/${{ matrix.target.corpus }}
-          key: fuzz-ztd-query-postgres-${{ matrix.target.corpus }}-${{ github.run_id }}
+          key: fuzz-ztd-query-postgres-v3-${{ matrix.target.corpus }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            fuzz-ztd-query-postgres-v3-${{ matrix.target.corpus }}-
 
-      - if: ${{ always() && hashFiles('packages/ztd-query-postgres/crash-*') != '' }}
-        uses: actions/upload-artifact@v6
+      - name: Restore SQLFaker grammar coverage
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: packages/ztd-query-postgres/fuzz/coverage/${{ matrix.target.name }}
+          key: postgres-grammar-pg-17.2-${{ matrix.target.name }}-${{ hashFiles('packages/sql-faker/src/**', 'packages/sql-faker/resources/**') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            postgres-grammar-pg-17.2-${{ matrix.target.name }}-${{ hashFiles('packages/sql-faker/src/**', 'packages/sql-faker/resources/**') }}-
+
+      - name: Run PHP-Fuzzer
+        env:
+          FUZZ_MAX_RUNS: ${{ inputs.max_runs || '10000' }}
+          FUZZ_SCRIPT: ${{ matrix.target.script }}
+          FUZZ_CORPUS: ${{ matrix.target.corpus }}
+        run: |
+          set -euo pipefail
+          mkdir -p build/fuzz "fuzz/corpus/${FUZZ_CORPUS}"
+          vendor/bin/php-fuzzer fuzz "fuzz/${FUZZ_SCRIPT}" \
+            "fuzz/corpus/${FUZZ_CORPUS}/" \
+            "--max-runs=${FUZZ_MAX_RUNS}" 2>&1 | tee "build/fuzz/${FUZZ_CORPUS}.log"
+
+      - name: Save the evolved corpus
+        if: always()
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: packages/ztd-query-postgres/fuzz/corpus/${{ matrix.target.corpus }}
+          key: fuzz-ztd-query-postgres-v3-${{ matrix.target.corpus }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Save SQLFaker grammar coverage
+        if: always()
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: packages/ztd-query-postgres/fuzz/coverage/${{ matrix.target.name }}
+          key: postgres-grammar-pg-17.2-${{ matrix.target.name }}-${{ hashFiles('packages/sql-faker/src/**', 'packages/sql-faker/resources/**') }}-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Upload crash inputs
+        if: ${{ always() && hashFiles('packages/ztd-query-postgres/crash-*') != '' }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: fuzz-crashes-ztd-query-postgres-robustness-${{ matrix.target.name }}
           path: packages/ztd-query-postgres/crash-*
+          if-no-files-found: ignore
+
+      - name: Upload execution logs
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: postgres-fuzz-${{ matrix.target.name }}
+          path: |
+            packages/ztd-query-postgres/build/fuzz/
+            packages/ztd-query-postgres/fuzz/coverage/${{ matrix.target.name }}/
+          if-no-files-found: ignore
 
   notify:
     name: Notify on crash
     runs-on: ubuntu-latest
     needs: [robustness]
+    if: always() && needs.robustness.result == 'failure'
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: read
+      issues: write
     steps:
-      - uses: actions/github-script@v8
+      - name: Report a new fuzz crash
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           script: |
             const { data } = await github.rest.actions.listWorkflowRunArtifacts({
@@ -90,7 +163,7 @@ jobs:
               labels: 'fuzz',
               state: 'open'
             });
-            if (issues.length > 0) {
+            if (issues.some(({ title }) => title === 'Fuzz: Crash detected (ztd-query-postgres)')) {
               console.log('Open fuzz issue already exists, skipping creation');
               return;
             }
@@ -98,6 +171,6 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               title: `Fuzz: Crash detected (ztd-query-postgres)`,
-              body: `Fuzzing found a crash.\n\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nCheck the uploaded artifacts for crash details.`,
+              body: `Fuzzing found a crash.\n\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nDownload the crash and log artifacts, check out commit ${context.sha}, and replay the input with vendor/bin/php-fuzzer run-single fuzz/<target-script>.php crash-<hash>. The target script is listed in the job matrix.`,
               labels: ['bug', 'fuzz']
             });
