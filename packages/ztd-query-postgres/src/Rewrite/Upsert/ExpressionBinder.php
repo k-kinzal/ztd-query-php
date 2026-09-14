@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\Postgres\Rewrite\Upsert;
 
 use ZtdQuery\Platform\IdentifierQuoter;
-use ZtdQuery\Platform\Postgres\PgSqlLexerProfile;
+use ZtdQuery\Platform\Postgres\Sql\PgSqlLexerProfile;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;

@@ -4,105 +4,243 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Schema;
 
-use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
-use Tests\Contract\SchemaParserContractTest;
-use ZtdQuery\Platform\Postgres\PgSqlPartitionParser;
-use ZtdQuery\Platform\Postgres\PgSqlSchemaParser;
-use ZtdQuery\Platform\SchemaParser;
+use ZtdQuery\Platform\Postgres\Schema\PgSqlSchemaParser;
+use ZtdQuery\Platform\Postgres\Sql\Partition\PgSqlPartitionParser;
 use ZtdQuery\Schema\ColumnTypeFamily;
-use ZtdQuery\Schema\IdentityGenerationStrategy;
-use ZtdQuery\Schema\TablePartitionStrategy;
+use ZtdQuery\Schema\Key\IdentityGenerationStrategy;
+use ZtdQuery\Schema\Partition\TablePartitionStrategy;
 
 #[CoversClass(PgSqlSchemaParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlColumnTypeMapper::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlForeignKeyDefinitionParser::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Schema\PgSqlColumnTypeMapper::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Schema\Key\PgSqlForeignKeyDefinitionParser::class)]
 #[UsesClass(PgSqlPartitionParser::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Sql\PgSqlLexerProfile::class)]
 #[CoversClass(\ZtdQuery\Platform\Postgres\Schema\Definition\ColumnDefinition::class)]
 #[CoversClass(\ZtdQuery\Platform\Postgres\Schema\Definition\ColumnTypeDeclaration::class)]
 #[CoversClass(\ZtdQuery\Platform\Postgres\Schema\Definition\TableBody::class)]
 #[CoversClass(\ZtdQuery\Platform\Postgres\Schema\Definition\TableConstraint::class)]
 #[CoversClass(\ZtdQuery\Platform\Postgres\Schema\Definition\TableFields::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\Schema\ForeignKey\DefinitionEntry::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\Schema\ForeignKey\DefinitionTokens::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\Schema\Partition\BoundPredicate::class)]
-#[UsesClass(\ZtdQuery\Platform\Postgres\Schema\Partition\ClauseTokens::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Schema\Key\DefinitionEntry::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Schema\Key\DefinitionTokens::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Sql\Partition\BoundPredicate::class)]
+#[UsesClass(\ZtdQuery\Platform\Postgres\Sql\Partition\ClauseTokens::class)]
 #[UsesClass(\ZtdQuery\Platform\Postgres\Sql\Lexing\QuotedSpan::class)]
-final class PgSqlSchemaParserTest extends SchemaParserContractTest
+final class PgSqlSchemaParserTest extends \PHPUnit\Framework\TestCase
 {
+    public function testValidCreateTableReturnsNonNull(): void
+    {
+        $parser = new PgSqlSchemaParser();
+        $result = $parser->parse(<<<'SQL'
+        CREATE TABLE users (
+            id INTEGER NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            email TEXT,
+            PRIMARY KEY (id),
+            UNIQUE (email)
+        )
+        SQL);
+        self::assertNotNull($result);
+    }
+
+    public function testNonCreateTableReturnsNull(): void
+    {
+        $parser = new PgSqlSchemaParser();
+        self::assertNull($parser->parse('SELECT * FROM users'));
+        self::assertNull($parser->parse('INSERT INTO users (id) VALUES (1)'));
+        self::assertNull($parser->parse('DROP TABLE users'));
+    }
+
+    public function testPrimaryKeysSubsetOfColumns(): void
+    {
+        $parser = new PgSqlSchemaParser();
+        $sql = 'CREATE TABLE test (
+            id INTEGER,
+            name TEXT,
+            PRIMARY KEY (id)
+        )';
+        $def = $parser->parse($sql);
+        self::assertNotNull($def);
+        self::assertSame(['id'], $def->primaryKeys);
+        self::assertContains('id', $def->columns);
+    }
+
+    public function testNotNullSubsetOfColumns(): void
+    {
+        $parser = new PgSqlSchemaParser();
+        $sql = 'CREATE TABLE test (
+            id INTEGER NOT NULL,
+            name TEXT
+        )';
+        $def = $parser->parse($sql);
+        self::assertNotNull($def);
+        self::assertContains('id', $def->notNullColumns);
+        self::assertContains('id', $def->columns);
+    }
+
+    public function testColumnTypesKeysSubsetOfColumns(): void
+    {
+        $parser = new PgSqlSchemaParser();
+        $sql = 'CREATE TABLE test (
+            id INTEGER,
+            name TEXT
+        )';
+        $def = $parser->parse($sql);
+        self::assertNotNull($def);
+        self::assertArrayHasKey('id', $def->columnTypes);
+        self::assertContains('id', $def->columns);
+        self::assertArrayHasKey('name', $def->columnTypes);
+        self::assertContains('name', $def->columns);
+    }
+
+    public function testUniqueConstraintColumnsSubsetOfColumns(): void
+    {
+        $parser = new PgSqlSchemaParser();
+        $definition = $parser->parse(<<<'SQL'
+        CREATE TABLE users (
+            id INTEGER NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            email TEXT,
+            PRIMARY KEY (id),
+            UNIQUE (email)
+        )
+        SQL);
+        self::assertNotNull($definition);
+        self::assertSame([['email']], array_values($definition->uniqueConstraints));
+        self::assertContains('email', $definition->columns);
+    }
+
+    public function testParsedDefinitionHasNonEmptyColumns(): void
+    {
+        $parser = new PgSqlSchemaParser();
+        $definition = $parser->parse(<<<'SQL'
+        CREATE TABLE users (
+            id INTEGER NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            email TEXT,
+            PRIMARY KEY (id),
+            UNIQUE (email)
+        )
+        SQL);
+        self::assertNotNull($definition);
+        self::assertNotEmpty($definition->columns);
+    }
+
+    public function testParsedColumnsMatchExpected(): void
+    {
+        $parser = new PgSqlSchemaParser();
+        $definition = $parser->parse(<<<'SQL'
+        CREATE TABLE users (
+            id INTEGER NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            email TEXT,
+            PRIMARY KEY (id),
+            UNIQUE (email)
+        )
+        SQL);
+        self::assertNotNull($definition);
+        self::assertSame(['id', 'name', 'email'], $definition->columns, 'Parsed column names must match expected columns in order');
+    }
+
+    public function testParsedPrimaryKeysMatchExpected(): void
+    {
+        $parser = new PgSqlSchemaParser();
+        $definition = $parser->parse(<<<'SQL'
+        CREATE TABLE users (
+            id INTEGER NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            email TEXT,
+            PRIMARY KEY (id),
+            UNIQUE (email)
+        )
+        SQL);
+        self::assertNotNull($definition);
+        self::assertSame(['id'], $definition->primaryKeys, 'Parsed primary keys must match expected primary keys');
+    }
+
+    public function testParsedNotNullColumnsMatchExpected(): void
+    {
+        $parser = new PgSqlSchemaParser();
+        $definition = $parser->parse(<<<'SQL'
+        CREATE TABLE users (
+            id INTEGER NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            email TEXT,
+            PRIMARY KEY (id),
+            UNIQUE (email)
+        )
+        SQL);
+        self::assertNotNull($definition);
+        self::assertSame(['id', 'name'], $definition->notNullColumns);
+    }
+
+    public function testColumnCountMatchesExpected(): void
+    {
+        $parser = new PgSqlSchemaParser();
+        $definition = $parser->parse(<<<'SQL'
+        CREATE TABLE users (
+            id INTEGER NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            email TEXT,
+            PRIMARY KEY (id),
+            UNIQUE (email)
+        )
+        SQL);
+        self::assertNotNull($definition);
+        self::assertCount(count(['id', 'name', 'email']), $definition->columns, 'Column count must match expected');
+    }
+
+    public function testMalformedInputReturnsNull(): void
+    {
+        $parser = new PgSqlSchemaParser();
+        $result = $parser->parse('NOT VALID SQL AT ALL %%%');
+        self::assertNull($result);
+    }
+
+    public function testTypedColumnsKeysSubsetOfColumns(): void
+    {
+        $parser = new PgSqlSchemaParser();
+        $definition = $parser->parse(<<<'SQL'
+        CREATE TABLE users (
+            id INTEGER NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            email TEXT,
+            PRIMARY KEY (id),
+            UNIQUE (email)
+        )
+        SQL);
+        self::assertNotNull($definition);
+        self::assertSame($definition->columns, array_keys($definition->typedColumns));
+    }
     public function testParsesSchemaQualifiedQuotedDomainTypeWithoutChangingItsCase(): void
     {
-        $definition = (new PgSqlSchemaParser())->parse(
-            'CREATE TABLE contacts (age "tenant"."PositiveValue" NOT NULL)',
-        );
-
+        $definition = (new PgSqlSchemaParser())->parse('CREATE TABLE contacts (age "tenant"."PositiveValue" NOT NULL)');
         self::assertNotNull($definition);
         self::assertSame('"tenant"."PositiveValue"', $definition->columnTypes['age']);
         self::assertSame(ColumnTypeFamily::UNKNOWN, $definition->typedColumns['age']->family);
         self::assertSame('"tenant"."PositiveValue"', $definition->typedColumns['age']->nativeType);
     }
-
     public function testParsesQuotedDomainAndDomainArrayTypes(): void
     {
-        $definition = (new PgSqlSchemaParser())->parse(
-            'CREATE TABLE contacts (age "PositiveValue", history "tenant"."PositiveValue"[])',
-        );
-
+        $definition = (new PgSqlSchemaParser())->parse('CREATE TABLE contacts (age "PositiveValue", history "tenant"."PositiveValue"[])');
         self::assertNotNull($definition);
         self::assertSame('"PositiveValue"', $definition->columnTypes['age']);
         self::assertSame('"tenant"."PositiveValue"[]', $definition->columnTypes['history']);
     }
-
     public function testRejectsIncompleteQualifiedDomainType(): void
     {
-        self::assertNull((new PgSqlSchemaParser())->parse(
-            'CREATE TABLE contacts (age "tenant". NOT NULL)',
-        ));
-        self::assertNull((new PgSqlSchemaParser())->parse(
-            'CREATE TABLE contacts (age "tenant". not null)',
-        ));
+        self::assertNull((new PgSqlSchemaParser())->parse('CREATE TABLE contacts (age "tenant". NOT NULL)'));
+        self::assertNull((new PgSqlSchemaParser())->parse('CREATE TABLE contacts (age "tenant". not null)'));
     }
-
     public function testQuotedConstraintWordsRemainValidDomainNames(): void
     {
-        $definition = (new PgSqlSchemaParser())->parse(
-            'CREATE TABLE contacts (flag "tenant"."NOT", note "NOT NULL")',
-        );
-
+        $definition = (new PgSqlSchemaParser())->parse('CREATE TABLE contacts (flag "tenant"."NOT", note "NOT NULL")');
         self::assertNotNull($definition);
         self::assertSame('"tenant"."NOT"', $definition->columnTypes['flag']);
         self::assertSame('"NOT NULL"', $definition->columnTypes['note']);
         self::assertSame([], $definition->notNullColumns);
     }
-
-    #[Override]
-    protected function createParser(): SchemaParser
-    {
-        return new PgSqlSchemaParser();
-    }
-
-    #[Override]
-    protected function validCreateTableSql(): string
-    {
-        return <<<'SQL'
-            CREATE TABLE users (
-                id INTEGER NOT NULL,
-                name VARCHAR(255) NOT NULL,
-                email TEXT,
-                PRIMARY KEY (id),
-                UNIQUE (email)
-            )
-            SQL;
-    }
-
-    #[Override]
-    protected function nonCreateTableSql(): string
-    {
-        return 'SELECT 1';
-    }
-
     public function testParseBasicCreateTable(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -111,23 +249,16 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
             name VARCHAR(255) NOT NULL,
             email TEXT
         )';
-
         $def = $parser->parse($sql);
-
         self::assertNotNull($def);
         self::assertSame(['id', 'name', 'email'], $def->columns);
         self::assertSame(['id'], $def->primaryKeys);
         self::assertContains('id', $def->notNullColumns);
         self::assertContains('name', $def->notNullColumns);
     }
-
     public function testPartitionClauseDoesNotBecomePartOfTableBody(): void
     {
-        $definition = (new PgSqlSchemaParser())->parse(
-            'CREATE TABLE logs (id INTEGER, log_date DATE, PRIMARY KEY (id, log_date)) '
-            . 'PARTITION BY RANGE (log_date)',
-        );
-
+        $definition = (new PgSqlSchemaParser())->parse('CREATE TABLE logs (id INTEGER, log_date DATE, PRIMARY KEY (id, log_date)) ' . 'PARTITION BY RANGE (log_date)');
         self::assertNotNull($definition);
         self::assertSame(['id', 'log_date'], $definition->columns);
         self::assertSame(['id', 'log_date'], $definition->primaryKeys);
@@ -136,24 +267,18 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame(TablePartitionStrategy::Range, $partitionKey->strategy);
         self::assertSame(['log_date'], $partitionKey->expressions);
     }
-
     public function testCreateKeywordInsideAnotherStatementDoesNotParse(): void
     {
-        self::assertNull((new PgSqlSchemaParser())->parse(
-            'SELECT 1 FROM source_table; CREATE TABLE hidden (id INTEGER)',
-        ));
+        self::assertNull((new PgSqlSchemaParser())->parse('SELECT 1 FROM source_table; CREATE TABLE hidden (id INTEGER)'));
     }
-
     public function testIncompleteIfNotExistsAndQualifiedNamesDoNotParse(): void
     {
         $parser = new PgSqlSchemaParser();
-
         self::assertNull($parser->parse('CREATE TABLE IF users (id INTEGER)'));
         self::assertNull($parser->parse('CREATE TABLE IF NOT users (id INTEGER)'));
         self::assertNull($parser->parse('CREATE TABLE IF EXISTS users (id INTEGER)'));
         self::assertNull($parser->parse('CREATE TABLE public. (id INTEGER)'));
     }
-
     public function testParseColumnTypes(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -165,9 +290,7 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
             created_at TIMESTAMP,
             data JSONB
         )';
-
         $def = $parser->parse($sql);
-
         self::assertNotNull($def);
         self::assertSame('INTEGER', $def->columnTypes['id']);
         self::assertSame('NUMERIC(10,2)', $def->columnTypes['price']);
@@ -176,7 +299,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame('TIMESTAMP', $def->columnTypes['created_at']);
         self::assertSame('JSONB', $def->columnTypes['data']);
     }
-
     public function testParseTypedColumns(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -186,16 +308,13 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
             active BOOLEAN,
             data JSONB
         )';
-
         $def = $parser->parse($sql);
-
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::INTEGER, $def->typedColumns['id']->family);
         self::assertSame(ColumnTypeFamily::TEXT, $def->typedColumns['name']->family);
         self::assertSame(ColumnTypeFamily::BOOLEAN, $def->typedColumns['active']->family);
         self::assertSame(ColumnTypeFamily::JSON, $def->typedColumns['data']->family);
     }
-
     public function testParsePrimaryKeyConstraint(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -204,13 +323,10 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
             name TEXT,
             PRIMARY KEY (id)
         )';
-
         $def = $parser->parse($sql);
-
         self::assertNotNull($def);
         self::assertSame(['id'], $def->primaryKeys);
     }
-
     public function testParseCompositePrimaryKey(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -219,13 +335,10 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
             role_id INTEGER,
             PRIMARY KEY (user_id, role_id)
         )';
-
         $def = $parser->parse($sql);
-
         self::assertNotNull($def);
         self::assertSame(['user_id', 'role_id'], $def->primaryKeys);
     }
-
     public function testParseUniqueConstraint(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -234,14 +347,11 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
             email TEXT,
             CONSTRAINT email_unique UNIQUE (email)
         )';
-
         $def = $parser->parse($sql);
-
         self::assertNotNull($def);
         self::assertArrayHasKey('email_unique', $def->uniqueConstraints);
         self::assertSame(['email'], $def->uniqueConstraints['email_unique']);
     }
-
     public function testParseUniqueOnColumn(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -249,13 +359,10 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
             id INTEGER PRIMARY KEY,
             email TEXT UNIQUE
         )';
-
         $def = $parser->parse($sql);
-
         self::assertNotNull($def);
         self::assertArrayHasKey('email_UNIQUE', $def->uniqueConstraints);
     }
-
     public function testParseQuotedIdentifiers(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -263,98 +370,33 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
             "Id" INTEGER PRIMARY KEY,
             "Name" VARCHAR(255) NOT NULL
         )';
-
         $def = $parser->parse($sql);
-
         self::assertNotNull($def);
         self::assertSame(['Id', 'Name'], $def->columns);
     }
-
     public function testParseIfNotExists(): void
     {
         $parser = new PgSqlSchemaParser();
         $sql = 'CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY
         )';
-
         $def = $parser->parse($sql);
         self::assertNotNull($def);
     }
-
     public function testParseTemporaryTable(): void
     {
         $parser = new PgSqlSchemaParser();
         $sql = 'CREATE TEMPORARY TABLE tmp (
             id INTEGER PRIMARY KEY
         )';
-
         $def = $parser->parse($sql);
         self::assertNotNull($def);
     }
-
-    #[Override]
-    public function testNonCreateTableReturnsNull(): void
-    {
-        $parser = new PgSqlSchemaParser();
-        self::assertNull($parser->parse('SELECT * FROM users'));
-        self::assertNull($parser->parse('INSERT INTO users (id) VALUES (1)'));
-        self::assertNull($parser->parse('DROP TABLE users'));
-    }
-
     public function testMalformedSqlReturnsNull(): void
     {
         $parser = new PgSqlSchemaParser();
         self::assertNull($parser->parse('GIBBERISH'));
     }
-
-    #[Override]
-    public function testPrimaryKeysSubsetOfColumns(): void
-    {
-        $parser = new PgSqlSchemaParser();
-        $sql = 'CREATE TABLE test (
-            id INTEGER,
-            name TEXT,
-            PRIMARY KEY (id)
-        )';
-
-        $def = $parser->parse($sql);
-        self::assertNotNull($def);
-        self::assertSame(['id'], $def->primaryKeys);
-        self::assertContains('id', $def->columns);
-    }
-
-    #[Override]
-    public function testNotNullSubsetOfColumns(): void
-    {
-        $parser = new PgSqlSchemaParser();
-        $sql = 'CREATE TABLE test (
-            id INTEGER NOT NULL,
-            name TEXT
-        )';
-
-        $def = $parser->parse($sql);
-        self::assertNotNull($def);
-        self::assertContains('id', $def->notNullColumns);
-        self::assertContains('id', $def->columns);
-    }
-
-    #[Override]
-    public function testColumnTypesKeysSubsetOfColumns(): void
-    {
-        $parser = new PgSqlSchemaParser();
-        $sql = 'CREATE TABLE test (
-            id INTEGER,
-            name TEXT
-        )';
-
-        $def = $parser->parse($sql);
-        self::assertNotNull($def);
-        self::assertArrayHasKey('id', $def->columnTypes);
-        self::assertContains('id', $def->columns);
-        self::assertArrayHasKey('name', $def->columnTypes);
-        self::assertContains('name', $def->columns);
-    }
-
     public function testParseSerialType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -362,64 +404,50 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
             id SERIAL PRIMARY KEY,
             name TEXT
         )';
-
         $def = $parser->parse($sql);
-
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::INTEGER, $def->typedColumns['id']->family);
     }
-
     public function testParseBigserialType(): void
     {
         $parser = new PgSqlSchemaParser();
         $sql = 'CREATE TABLE test (
             id BIGSERIAL PRIMARY KEY
         )';
-
         $def = $parser->parse($sql);
-
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::INTEGER, $def->typedColumns['id']->family);
     }
-
     public function testParseTimestamptzType(): void
     {
         $parser = new PgSqlSchemaParser();
         $sql = 'CREATE TABLE test (
             created_at TIMESTAMPTZ
         )';
-
         $def = $parser->parse($sql);
-
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::TIMESTAMP, $def->typedColumns['created_at']->family);
     }
-
     public function testParseByteaType(): void
     {
         $parser = new PgSqlSchemaParser();
         $sql = 'CREATE TABLE test (
             data BYTEA
         )';
-
         $def = $parser->parse($sql);
-
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::BINARY, $def->typedColumns['data']->family);
     }
-
     public function testParseSchemaQualifiedTable(): void
     {
         $parser = new PgSqlSchemaParser();
         $sql = 'CREATE TABLE public.users (
             id INTEGER PRIMARY KEY
         )';
-
         $def = $parser->parse($sql);
         self::assertNotNull($def);
         self::assertSame(['id'], $def->columns);
     }
-
     public function testParseReservedWordColumnNames(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -428,19 +456,15 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
             "table" TEXT,
             "order" INTEGER
         )';
-
         $def = $parser->parse($sql);
-
         self::assertNotNull($def);
         self::assertSame(['select', 'table', 'order'], $def->columns);
     }
-
     public function testParseEmptyInputReturnsNull(): void
     {
         $parser = new PgSqlSchemaParser();
         self::assertNull($parser->parse(''));
     }
-
     public function testParseDefaultValues(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -449,103 +473,59 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
             status TEXT DEFAULT \'active\' NOT NULL,
             created_at TIMESTAMP DEFAULT NOW()
         )';
-
         $def = $parser->parse($sql);
-
         self::assertNotNull($def);
         self::assertSame(['id', 'status', 'created_at'], $def->columns);
         self::assertContains('status', $def->notNullColumns);
-        self::assertSame([
-            'status' => "'active'",
-            'created_at' => 'NOW()',
-        ], $def->columnDefaults);
+        self::assertSame(['status' => "'active'", 'created_at' => 'NOW()'], $def->columnDefaults);
     }
-
     public function testParseKeepsConstraintWordsInsideDefaultExpressions(): void
     {
-        $definition = (new PgSqlSchemaParser())->parse(
-            "CREATE TABLE t (label TEXT DEFAULT ('not null, still default') NOT NULL, enabled BOOLEAN DEFAULT TRUE)"
-        );
-
+        $definition = (new PgSqlSchemaParser())->parse("CREATE TABLE t (label TEXT DEFAULT ('not null, still default') NOT NULL, enabled BOOLEAN DEFAULT TRUE)");
         self::assertNotNull($definition);
-        self::assertSame([
-            'label' => "('not null, still default')",
-            'enabled' => 'TRUE',
-        ], $definition->columnDefaults);
+        self::assertSame(['label' => "('not null, still default')", 'enabled' => 'TRUE'], $definition->columnDefaults);
     }
-
     public function testParseDoesNotTreatSequenceAsOrdinaryDefault(): void
     {
-        $definition = (new PgSqlSchemaParser())->parse(
-            "CREATE TABLE t (id BIGINT DEFAULT nextval('t_id_seq'::regclass), name TEXT DEFAULT 'new')"
-        );
-
+        $definition = (new PgSqlSchemaParser())->parse("CREATE TABLE t (id BIGINT DEFAULT nextval('t_id_seq'::regclass), name TEXT DEFAULT 'new')");
         self::assertNotNull($definition);
         self::assertSame(['name' => "'new'"], $definition->columnDefaults);
         self::assertSame(['id' => IdentityGenerationStrategy::Sequence], $definition->identityStrategies);
     }
-
     public function testParseSerialAndGeneratedIdentityStrategies(): void
     {
-        $definition = (new PgSqlSchemaParser())->parse(
-            'CREATE TABLE t (id serial PRIMARY KEY, generated BIGINT generated by default as identity, name TEXT)'
-        );
-
+        $definition = (new PgSqlSchemaParser())->parse('CREATE TABLE t (id serial PRIMARY KEY, generated BIGINT generated by default as identity, name TEXT)');
         self::assertNotNull($definition);
-        self::assertSame([
-            'id' => IdentityGenerationStrategy::Sequence,
-            'generated' => IdentityGenerationStrategy::Sequence,
-        ], $definition->identityStrategies);
+        self::assertSame(['id' => IdentityGenerationStrategy::Sequence, 'generated' => IdentityGenerationStrategy::Sequence], $definition->identityStrategies);
     }
-
     public function testParseDetectsParenthesizedUppercaseSequenceDefault(): void
     {
-        $definition = (new PgSqlSchemaParser())->parse(
-            "CREATE TABLE t (id BIGINT DEFAULT ((NEXTVAL('t_id_seq'::regclass))), fallback BIGINT DEFAULT coalesce(nextval('fallback_seq'), 1), offset_id BIGINT DEFAULT +nextval('offset_seq'))"
-        );
-
+        $definition = (new PgSqlSchemaParser())->parse("CREATE TABLE t (id BIGINT DEFAULT ((NEXTVAL('t_id_seq'::regclass))), fallback BIGINT DEFAULT coalesce(nextval('fallback_seq'), 1), offset_id BIGINT DEFAULT +nextval('offset_seq'))");
         self::assertNotNull($definition);
-        self::assertSame([
-            'fallback' => "coalesce(nextval('fallback_seq'), 1)",
-            'offset_id' => "+nextval('offset_seq')",
-        ], $definition->columnDefaults);
-        self::assertSame([
-            'id' => IdentityGenerationStrategy::Sequence,
-        ], $definition->identityStrategies);
+        self::assertSame(['fallback' => "coalesce(nextval('fallback_seq'), 1)", 'offset_id' => "+nextval('offset_seq')"], $definition->columnDefaults);
+        self::assertSame(['id' => IdentityGenerationStrategy::Sequence], $definition->identityStrategies);
     }
-
     public function testGeneratedStoredColumnIsNotAnIdentity(): void
     {
-        $definition = (new PgSqlSchemaParser())->parse(
-            'CREATE TABLE t (source INTEGER, computed INTEGER GENERATED ALWAYS AS (source + 1) STORED)'
-        );
-
+        $definition = (new PgSqlSchemaParser())->parse('CREATE TABLE t (source INTEGER, computed INTEGER GENERATED ALWAYS AS (source + 1) STORED)');
         self::assertNotNull($definition);
         self::assertSame([], $definition->identityStrategies);
         self::assertSame(['computed' => '(source + 1)'], $definition->generatedExpressions);
     }
-
     public function testUnprefixedAndIncompleteIdentityClausesAreNotIdentities(): void
     {
-        $definition = (new PgSqlSchemaParser())->parse(
-            'CREATE TABLE t (always_value BIGINT ALWAYS AS IDENTITY, default_value BIGINT BY DEFAULT AS IDENTITY, '
-            . 'incomplete BIGINT GENERATED, unprefixed_computed INTEGER ALWAYS AS (1) STORED)'
-        );
-
+        $definition = (new PgSqlSchemaParser())->parse('CREATE TABLE t (always_value BIGINT ALWAYS AS IDENTITY, default_value BIGINT BY DEFAULT AS IDENTITY, ' . 'incomplete BIGINT GENERATED, unprefixed_computed INTEGER ALWAYS AS (1) STORED)');
         self::assertNotNull($definition);
         self::assertSame([], $definition->identityStrategies);
         self::assertSame([], $definition->generatedExpressions);
     }
-
     public function testParseStopsDefaultAtInlinePrimaryKeyConstraint(): void
     {
         $definition = (new PgSqlSchemaParser())->parse('CREATE TABLE t (id INTEGER DEFAULT 7 PRIMARY KEY)');
-
         self::assertNotNull($definition);
         self::assertSame(['id' => '7'], $definition->columnDefaults);
         self::assertSame(['id'], $definition->primaryKeys);
     }
-
     public function testParseMultipleUniqueConstraints(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -556,16 +536,13 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
             CONSTRAINT email_unique UNIQUE (email),
             CONSTRAINT username_unique UNIQUE (username)
         )';
-
         $def = $parser->parse($sql);
-
         self::assertNotNull($def);
         self::assertArrayHasKey('email_unique', $def->uniqueConstraints);
         self::assertArrayHasKey('username_unique', $def->uniqueConstraints);
         self::assertSame(['email'], $def->uniqueConstraints['email_unique']);
         self::assertSame(['username'], $def->uniqueConstraints['username_unique']);
     }
-
     public function testParseDoublePrecision(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -575,7 +552,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame('DOUBLE PRECISION', $def->columnTypes['v']);
         self::assertSame(ColumnTypeFamily::DOUBLE, $def->typedColumns['v']->family);
     }
-
     public function testParseFloat4(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -584,7 +560,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::FLOAT, $def->typedColumns['v']->family);
     }
-
     public function testParseFloat8(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -593,7 +568,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::DOUBLE, $def->typedColumns['v']->family);
     }
-
     public function testParseRealType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -602,7 +576,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::FLOAT, $def->typedColumns['v']->family);
     }
-
     public function testParseDecimalType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -612,7 +585,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame('DECIMAL(10,2)', $def->columnTypes['v']);
         self::assertSame(ColumnTypeFamily::DECIMAL, $def->typedColumns['v']->family);
     }
-
     public function testParseSmallint(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -621,7 +593,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::INTEGER, $def->typedColumns['v']->family);
     }
-
     public function testParseBigint(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -630,7 +601,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::INTEGER, $def->typedColumns['v']->family);
     }
-
     public function testParseSmallserial(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -639,7 +609,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::INTEGER, $def->typedColumns['id']->family);
     }
-
     public function testParseInt2Int4Int8(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -649,7 +618,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame(ColumnTypeFamily::INTEGER, $def->typedColumns['b']->family);
         self::assertSame(ColumnTypeFamily::INTEGER, $def->typedColumns['c']->family);
     }
-
     public function testParseDateType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -657,7 +625,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::DATE, $def->typedColumns['v']->family);
     }
-
     public function testParseTimeType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -665,7 +632,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::TIME, $def->typedColumns['v']->family);
     }
-
     public function testParseTimetzType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -673,7 +639,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::TIME, $def->typedColumns['v']->family);
     }
-
     public function testParseTimeWithTimezoneMultiWord(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -681,7 +646,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame('TIME WITH', $def->columnTypes['v']);
     }
-
     public function testParseTimestampWithoutTimezoneMultiWord(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -689,7 +653,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame('TIMESTAMP WITHOUT', $def->columnTypes['v']);
     }
-
     public function testParseTimestampWithTimezoneMultiWord(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -697,7 +660,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame('TIMESTAMP WITH', $def->columnTypes['v']);
     }
-
     public function testParseJsonType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -705,7 +667,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::JSON, $def->typedColumns['v']->family);
     }
-
     public function testParseBoolType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -713,7 +674,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::BOOLEAN, $def->typedColumns['v']->family);
     }
-
     public function testParseCharType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -722,7 +682,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame('CHAR(5)', $def->columnTypes['v']);
         self::assertSame(ColumnTypeFamily::STRING, $def->typedColumns['v']->family);
     }
-
     public function testParseCharacterType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -730,7 +689,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::STRING, $def->typedColumns['v']->family);
     }
-
     public function testParseCharacterVaryingType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -739,7 +697,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame('CHARACTER VARYING(50)', $def->columnTypes['v']);
         self::assertSame(ColumnTypeFamily::STRING, $def->typedColumns['v']->family);
     }
-
     public function testParseNameType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -747,7 +704,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::STRING, $def->typedColumns['v']->family);
     }
-
     public function testParseCitextType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -755,7 +711,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::TEXT, $def->typedColumns['v']->family);
     }
-
     public function testParseVarcharType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -763,7 +718,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::STRING, $def->typedColumns['v']->family);
     }
-
     public function testParseUnknownType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -771,7 +725,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::UNKNOWN, $def->typedColumns['v']->family);
     }
-
     public function testParseArrayType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -780,7 +733,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame('INTEGER[]', $def->columnTypes['v']);
         self::assertSame(ColumnTypeFamily::INTEGER, $def->typedColumns['v']->family);
     }
-
     public function testParsePrimaryKeyImpliesNotNull(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -789,7 +741,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertContains('id', $def->notNullColumns);
         self::assertSame(['id'], $def->primaryKeys);
     }
-
     public function testParsePrimaryKeyConstraintDoesNotDuplicate(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -797,7 +748,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id'], $def->primaryKeys);
     }
-
     public function testParseUniqueConstraintWithoutName(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -805,7 +755,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertContains(['email'], $def->uniqueConstraints);
     }
-
     public function testParseCheckConstraintIgnored(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -813,7 +762,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id'], $def->columns);
     }
-
     public function testParseForeignKeyConstraintIgnored(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -821,7 +769,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id'], $def->columns);
     }
-
     public function testParseExcludeConstraintIgnored(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -829,7 +776,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id'], $def->columns);
     }
-
     public function testParseColumnDefaultNotNull(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -837,7 +783,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertContains('s', $def->notNullColumns);
     }
-
     public function testParseUnloggedTable(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -845,7 +790,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id'], $def->columns);
     }
-
     public function testParseTempTable(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -853,7 +797,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id'], $def->columns);
     }
-
     public function testParseCompositeUniqueConstraint(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -861,7 +804,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['a', 'b'], $def->uniqueConstraints['uq_ab']);
     }
-
     public function testParseColumnTypeUppercased(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -870,14 +812,12 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame('INTEGER', $def->columnTypes['v']);
         self::assertContains('v', $def->notNullColumns);
     }
-
     public function testParseUniqueConstraintReferencingNonExistentColumnReturnsNull(): void
     {
         $parser = new PgSqlSchemaParser();
         $def = $parser->parse('CREATE TABLE t (id INTEGER, CONSTRAINT uq UNIQUE (nonexistent))');
         self::assertNull($def);
     }
-
     public function testParseTimestamptzColumnType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -885,13 +825,11 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame('TIMESTAMPTZ', $def->columnTypes['v']);
     }
-
     public function testParseEscapedDoubleQuoteIdentifierReturnsNull(): void
     {
         $parser = new PgSqlSchemaParser();
         self::assertNull($parser->parse('CREATE TABLE t ("a""b" INTEGER)'));
     }
-
     public function testParseDefaultWithParentheses(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -899,7 +837,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['v', 'id'], $def->columns);
     }
-
     public function testParseColumnWithSingleQuoteDefault(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -907,7 +844,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['v', 'id'], $def->columns);
     }
-
     public function testParseIntType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -916,7 +852,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame(ColumnTypeFamily::INTEGER, $def->typedColumns['v']->family);
         self::assertSame('INT', $def->columnTypes['v']);
     }
-
     public function testParseTimeWithoutTimezoneMultiWord(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -924,7 +859,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame('TIME WITHOUT', $def->columnTypes['v']);
     }
-
     public function testParseColumnWithGeneratedClause(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -933,7 +867,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame(['id'], $def->columns);
         self::assertSame(['id' => IdentityGenerationStrategy::Sequence], $def->identityStrategies);
     }
-
     public function testParseMultiWordTypeNotConflictWithConstraint(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -942,7 +875,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame('DOUBLE PRECISION', $def->columnTypes['v']);
         self::assertContains('v', $def->notNullColumns);
     }
-
     public function testParseBitType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -950,7 +882,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame('BIT(8)', $def->columnTypes['v']);
     }
-
     public function testParseIntervalType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -958,7 +889,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame('INTERVAL', $def->columnTypes['v']);
     }
-
     public function testParseColumnNamedConstraintKeyword(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -966,13 +896,11 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['primary', 'check'], $def->columns);
     }
-
     public function testParseNoColumnsReturnsNull(): void
     {
         $parser = new PgSqlSchemaParser();
         self::assertNull($parser->parse('CREATE TABLE t (PRIMARY KEY (id))'));
     }
-
     public function testParseColumnNativeTypeIsUpper(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -981,7 +909,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame('VARCHAR(50)', $def->columnTypes['v']);
         self::assertSame('VARCHAR(50)', $def->typedColumns['v']->nativeType);
     }
-
     public function testParseMultilineCreateTable(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -989,7 +916,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id', 'name'], $def->columns);
     }
-
     public function testParseLowercaseCreateTable(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -997,7 +923,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id', 'name'], $def->columns);
     }
-
     public function testParseLowercasePrimaryKey(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1005,7 +930,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id'], $def->primaryKeys);
     }
-
     public function testParseLowercaseUnique(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1013,7 +937,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertNotEmpty($def->uniqueConstraints);
     }
-
     public function testParseLowercaseNotNull(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1021,7 +944,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertContains('id', $def->notNullColumns);
     }
-
     public function testParseLowercaseInlinePrimaryKey(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1029,7 +951,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id'], $def->primaryKeys);
     }
-
     public function testParseLowercaseInlineUnique(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1037,7 +958,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertNotEmpty($def->uniqueConstraints);
     }
-
     public function testParseMultilineColumnDefinition(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1046,7 +966,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame(['id', 'name'], $def->columns);
         self::assertContains('id', $def->notNullColumns);
     }
-
     public function testParseColumnWithLeadingWhitespace(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1054,7 +973,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id', 'name'], $def->columns);
     }
-
     public function testParseDoubleQuotedColumnName(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1062,7 +980,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertContains('Column Name', $def->columns);
     }
-
     public function testParseCharTypeNoLength(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1071,7 +988,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame('CHAR', $def->columnTypes['c']);
         self::assertSame(ColumnTypeFamily::STRING, $def->typedColumns['c']->family);
     }
-
     public function testParseCharTypeWithLength(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1079,7 +995,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame('CHAR(5)', $def->columnTypes['c']);
     }
-
     public function testParseVarcharNoLength(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1087,7 +1002,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame('VARCHAR', $def->columnTypes['v']);
     }
-
     public function testParseNumericWithPrecisionOnly(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1095,7 +1009,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame('NUMERIC(10)', $def->columnTypes['n']);
     }
-
     public function testParseNumericNoParams(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1103,7 +1016,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame('NUMERIC', $def->columnTypes['n']);
     }
-
     public function testParseDoublePrecisionType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1112,7 +1024,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame('DOUBLE PRECISION', $def->columnTypes['d']);
         self::assertSame(ColumnTypeFamily::DOUBLE, $def->typedColumns['d']->family);
     }
-
     public function testParseTimestampType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1120,7 +1031,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::TIMESTAMP, $def->typedColumns['ts']->family);
     }
-
     public function testParseBooleanType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1128,7 +1038,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::BOOLEAN, $def->typedColumns['b']->family);
     }
-
     public function testParseJsonbType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1136,7 +1045,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::JSON, $def->typedColumns['j']->family);
     }
-
     public function testParseSmallintType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1144,7 +1052,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::INTEGER, $def->typedColumns['s']->family);
     }
-
     public function testParseBigintType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1152,7 +1059,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::INTEGER, $def->typedColumns['b']->family);
     }
-
     public function testParseTextType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1160,7 +1066,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::TEXT, $def->typedColumns['t']->family);
     }
-
     public function testParseMultiDimensionalArray(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1168,7 +1073,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame('INTEGER[][]', $def->columnTypes['a']);
     }
-
     public function testParseNamedConstraintPrimaryKey(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1176,7 +1080,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id'], $def->primaryKeys);
     }
-
     public function testParseNamedConstraintUnique(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1185,7 +1088,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertArrayHasKey('uq_email', $def->uniqueConstraints);
         self::assertSame(['email'], $def->uniqueConstraints['uq_email']);
     }
-
     public function testParseConstraintEntryCheck(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1193,7 +1095,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id'], $def->columns);
     }
-
     public function testParseConstraintEntryForeignKey(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1201,7 +1102,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id'], $def->columns);
     }
-
     public function testParseConstraintEntryExclude(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1209,7 +1109,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id'], $def->columns);
     }
-
     public function testParseWithLeadingWhitespace(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1217,19 +1116,16 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id'], $def->columns);
     }
-
     public function testParseNonCreateTableReturnsNull(): void
     {
         $parser = new PgSqlSchemaParser();
         self::assertNull($parser->parse('SELECT 1'));
     }
-
     public function testParseEmptyBody(): void
     {
         $parser = new PgSqlSchemaParser();
         self::assertNull($parser->parse('CREATE TABLE t ()'));
     }
-
     public function testParseSingleQuoteInDefaultValue(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1237,7 +1133,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['name', 'id'], $def->columns);
     }
-
     public function testParseDoubleQuotedColumnWithComma(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1245,7 +1140,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertContains('a,b', $def->columns);
     }
-
     public function testParsePrimaryKeyAddsToNotNull(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1254,13 +1148,11 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertContains('id', $def->notNullColumns);
         self::assertContains('id', $def->primaryKeys);
     }
-
     public function testParseUniqueConstraintWithNonExistentColumnReturnsNull(): void
     {
         $parser = new PgSqlSchemaParser();
         self::assertNull($parser->parse('CREATE TABLE t (id INTEGER, UNIQUE (nonexistent))'));
     }
-
     public function testParseIfNotExistsTable(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1268,11 +1160,9 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id'], $def->columns);
     }
-
     public function testRejectsMalformedCreateTablePreambleAndBodyDelimiters(): void
     {
         $parser = new PgSqlSchemaParser();
-
         self::assertNull($parser->parse('CREATE TABLE IF EXISTS t (id INTEGER)'));
         self::assertNull($parser->parse('CREATE TABLE IF WRONG EXISTS t (id INTEGER)'));
         self::assertNull($parser->parse('CREATE TABLE IF NOT MISSING t (id INTEGER)'));
@@ -1281,7 +1171,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNull($parser->parse('CREATE TABLE public. (id INTEGER)'));
         self::assertNull($parser->parse('CREATE TABLE t'));
     }
-
     public function testParseLowercaseTimestamp(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1289,7 +1178,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::TIMESTAMP, $def->typedColumns['ts']->family);
     }
-
     public function testParseLowercaseBoolean(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1297,7 +1185,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::BOOLEAN, $def->typedColumns['b']->family);
     }
-
     public function testParseDoubleQuotedTableName(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1305,7 +1192,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id'], $def->columns);
     }
-
     public function testParseInt2Type(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1313,7 +1199,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::INTEGER, $def->typedColumns['n']->family);
     }
-
     public function testParseInt4Type(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1321,7 +1206,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::INTEGER, $def->typedColumns['n']->family);
     }
-
     public function testParseInt8Type(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1329,7 +1213,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::INTEGER, $def->typedColumns['n']->family);
     }
-
     public function testParseFloat4Type(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1337,7 +1220,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::FLOAT, $def->typedColumns['f']->family);
     }
-
     public function testParseFloat8Type(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1345,7 +1227,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::DOUBLE, $def->typedColumns['f']->family);
     }
-
     public function testParseSmallserialType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1354,7 +1235,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame(ColumnTypeFamily::INTEGER, $def->typedColumns['s']->family);
         self::assertSame(['s' => IdentityGenerationStrategy::Sequence], $def->identityStrategies);
     }
-
     public function testParseColumnTypeWithWhitespaceBeforeParams(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1362,7 +1242,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame('VARCHAR(50)', $def->columnTypes['v']);
     }
-
     public function testParseMultiWordTypePrefix(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1371,7 +1250,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame('DOUBLE PRECISION', $def->columnTypes['d']);
         self::assertSame('TIMESTAMP', $def->columnTypes['t']);
     }
-
     public function testParseMultiWordTypeWithConstraintAfter(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1380,7 +1258,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame('DOUBLE PRECISION', $def->columnTypes['d']);
         self::assertContains('d', $def->notNullColumns);
     }
-
     public function testParseTimestampMultiWordFollowedByConstraint(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1389,7 +1266,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame('TIMESTAMP', $def->columnTypes['ts']);
         self::assertContains('ts', $def->notNullColumns);
     }
-
     public function testParseColumnWithDefaultAndNotNull(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1397,7 +1273,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertContains('active', $def->notNullColumns);
     }
-
     public function testParseLowercaseDoublePrecision(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1405,7 +1280,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame('DOUBLE PRECISION', $def->columnTypes['d']);
     }
-
     public function testParseCompositeUnique(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1414,7 +1288,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         $uk = array_values($def->uniqueConstraints);
         self::assertSame(['a', 'b'], $uk[0]);
     }
-
     public function testParsePrimaryKeyNoDuplicate(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1422,7 +1295,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertCount(1, $def->primaryKeys);
     }
-
     public function testParseInlineUniqueColumnNameFormat(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1431,7 +1303,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertArrayHasKey('email_UNIQUE', $def->uniqueConstraints);
         self::assertSame(['email'], $def->uniqueConstraints['email_UNIQUE']);
     }
-
     public function testParseColumnDefinitionWithMultilineTypeAndConstraints(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1441,7 +1312,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertContains('bio', $def->notNullColumns);
         self::assertArrayHasKey('bio_UNIQUE', $def->uniqueConstraints);
     }
-
     public function testParseLowercaseConstraintPrimaryKey(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1449,7 +1319,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id'], $def->primaryKeys);
     }
-
     public function testParseLowercaseConstraintUnique(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1458,7 +1327,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         $uk = array_values($def->uniqueConstraints);
         self::assertSame(['email'], $uk[0]);
     }
-
     public function testParseLowercaseConstraintKeyword(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1466,7 +1334,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id'], $def->primaryKeys);
     }
-
     public function testParseArrayTypeColumn(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1475,7 +1342,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame(['tags'], $def->columns);
         self::assertSame('TEXT[]', $def->columnTypes['tags']);
     }
-
     public function testParseMultiWordTypeWithConstraintKeyword(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1484,7 +1350,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame('TIMESTAMP', $def->columnTypes['ts']);
         self::assertContains('ts', $def->notNullColumns);
     }
-
     public function testParseMultiWordTypeTimestampWithTimeZone(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1492,7 +1357,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame('DOUBLE PRECISION', $def->columnTypes['d']);
     }
-
     public function testParseEmptyEntrySkipped(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1500,7 +1364,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id', 'name'], $def->columns);
     }
-
     public function testParseQuotedColumnName(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1508,7 +1371,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['My Column'], $def->columns);
     }
-
     public function testParseDefaultValueWithStringContainingComma(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1516,7 +1378,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id', 'note'], $def->columns);
     }
-
     public function testParseCheckConstraintSkipped(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1524,7 +1385,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['age'], $def->columns);
     }
-
     public function testParseForeignKeyConstraintSkipped(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1532,7 +1392,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['user_id'], $def->columns);
     }
-
     public function testParseExcludeConstraintSkipped(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1540,13 +1399,11 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['tsrange'], $def->columns);
     }
-
     public function testParseInvalidSqlReturnsNull(): void
     {
         $parser = new PgSqlSchemaParser();
         self::assertNull($parser->parse('NOT A CREATE TABLE'));
     }
-
     public function testParseTemporaryTableLowercase(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1554,7 +1411,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id'], $def->columns);
     }
-
     public function testParseTempTableLowercase(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1562,7 +1418,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id'], $def->columns);
     }
-
     public function testParseUnloggedTableLowercase(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1570,7 +1425,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id'], $def->columns);
     }
-
     public function testParseIfNotExistsLowercase(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1578,7 +1432,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id'], $def->columns);
     }
-
     public function testParseColumnWithDoubleQuoteName(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1586,7 +1439,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['col_name'], $def->columns);
     }
-
     public function testParseSingleQuoteInDefault(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1594,7 +1446,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['name', 'id'], $def->columns);
     }
-
     public function testParseTypedColumnsPresent(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1605,7 +1456,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame(ColumnTypeFamily::INTEGER, $def->typedColumns['id']->family);
         self::assertSame(ColumnTypeFamily::TEXT, $def->typedColumns['name']->family);
     }
-
     public function testParseColumnWithLeadingWhitespaceInDefinition(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1613,7 +1463,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id', 'name'], $def->columns);
     }
-
     public function testParseColumnDefinitionLowercaseType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1622,7 +1471,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame('INTEGER', $def->columnTypes['id']);
         self::assertSame('TEXT', $def->columnTypes['name']);
     }
-
     public function testParseColumnWithDefaultContainingParenInString(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1630,7 +1478,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['note', 'id'], $def->columns);
     }
-
     public function testParseMultiWordTypeDoublePrecsion(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1639,7 +1486,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame('DOUBLE PRECISION', $def->columnTypes['val']);
         self::assertSame(ColumnTypeFamily::DOUBLE, $def->typedColumns['val']->family);
     }
-
     public function testParseVarcharWithLength(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1648,7 +1494,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame('VARCHAR(255)', $def->columnTypes['name']);
         self::assertSame(ColumnTypeFamily::STRING, $def->typedColumns['name']->family);
     }
-
     public function testParseUnknownTypeFamily(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1656,7 +1501,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(ColumnTypeFamily::UNKNOWN, $def->typedColumns['geom']->family);
     }
-
     public function testParseUniqueConstraintReferencesValidColumn(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1665,7 +1509,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotEmpty($def->uniqueConstraints);
         self::assertContains(['name'], $def->uniqueConstraints);
     }
-
     public function testParsePrimaryKeyConstraintInColumn(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1674,7 +1517,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame(['id'], $def->primaryKeys);
         self::assertContains('id', $def->notNullColumns);
     }
-
     public function testParseColumnWithLeadingWhitespaceInType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1682,7 +1524,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id'], $def->columns);
     }
-
     public function testParseConstraintLowercaseConstraintKeyword(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1692,7 +1533,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertArrayHasKey('uq_name', $def->uniqueConstraints);
         self::assertSame(['name'], $def->uniqueConstraints['uq_name']);
     }
-
     public function testParseIsConstraintEntryWithLeadingWhitespace(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1700,7 +1540,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id'], $def->primaryKeys);
     }
-
     public function testParseColumnDefinitionMultilineEntry(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1708,7 +1547,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id'], $def->columns);
     }
-
     public function testParseColumnArrayTypeBrackets(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1716,7 +1554,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['tags'], $def->columns);
     }
-
     public function testParseColumnArrayTypeMultipleBrackets(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1724,7 +1561,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['matrix'], $def->columns);
     }
-
     public function testParseColumnArrayTypeBracketsWithSpaceBeforeNext(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1733,7 +1569,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame(['tags'], $def->columns);
         self::assertContains('tags', $def->notNullColumns);
     }
-
     public function testParseMultiWordTypeWithSecondWordAsConstraint(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1742,7 +1577,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame(['t1'], $def->columns);
         self::assertContains('t1', $def->notNullColumns);
     }
-
     public function testParseDoublePrecsionLowercase(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1750,7 +1584,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['x'], $def->columns);
     }
-
     public function testParseCharacterVaryingTypeWithDifferentLength(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1758,7 +1591,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['name'], $def->columns);
     }
-
     public function testParseColumnDefaultWithCommaInSingleQuotedString(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1766,7 +1598,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id', 'name'], $def->columns);
     }
-
     public function testParseColumnWithDoubleQuotedNameContainingComma(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1774,7 +1605,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['a,b', 'c'], $def->columns);
     }
-
     public function testParseConstraintEntryLowercaseCheckKeyword(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1782,7 +1612,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id'], $def->columns);
     }
-
     public function testParseConstraintEntryLowercaseForeignKey(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1793,7 +1622,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame('other', array_values($def->foreignKeys)[0]->referencedTable);
         self::assertSame(['id'], array_values($def->foreignKeys)[0]->columns);
     }
-
     public function testParseColumnWithDefaultContainingParenthesis(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1802,7 +1630,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertSame(['id'], $def->columns);
         self::assertSame([], $def->columnDefaults);
     }
-
     public function testParseBitVaryingMultiWordType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1810,7 +1637,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['flags'], $def->columns);
     }
-
     public function testParseIntervalYearMultiWordType(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1818,7 +1644,6 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['duration'], $def->columns);
     }
-
     public function testParseLowercaseTableLevelPrimaryKey(): void
     {
         $parser = new PgSqlSchemaParser();
@@ -1826,18 +1651,13 @@ final class PgSqlSchemaParserTest extends SchemaParserContractTest
         self::assertNotNull($def);
         self::assertSame(['id'], $def->primaryKeys);
     }
-
     public function testConstraintKeywordPrefixesRemainColumnNames(): void
     {
         $parser = new PgSqlSchemaParser();
         $sql = 'CREATE TABLE bookings (id INT, check_in TEXT, checkout_date TEXT, unique_value TEXT, constraint_name TEXT, foreign_key_id INT, exclude_reason TEXT, "CHECK" TEXT,   PRIMARY KEY (id))';
         $def = $parser->parse($sql);
-
         self::assertNotNull($def);
-        self::assertSame(
-            ['id', 'check_in', 'checkout_date', 'unique_value', 'constraint_name', 'foreign_key_id', 'exclude_reason', 'CHECK'],
-            $def->columns,
-        );
+        self::assertSame(['id', 'check_in', 'checkout_date', 'unique_value', 'constraint_name', 'foreign_key_id', 'exclude_reason', 'CHECK'], $def->columns);
         self::assertSame(['id'], $def->primaryKeys);
     }
     public function testParseRejectsPrimaryKeysReferencingUndeclaredColumns(): void

@@ -8,14 +8,14 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(\ZtdQuery\Platform\Postgres\Schema\Definition\TableFields::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\PgSqlColumnTypeMapper::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\PgSqlPartitionParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\PgSqlColumnTypeMapper::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Sql\PgSqlLexerProfile::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Sql\Partition\PgSqlPartitionParser::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\Definition\ColumnDefinition::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\Definition\ColumnTypeDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\Definition\TableConstraint::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\Partition\BoundPredicate::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\Partition\ClauseTokens::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Sql\Partition\BoundPredicate::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Sql\Partition\ClauseTokens::class)]
 final class TableFieldsTest extends TestCase
 {
     public function testAppendEntryPreservesInlineAndTableConstraints(): void
@@ -30,7 +30,7 @@ final class TableFieldsTest extends TestCase
         self::assertSame(['id'], $definition->primaryKeys);
         self::assertSame(['id'], $definition->notNullColumns);
         self::assertSame("'guest'", $definition->columnDefaults['name']);
-        self::assertSame(\ZtdQuery\Schema\IdentityGenerationStrategy::Sequence, $definition->identityStrategies['id']);
+        self::assertSame(\ZtdQuery\Schema\Key\IdentityGenerationStrategy::Sequence, $definition->identityStrategies['id']);
         self::assertSame(['id', 'name'], $definition->uniqueConstraints['unique_pair']);
     }
 

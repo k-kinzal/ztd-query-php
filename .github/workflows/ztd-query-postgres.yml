@@ -89,6 +89,8 @@ jobs:
           composer-options: --prefer-dist
       - name: Check installed platform requirements
         run: composer check-platform-reqs
+      - name: Check PSR-4 paths and ambiguous classes
+        run: composer dump-autoload --optimize --strict-psr --strict-ambiguous
       - name: Check the formatting
         run: composer format:check
       - name: Analyse with PHPStan

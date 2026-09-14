@@ -6,17 +6,27 @@ namespace ZtdQuery\Platform\Postgres;
 
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
-use ZtdQuery\Platform\Postgres\Transformer\DeleteTransformer;
-use ZtdQuery\Platform\Postgres\Transformer\InsertTransformer;
-use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
-use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
+use ZtdQuery\Platform\Postgres\Connection\Copy\PgSqlCopySupport;
+use ZtdQuery\Platform\Postgres\Connection\Placeholder\PgSqlPdoParameterBindingCompiler;
+use ZtdQuery\Platform\Postgres\Connection\Result\PgSqlPdoResultColumnTypeResolver;
+use ZtdQuery\Platform\Postgres\Rewrite\PgSqlQueryGuard;
+use ZtdQuery\Platform\Postgres\Rewrite\PgSqlRewriter;
+use ZtdQuery\Platform\Postgres\Rewrite\Transformer\DeleteTransformer;
+use ZtdQuery\Platform\Postgres\Rewrite\Transformer\InsertTransformer;
+use ZtdQuery\Platform\Postgres\Rewrite\Transformer\PgSqlTransformer;
+use ZtdQuery\Platform\Postgres\Rewrite\Transformer\SelectTransformer;
+use ZtdQuery\Platform\Postgres\Rewrite\Transformer\UpdateTransformer;
+use ZtdQuery\Platform\Postgres\Schema\PgSqlSchemaParser;
+use ZtdQuery\Platform\Postgres\Schema\PgSqlSchemaReflector;
+use ZtdQuery\Platform\Postgres\Shadow\PgSqlMutationResolver;
+use ZtdQuery\Platform\Postgres\Sql\PgSqlParser;
 use ZtdQuery\Platform\SessionFactory;
 use ZtdQuery\ResultSelectRunner;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Schema\ViewDefinitionSet;
 use ZtdQuery\Session;
 use ZtdQuery\Shadow\ShadowStore;
-use ZtdQuery\Shadow\ShadowTransactionManager;
+use ZtdQuery\Shadow\ShadowTransactions;
 
 /**
  * Factory for creating Session instances pre-configured for PostgreSQL.
@@ -70,7 +80,7 @@ final class PgSqlSessionFactory implements SessionFactory
             new ResultSelectRunner(),
             $config,
             $connection,
-            transactions: new ShadowTransactionManager($shadowStore, $registry),
+            transactions: new ShadowTransactions($shadowStore, $registry),
             registry: $registry,
             copySupport: new PgSqlCopySupport(),
             parameterBindingCompiler: new PgSqlPdoParameterBindingCompiler(),

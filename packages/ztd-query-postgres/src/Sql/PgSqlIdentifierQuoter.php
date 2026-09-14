@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Platform\Postgres;
+namespace ZtdQuery\Platform\Postgres\Sql;
 
 use ZtdQuery\Platform\IdentifierQuoter;
 
@@ -11,7 +11,7 @@ use ZtdQuery\Platform\IdentifierQuoter;
  *
  * @visibility public
  * @example Quote reserved identifiers
- *     (new \ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter())->quote('select') // => '"select"'
+ *     (new \ZtdQuery\Platform\Postgres\Sql\PgSqlIdentifierQuoter())->quote('select') // => '"select"'
  */
 final class PgSqlIdentifierQuoter implements IdentifierQuoter
 {
@@ -20,7 +20,7 @@ final class PgSqlIdentifierQuoter implements IdentifierQuoter
      *
      * @visibility public
      * @example Quote an identifier containing a double quote
-     *     (new \ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter())->quote('order"items') // => '"order""items"'
+     *     (new \ZtdQuery\Platform\Postgres\Sql\PgSqlIdentifierQuoter())->quote('order"items') // => '"order""items"'
      */
     public function quote(string $identifier): string
     {

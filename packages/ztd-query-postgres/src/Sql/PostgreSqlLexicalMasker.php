@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Platform\Postgres;
+namespace ZtdQuery\Platform\Postgres\Sql;
 
 use ZtdQuery\Platform\Postgres\Sql\Lexing\QuotedSpan;
 
@@ -87,7 +87,7 @@ final class PostgreSqlLexicalMasker
 
             if ($pair === '/*') {
                 $result .= ' ';
-                $i = Sql\Lexing\CommentSpan::end($sql, $i);
+                $i = Lexing\CommentSpan::end($sql, $i);
                 continue;
             }
 

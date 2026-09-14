@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Bench;
 
 use PhpBench\Attributes as Bench;
-use ZtdQuery\Platform\Postgres\PgSqlParser;
+use ZtdQuery\Platform\Postgres\Sql\PgSqlParser;
 
 final class ParserBench
 {

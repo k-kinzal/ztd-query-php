@@ -4,6 +4,9 @@
     "source": {
         "directories": [
             "src"
+        ],
+        "excludes": [
+            "Compatibility/ClassAliases.php"
         ]
     },
     "mutators": {

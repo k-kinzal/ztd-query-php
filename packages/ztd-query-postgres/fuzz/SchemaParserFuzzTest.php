@@ -1,6 +1,6 @@
 <?php
 
-declare (strict_types=1);
+declare(strict_types=1);
 
 namespace Fuzz;
 
@@ -10,7 +10,7 @@ use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\PostgreSqlProvider;
-use ZtdQuery\Platform\Postgres\PgSqlSchemaParser;
+use ZtdQuery\Platform\Postgres\Schema\PgSqlSchemaParser;
 use ZtdQuery\Schema\TableDefinition;
 
 /**

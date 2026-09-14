@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Postgres\Schema\Definition;
 
-use ZtdQuery\Platform\Postgres\PgSqlPartitionParser;
-use ZtdQuery\Schema\ColumnType;
-use ZtdQuery\Schema\IdentityGenerationStrategy;
+use ZtdQuery\Platform\Postgres\Sql\Partition\PgSqlPartitionParser;
+use ZtdQuery\Schema\ColumnDeclaration;
+use ZtdQuery\Schema\Key\IdentityGenerationStrategy;
 use ZtdQuery\Schema\TableDefinition;
 
 /**
@@ -25,7 +25,7 @@ final class TableFields
      */
     private array $columnTypes = [];
     /**
-     * @var array<string, ColumnType>
+     * @var array<string, ColumnDeclaration>
      */
     private array $typedColumns = [];
     /**
@@ -79,7 +79,7 @@ final class TableFields
 
     /**
      * Records typed column metadata and its inline constraints.
-     * @param array{name: string, type: string, columnType: ColumnType, notNull: bool, primaryKey: bool, unique: bool, default: string|null, identity: bool, generatedExpression: string|null} $columnDef
+     * @param array{name: string, type: string, columnType: ColumnDeclaration, notNull: bool, primaryKey: bool, unique: bool, default: string|null, identity: bool, generatedExpression: string|null} $columnDef
      */
     public function appendColumn(array $columnDef): void
     {
@@ -116,7 +116,7 @@ final class TableFields
 
     /**
      * Validates referenced primary and unique columns and produces the complete table definition.
-     * @param array<string, \ZtdQuery\Schema\ForeignKeyDefinition> $foreignKeys
+     * @param array<string, \ZtdQuery\Schema\Key\ForeignKeyDefinition> $foreignKeys
      */
     public function definition(string $createTableSql, array $foreignKeys): ?TableDefinition
     {

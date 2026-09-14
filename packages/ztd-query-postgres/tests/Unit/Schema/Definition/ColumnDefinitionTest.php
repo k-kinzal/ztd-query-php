@@ -8,15 +8,15 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(\ZtdQuery\Platform\Postgres\Schema\Definition\ColumnDefinition::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\PgSqlColumnTypeMapper::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\PgSqlColumnTypeMapper::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Sql\PgSqlLexerProfile::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\Definition\ColumnTypeDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\Definition\TableConstraint::class)]
 final class ColumnDefinitionTest extends TestCase
 {
     public function testParseColumnDefinition(): void
     {
-        self::assertEquals(['name' => 'id', 'type' => 'BIGINT', 'columnType' => new \ZtdQuery\Schema\ColumnType(family: \ZtdQuery\Schema\ColumnTypeFamily::INTEGER, nativeType: 'BIGINT'), 'notNull' => false, 'primaryKey' => true, 'unique' => false, 'default' => null, 'identity' => true, 'generatedExpression' => null], (new \ZtdQuery\Platform\Postgres\Schema\Definition\ColumnDefinition())->parseColumnDefinition('id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY'));
+        self::assertEquals(['name' => 'id', 'type' => 'BIGINT', 'columnType' => new \ZtdQuery\Schema\ColumnDeclaration(family: \ZtdQuery\Schema\ColumnTypeFamily::INTEGER, nativeType: 'BIGINT'), 'notNull' => false, 'primaryKey' => true, 'unique' => false, 'default' => null, 'identity' => true, 'generatedExpression' => null], (new \ZtdQuery\Platform\Postgres\Schema\Definition\ColumnDefinition())->parseColumnDefinition('id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY'));
     }
 
     public function testIsSequenceDefault(): void

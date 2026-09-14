@@ -8,7 +8,7 @@ use Generator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use ZtdQuery\Platform\Postgres\PostgreSqlLexicalMasker;
+use ZtdQuery\Platform\Postgres\Sql\PostgreSqlLexicalMasker;
 
 #[CoversClass(PostgreSqlLexicalMasker::class)]
 #[CoversClass(\ZtdQuery\Platform\Postgres\Sql\Lexing\CommentSpan::class)]

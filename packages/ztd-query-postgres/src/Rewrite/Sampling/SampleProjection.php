@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Postgres\Rewrite\Sampling;
 
-use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
-use ZtdQuery\Platform\Postgres\PgSqlTableSample;
-use ZtdQuery\Platform\Postgres\PgSqlTableSampleMethod;
+use ZtdQuery\Platform\Postgres\Sql\PgSqlIdentifierQuoter;
+use ZtdQuery\Platform\Postgres\Sql\Sampling\PgSqlTableSample;
+use ZtdQuery\Platform\Postgres\Sql\Sampling\PgSqlTableSampleMethod;
 
 /**
  * Sample projection operations for PostgreSQL sampling.

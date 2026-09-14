@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Platform\Postgres\Schema\Definition;
 
-use ZtdQuery\Platform\Postgres\PgSqlColumnTypeMapper;
-use ZtdQuery\Platform\Postgres\PgSqlLexerProfile;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Platform\Postgres\Schema\PgSqlColumnTypeMapper;
+use ZtdQuery\Platform\Postgres\Sql\PgSqlLexerProfile;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Sql\SqlTokenStream;
 
 /**
@@ -17,7 +17,7 @@ use ZtdQuery\Sql\SqlTokenStream;
 final class ColumnDefinition
 {
     /**
-     * @return array{name: string, type: string, columnType: ColumnType, notNull: bool, primaryKey: bool, unique: bool, default: string|null, identity: bool, generatedExpression: string|null}|null
+     * @return array{name: string, type: string, columnType: ColumnDeclaration, notNull: bool, primaryKey: bool, unique: bool, default: string|null, identity: bool, generatedExpression: string|null}|null
      */
     public function parseColumnDefinition(string $entry): ?array
     {

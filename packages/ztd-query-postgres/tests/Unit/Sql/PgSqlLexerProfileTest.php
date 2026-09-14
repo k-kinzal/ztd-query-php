@@ -6,7 +6,7 @@ namespace Tests\Unit\Sql;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use ZtdQuery\Platform\Postgres\PgSqlLexerProfile;
+use ZtdQuery\Platform\Postgres\Sql\PgSqlLexerProfile;
 use ZtdQuery\Sql\SqlToken;
 use ZtdQuery\Sql\SqlTokenKind;
 use ZtdQuery\Sql\SqlTokenStream;

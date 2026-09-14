@@ -36,26 +36,17 @@
     ],
     "autoload": {
         "psr-4": {
-            "ZtdQuery\\Platform\\Postgres\\": [
-                "src/",
-                "src/Sql/",
-                "src/Parsing/",
-                "src/Parsing/Merge/",
-                "src/Parsing/Sampling/",
-                "src/Schema/",
-                "src/Reflection/",
-                "src/Rewrite/",
-                "src/Driver/"
-            ]
-        }
+            "ZtdQuery\\Platform\\Postgres\\": "src/"
+        },
+        "files": [
+            "src/Compatibility/ClassAliases.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
-            "Tests\\": [
-                "tests/",
-                "../ztd-query-core/tests/"
-            ],
-            "Fuzz\\": "fuzz/"
+            "Tests\\": "tests/",
+            "Fuzz\\": "fuzz/",
+            "Bench\\": "bench/"
         }
     },
     "scripts": {
@@ -89,14 +80,14 @@
         "loc-guard": "loc-guard --config=loc.yaml",
         "tree-guard": "tree-guard --config=tree.yaml",
         "deptrac": [
-            "deptrac analyse --config-file=deptrac.yaml",
+            "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered",
             "deptrac debug:unassigned --config-file=deptrac.yaml"
         ],
         "deptrac:debug": [
             "deptrac debug:unassigned --config-file=deptrac.yaml",
             "deptrac debug:unused --config-file=deptrac.yaml"
         ],
-        "docgen": "cd ../.. && packages/ztd-query-postgres/vendor/bin/docgen --packages=packages/ztd-query-postgres --deptrac=\"$(pwd)/packages/ztd-query-postgres/deptrac.yaml\" --exclude='packages/ztd-query-postgres/../ztd-query-core/tests/*' --output=packages/ztd-query-postgres/build/docs --cache-dir=packages/ztd-query-postgres/build/docgen-cache --title=k-kinzal/ztd-query-postgres",
+        "docgen": "cd ../.. && packages/ztd-query-postgres/vendor/bin/docgen --packages=packages/ztd-query-postgres --deptrac=\"$(pwd)/packages/ztd-query-postgres/deptrac.yaml\" --exclude=packages/ztd-query-postgres/src/Compatibility/ClassAliases.php --exclude='packages/ztd-query-postgres/../ztd-query-core/tests/*' --output=packages/ztd-query-postgres/build/docs --cache-dir=packages/ztd-query-postgres/build/docgen-cache --title=k-kinzal/ztd-query-postgres",
         "docgen:serve": "@docgen --serve",
         "docgen:diff": "@docgen --diff=origin/main --serve",
         "docgen:fresh": "@docgen --no-cache"

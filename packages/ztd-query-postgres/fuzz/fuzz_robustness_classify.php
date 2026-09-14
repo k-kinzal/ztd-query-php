@@ -6,8 +6,8 @@ use Faker\Factory;
 use Fuzz\Input\SqlInput;
 use SqlFaker\Generation\Coverage\GrammarCoverage;
 use SqlFaker\PostgreSqlProvider;
-use ZtdQuery\Platform\Postgres\PgSqlParser;
-use ZtdQuery\Platform\Postgres\PgSqlQueryGuard;
+use ZtdQuery\Platform\Postgres\Rewrite\PgSqlQueryGuard;
+use ZtdQuery\Platform\Postgres\Sql\PgSqlParser;
 
 register_shutdown_function(static function (): void {
     if (function_exists('pcntl_alarm')) {
@@ -21,19 +21,10 @@ $input = new SqlInput(new PostgreSqlProvider(Factory::create(), 'pg-17.2', $cove
 $config->setAllowedExceptions([]);
 $config->setMaxLen(20005);
 $config->setTarget(static function (string $bytes) use ($input): void {
-    $sql = '';
-    $completed = false;
-    try {
-        $sql = $input->generate($bytes);
-        $guard = new PgSqlQueryGuard(new PgSqlParser());
-        $first = $guard->classify($sql);
-        if ($first !== $guard->classify($sql)) {
-            throw new Error('Classification changed for the same SQL.');
-        }
-        $completed = true;
-    } finally {
-        if (!$completed) {
-            fwrite(STDERR, "PostgreSQL grammar: pg-17.2\nInput (hex): " . bin2hex($bytes) . "\nSQL:\n" . $sql . "\n");
-        }
+    $sql = $input->generate($bytes);
+    $guard = new PgSqlQueryGuard(new PgSqlParser());
+    $first = $guard->classify($sql);
+    if ($first !== $guard->classify($sql)) {
+        throw new Error('Classification changed for the same SQL.');
     }
 });

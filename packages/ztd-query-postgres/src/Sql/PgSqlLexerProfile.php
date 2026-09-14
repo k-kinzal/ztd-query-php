@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Platform\Postgres;
+namespace ZtdQuery\Platform\Postgres\Sql;
 
 use ZtdQuery\Sql\SqlLexerProfile;
 

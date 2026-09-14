@@ -20,15 +20,6 @@ $input = new SqlInput(new PostgreSqlProvider(Factory::create(), 'pg-17.2', $cove
 $config->setAllowedExceptions([]);
 $config->setMaxLen(20005);
 $config->setTarget(static function (string $bytes) use ($input): void {
-    $sql = '';
-    $completed = false;
-    try {
-        $sql = $input->generate($bytes);
-        (new RewriteCheck())->verify($sql, true);
-        $completed = true;
-    } finally {
-        if (!$completed) {
-            fwrite(STDERR, "PostgreSQL grammar: pg-17.2\nInput (hex): " . bin2hex($bytes) . "\nSQL:\n" . $sql . "\n");
-        }
-    }
+    $sql = $input->generate($bytes);
+    (new RewriteCheck())->verify($sql, true);
 });

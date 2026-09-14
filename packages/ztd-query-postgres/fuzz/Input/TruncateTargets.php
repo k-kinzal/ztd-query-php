@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Fuzz\Input;
 
-use ZtdQuery\Platform\Postgres\PgSqlLexerProfile;
+use ZtdQuery\Platform\Postgres\Sql\PgSqlLexerProfile;
 use ZtdQuery\Sql\SqlTokenStream;
 
 /**

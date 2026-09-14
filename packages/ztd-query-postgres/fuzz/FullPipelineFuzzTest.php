@@ -1,6 +1,6 @@
 <?php
 
-declare (strict_types=1);
+declare(strict_types=1);
 
 namespace Fuzz;
 
@@ -12,8 +12,18 @@ use PHPUnit\Framework\TestCase;
 use SqlFaker\PostgreSqlProvider;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
-use ZtdQuery\Platform\Postgres\PgSqlSchemaParser;
+use ZtdQuery\Platform\Postgres\Rewrite\PgSqlQueryGuard;
+use ZtdQuery\Platform\Postgres\Rewrite\PgSqlRewriter;
+use ZtdQuery\Platform\Postgres\Rewrite\Transformer\DeleteTransformer;
+use ZtdQuery\Platform\Postgres\Rewrite\Transformer\InsertTransformer;
+use ZtdQuery\Platform\Postgres\Rewrite\Transformer\PgSqlTransformer;
+use ZtdQuery\Platform\Postgres\Rewrite\Transformer\SelectTransformer;
+use ZtdQuery\Platform\Postgres\Rewrite\Transformer\UpdateTransformer;
+use ZtdQuery\Platform\Postgres\Schema\PgSqlSchemaParser;
+use ZtdQuery\Platform\Postgres\Shadow\PgSqlMutationResolver;
+use ZtdQuery\Platform\Postgres\Sql\PgSqlIdentifierQuoter;
+use ZtdQuery\Platform\Postgres\Sql\PgSqlParser;
+use ZtdQuery\Platform\Postgres\Sql\Value\PgSqlCastRenderer;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\ShadowStore;
@@ -65,14 +75,25 @@ final class FullPipelineFuzzTest extends TestCase
             }
             $shadowStore = new ShadowStore();
             $registry = new TableDefinitionRegistry();
-            $tableName = (new Fixture\SchemaRows())->extractTableName($createSql);
+            $tableName = (new Input\SchemaRows())->extractTableName($createSql);
             if ($tableName === null) {
                 continue;
             }
             $registry->register($tableName, $definition);
-            $fixtureRows = (new Fixture\SchemaRows())->generateFixtureRows($definition, $this->faker->numberBetween(0, 5));
+            $fixtureRows = (new Input\SchemaRows())->generateFixtureRows($definition, $this->faker->numberBetween(0, 5));
             $shadowStore->set($tableName, $fixtureRows);
-            $rewriter = (new Fixture\RewriterFactory())->buildRewriter($shadowStore, $registry);
+            $parser = new PgSqlParser();
+            $guard = new PgSqlQueryGuard($parser);
+            $castRenderer = new PgSqlCastRenderer();
+            $quoter = new PgSqlIdentifierQuoter();
+            $selectTransformer = new SelectTransformer($castRenderer, $quoter);
+            $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+            $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+            $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+            $transformer = new PgSqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer);
+            $schemaParser = new PgSqlSchemaParser();
+            $mutationResolver = new PgSqlMutationResolver($shadowStore, $registry, $schemaParser, $parser);
+            $rewriter = new PgSqlRewriter($guard, $shadowStore, $registry, $transformer, $mutationResolver, $parser);
             $selectSql = 'SELECT * FROM ' . (new PgSqlIdentifierQuoter())->quote($tableName);
             try {
                 $plan = $rewriter->rewrite($selectSql);
@@ -99,14 +120,25 @@ final class FullPipelineFuzzTest extends TestCase
             }
             $shadowStore = new ShadowStore();
             $registry = new TableDefinitionRegistry();
-            $tableName = (new Fixture\SchemaRows())->extractTableName($createSql);
+            $tableName = (new Input\SchemaRows())->extractTableName($createSql);
             if ($tableName === null) {
                 continue;
             }
             $registry->register($tableName, $definition);
             $shadowStore->set($tableName, []);
-            $rewriter = (new Fixture\RewriterFactory())->buildRewriter($shadowStore, $registry);
-            $values = (new Fixture\InsertLiterals($this->faker))->buildInsertValues($definition);
+            $parser = new PgSqlParser();
+            $guard = new PgSqlQueryGuard($parser);
+            $castRenderer = new PgSqlCastRenderer();
+            $quoter = new PgSqlIdentifierQuoter();
+            $selectTransformer = new SelectTransformer($castRenderer, $quoter);
+            $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+            $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+            $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+            $transformer = new PgSqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer);
+            $schemaParser = new PgSqlSchemaParser();
+            $mutationResolver = new PgSqlMutationResolver($shadowStore, $registry, $schemaParser, $parser);
+            $rewriter = new PgSqlRewriter($guard, $shadowStore, $registry, $transformer, $mutationResolver, $parser);
+            $values = (new Input\InsertLiterals($this->faker))->buildInsertValues($definition);
             $insertSql = 'INSERT INTO ' . (new PgSqlIdentifierQuoter())->quote($tableName) . ' (' . implode(', ', array_map(fn (string $c) => (new PgSqlIdentifierQuoter())->quote($c), $definition->columns)) . ') VALUES (' . $values . ')';
             try {
                 $plan = $rewriter->rewrite($insertSql);
@@ -114,7 +146,7 @@ final class FullPipelineFuzzTest extends TestCase
                 self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind());
                 if ($plan->mutation() !== null) {
                     $countBefore = count($shadowStore->get($tableName));
-                    $fakeResultRows = [(new Fixture\SchemaRows())->generateFixtureRows($definition, 1)[0]];
+                    $fakeResultRows = [(new Input\SchemaRows())->generateFixtureRows($definition, 1)[0]];
                     $plan->mutation()->apply($shadowStore, $fakeResultRows);
                     $storedRows = $shadowStore->get($tableName);
                     self::assertNotEmpty($storedRows);
@@ -140,14 +172,25 @@ final class FullPipelineFuzzTest extends TestCase
             }
             $shadowStore = new ShadowStore();
             $registry = new TableDefinitionRegistry();
-            $tableName = (new Fixture\SchemaRows())->extractTableName($createSql);
+            $tableName = (new Input\SchemaRows())->extractTableName($createSql);
             if ($tableName === null) {
                 continue;
             }
             $registry->register($tableName, $definition);
-            $fixtureRows = (new Fixture\SchemaRows())->generateFixtureRows($definition, 3);
+            $fixtureRows = (new Input\SchemaRows())->generateFixtureRows($definition, 3);
             $shadowStore->set($tableName, $fixtureRows);
-            $rewriter = (new Fixture\RewriterFactory())->buildRewriter($shadowStore, $registry);
+            $parser = new PgSqlParser();
+            $guard = new PgSqlQueryGuard($parser);
+            $castRenderer = new PgSqlCastRenderer();
+            $quoter = new PgSqlIdentifierQuoter();
+            $selectTransformer = new SelectTransformer($castRenderer, $quoter);
+            $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+            $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+            $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+            $transformer = new PgSqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer);
+            $schemaParser = new PgSqlSchemaParser();
+            $mutationResolver = new PgSqlMutationResolver($shadowStore, $registry, $schemaParser, $parser);
+            $rewriter = new PgSqlRewriter($guard, $shadowStore, $registry, $transformer, $mutationResolver, $parser);
             $firstCol = $definition->columns[0];
             $updateSql = 'UPDATE ' . (new PgSqlIdentifierQuoter())->quote($tableName) . ' SET ' . (new PgSqlIdentifierQuoter())->quote($firstCol) . ' = ' . (new PgSqlIdentifierQuoter())->quote($firstCol);
             try {
@@ -180,14 +223,25 @@ final class FullPipelineFuzzTest extends TestCase
             }
             $shadowStore = new ShadowStore();
             $registry = new TableDefinitionRegistry();
-            $tableName = (new Fixture\SchemaRows())->extractTableName($createSql);
+            $tableName = (new Input\SchemaRows())->extractTableName($createSql);
             if ($tableName === null) {
                 continue;
             }
             $registry->register($tableName, $definition);
-            $fixtureRows = (new Fixture\SchemaRows())->generateFixtureRows($definition, 3);
+            $fixtureRows = (new Input\SchemaRows())->generateFixtureRows($definition, 3);
             $shadowStore->set($tableName, $fixtureRows);
-            $rewriter = (new Fixture\RewriterFactory())->buildRewriter($shadowStore, $registry);
+            $parser = new PgSqlParser();
+            $guard = new PgSqlQueryGuard($parser);
+            $castRenderer = new PgSqlCastRenderer();
+            $quoter = new PgSqlIdentifierQuoter();
+            $selectTransformer = new SelectTransformer($castRenderer, $quoter);
+            $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+            $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+            $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+            $transformer = new PgSqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer);
+            $schemaParser = new PgSqlSchemaParser();
+            $mutationResolver = new PgSqlMutationResolver($shadowStore, $registry, $schemaParser, $parser);
+            $rewriter = new PgSqlRewriter($guard, $shadowStore, $registry, $transformer, $mutationResolver, $parser);
             $deleteSql = 'DELETE FROM ' . (new PgSqlIdentifierQuoter())->quote($tableName);
             try {
                 $plan = $rewriter->rewrite($deleteSql);
@@ -218,11 +272,22 @@ final class FullPipelineFuzzTest extends TestCase
             }
             $shadowStore = new ShadowStore();
             $registry = new TableDefinitionRegistry();
-            $tableName = (new Fixture\SchemaRows())->extractTableName($createSql);
+            $tableName = (new Input\SchemaRows())->extractTableName($createSql);
             if ($tableName === null) {
                 continue;
             }
-            $rewriter = (new Fixture\RewriterFactory())->buildRewriter($shadowStore, $registry);
+            $parser = new PgSqlParser();
+            $guard = new PgSqlQueryGuard($parser);
+            $castRenderer = new PgSqlCastRenderer();
+            $quoter = new PgSqlIdentifierQuoter();
+            $selectTransformer = new SelectTransformer($castRenderer, $quoter);
+            $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+            $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+            $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+            $transformer = new PgSqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer);
+            $schemaParser = new PgSqlSchemaParser();
+            $mutationResolver = new PgSqlMutationResolver($shadowStore, $registry, $schemaParser, $parser);
+            $rewriter = new PgSqlRewriter($guard, $shadowStore, $registry, $transformer, $mutationResolver, $parser);
             try {
                 $createPlan = $rewriter->rewrite($createSql);
                 self::assertSame(QueryKind::DDL_SIMULATED, $createPlan->kind());
@@ -253,15 +318,26 @@ final class FullPipelineFuzzTest extends TestCase
             }
             $shadowStore = new ShadowStore();
             $registry = new TableDefinitionRegistry();
-            $tableName = (new Fixture\SchemaRows())->extractTableName($createSql);
+            $tableName = (new Input\SchemaRows())->extractTableName($createSql);
             if ($tableName === null) {
                 continue;
             }
             $registry->register($tableName, $definition);
-            $fixtureRows = (new Fixture\SchemaRows())->generateFixtureRows($definition, 3);
+            $fixtureRows = (new Input\SchemaRows())->generateFixtureRows($definition, 3);
             $shadowStore->set($tableName, $fixtureRows);
-            $rewriter = (new Fixture\RewriterFactory())->buildRewriter($shadowStore, $registry);
-            $operations = ['SELECT * FROM ' . (new PgSqlIdentifierQuoter())->quote($tableName), 'INSERT INTO ' . (new PgSqlIdentifierQuoter())->quote($tableName) . ' (' . implode(', ', array_map(fn (string $c) => (new PgSqlIdentifierQuoter())->quote($c), $definition->columns)) . ') VALUES (' . (new Fixture\InsertLiterals($this->faker))->buildInsertValues($definition) . ')'];
+            $parser = new PgSqlParser();
+            $guard = new PgSqlQueryGuard($parser);
+            $castRenderer = new PgSqlCastRenderer();
+            $quoter = new PgSqlIdentifierQuoter();
+            $selectTransformer = new SelectTransformer($castRenderer, $quoter);
+            $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+            $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+            $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+            $transformer = new PgSqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer);
+            $schemaParser = new PgSqlSchemaParser();
+            $mutationResolver = new PgSqlMutationResolver($shadowStore, $registry, $schemaParser, $parser);
+            $rewriter = new PgSqlRewriter($guard, $shadowStore, $registry, $transformer, $mutationResolver, $parser);
+            $operations = ['SELECT * FROM ' . (new PgSqlIdentifierQuoter())->quote($tableName), 'INSERT INTO ' . (new PgSqlIdentifierQuoter())->quote($tableName) . ' (' . implode(', ', array_map(fn (string $c) => (new PgSqlIdentifierQuoter())->quote($c), $definition->columns)) . ') VALUES (' . (new Input\InsertLiterals($this->faker))->buildInsertValues($definition) . ')'];
             if ($definition->primaryKeys !== []) {
                 $operations[] = 'UPDATE ' . (new PgSqlIdentifierQuoter())->quote($tableName) . ' SET ' . (new PgSqlIdentifierQuoter())->quote($definition->columns[0]) . ' = ' . (new PgSqlIdentifierQuoter())->quote($definition->columns[0]);
             }
@@ -272,7 +348,7 @@ final class FullPipelineFuzzTest extends TestCase
                     self::assertNotEmpty($plan->sql());
                     self::assertInstanceOf(QueryKind::class, $plan->kind());
                     if ($plan->mutation() !== null) {
-                        $fakeRows = (new Fixture\SchemaRows())->generateFixtureRows($definition, 1);
+                        $fakeRows = (new Input\SchemaRows())->generateFixtureRows($definition, 1);
                         $plan->mutation()->apply($shadowStore, $fakeRows);
                     }
                     $allData = $shadowStore->getAll();

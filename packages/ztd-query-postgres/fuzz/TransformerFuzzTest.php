@@ -1,6 +1,6 @@
 <?php
 
-declare (strict_types=1);
+declare(strict_types=1);
 
 namespace Fuzz;
 
@@ -11,10 +11,10 @@ use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\PostgreSqlProvider;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
-use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
-use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
-use ZtdQuery\Schema\ColumnType;
+use ZtdQuery\Platform\Postgres\Rewrite\Transformer\SelectTransformer;
+use ZtdQuery\Platform\Postgres\Sql\PgSqlIdentifierQuoter;
+use ZtdQuery\Platform\Postgres\Sql\Value\PgSqlCastRenderer;
+use ZtdQuery\Schema\ColumnDeclaration;
 use ZtdQuery\Schema\ColumnTypeFamily;
 
 /**
@@ -64,7 +64,7 @@ final class TransformerFuzzTest extends TestCase
      */
     public function testTransformWithShadowDataContainsWithClause(): void
     {
-        $tables = ['users' => ['rows' => [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com'], ['id' => 2, 'name' => 'Bob', 'email' => 'bob@example.com']], 'columns' => ['id', 'name', 'email'], 'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'), 'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'), 'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT')]]];
+        $tables = ['users' => ['rows' => [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com'], ['id' => 2, 'name' => 'Bob', 'email' => 'bob@example.com']], 'columns' => ['id', 'name', 'email'], 'columnTypes' => ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'), 'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'), 'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT')]]];
         $withCount = 0;
         for ($i = 0; $i < self::ITERATIONS; $i++) {
             $sql = $this->provider->selectStatement(50);
@@ -87,7 +87,7 @@ final class TransformerFuzzTest extends TestCase
      */
     public function testTransformWithEmptyRowsContainsWithClause(): void
     {
-        $tables = ['users' => ['rows' => [], 'columns' => ['id', 'name', 'email'], 'columnTypes' => ['id' => new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'), 'name' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT'), 'email' => new ColumnType(ColumnTypeFamily::TEXT, 'TEXT')]]];
+        $tables = ['users' => ['rows' => [], 'columns' => ['id', 'name', 'email'], 'columnTypes' => ['id' => new ColumnDeclaration(ColumnTypeFamily::INTEGER, 'INTEGER'), 'name' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT'), 'email' => new ColumnDeclaration(ColumnTypeFamily::TEXT, 'TEXT')]]];
         for ($i = 0; $i < self::ITERATIONS; $i++) {
             $sql = $this->provider->selectStatement(50);
             try {

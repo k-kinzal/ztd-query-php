@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\Postgres\Session;
 
 use ZtdQuery\Connection\ConnectionInterface;
-use ZtdQuery\Platform\Postgres\PgSqlPartitionReflector;
-use ZtdQuery\Platform\Postgres\PgSqlSchemaParser;
-use ZtdQuery\Platform\Postgres\PgSqlSchemaReflector;
+use ZtdQuery\Platform\Postgres\Schema\Partition\PgSqlPartitionReflector;
+use ZtdQuery\Platform\Postgres\Schema\PgSqlSchemaParser;
+use ZtdQuery\Platform\Postgres\Schema\PgSqlSchemaReflector;
 use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Session;
 

@@ -8,53 +8,63 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(\ZtdQuery\Platform\Postgres\Session\SchemaInitializer::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Relation\FromClause::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Parsing\Relation\RelationReference::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\PgSqlColumnTypeMapper::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\PgSqlForeignKeyDefinitionParser::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\PgSqlPartitionParser::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\PgSqlPartitionReflector::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSchemaParser::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSchemaReflector::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\PgSqlSelectRelationParser::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\PgSqlViewDefinitionParser::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Reflection\Catalog\PartitionKeys::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Reflection\Catalog\TableQueries::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Reflection\Column\ColumnDefinitionSql::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Reflection\Column\NativeTypeSql::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Reflection\Key\ForeignKeyRow::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Reflection\Key\ForeignKeys::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Reflection\Key\IndexDefinitions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Reflection\Key\IndexRows::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Reflection\Key\PrimaryColumns::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Reflection\Key\UniqueIndexes::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Sql\Relation\FromClause::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Sql\Relation\RelationReference::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\PgSqlColumnTypeMapper::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\Key\PgSqlForeignKeyDefinitionParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Sql\PgSqlIdentifierQuoter::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Sql\PgSqlLexerProfile::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Sql\Partition\PgSqlPartitionParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\Partition\PgSqlPartitionReflector::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\PgSqlSchemaParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\PgSqlSchemaReflector::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Sql\Relation\PgSqlSelectRelationParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\View\PgSqlViewDefinitionParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\Reflection\Catalog\PartitionKeys::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\Reflection\Catalog\TableQueries::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\Reflection\Column\ColumnDefinitionSql::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\Reflection\Column\NativeTypeSql::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\Reflection\Key\ForeignKeyRow::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\Reflection\Key\ForeignKeys::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\Reflection\Key\IndexDefinitions::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\Reflection\Key\IndexRows::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\Reflection\Key\PrimaryColumns::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\Reflection\Key\UniqueIndexes::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\Definition\ColumnDefinition::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\Definition\ColumnTypeDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\Definition\TableBody::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\Definition\TableConstraint::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\Definition\TableFields::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\ForeignKey\DefinitionEntry::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\ForeignKey\DefinitionTokens::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\Partition\BoundPredicate::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\Partition\ClauseTokens::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\Key\DefinitionEntry::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Schema\Key\DefinitionTokens::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Sql\Partition\BoundPredicate::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Sql\Partition\ClauseTokens::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Sql\Lexing\QuotedSpan::class)]
 final class SchemaInitializerTest extends TestCase
 {
     public function testPopulateRegistersColumnsPartialIndexesAndPartitionKeys(): void
     {
-        $connection = new \Tests\Fake\FakeSequentialConnection([
-            new \Tests\Fake\FakeStatement([['table_name' => 'users']]),
-            new \Tests\Fake\FakeStatement([['column_name' => 'id', 'data_type' => 'integer', 'is_nullable' => 'NO']]),
-            new \Tests\Fake\FakeStatement([['column_name' => 'id']]),
-            new \Tests\Fake\FakeStatement([['constraint_name' => 'positive_id', 'column_name' => 'id', 'predicate' => 'id > 0']]),
-            new \Tests\Fake\FakeStatement([]),
-            new \Tests\Fake\FakeStatement([['table_name' => 'users', 'partition_key' => 'RANGE (id)']]),
-            new \Tests\Fake\FakeStatement([]),
-        ]);
+        $statement = self::createStub(\ZtdQuery\Connection\StatementInterface::class);
+        $statement->method('fetchAll')->willReturn([['table_name' => 'users']]);
+        $statement2 = self::createStub(\ZtdQuery\Connection\StatementInterface::class);
+        $statement2->method('fetchAll')->willReturn([['column_name' => 'id', 'data_type' => 'integer', 'is_nullable' => 'NO']]);
+        $statement3 = self::createStub(\ZtdQuery\Connection\StatementInterface::class);
+        $statement3->method('fetchAll')->willReturn([['column_name' => 'id']]);
+        $statement4 = self::createStub(\ZtdQuery\Connection\StatementInterface::class);
+        $statement4->method('fetchAll')->willReturn([['constraint_name' => 'positive_id', 'column_name' => 'id', 'predicate' => 'id > 0']]);
+        $statement5 = self::createStub(\ZtdQuery\Connection\StatementInterface::class);
+        $statement5->method('fetchAll')->willReturn([]);
+        $statement6 = self::createStub(\ZtdQuery\Connection\StatementInterface::class);
+        $statement6->method('fetchAll')->willReturn([['table_name' => 'users', 'partition_key' => 'RANGE (id)']]);
+        $statement7 = self::createStub(\ZtdQuery\Connection\StatementInterface::class);
+        $statement7->method('fetchAll')->willReturn([]);
+        $statementResults = [$statement, $statement2, $statement3, $statement4, $statement5, $statement6, $statement7];
+        $connection = self::createStub(\ZtdQuery\Connection\ConnectionInterface::class);
+        $connection->method('query')->willReturnCallback(static function () use (&$statementResults): \ZtdQuery\Connection\StatementInterface|false {
+            return array_shift($statementResults) ?? false;
+        });
         $registry = new \ZtdQuery\Schema\TableDefinitionRegistry();
-        (new \ZtdQuery\Platform\Postgres\Session\SchemaInitializer())->populate($connection, new \ZtdQuery\Platform\Postgres\PgSqlSchemaReflector($connection), new \ZtdQuery\Platform\Postgres\PgSqlSchemaParser(), $registry);
+        (new \ZtdQuery\Platform\Postgres\Session\SchemaInitializer())->populate($connection, new \ZtdQuery\Platform\Postgres\Schema\PgSqlSchemaReflector($connection), new \ZtdQuery\Platform\Postgres\Schema\PgSqlSchemaParser(), $registry);
         $definition = $registry->get('users');
         self::assertNotNull($definition);
         self::assertSame(['id'], $definition->primaryKeys);

@@ -1,6 +1,6 @@
 <?php
 
-declare (strict_types=1);
+declare(strict_types=1);
 
 namespace Fuzz;
 
@@ -12,18 +12,18 @@ use PHPUnit\Framework\TestCase;
 use SqlFaker\PostgreSqlProvider;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
-use ZtdQuery\Platform\Postgres\PgSqlCastRenderer;
-use ZtdQuery\Platform\Postgres\PgSqlIdentifierQuoter;
-use ZtdQuery\Platform\Postgres\PgSqlMutationResolver;
-use ZtdQuery\Platform\Postgres\PgSqlParser;
-use ZtdQuery\Platform\Postgres\PgSqlQueryGuard;
-use ZtdQuery\Platform\Postgres\PgSqlRewriter;
-use ZtdQuery\Platform\Postgres\PgSqlSchemaParser;
-use ZtdQuery\Platform\Postgres\PgSqlTransformer;
-use ZtdQuery\Platform\Postgres\Transformer\DeleteTransformer;
-use ZtdQuery\Platform\Postgres\Transformer\InsertTransformer;
-use ZtdQuery\Platform\Postgres\Transformer\SelectTransformer;
-use ZtdQuery\Platform\Postgres\Transformer\UpdateTransformer;
+use ZtdQuery\Platform\Postgres\Rewrite\PgSqlQueryGuard;
+use ZtdQuery\Platform\Postgres\Rewrite\PgSqlRewriter;
+use ZtdQuery\Platform\Postgres\Rewrite\Transformer\DeleteTransformer;
+use ZtdQuery\Platform\Postgres\Rewrite\Transformer\InsertTransformer;
+use ZtdQuery\Platform\Postgres\Rewrite\Transformer\PgSqlTransformer;
+use ZtdQuery\Platform\Postgres\Rewrite\Transformer\SelectTransformer;
+use ZtdQuery\Platform\Postgres\Rewrite\Transformer\UpdateTransformer;
+use ZtdQuery\Platform\Postgres\Schema\PgSqlSchemaParser;
+use ZtdQuery\Platform\Postgres\Shadow\PgSqlMutationResolver;
+use ZtdQuery\Platform\Postgres\Sql\PgSqlIdentifierQuoter;
+use ZtdQuery\Platform\Postgres\Sql\PgSqlParser;
+use ZtdQuery\Platform\Postgres\Sql\Value\PgSqlCastRenderer;
 use ZtdQuery\Rewrite\QueryKind;
 use ZtdQuery\Schema\TableDefinition;
 use ZtdQuery\Schema\TableDefinitionRegistry;

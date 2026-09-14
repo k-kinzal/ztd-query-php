@@ -8,7 +8,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 #[CoversClass(\ZtdQuery\Platform\Postgres\Schema\Definition\ColumnTypeDeclaration::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\PgSqlLexerProfile::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Platform\Postgres\Sql\PgSqlLexerProfile::class)]
 final class ColumnTypeDeclarationTest extends TestCase
 {
     public function testExtractType(): void
@@ -24,7 +24,7 @@ final class ColumnTypeDeclarationTest extends TestCase
     public function testIsTypeIdentifier(): void
     {
         $sql = '"PositiveValue"';
-        $stream = \ZtdQuery\Sql\SqlTokenStream::tokenize($sql, \ZtdQuery\Platform\Postgres\PgSqlLexerProfile::create());
+        $stream = \ZtdQuery\Sql\SqlTokenStream::tokenize($sql, \ZtdQuery\Platform\Postgres\Sql\PgSqlLexerProfile::create());
         $tokens = $stream->significantTokens();
 
         self::assertSame(true, \ZtdQuery\Platform\Postgres\Schema\Definition\ColumnTypeDeclaration::isTypeIdentifier($tokens[0]));
