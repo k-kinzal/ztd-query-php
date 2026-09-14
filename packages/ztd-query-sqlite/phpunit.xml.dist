@@ -3,7 +3,6 @@
 <phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
          bootstrap="vendor/autoload.php"
-         defaultTestSuite="unit,doctest"
          colors="true"
          cacheDirectory=".phpunit.cache"
          executionOrder="depends,random"
