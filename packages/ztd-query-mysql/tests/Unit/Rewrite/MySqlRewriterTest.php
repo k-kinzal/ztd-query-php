@@ -7,7 +7,6 @@ namespace Tests\Unit\Rewrite;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use Tests\Fixture\MySqlRewriterFactory;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\Rewrite\LoadData\MySqlLoadDataProjector;
@@ -169,7 +168,18 @@ final class MySqlRewriterTest extends TestCase
         self::assertNotNull($definition);
         $registry->register('events', $definition);
 
-        $sql = MySqlRewriterFactory::create($store, $registry)
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
+        $sql = $rewriter
             ->rewrite('SELECT id FROM events PARTITION (p2024)')
             ->sql();
 
@@ -190,7 +200,19 @@ final class MySqlRewriterTest extends TestCase
         self::assertNotNull($definition);
         $registry->register('events', $definition);
 
-        $sql = MySqlRewriterFactory::create(new ShadowStore(), $registry)
+        $store = new ShadowStore();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
+        $sql = $rewriter
             ->rewrite('SELECT id FROM events PARTITION (p0)')
             ->sql();
 
@@ -207,7 +229,18 @@ final class MySqlRewriterTest extends TestCase
         self::assertNotNull($definition);
         $registry->register('orders', $definition);
 
-        $sql = MySqlRewriterFactory::create($store, $registry)->rewrite('SELECT total FROM orders')->sql();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
+        $sql = $rewriter->rewrite('SELECT total FROM orders')->sql();
 
         self::assertStringContainsString('(qty * 2) AS `total`', $sql);
     }
@@ -271,7 +304,18 @@ SQL);
         self::assertNotNull($definition);
         $registry->register('users', $definition);
 
-        $plan = MySqlRewriterFactory::create($store, $registry)->rewrite('SELECT name FROM app.users');
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
+        $plan = $rewriter->rewrite('SELECT name FROM app.users');
 
         self::assertStringStartsWith('WITH `users` AS', $plan->sql());
         self::assertStringEndsWith('SELECT name FROM users', $plan->sql());
@@ -279,7 +323,19 @@ SQL);
 
     public function testExplainPassesThroughUnchanged(): void
     {
-        $rewriter = MySqlRewriterFactory::create(new ShadowStore(), new TableDefinitionRegistry());
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
         $sql = 'EXPLAIN SELECT * FROM users';
 
         $plan = $rewriter->rewrite($sql);
@@ -290,7 +346,19 @@ SQL);
 
     public function testDescribePassesThroughUnchanged(): void
     {
-        $rewriter = MySqlRewriterFactory::create(new ShadowStore(), new TableDefinitionRegistry());
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
         $sql = 'DESCRIBE users';
 
         $plan = $rewriter->rewrite($sql);
@@ -301,7 +369,19 @@ SQL);
 
     public function testShowCreateTablePassesThroughUnchanged(): void
     {
-        $rewriter = MySqlRewriterFactory::create(new ShadowStore(), new TableDefinitionRegistry());
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
         $sql = 'SHOW CREATE TABLE users';
 
         $plan = $rewriter->rewrite($sql);
@@ -326,7 +406,18 @@ SQL);
         self::assertNotNull($definition);
         $registry->register('users', $definition);
 
-        $plan = MySqlRewriterFactory::create($store, $registry)->rewrite('SELECT * FROM (SELECT id, name FROM users) AS selected');
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
+        $plan = $rewriter->rewrite('SELECT * FROM (SELECT id, name FROM users) AS selected');
 
         self::assertStringStartsWith('WITH `users` AS', $plan->sql());
     }
@@ -347,7 +438,18 @@ SQL);
         self::assertNotNull($definition);
         $registry->register('users', $definition);
 
-        $plan = MySqlRewriterFactory::create($store, $registry)->rewrite("# SELECT * FROM unknown_table\nSELECT * FROM users");
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
+        $plan = $rewriter->rewrite("# SELECT * FROM unknown_table\nSELECT * FROM users");
 
         self::assertSame(QueryKind::READ, $plan->kind());
         self::assertStringContainsString('FROM users', $plan->sql());
@@ -360,7 +462,19 @@ SQL);
         self::assertNotNull($definition);
         $registry->register('known_table', $definition);
 
-        $plan = MySqlRewriterFactory::create(new ShadowStore(), $registry)->rewrite(
+        $store = new ShadowStore();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
+        $plan = $rewriter->rewrite(
             'WITH users AS (SELECT 1 AS id) SELECT * FROM Users',
         );
 
@@ -377,7 +491,19 @@ SQL);
         $this->expectException(UnknownSchemaException::class);
         $this->expectExceptionMessage('missing_table');
 
-        MySqlRewriterFactory::create(new ShadowStore(), $registry)->rewrite(
+        $store = new ShadowStore();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
+        $rewriter->rewrite(
             'WITH users AS (SELECT 1 AS id) SELECT * FROM Users JOIN missing_table ON TRUE',
         );
     }
@@ -430,7 +556,19 @@ SQL);
 
     public function testRewritesSingleSetExpressionsWithoutTreatingThemAsMultipleStatements(): void
     {
-        $rewriter = MySqlRewriterFactory::create(new ShadowStore(), new TableDefinitionRegistry());
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
 
         $except = $rewriter->rewrite('SELECT 1 EXCEPT SELECT 2');
         $intersect = $rewriter->rewrite('SELECT 1 INTERSECT SELECT 2');
@@ -445,7 +583,19 @@ SQL);
 
     public function testCompositeReadRejectsSelectInto(): void
     {
-        $rewriter = MySqlRewriterFactory::create(new ShadowStore(), new TableDefinitionRegistry());
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
 
         $this->expectException(UnsupportedSqlException::class);
         $this->expectExceptionMessage('Statement type not supported');
@@ -455,7 +605,19 @@ SQL);
 
     public function testCompositeReadAllowsTablesWithoutSchemaContext(): void
     {
-        $rewriter = MySqlRewriterFactory::create(new ShadowStore(), new TableDefinitionRegistry());
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
 
         $plan = $rewriter->rewrite('SELECT * FROM missing EXCEPT SELECT * FROM other');
 
@@ -471,7 +633,18 @@ SQL);
         $definition = $schemaParser->parse('CREATE TABLE known (id INT)');
         self::assertNotNull($definition);
         $registry->register('known', $definition);
-        $rewriter = MySqlRewriterFactory::create(new ShadowStore(), $registry);
+        $store = new ShadowStore();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
 
         $this->expectException(UnknownSchemaException::class);
         $this->expectExceptionMessage('unknown_table');
@@ -481,7 +654,19 @@ SQL);
 
     public function testRewriteMultipleUsesLexicalStatementBoundaries(): void
     {
-        $rewriter = MySqlRewriterFactory::create(new ShadowStore(), new TableDefinitionRegistry());
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
 
         $plan = $rewriter->rewriteMultiple('SELECT 1 EXCEPT SELECT 2; SELECT 3');
 
@@ -552,7 +737,18 @@ SQL);
         self::assertNotNull($definition);
         $registry = new TableDefinitionRegistry();
         $registry->register('settings', $definition);
-        $rewriter = MySqlRewriterFactory::create(new ShadowStore(), $registry);
+        $store = new ShadowStore();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
 
         $plan = $rewriter->rewrite('INSERT INTO settings (id) VALUES (1)');
 
@@ -567,7 +763,18 @@ SQL);
         self::assertNotNull($definition);
         $registry = new TableDefinitionRegistry();
         $registry->register('users', $definition);
-        $rewriter = MySqlRewriterFactory::create(new ShadowStore(), $registry);
+        $store = new ShadowStore();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
 
         $plan = $rewriter->rewrite("INSERT INTO users (name) VALUES ('Alice')");
 
@@ -3271,7 +3478,18 @@ SQL);
     {
         $store = new ShadowStore();
         $store->insert('late_table', [['id' => 1, 'name' => 'Alice']]);
-        $rewriter = MySqlRewriterFactory::create($store, new TableDefinitionRegistry());
+        $registry = new TableDefinitionRegistry();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
 
         try {
             $rewriter->rewrite("UPDATE late_table SET name = 'Bob' WHERE id = 1");
@@ -3283,20 +3501,56 @@ SQL);
 
     public function testSplitStatements(): void
     {
-        $rewriter = MySqlRewriterFactory::create(new ShadowStore(), new TableDefinitionRegistry());
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
         self::assertSame(['SELECT 1', "SELECT ';'"], $rewriter->splitStatements("SELECT 1; SELECT ';'"));
     }
 
     public function testTransactionStatement(): void
     {
-        $rewriter = MySqlRewriterFactory::create(new ShadowStore(), new TableDefinitionRegistry());
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
         self::assertNotNull($rewriter->transactionStatement('BEGIN'));
         self::assertNull($rewriter->transactionStatement('SELECT 1'));
     }
 
     public function testEmptyResultSelect(): void
     {
-        $rewriter = MySqlRewriterFactory::create(new ShadowStore(), new TableDefinitionRegistry());
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
         self::assertSame('SELECT 1 WHERE FALSE', $rewriter->emptyResultSelect());
     }
 
@@ -3307,7 +3561,17 @@ SQL);
         $definition = (new MySqlSchemaParser(new MySqlParser()))->parse('CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY, name TEXT)');
         self::assertNotNull($definition);
         $registry->register('users', $definition);
-        $rewriter = MySqlRewriterFactory::create($store, $registry);
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
         $first = $rewriter->rewrite("INSERT INTO users (name) VALUES ('a')");
         $rewriter->commitRewriteState();
         $second = $rewriter->rewrite("INSERT INTO users (name) VALUES ('b')");
@@ -3317,14 +3581,44 @@ SQL);
 
     public function testSelectReturnsReadKind(): void
     {
-        $rewriter = MySqlRewriterFactory::withUsers();
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $definition = $schemaParser->parse('CREATE TABLE users (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255) NOT NULL, email VARCHAR(255) NOT NULL, PRIMARY KEY (id))');
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
         $plan = $rewriter->rewrite('SELECT id, name, email FROM users WHERE id = 1');
         self::assertSame(QueryKind::READ, $plan->kind());
     }
 
     public function testInsertReturnsWriteSimulatedWithMutation(): void
     {
-        $rewriter = MySqlRewriterFactory::withUsers();
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $definition = $schemaParser->parse('CREATE TABLE users (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255) NOT NULL, email VARCHAR(255) NOT NULL, PRIMARY KEY (id))');
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
         $plan = $rewriter->rewrite("INSERT INTO users (id, name, email) VALUES (1, 'Alice', 'alice@example.com')");
         self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind());
         self::assertNotNull($plan->mutation());
@@ -3336,7 +3630,21 @@ SQL);
     {
         $store = new ShadowStore();
         $store->set('users', [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com']]);
-        $rewriter = MySqlRewriterFactory::withUsers($store);
+        $registry = new TableDefinitionRegistry();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $definition = $schemaParser->parse('CREATE TABLE users (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255) NOT NULL, email VARCHAR(255) NOT NULL, PRIMARY KEY (id))');
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
         $plan = $rewriter->rewrite("UPDATE users SET name = 'Bob' WHERE id = 1");
         self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind());
         self::assertNotNull($plan->mutation());
@@ -3348,7 +3656,21 @@ SQL);
     {
         $store = new ShadowStore();
         $store->set('users', [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com']]);
-        $rewriter = MySqlRewriterFactory::withUsers($store);
+        $registry = new TableDefinitionRegistry();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $definition = $schemaParser->parse('CREATE TABLE users (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255) NOT NULL, email VARCHAR(255) NOT NULL, PRIMARY KEY (id))');
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
         $plan = $rewriter->rewrite('DELETE FROM users WHERE id = 1');
         self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind());
         self::assertNotNull($plan->mutation());
@@ -3358,29 +3680,89 @@ SQL);
 
     public function testCreateTableReturnsDdlSimulated(): void
     {
-        $rewriter = MySqlRewriterFactory::withUsers();
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $definition = $schemaParser->parse('CREATE TABLE users (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255) NOT NULL, email VARCHAR(255) NOT NULL, PRIMARY KEY (id))');
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
         $plan = $rewriter->rewrite('CREATE TABLE orders (id INT PRIMARY KEY, amount DECIMAL(10,2))');
         self::assertSame(QueryKind::DDL_SIMULATED, $plan->kind());
     }
 
     public function testDropTableReturnsDdlSimulated(): void
     {
-        $rewriter = MySqlRewriterFactory::withUsers();
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $definition = $schemaParser->parse('CREATE TABLE users (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255) NOT NULL, email VARCHAR(255) NOT NULL, PRIMARY KEY (id))');
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
         $plan = $rewriter->rewrite('DROP TABLE IF EXISTS orders');
         self::assertSame(QueryKind::DDL_SIMULATED, $plan->kind());
     }
 
     public function testUnsupportedSqlThrowsException(): void
     {
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $definition = $schemaParser->parse('CREATE TABLE users (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255) NOT NULL, email VARCHAR(255) NOT NULL, PRIMARY KEY (id))');
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
         $this->expectException(UnsupportedSqlException::class);
-        $rewriter = MySqlRewriterFactory::withUsers();
         $rewriter->rewrite('CREATE DATABASE test_db');
     }
 
     public function testEmptyInputThrowsException(): void
     {
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $definition = $schemaParser->parse('CREATE TABLE users (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255) NOT NULL, email VARCHAR(255) NOT NULL, PRIMARY KEY (id))');
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
         $this->expectException(UnsupportedSqlException::class);
-        $rewriter = MySqlRewriterFactory::withUsers();
         $rewriter->rewrite('');
     }
 
@@ -3388,7 +3770,21 @@ SQL);
     {
         $store = new ShadowStore();
         $store->set('users', [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com']]);
-        $rewriter = MySqlRewriterFactory::withUsers($store);
+        $registry = new TableDefinitionRegistry();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $definition = $schemaParser->parse('CREATE TABLE users (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255) NOT NULL, email VARCHAR(255) NOT NULL, PRIMARY KEY (id))');
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
         $plan1 = $rewriter->rewrite('SELECT id, name, email FROM users WHERE id = 1');
         $plan2 = $rewriter->rewrite('SELECT id, name, email FROM users WHERE id = 1');
         self::assertSame($plan1->sql(), $plan2->sql());
@@ -3397,7 +3793,22 @@ SQL);
 
     public function testReadPlanHasNoMutation(): void
     {
-        $rewriter = MySqlRewriterFactory::withUsers();
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $definition = $schemaParser->parse('CREATE TABLE users (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255) NOT NULL, email VARCHAR(255) NOT NULL, PRIMARY KEY (id))');
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
         $plan = $rewriter->rewrite('SELECT id, name, email FROM users WHERE id = 1');
         self::assertSame(QueryKind::READ, $plan->kind());
         self::assertNull($plan->mutation());
@@ -3405,7 +3816,22 @@ SQL);
 
     public function testWritePlanHasNonNullMutation(): void
     {
-        $rewriter = MySqlRewriterFactory::withUsers();
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $definition = $schemaParser->parse('CREATE TABLE users (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255) NOT NULL, email VARCHAR(255) NOT NULL, PRIMARY KEY (id))');
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
         $plan = $rewriter->rewrite("INSERT INTO users (id, name, email) VALUES (1, 'Alice', 'alice@example.com')");
         self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind());
         self::assertNotNull($plan->mutation());
@@ -3414,7 +3840,22 @@ SQL);
 
     public function testRewriteOutputIsNonEmpty(): void
     {
-        $rewriter = MySqlRewriterFactory::withUsers();
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $definition = $schemaParser->parse('CREATE TABLE users (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255) NOT NULL, email VARCHAR(255) NOT NULL, PRIMARY KEY (id))');
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
         $plan = $rewriter->rewrite('SELECT id, name, email FROM users WHERE id = 1');
         self::assertNotEmpty($plan->sql());
         self::assertStringContainsString('SELECT', strtoupper($plan->sql()));
@@ -3422,7 +3863,22 @@ SQL);
 
     public function testInsertRewriteOutputContainsSelect(): void
     {
-        $rewriter = MySqlRewriterFactory::withUsers();
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $parser = new MySqlParser();
+        $schemaParser = new MySqlSchemaParser($parser);
+        $definition = $schemaParser->parse('CREATE TABLE users (id INT NOT NULL AUTO_INCREMENT, name VARCHAR(255) NOT NULL, email VARCHAR(255) NOT NULL, PRIMARY KEY (id))');
+        self::assertNotNull($definition);
+        $registry->register('users', $definition);
+        $selectTransformer = new SelectTransformer();
+        $insertTransformer = new InsertTransformer($parser, $selectTransformer);
+        $updateTransformer = new UpdateTransformer($parser, $selectTransformer);
+        $deleteTransformer = new DeleteTransformer($parser, $selectTransformer);
+        $replaceTransformer = new ReplaceTransformer($parser, $selectTransformer);
+        $transformer = new MySqlTransformer($parser, $selectTransformer, $insertTransformer, $updateTransformer, $deleteTransformer, $replaceTransformer);
+        $mutationResolver = new MySqlMutationResolver($store, $registry, $schemaParser, $updateTransformer, $deleteTransformer);
+        $rewriter = new MySqlRewriter(new MySqlQueryGuard($parser), $store, $registry, $transformer, $mutationResolver, $parser);
+
         $plan = $rewriter->rewrite("INSERT INTO users (id, name, email) VALUES (1, 'Alice', 'alice@example.com')");
         self::assertSame(QueryKind::WRITE_SIMULATED, $plan->kind());
         self::assertMatchesRegularExpression('/^(?:WITH\b|SELECT\b)/i', $plan->sql(), 'INSERT rewrite must produce a result-select query starting with SELECT or WITH...SELECT');
