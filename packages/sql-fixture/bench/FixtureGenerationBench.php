@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlFixture\Bench;
+namespace Bench;
 
 use Faker\Factory;
 use PhpBench\Attributes as Bench;

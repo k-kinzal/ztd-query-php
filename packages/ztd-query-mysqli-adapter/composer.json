@@ -77,7 +77,7 @@
         "psr-4": {
             "Tests\\": "tests/",
             "Fuzz\\": "fuzz/",
-            "ZtdQuery\\Adapter\\Mysqli\\Bench\\": "bench/"
+            "Bench\\": "bench/"
         }
     },
     "scripts": {

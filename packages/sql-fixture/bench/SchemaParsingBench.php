@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlFixture\Bench;
+namespace Bench;
 
 use PhpBench\Attributes as Bench;
 use SqlFixture\Platform\MySql\MySqlSchemaParser;

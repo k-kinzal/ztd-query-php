@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Platform\Postgres\Bench;
+namespace Bench;
 
 use PhpBench\Attributes as Bench;
 use ZtdQuery\Platform\Postgres\Rewrite\PgSqlQueryGuard;

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Bench;
+namespace Bench;
 
 use PhpBench\Attributes as Bench;
 use ZtdQuery\Shadow\ShadowStore;

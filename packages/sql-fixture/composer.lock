@@ -1627,7 +1627,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-faker",
-                "reference": "dfd431d266a5a5186901cb038ff7509a2dcdd7aa"
+                "reference": "cfe2c8731036b6e36b5d7c4576485283de886111"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -1663,7 +1663,7 @@
                 "psr-4": {
                     "Tests\\": "tests/",
                     "Fuzz\\": "fuzz/",
-                    "SqlFaker\\Bench\\": "bench/"
+                    "Bench\\": "bench/"
                 }
             },
             "scripts": {

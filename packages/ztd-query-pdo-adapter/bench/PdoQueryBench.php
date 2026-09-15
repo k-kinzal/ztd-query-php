@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Adapter\Pdo\Bench;
+namespace Bench;
 
 use PDO;
 use PDOStatement;

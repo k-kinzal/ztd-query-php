@@ -59,7 +59,7 @@
         "psr-4": {
             "Tests\\": "tests/",
             "Fuzz\\": "fuzz/",
-            "ZtdQuery\\Platform\\MySql\\Bench\\": "bench/"
+            "Bench\\": "bench/"
         }
     },
     "scripts": {

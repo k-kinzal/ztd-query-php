@@ -7,6 +7,9 @@ includes:
 
 parameters:
     toolkit:
+        visibilityExemptNamespacePrefixes:
+            - 'Tests'
+            - 'Bench'
         forbiddenTermsByPath:
             'src/Compiler/*': [mysql, postgres, pgsql, sqlite, mariadb]
             'src/Generation/*': [mysql, postgres, pgsql, sqlite, mariadb]

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Platform\Sqlite\Bench;
+namespace Bench;
 
 use PhpBench\Attributes as Benchmark;
 use ZtdQuery\Platform\Sqlite\Sql\SqliteParser;

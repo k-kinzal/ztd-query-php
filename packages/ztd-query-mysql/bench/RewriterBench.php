@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Platform\MySql\Bench;
+namespace Bench;
 
 use LogicException;
 use PhpBench\Attributes as Bench;

@@ -48,7 +48,7 @@
         "psr-4": {
             "Tests\\": "tests/",
             "Fuzz\\": "fuzz/",
-            "SqlFixture\\Bench\\": "bench/"
+            "Bench\\": "bench/"
         }
     },
     "scripts": {

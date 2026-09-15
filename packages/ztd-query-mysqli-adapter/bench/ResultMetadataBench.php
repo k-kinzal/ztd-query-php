@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Adapter\Mysqli\Bench;
+namespace Bench;
 
 use mysqli;
 use mysqli_result;

@@ -58,7 +58,7 @@
         "psr-4": {
             "Tests\\": "tests/",
             "Fuzz\\": "fuzz/",
-            "ZtdQuery\\Platform\\Sqlite\\Bench\\": "bench/"
+            "Bench\\": "bench/"
         }
     },
     "scripts": {

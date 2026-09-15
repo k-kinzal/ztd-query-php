@@ -7,6 +7,9 @@ includes:
 
 parameters:
     toolkit:
+        visibilityExemptNamespacePrefixes:
+            - 'Tests'
+            - 'Bench'
         forbiddenNamespacePrefixes:
             - 'Tests\Fixture'
             - 'Tests\Fixtures'

@@ -12,7 +12,7 @@
             "dist": {
                 "type": "path",
                 "url": "../ztd-query-core",
-                "reference": "72ed2482048c7359f4a4366b99d9ef53cc93b4e3"
+                "reference": "e0e53e01ff168508fb63f4d6b5dd8b0597cdac6f"
             },
             "require": {
                 "php": "^8.1"
@@ -43,7 +43,7 @@
                 "psr-4": {
                     "Tests\\": "tests/",
                     "Fuzz\\": "fuzz/",
-                    "ZtdQuery\\Bench\\": "bench/"
+                    "Bench\\": "bench/"
                 }
             },
             "scripts": {
@@ -137,7 +137,7 @@
             "dist": {
                 "type": "path",
                 "url": "../ztd-query-mysql",
-                "reference": "b7532c6a7a8dab85e251fe0147d86e5c49e95196"
+                "reference": "9a6918985db3a3dd5a598c279c900b19f39cccbb"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -171,7 +171,7 @@
                 "psr-4": {
                     "Tests\\": "tests/",
                     "Fuzz\\": "fuzz/",
-                    "ZtdQuery\\Platform\\MySql\\Bench\\": "bench/"
+                    "Bench\\": "bench/"
                 }
             },
             "scripts": {
@@ -1761,7 +1761,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-faker",
-                "reference": "dfd431d266a5a5186901cb038ff7509a2dcdd7aa"
+                "reference": "cfe2c8731036b6e36b5d7c4576485283de886111"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -1797,7 +1797,7 @@
                 "psr-4": {
                     "Tests\\": "tests/",
                     "Fuzz\\": "fuzz/",
-                    "SqlFaker\\Bench\\": "bench/"
+                    "Bench\\": "bench/"
                 }
             },
             "scripts": {
@@ -1910,7 +1910,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-fixture",
-                "reference": "dbd28cf213b74c3f536ef33cdc770c379e7611bc"
+                "reference": "6aced812c461784277f586f58f25470fb8569db1"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -1942,7 +1942,7 @@
                 "psr-4": {
                     "Tests\\": "tests/",
                     "Fuzz\\": "fuzz/",
-                    "SqlFixture\\Bench\\": "bench/"
+                    "Bench\\": "bench/"
                 }
             },
             "scripts": {

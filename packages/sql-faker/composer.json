@@ -43,7 +43,7 @@
         "psr-4": {
             "Tests\\": "tests/",
             "Fuzz\\": "fuzz/",
-            "SqlFaker\\Bench\\": "bench/"
+            "Bench\\": "bench/"
         }
     },
     "scripts": {
