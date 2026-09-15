@@ -25,6 +25,7 @@ def packages(root=ROOT):
 def check(root=ROOT):
     errors = []
     constraints, locked, scripts, files = {}, {}, {}, {}
+    configurations = {}
     for package in packages(root):
         manifest = json.loads((package / 'composer.json').read_text())
         name = package.name
@@ -47,6 +48,11 @@ def check(root=ROOT):
             value = manifest['scripts'].get(command)
             if value is None or scripts.setdefault(command, value) != value:
                 errors.append(f'{name}: inconsistent Composer script {command}')
+        docgen = manifest['scripts'].get('docgen', '').replace(manifest['name'], '<package>')
+        if not docgen or scripts.setdefault('docgen', docgen) != docgen:
+            errors.append(f'{name}: inconsistent DocGen command')
+        if configurations.setdefault('composer', manifest['config']) != manifest['config']:
+            errors.append(f'{name}: inconsistent Composer configuration')
         expected_autoload = {'psr-4': {'Tests\\': 'tests/', 'Fuzz\\': 'fuzz/', 'Bench\\': 'bench/'}}
         if manifest['autoload-dev'] != expected_autoload:
             errors.append(f'{name}: inconsistent development autoloading')

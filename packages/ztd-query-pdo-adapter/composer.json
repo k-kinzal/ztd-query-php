@@ -118,7 +118,7 @@
             "deptrac debug:unassigned --config-file=deptrac.yaml",
             "deptrac debug:unused --config-file=deptrac.yaml"
         ],
-        "docgen": "vendor/bin/docgen --packages=. --deptrac=deptrac.yaml --exclude=\"src/Compatibility/ClassAliases.php\" --output=build/docs --cache-dir=build/docgen-cache --title=k-kinzal/ztd-query-pdo-adapter",
+        "docgen": "package=\"$PWD\"; root=\"$(git rev-parse --show-toplevel 2>/dev/null || pwd)\"; prefix=\"${package#\"$root\"/}\"; if [ \"$package\" = \"$root\" ]; then prefix=.; fi; cd \"$root\" && \"$package/vendor/bin/docgen\" --packages=\"$prefix\" --deptrac=\"$package/deptrac.yaml\" --exclude=\"$prefix/src/Compatibility/ClassAliases.php\" --output=\"$package/build/docs\" --cache-dir=\"$package/build/docgen-cache\" --title=k-kinzal/ztd-query-pdo-adapter",
         "docgen:diff": [
             "Composer\\Config::disableProcessTimeout",
             "@docgen --diff=origin/main --serve"
@@ -219,7 +219,7 @@
         "loc-guard": "loc-guard --config=loc.yaml",
         "phpstan": "phpstan analyse --memory-limit=512M",
         "test": "paratest --processes=auto",
-        "test:coverage": "@php -d memory_limit=1G vendor/bin/phpunit --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml",
+        "test:coverage": "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml",
         "test:integration": "phpunit --testsuite integration",
         "test:unit": "phpunit --testsuite unit",
         "tree-guard": "tree-guard --config=tree.yaml"

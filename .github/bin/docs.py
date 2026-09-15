@@ -43,10 +43,10 @@ def main():
     command = [
         str(ROOT / 'packages/ztd-query-core/vendor/bin/docgen'),
         '--packages=packages/*', '--exclude=packages/*/src/Compatibility/ClassAliases.php',
-        '--deptrac=deptrac.yaml', '--coverage=build/coverage-xml',
+        '--deptrac=' + str(ROOT / 'deptrac.yaml'), '--coverage=build/coverage-xml',
         '--output=build/docs', '--cache-dir=build/docgen-cache',
         '--title=ZTD Query PHP', '--repository=https://github.com/k-kinzal/ztd-query-php',
-        '--jobs=' + args.jobs,
+        '--jobs=' + args.jobs, '--memory-limit=2G',
     ]
     if args.diff:
         command.append('--diff=' + args.diff)

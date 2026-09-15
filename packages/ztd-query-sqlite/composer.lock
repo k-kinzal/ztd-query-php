@@ -12,7 +12,7 @@
             "dist": {
                 "type": "path",
                 "url": "../ztd-query-core",
-                "reference": "5d7486baa76065b54573201b48bd184be60b1803"
+                "reference": "7d174d3069334b949f1ec0ba4e778a3d6cf257f1"
             },
             "require": {
                 "php": "^8.1"
@@ -68,7 +68,7 @@
                     "deptrac debug:unused --config-file=deptrac.yaml"
                 ],
                 "docgen": [
-                    "vendor/bin/docgen --packages=. --deptrac=deptrac.yaml --exclude=\"src/Compatibility/ClassAliases.php\" --output=build/docs --cache-dir=build/docgen-cache --title=k-kinzal/ztd-query-core"
+                    "package=\"$PWD\"; root=\"$(git rev-parse --show-toplevel 2>/dev/null || pwd)\"; prefix=\"${package#\"$root\"/}\"; if [ \"$package\" = \"$root\" ]; then prefix=.; fi; cd \"$root\" && \"$package/vendor/bin/docgen\" --packages=\"$prefix\" --deptrac=\"$package/deptrac.yaml\" --exclude=\"$prefix/src/Compatibility/ClassAliases.php\" --output=\"$package/build/docs\" --cache-dir=\"$package/build/docgen-cache\" --title=k-kinzal/ztd-query-core"
                 ],
                 "docgen:diff": [
                     "Composer\\Config::disableProcessTimeout",
@@ -1375,7 +1375,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-faker",
-                "reference": "d5c36810b3282a1ded8521a1f8b6da19bb184e37"
+                "reference": "e7a28a8bf2f63e03dd06b0ece5551a89c448e2bc"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -1445,7 +1445,7 @@
                     "deptrac debug:unused --config-file=deptrac.yaml"
                 ],
                 "docgen": [
-                    "vendor/bin/docgen --packages=. --deptrac=deptrac.yaml --exclude=\"src/Compatibility/ClassAliases.php\" --output=build/docs --cache-dir=build/docgen-cache --title=k-kinzal/sql-faker"
+                    "package=\"$PWD\"; root=\"$(git rev-parse --show-toplevel 2>/dev/null || pwd)\"; prefix=\"${package#\"$root\"/}\"; if [ \"$package\" = \"$root\" ]; then prefix=.; fi; cd \"$root\" && \"$package/vendor/bin/docgen\" --packages=\"$prefix\" --deptrac=\"$package/deptrac.yaml\" --exclude=\"$prefix/src/Compatibility/ClassAliases.php\" --output=\"$package/build/docs\" --cache-dir=\"$package/build/docgen-cache\" --title=k-kinzal/sql-faker"
                 ],
                 "docgen:diff": [
                     "Composer\\Config::disableProcessTimeout",

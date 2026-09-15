@@ -12,7 +12,7 @@
             "dist": {
                 "type": "path",
                 "url": "../ztd-query-core",
-                "reference": "5d7486baa76065b54573201b48bd184be60b1803"
+                "reference": "2a58975e82110613ab475fadf60aa4dfee94ccc2"
             },
             "require": {
                 "php": "^8.1"
@@ -68,7 +68,7 @@
                     "deptrac debug:unused --config-file=deptrac.yaml"
                 ],
                 "docgen": [
-                    "vendor/bin/docgen --packages=. --deptrac=deptrac.yaml --exclude=\"src/Compatibility/ClassAliases.php\" --output=build/docs --cache-dir=build/docgen-cache --title=k-kinzal/ztd-query-core"
+                    "package=\"$PWD\"; root=\"$(git rev-parse --show-toplevel 2>/dev/null || pwd)\"; prefix=\"${package#\"$root\"/}\"; if [ \"$package\" = \"$root\" ]; then prefix=.; fi; cd \"$root\" && \"$package/vendor/bin/docgen\" --packages=\"$prefix\" --deptrac=\"$package/deptrac.yaml\" --exclude=\"$prefix/src/Compatibility/ClassAliases.php\" --output=\"$package/build/docs\" --cache-dir=\"$package/build/docgen-cache\" --title=k-kinzal/ztd-query-core"
                 ],
                 "docgen:diff": [
                     "Composer\\Config::disableProcessTimeout",
@@ -115,7 +115,7 @@
                     "paratest --processes=auto"
                 ],
                 "test:coverage": [
-                    "@php -d memory_limit=1G vendor/bin/phpunit --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
                 ],
                 "test:unit": [
                     "phpunit --testsuite unit"
@@ -1375,7 +1375,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-faker",
-                "reference": "d5c36810b3282a1ded8521a1f8b6da19bb184e37"
+                "reference": "91c8eb24749f0def3b69085ae4bd520080b5f2e7"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -1445,7 +1445,7 @@
                     "deptrac debug:unused --config-file=deptrac.yaml"
                 ],
                 "docgen": [
-                    "vendor/bin/docgen --packages=. --deptrac=deptrac.yaml --exclude=\"src/Compatibility/ClassAliases.php\" --output=build/docs --cache-dir=build/docgen-cache --title=k-kinzal/sql-faker"
+                    "package=\"$PWD\"; root=\"$(git rev-parse --show-toplevel 2>/dev/null || pwd)\"; prefix=\"${package#\"$root\"/}\"; if [ \"$package\" = \"$root\" ]; then prefix=.; fi; cd \"$root\" && \"$package/vendor/bin/docgen\" --packages=\"$prefix\" --deptrac=\"$package/deptrac.yaml\" --exclude=\"$prefix/src/Compatibility/ClassAliases.php\" --output=\"$package/build/docs\" --cache-dir=\"$package/build/docgen-cache\" --title=k-kinzal/sql-faker"
                 ],
                 "docgen:diff": [
                     "Composer\\Config::disableProcessTimeout",
@@ -1502,7 +1502,7 @@
                     "paratest --processes=auto"
                 ],
                 "test:coverage": [
-                    "@php -d memory_limit=1G vendor/bin/phpunit --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
                 ],
                 "test:unit": [
                     "phpunit --testsuite unit"
@@ -1529,7 +1529,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-fixture",
-                "reference": "54f64190c0a8767a84081ea84132ed492dfcb5ae"
+                "reference": "8e9b3cd996a387c1fa2f2387ce7988d39f295cbb"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -1586,7 +1586,7 @@
                     "deptrac debug:unused --config-file=deptrac.yaml"
                 ],
                 "docgen": [
-                    "vendor/bin/docgen --packages=. --deptrac=deptrac.yaml --exclude=\"src/Compatibility/ClassAliases.php\" --output=build/docs --cache-dir=build/docgen-cache --title=k-kinzal/sql-fixture"
+                    "package=\"$PWD\"; root=\"$(git rev-parse --show-toplevel 2>/dev/null || pwd)\"; prefix=\"${package#\"$root\"/}\"; if [ \"$package\" = \"$root\" ]; then prefix=.; fi; cd \"$root\" && \"$package/vendor/bin/docgen\" --packages=\"$prefix\" --deptrac=\"$package/deptrac.yaml\" --exclude=\"$prefix/src/Compatibility/ClassAliases.php\" --output=\"$package/build/docs\" --cache-dir=\"$package/build/docgen-cache\" --title=k-kinzal/sql-fixture"
                 ],
                 "docgen:diff": [
                     "Composer\\Config::disableProcessTimeout",
@@ -1638,7 +1638,7 @@
                     "paratest --processes=auto"
                 ],
                 "test:coverage": [
-                    "@php -d memory_limit=1G vendor/bin/phpunit --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
                 ],
                 "test:integration": [
                     "phpunit --testsuite integration"
@@ -1719,7 +1719,7 @@
             "dist": {
                 "type": "path",
                 "url": "../ztd-query-mysql",
-                "reference": "8dea084c617e8cf62eb583519ed74180102ba6da"
+                "reference": "c71363421e16e64ca802738a5d899c8b8e9346b3"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -1778,7 +1778,7 @@
                     "deptrac debug:unused --config-file=deptrac.yaml"
                 ],
                 "docgen": [
-                    "vendor/bin/docgen --packages=. --deptrac=deptrac.yaml --exclude=\"src/Compatibility/ClassAliases.php\" --output=build/docs --cache-dir=build/docgen-cache --title=k-kinzal/ztd-query-mysql"
+                    "package=\"$PWD\"; root=\"$(git rev-parse --show-toplevel 2>/dev/null || pwd)\"; prefix=\"${package#\"$root\"/}\"; if [ \"$package\" = \"$root\" ]; then prefix=.; fi; cd \"$root\" && \"$package/vendor/bin/docgen\" --packages=\"$prefix\" --deptrac=\"$package/deptrac.yaml\" --exclude=\"$prefix/src/Compatibility/ClassAliases.php\" --output=\"$package/build/docs\" --cache-dir=\"$package/build/docgen-cache\" --title=k-kinzal/ztd-query-mysql"
                 ],
                 "docgen:diff": [
                     "Composer\\Config::disableProcessTimeout",
@@ -1830,7 +1830,7 @@
                     "paratest --processes=auto"
                 ],
                 "test:coverage": [
-                    "@php -d memory_limit=1G vendor/bin/phpunit --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
                 ],
                 "test:unit": [
                     "phpunit --testsuite unit"
@@ -1857,7 +1857,7 @@
             "dist": {
                 "type": "path",
                 "url": "../ztd-query-postgres",
-                "reference": "8b0442833969c787a73f1411e88dce5bccc8dea1"
+                "reference": "d5d609d3572e7dc394ac5170ecf3b43466fad374"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -1915,7 +1915,7 @@
                     "deptrac debug:unused --config-file=deptrac.yaml"
                 ],
                 "docgen": [
-                    "vendor/bin/docgen --packages=. --deptrac=deptrac.yaml --exclude=\"src/Compatibility/ClassAliases.php\" --output=build/docs --cache-dir=build/docgen-cache --title=k-kinzal/ztd-query-postgres"
+                    "package=\"$PWD\"; root=\"$(git rev-parse --show-toplevel 2>/dev/null || pwd)\"; prefix=\"${package#\"$root\"/}\"; if [ \"$package\" = \"$root\" ]; then prefix=.; fi; cd \"$root\" && \"$package/vendor/bin/docgen\" --packages=\"$prefix\" --deptrac=\"$package/deptrac.yaml\" --exclude=\"$prefix/src/Compatibility/ClassAliases.php\" --output=\"$package/build/docs\" --cache-dir=\"$package/build/docgen-cache\" --title=k-kinzal/ztd-query-postgres"
                 ],
                 "docgen:diff": [
                     "Composer\\Config::disableProcessTimeout",
@@ -1972,7 +1972,7 @@
                     "paratest --processes=auto"
                 ],
                 "test:coverage": [
-                    "@php -d memory_limit=1G vendor/bin/phpunit --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
                 ],
                 "test:fuzz": [
                     "phpunit fuzz/"
@@ -2002,7 +2002,7 @@
             "dist": {
                 "type": "path",
                 "url": "../ztd-query-sqlite",
-                "reference": "9f6dfa03a2438631bcd576a0b5f50a49422923f7"
+                "reference": "fce48779cd80ff8ed5fd5899b70346ff41689b61"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -2060,7 +2060,7 @@
                     "deptrac debug:unused --config-file=deptrac.yaml"
                 ],
                 "docgen": [
-                    "vendor/bin/docgen --packages=. --deptrac=deptrac.yaml --exclude=\"src/Compatibility/ClassAliases.php\" --output=build/docs --cache-dir=build/docgen-cache --title=k-kinzal/ztd-query-sqlite"
+                    "package=\"$PWD\"; root=\"$(git rev-parse --show-toplevel 2>/dev/null || pwd)\"; prefix=\"${package#\"$root\"/}\"; if [ \"$package\" = \"$root\" ]; then prefix=.; fi; cd \"$root\" && \"$package/vendor/bin/docgen\" --packages=\"$prefix\" --deptrac=\"$package/deptrac.yaml\" --exclude=\"$prefix/src/Compatibility/ClassAliases.php\" --output=\"$package/build/docs\" --cache-dir=\"$package/build/docgen-cache\" --title=k-kinzal/ztd-query-sqlite"
                 ],
                 "docgen:diff": [
                     "Composer\\Config::disableProcessTimeout",
@@ -2120,7 +2120,7 @@
                     "paratest --processes=auto"
                 ],
                 "test:coverage": [
-                    "@php -d memory_limit=1G vendor/bin/phpunit --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
                 ],
                 "test:unit": [
                     "phpunit --testsuite unit"
