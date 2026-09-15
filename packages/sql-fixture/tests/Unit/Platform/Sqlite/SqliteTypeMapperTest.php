@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Platform\Sqlite;
 
 use Faker\Factory;
+use Override;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -23,9 +24,7 @@ use SqlFixture\Schema\ColumnDefinition;
 #[UsesClass(\SqlFixture\TypeMapper\DecimalRange::class)]
 final class SqliteTypeMapperTest extends TestCase
 {
-    /**
-     * Collects old Faker generators before their destructors can reset a test's random seed.
-     */
+    #[Override]
     protected function setUp(): void
     {
         parent::setUp();
