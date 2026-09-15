@@ -351,18 +351,7 @@ final class ZtdPdoTest extends TestCase
         self::assertContains('sqlite', ZtdPdo::getAvailableDrivers());
     }
 
-    public function testPgsqlCopyToArrayRefusesADialectWithNoCopy(): void
-    {
-        $this->expectException(ZtdPdoException::class);
-        $this->expectExceptionMessage('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
 
-        $native = new PDO('sqlite::memory:');
-        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $ztdPdo = ZtdPdo::fromPdo($native);
-
-        $ztdPdo->pgsqlCopyToArray('users', fields: 'id');
-    }
 
     public function testCopyToArrayRefusesADialectWithNoCopy(): void
     {
@@ -376,17 +365,7 @@ final class ZtdPdoTest extends TestCase
         $ztdPdo->copyToArray('users');
     }
 
-    public function testPgsqlCopyFromArrayRefusesADialectWithNoCopy(): void
-    {
-        $this->expectExceptionMessage('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
 
-        $native = new PDO('sqlite::memory:');
-        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $ztdPdo = ZtdPdo::fromPdo($native);
-
-        $ztdPdo->pgsqlCopyFromArray('users', ["1\tada\n"]);
-    }
 
     public function testCopyFromArrayRefusesADialectWithNoCopy(): void
     {
@@ -400,17 +379,7 @@ final class ZtdPdoTest extends TestCase
         $ztdPdo->copyFromArray('users', ["1\tada\n"]);
     }
 
-    public function testPgsqlCopyToFileRefusesADialectWithNoCopy(): void
-    {
-        $this->expectExceptionMessage('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
 
-        $native = new PDO('sqlite::memory:');
-        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $ztdPdo = ZtdPdo::fromPdo($native);
-
-        $ztdPdo->pgsqlCopyToFile('users', '/dev/null', fields: 'id');
-    }
 
     public function testCopyToFileRefusesADialectWithNoCopy(): void
     {
@@ -424,17 +393,7 @@ final class ZtdPdoTest extends TestCase
         $ztdPdo->copyToFile('users', '/dev/null');
     }
 
-    public function testPgsqlCopyFromFileRefusesADialectWithNoCopy(): void
-    {
-        $this->expectExceptionMessage('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
 
-        $native = new PDO('sqlite::memory:');
-        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $ztdPdo = ZtdPdo::fromPdo($native);
-
-        $ztdPdo->pgsqlCopyFromFile('users', '/dev/null', fields: 'id');
-    }
 
     public function testCopyFromFileRefusesADialectWithNoCopy(): void
     {

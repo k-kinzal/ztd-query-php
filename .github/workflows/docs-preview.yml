@@ -5,12 +5,12 @@ on:
     paths:
       - 'packages/sql-faker/**'
       - 'packages/ztd-query-core/**'
-      - 'packages/ztd-query-pdo-adapter/**'
+      - 'packages/ztd-query-postgres/**'
       - 'packages/ztd-query-mysqli-adapter/**'
       - 'packages/ztd-query-mysql/**'
-      - 'packages/ztd-query-postgres/**'
-      - 'packages/ztd-query-sqlite/**'
       - 'packages/sql-fixture/**'
+      - 'packages/ztd-query-pdo-adapter/**'
+      - 'packages/ztd-query-sqlite/**'
       - '.github/workflows/docs.yml'
       - '.github/workflows/docs-preview.yml'
     types:
@@ -230,7 +230,7 @@ jobs:
           comment_file="$(mktemp)"
           cat > "$comment_file" <<EOF
           <!-- sql-faker-docgen-preview -->
-          **Documentation previews:** [SQL Faker](${preview_url}), [ZTD Query Core](${preview_url}core/), [PDO Adapter](${preview_url}pdo/), [mysqli Adapter](${preview_url}mysqli/), [ZTD Query PostgreSQL](${preview_url}ztd-query-postgres/)
+          **Documentation previews:** [SQL Faker](${preview_url}), [ZTD Query Core](${preview_url}core/), [ZTD Query PostgreSQL](${preview_url}ztd-query-postgres/), [MySQLi Adapter](${preview_url}mysqli/), [PDO Adapter](${preview_url}pdo/)
 
           Generated in diff mode against ${BASE_REF}. Use **Off**, **Diff**, or
           **Changes** at the top of the page to select the documentation view.

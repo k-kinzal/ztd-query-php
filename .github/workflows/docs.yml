@@ -7,12 +7,12 @@ on:
     paths:
       - 'packages/sql-faker/**'
       - 'packages/ztd-query-core/**'
-      - 'packages/ztd-query-pdo-adapter/**'
+      - 'packages/ztd-query-postgres/**'
       - 'packages/ztd-query-mysqli-adapter/**'
       - 'packages/ztd-query-mysql/**'
-      - 'packages/ztd-query-postgres/**'
-      - 'packages/ztd-query-sqlite/**'
       - 'packages/sql-fixture/**'
+      - 'packages/ztd-query-pdo-adapter/**'
+      - 'packages/ztd-query-sqlite/**'
       - '.github/workflows/docs.yml'
       - '.github/workflows/docs-preview.yml'
   workflow_dispatch:

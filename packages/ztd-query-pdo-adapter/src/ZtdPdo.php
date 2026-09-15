@@ -13,6 +13,7 @@ use SensitiveParameter;
 use Traversable;
 use ZtdQuery\Adapter\Pdo\Session\ConnectionExecution;
 use ZtdQuery\Adapter\Pdo\Session\CopyArguments;
+use ZtdQuery\Adapter\Pdo\Session\PostgreSqlCopyMethods;
 use ZtdQuery\Adapter\Pdo\Session\PreparedQuery;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Platform\SessionFactory;
@@ -39,7 +40,7 @@ use ZtdQuery\Session;
  *     $pdo->query('SELECT name FROM users')->fetchColumn() // => 'Alice'
  *     $native->query('SELECT COUNT(*) FROM users')->fetchColumn() // => 0
  */
-class ZtdPdo extends PDO
+class ZtdPdo extends PDO implements PostgreSqlCopyMethods
 {
     private ConnectionExecution $execution;
 
@@ -431,6 +432,7 @@ class ZtdPdo extends PDO
      *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
      *     $pdo->pgsqlCopyToArray('users') // throws \ZtdQuery\Adapter\Pdo\ZtdPdoException: PostgreSQL driver
      */
+    #[Override]
     public function pgsqlCopyToArray(
         mixed $tableName,
         mixed $separator = "\t",
@@ -483,6 +485,7 @@ class ZtdPdo extends PDO
      *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
      *     $pdo->pgsqlCopyFromArray('users', []) // throws \ZtdQuery\Adapter\Pdo\ZtdPdoException: PostgreSQL driver
      */
+    #[Override]
     public function pgsqlCopyFromArray(
         mixed $tableName,
         array|Traversable $rows,
@@ -538,6 +541,7 @@ class ZtdPdo extends PDO
      *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
      *     $pdo->pgsqlCopyToFile('users', __FILE__) // throws \ZtdQuery\Adapter\Pdo\ZtdPdoException: PostgreSQL driver
      */
+    #[Override]
     public function pgsqlCopyToFile(
         mixed $tableName,
         mixed $filename,
@@ -596,6 +600,7 @@ class ZtdPdo extends PDO
      *     $pdo->pgsqlCopyFromFile('users', $path) // throws \ZtdQuery\Adapter\Pdo\ZtdPdoException: PostgreSQL driver
      *     unlink($path);
      */
+    #[Override]
     public function pgsqlCopyFromFile(
         mixed $tableName,
         mixed $filename,
