@@ -6,6 +6,7 @@ includes:
     - vendor/k-kinzal/php-ai-toolkit/rules.neon
 
 parameters:
+    phpVersion: 80100
     level: max
     paths:
         - src

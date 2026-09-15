@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\SqlFaker\Compiler\Bison\Lexer;
+namespace Tests\Unit\Compiler\Bison\Lexer;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;

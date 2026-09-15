@@ -280,3 +280,7 @@ scripts/
 .entire/
 .gemini/
 .github/hooks/
+
+# Monorepo tooling caches
+/.deptrac.cache
+__pycache__/

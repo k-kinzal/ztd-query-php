@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\SqlFaker\Sqlite\Generation\Rewrite\Expression;
+namespace Tests\Unit\Sqlite\Generation\Rewrite\Expression;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;

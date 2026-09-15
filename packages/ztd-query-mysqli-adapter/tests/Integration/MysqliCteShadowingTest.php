@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
-use Containers\MySql80Container;
-use Containers\MySql84Container;
 use mysqli;
 use mysqli_result;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use Testcontainers\Testcontainers;
+use Tests\Container\MySql80Container;
+use Tests\Container\MySql84Container;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(ZtdMysqli::class)]

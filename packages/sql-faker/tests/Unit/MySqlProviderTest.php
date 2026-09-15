@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\SqlFaker;
+namespace Tests\Unit;
 
 use Faker\Factory;
 use Override;

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\SqlFaker\PostgreSql\Generation\Lookahead;
+namespace Tests\Unit\PostgreSql\Generation\Lookahead;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;

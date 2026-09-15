@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\SqlFaker\MySql\Generation;
+namespace Tests\Unit\MySql\Generation;
 
 use Closure;
 use Faker\Factory;

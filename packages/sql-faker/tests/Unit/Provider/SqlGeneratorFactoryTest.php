@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\SqlFaker\Provider;
+namespace Tests\Unit\Provider;
 
 use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversClass;

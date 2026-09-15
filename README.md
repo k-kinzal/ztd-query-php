@@ -43,3 +43,50 @@ See [packages/ztd-query-core/README.md](packages/ztd-query-core/README.md) for f
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
+
+## Package development
+
+Every package uses `src/`, `tests/`, `fuzz/`, and `bench/`, with the same Composer
+commands and root configuration files. Test containers and PHPStan stubs live in
+`tests/Container/` and `tests/Stub/`. SQL Faker additionally keeps its grammar
+inputs in `resources/`, compiler entry points in `bin/`, and design notes in `docs/`.
+Generated files are ignored; package lock files are committed. Development files
+and lock files are excluded from release archives.
+
+Shared dependency constraints and locked versions must agree across all packages.
+After updating a shared dependency, update the other package lock files and run:
+
+```sh
+python3 .github/bin/package_policy.py
+```
+
+The root `deptrac.yaml` checks package boundaries: core defines shared contracts,
+MySQL/PostgreSQL/SQLite implement them, and PDO/MySQLi adapt native connections.
+Each package's `deptrac.yaml` checks its internal layers. Database-specific stubs,
+fuzz targets, container setup, and mutation timeouts follow that package's needs.
+
+Common commands, run from any package directory:
+
+```sh
+composer install
+composer lint
+composer test
+composer test:unit
+composer test:coverage
+composer doctest
+composer bench:quick
+composer docgen
+```
+
+Packages with database integration tests also provide `composer test:integration`.
+The docs workflows use unit-test coverage consistently for every package; database
+integration tests and doctests remain in each package's CI. Both main and PR docs
+build one site containing all packages, their dependency graph, and test links.
+After installing dependencies and running `composer test:coverage` in every
+package, build the complete site from the repository root with:
+
+```sh
+python3 .github/bin/docs.py
+# Compare against main:
+python3 .github/bin/docs.py --diff=origin/main
+```

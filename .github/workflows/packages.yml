@@ -1,0 +1,20 @@
+name: Package conventions
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  conventions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Check package structure and dependency versions
+        run: python3 .github/bin/package_policy.py
+      - name: Test documentation report assembly
+        run: python3 -m unittest discover -s .github/tests

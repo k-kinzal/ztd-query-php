@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Doctest\SqlFaker;
+namespace Tests\Doctest;
 
 use Generator;
 use LogicException;

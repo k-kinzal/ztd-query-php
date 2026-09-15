@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\SqlFaker\PostgreSql\Generation\Rewrite\Column;
+namespace Tests\Unit\PostgreSql\Generation\Rewrite\Column;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;

@@ -2,7 +2,7 @@
 deptrac:
   paths: [src]
   layers:
-    - name: PublicApi
+    - name: Adapter
       collectors:
         - type: directory
           value: src/[^/]+\.php$
@@ -18,13 +18,13 @@ deptrac:
       collectors:
         - type: classLike
           value: ^ZtdQuery\\(?!Adapter\\|Platform\\MySql\\)
-    - name: MySqlPlatform
+    - name: Platforms
       collectors:
         - type: composer
           composerPath: composer.json
           composerLockPath: composer.lock
           packages: [k-kinzal/ztd-query-mysql]
   ruleset:
-    PublicApi: [Driver, Native, Core, MySqlPlatform]
+    Adapter: [Driver, Native, Core, Platforms]
     Driver: [Core]
     Native: []

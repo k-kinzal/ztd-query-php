@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\SqlFaker\Generation\Lexeme;
+namespace Tests\Unit\Generation\Lexeme;
 
 use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversNothing;

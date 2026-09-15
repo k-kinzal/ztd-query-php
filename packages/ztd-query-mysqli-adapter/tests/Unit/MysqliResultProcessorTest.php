@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use Containers\MySql80Container;
-use Containers\MySql84Container;
 use mysqli;
 use mysqli_result;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -13,6 +11,8 @@ use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Testcontainers\Testcontainers;
+use Tests\Container\MySql80Container;
+use Tests\Container\MySql84Container;
 use ZtdQuery\Adapter\Mysqli\Driver\MysqliResultColumnExtractor;
 use ZtdQuery\Adapter\Mysqli\Driver\MysqliResultStatement;
 use ZtdQuery\Adapter\Mysqli\MysqliResultProcessor;

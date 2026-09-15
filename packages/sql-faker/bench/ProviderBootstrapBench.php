@@ -10,9 +10,15 @@ use SqlFaker\MySqlProvider;
 use SqlFaker\PostgreSqlProvider;
 use SqlFaker\SqliteProvider;
 
+/**
+ * Measures initialization of the SQL generators for each dialect.
+ */
 #[Bench\Groups(['bootstrap'])]
 final class ProviderBootstrapBench
 {
+    /**
+     * Measures creation of a seeded MySql provider.
+     */
     #[Bench\Revs(20)]
     public function benchMySqlProviderBootstrap(): void
     {
@@ -21,6 +27,9 @@ final class ProviderBootstrapBench
         new MySqlProvider($faker, 'mysql-8.4.7');
     }
 
+    /**
+     * Measures creation of a seeded PostgreSql provider.
+     */
     #[Bench\Revs(20)]
     public function benchPostgreSqlProviderBootstrap(): void
     {
@@ -29,6 +38,9 @@ final class ProviderBootstrapBench
         new PostgreSqlProvider($faker, 'pg-17.2');
     }
 
+    /**
+     * Measures creation of a seeded Sqlite provider.
+     */
     #[Bench\Revs(20)]
     public function benchSqliteProviderBootstrap(): void
     {

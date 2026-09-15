@@ -3,7 +3,11 @@ paths:
   - '.'
 
 exclude:
+  - '.git'
+  - '.idea'
   - 'build'
+  - 'node_modules'
+  - 'var'
   - 'vendor'
 
 rules:

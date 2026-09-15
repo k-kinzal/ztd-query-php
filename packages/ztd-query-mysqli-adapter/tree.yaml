@@ -13,8 +13,6 @@ exclude:
 rules:
   - path: '**'
     deny_dirs: ['scripts', 'Scripts']
-  - path: 'tests/**'
-    deny_dirs: ['Fixtures', 'Fixture']
   - path: 'src/**'
     forbid_empty: true
     allow: ['*.php']

@@ -1,0 +1,109 @@
+name: Build package documentation
+
+on:
+  workflow_call:
+    inputs:
+      diff:
+        type: string
+        default: ''
+      preview:
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Generate documentation for all packages
+    services:
+      mysql:
+        image: container-registry.oracle.com/mysql/community-server:8.4.7
+        env:
+          MYSQL_ROOT_PASSWORD: toolkit
+          MYSQL_ROOT_HOST: '%'
+          MYSQL_DATABASE: sql_fixture
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -ptoolkit"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+      postgres:
+        image: postgres:17.2
+        env:
+          POSTGRES_PASSWORD: toolkit
+          POSTGRES_DB: sql_fixture
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd="pg_isready -U postgres -d sql_fixture"
+          --health-interval=10s --health-timeout=5s --health-retries=12
+    env:
+      SQL_FIXTURE_MYSQL_DSN: mysql:host=127.0.0.1;port=3306;dbname=sql_fixture
+      SQL_FIXTURE_PGSQL_DSN: pgsql:host=127.0.0.1;port=5432;dbname=sql_fixture
+      COMPOSER_NO_INTERACTION: '1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          fetch-depth: 0
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+        with:
+          php-version: '8.3'
+          extensions: gd, mbstring, pcntl, mysqli, pdo, pdo_mysql, pdo_pgsql, pdo_sqlite
+          coverage: pcov
+      - name: Restore Composer downloads
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: ~/.cache/composer/files
+          key: docs-composer-${{ runner.os }}-${{ hashFiles('packages/*/composer.lock') }}
+          restore-keys: docs-composer-${{ runner.os }}-
+      - name: Check package conventions
+        run: |
+          python3 .github/bin/package_policy.py
+          python3 -m unittest discover -s .github/tests
+      - name: Install every package's locked dependencies
+        run: |
+          set -euo pipefail
+          for manifest in packages/*/composer.json; do
+            package="${manifest%/composer.json}"
+            composer --working-dir="$package" validate --strict --no-check-publish
+            composer --working-dir="$package" install --prefer-dist --no-progress
+            composer --working-dir="$package" check-platform-reqs
+          done
+      - name: Check package architecture
+        run: packages/ztd-query-core/vendor/bin/deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered
+      - name: Restore the DocGen cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: build/docgen-cache
+          key: packages-docgen-${{ runner.os }}-${{ hashFiles('packages/*/composer.lock') }}-${{ github.sha }}
+          restore-keys: |
+            packages-docgen-${{ runner.os }}-${{ hashFiles('packages/*/composer.lock') }}-
+            packages-docgen-${{ runner.os }}-
+      - name: Generate coverage for every package
+        run: |
+          set -euo pipefail
+          for manifest in packages/*/composer.json; do
+            composer --working-dir="${manifest%/composer.json}" run-script --timeout=1800 test:coverage
+          done
+      - name: Generate the complete documentation site
+        env:
+          BASE_SHA: ${{ inputs.diff }}
+          PREVIEW: ${{ inputs.preview }}
+        run: |
+          set -euo pipefail
+          repository="${GITHUB_REPOSITORY,,}"
+          base_url="https://${repository%%/*}.github.io/${repository#*/}"
+          if [ -n "$PREVIEW" ]; then
+            base_url="${base_url}/pr/${PREVIEW}"
+          fi
+          python3 .github/bin/docs.py --base-url="$base_url" --diff="$BASE_SHA"
+      - name: Upload the complete documentation site
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: package-docs
+          path: build/docs/
+          include-hidden-files: true
+          if-no-files-found: error

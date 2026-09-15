@@ -2,50 +2,78 @@
 deptrac:
   paths:
     - ./src
+  analyser:
+    types: [class, use, file]
   layers:
     - name: Simulator
       collectors:
         - type: directory
           value: src/Simulator/.*
+        - type: classLike
+          value: ^ZtdQuery\\Simulator\\
     - name: Session
       collectors:
         - type: directory
           value: src/[^/]+\.php
+        - type: directory
+          value: src/Platform/SessionFactory.php$
+        - type: classLike
+          value: ^ZtdQuery\\[^\\]+$
+        - type: directory
+          value: src/Compatibility/.*
         - type: classLike
           value: ^ZtdQuery\\Platform\\SessionFactory$
     - name: Simulation
       collectors:
         - type: directory
           value: src/Rewrite/.*
+        - type: classLike
+          value: ^ZtdQuery\\Rewrite\\
         - type: directory
           value: src/Shadow/.*
+        - type: classLike
+          value: ^ZtdQuery\\Shadow\\
     - name: Contract
       collectors:
         - type: directory
           value: src/Connection/.*
+        - type: classLike
+          value: ^ZtdQuery\\Connection\\
         - type: bool
           must:
             - type: directory
               value: src/Platform/.*
           must_not:
-            - type: classLike
-              value: ^ZtdQuery\\Platform\\SessionFactory$
+            - type: directory
+              value: src/Platform/SessionFactory.php$
     - name: Schema
       collectors:
         - type: directory
           value: src/Schema/.*
+        - type: classLike
+          value: ^ZtdQuery\\Schema\\
     - name: Sql
       collectors:
         - type: directory
           value: src/Sql/.*
+        - type: classLike
+          value: ^ZtdQuery\\Sql\\
     - name: Config
       collectors:
         - type: directory
           value: src/Config/.*
+        - type: classLike
+          value: ^ZtdQuery\\Config\\
     - name: Exception
       collectors:
         - type: directory
           value: src/Exception/.*
+        - type: classLike
+          value: ^ZtdQuery\\Exception\\
+    - name: Composer
+      collectors:
+        - type: classLike
+          value: ^Composer\\Autoload\\
   ruleset:
     Simulator:
       - Session
@@ -53,6 +81,7 @@ deptrac:
       - Contract
       - Exception
     Session:
+      - Composer
       - Simulation
       - Contract
       - Schema
@@ -74,3 +103,4 @@ deptrac:
       - Exception
     Config: ~
     Exception: ~
+    Composer: ~

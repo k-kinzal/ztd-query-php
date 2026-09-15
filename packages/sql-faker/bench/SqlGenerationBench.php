@@ -10,6 +10,9 @@ use SqlFaker\MySqlProvider;
 use SqlFaker\PostgreSqlProvider;
 use SqlFaker\SqliteProvider;
 
+/**
+ * Measures SELECT generation after each dialect provider has been initialized.
+ */
 #[Bench\Groups(['generation'])]
 final class SqlGenerationBench
 {
@@ -17,6 +20,9 @@ final class SqlGenerationBench
     private PostgreSqlProvider $postgreSqlProvider;
     private SqliteProvider $sqliteProvider;
 
+    /**
+     * Initializes a seeded MySql provider for the measured iterations.
+     */
     public function setUpMySql(): void
     {
         $mySqlFaker = Factory::create();
@@ -24,6 +30,9 @@ final class SqlGenerationBench
         $this->mySqlProvider = new MySqlProvider($mySqlFaker, 'mysql-8.4.7');
     }
 
+    /**
+     * Initializes a seeded PostgreSql provider for the measured iterations.
+     */
     public function setUpPostgreSql(): void
     {
         $postgresFaker = Factory::create();
@@ -31,6 +40,9 @@ final class SqlGenerationBench
         $this->postgreSqlProvider = new PostgreSqlProvider($postgresFaker, 'pg-17.2');
     }
 
+    /**
+     * Initializes a seeded Sqlite provider for the measured iterations.
+     */
     public function setUpSqlite(): void
     {
         $sqliteFaker = Factory::create();
@@ -38,6 +50,9 @@ final class SqlGenerationBench
         $this->sqliteProvider = new SqliteProvider($sqliteFaker, 'sqlite-3.47.2');
     }
 
+    /**
+     * Generates a MySql SELECT statement with bounded nesting.
+     */
     #[Bench\BeforeMethods('setUpMySql')]
     #[Bench\Revs(250)]
     public function benchGenerateMySqlSelect(): void
@@ -45,6 +60,9 @@ final class SqlGenerationBench
         $this->mySqlProvider->selectStatement(maxDepth: 6);
     }
 
+    /**
+     * Generates a PostgreSql SELECT statement with bounded nesting.
+     */
     #[Bench\BeforeMethods('setUpPostgreSql')]
     #[Bench\Revs(250)]
     public function benchGeneratePostgreSqlSelect(): void
@@ -52,6 +70,9 @@ final class SqlGenerationBench
         $this->postgreSqlProvider->selectStatement(maxDepth: 6);
     }
 
+    /**
+     * Generates a Sqlite SELECT statement with bounded nesting.
+     */
     #[Bench\BeforeMethods('setUpSqlite')]
     #[Bench\Revs(250)]
     public function benchGenerateSqliteSelect(): void

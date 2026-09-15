@@ -21,5 +21,6 @@
         "json": "build/infection/infection.json"
     },
     "testFrameworkExtraArgs": "--no-extensions --testsuite=unit,integration",
-    "testFramework": "phpunit"
+    "testFramework": "phpunit",
+    "phpUnit": {"configDir": ".", "customPath": "vendor/bin/phpunit"}
 }

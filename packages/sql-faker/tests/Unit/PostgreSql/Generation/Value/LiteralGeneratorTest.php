@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\SqlFaker\PostgreSql\Generation\Value;
+namespace Tests\Unit\PostgreSql\Generation\Value;
 
 use Faker\Factory;
 use Override;

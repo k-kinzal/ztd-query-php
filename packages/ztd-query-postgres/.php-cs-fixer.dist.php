@@ -1,5 +1,5 @@
 <?php
-# NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
+/** NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you. */
 
 declare(strict_types=1);
 

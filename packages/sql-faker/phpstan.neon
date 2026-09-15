@@ -14,8 +14,10 @@ parameters:
         forbiddenNamespacePrefixes:
             - 'Tests\Fixture'
             - 'Tests\Fixtures'
+    phpVersion: 80100
     level: max
     paths:
         - src
-        - fuzz
         - tests
+        - fuzz
+        - bench

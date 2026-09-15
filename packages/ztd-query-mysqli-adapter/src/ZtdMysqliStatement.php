@@ -26,7 +26,7 @@ use ZtdQuery\Session;
  *
  * @visibility public
  * @example Execute a parameterized simulated insert
- *     $container = \Testcontainers\Testcontainers::run(\Containers\MySql80Container::class);
+ *     $container = \Testcontainers\Testcontainers::run(\Tests\Container\MySql80Container::class);
  *     $native = $container->getData(\mysqli::class);
  *     $native->query('CREATE TABLE contacts (id INT PRIMARY KEY, name VARCHAR(100))');
  *     $ztd = \ZtdQuery\Adapter\Mysqli\ZtdMysqli::fromMysqli($native);
