@@ -23,6 +23,15 @@ use SqlFixture\Schema\ColumnDefinition;
 #[UsesClass(\SqlFixture\TypeMapper\DecimalRange::class)]
 final class SqliteTypeMapperTest extends TestCase
 {
+    /**
+     * Collects old Faker generators before their destructors can reset a test's random seed.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+        gc_collect_cycles();
+    }
+
     #[Test]
     public function testGenerateIntegerAffinity(): void
     {
