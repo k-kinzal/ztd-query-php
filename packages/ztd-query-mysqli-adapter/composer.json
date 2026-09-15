@@ -41,7 +41,7 @@
         "psr-4": {
             "Tests\\": "tests/",
             "Fuzz\\": "fuzz/",
-            "Bench\\": "bench/"
+            "ZtdQuery\\Adapter\\Mysqli\\Bench\\": "bench/"
         }
     },
     "scripts": {
@@ -118,7 +118,11 @@
         "platform": {
             "php": "8.1.0"
         },
-        "sort-packages": true
+        "sort-packages": true,
+        "preferred-install": {
+            "k-kinzal/sql-faker": "source",
+            "*": "dist"
+        }
     },
     "support": {
         "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-mysqli-adapter",

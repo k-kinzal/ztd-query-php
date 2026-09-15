@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Bench;
+namespace ZtdQuery\Platform\Sqlite\Bench;
 
 use PhpBench\Attributes as Benchmark;
 use ZtdQuery\Platform\Sqlite\Rewrite\SqliteQueryGuard;

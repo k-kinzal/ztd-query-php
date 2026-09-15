@@ -69,7 +69,6 @@ jobs:
         with:
           working-directory: packages/ztd-query-mysqli-adapter
           dependency-versions: locked
-          composer-options: --prefer-dist
           require-lock-file: true
       - name: Check installed platform requirements
         run: composer check-platform-reqs

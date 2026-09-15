@@ -7,7 +7,6 @@ $finder = (new PhpCsFixer\Finder())
     ->in(__DIR__)
     ->exclude('build')
     ->exclude('resources/ast')
-    ->exclude('resources/lexical')
     ->exclude('vendor');
 
 return (new PhpCsFixer\Config())

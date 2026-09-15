@@ -58,7 +58,6 @@ jobs:
           working-directory: packages/ztd-query-postgres
           dependency-versions: locked
           require-lock-file: true
-          composer-options: --prefer-dist
 
       - name: Check installed platform requirements
         run: composer check-platform-reqs

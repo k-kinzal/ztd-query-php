@@ -56,7 +56,6 @@ jobs:
         with:
           working-directory: packages/sql-faker
           dependency-versions: locked
-          composer-options: --prefer-dist
           require-lock-file: true
       - name: Check runtime platform requirements
         run: composer check-platform-reqs --no-dev

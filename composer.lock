@@ -75,7 +75,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-faker",
-                "reference": "bac882bd0a4aa593aa24482bd773ed068d9c723e"
+                "reference": "a6fd2bbe66b4bdc932acfaa2c82b144620a3e4a7"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -111,7 +111,7 @@
                 "psr-4": {
                     "Tests\\": "tests/",
                     "Fuzz\\": "fuzz/",
-                    "Bench\\": "bench/"
+                    "SqlFaker\\Bench\\": "bench/"
                 }
             },
             "scripts": {
@@ -224,7 +224,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-fixture",
-                "reference": "4fb74023589f864a09fa12d3be2f2f044815d0fa"
+                "reference": "2ddfdc58f688e08c6974d73822d324e8f95ed2b3"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -256,7 +256,7 @@
                 "psr-4": {
                     "Tests\\": "tests/",
                     "Fuzz\\": "fuzz/",
-                    "Bench\\": "bench/"
+                    "SqlFixture\\Bench\\": "bench/"
                 }
             },
             "scripts": {
@@ -358,7 +358,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-core",
-                "reference": "48ec4ef86abbe8caff825de917d30db38ed88cd9"
+                "reference": "29d0c991c203fba0ed29126bd54cce36f4b3365a"
             },
             "require": {
                 "php": "^8.1"
@@ -389,7 +389,7 @@
                 "psr-4": {
                     "Tests\\": "tests/",
                     "Fuzz\\": "fuzz/",
-                    "Bench\\": "bench/"
+                    "ZtdQuery\\Bench\\": "bench/"
                 }
             },
             "scripts": {
@@ -483,7 +483,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-mysql",
-                "reference": "e6c666e74901a5170ced36cbc118c0bc7fc29c9e"
+                "reference": "9f340e12f3786021c539507fb468e0b4ce0a05f7"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -517,7 +517,7 @@
                 "psr-4": {
                     "Tests\\": "tests/",
                     "Fuzz\\": "fuzz/",
-                    "Bench\\": "bench/"
+                    "ZtdQuery\\Platform\\MySql\\Bench\\": "bench/"
                 }
             },
             "scripts": {
@@ -616,7 +616,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-mysqli-adapter",
-                "reference": "913d0d14fbdf66ef20147a5e09dd264195612be1"
+                "reference": "9d724c85650e741d48714287f05ab38b24bfbfe4"
             },
             "require": {
                 "ext-mysqli": "*",
@@ -650,7 +650,7 @@
                 "psr-4": {
                     "Tests\\": "tests/",
                     "Fuzz\\": "fuzz/",
-                    "Bench\\": "bench/"
+                    "ZtdQuery\\Adapter\\Mysqli\\Bench\\": "bench/"
                 }
             },
             "scripts": {
@@ -772,7 +772,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-pdo-adapter",
-                "reference": "1719547c1c7d719a217e3c59df12acefbb1ebab5"
+                "reference": "00951e1a4b06727682c84d99144044af8935c90b"
             },
             "require": {
                 "ext-pdo": "*",
@@ -813,7 +813,7 @@
                 "psr-4": {
                     "Tests\\": "tests/",
                     "Fuzz\\": "fuzz/",
-                    "Bench\\": "bench/"
+                    "ZtdQuery\\Adapter\\Pdo\\Bench\\": "bench/"
                 }
             },
             "scripts": {
@@ -980,7 +980,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-postgres",
-                "reference": "2748847482af9541e5cb93220544e1b9994f3a23"
+                "reference": "311d4d1a8981cd79c0bf690449a30d5d2f08391b"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -1013,7 +1013,7 @@
                 "psr-4": {
                     "Tests\\": "tests/",
                     "Fuzz\\": "fuzz/",
-                    "Bench\\": "bench/"
+                    "ZtdQuery\\Platform\\Postgres\\Bench\\": "bench/"
                 }
             },
             "scripts": {
@@ -1120,7 +1120,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-sqlite",
-                "reference": "2a47043b735543faa1b87208c3137c4e8cc52603"
+                "reference": "1a45f2d73948e51a455a5b37d3f78d6f7d802d4d"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -1153,7 +1153,7 @@
                 "psr-4": {
                     "Tests\\": "tests/",
                     "Fuzz\\": "fuzz/",
-                    "Bench\\": "bench/"
+                    "ZtdQuery\\Platform\\Sqlite\\Bench\\": "bench/"
                 }
             },
             "scripts": {

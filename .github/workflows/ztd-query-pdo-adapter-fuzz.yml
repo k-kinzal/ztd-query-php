@@ -35,7 +35,6 @@ jobs:
         working-directory: packages/ztd-query-pdo-adapter
         dependency-versions: locked
         require-lock-file: true
-        composer-options: --prefer-dist
     - name: Check installed platform requirements
       run: composer check-platform-reqs
     - name: Validate the run budget
@@ -141,7 +140,6 @@ jobs:
         working-directory: packages/ztd-query-pdo-adapter
         dependency-versions: locked
         require-lock-file: true
-        composer-options: --prefer-dist
     - name: Check installed platform requirements
       run: composer check-platform-reqs
     - name: Validate the run budget
@@ -247,7 +245,6 @@ jobs:
         working-directory: packages/ztd-query-pdo-adapter
         dependency-versions: locked
         require-lock-file: true
-        composer-options: --prefer-dist
     - name: Check installed platform requirements
       run: composer check-platform-reqs
     - name: Validate the run budget
@@ -340,7 +337,6 @@ jobs:
         working-directory: packages/ztd-query-pdo-adapter
         dependency-versions: locked
         require-lock-file: true
-        composer-options: --prefer-dist
     - name: Check installed platform requirements
       run: composer check-platform-reqs
     - name: Validate the run budget

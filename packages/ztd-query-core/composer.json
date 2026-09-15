@@ -38,7 +38,7 @@
         "psr-4": {
             "Tests\\": "tests/",
             "Fuzz\\": "fuzz/",
-            "Bench\\": "bench/"
+            "ZtdQuery\\Bench\\": "bench/"
         }
     },
     "scripts": {

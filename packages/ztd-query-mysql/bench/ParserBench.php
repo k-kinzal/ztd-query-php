@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Bench;
+namespace ZtdQuery\Platform\MySql\Bench;
 
 use PhpBench\Attributes as Bench;
 use ZtdQuery\Platform\MySql\Sql\MySqlParser;

@@ -54,7 +54,6 @@ jobs:
           working-directory: packages/ztd-query-postgres
           dependency-versions: locked
           require-lock-file: true
-          composer-options: --prefer-dist
       - name: Check installed platform requirements
         if: matrix.php == '8.1' || matrix.php == '8.2' || matrix.php == '8.3'
         run: composer check-platform-reqs
@@ -90,7 +89,6 @@ jobs:
           working-directory: packages/ztd-query-postgres
           dependency-versions: locked
           require-lock-file: true
-          composer-options: --prefer-dist
       - name: Check installed platform requirements
         run: composer check-platform-reqs
       - name: Check PSR-4 paths and ambiguous classes
@@ -131,7 +129,6 @@ jobs:
           working-directory: packages/ztd-query-postgres
           dependency-versions: locked
           require-lock-file: true
-          composer-options: --prefer-dist
       - name: Check installed platform requirements
         run: composer check-platform-reqs
       - name: Run the full benchmark
@@ -163,7 +160,6 @@ jobs:
           working-directory: packages/ztd-query-postgres
           dependency-versions: locked
           require-lock-file: true
-          composer-options: --prefer-dist
       - name: Check installed platform requirements
         run: |
           composer check-platform-reqs --no-dev

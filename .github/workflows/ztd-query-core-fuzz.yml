@@ -61,7 +61,6 @@ jobs:
         with:
           working-directory: packages/ztd-query-core
           dependency-versions: locked
-          composer-options: --prefer-dist
           require-lock-file: true
 
       - name: Check runtime platform requirements

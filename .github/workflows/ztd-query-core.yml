@@ -51,7 +51,6 @@ jobs:
         with:
           working-directory: packages/ztd-query-core
           dependency-versions: locked
-          composer-options: --prefer-dist
           require-lock-file: true
       - name: Check installed platform requirements
         if: matrix.php == '8.1' || matrix.php == '8.2' || matrix.php == '8.3'
@@ -84,7 +83,6 @@ jobs:
         with:
           working-directory: packages/ztd-query-core
           dependency-versions: locked
-          composer-options: --prefer-dist
           require-lock-file: true
       - name: Check installed platform requirements
         run: composer check-platform-reqs
@@ -123,7 +121,6 @@ jobs:
         with:
           working-directory: packages/ztd-query-core
           dependency-versions: locked
-          composer-options: --prefer-dist
           require-lock-file: true
       - name: Check installed platform requirements
         run: composer check-platform-reqs
@@ -155,7 +152,6 @@ jobs:
         with:
           working-directory: packages/ztd-query-core
           dependency-versions: locked
-          composer-options: --prefer-dist
           require-lock-file: true
       - name: Check installed platform requirements
         run: |

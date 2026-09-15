@@ -50,7 +50,6 @@ jobs:
         with:
           working-directory: packages/sql-fixture
           dependency-versions: locked
-          composer-options: --prefer-dist
           require-lock-file: true
 
       - name: Check installed platform requirements

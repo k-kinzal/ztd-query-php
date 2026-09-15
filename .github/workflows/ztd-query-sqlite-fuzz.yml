@@ -63,7 +63,6 @@ jobs:
         with:
           working-directory: packages/ztd-query-sqlite
           dependency-versions: locked
-          composer-options: --prefer-dist
           require-lock-file: true
 
       - name: Check installed platform requirements
