@@ -130,7 +130,7 @@ jobs:
           if [ -n "$comment_id" ]; then
             gh api --method PATCH "repos/${GITHUB_REPOSITORY}/issues/comments/${comment_id}" -F "body=@${comment_file}"
           else
-            gh pr comment "${PR_NUMBER}" --body-file "$comment_file"
+            gh pr comment "${PR_NUMBER}" --repo "${GITHUB_REPOSITORY}" --body-file "$comment_file"
           fi
 
   cleanup:
