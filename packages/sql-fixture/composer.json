@@ -52,6 +52,7 @@
         }
     },
     "scripts": {
+        "autoload:check": "composer dump-autoload --optimize --strict-psr --strict-ambiguous",
         "bench": "phpbench run --report=aggregate",
         "bench:full": "@bench",
         "bench:quick": "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10",
@@ -70,19 +71,24 @@
         "doctest": "phpunit --testsuite doctest",
         "format": "php-cs-fixer fix --allow-risky=yes",
         "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
-        "fuzz": [
-            "@fuzz:create-table",
-            "@fuzz:insert-select"
-        ],
+        "fuzz": "@fuzz:smoke",
         "fuzz:create-table": [
+            "Composer\\Config::disableProcessTimeout",
             "@php -r \"is_dir('fuzz/corpus/create-table') || mkdir('fuzz/corpus/create-table', 0777, true);\" --",
             "php-fuzzer fuzz fuzz/fuzz_create_table.php fuzz/corpus/create-table/"
         ],
         "fuzz:insert-select": [
+            "Composer\\Config::disableProcessTimeout",
             "@php -r \"is_dir('fuzz/corpus/insert-select') || mkdir('fuzz/corpus/insert-select', 0777, true);\" --",
             "php-fuzzer fuzz fuzz/fuzz_insert_select.php fuzz/corpus/insert-select/"
         ],
+        "fuzz:smoke": [
+            "Composer\\Config::disableProcessTimeout",
+            "@fuzz:create-table --max-runs=100",
+            "@fuzz:insert-select --max-runs=100"
+        ],
         "lint": [
+            "@autoload:check",
             "@format:check",
             "@phpstan",
             "@compat",
@@ -110,5 +116,9 @@
     "support": {
         "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-fixture",
         "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-fixture/"
+    },
+    "scripts-descriptions": {
+        "fuzz": "Run every fuzz target with the bounded smoke budget.",
+        "fuzz:smoke": "Run each fuzz target for up to 100 executions; individual fuzz:* commands run continuously."
     }
 }

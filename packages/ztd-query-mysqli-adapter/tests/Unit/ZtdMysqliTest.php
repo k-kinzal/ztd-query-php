@@ -19,9 +19,9 @@ use Tests\Container\MySql84Container;
 use ZtdQuery\Adapter\Mysqli\Driver\MysqliConnection;
 use ZtdQuery\Adapter\Mysqli\Driver\MysqliResultColumnExtractor;
 use ZtdQuery\Adapter\Mysqli\Driver\MysqliResultStatement;
-use ZtdQuery\Adapter\Mysqli\MysqliResultProcessor;
-use ZtdQuery\Adapter\Mysqli\MysqliStatementBindingBridge;
 use ZtdQuery\Adapter\Mysqli\Native\MysqliPropertyReader;
+use ZtdQuery\Adapter\Mysqli\Native\MysqliStatementBindingBridge;
+use ZtdQuery\Adapter\Mysqli\Session\MysqliResultProcessor;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqliException;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqliStatement;
@@ -40,10 +40,12 @@ use ZtdQuery\Shadow\ShadowStore;
 use ZtdQuery\Sql\TransactionStatement;
 
 #[CoversClass(ZtdMysqli::class)]
+#[CoversClass(\ZtdQuery\Adapter\Mysqli\Session\ConnectionExecution::class)]
 #[Large]
 #[UsesClass(MysqliConnection::class)]
 #[UsesClass(MysqliPropertyReader::class)]
 #[UsesClass(ZtdMysqliStatement::class)]
+#[UsesClass(\ZtdQuery\Adapter\Mysqli\Session\StatementExecution::class)]
 #[UsesClass(ZtdMysqliException::class)]
 #[UsesClass(MysqliStatementBindingBridge::class)]
 #[UsesClass(MysqliResultProcessor::class)]

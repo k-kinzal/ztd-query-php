@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\PostgreSql;
 
+use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -21,7 +22,14 @@ final class DoBlockTest extends TestCase
 {
     public function testDoBlockPassesThroughAndLaterShadowDmlStillWorks(): void
     {
-        [$schemaName, $pdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $pdo */
+        $pdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $pdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $pdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
 
         try {
             $pdo->exec('CREATE TABLE items (id INTEGER PRIMARY KEY, name TEXT NOT NULL)');

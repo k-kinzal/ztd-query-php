@@ -24,6 +24,7 @@ env:
 
 defaults:
   run:
+    shell: bash
     working-directory: packages/ztd-query-sqlite
 
 jobs:
@@ -45,7 +46,7 @@ jobs:
           extensions: pdo_sqlite
           coverage: none
       - name: Validate the Composer manifest and lock file
-        run: composer validate --strict --no-check-publish --no-check-all
+        run: composer validate --strict --no-check-publish
       - name: Install dependencies
         uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
@@ -76,7 +77,7 @@ jobs:
           extensions: pdo_sqlite
           coverage: none
       - name: Validate the Composer manifest and lock file
-        run: composer validate --strict --no-check-publish --no-check-all
+        run: composer validate --strict --no-check-publish
       - name: Install dependencies
         uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
@@ -86,6 +87,8 @@ jobs:
           require-lock-file: true
       - name: Check installed platform requirements
         run: composer check-platform-reqs
+      - name: Check PSR-4 paths and ambiguous classes
+        run: composer autoload:check
       - name: Check the formatting
         run: composer format:check
       - name: Analyse with PHPStan
@@ -113,7 +116,7 @@ jobs:
           extensions: pdo_sqlite
           coverage: none
       - name: Validate the Composer manifest and lock file
-        run: composer validate --strict --no-check-publish --no-check-all
+        run: composer validate --strict --no-check-publish
       - name: Install dependencies
         uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
@@ -124,7 +127,16 @@ jobs:
       - name: Check installed platform requirements
         run: composer check-platform-reqs
       - name: Run the benchmarks
-        run: composer bench
+        run: |
+          mkdir -p build/phpbench
+          composer run-script --timeout=1200 bench -- --dump-file=build/phpbench/results.xml | tee build/phpbench/report.txt
+      - name: Upload benchmark measurements
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ztd-query-sqlite-phpbench
+          path: packages/ztd-query-sqlite/build/phpbench/
+          if-no-files-found: ignore
 
   mutation:
     name: Mutation Testing
@@ -138,13 +150,13 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:
-          php-version: '8.3'
+          php-version: '8.5'
           extensions: pdo_sqlite
           coverage: pcov
           tools: infection:0.35.4
           ini-values: memory_limit=1G
       - name: Validate the Composer manifest and lock file
-        run: composer validate --strict --no-check-publish --no-check-all
+        run: composer validate --strict --no-check-publish
       - name: Install package dependencies
         uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
@@ -154,13 +166,13 @@ jobs:
           require-lock-file: true
       - name: Check installed platform requirements
         run: |
-          composer check-platform-reqs
+          composer check-platform-reqs --no-dev
           infection --version
       - name: Mutation testing on changed lines
         if: github.event_name == 'pull_request'
         run: >-
           php -d memory_limit=4G "$(command -v infection)"
-          --configuration=infection.json5
+          --configuration=infection.json5 --with-uncovered
           --threads=4
           --only-covering-test-cases
           --git-diff-lines
@@ -174,7 +186,7 @@ jobs:
         if: github.event_name != 'pull_request'
         run: >-
           php -d memory_limit=4G "$(command -v infection)"
-          --configuration=infection.json5
+          --configuration=infection.json5 --with-uncovered
           --threads=4
           --only-covering-test-cases
           --no-progress

@@ -22,7 +22,14 @@ final class GeneratedColumnTest extends TestCase
 {
     public function testGeneratedValuesDriveReadsAggregatesUpdatesAndDeletes(): void
     {
-        [$databaseName, $pdo] = MySqlContainer::createTestDatabase();
+        $containerInstance = \Testcontainers\Testcontainers::run(MySqlContainer::class);
+        /** @var PDO $pdo */
+        $pdo = $containerInstance->getData(PDO::class);
+
+        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
+        $pdo->exec(sprintf('CREATE DATABASE `%s` CHARACTER SET utf8mb4', $databaseName));
+        $pdo->exec(sprintf('USE `%s`', $databaseName));
+
 
         try {
             $pdo->exec('CREATE TABLE orders (id BIGINT AUTO_INCREMENT PRIMARY KEY, qty INT NOT NULL, unit_price DECIMAL(10,2) NOT NULL, total DECIMAL(12,2) GENERATED ALWAYS AS (qty * unit_price) STORED)');

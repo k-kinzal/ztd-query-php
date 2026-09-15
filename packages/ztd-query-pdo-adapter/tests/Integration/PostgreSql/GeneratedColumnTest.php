@@ -22,7 +22,14 @@ final class GeneratedColumnTest extends TestCase
 {
     public function testGeneratedValuesDriveReadsAggregatesUpdatesAndDeletes(): void
     {
-        [$schemaName, $pdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $pdo */
+        $pdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $pdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $pdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
 
         try {
             $pdo->exec('CREATE TABLE orders (id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY, qty INTEGER NOT NULL, unit_price NUMERIC(10,2) NOT NULL, total NUMERIC(12,2) GENERATED ALWAYS AS (qty * unit_price) STORED)');

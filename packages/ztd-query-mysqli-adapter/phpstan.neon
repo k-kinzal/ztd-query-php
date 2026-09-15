@@ -24,4 +24,4 @@ parameters:
         - bench
     excludePaths:
         # PHPStan 2.2.14 still models bind_param() without reference parameters.
-        - src/MysqliStatementBindingBridge.php
+        - src/Native/MysqliStatementBindingBridge.php

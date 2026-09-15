@@ -10,6 +10,9 @@ parameters:
         visibilityExemptNamespacePrefixes:
             - 'Tests'
             - 'Bench'
+        forbiddenNamespacePrefixes:
+            - 'Tests\Fixture'
+            - 'Tests\Fixtures'
     phpVersion: 80100
     level: max
     stubFiles:

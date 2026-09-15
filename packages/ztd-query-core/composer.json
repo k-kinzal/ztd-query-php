@@ -42,6 +42,7 @@
         }
     },
     "scripts": {
+        "autoload:check": "composer dump-autoload --optimize --strict-psr --strict-ambiguous",
         "bench": "phpbench run --report=aggregate",
         "bench:full": "@bench",
         "bench:quick": "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10",
@@ -60,14 +61,18 @@
         "doctest": "phpunit --testsuite doctest",
         "format": "php-cs-fixer fix --allow-risky=yes",
         "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
-        "fuzz": [
-            "@fuzz:token-stream"
+        "fuzz": "@fuzz:smoke",
+        "fuzz:smoke": [
+            "Composer\\Config::disableProcessTimeout",
+            "@fuzz:token-stream --max-runs=100"
         ],
         "fuzz:token-stream": [
+            "Composer\\Config::disableProcessTimeout",
             "@php -r \"is_dir('fuzz/corpus/token-stream') || mkdir('fuzz/corpus/token-stream', 0777, true);\" --",
             "php-fuzzer fuzz fuzz/fuzz_token_stream.php fuzz/corpus/token-stream/"
         ],
         "lint": [
+            "@autoload:check",
             "@format:check",
             "@phpstan",
             "@compat",
@@ -94,5 +99,9 @@
     "support": {
         "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-core",
         "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/ztd-query-core/"
+    },
+    "scripts-descriptions": {
+        "fuzz": "Run every fuzz target with the bounded smoke budget.",
+        "fuzz:smoke": "Run each fuzz target for up to 100 executions; individual fuzz:* commands run continuously."
     }
 }

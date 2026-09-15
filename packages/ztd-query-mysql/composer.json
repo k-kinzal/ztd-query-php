@@ -63,6 +63,7 @@
         }
     },
     "scripts": {
+        "autoload:check": "composer dump-autoload --optimize --strict-psr --strict-ambiguous",
         "bench": "phpbench run --report=aggregate",
         "bench:full": "@bench",
         "bench:quick": "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10",
@@ -81,19 +82,30 @@
         "doctest": "phpunit --testsuite doctest",
         "format": "php-cs-fixer fix --allow-risky=yes",
         "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
+        "fuzz": "@fuzz:smoke",
         "fuzz:robustness": [
+            "Composer\\Config::disableProcessTimeout",
             "@php -r \"is_dir('fuzz/corpus/robustness') || mkdir('fuzz/corpus/robustness', 0777, true);\" --",
             "php-fuzzer fuzz fuzz/fuzz_robustness.php fuzz/corpus/robustness/"
         ],
         "fuzz:robustness:classify": [
+            "Composer\\Config::disableProcessTimeout",
             "@php -r \"is_dir('fuzz/corpus/robustness-classify') || mkdir('fuzz/corpus/robustness-classify', 0777, true);\" --",
             "php-fuzzer fuzz fuzz/fuzz_robustness_classify.php fuzz/corpus/robustness-classify/"
         ],
         "fuzz:robustness:rewrite": [
+            "Composer\\Config::disableProcessTimeout",
             "@php -r \"is_dir('fuzz/corpus/robustness-rewrite') || mkdir('fuzz/corpus/robustness-rewrite', 0777, true);\" --",
             "php-fuzzer fuzz fuzz/fuzz_robustness_rewrite.php fuzz/corpus/robustness-rewrite/"
         ],
+        "fuzz:smoke": [
+            "Composer\\Config::disableProcessTimeout",
+            "@fuzz:robustness --max-runs=100",
+            "@fuzz:robustness:classify --max-runs=100",
+            "@fuzz:robustness:rewrite --max-runs=100"
+        ],
         "lint": [
+            "@autoload:check",
             "@format:check",
             "@phpstan",
             "@compat",
@@ -120,5 +132,9 @@
     "support": {
         "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-mysql",
         "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/ztd-query-mysql/"
+    },
+    "scripts-descriptions": {
+        "fuzz": "Run every fuzz target with the bounded smoke budget.",
+        "fuzz:smoke": "Run each fuzz target for up to 100 executions; individual fuzz:* commands run continuously."
     }
 }

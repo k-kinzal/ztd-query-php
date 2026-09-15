@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\MySql;
 
+use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -21,7 +22,14 @@ final class NativeUpsertExpressionTest extends TestCase
 {
     public function testDatabaseEvaluatesSubqueryUpsertExpression(): void
     {
-        [$databaseName, $rawPdo] = MySqlContainer::createTestDatabase();
+        $containerInstance = \Testcontainers\Testcontainers::run(MySqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE DATABASE `%s` CHARACTER SET utf8mb4', $databaseName));
+        $rawPdo->exec(sprintf('USE `%s`', $databaseName));
+
 
         try {
             $rawPdo->exec('CREATE TABLE prices (product_id INT PRIMARY KEY, price DECIMAL(10,2))');
@@ -48,7 +56,14 @@ final class NativeUpsertExpressionTest extends TestCase
 
     public function testDatabaseEvaluatesJsonUpsertExpression(): void
     {
-        [$databaseName, $rawPdo] = MySqlContainer::createTestDatabase();
+        $containerInstance = \Testcontainers\Testcontainers::run(MySqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE DATABASE `%s` CHARACTER SET utf8mb4', $databaseName));
+        $rawPdo->exec(sprintf('USE `%s`', $databaseName));
+
 
         try {
             $rawPdo->exec('CREATE TABLE items (id INT PRIMARY KEY, meta JSON)');
@@ -73,7 +88,14 @@ final class NativeUpsertExpressionTest extends TestCase
 
     public function testDatabaseEvaluatesConditionalUpsertExpression(): void
     {
-        [$databaseName, $rawPdo] = MySqlContainer::createTestDatabase();
+        $containerInstance = \Testcontainers\Testcontainers::run(MySqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE DATABASE `%s` CHARACTER SET utf8mb4', $databaseName));
+        $rawPdo->exec(sprintf('USE `%s`', $databaseName));
+
 
         try {
             $rawPdo->exec('CREATE TABLE products (id INT PRIMARY KEY, price DECIMAL(10,2), version INT)');

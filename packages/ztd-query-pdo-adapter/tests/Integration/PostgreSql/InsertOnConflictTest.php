@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\PostgreSql;
 
+use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -23,7 +24,14 @@ final class InsertOnConflictTest extends TestCase
 {
     public function testPreparedOnConflictDoUpdateReplacesExistingRow(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
         $table = 'prefix_' . bin2hex(random_bytes(8));
 
         try {
@@ -47,7 +55,14 @@ final class InsertOnConflictTest extends TestCase
 
     public function testOnConflictDoNothing(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
         $table = 'prefix_' . bin2hex(random_bytes(8));
 
         try {
@@ -79,7 +94,14 @@ final class InsertOnConflictTest extends TestCase
 
     public function testOnConflictDoUpdate(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
         $table = 'prefix_' . bin2hex(random_bytes(8));
 
         try {
@@ -111,7 +133,14 @@ final class InsertOnConflictTest extends TestCase
 
     public function testConditionalOnConflictAndReturningMatchPostgres(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
         $nativeTable = 'prefix_' . bin2hex(random_bytes(8));
         $shadowTable = 'prefix_' . bin2hex(random_bytes(8));
 

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\MySql;
 
+use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -16,7 +17,14 @@ final class PreparedUpsertTest extends TestCase
 {
     public function testPreparedReplaceRemovesExistingPrimaryKey(): void
     {
-        [$databaseName, $rawPdo] = MySqlContainer::createTestDatabase();
+        $containerInstance = \Testcontainers\Testcontainers::run(MySqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE DATABASE `%s` CHARACTER SET utf8mb4', $databaseName));
+        $rawPdo->exec(sprintf('USE `%s`', $databaseName));
+
         $table = 'prefix_' . bin2hex(random_bytes(8));
 
         try {
@@ -38,7 +46,14 @@ final class PreparedUpsertTest extends TestCase
 
     public function testPreparedOnDuplicateKeyUpdateReplacesExistingValues(): void
     {
-        [$databaseName, $rawPdo] = MySqlContainer::createTestDatabase();
+        $containerInstance = \Testcontainers\Testcontainers::run(MySqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE DATABASE `%s` CHARACTER SET utf8mb4', $databaseName));
+        $rawPdo->exec(sprintf('USE `%s`', $databaseName));
+
         $table = 'prefix_' . bin2hex(random_bytes(8));
 
         try {

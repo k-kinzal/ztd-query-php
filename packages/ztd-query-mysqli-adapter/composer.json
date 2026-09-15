@@ -81,6 +81,7 @@
         }
     },
     "scripts": {
+        "autoload:check": "composer dump-autoload --optimize --strict-psr --strict-ambiguous",
         "bench": "phpbench run --report=aggregate",
         "bench:full": "@bench",
         "bench:quick": "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10",
@@ -99,39 +100,48 @@
         "doctest": "phpunit --testsuite doctest",
         "format": "php-cs-fixer fix --allow-risky=yes",
         "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
-        "fuzz": [
-            "@fuzz:robustness",
-            "@fuzz:correctness:select",
-            "@fuzz:correctness:insert",
-            "@fuzz:correctness:replace",
-            "@fuzz:correctness:update",
-            "@fuzz:correctness:delete"
-        ],
+        "fuzz": "@fuzz:smoke",
         "fuzz:correctness:delete": [
+            "Composer\\Config::disableProcessTimeout",
             "@php -r \"is_dir('fuzz/corpus/correctness-delete') || mkdir('fuzz/corpus/correctness-delete', 0777, true);\" --",
             "php-fuzzer fuzz fuzz/fuzz_correctness_delete.php fuzz/corpus/correctness-delete/"
         ],
         "fuzz:correctness:insert": [
+            "Composer\\Config::disableProcessTimeout",
             "@php -r \"is_dir('fuzz/corpus/correctness-insert') || mkdir('fuzz/corpus/correctness-insert', 0777, true);\" --",
             "php-fuzzer fuzz fuzz/fuzz_correctness_insert.php fuzz/corpus/correctness-insert/"
         ],
         "fuzz:correctness:replace": [
+            "Composer\\Config::disableProcessTimeout",
             "@php -r \"is_dir('fuzz/corpus/correctness-replace') || mkdir('fuzz/corpus/correctness-replace', 0777, true);\" --",
             "php-fuzzer fuzz fuzz/fuzz_correctness_replace.php fuzz/corpus/correctness-replace/"
         ],
         "fuzz:correctness:select": [
+            "Composer\\Config::disableProcessTimeout",
             "@php -r \"is_dir('fuzz/corpus/correctness-select') || mkdir('fuzz/corpus/correctness-select', 0777, true);\" --",
             "php-fuzzer fuzz fuzz/fuzz_correctness_select.php fuzz/corpus/correctness-select/"
         ],
         "fuzz:correctness:update": [
+            "Composer\\Config::disableProcessTimeout",
             "@php -r \"is_dir('fuzz/corpus/correctness-update') || mkdir('fuzz/corpus/correctness-update', 0777, true);\" --",
             "php-fuzzer fuzz fuzz/fuzz_correctness_update.php fuzz/corpus/correctness-update/"
         ],
         "fuzz:robustness": [
+            "Composer\\Config::disableProcessTimeout",
             "@php -r \"is_dir('fuzz/corpus/robustness-execute') || mkdir('fuzz/corpus/robustness-execute', 0777, true);\" --",
             "php-fuzzer fuzz fuzz/fuzz_robustness_execute.php fuzz/corpus/robustness-execute/"
         ],
+        "fuzz:smoke": [
+            "Composer\\Config::disableProcessTimeout",
+            "@fuzz:robustness --max-runs=100",
+            "@fuzz:correctness:select --max-runs=100",
+            "@fuzz:correctness:insert --max-runs=100",
+            "@fuzz:correctness:replace --max-runs=100",
+            "@fuzz:correctness:update --max-runs=100",
+            "@fuzz:correctness:delete --max-runs=100"
+        ],
         "lint": [
+            "@autoload:check",
             "@format:check",
             "@phpstan",
             "@compat",
@@ -159,5 +169,9 @@
     "support": {
         "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-mysqli-adapter",
         "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/ztd-query-mysqli-adapter/"
+    },
+    "scripts-descriptions": {
+        "fuzz": "Run every fuzz target with the bounded smoke budget.",
+        "fuzz:smoke": "Run each fuzz target for up to 100 executions; individual fuzz:* commands run continuously."
     }
 }

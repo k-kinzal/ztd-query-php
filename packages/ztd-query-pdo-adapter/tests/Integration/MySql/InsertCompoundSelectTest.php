@@ -17,7 +17,14 @@ final class InsertCompoundSelectTest extends TestCase
 {
     public function testInsertPreservesEveryCompoundSelectBranch(): void
     {
-        [$databaseName, $rawPdo] = MySqlContainer::createTestDatabase();
+        $containerInstance = \Testcontainers\Testcontainers::run(MySqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE DATABASE `%s` CHARACTER SET utf8mb4', $databaseName));
+        $rawPdo->exec(sprintf('USE `%s`', $databaseName));
+
         $archive = 'prefix_' . bin2hex(random_bytes(8));
         $current = 'prefix_' . bin2hex(random_bytes(8));
         $combined = 'prefix_' . bin2hex(random_bytes(8));

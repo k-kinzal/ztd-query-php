@@ -32,6 +32,7 @@ env:
 
 defaults:
   run:
+    shell: bash
     working-directory: packages/ztd-query-mysqli-adapter
 
 jobs:
@@ -60,7 +61,7 @@ jobs:
           coverage: none
           ini-values: memory_limit=1G
       - name: Validate the Composer manifest
-        run: composer validate --strict --no-check-publish --no-check-all
+        run: composer validate --strict --no-check-publish
       - uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
           working-directory: packages/ztd-query-mysqli-adapter
@@ -68,6 +69,10 @@ jobs:
           composer-options: --prefer-dist
           require-lock-file: true
       - name: Check installed platform requirements
+        if: matrix.php == '8.1' || matrix.php == '8.2' || matrix.php == '8.3'
+        run: composer check-platform-reqs
+      - name: Check runtime platform requirements
+        if: matrix.php == '8.4' || matrix.php == '8.5'
         run: composer check-platform-reqs --no-dev
       - name: Unit, integration and documentation examples
         run: composer run-script --timeout=1800 test
@@ -87,7 +92,7 @@ jobs:
           coverage: none
           ini-values: memory_limit=1G
       - name: Validate the Composer manifest
-        run: composer validate --strict --no-check-publish --no-check-all
+        run: composer validate --strict --no-check-publish
       - uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
           working-directory: packages/ztd-query-mysqli-adapter
@@ -96,6 +101,8 @@ jobs:
           require-lock-file: true
       - name: Check installed platform requirements
         run: composer check-platform-reqs
+      - name: Check PSR-4 paths and ambiguous classes
+        run: composer autoload:check
       - name: Coding standards
         run: composer format:check
       - name: PHPStan (maximum level and toolkit rules)
@@ -109,7 +116,7 @@ jobs:
       - name: Dependency boundaries
         run: composer deptrac
 
-  benchmark:
+  bench:
     name: Benchmarks
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -124,7 +131,7 @@ jobs:
           coverage: none
           ini-values: memory_limit=1G
       - name: Validate the Composer manifest
-        run: composer validate --strict --no-check-publish --no-check-all
+        run: composer validate --strict --no-check-publish
       - uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
           working-directory: packages/ztd-query-mysqli-adapter
@@ -133,7 +140,17 @@ jobs:
           require-lock-file: true
       - name: Check installed platform requirements
         run: composer check-platform-reqs
-      - run: composer run-script --timeout=1200 bench
+      - name: Run the benchmarks
+        run: |
+          mkdir -p build/phpbench
+          composer run-script --timeout=1200 bench -- --dump-file=build/phpbench/results.xml | tee build/phpbench/report.txt
+      - name: Upload benchmark measurements
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ztd-query-mysqli-adapter-phpbench
+          path: packages/ztd-query-mysqli-adapter/build/phpbench/
+          if-no-files-found: ignore
 
   mutation:
     name: Mutation testing
@@ -151,7 +168,7 @@ jobs:
           ini-values: memory_limit=1G
           tools: infection:0.35.4
       - name: Validate the Composer manifest
-        run: composer validate --strict --no-check-publish --no-check-all
+        run: composer validate --strict --no-check-publish
       - uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
           working-directory: packages/ztd-query-mysqli-adapter
