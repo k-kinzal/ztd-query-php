@@ -88,46 +88,53 @@
 <span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-var">$STARTUP_TIMEOUT</span> = <span class="tok-num">300</span>;</span>
 <span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a></span>
 <span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a><span class="tok-com">     * @var bool|null</span></span>
-<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-var">$AUTO_REMOVE_ON_EXIT</span> = <span class="tok-id">true</span>;</span>
-<span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a></span>
-<span class="src-line" id="L55" data-diff="same"><a class="ln" href="#L55">55</a>    #[<span class="tok-id">Override</span>]</span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a><span class="tok-com">     * Parallel PHPUnit workers can select the same seeded port candidates.</span></span>
+<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a><span class="tok-com">     * @var null|int</span></span>
+<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-var">$STARTUP_CONFLICT_RETRY_ATTEMPTS</span> = <span class="tok-num">10</span>;</span>
+<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a></span>
+<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L58" data-diff="same"><a class="ln" href="#L58">58</a><span class="tok-com">     * @var bool|null</span></span>
+<span class="src-line" id="L59" data-diff="same"><a class="ln" href="#L59">59</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L60" data-diff="same"><a class="ln" href="#L60">60</a>    <span class="tok-kw">protected</span> <span class="tok-kw">static</span> <span class="tok-var">$AUTO_REMOVE_ON_EXIT</span> = <span class="tok-id">true</span>;</span>
+<span class="src-line" id="L61" data-diff="same"><a class="ln" href="#L61">61</a></span>
+<span class="src-line" id="L62" data-diff="same"><a class="ln" href="#L62">62</a>    #[<span class="tok-id">Override</span>]</span>
 <span class="src-line" data-diff="removed"><span class="ln">58</span>    <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">waitStrategy</span>(<span class="tok-var">$instance</span>): <span class="tok-id">PDOConnectWaitStrategy</span></span>
-<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>    <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">waitStrategy</span>(<span class="tok-var">$instance</span>): <span class="tok-id">LogMessageWaitStrategy</span></span>
-<span class="src-line" id="L57" data-diff="same"><a class="ln" href="#L57">57</a>    {</span>
-<span class="src-line" id="L58" data-diff="same"><a class="ln" href="#L58">58</a>        <span class="tok-kw">unset</span>(<span class="tok-var">$instance</span>);</span>
-<span class="src-line" id="L59" data-diff="same"><a class="ln" href="#L59">59</a></span>
+<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>    <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">waitStrategy</span>(<span class="tok-var">$instance</span>): <span class="tok-id">LogMessageWaitStrategy</span></span>
+<span class="src-line" id="L64" data-diff="same"><a class="ln" href="#L64">64</a>    {</span>
+<span class="src-line" id="L65" data-diff="same"><a class="ln" href="#L65">65</a>        <span class="tok-kw">unset</span>(<span class="tok-var">$instance</span>);</span>
+<span class="src-line" id="L66" data-diff="same"><a class="ln" href="#L66">66</a></span>
 <span class="src-line" data-diff="removed"><span class="ln">62</span>        <span class="tok-kw">return</span> (<span class="tok-kw">new</span> <span class="tok-id">PDOConnectWaitStrategy</span>())</span>
 <span class="src-line" data-diff="removed"><span class="ln">63</span>            -&gt;<span class="tok-id">withDsn</span>((<span class="tok-kw">new</span> <span class="tok-id">PostgreSqlDSN</span>())-&gt;<span class="tok-id">withDbname</span>(<span class="tok-str">&#039;ztd_test&#039;</span>))</span>
 <span class="src-line" data-diff="removed"><span class="ln">64</span>            -&gt;<span class="tok-id">withUsername</span>(<span class="tok-str">&#039;test&#039;</span>)</span>
 <span class="src-line" data-diff="removed"><span class="ln">65</span>            -&gt;<span class="tok-id">withPassword</span>(<span class="tok-str">&#039;test&#039;</span>)</span>
 <span class="src-line" data-diff="removed"><span class="ln">66</span>            -&gt;<span class="tok-id">withTimeoutSeconds</span>(<span class="tok-num">120</span>)</span>
 <span class="src-line" data-diff="removed"><span class="ln">67</span>            -&gt;<span class="tok-id">withRetryInterval</span>(<span class="tok-num">250000</span>);</span>
-<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>        <span class="tok-kw">return</span> (<span class="tok-kw">new</span> <span class="tok-id">LogMessageWaitStrategy</span>())</span>
-<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>            -&gt;<span class="tok-id">withPattern</span>(<span class="tok-str">&#039;\\[1\\].*database system is ready to accept connections&#039;</span>)</span>
-<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>            -&gt;<span class="tok-id">withTimeoutSeconds</span>(<span class="tok-num">120</span>);</span>
-<span class="src-line" id="L63" data-diff="same"><a class="ln" href="#L63">63</a>    }</span>
-<span class="src-line" id="L64" data-diff="same"><a class="ln" href="#L64">64</a></span>
-<span class="src-line" id="L65" data-diff="same"><a class="ln" href="#L65">65</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L66" data-diff="same"><a class="ln" href="#L66">66</a><span class="tok-com">     * After start.</span></span>
-<span class="src-line" id="L67" data-diff="same"><a class="ln" href="#L67">67</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L68" data-diff="same"><a class="ln" href="#L68">68</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L69" data-diff="same"><a class="ln" href="#L69">69</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">afterStart</span>(<span class="tok-var">$instance</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L70" data-diff="same"><a class="ln" href="#L70">70</a>    {</span>
-<span class="src-line" id="L71" data-diff="same"><a class="ln" href="#L71">71</a>        <span class="tok-var">$port</span> = <span class="tok-var">$instance</span>-&gt;<span class="tok-id">getMappedPort</span>(<span class="tok-num">5432</span>);</span>
-<span class="src-line" id="L72" data-diff="same"><a class="ln" href="#L72">72</a>        <span class="tok-var">$host</span> = <span class="tok-id">str_replace</span>(<span class="tok-str">&#039;localhost&#039;</span>, <span class="tok-str">&#039;127.0.0.1&#039;</span>, <span class="tok-var">$instance</span>-&gt;<span class="tok-id">getHost</span>());</span>
-<span class="src-line" id="L73" data-diff="same"><a class="ln" href="#L73">73</a></span>
-<span class="src-line" id="L74" data-diff="same"><a class="ln" href="#L74">74</a>        <span class="tok-var">$pdo</span> = <span class="tok-kw">new</span> <span class="tok-id">PDO</span>(</span>
-<span class="src-line" id="L75" data-diff="same"><a class="ln" href="#L75">75</a>            &quot;<span class="tok-str">pgsql:host=</span>{<span class="tok-var">$host</span>}<span class="tok-str">;port=</span>{<span class="tok-var">$port</span>}<span class="tok-str">;dbname=ztd_test</span>&quot;,</span>
-<span class="src-line" id="L76" data-diff="same"><a class="ln" href="#L76">76</a>            <span class="tok-str">&#039;test&#039;</span>,</span>
-<span class="src-line" id="L77" data-diff="same"><a class="ln" href="#L77">77</a>            <span class="tok-str">&#039;test&#039;</span>,</span>
-<span class="src-line" id="L78" data-diff="same"><a class="ln" href="#L78">78</a>            [<span class="tok-id">PDO</span>::<span class="tok-id">ATTR_ERRMODE</span> =&gt; <span class="tok-id">PDO</span>::<span class="tok-id">ERRMODE_EXCEPTION</span>, <span class="tok-id">PDO</span>::<span class="tok-id">ATTR_DEFAULT_FETCH_MODE</span> =&gt; <span class="tok-id">PDO</span>::<span class="tok-id">FETCH_ASSOC</span>]</span>
-<span class="src-line" id="L79" data-diff="same"><a class="ln" href="#L79">79</a>        );</span>
+<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a>        <span class="tok-kw">return</span> (<span class="tok-kw">new</span> <span class="tok-id">LogMessageWaitStrategy</span>())</span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>            -&gt;<span class="tok-id">withPattern</span>(<span class="tok-str">&#039;\\[1\\].*database system is ready to accept connections&#039;</span>)</span>
+<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>            -&gt;<span class="tok-id">withTimeoutSeconds</span>(<span class="tok-num">120</span>);</span>
+<span class="src-line" id="L70" data-diff="same"><a class="ln" href="#L70">70</a>    }</span>
+<span class="src-line" id="L71" data-diff="same"><a class="ln" href="#L71">71</a></span>
+<span class="src-line" id="L72" data-diff="same"><a class="ln" href="#L72">72</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L73" data-diff="same"><a class="ln" href="#L73">73</a><span class="tok-com">     * After start.</span></span>
+<span class="src-line" id="L74" data-diff="same"><a class="ln" href="#L74">74</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L75" data-diff="same"><a class="ln" href="#L75">75</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L76" data-diff="same"><a class="ln" href="#L76">76</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">afterStart</span>(<span class="tok-var">$instance</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L77" data-diff="same"><a class="ln" href="#L77">77</a>    {</span>
+<span class="src-line" id="L78" data-diff="same"><a class="ln" href="#L78">78</a>        <span class="tok-var">$port</span> = <span class="tok-var">$instance</span>-&gt;<span class="tok-id">getMappedPort</span>(<span class="tok-num">5432</span>);</span>
+<span class="src-line" id="L79" data-diff="same"><a class="ln" href="#L79">79</a>        <span class="tok-var">$host</span> = <span class="tok-id">str_replace</span>(<span class="tok-str">&#039;localhost&#039;</span>, <span class="tok-str">&#039;127.0.0.1&#039;</span>, <span class="tok-var">$instance</span>-&gt;<span class="tok-id">getHost</span>());</span>
 <span class="src-line" id="L80" data-diff="same"><a class="ln" href="#L80">80</a></span>
-<span class="src-line" id="L81" data-diff="same"><a class="ln" href="#L81">81</a>        <span class="tok-var">$instance</span>-&gt;<span class="tok-id">setData</span>(<span class="tok-var">$pdo</span>);</span>
-<span class="src-line" id="L82" data-diff="same"><a class="ln" href="#L82">82</a>    }</span>
-<span class="src-line" id="L83" data-diff="same"><a class="ln" href="#L83">83</a></span>
+<span class="src-line" id="L81" data-diff="same"><a class="ln" href="#L81">81</a>        <span class="tok-var">$pdo</span> = <span class="tok-kw">new</span> <span class="tok-id">PDO</span>(</span>
+<span class="src-line" id="L82" data-diff="same"><a class="ln" href="#L82">82</a>            &quot;<span class="tok-str">pgsql:host=</span>{<span class="tok-var">$host</span>}<span class="tok-str">;port=</span>{<span class="tok-var">$port</span>}<span class="tok-str">;dbname=ztd_test</span>&quot;,</span>
+<span class="src-line" id="L83" data-diff="same"><a class="ln" href="#L83">83</a>            <span class="tok-str">&#039;test&#039;</span>,</span>
+<span class="src-line" id="L84" data-diff="same"><a class="ln" href="#L84">84</a>            <span class="tok-str">&#039;test&#039;</span>,</span>
+<span class="src-line" id="L85" data-diff="same"><a class="ln" href="#L85">85</a>            [<span class="tok-id">PDO</span>::<span class="tok-id">ATTR_ERRMODE</span> =&gt; <span class="tok-id">PDO</span>::<span class="tok-id">ERRMODE_EXCEPTION</span>, <span class="tok-id">PDO</span>::<span class="tok-id">ATTR_DEFAULT_FETCH_MODE</span> =&gt; <span class="tok-id">PDO</span>::<span class="tok-id">FETCH_ASSOC</span>]</span>
+<span class="src-line" id="L86" data-diff="same"><a class="ln" href="#L86">86</a>        );</span>
+<span class="src-line" id="L87" data-diff="same"><a class="ln" href="#L87">87</a></span>
+<span class="src-line" id="L88" data-diff="same"><a class="ln" href="#L88">88</a>        <span class="tok-var">$instance</span>-&gt;<span class="tok-id">setData</span>(<span class="tok-var">$pdo</span>);</span>
+<span class="src-line" id="L89" data-diff="same"><a class="ln" href="#L89">89</a>    }</span>
+<span class="src-line" id="L90" data-diff="same"><a class="ln" href="#L90">90</a></span>
 <span class="src-line" data-diff="removed"><span class="ln">89</span>    <span class="tok-com">/**</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">90</span><span class="tok-com">     * Run the container and create an isolated test schema.</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">91</span><span class="tok-com">     *</span></span>
@@ -151,8 +158,8 @@
 <span class="src-line" data-diff="removed"><span class="ln">109</span></span>
 <span class="src-line" data-diff="removed"><span class="ln">110</span>        <span class="tok-kw">return</span> [<span class="tok-var">$schemaName</span>, <span class="tok-var">$pdo</span>];</span>
 <span class="src-line" data-diff="removed"><span class="ln">111</span>    }</span>
-<span class="src-line" id="L84" data-diff="same"><a class="ln" href="#L84">84</a>}</span>
-<span class="src-line" id="L85" data-diff="same"><a class="ln" href="#L85">85</a></span>
+<span class="src-line" id="L91" data-diff="same"><a class="ln" href="#L91">91</a>}</span>
+<span class="src-line" id="L92" data-diff="same"><a class="ln" href="#L92">92</a></span>
 </code></pre>
 </main>
 <footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
