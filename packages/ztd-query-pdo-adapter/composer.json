@@ -6,7 +6,7 @@
     "require": {
         "php": "^8.1",
         "ext-pdo": "*",
-        "k-kinzal/ztd-query-core": "@dev"
+        "k-kinzal/ztd-query-core": "dev-main"
     },
     "suggest": {
         "k-kinzal/ztd-query-mysql": "Required for MySQL support (PDO driver: mysql)",
@@ -14,49 +14,82 @@
         "k-kinzal/ztd-query-sqlite": "Required for SQLite support (PDO driver: sqlite)"
     },
     "require-dev": {
-        "friendsofphp/php-cs-fixer": "^3.92",
-        "infection/infection": "^0.28 || ^0.29 || ^0.30 || ^0.31 || ^0.32 || ^0.34.1",
-        "k-kinzal/sql-faker": "@dev",
-        "k-kinzal/sql-fixture": "@dev",
+        "brianium/paratest": "^6.11 || ^7",
+        "deptrac/deptrac": "^3.0",
+        "friendsofphp/php-cs-fixer": "^3.95.24",
+        "k-kinzal/php-ai-toolkit": "dev-main",
+        "k-kinzal/sql-faker": "dev-main",
+        "k-kinzal/sql-fixture": "dev-main",
         "k-kinzal/testcontainers-php": "^0.5.1",
-        "k-kinzal/ztd-query-mysql": "@dev",
-        "k-kinzal/ztd-query-postgres": "@dev",
-        "k-kinzal/ztd-query-sqlite": "@dev",
+        "k-kinzal/ztd-query-mysql": "dev-main",
+        "k-kinzal/ztd-query-postgres": "dev-main",
+        "k-kinzal/ztd-query-sqlite": "dev-main",
         "nikic/php-fuzzer": "^0.0.11",
+        "phpbench/phpbench": "^1.4",
+        "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
         "phpstan/phpstan": "^2.1",
-        "phpstan/phpstan-strict-rules": "^2.0",
-        "phpunit/phpunit": "^10.5 || ^11 || ^12 || ^13",
-        "k-kinzal/phpstan-custom-rules": "@dev",
-        "brianium/paratest": "^6.11 || ^7"
+        "phpunit/phpunit": "^10.5",
+        "squizlabs/php_codesniffer": "^4.0.4"
     },
     "repositories": [
         {
-            "type": "path",
-            "url": "../ztd-query-core"
+            "name": "php-ai-toolkit",
+            "type": "vcs",
+            "url": "https://github.com/k-kinzal/php-ai-toolkit.git"
         },
         {
             "type": "path",
-            "url": "../ztd-query-mysql"
+            "url": "../ztd-query-core",
+            "options": {
+                "versions": {
+                    "k-kinzal/ztd-query-core": "dev-main"
+                }
+            }
         },
         {
             "type": "path",
-            "url": "../ztd-query-sqlite"
+            "url": "../ztd-query-mysql",
+            "options": {
+                "versions": {
+                    "k-kinzal/ztd-query-mysql": "dev-main"
+                }
+            }
         },
         {
             "type": "path",
-            "url": "../ztd-query-postgres"
+            "url": "../ztd-query-sqlite",
+            "options": {
+                "versions": {
+                    "k-kinzal/ztd-query-sqlite": "dev-main"
+                }
+            }
         },
         {
             "type": "path",
-            "url": "../sql-faker"
+            "url": "../ztd-query-postgres",
+            "options": {
+                "versions": {
+                    "k-kinzal/ztd-query-postgres": "dev-main"
+                }
+            }
         },
         {
             "type": "path",
-            "url": "../sql-fixture"
+            "url": "../sql-faker",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-faker": "dev-main"
+                }
+            }
         },
         {
             "type": "path",
-            "url": "../phpstan-custom-rules"
+            "url": "../sql-fixture",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-fixture": "dev-main"
+                }
+            }
         }
     ],
     "autoload": {
@@ -67,16 +100,21 @@
     "autoload-dev": {
         "psr-4": {
             "Tests\\": "tests/",
-            "Fuzz\\": "fuzz/"
+            "Fuzz\\": "fuzz/",
+            "Bench\\": "bench/"
         }
     },
     "scripts": {
         "test": "paratest --processes=auto",
-        "test:unit": "phpunit tests/Unit/",
-        "test:integration": "phpunit tests/Integration/",
+        "test:unit": "phpunit --testsuite unit",
+        "test:integration": "phpunit --testsuite integration",
         "lint": [
             "@format:check",
-            "phpstan analyse --memory-limit=512M"
+            "@phpstan",
+            "@compat",
+            "@loc-guard",
+            "@tree-guard",
+            "@deptrac"
         ],
         "format": "php-cs-fixer fix --allow-risky=yes",
         "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
@@ -102,21 +140,49 @@
         "fuzz:correctness:insert": "php-fuzzer fuzz fuzz/fuzz_correctness_insert.php fuzz/corpus/correctness-insert/",
         "fuzz:correctness:update": "php-fuzzer fuzz fuzz/fuzz_correctness_update.php fuzz/corpus/correctness-update/",
         "fuzz:correctness:delete": "php-fuzzer fuzz fuzz/fuzz_correctness_delete.php fuzz/corpus/correctness-delete/",
-        "fuzz:correctness:sqlite:select": "php-fuzzer fuzz fuzz/fuzz_correctness_sqlite_select.php fuzz/corpus/correctness-select/",
-        "fuzz:correctness:sqlite:insert": "php-fuzzer fuzz fuzz/fuzz_correctness_sqlite_insert.php fuzz/corpus/correctness-insert/",
-        "fuzz:correctness:sqlite:update": "php-fuzzer fuzz fuzz/fuzz_correctness_sqlite_update.php fuzz/corpus/correctness-update/",
-        "fuzz:correctness:sqlite:delete": "php-fuzzer fuzz fuzz/fuzz_correctness_sqlite_delete.php fuzz/corpus/correctness-delete/",
+        "fuzz:correctness:sqlite:select": "php-fuzzer fuzz fuzz/fuzz_correctness_sqlite_select.php fuzz/corpus/correctness-sqlite-select/",
+        "fuzz:correctness:sqlite:insert": "php-fuzzer fuzz fuzz/fuzz_correctness_sqlite_insert.php fuzz/corpus/correctness-sqlite-insert/",
+        "fuzz:correctness:sqlite:update": "php-fuzzer fuzz fuzz/fuzz_correctness_sqlite_update.php fuzz/corpus/correctness-sqlite-update/",
+        "fuzz:correctness:sqlite:delete": "php-fuzzer fuzz fuzz/fuzz_correctness_sqlite_delete.php fuzz/corpus/correctness-sqlite-delete/",
         "fuzz:correctness:sqlite:alter": "php-fuzzer fuzz fuzz/fuzz_correctness_sqlite_alter.php fuzz/corpus/correctness-sqlite-alter/",
-        "fuzz:correctness:pg:select": "php-fuzzer fuzz fuzz/fuzz_correctness_pg_select.php fuzz/corpus/correctness-select/",
-        "fuzz:correctness:pg:insert": "php-fuzzer fuzz fuzz/fuzz_correctness_pg_insert.php fuzz/corpus/correctness-insert/",
-        "fuzz:correctness:pg:update": "php-fuzzer fuzz fuzz/fuzz_correctness_pg_update.php fuzz/corpus/correctness-update/",
-        "fuzz:correctness:pg:delete": "php-fuzzer fuzz fuzz/fuzz_correctness_pg_delete.php fuzz/corpus/correctness-delete/",
+        "fuzz:correctness:pg:select": "php-fuzzer fuzz fuzz/fuzz_correctness_pg_select.php fuzz/corpus/correctness-pg-select/",
+        "fuzz:correctness:pg:insert": "php-fuzzer fuzz fuzz/fuzz_correctness_pg_insert.php fuzz/corpus/correctness-pg-insert/",
+        "fuzz:correctness:pg:update": "php-fuzzer fuzz fuzz/fuzz_correctness_pg_update.php fuzz/corpus/correctness-pg-update/",
+        "fuzz:correctness:pg:delete": "php-fuzzer fuzz fuzz/fuzz_correctness_pg_delete.php fuzz/corpus/correctness-pg-delete/",
         "fuzz:correctness:pg:ctas": "php-fuzzer fuzz fuzz/fuzz_correctness_pg_ctas.php fuzz/corpus/correctness-pg-ctas/",
-        "infection": "infection --threads=max --show-mutations --no-progress"
+        "doctest": "phpunit --testsuite doctest",
+        "phpstan": "phpstan analyse --memory-limit=512M",
+        "compat": "phpcs",
+        "loc-guard": "loc-guard --config=loc.yaml",
+        "tree-guard": "tree-guard --config=tree.yaml",
+        "deptrac": [
+            "deptrac analyse --config-file=deptrac.yaml",
+            "deptrac debug:unassigned --config-file=deptrac.yaml"
+        ],
+        "bench": "phpbench run --report=aggregate",
+        "bench:quick": "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10",
+        "bench:full": "@bench",
+        "docgen": "cd ../.. && packages/ztd-query-pdo-adapter/vendor/bin/docgen --packages=packages/ztd-query-pdo-adapter --deptrac=\"$PWD/packages/ztd-query-pdo-adapter/deptrac.yaml\" --output=packages/ztd-query-pdo-adapter/build/docs --cache-dir=packages/ztd-query-pdo-adapter/build/docgen-cache --title=k-kinzal/ztd-query-pdo-adapter",
+        "docgen:serve": "@docgen --serve",
+        "docgen:diff": "@docgen --diff=origin/main --serve",
+        "docgen:fresh": "@docgen --no-cache",
+        "test:coverage": "phpunit --testsuite unit --coverage-xml build/coverage-xml",
+        "deptrac:debug": [
+            "deptrac debug:unassigned --config-file=deptrac.yaml",
+            "deptrac debug:unused --config-file=deptrac.yaml"
+        ]
     },
     "config": {
         "allow-plugins": {
-            "infection/extension-installer": true
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        },
+        "sort-packages": true,
+        "platform": {
+            "php": "8.1.0"
         }
+    },
+    "support": {
+        "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-pdo-adapter",
+        "docs": "https://k-kinzal.github.io/ztd-query-php/pdo/k-kinzal/ztd-query-pdo-adapter/"
     }
 }

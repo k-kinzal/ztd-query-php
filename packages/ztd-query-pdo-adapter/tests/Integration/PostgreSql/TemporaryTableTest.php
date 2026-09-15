@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Integration\PostgreSql;
 
+use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
-use Tests\Fixtures\PostgreSqlContainer;
+use Tests\Container\PostgreSqlContainer;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 
 /**
@@ -38,7 +39,7 @@ final class TemporaryTableTest extends TestCase
             self::assertNotFalse($statement);
             self::assertSame(
                 [['id' => 1, 'value' => 'a'], ['id' => 2, 'value' => 'c']],
-                $statement->fetchAll(\PDO::FETCH_ASSOC),
+                $statement->fetchAll(PDO::FETCH_ASSOC),
             );
         } finally {
             $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));

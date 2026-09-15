@@ -33,7 +33,7 @@ final class FullTextSearchTest extends TestCase
         self::assertSame([], $empty->fetchAll());
 
         self::assertSame(3, $ztdPdo->exec(
-            "INSERT INTO fts_articles (title, body) VALUES "
+            'INSERT INTO fts_articles (title, body) VALUES '
             . "('Search guide', 'exact search terms'), "
             . "('Body match', 'needle in body'), "
             . "('Other', 'unrelated')",

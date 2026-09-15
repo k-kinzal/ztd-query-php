@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Adapter\Pdo;
+namespace ZtdQuery\Adapter\Pdo\Driver;
 
 use PDO;
 use PDOException;
@@ -15,11 +15,18 @@ use ZtdQuery\Connection\StatementInterface;
  *
  * This class wraps a PDO instance and provides the minimal interface
  * required by the ZTD session for executing queries.
+ *
+ * @visibility ZtdQuery\Adapter\Pdo
  */
 final class PdoConnection implements ConnectionInterface
 {
     private PDO $pdo;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param PDO $pdo
+     */
     public function __construct(PDO $pdo)
     {
         $this->pdo = $pdo;

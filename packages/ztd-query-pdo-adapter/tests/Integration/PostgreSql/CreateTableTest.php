@@ -7,13 +7,15 @@ namespace Tests\Integration\PostgreSql;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
-use Tests\Fixtures\PostgreSqlContainer;
+use Tests\Container\PostgreSqlContainer;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 
 /**
  * @requires extension pdo_pgsql
  * @group integration
  * @group postgres
+ *
+ * @phpstan-type Row array<string, mixed>
  */
 #[CoversNothing]
 #[Large]
@@ -33,7 +35,7 @@ final class CreateTableTest extends TestCase
 
             $stmt = $ztdPdo->query("SELECT * FROM {$table} ORDER BY id");
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $ztdRows = $stmt->fetchAll();
 
             self::assertCount(1, $ztdRows);
@@ -60,7 +62,7 @@ final class CreateTableTest extends TestCase
 
             $stmt = $ztdPdo->query("SELECT * FROM {$table}");
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $ztdRows = $stmt->fetchAll();
 
             self::assertCount(1, $ztdRows);
@@ -80,7 +82,7 @@ final class CreateTableTest extends TestCase
             $ztdPdo->exec("CREATE TABLE {$table} (id INTEGER PRIMARY KEY, name TEXT NOT NULL)");
 
             $stmt = $rawPdo->prepare(
-                "SELECT table_name FROM information_schema.tables WHERE table_name = ? AND table_schema = current_schema()"
+                'SELECT table_name FROM information_schema.tables WHERE table_name = ? AND table_schema = current_schema()'
             );
             $stmt->execute([$table]);
             $rows = $stmt->fetchAll();
@@ -135,7 +137,7 @@ final class CreateTableTest extends TestCase
             );
 
             $typeStatement = $ztdPdo->query(
-                "SELECT pg_typeof(next_id)::text AS id_type, pg_typeof(name)::text AS name_type, "
+                'SELECT pg_typeof(next_id)::text AS id_type, pg_typeof(name)::text AS name_type, '
                 . "pg_typeof(score)::text AS score_type FROM {$copy} LIMIT 1"
             );
             self::assertNotFalse($typeStatement);

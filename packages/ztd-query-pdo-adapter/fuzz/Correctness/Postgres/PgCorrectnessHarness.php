@@ -8,11 +8,15 @@ use Faker\Factory;
 use Faker\Generator;
 use Fuzz\Correctness\SchemaDefinition;
 use PDO;
+use RuntimeException;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 use ZtdQuery\Config\UnknownSchemaBehavior;
 use ZtdQuery\Config\UnsupportedSqlBehavior;
 use ZtdQuery\Config\ZtdConfig;
 
+/**
+ * @phpstan-import-type Row from \Fuzz\Correctness\CorrectnessHarness
+ */
 final class PgCorrectnessHarness
 {
     private PDO $rawPdo;
@@ -23,9 +27,18 @@ final class PgCorrectnessHarness
     private string $pass;
     private Generator $faker;
 
-    /** @var array<int, array<string, mixed>> */
+    /** @var list<Row> */
     private array $fixtureRows = [];
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param string $host
+     * @param int $port
+     * @param string $dbName
+     * @param string $user
+     * @param string $pass
+     */
     public function __construct(string $host, int $port, string $dbName, string $user, string $pass)
     {
         $this->dsn = "pgsql:host=$host;port=$port;dbname=$dbName";
@@ -36,12 +49,13 @@ final class PgCorrectnessHarness
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
         $this->faker = Factory::create();
+        $this->faker->addProvider(new \Fuzz\Correctness\FixedDateTimeProvider());
     }
 
     /**
      * Set up both connections with the same schema and data.
      *
-     * @return array<int, array<string, mixed>> The fixture rows inserted
+     * @return list<Row> The fixture rows inserted
      */
     public function setup(SchemaDefinition $schema, int $seed, int $rowCount = 3): array
     {
@@ -79,7 +93,7 @@ final class PgCorrectnessHarness
                 if (is_bool($v)) {
                     return $v ? 'TRUE' : 'FALSE';
                 }
-                return "'" . str_replace("'", "''", is_scalar($v) ? $v : '') . "'";
+                return "'" . str_replace("'", "''", $v) . "'";
             }, array_values($row));
             $sql = sprintf(
                 'INSERT INTO "%s" (%s) VALUES (%s)',
@@ -93,6 +107,10 @@ final class PgCorrectnessHarness
         return $this->fixtureRows;
     }
 
+    /**
+     * Teardown.
+     *
+     */
     public function teardown(): void
     {
         if ($this->currentSchema !== null) {
@@ -103,36 +121,54 @@ final class PgCorrectnessHarness
         $this->fixtureRows = [];
     }
 
+    /**
+     * Answers raw pdo.
+     *
+     * @return PDO
+     */
     public function getRawPdo(): PDO
     {
         return $this->rawPdo;
     }
 
+    /**
+     * @throws RuntimeException
+     */
     public function getZtdPdo(): ZtdPdo
     {
         if ($this->ztdPdo === null) {
-            throw new \RuntimeException('ZtdPdo not initialized. Call setup() first.');
+            throw new RuntimeException('ZtdPdo not initialized. Call setup() first.');
         }
         return $this->ztdPdo;
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return list<Row>
      */
     public function getFixtureRows(): array
     {
         return $this->fixtureRows;
     }
 
+    /**
+     * Answers current schema.
+     *
+     * @return ?SchemaDefinition
+     */
     public function getCurrentSchema(): ?SchemaDefinition
     {
         return $this->currentSchema;
     }
 
     /**
-     * @return array<string, mixed>
+     * Answers one fixture row for the schema, made from the index so a run repeats.
+     *
+     * @param SchemaDefinition $schema The schema
+     * @param int $index Where to read
+     *
+     * @return Row What it answers
      */
-    private function generateFixtureRow(SchemaDefinition $schema, int $index): array
+    public function generateFixtureRow(SchemaDefinition $schema, int $index): array
     {
         $row = [];
         foreach ($schema->columns as $col) {
@@ -146,6 +182,8 @@ final class PgCorrectnessHarness
                 $row[$col] = $index + 1;
             } elseif (str_contains($colLower, 'real') || str_contains($colLower, 'float') || str_contains($colLower, 'double')) {
                 $row[$col] = round($this->faker->randomFloat(2, 0, 999), 2);
+            } elseif (str_contains($colLower, 'bit')) {
+                $row[$col] = $this->faker->regexify('[01]{8}');
             } elseif (str_contains($colLower, 'bool')) {
                 $row[$col] = $this->faker->boolean();
             } elseif (str_contains($colLower, 'smallint') || str_contains($colLower, 'int') || str_contains($colLower, 'quantity') || str_contains($colLower, 'bigint')) {
@@ -168,9 +206,13 @@ final class PgCorrectnessHarness
     }
 
     /**
-     * @param array<string, mixed> $row
+     * Writes one fixture row into the table both sides read.
+     *
+     * @param PDO $pdo The pdo
+     * @param string $table Table it belongs to
+     * @param Row $row Row to read
      */
-    private function insertRow(PDO $pdo, string $table, array $row): void
+    public function insertRow(PDO $pdo, string $table, array $row): void
     {
         $columns = array_keys($row);
         $placeholders = array_fill(0, count($columns), '?');

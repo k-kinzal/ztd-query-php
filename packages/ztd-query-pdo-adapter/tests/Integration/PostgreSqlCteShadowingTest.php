@@ -4,22 +4,18 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
+use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
-use Tests\Fixtures\PostgreSqlContainer;
+use Tests\Container\PostgreSqlContainer;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 
 /**
- * Integration tests for ZtdPdo with PostgreSQL: CTE shadowing behavior.
- *
- * PostgreSQL CTE shadowing replaces table references with CTE definitions
- * containing shadow data. Tables with no shadow data are shadowed with
- * empty CTEs (consistent with MySQL behavior).
- *
  * @requires extension pdo_pgsql
  * @group integration
  * @group postgres
+ * @phpstan-type Row array<string, mixed>
  */
 #[CoversNothing]
 #[Large]
@@ -44,7 +40,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
             $stmt = $ztdPdo->query(sprintf('SELECT * FROM %s ORDER BY id', $table));
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rows = $stmt->fetchAll();
 
             self::assertCount(0, $rows);
@@ -77,7 +73,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
             $stmt = $rawPdo->query(sprintf('SELECT * FROM %s', $table));
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rawRows = $stmt->fetchAll();
 
             self::assertCount(2, $rawRows);
@@ -110,7 +106,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
             $stmt = $ztdPdo->query(sprintf('SELECT name, age FROM %s ORDER BY name', $table));
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $ztdRows = $stmt->fetchAll();
 
             self::assertCount(1, $ztdRows);
@@ -148,7 +144,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
             $stmt = $ztdPdo->query(sprintf('SELECT name FROM %s ORDER BY name', $table));
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $ztdRows = $stmt->fetchAll();
 
             self::assertCount(2, $ztdRows);
@@ -188,7 +184,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
             $stmt = $rawPdo->query(sprintf('SELECT * FROM %s ORDER BY id', $table));
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rawRows = $stmt->fetchAll();
 
             self::assertCount(2, $rawRows);
@@ -225,7 +221,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
             $stmt = $rawPdo->query(sprintf('SELECT * FROM %s', $table));
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rawRows = $stmt->fetchAll();
 
             self::assertCount(3, $rawRows);
@@ -291,9 +287,9 @@ final class PostgreSqlCteShadowingTest extends TestCase
                 $table
             ));
 
-            $stmt = $ztdPdo->query(sprintf("SELECT name FROM %s WHERE age > 30 ORDER BY name", $table));
+            $stmt = $ztdPdo->query(sprintf('SELECT name FROM %s WHERE age > 30 ORDER BY name', $table));
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rows = $stmt->fetchAll();
 
             $names = array_column($rows, 'name');
@@ -327,7 +323,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
             $stmt = $rawPdo->query(sprintf("SELECT name, age FROM %s WHERE name = 'Alice'", $table));
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rawRows = $stmt->fetchAll();
 
             self::assertCount(1, $rawRows);
@@ -362,7 +358,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
             $stmt = $rawPdo->query(sprintf('SELECT name FROM %s ORDER BY name', $table));
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rawRows = $stmt->fetchAll();
 
             $names = array_column($rawRows, 'name');
@@ -392,7 +388,7 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
             $ids = $ztdPdo->query(sprintf("-- SELECT * FROM other_table WHERE DELETE UPDATE INSERT\nSELECT id FROM %s ORDER BY id", $table));
             self::assertNotFalse($ids);
-            self::assertSame([1], $ids->fetchAll(\PDO::FETCH_COLUMN));
+            self::assertSame([1], $ids->fetchAll(PDO::FETCH_COLUMN));
         } finally {
             $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
         }
@@ -505,25 +501,25 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
             $exists = $ztdPdo->query(sprintf("SELECT name FROM %s WHERE meta ? 'reviewed'", $table));
             self::assertNotFalse($exists);
-            self::assertSame(['Doc A'], $exists->fetchAll(\PDO::FETCH_COLUMN));
+            self::assertSame(['Doc A'], $exists->fetchAll(PDO::FETCH_COLUMN));
 
             $existsAny = $ztdPdo->query(sprintf("SELECT name FROM %s WHERE meta ?| array['reviewed', 'missing']", $table));
             self::assertNotFalse($existsAny);
-            self::assertSame(['Doc A'], $existsAny->fetchAll(\PDO::FETCH_COLUMN));
+            self::assertSame(['Doc A'], $existsAny->fetchAll(PDO::FETCH_COLUMN));
 
             $existsAll = $ztdPdo->query(sprintf("SELECT name FROM %s WHERE meta ?& array['author', 'reviewed']", $table));
             self::assertNotFalse($existsAll);
-            self::assertSame(['Doc A'], $existsAll->fetchAll(\PDO::FETCH_COLUMN));
+            self::assertSame(['Doc A'], $existsAll->fetchAll(PDO::FETCH_COLUMN));
 
             $preparedOperator = $ztdPdo->prepare(sprintf('SELECT name FROM %s WHERE meta ? ? ORDER BY name', $table));
             self::assertNotFalse($preparedOperator);
             self::assertTrue($preparedOperator->execute(['author']));
-            self::assertSame(['Doc A', 'Doc B'], $preparedOperator->fetchAll(\PDO::FETCH_COLUMN));
+            self::assertSame(['Doc A', 'Doc B'], $preparedOperator->fetchAll(PDO::FETCH_COLUMN));
 
             $preparedValue = $ztdPdo->prepare(sprintf('SELECT name FROM %s WHERE id = ?', $table));
             self::assertNotFalse($preparedValue);
             self::assertTrue($preparedValue->execute([2]));
-            self::assertSame(['Doc B'], $preparedValue->fetchAll(\PDO::FETCH_COLUMN));
+            self::assertSame(['Doc B'], $preparedValue->fetchAll(PDO::FETCH_COLUMN));
         } finally {
             $rawPdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
         }
@@ -562,9 +558,9 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
             $insert = $ztdPdo->prepare(sprintf('INSERT INTO %s (id, scores, payload) VALUES (?, ?::integer[], ?)', $table));
             self::assertNotFalse($insert);
-            self::assertTrue($insert->bindValue(1, 1, \PDO::PARAM_INT));
+            self::assertTrue($insert->bindValue(1, 1, PDO::PARAM_INT));
             self::assertTrue($insert->bindValue(2, '{90,85,92}'));
-            self::assertTrue($insert->bindValue(3, $payload, \PDO::PARAM_LOB));
+            self::assertTrue($insert->bindValue(3, $payload, PDO::PARAM_LOB));
             self::assertTrue($insert->execute());
             self::assertSame(1, $ztdPdo->exec(sprintf('INSERT INTO %s (id, scores, payload) VALUES (2, ARRAY[1,2,3], NULL)', $table)));
 

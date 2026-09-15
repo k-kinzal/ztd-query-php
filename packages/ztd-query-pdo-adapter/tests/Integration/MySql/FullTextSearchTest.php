@@ -8,7 +8,7 @@ use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
-use Tests\Fixtures\MySqlContainer;
+use Tests\Container\MySqlContainer;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 
 /**
@@ -31,7 +31,7 @@ final class FullTextSearchTest extends TestCase
             );
             $ztdPdo = ZtdPdo::fromPdo($rawPdo);
             self::assertSame(3, $ztdPdo->exec(
-                "INSERT INTO articles VALUES "
+                'INSERT INTO articles VALUES '
                 . "(1, 'Search guide', 'exact search terms'), "
                 . "(2, 'Body match', 'needle in body'), "
                 . "(3, 'Other', 'unrelated')",

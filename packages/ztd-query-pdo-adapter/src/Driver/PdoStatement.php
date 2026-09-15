@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace ZtdQuery\Adapter\Pdo;
+namespace ZtdQuery\Adapter\Pdo\Driver;
 
 use PDO;
 use PDOException;
@@ -17,11 +17,19 @@ use ZtdQuery\Platform\ResultColumnTypeResolver;
  *
  * This class wraps a PDOStatement and provides the minimal interface
  * required by the ZTD session for executing statements and fetching results.
+ *
+ *
+ * @visibility ZtdQuery\Adapter\Pdo
  */
 final class PdoStatement implements StatementInterface
 {
     private NativePdoStatement $statement;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param NativePdoStatement $statement
+     */
     public function __construct(NativePdoStatement $statement)
     {
         $this->statement = $statement;
@@ -48,11 +56,22 @@ final class PdoStatement implements StatementInterface
 
     /**
      * {@inheritDoc}
+     *
+     * @throws DatabaseException When the native driver returns an invalid row.
      */
     public function fetchAll(): array
     {
-        /** @var array<int, array<string, mixed>> $rows */
-        $rows = $this->statement->fetchAll(PDO::FETCH_ASSOC);
+        $rows = [];
+        while (($row = $this->statement->fetch(PDO::FETCH_ASSOC)) !== false) {
+            if (!is_array($row)) {
+                throw new DatabaseException('PDO returned a non-array row for FETCH_ASSOC.');
+            }
+            $columns = [];
+            foreach ($row as $name => $value) {
+                $columns["{$name}"] = $value;
+            }
+            $rows[] = $columns;
+        }
 
         return $rows;
     }

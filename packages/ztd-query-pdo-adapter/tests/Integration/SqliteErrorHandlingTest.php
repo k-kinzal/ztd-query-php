@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
+use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -14,9 +15,8 @@ use ZtdQuery\Config\UnsupportedSqlBehavior;
 use ZtdQuery\Config\ZtdConfig;
 
 /**
- * Integration tests for ZtdPdo error handling with SQLite.
- *
  * @requires extension pdo_sqlite
+ * @phpstan-type Row array<string, mixed>
  */
 #[CoversNothing]
 #[Large]
@@ -24,7 +24,7 @@ final class SqliteErrorHandlingTest extends TestCase
 {
     public function testLateTableUpdateAndDeletePassThroughByDefault(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $ztd = ZtdPdo::fromPdo($rawPdo);
 
         $rawPdo->exec('CREATE TABLE late_table (id INTEGER PRIMARY KEY, value TEXT NOT NULL)');
@@ -42,7 +42,7 @@ final class SqliteErrorHandlingTest extends TestCase
 
     public function testLateTableMutationRespectsExceptionBehavior(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $config = new ZtdConfig(
             UnsupportedSqlBehavior::Ignore,
             UnknownSchemaBehavior::Exception,
@@ -59,7 +59,7 @@ final class SqliteErrorHandlingTest extends TestCase
 
     public function testRowsFromLateTableInsertDoNotBypassPassthroughBehavior(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $ztd = ZtdPdo::fromPdo($rawPdo);
 
         $rawPdo->exec('CREATE TABLE late_table (id INTEGER PRIMARY KEY, value TEXT NOT NULL)');
@@ -74,7 +74,7 @@ final class SqliteErrorHandlingTest extends TestCase
 
     public function testUnsupportedSqlWithExceptionBehavior(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $rawPdo->exec('CREATE TABLE items (id INTEGER PRIMARY KEY AUTOINCREMENT, value TEXT NOT NULL)');
 
         $config = new ZtdConfig(UnsupportedSqlBehavior::Exception);
@@ -86,7 +86,7 @@ final class SqliteErrorHandlingTest extends TestCase
 
     public function testUnsupportedSqlWithIgnoreBehavior(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $rawPdo->exec('CREATE TABLE items (id INTEGER PRIMARY KEY AUTOINCREMENT, value TEXT NOT NULL)');
 
         $config = new ZtdConfig(UnsupportedSqlBehavior::Ignore);
@@ -98,7 +98,7 @@ final class SqliteErrorHandlingTest extends TestCase
 
     public function testUnsupportedSqlWithNoticeBehavior(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $rawPdo->exec('CREATE TABLE items (id INTEGER PRIMARY KEY AUTOINCREMENT, value TEXT NOT NULL)');
 
         $config = new ZtdConfig(UnsupportedSqlBehavior::Notice);
@@ -123,7 +123,7 @@ final class SqliteErrorHandlingTest extends TestCase
 
     public function testPreparedStatementInsertAndSelect(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $rawPdo->exec('CREATE TABLE items (id INTEGER PRIMARY KEY AUTOINCREMENT, value TEXT NOT NULL)');
 
         $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
@@ -134,7 +134,7 @@ final class SqliteErrorHandlingTest extends TestCase
         self::assertNotFalse($stmt);
 
         $stmt->execute(['test_value']);
-        /** @var list<array<string, mixed>> $rows */
+        /** @var list<Row> $rows */
         $rows = $stmt->fetchAll();
 
         self::assertCount(1, $rows);
@@ -143,7 +143,7 @@ final class SqliteErrorHandlingTest extends TestCase
 
     public function testPreparedStatementWithBindValue(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $rawPdo->exec('CREATE TABLE items (id INTEGER PRIMARY KEY AUTOINCREMENT, value TEXT NOT NULL)');
 
         $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
@@ -155,7 +155,7 @@ final class SqliteErrorHandlingTest extends TestCase
 
         $stmt->bindValue(':val', 'bound_value');
         $stmt->execute();
-        /** @var list<array<string, mixed>> $rows */
+        /** @var list<Row> $rows */
         $rows = $stmt->fetchAll();
 
         self::assertCount(1, $rows);

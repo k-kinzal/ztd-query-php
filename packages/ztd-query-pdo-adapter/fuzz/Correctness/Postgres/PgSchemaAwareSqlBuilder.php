@@ -7,15 +7,29 @@ namespace Fuzz\Correctness\Postgres;
 use Faker\Generator;
 use Fuzz\Correctness\SchemaDefinition;
 
+/**
+ * The pg schema aware sql builder.
+ */
 final class PgSchemaAwareSqlBuilder
 {
     private Generator $faker;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param Generator $faker
+     */
     public function __construct(Generator $faker)
     {
         $this->faker = $faker;
     }
 
+    /**
+     * Builds select.
+     *
+     * @param SchemaDefinition $schema
+     * @return string
+     */
     public function buildSelect(SchemaDefinition $schema): string
     {
         $table = $this->quoteIdentifier($schema->name);
@@ -40,11 +54,11 @@ final class PgSchemaAwareSqlBuilder
             case 3:
                 /** @var string $groupCol */
                 $groupCol = $this->faker->randomElement($columns);
-                return "SELECT COUNT(*) AS cnt, " . $this->quoteIdentifier($groupCol) . " FROM $table GROUP BY " . $this->quoteIdentifier($groupCol);
+                return 'SELECT COUNT(*) AS cnt, ' . $this->quoteIdentifier($groupCol) . " FROM $table GROUP BY " . $this->quoteIdentifier($groupCol);
             case 4:
                 /** @var string $col */
                 $col = $this->faker->randomElement($columns);
-                return "SELECT DISTINCT " . $this->quoteIdentifier($col) . " FROM $table";
+                return 'SELECT DISTINCT ' . $this->quoteIdentifier($col) . " FROM $table";
             case 5:
                 /** @var string $derivedColumn */
                 $derivedColumn = $this->faker->randomElement($columns);
@@ -55,6 +69,13 @@ final class PgSchemaAwareSqlBuilder
         }
     }
 
+    /**
+     * Builds join select.
+     *
+     * @param SchemaDefinition $left
+     * @param SchemaDefinition $right
+     * @return string
+     */
     public function buildJoinSelect(SchemaDefinition $left, SchemaDefinition $right): string
     {
         $leftTable = $this->quoteIdentifier($left->name);
@@ -83,6 +104,12 @@ final class PgSchemaAwareSqlBuilder
             . '"left_value" NULLS LAST, "right_value" NULLS LAST';
     }
 
+    /**
+     * Builds insert.
+     *
+     * @param SchemaDefinition $schema
+     * @return string
+     */
     public function buildInsert(SchemaDefinition $schema): string
     {
         $table = $this->quoteIdentifier($schema->name);
@@ -119,6 +146,12 @@ final class PgSchemaAwareSqlBuilder
         return "INSERT INTO $table ($colList) VALUES ($valList)";
     }
 
+    /**
+     * Builds update.
+     *
+     * @param SchemaDefinition $schema
+     * @return string
+     */
     public function buildUpdate(SchemaDefinition $schema): string
     {
         $table = $this->quoteIdentifier($schema->name);
@@ -150,6 +183,12 @@ final class PgSchemaAwareSqlBuilder
         return "UPDATE $table SET " . $this->quoteIdentifier($updateCol) . " = $newValue WHERE $whereClause";
     }
 
+    /**
+     * Builds delete.
+     *
+     * @param SchemaDefinition $schema
+     * @return string
+     */
     public function buildDelete(SchemaDefinition $schema): string
     {
         $table = $this->quoteIdentifier($schema->name);
@@ -160,17 +199,31 @@ final class PgSchemaAwareSqlBuilder
         return "DELETE FROM $table WHERE $whereClause";
     }
 
-    private function buildPkWhere(SchemaDefinition $schema): string
+    /**
+     * Answers a WHERE that names one row by its primary key.
+     *
+     * @param SchemaDefinition $schema The schema
+     *
+     * @return string What it answers
+     */
+    public function buildPkWhere(SchemaDefinition $schema): string
     {
         $conditions = [];
         foreach ($schema->primaryKeys as $pk) {
             $literal = $this->generateLiteral($pk);
             $conditions[] = $this->quoteIdentifier($pk) . " = $literal";
         }
-        return implode(' AND ', $conditions);
+        return $conditions === [] ? '1 = 1' : implode(' AND ', $conditions);
     }
 
-    private function buildGroupedSubqueryWhere(SchemaDefinition $schema): string
+    /**
+     * Answers a WHERE built from a grouped subquery.
+     *
+     * @param SchemaDefinition $schema The schema
+     *
+     * @return string What it answers
+     */
+    public function buildGroupedSubqueryWhere(SchemaDefinition $schema): string
     {
         $table = $this->quoteIdentifier($schema->name);
         $key = $this->quoteIdentifier($schema->primaryKeys[0] ?? $schema->columns[0]);
@@ -179,9 +232,13 @@ final class PgSchemaAwareSqlBuilder
     }
 
     /**
-     * @param array<int, string> $columns
+     * Answers a column list drawn from the ones the table has.
+     *
+     * @param array<int, string> $columns Columns to read
+     *
+     * @return string What it answers
      */
-    private function randomColumns(array $columns): string
+    public function randomColumns(array $columns): string
     {
         $count = $this->faker->numberBetween(1, count($columns));
         /** @var array<int, string> $selected */
@@ -189,7 +246,14 @@ final class PgSchemaAwareSqlBuilder
         return implode(', ', array_map(fn ($c) => $this->quoteIdentifier($c), $selected));
     }
 
-    private function generateLiteral(string $column): string
+    /**
+     * Answers a literal the column can hold.
+     *
+     * @param string $column Column to read
+     *
+     * @return string What it answers
+     */
+    public function generateLiteral(string $column): string
     {
         $col = strtolower($column);
 
@@ -217,7 +281,14 @@ final class PgSchemaAwareSqlBuilder
         return "'" . str_replace("'", "''", $str) . "'";
     }
 
-    private function isTextColumn(string $column): bool
+    /**
+     * Answers whether the column holds text.
+     *
+     * @param string $column Column to read
+     *
+     * @return bool What it answers
+     */
+    public function isTextColumn(string $column): bool
     {
         $column = strtolower($column);
 
@@ -229,7 +300,14 @@ final class PgSchemaAwareSqlBuilder
             || str_contains($column, 'char');
     }
 
-    private function quoteIdentifier(string $name): string
+    /**
+     * Answers the name as the dialect quotes it.
+     *
+     * @param string $name Name to read
+     *
+     * @return string What it answers
+     */
+    public function quoteIdentifier(string $name): string
     {
         return '"' . str_replace('"', '""', $name) . '"';
     }

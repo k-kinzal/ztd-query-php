@@ -14,8 +14,11 @@ use Fuzz\Correctness\Sqlite\SqliteCorrectnessHarness;
 use Fuzz\Correctness\Sqlite\Target\AlterCorrectnessTarget;
 
 $faker = Factory::create();
+$faker->addProvider(new Fuzz\Correctness\FixedDateTimeProvider());
 $harness = new SqliteCorrectnessHarness();
 $target = new AlterCorrectnessTarget($harness, $faker, new ResultComparator());
 
-/** @var \PhpFuzzer\Config $config */
-$config->setTarget(\Closure::fromCallable($target));
+/** @var PhpFuzzer\Config $config */
+$config->setAllowedExceptions([]);
+$config->setMaxLen(1024);
+$config->setTarget(Closure::fromCallable($target));

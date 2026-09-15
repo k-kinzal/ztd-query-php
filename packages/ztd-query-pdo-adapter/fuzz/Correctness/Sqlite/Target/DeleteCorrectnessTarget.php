@@ -17,6 +17,9 @@ use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 
+/**
+ * @phpstan-import-type Row from \Fuzz\Correctness\CorrectnessHarness
+ */
 final class DeleteCorrectnessTarget
 {
     private SqliteCorrectnessHarness $harness;
@@ -24,6 +27,13 @@ final class DeleteCorrectnessTarget
     private SqliteSchemaAwareSqlBuilder $sqlBuilder;
     private Generator $faker;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param SqliteCorrectnessHarness $harness
+     * @param SqliteSchemaAwareSqlBuilder $sqlBuilder
+     * @param Generator $faker
+     */
     public function __construct(
         SqliteCorrectnessHarness $harness,
         SqliteSchemaAwareSqlBuilder $sqlBuilder,
@@ -35,6 +45,9 @@ final class DeleteCorrectnessTarget
         $this->faker = $faker;
     }
 
+    /**
+     * @throws Error
+     */
     public function __invoke(string $input): void
     {
         $seed = crc32(str_pad($input, 4, "\0"));
@@ -54,8 +67,23 @@ final class DeleteCorrectnessTarget
             }
 
             try {
-                $this->harness->getZtdPdo()->exec($sql);
+                $snapshot = \Fuzz\Correctness\PhysicalTableSnapshot::capture($this->harness->getRawPdo(), $schema->name);
+                try {
+                    $this->harness->getZtdPdo()->exec($sql);
+                } finally {
+                    \Fuzz\Correctness\PhysicalTableSnapshot::assertUnchanged($this->harness->getRawPdo(), $schema->name, $snapshot, $sql, $seed);
+                }
             } catch (UnsupportedSqlException | UnknownSchemaException | DatabaseException | PDOException $e) {
+                if ($schema->primaryKeys === []) {
+                    for ($cause = $e; $cause !== null; $cause = $cause->getPrevious()) {
+                        if ($cause instanceof \ZtdQuery\Exception\MissingPrimaryKeyException) {
+                            return;
+                        }
+                    }
+                }
+                if ($schema->primaryKeys === [] && $e->getPrevious()?->getPrevious() instanceof \ZtdQuery\Exception\MissingPrimaryKeyException) {
+                    return;
+                }
                 if ($rawError !== null) {
                     return;
                 }
@@ -63,7 +91,7 @@ final class DeleteCorrectnessTarget
             }
 
             if ($rawError !== null) {
-                return;
+                throw new Error("ZTD DELETE accepted a native-rejected query\nSeed: $seed\nSQL: $sql\n" . $rawError->getMessage(), 0, $rawError);
             }
 
             $this->compareTableState($schema, $seed);
@@ -72,13 +100,21 @@ final class DeleteCorrectnessTarget
         }
     }
 
-    private function compareTableState(SchemaDefinition $schema, int $seed): void
+    /**
+     * Reads the table on both sides and fails if they disagree.
+     *
+     * @param SchemaDefinition $schema The schema
+     * @param int $seed The seed
+     *
+     * @throws Error
+     */
+    public function compareTableState(SchemaDefinition $schema, int $seed): void
     {
         $rawRows = $this->fetchAll($this->harness->getRawPdo(), $schema->name);
 
         $selectSql = sprintf('SELECT * FROM "%s"', str_replace('"', '""', $schema->name));
         $stmt = $this->harness->getZtdPdo()->query($selectSql);
-        /** @var array<int, array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt !== false ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
 
         if (!$this->comparator->compareRows($rawRows, $ztdRows, $schema->primaryKeys)) {
@@ -86,19 +122,24 @@ final class DeleteCorrectnessTarget
                 "DELETE table state mismatch\n" .
                 "Seed: $seed\n" .
                 "Schema: {$schema->name}\n" .
-                "Raw row count: " . count($rawRows) . "\n" .
-                "ZTD row count: " . count($ztdRows)
+                'Raw row count: ' . count($rawRows) . "\n" .
+                'ZTD row count: ' . count($ztdRows)
             );
         }
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * Answers every row the connection reads.
+     *
+     * @param PDO $pdo The pdo
+     * @param string $table Table it belongs to
+     *
+     * @return list<Row> What it answers
      */
-    private function fetchAll(PDO $pdo, string $table): array
+    public function fetchAll(PDO $pdo, string $table): array
     {
         $stmt = $pdo->query(sprintf('SELECT * FROM "%s"', str_replace('"', '""', $table)));
-        /** @var array<int, array<string, mixed>> $rows */
+        /** @var list<Row> $rows */
         $rows = $stmt !== false ? $stmt->fetchAll(PDO::FETCH_ASSOC) : [];
         return $rows;
     }

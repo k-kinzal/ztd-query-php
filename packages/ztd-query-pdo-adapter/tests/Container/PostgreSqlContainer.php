@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Tests\Fixtures;
+namespace Tests\Container;
 
+use Override;
+use PDO;
 use Testcontainers\Containers\GenericContainer\GenericContainer;
 use Testcontainers\Containers\WaitStrategy\PDO\PDOConnectWaitStrategy;
 use Testcontainers\Hook\AfterStartHook;
@@ -52,6 +54,7 @@ final class PostgreSqlContainer extends GenericContainer
      */
     protected static $AUTO_REMOVE_ON_EXIT = true;
 
+    #[Override]
     protected function waitStrategy($instance): PDOConnectWaitStrategy
     {
         unset($instance);
@@ -64,16 +67,20 @@ final class PostgreSqlContainer extends GenericContainer
             ->withRetryInterval(250000);
     }
 
+    /**
+     * After start.
+     *
+     */
     public function afterStart($instance): void
     {
         $port = $instance->getMappedPort(5432);
         $host = str_replace('localhost', '127.0.0.1', $instance->getHost());
 
-        $pdo = new \PDO(
+        $pdo = new PDO(
             "pgsql:host={$host};port={$port};dbname=ztd_test",
             'test',
             'test',
-            [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]
         );
 
         $instance->setData($pdo);
@@ -82,14 +89,19 @@ final class PostgreSqlContainer extends GenericContainer
     /**
      * Run the container and create an isolated test schema.
      *
-     * @return array{string, \PDO}
+     * @return array{string, PDO}
      */
     public static function createTestSchema(): array
     {
-        $instance = Testcontainers::run(self::class);
-
-        /** @var \PDO $pdo */
-        $pdo = $instance->getData(\PDO::class);
+        $host = getenv('PG_HOST');
+        if ($host !== false) {
+            $port = getenv('PG_PORT');
+            $pdo = new PDO(sprintf('pgsql:host=%s;port=%d;dbname=ztd_test', $host, $port === false ? 5432 : (int) $port), 'test', 'test', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
+        } else {
+            $instance = Testcontainers::run(self::class);
+            /** @var PDO $pdo */
+            $pdo = $instance->getData(PDO::class);
+        }
 
         $schemaName = 'ztd_' . bin2hex(random_bytes(8));
         $pdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));

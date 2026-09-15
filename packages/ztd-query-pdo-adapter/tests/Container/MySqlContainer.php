@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Tests\Fixtures;
+namespace Tests\Container;
 
+use Override;
+use PDO;
 use Testcontainers\Containers\GenericContainer\GenericContainer;
 use Testcontainers\Containers\WaitStrategy\PDO\MySQLDSN;
 use Testcontainers\Containers\WaitStrategy\PDO\PDOConnectWaitStrategy;
@@ -51,6 +53,7 @@ final class MySqlContainer extends GenericContainer
      */
     protected static $AUTO_REMOVE_ON_EXIT = true;
 
+    #[Override]
     protected function waitStrategy($instance): PDOConnectWaitStrategy
     {
         unset($instance);
@@ -63,16 +66,20 @@ final class MySqlContainer extends GenericContainer
             ->withRetryInterval(250000);
     }
 
+    /**
+     * After start.
+     *
+     */
     public function afterStart($instance): void
     {
         $port = $instance->getMappedPort(3306);
         $host = str_replace('localhost', '127.0.0.1', $instance->getHost());
 
-        $pdo = new \PDO(
+        $pdo = new PDO(
             "mysql:host={$host};port={$port};charset=utf8mb4",
             'root',
             'root',
-            [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]
         );
 
         $instance->setData($pdo);
@@ -81,14 +88,19 @@ final class MySqlContainer extends GenericContainer
     /**
      * Run the container and create an isolated test database.
      *
-     * @return array{string, \PDO}
+     * @return array{string, PDO}
      */
     public static function createTestDatabase(): array
     {
-        $instance = Testcontainers::run(self::class);
-
-        /** @var \PDO $pdo */
-        $pdo = $instance->getData(\PDO::class);
+        $host = getenv('MYSQL_HOST');
+        if ($host !== false) {
+            $port = getenv('MYSQL_PORT');
+            $pdo = new PDO(sprintf('mysql:host=%s;port=%d;charset=utf8mb4', $host, $port === false ? 3306 : (int) $port), 'root', 'root', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
+        } else {
+            $instance = Testcontainers::run(self::class);
+            /** @var PDO $pdo */
+            $pdo = $instance->getData(PDO::class);
+        }
 
         $databaseName = 'ztd_' . bin2hex(random_bytes(8));
         $pdo->exec(sprintf('CREATE DATABASE `%s` CHARACTER SET utf8mb4', $databaseName));

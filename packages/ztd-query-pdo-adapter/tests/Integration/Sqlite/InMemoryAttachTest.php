@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Sqlite;
 
+use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 
 /**
@@ -18,9 +20,9 @@ final class InMemoryAttachTest extends TestCase
 {
     public function testInMemoryDatabaseIsAttachedToPhysicalConnection(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        $rawPdo = new PDO('sqlite::memory:', null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
         $ztdPdo = ZtdPdo::fromPdo($rawPdo);
 
@@ -33,12 +35,12 @@ final class InMemoryAttachTest extends TestCase
 
     public function testPersistentDatabaseAttachIsRejected(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+        $rawPdo = new PDO('sqlite::memory:', null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
         ]);
         $ztdPdo = ZtdPdo::fromPdo($rawPdo);
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
 
         $ztdPdo->exec("ATTACH 'test.sqlite' AS db2");
     }

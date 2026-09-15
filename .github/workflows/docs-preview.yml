@@ -9,6 +9,8 @@ on:
       - 'packages/ztd-query-mysqli-adapter/**'
       - 'packages/ztd-query-mysql/**'
       - 'packages/sql-fixture/**'
+      - 'packages/ztd-query-pdo-adapter/**'
+      - 'packages/ztd-query-sqlite/**'
       - '.github/workflows/docs.yml'
       - '.github/workflows/docs-preview.yml'
     types:
@@ -49,7 +51,7 @@ jobs:
         with:
           # The locked ParaTest version supports PHP 8.1 through 8.3.
           php-version: '8.3'
-          extensions: mbstring, pcntl, gd, mysqli, pdo_mysql
+          extensions: mbstring, pcntl, gd, mysqli, pdo, pdo_mysql, pdo_pgsql, pdo_sqlite
           coverage: pcov
 
       - name: Install dependencies
@@ -73,6 +75,17 @@ jobs:
 
       - name: Check core platform requirements
         run: composer --working-dir=packages/ztd-query-core check-platform-reqs
+
+      - name: Install PDO adapter dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+        with:
+          working-directory: packages/ztd-query-pdo-adapter
+          dependency-versions: locked
+          composer-options: --prefer-dist
+          require-lock-file: true
+
+      - name: Check PDO adapter platform requirements
+        run: composer --working-dir=packages/ztd-query-pdo-adapter check-platform-reqs
 
       - name: Install PostgreSQL dependencies
         uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
@@ -102,11 +115,12 @@ jobs:
           path: |
             packages/sql-faker/build/docgen-cache
             packages/ztd-query-core/build/docgen-cache
+            packages/ztd-query-pdo-adapter/build/docgen-cache
             packages/ztd-query-postgres/build/docgen-cache
             packages/ztd-query-mysqli-adapter/build/docgen-cache
-          key: sql-faker-docgen-${{ runner.os }}-${{ hashFiles('packages/sql-faker/composer.lock', 'packages/ztd-query-core/composer.lock', 'packages/ztd-query-postgres/composer.lock', 'packages/ztd-query-mysqli-adapter/composer.lock') }}-${{ github.sha }}
+          key: sql-faker-docgen-${{ runner.os }}-${{ hashFiles('packages/sql-faker/composer.lock', 'packages/ztd-query-core/composer.lock', 'packages/ztd-query-pdo-adapter/composer.lock', 'packages/ztd-query-postgres/composer.lock', 'packages/ztd-query-mysqli-adapter/composer.lock') }}-${{ github.sha }}
           restore-keys: |
-            sql-faker-docgen-${{ runner.os }}-${{ hashFiles('packages/sql-faker/composer.lock', 'packages/ztd-query-core/composer.lock', 'packages/ztd-query-postgres/composer.lock', 'packages/ztd-query-mysqli-adapter/composer.lock') }}-
+            sql-faker-docgen-${{ runner.os }}-${{ hashFiles('packages/sql-faker/composer.lock', 'packages/ztd-query-core/composer.lock', 'packages/ztd-query-pdo-adapter/composer.lock', 'packages/ztd-query-postgres/composer.lock', 'packages/ztd-query-mysqli-adapter/composer.lock') }}-
             sql-faker-docgen-${{ runner.os }}-
 
       - name: Generate the coverage report the preview reads
@@ -114,6 +128,9 @@ jobs:
 
       - name: Generate core coverage
         run: composer --working-dir=packages/ztd-query-core test -- --coverage-xml build/coverage-xml
+
+      - name: Generate PDO adapter coverage
+        run: composer --working-dir=packages/ztd-query-pdo-adapter test:coverage
 
       - name: Generate PostgreSQL coverage
         run: composer --working-dir=packages/ztd-query-postgres test -- --coverage-xml build/coverage-xml
@@ -133,6 +150,8 @@ jobs:
             --base-url="https://${repository%%/*}.github.io/${repository#*/}/pr/${PR_NUMBER}"
           composer --working-dir=packages/ztd-query-core docgen -- --coverage=packages/ztd-query-core/build/coverage-xml --diff="${BASE_SHA}" \
             --base-url="https://${repository%%/*}.github.io/${repository#*/}/pr/${PR_NUMBER}/core"
+          composer --working-dir=packages/ztd-query-pdo-adapter docgen -- --coverage=packages/ztd-query-pdo-adapter/build/coverage-xml --diff="${BASE_SHA}" \
+            --base-url="https://${repository%%/*}.github.io/${repository#*/}/pr/${PR_NUMBER}/pdo"
           composer --working-dir=packages/ztd-query-postgres docgen -- --coverage=packages/ztd-query-postgres/build/coverage-xml --diff="${BASE_SHA}" \
             --base-url="https://${repository%%/*}.github.io/${repository#*/}/pr/${PR_NUMBER}/ztd-query-postgres"
           composer --working-dir=packages/ztd-query-mysqli-adapter docgen -- --coverage=packages/ztd-query-mysqli-adapter/build/coverage-xml --diff="${BASE_SHA}" \
@@ -153,9 +172,11 @@ jobs:
           set -euo pipefail
 
           mkdir -p "pr/${PR_NUMBER}"
-          rsync -a --checksum --delete --exclude '/core/' --exclude '/ztd-query-postgres/' --exclude '/mysqli/' ../packages/sql-faker/build/docs/ "pr/${PR_NUMBER}/"
+          rsync -a --checksum --delete --exclude '/core/' --exclude '/pdo/' --exclude '/mysqli/' --exclude '/ztd-query-postgres/' ../packages/sql-faker/build/docs/ "pr/${PR_NUMBER}/"
           mkdir -p "pr/${PR_NUMBER}/core"
           rsync -a --checksum --delete ../packages/ztd-query-core/build/docs/ "pr/${PR_NUMBER}/core/"
+          mkdir -p "pr/${PR_NUMBER}/pdo"
+          rsync -a --checksum --delete ../packages/ztd-query-pdo-adapter/build/docs/ "pr/${PR_NUMBER}/pdo/"
           mkdir -p "pr/${PR_NUMBER}/ztd-query-postgres"
           rsync -a --checksum --delete ../packages/ztd-query-postgres/build/docs/ "pr/${PR_NUMBER}/ztd-query-postgres/"
           mkdir -p "pr/${PR_NUMBER}/mysqli"
@@ -209,7 +230,7 @@ jobs:
           comment_file="$(mktemp)"
           cat > "$comment_file" <<EOF
           <!-- sql-faker-docgen-preview -->
-          **Documentation previews:** [SQL Faker](${preview_url}), [ZTD Query Core](${preview_url}core/), [ZTD Query PostgreSQL](${preview_url}ztd-query-postgres/), [MySQLi Adapter](${preview_url}mysqli/)
+          **Documentation previews:** [SQL Faker](${preview_url}), [ZTD Query Core](${preview_url}core/), [ZTD Query PostgreSQL](${preview_url}ztd-query-postgres/), [MySQLi Adapter](${preview_url}mysqli/), [PDO Adapter](${preview_url}pdo/)
 
           Generated in diff mode against ${BASE_REF}. Use **Off**, **Diff**, or
           **Changes** at the top of the page to select the documentation view.

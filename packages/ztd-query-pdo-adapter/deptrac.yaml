@@ -1,0 +1,42 @@
+# NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
+deptrac:
+  paths: [./src]
+  analyser:
+    types: [class, use]
+  layers:
+    - name: Adapter
+      collectors:
+        - type: directory
+          value: 'src/(ZtdPdo|ZtdPdoStatement)\.php$'
+    - name: Session
+      collectors:
+        - type: directory
+          value: 'src/Session/'
+        # The exception is a consumer contract raised by session operations.
+        - type: directory
+          value: 'src/ZtdPdoException\.php$'
+    - name: Driver
+      collectors:
+        - type: directory
+          value: 'src/Driver/'
+    - name: Core
+      collectors:
+        - type: bool
+          must:
+            - type: classLike
+              value: '^ZtdQuery\\'
+          must_not:
+            - type: classLike
+              value: '^ZtdQuery\\Adapter\\'
+            - type: classLike
+              value: '^ZtdQuery\\Platform\\(MySql|Postgres|Sqlite)\\'
+    - name: Platforms
+      collectors:
+        - type: classLike
+          value: '^ZtdQuery\\Platform\\(MySql|Postgres|Sqlite)\\'
+  ruleset:
+    Adapter: [Session, Core]
+    Session: [Driver, Core, Platforms]
+    Driver: [Core]
+    Core: []
+    Platforms: []

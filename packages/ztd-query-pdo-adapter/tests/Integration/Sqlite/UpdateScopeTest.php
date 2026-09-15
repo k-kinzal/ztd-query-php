@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\Sqlite;
 
+use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -18,9 +19,9 @@ final class UpdateScopeTest extends TestCase
 {
     public function testUpdateFromReadsJoinedShadowRows(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        $rawPdo = new PDO('sqlite::memory:', null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
         $rawPdo->exec('CREATE TABLE native_inventory (id INTEGER PRIMARY KEY, quantity INTEGER)');
         $rawPdo->exec('CREATE TABLE native_incoming (id INTEGER PRIMARY KEY, delta INTEGER)');
@@ -44,9 +45,9 @@ final class UpdateScopeTest extends TestCase
 
     public function testUpdateTargetAliasQualifiesSelectionScope(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        $rawPdo = new PDO('sqlite::memory:', null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
         $rawPdo->exec('CREATE TABLE native_items (id INTEGER PRIMARY KEY, quantity INTEGER)');
         $rawPdo->exec('CREATE TABLE shadow_items (id INTEGER PRIMARY KEY, quantity INTEGER)');

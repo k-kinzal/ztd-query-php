@@ -7,12 +7,16 @@ namespace Fuzz\Correctness;
 use Faker\Factory;
 use Faker\Generator;
 use PDO;
+use RuntimeException;
 use SqlFixture\FixtureProvider;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 use ZtdQuery\Config\UnknownSchemaBehavior;
 use ZtdQuery\Config\UnsupportedSqlBehavior;
 use ZtdQuery\Config\ZtdConfig;
 
+/**
+ * @phpstan-type Row array<string, bool|float|int|string|null>
+ */
 final class CorrectnessHarness
 {
     private PDO $rawPdo;
@@ -24,9 +28,18 @@ final class CorrectnessHarness
     private Generator $faker;
     private FixtureProvider $fixtureProvider;
 
-    /** @var array<int, array<string, mixed>> */
+    /** @var list<Row> */
     private array $fixtureRows = [];
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param string $host
+     * @param int $port
+     * @param string $dbName
+     * @param string $user
+     * @param string $pass
+     */
     public function __construct(string $host, int $port, string $dbName, string $user, string $pass)
     {
         $this->dsn = "mysql:host=$host;port=$port;dbname=$dbName;charset=utf8mb4";
@@ -37,13 +50,39 @@ final class CorrectnessHarness
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
         $this->faker = Factory::create();
+        $this->faker->addProvider(new FixedDateTimeProvider());
         $this->fixtureProvider = new FixtureProvider($this->faker);
+    }
+
+    /**
+     * Answers a generated row the harness can write and compare.
+     *
+     * The generator answers whatever the column's type maps to; a row both
+     * sides can be asked about holds nothing but scalars and nulls.
+     *
+     * @param string $createTableSql Declaration of the table to build a row for
+     *
+     * @return Row The row, keyed by column
+     *
+     * @throws RuntimeException When the generator answers something no comparison can read
+     */
+    public function fixtureRow(string $createTableSql): array
+    {
+        $row = [];
+        foreach ($this->fixtureProvider->fixture($createTableSql) as $column => $value) {
+            if ($value !== null && !is_scalar($value)) {
+                throw new RuntimeException(sprintf('The fixture generator answered %s for column "%s", which no comparison can read.', get_debug_type($value), $column));
+            }
+            $row[$column] = $value;
+        }
+
+        return $row;
     }
 
     /**
      * Set up both connections with the same schema and data.
      *
-     * @return array<int, array<string, mixed>> The fixture rows inserted
+     * @return list<Row> The fixture rows inserted
      */
     public function setup(SchemaDefinition $schema, int $seed, int $rowCount = 3): array
     {
@@ -55,7 +94,7 @@ final class CorrectnessHarness
 
         $this->fixtureRows = [];
         for ($i = 0; $i < $rowCount; $i++) {
-            $row = $this->fixtureProvider->fixture($schema->sql);
+            $row = $this->fixtureRow($schema->sql);
             if (count($schema->primaryKeys) === 1 && $schema->primaryKeys[0] === 'id') {
                 $row['id'] = $i + 1;
             }
@@ -88,7 +127,7 @@ final class CorrectnessHarness
                 if (is_bool($v)) {
                     return $v ? '1' : '0';
                 }
-                return "'" . addslashes(is_scalar($v) ? $v : '') . "'";
+                return "'" . addslashes($v) . "'";
             }, array_values($row));
             $sql = sprintf(
                 'INSERT INTO `%s` (%s) VALUES (%s)',
@@ -102,6 +141,10 @@ final class CorrectnessHarness
         return $this->fixtureRows;
     }
 
+    /**
+     * Teardown.
+     *
+     */
     public function teardown(): void
     {
         if ($this->currentSchema !== null) {
@@ -112,36 +155,53 @@ final class CorrectnessHarness
         $this->fixtureRows = [];
     }
 
+    /**
+     * Answers raw pdo.
+     *
+     * @return PDO
+     */
     public function getRawPdo(): PDO
     {
         return $this->rawPdo;
     }
 
+    /**
+     * @throws RuntimeException
+     */
     public function getZtdPdo(): ZtdPdo
     {
         if ($this->ztdPdo === null) {
-            throw new \RuntimeException('ZtdPdo not initialized. Call setup() first.');
+            throw new RuntimeException('ZtdPdo not initialized. Call setup() first.');
         }
         return $this->ztdPdo;
     }
 
     /**
-     * @return array<int, array<string, mixed>>
+     * @return list<Row>
      */
     public function getFixtureRows(): array
     {
         return $this->fixtureRows;
     }
 
+    /**
+     * Answers current schema.
+     *
+     * @return ?SchemaDefinition
+     */
     public function getCurrentSchema(): ?SchemaDefinition
     {
         return $this->currentSchema;
     }
 
     /**
-     * @param array<string, mixed> $row
+     * Writes one fixture row into the table both sides read.
+     *
+     * @param PDO $pdo The pdo
+     * @param string $table Table it belongs to
+     * @param Row $row Row to read
      */
-    private function insertRow(PDO $pdo, string $table, array $row): void
+    public function insertRow(PDO $pdo, string $table, array $row): void
     {
         $columns = array_keys($row);
         $placeholders = array_fill(0, count($columns), '?');

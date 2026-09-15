@@ -4,16 +4,19 @@ declare(strict_types=1);
 
 namespace Tests\Integration\PostgreSql;
 
+use PDOStatement;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
-use Tests\Fixtures\PostgreSqlContainer;
+use Tests\Container\PostgreSqlContainer;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 
 /**
  * @requires extension pdo_pgsql
  * @group integration
  * @group postgres
+ *
+ * @phpstan-type Row array<string, mixed>
  */
 #[CoversNothing]
 #[Large]
@@ -34,12 +37,12 @@ final class InsertBasicTest extends TestCase
 
             $stmt = $rawPdo->query("SELECT * FROM {$table} ORDER BY id");
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rawRows = $stmt->fetchAll();
 
             $stmt = $ztdPdo->query("SELECT * FROM {$table} ORDER BY id");
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $ztdRows = $stmt->fetchAll();
 
             self::assertSame($rawRows, $ztdRows);
@@ -63,12 +66,12 @@ final class InsertBasicTest extends TestCase
 
             $stmt = $rawPdo->query("SELECT * FROM {$table} ORDER BY id");
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rawRows = $stmt->fetchAll();
 
             $stmt = $ztdPdo->query("SELECT * FROM {$table} ORDER BY id");
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $ztdRows = $stmt->fetchAll();
 
             self::assertSame($rawRows, $ztdRows);
@@ -91,7 +94,7 @@ final class InsertBasicTest extends TestCase
 
             $stmt = $rawPdo->query("SELECT * FROM {$table}");
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rawRows = $stmt->fetchAll();
 
             self::assertCount(0, $rawRows);
@@ -167,7 +170,7 @@ final class InsertBasicTest extends TestCase
             $ztdPdo->exec("INSERT INTO {$archive} SELECT id, name, price * 2, CAST(ROW_NUMBER() OVER (PARTITION BY dept ORDER BY price DESC) AS INTEGER) FROM {$products}");
             $ztdPdo->exec("INSERT INTO {$departments} (name) SELECT DISTINCT dept FROM {$products} ORDER BY dept");
             $popularInsert = $ztdPdo->prepare("INSERT INTO {$popular} SELECT dept, SUM(price), COUNT(*) FROM {$products} GROUP BY dept HAVING SUM(price) > ?");
-            self::assertInstanceOf(\PDOStatement::class, $popularInsert);
+            self::assertInstanceOf(PDOStatement::class, $popularInsert);
             $popularInsert->execute([15]);
             $ztdPdo->exec("INSERT INTO {$conditional} SELECT 1, 'alice' WHERE NOT EXISTS (SELECT 1 FROM {$conditional} WHERE name = 'alice')");
             $ztdPdo->exec("INSERT INTO {$conditional} SELECT 1, 'alice' WHERE NOT EXISTS (SELECT 1 FROM {$conditional} WHERE name = 'alice')");

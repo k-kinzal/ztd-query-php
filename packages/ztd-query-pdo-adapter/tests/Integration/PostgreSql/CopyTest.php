@@ -7,10 +7,15 @@ namespace Tests\Integration\PostgreSql;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
-use Tests\Fixtures\PostgreSqlContainer;
+use Tests\Container\PostgreSqlContainer;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 use ZtdQuery\Adapter\Pdo\ZtdPdoException;
+use ZtdQuery\Config\UnsupportedSqlBehavior;
+use ZtdQuery\Config\ZtdConfig;
+use ZtdQuery\Connection\Exception\DatabaseException;
+use ZtdQuery\Exception\UnsupportedSqlException;
 
 /**
  * @requires extension pdo_pgsql
@@ -21,134 +26,136 @@ use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 #[Large]
 final class CopyTest extends TestCase
 {
-    public function testCopyArrayAndFileMethodsUseShadowDataWithoutTouchingPhysicalTable(): void
+    #[TestWith(['FROM STDIN'])]
+    #[TestWith(['TO STDOUT'])]
+    public function testExecDelegatesUnsupportedCopyToTheSession(string $direction): void
     {
         [$schemaName, $pdo] = PostgreSqlContainer::createTestSchema();
-        $exportFile = tempnam(sys_get_temp_dir(), 'ztd-copy-export-');
-        $importFile = tempnam(sys_get_temp_dir(), 'ztd-copy-import-');
-        self::assertNotFalse($exportFile);
-        self::assertNotFalse($importFile);
 
         try {
-            $pdo->exec(
-                'CREATE TABLE copy_target ('
-                . 'id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY, '
-                . 'value TEXT NOT NULL, optional TEXT, active BOOLEAN NOT NULL, '
-                . 'generated_value TEXT GENERATED ALWAYS AS (upper(value)) STORED)'
-            );
+            $pdo->exec('CREATE TABLE copy_target (id INTEGER PRIMARY KEY)');
+            $pdo->exec('INSERT INTO copy_target VALUES (1)');
             $ztdPdo = ZtdPdo::fromPdo($pdo);
+            $ztdPdo->exec('INSERT INTO copy_target VALUES (2)');
+            $sql = 'COPY copy_target ' . $direction;
 
-            self::assertTrue($ztdPdo->pgsqlCopyFromArray(
-                'copy_target',
-                ["1|a\\|b|\\N|t\n", "2|line\\nfeed|text|f\n"],
-                '|',
-                '\\N',
-                'id, value, optional, active',
-            ));
-            self::assertTrue($ztdPdo->copyFromArray(
-                'copy_target',
-                new \ArrayIterator(["3|iterator|value|t\n"]),
-                '|',
-                '\\N',
-                'id, value, optional, active',
-            ));
+            try {
+                $ztdPdo->exec($sql);
+                self::fail('Expected the session to reject unsupported COPY SQL.');
+            } catch (ZtdPdoException $exception) {
+                $databaseException = $exception->getPrevious();
+                self::assertInstanceOf(DatabaseException::class, $databaseException);
+                $refusal = $databaseException->getPrevious();
+                self::assertInstanceOf(UnsupportedSqlException::class, $refusal);
+                self::assertSame($sql, $refusal->getSql());
+            }
 
-            $rows = $ztdPdo->query(
-                'SELECT id, value, optional, active, generated_value FROM copy_target ORDER BY id',
-            );
-            self::assertNotFalse($rows);
-            self::assertSame([
-                ['id' => 1, 'value' => 'a|b', 'optional' => null, 'active' => true, 'generated_value' => 'A|B'],
-                ['id' => 2, 'value' => "line\nfeed", 'optional' => 'text', 'active' => false, 'generated_value' => "LINE\nFEED"],
-                ['id' => 3, 'value' => 'iterator', 'optional' => 'value', 'active' => true, 'generated_value' => 'ITERATOR'],
-            ], $rows->fetchAll(PDO::FETCH_ASSOC));
-
-            $exported = $ztdPdo->pgsqlCopyToArray(
-                'copy_target',
-                '|',
-                'NULL',
-                'id, value, optional, active',
-            );
-            self::assertSame([
-                "1|a\\|b|NULL|t\n",
-                "2|line\\nfeed|text|f\n",
-                "3|iterator|value|t\n",
-            ], $exported);
-            self::assertTrue($ztdPdo->copyToFile(
-                'copy_target',
-                $exportFile,
-                '|',
-                'NULL',
-                'id, value, optional, active',
-            ));
-            self::assertSame(implode('', $exported), file_get_contents($exportFile));
-            self::assertTrue($ztdPdo->pgsqlCopyToFile(
-                'copy_target',
-                $exportFile,
-                '|',
-                'NULL',
-                'id, value, optional, active',
-            ));
-
-            self::assertSame(17, file_put_contents($importFile, "4|from-file|\\N|f\n"));
-            self::assertTrue($ztdPdo->pgsqlCopyFromFile(
-                'copy_target',
-                $importFile,
-                '|',
-                '\\N',
-                'id, value, optional, active',
-            ));
-            $afterFileImport = $ztdPdo->copyToArray(
-                'copy_target',
-                fields: 'id, value, optional, active',
-            );
-            self::assertNotFalse($afterFileImport);
-            self::assertSame(["4\tfrom-file\t\\N\tf\n"], array_slice($afterFileImport, -1));
-            self::assertSame(0, file_put_contents($importFile, ''));
-            self::assertTrue($ztdPdo->copyFromFile(
-                'copy_target',
-                $importFile,
-                fields: 'id, value, optional, active',
-            ));
-
-            $physical = $pdo->query('SELECT COUNT(*) FROM copy_target');
+            $physical = $pdo->query('SELECT id FROM copy_target');
+            $shadow = $ztdPdo->query('SELECT id FROM copy_target');
             self::assertNotFalse($physical);
-            self::assertSame(0, (int) $physical->fetchColumn());
+            self::assertNotFalse($shadow);
+            self::assertSame([1], $physical->fetchAll(PDO::FETCH_COLUMN));
+            self::assertSame([2], $shadow->fetchAll(PDO::FETCH_COLUMN));
         } finally {
-            unlink($exportFile);
-            unlink($importFile);
             $pdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
         }
     }
 
-    public function testRawCopyIsRejectedExplicitlyAndMalformedRowsAreAtomic(): void
+    #[TestWith(['FROM STDIN'])]
+    #[TestWith(['TO STDOUT'])]
+    public function testQueryDelegatesUnsupportedCopyToTheSession(string $direction): void
     {
         [$schemaName, $pdo] = PostgreSqlContainer::createTestSchema();
 
         try {
-            $pdo->exec('CREATE TABLE copy_target (id INTEGER PRIMARY KEY, value TEXT NOT NULL)');
+            $pdo->exec('CREATE TABLE copy_target (id INTEGER PRIMARY KEY)');
+            $pdo->exec('INSERT INTO copy_target VALUES (1)');
             $ztdPdo = ZtdPdo::fromPdo($pdo);
+            $ztdPdo->exec('INSERT INTO copy_target VALUES (2)');
+            $sql = 'COPY copy_target ' . $direction;
 
             try {
-                $ztdPdo->exec('COPY copy_target FROM STDIN');
-                self::fail('Expected raw COPY to be rejected.');
+                $ztdPdo->query($sql);
+                self::fail('Expected the session to reject unsupported COPY SQL.');
             } catch (ZtdPdoException $exception) {
-                self::assertStringContainsString('pgsqlCopyFromArray()', $exception->getMessage());
+                $databaseException = $exception->getPrevious();
+                self::assertInstanceOf(DatabaseException::class, $databaseException);
+                $refusal = $databaseException->getPrevious();
+                self::assertInstanceOf(UnsupportedSqlException::class, $refusal);
+                self::assertSame($sql, $refusal->getSql());
             }
+
+            $physical = $pdo->query('SELECT id FROM copy_target');
+            $shadow = $ztdPdo->query('SELECT id FROM copy_target');
+            self::assertNotFalse($physical);
+            self::assertNotFalse($shadow);
+            self::assertSame([1], $physical->fetchAll(PDO::FETCH_COLUMN));
+            self::assertSame([2], $shadow->fetchAll(PDO::FETCH_COLUMN));
+        } finally {
+            $pdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
+
+    #[TestWith(['FROM STDIN'])]
+    #[TestWith(['TO STDOUT'])]
+    public function testPrepareDelegatesUnsupportedCopyToTheSession(string $direction): void
+    {
+        [$schemaName, $pdo] = PostgreSqlContainer::createTestSchema();
+
+        try {
+            $pdo->exec('CREATE TABLE copy_target (id INTEGER PRIMARY KEY)');
+            $pdo->exec('INSERT INTO copy_target VALUES (1)');
+            $ztdPdo = ZtdPdo::fromPdo($pdo);
+            $ztdPdo->exec('INSERT INTO copy_target VALUES (2)');
+            $sql = 'COPY copy_target ' . $direction;
 
             try {
-                $ztdPdo->pgsqlCopyFromArray('copy_target', ["1\tvalid\n", "2\n"]);
-                self::fail('Expected a malformed COPY row to be rejected.');
-            } catch (\ValueError $exception) {
-                self::assertStringContainsString('2 fields are required', $exception->getMessage());
+                $ztdPdo->prepare($sql);
+                self::fail('Expected the session to reject unsupported COPY SQL.');
+            } catch (ZtdPdoException $exception) {
+                $databaseException = $exception->getPrevious();
+                self::assertInstanceOf(DatabaseException::class, $databaseException);
+                $refusal = $databaseException->getPrevious();
+                self::assertInstanceOf(UnsupportedSqlException::class, $refusal);
+                self::assertSame($sql, $refusal->getSql());
             }
 
-            $shadow = $ztdPdo->query('SELECT * FROM copy_target');
-            self::assertNotFalse($shadow);
-            self::assertSame([], $shadow->fetchAll(PDO::FETCH_ASSOC));
-            $physical = $pdo->query('SELECT COUNT(*) FROM copy_target');
+            $physical = $pdo->query('SELECT id FROM copy_target');
+            $shadow = $ztdPdo->query('SELECT id FROM copy_target');
             self::assertNotFalse($physical);
-            self::assertSame(0, (int) $physical->fetchColumn());
+            self::assertNotFalse($shadow);
+            self::assertSame([1], $physical->fetchAll(PDO::FETCH_COLUMN));
+            self::assertSame([2], $shadow->fetchAll(PDO::FETCH_COLUMN));
+        } finally {
+            $pdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
+        }
+    }
+
+    #[TestWith(['FROM STDIN'])]
+    #[TestWith(['TO STDOUT'])]
+    public function testStandardPdoMethodsHonorTheSessionsIgnorePolicyForCopy(string $direction): void
+    {
+        [$schemaName, $pdo] = PostgreSqlContainer::createTestSchema();
+
+        try {
+            $pdo->exec('CREATE TABLE copy_target (id INTEGER PRIMARY KEY)');
+            $pdo->exec('INSERT INTO copy_target VALUES (1)');
+            $ztdPdo = ZtdPdo::fromPdo($pdo, new ZtdConfig(unsupportedBehavior: UnsupportedSqlBehavior::Ignore));
+            $ztdPdo->exec('INSERT INTO copy_target VALUES (2)');
+
+            $sql = 'COPY copy_target ' . $direction;
+            self::assertSame(0, $ztdPdo->exec($sql));
+            self::assertFalse($ztdPdo->query($sql));
+            $statement = $ztdPdo->prepare($sql);
+            self::assertNotFalse($statement);
+            self::assertFalse($statement->execute());
+
+            $physical = $pdo->query('SELECT id FROM copy_target');
+            $shadow = $ztdPdo->query('SELECT id FROM copy_target');
+            self::assertNotFalse($physical);
+            self::assertNotFalse($shadow);
+            self::assertSame([1], $physical->fetchAll(PDO::FETCH_COLUMN));
+            self::assertSame([2], $shadow->fetchAll(PDO::FETCH_COLUMN));
         } finally {
             $pdo->exec(sprintf('DROP SCHEMA IF EXISTS "%s" CASCADE', $schemaName));
         }

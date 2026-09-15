@@ -7,14 +7,12 @@ namespace Tests\Integration;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
-use Tests\Fixtures\PostgreSqlContainer;
+use Tests\Container\PostgreSqlContainer;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Platform\Postgres\PgSqlSessionFactory;
 
 /**
- * Integration tests for ZtdPdo driver auto-detection with a real PostgreSQL database.
- *
  * @requires extension pdo_pgsql
  * @group integration
  * @group postgres

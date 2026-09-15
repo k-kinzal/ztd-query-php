@@ -17,6 +17,9 @@ use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 
+/**
+ * @phpstan-import-type Row from \Fuzz\Correctness\CorrectnessHarness
+ */
 final class SelectCorrectnessTarget
 {
     private PgCorrectnessHarness $harness;
@@ -24,6 +27,13 @@ final class SelectCorrectnessTarget
     private PgSchemaAwareSqlBuilder $sqlBuilder;
     private Generator $faker;
 
+    /**
+     * Binds the instance to what it will work from.
+     *
+     * @param PgCorrectnessHarness $harness
+     * @param PgSchemaAwareSqlBuilder $sqlBuilder
+     * @param Generator $faker
+     */
     public function __construct(
         PgCorrectnessHarness $harness,
         PgSchemaAwareSqlBuilder $sqlBuilder,
@@ -35,6 +45,12 @@ final class SelectCorrectnessTarget
         $this->faker = $faker;
     }
 
+    /**
+     * __invoke.
+     *
+     * @param string $input
+     * @throws Error
+     */
     public function __invoke(string $input): void
     {
         $seed = crc32(str_pad($input, 4, "\0"));
@@ -64,7 +80,12 @@ final class SelectCorrectnessTarget
         }
     }
 
-    private function setupJoinTable(SchemaDefinition $schema): void
+    /**
+     * Creates the second table a join reads.
+     *
+     * @param SchemaDefinition $schema The schema
+     */
+    public function setupJoinTable(SchemaDefinition $schema): void
     {
         $this->harness->getRawPdo()->exec('DROP TABLE IF EXISTS "_ztd_join_no_pk" CASCADE');
         $this->harness->getRawPdo()->exec($schema->sql);
@@ -78,9 +99,18 @@ final class SelectCorrectnessTarget
         );
     }
 
-    private function compareSelect(string $sql, SchemaDefinition $schema, int $seed): void
+    /**
+     * Runs the SELECT on both sides and fails if they disagree.
+     *
+     * @param string $sql Statement being read, as written
+     * @param SchemaDefinition $schema The schema
+     * @param int $seed The seed
+     *
+     * @throws Error
+     */
+    public function compareSelect(string $sql, SchemaDefinition $schema, int $seed): void
     {
-        /** @var array<int, array<string, mixed>>|null $rawResult */
+        /** @var list<Row>|null $rawResult */
         $rawResult = null;
         $rawError = null;
         try {
@@ -90,7 +120,7 @@ final class SelectCorrectnessTarget
             $rawError = $e;
         }
 
-        /** @var array<int, array<string, mixed>>|null $ztdResult */
+        /** @var list<Row>|null $ztdResult */
         $ztdResult = null;
         $ztdError = null;
         try {
@@ -117,19 +147,19 @@ final class SelectCorrectnessTarget
         }
 
         if ($rawResult !== null && $ztdResult !== null) {
-            /** @var array<int, array<string, mixed>> $rawResult */
-            /** @var array<int, array<string, mixed>> $ztdResult */
+            /** @var list<Row> $rawResult */
+            /** @var list<Row> $ztdResult */
             $hasOrderBy = stripos($sql, 'ORDER BY') !== false;
-            if (!$this->comparator->compareRows($rawResult, $ztdResult, $schema->primaryKeys, $schema->columnTypes, !$hasOrderBy)) {
+            if (!$this->comparator->compareRows($rawResult, $ztdResult, $schema->primaryKeys, $schema->columnTypes, $hasOrderBy)) {
                 throw new Error(
                     "SELECT result mismatch\n" .
                     "Seed: $seed\n" .
                     "SQL: $sql\n" .
                     "Schema: {$schema->name}\n" .
-                    "Raw result count: " . count($rawResult) . "\n" .
-                    "ZTD result count: " . count($ztdResult) . "\n" .
-                    "Raw first row: " . json_encode($rawResult[0] ?? null) . "\n" .
-                    "ZTD first row: " . json_encode($ztdResult[0] ?? null)
+                    'Raw result count: ' . count($rawResult) . "\n" .
+                    'ZTD result count: ' . count($ztdResult) . "\n" .
+                    'Raw first row: ' . json_encode($rawResult[0] ?? null) . "\n" .
+                    'ZTD first row: ' . json_encode($ztdResult[0] ?? null)
                 );
             }
         }

@@ -7,13 +7,15 @@ namespace Tests\Integration\PostgreSql;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
-use Tests\Fixtures\PostgreSqlContainer;
+use Tests\Container\PostgreSqlContainer;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 
 /**
  * @requires extension pdo_pgsql
  * @group integration
  * @group postgres
+ *
+ * @phpstan-type Row array<string, mixed>
  */
 #[CoversNothing]
 #[Large]
@@ -34,12 +36,12 @@ final class SelectDistinctTest extends TestCase
 
             $stmt = $rawPdo->query("SELECT DISTINCT category FROM {$table} ORDER BY category");
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rawRows = $stmt->fetchAll();
 
             $stmt = $ztdPdo->query("SELECT DISTINCT category FROM {$table} ORDER BY category");
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $ztdRows = $stmt->fetchAll();
 
             self::assertSame($rawRows, $ztdRows);

@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 namespace ZtdQuery\Adapter\Pdo;
 
+use Override;
 use PDO;
 use PDOStatement;
 use ReflectionClass;
 use RuntimeException;
+use SensitiveParameter;
+use ZtdQuery\Adapter\Pdo\Session\ConnectionExecution;
+use ZtdQuery\Adapter\Pdo\Session\PreparedQuery;
 use ZtdQuery\Config\ZtdConfig;
-use ZtdQuery\Connection\Exception\DatabaseException;
-use ZtdQuery\Platform\CopySupport;
-use ZtdQuery\Platform\CopyTarget;
-use ZtdQuery\Session;
 use ZtdQuery\Platform\SessionFactory;
+use ZtdQuery\Rewrite\RewritePlan;
+use ZtdQuery\Session;
 
 /**
  * PDO proxy that enforces ZTD behavior for reads and writes.
@@ -22,41 +24,22 @@ use ZtdQuery\Platform\SessionFactory;
  * but delegates all operations to an inner PDO instance when using fromPdo().
  *
  * Supports multiple database platforms via SessionFactory injection or auto-detection:
- * - mysql  -> MySqlSessionFactory  (k-kinzal/ztd-query-mysql)
- * - pgsql  -> PgSqlSessionFactory  (k-kinzal/ztd-query-postgres)
- * - sqlite -> SqliteSessionFactory (k-kinzal/ztd-query-sqlite)
+ * - MySQL (k-kinzal/ztd-query-mysql)
+ * - PostgreSQL (k-kinzal/ztd-query-postgres)
+ * - SQLite (k-kinzal/ztd-query-sqlite)
+ *
+ * @visibility public
+ * @example Simulate a write without changing the physical table
+ *     $native = new \PDO('sqlite::memory:');
+ *     $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+ *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo($native);
+ *     $pdo->exec("INSERT INTO users VALUES (1, 'Alice')") // => 1
+ *     $pdo->query('SELECT name FROM users')->fetchColumn() // => 'Alice'
+ *     $native->query('SELECT COUNT(*) FROM users')->fetchColumn() // => 0
  */
 class ZtdPdo extends PDO
 {
-    /**
-     * Driver name to SessionFactory class mapping for auto-detection.
-     *
-     * @var array<string, array{class: string, package: string}>
-     */
-    private const DRIVER_MAP = [
-        'mysql' => [
-            'class' => 'ZtdQuery\\Platform\\MySql\\MySqlSessionFactory',
-            'package' => 'k-kinzal/ztd-query-mysql',
-        ],
-        'pgsql' => [
-            'class' => 'ZtdQuery\\Platform\\Postgres\\PgSqlSessionFactory',
-            'package' => 'k-kinzal/ztd-query-postgres',
-        ],
-        'sqlite' => [
-            'class' => 'ZtdQuery\\Platform\\Sqlite\\SqliteSessionFactory',
-            'package' => 'k-kinzal/ztd-query-sqlite',
-        ],
-    ];
-
-    /**
-     * ZTD session context for this connection.
-     */
-    private Session $session;
-
-    /**
-     * Inner PDO instance for delegation.
-     */
-    private PDO $pdo;
+    private ConnectionExecution $execution;
 
     /**
      * Configure a new ZTD-enabled PDO wrapper.
@@ -64,16 +47,20 @@ class ZtdPdo extends PDO
      * If $factory is provided, it is used directly to create the session.
      * If $factory is null, the factory is auto-detected from the PDO driver name.
      *
-     * @param array<int, mixed>|null $options
+     * @param array<int, mixed>|null $options Driver options, as PDO::__construct() takes them
+     * @param ZtdConfig|null $config How ZTD is to behave, or null for the default
+     * @param SessionFactory|null $factory Platform to rewrite with, or null to read it off the driver
+     *
+     * @throws RuntimeException When the driver has no platform package installed
+     * @visibility public
+     * @example Open a ZTD connection
+     *     $pdo = new \ZtdQuery\Adapter\Pdo\ZtdPdo('sqlite::memory:');
+     *     $pdo->isZtdEnabled() // => true
      */
     public function __construct(string $dsn, ?string $username = null, ?string $password = null, ?array $options = null, ?ZtdConfig $config = null, ?SessionFactory $factory = null)
     {
         parent::__construct($dsn, $username, $password, $options);
-        $this->pdo = new PDO($dsn, $username, $password, $options);
-
-        $resolvedFactory = $factory ?? self::detectFactory($this->pdo);
-        $connection = new PdoConnection($this->pdo);
-        $this->session = $resolvedFactory->create($connection, $config ?? ZtdConfig::default());
+        $this->execution = new ConnectionExecution(new PDO($dsn, $username, $password, $options), $config, $factory);
     }
 
     /**
@@ -84,577 +71,354 @@ class ZtdPdo extends PDO
      *
      * If $factory is provided, it is used directly to create the session.
      * If $factory is null, the factory is auto-detected from the PDO driver name.
+     *
+     * @param PDO $pdo Connection to wrap
+     * @param ZtdConfig|null $config How ZTD is to behave, or null for the default
+     * @param SessionFactory|null $factory Platform to rewrite with, or null to read it off the driver
+     *
+     * @return static The connection, with ZTD in front of it
+     *
+     * @throws RuntimeException When the driver has no platform package installed
+     *
+     * @visibility public
+     * @example Wrap an existing PDO connection
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo->isZtdEnabled() // => true
+     *     $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) // => 'sqlite'
      */
     public static function fromPdo(PDO $pdo, ?ZtdConfig $config = null, ?SessionFactory $factory = null): static
     {
-        /** @var static $instance */
         $instance = (new ReflectionClass(static::class))->newInstanceWithoutConstructor();
-        $instance->pdo = $pdo;
-
-        $resolvedFactory = $factory ?? self::detectFactory($instance->pdo);
-        $connection = new PdoConnection($instance->pdo);
-        $instance->session = $resolvedFactory->create($connection, $config ?? ZtdConfig::default());
-
+        $instance->execution = new ConnectionExecution($pdo, $config, $factory);
         return $instance;
     }
 
     /**
-     * Detect the appropriate SessionFactory based on the PDO driver name.
-     *
-     * @throws RuntimeException If the driver is unsupported or the required platform package is not installed.
-     */
-    private static function detectFactory(PDO $pdo): SessionFactory
-    {
-        /** @var string $driver */
-        $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
-
-        if (!isset(self::DRIVER_MAP[$driver])) {
-            throw new RuntimeException(sprintf(
-                'Unsupported PDO driver: "%s". Supported drivers: %s.',
-                $driver,
-                implode(', ', array_keys(self::DRIVER_MAP))
-            ));
-        }
-
-        $mapping = self::DRIVER_MAP[$driver];
-        /** @var class-string<SessionFactory> $className */
-        $className = $mapping['class'];
-        $packageName = $mapping['package'];
-
-        if (!class_exists($className)) {
-            throw new RuntimeException(sprintf(
-                'Platform package for PDO driver "%s" is not installed. Install it with: composer require %s',
-                $driver,
-                $packageName
-            ));
-        }
-
-        return new $className();
-    }
-
-    /**
      * Enable ZTD mode for this connection.
+     *
+     * While it is enabled, nothing this connection is asked to write reaches
+     * the database; reads are answered from the shadow instead.
+     * @visibility public
+     * @example Resume shadowing after native access
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo->disableZtd();
+     *     $pdo->enableZtd();
+     *     $pdo->isZtdEnabled() // => true
      */
     public function enableZtd(): void
     {
-        $this->session->enable();
+        $this->execution->session()->enable();
     }
 
     /**
      * Disable ZTD mode for this connection.
+     *
+     * Once it is disabled, statements run against the database as they were
+     * written, and the shadow is not consulted.
+     *
+     * @example Temporarily pass queries through to the database
+     *     $pdo = new \ZtdQuery\Adapter\Pdo\ZtdPdo('sqlite::memory:');
+     *     $pdo->disableZtd();
+     *     $pdo->isZtdEnabled() // => false
+     *     $pdo->enableZtd();
+     *     $pdo->isZtdEnabled() // => true
+     * @visibility public
      */
     public function disableZtd(): void
     {
-        $this->session->disable();
+        $this->execution->session()->disable();
     }
 
     /**
      * Check whether ZTD mode is enabled.
+     *
+     * @return bool Whether writes are being shadowed rather than carried out
+     * @visibility public
+     * @example Inspect shadowing state
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo->isZtdEnabled() // => true
      */
     public function isZtdEnabled(): bool
     {
-        return $this->session->isEnabled();
+        return $this->execution->session()->isEnabled();
     }
 
     /**
      * {@inheritDoc}
      *
-     * @param array<mixed> $options
-     * @throws ZtdPdoException When ZTD-specific exception occurs (wraps DatabaseException).
+     * @param array<mixed> $options Driver options, as PDO::prepare() takes them
+     *
+     * @return PDOStatement|false The prepared statement, or false where the driver would not prepare one
+     *
+     * @throws ZtdPdoException When ZTD cannot carry the statement out, or an option is one PDO cannot be given
+     *
+     * @example Bind values to a simulated INSERT
+     *     $native = new \PDO('sqlite::memory:');
+     *     $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo($native);
+     *     $statement = $pdo->prepare('INSERT INTO users VALUES (:id, :name)');
+     *     $statement->execute(['id' => 1, 'name' => 'Alice']) // => true
+     *     $statement->rowCount() // => 1
+     *     $native->query('SELECT COUNT(*) FROM users')->fetchColumn() // => 0
+     * @visibility public
      */
+    #[Override]
     public function prepare(string $query, array $options = []): PDOStatement|false
     {
-        if (!$this->session->isEnabled()) {
-            return $this->pdo->prepare($query, $options);
-        }
-
-        $this->guardRawPostgreSqlCopy($query);
-
-        try {
-            $execution = new PdoPreparedExecution($this->pdo, $this->session, $query, $options);
-            $prepared = $execution->prepare(null);
-        } catch (DatabaseException $e) {
-            throw new ZtdPdoException($e->getMessage(), 0, $e);
-        }
-
-        $defaultFetchMode = $this->pdo->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE);
-
-        return new ZtdPdoStatement(
-            $prepared['statement'],
-            $this->session,
-            $prepared['plan'],
-            $execution,
-            is_int($defaultFetchMode) ? $defaultFetchMode : PDO::FETCH_BOTH,
+        return $this->execution->prepare(
+            $query,
+            $options,
+            static fn (PDOStatement $statement, Session $session, RewritePlan $plan, PreparedQuery $prepared, int $mode): PDOStatement =>
+                new ZtdPdoStatement($statement, $session, $plan, $prepared, $mode),
         );
     }
 
     /**
      * {@inheritDoc}
      *
-     * @throws ZtdPdoException When ZTD-specific exception occurs (wraps DatabaseException).
+     * @param mixed ...$fetchModeArgs The rest of what the fetch mode reads
+     *
+     * @return PDOStatement|false The executed statement, or false where it did not run
+     *
+     * @throws ZtdPdoException When ZTD cannot carry the statement out
+     * @visibility public
+     * @example Read virtual rows
+     *     $native = new \PDO('sqlite::memory:');
+     *     $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo($native);
+     *     $pdo->exec("INSERT INTO users VALUES (1, 'Ada')");
+     *     $pdo->query('SELECT name FROM users')->fetchColumn() // => 'Ada'
+     *     $native->query('SELECT COUNT(*) FROM users')->fetchColumn() // => 0
      */
+    #[Override]
     public function query(string $query, ?int $fetchMode = null, mixed ...$fetchModeArgs): PDOStatement|false
     {
-        if ($this->session->isEnabled()) {
-            $transactionStatement = $this->session->transactionStatement($query);
-            if ($transactionStatement !== null) {
-                $statement = $this->pdo->query($query, $fetchMode, ...$fetchModeArgs);
-                if ($statement !== false) {
-                    $this->session->applyTransactionStatement($transactionStatement);
-                }
-
-                return $statement;
-            }
-        }
-
-        $stmt = $this->prepare($query);
-        if ($stmt === false) {
-            return false;
-        }
-
-        if ($fetchMode !== null) {
-            $stmt->setFetchMode($fetchMode, ...$fetchModeArgs);
-        }
-
-        if (!$stmt->execute()) {
-            return false;
-        }
-
-        return $stmt;
+        return $this->execution->query($query, $fetchMode, $fetchModeArgs, $this->prepare(...));
     }
 
     /**
      * {@inheritDoc}
      *
-     * @throws ZtdPdoException When ZTD-specific exception occurs (wraps DatabaseException).
+     * A batch is carried out one statement at a time, and stops at the first
+     * one that does not run; what it answers is what the last one that ran
+     * affected, which is what PDO answers for a batch.
+     *
+     * @return int|false Rows the statement affected, or false where it did not run
+     *
+     * @throws ZtdPdoException When ZTD cannot carry the statement out
+     * @visibility public
+     * @example Count simulated mutations
+     *     $native = new \PDO('sqlite::memory:');
+     *     $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo($native);
+     *     $pdo->exec("INSERT INTO users VALUES (1, 'Ada')") // => 1
+     *     $pdo->exec("UPDATE users SET name = 'Grace'") // => 1
+     *     $native->query('SELECT COUNT(*) FROM users')->fetchColumn() // => 0
      */
+    #[Override]
     public function exec(string $statement): int|false
     {
-        if (!$this->session->isEnabled()) {
-            return $this->pdo->exec($statement);
-        }
-
-        $statements = $this->session->splitStatements($statement);
-        if (count($statements) > 1) {
-            return $this->execMultiple($statements);
-        }
-
-        $this->guardRawPostgreSqlCopy($statement);
-
-        $transactionStatement = $this->session->transactionStatement($statement);
-        if ($transactionStatement !== null) {
-            $result = $this->pdo->exec($statement);
-            if ($result !== false) {
-                $this->session->applyTransactionStatement($transactionStatement);
-            }
-
-            return $result;
-        }
-
-        try {
-            return $this->session->execStatement($statement);
-        } catch (DatabaseException $e) {
-            throw new ZtdPdoException($e->getMessage(), 0, $e);
-        }
-    }
-
-    /**
-     * @param non-empty-list<string> $statements
-     */
-    private function execMultiple(array $statements): int|false
-    {
-        $affectedRows = $this->exec($statements[0]);
-        if ($affectedRows === false) {
-            return false;
-        }
-
-        foreach (array_slice($statements, 1) as $statement) {
-            $result = $this->exec($statement);
-            if ($result === false) {
-                return false;
-            }
-            $affectedRows = $result;
-        }
-
-        return $affectedRows;
+        return $this->execution->exec($statement, $this->exec(...));
     }
 
     /**
      * {@inheritDoc}
      *
-     * @param array<mixed>|null $options
+     * The connection is opened with PDO's constructor rather than with
+     * PDO::connect(), which exists only from PHP 8.4 on while this package
+     * supports 8.1. What connect() adds is a driver-specific subclass of PDO,
+     * and nothing here asks the wrapped connection for anything a subclass
+     * would answer differently.
+     *
+     * This carries no #[\Override] for the same reason: from PHP 8.3 on the
+     * attribute is checked, and on 8.1 through 8.3 there is no PDO::connect()
+     * for it to be checked against.
+     *
+     * @param array<mixed>|null $options Driver options, as PDO::connect() takes them
+     *
+     * @return static The new connection, with ZTD in front of it
+     *
+     * @throws RuntimeException When the driver has no platform package installed
+     * @visibility public
+     * @example Create a connection through the static factory
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::connect('sqlite::memory:');
+     *     $pdo->isZtdEnabled() // => true
      */
     public static function connect(
         string $dsn,
         ?string $username = null,
-        #[\SensitiveParameter] ?string $password = null,
+        #[SensitiveParameter] ?string $password = null,
         ?array $options = null
     ): static {
-        return static::fromPdo(PDO::connect($dsn, $username, $password, $options));
+        return static::fromPdo(new PDO($dsn, $username, $password, $options));
     }
 
     /**
      * {@inheritDoc}
+     * @visibility public
+     * @example Begin a transaction for native and shadow state
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo->beginTransaction() // => true
+     *     $pdo->inTransaction() // => true
+     *     $pdo->rollBack();
      */
+    #[Override]
     public function beginTransaction(): bool
     {
-        $result = $this->pdo->beginTransaction();
-        if ($result) {
-            $this->session->beginTransaction();
-        }
-
-        return $result;
+        return $this->execution->beginTransaction();
     }
 
     /**
      * {@inheritDoc}
+     * @visibility public
+     * @example Keep committed virtual writes
+     *     $native = new \PDO('sqlite::memory:');
+     *     $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo($native);
+     *     $pdo->beginTransaction();
+     *     $pdo->exec("INSERT INTO users VALUES (1, 'Ada')");
+     *     $pdo->commit() // => true
+     *     $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn() // => 1
+     *     $native->query('SELECT COUNT(*) FROM users')->fetchColumn() // => 0
      */
+    #[Override]
     public function commit(): bool
     {
-        $result = $this->pdo->commit();
-        if ($result) {
-            $this->session->commitTransaction();
-        }
-
-        return $result;
+        return $this->execution->commit();
     }
 
     /**
      * {@inheritDoc}
+     * @visibility public
+     * @example Undo virtual writes in a transaction
+     *     $native = new \PDO('sqlite::memory:');
+     *     $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo($native);
+     *     $pdo->beginTransaction();
+     *     $pdo->exec("INSERT INTO users VALUES (1, 'Ada')");
+     *     $pdo->rollBack() // => true
+     *     $pdo->query('SELECT COUNT(*) FROM users')->fetchColumn() // => 0
      */
+    #[Override]
     public function rollBack(): bool
     {
-        $result = $this->pdo->rollBack();
-        if ($result) {
-            $this->session->rollBackTransaction();
-        }
-
-        return $result;
+        return $this->execution->rollBack();
     }
 
     /**
      * {@inheritDoc}
+     * @visibility public
+     * @example Observe transaction state
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo->inTransaction() // => false
+     *     $pdo->beginTransaction();
+     *     $pdo->inTransaction() // => true
+     *     $pdo->rollBack();
      */
+    #[Override]
     public function inTransaction(): bool
     {
-        return $this->pdo->inTransaction();
+        return $this->execution->native()->inTransaction();
     }
 
     /**
      * {@inheritDoc}
+     * @visibility public
+     * @example Read a generated shadow key
+     *     $native = new \PDO('sqlite::memory:');
+     *     $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo($native);
+     *     $pdo->exec("INSERT INTO users (name) VALUES ('Ada')");
+     *     $pdo->lastInsertId() // => '1'
      */
+    #[Override]
     public function lastInsertId(?string $name = null): string|false
     {
-        if ($this->session->isEnabled() && $name === null) {
-            $lastInsertId = $this->session->lastInsertId();
-            if ($lastInsertId !== false) {
-                return $lastInsertId;
-            }
-        }
-
-        return $this->pdo->lastInsertId($name);
+        return $this->execution->lastInsertId($name);
     }
 
     /**
      * {@inheritDoc}
+     * @visibility public
+     * @example Read a native SQLSTATE
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo->disableZtd();
+     *     $pdo->query('SELECT 1');
+     *     $pdo->errorCode() // => '00000'
      */
+    #[Override]
     public function errorCode(): ?string
     {
-        return $this->pdo->errorCode();
+        return $this->execution->native()->errorCode();
     }
 
     /**
      * {@inheritDoc}
      *
      * @return array{0: string|null, 1: int|null, 2: string|null}
+     * @visibility public
+     * @example Read native error information
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo->disableZtd();
+     *     $pdo->query('SELECT 1');
+     *     $pdo->errorInfo()[0] // => '00000'
      */
+    #[Override]
     public function errorInfo(): array
     {
         /** @var array{0: string|null, 1: int|null, 2: string|null} */
-        return $this->pdo->errorInfo();
+        return $this->execution->native()->errorInfo();
     }
 
     /**
      * {@inheritDoc}
+     * @visibility public
+     * @example Read the underlying driver name
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) // => 'sqlite'
      */
+    #[Override]
     public function getAttribute(int $attribute): mixed
     {
-        return $this->pdo->getAttribute($attribute);
+        return $this->execution->native()->getAttribute($attribute);
     }
 
     /**
      * {@inheritDoc}
+     * @visibility public
+     * @example Set the default fetch mode
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC) // => true
+     *     $pdo->query('SELECT 7 AS id')->fetch() // => ['id' => 7]
      */
+    #[Override]
     public function setAttribute(int $attribute, mixed $value): bool
     {
-        return $this->pdo->setAttribute($attribute, $value);
+        return $this->execution->native()->setAttribute($attribute, $value);
     }
 
     /**
      * {@inheritDoc}
+     * @visibility public
+     * @example Quote a value using the native driver
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo->quote("O'Reilly") // => "'O''Reilly'"
      */
+    #[Override]
     public function quote(string $string, int $type = PDO::PARAM_STR): string|false
     {
-        return $this->pdo->quote($string, $type);
-    }
-
-    /** @return array<int, string>|false */
-    public function pgsqlCopyToArray(
-        mixed $tableName,
-        mixed $separator = "\t",
-        mixed $nullAs = '\\N',
-        mixed $fields = null,
-    ): array|false {
-        return $this->copyToArrayThroughZtd(
-            $this->copyStringArgument($tableName, 'tableName'),
-            $this->copyStringArgument($separator, 'separator'),
-            $this->copyStringArgument($nullAs, 'nullAs'),
-            $this->copyOptionalStringArgument($fields, 'fields'),
-        );
-    }
-
-    /** @return array<int, string>|false */
-    public function copyToArray(
-        string $tableName,
-        string $separator = "\t",
-        string $nullAs = '\\N',
-        ?string $fields = null,
-    ): array|false {
-        return $this->copyToArrayThroughZtd($tableName, $separator, $nullAs, $fields);
-    }
-
-    /** @param array<mixed>|\Traversable<mixed> $rows */
-    public function pgsqlCopyFromArray(
-        mixed $tableName,
-        array|\Traversable $rows,
-        mixed $separator = "\t",
-        mixed $nullAs = '\\N',
-        mixed $fields = null,
-    ): bool {
-        return $this->copyFromArrayThroughZtd(
-            $this->copyStringArgument($tableName, 'tableName'),
-            $rows,
-            $this->copyStringArgument($separator, 'separator'),
-            $this->copyStringArgument($nullAs, 'nullAs'),
-            $this->copyOptionalStringArgument($fields, 'fields'),
-        );
-    }
-
-    /** @param array<mixed>|\Traversable<mixed> $rows */
-    public function copyFromArray(
-        string $tableName,
-        array|\Traversable $rows,
-        string $separator = "\t",
-        string $nullAs = '\\N',
-        ?string $fields = null,
-    ): bool {
-        return $this->copyFromArrayThroughZtd($tableName, $rows, $separator, $nullAs, $fields);
-    }
-
-    public function pgsqlCopyToFile(
-        mixed $tableName,
-        mixed $filename,
-        mixed $separator = "\t",
-        mixed $nullAs = '\\N',
-        mixed $fields = null,
-    ): bool {
-        return $this->copyToFileThroughZtd(
-            $this->copyStringArgument($tableName, 'tableName'),
-            $this->copyStringArgument($filename, 'filename'),
-            $this->copyStringArgument($separator, 'separator'),
-            $this->copyStringArgument($nullAs, 'nullAs'),
-            $this->copyOptionalStringArgument($fields, 'fields'),
-        );
-    }
-
-    public function copyToFile(
-        string $tableName,
-        string $filename,
-        string $separator = "\t",
-        string $nullAs = '\\N',
-        ?string $fields = null,
-    ): bool {
-        return $this->copyToFileThroughZtd($tableName, $filename, $separator, $nullAs, $fields);
-    }
-
-    public function pgsqlCopyFromFile(
-        mixed $tableName,
-        mixed $filename,
-        mixed $separator = "\t",
-        mixed $nullAs = '\\N',
-        mixed $fields = null,
-    ): bool {
-        return $this->copyFromFileThroughZtd(
-            $this->copyStringArgument($tableName, 'tableName'),
-            $this->copyStringArgument($filename, 'filename'),
-            $this->copyStringArgument($separator, 'separator'),
-            $this->copyStringArgument($nullAs, 'nullAs'),
-            $this->copyOptionalStringArgument($fields, 'fields'),
-        );
-    }
-
-    public function copyFromFile(
-        string $tableName,
-        string $filename,
-        string $separator = "\t",
-        string $nullAs = '\\N',
-        ?string $fields = null,
-    ): bool {
-        return $this->copyFromFileThroughZtd($tableName, $filename, $separator, $nullAs, $fields);
-    }
-
-    /** @return array<int, string>|false */
-    private function copyToArrayThroughZtd(
-        string $tableName,
-        string $separator,
-        string $nullAs,
-        ?string $fields,
-    ): array|false {
-        [$copy, $target] = $this->postgreSqlCopyTarget($tableName, $fields);
-        $statement = $this->query($copy->selectSql($target));
-        if ($statement === false) {
-            return false;
-        }
-
-        $rows = [];
-        while (($values = $statement->fetch(PDO::FETCH_NUM)) !== false) {
-            if (!is_array($values)) {
-                throw new ZtdPdoException('PostgreSQL COPY query returned an invalid row.');
-            }
-            $rows[] = $copy->encodeRow(array_values($values), $separator, $nullAs);
-        }
-
-        return $rows;
-    }
-
-    /** @param array<mixed>|\Traversable<mixed> $rows */
-    private function copyFromArrayThroughZtd(
-        string $tableName,
-        array|\Traversable $rows,
-        string $separator,
-        string $nullAs,
-        ?string $fields,
-    ): bool {
-        [$copy, $target] = $this->postgreSqlCopyTarget($tableName, $fields);
-        $decodedRows = [];
-        foreach ($rows as $row) {
-            if (!is_string($row)) {
-                throw new \TypeError(sprintf('PostgreSQL COPY rows must be strings, %s given.', get_debug_type($row)));
-            }
-            $decodedRow = $copy->decodeRow($row, $separator, $nullAs);
-            if (count($decodedRow) !== count($target->columns)) {
-                throw new \ValueError(sprintf(
-                    'PostgreSQL COPY row has %d fields, but %d fields are required.',
-                    count($decodedRow),
-                    count($target->columns),
-                ));
-            }
-            $decodedRows[] = $decodedRow;
-        }
-        if ($decodedRows === []) {
-            return true;
-        }
-
-        $parameters = [];
-        foreach ($decodedRows as $parameterValues) {
-            foreach ($parameterValues as $value) {
-                $parameters[] = $value;
-            }
-        }
-
-        $statement = $this->prepare($copy->insertSql(
-            $target,
-            count($decodedRows),
-            !$this->session->isEnabled(),
-        ));
-
-        return $statement !== false && $statement->execute($parameters);
-    }
-
-    private function copyToFileThroughZtd(
-        string $tableName,
-        string $filename,
-        string $separator,
-        string $nullAs,
-        ?string $fields,
-    ): bool {
-        $rows = $this->copyToArrayThroughZtd($tableName, $separator, $nullAs, $fields);
-        if ($rows === false) {
-            return false;
-        }
-
-        return file_put_contents($filename, implode('', $rows)) !== false;
-    }
-
-    private function copyFromFileThroughZtd(
-        string $tableName,
-        string $filename,
-        string $separator,
-        string $nullAs,
-        ?string $fields,
-    ): bool {
-        $rows = file($filename);
-        if ($rows === false) {
-            return false;
-        }
-
-        return $this->copyFromArrayThroughZtd($tableName, $rows, $separator, $nullAs, $fields);
-    }
-
-    /**
-     * @return array{CopySupport, CopyTarget}
-     */
-    private function postgreSqlCopyTarget(string $tableName, ?string $fields): array
-    {
-        $copy = $this->session->copySupport();
-        if ($copy === null) {
-            throw new ZtdPdoException('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
-        }
-
-        $target = $this->session->copyTarget($tableName, $fields);
-        if ($target === null) {
-            throw new ZtdPdoException(sprintf(
-                'PostgreSQL COPY cannot resolve the schema for table "%s".',
-                $tableName,
-            ));
-        }
-
-        return [$copy, $target];
-    }
-
-    private function guardRawPostgreSqlCopy(string $sql): void
-    {
-        if ($this->session->copySupport()?->isCopyStatement($sql) === true) {
-            throw new ZtdPdoException(
-                'ZTD Write Protection: Raw PostgreSQL COPY cannot preserve shadow isolation; '
-                . 'use the pgsqlCopyToArray(), pgsqlCopyFromArray(), pgsqlCopyToFile(), or pgsqlCopyFromFile() methods.',
-            );
-        }
-    }
-
-    private function copyStringArgument(mixed $value, string $name): string
-    {
-        if (!is_string($value)) {
-            throw new \TypeError(sprintf('PostgreSQL COPY argument $%s must be a string, %s given.', $name, get_debug_type($value)));
-        }
-
-        return $value;
-    }
-
-    private function copyOptionalStringArgument(mixed $value, string $name): ?string
-    {
-        if ($value === null) {
-            return null;
-        }
-
-        return $this->copyStringArgument($value, $name);
+        return $this->execution->native()->quote($string, $type);
     }
 
     /**
      * {@inheritDoc}
      *
-     * @return array<int, string>
+     * @return array<int, string> Every driver name PDO itself was built with
+     * @visibility public
+     * @example List the available native drivers
+     *     \ZtdQuery\Adapter\Pdo\ZtdPdo::getAvailableDrivers() === \PDO::getAvailableDrivers() // => true
      */
+    #[Override]
     public static function getAvailableDrivers(): array
     {
         /** @var array<int, string> */

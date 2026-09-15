@@ -1,113 +1,220 @@
 name: CI (ztd-query-pdo-adapter)
-
-on:
+'on':
   push:
-    branches: [main]
+    branches:
+    - main
   pull_request:
     paths:
-      - 'packages/ztd-query-pdo-adapter/**'
-      - 'packages/ztd-query-mysql/**'
-      - 'packages/ztd-query-postgres/**'
-      - 'packages/ztd-query-sqlite/**'
-      - 'packages/ztd-query-core/**'
-      - 'packages/sql-faker/**'
-      - 'packages/sql-fixture/**'
-      - 'packages/phpstan-custom-rules/**'
-      - '.github/workflows/ztd-query-pdo-adapter.yml'
-
+    - packages/ztd-query-pdo-adapter/**
+    - packages/ztd-query-mysql/**
+    - packages/ztd-query-postgres/**
+    - packages/ztd-query-sqlite/**
+    - packages/ztd-query-core/**
+    - packages/sql-faker/**
+    - packages/sql-fixture/**
+    - .github/workflows/ztd-query-pdo-adapter.yml
+  workflow_dispatch: null
+permissions:
+  contents: read
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
-
 defaults:
   run:
     working-directory: packages/ztd-query-pdo-adapter
-
 jobs:
-  test-unit:
-    name: Unit Test (PHP ${{ matrix.php }})
+  test:
+    name: Tests (PHP ${{ matrix.php }}, MySQL ${{ matrix.mysql }}, PostgreSQL 16, SQLite)
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        php: ['8.1', '8.2', '8.3', '8.4', '8.5']
+        php:
+        - '8.1'
+        - '8.2'
+        - '8.3'
+        - '8.4'
+        - '8.5'
+        mysql:
+        - 8.0.44
+        - 8.4.7
+    services:
+      mysql:
+        image: mysql:${{ matrix.mysql }}
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_ROOT_HOST: '%'
+        ports:
+        - 3306:3306
+        options: --health-cmd="mysqladmin ping -h 127.0.0.1 -proot" --health-interval=10s --health-timeout=5s --health-retries=20
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: ztd_test
+        ports:
+        - 5432:5432
+        options: --health-cmd="pg_isready -U test -d ztd_test" --health-interval=10s --health-timeout=5s --health-retries=20
+    env:
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_PORT: '3306'
+      PG_HOST: 127.0.0.1
+      PG_PORT: '5432'
     steps:
-      - uses: actions/checkout@v6
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-          extensions: mbstring, pdo, pdo_mysql
-          coverage: none
-      - uses: ramsey/composer-install@v3
-        with:
-          working-directory: packages/ztd-query-pdo-adapter
-      - run: composer test:unit
-
-  test-integration:
-    name: Integration (PHP ${{ matrix.php }})
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        php: ['8.1', '8.2', '8.3', '8.4', '8.5']
-    steps:
-      - uses: actions/checkout@v6
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: ${{ matrix.php }}
-          extensions: mbstring, pdo, pdo_mysql, pdo_pgsql, pdo_sqlite
-          coverage: none
-      - uses: ramsey/composer-install@v3
-        with:
-          working-directory: packages/ztd-query-pdo-adapter
-      - run: composer test:integration
-
+    - name: Check out the repository
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+    - name: Set up PHP
+      uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+      with:
+        php-version: ${{ matrix.php }}
+        extensions: ctype, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, pdo_mysql, pdo_pgsql, pdo_sqlite,
+          phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
+        coverage: none
+        ini-values: memory_limit=512M
+    - name: Validate Composer metadata
+      run: composer validate --strict --no-check-publish
+    - name: Install dependencies
+      uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+      with:
+        working-directory: packages/ztd-query-pdo-adapter
+        dependency-versions: locked
+        require-lock-file: true
+        composer-options: --prefer-dist
+    - name: Check installed platform requirements
+      if: matrix.php == '8.1' || matrix.php == '8.2' || matrix.php == '8.3'
+      run: composer check-platform-reqs
+    - name: Check library requirements outside the locked ParaTest PHP range
+      if: matrix.php == '8.4' || matrix.php == '8.5'
+      run: composer check-platform-reqs --no-dev
+    - name: Run PHPUnit and doctest with ParaTest
+      run: composer test
   lint:
+    name: Static checks
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v6
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.5'
-          extensions: mbstring
-          coverage: none
-      - uses: ramsey/composer-install@v3
-        with:
-          working-directory: packages/ztd-query-pdo-adapter
-      - run: composer lint
-
+    - name: Check out the repository
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+    - name: Set up PHP
+      uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+      with:
+        php-version: '8.3'
+        extensions: ctype, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, pdo_mysql, pdo_pgsql, pdo_sqlite,
+          phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
+        coverage: none
+        ini-values: memory_limit=512M
+    - name: Validate Composer metadata
+      run: composer validate --strict --no-check-publish
+    - name: Install dependencies
+      uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+      with:
+        working-directory: packages/ztd-query-pdo-adapter
+        dependency-versions: locked
+        require-lock-file: true
+        composer-options: --prefer-dist
+    - name: Check installed platform requirements
+      run: composer check-platform-reqs
+    - name: Check formatting
+      run: composer format:check
+    - name: Check source metrics
+      run: composer loc-guard
+    - name: Run PHPStan and toolkit rules
+      run: composer phpstan
+    - name: Check PHP compatibility
+      run: composer compat
+    - name: Check source tree
+      run: composer tree-guard
+    - name: Check architecture boundaries
+      run: composer deptrac
+  bench:
+    name: Benchmark execution
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+    - name: Check out the repository
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+    - name: Set up PHP
+      uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+      with:
+        php-version: '8.3'
+        extensions: ctype, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, pdo_mysql, pdo_pgsql, pdo_sqlite,
+          phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
+        coverage: none
+        ini-values: memory_limit=512M
+    - name: Validate Composer metadata
+      run: composer validate --strict --no-check-publish
+    - name: Install dependencies
+      uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+      with:
+        working-directory: packages/ztd-query-pdo-adapter
+        dependency-versions: locked
+        require-lock-file: true
+        composer-options: --prefer-dist
+    - name: Check installed platform requirements
+      run: composer check-platform-reqs
+    - name: Run the benchmarks
+      run: composer bench -- --dump-file=build/phpbench/results.xml
+    - name: Upload benchmark results
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: pdo-phpbench
+        path: packages/ztd-query-pdo-adapter/build/phpbench/
+        if-no-files-found: ignore
   mutation:
     name: Mutation Testing
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.5'
-          extensions: mbstring, pdo, pdo_mysql
-          coverage: pcov
-      - uses: ramsey/composer-install@v3
-        with:
-          working-directory: packages/ztd-query-pdo-adapter
-      - name: infection
-        run: |
-          if [ "${{ github.event_name }}" = "pull_request" ]; then
-            git fetch origin $GITHUB_BASE_REF
-            php -d memory_limit=256M vendor/bin/infection \
-              --threads=max \
-              --git-diff-lines \
-              --git-diff-base=origin/$GITHUB_BASE_REF \
-              --min-covered-msi=100 \
-              --ignore-msi-with-no-mutations \
-              --only-covering-test-cases \
-              --no-progress \
-              --logger-github
-          else
-            php -d memory_limit=512M vendor/bin/infection \
-              --threads=max \
-              --min-covered-msi=80 \
-              --no-progress \
-              --logger-github
-          fi
+    - name: Check out the repository
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        fetch-depth: 0
+    - name: Set up PHP
+      uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+      with:
+        php-version: '8.5'
+        extensions: ctype, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, pdo_mysql, pdo_pgsql, pdo_sqlite,
+          phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
+        coverage: pcov
+        ini-values: memory_limit=512M
+        tools: infection:0.35.4
+    - name: Validate Composer metadata
+      run: composer validate --strict --no-check-publish
+    - name: Install dependencies
+      uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+      with:
+        working-directory: packages/ztd-query-pdo-adapter
+        dependency-versions: locked
+        require-lock-file: true
+        composer-options: --prefer-dist
+    - name: Check installed platform requirements
+      run: composer check-platform-reqs --no-dev
+    - name: Mutation testing on changed lines
+      if: github.event_name == 'pull_request'
+      run: php -d memory_limit=4G "$(command -v infection)" --configuration=infection.json5 --threads=4 --only-covering-test-cases --with-uncovered
+        --git-diff-lines --git-diff-base="origin/${GITHUB_BASE_REF}" --ignore-msi-with-no-mutations --min-msi=85 --min-covered-msi=85
+        --no-progress --logger-github
+    - name: Mutation testing on the whole source tree
+      if: github.event_name != 'pull_request'
+      run: php -d memory_limit=4G "$(command -v infection)" --configuration=infection.json5 --threads=4 --only-covering-test-cases --with-uncovered
+        --no-progress --logger-github
+    - name: Reject skipped whole-tree mutants
+      if: github.event_name != 'pull_request'
+      run: |
+        php -d memory_limit=4G -r '
+          $report = json_decode(file_get_contents("build/infection/infection.json"), true, 512, JSON_THROW_ON_ERROR);
+          if ($report["stats"]["skippedCount"] !== 0) {
+              fwrite(STDERR, "Infection skipped mutants before execution; review the timeout against test durations.\n");
+              exit(1);
+          }
+        '
+    - name: Upload mutation reports
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: pdo-infection
+        path: packages/ztd-query-pdo-adapter/build/infection/
+        if-no-files-found: ignore

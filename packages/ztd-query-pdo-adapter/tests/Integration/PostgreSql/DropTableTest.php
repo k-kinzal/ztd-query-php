@@ -7,13 +7,15 @@ namespace Tests\Integration\PostgreSql;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
-use Tests\Fixtures\PostgreSqlContainer;
+use Tests\Container\PostgreSqlContainer;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 
 /**
  * @requires extension pdo_pgsql
  * @group integration
  * @group postgres
+ *
+ * @phpstan-type Row array<string, mixed>
  */
 #[CoversNothing]
 #[Large]
@@ -34,7 +36,7 @@ final class DropTableTest extends TestCase
 
             $stmt = $ztdPdo->query("SELECT * FROM {$table}");
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rows = $stmt->fetchAll();
 
             self::assertCount(1, $rows);
@@ -43,7 +45,7 @@ final class DropTableTest extends TestCase
 
             $stmt = $rawPdo->query("SELECT * FROM {$table}");
             self::assertNotFalse($stmt);
-            /** @var list<array<string, mixed>> */
+            /** @var list<Row> */
             $rawRows = $stmt->fetchAll();
 
             self::assertCount(1, $rawRows);

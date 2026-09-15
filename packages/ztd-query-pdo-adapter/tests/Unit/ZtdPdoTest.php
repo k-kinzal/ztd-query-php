@@ -6,71 +6,71 @@ namespace Tests\Unit;
 
 use PDO;
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use ReflectionClass;
-use RuntimeException;
-use ZtdQuery\Adapter\Pdo\PdoConnection;
-use ZtdQuery\Adapter\Pdo\PdoStatement;
+use ZtdQuery\Adapter\Pdo\Driver\PdoConnection;
+use ZtdQuery\Adapter\Pdo\Driver\PdoStatement;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 use ZtdQuery\Adapter\Pdo\ZtdPdoException;
-use ZtdQuery\Config\ZtdConfig;
-use ZtdQuery\Connection\ConnectionInterface;
-use ZtdQuery\Platform\SessionFactory;
-use ZtdQuery\Platform\CopySupport;
-use ZtdQuery\Platform\ResultColumnTypeResolver;
-use ZtdQuery\ResultSelectRunner;
-use ZtdQuery\Rewrite\QueryKind;
-use ZtdQuery\Rewrite\RewritePlan;
-use ZtdQuery\Rewrite\SqlRewriter;
-use ZtdQuery\Session;
-use ZtdQuery\Schema\ColumnType;
-use ZtdQuery\Schema\ColumnTypeFamily;
-use ZtdQuery\Shadow\Mutation\InsertMutation;
-use ZtdQuery\Shadow\ShadowStore;
+use ZtdQuery\Adapter\Pdo\ZtdPdoStatement;
 
 #[CoversClass(ZtdPdo::class)]
-#[UsesClass(PdoConnection::class)]
-#[UsesClass(PdoStatement::class)]
-#[UsesClass(ZtdPdoException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(ZtdPdoException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(ZtdPdoStatement::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(PdoConnection::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(PdoStatement::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\StatementExecution::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\Bindings::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\BufferedRow::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\DriverSessionFactory::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\ParameterKind::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\ParameterBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\PreparedQuery::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
+#[CoversClass(\ZtdQuery\Adapter\Pdo\Session\ConnectionExecution::class)]
 final class ZtdPdoTest extends TestCase
 {
-    /**
-     * Test that an explicitly provided SessionFactory overrides auto-detection in constructor.
-     */
-    public function testConstructorUsesExplicitSessionFactory(): void
+    public function testPublicApiAdaptsPdoWithoutAddingDriverSpecificOperations(): void
     {
-        $rewriter = static::createStub(SqlRewriter::class);
-        $mockFactory = static::createMock(SessionFactory::class);
-        $mockFactory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static fn (ConnectionInterface $connection, ZtdConfig $config): Session => new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $connection));
+        $pdoMethods = get_class_methods(PDO::class);
+        $lifecycleMethods = ['connect', 'fromPdo', 'enableZtd', 'disableZtd', 'isZtdEnabled'];
 
-        $ztdPdo = new ZtdPdo('sqlite::memory:', null, null, null, null, $mockFactory);
-
-        self::assertTrue($ztdPdo->isZtdEnabled());
+        self::assertSame([], array_values(array_diff(
+            get_class_methods(ZtdPdo::class),
+            $pdoMethods,
+            $lifecycleMethods,
+        )));
     }
 
-    /**
-     * Test that an explicitly provided SessionFactory overrides auto-detection in fromPdo().
-     */
-    public function testFromPdoUsesExplicitSessionFactory(): void
+    public function testExplicitPlatformFactoryCreatesAnIsolatedSession(): void
     {
-        $rewriter = static::createStub(SqlRewriter::class);
-        $mockFactory = static::createMock(SessionFactory::class);
-        $mockFactory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static fn (ConnectionInterface $connection, ZtdConfig $config): Session => new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $connection));
-
-        $pdo = new PDO('sqlite::memory:');
-        $ztdPdo = ZtdPdo::fromPdo($pdo, null, $mockFactory);
-
-        self::assertTrue($ztdPdo->isZtdEnabled());
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+        $pdo = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
+        self::assertSame(1, $pdo->exec("INSERT INTO users VALUES (1, 'Alice')"));
+        $result1 = $pdo->query('SELECT name FROM users');
+        self::assertNotFalse($result1);
+        self::assertSame('Alice', $result1->fetchColumn());
+        $result2 = $native->query('SELECT COUNT(*) FROM users');
+        self::assertNotFalse($result2);
+        self::assertSame(0, $result2->fetchColumn());
+        $pdo->disableZtd();
+        $pdo->enableZtd();
+        $result3 = $pdo->query('SELECT name FROM users');
+        self::assertNotFalse($result3);
+        self::assertSame('Alice', $result3->fetchColumn());
     }
 
-    /**
-     * Test that auto-detection works for SQLite driver when the package is installed.
-     */
+    public function testExecBatchReturnsTheLastStatementCount(): void
+    {
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
+        $pdo = ZtdPdo::fromPdo($native);
+        self::assertSame(1, $pdo->exec("INSERT INTO users VALUES (1, 'Alice'), (2, 'Bob'); UPDATE users SET name = 'Carol' WHERE id = 2"));
+        $result4 = $pdo->query('SELECT * FROM users ORDER BY id');
+        self::assertNotFalse($result4);
+        self::assertSame([['id' => 1, 'name' => 'Alice'], ['id' => 2, 'name' => 'Carol']], $result4->fetchAll(PDO::FETCH_ASSOC));
+    }
+
     public function testAutoDetectionForSqliteDriver(): void
     {
         (fn () => class_exists('ZtdQuery\\Platform\\Sqlite\\SqliteSessionFactory') || self::markTestSkipped('ztd-query-sqlite package is not installed.'))();
@@ -81,348 +81,257 @@ final class ZtdPdoTest extends TestCase
         self::assertTrue($ztdPdo->isZtdEnabled());
     }
 
-    /**
-     * Test that the DRIVER_MAP constant contains expected drivers.
-     */
-    public function testDriverMapContainsExpectedDrivers(): void
+    public function testEnableZtdPutsTheShadowBackInFrontOfTheDatabase(): void
     {
-        $reflection = new ReflectionClass(ZtdPdo::class);
-        $raw = $reflection->getConstant('DRIVER_MAP');
-        self::assertIsArray($raw);
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
+        $ztdPdo->disableZtd();
 
-        /** @var array<string, array{class: string, package: string}> $driverMap */
-        $driverMap = $raw;
+        $ztdPdo->enableZtd();
 
-        self::assertArrayHasKey('mysql', $driverMap);
-        self::assertArrayHasKey('pgsql', $driverMap);
-        self::assertArrayHasKey('sqlite', $driverMap);
-
-        self::assertSame('ZtdQuery\\Platform\\MySql\\MySqlSessionFactory', $driverMap['mysql']['class']);
-        self::assertSame('k-kinzal/ztd-query-mysql', $driverMap['mysql']['package']);
-
-        self::assertSame('ZtdQuery\\Platform\\Postgres\\PgSqlSessionFactory', $driverMap['pgsql']['class']);
-        self::assertSame('k-kinzal/ztd-query-postgres', $driverMap['pgsql']['package']);
-
-        self::assertSame('ZtdQuery\\Platform\\Sqlite\\SqliteSessionFactory', $driverMap['sqlite']['class']);
-        self::assertSame('k-kinzal/ztd-query-sqlite', $driverMap['sqlite']['package']);
+        self::assertTrue($ztdPdo->isZtdEnabled());
     }
 
-    /**
-     * Test that unsupported driver throws RuntimeException with descriptive message.
-     */
-    public function testUnsupportedDriverThrowsException(): void
+    public function testDisableZtdLetsStatementsReachTheDatabase(): void
     {
-        $reflection = new ReflectionClass(ZtdPdo::class);
-        $method = $reflection->getMethod('detectFactory');
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
 
-        $fakePdo = new class ('sqlite::memory:') extends PDO {
-            public string $fakeDriver = '';
+        $ztdPdo->disableZtd();
 
-            public function getAttribute(int $attribute): mixed
-            {
-                if ($attribute === PDO::ATTR_DRIVER_NAME) {
-                    return $this->fakeDriver;
-                }
-
-                return parent::getAttribute($attribute);
-            }
-        };
-        $fakePdo->fakeDriver = 'oci';
-
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Unsupported PDO driver: "oci"');
-
-        $method->invoke(null, $fakePdo);
+        self::assertFalse($ztdPdo->isZtdEnabled());
     }
 
-    /**
-     * Test that the error message for unsupported driver lists all supported drivers.
-     */
-    public function testUnsupportedDriverErrorListsSupportedDrivers(): void
+    public function testIsZtdEnabledSaysWritesAreShadowedFromTheStart(): void
     {
-        $reflection = new ReflectionClass(ZtdPdo::class);
-        $method = $reflection->getMethod('detectFactory');
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
 
-        $fakePdo = new class ('sqlite::memory:') extends PDO {
-            public string $fakeDriver = '';
+        self::assertTrue($ztdPdo->isZtdEnabled());
+    }
 
-            public function getAttribute(int $attribute): mixed
-            {
-                if ($attribute === PDO::ATTR_DRIVER_NAME) {
-                    return $this->fakeDriver;
-                }
+    public function testPrepareAnswersAStatementThatShadowsWhatItIsRunWith(): void
+    {
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
 
-                return parent::getAttribute($attribute);
-            }
-        };
-        $fakePdo->fakeDriver = 'firebird';
+        $statement = $ztdPdo->prepare('SELECT * FROM users');
 
+        self::assertNotFalse($statement);
+    }
+
+    public function testPrepareHandsTheStatementStraightToPdoWhileZtdIsOff(): void
+    {
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
+        $ztdPdo->disableZtd();
+
+        $statement = $ztdPdo->prepare('SELECT * FROM users');
+
+        self::assertNotInstanceOf(ZtdPdoStatement::class, $statement);
+    }
+
+    public function testQueryReadsTheShadowRatherThanTheTable(): void
+    {
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
+
+        $statement = $ztdPdo->query('SELECT * FROM users');
+
+        self::assertSame([], $statement === false ? [false] : $statement->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    public function testQueryReadsBackWhatWasWrittenThroughZtd(): void
+    {
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
+        $ztdPdo->exec("INSERT INTO users (id, name) VALUES (3, 'linus')");
+
+        $statement = $ztdPdo->query('SELECT * FROM users');
+
+        self::assertSame([['id' => 3, 'name' => 'linus']], $statement === false ? [] : $statement->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    public function testQueryReadsInTheFetchModeItIsGiven(): void
+    {
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
+        $ztdPdo->exec("INSERT INTO users (id, name) VALUES (3, 'linus')");
+
+        $statement = $ztdPdo->query('SELECT * FROM users', PDO::FETCH_NUM);
+
+        self::assertSame([[3, 'linus']], $statement === false ? [] : $statement->fetchAll());
+    }
+
+    public function testConnectOpensAConnectionWithZtdAlreadyInFrontOfIt(): void
+    {
+        self::assertSame(ZtdPdo::class, ZtdPdo::connect('sqlite::memory:')::class);
+    }
+
+    public function testBeginTransactionOpensOneOnTheShadowAsWellAsTheDatabase(): void
+    {
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
+
+        self::assertSame([true, true], [$ztdPdo->beginTransaction(), $ztdPdo->inTransaction()]);
+    }
+
+    public function testCommitKeepsWhatTheTransactionWroteToTheShadow(): void
+    {
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
+        $ztdPdo->beginTransaction();
+        $ztdPdo->exec("INSERT INTO users (id, name) VALUES (3, 'linus')");
+
+        $committed = $ztdPdo->commit();
+
+        $statement = $ztdPdo->query('SELECT * FROM users');
+        self::assertSame([true, [['id' => 3, 'name' => 'linus']]], [
+            $committed,
+            $statement === false ? [] : $statement->fetchAll(PDO::FETCH_ASSOC),
+        ]);
+    }
+
+    public function testRollBackTakesBackWhatTheTransactionWroteToTheShadow(): void
+    {
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
+        $ztdPdo->beginTransaction();
+        $ztdPdo->exec("INSERT INTO users (id, name) VALUES (3, 'linus')");
+
+        $rolledBack = $ztdPdo->rollBack();
+
+        $statement = $ztdPdo->query('SELECT * FROM users');
+        self::assertSame([true, []], [
+            $rolledBack,
+            $statement === false ? [false] : $statement->fetchAll(PDO::FETCH_ASSOC),
+        ]);
+    }
+
+    public function testInTransactionSaysNothingIsOpenBeforeOneIsBegun(): void
+    {
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
+
+        self::assertFalse($ztdPdo->inTransaction());
+    }
+
+    public function testLastInsertIdAnswersTheKeyTheShadowGaveTheRowItWrote(): void
+    {
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
+        $ztdPdo->exec("INSERT INTO users (name) VALUES ('linus')");
+
+        self::assertSame('1', $ztdPdo->lastInsertId());
+    }
+
+    public function testErrorCodeAnswersWhatTheDriverSaysWentWrongLast(): void
+    {
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
+
+        self::assertSame('00000', $ztdPdo->errorCode());
+    }
+
+    public function testErrorInfoAnswersWhatTheDriverSaysAboutTheLastFailure(): void
+    {
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
+
+        self::assertSame('00000', $ztdPdo->errorInfo()[0]);
+    }
+
+    public function testGetAttributeReadsTheAttributeOffTheConnectionItWraps(): void
+    {
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
+
+        self::assertSame('sqlite', $ztdPdo->getAttribute(PDO::ATTR_DRIVER_NAME));
+    }
+
+    public function testSetAttributeSetsTheAttributeOnTheConnectionItWraps(): void
+    {
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
+
+        $ztdPdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_NUM);
+
+        self::assertSame(PDO::FETCH_NUM, $ztdPdo->getAttribute(PDO::ATTR_DEFAULT_FETCH_MODE));
+    }
+
+    public function testQuoteWritesAValueTheWayTheDriverWouldQuoteIt(): void
+    {
+        $native = new PDO('sqlite::memory:');
+        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
+        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
+        $ztdPdo = ZtdPdo::fromPdo($native);
+
+        self::assertSame("'ada'", $ztdPdo->quote('ada'));
+    }
+
+    public function testGetAvailableDriversAnswersTheDriversPdoWasBuiltWith(): void
+    {
+        self::assertContains('sqlite', ZtdPdo::getAvailableDrivers());
+    }
+
+    public function testFromPdoRetainsTheExistingConnectionAndItsOptions(): void
+    {
+        $native = new PDO('sqlite::memory:', options: [PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
+        $native->exec('CREATE TABLE items (id INTEGER PRIMARY KEY)');
+        $pdo = ZtdPdo::fromPdo($native);
+        self::assertSame(1, $pdo->exec('INSERT INTO items VALUES (7)'));
+        $result5 = $pdo->query('SELECT id FROM items');
+        self::assertNotFalse($result5);
+        self::assertSame(['id' => 7], $result5->fetch());
+        $result6 = $native->query('SELECT COUNT(*) FROM items');
+        self::assertNotFalse($result6);
+        self::assertSame(0, $result6->fetchColumn());
+    }
+
+    public function testPrepareWrapsUnsupportedStatementsForPdoConsumers(): void
+    {
+        $pdo = ZtdPdo::fromPdo(new PDO('sqlite::memory:'));
         try {
-            $method->invoke(null, $fakePdo);
-            self::fail('Expected RuntimeException');
-        } catch (RuntimeException $e) {
-            self::assertStringContainsString('mysql', $e->getMessage());
-            self::assertStringContainsString('pgsql', $e->getMessage());
-            self::assertStringContainsString('sqlite', $e->getMessage());
+            $pdo->prepare('VACUUM');
+            self::fail('Unsupported maintenance statements must be rejected.');
+        } catch (ZtdPdoException $failure) {
+            self::assertStringContainsString('Statement type not supported', $failure->getMessage());
+            self::assertSame(0, $failure->getCode());
+            self::assertInstanceOf(\ZtdQuery\Connection\Exception\DatabaseException::class, $failure->getPrevious());
         }
     }
-
-    /**
-     * Test that a known driver with available class succeeds in auto-detection.
-     */
-    public function testDetectFactorySucceedsForInstalledDriver(): void
-    {
-        $reflection = new ReflectionClass(ZtdPdo::class);
-        $method = $reflection->getMethod('detectFactory');
-
-        $fakePdo = new class ('sqlite::memory:') extends PDO {
-            public string $fakeDriver = '';
-
-            public function getAttribute(int $attribute): mixed
-            {
-                if ($attribute === PDO::ATTR_DRIVER_NAME) {
-                    return $this->fakeDriver;
-                }
-
-                return parent::getAttribute($attribute);
-            }
-        };
-        $fakePdo->fakeDriver = 'mysql';
-
-        (fn () => class_exists('ZtdQuery\\Platform\\MySql\\MySqlSessionFactory') || self::markTestSkipped('ztd-query-mysql package is not installed.'))();
-
-        $result = $method->invoke(null, $fakePdo);
-        self::assertInstanceOf(SessionFactory::class, $result);
-    }
-
-    /**
-     * Test that enableZtd/disableZtd/isZtdEnabled work with explicit factory.
-     */
-    public function testZtdToggleWithExplicitFactory(): void
-    {
-        $rewriter = static::createStub(SqlRewriter::class);
-        $mockFactory = static::createMock(SessionFactory::class);
-        $mockFactory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static fn (ConnectionInterface $connection, ZtdConfig $config): Session => new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $connection));
-
-        $pdo = new PDO('sqlite::memory:');
-        $ztdPdo = ZtdPdo::fromPdo($pdo, null, $mockFactory);
-
-        self::assertTrue($ztdPdo->isZtdEnabled());
-
-        $ztdPdo->disableZtd();
-        self::assertFalse($ztdPdo->isZtdEnabled());
-
-        $ztdPdo->enableZtd();
-        self::assertTrue($ztdPdo->isZtdEnabled());
-    }
-
-    /**
-     * Test that SessionFactory is called exactly once per ZtdPdo instance.
-     */
-    public function testSessionFactoryCalledOncePerInstance(): void
-    {
-        $callCount = 0;
-        $rewriter = static::createStub(SqlRewriter::class);
-        $mockFactory = static::createMock(SessionFactory::class);
-        $mockFactory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static function (ConnectionInterface $connection, ZtdConfig $config) use (&$callCount, $rewriter): Session {
-                $callCount++;
-
-                return new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $connection);
-            });
-
-        $pdo = new PDO('sqlite::memory:');
-        $ztdPdo = ZtdPdo::fromPdo($pdo, null, $mockFactory);
-
-        $ztdPdo->disableZtd();
-        $ztdPdo->enableZtd();
-        $ztdPdo->isZtdEnabled();
-
-        self::assertSame(1, $callCount);
-    }
-
-    /**
-     * Test that explicit config is passed to the factory via fromPdo.
-     */
-    public function testExplicitConfigPassedToFactory(): void
-    {
-        $expectedConfig = ZtdConfig::default();
-        $receivedConfig = null;
-
-        $rewriter = static::createStub(SqlRewriter::class);
-        $mockFactory = static::createMock(SessionFactory::class);
-        $mockFactory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static function (ConnectionInterface $connection, ZtdConfig $config) use (&$receivedConfig, $rewriter): Session {
-                $receivedConfig = $config;
-
-                return new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $connection);
-            });
-
-        $pdo = new PDO('sqlite::memory:');
-        ZtdPdo::fromPdo($pdo, $expectedConfig, $mockFactory);
-
-        self::assertSame($expectedConfig, $receivedConfig);
-    }
-
-    public function testExecRunsEachStatementSequentiallyAndReturnsLastAffectedRows(): void
-    {
-        $store = new ShadowStore();
-        $rewriter = static::createMock(SqlRewriter::class);
-        $rewriter->expects(self::exactly(3))
-            ->method('splitStatements')
-            ->willReturnCallback(static fn (string $sql): array => match ($sql) {
-                'first; second' => ['first', 'second'],
-                default => [$sql],
-            });
-        $rewriter->expects(self::exactly(2))
-            ->method('rewrite')
-            ->willReturnCallback(static fn (string $sql): RewritePlan => match ($sql) {
-                'first' => new RewritePlan(
-                    'SELECT 1 AS id UNION ALL SELECT 2 AS id',
-                    QueryKind::WRITE_SIMULATED,
-                    new InsertMutation('first_items'),
-                ),
-                'second' => new RewritePlan(
-                    'SELECT 3 AS id',
-                    QueryKind::WRITE_SIMULATED,
-                    new InsertMutation('second_items'),
-                ),
-                default => throw new RuntimeException("Unexpected SQL: $sql"),
-            });
-        $factory = static::createMock(SessionFactory::class);
-        $typeResolver = static::createStub(ResultColumnTypeResolver::class);
-        $typeResolver->method('resolve')->willReturn(new ColumnType(ColumnTypeFamily::INTEGER, 'INTEGER'));
-        $factory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static fn (ConnectionInterface $connection, ZtdConfig $config): Session => new Session(
-                $rewriter,
-                $store,
-                new ResultSelectRunner(),
-                $config,
-                $connection,
-                resultColumnTypeResolver: $typeResolver,
-            ));
-        $ztdPdo = ZtdPdo::fromPdo(new PDO('sqlite::memory:'), null, $factory);
-
-        self::assertSame(1, $ztdPdo->exec('first; second'));
-        self::assertSame([['id' => 1], ['id' => 2]], $store->get('first_items'));
-        self::assertSame([['id' => 3]], $store->get('second_items'));
-    }
-
-    public function testExecRejectsRawPostgreSqlCopy(): void
-    {
-        $rewriter = static::createStub(SqlRewriter::class);
-        $copySupport = static::createStub(CopySupport::class);
-        $copySupport->method('isCopyStatement')->willReturn(true);
-        $factory = static::createStub(SessionFactory::class);
-        $factory->method('create')
-            ->willReturnCallback(static fn (ConnectionInterface $connection, ZtdConfig $config): Session => new Session(
-                $rewriter,
-                new ShadowStore(),
-                new ResultSelectRunner(),
-                $config,
-                $connection,
-                copySupport: $copySupport,
-            ));
-        $ztdPdo = ZtdPdo::fromPdo(new PDO('sqlite::memory:'), null, $factory);
-
-        $this->expectException(ZtdPdoException::class);
-        $this->expectExceptionMessage(
-            'ZTD Write Protection: Raw PostgreSQL COPY cannot preserve shadow isolation; '
-            . 'use the pgsqlCopyToArray(), pgsqlCopyFromArray(), pgsqlCopyToFile(), or pgsqlCopyFromFile() methods.',
-        );
-
-        $ztdPdo->exec('COPY users TO STDOUT');
-    }
-
-    public function testExecStopsBatchWhenFirstStatementFails(): void
-    {
-        $rewriter = static::createMock(SqlRewriter::class);
-        $rewriter->expects(self::exactly(2))
-            ->method('splitStatements')
-            ->willReturnCallback(static fn (string $sql): array => match ($sql) {
-                'first; second' => ['first', 'second'],
-                default => [$sql],
-            });
-        $rewriter->expects(self::once())
-            ->method('rewrite')
-            ->with('first')
-            ->willReturn(new RewritePlan('SELECT * FROM missing_table', QueryKind::READ));
-        $factory = static::createMock(SessionFactory::class);
-        $factory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static fn (ConnectionInterface $connection, ZtdConfig $config): Session => new Session(
-                $rewriter,
-                new ShadowStore(),
-                new ResultSelectRunner(),
-                $config,
-                $connection,
-            ));
-        $pdo = new PDO('sqlite::memory:');
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_SILENT);
-        $ztdPdo = ZtdPdo::fromPdo($pdo, null, $factory);
-
-        self::assertFalse($ztdPdo->exec('first; second'));
-    }
-
-    public function testExecStopsBatchWhenLaterStatementFails(): void
-    {
-        $rewriter = static::createMock(SqlRewriter::class);
-        $rewriter->expects(self::exactly(3))
-            ->method('splitStatements')
-            ->willReturnCallback(static fn (string $sql): array => match ($sql) {
-                'first; second; third' => ['first', 'second', 'third'],
-                default => [$sql],
-            });
-        $rewriter->expects(self::exactly(2))
-            ->method('rewrite')
-            ->willReturnCallback(static fn (string $sql): RewritePlan => match ($sql) {
-                'first' => new RewritePlan('SELECT 1', QueryKind::READ),
-                'second' => new RewritePlan('SELECT * FROM missing_table', QueryKind::READ),
-                default => throw new RuntimeException("Unexpected SQL: $sql"),
-            });
-        $factory = static::createMock(SessionFactory::class);
-        $factory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static fn (ConnectionInterface $connection, ZtdConfig $config): Session => new Session(
-                $rewriter,
-                new ShadowStore(),
-                new ResultSelectRunner(),
-                $config,
-                $connection,
-            ));
-        $pdo = new PDO('sqlite::memory:');
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_SILENT);
-        $ztdPdo = ZtdPdo::fromPdo($pdo, null, $factory);
-
-        self::assertFalse($ztdPdo->exec('first; second; third'));
-    }
-
-    /**
-     * Test that explicit config is passed to the factory via constructor.
-     */
-    public function testConstructorPassesExplicitConfigToFactory(): void
-    {
-        $expectedConfig = ZtdConfig::default();
-        $receivedConfig = null;
-
-        $rewriter = static::createStub(SqlRewriter::class);
-        $mockFactory = static::createMock(SessionFactory::class);
-        $mockFactory->expects(self::once())
-            ->method('create')
-            ->willReturnCallback(static function (ConnectionInterface $connection, ZtdConfig $config) use (&$receivedConfig, $rewriter): Session {
-                $receivedConfig = $config;
-
-                return new Session($rewriter, new ShadowStore(), new ResultSelectRunner(), $config, $connection);
-            });
-
-        new ZtdPdo('sqlite::memory:', null, null, null, $expectedConfig, $mockFactory);
-
-        self::assertSame($expectedConfig, $receivedConfig);
-    }
-
 }

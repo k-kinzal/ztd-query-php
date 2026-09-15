@@ -4,21 +4,15 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
+use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 
 /**
- * Integration tests for ZtdPdo with SQLite: CTE shadowing behavior.
- *
- * ZTD CTE shadowing replaces real table references with CTE definitions
- * that contain only the shadow data (mutations made through ZTD).
- * When no mutations exist for a table, the CTE returns zero rows.
- * Mutations accumulate in the shadow store: INSERT adds rows,
- * UPDATE and DELETE operate on shadow rows only.
- *
  * @requires extension pdo_sqlite
+ * @phpstan-type Row array<string, mixed>
  */
 #[CoversNothing]
 #[Large]
@@ -26,7 +20,7 @@ final class SqliteCteShadowingTest extends TestCase
 {
     public function testSelectOnCleanShadowReturnsEmpty(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $rawPdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL)');
         $rawPdo->exec("INSERT INTO users (name, age) VALUES ('Alice', 30), ('Bob', 25)");
 
@@ -34,14 +28,14 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $ztdPdo->query('SELECT * FROM users ORDER BY id');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rows */
+        /** @var list<Row> $rows */
         $rows = $stmt->fetchAll();
         self::assertCount(0, $rows);
     }
 
     public function testInsertDoesNotModifyPhysicalDatabase(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $rawPdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL)');
         $rawPdo->exec("INSERT INTO users (name, age) VALUES ('Alice', 30), ('Bob', 25)");
 
@@ -51,14 +45,14 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $rawPdo->query('SELECT * FROM users');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         self::assertCount(2, $rawRows);
     }
 
     public function testInsertIsVisibleViaZtdSelect(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $rawPdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL)');
         $rawPdo->exec("INSERT INTO users (name, age) VALUES ('Alice', 30), ('Bob', 25)");
 
@@ -68,7 +62,7 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $ztdPdo->query('SELECT name, age FROM users ORDER BY name');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertCount(1, $ztdRows);
         self::assertSame('Charlie', $ztdRows[0]['name']);
@@ -77,7 +71,7 @@ final class SqliteCteShadowingTest extends TestCase
 
     public function testMultipleInsertsAccumulate(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $rawPdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL)');
         $rawPdo->exec("INSERT INTO users (name, age) VALUES ('Alice', 30), ('Bob', 25)");
 
@@ -88,7 +82,7 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $ztdPdo->query('SELECT name FROM users ORDER BY name');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertCount(2, $ztdRows);
 
@@ -98,7 +92,7 @@ final class SqliteCteShadowingTest extends TestCase
 
     public function testSelectWithWhereOnShadowData(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $rawPdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL)');
         $rawPdo->exec("INSERT INTO users (name, age) VALUES ('Alice', 30), ('Bob', 25)");
 
@@ -107,9 +101,9 @@ final class SqliteCteShadowingTest extends TestCase
         $ztdPdo->exec("INSERT INTO users (name, age) VALUES ('Charlie', 35)");
         $ztdPdo->exec("INSERT INTO users (name, age) VALUES ('Diana', 28)");
 
-        $stmt = $ztdPdo->query("SELECT * FROM users WHERE age > 30");
+        $stmt = $ztdPdo->query('SELECT * FROM users WHERE age > 30');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rows */
+        /** @var list<Row> $rows */
         $rows = $stmt->fetchAll();
         self::assertCount(1, $rows);
         self::assertSame('Charlie', $rows[0]['name']);
@@ -117,7 +111,7 @@ final class SqliteCteShadowingTest extends TestCase
 
     public function testPhysicalDatabaseRemainsUnchangedAfterMutations(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $rawPdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL)');
         $rawPdo->exec("INSERT INTO users (name, age) VALUES ('Alice', 30), ('Bob', 25)");
 
@@ -128,7 +122,7 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $rawPdo->query('SELECT * FROM users ORDER BY id');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         self::assertCount(2, $rawRows);
         self::assertSame('Alice', $rawRows[0]['name']);
@@ -137,7 +131,7 @@ final class SqliteCteShadowingTest extends TestCase
 
     public function testDisableZtdBypassesRewriting(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $rawPdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL)');
         $rawPdo->exec("INSERT INTO users (name, age) VALUES ('Alice', 30), ('Bob', 25)");
 
@@ -148,7 +142,7 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $rawPdo->query('SELECT * FROM users');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         self::assertCount(3, $rawRows);
 
@@ -157,7 +151,7 @@ final class SqliteCteShadowingTest extends TestCase
 
     public function testEnableDisableToggle(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $rawPdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL)');
         $rawPdo->exec("INSERT INTO users (name, age) VALUES ('Alice', 30), ('Bob', 25)");
 
@@ -172,7 +166,7 @@ final class SqliteCteShadowingTest extends TestCase
 
     public function testPreparedStatementSelectWithZtd(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $rawPdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL)');
         $rawPdo->exec("INSERT INTO users (name, age) VALUES ('Alice', 30), ('Bob', 25)");
 
@@ -184,7 +178,7 @@ final class SqliteCteShadowingTest extends TestCase
         self::assertNotFalse($stmt);
 
         $stmt->execute(['Charlie']);
-        /** @var list<array<string, mixed>> $rows */
+        /** @var list<Row> $rows */
         $rows = $stmt->fetchAll();
 
         self::assertCount(1, $rows);
@@ -193,7 +187,7 @@ final class SqliteCteShadowingTest extends TestCase
 
     public function testPreparedStatementSelectNonExistent(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $rawPdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL)');
         $rawPdo->exec("INSERT INTO users (name, age) VALUES ('Alice', 30), ('Bob', 25)");
 
@@ -205,7 +199,7 @@ final class SqliteCteShadowingTest extends TestCase
         self::assertNotFalse($stmt);
 
         $stmt->execute(['Alice']);
-        /** @var list<array<string, mixed>> $rows */
+        /** @var list<Row> $rows */
         $rows = $stmt->fetchAll();
 
         self::assertCount(0, $rows);
@@ -213,7 +207,7 @@ final class SqliteCteShadowingTest extends TestCase
 
     public function testMultipleInsertsExactRowComparison(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $rawPdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL)');
         $rawPdo->exec("INSERT INTO users (name, age) VALUES ('Alice', 30), ('Bob', 25)");
 
@@ -224,7 +218,7 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $ztdPdo->query('SELECT name, age FROM users ORDER BY name');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertCount(2, $ztdRows);
         self::assertSame('Charlie', $ztdRows[0]['name']);
@@ -232,7 +226,7 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $rawPdo->query('SELECT name FROM users ORDER BY name');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         self::assertCount(2, $rawRows);
         self::assertSame('Alice', $rawRows[0]['name']);
@@ -241,7 +235,7 @@ final class SqliteCteShadowingTest extends TestCase
 
     public function testUpdateShadowData(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $rawPdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL)');
         $rawPdo->exec("INSERT INTO users (name, age) VALUES ('Alice', 30), ('Bob', 25)");
 
@@ -253,7 +247,7 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $ztdPdo->query("SELECT name, age FROM users WHERE name = 'Charlie'");
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertCount(1, $ztdRows);
         self::assertSame('Charlie', $ztdRows[0]['name']);
@@ -261,7 +255,7 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $ztdPdo->query("SELECT name, age FROM users WHERE name = 'Diana'");
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $dianaRows */
+        /** @var list<Row> $dianaRows */
         $dianaRows = $stmt->fetchAll();
         self::assertCount(1, $dianaRows);
         self::assertSame('Diana', $dianaRows[0]['name']);
@@ -269,7 +263,7 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $rawPdo->query('SELECT name, age FROM users ORDER BY id');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         self::assertCount(2, $rawRows);
         self::assertSame('Alice', $rawRows[0]['name']);
@@ -280,7 +274,7 @@ final class SqliteCteShadowingTest extends TestCase
 
     public function testDeleteShadowData(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $rawPdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL)');
         $rawPdo->exec("INSERT INTO users (name, age) VALUES ('Alice', 30), ('Bob', 25)");
 
@@ -292,14 +286,14 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $ztdPdo->query('SELECT name FROM users ORDER BY name');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertCount(1, $ztdRows);
         self::assertSame('Diana', $ztdRows[0]['name']);
 
         $stmt = $rawPdo->query('SELECT name FROM users ORDER BY id');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         self::assertCount(2, $rawRows);
         self::assertSame('Alice', $rawRows[0]['name']);
@@ -308,7 +302,7 @@ final class SqliteCteShadowingTest extends TestCase
 
     public function testDeleteAllShadowData(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $rawPdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL)');
         $rawPdo->exec("INSERT INTO users (name, age) VALUES ('Alice', 30), ('Bob', 25)");
 
@@ -319,20 +313,20 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $ztdPdo->query('SELECT * FROM users');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertCount(0, $ztdRows);
 
         $stmt = $rawPdo->query('SELECT * FROM users');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         self::assertCount(2, $rawRows);
     }
 
     public function testInsertThenUpdateThenSelectRoundtrip(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $rawPdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL)');
         $rawPdo->exec("INSERT INTO users (name, age) VALUES ('Alice', 30), ('Bob', 25)");
 
@@ -343,21 +337,21 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $ztdPdo->query('SELECT name FROM users');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertCount(1, $ztdRows);
         self::assertSame('Charles', $ztdRows[0]['name']);
 
         $stmt = $rawPdo->query('SELECT * FROM users');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         self::assertCount(2, $rawRows);
     }
 
     public function testUpdateIsVisibleViaZtdSelect(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $rawPdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL)');
         $rawPdo->exec("INSERT INTO users (name, age) VALUES ('Alice', 30), ('Bob', 25)");
 
@@ -368,7 +362,7 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $ztdPdo->query("SELECT name, age FROM users WHERE name = 'Charlie'");
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         self::assertCount(1, $ztdRows);
         self::assertSame('Charlie', $ztdRows[0]['name']);
@@ -377,7 +371,7 @@ final class SqliteCteShadowingTest extends TestCase
 
     public function testUpdateDoesNotModifyPhysicalDatabase(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $rawPdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL)');
         $rawPdo->exec("INSERT INTO users (name, age) VALUES ('Alice', 30), ('Bob', 25)");
 
@@ -388,7 +382,7 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $rawPdo->query('SELECT name, age FROM users ORDER BY id');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         self::assertCount(2, $rawRows);
         self::assertSame('Alice', $rawRows[0]['name']);
@@ -399,7 +393,7 @@ final class SqliteCteShadowingTest extends TestCase
 
     public function testDeleteIsVisibleViaZtdSelect(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $rawPdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL)');
         $rawPdo->exec("INSERT INTO users (name, age) VALUES ('Alice', 30), ('Bob', 25)");
 
@@ -411,7 +405,7 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $ztdPdo->query('SELECT name FROM users ORDER BY name');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $ztdRows */
+        /** @var list<Row> $ztdRows */
         $ztdRows = $stmt->fetchAll();
         $names = array_column($ztdRows, 'name');
         self::assertSame(['Diana'], $names, 'After DELETE, only Diana must remain in ZTD view');
@@ -419,7 +413,7 @@ final class SqliteCteShadowingTest extends TestCase
 
     public function testDeleteDoesNotModifyPhysicalDatabase(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $rawPdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, age INTEGER NOT NULL)');
         $rawPdo->exec("INSERT INTO users (name, age) VALUES ('Alice', 30), ('Bob', 25)");
 
@@ -430,7 +424,7 @@ final class SqliteCteShadowingTest extends TestCase
 
         $stmt = $rawPdo->query('SELECT name FROM users ORDER BY id');
         self::assertNotFalse($stmt);
-        /** @var list<array<string, mixed>> $rawRows */
+        /** @var list<Row> $rawRows */
         $rawRows = $stmt->fetchAll();
         $names = array_column($rawRows, 'name');
         self::assertSame(['Alice', 'Bob'], $names, 'Physical database must be unchanged after ZTD DELETE');
@@ -438,7 +432,7 @@ final class SqliteCteShadowingTest extends TestCase
 
     public function testInsertWithNullValues(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $rawPdo->exec('CREATE TABLE nullable_table (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, bio TEXT)');
 
         $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
@@ -448,7 +442,7 @@ final class SqliteCteShadowingTest extends TestCase
         $ztdRows = $ztdPdo->query('SELECT * FROM nullable_table');
         self::assertNotFalse($ztdRows);
 
-        /** @var list<array<string, mixed>> $rows */
+        /** @var list<Row> $rows */
         $rows = $ztdRows->fetchAll();
         self::assertCount(1, $rows);
         self::assertSame('Test', $rows[0]['name']);
@@ -457,7 +451,7 @@ final class SqliteCteShadowingTest extends TestCase
 
     public function testCommentsRemainLexicalWhitespaceAcrossSqliteMutations(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $rawPdo->exec('CREATE TABLE items (id INTEGER PRIMARY KEY, status INTEGER)');
         $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
 
@@ -472,12 +466,12 @@ final class SqliteCteShadowingTest extends TestCase
 
         $ids = $ztdPdo->query("-- SELECT * FROM other_table WHERE DELETE UPDATE INSERT\nSELECT id FROM items ORDER BY id");
         self::assertNotFalse($ids);
-        self::assertSame([1], $ids->fetchAll(\PDO::FETCH_COLUMN));
+        self::assertSame([1], $ids->fetchAll(PDO::FETCH_COLUMN));
     }
 
     public function testSqliteStringLiteralsDoNotCreateTableReferences(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $rawPdo->exec('CREATE TABLE items (id INTEGER PRIMARY KEY, name TEXT)');
         $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
         $ztdPdo->exec("INSERT INTO items VALUES (1, 'test')");
@@ -497,7 +491,7 @@ final class SqliteCteShadowingTest extends TestCase
 
     public function testInsertWithoutColumnListSupportsConstraintKeywordPrefixes(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $rawPdo->exec('CREATE TABLE bookings (id INT PRIMARY KEY, guest TEXT, check_in TEXT, check_out TEXT)');
         $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
 
@@ -517,7 +511,7 @@ final class SqliteCteShadowingTest extends TestCase
 
     public function testQuotedInsertSourceKeywordsRemainIdentifiers(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC]);
+        $rawPdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $rawPdo->exec('CREATE TABLE "select" (id INTEGER PRIMARY KEY, val TEXT)');
         $rawPdo->exec('CREATE TABLE "values" (id INTEGER PRIMARY KEY, val TEXT)');
         $rawPdo->exec('CREATE TABLE keyword_columns (id INTEGER PRIMARY KEY, "select" TEXT, "values" TEXT)');
@@ -548,9 +542,9 @@ final class SqliteCteShadowingTest extends TestCase
 
     public function testBinaryPreparedValueRoundTripsThroughShadowCte(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        $rawPdo = new PDO('sqlite::memory:', null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
         $rawPdo->exec('CREATE TABLE events (id INTEGER PRIMARY KEY, payload BLOB)');
         $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
@@ -567,9 +561,9 @@ final class SqliteCteShadowingTest extends TestCase
 
     public function testRealValuesRetainRoundTripPrecision(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        $rawPdo = new PDO('sqlite::memory:', null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
         $rawPdo->exec('CREATE TABLE measurements (id INTEGER PRIMARY KEY, value REAL)');
         $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
@@ -578,14 +572,14 @@ final class SqliteCteShadowingTest extends TestCase
 
         $result = $ztdPdo->query('SELECT value FROM measurements ORDER BY id');
         self::assertNotFalse($result);
-        self::assertSame([2.718281828459045, 0.30000000000000004], $result->fetchAll(\PDO::FETCH_COLUMN));
+        self::assertSame([2.718281828459045, 0.30000000000000004], $result->fetchAll(PDO::FETCH_COLUMN));
     }
 
     public function testShadowValuesRetainSqliteStorageClasses(): void
     {
-        $rawPdo = new \PDO('sqlite::memory:', null, null, [
-            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+        $rawPdo = new PDO('sqlite::memory:', null, null, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         ]);
         $rawPdo->exec('CREATE TABLE values_table (id INTEGER PRIMARY KEY, int_value INTEGER, real_value REAL, text_value TEXT, nullable_value TEXT)');
         $ztdPdo = ZtdPdo::fromPdo($rawPdo, null);
@@ -594,6 +588,6 @@ final class SqliteCteShadowingTest extends TestCase
 
         $result = $ztdPdo->query('SELECT typeof(int_value), typeof(real_value), typeof(text_value), typeof(nullable_value) FROM values_table');
         self::assertNotFalse($result);
-        self::assertSame(['integer', 'real', 'text', 'null'], $result->fetch(\PDO::FETCH_NUM));
+        self::assertSame(['integer', 'real', 'text', 'null'], $result->fetch(PDO::FETCH_NUM));
     }
 }

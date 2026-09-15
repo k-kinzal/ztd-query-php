@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Integration\PostgreSql;
 
+use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
-use Tests\Fixtures\PostgreSqlContainer;
+use Tests\Container\PostgreSqlContainer;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 
 /**
@@ -36,12 +37,12 @@ final class ViewTest extends TestCase
 
             $simple = $ztdPdo->query('SELECT id FROM active_accounts ORDER BY id');
             self::assertNotFalse($simple);
-            self::assertSame([1, 3], $simple->fetchAll(\PDO::FETCH_COLUMN));
+            self::assertSame([1, 3], $simple->fetchAll(PDO::FETCH_COLUMN));
 
             $prepared = $ztdPdo->prepare('SELECT id FROM active_accounts WHERE amount >= ? ORDER BY id');
             self::assertNotFalse($prepared);
             self::assertTrue($prepared->execute([150]));
-            self::assertSame([3], $prepared->fetchAll(\PDO::FETCH_COLUMN));
+            self::assertSame([3], $prepared->fetchAll(PDO::FETCH_COLUMN));
 
             $joined = $ztdPdo->query('SELECT id, label FROM account_labels ORDER BY id');
             self::assertNotFalse($joined);

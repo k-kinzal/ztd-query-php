@@ -5,7 +5,11 @@ declare(strict_types=1);
 namespace Fuzz\Correctness;
 
 use Faker\Generator;
+use InvalidArgumentException;
 
+/**
+ * The schema pool.
+ */
 final class SchemaPool
 {
     /** @var array<string, SchemaDefinition> */
@@ -13,7 +17,10 @@ final class SchemaPool
 
     private static bool $initialized = false;
 
-    private static function initialize(): void
+    /**
+     * Fills the pool the first time it is asked for.
+     */
+    public static function initialize(): void
     {
         if (self::$initialized) {
             return;
@@ -80,6 +87,12 @@ final class SchemaPool
         self::$initialized = true;
     }
 
+    /**
+     * Random.
+     *
+     * @param Generator $faker
+     * @return SchemaDefinition
+     */
     public static function random(Generator $faker): SchemaDefinition
     {
         self::initialize();
@@ -98,11 +111,14 @@ final class SchemaPool
         return self::$schemas;
     }
 
+    /**
+     * @throws InvalidArgumentException
+     */
     public static function get(string $name): SchemaDefinition
     {
         self::initialize();
         if (!isset(self::$schemas[$name])) {
-            throw new \InvalidArgumentException("Unknown schema: $name");
+            throw new InvalidArgumentException("Unknown schema: $name");
         }
         return self::$schemas[$name];
     }
