@@ -14,14 +14,12 @@ use PHPUnit\Framework\TestCase;
 use ZtdQuery\Adapter\Pdo\Driver\PdoConnection;
 use ZtdQuery\Adapter\Pdo\Session\ConnectionExecution;
 use ZtdQuery\Adapter\Pdo\Session\DriverSessionFactory;
-use ZtdQuery\Adapter\Pdo\Session\PostgreSqlCopy;
 use ZtdQuery\Adapter\Pdo\Session\PreparedQuery;
 use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 
 #[CoversClass(ConnectionExecution::class)]
 #[UsesClass(PdoConnection::class)]
 #[UsesClass(DriverSessionFactory::class)]
-#[UsesClass(PostgreSqlCopy::class)]
 #[UsesClass(PreparedQuery::class)]
 #[UsesClass(ZtdPdoException::class)]
 #[Medium]
@@ -93,14 +91,6 @@ final class ConnectionExecutionTest extends TestCase
         self::assertNotFalse($shadow);
         self::assertSame(0, $physical->fetchColumn());
         self::assertSame(1, $shadow->fetchColumn());
-    }
-
-    public function testCopyRejectsAnUnsupportedDialect(): void
-    {
-        $execution = new ConnectionExecution(new PDO('sqlite::memory:'));
-        $this->expectException(ZtdPdoException::class);
-        $this->expectExceptionMessage('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
-        $execution->copy()->target('users', null);
     }
 
     public function testBeginTransactionPropagatesNativeFailure(): void

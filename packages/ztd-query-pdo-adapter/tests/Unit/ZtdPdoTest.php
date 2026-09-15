@@ -12,21 +12,12 @@ use ZtdQuery\Adapter\Pdo\Driver\PdoStatement;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 use ZtdQuery\Adapter\Pdo\ZtdPdoStatement;
-use ZtdQuery\Config\ZtdConfig;
-use ZtdQuery\Connection\ConnectionInterface;
-use ZtdQuery\Platform\CopySupport;
-use ZtdQuery\Platform\SessionFactory;
-use ZtdQuery\ResultSelectRunner;
-use ZtdQuery\Rewrite\SqlRewriter;
-use ZtdQuery\Session;
-use ZtdQuery\Shadow\ShadowStore;
 
 #[CoversClass(ZtdPdo::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(ZtdPdoException::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(ZtdPdoStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(PdoConnection::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(PdoStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\PostgreSqlCopy::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\StatementExecution::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\Bindings::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\BufferedRow::class)]
@@ -36,9 +27,20 @@ use ZtdQuery\Shadow\ShadowStore;
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\PreparedQuery::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
 #[CoversClass(\ZtdQuery\Adapter\Pdo\Session\ConnectionExecution::class)]
-#[CoversClass(\ZtdQuery\Adapter\Pdo\Session\CopyArguments::class)]
 final class ZtdPdoTest extends TestCase
 {
+    public function testPublicApiAdaptsPdoWithoutAddingDriverSpecificOperations(): void
+    {
+        $pdoMethods = get_class_methods(PDO::class);
+        $lifecycleMethods = ['connect', 'fromPdo', 'enableZtd', 'disableZtd', 'isZtdEnabled'];
+
+        self::assertSame([], array_values(array_diff(
+            get_class_methods(ZtdPdo::class),
+            $pdoMethods,
+            $lifecycleMethods,
+        )));
+    }
+
     public function testExplicitPlatformFactoryCreatesAnIsolatedSession(): void
     {
         $native = new PDO('sqlite::memory:');
@@ -58,7 +60,7 @@ final class ZtdPdoTest extends TestCase
         self::assertSame('Alice', $result3->fetchColumn());
     }
 
-    public function testBatchExecReturnsTheLastStatementCount(): void
+    public function testExecBatchReturnsTheLastStatementCount(): void
     {
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
@@ -69,10 +71,6 @@ final class ZtdPdoTest extends TestCase
         self::assertSame([['id' => 1, 'name' => 'Alice'], ['id' => 2, 'name' => 'Carol']], $result4->fetchAll(PDO::FETCH_ASSOC));
     }
 
-
-
-
-
     public function testAutoDetectionForSqliteDriver(): void
     {
         (fn () => class_exists('ZtdQuery\\Platform\\Sqlite\\SqliteSessionFactory') || self::markTestSkipped('ztd-query-sqlite package is not installed.'))();
@@ -82,46 +80,6 @@ final class ZtdPdoTest extends TestCase
 
         self::assertTrue($ztdPdo->isZtdEnabled());
     }
-
-
-
-
-
-
-
-
-
-    public function testExecRejectsRawPostgreSqlCopy(): void
-    {
-        $rewriter = static::createStub(SqlRewriter::class);
-        $copySupport = static::createStub(CopySupport::class);
-        $copySupport->method('isCopyStatement')->willReturn(true);
-        $factory = static::createStub(SessionFactory::class);
-        $factory->method('create')
-            ->willReturnCallback(static fn (ConnectionInterface $connection, ZtdConfig $config): Session => new Session(
-                $rewriter,
-                new ShadowStore(),
-                new ResultSelectRunner(),
-                $config,
-                $connection,
-                copySupport: $copySupport,
-            ));
-        $ztdPdo = ZtdPdo::fromPdo(new PDO('sqlite::memory:'), null, $factory);
-
-        $this->expectException(ZtdPdoException::class);
-        $this->expectExceptionMessage(
-            'ZTD Write Protection: Raw PostgreSQL COPY cannot preserve shadow isolation; '
-            . 'use the pgsqlCopyToArray(), pgsqlCopyFromArray(), pgsqlCopyToFile(), or pgsqlCopyFromFile() methods.',
-        );
-
-        $ztdPdo->exec('COPY users TO STDOUT');
-    }
-
-
-
-
-
-
 
     public function testEnableZtdPutsTheShadowBackInFrontOfTheDatabase(): void
     {
@@ -169,7 +127,6 @@ final class ZtdPdoTest extends TestCase
 
         self::assertNotFalse($statement);
     }
-
 
     public function testPrepareHandsTheStatementStraightToPdoWhileZtdIsOff(): void
     {
@@ -351,86 +308,6 @@ final class ZtdPdoTest extends TestCase
         self::assertContains('sqlite', ZtdPdo::getAvailableDrivers());
     }
 
-
-
-    public function testCopyToArrayRefusesADialectWithNoCopy(): void
-    {
-        $this->expectExceptionMessage('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
-
-        $native = new PDO('sqlite::memory:');
-        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $ztdPdo = ZtdPdo::fromPdo($native);
-
-        $ztdPdo->copyToArray('users');
-    }
-
-
-
-    public function testCopyFromArrayRefusesADialectWithNoCopy(): void
-    {
-        $this->expectExceptionMessage('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
-
-        $native = new PDO('sqlite::memory:');
-        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $ztdPdo = ZtdPdo::fromPdo($native);
-
-        $ztdPdo->copyFromArray('users', ["1\tada\n"]);
-    }
-
-
-
-    public function testCopyToFileRefusesADialectWithNoCopy(): void
-    {
-        $this->expectExceptionMessage('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
-
-        $native = new PDO('sqlite::memory:');
-        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $ztdPdo = ZtdPdo::fromPdo($native);
-
-        $ztdPdo->copyToFile('users', '/dev/null');
-    }
-
-
-
-    public function testCopyFromFileRefusesADialectWithNoCopy(): void
-    {
-        $this->expectExceptionMessage('PostgreSQL COPY methods require the PDO PostgreSQL driver.');
-
-        $native = new PDO('sqlite::memory:');
-        $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $ztdPdo = ZtdPdo::fromPdo($native);
-
-        $ztdPdo->copyFromFile('users', '/dev/null');
-    }
-
-
-    public function testPrepareRefusesACopyWrittenAsRawSql(): void
-    {
-        $rewriter = static::createStub(SqlRewriter::class);
-        $copySupport = static::createStub(CopySupport::class);
-        $copySupport->method('isCopyStatement')->willReturn(true);
-        $factory = static::createStub(SessionFactory::class);
-        $factory->method('create')->willReturnCallback(
-            static fn (ConnectionInterface $connection, ZtdConfig $config): Session => new Session(
-                $rewriter,
-                new ShadowStore(),
-                new ResultSelectRunner(),
-                $config,
-                $connection,
-                copySupport: $copySupport,
-            ),
-        );
-        $ztdPdo = ZtdPdo::fromPdo(new PDO('sqlite::memory:'), null, $factory);
-
-        $this->expectException(ZtdPdoException::class);
-        $this->expectExceptionMessage('ZTD Write Protection: Raw PostgreSQL COPY');
-
-        $ztdPdo->prepare('COPY users TO STDOUT');
-    }
     public function testFromPdoRetainsTheExistingConnectionAndItsOptions(): void
     {
         $native = new PDO('sqlite::memory:', options: [PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
@@ -445,30 +322,6 @@ final class ZtdPdoTest extends TestCase
         self::assertSame(0, $result6->fetchColumn());
     }
 
-    public function testPgsqlCopyToArrayValidatesNativeArgumentsBeforeDispatch(): void
-    {
-        $pdo = ZtdPdo::fromPdo(new PDO('sqlite::memory:'));
-        $this->expectException(ZtdPdoException::class);
-        $this->expectExceptionMessage('PostgreSQL COPY argument $tableName must be a string, int given.');
-        $pdo->pgsqlCopyToArray(1);
-    }
-
-    public function testPgsqlCopyFromArrayValidatesOptionalFields(): void
-    {
-        $pdo = ZtdPdo::fromPdo(new PDO('sqlite::memory:'));
-        $this->expectException(ZtdPdoException::class);
-        $this->expectExceptionMessage('PostgreSQL COPY argument $fields must be a string, float given.');
-        $pdo->pgsqlCopyFromArray('items', [], fields: 1.5);
-    }
-
-    public function testCopyFromArrayRejectsNonStringRows(): void
-    {
-        $pdo = ZtdPdo::fromPdo(new PDO('sqlite::memory:'));
-        $this->expectException(ZtdPdoException::class);
-        $this->expectExceptionMessage('PostgreSQL COPY rows must be strings, int given.');
-        $pdo->copyFromArray('items', [1]);
-    }
-
     public function testPrepareWrapsUnsupportedStatementsForPdoConsumers(): void
     {
         $pdo = ZtdPdo::fromPdo(new PDO('sqlite::memory:'));
@@ -480,30 +333,5 @@ final class ZtdPdoTest extends TestCase
             self::assertSame(0, $failure->getCode());
             self::assertInstanceOf(\ZtdQuery\Connection\Exception\DatabaseException::class, $failure->getPrevious());
         }
-    }
-
-
-    public function testPgsqlCopyToArrayRejectsInvalidFieldLists(): void
-    {
-        $pdo = ZtdPdo::fromPdo(new PDO('sqlite::memory:'));
-        $this->expectException(ZtdPdoException::class);
-        $this->expectExceptionMessage('PostgreSQL COPY argument $fields must be a string, float given.');
-        $pdo->pgsqlCopyToArray('items', fields: 1.5);
-    }
-
-    public function testPgsqlCopyToFileRejectsInvalidFieldLists(): void
-    {
-        $pdo = ZtdPdo::fromPdo(new PDO('sqlite::memory:'));
-        $this->expectException(ZtdPdoException::class);
-        $this->expectExceptionMessage('PostgreSQL COPY argument $fields must be a string, float given.');
-        $pdo->pgsqlCopyToFile('items', '/dev/null', fields: 1.5);
-    }
-
-    public function testPgsqlCopyFromFileRejectsInvalidFieldLists(): void
-    {
-        $pdo = ZtdPdo::fromPdo(new PDO('sqlite::memory:'));
-        $this->expectException(ZtdPdoException::class);
-        $this->expectExceptionMessage('PostgreSQL COPY argument $fields must be a string, float given.');
-        $pdo->pgsqlCopyFromFile('items', '/dev/null', fields: 1.5);
     }
 }

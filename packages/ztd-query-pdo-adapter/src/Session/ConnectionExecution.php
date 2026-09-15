@@ -23,7 +23,6 @@ use ZtdQuery\Session;
 final class ConnectionExecution
 {
     private readonly Session $session;
-    private readonly PostgreSqlCopy $copy;
 
     /**
      * Create a shadow session for the supplied native connection.
@@ -32,7 +31,6 @@ final class ConnectionExecution
     {
         $resolvedFactory = $factory ?? (new DriverSessionFactory())->forConnection($pdo);
         $this->session = $resolvedFactory->create(new PdoConnection($pdo), $config ?? ZtdConfig::default());
-        $this->copy = new PostgreSqlCopy($this->session);
     }
 
     /**
@@ -52,14 +50,6 @@ final class ConnectionExecution
     }
 
     /**
-     * Return PostgreSQL COPY operations for this session.
-     */
-    public function copy(): PostgreSqlCopy
-    {
-        return $this->copy;
-    }
-
-    /**
      * Prepare native SQL and let the facade wrap the resulting execution plan.
      *
      * @template TOption
@@ -72,8 +62,6 @@ final class ConnectionExecution
         if (!$this->session->isEnabled()) {
             return $this->pdo->prepare($query, $options);
         }
-
-        $this->copy->guardRaw($query);
 
         try {
             $native = $this->pdo;
@@ -158,8 +146,6 @@ final class ConnectionExecution
 
             return $affectedRows;
         }
-
-        $this->copy->guardRaw($statement);
 
         $transactionStatement = $this->session->transactionStatement($statement);
         if ($transactionStatement !== null) {

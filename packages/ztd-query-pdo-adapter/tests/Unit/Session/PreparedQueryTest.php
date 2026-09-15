@@ -21,7 +21,6 @@ use ZtdQuery\Platform\Sqlite\SqliteSessionFactory;
 #[UsesClass(\ZtdQuery\Adapter\Pdo\ZtdPdo::class)]
 #[UsesClass(PdoConnection::class)]
 #[UsesClass(\ZtdQuery\Adapter\Pdo\Driver\PdoStatement::class)]
-#[UsesClass(\ZtdQuery\Adapter\Pdo\Session\PostgreSqlCopy::class)]
 #[UsesClass(\ZtdQuery\Adapter\Pdo\Session\StatementExecution::class)]
 #[UsesClass(\ZtdQuery\Adapter\Pdo\Session\Bindings::class)]
 #[UsesClass(\ZtdQuery\Adapter\Pdo\Session\BufferedRow::class)]
@@ -30,7 +29,6 @@ use ZtdQuery\Platform\Sqlite\SqliteSessionFactory;
 #[UsesClass(\ZtdQuery\Adapter\Pdo\Session\ParameterBinder::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
 #[UsesClass(\ZtdQuery\Adapter\Pdo\Session\ConnectionExecution::class)]
-#[UsesClass(\ZtdQuery\Adapter\Pdo\Session\CopyArguments::class)]
 final class PreparedQueryTest extends TestCase
 {
     public function testRewriteUsesTheCurrentShadowOnEveryExecution(): void
