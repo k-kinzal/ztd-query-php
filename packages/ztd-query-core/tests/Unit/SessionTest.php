@@ -10,7 +10,6 @@ use PHPUnit\Framework\TestCase;
 use Tests\Fake\FakeConnection;
 use Tests\Fake\FakeSqlRewriter;
 use Tests\Fake\FakeStatement;
-use Tests\Fake\SessionUnderTest;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\Exception\DatabaseException;
 use ZtdQuery\Connection\ResultSet;
@@ -267,7 +266,16 @@ final class SessionTest extends TestCase
 
     public function testIsEnabledFollowsWhatWasAskedFor(): void
     {
-        $session = SessionUnderTest::plain();
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $session = new Session(
+            new FakeSqlRewriter($store, $registry),
+            $store,
+            new ResultSelectRunner(),
+            ZtdConfig::default(),
+            new FakeConnection(),
+            registry: $registry,
+        );
 
         self::assertTrue($session->isEnabled());
 
@@ -280,7 +288,15 @@ final class SessionTest extends TestCase
     {
         $store = new ShadowStore();
         $store->set('users', [['id' => 1]]);
-        $session = SessionUnderTest::over($store);
+        $registry = new TableDefinitionRegistry();
+        $session = new Session(
+            new FakeSqlRewriter($store, $registry),
+            $store,
+            new ResultSelectRunner(),
+            ZtdConfig::default(),
+            new FakeConnection(),
+            registry: $registry,
+        );
 
         $session->disable();
 
@@ -289,7 +305,16 @@ final class SessionTest extends TestCase
 
     public function testShouldExecuteIsFalseOnlyForAPlanNothingIsToBeRunFor(): void
     {
-        $session = SessionUnderTest::plain();
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $session = new Session(
+            new FakeSqlRewriter($store, $registry),
+            $store,
+            new ResultSelectRunner(),
+            ZtdConfig::default(),
+            new FakeConnection(),
+            registry: $registry,
+        );
 
         self::assertTrue($session->shouldExecute(new RewritePlan('SELECT 1', QueryKind::READ)));
         self::assertFalse($session->shouldExecute(new RewritePlan('SELECT 1', QueryKind::SKIPPED)));
@@ -297,7 +322,16 @@ final class SessionTest extends TestCase
 
     public function testNeedsPostProcessingIsTrueForTheKindsThatChangeTheShadow(): void
     {
-        $session = SessionUnderTest::plain();
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $session = new Session(
+            new FakeSqlRewriter($store, $registry),
+            $store,
+            new ResultSelectRunner(),
+            ZtdConfig::default(),
+            new FakeConnection(),
+            registry: $registry,
+        );
 
         self::assertTrue($session->needsPostProcessing(new RewritePlan('x', QueryKind::WRITE_SIMULATED)));
         self::assertTrue($session->needsPostProcessing(new RewritePlan('x', QueryKind::DDL_SIMULATED)));
@@ -306,7 +340,18 @@ final class SessionTest extends TestCase
 
     public function testCreateEmptyWriteResultAnswersASimulatedWriteWithNothingToFetch(): void
     {
-        $result = SessionUnderTest::plain()->createEmptyWriteResult();
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $session = new Session(
+            new FakeSqlRewriter($store, $registry),
+            $store,
+            new ResultSelectRunner(),
+            ZtdConfig::default(),
+            new FakeConnection(),
+            registry: $registry,
+        );
+
+        $result = $session->createEmptyWriteResult();
 
         self::assertSame(QueryKind::WRITE_SIMULATED, $result->kind());
         self::assertSame([], $result->fetchAll());
@@ -314,19 +359,49 @@ final class SessionTest extends TestCase
 
     public function testLastInsertIdIsFalseUntilSomethingHasBeenInserted(): void
     {
-        self::assertFalse(SessionUnderTest::plain()->lastInsertId());
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $session = new Session(
+            new FakeSqlRewriter($store, $registry),
+            $store,
+            new ResultSelectRunner(),
+            ZtdConfig::default(),
+            new FakeConnection(),
+            registry: $registry,
+        );
+
+        self::assertFalse($session->lastInsertId());
     }
 
     public function testTransactionStatementIsNothingForAStatementThatIsNotOne(): void
     {
-        self::assertNull(SessionUnderTest::plain()->transactionStatement('SELECT 1'));
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $session = new Session(
+            new FakeSqlRewriter($store, $registry),
+            $store,
+            new ResultSelectRunner(),
+            ZtdConfig::default(),
+            new FakeConnection(),
+            registry: $registry,
+        );
+
+        self::assertNull($session->transactionStatement('SELECT 1'));
     }
 
     public function testCommitTransactionKeepsWhatTheTransactionDid(): void
     {
         $store = new ShadowStore();
         $store->set('users', [['id' => 1]]);
-        $session = SessionUnderTest::over($store);
+        $registry = new TableDefinitionRegistry();
+        $session = new Session(
+            new FakeSqlRewriter($store, $registry),
+            $store,
+            new ResultSelectRunner(),
+            ZtdConfig::default(),
+            new FakeConnection(),
+            registry: $registry,
+        );
 
         $session->transactions()->begin();
         $store->set('users', []);
@@ -340,7 +415,15 @@ final class SessionTest extends TestCase
     {
         $store = new ShadowStore();
         $store->set('users', [['id' => 1]]);
-        $session = SessionUnderTest::over($store);
+        $registry = new TableDefinitionRegistry();
+        $session = new Session(
+            new FakeSqlRewriter($store, $registry),
+            $store,
+            new ResultSelectRunner(),
+            ZtdConfig::default(),
+            new FakeConnection(),
+            registry: $registry,
+        );
 
         TransactionStatement::begin()->apply($session->transactions());
         $store->set('users', []);
@@ -351,29 +434,82 @@ final class SessionTest extends TestCase
 
     public function testCopySupportIsNothingWhereTheDialectHasNoCopy(): void
     {
-        self::assertNull(SessionUnderTest::plain()->copySupport());
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $session = new Session(
+            new FakeSqlRewriter($store, $registry),
+            $store,
+            new ResultSelectRunner(),
+            ZtdConfig::default(),
+            new FakeConnection(),
+            registry: $registry,
+        );
+
+        self::assertNull($session->copySupport());
     }
 
     public function testCopyTargetIsNothingWhereTheDialectHasNoCopy(): void
     {
-        self::assertNull(SessionUnderTest::plain()->copyTarget('users', null));
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $session = new Session(
+            new FakeSqlRewriter($store, $registry),
+            $store,
+            new ResultSelectRunner(),
+            ZtdConfig::default(),
+            new FakeConnection(),
+            registry: $registry,
+        );
+
+        self::assertNull($session->copyTarget('users', null));
     }
 
     public function testParameterBindingCompilerIsNothingWhereTheDriverBindsThemItself(): void
     {
-        self::assertNull(SessionUnderTest::plain()->parameterBindingCompiler());
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $session = new Session(
+            new FakeSqlRewriter($store, $registry),
+            $store,
+            new ResultSelectRunner(),
+            ZtdConfig::default(),
+            new FakeConnection(),
+            registry: $registry,
+        );
+
+        self::assertNull($session->parameterBindingCompiler());
     }
 
     public function testRewriteAnswersThePlanTheRewriterGives(): void
     {
-        $plan = SessionUnderTest::plain()->rewrite('SELECT 1');
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $session = new Session(
+            new FakeSqlRewriter($store, $registry),
+            $store,
+            new ResultSelectRunner(),
+            ZtdConfig::default(),
+            new FakeConnection(),
+            registry: $registry,
+        );
+
+        $plan = $session->rewrite('SELECT 1');
 
         self::assertSame(QueryKind::READ, $plan->kind());
     }
 
     public function testProcessExecutedStatementReadsAReadStatementStraightBack(): void
     {
-        $session = SessionUnderTest::plain();
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $session = new Session(
+            new FakeSqlRewriter($store, $registry),
+            $store,
+            new ResultSelectRunner(),
+            ZtdConfig::default(),
+            new FakeConnection(),
+            registry: $registry,
+        );
         $plan = new RewritePlan('SELECT 1', QueryKind::READ);
 
         $result = $session->processExecutedStatement($plan, new FakeStatement([['id' => 1]]));
@@ -385,7 +521,15 @@ final class SessionTest extends TestCase
     {
         $store = new ShadowStore();
         $store->set('users', []);
-        $session = SessionUnderTest::over($store);
+        $registry = new TableDefinitionRegistry();
+        $session = new Session(
+            new FakeSqlRewriter($store, $registry),
+            $store,
+            new ResultSelectRunner(),
+            ZtdConfig::default(),
+            new FakeConnection(),
+            registry: $registry,
+        );
 
         $impact = $session->applyShadow(new InsertMutation('users'), new ResultSet([['id' => 1]], []), 'INSERT');
 
@@ -395,7 +539,16 @@ final class SessionTest extends TestCase
 
     public function testExecStatementAnswersHowManyRowsAReadStatementCameTo(): void
     {
-        $session = SessionUnderTest::plain();
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $session = new Session(
+            new FakeSqlRewriter($store, $registry),
+            $store,
+            new ResultSelectRunner(),
+            ZtdConfig::default(),
+            new FakeConnection(),
+            registry: $registry,
+        );
 
         self::assertSame(0, $session->execStatement('SELECT 1'));
     }
@@ -404,7 +557,15 @@ final class SessionTest extends TestCase
     {
         $store = new ShadowStore();
         $store->set('users', []);
-        $session = SessionUnderTest::over($store);
+        $registry = new TableDefinitionRegistry();
+        $session = new Session(
+            new FakeSqlRewriter($store, $registry),
+            $store,
+            new ResultSelectRunner(),
+            ZtdConfig::default(),
+            new FakeConnection(),
+            registry: $registry,
+        );
         $plan = new RewritePlan('SELECT 1', QueryKind::WRITE_SIMULATED, new InsertMutation('users'));
 
         $rows = $session->runResultSelectAndApplyShadow(
@@ -417,7 +578,16 @@ final class SessionTest extends TestCase
 
     public function testEnableTurnsZtdBackOn(): void
     {
-        $session = SessionUnderTest::plain();
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $session = new Session(
+            new FakeSqlRewriter($store, $registry),
+            $store,
+            new ResultSelectRunner(),
+            ZtdConfig::default(),
+            new FakeConnection(),
+            registry: $registry,
+        );
         $session->disable();
 
         $session->enable();
@@ -429,7 +599,15 @@ final class SessionTest extends TestCase
     {
         $store = new ShadowStore();
         $store->set('users', [['id' => 1]]);
-        $session = SessionUnderTest::over($store);
+        $registry = new TableDefinitionRegistry();
+        $session = new Session(
+            new FakeSqlRewriter($store, $registry),
+            $store,
+            new ResultSelectRunner(),
+            ZtdConfig::default(),
+            new FakeConnection(),
+            registry: $registry,
+        );
 
         $session->transactions()->begin();
         $store->set('users', []);
@@ -440,7 +618,16 @@ final class SessionTest extends TestCase
 
     public function testResultColumnTypeResolverAnswersTheOneTheSessionWasBuiltWith(): void
     {
-        $session = SessionUnderTest::plain();
+        $store = new ShadowStore();
+        $registry = new TableDefinitionRegistry();
+        $session = new Session(
+            new FakeSqlRewriter($store, $registry),
+            $store,
+            new ResultSelectRunner(),
+            ZtdConfig::default(),
+            new FakeConnection(),
+            registry: $registry,
+        );
 
         self::assertInstanceOf(MissingResultColumnTypeResolver::class, $session->resultColumnTypeResolver());
     }
@@ -449,7 +636,15 @@ final class SessionTest extends TestCase
     {
         $store = new ShadowStore();
         $store->set('users', [['id' => 1]]);
-        $session = SessionUnderTest::over($store);
+        $registry = new TableDefinitionRegistry();
+        $session = new Session(
+            new FakeSqlRewriter($store, $registry),
+            $store,
+            new ResultSelectRunner(),
+            ZtdConfig::default(),
+            new FakeConnection(),
+            registry: $registry,
+        );
 
         TransactionStatement::begin()->apply($session->transactions());
         $store->set('users', []);
