@@ -12,7 +12,7 @@
             "dist": {
                 "type": "path",
                 "url": "../ztd-query-core",
-                "reference": "7d174d3069334b949f1ec0ba4e778a3d6cf257f1"
+                "reference": "2a58975e82110613ab475fadf60aa4dfee94ccc2"
             },
             "require": {
                 "php": "^8.1"
@@ -115,7 +115,7 @@
                     "paratest --processes=auto"
                 ],
                 "test:coverage": [
-                    "@php -d memory_limit=1G vendor/bin/phpunit --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
                 ],
                 "test:unit": [
                     "phpunit --testsuite unit"
@@ -1375,7 +1375,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-faker",
-                "reference": "e7a28a8bf2f63e03dd06b0ece5551a89c448e2bc"
+                "reference": "91c8eb24749f0def3b69085ae4bd520080b5f2e7"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -1502,7 +1502,7 @@
                     "paratest --processes=auto"
                 ],
                 "test:coverage": [
-                    "@php -d memory_limit=1G vendor/bin/phpunit --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
                 ],
                 "test:unit": [
                     "phpunit --testsuite unit"
