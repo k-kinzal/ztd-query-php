@@ -6,45 +6,66 @@
     "require": {
         "php": "^8.1",
         "ext-mysqli": "*",
-        "k-kinzal/ztd-query-core": "@dev",
-        "k-kinzal/ztd-query-mysql": "@dev"
+        "k-kinzal/ztd-query-core": "dev-main",
+        "k-kinzal/ztd-query-mysql": "dev-main"
     },
     "require-dev": {
         "brianium/paratest": "^7.3",
         "deptrac/deptrac": "^3.0",
-        "friendsofphp/php-cs-fixer": "^3.95.24",
+        "friendsofphp/php-cs-fixer": "^3.95.25",
         "k-kinzal/php-ai-toolkit": "dev-main",
-        "k-kinzal/sql-faker": "@dev",
-        "k-kinzal/sql-fixture": "@dev",
+        "k-kinzal/sql-faker": "dev-main",
+        "k-kinzal/sql-fixture": "dev-main",
         "k-kinzal/testcontainers-php": "^0.5.1",
         "nikic/php-fuzzer": "^0.0.11",
         "phpbench/phpbench": "^1.4",
         "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
         "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-strict-rules": "^2.0",
         "phpunit/phpunit": "^10.5",
         "squizlabs/php_codesniffer": "^4.0.4"
     },
     "repositories": [
         {
-            "type": "path",
-            "url": "../ztd-query-core"
-        },
-        {
-            "type": "path",
-            "url": "../ztd-query-mysql"
-        },
-        {
-            "type": "path",
-            "url": "../sql-faker"
-        },
-        {
-            "type": "path",
-            "url": "../sql-fixture"
-        },
-        {
             "name": "php-ai-toolkit",
             "type": "vcs",
             "url": "https://github.com/k-kinzal/php-ai-toolkit.git"
+        },
+        {
+            "type": "path",
+            "url": "../sql-faker",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-faker": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../sql-fixture",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-fixture": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../ztd-query-core",
+            "options": {
+                "versions": {
+                    "k-kinzal/ztd-query-core": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../ztd-query-mysql",
+            "options": {
+                "versions": {
+                    "k-kinzal/ztd-query-mysql": "dev-main"
+                }
+            }
         }
     ],
     "autoload": {
@@ -56,58 +77,85 @@
         "psr-4": {
             "Tests\\": "tests/",
             "Fuzz\\": "fuzz/",
-            "Bench\\": "bench/",
-            "Containers\\": "containers/"
+            "Bench\\": "bench/"
         }
     },
     "scripts": {
-        "test": "paratest --processes=auto",
-        "test:unit": "phpunit --testsuite unit",
-        "test:integration": "phpunit --testsuite integration",
-        "lint": [
-            "@format:check",
-            "@phpstan",
-            "@loc-guard",
-            "@tree-guard",
-            "@deptrac",
-            "@compat"
+        "autoload:check": "composer dump-autoload --optimize --strict-psr --strict-ambiguous",
+        "bench": "phpbench run --report=aggregate",
+        "bench:full": "@bench",
+        "bench:quick": "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10",
+        "compat": "phpcs",
+        "deptrac": "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered",
+        "docgen": "docgen --packages=. --title=k-kinzal/ztd-query-mysqli-adapter",
+        "docgen:diff": [
+            "Composer\\Config::disableProcessTimeout",
+            "@docgen --diff=origin/main --serve"
         ],
+        "docgen:fresh": "@docgen --no-cache",
+        "docgen:serve": [
+            "Composer\\Config::disableProcessTimeout",
+            "@docgen --serve"
+        ],
+        "doctest": "phpunit --testsuite doctest",
         "format": "php-cs-fixer fix --allow-risky=yes",
         "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
-        "fuzz": [
-            "@fuzz:robustness",
-            "@fuzz:correctness:select",
-            "@fuzz:correctness:insert",
-            "@fuzz:correctness:replace",
-            "@fuzz:correctness:update",
-            "@fuzz:correctness:delete"
+        "fuzz": "@fuzz:smoke",
+        "fuzz:correctness:delete": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php -r \"is_dir('fuzz/corpus/correctness-delete') || mkdir('fuzz/corpus/correctness-delete', 0777, true);\" --",
+            "php-fuzzer fuzz fuzz/fuzz_correctness_delete.php fuzz/corpus/correctness-delete/"
         ],
-        "fuzz:robustness": "mkdir -p fuzz/corpus/robustness-execute && php-fuzzer fuzz fuzz/fuzz_robustness_execute.php fuzz/corpus/robustness-execute/",
-        "fuzz:correctness:select": "mkdir -p fuzz/corpus/correctness-select && php-fuzzer fuzz fuzz/fuzz_correctness_select.php fuzz/corpus/correctness-select/",
-        "fuzz:correctness:insert": "mkdir -p fuzz/corpus/correctness-insert && php-fuzzer fuzz fuzz/fuzz_correctness_insert.php fuzz/corpus/correctness-insert/",
-        "fuzz:correctness:replace": "mkdir -p fuzz/corpus/correctness-replace && php-fuzzer fuzz fuzz/fuzz_correctness_replace.php fuzz/corpus/correctness-replace/",
-        "fuzz:correctness:update": "mkdir -p fuzz/corpus/correctness-update && php-fuzzer fuzz fuzz/fuzz_correctness_update.php fuzz/corpus/correctness-update/",
-        "fuzz:correctness:delete": "mkdir -p fuzz/corpus/correctness-delete && php-fuzzer fuzz fuzz/fuzz_correctness_delete.php fuzz/corpus/correctness-delete/",
-        "doctest": "phpunit --testsuite doctest",
-        "phpstan": "phpstan analyse --memory-limit=512M",
-        "compat": "phpcs",
+        "fuzz:correctness:insert": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php -r \"is_dir('fuzz/corpus/correctness-insert') || mkdir('fuzz/corpus/correctness-insert', 0777, true);\" --",
+            "php-fuzzer fuzz fuzz/fuzz_correctness_insert.php fuzz/corpus/correctness-insert/"
+        ],
+        "fuzz:correctness:replace": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php -r \"is_dir('fuzz/corpus/correctness-replace') || mkdir('fuzz/corpus/correctness-replace', 0777, true);\" --",
+            "php-fuzzer fuzz fuzz/fuzz_correctness_replace.php fuzz/corpus/correctness-replace/"
+        ],
+        "fuzz:correctness:select": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php -r \"is_dir('fuzz/corpus/correctness-select') || mkdir('fuzz/corpus/correctness-select', 0777, true);\" --",
+            "php-fuzzer fuzz fuzz/fuzz_correctness_select.php fuzz/corpus/correctness-select/"
+        ],
+        "fuzz:correctness:update": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php -r \"is_dir('fuzz/corpus/correctness-update') || mkdir('fuzz/corpus/correctness-update', 0777, true);\" --",
+            "php-fuzzer fuzz fuzz/fuzz_correctness_update.php fuzz/corpus/correctness-update/"
+        ],
+        "fuzz:robustness": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php -r \"is_dir('fuzz/corpus/robustness-execute') || mkdir('fuzz/corpus/robustness-execute', 0777, true);\" --",
+            "php-fuzzer fuzz fuzz/fuzz_robustness_execute.php fuzz/corpus/robustness-execute/"
+        ],
+        "fuzz:smoke": [
+            "Composer\\Config::disableProcessTimeout",
+            "@fuzz:robustness --max-runs=100",
+            "@fuzz:correctness:select --max-runs=100",
+            "@fuzz:correctness:insert --max-runs=100",
+            "@fuzz:correctness:replace --max-runs=100",
+            "@fuzz:correctness:update --max-runs=100",
+            "@fuzz:correctness:delete --max-runs=100"
+        ],
+        "lint": [
+            "@autoload:check",
+            "@format:check",
+            "@phpstan",
+            "@compat",
+            "@loc-guard",
+            "@tree-guard",
+            "@deptrac"
+        ],
         "loc-guard": "loc-guard --config=loc.yaml",
-        "tree-guard": "tree-guard --config=tree.yaml",
-        "deptrac": [
-            "deptrac analyse --config-file=deptrac.yaml",
-            "deptrac debug:unassigned --config-file=deptrac.yaml"
-        ],
-        "deptrac:debug": [
-            "deptrac debug:unassigned --config-file=deptrac.yaml",
-            "deptrac debug:unused --config-file=deptrac.yaml"
-        ],
-        "bench": "phpbench run --report=aggregate",
-        "bench:quick": "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10",
-        "bench:full": "@bench",
-        "docgen": "cd ../.. && packages/ztd-query-mysqli-adapter/vendor/bin/docgen --packages=packages/ztd-query-mysqli-adapter --deptrac=\"$PWD/packages/ztd-query-mysqli-adapter/deptrac.yaml\" --output=packages/ztd-query-mysqli-adapter/build/docs --cache-dir=packages/ztd-query-mysqli-adapter/build/docgen-cache --title=k-kinzal/ztd-query-mysqli-adapter",
-        "docgen:serve": "@docgen --serve",
-        "docgen:diff": "@docgen --diff=origin/main --serve",
-        "docgen:fresh": "@docgen --no-cache"
+        "phpstan": "phpstan analyse --memory-limit=512M",
+        "test": "paratest --processes=auto",
+        "test:coverage": "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml",
+        "test:integration": "phpunit --testsuite integration",
+        "test:unit": "phpunit --testsuite unit",
+        "tree-guard": "tree-guard --config=tree.yaml"
     },
     "config": {
         "allow-plugins": {
@@ -120,6 +168,10 @@
     },
     "support": {
         "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-mysqli-adapter",
-        "docs": "https://k-kinzal.github.io/ztd-query-php/mysqli/k-kinzal/ztd-query-mysqli-adapter/"
+        "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/ztd-query-mysqli-adapter/"
+    },
+    "scripts-descriptions": {
+        "fuzz": "Run every fuzz target with the bounded smoke budget.",
+        "fuzz:smoke": "Run each fuzz target for up to 100 executions; individual fuzz:* commands run continuously."
     }
 }

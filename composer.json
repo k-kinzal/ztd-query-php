@@ -1,0 +1,65 @@
+{
+    "name": "k-kinzal/ztd-query-php",
+    "description": "Zero Table Dependencies query packages for PHP",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": "^8.1",
+        "k-kinzal/sql-faker": "dev-main",
+        "k-kinzal/sql-fixture": "dev-main",
+        "k-kinzal/ztd-query-core": "dev-main",
+        "k-kinzal/ztd-query-mysql": "dev-main",
+        "k-kinzal/ztd-query-mysqli-adapter": "dev-main",
+        "k-kinzal/ztd-query-pdo-adapter": "dev-main",
+        "k-kinzal/ztd-query-postgres": "dev-main",
+        "k-kinzal/ztd-query-sqlite": "dev-main"
+    },
+    "require-dev": {
+        "k-kinzal/php-ai-toolkit": "dev-main"
+    },
+    "repositories": [
+        {
+            "name": "php-ai-toolkit",
+            "type": "vcs",
+            "url": "https://github.com/k-kinzal/php-ai-toolkit.git"
+        },
+        {
+            "type": "path",
+            "url": "packages/*",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-faker": "dev-main",
+                    "k-kinzal/sql-fixture": "dev-main",
+                    "k-kinzal/ztd-query-core": "dev-main",
+                    "k-kinzal/ztd-query-mysql": "dev-main",
+                    "k-kinzal/ztd-query-mysqli-adapter": "dev-main",
+                    "k-kinzal/ztd-query-pdo-adapter": "dev-main",
+                    "k-kinzal/ztd-query-postgres": "dev-main",
+                    "k-kinzal/ztd-query-sqlite": "dev-main"
+                }
+            }
+        }
+    ],
+    "scripts": {
+        "docgen": "docgen --exclude=packages/*/src/Compatibility/ClassAliases.php --title=\"ZTD Query PHP\" --jobs=2 --memory-limit=2G",
+        "docgen:diff": [
+            "Composer\\Config::disableProcessTimeout",
+            "@docgen --diff=origin/main"
+        ],
+        "docgen:fresh": "@docgen --no-cache",
+        "docgen:serve": [
+            "Composer\\Config::disableProcessTimeout",
+            "@docgen --serve"
+        ]
+    },
+    "config": {
+        "platform": {
+            "php": "8.1.0"
+        },
+        "sort-packages": true
+    },
+    "support": {
+        "source": "https://github.com/k-kinzal/ztd-query-php",
+        "docs": "https://k-kinzal.github.io/ztd-query-php/"
+    }
+}

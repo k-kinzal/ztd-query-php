@@ -22,7 +22,14 @@ final class ViewTest extends TestCase
 {
     public function testViewsReadShadowWritesAcrossFiltersJoinsAggregatesAndPreparation(): void
     {
-        [$schemaName, $pdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $pdo */
+        $pdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $pdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $pdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
 
         try {
             $pdo->exec('CREATE TABLE accounts (id INTEGER PRIMARY KEY, region TEXT, amount INTEGER, active BOOLEAN)');

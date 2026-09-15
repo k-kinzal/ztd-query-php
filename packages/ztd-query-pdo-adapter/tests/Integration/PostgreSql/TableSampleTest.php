@@ -22,7 +22,14 @@ final class TableSampleTest extends TestCase
 {
     public function testTableSampleUsesShadowRows(): void
     {
-        [$schemaName, $pdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $pdo */
+        $pdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $pdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $pdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
 
         try {
             $pdo->exec('CREATE TABLE sample_data (id INTEGER PRIMARY KEY, label TEXT NOT NULL)');

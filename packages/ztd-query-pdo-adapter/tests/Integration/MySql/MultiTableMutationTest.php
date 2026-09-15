@@ -17,7 +17,14 @@ final class MultiTableMutationTest extends TestCase
 {
     public function testUpdatesAndDeletesEveryListedTable(): void
     {
-        [$databaseName, $rawPdo] = MySqlContainer::createTestDatabase();
+        $containerInstance = \Testcontainers\Testcontainers::run(MySqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE DATABASE `%s` CHARACTER SET utf8mb4', $databaseName));
+        $rawPdo->exec(sprintf('USE `%s`', $databaseName));
+
         $users = 'users_' . bin2hex(random_bytes(8));
         $orders = 'orders_' . bin2hex(random_bytes(8));
 

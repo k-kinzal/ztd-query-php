@@ -23,6 +23,7 @@ env:
 
 defaults:
   run:
+    shell: bash
     working-directory: packages/sql-fixture
 
 jobs:
@@ -108,6 +109,8 @@ jobs:
           require-lock-file: true
       - name: Check installed platform requirements
         run: composer check-platform-reqs
+      - name: Check PSR-4 paths and ambiguous classes
+        run: composer autoload:check
       - name: Check the formatting
         run: composer format:check
       - name: Analyse with PHPStan
@@ -120,48 +123,6 @@ jobs:
         run: composer tree-guard
       - name: Check the architecture layers
         run: composer deptrac
-
-  docgen:
-    name: Generate documentation
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Check out the repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          fetch-depth: 0
-      - name: Set up PHP
-        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
-        with:
-          php-version: '8.3'
-          extensions: gd, mbstring, pcntl
-          coverage: none
-      - name: Install dependencies
-        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
-        with:
-          working-directory: packages/sql-fixture
-          dependency-versions: locked
-          composer-options: --prefer-dist
-          require-lock-file: true
-      - name: Check installed platform requirements
-        run: composer check-platform-reqs
-      - name: Restore the DocGen cache
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-        with:
-          path: packages/sql-fixture/build/docgen-cache
-          key: sql-fixture-docgen-${{ runner.os }}-${{ hashFiles('packages/sql-fixture/composer.lock') }}-${{ github.sha }}
-          restore-keys: |
-            sql-fixture-docgen-${{ runner.os }}-${{ hashFiles('packages/sql-fixture/composer.lock') }}-
-            sql-fixture-docgen-${{ runner.os }}-
-      - name: Generate the documentation
-        run: composer docgen
-      - name: Upload the documentation
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: sql-fixture-docs
-          path: packages/sql-fixture/build/docs/
-          include-hidden-files: true
-          if-no-files-found: error
 
   bench:
     name: Benchmark
@@ -190,14 +151,13 @@ jobs:
       - name: Run the benchmarks
         run: |
           mkdir -p build/phpbench
-          composer bench -- --dump-file=build/phpbench/results.xml | tee build/phpbench/report.txt
+          composer run-script --timeout=1200 bench -- --dump-file=build/phpbench/results.xml | tee build/phpbench/report.txt
       - name: Upload benchmark measurements
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: sql-fixture-phpbench
-          path: |
-            packages/sql-fixture/build/phpbench/
+          path: packages/sql-fixture/build/phpbench/
           if-no-files-found: ignore
 
   mutation:
@@ -257,7 +217,7 @@ jobs:
         if: github.event_name == 'pull_request'
         run: >-
           php -d memory_limit=1G "$(command -v infection)"
-          --configuration=infection.json5
+          --configuration=infection.json5 --with-uncovered
           --threads=4
           --only-covering-test-cases
           --git-diff-lines
@@ -271,7 +231,7 @@ jobs:
         if: github.event_name != 'pull_request'
         run: >-
           php -d memory_limit=1G "$(command -v infection)"
-          --configuration=infection.json5
+          --configuration=infection.json5 --with-uncovered
           --threads=4
           --only-covering-test-cases
           --no-progress

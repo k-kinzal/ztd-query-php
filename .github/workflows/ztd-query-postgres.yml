@@ -24,6 +24,7 @@ env:
 
 defaults:
   run:
+    shell: bash
     working-directory: packages/ztd-query-postgres
 
 jobs:
@@ -45,7 +46,7 @@ jobs:
           extensions: dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
           coverage: none
       - name: Validate the Composer manifest
-        run: composer validate --strict --no-check-all --no-check-publish
+        run: composer validate --strict --no-check-publish
       - name: Install dependencies
         uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
@@ -79,7 +80,7 @@ jobs:
           extensions: dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
           coverage: none
       - name: Validate the Composer manifest
-        run: composer validate --strict --no-check-all --no-check-publish
+        run: composer validate --strict --no-check-publish
       - name: Install dependencies
         uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
@@ -90,7 +91,7 @@ jobs:
       - name: Check installed platform requirements
         run: composer check-platform-reqs
       - name: Check PSR-4 paths and ambiguous classes
-        run: composer dump-autoload --optimize --strict-psr --strict-ambiguous
+        run: composer autoload:check
       - name: Check the formatting
         run: composer format:check
       - name: Analyse with PHPStan
@@ -118,7 +119,7 @@ jobs:
           extensions: dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter
           coverage: none
       - name: Validate the Composer manifest
-        run: composer validate --strict --no-check-all --no-check-publish
+        run: composer validate --strict --no-check-publish
       - name: Install dependencies
         uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
@@ -128,8 +129,17 @@ jobs:
           composer-options: --prefer-dist
       - name: Check installed platform requirements
         run: composer check-platform-reqs
-      - name: Run the full benchmark
-        run: composer bench
+      - name: Run the benchmarks
+        run: |
+          mkdir -p build/phpbench
+          composer run-script --timeout=1200 bench -- --dump-file=build/phpbench/results.xml | tee build/phpbench/report.txt
+      - name: Upload benchmark measurements
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ztd-query-postgres-phpbench
+          path: packages/ztd-query-postgres/build/phpbench/
+          if-no-files-found: ignore
 
   mutation:
     name: Mutation Testing
@@ -149,7 +159,7 @@ jobs:
           tools: infection:0.35.4
           ini-values: memory_limit=1G
       - name: Validate the Composer manifest
-        run: composer validate --strict --no-check-all --no-check-publish
+        run: composer validate --strict --no-check-publish
       - name: Install package dependencies
         uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
         with:
@@ -165,7 +175,7 @@ jobs:
         if: github.event_name == 'pull_request'
         run: >-
           php -d memory_limit=4G "$(command -v infection)"
-          --configuration=infection.json5
+          --configuration=infection.json5 --with-uncovered
           --threads=4
           --only-covering-test-cases
           --git-diff-lines
@@ -179,7 +189,7 @@ jobs:
         if: github.event_name != 'pull_request'
         run: >-
           php -d memory_limit=4G "$(command -v infection)"
-          --configuration=infection.json5
+          --configuration=infection.json5 --with-uncovered
           --threads=4
           --only-covering-test-cases
           --no-progress

@@ -22,7 +22,14 @@ final class ViewTest extends TestCase
 {
     public function testViewsReadShadowWritesAcrossFiltersJoinsAggregatesAndPreparation(): void
     {
-        [$databaseName, $pdo] = MySqlContainer::createTestDatabase();
+        $containerInstance = \Testcontainers\Testcontainers::run(MySqlContainer::class);
+        /** @var PDO $pdo */
+        $pdo = $containerInstance->getData(PDO::class);
+
+        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
+        $pdo->exec(sprintf('CREATE DATABASE `%s` CHARACTER SET utf8mb4', $databaseName));
+        $pdo->exec(sprintf('USE `%s`', $databaseName));
+
 
         try {
             $pdo->exec('CREATE TABLE accounts (id INT PRIMARY KEY, region VARCHAR(20), amount INT, active BOOLEAN)');

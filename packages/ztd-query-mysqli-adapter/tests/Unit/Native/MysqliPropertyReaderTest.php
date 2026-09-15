@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Native;
 
-use Containers\MySql80Container;
-use Containers\MySql84Container;
 use mysqli;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use Testcontainers\Testcontainers;
+use Tests\Container\MySql80Container;
+use Tests\Container\MySql84Container;
 use ZtdQuery\Adapter\Mysqli\Native\MysqliPropertyReader;
 
 #[CoversClass(MysqliPropertyReader::class)]

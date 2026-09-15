@@ -21,6 +21,7 @@ concurrency:
   cancel-in-progress: true
 defaults:
   run:
+    shell: bash
     working-directory: packages/ztd-query-pdo-adapter
 jobs:
   test:
@@ -39,29 +40,8 @@ jobs:
         mysql:
         - 8.0.44
         - 8.4.7
-    services:
-      mysql:
-        image: mysql:${{ matrix.mysql }}
-        env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_ROOT_HOST: '%'
-        ports:
-        - 3306:3306
-        options: --health-cmd="mysqladmin ping -h 127.0.0.1 -proot" --health-interval=10s --health-timeout=5s --health-retries=20
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-          POSTGRES_DB: ztd_test
-        ports:
-        - 5432:5432
-        options: --health-cmd="pg_isready -U test -d ztd_test" --health-interval=10s --health-timeout=5s --health-retries=20
     env:
-      MYSQL_HOST: 127.0.0.1
-      MYSQL_PORT: '3306'
-      PG_HOST: 127.0.0.1
-      PG_PORT: '5432'
+      MYSQL_VERSION: ${{ matrix.mysql }}
     steps:
     - name: Check out the repository
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -116,6 +96,8 @@ jobs:
         composer-options: --prefer-dist
     - name: Check installed platform requirements
       run: composer check-platform-reqs
+    - name: Check PSR-4 paths and ambiguous classes
+      run: composer autoload:check
     - name: Check formatting
       run: composer format:check
     - name: Check source metrics
@@ -155,14 +137,17 @@ jobs:
     - name: Check installed platform requirements
       run: composer check-platform-reqs
     - name: Run the benchmarks
-      run: composer bench -- --dump-file=build/phpbench/results.xml
-    - name: Upload benchmark results
+      run: |
+        mkdir -p build/phpbench
+        composer run-script --timeout=1200 bench -- --dump-file=build/phpbench/results.xml | tee build/phpbench/report.txt
+    - name: Upload benchmark measurements
       if: always()
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
-        name: pdo-phpbench
+        name: ztd-query-pdo-adapter-phpbench
         path: packages/ztd-query-pdo-adapter/build/phpbench/
         if-no-files-found: ignore
+
   mutation:
     name: Mutation Testing
     runs-on: ubuntu-latest

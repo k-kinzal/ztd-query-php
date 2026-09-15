@@ -30,7 +30,14 @@ final class CopyTest extends TestCase
     #[TestWith(['TO STDOUT'])]
     public function testExecDelegatesUnsupportedCopyToTheSession(string $direction): void
     {
-        [$schemaName, $pdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $pdo */
+        $pdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $pdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $pdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
 
         try {
             $pdo->exec('CREATE TABLE copy_target (id INTEGER PRIMARY KEY)');
@@ -65,7 +72,14 @@ final class CopyTest extends TestCase
     #[TestWith(['TO STDOUT'])]
     public function testQueryDelegatesUnsupportedCopyToTheSession(string $direction): void
     {
-        [$schemaName, $pdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $pdo */
+        $pdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $pdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $pdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
 
         try {
             $pdo->exec('CREATE TABLE copy_target (id INTEGER PRIMARY KEY)');
@@ -100,7 +114,14 @@ final class CopyTest extends TestCase
     #[TestWith(['TO STDOUT'])]
     public function testPrepareDelegatesUnsupportedCopyToTheSession(string $direction): void
     {
-        [$schemaName, $pdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $pdo */
+        $pdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $pdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $pdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
 
         try {
             $pdo->exec('CREATE TABLE copy_target (id INTEGER PRIMARY KEY)');
@@ -135,7 +156,14 @@ final class CopyTest extends TestCase
     #[TestWith(['TO STDOUT'])]
     public function testStandardPdoMethodsHonorTheSessionsIgnorePolicyForCopy(string $direction): void
     {
-        [$schemaName, $pdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $pdo */
+        $pdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $pdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $pdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
 
         try {
             $pdo->exec('CREATE TABLE copy_target (id INTEGER PRIMARY KEY)');

@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use Containers\MySql80Container;
-use Containers\MySql84Container;
 use mysqli;
 use mysqli_result;
 use mysqli_stmt;
@@ -16,10 +14,12 @@ use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Testcontainers\Testcontainers;
+use Tests\Container\MySql80Container;
+use Tests\Container\MySql84Container;
 use ZtdQuery\Adapter\Mysqli\Driver\MysqliResultColumnExtractor;
 use ZtdQuery\Adapter\Mysqli\Driver\MysqliResultStatement;
-use ZtdQuery\Adapter\Mysqli\MysqliResultProcessor;
-use ZtdQuery\Adapter\Mysqli\MysqliStatementBindingBridge;
+use ZtdQuery\Adapter\Mysqli\Native\MysqliStatementBindingBridge;
+use ZtdQuery\Adapter\Mysqli\Session\MysqliResultProcessor;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqliException;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqliStatement;
 use ZtdQuery\Config\ZtdConfig;
@@ -34,6 +34,7 @@ use ZtdQuery\Shadow\Mutation\InsertMutation;
 use ZtdQuery\Shadow\ShadowStore;
 
 #[CoversClass(ZtdMysqliStatement::class)]
+#[CoversClass(\ZtdQuery\Adapter\Mysqli\Session\StatementExecution::class)]
 #[Large]
 #[UsesClass(MysqliStatementBindingBridge::class)]
 #[UsesClass(MysqliResultProcessor::class)]

@@ -3,6 +3,7 @@ paths:
   - '.'
 
 exclude:
+  - '.git'
   - 'build'
   - 'vendor'
 

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\SqlFaker\PostgreSql\Generation\Lexeme;
+namespace Tests\Unit\PostgreSql\Generation\Lexeme;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;

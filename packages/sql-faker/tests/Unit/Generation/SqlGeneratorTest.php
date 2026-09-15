@@ -2,7 +2,7 @@
 
 declare (strict_types=1);
 
-namespace Tests\Unit\SqlFaker\Generation;
+namespace Tests\Unit\Generation;
 
 use Closure;
 use Faker\Factory;

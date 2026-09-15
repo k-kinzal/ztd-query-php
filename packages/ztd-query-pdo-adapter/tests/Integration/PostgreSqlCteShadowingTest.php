@@ -23,7 +23,14 @@ final class PostgreSqlCteShadowingTest extends TestCase
 {
     public function testSelectOnCleanShadowReturnsEmpty(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
         $table = 'prefix_' . bin2hex(random_bytes(8));
 
         try {
@@ -51,7 +58,14 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testInsertDoesNotModifyPhysicalDatabase(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
         $table = 'prefix_' . bin2hex(random_bytes(8));
 
         try {
@@ -84,7 +98,14 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testInsertIsVisibleViaZtdSelect(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
         $table = 'prefix_' . bin2hex(random_bytes(8));
 
         try {
@@ -118,7 +139,14 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testMultipleInsertsAccumulate(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
         $table = 'prefix_' . bin2hex(random_bytes(8));
 
         try {
@@ -158,7 +186,14 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testPhysicalDatabaseRemainsUnchangedAfterMutations(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
         $table = 'prefix_' . bin2hex(random_bytes(8));
 
         try {
@@ -197,7 +232,14 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testDisableZtdBypassesRewriting(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
         $table = 'prefix_' . bin2hex(random_bytes(8));
 
         try {
@@ -234,7 +276,14 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testEnableDisableToggle(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
         $table = 'prefix_' . bin2hex(random_bytes(8));
 
         try {
@@ -263,7 +312,14 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testSelectWithWhereOnShadowData(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
         $table = 'prefix_' . bin2hex(random_bytes(8));
 
         try {
@@ -301,7 +357,14 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testUpdateDoesNotModifyPhysicalDatabase(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
         $table = 'prefix_' . bin2hex(random_bytes(8));
 
         try {
@@ -336,7 +399,14 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testDeleteDoesNotModifyPhysicalDatabase(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
         $table = 'prefix_' . bin2hex(random_bytes(8));
 
         try {
@@ -370,7 +440,14 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testCommentsRemainLexicalWhitespaceAcrossPostgreSqlMutations(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
         $table = 'comment_' . bin2hex(random_bytes(8));
 
         try {
@@ -396,7 +473,14 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testPostgreSqlQuotedStringFormsPreserveWhereOffsets(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
         $table = 'literal_' . bin2hex(random_bytes(8));
 
         try {
@@ -425,7 +509,14 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testInsertWithoutColumnListSupportsConstraintKeywordPrefixes(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
         $table = 'booking_' . bin2hex(random_bytes(8));
 
         try {
@@ -454,7 +545,14 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testQuotedInsertSourceKeywordsRemainIdentifiers(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
 
         try {
             $rawPdo->exec('CREATE TABLE "select" (id INTEGER PRIMARY KEY, val TEXT)');
@@ -490,7 +588,14 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testJsonExistenceOperatorsRemainDistinctFromPlaceholders(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
         $table = 'json_docs_' . bin2hex(random_bytes(8));
 
         try {
@@ -527,7 +632,14 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testPreparedBooleanAndBigIntValuesRetainTheirTypes(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
         $table = 'typed_' . bin2hex(random_bytes(8));
 
         try {
@@ -548,7 +660,14 @@ final class PostgreSqlCteShadowingTest extends TestCase
 
     public function testArrayAndBinaryValuesRetainNativeTypes(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
         $table = 'typed_' . bin2hex(random_bytes(8));
 
         try {

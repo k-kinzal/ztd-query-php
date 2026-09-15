@@ -22,7 +22,6 @@
             <directory>tests/Unit</directory>
         </testsuite>
         <testsuite name="doctest">
-            <directory>tests/Doctest</directory>
             <file>vendor/k-kinzal/php-ai-toolkit/src/Doctest/DoctestSuite.php</file>
         </testsuite>
     </testsuites>

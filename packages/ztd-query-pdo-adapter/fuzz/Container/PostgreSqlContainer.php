@@ -6,7 +6,7 @@ namespace Fuzz\Container;
 
 use Override;
 use Testcontainers\Containers\GenericContainer\GenericContainer;
-use Testcontainers\Containers\WaitStrategy\PDO\PDOConnectWaitStrategy;
+use Testcontainers\Containers\WaitStrategy\LogMessageWaitStrategy;
 
 /**
  * The postgre sql container.
@@ -43,15 +43,12 @@ final class PostgreSqlContainer extends GenericContainer
     protected static $STARTUP_TIMEOUT = 300;
 
     #[Override]
-    protected function waitStrategy($instance): PDOConnectWaitStrategy
+    protected function waitStrategy($instance): LogMessageWaitStrategy
     {
         unset($instance);
 
-        return (new PDOConnectWaitStrategy())
-            ->withDsn((new PostgreSqlDSN())->withDbname('fuzz_test'))
-            ->withUsername('test')
-            ->withPassword('test')
-            ->withTimeoutSeconds(120)
-            ->withRetryInterval(250000);
+        return (new LogMessageWaitStrategy())
+            ->withPattern('\\[1\\].*database system is ready to accept connections')
+            ->withTimeoutSeconds(120);
     }
 }

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\SqlFaker\PostgreSql\Generation;
+namespace Tests\Unit\PostgreSql\Generation;
 
 use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversClass;

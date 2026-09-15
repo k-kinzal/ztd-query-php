@@ -1,30 +1,47 @@
 # NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
 deptrac:
-  paths: [src]
+  paths: [./src]
+  analyser:
+    types: [class, use]
   layers:
-    - name: PublicApi
+    - name: Adapter
       collectors:
         - type: directory
-          value: src/[^/]+\.php$
+          value: 'src/(ZtdMysqli|ZtdMysqliStatement)\.php$'
+    - name: Session
+      collectors:
+        - type: directory
+          value: 'src/Session/'
+        # The exception is a consumer contract raised by session operations.
+        - type: directory
+          value: 'src/ZtdMysqliException\.php$'
     - name: Driver
       collectors:
         - type: directory
-          value: src/Driver/.*
+          value: 'src/Driver/'
     - name: Native
       collectors:
         - type: directory
-          value: src/Native/.*
+          value: 'src/Native/'
     - name: Core
       collectors:
-        - type: classLike
-          value: ^ZtdQuery\\(?!Adapter\\|Platform\\MySql\\)
-    - name: MySqlPlatform
+        - type: bool
+          must:
+            - type: classLike
+              value: '^ZtdQuery\\'
+          must_not:
+            - type: classLike
+              value: '^ZtdQuery\\Adapter\\'
+            - type: classLike
+              value: '^ZtdQuery\\Platform\\MySql\\'
+    - name: Platforms
       collectors:
-        - type: composer
-          composerPath: composer.json
-          composerLockPath: composer.lock
-          packages: [k-kinzal/ztd-query-mysql]
+        - type: classLike
+          value: '^ZtdQuery\\Platform\\MySql\\'
   ruleset:
-    PublicApi: [Driver, Native, Core, MySqlPlatform]
+    Adapter: [Session, Native, Core]
+    Session: [Driver, Core, Platforms]
     Driver: [Core]
     Native: []
+    Core: []
+    Platforms: []

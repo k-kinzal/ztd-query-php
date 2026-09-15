@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\SqlFaker\Sqlite\Generation\Value;
+namespace Tests\Unit\Sqlite\Generation\Value;
 
 use Faker\Factory;
 use Override;

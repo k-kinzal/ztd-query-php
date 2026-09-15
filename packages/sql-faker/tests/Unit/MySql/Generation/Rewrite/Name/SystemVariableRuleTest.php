@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\SqlFaker\MySql\Generation\Rewrite\Name;
+namespace Tests\Unit\MySql\Generation\Rewrite\Name;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;

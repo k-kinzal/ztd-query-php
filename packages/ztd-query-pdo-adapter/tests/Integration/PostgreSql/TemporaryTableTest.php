@@ -22,7 +22,14 @@ final class TemporaryTableTest extends TestCase
 {
     public function testDmlContinuesAcrossTemporaryTableLifecycle(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
 
         try {
             $ztdPdo = ZtdPdo::fromPdo($rawPdo);

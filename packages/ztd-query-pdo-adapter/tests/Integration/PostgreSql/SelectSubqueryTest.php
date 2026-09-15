@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\PostgreSql;
 
+use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -23,7 +24,14 @@ final class SelectSubqueryTest extends TestCase
 {
     public function testSubqueryInWhere(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
         $users = 'prefix_' . bin2hex(random_bytes(8));
         $orders = 'prefix_' . bin2hex(random_bytes(8));
 
@@ -59,7 +67,14 @@ final class SelectSubqueryTest extends TestCase
 
     public function testScalarSubquery(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
         $users = 'prefix_' . bin2hex(random_bytes(8));
         $orders = 'prefix_' . bin2hex(random_bytes(8));
 
@@ -95,7 +110,14 @@ final class SelectSubqueryTest extends TestCase
 
     public function testSubqueryInFrom(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
         $users = 'prefix_' . bin2hex(random_bytes(8));
         $orders = 'prefix_' . bin2hex(random_bytes(8));
 

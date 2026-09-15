@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\PostgreSql;
 
+use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -23,7 +24,14 @@ final class DeleteBasicTest extends TestCase
 {
     public function testDeleteSingleRow(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
         $table = 'prefix_' . bin2hex(random_bytes(8));
 
         try {
@@ -55,7 +63,14 @@ final class DeleteBasicTest extends TestCase
 
     public function testDeleteAllRowsWithCondition(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
         $table = 'prefix_' . bin2hex(random_bytes(8));
 
         try {
@@ -87,7 +102,14 @@ final class DeleteBasicTest extends TestCase
 
     public function testDeleteDoesNotModifyPhysicalDatabase(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
         $table = 'prefix_' . bin2hex(random_bytes(8));
 
         try {

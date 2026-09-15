@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\SqlFaker\Generation\Derivation;
+namespace Tests\Unit\Generation\Derivation;
 
 use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversClass;

@@ -7,15 +7,13 @@ namespace Tests\Container;
 use Override;
 use PDO;
 use Testcontainers\Containers\GenericContainer\GenericContainer;
-use Testcontainers\Containers\WaitStrategy\PDO\PDOConnectWaitStrategy;
+use Testcontainers\Containers\WaitStrategy\LogMessageWaitStrategy;
 use Testcontainers\Hook\AfterStartHook;
-use Testcontainers\Testcontainers;
 
 /**
  * PostgreSQL container definition for integration tests.
  *
  * Uses AfterStartHook to create and cache a PDO connection on first start.
- * Provides createTestSchema() to create an isolated schema per test.
  */
 final class PostgreSqlContainer extends GenericContainer
 {
@@ -50,21 +48,25 @@ final class PostgreSqlContainer extends GenericContainer
     protected static $STARTUP_TIMEOUT = 300;
 
     /**
+     * Parallel PHPUnit workers can select the same seeded port candidates.
+     *
+     * @var null|int
+     */
+    protected static $STARTUP_CONFLICT_RETRY_ATTEMPTS = 10;
+
+    /**
      * @var bool|null
      */
     protected static $AUTO_REMOVE_ON_EXIT = true;
 
     #[Override]
-    protected function waitStrategy($instance): PDOConnectWaitStrategy
+    protected function waitStrategy($instance): LogMessageWaitStrategy
     {
         unset($instance);
 
-        return (new PDOConnectWaitStrategy())
-            ->withDsn((new PostgreSqlDSN())->withDbname('ztd_test'))
-            ->withUsername('test')
-            ->withPassword('test')
-            ->withTimeoutSeconds(120)
-            ->withRetryInterval(250000);
+        return (new LogMessageWaitStrategy())
+            ->withPattern('\\[1\\].*database system is ready to accept connections')
+            ->withTimeoutSeconds(120);
     }
 
     /**
@@ -86,27 +88,4 @@ final class PostgreSqlContainer extends GenericContainer
         $instance->setData($pdo);
     }
 
-    /**
-     * Run the container and create an isolated test schema.
-     *
-     * @return array{string, PDO}
-     */
-    public static function createTestSchema(): array
-    {
-        $host = getenv('PG_HOST');
-        if ($host !== false) {
-            $port = getenv('PG_PORT');
-            $pdo = new PDO(sprintf('pgsql:host=%s;port=%d;dbname=ztd_test', $host, $port === false ? 5432 : (int) $port), 'test', 'test', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
-        } else {
-            $instance = Testcontainers::run(self::class);
-            /** @var PDO $pdo */
-            $pdo = $instance->getData(PDO::class);
-        }
-
-        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
-        $pdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
-        $pdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
-
-        return [$schemaName, $pdo];
-    }
 }
