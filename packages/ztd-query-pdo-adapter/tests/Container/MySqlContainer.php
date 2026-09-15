@@ -47,6 +47,13 @@ final class MySqlContainer extends GenericContainer
     protected static $STARTUP_TIMEOUT = 300;
 
     /**
+     * Parallel PHPUnit workers can select the same seeded port candidates.
+     *
+     * @var null|int
+     */
+    protected static $STARTUP_CONFLICT_RETRY_ATTEMPTS = 10;
+
+    /**
      * @var bool|null
      */
     protected static $AUTO_REMOVE_ON_EXIT = true;
