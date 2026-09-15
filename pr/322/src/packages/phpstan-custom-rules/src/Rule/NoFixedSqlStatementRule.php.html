@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>packages/phpstan-custom-rules/src/Rule/NoFixedSqlStatementRule.php — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/322/src/packages/phpstan-custom-rules/src/Rule/NoFixedSqlStatementRule.php.html">
+<meta name="description" content="The source of packages/phpstan-custom-rules/src/Rule/NoFixedSqlStatementRule.php.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="packages/phpstan-custom-rules/src/Rule/NoFixedSqlStatementRule.php — ZTD Query PHP">
+<meta property="og:description" content="The source of packages/phpstan-custom-rules/src/Rule/NoFixedSqlStatementRule.php.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/322/src/packages/phpstan-custom-rules/src/Rule/NoFixedSqlStatementRule.php.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/322/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../../">
+<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../../../../index.html">ZTD Query PHP</a></div><nav class="sb-block"><div class="sb-title">Packages</div><ul class="sb-list"><li data-diff="modified"><a href="../../../../../k-kinzal/sql-faker/index.html">k-kinzal/sql-faker</a></li><li data-diff="same"><a href="../../../../../k-kinzal/sql-fixture/index.html">k-kinzal/sql-fixture</a></li><li data-diff="same"><a href="../../../../../k-kinzal/ztd-query-core/index.html">k-kinzal/ztd-query-core</a></li><li data-diff="same"><a href="../../../../../k-kinzal/ztd-query-mysql/index.html">k-kinzal/ztd-query-mysql</a></li><li data-diff="modified"><a href="../../../../../k-kinzal/ztd-query-mysqli-adapter/index.html">k-kinzal/ztd-query-mysqli-adapter</a></li><li data-diff="modified"><a href="../../../../../k-kinzal/ztd-query-pdo-adapter/index.html">k-kinzal/ztd-query-pdo-adapter</a></li><li data-diff="same"><a href="../../../../../k-kinzal/ztd-query-postgres/index.html">k-kinzal/ztd-query-postgres</a></li><li data-diff="same"><a href="../../../../../k-kinzal/ztd-query-sqlite/index.html">k-kinzal/ztd-query-sqlite</a></li><li data-diff="removed"><a href="../../../../../k-kinzal/phpstan-custom-rules/index.html">k-kinzal/phpstan-custom-rules</a></li></ul></nav></nav>
+<div class="page">
+<header class="topbar">
+<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
+<nav class="crumbs"><a href="../../../../../index.html">src</a><span class="crumb-sep">::</span><span class="crumb-current">packages/phpstan-custom-rules/src/Rule/NoFixedSqlStatementRule.php</span></nav>
+<div class="topbar-tools">
+<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing bf2b668ca to working tree">bf2b668ca <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between bf2b668ca and working tree." data-off="This page documents what bf2b668ca had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1 class="source-title">packages/phpstan-custom-rules/src/Rule/NoFixedSqlStatementRule.php</h1></div>
+<div class="notice diff-banner" data-diff="removed">Removed in working tree, compared to bf2b668ca.</div>
+<pre class="source" data-diff="removed"><code><span class="src-line" data-diff="removed"><span class="ln">1</span>&lt;?php</span>
+<span class="src-line" data-diff="removed"><span class="ln">2</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">3</span><span class="tok-kw">declare</span>(<span class="tok-id">strict_types</span>=<span class="tok-num">1</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">4</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">5</span><span class="tok-kw">namespace</span> <span class="tok-id">ZtdQuery\PhpStanCustomRules\Rule</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">6</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">7</span><span class="tok-kw">use</span> <span class="tok-id">PhpParser\Node</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">8</span><span class="tok-kw">use</span> <span class="tok-id">PhpParser\Node\Expr</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">9</span><span class="tok-kw">use</span> <span class="tok-id">PhpParser\Node\Expr\Array_</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">10</span><span class="tok-kw">use</span> <span class="tok-id">PhpParser\Node\Expr\Assign</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">11</span><span class="tok-kw">use</span> <span class="tok-id">PhpParser\Node\Expr\AssignOp</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">12</span><span class="tok-kw">use</span> <span class="tok-id">PhpParser\Node\Expr\AssignOp\Concat</span> <span class="tok-kw">as</span> <span class="tok-id">AssignConcat</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">13</span><span class="tok-kw">use</span> <span class="tok-id">PhpParser\Node\Expr\BinaryOp\Concat</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">14</span><span class="tok-kw">use</span> <span class="tok-id">PhpParser\Node\Expr\FuncCall</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">15</span><span class="tok-kw">use</span> <span class="tok-id">PhpParser\Node\Expr\Match_</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">16</span><span class="tok-kw">use</span> <span class="tok-id">PhpParser\Node\Expr\MethodCall</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">17</span><span class="tok-kw">use</span> <span class="tok-id">PhpParser\Node\Expr\PropertyFetch</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">18</span><span class="tok-kw">use</span> <span class="tok-id">PhpParser\Node\Expr\Variable</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">19</span><span class="tok-kw">use</span> <span class="tok-id">PhpParser\Node\Identifier</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">20</span><span class="tok-kw">use</span> <span class="tok-id">PhpParser\Node\InterpolatedStringPart</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">21</span><span class="tok-kw">use</span> <span class="tok-id">PhpParser\Node\Name</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">22</span><span class="tok-kw">use</span> <span class="tok-id">PhpParser\Node\Scalar\InterpolatedString</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">23</span><span class="tok-kw">use</span> <span class="tok-id">PhpParser\Node\Scalar\String_</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">24</span><span class="tok-kw">use</span> <span class="tok-id">PhpParser\Node\Stmt\ClassMethod</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">25</span><span class="tok-kw">use</span> <span class="tok-id">PhpParser\Node\Stmt\Return_</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">26</span><span class="tok-kw">use</span> <span class="tok-id">PHPStan\Analyser\Scope</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">27</span><span class="tok-kw">use</span> <span class="tok-id">PHPStan\Rules\IdentifierRuleError</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">28</span><span class="tok-kw">use</span> <span class="tok-id">PHPStan\Rules\Rule</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">29</span><span class="tok-kw">use</span> <span class="tok-id">PHPStan\Rules\RuleErrorBuilder</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">30</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">31</span><span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">32</span><span class="tok-com"> * @implements Rule&lt;Node&gt;</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">33</span><span class="tok-com"> */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">34</span><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">NoFixedSqlStatementRule</span> <span class="tok-kw">implements</span> <span class="tok-id">Rule</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">35</span>{</span>
+<span class="src-line" data-diff="removed"><span class="ln">36</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">getNodeType</span>(): <span class="tok-id">string</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">37</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">38</span>        <span class="tok-kw">return</span> <span class="tok-id">Node</span>::<span class="tok-kw">class</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">39</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">40</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">41</span>    <span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">42</span><span class="tok-com">     * @return list&lt;IdentifierRuleError&gt;</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">43</span><span class="tok-com">     */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">44</span>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">processNode</span>(<span class="tok-id">Node</span> <span class="tok-var">$node</span>, <span class="tok-id">Scope</span> <span class="tok-var">$scope</span>): <span class="tok-kw">array</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">45</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">46</span>        <span class="tok-var">$namespace</span> = <span class="tok-var">$scope</span>-&gt;<span class="tok-id">getNamespace</span>() ?? <span class="tok-str">&#039;&#039;</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">47</span>        <span class="tok-kw">if</span> (<span class="tok-var">$namespace</span> !== <span class="tok-str">&#039;SqlFaker&#039;</span> &amp;&amp; !<span class="tok-id">str_starts_with</span>(<span class="tok-var">$namespace</span>, <span class="tok-str">&#039;SqlFaker\\&#039;</span>)) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">48</span>            <span class="tok-kw">return</span> [];</span>
+<span class="src-line" data-diff="removed"><span class="ln">49</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">50</span>        <span class="tok-kw">if</span> (<span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">ClassMethod</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">51</span>            &amp;&amp; <span class="tok-id">str_starts_with</span>(<span class="tok-var">$node</span>-&gt;<span class="tok-id">name</span>-&gt;<span class="tok-id">name</span>, <span class="tok-str">&#039;generate&#039;</span>)</span>
+<span class="src-line" data-diff="removed"><span class="ln">52</span>            &amp;&amp; <span class="tok-var">$this</span>-&gt;<span class="tok-id">isSqlGeneratorClass</span>(<span class="tok-var">$scope</span>)</span>
+<span class="src-line" data-diff="removed"><span class="ln">53</span>        ) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">54</span>            <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">invalidGeneratorReturnErrors</span>(<span class="tok-var">$node</span>, <span class="tok-var">$scope</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">55</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">56</span>        <span class="tok-kw">if</span> (<span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Return_</span> &amp;&amp; <span class="tok-var">$node</span>-&gt;<span class="tok-id">expr</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">57</span>            <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">isSqlGeneratorMethod</span>(<span class="tok-var">$scope</span>)) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">58</span>                <span class="tok-kw">return</span> [];</span>
+<span class="src-line" data-diff="removed"><span class="ln">59</span>            }</span>
+<span class="src-line" data-diff="removed"><span class="ln">60</span>            <span class="tok-kw">foreach</span> (<span class="tok-var">$scope</span>-&gt;<span class="tok-id">getType</span>(<span class="tok-var">$node</span>-&gt;<span class="tok-id">expr</span>)-&gt;<span class="tok-id">getConstantStrings</span>() <span class="tok-kw">as</span> <span class="tok-var">$constantString</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">61</span>                <span class="tok-var">$value</span> = <span class="tok-var">$constantString</span>-&gt;<span class="tok-id">getValue</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">62</span>                <span class="tok-kw">if</span> (<span class="tok-id">SqlStatementTemplateDetector</span>::<span class="tok-id">contains</span>(<span class="tok-var">$value</span>, <span class="tok-id">true</span>)</span>
+<span class="src-line" data-diff="removed"><span class="ln">63</span>                    &amp;&amp; !<span class="tok-id">SqlStatementTemplateDetector</span>::<span class="tok-id">contains</span>(<span class="tok-var">$value</span>)</span>
+<span class="src-line" data-diff="removed"><span class="ln">64</span>                ) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">65</span>                    <span class="tok-kw">return</span> [<span class="tok-var">$this</span>-&gt;<span class="tok-id">error</span>(<span class="tok-var">$node</span>-&gt;<span class="tok-id">getStartLine</span>())];</span>
+<span class="src-line" data-diff="removed"><span class="ln">66</span>                }</span>
+<span class="src-line" data-diff="removed"><span class="ln">67</span>            }</span>
+<span class="src-line" data-diff="removed"><span class="ln">68</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">69</span>            <span class="tok-kw">return</span> [];</span>
+<span class="src-line" data-diff="removed"><span class="ln">70</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">71</span>        <span class="tok-kw">if</span> (!<span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">String_</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">72</span>            &amp;&amp; !<span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">InterpolatedStringPart</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">73</span>            &amp;&amp; !<span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">InterpolatedString</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">74</span>            &amp;&amp; !<span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Concat</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">75</span>            &amp;&amp; !<span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Assign</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">76</span>            &amp;&amp; !<span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">AssignConcat</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">77</span>            &amp;&amp; !<span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">FuncCall</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">78</span>        ) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">79</span>            <span class="tok-kw">return</span> [];</span>
+<span class="src-line" data-diff="removed"><span class="ln">80</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">81</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">82</span>        <span class="tok-kw">if</span> (<span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">FuncCall</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">83</span>            <span class="tok-kw">foreach</span> (<span class="tok-var">$scope</span>-&gt;<span class="tok-id">getType</span>(<span class="tok-var">$node</span>)-&gt;<span class="tok-id">getConstantStrings</span>() <span class="tok-kw">as</span> <span class="tok-var">$constantString</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">84</span>                <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">containsSqlTemplate</span>(<span class="tok-var">$constantString</span>-&gt;<span class="tok-id">getValue</span>())) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">85</span>                    <span class="tok-kw">return</span> [<span class="tok-var">$this</span>-&gt;<span class="tok-id">error</span>(<span class="tok-var">$node</span>-&gt;<span class="tok-id">getStartLine</span>())];</span>
+<span class="src-line" data-diff="removed"><span class="ln">86</span>                }</span>
+<span class="src-line" data-diff="removed"><span class="ln">87</span>            }</span>
+<span class="src-line" data-diff="removed"><span class="ln">88</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">89</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">90</span>        <span class="tok-var">$value</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">literalValue</span>(<span class="tok-var">$node</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">91</span>        <span class="tok-kw">if</span> (<span class="tok-var">$value</span> === <span class="tok-id">null</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">92</span>            <span class="tok-kw">return</span> [];</span>
+<span class="src-line" data-diff="removed"><span class="ln">93</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">94</span>        <span class="tok-kw">if</span> (!<span class="tok-var">$this</span>-&gt;<span class="tok-id">containsSqlTemplate</span>(<span class="tok-var">$value</span>)) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">95</span>            <span class="tok-kw">return</span> [];</span>
+<span class="src-line" data-diff="removed"><span class="ln">96</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">97</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">98</span>        <span class="tok-kw">return</span> [<span class="tok-var">$this</span>-&gt;<span class="tok-id">error</span>(<span class="tok-var">$node</span>-&gt;<span class="tok-id">getStartLine</span>())];</span>
+<span class="src-line" data-diff="removed"><span class="ln">99</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">100</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">101</span>    <span class="tok-kw">private</span> <span class="tok-kw">function</span> <span class="tok-id">isSqlGeneratorMethod</span>(<span class="tok-id">Scope</span> <span class="tok-var">$scope</span>): <span class="tok-id">bool</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">102</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">103</span>        <span class="tok-var">$function</span> = <span class="tok-var">$scope</span>-&gt;<span class="tok-id">getFunctionName</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">104</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">105</span>        <span class="tok-kw">return</span> <span class="tok-var">$function</span> !== <span class="tok-id">null</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">106</span>            &amp;&amp; <span class="tok-id">str_starts_with</span>(<span class="tok-var">$function</span>, <span class="tok-str">&#039;generate&#039;</span>)</span>
+<span class="src-line" data-diff="removed"><span class="ln">107</span>            &amp;&amp; <span class="tok-var">$this</span>-&gt;<span class="tok-id">isSqlGeneratorClass</span>(<span class="tok-var">$scope</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">108</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">109</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">110</span>    <span class="tok-kw">private</span> <span class="tok-kw">function</span> <span class="tok-id">isSqlGeneratorClass</span>(<span class="tok-id">Scope</span> <span class="tok-var">$scope</span>): <span class="tok-id">bool</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">111</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">112</span>        <span class="tok-var">$class</span> = <span class="tok-var">$scope</span>-&gt;<span class="tok-id">getClassReflection</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">113</span>        <span class="tok-kw">if</span> (<span class="tok-var">$class</span> === <span class="tok-id">null</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">114</span>            <span class="tok-kw">return</span> <span class="tok-id">false</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">115</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">116</span>        <span class="tok-var">$className</span> = <span class="tok-var">$class</span>-&gt;<span class="tok-id">getName</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">117</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">118</span>        <span class="tok-kw">return</span> <span class="tok-id">strcmp</span>(<span class="tok-var">$className</span>, <span class="tok-str">&#039;SqlFaker\\Generation\\SqlGenerator&#039;</span>) === <span class="tok-num">0</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">119</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">120</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">121</span>    <span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">122</span><span class="tok-com">     * @param array&lt;string, list&lt;Expr&gt;&gt; $assignments</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">123</span><span class="tok-com">     * @param list&lt;string&gt; $visited</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">124</span><span class="tok-com">     */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">125</span>    <span class="tok-kw">private</span> <span class="tok-kw">function</span> <span class="tok-id">isApprovedGeneratorReturn</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">126</span>        <span class="tok-id">Expr</span> <span class="tok-var">$expr</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">127</span>        <span class="tok-id">Scope</span> <span class="tok-var">$scope</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">128</span>        <span class="tok-kw">array</span> <span class="tok-var">$assignments</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">129</span>        <span class="tok-kw">array</span> <span class="tok-var">$visited</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">130</span>    ): <span class="tok-id">bool</span> {</span>
+<span class="src-line" data-diff="removed"><span class="ln">131</span>        <span class="tok-kw">if</span> (<span class="tok-var">$expr</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Match_</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">132</span>            <span class="tok-kw">foreach</span> (<span class="tok-var">$expr</span>-&gt;<span class="tok-id">arms</span> <span class="tok-kw">as</span> <span class="tok-var">$arm</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">133</span>                <span class="tok-kw">if</span> (!<span class="tok-var">$this</span>-&gt;<span class="tok-id">isApprovedGeneratorReturn</span>(<span class="tok-var">$arm</span>-&gt;<span class="tok-id">body</span>, <span class="tok-var">$scope</span>, <span class="tok-var">$assignments</span>, <span class="tok-var">$visited</span>)) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">134</span>                    <span class="tok-kw">return</span> <span class="tok-id">false</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">135</span>                }</span>
+<span class="src-line" data-diff="removed"><span class="ln">136</span>            }</span>
+<span class="src-line" data-diff="removed"><span class="ln">137</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">138</span>            <span class="tok-kw">return</span> <span class="tok-var">$expr</span>-&gt;<span class="tok-id">arms</span> !== [];</span>
+<span class="src-line" data-diff="removed"><span class="ln">139</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">140</span>        <span class="tok-kw">if</span> (<span class="tok-var">$expr</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Variable</span> &amp;&amp; <span class="tok-id">is_string</span>(<span class="tok-var">$expr</span>-&gt;<span class="tok-id">name</span>)) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">141</span>            <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">isGrammarDerivedVariable</span>(<span class="tok-var">$expr</span>-&gt;<span class="tok-id">name</span>, <span class="tok-var">$assignments</span>, <span class="tok-var">$scope</span>, <span class="tok-var">$visited</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">142</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">143</span>        <span class="tok-kw">if</span> (!<span class="tok-var">$expr</span> <span class="tok-kw">instanceof</span> <span class="tok-id">MethodCall</span> || !<span class="tok-var">$expr</span>-&gt;<span class="tok-id">name</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Identifier</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">144</span>            <span class="tok-kw">return</span> <span class="tok-id">false</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">145</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">146</span>        <span class="tok-kw">if</span> (<span class="tok-var">$expr</span>-&gt;<span class="tok-id">var</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Variable</span> &amp;&amp; <span class="tok-var">$expr</span>-&gt;<span class="tok-id">var</span>-&gt;<span class="tok-id">name</span> === <span class="tok-str">&#039;this&#039;</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">147</span>            <span class="tok-kw">return</span> <span class="tok-id">str_starts_with</span>(<span class="tok-var">$expr</span>-&gt;<span class="tok-id">name</span>-&gt;<span class="tok-id">name</span>, <span class="tok-str">&#039;generate&#039;</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">148</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">149</span>        <span class="tok-kw">if</span> (!<span class="tok-var">$expr</span>-&gt;<span class="tok-id">var</span> <span class="tok-kw">instanceof</span> <span class="tok-id">PropertyFetch</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">150</span>            || !<span class="tok-var">$expr</span>-&gt;<span class="tok-id">var</span>-&gt;<span class="tok-id">var</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Variable</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">151</span>            || <span class="tok-var">$expr</span>-&gt;<span class="tok-id">var</span>-&gt;<span class="tok-id">var</span>-&gt;<span class="tok-id">name</span> !== <span class="tok-str">&#039;this&#039;</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">152</span>            || !<span class="tok-var">$expr</span>-&gt;<span class="tok-id">var</span>-&gt;<span class="tok-id">name</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Identifier</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">153</span>            || <span class="tok-var">$expr</span>-&gt;<span class="tok-id">var</span>-&gt;<span class="tok-id">name</span>-&gt;<span class="tok-id">name</span> !== <span class="tok-str">&#039;lexicalGrammar&#039;</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">154</span>        ) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">155</span>            <span class="tok-kw">return</span> <span class="tok-id">false</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">156</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">157</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">158</span>        <span class="tok-kw">if</span> (<span class="tok-id">str_starts_with</span>(<span class="tok-var">$expr</span>-&gt;<span class="tok-id">name</span>-&gt;<span class="tok-id">name</span>, <span class="tok-str">&#039;generate&#039;</span>)) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">159</span>            <span class="tok-kw">return</span> <span class="tok-id">true</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">160</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">161</span>        <span class="tok-var">$argument</span> = <span class="tok-var">$expr</span>-&gt;<span class="tok-id">getArgs</span>()[<span class="tok-num">0</span>]-&gt;<span class="tok-id">value</span> ?? <span class="tok-id">null</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">162</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">163</span>        <span class="tok-kw">return</span> <span class="tok-var">$expr</span>-&gt;<span class="tok-id">name</span>-&gt;<span class="tok-id">name</span> === <span class="tok-str">&#039;realize&#039;</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">164</span>            &amp;&amp; <span class="tok-var">$argument</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">165</span>            &amp;&amp; <span class="tok-var">$this</span>-&gt;<span class="tok-id">isDerivedTerminalExpression</span>(<span class="tok-var">$argument</span>, <span class="tok-var">$assignments</span>, <span class="tok-var">$scope</span>, []);</span>
+<span class="src-line" data-diff="removed"><span class="ln">166</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">167</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">168</span>    <span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">169</span><span class="tok-com">     * @return list&lt;IdentifierRuleError&gt;</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">170</span><span class="tok-com">     */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">171</span>    <span class="tok-kw">private</span> <span class="tok-kw">function</span> <span class="tok-id">invalidGeneratorReturnErrors</span>(<span class="tok-id">ClassMethod</span> <span class="tok-var">$method</span>, <span class="tok-id">Scope</span> <span class="tok-var">$scope</span>): <span class="tok-kw">array</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">172</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">173</span>        <span class="tok-var">$returns</span> = [];</span>
+<span class="src-line" data-diff="removed"><span class="ln">174</span>        <span class="tok-var">$assignments</span> = [];</span>
+<span class="src-line" data-diff="removed"><span class="ln">175</span>        <span class="tok-kw">foreach</span> (<span class="tok-var">$method</span>-&gt;<span class="tok-id">stmts</span> ?? [] <span class="tok-kw">as</span> <span class="tok-var">$statement</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">176</span>            <span class="tok-var">$this</span>-&gt;<span class="tok-id">collectVariableFlow</span>(<span class="tok-var">$statement</span>, <span class="tok-var">$returns</span>, <span class="tok-var">$assignments</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">177</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">178</span>        <span class="tok-var">$errors</span> = [];</span>
+<span class="src-line" data-diff="removed"><span class="ln">179</span>        <span class="tok-kw">foreach</span> (<span class="tok-var">$returns</span> <span class="tok-kw">as</span> [<span class="tok-var">$expression</span>, <span class="tok-var">$line</span>]) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">180</span>            <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">isApprovedGeneratorReturn</span>(<span class="tok-var">$expression</span>, <span class="tok-var">$scope</span>, <span class="tok-var">$assignments</span>, [])) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">181</span>                <span class="tok-kw">continue</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">182</span>            }</span>
+<span class="src-line" data-diff="removed"><span class="ln">183</span>            <span class="tok-var">$errors</span>[] = <span class="tok-var">$this</span>-&gt;<span class="tok-id">error</span>(<span class="tok-var">$line</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">184</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">185</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">186</span>        <span class="tok-kw">return</span> <span class="tok-var">$errors</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">187</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">188</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">189</span>    <span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">190</span><span class="tok-com">     * @param array&lt;string, list&lt;Expr&gt;&gt; $assignments</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">191</span><span class="tok-com">     * @param list&lt;string&gt; $visited</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">192</span><span class="tok-com">     */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">193</span>    <span class="tok-kw">private</span> <span class="tok-kw">function</span> <span class="tok-id">isGrammarDerivedVariable</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">194</span>        <span class="tok-id">string</span> <span class="tok-var">$name</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">195</span>        <span class="tok-kw">array</span> <span class="tok-var">$assignments</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">196</span>        <span class="tok-id">Scope</span> <span class="tok-var">$scope</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">197</span>        <span class="tok-kw">array</span> <span class="tok-var">$visited</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">198</span>    ): <span class="tok-id">bool</span> {</span>
+<span class="src-line" data-diff="removed"><span class="ln">199</span>        <span class="tok-kw">if</span> (<span class="tok-id">in_array</span>(<span class="tok-var">$name</span>, <span class="tok-var">$visited</span>, <span class="tok-id">true</span>)) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">200</span>            <span class="tok-kw">return</span> <span class="tok-id">false</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">201</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">202</span>        <span class="tok-var">$sources</span> = <span class="tok-var">$assignments</span>[<span class="tok-var">$name</span>] ?? [];</span>
+<span class="src-line" data-diff="removed"><span class="ln">203</span>        <span class="tok-kw">if</span> (<span class="tok-var">$sources</span> === []) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">204</span>            <span class="tok-kw">return</span> <span class="tok-id">false</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">205</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">206</span>        <span class="tok-var">$visited</span>[] = <span class="tok-var">$name</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">207</span>        <span class="tok-kw">foreach</span> (<span class="tok-var">$sources</span> <span class="tok-kw">as</span> <span class="tok-var">$source</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">208</span>            <span class="tok-kw">if</span> (<span class="tok-var">$source</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Variable</span> &amp;&amp; <span class="tok-id">is_string</span>(<span class="tok-var">$source</span>-&gt;<span class="tok-id">name</span>)) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">209</span>                <span class="tok-kw">if</span> (!<span class="tok-var">$this</span>-&gt;<span class="tok-id">isGrammarDerivedVariable</span>(<span class="tok-var">$source</span>-&gt;<span class="tok-id">name</span>, <span class="tok-var">$assignments</span>, <span class="tok-var">$scope</span>, <span class="tok-var">$visited</span>)) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">210</span>                    <span class="tok-kw">return</span> <span class="tok-id">false</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">211</span>                }</span>
+<span class="src-line" data-diff="removed"><span class="ln">212</span>                <span class="tok-kw">continue</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">213</span>            }</span>
+<span class="src-line" data-diff="removed"><span class="ln">214</span>            <span class="tok-kw">if</span> (!<span class="tok-var">$this</span>-&gt;<span class="tok-id">isApprovedGeneratorReturn</span>(<span class="tok-var">$source</span>, <span class="tok-var">$scope</span>, <span class="tok-var">$assignments</span>, <span class="tok-var">$visited</span>)) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">215</span>                <span class="tok-kw">return</span> <span class="tok-id">false</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">216</span>            }</span>
+<span class="src-line" data-diff="removed"><span class="ln">217</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">218</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">219</span>        <span class="tok-kw">return</span> <span class="tok-id">true</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">220</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">221</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">222</span>    <span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">223</span><span class="tok-com">     * @param array&lt;string, list&lt;Expr&gt;&gt; $assignments</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">224</span><span class="tok-com">     * @param list&lt;string&gt; $visited</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">225</span><span class="tok-com">     */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">226</span>    <span class="tok-kw">private</span> <span class="tok-kw">function</span> <span class="tok-id">isDerivedTerminalExpression</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">227</span>        <span class="tok-id">Expr</span> <span class="tok-var">$expr</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">228</span>        <span class="tok-kw">array</span> <span class="tok-var">$assignments</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">229</span>        <span class="tok-id">Scope</span> <span class="tok-var">$scope</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">230</span>        <span class="tok-kw">array</span> <span class="tok-var">$visited</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">231</span>    ): <span class="tok-id">bool</span> {</span>
+<span class="src-line" data-diff="removed"><span class="ln">232</span>        <span class="tok-kw">if</span> (<span class="tok-var">$expr</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Variable</span> &amp;&amp; <span class="tok-id">is_string</span>(<span class="tok-var">$expr</span>-&gt;<span class="tok-id">name</span>)) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">233</span>            <span class="tok-kw">if</span> (<span class="tok-id">in_array</span>(<span class="tok-var">$expr</span>-&gt;<span class="tok-id">name</span>, <span class="tok-var">$visited</span>, <span class="tok-id">true</span>)) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">234</span>                <span class="tok-kw">return</span> <span class="tok-id">false</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">235</span>            }</span>
+<span class="src-line" data-diff="removed"><span class="ln">236</span>            <span class="tok-var">$sources</span> = <span class="tok-var">$assignments</span>[<span class="tok-var">$expr</span>-&gt;<span class="tok-id">name</span>] ?? [];</span>
+<span class="src-line" data-diff="removed"><span class="ln">237</span>            <span class="tok-kw">if</span> (<span class="tok-var">$sources</span> === []) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">238</span>                <span class="tok-kw">return</span> <span class="tok-id">false</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">239</span>            }</span>
+<span class="src-line" data-diff="removed"><span class="ln">240</span>            <span class="tok-var">$visited</span>[] = <span class="tok-var">$expr</span>-&gt;<span class="tok-id">name</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">241</span>            <span class="tok-kw">foreach</span> (<span class="tok-var">$sources</span> <span class="tok-kw">as</span> <span class="tok-var">$source</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">242</span>                <span class="tok-kw">if</span> (!<span class="tok-var">$this</span>-&gt;<span class="tok-id">isDerivedTerminalExpression</span>(<span class="tok-var">$source</span>, <span class="tok-var">$assignments</span>, <span class="tok-var">$scope</span>, <span class="tok-var">$visited</span>)) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">243</span>                    <span class="tok-kw">return</span> <span class="tok-id">false</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">244</span>                }</span>
+<span class="src-line" data-diff="removed"><span class="ln">245</span>            }</span>
+<span class="src-line" data-diff="removed"><span class="ln">246</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">247</span>            <span class="tok-kw">return</span> <span class="tok-id">true</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">248</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">249</span>        <span class="tok-kw">if</span> (<span class="tok-var">$expr</span> <span class="tok-kw">instanceof</span> <span class="tok-id">FuncCall</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">250</span>            &amp;&amp; <span class="tok-var">$expr</span>-&gt;<span class="tok-id">name</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Name</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">251</span>            &amp;&amp; <span class="tok-id">strtolower</span>(<span class="tok-var">$expr</span>-&gt;<span class="tok-id">name</span>-&gt;<span class="tok-id">toString</span>()) === <span class="tok-str">&#039;array_map&#039;</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">252</span>        ) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">253</span>            <span class="tok-var">$argument</span> = <span class="tok-var">$expr</span>-&gt;<span class="tok-id">getArgs</span>()[<span class="tok-num">1</span>]-&gt;<span class="tok-id">value</span> ?? <span class="tok-id">null</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">254</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">255</span>            <span class="tok-kw">return</span> <span class="tok-var">$argument</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">256</span>                &amp;&amp; <span class="tok-var">$this</span>-&gt;<span class="tok-id">isDerivedTerminalExpression</span>(<span class="tok-var">$argument</span>, <span class="tok-var">$assignments</span>, <span class="tok-var">$scope</span>, <span class="tok-var">$visited</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">257</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">258</span>        <span class="tok-kw">if</span> (!<span class="tok-var">$expr</span> <span class="tok-kw">instanceof</span> <span class="tok-id">MethodCall</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">259</span>            || !<span class="tok-var">$expr</span>-&gt;<span class="tok-id">var</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Variable</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">260</span>            || <span class="tok-var">$expr</span>-&gt;<span class="tok-id">var</span>-&gt;<span class="tok-id">name</span> !== <span class="tok-str">&#039;this&#039;</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">261</span>            || !<span class="tok-var">$expr</span>-&gt;<span class="tok-id">name</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Identifier</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">262</span>        ) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">263</span>            <span class="tok-kw">return</span> <span class="tok-id">false</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">264</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">265</span>        <span class="tok-kw">if</span> (<span class="tok-var">$expr</span>-&gt;<span class="tok-id">name</span>-&gt;<span class="tok-id">name</span> === <span class="tok-str">&#039;derive&#039;</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">266</span>            <span class="tok-kw">return</span> <span class="tok-id">true</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">267</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">268</span>        <span class="tok-kw">if</span> (<span class="tok-var">$expr</span>-&gt;<span class="tok-id">name</span>-&gt;<span class="tok-id">name</span> !== <span class="tok-str">&#039;normalizeParserSemantics&#039;</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">269</span>            <span class="tok-kw">return</span> <span class="tok-id">false</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">270</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">271</span>        <span class="tok-var">$argument</span> = <span class="tok-var">$expr</span>-&gt;<span class="tok-id">getArgs</span>()[<span class="tok-num">0</span>]-&gt;<span class="tok-id">value</span> ?? <span class="tok-id">null</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">272</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">273</span>        <span class="tok-kw">return</span> <span class="tok-var">$argument</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Expr</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">274</span>            &amp;&amp; <span class="tok-var">$this</span>-&gt;<span class="tok-id">isDerivedTerminalExpression</span>(<span class="tok-var">$argument</span>, <span class="tok-var">$assignments</span>, <span class="tok-var">$scope</span>, <span class="tok-var">$visited</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">275</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">276</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">277</span>    <span class="tok-com">/**</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">278</span><span class="tok-com">     * @param list&lt;array{Expr, int}&gt; $returns</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">279</span><span class="tok-com">     * @param array&lt;string, list&lt;Expr&gt;&gt; $assignments</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">280</span><span class="tok-com">     */</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">281</span>    <span class="tok-kw">private</span> <span class="tok-kw">function</span> <span class="tok-id">collectVariableFlow</span>(<span class="tok-id">Node</span> <span class="tok-var">$node</span>, <span class="tok-kw">array</span> &amp;<span class="tok-var">$returns</span>, <span class="tok-kw">array</span> &amp;<span class="tok-var">$assignments</span>): <span class="tok-id">void</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">282</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">283</span>        <span class="tok-kw">if</span> (<span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">\PhpParser\Node\FunctionLike</span> &amp;&amp; !<span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">ClassMethod</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">284</span>            <span class="tok-kw">return</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">285</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">286</span>        <span class="tok-kw">if</span> (<span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Return_</span> &amp;&amp; <span class="tok-var">$node</span>-&gt;<span class="tok-id">expr</span> !== <span class="tok-id">null</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">287</span>            <span class="tok-var">$returns</span>[] = [<span class="tok-var">$node</span>-&gt;<span class="tok-id">expr</span>, <span class="tok-var">$node</span>-&gt;<span class="tok-id">getStartLine</span>()];</span>
+<span class="src-line" data-diff="removed"><span class="ln">288</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">289</span>        <span class="tok-kw">if</span> ((<span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Assign</span> || <span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">AssignOp</span>)</span>
+<span class="src-line" data-diff="removed"><span class="ln">290</span>            &amp;&amp; <span class="tok-var">$node</span>-&gt;<span class="tok-id">var</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Variable</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">291</span>            &amp;&amp; <span class="tok-id">is_string</span>(<span class="tok-var">$node</span>-&gt;<span class="tok-id">var</span>-&gt;<span class="tok-id">name</span>)</span>
+<span class="src-line" data-diff="removed"><span class="ln">292</span>        ) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">293</span>            <span class="tok-var">$assignments</span>[<span class="tok-var">$node</span>-&gt;<span class="tok-id">var</span>-&gt;<span class="tok-id">name</span>][] = <span class="tok-var">$node</span>-&gt;<span class="tok-id">expr</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">294</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">295</span>        <span class="tok-var">$subNodes</span> = <span class="tok-id">get_object_vars</span>(<span class="tok-var">$node</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">296</span>        <span class="tok-kw">foreach</span> (<span class="tok-var">$node</span>-&gt;<span class="tok-id">getSubNodeNames</span>() <span class="tok-kw">as</span> <span class="tok-var">$name</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">297</span>            <span class="tok-var">$child</span> = <span class="tok-var">$subNodes</span>[<span class="tok-var">$name</span>] ?? <span class="tok-id">null</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">298</span>            <span class="tok-kw">if</span> (<span class="tok-var">$child</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Node</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">299</span>                <span class="tok-var">$this</span>-&gt;<span class="tok-id">collectVariableFlow</span>(<span class="tok-var">$child</span>, <span class="tok-var">$returns</span>, <span class="tok-var">$assignments</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">300</span>                <span class="tok-kw">continue</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">301</span>            }</span>
+<span class="src-line" data-diff="removed"><span class="ln">302</span>            <span class="tok-kw">if</span> (!<span class="tok-id">is_array</span>(<span class="tok-var">$child</span>)) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">303</span>                <span class="tok-kw">continue</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">304</span>            }</span>
+<span class="src-line" data-diff="removed"><span class="ln">305</span>            <span class="tok-kw">foreach</span> (<span class="tok-var">$child</span> <span class="tok-kw">as</span> <span class="tok-var">$item</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">306</span>                <span class="tok-kw">if</span> (<span class="tok-var">$item</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Node</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">307</span>                    <span class="tok-var">$this</span>-&gt;<span class="tok-id">collectVariableFlow</span>(<span class="tok-var">$item</span>, <span class="tok-var">$returns</span>, <span class="tok-var">$assignments</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">308</span>                }</span>
+<span class="src-line" data-diff="removed"><span class="ln">309</span>            }</span>
+<span class="src-line" data-diff="removed"><span class="ln">310</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">311</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">312</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">313</span>    <span class="tok-kw">private</span> <span class="tok-kw">function</span> <span class="tok-id">error</span>(<span class="tok-id">int</span> <span class="tok-var">$line</span>): <span class="tok-id">IdentifierRuleError</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">314</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">315</span>        <span class="tok-kw">return</span> <span class="tok-id">RuleErrorBuilder</span>::<span class="tok-id">message</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">316</span>            <span class="tok-str">&#039;SQLFaker must not construct SQL statements from fixed templates; derive them from the dialect grammar.&#039;</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">317</span>        )</span>
+<span class="src-line" data-diff="removed"><span class="ln">318</span>            -&gt;<span class="tok-id">identifier</span>(<span class="tok-str">&#039;customRules.noFixedSqlStatement&#039;</span>)</span>
+<span class="src-line" data-diff="removed"><span class="ln">319</span>            -&gt;<span class="tok-id">line</span>(<span class="tok-var">$line</span>)</span>
+<span class="src-line" data-diff="removed"><span class="ln">320</span>            -&gt;<span class="tok-id">build</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">321</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">322</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">323</span>    <span class="tok-kw">private</span> <span class="tok-kw">function</span> <span class="tok-id">containsSqlTemplate</span>(<span class="tok-id">string</span> <span class="tok-var">$value</span>): <span class="tok-id">bool</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">324</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">325</span>        <span class="tok-kw">return</span> <span class="tok-id">SqlStatementTemplateDetector</span>::<span class="tok-id">contains</span>(<span class="tok-var">$value</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">326</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">327</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">328</span>    <span class="tok-kw">private</span> <span class="tok-kw">function</span> <span class="tok-id">literalValue</span>(<span class="tok-id">Node</span> <span class="tok-var">$node</span>): ?<span class="tok-id">string</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">329</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">330</span>        <span class="tok-kw">if</span> (<span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">String_</span> || <span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">InterpolatedStringPart</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">331</span>            <span class="tok-kw">return</span> <span class="tok-var">$node</span>-&gt;<span class="tok-id">value</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">332</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">333</span>        <span class="tok-kw">if</span> (<span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">InterpolatedString</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">334</span>            <span class="tok-kw">return</span> <span class="tok-id">implode</span>(<span class="tok-str">&#039;&#039;</span>, <span class="tok-id">array_map</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">335</span>                <span class="tok-kw">static</span> <span class="tok-kw">fn</span> (<span class="tok-id">Expr</span>|<span class="tok-id">InterpolatedStringPart</span> <span class="tok-var">$part</span>): <span class="tok-id">string</span> =&gt; <span class="tok-var">$part</span> <span class="tok-kw">instanceof</span> <span class="tok-id">InterpolatedStringPart</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">336</span>                    ? <span class="tok-var">$part</span>-&gt;<span class="tok-id">value</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">337</span>                    : <span class="tok-str">&#039;__ztd_dynamic__&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">338</span>                <span class="tok-var">$node</span>-&gt;<span class="tok-id">parts</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">339</span>            ));</span>
+<span class="src-line" data-diff="removed"><span class="ln">340</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">341</span>        <span class="tok-kw">if</span> (<span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">FuncCall</span> &amp;&amp; <span class="tok-var">$node</span>-&gt;<span class="tok-id">name</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Name</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">342</span>            <span class="tok-var">$function</span> = <span class="tok-id">strtolower</span>(<span class="tok-var">$node</span>-&gt;<span class="tok-id">name</span>-&gt;<span class="tok-id">toString</span>());</span>
+<span class="src-line" data-diff="removed"><span class="ln">343</span>            <span class="tok-kw">if</span> (<span class="tok-id">in_array</span>(<span class="tok-var">$function</span>, [<span class="tok-str">&#039;sprintf&#039;</span>, <span class="tok-str">&#039;vsprintf&#039;</span>], <span class="tok-id">true</span>)) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">344</span>                <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">formattedValue</span>(<span class="tok-var">$node</span>, <span class="tok-var">$function</span> === <span class="tok-str">&#039;vsprintf&#039;</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">345</span>            }</span>
+<span class="src-line" data-diff="removed"><span class="ln">346</span>            <span class="tok-kw">if</span> (<span class="tok-var">$function</span> === <span class="tok-str">&#039;str_replace&#039;</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">347</span>                <span class="tok-var">$arguments</span> = <span class="tok-var">$node</span>-&gt;<span class="tok-id">getArgs</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">348</span>                <span class="tok-var">$search</span> = <span class="tok-kw">isset</span>(<span class="tok-var">$arguments</span>[<span class="tok-num">0</span>]) ? <span class="tok-var">$this</span>-&gt;<span class="tok-id">literalValue</span>(<span class="tok-var">$arguments</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">value</span>) : <span class="tok-id">null</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">349</span>                <span class="tok-var">$replace</span> = <span class="tok-kw">isset</span>(<span class="tok-var">$arguments</span>[<span class="tok-num">1</span>]) ? <span class="tok-var">$this</span>-&gt;<span class="tok-id">literalValue</span>(<span class="tok-var">$arguments</span>[<span class="tok-num">1</span>]-&gt;<span class="tok-id">value</span>) : <span class="tok-id">null</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">350</span>                <span class="tok-var">$subject</span> = <span class="tok-kw">isset</span>(<span class="tok-var">$arguments</span>[<span class="tok-num">2</span>]) ? <span class="tok-var">$this</span>-&gt;<span class="tok-id">literalValue</span>(<span class="tok-var">$arguments</span>[<span class="tok-num">2</span>]-&gt;<span class="tok-id">value</span>) : <span class="tok-id">null</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">351</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">352</span>                <span class="tok-kw">return</span> <span class="tok-var">$search</span> === <span class="tok-id">null</span> || <span class="tok-var">$replace</span> === <span class="tok-id">null</span> || <span class="tok-var">$subject</span> === <span class="tok-id">null</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">353</span>                    ? <span class="tok-id">null</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">354</span>                    : <span class="tok-id">str_replace</span>(<span class="tok-var">$search</span>, <span class="tok-var">$replace</span>, <span class="tok-var">$subject</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">355</span>            }</span>
+<span class="src-line" data-diff="removed"><span class="ln">356</span>            <span class="tok-kw">if</span> (!<span class="tok-id">in_array</span>(<span class="tok-var">$function</span>, [<span class="tok-str">&#039;implode&#039;</span>, <span class="tok-str">&#039;join&#039;</span>], <span class="tok-id">true</span>)) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">357</span>                <span class="tok-kw">return</span> <span class="tok-id">null</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">358</span>            }</span>
+<span class="src-line" data-diff="removed"><span class="ln">359</span>            <span class="tok-var">$arguments</span> = <span class="tok-var">$node</span>-&gt;<span class="tok-id">getArgs</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">360</span>            <span class="tok-var">$separatorNode</span> = <span class="tok-id">count</span>(<span class="tok-var">$arguments</span>) === <span class="tok-num">1</span> ? <span class="tok-id">null</span> : (<span class="tok-var">$arguments</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">value</span> ?? <span class="tok-id">null</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">361</span>            <span class="tok-var">$valuesNode</span> = <span class="tok-id">count</span>(<span class="tok-var">$arguments</span>) === <span class="tok-num">1</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">362</span>                ? (<span class="tok-var">$arguments</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">value</span> ?? <span class="tok-id">null</span>)</span>
+<span class="src-line" data-diff="removed"><span class="ln">363</span>                : (<span class="tok-var">$arguments</span>[<span class="tok-num">1</span>]-&gt;<span class="tok-id">value</span> ?? <span class="tok-id">null</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">364</span>            <span class="tok-kw">if</span> (!<span class="tok-var">$valuesNode</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Array_</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">365</span>                <span class="tok-kw">return</span> <span class="tok-id">null</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">366</span>            }</span>
+<span class="src-line" data-diff="removed"><span class="ln">367</span>            <span class="tok-var">$separator</span> = <span class="tok-var">$separatorNode</span> === <span class="tok-id">null</span> ? <span class="tok-str">&#039;&#039;</span> : (<span class="tok-var">$this</span>-&gt;<span class="tok-id">literalValue</span>(<span class="tok-var">$separatorNode</span>) ?? <span class="tok-str">&#039; &#039;</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">368</span>            <span class="tok-var">$values</span> = [];</span>
+<span class="src-line" data-diff="removed"><span class="ln">369</span>            <span class="tok-kw">foreach</span> (<span class="tok-var">$valuesNode</span>-&gt;<span class="tok-id">items</span> <span class="tok-kw">as</span> <span class="tok-var">$item</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">370</span>                <span class="tok-var">$values</span>[] = <span class="tok-var">$this</span>-&gt;<span class="tok-id">literalValue</span>(<span class="tok-var">$item</span>-&gt;<span class="tok-id">value</span>) ?? <span class="tok-str">&#039;__ztd_dynamic__&#039;</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">371</span>            }</span>
+<span class="src-line" data-diff="removed"><span class="ln">372</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">373</span>            <span class="tok-kw">return</span> <span class="tok-id">implode</span>(<span class="tok-var">$separator</span>, <span class="tok-var">$values</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">374</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">375</span>        <span class="tok-kw">if</span> (<span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">AssignConcat</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">376</span>            <span class="tok-var">$suffix</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">literalValue</span>(<span class="tok-var">$node</span>-&gt;<span class="tok-id">expr</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">377</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">378</span>            <span class="tok-kw">return</span> <span class="tok-var">$suffix</span> === <span class="tok-id">null</span> ? <span class="tok-id">null</span> : <span class="tok-str">&#039;SELECT __ztd_dynamic__ &#039;</span> . <span class="tok-var">$suffix</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">379</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">380</span>        <span class="tok-kw">if</span> (<span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Assign</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">381</span>            &amp;&amp; <span class="tok-var">$node</span>-&gt;<span class="tok-id">var</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Variable</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">382</span>            &amp;&amp; <span class="tok-id">is_string</span>(<span class="tok-var">$node</span>-&gt;<span class="tok-id">var</span>-&gt;<span class="tok-id">name</span>)</span>
+<span class="src-line" data-diff="removed"><span class="ln">383</span>            &amp;&amp; <span class="tok-var">$node</span>-&gt;<span class="tok-id">expr</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Concat</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">384</span>            &amp;&amp; <span class="tok-var">$node</span>-&gt;<span class="tok-id">expr</span>-&gt;<span class="tok-id">left</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Variable</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">385</span>            &amp;&amp; <span class="tok-var">$node</span>-&gt;<span class="tok-id">expr</span>-&gt;<span class="tok-id">left</span>-&gt;<span class="tok-id">name</span> === <span class="tok-var">$node</span>-&gt;<span class="tok-id">var</span>-&gt;<span class="tok-id">name</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">386</span>        ) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">387</span>            <span class="tok-var">$suffix</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">literalValue</span>(<span class="tok-var">$node</span>-&gt;<span class="tok-id">expr</span>-&gt;<span class="tok-id">right</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">388</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">389</span>            <span class="tok-kw">return</span> <span class="tok-var">$suffix</span> === <span class="tok-id">null</span> ? <span class="tok-id">null</span> : <span class="tok-str">&#039;SELECT __ztd_dynamic__ &#039;</span> . <span class="tok-var">$suffix</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">390</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">391</span>        <span class="tok-kw">if</span> (!<span class="tok-var">$node</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Concat</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">392</span>            <span class="tok-kw">return</span> <span class="tok-id">null</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">393</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">394</span>        <span class="tok-var">$left</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">literalValue</span>(<span class="tok-var">$node</span>-&gt;<span class="tok-id">left</span>) ?? <span class="tok-str">&#039;__ztd_dynamic__&#039;</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">395</span>        <span class="tok-var">$right</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">literalValue</span>(<span class="tok-var">$node</span>-&gt;<span class="tok-id">right</span>) ?? <span class="tok-str">&#039;__ztd_dynamic__&#039;</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">396</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">397</span>        <span class="tok-kw">return</span> <span class="tok-var">$left</span> . <span class="tok-var">$right</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">398</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">399</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">400</span>    <span class="tok-kw">private</span> <span class="tok-kw">function</span> <span class="tok-id">formattedValue</span>(<span class="tok-id">FuncCall</span> <span class="tok-var">$call</span>, <span class="tok-id">bool</span> <span class="tok-var">$argumentsInArray</span>): ?<span class="tok-id">string</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">401</span>    {</span>
+<span class="src-line" data-diff="removed"><span class="ln">402</span>        <span class="tok-var">$arguments</span> = <span class="tok-var">$call</span>-&gt;<span class="tok-id">getArgs</span>();</span>
+<span class="src-line" data-diff="removed"><span class="ln">403</span>        <span class="tok-var">$formatNode</span> = <span class="tok-var">$arguments</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">value</span> ?? <span class="tok-id">null</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">404</span>        <span class="tok-kw">if</span> (!<span class="tok-var">$formatNode</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Node</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">405</span>            <span class="tok-kw">return</span> <span class="tok-id">null</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">406</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">407</span>        <span class="tok-var">$format</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">literalValue</span>(<span class="tok-var">$formatNode</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">408</span>        <span class="tok-kw">if</span> (<span class="tok-var">$format</span> === <span class="tok-id">null</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">409</span>            <span class="tok-kw">return</span> <span class="tok-id">null</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">410</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">411</span>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">containsSqlTemplate</span>(<span class="tok-var">$format</span>)) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">412</span>            <span class="tok-kw">return</span> <span class="tok-id">null</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">413</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">414</span>        <span class="tok-kw">if</span> (<span class="tok-var">$argumentsInArray</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">415</span>            <span class="tok-var">$valuesNode</span> = <span class="tok-var">$arguments</span>[<span class="tok-num">1</span>]-&gt;<span class="tok-id">value</span> ?? <span class="tok-id">null</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">416</span>            <span class="tok-kw">if</span> (!<span class="tok-var">$valuesNode</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Array_</span>) {</span>
+<span class="src-line" data-diff="removed"><span class="ln">417</span>                <span class="tok-kw">return</span> <span class="tok-id">null</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">418</span>            }</span>
+<span class="src-line" data-diff="removed"><span class="ln">419</span>            <span class="tok-var">$valueNodes</span> = <span class="tok-id">array_map</span>(<span class="tok-kw">static</span> <span class="tok-kw">fn</span> (<span class="tok-var">$item</span>): <span class="tok-id">Node</span> =&gt; <span class="tok-var">$item</span>-&gt;<span class="tok-id">value</span>, <span class="tok-var">$valuesNode</span>-&gt;<span class="tok-id">items</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">420</span>        } <span class="tok-kw">else</span> {</span>
+<span class="src-line" data-diff="removed"><span class="ln">421</span>            <span class="tok-var">$valueNodes</span> = <span class="tok-id">array_map</span>(<span class="tok-kw">static</span> <span class="tok-kw">fn</span> (<span class="tok-var">$argument</span>): <span class="tok-id">Node</span> =&gt; <span class="tok-var">$argument</span>-&gt;<span class="tok-id">value</span>, <span class="tok-id">array_slice</span>(<span class="tok-var">$arguments</span>, <span class="tok-num">1</span>));</span>
+<span class="src-line" data-diff="removed"><span class="ln">422</span>        }</span>
+<span class="src-line" data-diff="removed"><span class="ln">423</span>        <span class="tok-var">$values</span> = <span class="tok-id">array_map</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">424</span>            <span class="tok-kw">fn</span> (<span class="tok-id">Node</span> <span class="tok-var">$value</span>): <span class="tok-id">string</span> =&gt; <span class="tok-var">$this</span>-&gt;<span class="tok-id">literalValue</span>(<span class="tok-var">$value</span>) ?? <span class="tok-str">&#039;__ztd_dynamic__&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">425</span>            <span class="tok-var">$valueNodes</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">426</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">427</span>        <span class="tok-var">$index</span> = <span class="tok-num">0</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">428</span>        <span class="tok-var">$formatted</span> = <span class="tok-id">preg_replace_callback</span>(</span>
+<span class="src-line" data-diff="removed"><span class="ln">429</span>            <span class="tok-str">&#039;~%(?:[0-9]+\\$)?[-+0\x20\x27]*(?:[0-9]+|\*)?(?:\.(?:[0-9]+|\*))?[bcdeEfFgGosuxX]~&#039;</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">430</span>            <span class="tok-kw">static</span> <span class="tok-kw">function</span> () <span class="tok-kw">use</span> (&amp;<span class="tok-var">$index</span>, <span class="tok-var">$values</span>): <span class="tok-id">string</span> {</span>
+<span class="src-line" data-diff="removed"><span class="ln">431</span>                <span class="tok-kw">return</span> <span class="tok-var">$values</span>[<span class="tok-var">$index</span>++] ?? <span class="tok-str">&#039;&#039;</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">432</span>            },</span>
+<span class="src-line" data-diff="removed"><span class="ln">433</span>            <span class="tok-var">$format</span>,</span>
+<span class="src-line" data-diff="removed"><span class="ln">434</span>        );</span>
+<span class="src-line" data-diff="removed"><span class="ln">435</span></span>
+<span class="src-line" data-diff="removed"><span class="ln">436</span>        <span class="tok-kw">return</span> <span class="tok-var">$formatted</span>;</span>
+<span class="src-line" data-diff="removed"><span class="ln">437</span>    }</span>
+<span class="src-line" data-diff="removed"><span class="ln">438</span>}</span>
+<span class="src-line" data-diff="removed"><span class="ln">439</span></span>
+</code></pre>
+</main>
+<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div>
+<script src="../../../../../assets/search-index.js" defer></script>
+<script src="../../../../../assets/app.js" defer></script>
+</body>
+</html>
