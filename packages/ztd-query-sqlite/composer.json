@@ -26,6 +26,24 @@
             "name": "php-ai-toolkit",
             "type": "vcs",
             "url": "https://github.com/k-kinzal/php-ai-toolkit.git"
+        },
+        {
+            "type": "path",
+            "url": "../sql-faker",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-faker": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../ztd-query-core",
+            "options": {
+                "versions": {
+                    "k-kinzal/ztd-query-core": "dev-main"
+                }
+            }
         }
     ],
     "autoload": {
@@ -102,11 +120,7 @@
         "platform": {
             "php": "8.1.0"
         },
-        "sort-packages": true,
-        "preferred-install": {
-            "k-kinzal/sql-faker": "source",
-            "*": "dist"
-        }
+        "sort-packages": true
     },
     "support": {
         "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-sqlite",

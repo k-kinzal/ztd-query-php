@@ -39,8 +39,6 @@ jobs:
     steps:
       - name: Check out the repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          sparse-checkout: packages/ztd-query-postgres
 
       - name: Set up PHP
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
@@ -58,6 +56,7 @@ jobs:
           working-directory: packages/ztd-query-postgres
           dependency-versions: locked
           require-lock-file: true
+          composer-options: --prefer-dist
 
       - name: Check installed platform requirements
         run: composer check-platform-reqs
@@ -86,9 +85,9 @@ jobs:
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: packages/ztd-query-postgres/fuzz/coverage/${{ matrix.target.name }}
-          key: postgres-grammar-pg-17.2-${{ matrix.target.name }}-${{ hashFiles('packages/ztd-query-postgres/composer.lock') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: postgres-grammar-pg-17.2-${{ matrix.target.name }}-${{ hashFiles('packages/sql-faker/src/**', 'packages/sql-faker/resources/**') }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: |
-            postgres-grammar-pg-17.2-${{ matrix.target.name }}-${{ hashFiles('packages/ztd-query-postgres/composer.lock') }}-
+            postgres-grammar-pg-17.2-${{ matrix.target.name }}-${{ hashFiles('packages/sql-faker/src/**', 'packages/sql-faker/resources/**') }}-
 
       - name: Run PHP-Fuzzer
         env:
@@ -114,7 +113,7 @@ jobs:
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: packages/ztd-query-postgres/fuzz/coverage/${{ matrix.target.name }}
-          key: postgres-grammar-pg-17.2-${{ matrix.target.name }}-${{ hashFiles('packages/ztd-query-postgres/composer.lock') }}-${{ github.run_id }}-${{ github.run_attempt }}
+          key: postgres-grammar-pg-17.2-${{ matrix.target.name }}-${{ hashFiles('packages/sql-faker/src/**', 'packages/sql-faker/resources/**') }}-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Upload crash inputs
         if: ${{ always() && hashFiles('packages/ztd-query-postgres/crash-*') != '' }}

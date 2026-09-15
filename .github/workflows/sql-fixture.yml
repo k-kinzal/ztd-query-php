@@ -60,8 +60,6 @@ jobs:
     steps:
       - name: Check out the repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          sparse-checkout: packages/sql-fixture
       - name: Set up PHP
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:
@@ -75,6 +73,7 @@ jobs:
         with:
           working-directory: packages/sql-fixture
           dependency-versions: locked
+          composer-options: --prefer-dist
           require-lock-file: true
       - name: Check installed platform requirements
         if: matrix.php == '8.1' || matrix.php == '8.2' || matrix.php == '8.3'
@@ -92,8 +91,6 @@ jobs:
     steps:
       - name: Check out the repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          sparse-checkout: packages/sql-fixture
       - name: Set up PHP
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:
@@ -107,6 +104,7 @@ jobs:
         with:
           working-directory: packages/sql-fixture
           dependency-versions: locked
+          composer-options: --prefer-dist
           require-lock-file: true
       - name: Check installed platform requirements
         run: composer check-platform-reqs
@@ -130,8 +128,6 @@ jobs:
     steps:
       - name: Check out the repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          sparse-checkout: packages/sql-fixture
       - name: Set up PHP
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
         with:
@@ -145,6 +141,7 @@ jobs:
         with:
           working-directory: packages/sql-fixture
           dependency-versions: locked
+          composer-options: --prefer-dist
           require-lock-file: true
       - name: Check installed platform requirements
         run: composer check-platform-reqs
@@ -192,7 +189,6 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
         with:
-          sparse-checkout: packages/sql-fixture
           fetch-depth: 0
       - name: Set up PHP
         uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
@@ -209,6 +205,7 @@ jobs:
         with:
           working-directory: packages/sql-fixture
           dependency-versions: locked
+          composer-options: --prefer-dist
           require-lock-file: true
       - name: Check installed platform requirements
         run: |
