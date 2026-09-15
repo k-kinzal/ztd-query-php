@@ -75,7 +75,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-faker",
-                "reference": "5a5339e4ced5b93fe5f08dc983ab100bf1536bba"
+                "reference": "bac882bd0a4aa593aa24482bd773ed068d9c723e"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -137,15 +137,10 @@
                     "phpcs"
                 ],
                 "deptrac": [
-                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered",
-                    "deptrac debug:unassigned --config-file=deptrac.yaml"
-                ],
-                "deptrac:debug": [
-                    "deptrac debug:unassigned --config-file=deptrac.yaml",
-                    "deptrac debug:unused --config-file=deptrac.yaml"
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
                 ],
                 "docgen": [
-                    "package=\"$PWD\"; root=\"$(git rev-parse --show-toplevel 2>/dev/null || pwd)\"; prefix=\"${package#\"$root\"/}\"; if [ \"$package\" = \"$root\" ]; then prefix=.; fi; cd \"$root\" && \"$package/vendor/bin/docgen\" --packages=\"$prefix\" --deptrac=\"$package/deptrac.yaml\" --exclude=\"$prefix/src/Compatibility/ClassAliases.php\" --output=\"$package/build/docs\" --cache-dir=\"$package/build/docgen-cache\" --title=k-kinzal/sql-faker"
+                    "docgen --packages=. --title=k-kinzal/sql-faker"
                 ],
                 "docgen:diff": [
                     "Composer\\Config::disableProcessTimeout",
@@ -229,7 +224,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-fixture",
-                "reference": "662ba2ce4630c3661f634e415fa689110643e3ea"
+                "reference": "4fb74023589f864a09fa12d3be2f2f044815d0fa"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -278,15 +273,10 @@
                     "phpcs"
                 ],
                 "deptrac": [
-                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered",
-                    "deptrac debug:unassigned --config-file=deptrac.yaml"
-                ],
-                "deptrac:debug": [
-                    "deptrac debug:unassigned --config-file=deptrac.yaml",
-                    "deptrac debug:unused --config-file=deptrac.yaml"
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
                 ],
                 "docgen": [
-                    "package=\"$PWD\"; root=\"$(git rev-parse --show-toplevel 2>/dev/null || pwd)\"; prefix=\"${package#\"$root\"/}\"; if [ \"$package\" = \"$root\" ]; then prefix=.; fi; cd \"$root\" && \"$package/vendor/bin/docgen\" --packages=\"$prefix\" --deptrac=\"$package/deptrac.yaml\" --exclude=\"$prefix/src/Compatibility/ClassAliases.php\" --output=\"$package/build/docs\" --cache-dir=\"$package/build/docgen-cache\" --title=k-kinzal/sql-fixture"
+                    "docgen --packages=. --title=k-kinzal/sql-fixture"
                 ],
                 "docgen:diff": [
                     "Composer\\Config::disableProcessTimeout",
@@ -368,7 +358,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-core",
-                "reference": "cc91f3aec54f4a475b6d913d1f4184a5f5c18155"
+                "reference": "48ec4ef86abbe8caff825de917d30db38ed88cd9"
             },
             "require": {
                 "php": "^8.1"
@@ -416,15 +406,10 @@
                     "phpcs"
                 ],
                 "deptrac": [
-                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered",
-                    "deptrac debug:unassigned --config-file=deptrac.yaml"
-                ],
-                "deptrac:debug": [
-                    "deptrac debug:unassigned --config-file=deptrac.yaml",
-                    "deptrac debug:unused --config-file=deptrac.yaml"
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
                 ],
                 "docgen": [
-                    "package=\"$PWD\"; root=\"$(git rev-parse --show-toplevel 2>/dev/null || pwd)\"; prefix=\"${package#\"$root\"/}\"; if [ \"$package\" = \"$root\" ]; then prefix=.; fi; cd \"$root\" && \"$package/vendor/bin/docgen\" --packages=\"$prefix\" --deptrac=\"$package/deptrac.yaml\" --exclude=\"$prefix/src/Compatibility/ClassAliases.php\" --output=\"$package/build/docs\" --cache-dir=\"$package/build/docgen-cache\" --title=k-kinzal/ztd-query-core"
+                    "docgen --packages=. --title=k-kinzal/ztd-query-core --exclude=src/Compatibility/ClassAliases.php"
                 ],
                 "docgen:diff": [
                     "Composer\\Config::disableProcessTimeout",
@@ -498,7 +483,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-mysql",
-                "reference": "1d4e87876a3276cc50f7f6d34b56bfdabc76dfcb"
+                "reference": "e6c666e74901a5170ced36cbc118c0bc7fc29c9e"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -549,15 +534,10 @@
                     "phpcs"
                 ],
                 "deptrac": [
-                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered",
-                    "deptrac debug:unassigned --config-file=deptrac.yaml"
-                ],
-                "deptrac:debug": [
-                    "deptrac debug:unassigned --config-file=deptrac.yaml",
-                    "deptrac debug:unused --config-file=deptrac.yaml"
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
                 ],
                 "docgen": [
-                    "package=\"$PWD\"; root=\"$(git rev-parse --show-toplevel 2>/dev/null || pwd)\"; prefix=\"${package#\"$root\"/}\"; if [ \"$package\" = \"$root\" ]; then prefix=.; fi; cd \"$root\" && \"$package/vendor/bin/docgen\" --packages=\"$prefix\" --deptrac=\"$package/deptrac.yaml\" --exclude=\"$prefix/src/Compatibility/ClassAliases.php\" --output=\"$package/build/docs\" --cache-dir=\"$package/build/docgen-cache\" --title=k-kinzal/ztd-query-mysql"
+                    "docgen --packages=. --title=k-kinzal/ztd-query-mysql --exclude=src/Compatibility/ClassAliases.php"
                 ],
                 "docgen:diff": [
                     "Composer\\Config::disableProcessTimeout",
@@ -636,7 +616,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-mysqli-adapter",
-                "reference": "de76b518c029ebab4ea6d96fb394bf9cad1acd63"
+                "reference": "913d0d14fbdf66ef20147a5e09dd264195612be1"
             },
             "require": {
                 "ext-mysqli": "*",
@@ -687,15 +667,10 @@
                     "phpcs"
                 ],
                 "deptrac": [
-                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered",
-                    "deptrac debug:unassigned --config-file=deptrac.yaml"
-                ],
-                "deptrac:debug": [
-                    "deptrac debug:unassigned --config-file=deptrac.yaml",
-                    "deptrac debug:unused --config-file=deptrac.yaml"
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
                 ],
                 "docgen": [
-                    "package=\"$PWD\"; root=\"$(git rev-parse --show-toplevel 2>/dev/null || pwd)\"; prefix=\"${package#\"$root\"/}\"; if [ \"$package\" = \"$root\" ]; then prefix=.; fi; cd \"$root\" && \"$package/vendor/bin/docgen\" --packages=\"$prefix\" --deptrac=\"$package/deptrac.yaml\" --exclude=\"$prefix/src/Compatibility/ClassAliases.php\" --output=\"$package/build/docs\" --cache-dir=\"$package/build/docgen-cache\" --title=k-kinzal/ztd-query-mysqli-adapter"
+                    "docgen --packages=. --title=k-kinzal/ztd-query-mysqli-adapter"
                 ],
                 "docgen:diff": [
                     "Composer\\Config::disableProcessTimeout",
@@ -797,7 +772,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-pdo-adapter",
-                "reference": "34689577b0c7a6e1398b924efc9457e842c7fb35"
+                "reference": "1719547c1c7d719a217e3c59df12acefbb1ebab5"
             },
             "require": {
                 "ext-pdo": "*",
@@ -855,15 +830,10 @@
                     "phpcs"
                 ],
                 "deptrac": [
-                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered",
-                    "deptrac debug:unassigned --config-file=deptrac.yaml"
-                ],
-                "deptrac:debug": [
-                    "deptrac debug:unassigned --config-file=deptrac.yaml",
-                    "deptrac debug:unused --config-file=deptrac.yaml"
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
                 ],
                 "docgen": [
-                    "package=\"$PWD\"; root=\"$(git rev-parse --show-toplevel 2>/dev/null || pwd)\"; prefix=\"${package#\"$root\"/}\"; if [ \"$package\" = \"$root\" ]; then prefix=.; fi; cd \"$root\" && \"$package/vendor/bin/docgen\" --packages=\"$prefix\" --deptrac=\"$package/deptrac.yaml\" --exclude=\"$prefix/src/Compatibility/ClassAliases.php\" --output=\"$package/build/docs\" --cache-dir=\"$package/build/docgen-cache\" --title=k-kinzal/ztd-query-pdo-adapter"
+                    "docgen --packages=. --title=k-kinzal/ztd-query-pdo-adapter"
                 ],
                 "docgen:diff": [
                     "Composer\\Config::disableProcessTimeout",
@@ -1010,7 +980,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-postgres",
-                "reference": "21eb95791bb2f5ff85cadbf51917a6b92b22e8c3"
+                "reference": "2748847482af9541e5cb93220544e1b9994f3a23"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -1060,15 +1030,10 @@
                     "phpcs"
                 ],
                 "deptrac": [
-                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered",
-                    "deptrac debug:unassigned --config-file=deptrac.yaml"
-                ],
-                "deptrac:debug": [
-                    "deptrac debug:unassigned --config-file=deptrac.yaml",
-                    "deptrac debug:unused --config-file=deptrac.yaml"
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
                 ],
                 "docgen": [
-                    "package=\"$PWD\"; root=\"$(git rev-parse --show-toplevel 2>/dev/null || pwd)\"; prefix=\"${package#\"$root\"/}\"; if [ \"$package\" = \"$root\" ]; then prefix=.; fi; cd \"$root\" && \"$package/vendor/bin/docgen\" --packages=\"$prefix\" --deptrac=\"$package/deptrac.yaml\" --exclude=\"$prefix/src/Compatibility/ClassAliases.php\" --output=\"$package/build/docs\" --cache-dir=\"$package/build/docgen-cache\" --title=k-kinzal/ztd-query-postgres"
+                    "docgen --packages=. --title=k-kinzal/ztd-query-postgres --exclude=src/Compatibility/ClassAliases.php"
                 ],
                 "docgen:diff": [
                     "Composer\\Config::disableProcessTimeout",
@@ -1155,7 +1120,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-sqlite",
-                "reference": "5d7bf64a5caad09db96b6ca244238fd77d463ca5"
+                "reference": "2a47043b735543faa1b87208c3137c4e8cc52603"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -1205,15 +1170,10 @@
                     "phpcs"
                 ],
                 "deptrac": [
-                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered",
-                    "deptrac debug:unassigned --config-file=deptrac.yaml"
-                ],
-                "deptrac:debug": [
-                    "deptrac debug:unassigned --config-file=deptrac.yaml",
-                    "deptrac debug:unused --config-file=deptrac.yaml"
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
                 ],
                 "docgen": [
-                    "package=\"$PWD\"; root=\"$(git rev-parse --show-toplevel 2>/dev/null || pwd)\"; prefix=\"${package#\"$root\"/}\"; if [ \"$package\" = \"$root\" ]; then prefix=.; fi; cd \"$root\" && \"$package/vendor/bin/docgen\" --packages=\"$prefix\" --deptrac=\"$package/deptrac.yaml\" --exclude=\"$prefix/src/Compatibility/ClassAliases.php\" --output=\"$package/build/docs\" --cache-dir=\"$package/build/docgen-cache\" --title=k-kinzal/ztd-query-sqlite"
+                    "docgen --packages=. --title=k-kinzal/ztd-query-sqlite --exclude=src/Compatibility/ClassAliases.php"
                 ],
                 "docgen:diff": [
                     "Composer\\Config::disableProcessTimeout",

@@ -46,47 +46,19 @@ jobs:
           echo "constraint=^${MAJOR}.${MINOR}" >> "$GITHUB_OUTPUT"
           echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
 
-      - name: Transform composer.json
+      - name: Set release dependency constraints
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          CONSTRAINT: ${{ steps.version.outputs.constraint }}
+          PACKAGE: ${{ matrix.package.local_path }}
         run: |
-          FILE="packages/${{ matrix.package.local_path }}/composer.json"
-          CONSTRAINT="${{ steps.version.outputs.constraint }}"
-
-          if [ -n "$CONSTRAINT" ]; then
-            jq --arg v "$CONSTRAINT" '
-              (if .repositories then .repositories |= [.[] | select(.type == "path" | not)] else . end) |
-              (if .repositories == [] then del(.repositories) else . end) |
-              (if ."autoload-dev"."psr-4" then
-                ."autoload-dev"."psr-4" |= with_entries(
-                  if (.value | type) == "array" then
-                    .value |= [.[] | select(startswith("../") | not)] |
-                    if (.value | length) == 1 then .value = .value[0] else . end
-                  else . end
-                )
-              else . end) |
-              .require |= with_entries(
-                if (.key | test("^k-kinzal/(ztd-query-(core|mysql|postgres|sqlite|pdo-adapter|mysqli-adapter)|sql-faker|sql-fixture)$")) and .value == "dev-main" then .value = $v else . end
-              ) |
-              ."require-dev" |= with_entries(
-                if (.key | test("^k-kinzal/(ztd-query-(core|mysql|postgres|sqlite|pdo-adapter|mysqli-adapter)|sql-faker|sql-fixture)$")) and .value == "dev-main" then .value = $v else . end
-              )
-            ' "$FILE" > "${FILE}.tmp" && mv "${FILE}.tmp" "$FILE"
-          else
-            jq '
-              (if .repositories then .repositories |= [.[] | select(.type == "path" | not)] else . end) |
-              (if .repositories == [] then del(.repositories) else . end) |
-              (if ."autoload-dev"."psr-4" then
-                ."autoload-dev"."psr-4" |= with_entries(
-                  if (.value | type) == "array" then
-                    .value |= [.[] | select(startswith("../") | not)] |
-                    if (.value | length) == 1 then .value = .value[0] else . end
-                  else . end
-                )
-              else . end)
-            ' "$FILE" > "${FILE}.tmp" && mv "${FILE}.tmp" "$FILE"
-          fi
-
-      - name: Remove the monorepo development lock file
-        run: rm "packages/${{ matrix.package.local_path }}/composer.lock"
+          FILE="packages/${PACKAGE}/composer.json"
+          jq --arg v "$CONSTRAINT" '
+            (.require, ."require-dev") |= with_entries(
+              if (.key | test("^k-kinzal/(ztd-query-(core|mysql|postgres|sqlite|pdo-adapter|mysqli-adapter)|sql-faker|sql-fixture)$")) and .value == "dev-main" then .value = $v else . end
+            )
+          ' "$FILE" > "${FILE}.tmp" && mv "${FILE}.tmp" "$FILE"
+          rm "packages/${PACKAGE}/composer.lock"
 
       - uses: danharrin/monorepo-split-github-action@v2.3.0
         env:

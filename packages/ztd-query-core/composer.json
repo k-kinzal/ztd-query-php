@@ -46,15 +46,8 @@
         "bench:full": "@bench",
         "bench:quick": "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10",
         "compat": "phpcs",
-        "deptrac": [
-            "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered",
-            "deptrac debug:unassigned --config-file=deptrac.yaml"
-        ],
-        "deptrac:debug": [
-            "deptrac debug:unassigned --config-file=deptrac.yaml",
-            "deptrac debug:unused --config-file=deptrac.yaml"
-        ],
-        "docgen": "package=\"$PWD\"; root=\"$(git rev-parse --show-toplevel 2>/dev/null || pwd)\"; prefix=\"${package#\"$root\"/}\"; if [ \"$package\" = \"$root\" ]; then prefix=.; fi; cd \"$root\" && \"$package/vendor/bin/docgen\" --packages=\"$prefix\" --deptrac=\"$package/deptrac.yaml\" --exclude=\"$prefix/src/Compatibility/ClassAliases.php\" --output=\"$package/build/docs\" --cache-dir=\"$package/build/docgen-cache\" --title=k-kinzal/ztd-query-core",
+        "deptrac": "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered",
+        "docgen": "docgen --packages=. --title=k-kinzal/ztd-query-core --exclude=src/Compatibility/ClassAliases.php",
         "docgen:diff": [
             "Composer\\Config::disableProcessTimeout",
             "@docgen --diff=origin/main --serve"

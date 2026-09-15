@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f9607c650e1d812f5a49fb82ee697322",
+    "content-hash": "737de5426bdb8a9609ae1c5f77299615",
     "packages": [
         {
             "name": "fakerphp/faker",
@@ -1624,156 +1624,57 @@
         {
             "name": "k-kinzal/sql-faker",
             "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/k-kinzal/sql-faker.git",
+                "reference": "0e6d6830daecb2303d9514e13190d8203e3e5f4c"
+            },
             "dist": {
-                "type": "path",
-                "url": "../sql-faker",
-                "reference": "91c8eb24749f0def3b69085ae4bd520080b5f2e7"
+                "type": "zip",
+                "url": "https://api.github.com/repos/k-kinzal/sql-faker/zipball/0e6d6830daecb2303d9514e13190d8203e3e5f4c",
+                "reference": "0e6d6830daecb2303d9514e13190d8203e3e5f4c",
+                "shasum": ""
             },
             "require": {
                 "fakerphp/faker": "^1.23",
                 "php": "^8.1"
             },
             "require-dev": {
-                "brianium/paratest": "^7.3",
+                "brianium/paratest": "^6.11 || ^7",
                 "deptrac/deptrac": "^3.0",
-                "friendsofphp/php-cs-fixer": "^3.95.25",
+                "friendsofphp/php-cs-fixer": "^3.95.24",
                 "k-kinzal/php-ai-toolkit": "dev-main",
                 "k-kinzal/testcontainers-php": "^0.5.1",
                 "nikic/php-fuzzer": "^0.0.11",
                 "phpbench/phpbench": "^1.4",
                 "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
                 "phpstan/phpstan": "^2.1",
-                "phpstan/phpstan-strict-rules": "^2.0",
                 "phpunit/phpunit": "^10.5",
                 "squizlabs/php_codesniffer": "^4.0.4",
                 "symfony/filesystem": "^6.4"
             },
+            "default-branch": true,
             "type": "library",
             "autoload": {
-                "psr-4": {
-                    "SqlFaker\\": "src/"
-                },
                 "files": [
                     "src/MySql/StatementType.php",
                     "src/PostgreSql/StatementType.php",
                     "src/Sqlite/StatementType.php"
-                ]
-            },
-            "autoload-dev": {
+                ],
                 "psr-4": {
-                    "Tests\\": "tests/",
-                    "Fuzz\\": "fuzz/",
-                    "Bench\\": "bench/"
+                    "SqlFaker\\": "src/"
                 }
             },
-            "scripts": {
-                "bench": [
-                    "phpbench run --report=aggregate"
-                ],
-                "bench:full": [
-                    "@bench"
-                ],
-                "bench:quick": [
-                    "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
-                ],
-                "build-mysql": [
-                    "php bin/build-mysql.php"
-                ],
-                "build-pg": [
-                    "php bin/build-pg.php"
-                ],
-                "build-sqlite": [
-                    "php bin/build-sqlite.php"
-                ],
-                "compat": [
-                    "phpcs"
-                ],
-                "deptrac": [
-                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered",
-                    "deptrac debug:unassigned --config-file=deptrac.yaml"
-                ],
-                "deptrac:debug": [
-                    "deptrac debug:unassigned --config-file=deptrac.yaml",
-                    "deptrac debug:unused --config-file=deptrac.yaml"
-                ],
-                "docgen": [
-                    "package=\"$PWD\"; root=\"$(git rev-parse --show-toplevel 2>/dev/null || pwd)\"; prefix=\"${package#\"$root\"/}\"; if [ \"$package\" = \"$root\" ]; then prefix=.; fi; cd \"$root\" && \"$package/vendor/bin/docgen\" --packages=\"$prefix\" --deptrac=\"$package/deptrac.yaml\" --exclude=\"$prefix/src/Compatibility/ClassAliases.php\" --output=\"$package/build/docs\" --cache-dir=\"$package/build/docgen-cache\" --title=k-kinzal/sql-faker"
-                ],
-                "docgen:diff": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@docgen --diff=origin/main --serve"
-                ],
-                "docgen:fresh": [
-                    "@docgen --no-cache"
-                ],
-                "docgen:serve": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@docgen --serve"
-                ],
-                "doctest": [
-                    "phpunit --testsuite doctest"
-                ],
-                "format": [
-                    "php-cs-fixer fix --allow-risky=yes"
-                ],
-                "format:check": [
-                    "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
-                ],
-                "fuzz": [
-                    "@fuzz:mysql",
-                    "@fuzz:pg",
-                    "@fuzz:sqlite"
-                ],
-                "fuzz:mysql": [
-                    "@php -r \"is_dir('fuzz/corpus/mysql') || mkdir('fuzz/corpus/mysql', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_mysql_syntax.php fuzz/corpus/mysql/"
-                ],
-                "fuzz:pg": [
-                    "@php -r \"is_dir('fuzz/corpus/pg') || mkdir('fuzz/corpus/pg', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_pg_syntax.php fuzz/corpus/pg/"
-                ],
-                "fuzz:sqlite": [
-                    "@php -r \"is_dir('fuzz/corpus/sqlite') || mkdir('fuzz/corpus/sqlite', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_sqlite_syntax.php fuzz/corpus/sqlite/"
-                ],
-                "lint": [
-                    "@format:check",
-                    "@phpstan",
-                    "@compat",
-                    "@loc-guard",
-                    "@tree-guard",
-                    "@deptrac"
-                ],
-                "loc-guard": [
-                    "loc-guard --config=loc.yaml"
-                ],
-                "phpstan": [
-                    "phpstan analyse --memory-limit=512M"
-                ],
-                "test": [
-                    "paratest --processes=auto"
-                ],
-                "test:coverage": [
-                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
-                ],
-                "test:unit": [
-                    "phpunit --testsuite unit"
-                ],
-                "tree-guard": [
-                    "tree-guard --config=tree.yaml"
-                ]
-            },
+            "notification-url": "https://packagist.org/downloads/",
             "license": [
                 "MIT"
             ],
             "description": "Faker Provider for generating syntactically valid SQL statements",
             "support": {
-                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-faker",
-                "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-faker/"
+                "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-faker/",
+                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-faker"
             },
-            "transport-options": {
-                "relative": true
-            }
+            "time": "2026-09-12T15:30:36+00:00"
         },
         {
             "name": "k-kinzal/testcontainers-php",

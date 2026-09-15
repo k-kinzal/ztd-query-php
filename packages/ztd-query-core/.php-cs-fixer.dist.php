@@ -6,9 +6,6 @@ declare(strict_types=1);
 $finder = (new PhpCsFixer\Finder())
     ->in(__DIR__)
     ->exclude('build')
-    ->exclude('cache')
-    ->exclude('node_modules')
-    ->exclude('var')
     ->exclude('vendor');
 
 return (new PhpCsFixer\Config())
