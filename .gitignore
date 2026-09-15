@@ -108,6 +108,7 @@ vendor/
 # Composer lock files
 composer.lock
 **/composer.lock
+!/composer.lock
 
 # Fuzz testing artifacts
 packages/*/fuzz/corpus/
@@ -280,7 +281,3 @@ scripts/
 .entire/
 .gemini/
 .github/hooks/
-
-# Monorepo tooling caches
-/.deptrac.cache
-__pycache__/
