@@ -82,7 +82,8 @@ jobs:
             if [ "$(jq -r .commit <<< "$build")" = "$expected_sha" ]; then
               case "$(jq -r .status <<< "$build")" in
                 built) exit 0 ;;
-                errored) jq .error <<< "$build"; exit 1 ;;
+                # Pages can replace a cancelled build for this same commit.
+                errored) jq .error <<< "$build" >&2 ;;
               esac
             fi
             sleep 10
