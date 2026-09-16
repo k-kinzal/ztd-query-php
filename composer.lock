@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "51d3274f1f413234119fa2ee0f6775d5",
+    "content-hash": "4d43914a520980f454702a6adcdddfaa",
     "packages": [
         {
             "name": "fakerphp/faker",
@@ -75,7 +75,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-faker",
-                "reference": "bac882bd0a4aa593aa24482bd773ed068d9c723e"
+                "reference": "9c3282f8c81714a8295f9377e05b512b07562ba8"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -115,6 +115,9 @@
                 }
             },
             "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
                 "bench": [
                     "phpbench run --report=aggregate"
                 ],
@@ -163,23 +166,31 @@
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
                 ],
                 "fuzz": [
-                    "@fuzz:mysql",
-                    "@fuzz:pg",
-                    "@fuzz:sqlite"
+                    "@fuzz:smoke"
                 ],
                 "fuzz:mysql": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/mysql') || mkdir('fuzz/corpus/mysql', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_mysql_syntax.php fuzz/corpus/mysql/"
                 ],
                 "fuzz:pg": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/pg') || mkdir('fuzz/corpus/pg', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_pg_syntax.php fuzz/corpus/pg/"
                 ],
+                "fuzz:smoke": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@fuzz:mysql --max-runs=100",
+                    "@fuzz:pg --max-runs=100",
+                    "@fuzz:sqlite --max-runs=100"
+                ],
                 "fuzz:sqlite": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/sqlite') || mkdir('fuzz/corpus/sqlite', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_sqlite_syntax.php fuzz/corpus/sqlite/"
                 ],
                 "lint": [
+                    "@autoload:check",
                     "@format:check",
                     "@phpstan",
                     "@compat",
@@ -224,7 +235,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-fixture",
-                "reference": "7f323d8085be8bfe9dffe5d66cf34f63ff752633"
+                "reference": "61b3aa88f0b55a921571362ad2bd6b2dd47422b2"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -260,6 +271,9 @@
                 }
             },
             "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
                 "bench": [
                     "phpbench run --report=aggregate"
                 ],
@@ -299,18 +313,25 @@
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
                 ],
                 "fuzz": [
-                    "@fuzz:create-table",
-                    "@fuzz:insert-select"
+                    "@fuzz:smoke"
                 ],
                 "fuzz:create-table": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/create-table') || mkdir('fuzz/corpus/create-table', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_create_table.php fuzz/corpus/create-table/"
                 ],
                 "fuzz:insert-select": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/insert-select') || mkdir('fuzz/corpus/insert-select', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_insert_select.php fuzz/corpus/insert-select/"
                 ],
+                "fuzz:smoke": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@fuzz:create-table --max-runs=100",
+                    "@fuzz:insert-select --max-runs=100"
+                ],
                 "lint": [
+                    "@autoload:check",
                     "@format:check",
                     "@phpstan",
                     "@compat",
@@ -353,12 +374,167 @@
             }
         },
         {
+            "name": "k-kinzal/sql-parser",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "packages/sql-parser",
+                "reference": "035f90615c8d7c5347d43275c806224700179019"
+            },
+            "require": {
+                "ext-zlib": "*",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "brianium/paratest": "^7.3",
+                "deptrac/deptrac": "^3.0",
+                "fakerphp/faker": "^1.23",
+                "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/php-ai-toolkit": "dev-main",
+                "k-kinzal/sql-faker": "dev-main",
+                "nikic/php-fuzzer": "^0.0.11",
+                "phpbench/phpbench": "^1.4",
+                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
+                "phpstan/phpstan": "^2.1",
+                "phpstan/phpstan-strict-rules": "^2.0",
+                "phpunit/phpunit": "^10.5",
+                "squizlabs/php_codesniffer": "^4.0.4"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "SqlParser\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Tests\\": "tests/",
+                    "Fuzz\\": "fuzz/",
+                    "Bench\\": "bench/"
+                }
+            },
+            "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
+                "bench": [
+                    "phpbench run --report=aggregate"
+                ],
+                "bench:full": [
+                    "@bench"
+                ],
+                "bench:quick": [
+                    "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
+                ],
+                "build-mysql": [
+                    "php bin/build-mysql.php"
+                ],
+                "build-pg": [
+                    "php bin/build-pg.php"
+                ],
+                "build-sqlite": [
+                    "php bin/build-sqlite.php"
+                ],
+                "compat": [
+                    "phpcs"
+                ],
+                "deptrac": [
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
+                ],
+                "docgen": [
+                    "docgen --packages=. --title=k-kinzal/sql-parser"
+                ],
+                "docgen:diff": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --diff=origin/main --serve"
+                ],
+                "docgen:fresh": [
+                    "@docgen --no-cache"
+                ],
+                "docgen:serve": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --serve"
+                ],
+                "doctest": [
+                    "phpunit --testsuite doctest"
+                ],
+                "format": [
+                    "php-cs-fixer fix --allow-risky=yes"
+                ],
+                "format:check": [
+                    "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
+                ],
+                "fuzz": [
+                    "@fuzz:smoke"
+                ],
+                "fuzz:mysql": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php -r \"is_dir('fuzz/corpus/mysql') || mkdir('fuzz/corpus/mysql', 0777, true);\" --",
+                    "php-fuzzer fuzz fuzz/fuzz_mysql_parse.php fuzz/corpus/mysql/"
+                ],
+                "fuzz:pg": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php -r \"is_dir('fuzz/corpus/pg') || mkdir('fuzz/corpus/pg', 0777, true);\" --",
+                    "php-fuzzer fuzz fuzz/fuzz_pg_parse.php fuzz/corpus/pg/"
+                ],
+                "fuzz:smoke": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@fuzz:mysql --max-runs=100",
+                    "@fuzz:pg --max-runs=100",
+                    "@fuzz:sqlite --max-runs=100"
+                ],
+                "fuzz:sqlite": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php -r \"is_dir('fuzz/corpus/sqlite') || mkdir('fuzz/corpus/sqlite', 0777, true);\" --",
+                    "php-fuzzer fuzz fuzz/fuzz_sqlite_parse.php fuzz/corpus/sqlite/"
+                ],
+                "lint": [
+                    "@autoload:check",
+                    "@format:check",
+                    "@phpstan",
+                    "@compat",
+                    "@loc-guard",
+                    "@tree-guard",
+                    "@deptrac"
+                ],
+                "loc-guard": [
+                    "loc-guard --config=loc.yaml"
+                ],
+                "phpstan": [
+                    "phpstan analyse --memory-limit=1G"
+                ],
+                "test": [
+                    "paratest --processes=auto"
+                ],
+                "test:coverage": [
+                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+                ],
+                "test:unit": [
+                    "phpunit --testsuite unit"
+                ],
+                "tree-guard": [
+                    "tree-guard --config=tree.yaml"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "LALR(1) SQL parsers for MySQL, PostgreSQL, and SQLite built from the official grammars",
+            "support": {
+                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-parser",
+                "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-parser/"
+            },
+            "transport-options": {
+                "relative": true
+            }
+        },
+        {
             "name": "k-kinzal/ztd-query-core",
             "version": "dev-main",
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-core",
-                "reference": "48ec4ef86abbe8caff825de917d30db38ed88cd9"
+                "reference": "4d16c63adccd4347c005e50f56e9bc7a4583d199"
             },
             "require": {
                 "php": "^8.1"
@@ -393,6 +569,9 @@
                 }
             },
             "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
                 "bench": [
                     "phpbench run --report=aggregate"
                 ],
@@ -432,13 +611,19 @@
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
                 ],
                 "fuzz": [
-                    "@fuzz:token-stream"
+                    "@fuzz:smoke"
+                ],
+                "fuzz:smoke": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@fuzz:token-stream --max-runs=100"
                 ],
                 "fuzz:token-stream": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/token-stream') || mkdir('fuzz/corpus/token-stream', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_token_stream.php fuzz/corpus/token-stream/"
                 ],
                 "lint": [
+                    "@autoload:check",
                     "@format:check",
                     "@phpstan",
                     "@compat",
@@ -483,7 +668,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-mysql",
-                "reference": "fe2382a4eb70ed5c6a52fb996b8d219d3c0b8f6d"
+                "reference": "04a99db79044f7033232278a4dbaef637255e97a"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -521,6 +706,9 @@
                 }
             },
             "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
                 "bench": [
                     "phpbench run --report=aggregate"
                 ],
@@ -559,19 +747,32 @@
                 "format:check": [
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
                 ],
+                "fuzz": [
+                    "@fuzz:smoke"
+                ],
                 "fuzz:robustness": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/robustness') || mkdir('fuzz/corpus/robustness', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_robustness.php fuzz/corpus/robustness/"
                 ],
                 "fuzz:robustness:classify": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/robustness-classify') || mkdir('fuzz/corpus/robustness-classify', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_robustness_classify.php fuzz/corpus/robustness-classify/"
                 ],
                 "fuzz:robustness:rewrite": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/robustness-rewrite') || mkdir('fuzz/corpus/robustness-rewrite', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_robustness_rewrite.php fuzz/corpus/robustness-rewrite/"
                 ],
+                "fuzz:smoke": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@fuzz:robustness --max-runs=100",
+                    "@fuzz:robustness:classify --max-runs=100",
+                    "@fuzz:robustness:rewrite --max-runs=100"
+                ],
                 "lint": [
+                    "@autoload:check",
                     "@format:check",
                     "@phpstan",
                     "@compat",
@@ -616,7 +817,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-mysqli-adapter",
-                "reference": "5400443b98c1e12d3a25ac21f465a4a5746eb843"
+                "reference": "cc5c6e0b2c6259f646e43180dcb36122d21db07b"
             },
             "require": {
                 "ext-mysqli": "*",
@@ -654,6 +855,9 @@
                 }
             },
             "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
                 "bench": [
                     "phpbench run --report=aggregate"
                 ],
@@ -693,38 +897,49 @@
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
                 ],
                 "fuzz": [
-                    "@fuzz:robustness",
-                    "@fuzz:correctness:select",
-                    "@fuzz:correctness:insert",
-                    "@fuzz:correctness:replace",
-                    "@fuzz:correctness:update",
-                    "@fuzz:correctness:delete"
+                    "@fuzz:smoke"
                 ],
                 "fuzz:correctness:delete": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/correctness-delete') || mkdir('fuzz/corpus/correctness-delete', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_correctness_delete.php fuzz/corpus/correctness-delete/"
                 ],
                 "fuzz:correctness:insert": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/correctness-insert') || mkdir('fuzz/corpus/correctness-insert', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_correctness_insert.php fuzz/corpus/correctness-insert/"
                 ],
                 "fuzz:correctness:replace": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/correctness-replace') || mkdir('fuzz/corpus/correctness-replace', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_correctness_replace.php fuzz/corpus/correctness-replace/"
                 ],
                 "fuzz:correctness:select": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/correctness-select') || mkdir('fuzz/corpus/correctness-select', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_correctness_select.php fuzz/corpus/correctness-select/"
                 ],
                 "fuzz:correctness:update": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/correctness-update') || mkdir('fuzz/corpus/correctness-update', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_correctness_update.php fuzz/corpus/correctness-update/"
                 ],
                 "fuzz:robustness": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/robustness-execute') || mkdir('fuzz/corpus/robustness-execute', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_robustness_execute.php fuzz/corpus/robustness-execute/"
                 ],
+                "fuzz:smoke": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@fuzz:robustness --max-runs=100",
+                    "@fuzz:correctness:select --max-runs=100",
+                    "@fuzz:correctness:insert --max-runs=100",
+                    "@fuzz:correctness:replace --max-runs=100",
+                    "@fuzz:correctness:update --max-runs=100",
+                    "@fuzz:correctness:delete --max-runs=100"
+                ],
                 "lint": [
+                    "@autoload:check",
                     "@format:check",
                     "@phpstan",
                     "@compat",
@@ -772,7 +987,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-pdo-adapter",
-                "reference": "2812c153bb690eae144c04bdd8abeb2abb91380f"
+                "reference": "a51fcc76accc7d4454bbdf769f01529260be5453"
             },
             "require": {
                 "ext-pdo": "*",
@@ -817,6 +1032,9 @@
                 }
             },
             "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
                 "bench": [
                     "phpbench run --report=aggregate"
                 ],
@@ -856,83 +1074,103 @@
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
                 ],
                 "fuzz": [
-                    "@fuzz:robustness",
-                    "@fuzz:correctness:select",
-                    "@fuzz:correctness:insert",
-                    "@fuzz:correctness:update",
-                    "@fuzz:correctness:delete",
-                    "@fuzz:correctness:sqlite:select",
-                    "@fuzz:correctness:sqlite:insert",
-                    "@fuzz:correctness:sqlite:update",
-                    "@fuzz:correctness:sqlite:delete",
-                    "@fuzz:correctness:sqlite:alter",
-                    "@fuzz:correctness:pg:select",
-                    "@fuzz:correctness:pg:insert",
-                    "@fuzz:correctness:pg:update",
-                    "@fuzz:correctness:pg:delete",
-                    "@fuzz:correctness:pg:ctas"
+                    "@fuzz:smoke"
                 ],
                 "fuzz:correctness:delete": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/correctness-delete') || mkdir('fuzz/corpus/correctness-delete', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_correctness_delete.php fuzz/corpus/correctness-delete/"
                 ],
                 "fuzz:correctness:insert": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/correctness-insert') || mkdir('fuzz/corpus/correctness-insert', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_correctness_insert.php fuzz/corpus/correctness-insert/"
                 ],
                 "fuzz:correctness:pg:ctas": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/correctness-pg-ctas') || mkdir('fuzz/corpus/correctness-pg-ctas', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_correctness_pg_ctas.php fuzz/corpus/correctness-pg-ctas/"
                 ],
                 "fuzz:correctness:pg:delete": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/correctness-pg-delete') || mkdir('fuzz/corpus/correctness-pg-delete', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_correctness_pg_delete.php fuzz/corpus/correctness-pg-delete/"
                 ],
                 "fuzz:correctness:pg:insert": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/correctness-pg-insert') || mkdir('fuzz/corpus/correctness-pg-insert', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_correctness_pg_insert.php fuzz/corpus/correctness-pg-insert/"
                 ],
                 "fuzz:correctness:pg:select": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/correctness-pg-select') || mkdir('fuzz/corpus/correctness-pg-select', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_correctness_pg_select.php fuzz/corpus/correctness-pg-select/"
                 ],
                 "fuzz:correctness:pg:update": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/correctness-pg-update') || mkdir('fuzz/corpus/correctness-pg-update', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_correctness_pg_update.php fuzz/corpus/correctness-pg-update/"
                 ],
                 "fuzz:correctness:select": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/correctness-select') || mkdir('fuzz/corpus/correctness-select', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_correctness_select.php fuzz/corpus/correctness-select/"
                 ],
                 "fuzz:correctness:sqlite:alter": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/correctness-sqlite-alter') || mkdir('fuzz/corpus/correctness-sqlite-alter', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_correctness_sqlite_alter.php fuzz/corpus/correctness-sqlite-alter/"
                 ],
                 "fuzz:correctness:sqlite:delete": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/correctness-sqlite-delete') || mkdir('fuzz/corpus/correctness-sqlite-delete', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_correctness_sqlite_delete.php fuzz/corpus/correctness-sqlite-delete/"
                 ],
                 "fuzz:correctness:sqlite:insert": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/correctness-sqlite-insert') || mkdir('fuzz/corpus/correctness-sqlite-insert', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_correctness_sqlite_insert.php fuzz/corpus/correctness-sqlite-insert/"
                 ],
                 "fuzz:correctness:sqlite:select": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/correctness-sqlite-select') || mkdir('fuzz/corpus/correctness-sqlite-select', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_correctness_sqlite_select.php fuzz/corpus/correctness-sqlite-select/"
                 ],
                 "fuzz:correctness:sqlite:update": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/correctness-sqlite-update') || mkdir('fuzz/corpus/correctness-sqlite-update', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_correctness_sqlite_update.php fuzz/corpus/correctness-sqlite-update/"
                 ],
                 "fuzz:correctness:update": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/correctness-update') || mkdir('fuzz/corpus/correctness-update', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_correctness_update.php fuzz/corpus/correctness-update/"
                 ],
                 "fuzz:robustness": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/robustness-execute') || mkdir('fuzz/corpus/robustness-execute', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_robustness_execute.php fuzz/corpus/robustness-execute/"
                 ],
+                "fuzz:smoke": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@fuzz:robustness --max-runs=100",
+                    "@fuzz:correctness:select --max-runs=100",
+                    "@fuzz:correctness:insert --max-runs=100",
+                    "@fuzz:correctness:update --max-runs=100",
+                    "@fuzz:correctness:delete --max-runs=100",
+                    "@fuzz:correctness:sqlite:select --max-runs=100",
+                    "@fuzz:correctness:sqlite:insert --max-runs=100",
+                    "@fuzz:correctness:sqlite:update --max-runs=100",
+                    "@fuzz:correctness:sqlite:delete --max-runs=100",
+                    "@fuzz:correctness:sqlite:alter --max-runs=100",
+                    "@fuzz:correctness:pg:select --max-runs=100",
+                    "@fuzz:correctness:pg:insert --max-runs=100",
+                    "@fuzz:correctness:pg:update --max-runs=100",
+                    "@fuzz:correctness:pg:delete --max-runs=100",
+                    "@fuzz:correctness:pg:ctas --max-runs=100"
+                ],
                 "lint": [
+                    "@autoload:check",
                     "@format:check",
                     "@phpstan",
                     "@compat",
@@ -980,7 +1218,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-postgres",
-                "reference": "7129e90956ce2740e12b494e7ccba5c34516d4ab"
+                "reference": "34ff7e1c8611d4a06dfcf585c3bf9a1150d0a507"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -1017,6 +1255,9 @@
                 }
             },
             "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
                 "bench": [
                     "phpbench run --report=aggregate"
                 ],
@@ -1056,23 +1297,31 @@
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
                 ],
                 "fuzz": [
-                    "@fuzz:robustness",
-                    "@fuzz:robustness:classify",
-                    "@fuzz:robustness:rewrite"
+                    "@fuzz:smoke"
                 ],
                 "fuzz:robustness": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/robustness') || mkdir('fuzz/corpus/robustness', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_robustness.php fuzz/corpus/robustness/"
                 ],
                 "fuzz:robustness:classify": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/robustness-classify') || mkdir('fuzz/corpus/robustness-classify', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_robustness_classify.php fuzz/corpus/robustness-classify/"
                 ],
                 "fuzz:robustness:rewrite": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/robustness-rewrite') || mkdir('fuzz/corpus/robustness-rewrite', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_robustness_rewrite.php fuzz/corpus/robustness-rewrite/"
                 ],
+                "fuzz:smoke": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@fuzz:robustness --max-runs=100",
+                    "@fuzz:robustness:classify --max-runs=100",
+                    "@fuzz:robustness:rewrite --max-runs=100"
+                ],
                 "lint": [
+                    "@autoload:check",
                     "@format:check",
                     "@phpstan",
                     "@compat",
@@ -1120,7 +1369,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-sqlite",
-                "reference": "c812c911d8c57b1f5bf9449614c5b15632b78671"
+                "reference": "635dc7831ebc7c6943f681aac4dda77dcadca094"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -1157,6 +1406,9 @@
                 }
             },
             "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
                 "bench": [
                     "phpbench run --report=aggregate"
                 ],
@@ -1196,26 +1448,34 @@
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
                 ],
                 "fuzz": [
-                    "@fuzz:robustness:classify",
-                    "@fuzz:robustness:rewrite",
-                    "@fuzz:semantics"
+                    "@fuzz:smoke"
                 ],
                 "fuzz:robustness": [
                     "@fuzz:semantics"
                 ],
                 "fuzz:robustness:classify": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/robustness-classify') || mkdir('fuzz/corpus/robustness-classify', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_robustness_classify.php fuzz/corpus/robustness-classify/"
                 ],
                 "fuzz:robustness:rewrite": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/robustness-rewrite') || mkdir('fuzz/corpus/robustness-rewrite', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_robustness_rewrite.php fuzz/corpus/robustness-rewrite/"
                 ],
                 "fuzz:semantics": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/semantics') || mkdir('fuzz/corpus/semantics', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_semantics.php fuzz/corpus/semantics/"
                 ],
+                "fuzz:smoke": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@fuzz:robustness:classify --max-runs=100",
+                    "@fuzz:robustness:rewrite --max-runs=100",
+                    "@fuzz:semantics --max-runs=100"
+                ],
                 "lint": [
+                    "@autoload:check",
                     "@format:check",
                     "@phpstan",
                     "@compat",
@@ -2175,6 +2435,7 @@
         "k-kinzal/php-ai-toolkit": 20,
         "k-kinzal/sql-faker": 20,
         "k-kinzal/sql-fixture": 20,
+        "k-kinzal/sql-parser": 20,
         "k-kinzal/ztd-query-core": 20,
         "k-kinzal/ztd-query-mysql": 20,
         "k-kinzal/ztd-query-mysqli-adapter": 20,

@@ -17,6 +17,7 @@ ZTD Query PHP wraps PDO/MySQLi to intercept and transform SQL queries using CTE 
 | [ztd-query-mysqli-adapter](packages/ztd-query-mysqli-adapter/) | MySQLi adapter: drop-in `ZtdMysqli` / `ZtdMysqliStatement` |
 | [sql-faker](packages/sql-faker/) | Faker provider for generating syntactically valid SQL · [Documentation](https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-faker/) |
 | [sql-fixture](packages/sql-fixture/) | Faker provider for generating test fixture data from schemas |
+| [sql-parser](packages/sql-parser/) | LALR(1) SQL parsers for MySQL, PostgreSQL and SQLite built from the official grammars |
 
 ## Quick Start
 
