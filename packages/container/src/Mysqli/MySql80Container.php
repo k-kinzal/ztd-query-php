@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Container;
+namespace Container\Mysqli;
 
 use mysqli;
 use Override;

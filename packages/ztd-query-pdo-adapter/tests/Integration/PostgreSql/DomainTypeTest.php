@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Integration\PostgreSql;
 
+use Container\Pdo\PostgreSqlContainer;
 use PDO;
 use PDOException;
 use PDOStatement;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
-use Tests\Container\PostgreSqlContainer;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 
 /**

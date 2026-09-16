@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Fuzz\Container;
+namespace Container\Fuzz;
 
 use Override;
 use Testcontainers\Containers\GenericContainer\GenericContainer;
@@ -10,19 +10,23 @@ use Testcontainers\Containers\WaitStrategy\PDO\MySQLDSN;
 use Testcontainers\Containers\WaitStrategy\PDO\PDOConnectWaitStrategy;
 
 /**
- * Runs a disposable MySQL 8.4 instance for fixture correctness checks.
+ * Testcontainers definition for the MySQL 9.0.1 server the fuzzer runs against.
+ *
+ * The image tag is pinned so that a finding always reproduces against the
+ * same server build, and each run receives a disposable container. The same server
+ * is used by every input within that run.
  */
-final class MySql84Container extends GenericContainer
+final class MySql90Container extends GenericContainer
 {
     /**
      * @var null|string
      */
-    protected static $IMAGE = 'container-registry.oracle.com/mysql/community-server:8.4.7';
+    protected static $IMAGE = 'container-registry.oracle.com/mysql/community-server:9.0.1';
 
     /**
      * @var null|string
      */
-    protected static $REUSE_MODE = 'reuse';
+    protected static $REUSE_MODE = 'add';
 
     /**
      * @var array<int>|null
@@ -35,7 +39,6 @@ final class MySql84Container extends GenericContainer
     protected static $ENVIRONMENTS = [
         'MYSQL_ROOT_PASSWORD' => 'root',
         'MYSQL_ROOT_HOST' => '%',
-        'MYSQL_DATABASE' => 'test',
     ];
 
     /**
@@ -54,7 +57,7 @@ final class MySql84Container extends GenericContainer
         unset($instance);
 
         return (new PDOConnectWaitStrategy())
-            ->withDsn((new MySQLDSN())->withDbname('test')->withCharset('utf8mb4'))
+            ->withDsn((new MySQLDSN())->withCharset('utf8mb4'))
             ->withUsername('root')
             ->withPassword('root')
             ->withTimeoutSeconds(120)
@@ -62,10 +65,12 @@ final class MySql84Container extends GenericContainer
     }
 
     /**
-     * Returns the SQL grammar release matching the database image.
+     * Names the grammar version matching this container's server version.
+     *
+     * @return string Grammar version identifier, e.g. "mysql-9.0.1"
      */
     public static function getGrammarVersion(): string
     {
-        return 'mysql-8.4.7';
+        return 'mysql-9.0.1';
     }
 }

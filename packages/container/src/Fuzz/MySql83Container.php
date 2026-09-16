@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Fuzz\Container;
+namespace Container\Fuzz;
 
 use Override;
 use Testcontainers\Containers\GenericContainer\GenericContainer;
@@ -10,18 +10,18 @@ use Testcontainers\Containers\WaitStrategy\PDO\MySQLDSN;
 use Testcontainers\Containers\WaitStrategy\PDO\PDOConnectWaitStrategy;
 
 /**
- * Testcontainers definition for the MySQL 5.7.44 server the fuzzer runs against.
+ * Testcontainers definition for the MySQL 8.3.0 server the fuzzer runs against.
  *
  * The image tag is pinned so that a finding always reproduces against the
  * same server build, and each run receives a disposable container. The same server
  * is used by every input within that run.
  */
-final class MySql57Container extends GenericContainer
+final class MySql83Container extends GenericContainer
 {
     /**
      * @var null|string
      */
-    protected static $IMAGE = 'mysql:5.7.44';
+    protected static $IMAGE = 'mysql:8.3.0';
 
     /**
      * @var null|string
@@ -67,10 +67,10 @@ final class MySql57Container extends GenericContainer
     /**
      * Names the grammar version matching this container's server version.
      *
-     * @return string Grammar version identifier, e.g. "mysql-5.7.44"
+     * @return string Grammar version identifier, e.g. "mysql-8.3.0"
      */
     public static function getGrammarVersion(): string
     {
-        return 'mysql-5.7.44';
+        return 'mysql-8.3.0';
     }
 }

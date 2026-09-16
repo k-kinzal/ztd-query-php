@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Fuzz\Container;
 
+use Container\Mysqli\MySql80Container;
+use Container\Mysqli\MySql84Container;
 use RuntimeException;
 use Testcontainers\Testcontainers;
-use Tests\Container\MySql80Container;
-use Tests\Container\MySql84Container;
 
 /**
  * Resolves a disposable MySQL service for a versioned fuzz campaign.

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Fuzz\Container;
+namespace Container\Fixture;
 
 use Override;
 use Testcontainers\Containers\GenericContainer\GenericContainer;
@@ -10,14 +10,14 @@ use Testcontainers\Containers\WaitStrategy\PDO\MySQLDSN;
 use Testcontainers\Containers\WaitStrategy\PDO\PDOConnectWaitStrategy;
 
 /**
- * The my sql84 container.
+ * Runs a disposable MySQL 8.4 instance for fixture correctness checks.
  */
 final class MySql84Container extends GenericContainer
 {
     /**
      * @var null|string
      */
-    protected static $IMAGE = 'mysql:8.4.7';
+    protected static $IMAGE = 'container-registry.oracle.com/mysql/community-server:8.4.7';
 
     /**
      * @var null|string
@@ -34,6 +34,8 @@ final class MySql84Container extends GenericContainer
      */
     protected static $ENVIRONMENTS = [
         'MYSQL_ROOT_PASSWORD' => 'root',
+        'MYSQL_ROOT_HOST' => '%',
+        'MYSQL_DATABASE' => 'test',
     ];
 
     /**
@@ -41,13 +43,18 @@ final class MySql84Container extends GenericContainer
      */
     protected static $STARTUP_TIMEOUT = 300;
 
+    /**
+     * @var bool|null
+     */
+    protected static $AUTO_REMOVE_ON_EXIT = true;
+
     #[Override]
     protected function waitStrategy($instance): PDOConnectWaitStrategy
     {
         unset($instance);
 
         return (new PDOConnectWaitStrategy())
-            ->withDsn((new MySQLDSN())->withCharset('utf8mb4'))
+            ->withDsn((new MySQLDSN())->withDbname('test')->withCharset('utf8mb4'))
             ->withUsername('root')
             ->withPassword('root')
             ->withTimeoutSeconds(120)
@@ -55,9 +62,7 @@ final class MySql84Container extends GenericContainer
     }
 
     /**
-     * Answers grammar version.
-     *
-     * @return string
+     * Returns the SQL grammar release matching the database image.
      */
     public static function getGrammarVersion(): string
     {

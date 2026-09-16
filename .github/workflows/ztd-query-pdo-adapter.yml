@@ -5,6 +5,7 @@ name: CI (ztd-query-pdo-adapter)
     - main
   pull_request:
     paths:
+    - packages/container/**
     - packages/ztd-query-pdo-adapter/**
     - packages/ztd-query-mysql/**
     - packages/ztd-query-postgres/**

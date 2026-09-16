@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Fuzz\Container;
+namespace Container\Reusable;
 
 use Override;
 use Testcontainers\Containers\GenericContainer\GenericContainer;
@@ -10,23 +10,19 @@ use Testcontainers\Containers\WaitStrategy\PDO\MySQLDSN;
 use Testcontainers\Containers\WaitStrategy\PDO\PDOConnectWaitStrategy;
 
 /**
- * Testcontainers definition for the MySQL 8.3.0 server the fuzzer runs against.
- *
- * The image tag is pinned so that a finding always reproduces against the
- * same server build, and each run receives a disposable container. The same server
- * is used by every input within that run.
+ * The my sql84 container.
  */
-final class MySql83Container extends GenericContainer
+final class MySql84Container extends GenericContainer
 {
     /**
      * @var null|string
      */
-    protected static $IMAGE = 'mysql:8.3.0';
+    protected static $IMAGE = 'mysql:8.4.7';
 
     /**
      * @var null|string
      */
-    protected static $REUSE_MODE = 'add';
+    protected static $REUSE_MODE = 'reuse';
 
     /**
      * @var array<int>|null
@@ -38,18 +34,12 @@ final class MySql83Container extends GenericContainer
      */
     protected static $ENVIRONMENTS = [
         'MYSQL_ROOT_PASSWORD' => 'root',
-        'MYSQL_ROOT_HOST' => '%',
     ];
 
     /**
      * @var null|int
      */
     protected static $STARTUP_TIMEOUT = 300;
-
-    /**
-     * @var bool|null
-     */
-    protected static $AUTO_REMOVE_ON_EXIT = true;
 
     #[Override]
     protected function waitStrategy($instance): PDOConnectWaitStrategy
@@ -65,12 +55,12 @@ final class MySql83Container extends GenericContainer
     }
 
     /**
-     * Names the grammar version matching this container's server version.
+     * Answers grammar version.
      *
-     * @return string Grammar version identifier, e.g. "mysql-8.3.0"
+     * @return string
      */
     public static function getGrammarVersion(): string
     {
-        return 'mysql-8.3.0';
+        return 'mysql-8.4.7';
     }
 }

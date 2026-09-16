@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Fuzz\Container;
+namespace Container\Fuzz;
 
 use Override;
 use Testcontainers\Containers\GenericContainer\GenericContainer;

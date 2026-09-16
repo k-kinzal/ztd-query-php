@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Bench;
 
+use Container\Mysqli\MySql80Container;
 use mysqli;
 use mysqli_result;
 use PhpBench\Attributes as Bench;
 use RuntimeException;
 use Testcontainers\Testcontainers;
-use Tests\Container\MySql80Container;
 use ZtdQuery\Adapter\Mysqli\Driver\MysqliResultColumnExtractor;
 use ZtdQuery\Platform\MySql\MySqlResultColumnTypeResolver;
 

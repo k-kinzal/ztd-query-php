@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Integration\MySql;
 
+use Container\Pdo\MySqlContainer;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
-use Tests\Container\MySqlContainer;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 
 #[CoversNothing]

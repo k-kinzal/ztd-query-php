@@ -2,32 +2,32 @@
 
 declare(strict_types=1);
 
-namespace Tests\Container;
+namespace Container\Mysqli;
 
+use mysqli;
 use Override;
-use PDO;
+use RuntimeException;
 use Testcontainers\Containers\GenericContainer\GenericContainer;
 use Testcontainers\Containers\WaitStrategy\PDO\MySQLDSN;
 use Testcontainers\Containers\WaitStrategy\PDO\PDOConnectWaitStrategy;
 use Testcontainers\Hook\AfterStartHook;
 
 /**
- * MySQL container definition for integration tests.
- *
- * Uses AfterStartHook to create and cache a PDO connection on first start.
+ * Starts the pinned MySQL 8.4 service used by the package tools.
  */
-final class MySqlContainer extends GenericContainer
+final class MySql84Container extends GenericContainer
 {
     use AfterStartHook;
-    /**
-     * @var null|string
-     */
-    protected static $IMAGE = 'mysql:8.0.44';
 
     /**
      * @var null|string
      */
-    protected static $REUSE_MODE = 'reuse';
+    protected static $IMAGE = 'mysql:8.4.7';
+
+    /**
+     * @var null|string
+     */
+    protected static $REUSE_MODE = 'restart';
 
     /**
      * @var array<int>|null
@@ -35,10 +35,16 @@ final class MySqlContainer extends GenericContainer
     protected static $EXPOSED_PORTS = [3306];
 
     /**
+     * @var array<string>|null
+     */
+    protected static $MOUNTS = ['type=tmpfs,destination=/var/lib/mysql'];
+
+    /**
      * @var array<string, string>|null
      */
     protected static $ENVIRONMENTS = [
         'MYSQL_ROOT_PASSWORD' => 'root',
+        'MYSQL_INITDB_SKIP_TZINFO' => '1',
     ];
 
     /**
@@ -59,12 +65,19 @@ final class MySqlContainer extends GenericContainer
     protected static $AUTO_REMOVE_ON_EXIT = true;
 
     /**
-     * Select the MySQL version under test while retaining the standalone default.
+     * Prepare a fresh database and expose its native connection to the caller.
+     *
+     * @throws RuntimeException If MySQL has no mapped port.
      */
-    public function __construct()
+    public function afterStart($instance): void
     {
-        $version = getenv('MYSQL_VERSION');
-        parent::__construct('mysql:' . ($version === false ? '8.0.44' : $version));
+        $port = $instance->getMappedPort(3306) ?? throw new RuntimeException('MySQL port was not mapped.');
+        $host = str_replace('localhost', '127.0.0.1', $instance->getHost());
+        $connection = new mysqli($host, 'root', 'root', '', $port);
+        $connection->query('CREATE DATABASE test CHARACTER SET utf8mb4');
+        $connection->select_db('test');
+        $connection->set_charset('utf8mb4');
+        $instance->setData($connection);
     }
 
     #[Override]
@@ -79,24 +92,4 @@ final class MySqlContainer extends GenericContainer
             ->withTimeoutSeconds(120)
             ->withRetryInterval(250000);
     }
-
-    /**
-     * After start.
-     *
-     */
-    public function afterStart($instance): void
-    {
-        $port = $instance->getMappedPort(3306);
-        $host = str_replace('localhost', '127.0.0.1', $instance->getHost());
-
-        $pdo = new PDO(
-            "mysql:host={$host};port={$port};charset=utf8mb4",
-            'root',
-            'root',
-            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]
-        );
-
-        $instance->setData($pdo);
-    }
-
 }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Native;
 
+use Container\Mysqli\MySql80Container;
+use Container\Mysqli\MySql84Container;
 use mysqli;
 use mysqli_result;
 use mysqli_stmt;
@@ -11,8 +13,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use Testcontainers\Testcontainers;
-use Tests\Container\MySql80Container;
-use Tests\Container\MySql84Container;
 use ZtdQuery\Adapter\Mysqli\Native\MysqliStatementBindingBridge;
 
 #[CoversClass(MysqliStatementBindingBridge::class)]
