@@ -10,6 +10,7 @@ use mysqli_warning;
 use Override;
 use ReturnTypeWillChange;
 use ZtdQuery\Adapter\Mysqli\Native\MysqliStatementBindingBridge;
+use ZtdQuery\Adapter\Mysqli\Native\MysqliStatementPropertyReader;
 use ZtdQuery\Adapter\Mysqli\Session\StatementExecution;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Session;
@@ -65,19 +66,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
         if ($result !== null && !$result->isPassthrough() && in_array($name, ['affected_rows', 'num_rows'], true)) {
             return $result->rowCount();
         }
-        return match ($name) {
-            'affected_rows' => $this->execution->native()->affected_rows,
-            'insert_id' => $this->execution->native()->insert_id,
-            'num_rows' => $this->execution->native()->num_rows,
-            'param_count' => $this->execution->native()->param_count,
-            'field_count' => $this->execution->native()->field_count,
-            'errno' => $this->execution->native()->errno,
-            'error' => $this->execution->native()->error,
-            'error_list' => $this->execution->native()->error_list,
-            'sqlstate' => $this->execution->native()->sqlstate,
-            'id' => $this->execution->native()->id,
-            default => null,
-        };
+        return (new MysqliStatementPropertyReader())->read($this->execution->native(), $name);
     }
 
     /**

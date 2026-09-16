@@ -19,6 +19,7 @@ use Tests\Container\MySql84Container;
 use ZtdQuery\Adapter\Mysqli\Driver\MysqliResultColumnExtractor;
 use ZtdQuery\Adapter\Mysqli\Driver\MysqliResultStatement;
 use ZtdQuery\Adapter\Mysqli\Native\MysqliStatementBindingBridge;
+use ZtdQuery\Adapter\Mysqli\Native\MysqliStatementPropertyReader;
 use ZtdQuery\Adapter\Mysqli\Session\MysqliResultProcessor;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqliException;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqliStatement;
@@ -37,6 +38,7 @@ use ZtdQuery\Shadow\ShadowStore;
 #[CoversClass(\ZtdQuery\Adapter\Mysqli\Session\StatementExecution::class)]
 #[Large]
 #[UsesClass(MysqliStatementBindingBridge::class)]
+#[UsesClass(MysqliStatementPropertyReader::class)]
 #[UsesClass(MysqliResultProcessor::class)]
 #[UsesClass(MysqliResultStatement::class)]
 #[UsesClass(MysqliResultColumnExtractor::class)]
