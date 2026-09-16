@@ -16,7 +16,7 @@ This package implements the SQLite-specific logic for ZTD (Zero Table Dependency
 - **Schema Management** - Reflect and track SQLite table definitions via `sqlite_master` and `PRAGMA` queries
 - **Error Classification** - Identify SQLite-specific error codes for unknown schema detection
 
-This package is used internally by the [PDO adapter](https://github.com/k-kinzal/ztd-query-pdo-adapter), but can also be used directly for custom adapter implementations.
+This package is used internally by the [PDO adapter](../ztd-query-pdo-sqlite-adapter/), but can also be used directly for custom adapter implementations.
 
 ## Requirements
 

@@ -27,10 +27,9 @@ final class ConnectionExecution
     /**
      * Create a shadow session for the supplied native connection.
      */
-    public function __construct(private readonly PDO $pdo, ?ZtdConfig $config = null, ?SessionFactory $factory = null)
+    public function __construct(private readonly PDO $pdo, SessionFactory $factory, ?ZtdConfig $config = null)
     {
-        $resolvedFactory = $factory ?? (new DriverSessionFactory())->forConnection($pdo);
-        $this->session = $resolvedFactory->create(new PdoConnection($pdo), $config ?? ZtdConfig::default());
+        $this->session = $factory->create(new PdoConnection($pdo), $config ?? ZtdConfig::default());
     }
 
     /**

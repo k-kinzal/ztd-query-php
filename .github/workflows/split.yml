@@ -29,6 +29,12 @@ jobs:
             split_repository: ztd-query-sqlite
           - local_path: ztd-query-pdo-adapter
             split_repository: ztd-query-pdo-adapter
+          - local_path: ztd-query-pdo-mysql-adapter
+            split_repository: ztd-query-pdo-mysql-adapter
+          - local_path: ztd-query-pdo-postgres-adapter
+            split_repository: ztd-query-pdo-postgres-adapter
+          - local_path: ztd-query-pdo-sqlite-adapter
+            split_repository: ztd-query-pdo-sqlite-adapter
           - local_path: ztd-query-mysqli-adapter
             split_repository: ztd-query-mysqli-adapter
 
@@ -64,10 +70,10 @@ jobs:
                 )
               else . end) |
               .require |= with_entries(
-                if (.key | test("^k-kinzal/(ztd-query-(core|mysql|postgres|sqlite|pdo-adapter|mysqli-adapter)|sql-faker|sql-fixture)$")) and .value == "dev-main" then .value = $v else . end
+                if (.key | test("^k-kinzal/(ztd-query-(core|mysql|postgres|sqlite|pdo-adapter|pdo-(mysql|postgres|sqlite)-adapter|mysqli-adapter)|sql-faker|sql-fixture)$")) and .value == "dev-main" then .value = $v else . end
               ) |
               ."require-dev" |= with_entries(
-                if (.key | test("^k-kinzal/(ztd-query-(core|mysql|postgres|sqlite|pdo-adapter|mysqli-adapter)|sql-faker|sql-fixture)$")) and .value == "dev-main" then .value = $v else . end
+                if (.key | test("^k-kinzal/(ztd-query-(core|mysql|postgres|sqlite|pdo-adapter|pdo-(mysql|postgres|sqlite)-adapter|mysqli-adapter)|sql-faker|sql-fixture)$")) and .value == "dev-main" then .value = $v else . end
               )
             ' "$FILE" > "${FILE}.tmp" && mv "${FILE}.tmp" "$FILE"
           else

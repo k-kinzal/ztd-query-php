@@ -13,13 +13,11 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use ZtdQuery\Adapter\Pdo\Driver\PdoConnection;
 use ZtdQuery\Adapter\Pdo\Session\ConnectionExecution;
-use ZtdQuery\Adapter\Pdo\Session\DriverSessionFactory;
 use ZtdQuery\Adapter\Pdo\Session\PreparedQuery;
 use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 
 #[CoversClass(ConnectionExecution::class)]
 #[UsesClass(PdoConnection::class)]
-#[UsesClass(DriverSessionFactory::class)]
 #[UsesClass(PreparedQuery::class)]
 #[UsesClass(ZtdPdoException::class)]
 #[Medium]
@@ -28,7 +26,7 @@ final class ConnectionExecutionTest extends TestCase
     public function testQueryPreservesPreparationDispatchAndFetchArguments(): void
     {
         $native = new PDO('sqlite::memory:');
-        $execution = new ConnectionExecution($native);
+        $execution = new ConnectionExecution($native, new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
         $queries = [];
         $statement = $execution->query('SELECT 7 AS id', PDO::FETCH_COLUMN, [1], static function (string $query) use ($native, &$queries): PDOStatement|false {
             $queries[] = $query;
@@ -43,7 +41,7 @@ final class ConnectionExecutionTest extends TestCase
     {
         $native = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_SILENT]);
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY)');
-        $execution = new ConnectionExecution($native);
+        $execution = new ConnectionExecution($native, new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
         $queries = [];
         $result = $execution->exec('INSERT INTO users VALUES (1); INSERT INTO missing VALUES (2); INSERT INTO users VALUES (3)', static function (string $query) use ($native, &$queries): int|false {
             $queries[] = $query;
@@ -59,7 +57,7 @@ final class ConnectionExecutionTest extends TestCase
     public function testPreparePreservesOpaqueNativeDriverOptions(): void
     {
         $native = new PDO('sqlite::memory:');
-        $execution = new ConnectionExecution($native);
+        $execution = new ConnectionExecution($native, new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
         $statement = $execution->prepare('SELECT 7 AS id', [PDO::ATTR_CURSOR => PDO::CURSOR_FWDONLY], static fn (PDOStatement $prepared): PDOStatement => $prepared);
         self::assertNotFalse($statement);
         self::assertTrue($statement->execute());
@@ -69,7 +67,7 @@ final class ConnectionExecutionTest extends TestCase
     public function testNativeTransactionStatementsKeepTheSessionSynchronized(): void
     {
         $native = new PDO('sqlite::memory:');
-        $execution = new ConnectionExecution($native);
+        $execution = new ConnectionExecution($native, new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
         self::assertSame($native, $execution->native());
         self::assertSame(0, $execution->exec('BEGIN', $native->exec(...)));
         self::assertSame(0, $execution->exec('ROLLBACK', $native->exec(...)));
@@ -83,7 +81,7 @@ final class ConnectionExecutionTest extends TestCase
     {
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY)');
-        $execution = new ConnectionExecution($native);
+        $execution = new ConnectionExecution($native, new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
         self::assertSame(1, $execution->session()->execStatement('INSERT INTO users VALUES (9)'));
         $physical = $native->query('SELECT COUNT(*) FROM users');
         $shadow = $native->query($execution->session()->rewrite('SELECT COUNT(*) FROM users')->sql());
@@ -96,7 +94,7 @@ final class ConnectionExecutionTest extends TestCase
     public function testBeginTransactionPropagatesNativeFailure(): void
     {
         $native = new PDO('sqlite::memory:');
-        $execution = new ConnectionExecution($native);
+        $execution = new ConnectionExecution($native, new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
         $native->beginTransaction();
         $this->expectException(PDOException::class);
         $execution->beginTransaction();
@@ -106,7 +104,7 @@ final class ConnectionExecutionTest extends TestCase
     {
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY)');
-        $execution = new ConnectionExecution($native);
+        $execution = new ConnectionExecution($native, new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
         self::assertTrue($execution->beginTransaction());
         self::assertSame(1, $execution->session()->execStatement('INSERT INTO users VALUES (9)'));
         self::assertTrue($execution->commit());
@@ -121,7 +119,7 @@ final class ConnectionExecutionTest extends TestCase
     {
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY)');
-        $execution = new ConnectionExecution($native);
+        $execution = new ConnectionExecution($native, new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
         self::assertTrue($execution->beginTransaction());
         self::assertSame(1, $execution->session()->execStatement('INSERT INTO users VALUES (9)'));
         self::assertTrue($execution->rollBack());
@@ -135,7 +133,7 @@ final class ConnectionExecutionTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY)');
         $native->exec('INSERT INTO users VALUES (7)');
-        $execution = new ConnectionExecution($native);
+        $execution = new ConnectionExecution($native, new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
         self::assertSame('7', $execution->lastInsertId());
         self::assertSame(1, $execution->session()->execStatement('INSERT INTO users VALUES (9)'));
         self::assertSame('9', $execution->lastInsertId());

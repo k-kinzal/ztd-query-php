@@ -1,0 +1,177 @@
+{
+    "name": "k-kinzal/ztd-query-pdo-postgres-adapter",
+    "description": "PostgreSql PDO adapter for ZTD Query",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "ext-pdo_pgsql": "*",
+        "k-kinzal/ztd-query-core": "dev-main",
+        "k-kinzal/ztd-query-pdo-adapter": "dev-main",
+        "k-kinzal/ztd-query-postgres": "dev-main",
+        "php": "^8.1"
+    },
+    "require-dev": {
+        "brianium/paratest": "^7.3",
+        "deptrac/deptrac": "^3.0",
+        "ext-pdo_sqlite": "*",
+        "friendsofphp/php-cs-fixer": "^3.95.25",
+        "k-kinzal/php-ai-toolkit": "dev-main",
+        "k-kinzal/sql-faker": "dev-main",
+        "k-kinzal/sql-fixture": "dev-main",
+        "k-kinzal/testcontainers-php": "^0.5.1",
+        "nikic/php-fuzzer": "^0.0.11",
+        "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "phpunit/phpunit": "^10.5",
+        "squizlabs/php_codesniffer": "^4.0.4"
+    },
+    "repositories": [
+        {
+            "name": "php-ai-toolkit",
+            "type": "vcs",
+            "url": "https://github.com/k-kinzal/php-ai-toolkit.git"
+        },
+        {
+            "type": "path",
+            "url": "../sql-faker",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-faker": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../sql-fixture",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-fixture": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../ztd-query-core",
+            "options": {
+                "versions": {
+                    "k-kinzal/ztd-query-core": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../ztd-query-postgres",
+            "options": {
+                "versions": {
+                    "k-kinzal/ztd-query-postgres": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../ztd-query-pdo-adapter",
+            "options": {
+                "versions": {
+                    "k-kinzal/ztd-query-pdo-adapter": "dev-main"
+                }
+            }
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "ZtdQuery\\Adapter\\Pdo\\Postgres\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/",
+            "Fuzz\\": "fuzz/"
+        }
+    },
+    "scripts": {
+        "autoload:check": "composer dump-autoload --optimize --strict-psr --strict-ambiguous",
+        "compat": "phpcs",
+        "deptrac": "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered",
+        "docgen": "docgen --packages=. --title=k-kinzal/ztd-query-pdo-postgres-adapter",
+        "docgen:diff": [
+            "Composer\\Config::disableProcessTimeout",
+            "@docgen --diff=origin/main --serve"
+        ],
+        "docgen:fresh": "@docgen --no-cache",
+        "docgen:serve": [
+            "Composer\\Config::disableProcessTimeout",
+            "@docgen --serve"
+        ],
+        "doctest": "phpunit --testsuite doctest",
+        "format": "php-cs-fixer fix --allow-risky=yes",
+        "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
+        "fuzz": "@fuzz:smoke",
+        "fuzz:correctness:pg:ctas": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php -r \"is_dir('fuzz/corpus/correctness-pg-ctas') || mkdir('fuzz/corpus/correctness-pg-ctas', 0777, true);\" --",
+            "php-fuzzer fuzz fuzz/fuzz_correctness_pg_ctas.php fuzz/corpus/correctness-pg-ctas/"
+        ],
+        "fuzz:correctness:pg:delete": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php -r \"is_dir('fuzz/corpus/correctness-pg-delete') || mkdir('fuzz/corpus/correctness-pg-delete', 0777, true);\" --",
+            "php-fuzzer fuzz fuzz/fuzz_correctness_pg_delete.php fuzz/corpus/correctness-pg-delete/"
+        ],
+        "fuzz:correctness:pg:insert": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php -r \"is_dir('fuzz/corpus/correctness-pg-insert') || mkdir('fuzz/corpus/correctness-pg-insert', 0777, true);\" --",
+            "php-fuzzer fuzz fuzz/fuzz_correctness_pg_insert.php fuzz/corpus/correctness-pg-insert/"
+        ],
+        "fuzz:correctness:pg:select": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php -r \"is_dir('fuzz/corpus/correctness-pg-select') || mkdir('fuzz/corpus/correctness-pg-select', 0777, true);\" --",
+            "php-fuzzer fuzz fuzz/fuzz_correctness_pg_select.php fuzz/corpus/correctness-pg-select/"
+        ],
+        "fuzz:correctness:pg:update": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php -r \"is_dir('fuzz/corpus/correctness-pg-update') || mkdir('fuzz/corpus/correctness-pg-update', 0777, true);\" --",
+            "php-fuzzer fuzz fuzz/fuzz_correctness_pg_update.php fuzz/corpus/correctness-pg-update/"
+        ],
+        "fuzz:smoke": [
+            "Composer\\Config::disableProcessTimeout",
+            "@fuzz:correctness:pg:select --max-runs=100",
+            "@fuzz:correctness:pg:insert --max-runs=100",
+            "@fuzz:correctness:pg:update --max-runs=100",
+            "@fuzz:correctness:pg:delete --max-runs=100",
+            "@fuzz:correctness:pg:ctas --max-runs=100"
+        ],
+        "lint": [
+            "@autoload:check",
+            "@format:check",
+            "@phpstan",
+            "@compat",
+            "@loc-guard",
+            "@tree-guard",
+            "@deptrac"
+        ],
+        "loc-guard": "loc-guard --config=loc.yaml",
+        "phpstan": "phpstan analyse --memory-limit=512M",
+        "test": "paratest --processes=auto",
+        "test:coverage": "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml",
+        "test:integration": "phpunit --testsuite integration",
+        "test:unit": "phpunit --testsuite unit",
+        "tree-guard": "tree-guard --config=tree.yaml"
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        },
+        "platform": {
+            "php": "8.1.0"
+        },
+        "sort-packages": true
+    },
+    "support": {
+        "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-pdo-postgres-adapter",
+        "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/ztd-query-pdo-postgres-adapter/"
+    },
+    "scripts-descriptions": {
+        "fuzz": "Run every fuzz target with the bounded smoke budget.",
+        "fuzz:smoke": "Run each fuzz target for up to 100 executions; individual fuzz:* commands run continuously."
+    }
+}

@@ -16,7 +16,7 @@ This package implements the MySQL-specific logic for ZTD (Zero Table Dependency)
 - **Schema Management** - Reflect and track MySQL table definitions for virtual DDL operations
 - **Error Classification** - Identify MySQL-specific error codes for unknown schema detection
 
-This package is used internally by the [PDO adapter](https://github.com/k-kinzal/ztd-query-pdo-adapter) and [MySQLi adapter](https://github.com/k-kinzal/ztd-query-mysqli-adapter), but can also be used directly for custom adapter implementations.
+This package is used internally by the [PDO adapter](../ztd-query-pdo-mysql-adapter/) and [MySQLi adapter](https://github.com/k-kinzal/ztd-query-mysqli-adapter), but can also be used directly for custom adapter implementations.
 
 ## Requirements
 

@@ -16,7 +16,7 @@ This package implements the PostgreSQL-specific logic for ZTD (Zero Table Depend
 - **Schema Management** - Reflect and track PostgreSQL table definitions via `information_schema` queries
 - **Error Classification** - Identify PostgreSQL-specific error codes for unknown schema detection
 
-This package is used internally by the [PDO adapter](https://github.com/k-kinzal/ztd-query-pdo-adapter), but can also be used directly for custom adapter implementations.
+This package is used internally by the [PDO adapter](../ztd-query-pdo-postgres-adapter/), but can also be used directly for custom adapter implementations.
 
 ## Requirements
 

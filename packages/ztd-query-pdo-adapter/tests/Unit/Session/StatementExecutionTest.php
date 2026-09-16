@@ -24,12 +24,12 @@ use ZtdQuery\Platform\Sqlite\SqliteSessionFactory;
 #[UsesClass(\ZtdQuery\Adapter\Pdo\Driver\PdoStatement::class)]
 #[UsesClass(\ZtdQuery\Adapter\Pdo\Session\Bindings::class)]
 #[UsesClass(\ZtdQuery\Adapter\Pdo\Session\BufferedRow::class)]
-#[UsesClass(\ZtdQuery\Adapter\Pdo\Session\DriverSessionFactory::class)]
 #[UsesClass(\ZtdQuery\Adapter\Pdo\Session\ParameterKind::class)]
 #[UsesClass(\ZtdQuery\Adapter\Pdo\Session\ParameterBinder::class)]
 #[UsesClass(PreparedQuery::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
 #[UsesClass(\ZtdQuery\Adapter\Pdo\Session\ConnectionExecution::class)]
+#[UsesClass(\ZtdQuery\Adapter\Pdo\Session\SessionFactoryResolver::class)]
 final class StatementExecutionTest extends TestCase
 {
     public function testExecutePreparedRefreshesShadowReadsAndReplaysBindings(): void

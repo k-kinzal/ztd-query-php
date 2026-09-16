@@ -59,7 +59,7 @@ composer require --dev k-kinzal/ztd-query-php
 ### Basic Example
 
 ```php
-use ZtdQuery\Adapter\Pdo\ZtdPdo;
+use ZtdQuery\Adapter\Pdo\MySql\ZtdPdo;
 
 // Create ZTD-wrapped PDO connection
 $pdo = new ZtdPdo('mysql:host=localhost;dbname=test', 'user', 'password');
@@ -79,7 +79,7 @@ $result = $stmt->fetchAll();
 ### Wrapping Existing PDO
 
 ```php
-use ZtdQuery\Adapter\Pdo\ZtdPdo;
+use ZtdQuery\Adapter\Pdo\MySql\ZtdPdo;
 
 $existingPdo = new PDO('mysql:host=localhost;dbname=test', 'user', 'password');
 
@@ -128,7 +128,7 @@ $pdo->enableZtd();
 ## Configuration
 
 ```php
-use ZtdQuery\Adapter\Pdo\ZtdPdo;
+use ZtdQuery\Adapter\Pdo\MySql\ZtdPdo;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Config\UnsupportedSqlBehavior;
 use ZtdQuery\Config\UnknownSchemaBehavior;

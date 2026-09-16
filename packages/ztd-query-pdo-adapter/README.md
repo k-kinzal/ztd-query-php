@@ -1,173 +1,51 @@
-# ZTD Query PDO Adapter
+# ZTD Query Shared PDO Adapter
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
+This package provides the database-independent PDO execution layer for ZTD Query on PHP 8.1+. It owns the PDO/PDOStatement proxies, connection delegation, prepared parameters, result fetching, transaction synchronization, and PDO exception translation.
 
-PDO adapter for [ZTD Query PHP](https://github.com/k-kinzal/ztd-query-core). Drop-in replacement for PDO that transparently applies Zero Table Dependency query transformation.
+## Choose a database adapter
 
-## Overview
+| Database | Install | Connection class |
+| --- | --- | --- |
+| MySQL | `k-kinzal/ztd-query-pdo-mysql-adapter` | `ZtdQuery\Adapter\Pdo\MySql\ZtdPdo` |
+| PostgreSQL | `k-kinzal/ztd-query-pdo-postgres-adapter` | `ZtdQuery\Adapter\Pdo\Postgres\ZtdPdo` |
+| SQLite | `k-kinzal/ztd-query-pdo-sqlite-adapter` | `ZtdQuery\Adapter\Pdo\Sqlite\ZtdPdo` |
 
-This package provides `ZtdPdo` and `ZtdPdoStatement`, which extend `PDO` and `PDOStatement` respectively. They intercept SQL queries and transform them using CTE (Common Table Expression) shadowing, enabling SQL unit testing without modifying physical databases.
+Each database adapter requires this package and its own platform. This package's runtime dependencies are only PHP, PDO, and ZTD core. It does not detect drivers or depend on a concrete platform. SQLite is a development dependency used to exercise the shared behavior with real in-memory connections.
 
-- **Drop-in replacement** - `ZtdPdo` extends `PDO` and is type-compatible everywhere `PDO` is expected
-- **Transparent rewriting** - All queries are automatically rewritten at `prepare()`/`query()`/`exec()` time
-- **Toggle on/off** - Enable or disable ZTD mode at runtime with `enableZtd()`/`disableZtd()`
-- **Wrap existing connections** - Use `ZtdPdo::fromPdo()` to wrap an existing PDO instance without creating a new connection
+## Why keep a shared package?
 
-## Requirements
+PDO's connection and statement contracts are the same across drivers. Query execution coordinates a core `Session`, parameter bindings, fetch modes, affected rows, and transaction state independently of SQL dialect. Copying that implementation into three packages would duplicate one responsibility and make fixes diverge. Database selection and its Composer dependency belong to the concrete adapters; SQL parsing and rewriting remain in the existing platform packages.
 
-- PHP 8.1 or higher
-- PDO extension
-- MySQL 5.6 - 9.1
-- [k-kinzal/ztd-query-php](https://github.com/k-kinzal/ztd-query-core) (core)
-- [k-kinzal/ztd-query-mysql](https://github.com/k-kinzal/ztd-query-mysql) (MySQL platform)
+## Custom platforms
 
-## Installation
-
-```bash
-composer require --dev k-kinzal/ztd-query-pdo-adapter
-```
-
-## Usage
-
-### Creating a New Connection
+The shared `ZtdPdo` remains usable with an explicit `SessionFactory`:
 
 ```php
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
+use ZtdQuery\Platform\Sqlite\SqliteSessionFactory;
 
-$pdo = new ZtdPdo('mysql:host=localhost;dbname=test', 'user', 'password');
-
-// Define schema and insert fixture data
-$pdo->exec('CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255), email VARCHAR(255))');
-$pdo->exec("INSERT INTO users (id, name, email) VALUES (1, 'Alice', 'alice@example.com')");
-$pdo->exec("INSERT INTO users (id, name, email) VALUES (2, 'Bob', 'bob@example.com')");
-
-// Query against fixture data (no physical table access)
-$stmt = $pdo->prepare('SELECT * FROM users WHERE id = ?');
-$stmt->execute([1]);
-$result = $stmt->fetchAll();
-// [['id' => 1, 'name' => 'Alice', 'email' => 'alice@example.com']]
+$native = new PDO('sqlite::memory:');
+$pdo = ZtdPdo::fromPdo($native, factory: new SqliteSessionFactory());
 ```
 
-### Wrapping an Existing PDO Instance
+This example requires installing the SQLite platform separately. `new ZtdPdo(...)` and `ZtdPdo::connect(...)` also accept named `config` and `factory` arguments. Omitting the factory on the shared facade raises `RuntimeException`; a concrete database adapter supplies its own default.
 
-```php
-use ZtdQuery\Adapter\Pdo\ZtdPdo;
+## Shared API
 
-$existingPdo = new PDO('mysql:host=localhost;dbname=test', 'user', 'password');
-$ztdPdo = ZtdPdo::fromPdo($existingPdo);
-```
+- `enableZtd()`, `disableZtd()`, and `isZtdEnabled()` control shadowing.
+- `prepare()`, `query()`, and `exec()` coordinate core session rewriting.
+- `beginTransaction()`, `commit()`, and `rollBack()` synchronize native and shadow transactions.
+- `ZtdPdoStatement` supports PDO binding and fetch modes and reports simulated affected rows.
+- `ZtdPdoException` preserves the PDO exception contract for ZTD failures.
 
-### Testing Write Operations
+## Migration
 
-INSERT/UPDATE/DELETE statements are converted to SELECT queries that return the affected rows:
-
-```php
-$pdo->exec('CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255))');
-$pdo->exec("INSERT INTO users (id, name) VALUES (1, 'Alice')");
-
-// INSERT returns the inserted row data
-$stmt = $pdo->prepare('INSERT INTO users (id, name) VALUES (?, ?)');
-$stmt->execute([2, 'Bob']);
-$inserted = $stmt->fetchAll();
-// [['id' => 2, 'name' => 'Bob']]
-
-// UPDATE returns the updated row data
-$stmt = $pdo->prepare('UPDATE users SET name = ? WHERE id = ?');
-$stmt->execute(['Alice Updated', 1]);
-$updated = $stmt->fetchAll();
-// [['id' => 1, 'name' => 'Alice Updated']]
-
-// DELETE returns the deleted row data
-$stmt = $pdo->prepare('DELETE FROM users WHERE id = ?');
-$stmt->execute([1]);
-$deleted = $stmt->fetchAll();
-// [['id' => 1, 'name' => 'Alice']]
-```
-
-### Enabling/Disabling ZTD Mode
-
-```php
-$pdo = new ZtdPdo($dsn, $user, $password);
-
-// Disable ZTD to execute against physical database
-$pdo->disableZtd();
-$pdo->exec('CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(255))');
-
-// Re-enable ZTD for testing
-$pdo->enableZtd();
-
-// Check current status
-$pdo->isZtdEnabled(); // true
-```
-
-### Configuration
-
-```php
-use ZtdQuery\Adapter\Pdo\ZtdPdo;
-use ZtdQuery\Config\ZtdConfig;
-use ZtdQuery\Config\UnsupportedSqlBehavior;
-use ZtdQuery\Config\UnknownSchemaBehavior;
-
-$config = new ZtdConfig(
-    unsupportedBehavior: UnsupportedSqlBehavior::Exception,
-    unknownSchemaBehavior: UnknownSchemaBehavior::Exception,
-    behaviorRules: [
-        'BEGIN' => UnsupportedSqlBehavior::Ignore,
-        'COMMIT' => UnsupportedSqlBehavior::Ignore,
-        'ROLLBACK' => UnsupportedSqlBehavior::Ignore,
-    ],
-);
-
-$pdo = new ZtdPdo($dsn, $user, $password, config: $config);
-```
-
-| Option | Values | Description |
-|--------|--------|-------------|
-| `unsupportedBehavior` | `Ignore`, `Notice`, `Exception` | Default behavior when unsupported SQL is executed |
-| `unknownSchemaBehavior` | `Passthrough`, `Exception` | Behavior when unknown table is referenced |
-| `behaviorRules` | `array<string, UnsupportedSqlBehavior>` | Per-pattern behavior overrides (first match wins) |
-
-## API Reference
-
-### ZtdPdo
-
-| Method | Description |
-|--------|-------------|
-| `__construct($dsn, $username, $password, $options, $config)` | Create a new ZTD-wrapped PDO connection |
-| `ZtdPdo::fromPdo($pdo, $config)` | Wrap an existing PDO instance |
-| `enableZtd()` | Enable ZTD mode |
-| `disableZtd()` | Disable ZTD mode |
-| `isZtdEnabled()` | Check whether ZTD mode is enabled |
-| `prepare($query, $options)` | Prepare a statement (rewritten if ZTD enabled) |
-| `query($query, $fetchMode, ...$fetchModeArgs)` | Execute a query and return the statement |
-| `exec($statement)` | Execute a statement and return affected row count |
-
-All other PDO methods (`beginTransaction`, `commit`, `rollBack`, `quote`, etc.) are delegated to the inner PDO instance.
-
-### ZtdPdoStatement
-
-Extends `PDOStatement` with ZTD-aware behavior. All fetch methods (`fetch`, `fetchAll`, `fetchColumn`, `fetchObject`) and parameter binding methods (`bindValue`, `bindParam`, `bindColumn`) work transparently. `rowCount()` returns the ZTD-aware affected row count for write operations.
+Replace the former generic adapter dependency with the database adapter above and update the `ZtdPdo` import. Constructor and `fromPdo()` arguments are preserved. Statement and exception namespaces do not change. Applications intentionally using a custom factory can keep this package and the existing connection class.
 
 ## Development
 
-```bash
-# Run unit tests
-composer test:unit
-
-# Run integration tests (requires Docker)
-composer test:integration
-
-# Run all tests
-composer test
-
-# Run linter (PHP-CS-Fixer + PHPStan level max)
-composer lint
-
-# Fix code style
-composer format
-```
+`composer test`, `composer lint`, and `composer bench` exercise the common behavior with SQLite. Database integration and fuzz suites live in their respective adapter packages.
 
 ## License
 
-MIT License. See [LICENSE](LICENSE) for details.
+MIT. See [LICENSE](LICENSE).

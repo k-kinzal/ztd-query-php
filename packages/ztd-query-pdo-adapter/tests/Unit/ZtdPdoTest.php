@@ -7,6 +7,7 @@ namespace Tests\Unit;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use ZtdQuery\Adapter\Pdo\Driver\PdoConnection;
 use ZtdQuery\Adapter\Pdo\Driver\PdoStatement;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
@@ -14,6 +15,7 @@ use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 use ZtdQuery\Adapter\Pdo\ZtdPdoStatement;
 
 #[CoversClass(ZtdPdo::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\SessionFactoryResolver::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(ZtdPdoException::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(ZtdPdoStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(PdoConnection::class)]
@@ -21,7 +23,6 @@ use ZtdQuery\Adapter\Pdo\ZtdPdoStatement;
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\StatementExecution::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\Bindings::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\BufferedRow::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\DriverSessionFactory::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\ParameterKind::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\ParameterBinder::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\PreparedQuery::class)]
@@ -64,19 +65,19 @@ final class ZtdPdoTest extends TestCase
     {
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
-        $pdo = ZtdPdo::fromPdo($native);
+        $pdo = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
         self::assertSame(1, $pdo->exec("INSERT INTO users VALUES (1, 'Alice'), (2, 'Bob'); UPDATE users SET name = 'Carol' WHERE id = 2"));
         $result4 = $pdo->query('SELECT * FROM users ORDER BY id');
         self::assertNotFalse($result4);
         self::assertSame([['id' => 1, 'name' => 'Alice'], ['id' => 2, 'name' => 'Carol']], $result4->fetchAll(PDO::FETCH_ASSOC));
     }
 
-    public function testAutoDetectionForSqliteDriver(): void
+    public function testExplicitFactoryForSqliteDriver(): void
     {
         (fn () => class_exists('ZtdQuery\\Platform\\Sqlite\\SqliteSessionFactory') || self::markTestSkipped('ztd-query-sqlite package is not installed.'))();
 
         $pdo = new PDO('sqlite::memory:');
-        $ztdPdo = ZtdPdo::fromPdo($pdo);
+        $ztdPdo = ZtdPdo::fromPdo($pdo, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
 
         self::assertTrue($ztdPdo->isZtdEnabled());
     }
@@ -86,7 +87,7 @@ final class ZtdPdoTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
         $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $ztdPdo = ZtdPdo::fromPdo($native);
+        $ztdPdo = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
         $ztdPdo->disableZtd();
 
         $ztdPdo->enableZtd();
@@ -99,7 +100,7 @@ final class ZtdPdoTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
         $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $ztdPdo = ZtdPdo::fromPdo($native);
+        $ztdPdo = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
 
         $ztdPdo->disableZtd();
 
@@ -111,7 +112,7 @@ final class ZtdPdoTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
         $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $ztdPdo = ZtdPdo::fromPdo($native);
+        $ztdPdo = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
 
         self::assertTrue($ztdPdo->isZtdEnabled());
     }
@@ -121,7 +122,7 @@ final class ZtdPdoTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
         $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $ztdPdo = ZtdPdo::fromPdo($native);
+        $ztdPdo = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
 
         $statement = $ztdPdo->prepare('SELECT * FROM users');
 
@@ -133,7 +134,7 @@ final class ZtdPdoTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
         $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $ztdPdo = ZtdPdo::fromPdo($native);
+        $ztdPdo = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
         $ztdPdo->disableZtd();
 
         $statement = $ztdPdo->prepare('SELECT * FROM users');
@@ -146,7 +147,7 @@ final class ZtdPdoTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
         $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $ztdPdo = ZtdPdo::fromPdo($native);
+        $ztdPdo = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
 
         $statement = $ztdPdo->query('SELECT * FROM users');
 
@@ -158,7 +159,7 @@ final class ZtdPdoTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
         $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $ztdPdo = ZtdPdo::fromPdo($native);
+        $ztdPdo = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
         $ztdPdo->exec("INSERT INTO users (id, name) VALUES (3, 'linus')");
 
         $statement = $ztdPdo->query('SELECT * FROM users');
@@ -171,7 +172,7 @@ final class ZtdPdoTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
         $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $ztdPdo = ZtdPdo::fromPdo($native);
+        $ztdPdo = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
         $ztdPdo->exec("INSERT INTO users (id, name) VALUES (3, 'linus')");
 
         $statement = $ztdPdo->query('SELECT * FROM users', PDO::FETCH_NUM);
@@ -181,7 +182,7 @@ final class ZtdPdoTest extends TestCase
 
     public function testConnectOpensAConnectionWithZtdAlreadyInFrontOfIt(): void
     {
-        self::assertSame(ZtdPdo::class, ZtdPdo::connect('sqlite::memory:')::class);
+        self::assertSame(ZtdPdo::class, ZtdPdo::connect('sqlite::memory:', factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())::class);
     }
 
     public function testBeginTransactionOpensOneOnTheShadowAsWellAsTheDatabase(): void
@@ -189,7 +190,7 @@ final class ZtdPdoTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
         $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $ztdPdo = ZtdPdo::fromPdo($native);
+        $ztdPdo = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
 
         self::assertSame([true, true], [$ztdPdo->beginTransaction(), $ztdPdo->inTransaction()]);
     }
@@ -199,7 +200,7 @@ final class ZtdPdoTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
         $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $ztdPdo = ZtdPdo::fromPdo($native);
+        $ztdPdo = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
         $ztdPdo->beginTransaction();
         $ztdPdo->exec("INSERT INTO users (id, name) VALUES (3, 'linus')");
 
@@ -217,7 +218,7 @@ final class ZtdPdoTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
         $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $ztdPdo = ZtdPdo::fromPdo($native);
+        $ztdPdo = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
         $ztdPdo->beginTransaction();
         $ztdPdo->exec("INSERT INTO users (id, name) VALUES (3, 'linus')");
 
@@ -235,7 +236,7 @@ final class ZtdPdoTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
         $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $ztdPdo = ZtdPdo::fromPdo($native);
+        $ztdPdo = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
 
         self::assertFalse($ztdPdo->inTransaction());
     }
@@ -245,7 +246,7 @@ final class ZtdPdoTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
         $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $ztdPdo = ZtdPdo::fromPdo($native);
+        $ztdPdo = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
         $ztdPdo->exec("INSERT INTO users (name) VALUES ('linus')");
 
         self::assertSame('1', $ztdPdo->lastInsertId());
@@ -256,7 +257,7 @@ final class ZtdPdoTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
         $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $ztdPdo = ZtdPdo::fromPdo($native);
+        $ztdPdo = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
 
         self::assertSame('00000', $ztdPdo->errorCode());
     }
@@ -266,7 +267,7 @@ final class ZtdPdoTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
         $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $ztdPdo = ZtdPdo::fromPdo($native);
+        $ztdPdo = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
 
         self::assertSame('00000', $ztdPdo->errorInfo()[0]);
     }
@@ -276,7 +277,7 @@ final class ZtdPdoTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
         $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $ztdPdo = ZtdPdo::fromPdo($native);
+        $ztdPdo = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
 
         self::assertSame('sqlite', $ztdPdo->getAttribute(PDO::ATTR_DRIVER_NAME));
     }
@@ -286,7 +287,7 @@ final class ZtdPdoTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
         $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $ztdPdo = ZtdPdo::fromPdo($native);
+        $ztdPdo = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
 
         $ztdPdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_NUM);
 
@@ -298,7 +299,7 @@ final class ZtdPdoTest extends TestCase
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
         $native->exec("INSERT INTO users (name) VALUES ('ada'), ('grace')");
-        $ztdPdo = ZtdPdo::fromPdo($native);
+        $ztdPdo = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
 
         self::assertSame("'ada'", $ztdPdo->quote('ada'));
     }
@@ -312,7 +313,7 @@ final class ZtdPdoTest extends TestCase
     {
         $native = new PDO('sqlite::memory:', options: [PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
         $native->exec('CREATE TABLE items (id INTEGER PRIMARY KEY)');
-        $pdo = ZtdPdo::fromPdo($native);
+        $pdo = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
         self::assertSame(1, $pdo->exec('INSERT INTO items VALUES (7)'));
         $result5 = $pdo->query('SELECT id FROM items');
         self::assertNotFalse($result5);
@@ -324,7 +325,7 @@ final class ZtdPdoTest extends TestCase
 
     public function testPrepareWrapsUnsupportedStatementsForPdoConsumers(): void
     {
-        $pdo = ZtdPdo::fromPdo(new PDO('sqlite::memory:'));
+        $pdo = ZtdPdo::fromPdo(new PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
         try {
             $pdo->prepare('VACUUM');
             self::fail('Unsupported maintenance statements must be rejected.');
@@ -333,5 +334,11 @@ final class ZtdPdoTest extends TestCase
             self::assertSame(0, $failure->getCode());
             self::assertInstanceOf(\ZtdQuery\Connection\Exception\DatabaseException::class, $failure->getPrevious());
         }
+    }
+    public function testSharedFacadeRequiresAnExplicitSessionFactory(): void
+    {
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Provide a SessionFactory or use a database-specific PDO adapter.');
+        ZtdPdo::fromPdo(new PDO('sqlite::memory:'));
     }
 }

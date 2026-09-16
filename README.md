@@ -13,7 +13,10 @@ ZTD Query PHP wraps PDO/MySQLi to intercept and transform SQL queries using CTE 
 |---------|-------------|
 | [ztd-query-core](packages/ztd-query-core/) | Core library: interfaces, session management, query routing |
 | [ztd-query-mysql](packages/ztd-query-mysql/) | MySQL platform: SQL parsing, classification, rewriting, schema reflection |
-| [ztd-query-pdo-adapter](packages/ztd-query-pdo-adapter/) | PDO adapter: drop-in `ZtdPdo` / `ZtdPdoStatement` |
+| [ztd-query-pdo-adapter](packages/ztd-query-pdo-adapter/) | Shared PDO execution, statements, and parameter binding |
+| [ztd-query-pdo-mysql-adapter](packages/ztd-query-pdo-mysql-adapter/) | MySQL PDO adapter |
+| [ztd-query-pdo-postgres-adapter](packages/ztd-query-pdo-postgres-adapter/) | PostgreSQL PDO adapter |
+| [ztd-query-pdo-sqlite-adapter](packages/ztd-query-pdo-sqlite-adapter/) | SQLite PDO adapter |
 | [ztd-query-mysqli-adapter](packages/ztd-query-mysqli-adapter/) | MySQLi adapter: drop-in `ZtdMysqli` / `ZtdMysqliStatement` |
 | [sql-faker](packages/sql-faker/) | Faker provider for generating syntactically valid SQL · [Documentation](https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-faker/) |
 | [sql-fixture](packages/sql-fixture/) | Faker provider for generating test fixture data from schemas |
@@ -21,11 +24,11 @@ ZTD Query PHP wraps PDO/MySQLi to intercept and transform SQL queries using CTE 
 ## Quick Start
 
 ```bash
-composer require --dev k-kinzal/ztd-query-pdo-adapter
+composer require --dev k-kinzal/ztd-query-pdo-mysql-adapter
 ```
 
 ```php
-use ZtdQuery\Adapter\Pdo\ZtdPdo;
+use ZtdQuery\Adapter\Pdo\MySql\ZtdPdo;
 
 $pdo = new ZtdPdo('mysql:host=localhost;dbname=test', 'user', 'password');
 

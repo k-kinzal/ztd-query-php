@@ -18,5 +18,4 @@ parameters:
     paths:
         - src
         - tests
-        - fuzz
         - bench

@@ -1,0 +1,26 @@
+deptrac:
+  paths: [./src]
+  analyser:
+    types: [class, use]
+  layers:
+    - name: Adapter
+      collectors:
+        - type: directory
+          value: 'src/'
+    - name: Pdo
+      collectors:
+        - type: classLike
+          value: '^ZtdQuery\\Adapter\\Pdo\\ZtdPdo$'
+    - name: Platform
+      collectors:
+        - type: classLike
+          value: '^ZtdQuery\\Platform\\Postgres\\'
+    - name: Contract
+      collectors:
+        - type: classLike
+          value: '^ZtdQuery\\Platform\\SessionFactory$'
+  ruleset:
+    Adapter: [Pdo, Platform, Contract]
+    Pdo: []
+    Platform: []
+    Contract: []

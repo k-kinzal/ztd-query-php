@@ -1,0 +1,201 @@
+name: Fuzz (ztd-query-pdo-mysql-adapter)
+permissions:
+  contents: read
+jobs:
+  robustness-execute:
+    name: Robustness / execute (MySQL ${{ matrix.mysql }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mysql:
+        - 8.0.44
+        - 8.4.7
+    defaults:
+      run:
+        working-directory: packages/ztd-query-pdo-mysql-adapter
+    steps:
+    - name: Check out the repository
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+    - name: Set up PHP
+      uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+      with:
+        php-version: '8.3'
+        extensions: ctype, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, pdo_mysql, phar, reflection,
+          simplexml, spl, tokenizer, xml, xmlwriter
+        coverage: none
+        ini-values: memory_limit=512M
+    - name: Validate Composer metadata
+      run: composer validate --strict --no-check-publish
+    - name: Install dependencies
+      uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+      with:
+        working-directory: packages/ztd-query-pdo-mysql-adapter
+        dependency-versions: locked
+        require-lock-file: true
+        composer-options: --prefer-dist
+    - name: Check installed platform requirements
+      run: composer check-platform-reqs
+    - name: Validate the run budget
+      env:
+        MAX_RUNS: ${{ inputs.max_runs || '10000' }}
+      run: "if [[ ! \"$MAX_RUNS\" =~ ^[1-9][0-9]{0,6}$ ]]; then\n  echo 'max_runs must be an integer between 1 and 1000000.'\
+        \ >&2\n  exit 1\nfi\nif (( MAX_RUNS > 1000000 )); then exit 1; fi\n"
+    - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      with:
+        path: packages/ztd-query-pdo-mysql-adapter/fuzz/corpus/robustness-execute
+        key: fuzz-robustness-execute-pdo-${{ matrix.mysql }}-${{ github.run_id }}
+        restore-keys: 'fuzz-robustness-execute-pdo-${{ matrix.mysql }}-
+
+          '
+      name: Restore the corpus
+    - name: Run the fuzz target
+      env:
+        MYSQL_VERSION: ${{ matrix.mysql }}
+        MAX_RUNS: ${{ inputs.max_runs || '10000' }}
+      run: "mkdir -p build/fuzz fuzz/corpus/robustness-execute\nvendor/bin/php-fuzzer fuzz fuzz/fuzz_robustness_execute.php\
+        \ \\\n  fuzz/corpus/robustness-execute/ \\\n  --max-runs=\"$MAX_RUNS\" 2>&1 | tee build/fuzz/run.log\nif grep -Eq\
+        \ '^(CORPUS )?CRASH in ' build/fuzz/run.log; then\n  echo 'Fuzzing found a counterexample; download the run artifacts\
+        \ and replay the input.' >&2\n  exit 1\nfi\n"
+    - if: always()
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      with:
+        path: packages/ztd-query-pdo-mysql-adapter/fuzz/corpus/robustness-execute
+        key: fuzz-robustness-execute-pdo-${{ matrix.mysql }}-${{ github.run_id }}
+      name: Save the corpus
+    - if: ${{ always() && hashFiles('packages/ztd-query-pdo-mysql-adapter/build/fuzz/run.log') != '' }}
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: fuzz-results-robustness-execute-pdo-${{ matrix.mysql }}
+        path: 'packages/ztd-query-pdo-mysql-adapter/crash-*
+
+          packages/ztd-query-pdo-mysql-adapter/build/fuzz/run.log
+
+          packages/ztd-query-pdo-mysql-adapter/fuzz/corpus/
+
+          '
+      name: Upload run log and replay inputs
+    timeout-minutes: 60
+    services:
+      mysql:
+        image: mysql:${{ matrix.mysql }}
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_ROOT_HOST: '%'
+        ports:
+        - 3306:3306
+        options: --health-cmd="mysqladmin ping -h 127.0.0.1 -proot" --health-interval=10s --health-timeout=5s --health-retries=20
+    env:
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_PORT: '3306'
+  correctness-mysql:
+    name: Correctness / ${{ matrix.target.name }}-pdo (MySQL ${{ matrix.mysql }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        mysql:
+        - 8.0.44
+        - 8.4.7
+        target:
+        - name: select
+          script: fuzz_correctness_select.php
+          corpus: correctness-select
+        - name: insert
+          script: fuzz_correctness_insert.php
+          corpus: correctness-insert
+        - name: update
+          script: fuzz_correctness_update.php
+          corpus: correctness-update
+        - name: delete
+          script: fuzz_correctness_delete.php
+          corpus: correctness-delete
+    defaults:
+      run:
+        working-directory: packages/ztd-query-pdo-mysql-adapter
+    steps:
+    - name: Check out the repository
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+    - name: Set up PHP
+      uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+      with:
+        php-version: '8.3'
+        extensions: ctype, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, pdo_mysql, phar, reflection,
+          simplexml, spl, tokenizer, xml, xmlwriter
+        coverage: none
+        ini-values: memory_limit=512M
+    - name: Validate Composer metadata
+      run: composer validate --strict --no-check-publish
+    - name: Install dependencies
+      uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+      with:
+        working-directory: packages/ztd-query-pdo-mysql-adapter
+        dependency-versions: locked
+        require-lock-file: true
+        composer-options: --prefer-dist
+    - name: Check installed platform requirements
+      run: composer check-platform-reqs
+    - name: Validate the run budget
+      env:
+        MAX_RUNS: ${{ inputs.max_runs || '10000' }}
+      run: "if [[ ! \"$MAX_RUNS\" =~ ^[1-9][0-9]{0,6}$ ]]; then\n  echo 'max_runs must be an integer between 1 and 1000000.'\
+        \ >&2\n  exit 1\nfi\nif (( MAX_RUNS > 1000000 )); then exit 1; fi\n"
+    - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      with:
+        path: packages/ztd-query-pdo-mysql-adapter/fuzz/corpus/${{ matrix.target.corpus }}
+        key: fuzz-${{ matrix.target.corpus }}-pdo-${{ matrix.mysql }}-${{ github.run_id }}
+        restore-keys: 'fuzz-${{ matrix.target.corpus }}-pdo-${{ matrix.mysql }}-
+
+          '
+      name: Restore the corpus
+    - name: Run the fuzz target
+      env:
+        MYSQL_VERSION: ${{ matrix.mysql }}
+        MAX_RUNS: ${{ inputs.max_runs || '10000' }}
+      run: "mkdir -p build/fuzz fuzz/corpus/${{ matrix.target.corpus }}\nvendor/bin/php-fuzzer fuzz fuzz/${{ matrix.target.script\
+        \ }} \\\n  fuzz/corpus/${{ matrix.target.corpus }}/ \\\n  --max-runs=\"$MAX_RUNS\" 2>&1 | tee build/fuzz/run.log\n\
+        if grep -Eq '^(CORPUS )?CRASH in ' build/fuzz/run.log; then\n  echo 'Fuzzing found a counterexample; download the\
+        \ run artifacts and replay the input.' >&2\n  exit 1\nfi\n"
+    - if: always()
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      with:
+        path: packages/ztd-query-pdo-mysql-adapter/fuzz/corpus/${{ matrix.target.corpus }}
+        key: fuzz-${{ matrix.target.corpus }}-pdo-${{ matrix.mysql }}-${{ github.run_id }}
+      name: Save the corpus
+    - if: ${{ always() && hashFiles('packages/ztd-query-pdo-mysql-adapter/build/fuzz/run.log') != '' }}
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      with:
+        name: fuzz-results-${{ matrix.target.name }}-pdo-${{ matrix.mysql }}
+        path: 'packages/ztd-query-pdo-mysql-adapter/crash-*
+
+          packages/ztd-query-pdo-mysql-adapter/build/fuzz/run.log
+
+          packages/ztd-query-pdo-mysql-adapter/fuzz/corpus/
+
+          '
+      name: Upload run log and replay inputs
+    timeout-minutes: 60
+    services:
+      mysql:
+        image: mysql:${{ matrix.mysql }}
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_ROOT_HOST: '%'
+        ports:
+        - 3306:3306
+        options: --health-cmd="mysqladmin ping -h 127.0.0.1 -proot" --health-interval=10s --health-timeout=5s --health-retries=20
+    env:
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_PORT: '3306'
+'on':
+  schedule:
+  - cron: 23 5 * * *
+  workflow_dispatch:
+    inputs:
+      max_runs:
+        description: Max fuzzing iterations
+        default: '10000'
+        type: string
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true

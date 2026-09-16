@@ -28,7 +28,7 @@ use ZtdQuery\Session;
  * @example Fetch a row through the PDO statement interface
  *     $native = new \PDO('sqlite::memory:');
  *     $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
- *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo($native);
+ *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
  *     $pdo->exec("INSERT INTO users VALUES (1, 'Alice')");
  *     $statement = $pdo->query('SELECT id, name FROM users');
  *     $statement->fetch(\PDO::FETCH_ASSOC) // => ['id' => 1, 'name' => 'Alice']
@@ -71,7 +71,7 @@ final class ZtdPdoStatement extends NativePdoStatement
      * @throws ZtdPdoException When PDO cannot bind a value of that type
      * @visibility public
      * @example Retain typed values when the query is prepared again
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $statement = $pdo->prepare('SELECT :id AS id');
      *     $statement->bindValue(':id', 7, \PDO::PARAM_INT) // => true
      *     $statement->execute() // => true
@@ -95,7 +95,7 @@ final class ZtdPdoStatement extends NativePdoStatement
      * @throws ZtdPdoException When PDO cannot bind a value of that type
      * @visibility public
      * @example Read the current variable at each execution
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $statement = $pdo->prepare('SELECT ? AS id');
      *     $params = (object) ['id' => 7];
      *     $statement->bindParam(1, $params->id, \PDO::PARAM_INT);
@@ -122,7 +122,7 @@ final class ZtdPdoStatement extends NativePdoStatement
      * @return bool Whether the column was bound
      * @visibility public
      * @example Bind a column on an executed statement
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $statement = $pdo->query('SELECT 7 AS id');
      *     $row = (object) ['id' => null];
      *     $statement->bindColumn('id', $row->id, \PDO::PARAM_INT) // => true
@@ -150,7 +150,7 @@ final class ZtdPdoStatement extends NativePdoStatement
      * @throws ZtdPdoException When ZTD cannot carry the statement out
      * @visibility public
      * @example Execute parameters against current shadow state
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $statement = $pdo->prepare('SELECT ? AS name');
      *     $statement->execute(['Ada']) // => true
      *     $statement->fetchColumn() // => 'Ada'
@@ -176,7 +176,7 @@ final class ZtdPdoStatement extends NativePdoStatement
      * @return mixed The next row as that mode reads it, or false where there is none
      * @visibility public
      * @example Fetch an associative row
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $statement = $pdo->query('SELECT 7 AS id');
      *     $statement->fetch(\PDO::FETCH_ASSOC) // => ['id' => 7]
      *     $statement->fetch() // => false
@@ -200,7 +200,7 @@ final class ZtdPdoStatement extends NativePdoStatement
      * @return array<array-key, mixed> Every remaining row, as that mode reads them
      * @visibility public
      * @example Fetch one column from every row
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $statement = $pdo->query('SELECT 7 AS id UNION ALL SELECT 9 AS id');
      *     $statement->fetchAll(\PDO::FETCH_COLUMN) // => [7, 9]
      */
@@ -221,7 +221,7 @@ final class ZtdPdoStatement extends NativePdoStatement
      * @return mixed The column's value in the next row, or false where there is none
      * @visibility public
      * @example Read a single value
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $statement = $pdo->query('SELECT 7 AS id');
      *     $statement->fetchColumn() // => 7
      *     $statement->fetchColumn() // => false
@@ -252,7 +252,7 @@ final class ZtdPdoStatement extends NativePdoStatement
      * @throws ReflectionException When the class will not let a property be written
      * @visibility public
      * @example Hydrate an anonymous row object
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $statement = $pdo->query('SELECT 7 AS id');
      *     $row = $statement->fetchObject();
      *     $row->id // => 7
@@ -276,7 +276,7 @@ final class ZtdPdoStatement extends NativePdoStatement
      * @example Count affected shadow rows
      *     $native = new \PDO('sqlite::memory:');
      *     $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo($native);
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $statement = $pdo->prepare('INSERT INTO users VALUES (?, ?)');
      *     $statement->execute([1, 'Ada']);
      *     $statement->rowCount() // => 1
@@ -297,7 +297,7 @@ final class ZtdPdoStatement extends NativePdoStatement
      * @return bool Whether the cursor was closed
      * @visibility public
      * @example Release a native cursor
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $statement = $pdo->query('SELECT 7 AS id');
      *     $statement->closeCursor() // => true
      */
@@ -319,7 +319,7 @@ final class ZtdPdoStatement extends NativePdoStatement
      * @return bool Whether the mode was set
      * @visibility public
      * @example Choose the shape of subsequent rows
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $statement = $pdo->query('SELECT 7 AS id');
      *     $statement->setFetchMode(\PDO::FETCH_NUM) // => true
      *     $statement->fetch() // => [7]
@@ -339,7 +339,7 @@ final class ZtdPdoStatement extends NativePdoStatement
      * @return string The driver's code for what went wrong last, or an empty string where nothing did
      * @visibility public
      * @example Read statement SQLSTATE
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $statement = $pdo->query('SELECT 7 AS id');
      *     $statement->errorCode() // => '00000'
      */
@@ -355,7 +355,7 @@ final class ZtdPdoStatement extends NativePdoStatement
      * @return array{0: string|null, 1: int|null, 2: string|null}
      * @visibility public
      * @example Read statement error details
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $statement = $pdo->query('SELECT 7 AS id');
      *     $statement->errorInfo()[0] // => '00000'
      */
@@ -372,7 +372,7 @@ final class ZtdPdoStatement extends NativePdoStatement
      * @return mixed What the driver has that attribute set to
      * @visibility public
      * @example Handle an unsupported SQLite statement attribute
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $statement = $pdo->query('SELECT 7 AS id');
      *     $statement->getAttribute(\PDO::ATTR_CURSOR) // throws \PDOException
      */
@@ -388,7 +388,7 @@ final class ZtdPdoStatement extends NativePdoStatement
      * @return bool Whether the attribute was set
      * @visibility public
      * @example Handle a driver that does not support statement attributes
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $statement = $pdo->query('SELECT 7 AS id');
      *     try { $supported = $statement->setAttribute(\PDO::ATTR_CURSOR, \PDO::CURSOR_FWDONLY); } catch (\PDOException) { $supported = false; }
      *     $supported // => false
@@ -405,7 +405,7 @@ final class ZtdPdoStatement extends NativePdoStatement
      * @return int Columns in the result the statement answered
      * @visibility public
      * @example Inspect result width
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $statement = $pdo->query('SELECT 7 AS id');
      *     $statement->columnCount() // => 1
      */
@@ -422,7 +422,7 @@ final class ZtdPdoStatement extends NativePdoStatement
      * because nothing the driver prepared answered its columns.
      * @visibility public
      * @example Read a projected column label
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $statement = $pdo->query('SELECT 7 AS id');
      *     $statement->getColumnMeta(0)['name'] // => 'id'
      */
@@ -438,7 +438,7 @@ final class ZtdPdoStatement extends NativePdoStatement
      * @return bool Whether there was another result to move to
      * @visibility public
      * @example Handle SQLite without multiple rowsets
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $statement = $pdo->query('SELECT 7 AS id');
      *     $statement->nextRowset() // throws \PDOException
      */
@@ -454,7 +454,7 @@ final class ZtdPdoStatement extends NativePdoStatement
      * @return bool|null Always true, because the dump is written rather than answered
      * @visibility public
      * @example Print the native statement diagnostics
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $statement = $pdo->query('SELECT 7 AS id');
      *     $statement->debugDumpParams() // => true
      */
@@ -476,7 +476,7 @@ final class ZtdPdoStatement extends NativePdoStatement
      * @return Iterator<mixed, mixed> Every remaining row
      * @visibility public
      * @example Iterate remaining rows
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $statement = $pdo->query('SELECT 7 AS id');
      *     $statement->setFetchMode(\PDO::FETCH_ASSOC);
      *     iterator_to_array($statement->getIterator()) // => [['id' => 7]]

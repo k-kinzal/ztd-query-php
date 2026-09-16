@@ -40,12 +40,12 @@ use ZtdQuery\Shadow\ShadowStore;
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\StatementExecution::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\Bindings::class)]
 #[CoversClass(BufferedRow::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\DriverSessionFactory::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(ParameterKind::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(ParameterBinder::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(PreparedQuery::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
 #[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\ConnectionExecution::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\ZtdQuery\Adapter\Pdo\Session\SessionFactoryResolver::class)]
 final class ZtdPdoStatementTest extends TestCase
 {
     /**
@@ -55,7 +55,7 @@ final class ZtdPdoStatementTest extends TestCase
     {
         $pdo = new PDO('sqlite::memory:');
         $pdo->exec('CREATE TABLE errors (id INTEGER PRIMARY KEY, message TEXT)');
-        $statement = ZtdPdo::fromPdo($pdo)->prepare("INSERT INTO errors VALUES (1, 'row message') RETURNING message");
+        $statement = ZtdPdo::fromPdo($pdo, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->prepare("INSERT INTO errors VALUES (1, 'row message') RETURNING message");
         self::assertInstanceOf(ZtdPdoStatement::class, $statement);
         self::assertTrue($statement->execute());
         $object = $statement->fetchObject(PDOException::class, ['constructor message', 7]);
@@ -66,7 +66,7 @@ final class ZtdPdoStatementTest extends TestCase
 
     public function testPassthroughFetchAllForwardsConstructorArguments(): void
     {
-        $pdo = ZtdPdo::fromPdo(new PDO('sqlite::memory:'));
+        $pdo = ZtdPdo::fromPdo(new PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
         $statement = $pdo->prepare("SELECT 'row message' AS message");
         self::assertInstanceOf(ZtdPdoStatement::class, $statement);
         self::assertTrue($statement->execute());
@@ -138,7 +138,7 @@ final class ZtdPdoStatementTest extends TestCase
     public function testBindValueSurvivesPreparedStatementRecompilation(): void
     {
         $pdo = new PDO('sqlite::memory:');
-        $stmt = ZtdPdo::fromPdo($pdo)->prepare('SELECT ? AS value');
+        $stmt = ZtdPdo::fromPdo($pdo, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->prepare('SELECT ? AS value');
         self::assertInstanceOf(ZtdPdoStatement::class, $stmt);
 
         self::assertTrue($stmt->bindValue(1, 42, PDO::PARAM_INT));
@@ -149,7 +149,7 @@ final class ZtdPdoStatementTest extends TestCase
     public function testBindParamSurvivesPreparedStatementRecompilation(): void
     {
         $pdo = new PDO('sqlite::memory:');
-        $stmt = ZtdPdo::fromPdo($pdo)->prepare('SELECT ? AS value');
+        $stmt = ZtdPdo::fromPdo($pdo, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->prepare('SELECT ? AS value');
         self::assertInstanceOf(ZtdPdoStatement::class, $stmt);
 
         $value = 41;
@@ -277,7 +277,7 @@ final class ZtdPdoStatementTest extends TestCase
     {
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $statement = ZtdPdo::fromPdo($native)->prepare('INSERT INTO users (name) VALUES (?) RETURNING id, name');
+        $statement = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->prepare('INSERT INTO users (name) VALUES (?) RETURNING id, name');
         self::assertInstanceOf(ZtdPdoStatement::class, $statement);
         $statement->execute(['linus']);
 
@@ -290,7 +290,7 @@ final class ZtdPdoStatementTest extends TestCase
     {
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $statement = ZtdPdo::fromPdo($native)->prepare('INSERT INTO users (name) VALUES (?) RETURNING id, name');
+        $statement = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->prepare('INSERT INTO users (name) VALUES (?) RETURNING id, name');
         self::assertInstanceOf(ZtdPdoStatement::class, $statement);
         $statement->execute(['linus']);
 
@@ -301,7 +301,7 @@ final class ZtdPdoStatementTest extends TestCase
     {
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $statement = ZtdPdo::fromPdo($native)->prepare('INSERT INTO users (name) VALUES (?) RETURNING id, name');
+        $statement = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->prepare('INSERT INTO users (name) VALUES (?) RETURNING id, name');
         self::assertInstanceOf(ZtdPdoStatement::class, $statement);
         $statement->execute(['linus']);
         $statement->fetch(PDO::FETCH_ASSOC);
@@ -313,7 +313,7 @@ final class ZtdPdoStatementTest extends TestCase
     {
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $statement = ZtdPdo::fromPdo($native)->prepare('INSERT INTO users (name) VALUES (?) RETURNING id, name');
+        $statement = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->prepare('INSERT INTO users (name) VALUES (?) RETURNING id, name');
         self::assertInstanceOf(ZtdPdoStatement::class, $statement);
         $statement->execute(['linus']);
 
@@ -324,7 +324,7 @@ final class ZtdPdoStatementTest extends TestCase
     {
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $statement = ZtdPdo::fromPdo($native)->prepare('INSERT INTO users (name) VALUES (?) RETURNING id, name');
+        $statement = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->prepare('INSERT INTO users (name) VALUES (?) RETURNING id, name');
         self::assertInstanceOf(ZtdPdoStatement::class, $statement);
         $statement->execute(['linus']);
 
@@ -335,7 +335,7 @@ final class ZtdPdoStatementTest extends TestCase
     {
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $statement = ZtdPdo::fromPdo($native)->prepare('INSERT INTO users (name) VALUES (?) RETURNING id, name');
+        $statement = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->prepare('INSERT INTO users (name) VALUES (?) RETURNING id, name');
         self::assertInstanceOf(ZtdPdoStatement::class, $statement);
         $statement->execute(['linus']);
 
@@ -349,7 +349,7 @@ final class ZtdPdoStatementTest extends TestCase
     {
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $statement = ZtdPdo::fromPdo($native)->prepare('INSERT INTO users (name) VALUES (?) RETURNING id, name');
+        $statement = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->prepare('INSERT INTO users (name) VALUES (?) RETURNING id, name');
         self::assertInstanceOf(ZtdPdoStatement::class, $statement);
         $statement->execute(['linus']);
 
@@ -365,7 +365,7 @@ final class ZtdPdoStatementTest extends TestCase
     {
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $statement = ZtdPdo::fromPdo($native)->prepare('INSERT INTO users (name) VALUES (?) RETURNING id, name');
+        $statement = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->prepare('INSERT INTO users (name) VALUES (?) RETURNING id, name');
         self::assertInstanceOf(ZtdPdoStatement::class, $statement);
         $statement->execute(['linus']);
         $statement->fetchObject();
@@ -376,7 +376,7 @@ final class ZtdPdoStatementTest extends TestCase
     public function testSetFetchModeIsRememberedAcrossAReprepare(): void
     {
         $native = new PDO('sqlite::memory:');
-        $statement = ZtdPdo::fromPdo($native)->prepare('SELECT ? AS value');
+        $statement = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->prepare('SELECT ? AS value');
         self::assertInstanceOf(ZtdPdoStatement::class, $statement);
         $statement->setFetchMode(PDO::FETCH_NUM);
 
@@ -500,7 +500,7 @@ final class ZtdPdoStatementTest extends TestCase
     {
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $statement = ZtdPdo::fromPdo($native)->prepare('INSERT INTO users (name) VALUES (?) RETURNING id, name');
+        $statement = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->prepare('INSERT INTO users (name) VALUES (?) RETURNING id, name');
         self::assertInstanceOf(ZtdPdoStatement::class, $statement);
         $statement->execute(['linus']);
 
@@ -530,7 +530,7 @@ final class ZtdPdoStatementTest extends TestCase
     {
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $statement = ZtdPdo::fromPdo($native)->prepare('INSERT INTO users (name) VALUES (?) RETURNING id, name');
+        $statement = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->prepare('INSERT INTO users (name) VALUES (?) RETURNING id, name');
         self::assertInstanceOf(ZtdPdoStatement::class, $statement);
         $statement->execute(['linus']);
 
@@ -541,7 +541,7 @@ final class ZtdPdoStatementTest extends TestCase
     {
         $pdo = new PDO('sqlite::memory:', null, null, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         $pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $ztdPdo = ZtdPdo::fromPdo($pdo);
+        $ztdPdo = ZtdPdo::fromPdo($pdo, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
         $statement = $ztdPdo->prepare("INSERT INTO users (name) VALUES ('ada'), ('grace') RETURNING id, name");
         self::assertInstanceOf(ZtdPdoStatement::class, $statement);
         $statement->execute();
@@ -558,7 +558,7 @@ final class ZtdPdoStatementTest extends TestCase
     {
         $pdo = new PDO('sqlite::memory:');
         $pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY)');
-        $statement = ZtdPdo::fromPdo($pdo)->prepare('INSERT INTO users VALUES (1)');
+        $statement = ZtdPdo::fromPdo($pdo, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->prepare('INSERT INTO users VALUES (1)');
         self::assertInstanceOf(ZtdPdoStatement::class, $statement);
         self::assertTrue($statement->execute());
         self::assertSame(1, $statement->rowCount());
@@ -572,14 +572,14 @@ final class ZtdPdoStatementTest extends TestCase
     {
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $statement = ZtdPdo::fromPdo($native)->prepare('INSERT INTO users (name) VALUES (?) RETURNING id, name');
+        $statement = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->prepare('INSERT INTO users (name) VALUES (?) RETURNING id, name');
         self::assertInstanceOf(ZtdPdoStatement::class, $statement);
         $statement->execute(['linus']);
         self::assertSame(1, $statement->fetchColumn());
         self::assertFalse($statement->fetchColumn());
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL)');
-        $statement = ZtdPdo::fromPdo($native)->prepare('INSERT INTO users (name) VALUES (?) RETURNING id, name');
+        $statement = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->prepare('INSERT INTO users (name) VALUES (?) RETURNING id, name');
         self::assertInstanceOf(ZtdPdoStatement::class, $statement);
         $statement->execute(['linus']);
         self::assertSame([1], $statement->fetchAll(PDO::FETCH_COLUMN));
@@ -617,7 +617,7 @@ final class ZtdPdoStatementTest extends TestCase
     {
         $native = new PDO('sqlite::memory:');
         $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
-        $statement = ZtdPdo::fromPdo($native)->query("INSERT INTO users VALUES (1, 'Ada'), (2, 'Grace') RETURNING id, name");
+        $statement = ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory())->query("INSERT INTO users VALUES (1, 'Ada'), (2, 'Grace') RETURNING id, name");
         self::assertInstanceOf(ZtdPdoStatement::class, $statement);
         self::assertSame(['Ada', 'Grace'], $statement->fetchAll(PDO::FETCH_COLUMN, 1));
         self::assertSame([], $statement->fetchAll(PDO::FETCH_COLUMN, 1));

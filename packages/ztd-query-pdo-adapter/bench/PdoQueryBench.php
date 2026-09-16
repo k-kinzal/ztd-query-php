@@ -32,7 +32,7 @@ final class PdoQueryBench
     {
         $this->native = new PDO('sqlite::memory:');
         $this->native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
-        $this->pdo = ZtdPdo::fromPdo($this->native);
+        $this->pdo = ZtdPdo::fromPdo($this->native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
         $rows = [];
         for ($id = 1; $id <= $params['rows']; $id++) {
             $rows[] = "({$id}, 'user-{$id}')";
@@ -53,7 +53,7 @@ final class PdoQueryBench
     #[Bench\Revs(1000)]
     public function benchWrapConnection(): void
     {
-        ZtdPdo::fromPdo($this->native);
+        ZtdPdo::fromPdo($this->native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
     }
 
     /**

@@ -36,7 +36,7 @@ deptrac:
           value: '^ZtdQuery\\Platform\\(MySql|Postgres|Sqlite)\\'
   ruleset:
     Adapter: [Session, Core]
-    Session: [Driver, Core, Platforms]
+    Session: [Driver, Core]
     Driver: [Core]
     Core: []
     Platforms: []

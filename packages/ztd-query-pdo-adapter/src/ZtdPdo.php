@@ -23,44 +23,45 @@ use ZtdQuery\Session;
  * Uses delegation pattern: extends PDO for type compatibility,
  * but delegates all operations to an inner PDO instance when using fromPdo().
  *
- * Supports multiple database platforms via SessionFactory injection or auto-detection:
- * - MySQL (k-kinzal/ztd-query-mysql)
- * - PostgreSQL (k-kinzal/ztd-query-postgres)
- * - SQLite (k-kinzal/ztd-query-sqlite)
+ * Shared PDO execution requires an explicit SessionFactory. Database-specific
+ * adapter subclasses provide their own default and validate the native driver.
  *
  * @visibility public
  * @example Simulate a write without changing the physical table
  *     $native = new \PDO('sqlite::memory:');
  *     $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
- *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo($native);
+ *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
  *     $pdo->exec("INSERT INTO users VALUES (1, 'Alice')") // => 1
  *     $pdo->query('SELECT name FROM users')->fetchColumn() // => 'Alice'
  *     $native->query('SELECT COUNT(*) FROM users')->fetchColumn() // => 0
  */
 class ZtdPdo extends PDO
 {
+    use \ZtdQuery\Adapter\Pdo\Session\SessionFactoryResolver;
+
     private ConnectionExecution $execution;
 
     /**
      * Configure a new ZTD-enabled PDO wrapper.
      *
      * If $factory is provided, it is used directly to create the session.
-     * If $factory is null, the factory is auto-detected from the PDO driver name.
+     * Database-specific subclasses provide a default factory; this shared facade requires one.
      *
      * @param array<int, mixed>|null $options Driver options, as PDO::__construct() takes them
      * @param ZtdConfig|null $config How ZTD is to behave, or null for the default
-     * @param SessionFactory|null $factory Platform to rewrite with, or null to read it off the driver
+     * @param SessionFactory|null $factory Platform to rewrite with, or null for the database-specific subclass default
      *
-     * @throws RuntimeException When the driver has no platform package installed
+     * @throws RuntimeException When no session factory is supplied to the shared facade
      * @visibility public
      * @example Open a ZTD connection
-     *     $pdo = new \ZtdQuery\Adapter\Pdo\ZtdPdo('sqlite::memory:');
+     *     $pdo = new \ZtdQuery\Adapter\Pdo\ZtdPdo('sqlite::memory:', factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $pdo->isZtdEnabled() // => true
      */
     public function __construct(string $dsn, ?string $username = null, ?string $password = null, ?array $options = null, ?ZtdConfig $config = null, ?SessionFactory $factory = null)
     {
         parent::__construct($dsn, $username, $password, $options);
-        $this->execution = new ConnectionExecution(new PDO($dsn, $username, $password, $options), $config, $factory);
+        $pdo = new PDO($dsn, $username, $password, $options);
+        $this->execution = new ConnectionExecution($pdo, static::resolveFactory($pdo, $factory), $config);
     }
 
     /**
@@ -70,26 +71,26 @@ class ZtdPdo extends PDO
      * The wrapped PDO instance will be used for all database operations.
      *
      * If $factory is provided, it is used directly to create the session.
-     * If $factory is null, the factory is auto-detected from the PDO driver name.
+     * Database-specific subclasses provide a default factory; this shared facade requires one.
      *
      * @param PDO $pdo Connection to wrap
      * @param ZtdConfig|null $config How ZTD is to behave, or null for the default
-     * @param SessionFactory|null $factory Platform to rewrite with, or null to read it off the driver
+     * @param SessionFactory|null $factory Platform to rewrite with, or null for the database-specific subclass default
      *
      * @return static The connection, with ZTD in front of it
      *
-     * @throws RuntimeException When the driver has no platform package installed
+     * @throws RuntimeException When no session factory is supplied to the shared facade
      *
      * @visibility public
      * @example Wrap an existing PDO connection
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $pdo->isZtdEnabled() // => true
      *     $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) // => 'sqlite'
      */
     public static function fromPdo(PDO $pdo, ?ZtdConfig $config = null, ?SessionFactory $factory = null): static
     {
         $instance = (new ReflectionClass(static::class))->newInstanceWithoutConstructor();
-        $instance->execution = new ConnectionExecution($pdo, $config, $factory);
+        $instance->execution = new ConnectionExecution($pdo, static::resolveFactory($pdo, $factory), $config);
         return $instance;
     }
 
@@ -100,7 +101,7 @@ class ZtdPdo extends PDO
      * the database; reads are answered from the shadow instead.
      * @visibility public
      * @example Resume shadowing after native access
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $pdo->disableZtd();
      *     $pdo->enableZtd();
      *     $pdo->isZtdEnabled() // => true
@@ -117,7 +118,7 @@ class ZtdPdo extends PDO
      * written, and the shadow is not consulted.
      *
      * @example Temporarily pass queries through to the database
-     *     $pdo = new \ZtdQuery\Adapter\Pdo\ZtdPdo('sqlite::memory:');
+     *     $pdo = new \ZtdQuery\Adapter\Pdo\ZtdPdo('sqlite::memory:', factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $pdo->disableZtd();
      *     $pdo->isZtdEnabled() // => false
      *     $pdo->enableZtd();
@@ -135,7 +136,7 @@ class ZtdPdo extends PDO
      * @return bool Whether writes are being shadowed rather than carried out
      * @visibility public
      * @example Inspect shadowing state
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $pdo->isZtdEnabled() // => true
      */
     public function isZtdEnabled(): bool
@@ -155,7 +156,7 @@ class ZtdPdo extends PDO
      * @example Bind values to a simulated INSERT
      *     $native = new \PDO('sqlite::memory:');
      *     $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo($native);
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $statement = $pdo->prepare('INSERT INTO users VALUES (:id, :name)');
      *     $statement->execute(['id' => 1, 'name' => 'Alice']) // => true
      *     $statement->rowCount() // => 1
@@ -185,7 +186,7 @@ class ZtdPdo extends PDO
      * @example Read virtual rows
      *     $native = new \PDO('sqlite::memory:');
      *     $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo($native);
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $pdo->exec("INSERT INTO users VALUES (1, 'Ada')");
      *     $pdo->query('SELECT name FROM users')->fetchColumn() // => 'Ada'
      *     $native->query('SELECT COUNT(*) FROM users')->fetchColumn() // => 0
@@ -210,7 +211,7 @@ class ZtdPdo extends PDO
      * @example Count simulated mutations
      *     $native = new \PDO('sqlite::memory:');
      *     $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo($native);
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $pdo->exec("INSERT INTO users VALUES (1, 'Ada')") // => 1
      *     $pdo->exec("UPDATE users SET name = 'Grace'") // => 1
      *     $native->query('SELECT COUNT(*) FROM users')->fetchColumn() // => 0
@@ -238,26 +239,28 @@ class ZtdPdo extends PDO
      *
      * @return static The new connection, with ZTD in front of it
      *
-     * @throws RuntimeException When the driver has no platform package installed
+     * @throws RuntimeException When no session factory is supplied to the shared facade
      * @visibility public
      * @example Create a connection through the static factory
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::connect('sqlite::memory:');
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::connect('sqlite::memory:', factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $pdo->isZtdEnabled() // => true
      */
     public static function connect(
         string $dsn,
         ?string $username = null,
         #[SensitiveParameter] ?string $password = null,
-        ?array $options = null
+        ?array $options = null,
+        ?ZtdConfig $config = null,
+        ?SessionFactory $factory = null,
     ): static {
-        return static::fromPdo(new PDO($dsn, $username, $password, $options));
+        return static::fromPdo(new PDO($dsn, $username, $password, $options), $config, $factory);
     }
 
     /**
      * {@inheritDoc}
      * @visibility public
      * @example Begin a transaction for native and shadow state
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $pdo->beginTransaction() // => true
      *     $pdo->inTransaction() // => true
      *     $pdo->rollBack();
@@ -274,7 +277,7 @@ class ZtdPdo extends PDO
      * @example Keep committed virtual writes
      *     $native = new \PDO('sqlite::memory:');
      *     $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo($native);
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $pdo->beginTransaction();
      *     $pdo->exec("INSERT INTO users VALUES (1, 'Ada')");
      *     $pdo->commit() // => true
@@ -293,7 +296,7 @@ class ZtdPdo extends PDO
      * @example Undo virtual writes in a transaction
      *     $native = new \PDO('sqlite::memory:');
      *     $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo($native);
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $pdo->beginTransaction();
      *     $pdo->exec("INSERT INTO users VALUES (1, 'Ada')");
      *     $pdo->rollBack() // => true
@@ -309,7 +312,7 @@ class ZtdPdo extends PDO
      * {@inheritDoc}
      * @visibility public
      * @example Observe transaction state
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $pdo->inTransaction() // => false
      *     $pdo->beginTransaction();
      *     $pdo->inTransaction() // => true
@@ -327,7 +330,7 @@ class ZtdPdo extends PDO
      * @example Read a generated shadow key
      *     $native = new \PDO('sqlite::memory:');
      *     $native->exec('CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT)');
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo($native);
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo($native, factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $pdo->exec("INSERT INTO users (name) VALUES ('Ada')");
      *     $pdo->lastInsertId() // => '1'
      */
@@ -341,7 +344,7 @@ class ZtdPdo extends PDO
      * {@inheritDoc}
      * @visibility public
      * @example Read a native SQLSTATE
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $pdo->disableZtd();
      *     $pdo->query('SELECT 1');
      *     $pdo->errorCode() // => '00000'
@@ -358,7 +361,7 @@ class ZtdPdo extends PDO
      * @return array{0: string|null, 1: int|null, 2: string|null}
      * @visibility public
      * @example Read native error information
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $pdo->disableZtd();
      *     $pdo->query('SELECT 1');
      *     $pdo->errorInfo()[0] // => '00000'
@@ -374,7 +377,7 @@ class ZtdPdo extends PDO
      * {@inheritDoc}
      * @visibility public
      * @example Read the underlying driver name
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) // => 'sqlite'
      */
     #[Override]
@@ -387,7 +390,7 @@ class ZtdPdo extends PDO
      * {@inheritDoc}
      * @visibility public
      * @example Set the default fetch mode
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $pdo->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, \PDO::FETCH_ASSOC) // => true
      *     $pdo->query('SELECT 7 AS id')->fetch() // => ['id' => 7]
      */
@@ -401,7 +404,7 @@ class ZtdPdo extends PDO
      * {@inheritDoc}
      * @visibility public
      * @example Quote a value using the native driver
-     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'));
+     *     $pdo = \ZtdQuery\Adapter\Pdo\ZtdPdo::fromPdo(new \PDO('sqlite::memory:'), factory: new \ZtdQuery\Platform\Sqlite\SqliteSessionFactory());
      *     $pdo->quote("O'Reilly") // => "'O''Reilly'"
      */
     #[Override]
