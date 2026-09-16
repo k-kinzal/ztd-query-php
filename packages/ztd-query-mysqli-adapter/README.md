@@ -18,11 +18,9 @@ This package provides `ZtdMysqli` and `ZtdMysqliStatement`, which extend `mysqli
 
 - PHP 8.1 or higher
 - MySQLi extension
-- MySQL 8.0.11 or later (CTE/`WITH` support required; MySQL 5.x is unsupported)
+- MySQL 8.0.11 - 9.1
 - [k-kinzal/ztd-query-php](https://github.com/k-kinzal/ztd-query-core) (core)
 - [k-kinzal/ztd-query-mysql](https://github.com/k-kinzal/ztd-query-mysql) (MySQL platform)
-
-The MySQL platform checks the server version when constructing or wrapping a connection and throws `RuntimeException` if it is unsupported or cannot be determined. MySQL integration tests run against 8.0.44 and 8.4.7.
 
 ## Installation
 

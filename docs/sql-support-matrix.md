@@ -2,8 +2,6 @@
 
 A list of SQL statements supported by ZTD. Since ZTD simulates query results without modifying the actual database, all operations are executed virtually.
 
-For MySQL, this matrix assumes **MySQL 8.0.11 or later**, with CTE/`WITH` support. MySQL 5.x cannot execute ZTD shadow queries. See [MySQL version requirements](mysql-spec.md#mysql-version-requirements); individual SQL features may require a newer server release.
-
 ## Legend
 
 | Status | Meaning |
