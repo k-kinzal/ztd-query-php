@@ -284,4 +284,61 @@ final class ConnectionExecutionTest extends TestCase
         }
     }
 
+    public function testBeginTransactionDefersTheDefaultSnapshotUntilTheFirstRead(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        try {
+            $native = $container->getData(mysqli::class);
+            $port = $container->getMappedPort(3306);
+            self::assertNotNull($port);
+            $other = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $port);
+            try {
+                $native->query('CREATE TABLE snapshot_rows (id INT PRIMARY KEY) ENGINE=InnoDB');
+                $native->query('SET SESSION TRANSACTION ISOLATION LEVEL REPEATABLE READ');
+                $execution = new ConnectionExecution($native);
+                self::assertTrue($execution->beginTransaction());
+                $other->query('INSERT INTO snapshot_rows VALUES (1)');
+                $result = $native->query('SELECT id FROM snapshot_rows');
+                self::assertInstanceOf(mysqli_result::class, $result);
+                self::assertSame([['id' => '1']], $result->fetch_all(MYSQLI_ASSOC));
+            } finally {
+                $native->rollback();
+                $other->close();
+                $native->close();
+            }
+        } finally {
+            $container->stop();
+        }
+    }
+
+    public function testCommitEndsTheNativeTransactionWithoutStartingAnother(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        try {
+            $native = $container->getData(mysqli::class);
+            $execution = new ConnectionExecution($native);
+            self::assertTrue($execution->beginTransaction());
+            self::assertTrue($execution->commit());
+            self::assertTrue($native->query('SET TRANSACTION ISOLATION LEVEL READ COMMITTED'));
+            $native->close();
+        } finally {
+            $container->stop();
+        }
+    }
+
+    public function testRollBackEndsTheNativeTransactionWithoutStartingAnother(): void
+    {
+        $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
+        try {
+            $native = $container->getData(mysqli::class);
+            $execution = new ConnectionExecution($native);
+            self::assertTrue($execution->beginTransaction());
+            self::assertTrue($execution->rollBack());
+            self::assertTrue($native->query('SET TRANSACTION ISOLATION LEVEL READ COMMITTED'));
+            $native->close();
+        } finally {
+            $container->stop();
+        }
+    }
+
 }
