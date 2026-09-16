@@ -1476,7 +1476,7 @@
             "dist": {
                 "type": "path",
                 "url": "../container",
-                "reference": "8e32fd244629d42930d4dbea62bb056d1f12d95e"
+                "reference": "aa9712a625bfa9d595ddd8784bc93075b9ab4b57"
             },
             "require": {
                 "ext-pdo": "*",
@@ -1490,7 +1490,7 @@
                 "phpunit/phpunit": "^10.5 || ^11 || ^12 || ^13"
             },
             "suggest": {
-                "ext-mysqli": "Required for MySQLi integration containers",
+                "ext-mysqli": "Required for integration tests using MySQLi",
                 "ext-pdo_mysql": "Required for MySQL containers",
                 "ext-pdo_pgsql": "Required for PostgreSQL containers"
             },

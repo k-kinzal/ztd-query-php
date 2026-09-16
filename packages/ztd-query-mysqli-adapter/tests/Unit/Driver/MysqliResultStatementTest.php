@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Driver;
 
-use Container\Mysqli\MySql80Container;
-use Container\Mysqli\MySql84Container;
+use Container\MySql80Container;
+use Container\MySql84Container;
 use mysqli;
 use mysqli_result;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -44,7 +44,8 @@ final class MysqliResultStatementTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $result = $connection->query("SELECT 1 AS id, 'Alice' AS name UNION ALL SELECT 2, 'Bob'");
             self::assertInstanceOf(mysqli_result::class, $result);
             $statement = new MysqliResultStatement($result, 2);
@@ -60,7 +61,8 @@ final class MysqliResultStatementTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $result = $connection->query("SELECT 1 AS id, 'Alice' AS name");
             self::assertInstanceOf(mysqli_result::class, $result);
             $resolver = self::createStub(ResultColumnTypeResolver::class);

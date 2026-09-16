@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use Container\Mysqli\MySql80Container;
-use Container\Mysqli\MySql84Container;
+use Container\MySql80Container;
+use Container\MySql84Container;
 use mysqli;
 use mysqli_result;
 use mysqli_sql_exception;
@@ -83,7 +83,8 @@ final class ZtdMysqliTest extends TestCase
             $host = str_replace('localhost', '127.0.0.1', $container->getHost());
             $port = $container->getMappedPort(3306);
             self::assertNotNull($port);
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $database = 'test';
             $other = new mysqli($host, 'root', 'root', $database, $port);
             try {
@@ -109,7 +110,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $config = ZtdConfig::default();
             $rewriter = self::createStub(SqlRewriter::class);
             $factory = self::createMock(SessionFactory::class);
@@ -127,7 +129,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             $ztd->disableZtd();
             self::assertFalse($ztd->isZtdEnabled());
@@ -143,7 +146,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             self::assertTrue($ztd->isZtdEnabled());
             $ztd->disableZtd();
@@ -158,7 +162,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             self::assertTrue($ztd->isZtdEnabled());
             $connection->close();
@@ -171,7 +176,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             $ztd->disableZtd();
             $statement = $ztd->prepare('SELECT 7 AS id');
@@ -191,7 +197,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             $statement = $ztd->prepare('SELECT 7 AS id');
             self::assertInstanceOf(ZtdMysqliStatement::class, $statement);
@@ -209,7 +216,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
             $rewriter = self::createStub(SqlRewriter::class);
             $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
@@ -236,7 +244,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
             $rewriter = self::createStub(SqlRewriter::class);
             $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
@@ -263,7 +272,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             $ztd->disableZtd();
             $result = $ztd->query('SELECT 7 AS id', MYSQLI_USE_RESULT);
@@ -279,7 +289,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
             $rewriter = self::createStub(SqlRewriter::class);
             $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
@@ -306,7 +317,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
             $rewriter = self::createStub(SqlRewriter::class);
             $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
@@ -325,7 +337,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             $result = $ztd->execute_query('SELECT ? AS value', ['enabled']);
             self::assertInstanceOf(mysqli_result::class, $result);
@@ -344,7 +357,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             $ztd->disableZtd();
             $ztd->query('CREATE TEMPORARY TABLE counts (id INT)');
@@ -360,7 +374,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
             $rewriter = self::createStub(SqlRewriter::class);
             $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
@@ -382,7 +397,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             self::assertTrue($ztd->begin_transaction());
             self::assertTrue($ztd->commit());
@@ -400,7 +416,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
             $rewriter = self::createStub(SqlRewriter::class);
             $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
@@ -423,7 +440,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
             $rewriter = self::createStub(SqlRewriter::class);
             $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
@@ -445,7 +463,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
             $rewriter = self::createStub(SqlRewriter::class);
             $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
@@ -472,7 +491,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
             $rewriter = self::createStub(SqlRewriter::class);
             $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
@@ -494,7 +514,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
             $rewriter = self::createStub(SqlRewriter::class);
             $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
@@ -517,7 +538,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $store = new ShadowStore();
             $rewriter = self::createStub(SqlRewriter::class);
             $rewriter->method('transactionStatement')->willReturnCallback((new MySqlTransactionStatementParser())->parse(...));
@@ -547,7 +569,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             $ztd->disableZtd();
             self::assertTrue($ztd->real_query('SELECT 7 AS id'));
@@ -564,7 +587,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             self::assertTrue($ztd->multi_query('SELECT 1 AS id; SELECT 2 AS id'));
             $first = $ztd->store_result();
@@ -585,7 +609,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             $connection->multi_query('SELECT 1; SELECT 2');
             $first = $connection->store_result();
@@ -607,7 +632,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             $connection->multi_query('SELECT 1; SELECT 2');
             $first = $connection->store_result();
@@ -628,7 +654,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             self::assertTrue($ztd->select_db('information_schema'));
             $result = $connection->query('SELECT DATABASE() AS name');
@@ -644,7 +671,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             self::assertTrue($ztd->set_charset('latin1'));
             self::assertSame('latin1', $connection->character_set_name());
@@ -658,7 +686,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             $connection->set_charset('latin1');
             self::assertSame('latin1', $ztd->character_set_name());
@@ -672,7 +701,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             self::assertSame("O\\'Reilly", $ztd->real_escape_string("O'Reilly"));
             $connection->close();
@@ -685,7 +715,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             self::assertSame("O\\'Reilly", $ztd->escape_string("O'Reilly"));
             $connection->close();
@@ -698,7 +729,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             self::assertTrue($ztd->change_user('root', 'root', 'information_schema'));
             $result = $connection->query('SELECT DATABASE() AS name');
@@ -714,7 +746,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             $connection->set_charset('latin1');
             $charset = $ztd->get_charset();
@@ -730,7 +763,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             self::assertSame($connection->server_info, $ztd->get_server_info());
             $connection->close();
@@ -743,7 +777,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             $stats = $ztd->get_connection_stats();
             self::assertArrayHasKey('bytes_sent', $stats);
@@ -758,7 +793,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             $connection->query("SELECT CAST('invalid' AS UNSIGNED)");
             $warning = $ztd->get_warnings();
@@ -774,7 +810,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             self::assertTrue($ztd->dump_debug_info());
             $connection->close();
@@ -787,7 +824,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             self::assertTrue($ztd->debug(''));
             $connection->close();
@@ -800,7 +838,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             self::assertTrue($ztd->options(MYSQLI_OPT_CONNECT_TIMEOUT, 5));
             $connection->close();
@@ -813,7 +852,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             self::assertTrue($ztd->set_opt(MYSQLI_OPT_CONNECT_TIMEOUT, 5));
             $connection->close();
@@ -826,7 +866,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             $status = $ztd->stat();
             self::assertIsString($status);
@@ -841,7 +882,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             $statement = $ztd->stmt_init();
             self::assertTrue($statement->prepare('SELECT 7 AS id'));
@@ -859,7 +901,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             $connection->real_query('SELECT 7 AS id');
             $result = $ztd->store_result();
@@ -875,7 +918,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             $connection->real_query('SELECT 7 AS id');
             $result = $ztd->use_result();
@@ -891,7 +935,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             self::assertSame($connection->thread_safe(), $ztd->thread_safe());
             $connection->close();
@@ -904,7 +949,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             $connection->query('SELECT 7 AS id', MYSQLI_ASYNC);
             $read = [$connection];
@@ -927,7 +973,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             $connection->query('SELECT 7 AS id', MYSQLI_ASYNC);
             $read = [$connection];
@@ -950,7 +997,8 @@ final class ZtdMysqliTest extends TestCase
             $host = str_replace('localhost', '127.0.0.1', $container->getHost());
             $port = $container->getMappedPort(3306);
             self::assertNotNull($port);
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             $thread = $connection->thread_id;
             self::assertTrue($ztd->close());
@@ -971,7 +1019,8 @@ final class ZtdMysqliTest extends TestCase
             $host = str_replace('localhost', '127.0.0.1', $container->getHost());
             $port = $container->getMappedPort(3306);
             self::assertNotNull($port);
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $connection->close();
             $connection = new mysqli();
             $rewriter = self::createStub(SqlRewriter::class);
@@ -993,7 +1042,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             set_error_handler(static fn (int $severity, string $message): bool => $severity === E_DEPRECATED && str_contains($message, 'mysqli::ping'));
             try {
@@ -1011,7 +1061,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             set_error_handler(static fn (int $severity, string $message): bool => $severity === E_DEPRECATED && str_contains($message, 'mysqli::get_client_info'));
             try {
@@ -1029,7 +1080,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             set_error_handler(static fn (int $severity, string $message): bool => $severity === E_DEPRECATED && str_contains($message, 'mysqli::init'));
             try {
@@ -1047,7 +1099,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             set_error_handler(static fn (int $severity, string $message): bool => $severity === E_DEPRECATED && str_contains($message, 'mysqli::refresh'));
             try {
@@ -1065,7 +1118,8 @@ final class ZtdMysqliTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             set_error_handler(static fn (int $severity, string $message): bool => $severity === E_DEPRECATED && str_contains($message, 'mysqli::ssl_set'));
             try {
@@ -1108,7 +1162,8 @@ final class ZtdMysqliTest extends TestCase
             $host = str_replace('localhost', '127.0.0.1', $container->getHost());
             $port = $container->getMappedPort(3306);
             self::assertNotNull($port);
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $ztd = ZtdMysqli::fromMysqli($connection);
             $nativeTarget = new mysqli($host, 'root', 'root', 'test', $port);
             $adapterTarget = new mysqli($host, 'root', 'root', 'test', $port);

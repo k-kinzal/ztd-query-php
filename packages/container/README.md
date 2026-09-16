@@ -1,54 +1,56 @@
 # Database Containers
 
-Shared Testcontainers definitions for integration and fuzz tests in this monorepo.
-Requires PHP 8.1+, Docker, and the PDO driver for the database being started.
-The MySQLi helper also requires `ext-mysqli`.
+Shared database container definitions for PHP 8.1+ and Docker. Every consumer uses
+one definition per database version from the `Container` namespace.
 
-Add `k-kinzal/container: dev-main` to the consuming package's `require-dev` and
-`{"type": "path", "url": "../container", "options": {"versions": {"k-kinzal/container": "dev-main"}}}` to its Composer repositories.
-Run the container-dependent tests from this monorepo. This internal development dependency is removed when packages are split for publication.
+## Versions
 
-## Definitions
+| Class | Image |
+|-------|-------|
+| `MySql56Container` | `mysql:5.6.51` |
+| `MySql57Container` | `mysql:5.7.44` |
+| `MySql80Container` | `mysql:8.0.44` |
+| `MySql81Container` | `mysql:8.1.0` |
+| `MySql82Container` | `mysql:8.2.0` |
+| `MySql83Container` | `mysql:8.3.0` |
+| `MySql84Container` | `container-registry.oracle.com/mysql/community-server:8.4.7` |
+| `MySql90Container` | `container-registry.oracle.com/mysql/community-server:9.0.1` |
+| `MySql91Container` | `container-registry.oracle.com/mysql/community-server:9.1.0` |
+| `PostgreSql16Container` | `postgres:16` |
+| `PostgreSql17Container` | `postgres:17.2` |
 
-The profiles preserve the existing images, credentials, database names, wait
-strategies, and container lifecycle settings.
+All containers initialize the `test` database. MySQL uses `root` / `root` and
+PostgreSQL uses `test` / `test`. MySQL data is stored in tmpfs, and timezone table
+loading is disabled to keep startup fast. Running the same class reuses its
+container until it is stopped; containers are removed when stopped.
 
-| Namespace | Definitions | Behavior |
-|-----------|-------------|----------|
-| `Container\Fuzz` | `MySql56Container`, `MySql57Container`, `MySql80Container`, `MySql81Container`, `MySql82Container`, `MySql83Container`, `MySql84Container`, `MySql90Container`, `MySql91Container`, `PostgreSqlContainer` | Pinned MySQL releases and PostgreSQL 17.2; disposable containers for SQL grammar fuzzing |
-| `Container\Reusable` | `MySql80Container`, `MySql84Container`, `PostgreSqlContainer` | MySQL 8.0.44 / 8.4.7 and PostgreSQL 16; reused within an adapter fuzzing process |
-| `Container\Fixture` | `MySql84Container` | MySQL 8.4.7 with the `test` database initialized |
-| `Container\Pdo` | `MySqlContainer`, `PostgreSqlContainer` | MySQL 8.0.44 (overridable with `MYSQL_VERSION`) and PostgreSQL 16; cached PDO connections |
-| `Container\Mysqli` | `MySql80Container`, `MySql84Container` | MySQL 8.0.44 / 8.4.7; fresh containers with a native MySQLi connection and an initialized `test` database |
-
-MySQL containers use `root` / `root`. PostgreSQL containers use `test` / `test`,
-with `fuzz_test` for fuzzing and `ztd_test` for integration tests.
-PostgreSQL containers wait for the server readiness log message.
+`MySqlContainer` and `PostgreSqlContainer` are abstract bases for the shared
+settings. Connection creation, database/schema isolation, and version selection
+belong to the caller. MySQL classes expose `getGrammarVersion()` for SQL grammar
+selection.
 
 ## Usage
 
+Add `k-kinzal/container: dev-main` to the consuming package's `require-dev` and
+`{"type": "path", "url": "../container", "options": {"versions": {"k-kinzal/container": "dev-main"}}}`
+to its Composer repositories. This internal development dependency is removed
+when packages are split for publication.
+
 ```php
-use Container\Fuzz\MySql80Container;
+use Container\MySql80Container;
 use Testcontainers\Testcontainers;
 
 $instance = Testcontainers::run(MySql80Container::class);
-$host = $instance->getHost();
+$host = str_replace('localhost', '127.0.0.1', $instance->getHost());
 $port = $instance->getMappedPort(3306);
-$grammarVersion = MySql80Container::getGrammarVersion();
+$pdo = new PDO("mysql:host=$host;port=$port;dbname=test;charset=utf8mb4", 'root', 'root');
+$mysqli = new mysqli($host, 'root', 'root', 'test', $port);
+$mysqli->set_charset('utf8mb4');
 ```
 
-```php
-use Container\Pdo\MySqlContainer;
-use Testcontainers\Testcontainers;
-
-$instance = Testcontainers::run(MySqlContainer::class);
-$pdo = $instance->getData(PDO::class);
-```
-
-Use `Container\Mysqli\MySql80Container` or `MySql84Container` and
-`$instance->getData(mysqli::class)` for a MySQLi connection. PDO containers are
-reused within the process; MySQLi containers restart on each `run()` call.
-Testcontainers stops the containers at process shutdown.
+MySQL readiness checks require `pdo_mysql`. PostgreSQL waits for the server's
+readiness log message. Install the appropriate PHP driver for the connections
+used by your code.
 
 ## Development
 

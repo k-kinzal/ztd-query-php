@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Fuzz\Container;
 
-use Container\Mysqli\MySql80Container;
-use Container\Mysqli\MySql84Container;
+use Container\MySql80Container;
+use Container\MySql84Container;
 use RuntimeException;
 use Testcontainers\Testcontainers;
 

@@ -4,68 +4,74 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
-use Container\Mysqli\MySql80Container;
-use Container\Mysqli\MySql84Container;
-use Container\Pdo\MySqlContainer;
-use Container\Pdo\PostgreSqlContainer;
+use Container\MySql80Container;
+use Container\MySql84Container;
+use Container\MySqlContainer;
+use Container\PostgreSql16Container;
+use Container\PostgreSql17Container;
+use Container\PostgreSqlContainer;
 use mysqli;
 use mysqli_result;
 use PDO;
 use PDOStatement;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Testcontainers\Testcontainers;
 
 #[CoversClass(MySqlContainer::class)]
+#[CoversClass(PostgreSqlContainer::class)]
 #[CoversClass(MySql80Container::class)]
 #[CoversClass(MySql84Container::class)]
-#[CoversClass(PostgreSqlContainer::class)]
+#[CoversClass(PostgreSql16Container::class)]
+#[CoversClass(PostgreSql17Container::class)]
 final class TestDatabaseTest extends TestCase
 {
-    public function testPdoMySqlReusesItsNativeConnection(): void
+    /** @return iterable<string, array{class-string<MySqlContainer>}> */
+    public static function mysqlVersions(): iterable
     {
-        $instance = Testcontainers::run(MySqlContainer::class);
-        $connection = $instance->getData(PDO::class);
-        self::assertInstanceOf(PDO::class, $connection);
-        $result = $connection->query('SELECT 1');
-        self::assertInstanceOf(PDOStatement::class, $result);
-        self::assertSame(1, $result->fetchColumn());
-        self::assertSame($connection, Testcontainers::run(MySqlContainer::class)->getData(PDO::class));
+        yield '8.0' => [MySql80Container::class];
+        yield '8.4' => [MySql84Container::class];
     }
 
-    public function testPostgreSqlReusesItsNativeConnection(): void
+    /** @return iterable<string, array{class-string<PostgreSqlContainer>}> */
+    public static function postgresVersions(): iterable
     {
-        $instance = Testcontainers::run(PostgreSqlContainer::class);
-        $connection = $instance->getData(PDO::class);
-        self::assertInstanceOf(PDO::class, $connection);
-        $result = $connection->query('SELECT current_database()');
-        self::assertInstanceOf(PDOStatement::class, $result);
-        self::assertSame('ztd_test', $result->fetchColumn());
-        self::assertSame($connection, Testcontainers::run(PostgreSqlContainer::class)->getData(PDO::class));
+        yield '16' => [PostgreSql16Container::class];
+        yield '17' => [PostgreSql17Container::class];
     }
 
-    public function testMysqli80InitializesItsTestDatabase(): void
+    /** @param class-string<MySqlContainer> $class */
+    #[DataProvider('mysqlVersions')]
+    public function testSameMySqlInstanceSupportsPdoAndMysqli(string $class): void
     {
-        $instance = Testcontainers::run(MySql80Container::class);
-        $connection = $instance->getData(mysqli::class);
-        self::assertInstanceOf(mysqli::class, $connection);
-        $result = $connection->query('SELECT DATABASE()');
+        $instance = Testcontainers::run($class);
+        $host = str_replace('localhost', '127.0.0.1', $instance->getHost());
+        $port = $instance->getMappedPort(3306);
+        self::assertNotNull($port);
+        $pdo = new PDO("mysql:host=$host;port=$port;dbname=test;charset=utf8mb4", 'root', 'root', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+        $mysqli = new mysqli($host, 'root', 'root', 'test', $port);
+        $mysqli->set_charset('utf8mb4');
+        $pdo->exec('CREATE TABLE shared_connection (id INT PRIMARY KEY)');
+        $pdo->exec('INSERT INTO shared_connection VALUES (42)');
+        $result = $mysqli->query('SELECT id FROM shared_connection');
         self::assertInstanceOf(mysqli_result::class, $result);
-        self::assertSame(['test'], $result->fetch_row());
-        self::assertSame('utf8mb4', $connection->character_set_name());
+        self::assertSame(['42'], $result->fetch_row());
+        self::assertSame($instance, Testcontainers::run($class));
+        $pdo->exec('DROP TABLE shared_connection');
     }
 
-    public function testMysqli84RestartsWithAnEmptyTestDatabase(): void
+    /** @param class-string<PostgreSqlContainer> $class */
+    #[DataProvider('postgresVersions')]
+    public function testPostgreSqlStartsWithTheCommonDatabase(string $class): void
     {
-        $first = Testcontainers::run(MySql84Container::class);
-        $firstConnection = $first->getData(mysqli::class);
-        self::assertInstanceOf(mysqli::class, $firstConnection);
-        $firstConnection->query('CREATE TABLE isolation_probe (id INT)');
-
-        $second = Testcontainers::run(MySql84Container::class);
-        $secondConnection = $second->getData(mysqli::class);
-        self::assertInstanceOf(mysqli::class, $secondConnection);
-        self::assertNotSame($firstConnection, $secondConnection);
-        self::assertTrue($secondConnection->query('CREATE TABLE isolation_probe (id INT)'));
+        $instance = Testcontainers::run($class);
+        $host = str_replace('localhost', '127.0.0.1', $instance->getHost());
+        $port = $instance->getMappedPort(5432);
+        $pdo = new PDO("pgsql:host=$host;port=$port;dbname=test", 'test', 'test', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
+        $result = $pdo->query('SELECT current_database()');
+        self::assertInstanceOf(PDOStatement::class, $result);
+        self::assertSame('test', $result->fetchColumn());
+        self::assertSame($instance, Testcontainers::run($class));
     }
 }

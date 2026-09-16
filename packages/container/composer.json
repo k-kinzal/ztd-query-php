@@ -15,7 +15,7 @@
         "phpunit/phpunit": "^10.5 || ^11 || ^12 || ^13"
     },
     "suggest": {
-        "ext-mysqli": "Required for MySQLi integration containers",
+        "ext-mysqli": "Required for integration tests using MySQLi",
         "ext-pdo_mysql": "Required for MySQL containers",
         "ext-pdo_pgsql": "Required for PostgreSQL containers"
     },

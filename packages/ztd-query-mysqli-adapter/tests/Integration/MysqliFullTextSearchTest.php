@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
-use Container\Mysqli\MySql80Container;
-use Container\Mysqli\MySql84Container;
+use Container\MySql80Container;
+use Container\MySql84Container;
 use mysqli;
 use mysqli_result;
 use PHPUnit\Framework\Attributes\Large;
@@ -31,7 +31,8 @@ final class MysqliFullTextSearchTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
 
             $rawMysqli->query(
                 'CREATE TABLE articles (id INT PRIMARY KEY, title VARCHAR(255), body TEXT, '

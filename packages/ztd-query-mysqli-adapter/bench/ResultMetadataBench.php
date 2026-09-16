@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Bench;
 
-use Container\Mysqli\MySql80Container;
+use Container\MySql80Container;
 use mysqli;
 use mysqli_result;
 use PhpBench\Attributes as Bench;
@@ -35,7 +35,8 @@ final class ResultMetadataBench
     public function setUp(array $params): void
     {
         $container = Testcontainers::run(MySql80Container::class);
-        $this->connection = $container->getData(mysqli::class);
+        $this->connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+        $this->connection->set_charset('utf8mb4');
         $projection = [];
         for ($column = 0; $column < $params['columns']; $column++) {
             $projection[] = $column . ' AS column_' . $column;

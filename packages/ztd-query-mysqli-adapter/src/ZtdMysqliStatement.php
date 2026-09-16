@@ -28,8 +28,9 @@ use ZtdQuery\Session;
  *
  * @visibility public
  * @example Execute a parameterized simulated insert
- *     $container = \Testcontainers\Testcontainers::run(\Container\Mysqli\MySql80Container::class);
- *     $native = $container->getData(\mysqli::class);
+ *     $container = \Testcontainers\Testcontainers::run(\Container\MySql80Container::class);
+ *     $native = new \mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+ *     $native->set_charset('utf8mb4');
  *     $native->query('CREATE TABLE contacts (id INT PRIMARY KEY, name VARCHAR(100))');
  *     $ztd = \ZtdQuery\Adapter\Mysqli\ZtdMysqli::fromMysqli($native);
  *     $statement = $ztd->prepare('INSERT INTO contacts VALUES (?, ?)');

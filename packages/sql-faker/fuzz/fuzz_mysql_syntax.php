@@ -26,15 +26,15 @@ register_shutdown_function(static function (): void {
     }
 });
 
-use Container\Fuzz\MySql56Container;
-use Container\Fuzz\MySql57Container;
-use Container\Fuzz\MySql80Container;
-use Container\Fuzz\MySql81Container;
-use Container\Fuzz\MySql82Container;
-use Container\Fuzz\MySql83Container;
-use Container\Fuzz\MySql84Container;
-use Container\Fuzz\MySql90Container;
-use Container\Fuzz\MySql91Container;
+use Container\MySql56Container;
+use Container\MySql57Container;
+use Container\MySql80Container;
+use Container\MySql81Container;
+use Container\MySql82Container;
+use Container\MySql83Container;
+use Container\MySql84Container;
+use Container\MySql90Container;
+use Container\MySql91Container;
 use Faker\Factory;
 use Fuzz\Target\MySqlSyntaxCheck;
 use SqlFaker\Generation\Choice\BytePlanCompiler;

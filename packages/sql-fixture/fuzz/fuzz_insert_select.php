@@ -17,7 +17,7 @@ register_shutdown_function(static function (): void {
     }
 });
 
-use Container\Fixture\MySql84Container;
+use Container\MySql84Container;
 use Fuzz\Target\InsertSelectTarget;
 use Testcontainers\Testcontainers;
 

@@ -17,7 +17,7 @@ use Fuzz\Correctness\Postgres\Target\InsertCorrectnessTarget;
 
 $faker = Factory::create();
 $faker->addProvider(new Fuzz\Correctness\FixedDateTimeProvider());
-$harness = new PgCorrectnessHarness($host, $port, 'fuzz_test', 'test', 'test');
+$harness = new PgCorrectnessHarness($host, $port, 'test', 'test', 'test');
 $sqlBuilder = new PgSchemaAwareSqlBuilder($faker);
 $target = new InsertCorrectnessTarget($harness, $sqlBuilder, $faker);
 

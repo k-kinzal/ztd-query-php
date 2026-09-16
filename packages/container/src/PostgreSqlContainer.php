@@ -2,47 +2,35 @@
 
 declare(strict_types=1);
 
-namespace Container\Reusable;
+namespace Container;
 
-use Override;
 use Testcontainers\Containers\GenericContainer\GenericContainer;
 use Testcontainers\Containers\WaitStrategy\LogMessageWaitStrategy;
 
-/**
- * The postgre sql container.
- */
-final class PostgreSqlContainer extends GenericContainer
+abstract class PostgreSqlContainer extends GenericContainer
 {
-    /**
-     * @var null|string
-     */
-    protected static $IMAGE = 'postgres:16';
-
-    /**
-     * @var null|string
-     */
+    /** @var null|string */
     protected static $REUSE_MODE = 'reuse';
 
-    /**
-     * @var array<int>|null
-     */
+    /** @var array<int>|null */
     protected static $EXPOSED_PORTS = [5432];
 
-    /**
-     * @var array<string, string>|null
-     */
+    /** @var array<string, string>|null */
     protected static $ENVIRONMENTS = [
         'POSTGRES_USER' => 'test',
         'POSTGRES_PASSWORD' => 'test',
-        'POSTGRES_DB' => 'fuzz_test',
+        'POSTGRES_DB' => 'test',
     ];
 
-    /**
-     * @var null|int
-     */
+    /** @var null|int */
     protected static $STARTUP_TIMEOUT = 300;
 
-    #[Override]
+    /** @var null|int */
+    protected static $STARTUP_CONFLICT_RETRY_ATTEMPTS = 10;
+
+    /** @var bool|null */
+    protected static $AUTO_REMOVE_ON_EXIT = true;
+
     protected function waitStrategy($instance): LogMessageWaitStrategy
     {
         unset($instance);

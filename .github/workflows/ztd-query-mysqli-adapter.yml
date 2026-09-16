@@ -14,6 +14,7 @@ on:
       - '.github/workflows/ztd-query-mysqli-adapter*.yml'
   pull_request:
     paths:
+      - 'packages/container/**'
       - 'packages/ztd-query-mysqli-adapter/**'
       - 'packages/ztd-query-mysql/**'
       - 'packages/ztd-query-core/**'

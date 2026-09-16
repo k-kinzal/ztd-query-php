@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Driver;
 
-use Container\Mysqli\MySql80Container;
-use Container\Mysqli\MySql84Container;
+use Container\MySql80Container;
+use Container\MySql84Container;
 use mysqli;
 use mysqli_result;
 use mysqli_stmt;
@@ -30,7 +30,8 @@ final class MysqliStatementTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $native = $connection->prepare('SELECT ? AS value');
             self::assertInstanceOf(mysqli_stmt::class, $native);
             $statement = new MysqliStatement($native, $connection);
@@ -46,7 +47,8 @@ final class MysqliStatementTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $native = $connection->prepare('SELECT ? AS value');
             self::assertInstanceOf(mysqli_stmt::class, $native);
             $value = 7;
@@ -65,7 +67,8 @@ final class MysqliStatementTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $native = $connection->prepare('SELECT 7 AS id UNION ALL SELECT 9 AS id');
             self::assertInstanceOf(mysqli_stmt::class, $native);
             $statement = new MysqliStatement($native, $connection);
@@ -89,7 +92,8 @@ final class MysqliStatementTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $connection->query('CREATE TEMPORARY TABLE counts (id INT)');
             $native = $connection->prepare('INSERT INTO counts VALUES (1), (2)');
             self::assertInstanceOf(mysqli_stmt::class, $native);
@@ -111,7 +115,8 @@ final class MysqliStatementTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $connection->query('CREATE TEMPORARY TABLE duplicate_keys (id INT PRIMARY KEY)');
             $connection->query('INSERT INTO duplicate_keys VALUES (1)');
             $native = $connection->prepare('INSERT INTO duplicate_keys VALUES (1)');
@@ -134,7 +139,8 @@ final class MysqliStatementTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $connection->query('CREATE TEMPORARY TABLE duplicate_keys (id INT PRIMARY KEY)');
             $connection->query('INSERT INTO duplicate_keys VALUES (1)');
             $native = $connection->prepare('INSERT INTO duplicate_keys VALUES (?)');
@@ -157,7 +163,8 @@ final class MysqliStatementTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $connection->query('CREATE TEMPORARY TABLE row_counts (id INT)');
             $native = $connection->prepare('INSERT INTO row_counts VALUES (1), (2)');
             self::assertInstanceOf(mysqli_stmt::class, $native);
