@@ -1,0 +1,51 @@
+{
+  "cli_version": "0.10.3",
+  "checkpoint_id": "01M2N4JSP6YTEVSJRHPRBGCXZ1",
+  "session_id": "01a0a849-a8db-73c0-a8d1-c11c5bdb9a5f",
+  "strategy": "manual-commit",
+  "created_at": "2026-09-16T12:55:37.855554Z",
+  "branch": "refactor/shared-database-containers",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".github/workflows/ztd-query-pdo-adapter.yml",
+    "packages/container/src/MySqlContainer.php",
+    "packages/container/src/PostgreSqlContainer.php"
+  ],
+  "agent": "Codex",
+  "model": "gpt-6-astra",
+  "turn_id": "408f7b9c2083",
+  "checkpoint_transcript_start": 417,
+  "transcript_lines_at_start": 417,
+  "compact_transcript_start": 48,
+  "token_usage": {
+    "input_tokens": 267527,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 1764352,
+    "output_tokens": 13364,
+    "api_call_count": 22
+  },
+  "session_metrics": {
+    "turn_count": 2
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-09-16T12:55:37.325419Z",
+    "agent_lines": 107,
+    "agent_removed": 0,
+    "human_added": 1717,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 1824,
+    "total_lines_changed": 3884,
+    "agent_percentage": 2.7548918640576727,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    }
+  ]
+}
