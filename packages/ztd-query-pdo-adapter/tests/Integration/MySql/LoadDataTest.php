@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Integration\MySql;
 
+use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
@@ -21,7 +22,14 @@ final class LoadDataTest extends TestCase
 {
     public function testLoadDataVariantsMutateOnlyTheShadowTable(): void
     {
-        [$databaseName, $pdo] = MySqlContainer::createTestDatabase();
+        $containerInstance = \Testcontainers\Testcontainers::run(MySqlContainer::class);
+        /** @var PDO $pdo */
+        $pdo = $containerInstance->getData(PDO::class);
+
+        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
+        $pdo->exec(sprintf('CREATE DATABASE `%s` CHARACTER SET utf8mb4', $databaseName));
+        $pdo->exec(sprintf('USE `%s`', $databaseName));
+
         $table = 'load_' . bin2hex(random_bytes(8));
 
         try {

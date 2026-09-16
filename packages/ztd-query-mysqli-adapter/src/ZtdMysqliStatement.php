@@ -9,7 +9,9 @@ use mysqli_stmt;
 use mysqli_warning;
 use Override;
 use ReturnTypeWillChange;
-use ZtdQuery\ExecuteResult;
+use ZtdQuery\Adapter\Mysqli\Native\MysqliStatementBindingBridge;
+use ZtdQuery\Adapter\Mysqli\Native\MysqliStatementPropertyReader;
+use ZtdQuery\Adapter\Mysqli\Session\StatementExecution;
 use ZtdQuery\Rewrite\RewritePlan;
 use ZtdQuery\Session;
 
@@ -26,7 +28,7 @@ use ZtdQuery\Session;
  *
  * @visibility public
  * @example Execute a parameterized simulated insert
- *     $container = \Testcontainers\Testcontainers::run(\Containers\MySql80Container::class);
+ *     $container = \Testcontainers\Testcontainers::run(\Tests\Container\MySql80Container::class);
  *     $native = $container->getData(\mysqli::class);
  *     $native->query('CREATE TABLE contacts (id INT PRIMARY KEY, name VARCHAR(100))');
  *     $ztd = \ZtdQuery\Adapter\Mysqli\ZtdMysqli::fromMysqli($native);
@@ -40,31 +42,7 @@ use ZtdQuery\Session;
  */
 final class ZtdMysqliStatement extends MysqliStatementBindingBridge
 {
-    /**
-     * Inner mysqli_stmt to delegate operations to.
-     * When ZTD is enabled, this is prepared with the rewritten SQL.
-     */
-    private mysqli_stmt $delegate;
-
-    /**
-     * ZTD session context.
-     */
-    private Session $session;
-
-    /**
-     * Rewrite plan from prepare time (null when ZTD disabled).
-     */
-    private ?RewritePlan $plan;
-
-    /**
-     * Last execution result from Session.
-     */
-    private ?ExecuteResult $result = null;
-
-    /**
-     * Cached mysqli_result from execute (for READ operations).
-     */
-    private mysqli_result|false|null $cachedMysqliResult = null;
+    private StatementExecution $execution;
 
     /**
      * Wrap the prepared statement with its session and optional rewrite plan.
@@ -72,9 +50,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     public function __construct(mysqli_stmt $delegate, Session $session, ?RewritePlan $plan)
     {
         parent::__construct($delegate);
-        $this->delegate = $delegate;
-        $this->session = $session;
-        $this->plan = $plan;
+        $this->execution = new StatementExecution($delegate, $session, $plan);
     }
 
     /**
@@ -86,23 +62,11 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
      */
     public function __get(string $name): mixed
     {
-        if ($this->result !== null && !$this->result->isPassthrough() && in_array($name, ['affected_rows', 'num_rows'], true)) {
-            return $this->result->rowCount();
+        $result = $this->execution->result();
+        if ($result !== null && !$result->isPassthrough() && in_array($name, ['affected_rows', 'num_rows'], true)) {
+            return $result->rowCount();
         }
-
-        return match ($name) {
-            'affected_rows' => $this->delegate->affected_rows,
-            'insert_id' => $this->delegate->insert_id,
-            'num_rows' => $this->delegate->num_rows,
-            'param_count' => $this->delegate->param_count,
-            'field_count' => $this->delegate->field_count,
-            'errno' => $this->delegate->errno,
-            'error' => $this->delegate->error,
-            'error_list' => $this->delegate->error_list,
-            'sqlstate' => $this->delegate->sqlstate,
-            'id' => $this->delegate->id,
-            default => null,
-        };
+        return (new MysqliStatementPropertyReader())->read($this->execution->native(), $name);
     }
 
     /**
@@ -136,11 +100,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
      */
     public function ztdAffectedRows(): int
     {
-        if ($this->result !== null && !$this->result->isPassthrough()) {
-            return $this->result->rowCount();
-        }
-
-        return (int) $this->delegate->affected_rows;
+        return $this->execution->affectedRows();
     }
 
     /**
@@ -152,19 +112,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     #[Override]
     public function execute(?array $params = null): bool
     {
-        $this->result = null;
-        if ($this->plan !== null && !$this->session->shouldExecute($this->plan)) {
-            return false;
-        }
-        if ($this->plan === null || !$this->session->needsPostProcessing($this->plan)) {
-            return $this->delegate->execute($params);
-        }
-        if (!$this->delegate->execute($params)) {
-            return false;
-        }
-        $this->cachedMysqliResult = $this->delegate->get_result();
-        $this->result = (new MysqliResultProcessor())->process($this->session, $this->plan, $this->cachedMysqliResult, $this->delegate->affected_rows);
-        return $this->result->isSuccess();
+        return $this->execution->execute($params);
     }
 
     /**
@@ -173,20 +121,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     #[Override]
     public function get_result(): mysqli_result|false
     {
-        if ($this->cachedMysqliResult !== null) {
-            $result = $this->cachedMysqliResult;
-            $this->cachedMysqliResult = null;
-
-            return $result;
-        }
-
-        if ($this->result !== null && !$this->result->isPassthrough()) {
-            if (!$this->result->hasResultSet()) {
-                return false;
-            }
-        }
-
-        return $this->delegate->get_result();
+        return $this->execution->getResult();
     }
 
     /**
@@ -195,13 +130,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     #[Override]
     public function fetch(): ?bool
     {
-        if ($this->result !== null && !$this->result->isPassthrough()) {
-            if (!$this->result->hasResultSet()) {
-                return null;
-            }
-        }
-
-        return $this->delegate->fetch();
+        return $this->execution->fetch();
     }
 
     /**
@@ -211,7 +140,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     #[ReturnTypeWillChange]
     public function close()
     {
-        $this->delegate->close();
+        $this->execution->native()->close();
         return true;
     }
 
@@ -221,7 +150,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     #[Override]
     public function free_result(): void
     {
-        $this->delegate->free_result();
+        $this->execution->native()->free_result();
     }
 
     /**
@@ -230,9 +159,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     #[Override]
     public function reset(): bool
     {
-        $this->result = null;
-
-        return $this->delegate->reset();
+        return $this->execution->reset();
     }
 
     /**
@@ -241,7 +168,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     #[Override]
     public function store_result(): bool
     {
-        return $this->delegate->store_result();
+        return $this->execution->native()->store_result();
     }
 
     /**
@@ -250,7 +177,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     #[Override]
     public function data_seek(int $offset): void
     {
-        $this->delegate->data_seek($offset);
+        $this->execution->native()->data_seek($offset);
     }
 
     /**
@@ -259,7 +186,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     #[Override]
     public function result_metadata(): mysqli_result|false
     {
-        return $this->delegate->result_metadata();
+        return $this->execution->native()->result_metadata();
     }
 
     /**
@@ -269,7 +196,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     #[Override]
     public function attr_get(int $attribute): int
     {
-        $value = $this->delegate->attr_get($attribute);
+        $value = $this->execution->native()->attr_get($attribute);
         if ($value === false) {
             throw new ZtdMysqliException('Unable to read the mysqli statement attribute.');
         }
@@ -283,7 +210,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     #[Override]
     public function attr_set(int $attribute, int $value): bool
     {
-        return $this->delegate->attr_set($attribute, $value);
+        return $this->execution->native()->attr_set($attribute, $value);
     }
 
     /**
@@ -292,7 +219,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     #[Override]
     public function get_warnings(): mysqli_warning|false
     {
-        return $this->delegate->get_warnings();
+        return $this->execution->native()->get_warnings();
     }
 
     /**
@@ -301,7 +228,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     #[Override]
     public function more_results(): bool
     {
-        return $this->delegate->more_results();
+        return $this->execution->native()->more_results();
     }
 
     /**
@@ -310,7 +237,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     #[Override]
     public function next_result(): bool
     {
-        return $this->delegate->next_result();
+        return $this->execution->native()->next_result();
     }
 
     /**
@@ -319,11 +246,12 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     #[Override]
     public function num_rows(): int|string
     {
-        if ($this->result !== null && !$this->result->isPassthrough()) {
-            return $this->result->rowCount();
+        $result = $this->execution->result();
+        if ($result !== null && !$result->isPassthrough()) {
+            return $result->rowCount();
         }
 
-        return $this->delegate->num_rows();
+        return $this->execution->native()->num_rows();
     }
 
     /**
@@ -332,7 +260,7 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     #[Override]
     public function prepare(string $query): bool
     {
-        return $this->delegate->prepare($query);
+        return $this->execution->native()->prepare($query);
     }
 
     /**
@@ -341,6 +269,6 @@ final class ZtdMysqliStatement extends MysqliStatementBindingBridge
     #[Override]
     public function send_long_data(int $param_num, string $data): bool
     {
-        return $this->delegate->send_long_data($param_num, $data);
+        return $this->execution->native()->send_long_data($param_num, $data);
     }
 }

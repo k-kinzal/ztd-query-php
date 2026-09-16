@@ -18,7 +18,14 @@ final class PreparedExecutionTest extends TestCase
 {
     public function testNativePositionsRemainBoundAcrossExpressionsAndMutations(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
         $products = 'products_' . bin2hex(random_bytes(8));
         $categories = 'categories_' . bin2hex(random_bytes(8));
 

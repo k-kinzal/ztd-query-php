@@ -6,6 +6,7 @@
     "minMsi": 80,
     "minCoveredMsi": 80,
     "timeout": 30,
+    "timeoutsAsEscaped": true,
     "tmpDir": "build/infection-tmp",
     "logs": {
         "text": "build/infection/escaped.log",
@@ -13,7 +14,8 @@
         "perMutator": "build/infection/per-mutator.md",
         "json": "build/infection/infection.json"
     },
-    "testFrameworkExtraArgs": "--no-extensions --testsuite=unit",
+    // Score all behavioral tests present in this package; documentation examples run separately.
+    "testFrameworkExtraArgs": "--no-extensions --testsuite=unit,integration",
     "testFramework": "phpunit",
     "phpUnit": {"configDir": ".", "customPath": "vendor/bin/phpunit"}
 }

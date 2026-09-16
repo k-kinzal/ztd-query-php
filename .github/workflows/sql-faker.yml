@@ -22,6 +22,7 @@ env:
 
 defaults:
   run:
+    shell: bash
     working-directory: packages/sql-faker
 
 jobs:
@@ -84,6 +85,8 @@ jobs:
           require-lock-file: true
       - name: Check installed platform requirements
         run: composer check-platform-reqs
+      - name: Check PSR-4 paths and ambiguous classes
+        run: composer autoload:check
       - name: Check the formatting
         run: composer format:check
       - name: Analyse with PHPStan
@@ -122,7 +125,16 @@ jobs:
       - name: Check installed platform requirements
         run: composer check-platform-reqs
       - name: Run the benchmarks
-        run: composer bench
+        run: |
+          mkdir -p build/phpbench
+          composer run-script --timeout=1200 bench -- --dump-file=build/phpbench/results.xml | tee build/phpbench/report.txt
+      - name: Upload benchmark measurements
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: sql-faker-phpbench
+          path: packages/sql-faker/build/phpbench/
+          if-no-files-found: ignore
 
   mutation:
     name: Mutation Testing
@@ -158,7 +170,7 @@ jobs:
         if: github.event_name == 'pull_request'
         run: >-
           php -d memory_limit=4G "$(command -v infection)"
-          --configuration=infection.json5
+          --configuration=infection.json5 --with-uncovered
           --threads=4
           --only-covering-test-cases
           --git-diff-lines
@@ -172,7 +184,7 @@ jobs:
         if: github.event_name != 'pull_request'
         run: >-
           php -d memory_limit=4G "$(command -v infection)"
-          --configuration=infection.json5
+          --configuration=infection.json5 --with-uncovered
           --threads=4
           --only-covering-test-cases
           --no-progress

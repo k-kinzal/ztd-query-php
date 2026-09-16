@@ -10,13 +10,11 @@ use Testcontainers\Containers\GenericContainer\GenericContainer;
 use Testcontainers\Containers\WaitStrategy\PDO\MySQLDSN;
 use Testcontainers\Containers\WaitStrategy\PDO\PDOConnectWaitStrategy;
 use Testcontainers\Hook\AfterStartHook;
-use Testcontainers\Testcontainers;
 
 /**
  * MySQL container definition for integration tests.
  *
  * Uses AfterStartHook to create and cache a PDO connection on first start.
- * Provides createTestDatabase() to create an isolated database per test.
  */
 final class MySqlContainer extends GenericContainer
 {
@@ -24,7 +22,7 @@ final class MySqlContainer extends GenericContainer
     /**
      * @var null|string
      */
-    protected static $IMAGE = 'mysql:8.0';
+    protected static $IMAGE = 'mysql:8.0.44';
 
     /**
      * @var null|string
@@ -49,9 +47,25 @@ final class MySqlContainer extends GenericContainer
     protected static $STARTUP_TIMEOUT = 300;
 
     /**
+     * Parallel PHPUnit workers can select the same seeded port candidates.
+     *
+     * @var null|int
+     */
+    protected static $STARTUP_CONFLICT_RETRY_ATTEMPTS = 10;
+
+    /**
      * @var bool|null
      */
     protected static $AUTO_REMOVE_ON_EXIT = true;
+
+    /**
+     * Select the MySQL version under test while retaining the standalone default.
+     */
+    public function __construct()
+    {
+        $version = getenv('MYSQL_VERSION');
+        parent::__construct('mysql:' . ($version === false ? '8.0.44' : $version));
+    }
 
     #[Override]
     protected function waitStrategy($instance): PDOConnectWaitStrategy
@@ -85,27 +99,4 @@ final class MySqlContainer extends GenericContainer
         $instance->setData($pdo);
     }
 
-    /**
-     * Run the container and create an isolated test database.
-     *
-     * @return array{string, PDO}
-     */
-    public static function createTestDatabase(): array
-    {
-        $host = getenv('MYSQL_HOST');
-        if ($host !== false) {
-            $port = getenv('MYSQL_PORT');
-            $pdo = new PDO(sprintf('mysql:host=%s;port=%d;charset=utf8mb4', $host, $port === false ? 3306 : (int) $port), 'root', 'root', [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]);
-        } else {
-            $instance = Testcontainers::run(self::class);
-            /** @var PDO $pdo */
-            $pdo = $instance->getData(PDO::class);
-        }
-
-        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
-        $pdo->exec(sprintf('CREATE DATABASE `%s` CHARACTER SET utf8mb4', $databaseName));
-        $pdo->exec(sprintf('USE `%s`', $databaseName));
-
-        return [$databaseName, $pdo];
-    }
 }

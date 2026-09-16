@@ -24,7 +24,14 @@ final class DomainTypeTest extends TestCase
 {
     public function testDomainConstraintsAndDmlRemainNativeInTheShadowStore(): void
     {
-        [$schemaName, $rawPdo] = PostgreSqlContainer::createTestSchema();
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $schemaName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
+        $rawPdo->exec(sprintf('SET search_path TO "%s"', $schemaName));
+
         $suffix = bin2hex(random_bytes(8));
         $positiveDomain = 'positive_int_' . $suffix;
         $percentageDomain = 'percentage_' . $suffix;

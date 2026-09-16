@@ -29,6 +29,7 @@
     // condition into an endless loop cannot be killed by an assertion, and Infection deliberately
     // does not avoid generating such mutants (infection/infection#1133, #2229). The mutation job
     // bounds runaway mutants with a PHP memory_limit instead of counting them as escaped.
+    "timeoutsAsEscaped": false,
     "tmpDir": "build/infection-tmp",
     "logs": {
         "text": "build/infection/escaped.log",
@@ -37,6 +38,7 @@
         "json": "build/infection/infection.json"
     },
     // Preserve PHPUnit result output for Infection by disabling the AI reporter.
+    // Score all behavioral tests present in this package; documentation examples run separately.
     "testFrameworkExtraArgs": "--no-extensions --testsuite=unit",
     "testFramework": "phpunit",
     "phpUnit": {

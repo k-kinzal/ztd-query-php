@@ -7,8 +7,10 @@ namespace Tests\Unit\Shadow\Mutation;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Tests\Fake\CascadingShop;
+use ZtdQuery\Schema\Key\ForeignKeyDefinition;
+use ZtdQuery\Schema\Key\ReferentialAction;
 use ZtdQuery\Schema\TableDefinition;
+use ZtdQuery\Schema\TableDefinitionRegistry;
 use ZtdQuery\Shadow\Mutation\Row\DeleteMutation;
 use ZtdQuery\Shadow\Mutation\Row\InsertMutation;
 use ZtdQuery\Shadow\Mutation\Row\MultiDeleteMutation;
@@ -22,6 +24,7 @@ use ZtdQuery\Shadow\Mutation\Table\SynchronizeMutation;
 use ZtdQuery\Shadow\Mutation\Table\TruncateMutation;
 use ZtdQuery\Shadow\Mutation\UpsertMutation;
 use ZtdQuery\Shadow\ReferentialIntegrityEnforcer;
+use ZtdQuery\Shadow\ShadowStore;
 
 #[CoversNothing]
 final class DataMutationTest extends TestCase
@@ -30,8 +33,14 @@ final class DataMutationTest extends TestCase
     public function testAMutationThatChangesRowsCarriesItsConsequencesToTheChildren(
         ShadowMutation $mutation,
     ): void {
-        $registry = CascadingShop::registry();
-        $before = CascadingShop::shadow();
+        $registry = new TableDefinitionRegistry();
+        $registry->register('parents', new TableDefinition(['id'], [], ['id'], [], []));
+        $registry->register('children', new TableDefinition(['id', 'parent_id'], [], ['id'], [], [], foreignKeys: [
+            'fk' => new ForeignKeyDefinition(['parent_id'], 'parents', ['id'], ReferentialAction::Cascade),
+        ]));
+        $before = new ShadowStore();
+        $before->set('parents', [['id' => 1]]);
+        $before->set('children', [['id' => 10, 'parent_id' => 1]]);
         $after = $before->snapshot();
         $after->set('parents', []);
 
@@ -59,8 +68,14 @@ final class DataMutationTest extends TestCase
 
     public function testAMutationThatChangesNoRowsCarriesNothingToTheChildren(): void
     {
-        $registry = CascadingShop::registry();
-        $before = CascadingShop::shadow();
+        $registry = new TableDefinitionRegistry();
+        $registry->register('parents', new TableDefinition(['id'], [], ['id'], [], []));
+        $registry->register('children', new TableDefinition(['id', 'parent_id'], [], ['id'], [], [], foreignKeys: [
+            'fk' => new ForeignKeyDefinition(['parent_id'], 'parents', ['id'], ReferentialAction::Cascade),
+        ]));
+        $before = new ShadowStore();
+        $before->set('parents', [['id' => 1]]);
+        $before->set('children', [['id' => 10, 'parent_id' => 1]]);
         $after = $before->snapshot();
         $after->set('parents', []);
         $mutation = new CreateTableMutation(

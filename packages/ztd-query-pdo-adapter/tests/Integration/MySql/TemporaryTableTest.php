@@ -22,7 +22,14 @@ final class TemporaryTableTest extends TestCase
 {
     public function testDmlContinuesAcrossTemporaryTableLifecycle(): void
     {
-        [$databaseName, $rawPdo] = MySqlContainer::createTestDatabase();
+        $containerInstance = \Testcontainers\Testcontainers::run(MySqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE DATABASE `%s` CHARACTER SET utf8mb4', $databaseName));
+        $rawPdo->exec(sprintf('USE `%s`', $databaseName));
+
 
         try {
             $ztdPdo = ZtdPdo::fromPdo($rawPdo);

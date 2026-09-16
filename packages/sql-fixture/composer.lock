@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e381b2276906f2667ed994b158804c43",
+    "content-hash": "f9607c650e1d812f5a49fb82ee697322",
     "packages": [
         {
             "name": "fakerphp/faker",
@@ -1623,26 +1623,27 @@
         },
         {
             "name": "k-kinzal/sql-faker",
-            "version": "dev-chore/sql-fixture-toolkit-latest",
+            "version": "dev-main",
             "dist": {
                 "type": "path",
                 "url": "../sql-faker",
-                "reference": "54b537b9673b578e5f2ff2ed957fc9e301060b21"
+                "reference": "cfe2c8731036b6e36b5d7c4576485283de886111"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
                 "php": "^8.1"
             },
             "require-dev": {
-                "brianium/paratest": "^6.11 || ^7",
+                "brianium/paratest": "^7.3",
                 "deptrac/deptrac": "^3.0",
-                "friendsofphp/php-cs-fixer": "^3.95.24",
+                "friendsofphp/php-cs-fixer": "^3.95.25",
                 "k-kinzal/php-ai-toolkit": "dev-main",
                 "k-kinzal/testcontainers-php": "^0.5.1",
                 "nikic/php-fuzzer": "^0.0.11",
                 "phpbench/phpbench": "^1.4",
                 "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
                 "phpstan/phpstan": "^2.1",
+                "phpstan/phpstan-strict-rules": "^2.0",
                 "phpunit/phpunit": "^10.5",
                 "squizlabs/php_codesniffer": "^4.0.4",
                 "symfony/filesystem": "^6.4"
@@ -1660,11 +1661,21 @@
             },
             "autoload-dev": {
                 "psr-4": {
-                    "Tests\\Unit\\SqlFaker\\": "tests/Unit/",
-                    "Fuzz\\": "fuzz/"
+                    "Tests\\": "tests/",
+                    "Fuzz\\": "fuzz/",
+                    "Bench\\": "bench/"
                 }
             },
             "scripts": {
+                "bench": [
+                    "phpbench run --report=aggregate"
+                ],
+                "bench:full": [
+                    "@bench"
+                ],
+                "bench:quick": [
+                    "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
+                ],
                 "build-mysql": [
                     "php bin/build-mysql.php"
                 ],
@@ -1674,46 +1685,28 @@
                 "build-sqlite": [
                     "php bin/build-sqlite.php"
                 ],
-                "bench": [
-                    "phpbench run --report=aggregate"
+                "compat": [
+                    "phpcs"
                 ],
-                "bench:quick": [
-                    "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
-                ],
-                "bench:full": [
-                    "@bench"
-                ],
-                "test": [
-                    "paratest --processes=auto"
-                ],
-                "doctest": [
-                    "phpunit --testsuite doctest"
+                "deptrac": [
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
                 ],
                 "docgen": [
-                    "cd ../.. && packages/sql-faker/vendor/bin/docgen --packages=packages/sql-faker --deptrac=packages/sql-faker/deptrac.yaml --output=packages/sql-faker/build/docs --cache-dir=packages/sql-faker/build/docgen-cache --title=k-kinzal/sql-faker"
-                ],
-                "docgen:serve": [
-                    "@docgen --serve"
+                    "docgen --packages=. --title=k-kinzal/sql-faker"
                 ],
                 "docgen:diff": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@docgen --diff=origin/main --serve"
                 ],
                 "docgen:fresh": [
                     "@docgen --no-cache"
                 ],
-                "test:unit": [
-                    "phpunit --testsuite unit"
+                "docgen:serve": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --serve"
                 ],
-                "lint": [
-                    "@format:check",
-                    "@phpstan",
-                    "@loc-guard",
-                    "@tree-guard",
-                    "@deptrac",
-                    "@compat"
-                ],
-                "compat": [
-                    "phpcs"
+                "doctest": [
+                    "phpunit --testsuite doctest"
                 ],
                 "format": [
                     "php-cs-fixer fix --allow-risky=yes"
@@ -1727,27 +1720,39 @@
                     "@fuzz:sqlite"
                 ],
                 "fuzz:mysql": [
+                    "@php -r \"is_dir('fuzz/corpus/mysql') || mkdir('fuzz/corpus/mysql', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_mysql_syntax.php fuzz/corpus/mysql/"
                 ],
                 "fuzz:pg": [
+                    "@php -r \"is_dir('fuzz/corpus/pg') || mkdir('fuzz/corpus/pg', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_pg_syntax.php fuzz/corpus/pg/"
                 ],
                 "fuzz:sqlite": [
+                    "@php -r \"is_dir('fuzz/corpus/sqlite') || mkdir('fuzz/corpus/sqlite', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_sqlite_syntax.php fuzz/corpus/sqlite/"
+                ],
+                "lint": [
+                    "@format:check",
+                    "@phpstan",
+                    "@compat",
+                    "@loc-guard",
+                    "@tree-guard",
+                    "@deptrac"
+                ],
+                "loc-guard": [
+                    "loc-guard --config=loc.yaml"
                 ],
                 "phpstan": [
                     "phpstan analyse --memory-limit=512M"
                 ],
-                "deptrac": [
-                    "deptrac analyse --config-file=deptrac.yaml",
-                    "deptrac debug:unassigned --config-file=deptrac.yaml"
+                "test": [
+                    "paratest --processes=auto"
                 ],
-                "deptrac:debug": [
-                    "deptrac debug:unassigned --config-file=deptrac.yaml",
-                    "deptrac debug:unused --config-file=deptrac.yaml"
+                "test:coverage": [
+                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
                 ],
-                "loc-guard": [
-                    "loc-guard --config=loc.yaml"
+                "test:unit": [
+                    "phpunit --testsuite unit"
                 ],
                 "tree-guard": [
                     "tree-guard --config=tree.yaml"
@@ -1968,16 +1973,16 @@
         },
         {
             "name": "nikic/php-parser",
-            "version": "v5.8.0",
+            "version": "v5.9.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/nikic/PHP-Parser.git",
-                "reference": "044a6a392ff8ad0d61f14370a5fbbd0a0107152f"
+                "reference": "9e33da9553fe7786f0962b35f4e4ecf01be89def"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/nikic/PHP-Parser/zipball/044a6a392ff8ad0d61f14370a5fbbd0a0107152f",
-                "reference": "044a6a392ff8ad0d61f14370a5fbbd0a0107152f",
+                "url": "https://api.github.com/repos/nikic/PHP-Parser/zipball/9e33da9553fe7786f0962b35f4e4ecf01be89def",
+                "reference": "9e33da9553fe7786f0962b35f4e4ecf01be89def",
                 "shasum": ""
             },
             "require": {
@@ -2019,9 +2024,9 @@
             ],
             "support": {
                 "issues": "https://github.com/nikic/PHP-Parser/issues",
-                "source": "https://github.com/nikic/PHP-Parser/tree/v5.8.0"
+                "source": "https://github.com/nikic/PHP-Parser/tree/v5.9.0"
             },
-            "time": "2026-07-04T14:30:18+00:00"
+            "time": "2026-09-13T18:51:52+00:00"
         },
         {
             "name": "phar-io/manifest",
@@ -2522,11 +2527,11 @@
         },
         {
             "name": "phpstan/phpstan",
-            "version": "2.2.13",
+            "version": "2.2.14",
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/9ba9ac76ee9c5cf5b56d58eb5deec6315b7a0260",
-                "reference": "9ba9ac76ee9c5cf5b56d58eb5deec6315b7a0260",
+                "url": "https://api.github.com/repos/phpstan/phpstan/zipball/9c672e7a8e791dfc3d30e55f683e73fc0b63a3ac",
+                "reference": "9c672e7a8e791dfc3d30e55f683e73fc0b63a3ac",
                 "shasum": ""
             },
             "require": {
@@ -2582,7 +2587,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-09-03T20:38:19+00:00"
+            "time": "2026-09-12T21:39:33+00:00"
         },
         {
             "name": "phpstan/phpstan-strict-rules",

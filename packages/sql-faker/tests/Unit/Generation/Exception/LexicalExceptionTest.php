@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\SqlFaker\Generation\Exception;
+namespace Tests\Unit\Generation\Exception;
 
 use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversClass;

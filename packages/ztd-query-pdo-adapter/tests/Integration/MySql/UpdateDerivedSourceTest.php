@@ -17,7 +17,14 @@ final class UpdateDerivedSourceTest extends TestCase
 {
     public function testUpdateJoinPreservesDerivedAggregateSource(): void
     {
-        [$databaseName, $rawPdo] = MySqlContainer::createTestDatabase();
+        $containerInstance = \Testcontainers\Testcontainers::run(MySqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE DATABASE `%s` CHARACTER SET utf8mb4', $databaseName));
+        $rawPdo->exec(sprintf('USE `%s`', $databaseName));
+
         $products = 'prefix_' . bin2hex(random_bytes(8));
         $summary = 'prefix_' . bin2hex(random_bytes(8));
 
@@ -47,7 +54,14 @@ final class UpdateDerivedSourceTest extends TestCase
 
     public function testUpdateJoinPreservesWindowedDerivedSource(): void
     {
-        [$databaseName, $rawPdo] = MySqlContainer::createTestDatabase();
+        $containerInstance = \Testcontainers\Testcontainers::run(MySqlContainer::class);
+        /** @var PDO $rawPdo */
+        $rawPdo = $containerInstance->getData(PDO::class);
+
+        $databaseName = 'ztd_' . bin2hex(random_bytes(8));
+        $rawPdo->exec(sprintf('CREATE DATABASE `%s` CHARACTER SET utf8mb4', $databaseName));
+        $rawPdo->exec(sprintf('USE `%s`', $databaseName));
+
         $scores = 'prefix_' . bin2hex(random_bytes(8));
         $rankings = 'prefix_' . bin2hex(random_bytes(8));
 
