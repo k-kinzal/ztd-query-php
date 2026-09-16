@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>k-kinzal/container — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/325/k-kinzal/container/">
+<meta name="description" content="Shared database containers for integration and fuzz testing">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="k-kinzal/container — ZTD Query PHP">
+<meta property="og:description" content="Shared database containers for integration and fuzz testing">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/325/k-kinzal/container/">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/325/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../">
+<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../index.html">ZTD Query PHP</a></div><div class="sb-pkg"><a href="../../k-kinzal/container/index.html">k-kinzal/container</a></div><nav class="sb-block"><div class="sb-title">On this page</div><ul class="sb-list"><li data-diff="same"><a href="#namespaces">Namespaces</a></li><li data-diff="same"><a href="#documents">Documents</a></li><li data-diff="same"><a href="#readme">README</a></li></ul></nav><nav class="sb-block"><div class="sb-title">Package</div><ul class="sb-list"><li data-diff="added"><a href="../../k-kinzal/container/all-items.html">All items</a></li><li data-diff="added"><a href="../../k-kinzal/container/index.html#documents">Documents</a></li></ul></nav><nav class="sb-block"><div class="sb-title">Namespaces</div><ul class="sb-list"><li data-diff="added"><a href="../../k-kinzal/container/Container/Fixture/index.html" title="Container\Fixture">Container\Fixture</a></li><li data-diff="added"><a href="../../k-kinzal/container/Container/Fuzz/index.html" title="Container\Fuzz">Container\Fuzz</a></li><li data-diff="added"><a href="../../k-kinzal/container/Container/Mysqli/index.html" title="Container\Mysqli">Container\Mysqli</a></li><li data-diff="added"><a href="../../k-kinzal/container/Container/Pdo/index.html" title="Container\Pdo">Container\Pdo</a></li><li data-diff="added"><a href="../../k-kinzal/container/Container/Reusable/index.html" title="Container\Reusable">Container\Reusable</a></li></ul></nav></nav>
+<div class="page">
+<header class="topbar">
+<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
+<nav class="crumbs"><span class="crumb-current">k-kinzal/container</span></nav>
+<div class="topbar-tools">
+<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 96c3cab77 to working tree">96c3cab77 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 96c3cab77 and working tree." data-off="This page documents what 96c3cab77 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-package">package</span>k-kinzal/container</h1></div>
+<p class="lede">Shared database containers for integration and fuzz testing</p>
+<div class="relation-row"><span class="relation-label">Repository</span> <a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com/k-kinzal/ztd-query-php</a></div>
+<div class="relation-row"><span class="relation-label">Required by</span> <a href="../../k-kinzal/sql-faker/index.html">k-kinzal/sql-faker</a> <span class="chip chip-sm chip-ghost">require-dev</span>, <a href="../../k-kinzal/sql-fixture/index.html">k-kinzal/sql-fixture</a> <span class="chip chip-sm chip-ghost">require-dev</span>, <a href="../../k-kinzal/ztd-query-mysqli-adapter/index.html">k-kinzal/ztd-query-mysqli-adapter</a> <span class="chip chip-sm chip-ghost">require-dev</span>, <a href="../../k-kinzal/ztd-query-pdo-adapter/index.html">k-kinzal/ztd-query-pdo-adapter</a> <span class="chip chip-sm chip-ghost">require-dev</span></div>
+<div class="relation-row"><span class="relation-label">External dependencies</span> <code>k-kinzal/testcontainers-php</code> <span class="dep-constraint">^0.5.1</span></div>
+<section data-diff="added"><h2 id="namespaces">Namespaces<a class="anchor" href="#namespaces">§</a></h2><div class="table-wrap"><table class="symbol-table"><tr data-diff="added"><td><a href="../../k-kinzal/container/Container/Fixture/index.html">Container\Fixture</a></td><td class="ns-counts"> <span class="ns-count k-class">1 class</span></td></tr><tr data-diff="added"><td><a href="../../k-kinzal/container/Container/Fuzz/index.html">Container\Fuzz</a></td><td class="ns-counts"> <span class="ns-count k-class">10 classes</span></td></tr><tr data-diff="added"><td><a href="../../k-kinzal/container/Container/Mysqli/index.html">Container\Mysqli</a></td><td class="ns-counts"> <span class="ns-count k-class">2 classes</span></td></tr><tr data-diff="added"><td><a href="../../k-kinzal/container/Container/Pdo/index.html">Container\Pdo</a></td><td class="ns-counts"> <span class="ns-count k-class">2 classes</span></td></tr><tr data-diff="added"><td><a href="../../k-kinzal/container/Container/Reusable/index.html">Container\Reusable</a></td><td class="ns-counts"> <span class="ns-count k-class">3 classes</span></td></tr></table></div></section>
+<section data-diff="added"><h2 id="documents">Documents <span class="count">1</span><a class="anchor" href="#documents">§</a></h2><div class="table-wrap"><table class="symbol-table"><tr data-diff="added"><td><a href="../../k-kinzal/container/doc/README.md.html">Database Containers</a></td><td class="item-ns">README.md</td></tr></table></div></section>
+<section class="readme" data-diff="same"><h2 id="readme">README<a class="anchor" href="#readme">§</a></h2><h2>Database Containers</h2>
+<p>Shared Testcontainers definitions for integration and fuzz tests in this monorepo. Requires PHP 8.1+, Docker, and the PDO driver for the database being started. The MySQLi helper also requires <code>ext-mysqli</code>.</p>
+<p>Add <code>k-kinzal/container: dev-main</code> to the consuming package&#039;s <code>require-dev</code> and <code>{&quot;type&quot;: &quot;path&quot;, &quot;url&quot;: &quot;../container&quot;, &quot;options&quot;: {&quot;versions&quot;: {&quot;k-kinzal/container&quot;: &quot;dev-main&quot;}}}</code> to its Composer repositories. Run the container-dependent tests from this monorepo. This internal development dependency is removed when packages are split for publication.</p>
+<h3>Definitions</h3>
+<p>The profiles preserve the existing images, credentials, database names, wait strategies, and container lifecycle settings.</p>
+<div class="table-wrap"><table><thead><tr><th>Namespace</th><th>Definitions</th><th>Behavior</th></tr></thead><tbody><tr><td><code>Container\Fuzz</code></td><td><code>MySql56Container</code>, <code>MySql57Container</code>, <code>MySql80Container</code>, <code>MySql81Container</code>, <code>MySql82Container</code>, <code>MySql83Container</code>, <code>MySql84Container</code>, <code>MySql90Container</code>, <code>MySql91Container</code>, <code>PostgreSqlContainer</code></td><td>Pinned MySQL releases and PostgreSQL 17.2; disposable containers for SQL grammar fuzzing</td></tr><tr><td><code>Container\Reusable</code></td><td><code>MySql80Container</code>, <code>MySql84Container</code>, <code>PostgreSqlContainer</code></td><td>MySQL 8.0.44 / 8.4.7 and PostgreSQL 16; reused within an adapter fuzzing process</td></tr><tr><td><code>Container\Fixture</code></td><td><code>MySql84Container</code></td><td>MySQL 8.4.7 with the <code>test</code> database initialized</td></tr><tr><td><code>Container\Pdo</code></td><td><code>MySqlContainer</code>, <code>PostgreSqlContainer</code></td><td>MySQL 8.0.44 (overridable with <code>MYSQL_VERSION</code>) and PostgreSQL 16; cached PDO connections</td></tr><tr><td><code>Container\Mysqli</code></td><td><code>MySql80Container</code>, <code>MySql84Container</code></td><td>MySQL 8.0.44 / 8.4.7; fresh containers with a native MySQLi connection and an initialized <code>test</code> database</td></tr></tbody></table></div>
+<p>MySQL containers use <code>root</code> / <code>root</code>. PostgreSQL containers use <code>test</code> / <code>test</code>, with <code>fuzz_test</code> for fuzzing and <code>ztd_test</code> for integration tests. PostgreSQL containers wait for the server readiness log message.</p>
+<h3>Usage</h3>
+<pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">Container\Fuzz\MySql80Container</span>;
+<span class="tok-kw">use</span> <span class="tok-id">Testcontainers\Testcontainers</span>;
+
+<span class="tok-var">$instance</span> = <span class="tok-id">Testcontainers</span>::<span class="tok-id">run</span>(<span class="tok-id">MySql80Container</span>::<span class="tok-kw">class</span>);
+<span class="tok-var">$host</span> = <span class="tok-var">$instance</span>-&gt;<span class="tok-id">getHost</span>();
+<span class="tok-var">$port</span> = <span class="tok-var">$instance</span>-&gt;<span class="tok-id">getMappedPort</span>(<span class="tok-num">3306</span>);
+<span class="tok-var">$grammarVersion</span> = <span class="tok-id">MySql80Container</span>::<span class="tok-id">getGrammarVersion</span>();</code></pre>
+<pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">Container\Pdo\MySqlContainer</span>;
+<span class="tok-kw">use</span> <span class="tok-id">Testcontainers\Testcontainers</span>;
+
+<span class="tok-var">$instance</span> = <span class="tok-id">Testcontainers</span>::<span class="tok-id">run</span>(<span class="tok-id">MySqlContainer</span>::<span class="tok-kw">class</span>);
+<span class="tok-var">$pdo</span> = <span class="tok-var">$instance</span>-&gt;<span class="tok-id">getData</span>(<span class="tok-id">PDO</span>::<span class="tok-kw">class</span>);</code></pre>
+<p>Use <code>Container\Mysqli\MySql80Container</code> or <code>MySql84Container</code> and <code>$instance-&gt;getData(mysqli::class)</code> for a MySQLi connection. PDO containers are reused within the process; MySQLi containers restart on each <code>run()</code> call. Testcontainers stops the containers at process shutdown.</p>
+<h3>Development</h3>
+<pre class="code-block"><code>composer install
+composer test:unit
+composer test:integration
+composer lint</code></pre>
+<p>Integration tests require Docker and <code>pdo_mysql</code>, <code>pdo_pgsql</code>, and <code>mysqli</code>.</p>
+</section>
+</main>
+<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div>
+<script src="../../assets/search-index.js" defer></script>
+<script src="../../assets/app.js" defer></script>
+</body>
+</html>
