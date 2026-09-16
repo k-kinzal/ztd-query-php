@@ -8,9 +8,11 @@ use PhpMyAdmin\SqlParser\Context;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
 use ZtdQuery\Connection\StatementInterface;
+use ZtdQuery\Platform\MySql\Connection\MySqlServerVersionGuard;
 use ZtdQuery\Platform\MySql\Connection\MySqlSessionSqlModeReflector;
 use ZtdQuery\Platform\MySql\Connection\Result\MySqlResultColumnTypeResolver;
 use ZtdQuery\Platform\MySql\MySqlSessionFactory;
@@ -120,6 +122,7 @@ use ZtdQuery\Sql\SqlTokenStream;
 #[UsesClass(MySqlSchemaParser::class)]
 #[UsesClass(MySqlSchemaReflector::class)]
 #[UsesClass(MySqlSessionSqlModeReflector::class)]
+#[UsesClass(MySqlServerVersionGuard::class)]
 #[UsesClass(DeleteTransformer::class)]
 #[UsesClass(InsertTransformer::class)]
 #[UsesClass(\ZtdQuery\Platform\MySql\Rewrite\Transformer\InsertRowRenderer::class)]
@@ -145,6 +148,8 @@ final class MySqlSessionFactoryTest extends TestCase
     {
         $empty = self::createStub(StatementInterface::class);
         $empty->method('fetchAll')->willReturn([]);
+        $version = self::createStub(StatementInterface::class);
+        $version->method('fetchAll')->willReturn([['ztd_server_version' => '8.0.11']]);
         $views = self::createStub(StatementInterface::class);
         $views->method('fetchAll')->willReturn([['name' => 'active_users']]);
         $create = self::createStub(StatementInterface::class);
@@ -154,6 +159,7 @@ final class MySqlSessionFactoryTest extends TestCase
         $connection = self::createStub(ConnectionInterface::class);
         $connection->method('query')->willReturnCallback(
             static fn (string $sql): StatementInterface => match ($sql) {
+                'SELECT VERSION() AS ztd_server_version' => $version,
                 'SHOW TABLES' => $empty,
                 "SHOW FULL TABLES WHERE Table_type = 'VIEW'" => $views,
                 'SHOW CREATE VIEW `active_users`' => $create,
@@ -173,9 +179,13 @@ final class MySqlSessionFactoryTest extends TestCase
     {
         $statement = self::createStub(StatementInterface::class);
         $statement->method('fetchAll')->willReturn([]);
+        $version = self::createStub(StatementInterface::class);
+        $version->method('fetchAll')->willReturn([['ztd_server_version' => '8.0.11']]);
 
         $connection = self::createStub(ConnectionInterface::class);
-        $connection->method('query')->willReturn($statement);
+        $connection->method('query')->willReturnCallback(
+            static fn (string $sql): StatementInterface => $sql === 'SELECT VERSION() AS ztd_server_version' ? $version : $statement,
+        );
 
         $config = new ZtdConfig();
         $factory = new MySqlSessionFactory();
@@ -190,11 +200,15 @@ final class MySqlSessionFactoryTest extends TestCase
         $empty->method('fetchAll')->willReturn([]);
         $sqlMode = self::createStub(StatementInterface::class);
         $sqlMode->method('fetchAll')->willReturn([['ztd_sql_mode' => 'STRICT_TRANS_TABLES,ANSI_QUOTES']]);
+        $version = self::createStub(StatementInterface::class);
+        $version->method('fetchAll')->willReturn([['ztd_server_version' => '8.0.11']]);
         $connection = self::createStub(ConnectionInterface::class);
         $connection->method('query')->willReturnCallback(
-            static fn (string $sql): StatementInterface => $sql === 'SELECT @@SESSION.sql_mode AS ztd_sql_mode'
-                ? $sqlMode
-                : $empty,
+            static fn (string $sql): StatementInterface => match ($sql) {
+                'SELECT VERSION() AS ztd_server_version' => $version,
+                'SELECT @@SESSION.sql_mode AS ztd_sql_mode' => $sqlMode,
+                default => $empty,
+            },
         );
         $previousMode = Context::getMode();
 
@@ -206,5 +220,19 @@ final class MySqlSessionFactoryTest extends TestCase
         } finally {
             Context::setMode($previousMode);
         }
+    }
+
+    public function testRejectsUnsupportedServerBeforeReflectingSchemaOrChangingSqlMode(): void
+    {
+        $version = self::createStub(StatementInterface::class);
+        $version->method('fetchAll')->willReturn([['ztd_server_version' => '5.7.44']]);
+        $connection = self::createMock(ConnectionInterface::class);
+        $connection->expects(self::once())->method('query')
+            ->with('SELECT VERSION() AS ztd_server_version')->willReturn($version);
+
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('ZTD requires MySQL 8.0.11 or later with WITH (CTE) support');
+
+        (new MySqlSessionFactory())->create($connection, ZtdConfig::default());
     }
 }

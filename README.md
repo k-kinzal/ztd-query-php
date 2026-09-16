@@ -7,6 +7,8 @@ A Zero Table Dependency testing library for PHP 8.1+ that enables SQL unit testi
 
 ZTD Query PHP wraps PDO/MySQLi to intercept and transform SQL queries using CTE (Common Table Expression) shadowing. This allows you to test SQL queries against fixture data using the real MySQL engine, without migrations, data seeding, or cleanup.
 
+MySQL ZTD sessions require **MySQL 8.0.11 or later** (the first MySQL 8.0 GA release). MySQL 5.6 and 5.7 do not support `WITH`/CTEs and cannot execute ZTD's shadow queries. See the [MySQL version requirements](docs/mysql-spec.md#mysql-version-requirements) for the official references and tested versions. The independent `sql-faker` and `sql-fixture` tools retain their own database version support.
+
 ## Packages
 
 | Package | Description |

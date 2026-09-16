@@ -18,9 +18,11 @@ This package provides `ZtdPdo` and `ZtdPdoStatement`, which extend `PDO` and `PD
 
 - PHP 8.1 or higher
 - PDO extension
-- MySQL 5.6 - 9.1
+- MySQL 8.0.11 or later when using the MySQL platform (CTE/`WITH` support required; MySQL 5.x is unsupported)
 - [k-kinzal/ztd-query-php](https://github.com/k-kinzal/ztd-query-core) (core)
 - [k-kinzal/ztd-query-mysql](https://github.com/k-kinzal/ztd-query-mysql) (MySQL platform)
+
+The MySQL platform checks the server version when constructing or wrapping a connection and throws `RuntimeException` if it is unsupported or cannot be determined. MySQL integration tests run against 8.0.44 and 8.4.7.
 
 ## Installation
 

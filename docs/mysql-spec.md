@@ -2,6 +2,20 @@
 
 This document defines how ZTD (Zero Downtime Deployment) handles MySQL SQL statements. ZTD simulates query results without modifying the physical database by using CTEs to shadow tables and virtualize writes.
 
+## MySQL Version Requirements
+
+ZTD's MySQL platform and its PDO/MySQLi adapters require **MySQL 8.0.11 or later**. MySQL 5.6 and 5.7 are unsupported because they cannot execute the `WITH` queries used for CTE shadowing, even when the original query is a plain `SELECT`, `INSERT`, `UPDATE`, or `DELETE`.
+
+- MySQL added nonrecursive and recursive CTEs in the [8.0.1 development milestone](https://dev.mysql.com/doc/relnotes/mysql/8.0/en/news-8-0-1.html).
+- The [first generally available MySQL 8.0 release was 8.0.11](https://dev.mysql.com/doc/refman/8.0/en/faqs-general.html). This is ZTD's minimum supported MySQL version; pre-GA MySQL 8.0 releases are excluded.
+- MySQL's [CTE name resolution rules](https://dev.mysql.com/doc/refman/8.0/en/with.html) let CTEs hide base tables and views, which is the basis of ZTD shadowing.
+
+`MySqlSessionFactory` checks `SELECT VERSION()` before configuring SQL mode or reflecting schemas. Unsupported or undetermined versions raise `RuntimeException`. MariaDB version numbers are not treated as MySQL versions; MariaDB is outside this platform's support contract.
+
+The adapter integration and execution fuzz test matrices exercise MySQL **8.0.44** and **8.4.7**. The minimum version enables the ZTD mechanism; individual SQL features still depend on the connected server version.
+
+These requirements apply to ZTD packages only. `sql-faker` and `sql-fixture` are independent validation tools, so their supported database versions are unchanged.
+
 ## Overview
 
 ZTD categorizes SQL statements into three handling modes:

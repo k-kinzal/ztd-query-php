@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace ZtdQuery\Platform\MySql;
 
 use PhpMyAdmin\SqlParser\Context;
+use RuntimeException;
 use ZtdQuery\Config\ZtdConfig;
 use ZtdQuery\Connection\ConnectionInterface;
+use ZtdQuery\Platform\MySql\Connection\MySqlServerVersionGuard;
 use ZtdQuery\Platform\MySql\Connection\MySqlSessionSqlModeReflector;
 use ZtdQuery\Platform\MySql\Connection\Result\MySqlResultColumnTypeResolver;
 use ZtdQuery\Platform\MySql\Rewrite\MySqlQueryGuard;
@@ -36,9 +38,12 @@ final class MySqlSessionFactory implements SessionFactory
 {
     /**
      * Create a Session pre-configured for MySQL.
+     *
+     * @throws RuntimeException When the server version is unavailable or unsupported.
      */
     public function create(ConnectionInterface $connection, ZtdConfig $config): Session
     {
+        (new MySqlServerVersionGuard())->validate($connection);
         Context::setMode((new MySqlSessionSqlModeReflector($connection))->reflect());
 
         $shadowStore = new ShadowStore();

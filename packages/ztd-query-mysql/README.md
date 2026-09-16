@@ -21,7 +21,10 @@ This package is used internally by the [PDO adapter](https://github.com/k-kinzal
 ## Requirements
 
 - PHP 8.1 or higher
+- MySQL 8.0.11 or later (CTE/`WITH` support required; MySQL 5.x is unsupported)
 - [k-kinzal/ztd-query-php](https://github.com/k-kinzal/ztd-query-core) (core)
+
+MySQL introduced CTEs in the [8.0.1 development milestone](https://dev.mysql.com/doc/relnotes/mysql/8.0/en/news-8-0-1.html); [8.0.11 was the first GA release](https://dev.mysql.com/doc/refman/8.0/en/faqs-general.html). ZTD uses this GA baseline because it rewrites table access to `WITH` queries even when the original SQL does not use CTEs. Adapter integration tests run against MySQL 8.0.44 and 8.4.7. SQL features introduced in later server releases still require those releases.
 
 ## Installation
 
@@ -44,9 +47,10 @@ $session = (new MySqlSessionFactory())->create($connection, ZtdConfig::default()
 ```
 
 The factory automatically:
-1. Reflects the database schema via `SHOW CREATE TABLE`
-2. Sets up the SQL parser, query guard, and all transformers
-3. Configures the shadow store for virtual write tracking
+1. Checks the server version, throwing `RuntimeException` for an unsupported or undetermined version
+2. Reflects the database schema via `SHOW CREATE TABLE`
+3. Sets up the SQL parser, query guard, and all transformers
+4. Configures the shadow store for virtual write tracking
 
 ### Query Classification
 
