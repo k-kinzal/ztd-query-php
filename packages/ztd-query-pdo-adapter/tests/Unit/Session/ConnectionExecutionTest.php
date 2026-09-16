@@ -11,6 +11,7 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use RuntimeException;
 use ZtdQuery\Adapter\Pdo\Driver\PdoConnection;
 use ZtdQuery\Adapter\Pdo\Session\ConnectionExecution;
 use ZtdQuery\Adapter\Pdo\Session\PreparedQuery;
@@ -140,5 +141,16 @@ final class ConnectionExecutionTest extends TestCase
         self::assertSame('7', $execution->lastInsertId('id'));
         $execution->session()->disable();
         self::assertSame('7', $execution->lastInsertId());
+    }
+    public function testUsesTheSuppliedFactoryAndConfigurationToBuildItsSession(): void
+    {
+        $config = new \ZtdQuery\Config\ZtdConfig();
+        $factory = $this->createMock(\ZtdQuery\Platform\SessionFactory::class);
+        $factory->expects(self::once())->method('create')
+            ->with(self::isInstanceOf(\ZtdQuery\Connection\ConnectionInterface::class), self::identicalTo($config))
+            ->willThrowException(new RuntimeException('Factory could not reflect the schema.'));
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Factory could not reflect the schema.');
+        new ConnectionExecution(new PDO('sqlite::memory:'), $factory, $config);
     }
 }

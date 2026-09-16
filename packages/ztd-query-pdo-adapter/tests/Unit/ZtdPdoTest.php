@@ -341,4 +341,39 @@ final class ZtdPdoTest extends TestCase
         $this->expectExceptionMessage('Provide a SessionFactory or use a database-specific PDO adapter.');
         ZtdPdo::fromPdo(new PDO('sqlite::memory:'));
     }
+    public function testOpeningAConnectionForwardsTheFactoryAndConfiguration(): void
+    {
+        $config = new \ZtdQuery\Config\ZtdConfig();
+        $factory = $this->createMock(\ZtdQuery\Platform\SessionFactory::class);
+        $factory->expects(self::once())->method('create')
+            ->with(self::isInstanceOf(\ZtdQuery\Connection\ConnectionInterface::class), self::identicalTo($config))
+            ->willThrowException(new RuntimeException('Factory could not reflect the schema.'));
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Factory could not reflect the schema.');
+        new ZtdPdo('sqlite::memory:', config: $config, factory: $factory);
+    }
+
+    public function testConnectForwardsTheFactoryAndConfiguration(): void
+    {
+        $config = new \ZtdQuery\Config\ZtdConfig();
+        $factory = $this->createMock(\ZtdQuery\Platform\SessionFactory::class);
+        $factory->expects(self::once())->method('create')
+            ->with(self::isInstanceOf(\ZtdQuery\Connection\ConnectionInterface::class), self::identicalTo($config))
+            ->willThrowException(new RuntimeException('Factory could not reflect the schema.'));
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Factory could not reflect the schema.');
+        ZtdPdo::connect('sqlite::memory:', config: $config, factory: $factory);
+    }
+
+    public function testFromPdoForwardsTheFactoryAndConfiguration(): void
+    {
+        $config = new \ZtdQuery\Config\ZtdConfig();
+        $factory = $this->createMock(\ZtdQuery\Platform\SessionFactory::class);
+        $factory->expects(self::once())->method('create')
+            ->with(self::isInstanceOf(\ZtdQuery\Connection\ConnectionInterface::class), self::identicalTo($config))
+            ->willThrowException(new RuntimeException('Factory could not reflect the schema.'));
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('Factory could not reflect the schema.');
+        ZtdPdo::fromPdo(new PDO('sqlite::memory:'), $config, $factory);
+    }
 }

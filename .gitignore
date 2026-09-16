@@ -99,6 +99,9 @@ phpcs.xml
 vendor/
 /wpcs/*
 
+# Deptrac cache
+.deptrac.cache
+
 # PHPStan cache
 .phpstan.cache/
 
