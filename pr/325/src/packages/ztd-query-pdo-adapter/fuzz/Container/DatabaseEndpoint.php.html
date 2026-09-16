@@ -41,9 +41,9 @@
 <span class="src-line" id="L4" data-diff="same"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5" data-diff="same"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">Fuzz\Container</span>;</span>
 <span class="src-line" id="L6" data-diff="same"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">Container\Reusable\MySql80Container</span>;</span>
-<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">Container\Reusable\MySql84Container</span>;</span>
-<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">Container\Reusable\PostgreSqlContainer</span>;</span>
+<span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">Container\MySql80Container</span>;</span>
+<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">Container\MySql84Container</span>;</span>
+<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">Container\PostgreSql16Container</span>;</span>
 <span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">RuntimeException</span>;</span>
 <span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">Testcontainers\Testcontainers</span>;</span>
 <span class="src-line" id="L12" data-diff="same"><a class="ln" href="#L12">12</a></span>
@@ -77,7 +77,8 @@
 <span class="src-line" id="L40" data-diff="same"><a class="ln" href="#L40">40</a>        <span class="tok-kw">if</span> (<span class="tok-var">$host</span> !== <span class="tok-id">false</span>) {</span>
 <span class="src-line" id="L41" data-diff="same"><a class="ln" href="#L41">41</a>            <span class="tok-kw">return</span> [<span class="tok-var">$host</span>, <span class="tok-id">self</span>::<span class="tok-id">port</span>(<span class="tok-str">&#039;PG_PORT&#039;</span>, <span class="tok-num">5432</span>)];</span>
 <span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a>        }</span>
-<span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a>        <span class="tok-var">$instance</span> = <span class="tok-id">Testcontainers</span>::<span class="tok-id">run</span>(<span class="tok-id">PostgreSqlContainer</span>::<span class="tok-kw">class</span>);</span>
+<span class="src-line" data-diff="removed"><span class="ln">40</span>        <span class="tok-var">$instance</span> = <span class="tok-id">Testcontainers</span>::<span class="tok-id">run</span>(<span class="tok-id">PostgreSqlContainer</span>::<span class="tok-kw">class</span>);</span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>        <span class="tok-var">$instance</span> = <span class="tok-id">Testcontainers</span>::<span class="tok-id">run</span>(<span class="tok-id">PostgreSql16Container</span>::<span class="tok-kw">class</span>);</span>
 <span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a></span>
 <span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a>        <span class="tok-kw">return</span> [<span class="tok-id">str_replace</span>(<span class="tok-str">&#039;localhost&#039;</span>, <span class="tok-str">&#039;127.0.0.1&#039;</span>, <span class="tok-var">$instance</span>-&gt;<span class="tok-id">getHost</span>()), <span class="tok-var">$instance</span>-&gt;<span class="tok-id">getMappedPort</span>(<span class="tok-num">5432</span>) ?? <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">RuntimeException</span>(<span class="tok-str">&#039;PostgreSQL port was not mapped.&#039;</span>)];</span>
 <span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a>    }</span>

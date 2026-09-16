@@ -41,8 +41,8 @@
 <span class="src-line" id="L4" data-diff="same"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5" data-diff="same"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">Tests\Integration</span>;</span>
 <span class="src-line" id="L6" data-diff="same"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">Container\Mysqli\MySql80Container</span>;</span>
-<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">Container\Mysqli\MySql84Container</span>;</span>
+<span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">Container\MySql80Container</span>;</span>
+<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">Container\MySql84Container</span>;</span>
 <span class="src-line" id="L9" data-diff="same"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">mysqli</span>;</span>
 <span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">mysqli_result</span>;</span>
 <span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\Attributes\Large</span>;</span>
@@ -70,33 +70,35 @@
 <span class="src-line" id="L31" data-diff="same"><a class="ln" href="#L31">31</a>    {</span>
 <span class="src-line" id="L32" data-diff="same"><a class="ln" href="#L32">32</a>        <span class="tok-var">$container</span> = <span class="tok-id">Testcontainers</span>::<span class="tok-id">run</span>(<span class="tok-id">getenv</span>(<span class="tok-str">&#039;MYSQL_VERSION&#039;</span>) === <span class="tok-str">&#039;8.4.7&#039;</span> ? <span class="tok-id">MySql84Container</span>::<span class="tok-kw">class</span> : <span class="tok-id">MySql80Container</span>::<span class="tok-kw">class</span>);</span>
 <span class="src-line" id="L33" data-diff="same"><a class="ln" href="#L33">33</a>        <span class="tok-kw">try</span> {</span>
-<span class="src-line" id="L34" data-diff="same"><a class="ln" href="#L34">34</a>            <span class="tok-var">$rawMysqli</span> = <span class="tok-var">$container</span>-&gt;<span class="tok-id">getData</span>(<span class="tok-id">mysqli</span>::<span class="tok-kw">class</span>);</span>
-<span class="src-line" id="L35" data-diff="same"><a class="ln" href="#L35">35</a></span>
-<span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a>            <span class="tok-var">$rawMysqli</span>-&gt;<span class="tok-id">query</span>(</span>
-<span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a>                <span class="tok-str">&#039;CREATE TABLE articles (id INT PRIMARY KEY, title VARCHAR(255), body TEXT, &#039;</span></span>
-<span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a>                . <span class="tok-str">&#039;FULLTEXT KEY article_search (title, body)) ENGINE=InnoDB&#039;</span>,</span>
-<span class="src-line" id="L39" data-diff="same"><a class="ln" href="#L39">39</a>            );</span>
-<span class="src-line" id="L40" data-diff="same"><a class="ln" href="#L40">40</a>            <span class="tok-var">$ztdMysqli</span> = <span class="tok-id">ZtdMysqli</span>::<span class="tok-id">fromMysqli</span>(<span class="tok-var">$rawMysqli</span>);</span>
-<span class="src-line" id="L41" data-diff="same"><a class="ln" href="#L41">41</a>            <span class="tok-id">self</span>::<span class="tok-id">assertNotFalse</span>(<span class="tok-var">$ztdMysqli</span>-&gt;<span class="tok-id">query</span>(</span>
-<span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a>                <span class="tok-str">&quot;INSERT INTO articles VALUES (1, &#039;Search guide&#039;, &#039;exact search terms&#039;), &quot;</span></span>
-<span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a>                . <span class="tok-str">&quot;(2, &#039;Other&#039;, &#039;unrelated&#039;)&quot;</span>,</span>
-<span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a>            ));</span>
-<span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a></span>
-<span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a>            <span class="tok-var">$result</span> = <span class="tok-var">$ztdMysqli</span>-&gt;<span class="tok-id">query</span>(</span>
-<span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a>                <span class="tok-str">&quot;SELECT id FROM articles WHERE MATCH(title, body) AGAINST (&#039;search terms&#039;)&quot;</span>,</span>
-<span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a>            );</span>
-<span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a>            <span class="tok-id">self</span>::<span class="tok-id">assertInstanceOf</span>(<span class="tok-id">mysqli_result</span>::<span class="tok-kw">class</span>, <span class="tok-var">$result</span>);</span>
-<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a>            <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([[<span class="tok-str">&#039;id&#039;</span> =&gt; <span class="tok-num">1</span>]], <span class="tok-var">$result</span>-&gt;<span class="tok-id">fetch_all</span>(<span class="tok-id">MYSQLI_ASSOC</span>));</span>
-<span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a></span>
-<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a>            <span class="tok-var">$physical</span> = <span class="tok-var">$rawMysqli</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&#039;SELECT COUNT(*) AS aggregate FROM articles&#039;</span>);</span>
-<span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a>            <span class="tok-id">self</span>::<span class="tok-id">assertInstanceOf</span>(<span class="tok-id">mysqli_result</span>::<span class="tok-kw">class</span>, <span class="tok-var">$physical</span>);</span>
-<span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a>            <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([[<span class="tok-str">&#039;aggregate&#039;</span> =&gt; <span class="tok-str">&#039;0&#039;</span>]], <span class="tok-var">$physical</span>-&gt;<span class="tok-id">fetch_all</span>(<span class="tok-id">MYSQLI_ASSOC</span>));</span>
-<span class="src-line" id="L55" data-diff="same"><a class="ln" href="#L55">55</a>        } <span class="tok-kw">finally</span> {</span>
-<span class="src-line" id="L56" data-diff="same"><a class="ln" href="#L56">56</a>            <span class="tok-var">$container</span>-&gt;<span class="tok-id">stop</span>();</span>
-<span class="src-line" id="L57" data-diff="same"><a class="ln" href="#L57">57</a>        }</span>
-<span class="src-line" id="L58" data-diff="same"><a class="ln" href="#L58">58</a>    }</span>
-<span class="src-line" id="L59" data-diff="same"><a class="ln" href="#L59">59</a>}</span>
-<span class="src-line" id="L60" data-diff="same"><a class="ln" href="#L60">60</a></span>
+<span class="src-line" data-diff="removed"><span class="ln">34</span>            <span class="tok-var">$rawMysqli</span> = <span class="tok-var">$container</span>-&gt;<span class="tok-id">getData</span>(<span class="tok-id">mysqli</span>::<span class="tok-kw">class</span>);</span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>            <span class="tok-var">$rawMysqli</span> = <span class="tok-kw">new</span> <span class="tok-id">mysqli</span>(<span class="tok-id">str_replace</span>(<span class="tok-str">&#039;localhost&#039;</span>, <span class="tok-str">&#039;127.0.0.1&#039;</span>, <span class="tok-var">$container</span>-&gt;<span class="tok-id">getHost</span>()), <span class="tok-str">&#039;root&#039;</span>, <span class="tok-str">&#039;root&#039;</span>, <span class="tok-str">&#039;test&#039;</span>, <span class="tok-var">$container</span>-&gt;<span class="tok-id">getMappedPort</span>(<span class="tok-num">3306</span>));</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>            <span class="tok-var">$rawMysqli</span>-&gt;<span class="tok-id">set_charset</span>(<span class="tok-str">&#039;utf8mb4&#039;</span>);</span>
+<span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a></span>
+<span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a>            <span class="tok-var">$rawMysqli</span>-&gt;<span class="tok-id">query</span>(</span>
+<span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a>                <span class="tok-str">&#039;CREATE TABLE articles (id INT PRIMARY KEY, title VARCHAR(255), body TEXT, &#039;</span></span>
+<span class="src-line" id="L39" data-diff="same"><a class="ln" href="#L39">39</a>                . <span class="tok-str">&#039;FULLTEXT KEY article_search (title, body)) ENGINE=InnoDB&#039;</span>,</span>
+<span class="src-line" id="L40" data-diff="same"><a class="ln" href="#L40">40</a>            );</span>
+<span class="src-line" id="L41" data-diff="same"><a class="ln" href="#L41">41</a>            <span class="tok-var">$ztdMysqli</span> = <span class="tok-id">ZtdMysqli</span>::<span class="tok-id">fromMysqli</span>(<span class="tok-var">$rawMysqli</span>);</span>
+<span class="src-line" id="L42" data-diff="same"><a class="ln" href="#L42">42</a>            <span class="tok-id">self</span>::<span class="tok-id">assertNotFalse</span>(<span class="tok-var">$ztdMysqli</span>-&gt;<span class="tok-id">query</span>(</span>
+<span class="src-line" id="L43" data-diff="same"><a class="ln" href="#L43">43</a>                <span class="tok-str">&quot;INSERT INTO articles VALUES (1, &#039;Search guide&#039;, &#039;exact search terms&#039;), &quot;</span></span>
+<span class="src-line" id="L44" data-diff="same"><a class="ln" href="#L44">44</a>                . <span class="tok-str">&quot;(2, &#039;Other&#039;, &#039;unrelated&#039;)&quot;</span>,</span>
+<span class="src-line" id="L45" data-diff="same"><a class="ln" href="#L45">45</a>            ));</span>
+<span class="src-line" id="L46" data-diff="same"><a class="ln" href="#L46">46</a></span>
+<span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a>            <span class="tok-var">$result</span> = <span class="tok-var">$ztdMysqli</span>-&gt;<span class="tok-id">query</span>(</span>
+<span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a>                <span class="tok-str">&quot;SELECT id FROM articles WHERE MATCH(title, body) AGAINST (&#039;search terms&#039;)&quot;</span>,</span>
+<span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a>            );</span>
+<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a>            <span class="tok-id">self</span>::<span class="tok-id">assertInstanceOf</span>(<span class="tok-id">mysqli_result</span>::<span class="tok-kw">class</span>, <span class="tok-var">$result</span>);</span>
+<span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a>            <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([[<span class="tok-str">&#039;id&#039;</span> =&gt; <span class="tok-num">1</span>]], <span class="tok-var">$result</span>-&gt;<span class="tok-id">fetch_all</span>(<span class="tok-id">MYSQLI_ASSOC</span>));</span>
+<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a></span>
+<span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a>            <span class="tok-var">$physical</span> = <span class="tok-var">$rawMysqli</span>-&gt;<span class="tok-id">query</span>(<span class="tok-str">&#039;SELECT COUNT(*) AS aggregate FROM articles&#039;</span>);</span>
+<span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a>            <span class="tok-id">self</span>::<span class="tok-id">assertInstanceOf</span>(<span class="tok-id">mysqli_result</span>::<span class="tok-kw">class</span>, <span class="tok-var">$physical</span>);</span>
+<span class="src-line" id="L55" data-diff="same"><a class="ln" href="#L55">55</a>            <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([[<span class="tok-str">&#039;aggregate&#039;</span> =&gt; <span class="tok-str">&#039;0&#039;</span>]], <span class="tok-var">$physical</span>-&gt;<span class="tok-id">fetch_all</span>(<span class="tok-id">MYSQLI_ASSOC</span>));</span>
+<span class="src-line" id="L56" data-diff="same"><a class="ln" href="#L56">56</a>        } <span class="tok-kw">finally</span> {</span>
+<span class="src-line" id="L57" data-diff="same"><a class="ln" href="#L57">57</a>            <span class="tok-var">$container</span>-&gt;<span class="tok-id">stop</span>();</span>
+<span class="src-line" id="L58" data-diff="same"><a class="ln" href="#L58">58</a>        }</span>
+<span class="src-line" id="L59" data-diff="same"><a class="ln" href="#L59">59</a>    }</span>
+<span class="src-line" id="L60" data-diff="same"><a class="ln" href="#L60">60</a>}</span>
+<span class="src-line" id="L61" data-diff="same"><a class="ln" href="#L61">61</a></span>
 </code></pre>
 </main>
 <footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
