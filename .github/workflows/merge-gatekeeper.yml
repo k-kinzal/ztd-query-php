@@ -17,6 +17,7 @@ on:
 jobs:
   merge-gatekeeper:
     runs-on: ubuntu-latest
+    timeout-minutes: 75
     permissions:
       checks: read
       statuses: read
@@ -24,4 +25,5 @@ jobs:
       - uses: upsidr/merge-gatekeeper@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          timeout: 1800
+          # Mutation jobs may run for 60 minutes; allow their startup and queue time as well.
+          timeout: 4200
