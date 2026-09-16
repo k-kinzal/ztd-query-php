@@ -1,0 +1,71 @@
+# NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
+#
+# Layers follow the life of a parse table: a grammar is read from its upstream
+# source, compiled into an LALR(1) automaton, stored as a table, and driven at
+# runtime by a lexer and the parser. Each dialect composes those stages.
+deptrac:
+  paths:
+    - ./src
+  analyser:
+    types:
+      - class
+      - use
+  layers:
+    # Symbols, rules and precedences as a grammar declares them.
+    - name: Grammar
+      collectors:
+        - type: directory
+          value: 'src/Grammar/'
+    # Reads Bison and Lemon sources into grammars.
+    - name: Compiler
+      collectors:
+        - type: directory
+          value: 'src/Compiler/'
+    # Builds the LALR(1) automaton and resolves its conflicts into a table.
+    - name: Automaton
+      collectors:
+        - type: directory
+          value: 'src/Automaton/'
+    # The parse table as it is stored, loaded and consulted.
+    - name: Table
+      collectors:
+        - type: directory
+          value: 'src/Table/'
+    # Tokens and the cursor the dialect lexers read with.
+    - name: Lexer
+      collectors:
+        - type: directory
+          value: 'src/Lexer/'
+    # Drives a table over tokens and builds the syntax tree.
+    - name: Parser
+      collectors:
+        - type: directory
+          value: 'src/Parser/'
+    # Names the releases each dialect ships tables for.
+    - name: Resource
+      collectors:
+        - type: directory
+          value: 'src/Resource/'
+    - name: MySql
+      collectors:
+        - type: directory
+          value: 'src/MySql/'
+    - name: PostgreSql
+      collectors:
+        - type: directory
+          value: 'src/PostgreSql/'
+    - name: Sqlite
+      collectors:
+        - type: directory
+          value: 'src/Sqlite/'
+  ruleset:
+    Grammar: []
+    Compiler: [Grammar]
+    Automaton: [Grammar, Table]
+    Table: [Grammar]
+    Lexer: [Table, Grammar]
+    Parser: [Table, Lexer]
+    Resource: [Table]
+    MySql: [Grammar, Compiler, Automaton, Table, Lexer, Parser, Resource]
+    PostgreSql: [Grammar, Compiler, Automaton, Table, Lexer, Parser, Resource]
+    Sqlite: [Grammar, Compiler, Automaton, Table, Lexer, Parser, Resource]
