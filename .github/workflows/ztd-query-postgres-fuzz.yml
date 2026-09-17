@@ -26,9 +26,6 @@ jobs:
     name: Robustness / ${{ matrix.target.name }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    permissions:
-      contents: read
-      issues: write
     strategy:
       fail-fast: false
       matrix:
@@ -104,16 +101,6 @@ jobs:
             "fuzz/corpus/${FUZZ_CORPUS}/" \
             "--max-runs=${FUZZ_MAX_RUNS}" 2>&1 | tee "build/fuzz/${FUZZ_CORPUS}.log"
 
-      - name: Open an issue for new findings
-        if: ${{ !cancelled() }}
-        uses: ./.github/actions/fuzz-finding-issue
-        with:
-          package: ztd-query-postgres
-          target: ${{ matrix.target.name }}
-          script: fuzz/${{ matrix.target.script }}
-          log: build/fuzz/${{ matrix.target.corpus }}.log
-          artifact: fuzz-crashes-ztd-query-postgres-robustness-${{ matrix.target.name }}
-
       - name: Save the evolved corpus
         if: always()
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
@@ -145,3 +132,45 @@ jobs:
             packages/ztd-query-postgres/build/fuzz/
             packages/ztd-query-postgres/fuzz/coverage/${{ matrix.target.name }}/
           if-no-files-found: ignore
+
+  notify:
+    name: Notify on crash
+    runs-on: ubuntu-latest
+    needs: [robustness]
+    if: always()
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: read
+      issues: write
+    steps:
+      - name: Report a new fuzz crash
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        with:
+          script: |
+            const { data } = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.runId
+            });
+            if (!data.artifacts.some(({ name }) => name.startsWith('fuzz-crashes-'))) {
+              console.log('No fuzz crash artifacts found');
+              return;
+            }
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'fuzz',
+              state: 'open'
+            });
+            if (issues.some(({ title }) => title === 'Fuzz: Crash detected (ztd-query-postgres)')) {
+              console.log('Open fuzz issue already exists, skipping creation');
+              return;
+            }
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Fuzz: Crash detected (ztd-query-postgres)`,
+              body: `Fuzzing found a crash.\n\nRun: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nDownload the crash and log artifacts, check out commit ${context.sha}, and replay the input with vendor/bin/php-fuzzer run-single fuzz/<target-script>.php crash-<hash>. The target script is listed in the job matrix.`,
+              labels: ['bug', 'fuzz']
+            });
