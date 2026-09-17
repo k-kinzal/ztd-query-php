@@ -4,10 +4,7 @@ declare(strict_types=1);
 
 namespace SqlFaker\Compiler\Lemon;
 
-use LemonParser\Ast\Declaration\Fallback;
-use LemonParser\Ast\Declaration\PrecedenceDeclaration;
 use LemonParser\Ast\Declaration\TokenClass;
-use LemonParser\Ast\Declaration\TokenDeclaration;
 use LemonParser\Ast\Declaration\Wildcard;
 use LemonParser\Ast\GrammarFile;
 use LemonParser\Ast\Rule;
@@ -29,9 +26,8 @@ use SqlFaker\Grammar\Model\Terminal;
  * several terminals, `A|B`, is spelled out into one alternative per
  * terminal, a `%token_class` becomes a rule with one alternative per
  * member, and the first rule is the start symbol. A name written in
- * capitals is a terminal unless a rule defines it; other names are
- * nonterminals unless `%token`, a precedence declaration, `%fallback`, a
- * token class or `%wildcard` declares them.
+ * capitals, digits and underscores is a terminal, as is the `%wildcard`
+ * token whatever its spelling; every other name is a nonterminal.
  *
  * @visibility public
  *
@@ -113,7 +109,7 @@ final class LemonGrammarCompiler
     }
 
     /**
-     * Decides which names are terminals.
+     * Decides which names are terminals: those spelled as tokens, and the wildcard whatever its spelling.
      *
      * @param GrammarFile $file The tree
      *
@@ -121,53 +117,21 @@ final class LemonGrammarCompiler
      */
     public function terminals(GrammarFile $file): array
     {
-        $tokens = [];
-        $rules = [];
+        $terminals = [];
         foreach ($file->declarations() as $declaration) {
-            if ($declaration instanceof PrecedenceDeclaration || $declaration instanceof TokenDeclaration || $declaration instanceof Fallback) {
-                $this->declareTokens($tokens, $declaration->symbols);
-            } elseif ($declaration instanceof TokenClass) {
-                $rules[$declaration->name->name] = true;
-                $this->declareTokens($tokens, $declaration->tokens);
-            } elseif ($declaration instanceof Wildcard && $declaration->symbol !== null && !isset($tokens[$declaration->symbol->name])) {
-                $tokens[$declaration->symbol->name] = true;
+            if ($declaration instanceof Wildcard && $declaration->symbol !== null) {
+                $terminals[$declaration->symbol->name] = true;
             }
         }
         foreach ($file->rules() as $rule) {
-            $rules[$rule->lhs->name] = true;
             foreach ($rule->symbols() as $symbol) {
                 if (self::isTokenName($symbol->name)) {
-                    $tokens[$symbol->name] = true;
-                } else {
-                    $rules[$symbol->name] = true;
-                }
-            }
-        }
-        $terminals = $tokens;
-        foreach ($file->rules() as $rule) {
-            foreach ($rule->symbols() as $symbol) {
-                if (!isset($tokens[$symbol->name]) && !isset($rules[$symbol->name]) && self::isTokenName($symbol->name)) {
                     $terminals[$symbol->name] = true;
                 }
             }
         }
 
         return $terminals;
-    }
-
-    /**
-     * Records the names of a declaration that are spelled as tokens.
-     *
-     * @param array<string, true> $tokens The tokens so far, added to
-     * @param list<\LemonParser\Ast\Symbol> $symbols The declared symbols
-     */
-    public function declareTokens(array &$tokens, array $symbols): void
-    {
-        foreach ($symbols as $symbol) {
-            if (self::isTokenName($symbol->name)) {
-                $tokens[$symbol->name] = true;
-            }
-        }
     }
 
     /**

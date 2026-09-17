@@ -139,19 +139,11 @@ final class LemonGrammarCompilerTest extends TestCase
 
     public function testTerminals(): void
     {
-        $file = (new Parser())->parse("%token A.\n%left B.\n%fallback C D.\n%wildcard ANY.\n%token_class cls E|F.\ns ::= A G h Mixed cls.\nh ::= .\n");
+        $file = (new Parser())->parse("%token A.\n%left B.\n%fallback C D.\n%wildcard Any.\n%token_class cls E|F.\ns ::= A G h Mixed cls.\nh ::= Any.\n");
 
-        self::assertSame(['A' => true, 'B' => true, 'C' => true, 'D' => true, 'ANY' => true, 'E' => true, 'F' => true, 'G' => true], (new LemonGrammarCompiler())->terminals($file));
+        self::assertSame(['Any' => true, 'A' => true, 'G' => true], (new LemonGrammarCompiler())->terminals($file));
     }
 
-    public function testDeclareTokens(): void
-    {
-        $tokens = ['A' => true];
-
-        (new LemonGrammarCompiler())->declareTokens($tokens, [new Symbol('B', new Location(1, 1)), new Symbol('lower', new Location(1, 3)), new Symbol('Mixed', new Location(1, 9))]);
-
-        self::assertSame(['A' => true, 'B' => true], $tokens);
-    }
 
     public function testIsTokenName(): void
     {
@@ -159,6 +151,8 @@ final class LemonGrammarCompilerTest extends TestCase
         self::assertTrue(LemonGrammarCompiler::isTokenName('JOIN_KW2'));
         self::assertFalse(LemonGrammarCompiler::isTokenName('expr'));
         self::assertFalse(LemonGrammarCompiler::isTokenName('Mixed'));
+        self::assertFalse(LemonGrammarCompiler::isTokenName('aID'));
+        self::assertFalse(LemonGrammarCompiler::isTokenName('IDa'));
         self::assertFalse(LemonGrammarCompiler::isTokenName(''));
     }
 }

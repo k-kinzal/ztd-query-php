@@ -173,14 +173,14 @@ final class BisonGrammarCompilerTest extends TestCase
 
     public function testDeclaredTokens(): void
     {
-        $file = (new Parser())->parse("%token <int> NUM 258 \"number\" STR\n%left '+' MINUS\n%type <t> expr\n%%\nexpr: NUM ;\n");
+        $file = (new Parser())->parse("%left '+' MINUS\n%token <int> NUM 258 \"number\" STR\n%type <t> expr\n%token LATE\n%%\nexpr: NUM ;\n");
 
-        self::assertSame(['NUM' => true, 'STR' => true], (new BisonGrammarCompiler())->declaredTokens($file));
+        self::assertSame(['NUM' => true, 'STR' => true, 'LATE' => true], (new BisonGrammarCompiler())->declaredTokens($file));
     }
 
     public function testSymbols(): void
     {
-        $file = (new Parser())->parse("%token NUM\n%%\nexpr: expr '+' NUM \"skipped\" { act(); } ;\n");
+        $file = (new Parser())->parse("%token NUM\n%%\nexpr: expr '+' \"skipped\" NUM { act(); } ;\n");
 
         $symbols = (new BisonGrammarCompiler())->symbols($file->rules()[0]->alternatives[0], ['expr' => true], ['NUM' => true]);
 
