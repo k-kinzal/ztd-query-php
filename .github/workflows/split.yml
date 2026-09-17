@@ -69,13 +69,10 @@ jobs:
                 )
               else . end) |
               .require |= with_entries(
-                if (.key | test("^k-kinzal/(ztd-query-(core|mysql|postgres|sqlite|pdo-adapter|mysqli-adapter)|sql-faker|sql-fixture|bison-parser)$")) and .value == "dev-main" then .value = $v else . end
-              ) |
-              ."require-dev" |= with_entries(
                 if (.key | test("^k-kinzal/(ztd-query-(core|mysql|postgres|sqlite|pdo-adapter|mysqli-adapter)|sql-faker|sql-fixture|bison-parser|lemon-parser)$")) and .value == "dev-main" then .value = $v else . end
               ) |
               ."require-dev" |= with_entries(
-                if (.key | test("^k-kinzal/(ztd-query-(core|mysql|postgres|sqlite|pdo-adapter|mysqli-adapter)|sql-faker|sql-fixture|lemon-parser)$")) and .value == "dev-main" then .value = $v else . end
+                if (.key | test("^k-kinzal/(ztd-query-(core|mysql|postgres|sqlite|pdo-adapter|mysqli-adapter)|sql-faker|sql-fixture|bison-parser|lemon-parser)$")) and .value == "dev-main" then .value = $v else . end
               )
             ' "$FILE" > "${FILE}.tmp" && mv "${FILE}.tmp" "$FILE"
           else
