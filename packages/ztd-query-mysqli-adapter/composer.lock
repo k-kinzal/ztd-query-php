@@ -1635,7 +1635,7 @@
             "dist": {
                 "type": "path",
                 "url": "../container",
-                "reference": "cc3b4cd24d999ddccfbbeae41de3656d44f8eebe"
+                "reference": "6478c853dbf8368cfd2ff4ffaffcb57bdc0369ec"
             },
             "require": {
                 "ext-pdo": "*",
@@ -1647,7 +1647,6 @@
                 "deptrac/deptrac": "^3.0",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
                 "k-kinzal/php-ai-toolkit": "dev-main",
-                "phpbench/phpbench": "^1.4",
                 "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
                 "phpstan/phpstan": "^2.1",
                 "phpstan/phpstan-strict-rules": "^2.0",
@@ -1655,7 +1654,6 @@
                 "squizlabs/php_codesniffer": "^4.0.4"
             },
             "suggest": {
-                "ext-mysqli": "Required for integration tests using MySQLi",
                 "ext-pdo_mysql": "Required for MySQL containers",
                 "ext-pdo_pgsql": "Required for PostgreSQL containers"
             },
@@ -1667,22 +1665,12 @@
             },
             "autoload-dev": {
                 "psr-4": {
-                    "Tests\\": "tests/",
-                    "Bench\\": "bench/"
+                    "Tests\\": "tests/"
                 }
             },
             "scripts": {
                 "autoload:check": [
                     "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
-                ],
-                "bench": [
-                    "phpbench run --report=aggregate"
-                ],
-                "bench:full": [
-                    "@bench"
-                ],
-                "bench:quick": [
-                    "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
                 ],
                 "compat": [
                     "phpcs"
@@ -1739,9 +1727,6 @@
                 ],
                 "tree-guard": [
                     "tree-guard --config=tree.yaml"
-                ],
-                "test:integration": [
-                    "phpunit --testsuite integration"
                 ]
             },
             "license": [

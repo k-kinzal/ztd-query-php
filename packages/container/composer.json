@@ -13,7 +13,6 @@
         "deptrac/deptrac": "^3.0",
         "friendsofphp/php-cs-fixer": "^3.95.25",
         "k-kinzal/php-ai-toolkit": "dev-main",
-        "phpbench/phpbench": "^1.4",
         "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-strict-rules": "^2.0",
@@ -34,15 +33,11 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Tests\\": "tests/",
-            "Bench\\": "bench/"
+            "Tests\\": "tests/"
         }
     },
     "scripts": {
         "autoload:check": "composer dump-autoload --optimize --strict-psr --strict-ambiguous",
-        "bench": "phpbench run --report=aggregate",
-        "bench:full": "@bench",
-        "bench:quick": "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10",
         "compat": "phpcs",
         "deptrac": "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered",
         "docgen": "docgen --packages=. --title=k-kinzal/container",
@@ -72,8 +67,7 @@
         "test": "paratest --processes=auto",
         "test:coverage": "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml",
         "test:unit": "phpunit --testsuite unit",
-        "tree-guard": "tree-guard --config=tree.yaml",
-        "test:integration": "phpunit --testsuite integration"
+        "tree-guard": "tree-guard --config=tree.yaml"
     },
     "config": {
         "allow-plugins": {
@@ -89,7 +83,6 @@
         "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/container/"
     },
     "suggest": {
-        "ext-mysqli": "Required for integration tests using MySQLi",
         "ext-pdo_mysql": "Required for MySQL containers",
         "ext-pdo_pgsql": "Required for PostgreSQL containers"
     }

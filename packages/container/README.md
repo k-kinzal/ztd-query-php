@@ -59,15 +59,14 @@ used by your code.
 composer install
 composer test
 composer lint
-composer bench
 composer doctest
 composer test:coverage
 ```
 
-Integration tests require Docker and `pdo_mysql`, `pdo_pgsql`, and `mysqli`.
+Unit tests and documentation examples do not require Docker.
 
 The package uses the same php-ai-toolkit quality checks as the other packages:
 strict PHPUnit with the AI reporter, executable documentation examples, PHPStan
 and toolkit rules, PHP-CS-Fixer, PHPCompatibility, loc-guard, tree-guard, Deptrac,
-PHPBench, and Infection. CI installs the committed Composer lockfile, runs tests
-on PHP 8.1 through 8.5, and publishes benchmark and mutation reports.
+and Infection. CI installs the committed Composer lockfile, runs tests
+on PHP 8.1 through 8.5, and publishes mutation reports.
