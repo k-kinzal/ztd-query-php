@@ -76,6 +76,11 @@ Parses CREATE TABLE statements and generates type-appropriate fake data using PH
 Provides three usage modes: SQL string-based (`FixtureProvider`), PDO connection-based (`DatabaseFixtureProvider`), and DDL file directory-based (`FileFixtureProvider`).
 Supports MySQL, PostgreSQL, and SQLite. Includes object hydration via `ReflectionHydrator`. Used for fuzz testing and integration tests.
 
+### packages/bison-parser
+
+Parser for GNU Bison grammar files (`.y`, `.yy`), producing a lossless syntax tree: every declaration, rule, alternative, action, predicate, tag, token number, alias, named reference and precedence modifier, each with its position.
+Follows Bison 3.8's own `scan-gram.l` and `parse-gram.y`, so it reads what Bison reads and rejects what Bison rejects; a `Printer` writes a tree back out and printing is stable.
+General-purpose and standalone with no dependencies beyond PHP; not tied to SQL. Used by sql-faker and sql-parser to read the MySQL and PostgreSQL grammars.
 ### packages/lemon-parser
 
 Parser for grammar files of the Lemon parser generator (SQLite's `parse.y`), producing a lossless syntax tree: every rule with its aliases, multi-terminal positions, precedence mark and action, and every declaration from `%token_prefix` to `%token_class`, each with its position.

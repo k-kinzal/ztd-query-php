@@ -9,6 +9,7 @@ use mysqli;
 use mysqli_result;
 use mysqli_sql_exception;
 use SqlFaker\Generation\Choice\BytePlanCompiler;
+use SqlFaker\Generation\Choice\PlanBuilder;
 use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\MySqlProvider;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
@@ -19,11 +20,22 @@ use ZtdQuery\Adapter\Mysqli\ZtdMysqliException;
  */
 final class ExecutionTarget
 {
+    private PlanBuilder $planner;
+
+    /**
+     * @var GenerationPlan<true>
+     */
+    private GenerationPlan $constraint;
+
     /**
      * Bind the immutable grammar and the disposable native fixture connection.
+     *
+     * Building the planner takes most of a second, so it is built once rather than per input.
      */
     public function __construct(private MySqlProvider $provider, private mysqli $native)
     {
+        $this->planner = $provider->planner();
+        $this->constraint = GenerationPlan::fromRule('simple_statement_or_begin')->requiringNonEmpty();
     }
 
     /**
@@ -33,8 +45,7 @@ final class ExecutionTarget
      */
     public function __invoke(string $input): void
     {
-        $constraint = GenerationPlan::fromRule('simple_statement_or_begin')->requiringNonEmpty();
-        $plan = (new BytePlanCompiler())->compile($input, $this->provider->planner(), $constraint);
+        $plan = (new BytePlanCompiler())->compile($input, $this->planner, $this->constraint);
         $sql = $this->provider->generate($plan);
         $ztd = ZtdMysqli::fromMysqli($this->native);
         try {

@@ -65,6 +65,7 @@ jobs:
         env:
           MAX_RUNS: ${{ inputs.max_runs || '10000' }}
         run: |
+          set -euo pipefail
           case "$MAX_RUNS" in
             ''|*[!0-9]*) echo 'max_runs must be a positive integer.' >&2; exit 2 ;;
           esac
@@ -76,9 +77,6 @@ jobs:
           vendor/bin/php-fuzzer fuzz fuzz/${{ matrix.target.script }} \
             fuzz/corpus/${{ matrix.target.corpus }}/ \
             --max-runs="$MAX_RUNS" 2>&1 | tee "build/fuzz/${{ matrix.target.name }}.log"
-          if grep -Eq '^(CORPUS )?CRASH|^DUPLICATE CRASH' "build/fuzz/${{ matrix.target.name }}.log"; then
-            exit 1
-          fi
 
       - if: always()
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9

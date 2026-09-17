@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "06d24f2cdb5c29192a82a8cc04426b6d",
+    "content-hash": "1caa8dc1e7dcbf32d79d28f3d850802e",
     "packages": [
         {
             "name": "fakerphp/faker",
@@ -70,12 +70,152 @@
             "time": "2024-11-21T13:46:39+00:00"
         },
         {
+            "name": "k-kinzal/bison-parser",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "packages/bison-parser",
+                "reference": "be3d87c744945430587a7b1e1663012d5fd15f4f"
+            },
+            "require": {
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "brianium/paratest": "^7.3",
+                "deptrac/deptrac": "^3.0",
+                "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/php-ai-toolkit": "dev-main",
+                "nikic/php-fuzzer": "^0.0.11",
+                "phpbench/phpbench": "^1.4",
+                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
+                "phpstan/phpstan": "^2.1",
+                "phpstan/phpstan-strict-rules": "^2.0",
+                "phpunit/phpunit": "^10.5",
+                "squizlabs/php_codesniffer": "^4.0.4"
+            },
+            "bin": [
+                "bin/bison-parser"
+            ],
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "BisonParser\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Tests\\": "tests/",
+                    "Fuzz\\": "fuzz/",
+                    "Bench\\": "bench/"
+                }
+            },
+            "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
+                "bench": [
+                    "phpbench run --report=aggregate"
+                ],
+                "bench:full": [
+                    "@bench"
+                ],
+                "bench:quick": [
+                    "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
+                ],
+                "compat": [
+                    "phpcs"
+                ],
+                "deptrac": [
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
+                ],
+                "docgen": [
+                    "docgen --packages=. --title=k-kinzal/bison-parser"
+                ],
+                "docgen:diff": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --diff=origin/main --serve"
+                ],
+                "docgen:fresh": [
+                    "@docgen --no-cache"
+                ],
+                "docgen:serve": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --serve"
+                ],
+                "doctest": [
+                    "phpunit --testsuite doctest"
+                ],
+                "format": [
+                    "php-cs-fixer fix --allow-risky=yes"
+                ],
+                "format:check": [
+                    "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
+                ],
+                "fuzz": [
+                    "@fuzz:smoke"
+                ],
+                "fuzz:parse": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php -r \"is_dir('fuzz/corpus/parse') || mkdir('fuzz/corpus/parse', 0777, true);\" --",
+                    "php-fuzzer fuzz fuzz/fuzz_parse.php fuzz/corpus/parse/"
+                ],
+                "fuzz:roundtrip": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php -r \"is_dir('fuzz/corpus/roundtrip') || mkdir('fuzz/corpus/roundtrip', 0777, true);\" --",
+                    "php-fuzzer fuzz fuzz/fuzz_roundtrip.php fuzz/corpus/roundtrip/"
+                ],
+                "fuzz:smoke": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@fuzz:parse --max-runs=100",
+                    "@fuzz:roundtrip --max-runs=100"
+                ],
+                "lint": [
+                    "@autoload:check",
+                    "@format:check",
+                    "@phpstan",
+                    "@compat",
+                    "@loc-guard",
+                    "@tree-guard",
+                    "@deptrac"
+                ],
+                "loc-guard": [
+                    "loc-guard --config=loc.yaml"
+                ],
+                "phpstan": [
+                    "phpstan analyse --memory-limit=1G"
+                ],
+                "test": [
+                    "paratest --processes=auto"
+                ],
+                "test:coverage": [
+                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+                ],
+                "test:unit": [
+                    "phpunit --testsuite unit"
+                ],
+                "tree-guard": [
+                    "tree-guard --config=tree.yaml"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Parser for GNU Bison grammar files, producing a lossless syntax tree",
+            "support": {
+                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/bison-parser",
+                "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/bison-parser/"
+            },
+            "transport-options": {
+                "relative": true
+            }
+        },
+        {
             "name": "k-kinzal/lemon-parser",
             "version": "dev-main",
             "dist": {
                 "type": "path",
                 "url": "packages/lemon-parser",
-                "reference": "a7294215bfda6c7d4cb2ee67c3cf12edfedbc501"
+                "reference": "dec15d063ad07f1b74af2ae26f39f6c72faff85e"
             },
             "require": {
                 "php": "^8.1"
@@ -215,7 +355,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-faker",
-                "reference": "7bfb91d95ed58c63cfea0b73fa6930cc54c3b438"
+                "reference": "e19dd21fba9c8c1e840baf0066c3702dbe8355d2"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -375,7 +515,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-fixture",
-                "reference": "111b2bfeae59b672cb2b795392f34707d34bd9e8"
+                "reference": "00a8df2c1442b8a702da155020d069c137b0cdf3"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -519,7 +659,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-core",
-                "reference": "505291ffbb9f8c0fe5f08c252e2eab3ff982e59b"
+                "reference": "14d5cb8e7d704e3388fc453eddf1a2363528a746"
             },
             "require": {
                 "php": "^8.1"
@@ -653,7 +793,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-mysql",
-                "reference": "b9029967115b33c4f18911df3f58ec98a27a2f1a"
+                "reference": "cfe3bfdc09cbe7e0658729f68d597501d8d5c220"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -802,7 +942,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-mysqli-adapter",
-                "reference": "59feef04452eb84450f2e91590c9493ba8618d91"
+                "reference": "755a5461b1d583961dd09df17d86570a885e13a2"
             },
             "require": {
                 "ext-mysqli": "*",
@@ -972,7 +1112,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-pdo-adapter",
-                "reference": "349ab9adc426127a3a8e578f85cc2ae41f209cc2"
+                "reference": "ef656e979c7de5f0f29eac7f4fc70360aef63e60"
             },
             "require": {
                 "ext-pdo": "*",
@@ -1203,7 +1343,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-postgres",
-                "reference": "df97bb434e0c1adec5841da05a49134666f05f4a"
+                "reference": "3fb4cf03da8df7ba2c1611ee597a613947805c75"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -1354,7 +1494,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-sqlite",
-                "reference": "aa8839b3d83215fc3a9e7683c4bd3bf888eead3f"
+                "reference": "642290b69106bfdec9ce70998d30e1732c033113"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -2417,6 +2557,7 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
+        "k-kinzal/bison-parser": 20,
         "k-kinzal/lemon-parser": 20,
         "k-kinzal/php-ai-toolkit": 20,
         "k-kinzal/sql-faker": 20,
