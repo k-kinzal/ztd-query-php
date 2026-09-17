@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SQLite SQL Specification for ZTD — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/330/k-kinzal/ztd-query-php/doc/docs/sqlite-spec.md.html">
+<meta name="description" content="SQLite SQL Specification for ZTD, a document of the k-kinzal/ztd-query-php package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="SQLite SQL Specification for ZTD — ZTD Query PHP">
+<meta property="og:description" content="SQLite SQL Specification for ZTD, a document of the k-kinzal/ztd-query-php package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/330/k-kinzal/ztd-query-php/doc/docs/sqlite-spec.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/330/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../">
+<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sb-pkg"><a href="../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a></div><nav class="sb-block"><div class="sb-title">Package</div><ul class="sb-list"><li data-diff="same"><a href="../../../../k-kinzal/ztd-query-php/all-items.html">All items</a></li><li data-diff="modified"><a href="../../../../k-kinzal/ztd-query-php/index.html#documents">Documents</a></li></ul></nav></nav>
+<div class="page">
+<header class="topbar">
+<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
+<nav class="crumbs"><a href="../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a><span class="crumb-sep">::</span><span class="crumb-current">docs/sqlite-spec.md</span></nav>
+<div class="topbar-tools">
+<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 4adc03d1d to working tree">4adc03d1d <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 4adc03d1d and working tree." data-off="This page documents what 4adc03d1d had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>SQLite SQL Specification for ZTD</h1><div class="symbol-meta"><span class="src-link">docs/sqlite-spec.md</span></div></div>
+<section class="readme" data-diff="same"><div class="doc-block" data-diff="same"><h2>SQLite SQL Specification for ZTD</h2>
+</div><div class="doc-block" data-diff="same"><p>This document defines how ZTD (Zero Downtime Deployment) handles SQLite SQL statements. ZTD simulates query results without modifying the physical database by using CTEs to shadow tables and virtualize writes.</p>
+</div><div class="doc-block" data-diff="same"><p><strong>Grammar Reference:</strong> SQLite 3.47.2 official Lemon grammar (<code>parse.y</code>). The <code>cmd</code> rule defines 40 production alternatives. This spec covers all 40 alternatives. Additionally, the <code>explain</code> rule wraps <code>cmd</code> to add <code>EXPLAIN</code> and <code>EXPLAIN QUERY PLAN</code> prefixes.</p>
+</div><div class="doc-block" data-diff="same"><h3>Overview</h3>
+</div><div class="doc-block" data-diff="same"><p>ZTD categorizes SQL statements into three handling modes:</p>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Mode</th><th>Description</th></tr></thead><tbody><tr><td><strong>Rewrite</strong></td><td>Transform the query using CTE shadowing to simulate the operation</td></tr><tr><td><strong>Ignored</strong></td><td>Statement has no effect (by design)</td></tr><tr><td><strong>Unsupported</strong></td><td>Follows Unsupported SQL behavior (ignore/notice/exception/passthrough)</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><blockquote><p><strong>Note:</strong> SQLite does not have a separate TCL &quot;Ignored&quot; category in the query guard. Transaction statements are classified as unsupported (null from the classifier), not as SKIPPED.</p>
+</blockquote>
+</div><div class="doc-block" data-diff="same"><hr>
+</div><div class="doc-block" data-diff="same"><h3>DML (Data Manipulation Language)</h3>
+</div><div class="doc-block" data-diff="same"><p>Grammar rules: <code>select</code> (via <code>cmd</code>), <code>INSERT</code>/<code>REPLACE</code> (via <code>insert_cmd</code>), <code>UPDATE</code>, <code>DELETE</code></p>
+</div><div class="doc-block" data-diff="same"><h4>SELECT (cmd -&gt; select)</h4>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Mode</th><th>Behavior</th></tr></thead><tbody><tr><td>Rewrite</td><td>Apply CTE shadowing to inject virtual mutations from ShadowStore</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><p><strong>Grammar:</strong> <code>cmd</code> alternative #11: <code>select</code>. The <code>select</code> rule expands to <code>selectnowith</code> or <code>with selectnowith</code>. The <code>oneselect</code> rule has 4 alternatives: basic SELECT, VALUES clause, and set operations via <code>multiselect_op</code> (UNION, UNION ALL, EXCEPT, INTERSECT).</p>
+</div><div class="doc-block" data-diff="same"><p><strong>Supported Syntax:</strong></p>
+</div><div class="doc-block" data-diff="same"><ul><li><code>SELECT ... FROM ...</code> - Basic select</li><li><code>SELECT ... WHERE ...</code> - Conditional select</li><li><code>SELECT ... JOIN ...</code> - Join operations (INNER, LEFT, CROSS, NATURAL)</li><li><code>SELECT ... GROUP BY ...</code> - Aggregation</li><li><code>SELECT ... HAVING ...</code> - Aggregate filtering</li><li><code>SELECT ... ORDER BY ...</code> - Sorting</li><li><code>SELECT ... LIMIT ... OFFSET ...</code> - Pagination</li><li><code>SELECT ... UNION [ALL] ...</code> - Set union</li><li><code>SELECT ... EXCEPT ...</code> - Set difference</li><li><code>SELECT ... INTERSECT ...</code> - Set intersection</li><li><code>SELECT ... (subquery)</code> - Subqueries</li><li><code>WITH ... SELECT ...</code> - Common Table Expressions</li><li><code>WITH RECURSIVE ... SELECT ...</code> - Recursive CTEs</li><li><code>SELECT ... WINDOW ...</code> - Window function definitions (SQLite 3.25+)</li><li><code>SELECT DISTINCT ...</code> - Distinct filtering</li><li><code>VALUES (...)</code> - Values expression (standalone)</li></ul>
+</div><div class="doc-block" data-diff="same"><p><strong>Unsupported Syntax:</strong></p>
+</div><div class="doc-block" data-diff="same"><ul><li><code>SELECT ... INTO ...</code> - Not supported by SQLite</li></ul>
+</div><div class="doc-block" data-diff="same"><h4>INSERT (cmd -&gt; with insert_cmd INTO ...)</h4>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Mode</th><th>Behavior</th></tr></thead><tbody><tr><td>Rewrite</td><td>Convert to result-select query, store mutation in ShadowStore</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><p><strong>Grammar:</strong> <code>cmd</code> alternatives #16 and #17. Alternative #16: <code>with insert_cmd INTO xfullname idlist_opt select upsert</code> (INSERT with values/select). Alternative #17: <code>with insert_cmd INTO xfullname idlist_opt DEFAULT VALUES returning</code> (INSERT DEFAULT VALUES). The <code>insert_cmd</code> rule has 2 alternatives: <code>INSERT orconf</code> and <code>REPLACE</code>.</p>
+</div><div class="doc-block" data-diff="same"><p><strong>Transformation:</strong></p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>-- Original
+INSERT INTO users (id, name) VALUES (1, &#039;Alice&#039;)
+
+-- Transformed (Result Select)
+SELECT 1 AS &quot;id&quot;, &#039;Alice&#039; AS &quot;name&quot;</code></pre>
+</div><div class="doc-block" data-diff="same"><p><strong>Supported Syntax:</strong></p>
+</div><div class="doc-block" data-diff="same"><ul><li><code>INSERT INTO ... VALUES (...)</code> - Single row insert</li><li><code>INSERT INTO ... VALUES (...), (...)</code> - Multi-row insert</li><li><code>INSERT ... SELECT ...</code> - Insert from subquery</li><li><code>INSERT ... ON CONFLICT ... DO UPDATE SET ...</code> - Upsert</li><li><code>INSERT ... ON CONFLICT ... DO NOTHING</code> - Skip conflicts</li><li><code>INSERT OR REPLACE INTO ...</code> - Replace on conflict</li><li><code>INSERT OR IGNORE INTO ...</code> - Ignore on conflict</li><li><code>INSERT OR ROLLBACK INTO ...</code> - Rollback on conflict</li><li><code>INSERT OR ABORT INTO ...</code> - Abort on conflict</li><li><code>INSERT OR FAIL INTO ...</code> - Fail on conflict</li><li><code>REPLACE INTO ...</code> - Replace (synonym for INSERT OR REPLACE)</li><li><code>WITH ... INSERT ...</code> - CTE with INSERT</li><li><code>INSERT INTO ... DEFAULT VALUES</code> - Insert defaults only</li></ul>
+</div><div class="doc-block" data-diff="same"><p><strong>SQLite-Specific Conflict Handling (from <code>orconf</code> rule):</strong></p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>-- INSERT OR REPLACE
+INSERT OR REPLACE INTO users (id, name) VALUES (1, &#039;Bob&#039;)
+-- Resolved as ReplaceMutation
+
+-- REPLACE INTO (synonym)
+REPLACE INTO users (id, name) VALUES (1, &#039;Bob&#039;)
+-- Resolved as ReplaceMutation
+
+-- INSERT OR IGNORE
+INSERT OR IGNORE INTO users (id, name) VALUES (1, &#039;Bob&#039;)
+-- Resolved as InsertMutation with isIgnore=true
+
+-- ON CONFLICT ... DO UPDATE (from `upsert` rule, 6 alternatives)
+INSERT INTO users (id, name) VALUES (1, &#039;Bob&#039;)
+ON CONFLICT (id) DO UPDATE SET name = excluded.name
+-- Resolved as UpsertMutation</code></pre>
+</div><div class="doc-block" data-diff="same"><p><strong>Unsupported Syntax:</strong></p>
+</div><div class="doc-block" data-diff="same"><ul><li><code>INSERT ... RETURNING ...</code> - RETURNING clause (SQLite 3.35+); Result Select approach is used instead</li></ul>
+</div><div class="doc-block" data-diff="same"><h4>UPDATE (cmd -&gt; with UPDATE ...)</h4>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Mode</th><th>Behavior</th></tr></thead><tbody><tr><td>Rewrite</td><td>Convert to result-select query, store mutation in ShadowStore</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><p><strong>Grammar:</strong> <code>cmd</code> alternatives #14 and #15. Alternative #14: <code>with UPDATE orconf xfullname indexed_opt SET setlist from where_opt_ret orderby_opt limit_opt</code> (with ORDER BY/LIMIT). Alternative #15: <code>with UPDATE orconf xfullname indexed_opt SET setlist from where_opt_ret</code> (simple).</p>
+</div><div class="doc-block" data-diff="same"><p><strong>Transformation:</strong></p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>-- Original
+UPDATE users SET name = &#039;Bob&#039; WHERE id = 1
+
+-- Transformed (Result Select with CTE shadowing)
+WITH &quot;users&quot; AS (
+  SELECT CAST(1 AS INTEGER) AS &quot;id&quot;, CAST(&#039;Alice&#039; AS TEXT) AS &quot;name&quot;
+)
+SELECT &#039;Bob&#039; AS &quot;name&quot;, &quot;users&quot;.&quot;id&quot; FROM &quot;users&quot; WHERE id = 1</code></pre>
+</div><div class="doc-block" data-diff="same"><p><strong>Supported Syntax:</strong></p>
+</div><div class="doc-block" data-diff="same"><ul><li><code>UPDATE ... SET ... WHERE ...</code> - Single table update</li><li><code>UPDATE ... SET ... ORDER BY ... LIMIT ...</code> - Limited update</li><li><code>UPDATE OR ROLLBACK/ABORT/REPLACE/FAIL/IGNORE ... SET ...</code> - Conflict resolution (from <code>orconf</code> rule)</li><li><code>WITH ... UPDATE ...</code> - CTE with UPDATE</li><li><code>UPDATE ... SET ... FROM ...</code> - Multi-table update (SQLite 3.33+, from <code>from</code> rule)</li></ul>
+</div><div class="doc-block" data-diff="same"><p><strong>Unsupported Syntax:</strong></p>
+</div><div class="doc-block" data-diff="same"><ul><li><code>UPDATE ... RETURNING ...</code> - RETURNING clause (SQLite 3.35+); Result Select approach is used instead</li></ul>
+</div><div class="doc-block" data-diff="same"><h4>DELETE (cmd -&gt; with DELETE FROM ...)</h4>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Mode</th><th>Behavior</th></tr></thead><tbody><tr><td>Rewrite</td><td>Convert to result-select query, store mutation in ShadowStore</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><p><strong>Grammar:</strong> <code>cmd</code> alternatives #12 and #13. Alternative #12: <code>with DELETE FROM xfullname indexed_opt where_opt_ret orderby_opt limit_opt</code> (with ORDER BY/LIMIT). Alternative #13: <code>with DELETE FROM xfullname indexed_opt where_opt_ret</code> (simple).</p>
+</div><div class="doc-block" data-diff="same"><p><strong>Transformation:</strong></p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>-- Original
+DELETE FROM users WHERE id = 1
+
+-- Transformed (Result Select with CTE shadowing)
+WITH &quot;users&quot; AS (
+  SELECT CAST(1 AS INTEGER) AS &quot;id&quot;, CAST(&#039;Alice&#039; AS TEXT) AS &quot;name&quot;
+)
+SELECT &quot;users&quot;.&quot;id&quot; AS &quot;id&quot;, &quot;users&quot;.&quot;name&quot; AS &quot;name&quot; FROM &quot;users&quot; WHERE id = 1</code></pre>
+</div><div class="doc-block" data-diff="same"><p><strong>Special Case - DELETE without WHERE (Truncate equivalent):</strong></p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>-- Original
+DELETE FROM users
+
+-- No transformation needed (acts as TRUNCATE)
+-- Returns: SELECT 1 WHERE 0
+-- ShadowStore: DeleteMutation clears the table</code></pre>
+</div><div class="doc-block" data-diff="same"><p><strong>Supported Syntax:</strong></p>
+</div><div class="doc-block" data-diff="same"><ul><li><code>DELETE FROM ... WHERE ...</code> - Conditional delete</li><li><code>DELETE FROM ... ORDER BY ... LIMIT ...</code> - Limited delete</li><li><code>DELETE FROM ...</code> - Delete all rows (treated as truncation)</li><li><code>WITH ... DELETE ...</code> - CTE with DELETE</li></ul>
+</div><div class="doc-block" data-diff="same"><p><strong>Unsupported Syntax:</strong></p>
+</div><div class="doc-block" data-diff="same"><ul><li><code>DELETE ... RETURNING ...</code> - RETURNING clause; Result Select approach is used instead</li></ul>
+</div><div class="doc-block" data-diff="same"><h4>TRUNCATE</h4>
+</div><div class="doc-block" data-diff="same"><p>SQLite does not have a <code>TRUNCATE TABLE</code> statement. Use <code>DELETE FROM table</code> (without WHERE clause) instead, which ZTD handles as a truncation operation.</p>
+</div><div class="doc-block" data-diff="same"><hr>
+</div><div class="doc-block" data-diff="same"><h3>DDL (Data Definition Language)</h3>
+</div><div class="doc-block" data-diff="same"><p>ZTD manages DDL virtually within SchemaRegistry. Physical database schema is never modified.</p>
+</div><div class="doc-block" data-diff="same"><p>Grammar rules: SQLite has 14 DDL-related <code>cmd</code> alternatives covering tables, indexes, views, triggers, and virtual tables. Only table-related DDL is rewritten; all other DDL is unsupported.</p>
+</div><div class="doc-block" data-diff="same"><h4>CREATE TABLE (cmd -&gt; create_table create_table_args)</h4>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Mode</th><th>Behavior</th></tr></thead><tbody><tr><td>Rewrite</td><td>Register virtual table in SchemaRegistry</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><p><strong>Grammar:</strong> <code>cmd</code> alternative #7: <code>create_table create_table_args</code>. The <code>create_table</code> rule: <code>createkw temp TABLE ifnotexists nm dbnm</code>. The <code>create_table_args</code> rule has 2 alternatives: column definitions <code>LP columnlist conslist_opt RP table_option_set</code> and <code>AS select</code> (CREATE TABLE AS SELECT).</p>
+</div><div class="doc-block" data-diff="same"><p><strong>Supported Syntax:</strong></p>
+</div><div class="doc-block" data-diff="same"><ul><li><code>CREATE TABLE ...</code> - Create virtual table</li><li><code>CREATE TABLE IF NOT EXISTS ...</code> - Conditional create</li><li><code>CREATE TEMPORARY TABLE ...</code> - Temporary table (treated as normal)</li><li><code>CREATE TABLE ... WITHOUT ROWID</code> - WITHOUT ROWID table (recognized in parsing, from <code>table_option</code> rule)</li></ul>
+</div><div class="doc-block" data-diff="same"><p><strong>Unsupported Syntax:</strong></p>
+</div><div class="doc-block" data-diff="same"><ul><li><code>CREATE TABLE ... AS SELECT ...</code> - Not handled (grammar supports it via <code>create_table_args</code>, but mutation resolver does not implement it)</li></ul>
+</div><div class="doc-block" data-diff="same"><h4>ALTER TABLE (cmd -&gt; ALTER TABLE ...)</h4>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Mode</th><th>Behavior</th></tr></thead><tbody><tr><td>Rewrite</td><td>Modify virtual table structure in SchemaRegistry</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><p><strong>Grammar:</strong> <code>cmd</code> alternatives #35-#38 define 4 ALTER TABLE operations:</p>
+</div><div class="doc-block" data-diff="same"><ul><li>#35: <code>ALTER TABLE fullname RENAME TO nm</code> - Rename table</li><li>#36: <code>ALTER TABLE add_column_fullname ADD kwcolumn_opt columnname carglist</code> - Add column</li><li>#37: <code>ALTER TABLE fullname DROP kwcolumn_opt nm</code> - Drop column (SQLite 3.35+)</li><li>#38: <code>ALTER TABLE fullname RENAME kwcolumn_opt nm TO nm</code> - Rename column (SQLite 3.25+)</li></ul>
+</div><div class="doc-block" data-diff="same"><p><strong>Supported Operations:</strong></p>
+</div><div class="doc-block" data-diff="same"><ul><li><code>ALTER TABLE ... ADD COLUMN ...</code> - Add virtual column (alternative #36)</li><li><code>ALTER TABLE ... ADD ...</code> - Add column (COLUMN keyword optional, from <code>kwcolumn_opt</code> rule)</li><li><code>ALTER TABLE ... DROP COLUMN ...</code> - Drop virtual column (alternative #37, SQLite 3.35+)</li><li><code>ALTER TABLE ... DROP ...</code> - Drop column (COLUMN keyword optional)</li><li><code>ALTER TABLE ... RENAME TO ...</code> - Rename virtual table (alternative #35)</li><li><code>ALTER TABLE ... RENAME COLUMN ... TO ...</code> - Rename column (alternative #38, SQLite 3.25+)</li><li><code>ALTER TABLE ... RENAME ... TO ...</code> - Rename column (without COLUMN keyword)</li></ul>
+</div><div class="doc-block" data-diff="same"><p><strong>Design Decision:</strong> SQLite&#039;s ALTER TABLE is intentionally limited compared to MySQL/PostgreSQL. The grammar defines exactly 4 operations and ZTD supports all of them. Operations not listed above throw <code>UnsupportedSqlException</code>.</p>
+</div><div class="doc-block" data-diff="same"><h4>DROP TABLE (cmd -&gt; DROP TABLE ...)</h4>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Mode</th><th>Behavior</th></tr></thead><tbody><tr><td>Rewrite</td><td>Remove virtual table from SchemaRegistry</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><p><strong>Grammar:</strong> <code>cmd</code> alternative #8: <code>DROP TABLE ifexists fullname</code>.</p>
+</div><div class="doc-block" data-diff="same"><p><strong>Supported Syntax:</strong></p>
+</div><div class="doc-block" data-diff="same"><ul><li><code>DROP TABLE ...</code></li><li><code>DROP TABLE IF EXISTS ...</code></li></ul>
+</div><div class="doc-block" data-diff="same"><h4>Other DDL (Unsupported)</h4>
+</div><div class="doc-block" data-diff="same"><p>All non-table DDL follows Unsupported SQL behavior. The complete list from the grammar:</p>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>#</th><th>Grammar Production</th><th>SQL Statement</th><th>Category</th></tr></thead><tbody><tr><td><strong>Index</strong></td><td></td><td></td><td></td></tr><tr><td>#18</td><td><code>createkw uniqueflag INDEX ifnotexists nm dbnm ON nm LP sortlist RP where_opt</code></td><td><code>CREATE [UNIQUE] INDEX ...</code></td><td>Index</td></tr><tr><td>#19</td><td><code>DROP INDEX ifexists fullname</code></td><td><code>DROP INDEX ...</code></td><td>Index</td></tr><tr><td><strong>View</strong></td><td></td><td></td><td></td></tr><tr><td>#9</td><td><code>createkw temp VIEW ifnotexists nm dbnm eidlist_opt AS select</code></td><td><code>CREATE [TEMP] VIEW ...</code></td><td>View</td></tr><tr><td>#10</td><td><code>DROP VIEW ifexists fullname</code></td><td><code>DROP VIEW ...</code></td><td>View</td></tr><tr><td><strong>Trigger</strong></td><td></td><td></td><td></td></tr><tr><td>#27</td><td><code>createkw trigger_decl BEGIN trigger_cmd_list END</code></td><td><code>CREATE TRIGGER ...</code></td><td>Trigger</td></tr><tr><td>#28</td><td><code>DROP TRIGGER ifexists fullname</code></td><td><code>DROP TRIGGER ...</code></td><td>Trigger</td></tr><tr><td><strong>Virtual Table</strong></td><td></td><td></td><td></td></tr><tr><td>#39</td><td><code>create_vtab</code></td><td><code>CREATE VIRTUAL TABLE ...</code></td><td>Virtual Table</td></tr><tr><td>#40</td><td><code>create_vtab LP vtabarglist RP</code></td><td><code>CREATE VIRTUAL TABLE ... USING module(args)</code></td><td>Virtual Table</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><hr>
+</div><div class="doc-block" data-diff="same"><h3>TCL (Transaction Control Language)</h3>
+</div><div class="doc-block" data-diff="same"><p>Grammar rules: <code>cmd</code> alternatives #1-#6</p>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Mode</th><th>Behavior</th></tr></thead><tbody><tr><td>Unsupported</td><td>Transaction statements are not classified by the query guard</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><p><strong>Design Decision:</strong> Unlike MySQL and PostgreSQL where TCL is explicitly classified as SKIPPED, SQLite&#039;s query guard does not recognize TCL statements. They are treated as unsupported and follow the configured Unsupported SQL behavior.</p>
+</div><div class="doc-block" data-diff="same"><p><strong>Grammar alternatives (6 total):</strong></p>
+</div><div class="doc-block" data-diff="same"><ul><li>#1: <code>BEGIN transtype trans_opt</code> - Begin transaction (from <code>transtype</code> rule: DEFERRED, IMMEDIATE, EXCLUSIVE, or empty)</li><li>#2: <code>COMMIT trans_opt</code> - Commit transaction (also END)</li><li>#3: <code>ROLLBACK trans_opt</code> - Rollback transaction</li><li>#4: <code>SAVEPOINT nm</code> - Create savepoint</li><li>#5: <code>RELEASE savepoint_opt nm</code> - Release savepoint</li><li>#6: <code>ROLLBACK trans_opt TO savepoint_opt nm</code> - Rollback to savepoint</li></ul>
+</div><div class="doc-block" data-diff="same"><p><strong>Unrecognized Statements:</strong></p>
+</div><div class="doc-block" data-diff="same"><ul><li><code>BEGIN</code> / <code>BEGIN TRANSACTION</code> / <code>BEGIN DEFERRED/IMMEDIATE/EXCLUSIVE</code></li><li><code>COMMIT</code> / <code>END</code> / <code>END TRANSACTION</code></li><li><code>ROLLBACK</code> / <code>ROLLBACK TRANSACTION</code></li><li><code>SAVEPOINT ...</code> / <code>RELEASE SAVEPOINT ...</code> / <code>ROLLBACK TO SAVEPOINT ...</code></li></ul>
+</div><div class="doc-block" data-diff="same"><hr>
+</div><div class="doc-block" data-diff="same"><h3>DCL (Data Control Language)</h3>
+</div><div class="doc-block" data-diff="same"><p>SQLite does not have DCL statements. There is no GRANT, REVOKE, or user management in SQLite.</p>
+</div><div class="doc-block" data-diff="same"><hr>
+</div><div class="doc-block" data-diff="same"><h3>Utility Statements</h3>
+</div><div class="doc-block" data-diff="same"><h4>PRAGMA (cmd alternatives #22-#26)</h4>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Mode</th><th>Behavior</th></tr></thead><tbody><tr><td>Unsupported</td><td>Follows Unsupported SQL behavior (ignore/notice/exception/passthrough)</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><p><strong>Grammar:</strong> 5 <code>cmd</code> alternatives for PRAGMA:</p>
+</div><div class="doc-block" data-diff="same"><ul><li>#22: <code>PRAGMA nm dbnm</code> - Query pragma (e.g., <code>PRAGMA table_info</code>)</li><li>#23: <code>PRAGMA nm dbnm EQ nmnum</code> - Set pragma with <code>=</code> (e.g., <code>PRAGMA journal_mode = WAL</code>)</li><li>#24: <code>PRAGMA nm dbnm LP nmnum RP</code> - Set pragma with <code>()</code> (e.g., <code>PRAGMA journal_mode(WAL)</code>)</li><li>#25: <code>PRAGMA nm dbnm EQ minus_num</code> - Set pragma with negative value</li><li>#26: <code>PRAGMA nm dbnm LP minus_num RP</code> - Set pragma with negative value in parentheses</li></ul>
+</div><div class="doc-block" data-diff="same"><blockquote><p><strong>Note:</strong> Schema reflection is performed via <code>sqlite_master</code> and PRAGMA queries internally by <code>SqliteSchemaReflector</code>, not through user-facing SQL.</p>
+</blockquote>
+</div><div class="doc-block" data-diff="same"><h4>EXPLAIN (explain rule)</h4>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Mode</th><th>Behavior</th></tr></thead><tbody><tr><td>Unsupported</td><td>Follows Unsupported SQL behavior</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><p><strong>Grammar:</strong> The <code>explain</code> rule wraps <code>cmd</code> with 2 alternatives:</p>
+</div><div class="doc-block" data-diff="same"><ul><li><code>EXPLAIN</code> - Explain query plan</li><li><code>EXPLAIN QUERY PLAN</code> - Detailed query plan</li></ul>
+</div><div class="doc-block" data-diff="same"><h4>Maintenance</h4>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>#</th><th>Grammar Production</th><th>SQL Statement</th><th>Mode</th><th>Notes</th></tr></thead><tbody><tr><td>#20</td><td><code>VACUUM vinto</code></td><td><code>VACUUM</code></td><td>Unsupported</td><td>Database compaction</td></tr><tr><td>#21</td><td><code>VACUUM nm vinto</code></td><td><code>VACUUM schema_name</code></td><td>Unsupported</td><td>Named database compaction</td></tr><tr><td>#31</td><td><code>REINDEX</code></td><td><code>REINDEX</code></td><td>Unsupported</td><td>Rebuild all indexes</td></tr><tr><td>#32</td><td><code>REINDEX nm dbnm</code></td><td><code>REINDEX table_or_index</code></td><td>Unsupported</td><td>Rebuild specific index</td></tr><tr><td>#33</td><td><code>ANALYZE</code></td><td><code>ANALYZE</code></td><td>Unsupported</td><td>Collect statistics for all</td></tr><tr><td>#34</td><td><code>ANALYZE nm dbnm</code></td><td><code>ANALYZE table_or_index</code></td><td>Unsupported</td><td>Collect statistics for specific table</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><h4>Database Attachment</h4>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>#</th><th>Grammar Production</th><th>SQL Statement</th><th>Mode</th><th>Notes</th></tr></thead><tbody><tr><td>#29</td><td><code>ATTACH database_kw_opt expr AS expr key_opt</code></td><td><code>ATTACH DATABASE file AS name</code></td><td>Unsupported</td><td>Attach external database</td></tr><tr><td>#30</td><td><code>DETACH database_kw_opt expr</code></td><td><code>DETACH DATABASE name</code></td><td>Unsupported</td><td>Detach external database</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><hr>
+</div><div class="doc-block" data-diff="same"><h3>Complete Grammar Coverage</h3>
+</div><div class="doc-block" data-diff="same"><p>The following table maps all 40 <code>cmd</code> alternatives to their ZTD handling mode:</p>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>#</th><th>Grammar Production</th><th>SQL Statement</th><th>Mode</th><th>Category</th></tr></thead><tbody><tr><td>1</td><td><code>BEGIN transtype trans_opt</code></td><td><code>BEGIN [DEFERRED|IMMEDIATE|EXCLUSIVE] [TRANSACTION]</code></td><td>Unsupported</td><td>TCL</td></tr><tr><td>2</td><td><code>COMMIT trans_opt</code></td><td><code>COMMIT [TRANSACTION]</code> / <code>END [TRANSACTION]</code></td><td>Unsupported</td><td>TCL</td></tr><tr><td>3</td><td><code>ROLLBACK trans_opt</code></td><td><code>ROLLBACK [TRANSACTION]</code></td><td>Unsupported</td><td>TCL</td></tr><tr><td>4</td><td><code>SAVEPOINT nm</code></td><td><code>SAVEPOINT name</code></td><td>Unsupported</td><td>TCL</td></tr><tr><td>5</td><td><code>RELEASE savepoint_opt nm</code></td><td><code>RELEASE [SAVEPOINT] name</code></td><td>Unsupported</td><td>TCL</td></tr><tr><td>6</td><td><code>ROLLBACK trans_opt TO savepoint_opt nm</code></td><td><code>ROLLBACK [TRANSACTION] TO [SAVEPOINT] name</code></td><td>Unsupported</td><td>TCL</td></tr><tr><td>7</td><td><code>create_table create_table_args</code></td><td><code>CREATE [TEMP] TABLE ...</code></td><td><strong>Rewrite</strong></td><td>DDL</td></tr><tr><td>8</td><td><code>DROP TABLE ifexists fullname</code></td><td><code>DROP TABLE [IF EXISTS] name</code></td><td><strong>Rewrite</strong></td><td>DDL</td></tr><tr><td>9</td><td><code>createkw temp VIEW ...</code></td><td><code>CREATE [TEMP] VIEW ...</code></td><td>Unsupported</td><td>DDL</td></tr><tr><td>10</td><td><code>DROP VIEW ifexists fullname</code></td><td><code>DROP VIEW [IF EXISTS] name</code></td><td>Unsupported</td><td>DDL</td></tr><tr><td>11</td><td><code>select</code></td><td><code>SELECT ...</code> / <code>VALUES (...)</code></td><td><strong>Rewrite</strong></td><td>DML</td></tr><tr><td>12</td><td><code>with DELETE FROM ... orderby limit</code></td><td><code>[WITH ...] DELETE FROM ... ORDER BY ... LIMIT ...</code></td><td><strong>Rewrite</strong></td><td>DML</td></tr><tr><td>13</td><td><code>with DELETE FROM ...</code></td><td><code>[WITH ...] DELETE FROM ... [WHERE ...]</code></td><td><strong>Rewrite</strong></td><td>DML</td></tr><tr><td>14</td><td><code>with UPDATE orconf ... orderby limit</code></td><td><code>[WITH ...] UPDATE [OR ...] ... ORDER BY ... LIMIT ...</code></td><td><strong>Rewrite</strong></td><td>DML</td></tr><tr><td>15</td><td><code>with UPDATE orconf ...</code></td><td><code>[WITH ...] UPDATE [OR ...] ... SET ... [WHERE ...]</code></td><td><strong>Rewrite</strong></td><td>DML</td></tr><tr><td>16</td><td><code>with insert_cmd INTO ... select upsert</code></td><td><code>[WITH ...] INSERT/REPLACE INTO ... VALUES/SELECT ... [ON CONFLICT ...]</code></td><td><strong>Rewrite</strong></td><td>DML</td></tr><tr><td>17</td><td><code>with insert_cmd INTO ... DEFAULT VALUES</code></td><td><code>[WITH ...] INSERT INTO ... DEFAULT VALUES</code></td><td><strong>Rewrite</strong></td><td>DML</td></tr><tr><td>18</td><td><code>createkw uniqueflag INDEX ...</code></td><td><code>CREATE [UNIQUE] INDEX ...</code></td><td>Unsupported</td><td>DDL</td></tr><tr><td>19</td><td><code>DROP INDEX ifexists fullname</code></td><td><code>DROP INDEX [IF EXISTS] name</code></td><td>Unsupported</td><td>DDL</td></tr><tr><td>20</td><td><code>VACUUM vinto</code></td><td><code>VACUUM [INTO file]</code></td><td>Unsupported</td><td>Utility</td></tr><tr><td>21</td><td><code>VACUUM nm vinto</code></td><td><code>VACUUM schema [INTO file]</code></td><td>Unsupported</td><td>Utility</td></tr><tr><td>22</td><td><code>PRAGMA nm dbnm</code></td><td><code>PRAGMA name</code></td><td>Unsupported</td><td>Utility</td></tr><tr><td>23</td><td><code>PRAGMA nm dbnm EQ nmnum</code></td><td><code>PRAGMA name = value</code></td><td>Unsupported</td><td>Utility</td></tr><tr><td>24</td><td><code>PRAGMA nm dbnm LP nmnum RP</code></td><td><code>PRAGMA name(value)</code></td><td>Unsupported</td><td>Utility</td></tr><tr><td>25</td><td><code>PRAGMA nm dbnm EQ minus_num</code></td><td><code>PRAGMA name = -value</code></td><td>Unsupported</td><td>Utility</td></tr><tr><td>26</td><td><code>PRAGMA nm dbnm LP minus_num RP</code></td><td><code>PRAGMA name(-value)</code></td><td>Unsupported</td><td>Utility</td></tr><tr><td>27</td><td><code>createkw trigger_decl BEGIN ... END</code></td><td><code>CREATE TRIGGER ...</code></td><td>Unsupported</td><td>DDL</td></tr><tr><td>28</td><td><code>DROP TRIGGER ifexists fullname</code></td><td><code>DROP TRIGGER [IF EXISTS] name</code></td><td>Unsupported</td><td>DDL</td></tr><tr><td>29</td><td><code>ATTACH database_kw_opt expr AS expr key_opt</code></td><td><code>ATTACH [DATABASE] file AS name</code></td><td>Unsupported</td><td>Utility</td></tr><tr><td>30</td><td><code>DETACH database_kw_opt expr</code></td><td><code>DETACH [DATABASE] name</code></td><td>Unsupported</td><td>Utility</td></tr><tr><td>31</td><td><code>REINDEX</code></td><td><code>REINDEX</code></td><td>Unsupported</td><td>Utility</td></tr><tr><td>32</td><td><code>REINDEX nm dbnm</code></td><td><code>REINDEX name</code></td><td>Unsupported</td><td>Utility</td></tr><tr><td>33</td><td><code>ANALYZE</code></td><td><code>ANALYZE</code></td><td>Unsupported</td><td>Utility</td></tr><tr><td>34</td><td><code>ANALYZE nm dbnm</code></td><td><code>ANALYZE name</code></td><td>Unsupported</td><td>Utility</td></tr><tr><td>35</td><td><code>ALTER TABLE fullname RENAME TO nm</code></td><td><code>ALTER TABLE ... RENAME TO ...</code></td><td><strong>Rewrite</strong></td><td>DDL</td></tr><tr><td>36</td><td><code>ALTER TABLE ... ADD kwcolumn_opt columnname carglist</code></td><td><code>ALTER TABLE ... ADD [COLUMN] ...</code></td><td><strong>Rewrite</strong></td><td>DDL</td></tr><tr><td>37</td><td><code>ALTER TABLE fullname DROP kwcolumn_opt nm</code></td><td><code>ALTER TABLE ... DROP [COLUMN] ...</code></td><td><strong>Rewrite</strong></td><td>DDL</td></tr><tr><td>38</td><td><code>ALTER TABLE fullname RENAME kwcolumn_opt nm TO nm</code></td><td><code>ALTER TABLE ... RENAME [COLUMN] ... TO ...</code></td><td><strong>Rewrite</strong></td><td>DDL</td></tr><tr><td>39</td><td><code>create_vtab</code></td><td><code>CREATE VIRTUAL TABLE ...</code></td><td>Unsupported</td><td>DDL</td></tr><tr><td>40</td><td><code>create_vtab LP vtabarglist RP</code></td><td><code>CREATE VIRTUAL TABLE ... USING module(args)</code></td><td>Unsupported</td><td>DDL</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><p><strong>Additional:</strong> <code>explain</code> rule wraps <code>cmd</code>: | | <code>EXPLAIN cmd</code> | <code>EXPLAIN ...</code> | Unsupported | Utility | | | <code>EXPLAIN QUERY PLAN cmd</code> | <code>EXPLAIN QUERY PLAN ...</code> | Unsupported | Utility |</p>
+</div><div class="doc-block" data-diff="same"><p><strong>Summary:</strong> 13 Rewrite + 0 Ignored + 27 Unsupported = 40 total (+ 2 EXPLAIN wrappers).</p>
+</div><div class="doc-block" data-diff="same"><hr>
+</div><div class="doc-block" data-diff="same"><h3>Multiple Statements</h3>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Mode</th><th>Behavior</th></tr></thead><tbody><tr><td>Rewrite</td><td>Process each statement sequentially via <code>rewriteMultiple()</code></td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><p><strong>Grammar:</strong> The <code>input</code> -&gt; <code>cmdlist</code> -&gt; <code>ecmd</code> -&gt; <code>cmdx</code> chain handles semicolon-separated statements. <code>cmdlist</code> is recursive: <code>cmdlist ecmd | ecmd</code>. Each <code>ecmd</code> is <code>SEMI | cmdx SEMI | explain cmdx SEMI</code>.</p>
+</div><div class="doc-block" data-diff="same"><p><strong>Supported:</strong></p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>SELECT 1; SELECT 2
+INSERT INTO t VALUES (1); UPDATE t SET x = 2</code></pre>
+</div><div class="doc-block" data-diff="same"><p><strong>Result:</strong> <code>MultiRewritePlan</code> containing individual <code>RewritePlan</code> for each statement.</p>
+</div><div class="doc-block" data-diff="same"><p><strong>Result Retrieval:</strong> Use <code>nextRowset()</code> to iterate through result sets.</p>
+</div><div class="doc-block" data-diff="same"><p><strong>Parser Note:</strong> The SQLite parser handles single-quoted strings (with <code>&#039;&#039;</code> escaping), double-quoted identifiers (with <code>&quot;&quot;</code> escaping), backtick-quoted identifiers, bracket-quoted identifiers (<code>[name]</code>), line comments (<code>--</code>), and block comments (<code>/* */</code>) when splitting statements by semicolons.</p>
+</div><div class="doc-block" data-diff="same"><hr>
+</div><div class="doc-block" data-diff="same"><h3>CTE Shadowing Details (SQLite-Specific)</h3>
+</div><div class="doc-block" data-diff="same"><h4>UNION ALL Chains</h4>
+</div><div class="doc-block" data-diff="same"><p>SQLite uses <code>SELECT ... UNION ALL SELECT ...</code> chains for all multi-row CTEs:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>WITH &quot;users&quot; AS (
+  SELECT CAST(1 AS INTEGER) AS &quot;id&quot;, CAST(&#039;Alice&#039; AS TEXT) AS &quot;name&quot;
+  UNION ALL
+  SELECT CAST(2 AS INTEGER) AS &quot;id&quot;, CAST(&#039;Bob&#039; AS TEXT) AS &quot;name&quot;
+)
+SELECT * FROM &quot;users&quot;</code></pre>
+</div><div class="doc-block" data-diff="same"><p><strong>Design Decision:</strong> Unlike PostgreSQL (which uses <code>VALUES</code> clause) and MySQL (which uses <code>UNION ALL</code>), SQLite uses <code>UNION ALL</code> chains. SQLite does not use <code>AS MATERIALIZED</code> since SQLite&#039;s CTE implementation does not inline CTEs by default (pre-3.35) and the keyword is not supported.</p>
+</div><div class="doc-block" data-diff="same"><h4>Empty CTEs</h4>
+</div><div class="doc-block" data-diff="same"><p>For tables with no fixture data:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>WITH &quot;users&quot; AS (SELECT CAST(NULL AS INTEGER) AS &quot;id&quot;, CAST(NULL AS TEXT) AS &quot;name&quot; WHERE 0)</code></pre>
+</div><div class="doc-block" data-diff="same"><p>Note: SQLite uses <code>WHERE 0</code> instead of PostgreSQL&#039;s <code>WHERE FALSE</code>.</p>
+</div><div class="doc-block" data-diff="same"><h4>Identifier Quoting</h4>
+</div><div class="doc-block" data-diff="same"><p>SQLite supports multiple quoting styles. ZTD uses double-quote identifiers (<code>&quot;identifier&quot;</code>), which is the SQL standard:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>-- Table name: my table
+SELECT * FROM &quot;my table&quot;</code></pre>
+</div><div class="doc-block" data-diff="same"><p>The parser also recognizes backtick-quoted (`<code> </code>identifier<code> </code><code>) and bracket-quoted (</code>[identifier]`) identifiers when reading, but generates double-quoted identifiers for output.</p>
+</div><div class="doc-block" data-diff="same"><hr>
+</div><div class="doc-block" data-diff="same"><h3>Type Mapping</h3>
+</div><div class="doc-block" data-diff="same"><h4>ColumnTypeFamily to SQLite CAST Types</h4>
+</div><div class="doc-block" data-diff="same"><p>SQLite has a simplified type affinity system with five storage classes: NULL, INTEGER, REAL, TEXT, BLOB.</p>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>ColumnTypeFamily</th><th>SQLite CAST Type</th></tr></thead><tbody><tr><td><code>INTEGER</code></td><td><code>INTEGER</code></td></tr><tr><td><code>FLOAT</code></td><td><code>REAL</code></td></tr><tr><td><code>DOUBLE</code></td><td><code>REAL</code></td></tr><tr><td><code>DECIMAL</code></td><td><code>NUMERIC</code></td></tr><tr><td><code>STRING</code></td><td><code>TEXT</code></td></tr><tr><td><code>TEXT</code></td><td><code>TEXT</code></td></tr><tr><td><code>BOOLEAN</code></td><td><code>INTEGER</code></td></tr><tr><td><code>DATE</code></td><td><code>TEXT</code></td></tr><tr><td><code>TIME</code></td><td><code>TEXT</code></td></tr><tr><td><code>DATETIME</code></td><td><code>TEXT</code></td></tr><tr><td><code>TIMESTAMP</code></td><td><code>TEXT</code></td></tr><tr><td><code>BINARY</code></td><td><code>BLOB</code></td></tr><tr><td><code>JSON</code></td><td><code>TEXT</code></td></tr><tr><td><code>UNKNOWN</code></td><td>Mapped from native type or <code>TEXT</code> fallback</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><p><strong>Design Decision:</strong> SQLite stores dates, times, booleans, and JSON as TEXT. ZTD&#039;s CAST expressions reflect this by casting to TEXT for temporal and JSON types, and INTEGER for booleans.</p>
+</div><div class="doc-block" data-diff="same"><h4>Native Type to ColumnTypeFamily Mapping</h4>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>SQLite Native Type</th><th>ColumnTypeFamily</th></tr></thead><tbody><tr><td><code>INT</code>, <code>INTEGER</code>, <code>TINYINT</code>, <code>SMALLINT</code>, <code>MEDIUMINT</code>, <code>BIGINT</code>, <code>INT2</code>, <code>INT8</code></td><td><code>INTEGER</code></td></tr><tr><td><code>REAL</code>, <code>DOUBLE</code>, <code>DOUBLE PRECISION</code>, <code>FLOAT</code></td><td><code>FLOAT</code></td></tr><tr><td><code>DECIMAL</code>, <code>NUMERIC</code></td><td><code>DECIMAL</code></td></tr><tr><td><code>CHAR</code>, <code>CHARACTER</code>, <code>VARCHAR</code>, <code>VARYING CHARACTER</code>, <code>NCHAR</code>, <code>NATIVE CHARACTER</code>, <code>NVARCHAR</code></td><td><code>STRING</code></td></tr><tr><td><code>TEXT</code>, <code>CLOB</code></td><td><code>TEXT</code></td></tr><tr><td><code>BOOLEAN</code>, <code>BOOL</code></td><td><code>BOOLEAN</code></td></tr><tr><td><code>BLOB</code></td><td><code>BINARY</code></td></tr><tr><td><code>DATE</code></td><td><code>DATE</code></td></tr><tr><td><code>TIME</code></td><td><code>TIME</code></td></tr><tr><td><code>DATETIME</code></td><td><code>DATETIME</code></td></tr><tr><td><code>TIMESTAMP</code></td><td><code>TIMESTAMP</code></td></tr><tr><td><code>JSON</code></td><td><code>JSON</code></td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><hr>
+</div><div class="doc-block" data-diff="same"><h3>Error Handling</h3>
+</div><div class="doc-block" data-diff="same"><h4>Error Classification</h4>
+</div><div class="doc-block" data-diff="same"><p>SQLite errors are classified using error codes and message patterns:</p>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Error Code</th><th>Meaning</th><th>Classification</th></tr></thead><tbody><tr><td><code>1</code> (SQLITE_ERROR)</td><td>General SQL error</td><td>Schema error (if message matches)</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><p><strong>Message Pattern Matching:</strong></p>
+</div><div class="doc-block" data-diff="same"><ul><li><code>no such table: ...</code> - Schema error</li><li><code>no such column: ...</code> - Schema error</li><li><code>table ... has no column named ...</code> - Schema error</li></ul>
+</div><div class="doc-block" data-diff="same"><h4>Schema Errors</h4>
+</div><div class="doc-block" data-diff="same"><h5>Non-existent Table</h5>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Operation</th><th>Detection</th><th>Behavior</th></tr></thead><tbody><tr><td>SELECT FROM unknown_table</td><td>ZTD</td><td><code>UnknownSchemaException</code></td></tr><tr><td>INSERT INTO unknown_table</td><td>ZTD</td><td><code>UnknownSchemaException</code></td></tr><tr><td>UPDATE unknown_table</td><td>ZTD</td><td><code>UnknownSchemaException</code></td></tr><tr><td>DELETE FROM unknown_table</td><td>ZTD</td><td><code>UnknownSchemaException</code></td></tr><tr><td>DROP TABLE unknown_table</td><td>ZTD</td><td><code>UnknownSchemaException</code></td></tr><tr><td>ALTER TABLE unknown_table</td><td>ZTD</td><td><code>UnknownSchemaException</code></td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><h5>Table/Column Already Exists</h5>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Operation</th><th>Detection</th><th>Behavior</th></tr></thead><tbody><tr><td>CREATE TABLE existing_table</td><td>ZTD</td><td><code>UnsupportedSqlException</code> (Table already exists)</td></tr><tr><td>CREATE TABLE IF NOT EXISTS</td><td>ZTD</td><td>No action (table already exists)</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><h4>Data Type Errors</h4>
+</div><div class="doc-block" data-diff="same"><p>ZTD applies CAST to all values using SQLite&#039;s type affinity system.</p>
+</div><div class="doc-block" data-diff="same"><p><strong>Example:</strong></p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>-- Schema: users (id INTEGER, name TEXT, active BOOLEAN)
+-- Original
+INSERT INTO users (id, name, active) VALUES (&#039;123&#039;, &#039;Alice&#039;, 1)
+
+-- Result Select (with CAST)
+SELECT
+  CAST(&#039;123&#039; AS INTEGER) AS &quot;id&quot;,
+  CAST(&#039;Alice&#039; AS TEXT) AS &quot;name&quot;,
+  CAST(1 AS INTEGER) AS &quot;active&quot;</code></pre>
+</div><div class="doc-block" data-diff="same"><h4>Schema Reflection</h4>
+</div><div class="doc-block" data-diff="same"><p>SQLite schema is reflected via <code>sqlite_master</code>:</p>
+</div><div class="doc-block" data-diff="same"><ul><li><strong>CREATE statements:</strong> <code>SELECT sql FROM sqlite_master WHERE type=&#039;table&#039; AND name=?</code></li><li><strong>All tables:</strong> <code>SELECT name, sql FROM sqlite_master WHERE type=&#039;table&#039; AND name NOT LIKE &#039;sqlite_%&#039;</code></li></ul>
+</div><div class="doc-block" data-diff="same"><p>The original <code>CREATE TABLE</code> SQL is stored directly in <code>sqlite_master.sql</code>, so no reconstruction is needed (unlike PostgreSQL).</p>
+</div><div class="doc-block" data-diff="same"><hr>
+</div><div class="doc-block" data-diff="same"><h3>Unsupported SQL Handling</h3>
+</div><div class="doc-block" data-diff="same"><p>When an unsupported SQL statement is executed, behavior depends on configuration.</p>
+</div><div class="doc-block" data-diff="same"><h4>Behavior Modes</h4>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Mode</th><th>Description</th></tr></thead><tbody><tr><td><code>ignore</code></td><td>Silently ignore, return empty result</td></tr><tr><td><code>notice</code></td><td>Log warning, continue with empty result</td></tr><tr><td><code>exception</code></td><td>Throw <code>UnsupportedSqlException</code></td></tr><tr><td><code>passthrough</code></td><td>Execute against real database as-is</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><h4>Per-Statement Configuration</h4>
+</div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Pattern</th><th>Behavior</th><th>Reason</th></tr></thead><tbody><tr><td><code>PRAGMA ...</code></td><td><code>passthrough</code> or <code>ignore</code></td><td>SQLite configuration</td></tr><tr><td><code>CREATE INDEX</code></td><td><code>ignore</code></td><td>Index management not needed in tests</td></tr><tr><td><code>BEGIN/COMMIT/ROLLBACK</code></td><td><code>passthrough</code></td><td>Transaction management</td></tr><tr><td>Default</td><td><code>ignore</code></td><td>Fallback for unspecified patterns</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="same"><hr>
+</div><div class="doc-block" data-diff="same"><h3>Limitations</h3>
+</div><div class="doc-block" data-diff="same"><ol><li><strong>No TRUNCATE TABLE</strong> - Use <code>DELETE FROM table</code> (without WHERE) instead. ZTD treats this as a truncation.</li><li><strong>No multi-table DELETE</strong> - SQLite only supports single-table DELETE (no USING clause).</li><li><strong>No RIGHT/FULL OUTER JOIN</strong> - SQLite does not support RIGHT or FULL OUTER JOIN (LEFT JOIN and CROSS JOIN are supported).</li><li><strong>No RETURNING clause</strong> - ZTD uses Result Select Query approach instead.</li><li><strong>No AS MATERIALIZED</strong> - SQLite does not support the <code>MATERIALIZED</code> keyword in CTEs (unlike PostgreSQL).</li><li><strong>No VALUES clause in CTEs</strong> - Multi-row CTEs use <code>UNION ALL</code> chains instead.</li><li><strong>No CREATE TABLE ... AS SELECT</strong> - Grammar supports it but mutation resolver does not implement it.</li><li><strong>TCL not ignored</strong> - Unlike MySQL/PostgreSQL, transaction statements are treated as unsupported, not silently ignored.</li><li><strong>Limited ALTER TABLE</strong> - Only ADD COLUMN, DROP COLUMN, RENAME TABLE, and RENAME COLUMN are supported (all 4 grammar alternatives).</li><li><strong>No stored procedures / functions</strong> - SQLite has no server-side programming.</li><li><strong>CHECK constraints</strong> - Not evaluated by ZTD.</li><li><strong>Triggers</strong> - Not simulated.</li><li><strong>Type affinity</strong> - SQLite&#039;s flexible typing means CAST may behave differently than strict-typed databases.</li><li><strong>Virtual tables</strong> - FTS, R-Tree, and other virtual table modules are unsupported.</li></ol>
+</div><div class="doc-block" data-diff="same"><hr>
+</div><div class="doc-block" data-diff="same"><h3>Design Principles</h3>
+</div><div class="doc-block" data-diff="same"><ol><li><strong>Zero Physical Impact</strong> - All operations are virtual; physical tables are never modified</li><li><strong>SQL as Pure Functions</strong> - Input (fixtures) and output (query results) only, no side effects</li><li><strong>Real Database Engine</strong> - Uses actual SQLite database for SQL parsing, type inference, and query execution</li><li><strong>CTE-Based Isolation</strong> - Tables are shadowed with CTEs, not mocked</li><li><strong>Simplicity</strong> - Complex features (triggers, views, virtual tables) are out of scope</li><li><strong>Type Conversion via CAST</strong> - Schema metadata used to apply appropriate type casts using SQLite&#039;s affinity system</li><li><strong>Result Select over RETURNING</strong> - Consistent cross-platform approach; does not rely on SQLite 3.35+ <code>RETURNING</code></li></ol>
+</div></section>
+</main>
+<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div>
+<script src="../../../../assets/search-index.js" defer></script>
+<script src="../../../../assets/app.js" defer></script>
+</body>
+</html>
