@@ -55,6 +55,7 @@ jobs:
             jq --arg v "$CONSTRAINT" '
               (if .repositories then .repositories |= [.[] | select(.type == "path" | not)] else . end) |
               (if .repositories == [] then del(.repositories) else . end) |
+              (if ."require-dev"."k-kinzal/container" then del(."require-dev"."k-kinzal/container") else . end) |
               (if ."autoload-dev"."psr-4" then
                 ."autoload-dev"."psr-4" |= with_entries(
                   if (.value | type) == "array" then
@@ -74,6 +75,7 @@ jobs:
             jq '
               (if .repositories then .repositories |= [.[] | select(.type == "path" | not)] else . end) |
               (if .repositories == [] then del(.repositories) else . end) |
+              (if ."require-dev"."k-kinzal/container" then del(."require-dev"."k-kinzal/container") else . end) |
               (if ."autoload-dev"."psr-4" then
                 ."autoload-dev"."psr-4" |= with_entries(
                   if (.value | type) == "array" then

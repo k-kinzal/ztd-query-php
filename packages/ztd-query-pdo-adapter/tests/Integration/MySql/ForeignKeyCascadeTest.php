@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Integration\MySql;
 
+use Container\MySql80Container;
+use Container\MySql84Container;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
-use Tests\Container\MySqlContainer;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 use ZtdQuery\Adapter\Pdo\ZtdPdoException;
 
@@ -23,9 +24,14 @@ final class ForeignKeyCascadeTest extends TestCase
 {
     public function testForeignKeysValidateAndCascadeUpdatesAndDeletes(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(MySqlContainer::class);
+        $containerInstance = \Testcontainers\Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         /** @var PDO $pdo */
-        $pdo = $containerInstance->getData(PDO::class);
+        $pdo = new PDO(
+            sprintf('mysql:host=%s;port=%d;dbname=test;charset=utf8mb4', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(3306)),
+            'root',
+            'root',
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
+        );
 
         $databaseName = 'ztd_' . bin2hex(random_bytes(8));
         $pdo->exec(sprintf('CREATE DATABASE `%s` CHARACTER SET utf8mb4', $databaseName));

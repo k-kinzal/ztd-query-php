@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "07163c16041ae49eed2a7d414b138f99",
+    "content-hash": "92d1fce05affa676bdc09ae632a9fe5e",
     "packages": [
         {
             "name": "k-kinzal/ztd-query-core",
@@ -12,7 +12,7 @@
             "dist": {
                 "type": "path",
                 "url": "../ztd-query-core",
-                "reference": "e0e53e01ff168508fb63f4d6b5dd8b0597cdac6f"
+                "reference": "9bf974e46edfbf1e6ce00e716da1ac803972969e"
             },
             "require": {
                 "php": "^8.1"
@@ -47,6 +47,9 @@
                 }
             },
             "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
                 "bench": [
                     "phpbench run --report=aggregate"
                 ],
@@ -86,13 +89,19 @@
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
                 ],
                 "fuzz": [
-                    "@fuzz:token-stream"
+                    "@fuzz:smoke"
+                ],
+                "fuzz:smoke": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@fuzz:token-stream --max-runs=100"
                 ],
                 "fuzz:token-stream": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/token-stream') || mkdir('fuzz/corpus/token-stream', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_token_stream.php fuzz/corpus/token-stream/"
                 ],
                 "lint": [
+                    "@autoload:check",
                     "@format:check",
                     "@phpstan",
                     "@compat",
@@ -137,7 +146,7 @@
             "dist": {
                 "type": "path",
                 "url": "../ztd-query-mysql",
-                "reference": "9a6918985db3a3dd5a598c279c900b19f39cccbb"
+                "reference": "52a104fdd51c8c8933fe17e6dd054a5e99adc359"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -175,6 +184,9 @@
                 }
             },
             "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
                 "bench": [
                     "phpbench run --report=aggregate"
                 ],
@@ -213,19 +225,32 @@
                 "format:check": [
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
                 ],
+                "fuzz": [
+                    "@fuzz:smoke"
+                ],
                 "fuzz:robustness": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/robustness') || mkdir('fuzz/corpus/robustness', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_robustness.php fuzz/corpus/robustness/"
                 ],
                 "fuzz:robustness:classify": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/robustness-classify') || mkdir('fuzz/corpus/robustness-classify', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_robustness_classify.php fuzz/corpus/robustness-classify/"
                 ],
                 "fuzz:robustness:rewrite": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/robustness-rewrite') || mkdir('fuzz/corpus/robustness-rewrite', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_robustness_rewrite.php fuzz/corpus/robustness-rewrite/"
                 ],
+                "fuzz:smoke": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@fuzz:robustness --max-runs=100",
+                    "@fuzz:robustness:classify --max-runs=100",
+                    "@fuzz:robustness:rewrite --max-runs=100"
+                ],
                 "lint": [
+                    "@autoload:check",
                     "@format:check",
                     "@phpstan",
                     "@compat",
@@ -1605,6 +1630,118 @@
             "time": "2025-03-19T14:43:43+00:00"
         },
         {
+            "name": "k-kinzal/container",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "../container",
+                "reference": "6478c853dbf8368cfd2ff4ffaffcb57bdc0369ec"
+            },
+            "require": {
+                "ext-pdo": "*",
+                "k-kinzal/testcontainers-php": "^0.5.1",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "brianium/paratest": "^7.3",
+                "deptrac/deptrac": "^3.0",
+                "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/php-ai-toolkit": "dev-main",
+                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
+                "phpstan/phpstan": "^2.1",
+                "phpstan/phpstan-strict-rules": "^2.0",
+                "phpunit/phpunit": "^10.5",
+                "squizlabs/php_codesniffer": "^4.0.4"
+            },
+            "suggest": {
+                "ext-pdo_mysql": "Required for MySQL containers",
+                "ext-pdo_pgsql": "Required for PostgreSQL containers"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Container\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Tests\\": "tests/"
+                }
+            },
+            "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
+                "compat": [
+                    "phpcs"
+                ],
+                "deptrac": [
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
+                ],
+                "docgen": [
+                    "docgen --packages=. --title=k-kinzal/container"
+                ],
+                "docgen:diff": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --diff=origin/main --serve"
+                ],
+                "docgen:fresh": [
+                    "@docgen --no-cache"
+                ],
+                "docgen:serve": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --serve"
+                ],
+                "doctest": [
+                    "phpunit --testsuite doctest"
+                ],
+                "format": [
+                    "php-cs-fixer fix --allow-risky=yes"
+                ],
+                "format:check": [
+                    "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
+                ],
+                "lint": [
+                    "@autoload:check",
+                    "@format:check",
+                    "@phpstan",
+                    "@compat",
+                    "@loc-guard",
+                    "@tree-guard",
+                    "@deptrac"
+                ],
+                "loc-guard": [
+                    "loc-guard --config=loc.yaml"
+                ],
+                "phpstan": [
+                    "phpstan analyse --memory-limit=512M"
+                ],
+                "test": [
+                    "paratest --processes=auto"
+                ],
+                "test:coverage": [
+                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+                ],
+                "test:unit": [
+                    "phpunit --testsuite unit"
+                ],
+                "tree-guard": [
+                    "tree-guard --config=tree.yaml"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Shared database containers for integration and fuzz testing",
+            "support": {
+                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/container",
+                "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/container/"
+            },
+            "transport-options": {
+                "relative": true
+            }
+        },
+        {
             "name": "k-kinzal/php-ai-toolkit",
             "version": "dev-main",
             "source": {
@@ -1761,7 +1898,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-faker",
-                "reference": "cfe2c8731036b6e36b5d7c4576485283de886111"
+                "reference": "d8deed35a9e3659c14031f2aafcfff3f441789bd"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -1771,8 +1908,8 @@
                 "brianium/paratest": "^7.3",
                 "deptrac/deptrac": "^3.0",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/container": "dev-main",
                 "k-kinzal/php-ai-toolkit": "dev-main",
-                "k-kinzal/testcontainers-php": "^0.5.1",
                 "nikic/php-fuzzer": "^0.0.11",
                 "phpbench/phpbench": "^1.4",
                 "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
@@ -1801,6 +1938,9 @@
                 }
             },
             "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
                 "bench": [
                     "phpbench run --report=aggregate"
                 ],
@@ -1849,23 +1989,31 @@
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
                 ],
                 "fuzz": [
-                    "@fuzz:mysql",
-                    "@fuzz:pg",
-                    "@fuzz:sqlite"
+                    "@fuzz:smoke"
                 ],
                 "fuzz:mysql": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/mysql') || mkdir('fuzz/corpus/mysql', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_mysql_syntax.php fuzz/corpus/mysql/"
                 ],
                 "fuzz:pg": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/pg') || mkdir('fuzz/corpus/pg', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_pg_syntax.php fuzz/corpus/pg/"
                 ],
+                "fuzz:smoke": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@fuzz:mysql --max-runs=100",
+                    "@fuzz:pg --max-runs=100",
+                    "@fuzz:sqlite --max-runs=100"
+                ],
                 "fuzz:sqlite": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/sqlite') || mkdir('fuzz/corpus/sqlite', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_sqlite_syntax.php fuzz/corpus/sqlite/"
                 ],
                 "lint": [
+                    "@autoload:check",
                     "@format:check",
                     "@phpstan",
                     "@compat",
@@ -1910,7 +2058,7 @@
             "dist": {
                 "type": "path",
                 "url": "../sql-fixture",
-                "reference": "6aced812c461784277f586f58f25470fb8569db1"
+                "reference": "fc6309d5ad85e62eb47738c41cb26285ac3c391b"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -1921,9 +2069,9 @@
                 "brianium/paratest": "^7.3",
                 "deptrac/deptrac": "^3.0",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/container": "dev-main",
                 "k-kinzal/php-ai-toolkit": "dev-main",
                 "k-kinzal/sql-faker": "dev-main",
-                "k-kinzal/testcontainers-php": "^0.5.1",
                 "nikic/php-fuzzer": "^0.0.11",
                 "phpbench/phpbench": "^1.4",
                 "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
@@ -1946,6 +2094,9 @@
                 }
             },
             "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
                 "bench": [
                     "phpbench run --report=aggregate"
                 ],
@@ -1985,18 +2136,25 @@
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
                 ],
                 "fuzz": [
-                    "@fuzz:create-table",
-                    "@fuzz:insert-select"
+                    "@fuzz:smoke"
                 ],
                 "fuzz:create-table": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/create-table') || mkdir('fuzz/corpus/create-table', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_create_table.php fuzz/corpus/create-table/"
                 ],
                 "fuzz:insert-select": [
+                    "Composer\\Config::disableProcessTimeout",
                     "@php -r \"is_dir('fuzz/corpus/insert-select') || mkdir('fuzz/corpus/insert-select', 0777, true);\" --",
                     "php-fuzzer fuzz fuzz/fuzz_insert_select.php fuzz/corpus/insert-select/"
                 ],
+                "fuzz:smoke": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@fuzz:create-table --max-runs=100",
+                    "@fuzz:insert-select --max-runs=100"
+                ],
                 "lint": [
+                    "@autoload:check",
                     "@format:check",
                     "@phpstan",
                     "@compat",
@@ -6641,6 +6799,7 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
+        "k-kinzal/container": 20,
         "k-kinzal/php-ai-toolkit": 20,
         "k-kinzal/sql-faker": 20,
         "k-kinzal/sql-fixture": 20,

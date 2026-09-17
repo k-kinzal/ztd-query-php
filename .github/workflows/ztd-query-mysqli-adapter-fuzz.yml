@@ -16,6 +16,7 @@ on:
         options: ['all', '8.0.44', '8.4.7']
   pull_request:
     paths:
+      - 'packages/container/**'
       - 'packages/ztd-query-mysqli-adapter/**'
       - 'packages/ztd-query-mysql/**'
       - 'packages/ztd-query-core/**'

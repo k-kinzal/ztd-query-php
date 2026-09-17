@@ -5,6 +5,7 @@ name: CI (ztd-query-pdo-adapter)
     - main
   pull_request:
     paths:
+    - packages/container/**
     - packages/ztd-query-pdo-adapter/**
     - packages/ztd-query-mysql/**
     - packages/ztd-query-postgres/**
@@ -68,6 +69,19 @@ jobs:
     - name: Check library requirements outside the locked ParaTest PHP range
       if: matrix.php == '8.4' || matrix.php == '8.5'
       run: composer check-platform-reqs --no-dev
+    - name: Pull database images before timed tests
+      run: |
+        php <<'PHP'
+        <?php
+        require 'vendor/autoload.php';
+        $mysql = getenv('MYSQL_VERSION') === '8.4.7' ? new Container\MySql84Container() : new Container\MySql80Container();
+        foreach ([$mysql, new Container\PostgreSql16Container()] as $container) {
+            passthru('docker pull ' . escapeshellarg($container->image()), $status);
+            if ($status !== 0) {
+                exit($status);
+            }
+        }
+        PHP
     - name: Run PHPUnit and doctest with ParaTest
       run: composer test
   lint:
