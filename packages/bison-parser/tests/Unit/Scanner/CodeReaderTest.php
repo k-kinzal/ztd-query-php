@@ -37,6 +37,14 @@ final class CodeReaderTest extends TestCase
         self::assertSame(' y', $cursor->take(2));
     }
 
+    public function testBracedSplicesBackslashNewlines(): void
+    {
+        $cursor = new Cursor("{ a /\\\n* } *\\\n\\\n/ b <\\\n% x %\\\n> c <% } } tail");
+
+        self::assertSame(" a /\\\n* } *\\\n\\\n/ b <\\\n% x %\\\n> c <% } ", (new CodeReader())->braced($cursor));
+        self::assertSame(' tail', $cursor->take(5));
+    }
+
     public function testBracedRejectsAnUnterminatedBlock(): void
     {
         $this->expectException(SyntaxException::class);
@@ -71,7 +79,34 @@ final class CodeReaderTest extends TestCase
         self::assertSame("'}'", $reader->unit(new Cursor("'}' tail")));
         self::assertSame('<%', $reader->unit(new Cursor('<% x')));
         self::assertSame('%>', $reader->unit(new Cursor('%> x')));
+        self::assertSame('<<', $reader->unit(new Cursor('<<% x')));
+        self::assertSame("<\\\n%", $reader->unit(new Cursor("<\\\n% x")));
+        self::assertSame("// a \\\n still the comment", $reader->unit(new Cursor("// a \\\n still the comment\n}")));
+        self::assertSame('"a\\[b"', $reader->unit(new Cursor('"a\\[b" tail')));
+        self::assertSame("\"a\\\n\"", $reader->unit(new Cursor("\"a\\\n\"b\" tail")));
+        self::assertSame("\"a\\\\\n\"b\"", $reader->unit(new Cursor("\"a\\\\\n\"b\" tail")));
         self::assertSame('a', $reader->unit(new Cursor('abc')));
+    }
+
+    public function testOpens(): void
+    {
+        $reader = new CodeReader();
+
+        self::assertTrue($reader->opens('{'));
+        self::assertTrue($reader->opens('<%'));
+        self::assertTrue($reader->opens("<\\\n%"));
+        self::assertFalse($reader->opens('}'));
+        self::assertFalse($reader->opens('<<'));
+    }
+
+    public function testCloses(): void
+    {
+        $reader = new CodeReader();
+
+        self::assertTrue($reader->closes('}'));
+        self::assertTrue($reader->closes('%>'));
+        self::assertTrue($reader->closes("%\\\n>"));
+        self::assertFalse($reader->closes('{'));
     }
 
     public function testUnitRejectsAnUnterminatedComment(): void

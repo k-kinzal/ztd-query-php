@@ -33,9 +33,12 @@ final class RuleParser
 {
     /**
      * @param SymbolListParser $symbols Turns symbol tokens into symbols
+     * @param DeclarationParser $lines Turns `#line` tokens into nodes
      */
-    public function __construct(private readonly SymbolListParser $symbols = new SymbolListParser())
-    {
+    public function __construct(
+        private readonly SymbolListParser $symbols = new SymbolListParser(),
+        private readonly DeclarationParser $lines = new DeclarationParser(),
+    ) {
     }
 
     /**
@@ -53,10 +56,13 @@ final class RuleParser
         $reference = $tokens->accept(TokenKind::BracketedIdentifier)?->text;
         $tokens->expect(TokenKind::Colon, "':' after '{$lhs->text}'");
         $alternatives = [$this->alternative($tokens, $tokens->peek()->location)];
-        while (($pipe = $tokens->accept(TokenKind::Pipe)) !== null) {
-            $alternatives[] = $this->alternative($tokens, $pipe->location);
-        }
-        while ($tokens->accept(TokenKind::Semicolon) !== null) {
+        while (true) {
+            $pipe = $tokens->accept(TokenKind::Pipe);
+            if ($pipe !== null) {
+                $alternatives[] = $this->alternative($tokens, $pipe->location);
+            } elseif ($tokens->accept(TokenKind::Semicolon) === null) {
+                break;
+            }
         }
 
         return new Rule($this->symbols->symbol($lhs), $reference, $alternatives, $lhs->location);
@@ -106,6 +112,11 @@ final class RuleParser
             $tokens->next();
 
             return new Predicate($token->text, $token->location);
+        }
+        if ($token->is(TokenKind::Line)) {
+            $tokens->next();
+
+            return $this->lines->line($token);
         }
         if (!$token->is(TokenKind::Directive)) {
             return null;

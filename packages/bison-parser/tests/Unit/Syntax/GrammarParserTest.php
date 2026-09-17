@@ -9,6 +9,7 @@ use BisonParser\Ast\Declaration\Prologue;
 use BisonParser\Ast\Declaration\Start;
 use BisonParser\Ast\Epilogue;
 use BisonParser\Ast\GrammarFile;
+use BisonParser\Ast\Line;
 use BisonParser\Ast\Location;
 use BisonParser\Ast\Rule\Alternative;
 use BisonParser\Ast\Rule\Rule;
@@ -43,6 +44,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(Escapes::class)]
 #[UsesClass(Flag::class)]
 #[UsesClass(GrammarFile::class)]
+#[UsesClass(Line::class)]
 #[UsesClass(Location::class)]
 #[UsesClass(Prologue::class)]
 #[UsesClass(Rule::class)]
@@ -67,6 +69,14 @@ final class GrammarParserTest extends TestCase
         self::assertSame([Prologue::class, Flag::class], array_map(static fn (object $declaration): string => $declaration::class, $file->declarations));
         self::assertSame([Rule::class, Start::class, Rule::class], array_map(static fn (object $item): string => $item::class, $file->grammar));
         self::assertSame("\nint main() {}\n", $file->epilogue?->code);
+    }
+
+    public function testParseKeepsLineDirectivesAmongTheRules(): void
+    {
+        $file = (new GrammarParser())->parse(new TokenStream((new Scanner())->scan("#line 3 \"a.y\"\n%debug\n%%\n#line 9\na: ;\n")));
+
+        self::assertSame([Line::class, Flag::class], array_map(static fn (object $declaration): string => $declaration::class, $file->declarations));
+        self::assertSame([Line::class, Rule::class], array_map(static fn (object $item): string => $item::class, $file->grammar));
     }
 
     public function testParseWithoutAnEpilogue(): void

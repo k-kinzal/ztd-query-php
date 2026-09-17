@@ -61,10 +61,10 @@ final class Escapes
     public function escape(string $rest, Location $location): array
     {
         if (preg_match('/^[0-7]{1,3}/', $rest, $match) === 1) {
-            return [chr(octdec($match[0]) & 0xFF), strlen($match[0])];
+            return [$this->byte((int) octdec($match[0]), '\\' . $match[0], $location), strlen($match[0])];
         }
         if (preg_match('/^x([0-9A-Fa-f]+)/', $rest, $match) === 1) {
-            return [chr(hexdec($match[1]) & 0xFF), strlen($match[0])];
+            return [$this->byte((int) hexdec(ltrim($match[1], '0') === '' ? '0' : substr(ltrim($match[1], '0'), 0, 8)), '\\' . $match[0], $location), strlen($match[0])];
         }
         if (preg_match('/^(u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/', $rest, $match) === 1) {
             $code = hexdec(substr($match[0], 1));
@@ -81,6 +81,26 @@ final class Escapes
         }
 
         throw SyntaxException::invalid('invalid character after \\-escape: ' . ($first === '' ? 'end of literal' : $first), $location);
+    }
+
+    /**
+     * Turns the number of an octal or hexadecimal escape into its byte, refusing what does not fit one.
+     *
+     * @param int $code The number
+     * @param string $escape The escape as written, for the message
+     * @param Location $location Where the literal is, for the message
+     *
+     * @return string The byte
+     *
+     * @throws SyntaxException When the number is above 255, which Bison rejects
+     */
+    public function byte(int $code, string $escape, Location $location): string
+    {
+        if ($code > 0xFF) {
+            throw SyntaxException::invalid("invalid number after \\-escape: {$escape}", $location);
+        }
+
+        return chr($code);
     }
 
     /**

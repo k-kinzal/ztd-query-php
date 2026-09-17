@@ -23,6 +23,7 @@ use BisonParser\Ast\Declaration\Symbols\SymbolClass;
 use BisonParser\Ast\Declaration\Symbols\SymbolDeclaration;
 use BisonParser\Ast\Declaration\Symbols\SymbolEntry;
 use BisonParser\Ast\Declaration\UnionDeclaration;
+use BisonParser\Ast\Line;
 use BisonParser\Ast\Location;
 use BisonParser\Ast\Symbol;
 use BisonParser\Ast\SymbolKind;
@@ -46,6 +47,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(Expect::class)]
 #[UsesClass(Flag::class)]
 #[UsesClass(InitialAction::class)]
+#[UsesClass(Line::class)]
 #[UsesClass(Location::class)]
 #[UsesClass(Option::class)]
 #[UsesClass(Param::class)]
@@ -90,6 +92,60 @@ final class DeclarationPrinterTest extends TestCase
         self::assertSame("%left '+' '-'", $printer->print(new PrecedenceDeclaration(Associativity::Left, [new SymbolEntry(new Symbol(SymbolKind::CharLiteral, '+', $at), null, null, null), new SymbolEntry(new Symbol(SymbolKind::CharLiteral, '-', $at), null, null, null)], $at)));
     }
 
+    public function testOption(): void
+    {
+        $printer = new DeclarationPrinter();
+        $at = new Location(1, 1);
+
+        self::assertSame('%defines', $printer->option(new Option('header', '%defines', null, $at)));
+        self::assertSame('%require "3.8"', $printer->option(new Option('require', '%require', '3.8', $at)));
+    }
+
+    public function testExpect(): void
+    {
+        $printer = new DeclarationPrinter();
+
+        self::assertSame('%expect 2', $printer->expect(2, false));
+        self::assertSame('%expect-rr 1', $printer->expect(1, true));
+    }
+
+    public function testUnion(): void
+    {
+        $printer = new DeclarationPrinter();
+        $at = new Location(1, 1);
+
+        self::assertSame('%union { int i; }', $printer->union(new UnionDeclaration(null, ' int i; ', $at)));
+        self::assertSame('%union YYSTYPE { int i; }', $printer->union(new UnionDeclaration('YYSTYPE', ' int i; ', $at)));
+    }
+
+    public function testProps(): void
+    {
+        $printer = new DeclarationPrinter();
+        $at = new Location(1, 1);
+
+        self::assertSame('%printer { p($$); } <*>', $printer->props(new CodeProps(true, ' p($$); ', [new Tag(Tag::ANY, $at)], $at)));
+        self::assertSame('%destructor { free($$); } NUM', $printer->props(new CodeProps(false, ' free($$); ', [new Symbol(SymbolKind::Identifier, 'NUM', $at)], $at)));
+    }
+
+    public function testCode(): void
+    {
+        $printer = new DeclarationPrinter();
+        $at = new Location(1, 1);
+
+        self::assertSame('%code { x }', $printer->code(new Code(null, ' x ', $at)));
+        self::assertSame('%code requires { x }', $printer->code(new Code('requires', ' x ', $at)));
+    }
+
+    public function testLine(): void
+    {
+        $printer = new DeclarationPrinter();
+        $at = new Location(1, 1);
+
+        self::assertSame('#line 12 "dir/file.y"', $printer->line(new Line(12, 'dir/file.y', $at)));
+        self::assertSame('#line 3', $printer->line(new Line(3, null, $at)));
+        self::assertSame('#line 3', $printer->print(new Line(3, null, $at)));
+    }
+
     public function testDefine(): void
     {
         $printer = new DeclarationPrinter();
@@ -116,8 +172,9 @@ final class DeclarationPrinterTest extends TestCase
             new SymbolEntry(new Symbol(SymbolKind::Identifier, 'B', $at), 'int', 300, new Alias('bee', true, $at)),
             new SymbolEntry(new Symbol(SymbolKind::Identifier, 'C', $at), 'int', null, new Alias('cee', false, $at)),
             new SymbolEntry(new Symbol(SymbolKind::String, 'dee', $at), 'str', null, null),
+            new SymbolEntry(new Symbol(SymbolKind::Identifier, 'E', $at), 'str', null, new Alias('e', false, $at, '"\\x65"')),
         ];
 
-        self::assertSame(' A <int> B 300 _("bee") C "cee" <str> "dee"', (new DeclarationPrinter())->entries($entries));
+        self::assertSame(' A <int> B 300 _("bee") C "cee" <str> "dee" E "\\x65"', (new DeclarationPrinter())->entries($entries));
     }
 }

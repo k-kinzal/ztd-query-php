@@ -1,0 +1,2 @@
+%tokens A.
+start ::= A.

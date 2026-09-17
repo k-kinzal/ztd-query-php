@@ -23,6 +23,7 @@ use BisonParser\Ast\Declaration\Symbols\SymbolClass;
 use BisonParser\Ast\Declaration\Symbols\SymbolDeclaration;
 use BisonParser\Ast\Declaration\Symbols\SymbolEntry;
 use BisonParser\Ast\Declaration\UnionDeclaration;
+use BisonParser\Ast\Line;
 use BisonParser\Ast\Location;
 use BisonParser\Ast\Symbol;
 use BisonParser\Ast\SymbolKind;
@@ -57,6 +58,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(Expect::class)]
 #[UsesClass(Flag::class)]
 #[UsesClass(InitialAction::class)]
+#[UsesClass(Line::class)]
 #[UsesClass(Location::class)]
 #[UsesClass(Option::class)]
 #[UsesClass(Param::class)]
@@ -100,6 +102,24 @@ final class DeclarationParserTest extends TestCase
         self::assertInstanceOf(Prologue::class, $prologue);
         self::assertSame(' int x; ', $prologue->code);
         self::assertInstanceOf(Flag::class, $flag);
+    }
+
+    public function testParseReadsALineDirective(): void
+    {
+        $line = (new DeclarationParser())->parse(new TokenStream((new Scanner())->scan("#line 7 \"x.y\"\n")));
+
+        self::assertInstanceOf(Line::class, $line);
+        self::assertSame([7, 'x.y', '1:1'], [$line->line, $line->file, (string) $line->location()]);
+    }
+
+    public function testLine(): void
+    {
+        $parser = new DeclarationParser();
+        $named = $parser->line(new Token(TokenKind::Line, '#line 12 "dir/file.y"', new Location(4, 1)));
+        $bare = $parser->line(new Token(TokenKind::Line, '#line 3', new Location(5, 1)));
+
+        self::assertSame([12, 'dir/file.y', '4:1'], [$named->line, $named->file, (string) $named->location()]);
+        self::assertSame([3, null], [$bare->line, $bare->file]);
     }
 
     public function testParseRejectsANonDeclaration(): void

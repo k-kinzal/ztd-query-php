@@ -1,0 +1,2 @@
+%left plus.
+start ::= .

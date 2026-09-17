@@ -32,6 +32,10 @@ final class SymbolPrinter
      */
     public function symbol(Symbol $symbol): string
     {
+        if ($symbol->spelling !== null) {
+            return $symbol->spelling;
+        }
+
         return match ($symbol->kind) {
             SymbolKind::Identifier => $symbol->value,
             SymbolKind::CharLiteral => "'" . $this->escapes->encode($symbol->value, "'") . "'",

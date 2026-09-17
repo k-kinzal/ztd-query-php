@@ -69,12 +69,22 @@ final class ScannerTest extends TestCase
     public function testSkipTrivia(): void
     {
         $scanner = new Scanner();
-        $cursor = new Cursor("  , // line\n\t/* block\n */\r\n#line 12 \"x.y\"\nnext");
+        $cursor = new Cursor(" \t// line\n\t/* block\n */\r\n , next");
 
         $scanner->skipTrivia($cursor);
 
         self::assertSame('next', $cursor->take(4));
         self::assertTrue($cursor->eof());
+    }
+
+    public function testScanKeepsLineDirectivesAtTheStartOfALine(): void
+    {
+        $tokens = (new Scanner())->scan("#line 12 \"x.y\"\n%token A\n#line 4\n%%");
+
+        self::assertSame(
+            [[TokenKind::Line, '#line 12 "x.y"'], [TokenKind::Directive, 'token'], [TokenKind::Identifier, 'A'], [TokenKind::Line, '#line 4'], [TokenKind::Section, '%%'], [TokenKind::End, '']],
+            array_map(static fn (Token $token): array => [$token->kind, $token->text], $tokens),
+        );
     }
 
     public function testSkipTriviaRejectsAnUnterminatedComment(): void
@@ -214,9 +224,9 @@ final class ScannerTest extends TestCase
         $translatable = $scanner->literal(new Cursor('_("number")'), new Location(1, 1));
         $tag = $scanner->literal(new Cursor('<int>'), new Location(1, 1));
 
-        self::assertSame([TokenKind::CharLiteral, "\n"], [$char?->kind, $char?->text]);
-        self::assertSame([TokenKind::String, 'a"b'], [$string?->kind, $string?->text]);
-        self::assertSame([TokenKind::TranslatableString, 'number'], [$translatable?->kind, $translatable?->text]);
+        self::assertSame([TokenKind::CharLiteral, "\n", "'\\n'"], [$char?->kind, $char?->text, $char?->raw]);
+        self::assertSame([TokenKind::String, 'a"b', '"a\\"b"'], [$string?->kind, $string?->text, $string?->raw]);
+        self::assertSame([TokenKind::TranslatableString, 'number', '_("number")'], [$translatable?->kind, $translatable?->text, $translatable?->raw]);
         self::assertSame([TokenKind::Tag, 'int'], [$tag?->kind, $tag?->text]);
         self::assertNull($scanner->literal(new Cursor(':'), new Location(1, 1)));
     }

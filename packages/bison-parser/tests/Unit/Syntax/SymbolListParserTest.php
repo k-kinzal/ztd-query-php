@@ -104,6 +104,7 @@ final class SymbolListParserTest extends TestCase
         $string = $parser->entry(new TokenStream((new Scanner())->scan('"n" 258')), null, true, true);
 
         self::assertSame(['NUM', 'int', 258, null], [$numbered->symbol->value, $numbered->tag, $numbered->number, $numbered->alias]);
+        self::assertSame('_("text")', $parser->entry(new TokenStream((new Scanner())->scan('STR _("text")')), null, true, true)->alias?->spelling);
         self::assertSame(['n', null, null, null], [$string->symbol->value, $string->tag, $string->number, $string->alias]);
     }
 
@@ -140,6 +141,29 @@ final class SymbolListParserTest extends TestCase
         (new SymbolListParser())->targets(new TokenStream((new Scanner())->scan(';')));
     }
 
+    public function testPassesLine(): void
+    {
+        $parser = new SymbolListParser();
+        $between = new TokenStream((new Scanner())->scan("A\n#line 2\nB"));
+        $before = new TokenStream((new Scanner())->scan("#line 2\n%%"));
+        $between->next();
+
+        self::assertTrue($parser->passesLine($between));
+        self::assertSame('B', $between->peek()->text);
+        self::assertFalse($parser->passesLine($before));
+        self::assertTrue($before->is(TokenKind::Line));
+    }
+
+    public function testEntriesPassOverALineBetweenEntries(): void
+    {
+        $stream = new TokenStream((new Scanner())->scan("A\n#line 2\n<t> B\n#line 3\n%%"));
+
+        $entries = (new SymbolListParser())->entries($stream, false, false);
+
+        self::assertSame([['A', null], ['B', 't']], array_map(static fn (SymbolEntry $entry): array => [$entry->symbol->value, $entry->tag], $entries));
+        self::assertTrue($stream->is(TokenKind::Line));
+    }
+
     public function testStartsSymbol(): void
     {
         $parser = new SymbolListParser();
@@ -157,8 +181,12 @@ final class SymbolListParserTest extends TestCase
         $lhs = $parser->symbol(new Token(TokenKind::IdentifierColon, 'expr', new Location(3, 1)));
 
         self::assertSame([SymbolKind::Identifier, 'expr', '3:1'], [$lhs->kind, $lhs->value, (string) $lhs->location]);
-        self::assertSame(SymbolKind::CharLiteral, $parser->symbol(new Token(TokenKind::CharLiteral, '+', new Location(1, 1)))->kind);
-        self::assertSame(SymbolKind::String, $parser->symbol(new Token(TokenKind::String, 'x', new Location(1, 1)))->kind);
+        $literal = $parser->symbol(new Token(TokenKind::CharLiteral, '+', new Location(1, 1), "'+'"));
+        $string = $parser->symbol(new Token(TokenKind::String, 'x', new Location(1, 1), '"\\x78"'));
+
+        self::assertSame([SymbolKind::CharLiteral, "'+'"], [$literal->kind, $literal->spelling]);
+        self::assertSame([SymbolKind::String, '"\\x78"'], [$string->kind, $string->spelling]);
+        self::assertNull($lhs->spelling);
     }
 
     public function testSymbolRejectsAnotherToken(): void
