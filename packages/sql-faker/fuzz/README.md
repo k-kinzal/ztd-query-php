@@ -8,7 +8,10 @@ statement to the database.
 MySQL and PostgreSQL start as disposable Testcontainers. `MYSQL_VERSION` selects the
 MySQL release (default `8.4.7`); the matching grammar version is chosen with it.
 PostgreSQL is pinned to 17.2. SQLite uses PHP's PDO SQLite extension, which must link
-3.47.2, the release the grammar was built from.
+3.47.2, the release the grammar was built from. CI compiles that release's `sqlite3.c`
+into a shared library and puts it first on `LD_LIBRARY_PATH`; a local run can load such
+a build the same way. On macOS use `DYLD_LIBRARY_PATH` and start the fuzzer as
+`php vendor/bin/php-fuzzer`, because the system `env` in its shebang drops that variable.
 
 ## What the database check does
 

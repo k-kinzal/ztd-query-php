@@ -26,6 +26,9 @@ jobs:
     name: Fuzz ${{ matrix.target.name }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+      issues: write
     strategy:
       fail-fast: false
       matrix:
@@ -93,11 +96,54 @@ jobs:
             exit 2
           fi
 
-          mkdir -p "${{ matrix.target.corpus }}"
+          mkdir -p build/fuzz "${{ matrix.target.corpus }}"
           vendor/bin/php-fuzzer fuzz \
             "${{ matrix.target.script }}" \
             "${{ matrix.target.corpus }}/" \
-            "--max-runs=$FUZZ_MAX_RUNS"
+            "--max-runs=$FUZZ_MAX_RUNS" 2>&1 | tee "build/fuzz/${{ matrix.target.name }}.log"
+
+      - name: Open an issue for a finding
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+        env:
+          FUZZ_TARGET: ${{ matrix.target.name }}
+          FUZZ_SCRIPT: ${{ matrix.target.script }}
+        with:
+          script: |
+            const fs = require('node:fs');
+            const path = require('node:path');
+            const crypto = require('node:crypto');
+            const target = process.env.FUZZ_TARGET;
+            const script = process.env.FUZZ_SCRIPT;
+            const root = path.resolve('packages/ztd-query-mysql');
+            const log = fs.readFileSync(path.join(root, `build/fuzz/${target}.log`), 'utf8');
+            const finding = log.match(/^(?:CORPUS )?CRASH in (.+)!$/m);
+            if (!finding) return;
+            const input = fs.readFileSync(path.resolve(root, finding[1]));
+            const hash = crypto.createHash('sha256').update(input).digest('hex');
+            const marker = `<!-- ztd-query-mysql-fuzz:${target}:${hash} -->`;
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              ...context.repo, state: 'open', per_page: 100
+            });
+            if (issues.some(issue => !issue.pull_request && issue.body?.includes(marker))) return;
+            const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const body = [
+              marker,
+              `PHP-Fuzzer found a crash in the ${target} target.`,
+              `Commit: ${context.sha}`,
+              `Workflow and input artifact: ${run} (fuzz-crashes-${target})`,
+              'Run from packages/ztd-query-mysql after extracting the artifact:',
+              '```sh',
+              `vendor/bin/php-fuzzer run-single ${script} '${path.relative(root, path.resolve(root, finding[1]))}'`,
+              '```',
+              `Input SHA-256: ${hash}`,
+              '<details><summary>PHP-Fuzzer output</summary>',
+              '', '```text', log.slice(-45000), '```', '</details>'
+            ].join('\n\n');
+            await github.rest.issues.create({
+              ...context.repo,
+              title: `[ztd-query-mysql fuzz] ${target}: ${hash.slice(0, 12)}`,
+              body
+            });
 
       - name: Save the evolved corpus
         if: always()
@@ -111,6 +157,8 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: fuzz-crashes-${{ matrix.target.name }}
-          path: packages/ztd-query-mysql/crash-*
+          path: |
+            packages/ztd-query-mysql/crash-*
+            packages/ztd-query-mysql/build/fuzz/${{ matrix.target.name }}.log
           if-no-files-found: ignore
           retention-days: 14

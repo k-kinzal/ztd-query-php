@@ -659,7 +659,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-parser",
-                "reference": "8f4c5bdae69558aa3d918cf11516a06ae569dd9c"
+                "reference": "efdd5089291f7c7f1a0401caf51b4179fb847eef"
             },
             "require": {
                 "ext-zlib": "*",
@@ -670,6 +670,8 @@
                 "deptrac/deptrac": "^3.0",
                 "fakerphp/faker": "^1.23",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/bison-parser": "dev-main",
+                "k-kinzal/lemon-parser": "dev-main",
                 "k-kinzal/php-ai-toolkit": "dev-main",
                 "k-kinzal/sql-faker": "dev-main",
                 "nikic/php-fuzzer": "^0.0.11",
@@ -679,6 +681,10 @@
                 "phpstan/phpstan-strict-rules": "^2.0",
                 "phpunit/phpunit": "^10.5",
                 "squizlabs/php_codesniffer": "^4.0.4"
+            },
+            "suggest": {
+                "k-kinzal/bison-parser": "To rebuild the MySQL and PostgreSQL parse tables with bin/build-mysql.php and bin/build-pg.php",
+                "k-kinzal/lemon-parser": "To rebuild the SQLite parse tables with bin/build-sqlite.php"
             },
             "type": "library",
             "autoload": {
