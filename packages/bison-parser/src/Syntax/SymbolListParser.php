@@ -82,6 +82,9 @@ final class SymbolListParser
         $entries = [];
         $tag = null;
         while (true) {
+            if ($this->passesLine($tokens)) {
+                continue;
+            }
             $tagToken = $tokens->accept(TokenKind::Tag);
             if ($tagToken !== null) {
                 $tag = $tagToken->text;
@@ -126,7 +129,7 @@ final class SymbolListParser
         $alias = null;
         if ($aliased) {
             $string = $tokens->accept(TokenKind::String) ?? $tokens->accept(TokenKind::TranslatableString);
-            $alias = $string === null ? null : new Alias($string->text, $string->is(TokenKind::TranslatableString), $string->location);
+            $alias = $string === null ? null : new Alias($string->text, $string->is(TokenKind::TranslatableString), $string->location, $string->raw);
         }
 
         return new SymbolEntry($symbol, $tag, $number, $alias);
@@ -144,8 +147,10 @@ final class SymbolListParser
     public function symbols(TokenStream $tokens): array
     {
         $symbols = [];
-        while ($this->startsSymbol($tokens->peek())) {
-            $symbols[] = $this->symbol($tokens->next());
+        while ($this->startsSymbol($tokens->peek()) || $this->passesLine($tokens)) {
+            if ($this->startsSymbol($tokens->peek())) {
+                $symbols[] = $this->symbol($tokens->next());
+            }
         }
         if ($symbols === []) {
             throw SyntaxException::unexpected('a symbol', $tokens->peek()->describe(), $tokens->peek()->location);
@@ -168,6 +173,9 @@ final class SymbolListParser
         $targets = [];
         while (true) {
             $token = $tokens->peek();
+            if ($this->passesLine($tokens)) {
+                continue;
+            }
             if ($this->startsSymbol($token)) {
                 $targets[] = $this->symbol($tokens->next());
             } elseif ($token->is(TokenKind::Tag) || $token->is(TokenKind::TagAny) || $token->is(TokenKind::TagNone)) {
@@ -181,6 +189,27 @@ final class SymbolListParser
         }
 
         return $targets;
+    }
+
+    /**
+     * Passes over a `#line` directive that falls inside a list, where Bison treats it as whitespace.
+     *
+     * A directive followed by anything else ends the list and is kept as a
+     * node of its own, so only a directive between two entries is lost.
+     *
+     * @param TokenStream $tokens The tokens
+     *
+     * @return bool True when a directive was passed over
+     */
+    public function passesLine(TokenStream $tokens): bool
+    {
+        $next = $tokens->peek(1);
+        if (!$tokens->is(TokenKind::Line) || !($this->startsSymbol($next) || $next->is(TokenKind::Tag) || $next->is(TokenKind::TagAny) || $next->is(TokenKind::TagNone))) {
+            return false;
+        }
+        $tokens->next();
+
+        return true;
     }
 
     /**
@@ -216,6 +245,6 @@ final class SymbolListParser
             throw SyntaxException::unexpected('a symbol', $token->describe(), $token->location);
         }
 
-        return new Symbol($kind, $token->text, $token->location);
+        return new Symbol($kind, $token->text, $token->location, $kind === SymbolKind::Identifier ? null : $token->raw);
     }
 }

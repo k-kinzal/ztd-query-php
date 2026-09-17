@@ -1,0 +1,3 @@
+%tokens A
+%%
+start: A ;

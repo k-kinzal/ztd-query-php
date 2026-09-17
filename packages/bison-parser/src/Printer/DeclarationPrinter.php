@@ -20,6 +20,7 @@ use BisonParser\Ast\Declaration\Symbols\PrecedenceDeclaration;
 use BisonParser\Ast\Declaration\Symbols\SymbolDeclaration;
 use BisonParser\Ast\Declaration\Symbols\SymbolEntry;
 use BisonParser\Ast\Declaration\UnionDeclaration;
+use BisonParser\Ast\Line;
 use BisonParser\Ast\Symbol;
 use BisonParser\Ast\Tag;
 use LogicException;
@@ -52,19 +53,93 @@ final class DeclarationPrinter
         return match ($declaration::class) {
             Prologue::class => '%{' . $declaration->code . '%}',
             Flag::class => $declaration->raw,
-            Option::class => $declaration->raw . ($declaration->value === null ? '' : ' ' . $this->symbols->string($declaration->value)),
+            Option::class => $this->option($declaration),
             Define::class => $this->define($declaration),
-            Expect::class => ($declaration->reduceReduce ? '%expect-rr ' : '%expect ') . $declaration->count,
+            Expect::class => $this->expect($declaration->count, $declaration->reduceReduce),
             InitialAction::class => '%initial-action ' . $this->symbols->code($declaration->code),
             Param::class => '%' . $declaration->kind->value . ' ' . implode(' ', array_map($this->symbols->code(...), $declaration->codes)),
-            UnionDeclaration::class => '%union ' . ($declaration->name === null ? '' : $declaration->name . ' ') . $this->symbols->code($declaration->code),
+            UnionDeclaration::class => $this->union($declaration),
             Start::class => '%start ' . implode(' ', array_map($this->symbols->symbol(...), $declaration->symbols)),
-            CodeProps::class => ($declaration->printer ? '%printer ' : '%destructor ') . $this->symbols->code($declaration->code) . ' ' . $this->targets($declaration->targets),
-            Code::class => '%code ' . ($declaration->qualifier === null ? '' : $declaration->qualifier . ' ') . $this->symbols->code($declaration->code),
+            CodeProps::class => $this->props($declaration),
+            Code::class => $this->code($declaration),
             SymbolDeclaration::class => '%' . $declaration->class->value . $this->entries($declaration->entries),
             PrecedenceDeclaration::class => '%' . $declaration->associativity->value . $this->entries($declaration->entries),
+            Line::class => $this->line($declaration),
             default => throw new LogicException('Unknown declaration ' . $declaration::class),
         };
+    }
+
+    /**
+     * Writes an option such as `%require "3.8"`.
+     *
+     * @param Option $option The option
+     *
+     * @return string The directive as written, then its string when it has one
+     */
+    public function option(Option $option): string
+    {
+        return $option->raw . ($option->value === null ? '' : ' ' . $this->symbols->string($option->value));
+    }
+
+    /**
+     * Writes `%expect N` or `%expect-rr N`.
+     *
+     * @param int $count The number of conflicts expected
+     * @param bool $reduceReduce Whether they are reduce/reduce conflicts
+     *
+     * @return string The directive
+     */
+    public function expect(int $count, bool $reduceReduce): string
+    {
+        return ($reduceReduce ? '%expect-rr ' : '%expect ') . $count;
+    }
+
+    /**
+     * Writes a `%union`.
+     *
+     * @param UnionDeclaration $union The union
+     *
+     * @return string `%union name { ... }`, the name left out when there is none
+     */
+    public function union(UnionDeclaration $union): string
+    {
+        return '%union ' . ($union->name === null ? '' : $union->name . ' ') . $this->symbols->code($union->code);
+    }
+
+    /**
+     * Writes a `%destructor` or `%printer`.
+     *
+     * @param CodeProps $props The declaration
+     *
+     * @return string The directive, its code and its targets
+     */
+    public function props(CodeProps $props): string
+    {
+        return ($props->printer ? '%printer ' : '%destructor ') . $this->symbols->code($props->code) . ' ' . $this->targets($props->targets);
+    }
+
+    /**
+     * Writes a `%code` block.
+     *
+     * @param Code $code The declaration
+     *
+     * @return string `%code qualifier { ... }`, the qualifier left out when there is none
+     */
+    public function code(Code $code): string
+    {
+        return '%code ' . ($code->qualifier === null ? '' : $code->qualifier . ' ') . $this->symbols->code($code->code);
+    }
+
+    /**
+     * Writes a `#line` directive.
+     *
+     * @param Line $line The directive
+     *
+     * @return string `#line N "file"`, or `#line N` when no file was named
+     */
+    public function line(Line $line): string
+    {
+        return '#line ' . $line->line . ($line->file === null ? '' : " \"{$line->file}\"");
     }
 
     /**
@@ -126,7 +201,7 @@ final class DeclarationPrinter
                 $text .= ' ' . $entry->number;
             }
             if ($entry->alias !== null) {
-                $text .= ' ' . ($entry->alias->translatable ? '_(' . $this->symbols->string($entry->alias->text) . ')' : $this->symbols->string($entry->alias->text));
+                $text .= ' ' . ($entry->alias->spelling ?? ($entry->alias->translatable ? '_(' . $this->symbols->string($entry->alias->text) . ')' : $this->symbols->string($entry->alias->text)));
             }
         }
 

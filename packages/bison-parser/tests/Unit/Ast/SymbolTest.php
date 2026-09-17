@@ -28,5 +28,7 @@ final class SymbolTest extends TestCase
         self::assertFalse($literal->isIdentifier());
         self::assertFalse($string->isIdentifier());
         self::assertSame('1:6', (string) $literal->location);
+        self::assertNull($identifier->spelling);
+        self::assertSame("'\\101'", (new Symbol(SymbolKind::CharLiteral, 'A', new Location(1, 1), "'\\101'"))->spelling);
     }
 }

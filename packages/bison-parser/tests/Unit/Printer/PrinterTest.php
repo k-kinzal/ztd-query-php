@@ -8,6 +8,7 @@ use BisonParser\Ast\Declaration\Flag;
 use BisonParser\Ast\Declaration\Start;
 use BisonParser\Ast\Epilogue;
 use BisonParser\Ast\GrammarFile;
+use BisonParser\Ast\Line;
 use BisonParser\Ast\Location;
 use BisonParser\Ast\Rule\Action;
 use BisonParser\Ast\Rule\Alternative;
@@ -33,6 +34,7 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(Escapes::class)]
 #[UsesClass(Flag::class)]
 #[UsesClass(GrammarFile::class)]
+#[UsesClass(Line::class)]
 #[UsesClass(Location::class)]
 #[UsesClass(RhsPrinter::class)]
 #[UsesClass(Rule::class)]
@@ -53,6 +55,7 @@ final class PrinterTest extends TestCase
 
         self::assertSame("%debug\n%%\nexpr:\n  expr '+'\n| %empty\n;\n%start expr;\n%%\nint main() {}\n", (new Printer())->print($file));
         self::assertSame("%%\n", (new Printer())->print(new GrammarFile([], [], null)));
+        self::assertSame("#line 2 \"x.y\"\n%%\n#line 5\n", (new Printer())->print(new GrammarFile([new Line(2, 'x.y', $at)], [new Line(5, null, $at)], null)));
     }
 
     public function testRule(): void

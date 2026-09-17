@@ -7,24 +7,31 @@ namespace BisonParser\Scanner;
 use BisonParser\SyntaxException;
 
 /**
- * Reads the host code Bison keeps as one token: braced code, predicates, and the prologue.
+ * Reads host code as Bison's scanner does: braced code, a prologue, or one unit of either.
  *
- * Braces are counted, and so are the digraphs `<%` and `%>`, while the
- * contents of string literals, character literals and comments are passed
- * over, as `scan-gram.l` passes over them.
+ * Braces nest, the digraphs `<%` and `%>` count as braces, and braces
+ * inside comments, strings and character literals do not count. A
+ * backslash-newline, which C splices away, may fall between the two
+ * characters of `/*`, `* /`, `//`, `<%`, `%>` and `<<`, and inside a
+ * string or character literal, exactly as `scan-gram.l` allows.
  *
  * @visibility root
  */
 final class CodeReader
 {
     /**
-     * Reads braced code that opens at the cursor, answering the text between the braces.
+     * Backslash-newlines that C splices away, as a regular expression fragment.
+     */
+    public const SPLICE = '(?:\\\\[ \f\t\v]*\r?\n)*';
+
+    /**
+     * Reads the braced code the cursor is at and returns the text between the braces.
      *
-     * @param Cursor $cursor Cursor positioned on the opening brace
+     * @param Cursor $cursor Positioned at the opening brace
      *
      * @return string The code without its braces
      *
-     * @throws SyntaxException When the code never closes
+     * @throws SyntaxException When the file ends before the closing brace
      */
     public function braced(Cursor $cursor): string
     {
@@ -34,9 +41,9 @@ final class CodeReader
         $nesting = 0;
         while (!$cursor->eof()) {
             $unit = $this->unit($cursor);
-            if ($unit === '{' || $unit === '<%') {
+            if ($this->opens($unit)) {
                 $nesting++;
-            } elseif ($unit === '}' || $unit === '%>') {
+            } elseif ($this->closes($unit)) {
                 if ($nesting === 0) {
                     return $code;
                 }
@@ -44,18 +51,17 @@ final class CodeReader
             }
             $code .= $unit;
         }
-
         throw SyntaxException::unterminated('braced code', '}', $start);
     }
 
     /**
-     * Reads the prologue that opens at the cursor, answering the text between `%{` and `%}`.
+     * Reads the prologue the cursor is at and returns the text between `%{` and `%}`.
      *
-     * @param Cursor $cursor Cursor positioned on `%{`
+     * @param Cursor $cursor Positioned at `%{`
      *
-     * @return string The code without its markers
+     * @return string The code without its delimiters
      *
-     * @throws SyntaxException When the prologue never closes
+     * @throws SyntaxException When the file ends before `%}`
      */
     public function prologue(Cursor $cursor): string
     {
@@ -70,49 +76,69 @@ final class CodeReader
             }
             $code .= $this->unit($cursor);
         }
-
         throw SyntaxException::unterminated('prologue', '%}', $start);
     }
 
     /**
-     * Reads one unit of host code: a literal, a comment, a digraph, or a byte.
+     * Reads one unit of host code: a comment, a string, a character literal, a digraph, or one byte.
      *
-     * A literal or comment is answered whole, so a brace inside one is never
-     * mistaken for a brace of the grammar.
+     * @param Cursor $cursor Positioned at the unit
      *
-     * @param Cursor $cursor Cursor positioned on the unit
+     * @return string The unit as written
      *
-     * @return string The consumed text
-     *
-     * @throws SyntaxException When a literal or comment never closes
+     * @throws SyntaxException When a comment, string or character literal is not closed
      */
     public function unit(Cursor $cursor): string
     {
         $start = $cursor->location();
-        if ($cursor->startsWith('/*')) {
-            $body = $cursor->takeUntil('*/');
+        $opening = $cursor->match('/' . self::SPLICE . '\*');
+        if ($opening !== null) {
+            $body = $cursor->match('(?s).*?\*' . self::SPLICE . '/');
             if ($body === null) {
                 throw SyntaxException::unterminated('comment', '*/', $start);
             }
 
-            return $body . '*/';
+            return $opening . $body;
         }
-        if ($cursor->startsWith('//')) {
-            return $cursor->match('//[^\n]*') ?? '';
+        $line = $cursor->match('/' . self::SPLICE . '/(?:\\\\[ \f\t\v]*\r?\n|[^\n])*');
+        if ($line !== null) {
+            return $line;
         }
         $byte = $cursor->peek();
         if ($byte === '"' || $byte === "'") {
-            $literal = $cursor->match(preg_quote($byte, '~') . '(?:\\\\(?:.|\n)|[^\\\\' . $byte . '\n])*' . preg_quote($byte, '~'));
+            $quote = preg_quote($byte, '~');
+            $literal = $cursor->match($quote . '(?:\\\\' . self::SPLICE . '[^\n\[\]]|\\\\[ \f\t\v]*\r?\n|[^\\\\' . $quote . '\n]|\\\\)*' . $quote);
             if ($literal === null) {
                 throw SyntaxException::unterminated($byte === '"' ? 'string' : 'character literal', $byte, $start);
             }
 
             return $literal;
         }
-        if ($cursor->startsWith('<%') || $cursor->startsWith('%>')) {
-            return $cursor->take(2);
-        }
 
-        return $cursor->take(1);
+        return $cursor->match('<' . self::SPLICE . '[%<]|%' . self::SPLICE . '>') ?? $cursor->take(1);
+    }
+
+    /**
+     * Reports whether a unit opens a brace: `{` or the digraph `<%`, possibly spliced.
+     *
+     * @param string $unit The unit
+     *
+     * @return bool True for an opening brace
+     */
+    public function opens(string $unit): bool
+    {
+        return $unit === '{' || preg_match('~^<' . self::SPLICE . '%$~', $unit) === 1;
+    }
+
+    /**
+     * Reports whether a unit closes a brace: `}` or the digraph `%>`, possibly spliced.
+     *
+     * @param string $unit The unit
+     *
+     * @return bool True for a closing brace
+     */
+    public function closes(string $unit): bool
+    {
+        return $unit === '}' || preg_match('~^%' . self::SPLICE . '>$~', $unit) === 1;
     }
 }

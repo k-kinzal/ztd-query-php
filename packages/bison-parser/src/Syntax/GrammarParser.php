@@ -55,6 +55,8 @@ final class GrammarParser
             }
             if ($tokens->is(TokenKind::IdentifierColon)) {
                 $grammar[] = $this->rules->parse($tokens);
+            } elseif ($tokens->is(TokenKind::Line)) {
+                $grammar[] = $this->declarations->parse($tokens);
             } elseif ($this->declarations->starts($tokens->peek())) {
                 $grammar[] = $this->declarations->parse($tokens);
                 $tokens->expect(TokenKind::Semicolon, "';' after a declaration among the rules");
