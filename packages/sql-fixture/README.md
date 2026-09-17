@@ -93,6 +93,27 @@ $tables = $faker->getTableNames(); // ['users', 'posts', 'comments']
 $faker->registerSchema('CREATE TABLE tags (id INT PRIMARY KEY, name VARCHAR(50))');
 ```
 
+### Related Fixtures and Conditional Relationships
+
+Use `fixtures()` to generate a group of related rows from a `FixturePlan` or a
+relation string. A choice selects relationships separately for each row:
+
+```php
+$fixtures = $provider->fixtures(
+    "choice comments.target_type {
+        'post' { comments.target_id > posts.id }
+        'video' { comments.target_id > videos.id }
+    }",
+    ['comments' => [['target_type' => 'post'], ['target_type' => 'video']]],
+);
+```
+
+Register all candidate schemas before generating the group. The first comment
+references a generated post and the second references a generated video.
+See [Relational fixture plans](docs/relations.md) for the PHP builder API,
+conditional child tables, composite keys, optional branches, inverse generation,
+and supported relationship patterns.
+
 ### Overriding Values
 
 Pass specific values to override generated data:

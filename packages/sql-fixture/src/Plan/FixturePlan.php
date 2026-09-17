@@ -42,7 +42,7 @@ use Stringable;
 class FixturePlan implements Stringable
 {
     /**
-     * @var list<Relation|string>
+     * @var list<Relation|RelationChoice|string>
      */
     private readonly array $parts;
 
@@ -50,6 +50,11 @@ class FixturePlan implements Stringable
      * @var list<Relation>
      */
     public readonly array $relations;
+
+    /**
+     * @var list<RelationChoice> Choices awaiting row-specific selection
+     */
+    public readonly array $choices;
 
     /**
      * @var list<string> Every table named, in first-mentioned order
@@ -62,7 +67,7 @@ class FixturePlan implements Stringable
     public readonly array $generationOrder;
 
     /**
-     * @param Relation|string ...$parts Relations, and the names of tables that stand alone
+     * @param Relation|RelationChoice|string ...$parts Relations, and the names of tables that stand alone
      * @throws Exception\EmptyPlanException If a table declaration is empty
      * @throws Exception\EmptyTableNameException
      * @throws Exception\MissingEndpointColumnsException
@@ -72,28 +77,17 @@ class FixturePlan implements Stringable
      * @throws Exception\UnsupportedManyToManyException
      * @throws Exception\CompositeArityMismatchException
      */
-    public function __construct(Relation|string ...$parts)
+    public function __construct(Relation|RelationChoice|string ...$parts)
     {
-        $relations = [];
-        $tables = [];
-
-        foreach ($parts as $part) {
-            if ($part instanceof Relation) {
-                $relations[] = $part;
-                $tables = [...$tables, ...$part->tables()];
-                continue;
-            }
-
-            $tables[] = (new Validation\TableName())->assertTableName($part);
-        }
-
         $this->parts = array_values($parts);
-        $this->relations = $relations;
-        $this->tables = array_values(array_unique($tables));
-
-        (new Validation\PlanValidation())->rejectColumnsBoundTwice($relations);
-        (new Validation\PlanValidation())->rejectUnboundedSelfReferences($relations);
-        $this->generationOrder = (new Validation\PlanValidation())->sortByDependency($this->tables, $relations);
+        $contents = new Choice\PlanContents($this->parts);
+        $this->relations = $contents->relations;
+        $this->choices = $contents->choices;
+        $this->tables = $contents->tables;
+        (new Validation\PlanValidation())->rejectColumnsBoundTwice($contents->unconditional);
+        (new Choice\ChoiceValidation())->validate($contents);
+        (new Validation\PlanValidation())->rejectUnboundedSelfReferences($this->relations);
+        $this->generationOrder = (new Validation\PlanValidation())->sortByDependency($this->tables, $this->relations);
     }
 
     /**
@@ -131,6 +125,40 @@ class FixturePlan implements Stringable
     public function withRelation(Relation $relation): self
     {
         return new self(...[...$this->parts, $relation]);
+    }
+
+    /**
+     * Adds mutually exclusive relations selected separately for each row.
+     */
+    public function withChoice(RelationChoice $choice): self
+    {
+        return new self(...[...$this->parts, $choice]);
+    }
+
+    /**
+     * Preserves declaration order for printing and branch selection.
+     * @return list<Relation|RelationChoice|string>
+     */
+    public function parts(): array
+    {
+        return $this->parts;
+    }
+
+    /**
+     * Replaces one choice with the selected relations for a generation scope.
+     */
+    public function select(RelationChoice $choice, Choice\ChoiceCase $case): self
+    {
+        $parts = [];
+        foreach ($this->parts as $part) {
+            if ($part === $choice) {
+                $parts = [...$parts, $choice->discriminator->table, ...$case->relations];
+                continue;
+            }
+            $parts[] = $part;
+        }
+
+        return new self(...$parts);
     }
 
     /**

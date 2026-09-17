@@ -49,6 +49,8 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\Plan\Exception\DuplicateColumnBindingException::class)]
 #[UsesClass(\SqlFixture\Plan\Exception\CyclicDependencyException::class)]
 #[UsesClass(\SqlFixture\Plan\Exception\UnboundedSelfReferenceException::class)]
+#[UsesClass(\SqlFixture\Plan\Choice\ChoiceValidation::class)]
+#[UsesClass(\SqlFixture\Plan\Choice\PlanContents::class)]
 final class GenerationRunTest extends TestCase
 {
     #[Test]

@@ -143,6 +143,14 @@ use SqlFixture\Provider\SqlSchemaProvider as Subject;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\IntegerWidth::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\DecimalRange::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Hydrator\Reflection\ConversionTarget::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\Choice\InverseRelations::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\Choice\ResolvedRow::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\Choice\RowChoices::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Plan\Choice\ChoiceValidation::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Plan\Choice\PlanContents::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\Generation\RowBindings::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\Generation\RecursiveRelationException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\Generation\RelationValueException::class)]
 final class SqlSchemaProviderTest extends TestCase
 {
     public function testCachesSchemasThroughThePublicProviderContract(): void
