@@ -1,0 +1,56 @@
+{
+  "cli_version": "0.10.3",
+  "checkpoint_id": "01M2PVY6N6KKQNJG8DX3CCZ9P0",
+  "session_id": "01a0a849-a8db-73c0-a8d1-c11c5bdb9a5f",
+  "strategy": "manual-commit",
+  "created_at": "2026-09-17T05:02:58.881457Z",
+  "branch": "refactor/shared-database-containers",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "packages/container/.gitignore",
+    "packages/container/README.md",
+    "packages/container/bench/ContainerDefinitionBench.php",
+    "packages/container/composer.json",
+    "packages/container/phpbench.json.dist",
+    "packages/container/phpstan.neon",
+    "packages/container/phpunit.xml.dist",
+    "packages/container/tests/Integration/TestDatabaseTest.php"
+  ],
+  "agent": "Codex",
+  "model": "gpt-6-astra",
+  "turn_id": "d02b40743cfd",
+  "checkpoint_transcript_start": 1421,
+  "transcript_lines_at_start": 1421,
+  "compact_transcript_start": 170,
+  "token_usage": {
+    "input_tokens": 236557,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 234112,
+    "output_tokens": 3610,
+    "api_call_count": 10
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-09-17T05:02:58.677636Z",
+    "agent_lines": 5,
+    "agent_removed": 157,
+    "human_added": 12,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 17,
+    "total_lines_changed": 759,
+    "agent_percentage": 21.34387351778656,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    }
+  ]
+}
