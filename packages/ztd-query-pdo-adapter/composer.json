@@ -17,10 +17,10 @@
         "brianium/paratest": "^7.3",
         "deptrac/deptrac": "^3.0",
         "friendsofphp/php-cs-fixer": "^3.95.25",
+        "k-kinzal/container": "dev-main",
         "k-kinzal/php-ai-toolkit": "dev-main",
         "k-kinzal/sql-faker": "dev-main",
         "k-kinzal/sql-fixture": "dev-main",
-        "k-kinzal/testcontainers-php": "^0.5.1",
         "k-kinzal/ztd-query-mysql": "dev-main",
         "k-kinzal/ztd-query-postgres": "dev-main",
         "k-kinzal/ztd-query-sqlite": "dev-main",
@@ -89,6 +89,15 @@
             "options": {
                 "versions": {
                     "k-kinzal/ztd-query-sqlite": "dev-main"
+                }
+            }
+        },
+        {
+            "type": "path",
+            "url": "../container",
+            "options": {
+                "versions": {
+                    "k-kinzal/container": "dev-main"
                 }
             }
         }
