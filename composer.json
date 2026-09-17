@@ -5,6 +5,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.1",
+        "k-kinzal/bison-parser": "dev-main",
         "k-kinzal/sql-faker": "dev-main",
         "k-kinzal/sql-fixture": "dev-main",
         "k-kinzal/sql-parser": "dev-main",
@@ -29,6 +30,7 @@
             "url": "packages/*",
             "options": {
                 "versions": {
+                    "k-kinzal/bison-parser": "dev-main",
                     "k-kinzal/sql-faker": "dev-main",
                     "k-kinzal/sql-fixture": "dev-main",
                     "k-kinzal/sql-parser": "dev-main",

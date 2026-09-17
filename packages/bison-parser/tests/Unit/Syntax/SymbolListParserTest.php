@@ -1,0 +1,171 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Syntax;
+
+use BisonParser\Ast\Declaration\Symbols\Alias;
+use BisonParser\Ast\Declaration\Symbols\SymbolEntry;
+use BisonParser\Ast\Location;
+use BisonParser\Ast\Symbol;
+use BisonParser\Ast\SymbolKind;
+use BisonParser\Ast\Tag;
+use BisonParser\Scanner\CodeReader;
+use BisonParser\Scanner\Cursor;
+use BisonParser\Scanner\Directives;
+use BisonParser\Scanner\Escapes;
+use BisonParser\Scanner\Scanner;
+use BisonParser\Scanner\Token;
+use BisonParser\Scanner\TokenKind;
+use BisonParser\Syntax\SymbolListParser;
+use BisonParser\Syntax\TokenStream;
+use BisonParser\SyntaxException;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Small;
+use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\TestCase;
+
+#[CoversClass(SymbolListParser::class)]
+#[UsesClass(Alias::class)]
+#[UsesClass(CodeReader::class)]
+#[UsesClass(Cursor::class)]
+#[UsesClass(Directives::class)]
+#[UsesClass(Escapes::class)]
+#[UsesClass(Location::class)]
+#[UsesClass(Scanner::class)]
+#[UsesClass(Symbol::class)]
+#[UsesClass(SymbolEntry::class)]
+#[UsesClass(SymbolKind::class)]
+#[UsesClass(SyntaxException::class)]
+#[UsesClass(Tag::class)]
+#[UsesClass(Token::class)]
+#[UsesClass(TokenKind::class)]
+#[UsesClass(TokenStream::class)]
+#[Small]
+final class SymbolListParserTest extends TestCase
+{
+    public function testTokenDeclarations(): void
+    {
+        $entries = (new SymbolListParser())->tokenDeclarations(new TokenStream((new Scanner())->scan('<int> NUM 258 "number" STR _("text") <str> ID \'+\' ;')));
+
+        self::assertSame(
+            [['NUM', 'int', 258, 'number', false], ['STR', 'int', null, 'text', true], ['ID', 'str', null, null, null], ['+', 'str', null, null, null]],
+            array_map(static fn (SymbolEntry $entry): array => [$entry->symbol->value, $entry->tag, $entry->number, $entry->alias?->text, $entry->alias?->translatable], $entries),
+        );
+    }
+
+    public function testPrecedenceDeclarations(): void
+    {
+        $entries = (new SymbolListParser())->precedenceDeclarations(new TokenStream((new Scanner())->scan('<int> PLUS 258 "+" \'-\' %%')));
+
+        self::assertSame(
+            [['PLUS', 'int', 258, SymbolKind::Identifier], ['+', 'int', null, SymbolKind::String], ['-', 'int', null, SymbolKind::CharLiteral]],
+            array_map(static fn (SymbolEntry $entry): array => [$entry->symbol->value, $entry->tag, $entry->number, $entry->symbol->kind], $entries),
+        );
+    }
+
+    public function testTypeDeclarations(): void
+    {
+        $stream = new TokenStream((new Scanner())->scan('<int> expr term 258'));
+
+        $entries = (new SymbolListParser())->typeDeclarations($stream);
+
+        self::assertSame([['expr', 'int', null], ['term', 'int', null]], array_map(static fn (SymbolEntry $entry): array => [$entry->symbol->value, $entry->tag, $entry->number], $entries));
+        self::assertTrue($stream->is(TokenKind::Integer));
+    }
+
+    public function testEntries(): void
+    {
+        $entries = (new SymbolListParser())->entries(new TokenStream((new Scanner())->scan('A B <t> C %%')), false, false);
+
+        self::assertSame([['A', null], ['B', null], ['C', 't']], array_map(static fn (SymbolEntry $entry): array => [$entry->symbol->value, $entry->tag], $entries));
+    }
+
+    public function testEntriesRejectsAnEmptyList(): void
+    {
+        $this->expectException(SyntaxException::class);
+        $this->expectExceptionMessage("Expected a symbol but found '%%' at 1:1");
+
+        (new SymbolListParser())->entries(new TokenStream((new Scanner())->scan('%%')), true, true);
+    }
+
+    public function testEntriesRejectsATagWithoutASymbol(): void
+    {
+        $this->expectException(SyntaxException::class);
+        $this->expectExceptionMessage("Expected a symbol after the tag but found '%%' at 1:7");
+
+        (new SymbolListParser())->entries(new TokenStream((new Scanner())->scan('<int> %%')), true, true);
+    }
+
+    public function testEntry(): void
+    {
+        $parser = new SymbolListParser();
+        $numbered = $parser->entry(new TokenStream((new Scanner())->scan('NUM 258 "n"')), 'int', true, false);
+        $string = $parser->entry(new TokenStream((new Scanner())->scan('"n" 258')), null, true, true);
+
+        self::assertSame(['NUM', 'int', 258, null], [$numbered->symbol->value, $numbered->tag, $numbered->number, $numbered->alias]);
+        self::assertSame(['n', null, null, null], [$string->symbol->value, $string->tag, $string->number, $string->alias]);
+    }
+
+    public function testSymbols(): void
+    {
+        $symbols = (new SymbolListParser())->symbols(new TokenStream((new Scanner())->scan('program \'x\' "y" %%')));
+
+        self::assertSame(['program', 'x', 'y'], array_map(static fn (Symbol $symbol): string => $symbol->value, $symbols));
+    }
+
+    public function testSymbolsRejectsAnEmptyList(): void
+    {
+        $this->expectException(SyntaxException::class);
+        $this->expectExceptionMessage('Expected a symbol but found end of file at 1:1');
+
+        (new SymbolListParser())->symbols(new TokenStream((new Scanner())->scan('')));
+    }
+
+    public function testTargets(): void
+    {
+        $targets = (new SymbolListParser())->targets(new TokenStream((new Scanner())->scan('NUM <int> <*> <> \'+\' %%')));
+
+        self::assertSame(
+            [[Symbol::class, 'NUM'], [Tag::class, 'int'], [Tag::class, '*'], [Tag::class, ''], [Symbol::class, '+']],
+            array_map(static fn (Symbol|Tag $target): array => [$target::class, $target instanceof Tag ? $target->name : $target->value], $targets),
+        );
+    }
+
+    public function testTargetsRejectsAnEmptyList(): void
+    {
+        $this->expectException(SyntaxException::class);
+        $this->expectExceptionMessage("Expected a symbol or tag but found ';' at 1:1");
+
+        (new SymbolListParser())->targets(new TokenStream((new Scanner())->scan(';')));
+    }
+
+    public function testStartsSymbol(): void
+    {
+        $parser = new SymbolListParser();
+
+        self::assertTrue($parser->startsSymbol(new Token(TokenKind::Identifier, 'x', new Location(1, 1))));
+        self::assertTrue($parser->startsSymbol(new Token(TokenKind::CharLiteral, 'x', new Location(1, 1))));
+        self::assertTrue($parser->startsSymbol(new Token(TokenKind::String, 'x', new Location(1, 1))));
+        self::assertFalse($parser->startsSymbol(new Token(TokenKind::IdentifierColon, 'x', new Location(1, 1))));
+        self::assertFalse($parser->startsSymbol(new Token(TokenKind::Tag, 'x', new Location(1, 1))));
+    }
+
+    public function testSymbol(): void
+    {
+        $parser = new SymbolListParser();
+        $lhs = $parser->symbol(new Token(TokenKind::IdentifierColon, 'expr', new Location(3, 1)));
+
+        self::assertSame([SymbolKind::Identifier, 'expr', '3:1'], [$lhs->kind, $lhs->value, (string) $lhs->location]);
+        self::assertSame(SymbolKind::CharLiteral, $parser->symbol(new Token(TokenKind::CharLiteral, '+', new Location(1, 1)))->kind);
+        self::assertSame(SymbolKind::String, $parser->symbol(new Token(TokenKind::String, 'x', new Location(1, 1)))->kind);
+    }
+
+    public function testSymbolRejectsAnotherToken(): void
+    {
+        $this->expectException(SyntaxException::class);
+        $this->expectExceptionMessage('Expected a symbol but found braced code at 1:1');
+
+        (new SymbolListParser())->symbol(new Token(TokenKind::Code, 'x', new Location(1, 1)));
+    }
+}

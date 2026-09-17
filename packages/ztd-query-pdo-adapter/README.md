@@ -18,7 +18,7 @@ This package provides `ZtdPdo` and `ZtdPdoStatement`, which extend `PDO` and `PD
 
 - PHP 8.1 or higher
 - PDO extension
-- MySQL 5.6 - 9.1
+- MySQL 8.0.11 - 9.1
 - [k-kinzal/ztd-query-php](https://github.com/k-kinzal/ztd-query-core) (core)
 - [k-kinzal/ztd-query-mysql](https://github.com/k-kinzal/ztd-query-mysql) (MySQL platform)
 

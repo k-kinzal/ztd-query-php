@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Integration;
 
+use Container\MySql80Container;
+use Container\MySql84Container;
 use mysqli;
 use mysqli_result;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use Testcontainers\Testcontainers;
-use Tests\Container\MySql80Container;
-use Tests\Container\MySql84Container;
 use ZtdQuery\Adapter\Mysqli\ZtdMysqli;
 
 #[\PHPUnit\Framework\Attributes\CoversClass(ZtdMysqli::class)]
@@ -31,7 +31,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $users = 'users_' . bin2hex(random_bytes(8));
             $orders = 'orders_' . bin2hex(random_bytes(8));
             $rawMysqli->query("CREATE TABLE `{$users}` (id INT PRIMARY KEY, name VARCHAR(50))");
@@ -84,7 +85,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, name VARCHAR(50))', $table));
             $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
@@ -107,7 +109,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, name VARCHAR(50))', $table));
             $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
@@ -130,7 +133,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, name VARCHAR(100), notes TEXT)', $table));
             $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
@@ -150,7 +154,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, payload VARBINARY(255))', $table));
             $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
@@ -174,7 +179,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, created_at DATETIME NOT NULL, due_at DATETIME)', $table));
             $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
@@ -198,7 +204,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $updates = 'prefix_' . bin2hex(random_bytes(8));
             $deletes = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, score INT)', $updates));
@@ -243,7 +250,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $parent = 'prefix_' . bin2hex(random_bytes(8));
             $child = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, name VARCHAR(50)) ENGINE=InnoDB', $parent));
@@ -269,7 +277,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $nativeTable = 'prefix_' . bin2hex(random_bytes(8));
             $shadowTable = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, quantity INT NOT NULL)', $nativeTable));
@@ -298,7 +307,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, score INT)', $table));
             $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
@@ -317,7 +327,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, name VARCHAR(20))', $table));
             $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
@@ -355,7 +366,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, parent_id INT)', $table));
             $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
@@ -380,7 +392,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, value VARCHAR(20))', $table));
             $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
@@ -401,7 +414,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, left_value VARCHAR(20), right_value VARCHAR(20))', $table));
             $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
@@ -425,7 +439,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $source = 'prefix_' . bin2hex(random_bytes(8));
             $target = 'prefix_' . bin2hex(random_bytes(8));
             $orders = 'prefix_' . bin2hex(random_bytes(8));
@@ -475,7 +490,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $definition = '(id INT PRIMARY KEY, name VARCHAR(50), dept_id INT, salary DECIMAL(10,2), active TINYINT DEFAULT 1)';
             $rawMysqli->query(sprintf('CREATE TABLE `%s` %s', $table, $definition));
@@ -504,7 +520,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $definition = '(id INT PRIMARY KEY, customer_id INT, amount DECIMAL(10,2), status VARCHAR(20))';
             $rawMysqli->query(sprintf('CREATE TABLE `%s` %s', $table, $definition));
@@ -531,7 +548,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(20) NOT NULL)', $table));
             $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
@@ -553,7 +571,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf(
                 "CREATE TABLE `%s` (id INT DEFAULT 7, status ENUM('new','active') DEFAULT 'active', note VARCHAR(20) DEFAULT NULL)",
@@ -582,7 +601,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf("CREATE TABLE `%s` (id INT PRIMARY KEY, size ENUM('small','medium','large'))", $table));
             $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
@@ -604,7 +624,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $users = 'prefix_' . bin2hex(random_bytes(8));
             $vip = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (name VARCHAR(255) PRIMARY KEY)', $users));
@@ -637,7 +658,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
             $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
@@ -657,7 +679,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
             $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
@@ -682,7 +705,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
             $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
@@ -713,7 +737,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
             $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
@@ -746,7 +771,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
             $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
@@ -776,7 +802,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
             $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
@@ -807,7 +834,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
             $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
@@ -828,7 +856,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
             $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
@@ -857,7 +886,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
             $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
@@ -888,7 +918,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
             $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
@@ -918,7 +949,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
             $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
@@ -938,7 +970,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
             $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
@@ -963,7 +996,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
             $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
@@ -992,7 +1026,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'prefix_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255) NOT NULL, age INT NOT NULL)', $table));
             $rawMysqli->query(sprintf("INSERT INTO `%s` (name, age) VALUES ('Alice', 30), ('Bob', 25)", $table));
@@ -1018,7 +1053,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $table = 'typed_' . bin2hex(random_bytes(8));
             $rawMysqli->query(sprintf('CREATE TABLE `%s` (id INT PRIMARY KEY, value VARCHAR(255))', $table));
             $ztdMysqli = ZtdMysqli::fromMysqli($rawMysqli, null);
@@ -1043,7 +1079,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $rawMysqli = $container->getData(mysqli::class);
+            $rawMysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $rawMysqli->set_charset('utf8mb4');
             $rawMysqli->query('CREATE TABLE events (id INT NOT NULL, event_date DATE NOT NULL, '
                 . 'PRIMARY KEY (id, event_date)) PARTITION BY RANGE (YEAR(event_date)) ('
                 . 'PARTITION p2023 VALUES LESS THAN (2024), '
@@ -1073,7 +1110,8 @@ final class MysqliCteShadowingTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $native = $container->getData(mysqli::class);
+            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE years (id INT PRIMARY KEY, value YEAR)');
             $ztd = ZtdMysqli::fromMysqli($native);
             self::assertNotFalse($ztd->query("INSERT INTO years VALUES (1, 78), (2, 69), (3, 0), (4, '0')"));
@@ -1096,7 +1134,8 @@ final class MysqliCteShadowingTest extends TestCase
             $host = str_replace('localhost', '127.0.0.1', $container->getHost());
             $port = $container->getMappedPort(3306);
             self::assertNotNull($port);
-            $native = $container->getData(mysqli::class);
+            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native->set_charset('utf8mb4');
             $database = 'test';
             $native->query('CREATE TABLE users (id INT)');
             $ztd = new ZtdMysqli($host, 'root', 'root', $database, $port);

@@ -21,6 +21,7 @@ This package is used internally by the [PDO adapter](https://github.com/k-kinzal
 ## Requirements
 
 - PHP 8.1 or higher
+- MySQL 8.0.11 - 9.1
 - [k-kinzal/ztd-query-php](https://github.com/k-kinzal/ztd-query-core) (core)
 
 ## Installation
