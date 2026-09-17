@@ -1,0 +1,7 @@
+# NAME URL — Lemon grammars fetched by conformance/fetch.php; defines/NAME.defines lists the define sets
+sqlite-3.47.2.y https://raw.githubusercontent.com/sqlite/sqlite/refs/tags/version-3.47.2/src/parse.y
+sqlite-3.35.0.y https://raw.githubusercontent.com/sqlite/sqlite/refs/tags/version-3.35.0/src/parse.y
+sqlite-3.20.0.y https://raw.githubusercontent.com/sqlite/sqlite/refs/tags/version-3.20.0/src/parse.y
+sqlite-3.8.0.y https://raw.githubusercontent.com/sqlite/sqlite/refs/tags/version-3.8.0/src/parse.y
+fts5parse-3.47.2.y https://raw.githubusercontent.com/sqlite/sqlite/refs/tags/version-3.47.2/ext/fts5/fts5parse.y
+lemon-test01.y https://raw.githubusercontent.com/sqlite/sqlite/refs/tags/version-3.47.2/test/lemon-test01.y
