@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Fuzz\Correctness;
 
+use JsonException;
+
 /**
  * @phpstan-import-type Row from \Fuzz\Correctness\CorrectnessHarness
  */
@@ -157,6 +159,8 @@ final class ResultComparator
     /**
      * Answers whether two JSON texts say the same thing.
      *
+     * @throws OracleViolation When either document is invalid.
+     *
      * @param string $expected The expected
      * @param string $actual The actual
      *
@@ -164,8 +168,12 @@ final class ResultComparator
      */
     public function compareJson(string $expected, string $actual): bool
     {
-        $expectedDecoded = json_decode($expected, true);
-        $actualDecoded = json_decode($actual, true);
+        try {
+            $expectedDecoded = json_decode($expected, true, 512, JSON_THROW_ON_ERROR);
+            $actualDecoded = json_decode($actual, true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException $failure) {
+            throw new OracleViolation('Invalid JSON in a compared result.', 0, $failure);
+        }
         return $expectedDecoded === $actualDecoded;
     }
 

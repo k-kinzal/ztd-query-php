@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Fuzz\Correctness;
 
+use JsonException;
+
 /**
  * Compares database scalar representations using their SQL semantics.
  */
@@ -25,18 +27,24 @@ final class ScalarComparison
      */
     public function compareDecimal(string $expected, string $actual): bool
     {
-        $expected = rtrim(rtrim($expected, '0'), '.');
-        $actual = rtrim(rtrim($actual, '0'), '.');
+        $expected = str_contains($expected, '.') ? rtrim(rtrim($expected, '0'), '.') : $expected;
+        $actual = str_contains($actual, '.') ? rtrim(rtrim($actual, '0'), '.') : $actual;
         return $expected === $actual;
     }
 
     /**
      * Compare JSON documents by decoded structure.
+     *
+     * @throws OracleViolation When either document is invalid.
      */
     public function compareJson(string $expected, string $actual): bool
     {
-        $expectedDecoded = json_decode($expected, true);
-        $actualDecoded = json_decode($actual, true);
+        try {
+            $expectedDecoded = json_decode($expected, true, 512, JSON_THROW_ON_ERROR);
+            $actualDecoded = json_decode($actual, true, 512, JSON_THROW_ON_ERROR);
+        } catch (JsonException $failure) {
+            throw new OracleViolation('Invalid JSON in a compared result.', 0, $failure);
+        }
         return $expectedDecoded === $actualDecoded;
     }
 

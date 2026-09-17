@@ -109,6 +109,7 @@
         "fuzz:correctness:insert": [
             "Composer\\Config::disableProcessTimeout",
             "@php -r \"is_dir('fuzz/corpus/correctness-insert') || mkdir('fuzz/corpus/correctness-insert', 0777, true);\" --",
+            "@php -r 'foreach (glob(\"fuzz/seeds/correctness-insert/*\") as $seed) { copy($seed, \"fuzz/corpus/correctness-insert/\" . basename($seed)); }' --",
             "php-fuzzer fuzz fuzz/fuzz_correctness_insert.php fuzz/corpus/correctness-insert/"
         ],
         "fuzz:correctness:replace": [
@@ -153,6 +154,7 @@
         "phpstan": "phpstan analyse --memory-limit=512M",
         "test": "paratest --processes=auto",
         "test:coverage": "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml",
+        "test:fuzz": "phpunit tests/Fuzz",
         "test:integration": "phpunit --testsuite integration",
         "test:unit": "phpunit --testsuite unit",
         "tree-guard": "tree-guard --config=tree.yaml"

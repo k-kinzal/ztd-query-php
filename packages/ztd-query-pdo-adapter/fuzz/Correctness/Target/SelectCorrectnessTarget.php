@@ -56,9 +56,9 @@ final class SelectCorrectnessTarget
         $this->faker->seed($seed);
 
         $schema = SchemaPool::random($this->faker);
-        $this->harness->setup($schema, $seed);
 
         try {
+            $this->harness->setup($schema, $seed);
             $queryCount = $this->faker->numberBetween(1, 5);
             for ($i = 0; $i < $queryCount; $i++) {
                 $sql = $this->sqlBuilder->buildSelect($schema);
@@ -100,6 +100,7 @@ final class SelectCorrectnessTarget
             $ztdResult = $stmt !== false ? $stmt->fetchAll(PDO::FETCH_ASSOC) : null;
         } catch (UnsupportedSqlException | UnknownSchemaException | DatabaseException $e) {
             if ($rawError !== null) {
+                \Fuzz\Correctness\FailureComparison::verify($rawError, $e, $sql);
                 return;
             }
             throw new Error("ZTD SELECT failed after native success\nSeed: $seed\nSQL: $sql", 0, $e);
@@ -108,30 +109,32 @@ final class SelectCorrectnessTarget
         }
 
         if ($rawError !== null && $ztdError !== null) {
+            \Fuzz\Correctness\FailureComparison::verify($rawError, $ztdError, $sql);
             return;
         }
 
         if ($rawError !== null) {
-            return;
+            throw new Error("ZTD SELECT accepted a native-rejected query\nSeed: $seed\nSQL: $sql", 0, $rawError);
         }
         if ($ztdError !== null) {
             throw new Error("ZTD SELECT failed after native success\nSeed: $seed\nSQL: $sql", 0, $ztdError);
         }
 
-        if ($rawResult !== null && $ztdResult !== null) {
-            $hasOrderBy = stripos($sql, 'ORDER BY') !== false;
-            if (!$this->comparator->compareRows($rawResult, $ztdResult, $schema->primaryKeys, [], $hasOrderBy)) {
-                throw new Error(
-                    "SELECT result mismatch\n" .
-                    "Seed: $seed\n" .
-                    "SQL: $sql\n" .
-                    "Schema: {$schema->name}\n" .
-                    'Raw result count: ' . count($rawResult) . "\n" .
-                    'ZTD result count: ' . count($ztdResult) . "\n" .
-                    'Raw first row: ' . json_encode($rawResult[0] ?? null) . "\n" .
-                    'ZTD first row: ' . json_encode($ztdResult[0] ?? null)
-                );
-            }
+        if ($rawResult === null || $ztdResult === null) {
+            throw new Error('SELECT did not return a result set: ' . $sql);
+        }
+        $hasOrderBy = stripos($sql, 'ORDER BY') !== false;
+        if (!$this->comparator->compareRows($rawResult, $ztdResult, $schema->primaryKeys, [], $hasOrderBy)) {
+            throw new Error(
+                "SELECT result mismatch\n" .
+                "Seed: $seed\n" .
+                "SQL: $sql\n" .
+                "Schema: {$schema->name}\n" .
+                'Raw result count: ' . count($rawResult) . "\n" .
+                'ZTD result count: ' . count($ztdResult) . "\n" .
+                'Raw first row: ' . json_encode($rawResult[0] ?? null) . "\n" .
+                'ZTD first row: ' . json_encode($ztdResult[0] ?? null)
+            );
         }
     }
 }

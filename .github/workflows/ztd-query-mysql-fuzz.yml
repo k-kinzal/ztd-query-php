@@ -93,11 +93,20 @@ jobs:
             exit 2
           fi
 
-          mkdir -p "${{ matrix.target.corpus }}"
+          mkdir -p build/fuzz "${{ matrix.target.corpus }}"
           vendor/bin/php-fuzzer fuzz \
             "${{ matrix.target.script }}" \
             "${{ matrix.target.corpus }}/" \
-            "--max-runs=$FUZZ_MAX_RUNS"
+            "--max-runs=$FUZZ_MAX_RUNS" 2>&1 | tee build/fuzz/run.log
+
+      - name: Fail on saved or replayed findings
+        if: always()
+        run: |
+          if find . -maxdepth 1 -name 'crash-*' -print -quit | grep -q . ||
+             grep -REq '^(CORPUS )?CRASH in |^DUPLICATE CRASH' build/fuzz/; then
+            echo 'Fuzzing reported a finding; inspect the uploaded input and log.' >&2
+            exit 1
+          fi
 
       - name: Save the evolved corpus
         if: always()
@@ -111,6 +120,8 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: fuzz-crashes-${{ matrix.target.name }}
-          path: packages/ztd-query-mysql/crash-*
+          path: |
+            packages/ztd-query-mysql/crash-*
+            packages/ztd-query-mysql/build/fuzz/
           if-no-files-found: ignore
           retention-days: 14

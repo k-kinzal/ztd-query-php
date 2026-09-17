@@ -124,7 +124,7 @@ final class SchemaAwareSqlBuilder
             ? "''"
             : (new SqlExpressionGenerator($this->faker))->generateLiteral($updateCol, $schema);
 
-        $whereClause = (new SqlExpressionGenerator($this->faker))->buildPkWhere($schema);
+        $whereClause = $schema->primaryKeys === [] ? '1 = 1' : (new SqlExpressionGenerator($this->faker))->buildPkWhere($schema);
 
         return "UPDATE `$table` SET `$updateCol` = $newValue WHERE $whereClause";
     }
@@ -135,7 +135,7 @@ final class SchemaAwareSqlBuilder
     public function buildDelete(SchemaDefinition $schema): string
     {
         $table = $schema->name;
-        $whereClause = (new SqlExpressionGenerator($this->faker))->buildPkWhere($schema);
+        $whereClause = $schema->primaryKeys === [] ? '1 = 1' : (new SqlExpressionGenerator($this->faker))->buildPkWhere($schema);
 
         return "DELETE FROM `$table` WHERE $whereClause";
     }

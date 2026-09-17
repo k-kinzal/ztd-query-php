@@ -45,10 +45,10 @@ final class AlterCorrectnessTarget
         $seed = crc32(str_pad($input, 4, "\0"));
         $this->faker->seed($seed);
         $schema = SqliteSchemaPool::random($this->faker);
-        $this->harness->setup($schema, $seed);
         $case = $this->buildCase($schema);
 
         try {
+            $this->harness->setup($schema, $seed);
             $rawError = null;
             try {
                 $this->harness->getRawPdo()->exec($case['sql']);
@@ -60,12 +60,13 @@ final class AlterCorrectnessTarget
                 $this->harness->getZtdPdo()->exec($case['sql']);
             } catch (UnsupportedSqlException | UnknownSchemaException | DatabaseException | PDOException $exception) {
                 if ($rawError !== null) {
+                    \Fuzz\Correctness\FailureComparison::verify($rawError, $exception, $case['sql']);
                     return;
                 }
                 throw new Error("ZTD ALTER failed after native success\nSeed: $seed\nSQL: {$case['sql']}", 0, $exception);
             }
             if ($rawError !== null) {
-                return;
+                throw new Error("ZTD ALTER accepted a native-rejected query\nSeed: $seed\nSQL: {$case['sql']}", 0, $rawError);
             }
 
             $rawRows = $this->fetchAll($this->harness->getRawPdo(), $case['resultTable']);

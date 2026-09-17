@@ -20,6 +20,9 @@ use ZtdQuery\Config\ZtdConfig;
 final class MysqliCorrectnessHarness
 {
     private mysqli $rawMysqli;
+    private ?mysqli $physical = null;
+    private ?string $physicalNamespace = null;
+    private ?string $physicalSnapshot = null;
     private ?ZtdMysqli $ztdMysqli = null;
     private ?SchemaDefinition $currentSchema = null;
     private string $host;
@@ -48,7 +51,7 @@ final class MysqliCorrectnessHarness
     }
 
     /**
-     * Set up both connections with the same schema and data.
+     * Initialize equal oracle and shadow rows with distinct physical backing rows.
      *
      * @return array<int, array<string, mixed>> The fixture rows inserted
      */
@@ -77,17 +80,20 @@ final class MysqliCorrectnessHarness
             (new FixtureRowWriter())->insertRow($this->rawMysqli, $schema->name, $row);
         }
 
-        $this->ztdMysqli = new ZtdMysqli(
-            $this->host,
-            $this->user,
-            $this->pass,
-            $this->dbName,
-            $this->port,
-            null,
-            new ZtdConfig(UnsupportedSqlBehavior::Ignore, UnknownSchemaBehavior::Exception)
-        );
-
+        $physical = new mysqli($this->host, $this->user, $this->pass, $this->dbName, $this->port);
+        $namespace = 'ztd_fuzz_' . bin2hex(random_bytes(8));
+        $physical->query('CREATE DATABASE `' . $namespace . '`');
+        $physical->select_db($namespace);
+        $physical->set_charset('utf8mb4');
+        $this->physical = $physical;
+        $this->physicalNamespace = $namespace;
+        $this->ztdMysqli = ZtdMysqli::fromMysqli($physical, new ZtdConfig(UnsupportedSqlBehavior::Exception, UnknownSchemaBehavior::Exception));
         $this->ztdMysqli->query($schema->sql);
+        $physical->query($schema->sql);
+        if ($fixtureRows !== []) {
+            (new FixtureRowWriter())->insertRow($physical, $schema->name, $fixtureRows[0]);
+        }
+        $this->physicalSnapshot = PhysicalSnapshot::capture($physical);
         foreach ($fixtureRows as $row) {
             $columns = array_keys($row);
             $values = array_map(function ($v) {
@@ -117,14 +123,28 @@ final class MysqliCorrectnessHarness
 
     /**
      * Remove the active physical table and discard its simulated session.
+     *
+     * @throws OracleViolation When the physical catalog was modified.
      */
     public function teardown(): void
     {
-        if ($this->currentSchema !== null) {
-            $this->rawMysqli->query("DROP TABLE IF EXISTS `{$this->currentSchema->name}`");
+        try {
+            if ($this->physical !== null && $this->physicalSnapshot !== null && $this->physicalSnapshot !== PhysicalSnapshot::capture($this->physical)) {
+                throw new OracleViolation('ZTD changed the physical backing catalog.');
+            }
+        } finally {
+            if ($this->physicalNamespace !== null) {
+                $this->rawMysqli->query('DROP DATABASE `' . $this->physicalNamespace . '`');
+            }
+            if ($this->currentSchema !== null) {
+                $this->rawMysqli->query("DROP TABLE IF EXISTS `{$this->currentSchema->name}`");
+            }
+            $this->physical = null;
+            $this->physicalNamespace = null;
+            $this->physicalSnapshot = null;
+            $this->ztdMysqli = null;
+            $this->currentSchema = null;
         }
-        $this->ztdMysqli = null;
-        $this->currentSchema = null;
     }
 
     /**

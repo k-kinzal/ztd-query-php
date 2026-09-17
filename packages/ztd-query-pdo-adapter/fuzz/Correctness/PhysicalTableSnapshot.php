@@ -28,7 +28,12 @@ final class PhysicalTableSnapshot
             $rows = array_map('serialize', $statement->fetchAll(PDO::FETCH_ASSOC));
             sort($rows, SORT_STRING);
 
-            return serialize($rows);
+            $columns = [];
+            for ($index = 0; $index < $statement->columnCount(); $index++) {
+                $columns[] = $statement->getColumnMeta($index);
+            }
+
+            return serialize([$columns, $rows]);
         } catch (PDOException $exception) {
             throw new Error('Could not inspect physical table ' . $table, 0, $exception);
         }

@@ -56,9 +56,9 @@ final class InsertCorrectnessTarget
         $this->faker->seed($seed);
 
         $schema = SchemaPool::random($this->faker);
-        $this->harness->setup($schema, $seed);
 
         try {
+            $this->harness->setup($schema, $seed);
             $sql = $this->sqlBuilder->buildInsert($schema);
 
             $rawError = null;
@@ -69,18 +69,18 @@ final class InsertCorrectnessTarget
             }
 
             try {
-                $snapshot = \Fuzz\Correctness\PhysicalTableSnapshot::capture($this->harness->getRawPdo(), $schema->name);
+                $snapshot = \Fuzz\Correctness\PhysicalTableSnapshot::capture($this->harness->getPhysicalPdo(), $schema->name);
                 try {
                     $this->harness->getZtdPdo()->exec($sql);
                 } finally {
-                    \Fuzz\Correctness\PhysicalTableSnapshot::assertUnchanged($this->harness->getRawPdo(), $schema->name, $snapshot, $sql, $seed);
+                    \Fuzz\Correctness\PhysicalTableSnapshot::assertUnchanged($this->harness->getPhysicalPdo(), $schema->name, $snapshot, $sql, $seed);
                 }
-            } catch (UnsupportedSqlException | UnknownSchemaException) {
-                return;
-            } catch (DatabaseException | PDOException $exception) {
+            } catch (UnsupportedSqlException | UnknownSchemaException | DatabaseException | PDOException $exception) {
                 if ($rawError === null) {
                     throw new Error("ZTD rejected a native-successful query\nSeed: $seed\nSQL: $sql\n" . $exception->getMessage(), 0, $exception);
                 }
+                \Fuzz\Correctness\FailureComparison::verify($rawError, $exception, $sql);
+                $this->compareTableState($schema, $seed);
                 return;
             }
 

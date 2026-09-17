@@ -86,9 +86,12 @@ jobs:
         run: |
           set -euo pipefail
           [[ "$MAX_RUNS" =~ ^[1-9][0-9]*$ ]] || { echo 'max_runs must be a positive integer' >&2; exit 1; }
-          mkdir -p "fuzz/corpus/$CORPUS"
-          vendor/bin/php-fuzzer fuzz "fuzz/$FUZZ_SCRIPT" "fuzz/corpus/$CORPUS/" --timeout=15 --max-runs="$MAX_RUNS"
-          if compgen -G 'crash-*' > /dev/null; then
+          mkdir -p build/fuzz "fuzz/corpus/$CORPUS"
+          if [[ -d "fuzz/seeds/$CORPUS" ]]; then
+            cp "fuzz/seeds/$CORPUS/"* "fuzz/corpus/$CORPUS/"
+          fi
+          vendor/bin/php-fuzzer fuzz "fuzz/$FUZZ_SCRIPT" "fuzz/corpus/$CORPUS/" --timeout=15 --max-runs="$MAX_RUNS" 2>&1 | tee build/fuzz/run.log
+          if compgen -G 'crash-*' > /dev/null || grep -Eq '^(CORPUS )?CRASH in |^DUPLICATE CRASH' build/fuzz/run.log; then
             echo 'Fuzzing produced crash artifacts; replay the uploaded inputs.' >&2
             exit 1
           fi
@@ -103,5 +106,8 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: mysqli-fuzz-${{ matrix.mysql }}-${{ matrix.target.corpus }}
-          path: packages/ztd-query-mysqli-adapter/crash-*
+          path: |
+            packages/ztd-query-mysqli-adapter/crash-*
+            packages/ztd-query-mysqli-adapter/build/fuzz/
+            packages/ztd-query-mysqli-adapter/fuzz/corpus/
           if-no-files-found: ignore

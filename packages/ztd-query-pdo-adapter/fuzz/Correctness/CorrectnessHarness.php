@@ -20,6 +20,8 @@ use ZtdQuery\Config\ZtdConfig;
 final class CorrectnessHarness
 {
     private PDO $rawPdo;
+    private ?PhysicalDatabase $physical = null;
+    private ?string $physicalSnapshot = null;
     private ?ZtdPdo $ztdPdo = null;
     private ?SchemaDefinition $currentSchema = null;
     private string $dsn;
@@ -80,7 +82,7 @@ final class CorrectnessHarness
     }
 
     /**
-     * Set up both connections with the same schema and data.
+     * Initialize equal oracle and shadow rows with distinct physical backing rows.
      *
      * @return list<Row> The fixture rows inserted
      */
@@ -109,12 +111,18 @@ final class CorrectnessHarness
             $this->insertRow($this->rawPdo, $schema->name, $row);
         }
 
-        $this->ztdPdo = new ZtdPdo($this->dsn, $this->user, $this->pass, [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        ], new ZtdConfig(UnsupportedSqlBehavior::Ignore, UnknownSchemaBehavior::Exception));
+        $backing = new PhysicalDatabase($this->rawPdo, $this->dsn, $this->user, $this->pass);
+        $this->physical = $backing;
+        $physical = $backing->connection();
+        $ztd = ZtdPdo::fromPdo($physical, new ZtdConfig(UnsupportedSqlBehavior::Exception, UnknownSchemaBehavior::Exception));
 
-        $this->ztdPdo->exec($schema->sql);
+        $this->ztdPdo = $ztd;
+        $ztd->exec($schema->sql);
+        $physical->exec($schema->sql);
+        if ($this->fixtureRows !== []) {
+            $this->insertRow($physical, $schema->name, $this->fixtureRows[0]);
+        }
+        $this->physicalSnapshot = $backing->snapshot();
         foreach ($this->fixtureRows as $row) {
             $columns = array_keys($row);
             $values = array_map(function ($v) {
@@ -135,7 +143,7 @@ final class CorrectnessHarness
                 implode(', ', array_map(fn ($c) => "`$c`", $columns)),
                 implode(', ', $values)
             );
-            $this->ztdPdo->exec($sql);
+            $ztd->exec($sql);
         }
 
         return $this->fixtureRows;
@@ -144,15 +152,36 @@ final class CorrectnessHarness
     /**
      * Teardown.
      *
+     * @throws OracleViolation When ZTD changed the backing catalog.
+     *
      */
     public function teardown(): void
     {
-        if ($this->currentSchema !== null) {
-            $this->rawPdo->exec("DROP TABLE IF EXISTS `{$this->currentSchema->name}`");
+        try {
+            if ($this->physical !== null && $this->physicalSnapshot !== null && $this->physicalSnapshot !== $this->physical->snapshot()) {
+                throw new OracleViolation('ZTD changed the physical backing catalog.');
+            }
+        } finally {
+            if ($this->currentSchema !== null) {
+                $this->rawPdo->exec("DROP TABLE IF EXISTS `{$this->currentSchema->name}`");
+            }
+            $this->physical?->close();
+            $this->physical = null;
+            $this->physicalSnapshot = null;
+            $this->ztdPdo = null;
+            $this->currentSchema = null;
+            $this->fixtureRows = [];
         }
-        $this->ztdPdo = null;
-        $this->currentSchema = null;
-        $this->fixtureRows = [];
+    }
+
+    /**
+     * Inspect the backing database independently of the oracle database.
+     *
+     * @throws RuntimeException When setup has not initialized the backing database.
+     */
+    public function getPhysicalPdo(): PDO
+    {
+        return $this->physical?->connection() ?? throw new RuntimeException('Physical database is not initialized.');
     }
 
     /**

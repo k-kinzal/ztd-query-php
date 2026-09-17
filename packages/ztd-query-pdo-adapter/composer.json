@@ -156,6 +156,12 @@
             "@php -r \"is_dir('fuzz/corpus/correctness-pg-select') || mkdir('fuzz/corpus/correctness-pg-select', 0777, true);\" --",
             "php-fuzzer fuzz fuzz/fuzz_correctness_pg_select.php fuzz/corpus/correctness-pg-select/"
         ],
+        "fuzz:correctness:pg:sequence": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php -r \"is_dir('fuzz/corpus/correctness-pg-sequence') || mkdir('fuzz/corpus/correctness-pg-sequence', 0777, true);\" --",
+            "@php -r 'foreach (glob(\"fuzz/seeds/sequence/*\") as $seed) { copy($seed, \"fuzz/corpus/correctness-pg-sequence/\" . basename($seed)); }' --",
+            "php-fuzzer fuzz fuzz/fuzz_correctness_pg_sequence.php fuzz/corpus/correctness-pg-sequence/"
+        ],
         "fuzz:correctness:pg:update": [
             "Composer\\Config::disableProcessTimeout",
             "@php -r \"is_dir('fuzz/corpus/correctness-pg-update') || mkdir('fuzz/corpus/correctness-pg-update', 0777, true);\" --",
@@ -165,6 +171,12 @@
             "Composer\\Config::disableProcessTimeout",
             "@php -r \"is_dir('fuzz/corpus/correctness-select') || mkdir('fuzz/corpus/correctness-select', 0777, true);\" --",
             "php-fuzzer fuzz fuzz/fuzz_correctness_select.php fuzz/corpus/correctness-select/"
+        ],
+        "fuzz:correctness:sequence": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php -r \"is_dir('fuzz/corpus/correctness-sequence') || mkdir('fuzz/corpus/correctness-sequence', 0777, true);\" --",
+            "@php -r 'foreach (glob(\"fuzz/seeds/sequence/*\") as $seed) { copy($seed, \"fuzz/corpus/correctness-sequence/\" . basename($seed)); }' --",
+            "php-fuzzer fuzz fuzz/fuzz_correctness_sequence.php fuzz/corpus/correctness-sequence/"
         ],
         "fuzz:correctness:sqlite:alter": [
             "Composer\\Config::disableProcessTimeout",
@@ -185,6 +197,12 @@
             "Composer\\Config::disableProcessTimeout",
             "@php -r \"is_dir('fuzz/corpus/correctness-sqlite-select') || mkdir('fuzz/corpus/correctness-sqlite-select', 0777, true);\" --",
             "php-fuzzer fuzz fuzz/fuzz_correctness_sqlite_select.php fuzz/corpus/correctness-sqlite-select/"
+        ],
+        "fuzz:correctness:sqlite:sequence": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php -r \"is_dir('fuzz/corpus/correctness-sqlite-sequence') || mkdir('fuzz/corpus/correctness-sqlite-sequence', 0777, true);\" --",
+            "@php -r 'foreach (glob(\"fuzz/seeds/sequence/*\") as $seed) { copy($seed, \"fuzz/corpus/correctness-sqlite-sequence/\" . basename($seed)); }' --",
+            "php-fuzzer fuzz fuzz/fuzz_correctness_sqlite_sequence.php fuzz/corpus/correctness-sqlite-sequence/"
         ],
         "fuzz:correctness:sqlite:update": [
             "Composer\\Config::disableProcessTimeout",
@@ -217,7 +235,10 @@
             "@fuzz:correctness:pg:insert --max-runs=100",
             "@fuzz:correctness:pg:update --max-runs=100",
             "@fuzz:correctness:pg:delete --max-runs=100",
-            "@fuzz:correctness:pg:ctas --max-runs=100"
+            "@fuzz:correctness:pg:ctas --max-runs=100",
+            "@fuzz:correctness:sequence --max-runs=100",
+            "@fuzz:correctness:pg:sequence --max-runs=100",
+            "@fuzz:correctness:sqlite:sequence --max-runs=100"
         ],
         "lint": [
             "@autoload:check",
@@ -232,6 +253,7 @@
         "phpstan": "phpstan analyse --memory-limit=512M",
         "test": "paratest --processes=auto",
         "test:coverage": "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml",
+        "test:fuzz": "phpunit tests/Fuzz",
         "test:integration": "phpunit --testsuite integration",
         "test:unit": "phpunit --testsuite unit",
         "tree-guard": "tree-guard --config=tree.yaml"

@@ -45,11 +45,11 @@ final class CreateTableAsCorrectnessTarget
         $seed = crc32(str_pad($input, 4, "\0"));
         $this->faker->seed($seed);
         $schema = PgSchemaPool::random($this->faker);
-        $this->harness->setup($schema, $seed);
         $copy = '_ztd_ctas_copy';
         $case = $this->buildCase($schema, $copy);
 
         try {
+            $this->harness->setup($schema, $seed);
             $this->harness->getRawPdo()->exec('DROP TABLE IF EXISTS ' . $this->quote($copy));
             $this->harness->getRawPdo()->exec($case['sql']);
 
@@ -66,8 +66,6 @@ final class CreateTableAsCorrectnessTarget
                 $seed,
                 $schema,
             );
-        } catch (PDOException) {
-            return;
         } finally {
             $this->harness->getRawPdo()->exec('DROP TABLE IF EXISTS ' . $this->quote($copy));
             $this->harness->teardown();
