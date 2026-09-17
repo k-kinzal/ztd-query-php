@@ -1,5 +1,1 @@
-他パッケージに基づかない実装のようです。LICENSEが含まれたり、php-ai-toolkitベースの各種品質系などが作られていません。またabstract classは嫌いなので使わないでください。
-
----
-
 containerにbenchは要らないです。integration testも不要です。
