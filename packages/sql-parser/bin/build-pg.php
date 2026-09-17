@@ -6,7 +6,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use SqlParser\Automaton\ParseTableBuilder;
-use SqlParser\Compiler\Bison\BisonReader;
+use SqlParser\Compiler\BisonGrammarReader;
 use SqlParser\PostgreSql\Source\KeywordList;
 use SqlParser\Resource\ResourceWriter;
 use SqlParser\Resource\SourceFetcher;
@@ -61,7 +61,7 @@ function pgGitTag(string $tag): string
 $registry = new VersionRegistry();
 $fetcher = new SourceFetcher(__DIR__ . '/../build/sources');
 $writer = new ResourceWriter();
-$reader = new BisonReader();
+$reader = new BisonGrammarReader();
 $builder = new ParseTableBuilder();
 $failed = false;
 foreach (pgTagsToBuild(array_slice($argv, 1), $registry) as $tag) {

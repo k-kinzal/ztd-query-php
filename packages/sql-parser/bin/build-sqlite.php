@@ -6,7 +6,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use SqlParser\Automaton\ParseTableBuilder;
-use SqlParser\Compiler\Lemon\LemonReader;
+use SqlParser\Compiler\LemonGrammarReader;
 use SqlParser\Resource\ResourceWriter;
 use SqlParser\Resource\SourceFetcher;
 use SqlParser\Resource\VersionRegistry;
@@ -59,7 +59,7 @@ $registry = new VersionRegistry();
 [$tags, $defines] = sqliteOptions(array_slice($argv, 1), $registry);
 $fetcher = new SourceFetcher(__DIR__ . '/../build/sources');
 $writer = new ResourceWriter();
-$reader = new LemonReader();
+$reader = new LemonGrammarReader();
 $builder = new ParseTableBuilder();
 $failed = false;
 foreach ($tags as $tag) {

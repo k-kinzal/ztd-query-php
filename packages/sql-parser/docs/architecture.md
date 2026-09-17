@@ -8,9 +8,9 @@ The package follows the life of a parse table through five layers, and each dial
 
 ## Compiler
 
-`SqlParser\Compiler\Bison` reads a Bison grammar file. Host code in braces is skipped as one token, a mid-rule action becomes a hidden `$@n` nonterminal deriving the empty string and numbered before the rule it appears in, exactly as Bison numbers it, and `%prec`, `%left`, `%right`, `%nonassoc`, `%precedence`, `%start` and `%expect` are recorded.
+`SqlParser\Compiler\BisonGrammarReader` turns the tree of the [bison-parser](../../bison-parser/) package into a grammar. A mid-rule action becomes a hidden `$@n` nonterminal deriving the empty string and numbered before the rule it appears in, exactly as Bison numbers it, and `%prec`, `%left`, `%right`, `%nonassoc`, `%precedence`, `%start` and `%expect` are recorded; host code, tags, aliases and named references are left to the tree.
 
-`SqlParser\Compiler\Lemon` reads a Lemon grammar file after applying its `%if` conditionals. `%token_class` declarations and `A|B` alternations become token classes, `%fallback` and `%wildcard` are recorded for the parser, and `[PREC]` marks name a rule's precedence.
+`SqlParser\Compiler\LemonGrammarReader` turns the tree of the [lemon-parser](../../lemon-parser/) package, read with the `%ifdef` names of the build, into a grammar. `%token_class` declarations and `A|B` positions become token classes, `%fallback` and `%wildcard` are recorded for the parser, and `[PREC]` marks name a rule's precedence.
 
 ## Automaton
 

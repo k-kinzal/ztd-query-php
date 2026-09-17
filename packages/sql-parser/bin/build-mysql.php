@@ -6,7 +6,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../vendor/autoload.php';
 
 use SqlParser\Automaton\ParseTableBuilder;
-use SqlParser\Compiler\Bison\BisonReader;
+use SqlParser\Compiler\BisonGrammarReader;
 use SqlParser\MySql\Source\LexHeader;
 use SqlParser\Resource\ResourceWriter;
 use SqlParser\Resource\SourceFetcher;
@@ -49,7 +49,7 @@ function mysqlTagsToBuild(array $arguments, VersionRegistry $registry): array
 $registry = new VersionRegistry();
 $fetcher = new SourceFetcher(__DIR__ . '/../build/sources');
 $writer = new ResourceWriter();
-$reader = new BisonReader();
+$reader = new BisonGrammarReader();
 $builder = new ParseTableBuilder();
 $failed = false;
 foreach (mysqlTagsToBuild(array_slice($argv, 1), $registry) as $tag) {

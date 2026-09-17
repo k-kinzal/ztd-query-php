@@ -16,11 +16,21 @@ deptrac:
       collectors:
         - type: directory
           value: 'src/Grammar/'
-    # Reads Bison and Lemon sources into grammars.
+    # Turns the trees of bison-parser and lemon-parser into grammars.
     - name: Compiler
       collectors:
         - type: directory
           value: 'src/Compiler/'
+    # The lossless Bison grammar tree, from the bison-parser package.
+    - name: BisonParser
+      collectors:
+        - type: classNameRegex
+          value: '/^BisonParser\\/'
+    # The lossless Lemon grammar tree, from the lemon-parser package.
+    - name: LemonParser
+      collectors:
+        - type: classNameRegex
+          value: '/^LemonParser\\/'
     # Builds the LALR(1) automaton and resolves its conflicts into a table.
     - name: Automaton
       collectors:
@@ -60,7 +70,9 @@ deptrac:
           value: 'src/Sqlite/'
   ruleset:
     Grammar: []
-    Compiler: [Grammar]
+    Compiler: [Grammar, BisonParser, LemonParser]
+    BisonParser: []
+    LemonParser: []
     Automaton: [Grammar, Table]
     Table: [Grammar]
     Lexer: [Table, Grammar]
