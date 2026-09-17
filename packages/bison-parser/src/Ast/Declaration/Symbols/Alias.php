@@ -22,11 +22,13 @@ final class Alias
      * @param string $text The decoded string
      * @param bool $translatable Whether the alias was written as `_("...")`
      * @param Location $location Where the alias is written
+     * @param string|null $spelling The alias as written, quotes and escapes included; null when built by hand
      */
     public function __construct(
         public readonly string $text,
         public readonly bool $translatable,
         public readonly Location $location,
+        public readonly ?string $spelling = null,
     ) {
     }
 }

@@ -1,0 +1,7 @@
+# NAME URL — real-world Bison grammars fetched by conformance/fetch.php
+postgresql-17.2.y https://raw.githubusercontent.com/postgres/postgres/refs/tags/REL_17_2/src/backend/parser/gram.y
+postgresql-12.0.y https://raw.githubusercontent.com/postgres/postgres/refs/tags/REL_12_0/src/backend/parser/gram.y
+plpgsql-16.0.y https://raw.githubusercontent.com/postgres/postgres/refs/tags/REL_16_0/src/pl/plpgsql/src/pl_gram.y
+mysql-5.5.62.yy https://raw.githubusercontent.com/mysql/mysql-server/refs/tags/mysql-5.5.62/sql/sql_yacc.yy
+mysql-8.4.7.yy https://raw.githubusercontent.com/mysql/mysql-server/refs/tags/mysql-8.4.7/sql/sql_yacc.yy
+php-8.3.0.y https://raw.githubusercontent.com/php/php-src/refs/tags/php-8.3.0/Zend/zend_language_parser.y

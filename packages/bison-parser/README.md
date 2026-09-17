@@ -67,8 +67,13 @@ See [docs/tree.md](docs/tree.md) for every node of the tree and [docs/fidelity.m
 | `%define`, `%code`, `%union`, `%param`, `%destructor`, `%printer`, `%start`, `%expect`, `%initial-action`, and every flag and option | one declaration class each |
 | `name[ref]: sym[ref] <tag>{ action }[ref] %?{ predicate } %prec X %dprec 2 %merge <f> %empty ;` | `Rule` with `Alternative`s of `RhsItem`s, in order |
 | the text after the second `%%` | `Epilogue` |
+| `#line N "file"` | `Line`, where it stands |
 
-Host code is kept as written and never interpreted. Deprecated spellings such as `%pure_parser`, `%term` and `%binary` are read as Bison reads them.
+Host code is kept as written and never interpreted. Literals keep their spelling next to their decoded value, since Bison names string tokens by their spelling. Deprecated spellings such as `%pure_parser`, `%term` and `%binary` are read as Bison reads them.
+
+## Conformance with GNU Bison
+
+`composer conformance -- --bison=PATH DIR...` reads every grammar under the directories with GNU Bison and with this package, and requires that a file Bison accepts prints back to a file from which Bison produces the same XML report, and that a file Bison's scanner or parser refuses raises a `SyntaxException` here. The CI runs it against Bison 3.8.2 on Bison's examples, the grammars of Bison's own test suite, real-world grammars and a hand-written corpus. See [docs/fidelity.md](docs/fidelity.md).
 
 ## License
 

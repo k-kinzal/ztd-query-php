@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Printer;
 
+use BisonParser\Ast\Line;
 use BisonParser\Ast\Location;
 use BisonParser\Ast\Rule\Action;
 use BisonParser\Ast\Rule\DprecItem;
@@ -15,6 +16,7 @@ use BisonParser\Ast\Rule\Predicate;
 use BisonParser\Ast\Rule\SymbolItem;
 use BisonParser\Ast\Symbol;
 use BisonParser\Ast\SymbolKind;
+use BisonParser\Printer\DeclarationPrinter;
 use BisonParser\Printer\RhsPrinter;
 use BisonParser\Printer\SymbolPrinter;
 use BisonParser\Scanner\Escapes;
@@ -29,6 +31,8 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(EmptyItem::class)]
 #[UsesClass(Escapes::class)]
 #[UsesClass(ExpectItem::class)]
+#[UsesClass(Line::class)]
+#[UsesClass(DeclarationPrinter::class)]
 #[UsesClass(Location::class)]
 #[UsesClass(MergeItem::class)]
 #[UsesClass(PrecItem::class)]
@@ -56,6 +60,7 @@ final class RhsPrinterTest extends TestCase
         self::assertSame('%merge <m>', $printer->print(new MergeItem('m', $at)));
         self::assertSame('%expect 1', $printer->print(new ExpectItem(1, false, $at)));
         self::assertSame('%expect-rr 3', $printer->print(new ExpectItem(3, true, $at)));
+        self::assertSame("\n#line 4 \"x.y\"\n", $printer->print(new Line(4, 'x.y', $at)));
     }
 
     public function testReference(): void

@@ -89,9 +89,6 @@ final class Scanner
                 }
                 continue;
             }
-            if ($cursor->location()->column === 1 && $cursor->match('#line [0-9]+(?: "[^"\n]*")?(?:\r?\n)') !== null) {
-                continue;
-            }
 
             return;
         }
@@ -110,6 +107,12 @@ final class Scanner
     {
         $location = $cursor->location();
         $byte = $cursor->peek();
+        if ($byte === '#' && $location->column === 1) {
+            $directive = $cursor->match('#line [0-9]+(?: "[^"\n]*")?(?=\r?\n)');
+            if ($directive !== null) {
+                return [new Token(TokenKind::Line, $directive, $location)];
+            }
+        }
         if ($byte === '%') {
             return [$this->percent($cursor, $location)];
         }
@@ -267,7 +270,7 @@ final class Scanner
                 throw SyntaxException::invalid('extra characters in character literal', $location);
             }
 
-            return new Token(TokenKind::CharLiteral, $decoded, $location);
+            return new Token(TokenKind::CharLiteral, $decoded, $location, $literal);
         }
         if ($byte === '"' || $cursor->startsWith('_("')) {
             $translatable = $byte === '_';
@@ -277,7 +280,7 @@ final class Scanner
             }
             $body = $translatable ? substr($literal, 3, -2) : substr($literal, 1, -1);
 
-            return new Token($translatable ? TokenKind::TranslatableString : TokenKind::String, $this->escapes->decode($body, $location), $location);
+            return new Token($translatable ? TokenKind::TranslatableString : TokenKind::String, $this->escapes->decode($body, $location), $location, $literal);
         }
         if ($byte === '<') {
             return $this->tag($cursor, $location);

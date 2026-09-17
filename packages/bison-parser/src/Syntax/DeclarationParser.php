@@ -22,6 +22,7 @@ use BisonParser\Ast\Declaration\Symbols\PrecedenceDeclaration;
 use BisonParser\Ast\Declaration\Symbols\SymbolClass;
 use BisonParser\Ast\Declaration\Symbols\SymbolDeclaration;
 use BisonParser\Ast\Declaration\UnionDeclaration;
+use BisonParser\Ast\Line;
 use BisonParser\Scanner\Directives;
 use BisonParser\Scanner\Token;
 use BisonParser\Scanner\TokenKind;
@@ -51,6 +52,7 @@ final class DeclarationParser
     public function starts(Token $token): bool
     {
         return $token->is(TokenKind::Prologue)
+            || $token->is(TokenKind::Line)
             || ($token->is(TokenKind::Directive) && !in_array($token->text, ['prec', 'dprec', 'merge', 'empty'], true));
     }
 
@@ -69,11 +71,28 @@ final class DeclarationParser
         if ($token->is(TokenKind::Prologue)) {
             return new Prologue($token->text, $token->location);
         }
+        if ($token->is(TokenKind::Line)) {
+            return $this->line($token);
+        }
         if (!$token->is(TokenKind::Directive)) {
             throw SyntaxException::unexpected('a declaration', $token->describe(), $token->location);
         }
 
         return $this->directive($token, $tokens);
+    }
+
+    /**
+     * Turns a `#line` token into its node.
+     *
+     * @param Token $token The token, whose text is the directive as written
+     *
+     * @return Line The node
+     */
+    public function line(Token $token): Line
+    {
+        preg_match('/^#line ([0-9]+)(?: "([^"]*)")?$/', $token->text, $match);
+
+        return new Line((int) ($match[1] ?? 0), $match[2] ?? null, $token->location);
     }
 
     /**

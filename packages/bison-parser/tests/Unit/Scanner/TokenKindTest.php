@@ -15,7 +15,7 @@ final class TokenKindTest extends TestCase
 {
     public function testCases(): void
     {
-        self::assertCount(21, TokenKind::cases());
+        self::assertCount(22, TokenKind::cases());
         self::assertSame('%%', TokenKind::Section->value);
         self::assertSame('end of file', TokenKind::End->value);
     }

@@ -31,5 +31,6 @@ enum TokenKind: string
     case Semicolon = ';';
     case Section = '%%';
     case Epilogue = 'epilogue';
+    case Line = 'line directive';
     case End = 'end of file';
 }
