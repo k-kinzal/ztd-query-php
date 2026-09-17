@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Native;
 
+use Container\MySql80Container;
+use Container\MySql84Container;
 use mysqli;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use Testcontainers\Testcontainers;
-use Tests\Container\MySql80Container;
-use Tests\Container\MySql84Container;
 use ZtdQuery\Adapter\Mysqli\Native\MysqliPropertyReader;
 
 #[CoversClass(MysqliPropertyReader::class)]
@@ -21,7 +21,8 @@ final class MysqliPropertyReaderTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $reader = new MysqliPropertyReader();
             self::assertSame($connection->affected_rows, $reader->read($connection, 'affected_rows'));
             self::assertSame($connection->client_info, $reader->read($connection, 'client_info'));
@@ -77,7 +78,8 @@ final class MysqliPropertyReaderTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $connection->query('CREATE TEMPORARY TABLE info_rows (id INT PRIMARY KEY)');
             $connection->query('INSERT INTO info_rows VALUES (1), (2)');
             $reader = new MysqliPropertyReader();

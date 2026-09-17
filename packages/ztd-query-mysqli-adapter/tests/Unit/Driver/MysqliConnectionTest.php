@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Driver;
 
+use Container\MySql80Container;
+use Container\MySql84Container;
 use mysqli;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Testcontainers\Testcontainers;
-use Tests\Container\MySql80Container;
-use Tests\Container\MySql84Container;
 use ZtdQuery\Adapter\Mysqli\Driver\MysqliConnection;
 use ZtdQuery\Adapter\Mysqli\Driver\MysqliResultStatement;
 use ZtdQuery\Connection\Exception\DatabaseException;
@@ -25,7 +25,8 @@ final class MysqliConnectionTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $mysqli = $container->getData(mysqli::class);
+            $mysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $mysqli->set_charset('utf8mb4');
             $result = (new MysqliConnection($mysqli))->query('SELECT 7 AS id');
             self::assertInstanceOf(MysqliResultStatement::class, $result);
             self::assertSame([['id' => '7']], $result->fetchAll());
@@ -39,7 +40,8 @@ final class MysqliConnectionTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $mysqli = $container->getData(mysqli::class);
+            $mysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $mysqli->set_charset('utf8mb4');
             $mysqli->query('CREATE TABLE users (id INT)');
             $result = (new MysqliConnection($mysqli))->query('INSERT INTO users VALUES (1), (2)');
             self::assertInstanceOf(MysqliResultStatement::class, $result);
@@ -54,7 +56,8 @@ final class MysqliConnectionTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $mysqli = $container->getData(mysqli::class);
+            $mysqli = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $mysqli->set_charset('utf8mb4');
             mysqli_report(MYSQLI_REPORT_OFF);
             try {
                 $this->expectException(DatabaseException::class);

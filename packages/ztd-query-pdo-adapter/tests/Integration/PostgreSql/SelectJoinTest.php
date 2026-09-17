@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Integration\PostgreSql;
 
+use Container\PostgreSql16Container;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
-use Tests\Container\PostgreSqlContainer;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 
 /**
@@ -24,9 +24,14 @@ final class SelectJoinTest extends TestCase
 {
     public function testInnerJoin(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
         /** @var PDO $rawPdo */
-        $rawPdo = $containerInstance->getData(PDO::class);
+        $rawPdo = new PDO(
+            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
+            'test',
+            'test',
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
+        );
 
         $schemaName = 'ztd_' . bin2hex(random_bytes(8));
         $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
@@ -67,9 +72,14 @@ final class SelectJoinTest extends TestCase
 
     public function testLeftJoin(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
         /** @var PDO $rawPdo */
-        $rawPdo = $containerInstance->getData(PDO::class);
+        $rawPdo = new PDO(
+            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
+            'test',
+            'test',
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
+        );
 
         $schemaName = 'ztd_' . bin2hex(random_bytes(8));
         $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
@@ -110,9 +120,14 @@ final class SelectJoinTest extends TestCase
 
     public function testRightJoin(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
         /** @var PDO $rawPdo */
-        $rawPdo = $containerInstance->getData(PDO::class);
+        $rawPdo = new PDO(
+            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
+            'test',
+            'test',
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
+        );
 
         $schemaName = 'ztd_' . bin2hex(random_bytes(8));
         $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
@@ -153,9 +168,14 @@ final class SelectJoinTest extends TestCase
 
     public function testFullJoin(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
         /** @var PDO $rawPdo */
-        $rawPdo = $containerInstance->getData(PDO::class);
+        $rawPdo = new PDO(
+            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
+            'test',
+            'test',
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
+        );
 
         $schemaName = 'ztd_' . bin2hex(random_bytes(8));
         $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
@@ -196,9 +216,14 @@ final class SelectJoinTest extends TestCase
 
     public function testCrossJoin(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
         /** @var PDO $rawPdo */
-        $rawPdo = $containerInstance->getData(PDO::class);
+        $rawPdo = new PDO(
+            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
+            'test',
+            'test',
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
+        );
 
         $schemaName = 'ztd_' . bin2hex(random_bytes(8));
         $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
@@ -239,9 +264,14 @@ final class SelectJoinTest extends TestCase
 
     public function testNaturalJoin(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
         /** @var PDO $rawPdo */
-        $rawPdo = $containerInstance->getData(PDO::class);
+        $rawPdo = new PDO(
+            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
+            'test',
+            'test',
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
+        );
 
         $schemaName = 'ztd_' . bin2hex(random_bytes(8));
         $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
@@ -282,9 +312,14 @@ final class SelectJoinTest extends TestCase
 
     public function testJoinWithTableWithoutPrimaryKey(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
         /** @var PDO $rawPdo */
-        $rawPdo = $containerInstance->getData(PDO::class);
+        $rawPdo = new PDO(
+            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
+            'test',
+            'test',
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
+        );
 
         $schemaName = 'ztd_' . bin2hex(random_bytes(8));
         $rawPdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));
