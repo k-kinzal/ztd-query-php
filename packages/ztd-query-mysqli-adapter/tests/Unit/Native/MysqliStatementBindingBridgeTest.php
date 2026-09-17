@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Native;
 
+use Container\MySql80Container;
+use Container\MySql84Container;
 use mysqli;
 use mysqli_result;
 use mysqli_stmt;
@@ -11,8 +13,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
 use Testcontainers\Testcontainers;
-use Tests\Container\MySql80Container;
-use Tests\Container\MySql84Container;
 use ZtdQuery\Adapter\Mysqli\Native\MysqliStatementBindingBridge;
 
 #[CoversClass(MysqliStatementBindingBridge::class)]
@@ -23,7 +23,8 @@ final class MysqliStatementBindingBridgeTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $statement = $connection->prepare('SELECT ? AS value');
             self::assertInstanceOf(mysqli_stmt::class, $statement);
             $bridge = new class ($statement) extends MysqliStatementBindingBridge {};
@@ -44,7 +45,8 @@ final class MysqliStatementBindingBridgeTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $connection = $container->getData(mysqli::class);
+            $connection = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $connection->set_charset('utf8mb4');
             $statement = $connection->prepare("SELECT 7 AS id, 'Alice' AS name");
             self::assertInstanceOf(mysqli_stmt::class, $statement);
             $bridge = new class ($statement) extends MysqliStatementBindingBridge {};

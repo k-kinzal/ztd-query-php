@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Integration\PostgreSql;
 
+use Container\PostgreSql16Container;
 use PDO;
 use PHPUnit\Framework\Attributes\CoversNothing;
 use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
-use Tests\Container\PostgreSqlContainer;
 use ZtdQuery\Adapter\Pdo\ZtdPdo;
 
 /**
@@ -22,9 +22,14 @@ final class DoBlockTest extends TestCase
 {
     public function testDoBlockPassesThroughAndLaterShadowDmlStillWorks(): void
     {
-        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSqlContainer::class);
+        $containerInstance = \Testcontainers\Testcontainers::run(PostgreSql16Container::class);
         /** @var PDO $pdo */
-        $pdo = $containerInstance->getData(PDO::class);
+        $pdo = new PDO(
+            sprintf('pgsql:host=%s;port=%d;dbname=test', str_replace('localhost', '127.0.0.1', $containerInstance->getHost()), $containerInstance->getMappedPort(5432)),
+            'test',
+            'test',
+            [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC],
+        );
 
         $schemaName = 'ztd_' . bin2hex(random_bytes(8));
         $pdo->exec(sprintf('CREATE SCHEMA "%s"', $schemaName));

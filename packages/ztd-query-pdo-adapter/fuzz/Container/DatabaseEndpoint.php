@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Fuzz\Container;
 
+use Container\MySql80Container;
+use Container\MySql84Container;
+use Container\PostgreSql16Container;
 use RuntimeException;
 use Testcontainers\Testcontainers;
 
@@ -37,7 +40,7 @@ final class DatabaseEndpoint
         if ($host !== false) {
             return [$host, self::port('PG_PORT', 5432)];
         }
-        $instance = Testcontainers::run(PostgreSqlContainer::class);
+        $instance = Testcontainers::run(PostgreSql16Container::class);
 
         return [str_replace('localhost', '127.0.0.1', $instance->getHost()), $instance->getMappedPort(5432) ?? throw new RuntimeException('PostgreSQL port was not mapped.')];
     }

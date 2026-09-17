@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Session;
 
+use Container\MySql80Container;
+use Container\MySql84Container;
 use mysqli;
 use mysqli_result;
 use mysqli_stmt;
@@ -12,8 +14,6 @@ use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Testcontainers\Testcontainers;
-use Tests\Container\MySql80Container;
-use Tests\Container\MySql84Container;
 use ZtdQuery\Adapter\Mysqli\Driver\MysqliConnection;
 use ZtdQuery\Adapter\Mysqli\Driver\MysqliResultColumnExtractor;
 use ZtdQuery\Adapter\Mysqli\Driver\MysqliResultStatement;
@@ -34,7 +34,8 @@ final class ConnectionExecutionTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $native = $container->getData(mysqli::class);
+            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
             $execution = new ConnectionExecution($native);
 
@@ -48,7 +49,8 @@ final class ConnectionExecutionTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $native = $container->getData(mysqli::class);
+            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
             $execution = new ConnectionExecution($native);
 
@@ -65,7 +67,8 @@ final class ConnectionExecutionTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $native = $container->getData(mysqli::class);
+            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
             $execution = new ConnectionExecution($native);
 
@@ -79,7 +82,8 @@ final class ConnectionExecutionTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $native = $container->getData(mysqli::class);
+            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
             $execution = new ConnectionExecution($native);
 
@@ -100,7 +104,8 @@ final class ConnectionExecutionTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $native = $container->getData(mysqli::class);
+            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
             $execution = new ConnectionExecution($native);
 
@@ -119,7 +124,8 @@ final class ConnectionExecutionTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $native = $container->getData(mysqli::class);
+            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
             $execution = new ConnectionExecution($native);
 
@@ -138,7 +144,8 @@ final class ConnectionExecutionTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $native = $container->getData(mysqli::class);
+            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
             $execution = new ConnectionExecution($native);
 
@@ -157,7 +164,8 @@ final class ConnectionExecutionTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $native = $container->getData(mysqli::class);
+            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
             $execution = new ConnectionExecution($native);
 
@@ -178,7 +186,8 @@ final class ConnectionExecutionTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $native = $container->getData(mysqli::class);
+            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
             $execution = new ConnectionExecution($native);
 
@@ -197,7 +206,8 @@ final class ConnectionExecutionTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $native = $container->getData(mysqli::class);
+            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
             $execution = new ConnectionExecution($native);
 
@@ -218,7 +228,8 @@ final class ConnectionExecutionTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $native = $container->getData(mysqli::class);
+            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
             $execution = new ConnectionExecution($native);
 
@@ -235,7 +246,8 @@ final class ConnectionExecutionTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $native = $container->getData(mysqli::class);
+            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
             $execution = new ConnectionExecution($native);
 
@@ -256,7 +268,8 @@ final class ConnectionExecutionTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $native = $container->getData(mysqli::class);
+            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
             $execution = new ConnectionExecution($native);
 
@@ -273,7 +286,8 @@ final class ConnectionExecutionTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $native = $container->getData(mysqli::class);
+            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native->set_charset('utf8mb4');
             $native->query('CREATE TABLE items (id INT PRIMARY KEY)');
             $execution = new ConnectionExecution($native);
 
@@ -288,7 +302,8 @@ final class ConnectionExecutionTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $native = $container->getData(mysqli::class);
+            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native->set_charset('utf8mb4');
             $port = $container->getMappedPort(3306);
             self::assertNotNull($port);
             $other = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $port);
@@ -315,7 +330,8 @@ final class ConnectionExecutionTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $native = $container->getData(mysqli::class);
+            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native->set_charset('utf8mb4');
             $execution = new ConnectionExecution($native);
             self::assertTrue($execution->beginTransaction());
             self::assertTrue($execution->commit());
@@ -330,7 +346,8 @@ final class ConnectionExecutionTest extends TestCase
     {
         $container = Testcontainers::run(getenv('MYSQL_VERSION') === '8.4.7' ? MySql84Container::class : MySql80Container::class);
         try {
-            $native = $container->getData(mysqli::class);
+            $native = new mysqli(str_replace('localhost', '127.0.0.1', $container->getHost()), 'root', 'root', 'test', $container->getMappedPort(3306));
+            $native->set_charset('utf8mb4');
             $execution = new ConnectionExecution($native);
             self::assertTrue($execution->beginTransaction());
             self::assertTrue($execution->rollBack());

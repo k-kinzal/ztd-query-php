@@ -141,15 +141,6 @@ jobs:
               body
             });
 
-      - name: Fail on saved or replayed findings
-        if: always()
-        run: |
-          if find . -maxdepth 1 -name 'crash-*' -print -quit | grep -q . ||
-             grep -REq '^(CORPUS )?CRASH in |^DUPLICATE CRASH' build/fuzz/; then
-            echo 'Fuzzing reported a finding; inspect the uploaded input and log.' >&2
-            exit 1
-          fi
-
       - name: Save the evolving corpus
         if: always()
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9

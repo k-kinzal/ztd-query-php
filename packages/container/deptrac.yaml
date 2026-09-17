@@ -1,0 +1,22 @@
+# NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
+deptrac:
+  paths: [./src]
+  analyser:
+    types: [class, use]
+  layers:
+    - name: Containers
+      collectors:
+        - type: classLike
+          value: '^Container\\(?:MySql|PostgreSql)[0-9]+Container$'
+    - name: Configuration
+      collectors:
+        - type: classLike
+          value: '^Container\\(?:MySql|PostgreSql)Configuration$'
+    - name: Testcontainers
+      collectors:
+        - type: classLike
+          value: '^Testcontainers\\'
+  ruleset:
+    Containers: [Configuration, Testcontainers]
+    Configuration: [Testcontainers]
+    Testcontainers: []

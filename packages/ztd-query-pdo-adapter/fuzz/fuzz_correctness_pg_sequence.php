@@ -12,7 +12,7 @@ use Fuzz\Correctness\Postgres\PgCorrectnessHarness;
 
 [$host, $port] = Fuzz\Container\DatabaseEndpoint::postgres();
 
-$target = new Fuzz\Correctness\SequenceTarget(new PgCorrectnessHarness($host, $port, 'fuzz_test', 'test', 'test'));
+$target = new Fuzz\Correctness\SequenceTarget(new PgCorrectnessHarness($host, $port, 'test', 'test', 'test'));
 
 /** @var PhpFuzzer\Config $config */
 $config->setAllowedExceptions([]);

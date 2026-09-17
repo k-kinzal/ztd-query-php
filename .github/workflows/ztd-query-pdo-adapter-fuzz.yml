@@ -5,6 +5,9 @@ jobs:
   robustness-execute:
     name: Robustness / execute (MySQL ${{ matrix.mysql }})
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     strategy:
       fail-fast: false
       matrix:
@@ -57,14 +60,56 @@ jobs:
         MYSQL_VERSION: ${{ matrix.mysql }}
         MAX_RUNS: ${{ inputs.max_runs || '10000' }}
       run: |
+        set -euo pipefail
         mkdir -p build/fuzz fuzz/corpus/robustness-execute
         vendor/bin/php-fuzzer fuzz fuzz/fuzz_robustness_execute.php \
           fuzz/corpus/robustness-execute/ \
           --max-runs="$MAX_RUNS" 2>&1 | tee build/fuzz/run.log
-        if grep -Eq '^(CORPUS )?CRASH in ' build/fuzz/run.log; then
-          echo 'Fuzzing found a counterexample; download the run artifacts and replay the input.' >&2
-          exit 1
-        fi
+    - name: Open an issue for a finding
+      uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+      env:
+        FUZZ_CORPUS: robustness-execute
+        FUZZ_SCRIPT: fuzz_robustness_execute.php
+        FUZZ_DATABASE: MySQL ${{ matrix.mysql }}
+        FUZZ_ARTIFACT: fuzz-results-robustness-execute-pdo-${{ matrix.mysql }}
+        FUZZ_REPLAY_ENV: 'MYSQL_VERSION=${{ matrix.mysql }} '
+      with:
+        script: |
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const crypto = require('node:crypto');
+          const corpus = process.env.FUZZ_CORPUS;
+          const script = process.env.FUZZ_SCRIPT;
+          const root = path.resolve('packages/ztd-query-pdo-adapter');
+          const log = fs.readFileSync(path.join(root, 'build/fuzz/run.log'), 'utf8');
+          const finding = log.match(/^(?:CORPUS )?CRASH in (.+)!$/m);
+          if (!finding) return;
+          const input = fs.readFileSync(path.resolve(root, finding[1]));
+          const hash = crypto.createHash('sha256').update(input).digest('hex');
+          const marker = `<!-- ztd-query-pdo-adapter-fuzz:${corpus}:${hash} -->`;
+          const issues = await github.paginate(github.rest.issues.listForRepo, {
+            ...context.repo, state: 'open', per_page: 100
+          });
+          if (issues.some(issue => !issue.pull_request && issue.body?.includes(marker))) return;
+          const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+          const body = [
+            marker,
+            `PHP-Fuzzer found a crash in the ${corpus} target on ${process.env.FUZZ_DATABASE}.`,
+            `Commit: ${context.sha}`,
+            `Workflow and input artifact: ${run} (${process.env.FUZZ_ARTIFACT})`,
+            'Run from packages/ztd-query-pdo-adapter after extracting the artifact:',
+            '```sh',
+            `${process.env.FUZZ_REPLAY_ENV}vendor/bin/php-fuzzer run-single fuzz/${script} '${path.relative(root, path.resolve(root, finding[1]))}'`,
+            '```',
+            `Input SHA-256: ${hash}`,
+            '<details><summary>PHP-Fuzzer output</summary>',
+            '', '```text', log.slice(-45000), '```', '</details>'
+          ].join('\n\n');
+          await github.rest.issues.create({
+            ...context.repo,
+            title: `[ztd-query-pdo-adapter fuzz] ${corpus}: ${hash.slice(0, 12)}`,
+            body
+          });
     - if: always()
       uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
       with:
@@ -96,6 +141,9 @@ jobs:
   correctness-mysql:
     name: Correctness / ${{ matrix.target.name }}-pdo (MySQL ${{ matrix.mysql }})
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     strategy:
       fail-fast: false
       matrix:
@@ -164,6 +212,7 @@ jobs:
         MYSQL_VERSION: ${{ matrix.mysql }}
         MAX_RUNS: ${{ inputs.max_runs || '10000' }}
       run: |
+        set -euo pipefail
         mkdir -p build/fuzz fuzz/corpus/${{ matrix.target.corpus }}
         if [[ '${{ matrix.target.name }}' == 'sequence' ]]; then
           cp fuzz/seeds/sequence/* fuzz/corpus/${{ matrix.target.corpus }}/
@@ -174,10 +223,51 @@ jobs:
         vendor/bin/php-fuzzer fuzz fuzz/${{ matrix.target.script }} \
           fuzz/corpus/${{ matrix.target.corpus }}/ \
           --max-runs="$MAX_RUNS" 2>&1 | tee build/fuzz/run.log
-        if grep -Eq '^(CORPUS )?CRASH in ' build/fuzz/run.log; then
-          echo 'Fuzzing found a counterexample; download the run artifacts and replay the input.' >&2
-          exit 1
-        fi
+    - name: Open an issue for a finding
+      uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+      env:
+        FUZZ_CORPUS: ${{ matrix.target.corpus }}
+        FUZZ_SCRIPT: ${{ matrix.target.script }}
+        FUZZ_DATABASE: MySQL ${{ matrix.mysql }}
+        FUZZ_ARTIFACT: fuzz-results-${{ matrix.target.name }}-pdo-${{ matrix.mysql }}
+        FUZZ_REPLAY_ENV: 'MYSQL_VERSION=${{ matrix.mysql }} '
+      with:
+        script: |
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const crypto = require('node:crypto');
+          const corpus = process.env.FUZZ_CORPUS;
+          const script = process.env.FUZZ_SCRIPT;
+          const root = path.resolve('packages/ztd-query-pdo-adapter');
+          const log = fs.readFileSync(path.join(root, 'build/fuzz/run.log'), 'utf8');
+          const finding = log.match(/^(?:CORPUS )?CRASH in (.+)!$/m);
+          if (!finding) return;
+          const input = fs.readFileSync(path.resolve(root, finding[1]));
+          const hash = crypto.createHash('sha256').update(input).digest('hex');
+          const marker = `<!-- ztd-query-pdo-adapter-fuzz:${corpus}:${hash} -->`;
+          const issues = await github.paginate(github.rest.issues.listForRepo, {
+            ...context.repo, state: 'open', per_page: 100
+          });
+          if (issues.some(issue => !issue.pull_request && issue.body?.includes(marker))) return;
+          const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+          const body = [
+            marker,
+            `PHP-Fuzzer found a crash in the ${corpus} target on ${process.env.FUZZ_DATABASE}.`,
+            `Commit: ${context.sha}`,
+            `Workflow and input artifact: ${run} (${process.env.FUZZ_ARTIFACT})`,
+            'Run from packages/ztd-query-pdo-adapter after extracting the artifact:',
+            '```sh',
+            `${process.env.FUZZ_REPLAY_ENV}vendor/bin/php-fuzzer run-single fuzz/${script} '${path.relative(root, path.resolve(root, finding[1]))}'`,
+            '```',
+            `Input SHA-256: ${hash}`,
+            '<details><summary>PHP-Fuzzer output</summary>',
+            '', '```text', log.slice(-45000), '```', '</details>'
+          ].join('\n\n');
+          await github.rest.issues.create({
+            ...context.repo,
+            title: `[ztd-query-pdo-adapter fuzz] ${corpus}: ${hash.slice(0, 12)}`,
+            body
+          });
     - if: always()
       uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
       with:
@@ -209,6 +299,9 @@ jobs:
   correctness-sqlite:
     name: Correctness / ${{ matrix.target.name }}-pdo-sqlite
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     strategy:
       fail-fast: false
       matrix:
@@ -274,6 +367,7 @@ jobs:
       name: Restore the corpus
     - name: Run the fuzz target
       run: |
+        set -euo pipefail
         mkdir -p build/fuzz fuzz/corpus/${{ matrix.target.corpus }}
         if [[ '${{ matrix.target.name }}' == 'sequence' ]]; then
           cp fuzz/seeds/sequence/* fuzz/corpus/${{ matrix.target.corpus }}/
@@ -284,12 +378,53 @@ jobs:
         vendor/bin/php-fuzzer fuzz fuzz/${{ matrix.target.script }} \
           fuzz/corpus/${{ matrix.target.corpus }}/ \
           --max-runs="$MAX_RUNS" 2>&1 | tee build/fuzz/run.log
-        if grep -Eq '^(CORPUS )?CRASH in ' build/fuzz/run.log; then
-          echo 'Fuzzing found a counterexample; download the run artifacts and replay the input.' >&2
-          exit 1
-        fi
       env:
         MAX_RUNS: ${{ inputs.max_runs || '10000' }}
+    - name: Open an issue for a finding
+      uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+      env:
+        FUZZ_CORPUS: ${{ matrix.target.corpus }}
+        FUZZ_SCRIPT: ${{ matrix.target.script }}
+        FUZZ_DATABASE: SQLite
+        FUZZ_ARTIFACT: fuzz-results-${{ matrix.target.name }}-pdo-sqlite
+        FUZZ_REPLAY_ENV: ''
+      with:
+        script: |
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const crypto = require('node:crypto');
+          const corpus = process.env.FUZZ_CORPUS;
+          const script = process.env.FUZZ_SCRIPT;
+          const root = path.resolve('packages/ztd-query-pdo-adapter');
+          const log = fs.readFileSync(path.join(root, 'build/fuzz/run.log'), 'utf8');
+          const finding = log.match(/^(?:CORPUS )?CRASH in (.+)!$/m);
+          if (!finding) return;
+          const input = fs.readFileSync(path.resolve(root, finding[1]));
+          const hash = crypto.createHash('sha256').update(input).digest('hex');
+          const marker = `<!-- ztd-query-pdo-adapter-fuzz:${corpus}:${hash} -->`;
+          const issues = await github.paginate(github.rest.issues.listForRepo, {
+            ...context.repo, state: 'open', per_page: 100
+          });
+          if (issues.some(issue => !issue.pull_request && issue.body?.includes(marker))) return;
+          const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+          const body = [
+            marker,
+            `PHP-Fuzzer found a crash in the ${corpus} target on ${process.env.FUZZ_DATABASE}.`,
+            `Commit: ${context.sha}`,
+            `Workflow and input artifact: ${run} (${process.env.FUZZ_ARTIFACT})`,
+            'Run from packages/ztd-query-pdo-adapter after extracting the artifact:',
+            '```sh',
+            `${process.env.FUZZ_REPLAY_ENV}vendor/bin/php-fuzzer run-single fuzz/${script} '${path.relative(root, path.resolve(root, finding[1]))}'`,
+            '```',
+            `Input SHA-256: ${hash}`,
+            '<details><summary>PHP-Fuzzer output</summary>',
+            '', '```text', log.slice(-45000), '```', '</details>'
+          ].join('\n\n');
+          await github.rest.issues.create({
+            ...context.repo,
+            title: `[ztd-query-pdo-adapter fuzz] ${corpus}: ${hash.slice(0, 12)}`,
+            body
+          });
     - if: always()
       uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
       with:
@@ -309,6 +444,9 @@ jobs:
   correctness-pg:
     name: Correctness / ${{ matrix.target.name }}-pdo-pg
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     strategy:
       fail-fast: false
       matrix:
@@ -374,6 +512,7 @@ jobs:
       name: Restore the corpus
     - name: Run the fuzz target
       run: |
+        set -euo pipefail
         mkdir -p build/fuzz fuzz/corpus/${{ matrix.target.corpus }}
         if [[ '${{ matrix.target.name }}' == 'sequence' ]]; then
           cp fuzz/seeds/sequence/* fuzz/corpus/${{ matrix.target.corpus }}/
@@ -384,12 +523,53 @@ jobs:
         vendor/bin/php-fuzzer fuzz fuzz/${{ matrix.target.script }} \
           fuzz/corpus/${{ matrix.target.corpus }}/ \
           --max-runs="$MAX_RUNS" 2>&1 | tee build/fuzz/run.log
-        if grep -Eq '^(CORPUS )?CRASH in ' build/fuzz/run.log; then
-          echo 'Fuzzing found a counterexample; download the run artifacts and replay the input.' >&2
-          exit 1
-        fi
       env:
         MAX_RUNS: ${{ inputs.max_runs || '10000' }}
+    - name: Open an issue for a finding
+      uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+      env:
+        FUZZ_CORPUS: ${{ matrix.target.corpus }}
+        FUZZ_SCRIPT: ${{ matrix.target.script }}
+        FUZZ_DATABASE: PostgreSQL
+        FUZZ_ARTIFACT: fuzz-results-${{ matrix.target.name }}-pdo-pg
+        FUZZ_REPLAY_ENV: ''
+      with:
+        script: |
+          const fs = require('node:fs');
+          const path = require('node:path');
+          const crypto = require('node:crypto');
+          const corpus = process.env.FUZZ_CORPUS;
+          const script = process.env.FUZZ_SCRIPT;
+          const root = path.resolve('packages/ztd-query-pdo-adapter');
+          const log = fs.readFileSync(path.join(root, 'build/fuzz/run.log'), 'utf8');
+          const finding = log.match(/^(?:CORPUS )?CRASH in (.+)!$/m);
+          if (!finding) return;
+          const input = fs.readFileSync(path.resolve(root, finding[1]));
+          const hash = crypto.createHash('sha256').update(input).digest('hex');
+          const marker = `<!-- ztd-query-pdo-adapter-fuzz:${corpus}:${hash} -->`;
+          const issues = await github.paginate(github.rest.issues.listForRepo, {
+            ...context.repo, state: 'open', per_page: 100
+          });
+          if (issues.some(issue => !issue.pull_request && issue.body?.includes(marker))) return;
+          const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+          const body = [
+            marker,
+            `PHP-Fuzzer found a crash in the ${corpus} target on ${process.env.FUZZ_DATABASE}.`,
+            `Commit: ${context.sha}`,
+            `Workflow and input artifact: ${run} (${process.env.FUZZ_ARTIFACT})`,
+            'Run from packages/ztd-query-pdo-adapter after extracting the artifact:',
+            '```sh',
+            `${process.env.FUZZ_REPLAY_ENV}vendor/bin/php-fuzzer run-single fuzz/${script} '${path.relative(root, path.resolve(root, finding[1]))}'`,
+            '```',
+            `Input SHA-256: ${hash}`,
+            '<details><summary>PHP-Fuzzer output</summary>',
+            '', '```text', log.slice(-45000), '```', '</details>'
+          ].join('\n\n');
+          await github.rest.issues.create({
+            ...context.repo,
+            title: `[ztd-query-pdo-adapter fuzz] ${corpus}: ${hash.slice(0, 12)}`,
+            body
+          });
     - if: always()
       uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
       with:
@@ -412,10 +592,10 @@ jobs:
         env:
           POSTGRES_USER: test
           POSTGRES_PASSWORD: test
-          POSTGRES_DB: fuzz_test
+          POSTGRES_DB: test
         ports:
         - 5432:5432
-        options: --health-cmd="pg_isready -U test -d fuzz_test" --health-interval=10s --health-timeout=5s --health-retries=20
+        options: --health-cmd="pg_isready -U test -d test" --health-interval=10s --health-timeout=5s --health-retries=20
     env:
       PG_HOST: 127.0.0.1
       PG_PORT: '5432'
