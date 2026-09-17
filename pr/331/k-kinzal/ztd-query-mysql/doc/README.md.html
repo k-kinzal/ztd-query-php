@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ZTD Query MySQL — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/331/k-kinzal/ztd-query-mysql/doc/README.md.html">
+<meta name="description" content="ZTD Query MySQL, a document of the k-kinzal/ztd-query-mysql package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="ZTD Query MySQL — ZTD Query PHP">
+<meta property="og:description" content="ZTD Query MySQL, a document of the k-kinzal/ztd-query-mysql package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/331/k-kinzal/ztd-query-mysql/doc/README.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/331/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../">
+<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../../index.html">ZTD Query PHP</a></div><div class="sb-pkg"><a href="../../../k-kinzal/ztd-query-mysql/index.html">k-kinzal/ztd-query-mysql</a></div><nav class="sb-block"><div class="sb-title">Package</div><ul class="sb-list"><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/all-items.html">All items</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/index.html#documents">Documents</a></li></ul></nav><nav class="sb-block"><div class="sb-title">Namespaces</div><ul class="sb-list"><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/index.html" title="ZtdQuery\Platform\MySql">ZtdQuery\Platform\MySql</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Connection/index.html" title="ZtdQuery\Platform\MySql\Connection">ZtdQuery\Platform\MySql\Connection</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Connection/Result/index.html" title="ZtdQuery\Platform\MySql\Connection\Result">ZtdQuery\Platform\MySql\Connection\Result</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Rewrite/index.html" title="ZtdQuery\Platform\MySql\Rewrite">ZtdQuery\Platform\MySql\Rewrite</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Rewrite/Classification/index.html" title="ZtdQuery\Platform\MySql\Rewrite\Classification">ZtdQuery\Platform\MySql\Rewrite\Classification</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Rewrite/Context/index.html" title="ZtdQuery\Platform\MySql\Rewrite\Context">ZtdQuery\Platform\MySql\Rewrite\Context</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Rewrite/Cte/index.html" title="ZtdQuery\Platform\MySql\Rewrite\Cte">ZtdQuery\Platform\MySql\Rewrite\Cte</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Rewrite/FullText/index.html" title="ZtdQuery\Platform\MySql\Rewrite\FullText">ZtdQuery\Platform\MySql\Rewrite\FullText</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Rewrite/GeneratedColumn/index.html" title="ZtdQuery\Platform\MySql\Rewrite\GeneratedColumn">ZtdQuery\Platform\MySql\Rewrite\GeneratedColumn</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Rewrite/LoadData/index.html" title="ZtdQuery\Platform\MySql\Rewrite\LoadData">ZtdQuery\Platform\MySql\Rewrite\LoadData</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Rewrite/Partition/index.html" title="ZtdQuery\Platform\MySql\Rewrite\Partition">ZtdQuery\Platform\MySql\Rewrite\Partition</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Rewrite/Transformer/index.html" title="ZtdQuery\Platform\MySql\Rewrite\Transformer">ZtdQuery\Platform\MySql\Rewrite\Transformer</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Rewrite/Transformer/Delete/index.html" title="ZtdQuery\Platform\MySql\Rewrite\Transformer\Delete">ZtdQuery\Platform\MySql\Rewrite\Transformer\Delete</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Rewrite/Transformer/Insert/index.html" title="ZtdQuery\Platform\MySql\Rewrite\Transformer\Insert">ZtdQuery\Platform\MySql\Rewrite\Transformer\Insert</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Rewrite/Transformer/Select/index.html" title="ZtdQuery\Platform\MySql\Rewrite\Transformer\Select">ZtdQuery\Platform\MySql\Rewrite\Transformer\Select</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Rewrite/Transformer/Set/index.html" title="ZtdQuery\Platform\MySql\Rewrite\Transformer\Set">ZtdQuery\Platform\MySql\Rewrite\Transformer\Set</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Rewrite/Transformer/Shadow/index.html" title="ZtdQuery\Platform\MySql\Rewrite\Transformer\Shadow">ZtdQuery\Platform\MySql\Rewrite\Transformer\Shadow</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Rewrite/Transformer/Update/index.html" title="ZtdQuery\Platform\MySql\Rewrite\Transformer\Update">ZtdQuery\Platform\MySql\Rewrite\Transformer\Update</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Rewrite/Type/index.html" title="ZtdQuery\Platform\MySql\Rewrite\Type">ZtdQuery\Platform\MySql\Rewrite\Type</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Rewrite/Upsert/index.html" title="ZtdQuery\Platform\MySql\Rewrite\Upsert">ZtdQuery\Platform\MySql\Rewrite\Upsert</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Rewrite/Validation/index.html" title="ZtdQuery\Platform\MySql\Rewrite\Validation">ZtdQuery\Platform\MySql\Rewrite\Validation</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Rewrite/View/index.html" title="ZtdQuery\Platform\MySql\Rewrite\View">ZtdQuery\Platform\MySql\Rewrite\View</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Schema/index.html" title="ZtdQuery\Platform\MySql\Schema">ZtdQuery\Platform\MySql\Schema</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Schema/Key/index.html" title="ZtdQuery\Platform\MySql\Schema\Key">ZtdQuery\Platform\MySql\Schema\Key</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Schema/Partition/index.html" title="ZtdQuery\Platform\MySql\Schema\Partition">ZtdQuery\Platform\MySql\Schema\Partition</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Schema/View/index.html" title="ZtdQuery\Platform\MySql\Schema\View">ZtdQuery\Platform\MySql\Schema\View</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Shadow/index.html" title="ZtdQuery\Platform\MySql\Shadow">ZtdQuery\Platform\MySql\Shadow</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Shadow/Mutation/Row/index.html" title="ZtdQuery\Platform\MySql\Shadow\Mutation\Row">ZtdQuery\Platform\MySql\Shadow\Mutation\Row</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Shadow/Mutation/Table/index.html" title="ZtdQuery\Platform\MySql\Shadow\Mutation\Table">ZtdQuery\Platform\MySql\Shadow\Mutation\Table</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Shadow/Mutation/Table/Alter/index.html" title="ZtdQuery\Platform\MySql\Shadow\Mutation\Table\Alter">ZtdQuery\Platform\MySql\Shadow\Mutation\Table\Alter</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Shadow/Mutation/Upsert/index.html" title="ZtdQuery\Platform\MySql\Shadow\Mutation\Upsert">ZtdQuery\Platform\MySql\Shadow\Mutation\Upsert</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Sql/index.html" title="ZtdQuery\Platform\MySql\Sql">ZtdQuery\Platform\MySql\Sql</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Sql/Alter/index.html" title="ZtdQuery\Platform\MySql\Sql\Alter">ZtdQuery\Platform\MySql\Sql\Alter</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Sql/Cte/index.html" title="ZtdQuery\Platform\MySql\Sql\Cte">ZtdQuery\Platform\MySql\Sql\Cte</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Sql/Diagnostic/index.html" title="ZtdQuery\Platform\MySql\Sql\Diagnostic">ZtdQuery\Platform\MySql\Sql\Diagnostic</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Sql/Dml/index.html" title="ZtdQuery\Platform\MySql\Sql\Dml">ZtdQuery\Platform\MySql\Sql\Dml</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Sql/Relation/index.html" title="ZtdQuery\Platform\MySql\Sql\Relation">ZtdQuery\Platform\MySql\Sql\Relation</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Sql/Transaction/index.html" title="ZtdQuery\Platform\MySql\Sql\Transaction">ZtdQuery\Platform\MySql\Sql\Transaction</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Sql/Upsert/index.html" title="ZtdQuery\Platform\MySql\Sql\Upsert">ZtdQuery\Platform\MySql\Sql\Upsert</a></li><li data-diff="same"><a href="../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Sql/Value/index.html" title="ZtdQuery\Platform\MySql\Sql\Value">ZtdQuery\Platform\MySql\Sql\Value</a></li></ul></nav></nav>
+<div class="page">
+<header class="topbar">
+<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
+<nav class="crumbs"><a href="../../../k-kinzal/ztd-query-mysql/index.html">k-kinzal/ztd-query-mysql</a><span class="crumb-sep">::</span><span class="crumb-current">README.md</span></nav>
+<div class="topbar-tools">
+<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 4adc03d1d to working tree">4adc03d1d <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 4adc03d1d and working tree." data-off="This page documents what 4adc03d1d had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>ZTD Query MySQL</h1><div class="symbol-meta"><span class="src-link">README.md</span></div></div>
+<section class="readme" data-diff="same"><div class="doc-block" data-diff="same"><h2>ZTD Query MySQL</h2>
+</div><div class="doc-block" data-diff="same"><p><a href="https://opensource.org/licenses/MIT"><span class="md-target" title="https://img.shields.io/badge/License-MIT-yellow.svg">License: MIT</span></a> <a href="https://www.php.net/"><span class="md-target" title="https://img.shields.io/badge/PHP-8.1%2B-blue.svg">PHP Version</span></a></p>
+</div><div class="doc-block" data-diff="same"><p>MySQL platform support for <a href="https://github.com/k-kinzal/ztd-query-core">ZTD Query PHP</a>. Provides SQL parsing, classification, rewriting, and schema management for MySQL.</p>
+</div><div class="doc-block" data-diff="same"><h3>Overview</h3>
+</div><div class="doc-block" data-diff="same"><p>This package implements the MySQL-specific logic for ZTD (Zero Table Dependency) query transformation. It handles:</p>
+</div><div class="doc-block" data-diff="same"><ul><li><strong>SQL Parsing</strong> - Parse MySQL statements using <a href="https://github.com/phpmyadmin/sql-parser">phpMyAdmin SQL Parser</a></li><li><strong>Query Classification</strong> - Classify queries as READ, WRITE_SIMULATED, or DDL_SIMULATED</li><li><strong>CTE Rewriting</strong> - Transform SELECT queries to use CTE-shadowed fixture data</li><li><strong>Result Select Query</strong> - Convert INSERT/UPDATE/DELETE/REPLACE into SELECT queries returning affected rows</li><li><strong>Schema Management</strong> - Reflect and track MySQL table definitions for virtual DDL operations</li><li><strong>Error Classification</strong> - Identify MySQL-specific error codes for unknown schema detection</li></ul>
+</div><div class="doc-block" data-diff="same"><p>This package is used internally by the <a href="https://github.com/k-kinzal/ztd-query-pdo-adapter">PDO adapter</a> and <a href="https://github.com/k-kinzal/ztd-query-mysqli-adapter">MySQLi adapter</a>, but can also be used directly for custom adapter implementations.</p>
+</div><div class="doc-block" data-diff="same"><h3>Requirements</h3>
+</div><div class="doc-block" data-diff="same"><ul><li>PHP 8.1 or higher</li><li>MySQL 8.0.11 - 9.1</li><li><a href="https://github.com/k-kinzal/ztd-query-core">k-kinzal/ztd-query-php</a> (core)</li></ul>
+</div><div class="doc-block" data-diff="same"><h3>Installation</h3>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>composer require k-kinzal/ztd-query-mysql</code></pre>
+</div><div class="doc-block" data-diff="same"><h3>Usage</h3>
+</div><div class="doc-block" data-diff="same"><h4>Creating a MySQL Session</h4>
+</div><div class="doc-block" data-diff="same"><p><code>MySqlSessionFactory</code> is the main entry point. It creates a fully configured <code>Session</code> instance for MySQL:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Config\ZtdConfig</span>;
+<span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Platform\MySql\MySqlSessionFactory</span>;
+
+<span class="tok-com">// $connection implements ZtdQuery\Connection\ConnectionInterface</span>
+<span class="tok-var">$session</span> = (<span class="tok-kw">new</span> <span class="tok-id">MySqlSessionFactory</span>())-&gt;<span class="tok-id">create</span>(<span class="tok-var">$connection</span>, <span class="tok-id">ZtdConfig</span>::<span class="tok-kw">default</span>());</code></pre>
+</div><div class="doc-block" data-diff="same"><p>The factory automatically:</p>
+</div><div class="doc-block" data-diff="same"><ol><li>Reflects the database schema via <code>SHOW CREATE TABLE</code></li><li>Sets up the SQL parser, query guard, and all transformers</li><li>Configures the shadow store for virtual write tracking</li></ol>
+</div><div class="doc-block" data-diff="same"><h4>Query Classification</h4>
+</div><div class="doc-block" data-diff="same"><p><code>MySqlQueryGuard</code> classifies SQL statements into query kinds:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Platform\MySql\Rewrite\MySqlQueryGuard</span>;
+<span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Platform\MySql\Sql\MySqlParser</span>;
+<span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Rewrite\QueryKind</span>;
+
+<span class="tok-var">$parser</span> = <span class="tok-kw">new</span> <span class="tok-id">MySqlParser</span>();
+<span class="tok-var">$guard</span> = <span class="tok-kw">new</span> <span class="tok-id">MySqlQueryGuard</span>(<span class="tok-var">$parser</span>);
+
+<span class="tok-var">$guard</span>-&gt;<span class="tok-id">classify</span>(<span class="tok-str">&#039;SELECT * FROM users&#039;</span>);
+<span class="tok-com">// =&gt; QueryKind::READ</span>
+
+<span class="tok-var">$guard</span>-&gt;<span class="tok-id">classify</span>(<span class="tok-str">&#039;INSERT INTO users (name) VALUES (&quot;Alice&quot;)&#039;</span>);
+<span class="tok-com">// =&gt; QueryKind::WRITE_SIMULATED</span>
+
+<span class="tok-var">$guard</span>-&gt;<span class="tok-id">classify</span>(<span class="tok-str">&#039;CREATE TABLE logs (id INT)&#039;</span>);
+<span class="tok-com">// =&gt; QueryKind::DDL_SIMULATED</span>
+
+<span class="tok-var">$guard</span>-&gt;<span class="tok-id">classify</span>(<span class="tok-str">&#039;BEGIN&#039;</span>);
+<span class="tok-com">// =&gt; null (unsupported)</span></code></pre>
+</div><div class="doc-block" data-diff="same"><h4>SQL Rewriting</h4>
+</div><div class="doc-block" data-diff="same"><p><code>MySqlRewriter</code> transforms SQL statements for ZTD execution:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Platform\MySql\Rewrite\MySqlRewriter</span>;
+
+<span class="tok-com">// Rewrite a single statement</span>
+<span class="tok-var">$plan</span> = <span class="tok-var">$rewriter</span>-&gt;<span class="tok-id">rewrite</span>(<span class="tok-str">&#039;SELECT email FROM users WHERE id = 1&#039;</span>);
+<span class="tok-com">// $plan-&gt;sql() returns the CTE-shadowed query</span>
+<span class="tok-com">// $plan-&gt;kind() returns the QueryKind</span>
+
+<span class="tok-com">// Rewrite multiple statements (e.g., multi-query)</span>
+<span class="tok-var">$plans</span> = <span class="tok-var">$rewriter</span>-&gt;<span class="tok-id">rewriteMultiple</span>(<span class="tok-str">&#039;SELECT 1; SELECT 2&#039;</span>);</code></pre>
+</div><div class="doc-block" data-diff="same"><h4>Error Classification</h4>
+</div><div class="doc-block" data-diff="same"><p><code>MySqlErrorClassifier</code> identifies MySQL error codes related to unknown schemas:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Platform\MySql\Connection\MySqlErrorClassifier</span>;
+
+<span class="tok-var">$classifier</span> = <span class="tok-kw">new</span> <span class="tok-id">MySqlErrorClassifier</span>();
+
+<span class="tok-var">$classifier</span>-&gt;<span class="tok-id">isUnknownSchemaError</span>(<span class="tok-num">1146</span>); <span class="tok-com">// true (Table doesn&#039;t exist)</span>
+<span class="tok-var">$classifier</span>-&gt;<span class="tok-id">isUnknownSchemaError</span>(<span class="tok-num">1054</span>); <span class="tok-com">// true (Unknown column)</span>
+<span class="tok-var">$classifier</span>-&gt;<span class="tok-id">isUnknownSchemaError</span>(<span class="tok-num">1064</span>); <span class="tok-com">// false (Syntax error)</span></code></pre>
+</div><div class="doc-block" data-diff="same"><h3>Architecture</h3>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>MySqlSessionFactory
+    |
+    +-- MySqlParser (SQL parsing via phpmyadmin/sql-parser)
+    +-- MySqlQueryGuard (query classification)
+    +-- MySqlSchemaReflector (database schema reflection)
+    +-- MySqlSchemaParser (CREATE TABLE parsing)
+    +-- MySqlRewriter (query rewriting orchestrator)
+    |       +-- MySqlTransformer
+    |       |       +-- SelectTransformer (CTE injection)
+    |       |       +-- InsertTransformer (INSERT -&gt; SELECT)
+    |       |       +-- UpdateTransformer (UPDATE -&gt; SELECT)
+    |       |       +-- DeleteTransformer (DELETE -&gt; SELECT)
+    |       |       +-- ReplaceTransformer (REPLACE -&gt; SELECT)
+    |       +-- MySqlMutationResolver (virtual DDL tracking)
+    +-- MySqlErrorClassifier (error code classification)</code></pre>
+</div><div class="doc-block" data-diff="same"><h3>SQL Support</h3>
+</div><div class="doc-block" data-diff="same"><h4>Fully Supported</h4>
+</div><div class="doc-block" data-diff="same"><ul><li><strong>SELECT</strong>: All clauses including JOIN, GROUP BY, HAVING, ORDER BY, LIMIT, UNION, subqueries, CTEs, window functions</li><li><strong>INSERT</strong>: VALUES, SELECT, ON DUPLICATE KEY UPDATE, IGNORE</li><li><strong>REPLACE</strong></li><li><strong>UPDATE</strong>: Single/multi-table with ORDER BY/LIMIT</li><li><strong>DELETE</strong>: Single/multi-table with ORDER BY/LIMIT</li><li><strong>TRUNCATE</strong></li><li><strong>DDL</strong>: CREATE TABLE, ALTER TABLE, DROP TABLE (virtual schema)</li><li><strong>WITH</strong>: CTE and recursive CTE</li></ul>
+</div><div class="doc-block" data-diff="same"><h4>Unsupported</h4>
+</div><div class="doc-block" data-diff="same"><ul><li>Stored procedures, triggers, functions, views</li><li>Database/schema operations</li><li>User/permission management</li><li>Server operations (FLUSH, RESET, etc.)</li></ul>
+</div><div class="doc-block" data-diff="same"><h3>Development</h3>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code># Run tests
+composer test
+
+# Run linter (PHP-CS-Fixer + PHPStan level max)
+composer lint
+
+# Run fuzz tests
+composer fuzz:robustness
+composer fuzz:robustness:classify
+composer fuzz:robustness:rewrite
+
+# Fix code style
+composer format</code></pre>
+</div><div class="doc-block" data-diff="same"><h3>License</h3>
+</div><div class="doc-block" data-diff="same"><p>MIT License. See <span class="md-target" title="LICENSE">LICENSE</span> for details.</p>
+</div></section>
+</main>
+<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div>
+<script src="../../../assets/search-index.js" defer></script>
+<script src="../../../assets/app.js" defer></script>
+</body>
+</html>
