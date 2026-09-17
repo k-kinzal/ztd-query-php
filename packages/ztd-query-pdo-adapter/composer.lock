@@ -1228,7 +1228,7 @@
             "dist": {
                 "type": "path",
                 "url": "../container",
-                "reference": "aa9712a625bfa9d595ddd8784bc93075b9ab4b57"
+                "reference": "cc3b4cd24d999ddccfbbeae41de3656d44f8eebe"
             },
             "require": {
                 "ext-pdo": "*",
@@ -1236,10 +1236,16 @@
                 "php": "^8.1"
             },
             "require-dev": {
-                "friendsofphp/php-cs-fixer": "^3.92",
+                "brianium/paratest": "^7.3",
+                "deptrac/deptrac": "^3.0",
+                "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/php-ai-toolkit": "dev-main",
+                "phpbench/phpbench": "^1.4",
+                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
                 "phpstan/phpstan": "^2.1",
                 "phpstan/phpstan-strict-rules": "^2.0",
-                "phpunit/phpunit": "^10.5 || ^11 || ^12 || ^13"
+                "phpunit/phpunit": "^10.5",
+                "squizlabs/php_codesniffer": "^4.0.4"
             },
             "suggest": {
                 "ext-mysqli": "Required for integration tests using MySQLi",
@@ -1254,34 +1260,91 @@
             },
             "autoload-dev": {
                 "psr-4": {
-                    "Tests\\": "tests/"
+                    "Tests\\": "tests/",
+                    "Bench\\": "bench/"
                 }
             },
             "scripts": {
-                "test": [
-                    "@test:unit"
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
                 ],
-                "test:unit": [
-                    "phpunit --testsuite unit"
+                "bench": [
+                    "phpbench run --report=aggregate"
                 ],
-                "test:integration": [
-                    "phpunit --testsuite integration"
+                "bench:full": [
+                    "@bench"
                 ],
-                "lint": [
-                    "@format:check",
-                    "phpstan analyse --memory-limit=512M"
+                "bench:quick": [
+                    "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
+                ],
+                "compat": [
+                    "phpcs"
+                ],
+                "deptrac": [
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
+                ],
+                "docgen": [
+                    "docgen --packages=. --title=k-kinzal/container"
+                ],
+                "docgen:diff": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --diff=origin/main --serve"
+                ],
+                "docgen:fresh": [
+                    "@docgen --no-cache"
+                ],
+                "docgen:serve": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --serve"
+                ],
+                "doctest": [
+                    "phpunit --testsuite doctest"
                 ],
                 "format": [
                     "php-cs-fixer fix --allow-risky=yes"
                 ],
                 "format:check": [
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
+                ],
+                "lint": [
+                    "@autoload:check",
+                    "@format:check",
+                    "@phpstan",
+                    "@compat",
+                    "@loc-guard",
+                    "@tree-guard",
+                    "@deptrac"
+                ],
+                "loc-guard": [
+                    "loc-guard --config=loc.yaml"
+                ],
+                "phpstan": [
+                    "phpstan analyse --memory-limit=512M"
+                ],
+                "test": [
+                    "paratest --processes=auto"
+                ],
+                "test:coverage": [
+                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+                ],
+                "test:unit": [
+                    "phpunit --testsuite unit"
+                ],
+                "tree-guard": [
+                    "tree-guard --config=tree.yaml"
+                ],
+                "test:integration": [
+                    "phpunit --testsuite integration"
                 ]
             },
             "license": [
                 "MIT"
             ],
             "description": "Shared database containers for integration and fuzz testing",
+            "support": {
+                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/container",
+                "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/container/"
+            },
             "transport-options": {
                 "relative": true
             }

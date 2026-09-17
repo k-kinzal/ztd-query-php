@@ -24,8 +24,9 @@ PostgreSQL uses `test` / `test`. MySQL data is stored in tmpfs, and timezone tab
 loading is disabled to keep startup fast. Running the same class reuses its
 container until it is stopped; containers are removed when stopped.
 
-`MySqlContainer` and `PostgreSqlContainer` are abstract bases for the shared
-settings. Connection creation, database/schema isolation, and version selection
+Each version is a final class that extends the Testcontainers `GenericContainer`.
+`MySqlConfiguration` and `PostgreSqlConfiguration` apply shared settings through
+composition. Connection creation, database/schema isolation, and version selection
 belong to the caller. MySQL classes expose `getGrammarVersion()` for SQL grammar
 selection.
 
@@ -56,9 +57,17 @@ used by your code.
 
 ```bash
 composer install
-composer test:unit
-composer test:integration
+composer test
 composer lint
+composer bench
+composer doctest
+composer test:coverage
 ```
 
 Integration tests require Docker and `pdo_mysql`, `pdo_pgsql`, and `mysqli`.
+
+The package uses the same php-ai-toolkit quality checks as the other packages:
+strict PHPUnit with the AI reporter, executable documentation examples, PHPStan
+and toolkit rules, PHP-CS-Fixer, PHPCompatibility, loc-guard, tree-guard, Deptrac,
+PHPBench, and Infection. CI installs the committed Composer lockfile, runs tests
+on PHP 8.1 through 8.5, and publishes benchmark and mutation reports.

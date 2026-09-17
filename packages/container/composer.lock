@@ -4,417 +4,85 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "92d1fce05affa676bdc09ae632a9fe5e",
+    "content-hash": "33b9896e5a5e437aee9e4dda452953c5",
     "packages": [
         {
-            "name": "k-kinzal/ztd-query-core",
-            "version": "dev-main",
-            "dist": {
-                "type": "path",
-                "url": "../ztd-query-core",
-                "reference": "9bf974e46edfbf1e6ce00e716da1ac803972969e"
-            },
-            "require": {
-                "php": "^8.1"
-            },
-            "require-dev": {
-                "brianium/paratest": "^7.3",
-                "deptrac/deptrac": "^3.0",
-                "friendsofphp/php-cs-fixer": "^3.95.25",
-                "k-kinzal/php-ai-toolkit": "dev-main",
-                "nikic/php-fuzzer": "^0.0.11",
-                "phpbench/phpbench": "^1.4",
-                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
-                "phpstan/phpstan": "^2.1",
-                "phpstan/phpstan-strict-rules": "^2.0",
-                "phpunit/phpunit": "^10.5",
-                "squizlabs/php_codesniffer": "^4.0.4"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "ZtdQuery\\": "src/"
-                },
-                "files": [
-                    "src/Compatibility/ClassAliases.php"
-                ]
-            },
-            "autoload-dev": {
-                "psr-4": {
-                    "Tests\\": "tests/",
-                    "Fuzz\\": "fuzz/",
-                    "Bench\\": "bench/"
-                }
-            },
-            "scripts": {
-                "autoload:check": [
-                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
-                ],
-                "bench": [
-                    "phpbench run --report=aggregate"
-                ],
-                "bench:full": [
-                    "@bench"
-                ],
-                "bench:quick": [
-                    "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
-                ],
-                "compat": [
-                    "phpcs"
-                ],
-                "deptrac": [
-                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
-                ],
-                "docgen": [
-                    "docgen --packages=. --title=k-kinzal/ztd-query-core --exclude=src/Compatibility/ClassAliases.php"
-                ],
-                "docgen:diff": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@docgen --diff=origin/main --serve"
-                ],
-                "docgen:fresh": [
-                    "@docgen --no-cache"
-                ],
-                "docgen:serve": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@docgen --serve"
-                ],
-                "doctest": [
-                    "phpunit --testsuite doctest"
-                ],
-                "format": [
-                    "php-cs-fixer fix --allow-risky=yes"
-                ],
-                "format:check": [
-                    "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
-                ],
-                "fuzz": [
-                    "@fuzz:smoke"
-                ],
-                "fuzz:smoke": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@fuzz:token-stream --max-runs=100"
-                ],
-                "fuzz:token-stream": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/token-stream') || mkdir('fuzz/corpus/token-stream', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_token_stream.php fuzz/corpus/token-stream/"
-                ],
-                "lint": [
-                    "@autoload:check",
-                    "@format:check",
-                    "@phpstan",
-                    "@compat",
-                    "@loc-guard",
-                    "@tree-guard",
-                    "@deptrac"
-                ],
-                "loc-guard": [
-                    "loc-guard --config=loc.yaml"
-                ],
-                "phpstan": [
-                    "phpstan analyse --memory-limit=512M"
-                ],
-                "test": [
-                    "paratest --processes=auto"
-                ],
-                "test:coverage": [
-                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
-                ],
-                "test:unit": [
-                    "phpunit --testsuite unit"
-                ],
-                "tree-guard": [
-                    "tree-guard --config=tree.yaml"
-                ]
-            },
-            "license": [
-                "MIT"
-            ],
-            "description": "Zero Table Dependencies query layer for PHP",
-            "support": {
-                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-core",
-                "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/ztd-query-core/"
-            },
-            "transport-options": {
-                "relative": true
-            }
-        },
-        {
-            "name": "k-kinzal/ztd-query-mysql",
-            "version": "dev-main",
-            "dist": {
-                "type": "path",
-                "url": "../ztd-query-mysql",
-                "reference": "52a104fdd51c8c8933fe17e6dd054a5e99adc359"
-            },
-            "require": {
-                "k-kinzal/ztd-query-core": "dev-main",
-                "php": "^8.1",
-                "phpmyadmin/sql-parser": "^5.11"
-            },
-            "require-dev": {
-                "brianium/paratest": "^7.3",
-                "deptrac/deptrac": "^3.0",
-                "friendsofphp/php-cs-fixer": "^3.95.25",
-                "k-kinzal/php-ai-toolkit": "dev-main",
-                "k-kinzal/sql-faker": "dev-main",
-                "nikic/php-fuzzer": "^0.0.11",
-                "phpbench/phpbench": "^1.4",
-                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
-                "phpstan/phpstan": "^2.1",
-                "phpstan/phpstan-strict-rules": "^2.0",
-                "phpunit/phpunit": "^10.5",
-                "squizlabs/php_codesniffer": "^4.0.4"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "ZtdQuery\\Platform\\MySql\\": "src/"
-                },
-                "files": [
-                    "src/Compatibility/ClassAliases.php"
-                ]
-            },
-            "autoload-dev": {
-                "psr-4": {
-                    "Tests\\": "tests/",
-                    "Fuzz\\": "fuzz/",
-                    "Bench\\": "bench/"
-                }
-            },
-            "scripts": {
-                "autoload:check": [
-                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
-                ],
-                "bench": [
-                    "phpbench run --report=aggregate"
-                ],
-                "bench:full": [
-                    "@bench"
-                ],
-                "bench:quick": [
-                    "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
-                ],
-                "compat": [
-                    "phpcs"
-                ],
-                "deptrac": [
-                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
-                ],
-                "docgen": [
-                    "docgen --packages=. --title=k-kinzal/ztd-query-mysql --exclude=src/Compatibility/ClassAliases.php"
-                ],
-                "docgen:diff": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@docgen --diff=origin/main --serve"
-                ],
-                "docgen:fresh": [
-                    "@docgen --no-cache"
-                ],
-                "docgen:serve": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@docgen --serve"
-                ],
-                "doctest": [
-                    "phpunit --testsuite doctest"
-                ],
-                "format": [
-                    "php-cs-fixer fix --allow-risky=yes"
-                ],
-                "format:check": [
-                    "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
-                ],
-                "fuzz": [
-                    "@fuzz:smoke"
-                ],
-                "fuzz:robustness": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/robustness') || mkdir('fuzz/corpus/robustness', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_robustness.php fuzz/corpus/robustness/"
-                ],
-                "fuzz:robustness:classify": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/robustness-classify') || mkdir('fuzz/corpus/robustness-classify', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_robustness_classify.php fuzz/corpus/robustness-classify/"
-                ],
-                "fuzz:robustness:rewrite": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/robustness-rewrite') || mkdir('fuzz/corpus/robustness-rewrite', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_robustness_rewrite.php fuzz/corpus/robustness-rewrite/"
-                ],
-                "fuzz:smoke": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@fuzz:robustness --max-runs=100",
-                    "@fuzz:robustness:classify --max-runs=100",
-                    "@fuzz:robustness:rewrite --max-runs=100"
-                ],
-                "lint": [
-                    "@autoload:check",
-                    "@format:check",
-                    "@phpstan",
-                    "@compat",
-                    "@loc-guard",
-                    "@tree-guard",
-                    "@deptrac"
-                ],
-                "loc-guard": [
-                    "loc-guard --config=loc.yaml"
-                ],
-                "phpstan": [
-                    "phpstan analyse --memory-limit=512M"
-                ],
-                "test": [
-                    "paratest --processes=auto"
-                ],
-                "test:coverage": [
-                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
-                ],
-                "test:unit": [
-                    "phpunit --testsuite unit"
-                ],
-                "tree-guard": [
-                    "tree-guard --config=tree.yaml"
-                ]
-            },
-            "license": [
-                "MIT"
-            ],
-            "description": "MySQL platform support for ZTD Query",
-            "support": {
-                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/ztd-query-mysql",
-                "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/ztd-query-mysql/"
-            },
-            "transport-options": {
-                "relative": true
-            }
-        },
-        {
-            "name": "phpmyadmin/sql-parser",
-            "version": "5.11.1",
+            "name": "k-kinzal/testcontainers-php",
+            "version": "v0.5.1",
             "source": {
                 "type": "git",
-                "url": "https://github.com/phpmyadmin/sql-parser.git",
-                "reference": "1b70d03526df92bd1e170e2670b7d3510e1b722b"
+                "url": "https://github.com/k-kinzal/testcontainers-php.git",
+                "reference": "baf7898b6490f9eb5b94734fa06917f862fd001f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpmyadmin/sql-parser/zipball/1b70d03526df92bd1e170e2670b7d3510e1b722b",
-                "reference": "1b70d03526df92bd1e170e2670b7d3510e1b722b",
+                "url": "https://api.github.com/repos/k-kinzal/testcontainers-php/zipball/baf7898b6490f9eb5b94734fa06917f862fd001f",
+                "reference": "baf7898b6490f9eb5b94734fa06917f862fd001f",
                 "shasum": ""
             },
             "require": {
-                "php": "^7.2 || ^8.0",
-                "symfony/polyfill-mbstring": "^1.3",
-                "symfony/polyfill-php80": "^1.16"
-            },
-            "conflict": {
-                "phpmyadmin/motranslator": "<3.0"
+                "ext-json": "*",
+                "ext-pdo": "*",
+                "php": "~5.6 || ~7.0 || ~7.1 || ~7.2 || ~7.3 || ~7.4 || ~8.0 || ~8.1 || ~8.2 || ~8.3 || ~8.4 || ~8.5",
+                "psr/log": "*",
+                "symfony/process": "*"
             },
             "require-dev": {
-                "phpbench/phpbench": "^1.1",
-                "phpmyadmin/coding-standard": "^3.0",
-                "phpmyadmin/motranslator": "^4.0 || ^5.0",
-                "phpstan/extension-installer": "^1.4",
-                "phpstan/phpstan": "^1.12",
-                "phpstan/phpstan-deprecation-rules": "^1.2",
-                "phpstan/phpstan-phpunit": "^1.4",
-                "phpstan/phpstan-strict-rules": "^1.6",
-                "phpunit/phpunit": "^8.5 || ^9.6",
-                "psalm/plugin-phpunit": "^0.16.1",
-                "vimeo/psalm": "^4.11",
-                "zumba/json-serializer": "~3.0.2"
+                "friendsofphp/php-cs-fixer": "*",
+                "phpunit/phpunit": "*"
             },
-            "suggest": {
-                "ext-mbstring": "For best performance",
-                "phpmyadmin/motranslator": "Translate messages to your favorite locale"
-            },
-            "bin": [
-                "bin/highlight-query",
-                "bin/lint-query",
-                "bin/sql-parser",
-                "bin/tokenize-query"
-            ],
             "type": "library",
             "autoload": {
+                "files": [
+                    "src/functions.php"
+                ],
                 "psr-4": {
-                    "PhpMyAdmin\\SqlParser\\": "src"
+                    "Testcontainers\\": "src/"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
             "license": [
-                "GPL-2.0-or-later"
+                "MIT"
             ],
             "authors": [
                 {
-                    "name": "The phpMyAdmin Team",
-                    "email": "developers@phpmyadmin.net",
-                    "homepage": "https://www.phpmyadmin.net/team/"
+                    "name": "k-kinzal",
+                    "email": "keen.flag7803@logn.in"
                 }
             ],
-            "description": "A validating SQL lexer and parser with a focus on MySQL dialect.",
-            "homepage": "https://github.com/phpmyadmin/sql-parser",
-            "keywords": [
-                "analysis",
-                "lexer",
-                "parser",
-                "query linter",
-                "sql",
-                "sql lexer",
-                "sql linter",
-                "sql parser",
-                "sql syntax highlighter",
-                "sql tokenizer"
-            ],
+            "description": "PHP library for Testcontainers",
             "support": {
-                "issues": "https://github.com/phpmyadmin/sql-parser/issues",
-                "source": "https://github.com/phpmyadmin/sql-parser"
+                "issues": "https://github.com/k-kinzal/testcontainers-php/issues",
+                "source": "https://github.com/k-kinzal/testcontainers-php/tree/v0.5.1"
             },
-            "funding": [
-                {
-                    "url": "https://www.phpmyadmin.net/donate/",
-                    "type": "other"
-                }
-            ],
-            "time": "2025-07-20T15:49:56+00:00"
+            "time": "2026-01-10T04:16:06+00:00"
         },
         {
-            "name": "symfony/polyfill-mbstring",
-            "version": "v1.38.2",
+            "name": "psr/log",
+            "version": "3.0.2",
             "source": {
                 "type": "git",
-                "url": "https://github.com/symfony/polyfill-mbstring.git",
-                "reference": "d3d318bad5e7a1bfbd026009c8bfb8d8f99ae6b6"
+                "url": "https://github.com/php-fig/log.git",
+                "reference": "f16e1d5863e37f8d8c2a01719f5b34baa2b714d3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/polyfill-mbstring/zipball/d3d318bad5e7a1bfbd026009c8bfb8d8f99ae6b6",
-                "reference": "d3d318bad5e7a1bfbd026009c8bfb8d8f99ae6b6",
+                "url": "https://api.github.com/repos/php-fig/log/zipball/f16e1d5863e37f8d8c2a01719f5b34baa2b714d3",
+                "reference": "f16e1d5863e37f8d8c2a01719f5b34baa2b714d3",
                 "shasum": ""
             },
             "require": {
-                "ext-iconv": "*",
-                "php": ">=7.2"
-            },
-            "provide": {
-                "ext-mbstring": "*"
-            },
-            "suggest": {
-                "ext-mbstring": "For best performance"
+                "php": ">=8.0.0"
             },
             "type": "library",
             "extra": {
-                "thanks": {
-                    "url": "https://github.com/symfony/polyfill",
-                    "name": "symfony/polyfill"
+                "branch-alias": {
+                    "dev-master": "3.x-dev"
                 }
             },
             "autoload": {
-                "files": [
-                    "bootstrap.php"
-                ],
                 "psr-4": {
-                    "Symfony\\Polyfill\\Mbstring\\": ""
+                    "Psr\\Log\\": "src"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -423,25 +91,66 @@
             ],
             "authors": [
                 {
-                    "name": "Nicolas Grekas",
-                    "email": "p@tchwork.com"
+                    "name": "PHP-FIG",
+                    "homepage": "https://www.php-fig.org/"
+                }
+            ],
+            "description": "Common interface for logging libraries",
+            "homepage": "https://github.com/php-fig/log",
+            "keywords": [
+                "log",
+                "psr",
+                "psr-3"
+            ],
+            "support": {
+                "source": "https://github.com/php-fig/log/tree/3.0.2"
+            },
+            "time": "2024-09-11T13:17:53+00:00"
+        },
+        {
+            "name": "symfony/process",
+            "version": "v6.4.46",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/process.git",
+                "reference": "b9f3d9ddf67543b92dbfa6d210c407d7a7982781"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/process/zipball/b9f3d9ddf67543b92dbfa6d210c407d7a7982781",
+                "reference": "b9f3d9ddf67543b92dbfa6d210c407d7a7982781",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.1"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Symfony\\Component\\Process\\": ""
+                },
+                "exclude-from-classmap": [
+                    "/Tests/"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Fabien Potencier",
+                    "email": "fabien@symfony.com"
                 },
                 {
                     "name": "Symfony Community",
                     "homepage": "https://symfony.com/contributors"
                 }
             ],
-            "description": "Symfony polyfill for the Mbstring extension",
+            "description": "Executes commands in sub-processes",
             "homepage": "https://symfony.com",
-            "keywords": [
-                "compatibility",
-                "mbstring",
-                "polyfill",
-                "portable",
-                "shim"
-            ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-mbstring/tree/v1.38.2"
+                "source": "https://github.com/symfony/process/tree/v6.4.46"
             },
             "funding": [
                 {
@@ -461,91 +170,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-05-27T06:59:30+00:00"
-        },
-        {
-            "name": "symfony/polyfill-php80",
-            "version": "v1.37.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/polyfill-php80.git",
-                "reference": "dfb55726c3a76ea3b6459fcfda1ec2d80a682411"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/polyfill-php80/zipball/dfb55726c3a76ea3b6459fcfda1ec2d80a682411",
-                "reference": "dfb55726c3a76ea3b6459fcfda1ec2d80a682411",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=7.2"
-            },
-            "type": "library",
-            "extra": {
-                "thanks": {
-                    "url": "https://github.com/symfony/polyfill",
-                    "name": "symfony/polyfill"
-                }
-            },
-            "autoload": {
-                "files": [
-                    "bootstrap.php"
-                ],
-                "psr-4": {
-                    "Symfony\\Polyfill\\Php80\\": ""
-                },
-                "classmap": [
-                    "Resources/stubs"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Ion Bazan",
-                    "email": "ion.bazan@gmail.com"
-                },
-                {
-                    "name": "Nicolas Grekas",
-                    "email": "p@tchwork.com"
-                },
-                {
-                    "name": "Symfony Community",
-                    "homepage": "https://symfony.com/contributors"
-                }
-            ],
-            "description": "Symfony polyfill backporting some PHP 8.0+ features to lower PHP versions",
-            "homepage": "https://symfony.com",
-            "keywords": [
-                "compatibility",
-                "polyfill",
-                "portable",
-                "shim"
-            ],
-            "support": {
-                "source": "https://github.com/symfony/polyfill-php80/tree/v1.37.0"
-            },
-            "funding": [
-                {
-                    "url": "https://symfony.com/sponsor",
-                    "type": "custom"
-                },
-                {
-                    "url": "https://github.com/fabpot",
-                    "type": "github"
-                },
-                {
-                    "url": "https://github.com/nicolas-grekas",
-                    "type": "github"
-                },
-                {
-                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
-                    "type": "tidelift"
-                }
-            ],
-            "time": "2026-04-10T16:19:22+00:00"
+            "time": "2026-09-02T12:35:55+00:00"
         }
     ],
     "packages-dev": [
@@ -1342,69 +967,6 @@
             "time": "2023-08-08T05:53:35+00:00"
         },
         {
-            "name": "fakerphp/faker",
-            "version": "v1.24.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/FakerPHP/Faker.git",
-                "reference": "e0ee18eb1e6dc3cda3ce9fd97e5a0689a88a64b5"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/FakerPHP/Faker/zipball/e0ee18eb1e6dc3cda3ce9fd97e5a0689a88a64b5",
-                "reference": "e0ee18eb1e6dc3cda3ce9fd97e5a0689a88a64b5",
-                "shasum": ""
-            },
-            "require": {
-                "php": "^7.4 || ^8.0",
-                "psr/container": "^1.0 || ^2.0",
-                "symfony/deprecation-contracts": "^2.2 || ^3.0"
-            },
-            "conflict": {
-                "fzaninotto/faker": "*"
-            },
-            "require-dev": {
-                "bamarni/composer-bin-plugin": "^1.4.1",
-                "doctrine/persistence": "^1.3 || ^2.0",
-                "ext-intl": "*",
-                "phpunit/phpunit": "^9.5.26",
-                "symfony/phpunit-bridge": "^5.4.16"
-            },
-            "suggest": {
-                "doctrine/orm": "Required to use Faker\\ORM\\Doctrine",
-                "ext-curl": "Required by Faker\\Provider\\Image to download images.",
-                "ext-dom": "Required by Faker\\Provider\\HtmlLorem for generating random HTML.",
-                "ext-iconv": "Required by Faker\\Provider\\ru_RU\\Text::realText() for generating real Russian text.",
-                "ext-mbstring": "Required for multibyte Unicode string functionality."
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Faker\\": "src/Faker/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "François Zaninotto"
-                }
-            ],
-            "description": "Faker is a PHP library that generates fake data for you.",
-            "keywords": [
-                "data",
-                "faker",
-                "fixtures"
-            ],
-            "support": {
-                "issues": "https://github.com/FakerPHP/Faker/issues",
-                "source": "https://github.com/FakerPHP/Faker/tree/v1.24.1"
-            },
-            "time": "2024-11-21T13:46:39+00:00"
-        },
-        {
             "name": "fidry/cpu-core-counter",
             "version": "1.3.0",
             "source": {
@@ -1630,133 +1192,6 @@
             "time": "2025-03-19T14:43:43+00:00"
         },
         {
-            "name": "k-kinzal/container",
-            "version": "dev-main",
-            "dist": {
-                "type": "path",
-                "url": "../container",
-                "reference": "cc3b4cd24d999ddccfbbeae41de3656d44f8eebe"
-            },
-            "require": {
-                "ext-pdo": "*",
-                "k-kinzal/testcontainers-php": "^0.5.1",
-                "php": "^8.1"
-            },
-            "require-dev": {
-                "brianium/paratest": "^7.3",
-                "deptrac/deptrac": "^3.0",
-                "friendsofphp/php-cs-fixer": "^3.95.25",
-                "k-kinzal/php-ai-toolkit": "dev-main",
-                "phpbench/phpbench": "^1.4",
-                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
-                "phpstan/phpstan": "^2.1",
-                "phpstan/phpstan-strict-rules": "^2.0",
-                "phpunit/phpunit": "^10.5",
-                "squizlabs/php_codesniffer": "^4.0.4"
-            },
-            "suggest": {
-                "ext-mysqli": "Required for integration tests using MySQLi",
-                "ext-pdo_mysql": "Required for MySQL containers",
-                "ext-pdo_pgsql": "Required for PostgreSQL containers"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Container\\": "src/"
-                }
-            },
-            "autoload-dev": {
-                "psr-4": {
-                    "Tests\\": "tests/",
-                    "Bench\\": "bench/"
-                }
-            },
-            "scripts": {
-                "autoload:check": [
-                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
-                ],
-                "bench": [
-                    "phpbench run --report=aggregate"
-                ],
-                "bench:full": [
-                    "@bench"
-                ],
-                "bench:quick": [
-                    "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
-                ],
-                "compat": [
-                    "phpcs"
-                ],
-                "deptrac": [
-                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
-                ],
-                "docgen": [
-                    "docgen --packages=. --title=k-kinzal/container"
-                ],
-                "docgen:diff": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@docgen --diff=origin/main --serve"
-                ],
-                "docgen:fresh": [
-                    "@docgen --no-cache"
-                ],
-                "docgen:serve": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@docgen --serve"
-                ],
-                "doctest": [
-                    "phpunit --testsuite doctest"
-                ],
-                "format": [
-                    "php-cs-fixer fix --allow-risky=yes"
-                ],
-                "format:check": [
-                    "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
-                ],
-                "lint": [
-                    "@autoload:check",
-                    "@format:check",
-                    "@phpstan",
-                    "@compat",
-                    "@loc-guard",
-                    "@tree-guard",
-                    "@deptrac"
-                ],
-                "loc-guard": [
-                    "loc-guard --config=loc.yaml"
-                ],
-                "phpstan": [
-                    "phpstan analyse --memory-limit=512M"
-                ],
-                "test": [
-                    "paratest --processes=auto"
-                ],
-                "test:coverage": [
-                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
-                ],
-                "test:unit": [
-                    "phpunit --testsuite unit"
-                ],
-                "tree-guard": [
-                    "tree-guard --config=tree.yaml"
-                ],
-                "test:integration": [
-                    "phpunit --testsuite integration"
-                ]
-            },
-            "license": [
-                "MIT"
-            ],
-            "description": "Shared database containers for integration and fuzz testing",
-            "support": {
-                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/container",
-                "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/container/"
-            },
-            "transport-options": {
-                "relative": true
-            }
-        },
-        {
             "name": "k-kinzal/php-ai-toolkit",
             "version": "dev-main",
             "source": {
@@ -1908,361 +1343,6 @@
             "time": "2026-09-12T19:58:56+00:00"
         },
         {
-            "name": "k-kinzal/sql-faker",
-            "version": "dev-main",
-            "dist": {
-                "type": "path",
-                "url": "../sql-faker",
-                "reference": "d8deed35a9e3659c14031f2aafcfff3f441789bd"
-            },
-            "require": {
-                "fakerphp/faker": "^1.23",
-                "php": "^8.1"
-            },
-            "require-dev": {
-                "brianium/paratest": "^7.3",
-                "deptrac/deptrac": "^3.0",
-                "friendsofphp/php-cs-fixer": "^3.95.25",
-                "k-kinzal/container": "dev-main",
-                "k-kinzal/php-ai-toolkit": "dev-main",
-                "nikic/php-fuzzer": "^0.0.11",
-                "phpbench/phpbench": "^1.4",
-                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
-                "phpstan/phpstan": "^2.1",
-                "phpstan/phpstan-strict-rules": "^2.0",
-                "phpunit/phpunit": "^10.5",
-                "squizlabs/php_codesniffer": "^4.0.4",
-                "symfony/filesystem": "^6.4"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "SqlFaker\\": "src/"
-                },
-                "files": [
-                    "src/MySql/StatementType.php",
-                    "src/PostgreSql/StatementType.php",
-                    "src/Sqlite/StatementType.php"
-                ]
-            },
-            "autoload-dev": {
-                "psr-4": {
-                    "Tests\\": "tests/",
-                    "Fuzz\\": "fuzz/",
-                    "Bench\\": "bench/"
-                }
-            },
-            "scripts": {
-                "autoload:check": [
-                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
-                ],
-                "bench": [
-                    "phpbench run --report=aggregate"
-                ],
-                "bench:full": [
-                    "@bench"
-                ],
-                "bench:quick": [
-                    "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
-                ],
-                "build-mysql": [
-                    "php bin/build-mysql.php"
-                ],
-                "build-pg": [
-                    "php bin/build-pg.php"
-                ],
-                "build-sqlite": [
-                    "php bin/build-sqlite.php"
-                ],
-                "compat": [
-                    "phpcs"
-                ],
-                "deptrac": [
-                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
-                ],
-                "docgen": [
-                    "docgen --packages=. --title=k-kinzal/sql-faker"
-                ],
-                "docgen:diff": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@docgen --diff=origin/main --serve"
-                ],
-                "docgen:fresh": [
-                    "@docgen --no-cache"
-                ],
-                "docgen:serve": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@docgen --serve"
-                ],
-                "doctest": [
-                    "phpunit --testsuite doctest"
-                ],
-                "format": [
-                    "php-cs-fixer fix --allow-risky=yes"
-                ],
-                "format:check": [
-                    "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
-                ],
-                "fuzz": [
-                    "@fuzz:smoke"
-                ],
-                "fuzz:mysql": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/mysql') || mkdir('fuzz/corpus/mysql', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_mysql_syntax.php fuzz/corpus/mysql/"
-                ],
-                "fuzz:pg": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/pg') || mkdir('fuzz/corpus/pg', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_pg_syntax.php fuzz/corpus/pg/"
-                ],
-                "fuzz:smoke": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@fuzz:mysql --max-runs=100",
-                    "@fuzz:pg --max-runs=100",
-                    "@fuzz:sqlite --max-runs=100"
-                ],
-                "fuzz:sqlite": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/sqlite') || mkdir('fuzz/corpus/sqlite', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_sqlite_syntax.php fuzz/corpus/sqlite/"
-                ],
-                "lint": [
-                    "@autoload:check",
-                    "@format:check",
-                    "@phpstan",
-                    "@compat",
-                    "@loc-guard",
-                    "@tree-guard",
-                    "@deptrac"
-                ],
-                "loc-guard": [
-                    "loc-guard --config=loc.yaml"
-                ],
-                "phpstan": [
-                    "phpstan analyse --memory-limit=512M"
-                ],
-                "test": [
-                    "paratest --processes=auto"
-                ],
-                "test:coverage": [
-                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
-                ],
-                "test:unit": [
-                    "phpunit --testsuite unit"
-                ],
-                "tree-guard": [
-                    "tree-guard --config=tree.yaml"
-                ]
-            },
-            "license": [
-                "MIT"
-            ],
-            "description": "Faker Provider for generating syntactically valid SQL statements",
-            "support": {
-                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-faker",
-                "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-faker/"
-            },
-            "transport-options": {
-                "relative": true
-            }
-        },
-        {
-            "name": "k-kinzal/sql-fixture",
-            "version": "dev-main",
-            "dist": {
-                "type": "path",
-                "url": "../sql-fixture",
-                "reference": "fc6309d5ad85e62eb47738c41cb26285ac3c391b"
-            },
-            "require": {
-                "fakerphp/faker": "^1.23",
-                "php": "^8.1",
-                "phpmyadmin/sql-parser": "^5.11"
-            },
-            "require-dev": {
-                "brianium/paratest": "^7.3",
-                "deptrac/deptrac": "^3.0",
-                "friendsofphp/php-cs-fixer": "^3.95.25",
-                "k-kinzal/container": "dev-main",
-                "k-kinzal/php-ai-toolkit": "dev-main",
-                "k-kinzal/sql-faker": "dev-main",
-                "nikic/php-fuzzer": "^0.0.11",
-                "phpbench/phpbench": "^1.4",
-                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
-                "phpstan/phpstan": "^2.1",
-                "phpstan/phpstan-strict-rules": "^2.0",
-                "phpunit/phpunit": "^10.5",
-                "squizlabs/php_codesniffer": "^4.0.4"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "SqlFixture\\": "src/"
-                }
-            },
-            "autoload-dev": {
-                "psr-4": {
-                    "Tests\\": "tests/",
-                    "Fuzz\\": "fuzz/",
-                    "Bench\\": "bench/"
-                }
-            },
-            "scripts": {
-                "autoload:check": [
-                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
-                ],
-                "bench": [
-                    "phpbench run --report=aggregate"
-                ],
-                "bench:full": [
-                    "@bench"
-                ],
-                "bench:quick": [
-                    "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
-                ],
-                "compat": [
-                    "phpcs"
-                ],
-                "deptrac": [
-                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
-                ],
-                "docgen": [
-                    "docgen --packages=. --title=k-kinzal/sql-fixture"
-                ],
-                "docgen:diff": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@docgen --diff=origin/main --serve"
-                ],
-                "docgen:fresh": [
-                    "@docgen --no-cache"
-                ],
-                "docgen:serve": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@docgen --serve"
-                ],
-                "doctest": [
-                    "phpunit --testsuite doctest"
-                ],
-                "format": [
-                    "php-cs-fixer fix --allow-risky=yes"
-                ],
-                "format:check": [
-                    "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
-                ],
-                "fuzz": [
-                    "@fuzz:smoke"
-                ],
-                "fuzz:create-table": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/create-table') || mkdir('fuzz/corpus/create-table', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_create_table.php fuzz/corpus/create-table/"
-                ],
-                "fuzz:insert-select": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/insert-select') || mkdir('fuzz/corpus/insert-select', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_insert_select.php fuzz/corpus/insert-select/"
-                ],
-                "fuzz:smoke": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@fuzz:create-table --max-runs=100",
-                    "@fuzz:insert-select --max-runs=100"
-                ],
-                "lint": [
-                    "@autoload:check",
-                    "@format:check",
-                    "@phpstan",
-                    "@compat",
-                    "@loc-guard",
-                    "@tree-guard",
-                    "@deptrac"
-                ],
-                "loc-guard": [
-                    "loc-guard --config=loc.yaml"
-                ],
-                "phpstan": [
-                    "phpstan analyse --memory-limit=512M"
-                ],
-                "test": [
-                    "paratest --processes=auto"
-                ],
-                "test:coverage": [
-                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
-                ],
-                "test:integration": [
-                    "phpunit --testsuite integration"
-                ],
-                "test:unit": [
-                    "phpunit --testsuite unit"
-                ],
-                "tree-guard": [
-                    "tree-guard --config=tree.yaml"
-                ]
-            },
-            "license": [
-                "MIT"
-            ],
-            "description": "Generate PHP-Faker based fixtures from SQL schemas",
-            "support": {
-                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-fixture",
-                "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-fixture/"
-            },
-            "transport-options": {
-                "relative": true
-            }
-        },
-        {
-            "name": "k-kinzal/testcontainers-php",
-            "version": "v0.5.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/k-kinzal/testcontainers-php.git",
-                "reference": "baf7898b6490f9eb5b94734fa06917f862fd001f"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/k-kinzal/testcontainers-php/zipball/baf7898b6490f9eb5b94734fa06917f862fd001f",
-                "reference": "baf7898b6490f9eb5b94734fa06917f862fd001f",
-                "shasum": ""
-            },
-            "require": {
-                "ext-json": "*",
-                "ext-pdo": "*",
-                "php": "~5.6 || ~7.0 || ~7.1 || ~7.2 || ~7.3 || ~7.4 || ~8.0 || ~8.1 || ~8.2 || ~8.3 || ~8.4 || ~8.5",
-                "psr/log": "*",
-                "symfony/process": "*"
-            },
-            "require-dev": {
-                "friendsofphp/php-cs-fixer": "*",
-                "phpunit/phpunit": "*"
-            },
-            "type": "library",
-            "autoload": {
-                "files": [
-                    "src/functions.php"
-                ],
-                "psr-4": {
-                    "Testcontainers\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "k-kinzal",
-                    "email": "keen.flag7803@logn.in"
-                }
-            ],
-            "description": "PHP library for Testcontainers",
-            "support": {
-                "issues": "https://github.com/k-kinzal/testcontainers-php/issues",
-                "source": "https://github.com/k-kinzal/testcontainers-php/tree/v0.5.1"
-            },
-            "time": "2026-01-10T04:16:06+00:00"
-        },
-        {
             "name": "myclabs/deep-copy",
             "version": "1.14.0",
             "source": {
@@ -2321,96 +1401,6 @@
                 }
             ],
             "time": "2026-08-11T10:17:44+00:00"
-        },
-        {
-            "name": "nikic/include-interceptor",
-            "version": "v0.1.2",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/nikic/include-interceptor.git",
-                "reference": "6a074d12c391b0906df0c2527ee8b16514025577"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/nikic/include-interceptor/zipball/6a074d12c391b0906df0c2527ee8b16514025577",
-                "reference": "6a074d12c391b0906df0c2527ee8b16514025577",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=7.1"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "^7 || ^8"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Nikic\\IncludeInterceptor\\": "src/",
-                    "Nikic\\IncludeInterceptor\\Tests\\": "tests/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Robin Appelman",
-                    "email": "icewind@owncloud.com"
-                }
-            ],
-            "description": "Intercept PHP includes",
-            "support": {
-                "issues": "https://github.com/nikic/include-interceptor/issues",
-                "source": "https://github.com/nikic/include-interceptor/tree/v0.1.2"
-            },
-            "time": "2021-11-27T21:03:08+00:00"
-        },
-        {
-            "name": "nikic/php-fuzzer",
-            "version": "v0.0.11",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/nikic/PHP-Fuzzer.git",
-                "reference": "5ebe3dafec828c80391db7adb1d63f79c8185c91"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/nikic/PHP-Fuzzer/zipball/5ebe3dafec828c80391db7adb1d63f79c8185c91",
-                "reference": "5ebe3dafec828c80391db7adb1d63f79c8185c91",
-                "shasum": ""
-            },
-            "require": {
-                "nikic/include-interceptor": "^0.1.1",
-                "nikic/php-parser": "^5.0",
-                "php": ">= 7.4",
-                "ulrichsg/getopt-php": "^4.0"
-            },
-            "require-dev": {
-                "phpstan/phpstan": "^1.10",
-                "phpunit/phpunit": "^9"
-            },
-            "suggest": {
-                "ext-pcntl": "Needed for timeout support"
-            },
-            "bin": [
-                "bin/php-fuzzer"
-            ],
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "PhpFuzzer\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "support": {
-                "issues": "https://github.com/nikic/PHP-Fuzzer/issues",
-                "source": "https://github.com/nikic/PHP-Fuzzer/tree/v0.0.11"
-            },
-            "time": "2025-05-21T19:53:32+00:00"
         },
         {
             "name": "nikic/php-parser",
@@ -3647,56 +2637,6 @@
                 "source": "https://github.com/php-fig/event-dispatcher/tree/1.0.0"
             },
             "time": "2019-01-08T18:20:26+00:00"
-        },
-        {
-            "name": "psr/log",
-            "version": "3.0.2",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/php-fig/log.git",
-                "reference": "f16e1d5863e37f8d8c2a01719f5b34baa2b714d3"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/php-fig/log/zipball/f16e1d5863e37f8d8c2a01719f5b34baa2b714d3",
-                "reference": "f16e1d5863e37f8d8c2a01719f5b34baa2b714d3",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=8.0.0"
-            },
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "3.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "Psr\\Log\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "PHP-FIG",
-                    "homepage": "https://www.php-fig.org/"
-                }
-            ],
-            "description": "Common interface for logging libraries",
-            "homepage": "https://github.com/php-fig/log",
-            "keywords": [
-                "log",
-                "psr",
-                "psr-3"
-            ],
-            "support": {
-                "source": "https://github.com/php-fig/log/tree/3.0.2"
-            },
-            "time": "2024-09-11T13:17:53+00:00"
         },
         {
             "name": "react/cache",
@@ -5327,16 +4267,16 @@
         },
         {
             "name": "symfony/console",
-            "version": "v6.4.45",
+            "version": "v6.4.46",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/console.git",
-                "reference": "3b8473e0d14157f2d22b0a0d7259ad23483d1e6d"
+                "reference": "9e118dd9e3b94544ff3cce860457c2951a0a2bd6"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/console/zipball/3b8473e0d14157f2d22b0a0d7259ad23483d1e6d",
-                "reference": "3b8473e0d14157f2d22b0a0d7259ad23483d1e6d",
+                "url": "https://api.github.com/repos/symfony/console/zipball/9e118dd9e3b94544ff3cce860457c2951a0a2bd6",
+                "reference": "9e118dd9e3b94544ff3cce860457c2951a0a2bd6",
                 "shasum": ""
             },
             "require": {
@@ -5401,7 +4341,7 @@
                 "terminal"
             ],
             "support": {
-                "source": "https://github.com/symfony/console/tree/v6.4.45"
+                "source": "https://github.com/symfony/console/tree/v6.4.46"
             },
             "funding": [
                 {
@@ -5421,7 +4361,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-08-25T13:08:31+00:00"
+            "time": "2026-09-10T10:42:14+00:00"
         },
         {
             "name": "symfony/deprecation-contracts",
@@ -5730,16 +4670,16 @@
         },
         {
             "name": "symfony/finder",
-            "version": "v6.4.44",
+            "version": "v6.4.46",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/finder.git",
-                "reference": "211b28d13d044dacdc00c1629a3bbcff27dc793a"
+                "reference": "04db08efd85558162ef43fba10c299871b60d60b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/finder/zipball/211b28d13d044dacdc00c1629a3bbcff27dc793a",
-                "reference": "211b28d13d044dacdc00c1629a3bbcff27dc793a",
+                "url": "https://api.github.com/repos/symfony/finder/zipball/04db08efd85558162ef43fba10c299871b60d60b",
+                "reference": "04db08efd85558162ef43fba10c299871b60d60b",
                 "shasum": ""
             },
             "require": {
@@ -5774,7 +4714,7 @@
             "description": "Finds files and directories via an intuitive fluent interface",
             "homepage": "https://symfony.com",
             "support": {
-                "source": "https://github.com/symfony/finder/tree/v6.4.44"
+                "source": "https://github.com/symfony/finder/tree/v6.4.46"
             },
             "funding": [
                 {
@@ -5794,7 +4734,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-08-21T10:00:03+00:00"
+            "time": "2026-09-10T14:17:24+00:00"
         },
         {
             "name": "symfony/options-resolver",
@@ -6118,6 +5058,175 @@
             "time": "2026-08-07T06:33:24+00:00"
         },
         {
+            "name": "symfony/polyfill-mbstring",
+            "version": "v1.38.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/polyfill-mbstring.git",
+                "reference": "d3d318bad5e7a1bfbd026009c8bfb8d8f99ae6b6"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/polyfill-mbstring/zipball/d3d318bad5e7a1bfbd026009c8bfb8d8f99ae6b6",
+                "reference": "d3d318bad5e7a1bfbd026009c8bfb8d8f99ae6b6",
+                "shasum": ""
+            },
+            "require": {
+                "ext-iconv": "*",
+                "php": ">=7.2"
+            },
+            "provide": {
+                "ext-mbstring": "*"
+            },
+            "suggest": {
+                "ext-mbstring": "For best performance"
+            },
+            "type": "library",
+            "extra": {
+                "thanks": {
+                    "url": "https://github.com/symfony/polyfill",
+                    "name": "symfony/polyfill"
+                }
+            },
+            "autoload": {
+                "files": [
+                    "bootstrap.php"
+                ],
+                "psr-4": {
+                    "Symfony\\Polyfill\\Mbstring\\": ""
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Nicolas Grekas",
+                    "email": "p@tchwork.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Symfony polyfill for the Mbstring extension",
+            "homepage": "https://symfony.com",
+            "keywords": [
+                "compatibility",
+                "mbstring",
+                "polyfill",
+                "portable",
+                "shim"
+            ],
+            "support": {
+                "source": "https://github.com/symfony/polyfill-mbstring/tree/v1.38.2"
+            },
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://github.com/nicolas-grekas",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2026-05-27T06:59:30+00:00"
+        },
+        {
+            "name": "symfony/polyfill-php80",
+            "version": "v1.37.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/polyfill-php80.git",
+                "reference": "dfb55726c3a76ea3b6459fcfda1ec2d80a682411"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/polyfill-php80/zipball/dfb55726c3a76ea3b6459fcfda1ec2d80a682411",
+                "reference": "dfb55726c3a76ea3b6459fcfda1ec2d80a682411",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=7.2"
+            },
+            "type": "library",
+            "extra": {
+                "thanks": {
+                    "url": "https://github.com/symfony/polyfill",
+                    "name": "symfony/polyfill"
+                }
+            },
+            "autoload": {
+                "files": [
+                    "bootstrap.php"
+                ],
+                "psr-4": {
+                    "Symfony\\Polyfill\\Php80\\": ""
+                },
+                "classmap": [
+                    "Resources/stubs"
+                ]
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Ion Bazan",
+                    "email": "ion.bazan@gmail.com"
+                },
+                {
+                    "name": "Nicolas Grekas",
+                    "email": "p@tchwork.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Symfony polyfill backporting some PHP 8.0+ features to lower PHP versions",
+            "homepage": "https://symfony.com",
+            "keywords": [
+                "compatibility",
+                "polyfill",
+                "portable",
+                "shim"
+            ],
+            "support": {
+                "source": "https://github.com/symfony/polyfill-php80/tree/v1.37.0"
+            },
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://github.com/nicolas-grekas",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2026-04-10T16:19:22+00:00"
+        },
+        {
             "name": "symfony/polyfill-php81",
             "version": "v1.38.1",
             "source": {
@@ -6278,71 +5387,6 @@
             "time": "2026-05-26T12:51:13+00:00"
         },
         {
-            "name": "symfony/process",
-            "version": "v6.4.45",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/symfony/process.git",
-                "reference": "0b0c5b7d895211b82021469d1cb8ef2448caed96"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/symfony/process/zipball/0b0c5b7d895211b82021469d1cb8ef2448caed96",
-                "reference": "0b0c5b7d895211b82021469d1cb8ef2448caed96",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=8.1"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "Symfony\\Component\\Process\\": ""
-                },
-                "exclude-from-classmap": [
-                    "/Tests/"
-                ]
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Fabien Potencier",
-                    "email": "fabien@symfony.com"
-                },
-                {
-                    "name": "Symfony Community",
-                    "homepage": "https://symfony.com/contributors"
-                }
-            ],
-            "description": "Executes commands in sub-processes",
-            "homepage": "https://symfony.com",
-            "support": {
-                "source": "https://github.com/symfony/process/tree/v6.4.45"
-            },
-            "funding": [
-                {
-                    "url": "https://symfony.com/sponsor",
-                    "type": "custom"
-                },
-                {
-                    "url": "https://github.com/fabpot",
-                    "type": "github"
-                },
-                {
-                    "url": "https://github.com/nicolas-grekas",
-                    "type": "github"
-                },
-                {
-                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
-                    "type": "tidelift"
-                }
-            ],
-            "time": "2026-08-20T17:31:17+00:00"
-        },
-        {
             "name": "symfony/service-contracts",
             "version": "v3.7.3",
             "source": {
@@ -6497,16 +5541,16 @@
         },
         {
             "name": "symfony/string",
-            "version": "v6.4.43",
+            "version": "v6.4.46",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/string.git",
-                "reference": "2a8d515c3eaa5d33cf76d5fa277cdadd0a4e5b49"
+                "reference": "4513ab2b0ad2d7845a2f920e2f30b61633c9e606"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/string/zipball/2a8d515c3eaa5d33cf76d5fa277cdadd0a4e5b49",
-                "reference": "2a8d515c3eaa5d33cf76d5fa277cdadd0a4e5b49",
+                "url": "https://api.github.com/repos/symfony/string/zipball/4513ab2b0ad2d7845a2f920e2f30b61633c9e606",
+                "reference": "4513ab2b0ad2d7845a2f920e2f30b61633c9e606",
                 "shasum": ""
             },
             "require": {
@@ -6562,7 +5606,7 @@
                 "utf8"
             ],
             "support": {
-                "source": "https://github.com/symfony/string/tree/v6.4.43"
+                "source": "https://github.com/symfony/string/tree/v6.4.46"
             },
             "funding": [
                 {
@@ -6582,7 +5626,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-07-28T07:28:15+00:00"
+            "time": "2026-09-11T09:03:57+00:00"
         },
         {
             "name": "symfony/yaml",
@@ -6711,57 +5755,6 @@
             "time": "2025-11-17T20:03:58+00:00"
         },
         {
-            "name": "ulrichsg/getopt-php",
-            "version": "v4.0.4",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/getopt-php/getopt-php.git",
-                "reference": "9313ecde04f7bed262716e3a4d32a5e2cea3ffad"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/getopt-php/getopt-php/zipball/9313ecde04f7bed262716e3a4d32a5e2cea3ffad",
-                "reference": "9313ecde04f7bed262716e3a4d32a5e2cea3ffad",
-                "shasum": ""
-            },
-            "require": {
-                "ext-mbstring": "*",
-                "php": "^7.1 || ^8.0"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "*",
-                "squizlabs/php_codesniffer": "^3.5.8",
-                "tflori/phpunit-printer": "*"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "GetOpt\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Ulrich Schmidt-Goertz",
-                    "email": "ulrich@schmidt-goertz.de"
-                },
-                {
-                    "name": "Thomas Flori",
-                    "email": "thflori@gmail.com"
-                }
-            ],
-            "description": "Command line arguments parser for PHP 7.1 and above",
-            "homepage": "http://getopt-php.github.io/getopt-php",
-            "support": {
-                "issues": "https://github.com/getopt-php/getopt-php/issues",
-                "source": "https://github.com/getopt-php/getopt-php/tree/v4.0.4"
-            },
-            "time": "2025-02-11T14:42:04+00:00"
-        },
-        {
             "name": "webmozart/glob",
             "version": "4.7.0",
             "source": {
@@ -6814,19 +5807,14 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "k-kinzal/container": 20,
         "k-kinzal/php-ai-toolkit": 20,
-        "k-kinzal/sql-faker": 20,
-        "k-kinzal/sql-fixture": 20,
-        "k-kinzal/ztd-query-core": 20,
-        "k-kinzal/ztd-query-mysql": 20,
         "phpcompatibility/php-compatibility": 15
     },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
         "php": "^8.1",
-        "ext-mysqli": "*"
+        "ext-pdo": "*"
     },
     "platform-dev": {},
     "platform-overrides": {

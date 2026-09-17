@@ -6,43 +6,52 @@ namespace Tests\Integration;
 
 use Container\MySql80Container;
 use Container\MySql84Container;
-use Container\MySqlContainer;
+use Container\MySqlConfiguration;
 use Container\PostgreSql16Container;
 use Container\PostgreSql17Container;
-use Container\PostgreSqlContainer;
+use Container\PostgreSqlConfiguration;
 use mysqli;
 use mysqli_result;
 use PDO;
 use PDOStatement;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Large;
 use PHPUnit\Framework\TestCase;
+use Testcontainers\Containers\GenericContainer\GenericContainer;
 use Testcontainers\Testcontainers;
 
-#[CoversClass(MySqlContainer::class)]
-#[CoversClass(PostgreSqlContainer::class)]
+#[CoversClass(MySqlConfiguration::class)]
+#[CoversClass(PostgreSqlConfiguration::class)]
 #[CoversClass(MySql80Container::class)]
 #[CoversClass(MySql84Container::class)]
 #[CoversClass(PostgreSql16Container::class)]
 #[CoversClass(PostgreSql17Container::class)]
+#[Large]
 final class TestDatabaseTest extends TestCase
 {
-    /** @return iterable<string, array{class-string<MySqlContainer>}> */
-    public static function mysqlVersions(): iterable
+    /**
+     * @return iterable<string, array{class-string<GenericContainer>}>
+     */
+    public static function providerMySqlVersions(): iterable
     {
         yield '8.0' => [MySql80Container::class];
         yield '8.4' => [MySql84Container::class];
     }
 
-    /** @return iterable<string, array{class-string<PostgreSqlContainer>}> */
-    public static function postgresVersions(): iterable
+    /**
+     * @return iterable<string, array{class-string<GenericContainer>}>
+     */
+    public static function providerPostgreSqlVersions(): iterable
     {
         yield '16' => [PostgreSql16Container::class];
         yield '17' => [PostgreSql17Container::class];
     }
 
-    /** @param class-string<MySqlContainer> $class */
-    #[DataProvider('mysqlVersions')]
+    /**
+     * @param class-string<GenericContainer> $class
+     */
+    #[DataProvider('providerMySqlVersions')]
     public function testSameMySqlInstanceSupportsPdoAndMysqli(string $class): void
     {
         $instance = Testcontainers::run($class);
@@ -61,8 +70,10 @@ final class TestDatabaseTest extends TestCase
         $pdo->exec('DROP TABLE shared_connection');
     }
 
-    /** @param class-string<PostgreSqlContainer> $class */
-    #[DataProvider('postgresVersions')]
+    /**
+     * @param class-string<GenericContainer> $class
+     */
+    #[DataProvider('providerPostgreSqlVersions')]
     public function testPostgreSqlStartsWithTheCommonDatabase(string $class): void
     {
         $instance = Testcontainers::run($class);
