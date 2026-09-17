@@ -45,7 +45,7 @@ SELECT id, 'Alice' AS name FROM users WHERE id = 1
 ## Requirements
 
 - PHP 8.1 or higher
-- MySQL 5.6 - 9.1
+- MySQL 8.0.11 - 9.1
 - PDO extension
 
 ## Installation
