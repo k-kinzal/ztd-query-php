@@ -184,6 +184,7 @@ final class BisonGrammarReaderTest extends TestCase
         $reader->declaration($declarations[4], $builder);
         $reader->declaration($declarations[5], $builder);
         $reader->declaration($declarations[6], $builder);
+        $builder->rule('other', ['NUM'], null);
         $builder->rule('expr', ['NUM'], null);
         $grammar = $builder->build();
 
@@ -229,6 +230,33 @@ final class BisonGrammarReaderTest extends TestCase
         self::assertTrue($reader->continues($alternative, 1));
         self::assertTrue($reader->continues($alternative, 2));
         self::assertFalse($reader->continues($alternative, 4));
+    }
+
+    public function testContinuesLooksOnlyAtWhatFollowsTheItem(): void
+    {
+        $reader = new BisonGrammarReader();
+        $parser = new Parser();
+        $symbol = $parser->parse("%token A\n%%\ns: { a } A ;\n")->rules()[0]->alternatives[0];
+        $action = $parser->parse("%token A\n%%\ns: { a } { b } ;\n")->rules()[0]->alternatives[0];
+        $predicate = $parser->parse("%token A\n%%\ns: { a } %?{ p } ;\n")->rules()[0]->alternatives[0];
+        $modifiers = $parser->parse("%token A\n%%\ns: { a } %prec A %dprec 1 ;\n")->rules()[0]->alternatives[0];
+
+        self::assertTrue($reader->continues($symbol, 0));
+        self::assertTrue($reader->continues($action, 0));
+        self::assertTrue($reader->continues($predicate, 0));
+        self::assertFalse($reader->continues($modifiers, 0));
+        self::assertFalse($reader->continues($symbol, 1));
+    }
+
+    public function testReadNumbersMidRuleActionsFromOneForEveryFile(): void
+    {
+        $reader = new BisonGrammarReader();
+        $source = "%token A B\n%%\ns: A { act(); } B ;\n";
+
+        $reader->read($source);
+        $grammar = $reader->read($source);
+
+        self::assertSame('$@1', $grammar->symbols->name($grammar->rules[1]->lhs));
     }
 
     public function testMidRule(): void
