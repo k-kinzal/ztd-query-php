@@ -32,6 +32,8 @@ final class SymbolPrinterTest extends TestCase
         self::assertSame("'\\n'", $printer->symbol(new Symbol(SymbolKind::CharLiteral, "\n", new Location(1, 1))));
         self::assertSame("'\\''", $printer->symbol(new Symbol(SymbolKind::CharLiteral, "'", new Location(1, 1))));
         self::assertSame('"a\\"b"', $printer->symbol(new Symbol(SymbolKind::String, 'a"b', new Location(1, 1))));
+        self::assertSame("'\\101'", $printer->symbol(new Symbol(SymbolKind::CharLiteral, 'A', new Location(1, 1), "'\\101'")));
+        self::assertSame('"\\x61"', $printer->symbol(new Symbol(SymbolKind::String, 'a', new Location(1, 1), '"\\x61"')));
     }
 
     public function testString(): void

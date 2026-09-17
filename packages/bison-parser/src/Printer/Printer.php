@@ -6,6 +6,7 @@ namespace BisonParser\Printer;
 
 use BisonParser\Ast\Declaration\Declaration;
 use BisonParser\Ast\GrammarFile;
+use BisonParser\Ast\Line;
 use BisonParser\Ast\Rule\Alternative;
 use BisonParser\Ast\Rule\Rule;
 
@@ -50,7 +51,7 @@ final class Printer
         }
         $lines[] = '%%';
         foreach ($file->grammar as $item) {
-            $lines[] = $item instanceof Rule ? $this->rule($item) : $this->declarations->print($item) . ';';
+            $lines[] = $item instanceof Rule ? $this->rule($item) : $this->declarations->print($item) . ($item instanceof Line ? '' : ';');
         }
         $text = implode("\n", $lines) . "\n";
         if ($file->epilogue !== null) {

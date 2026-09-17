@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Syntax;
 
+use BisonParser\Ast\Line;
 use BisonParser\Ast\Location;
 use BisonParser\Ast\Rule\Action;
 use BisonParser\Ast\Rule\Alternative;
@@ -24,6 +25,7 @@ use BisonParser\Scanner\Escapes;
 use BisonParser\Scanner\Scanner;
 use BisonParser\Scanner\Token;
 use BisonParser\Scanner\TokenKind;
+use BisonParser\Syntax\DeclarationParser;
 use BisonParser\Syntax\RuleParser;
 use BisonParser\Syntax\SymbolListParser;
 use BisonParser\Syntax\TokenStream;
@@ -43,6 +45,8 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(EmptyItem::class)]
 #[UsesClass(Escapes::class)]
 #[UsesClass(ExpectItem::class)]
+#[UsesClass(Line::class)]
+#[UsesClass(DeclarationParser::class)]
 #[UsesClass(Location::class)]
 #[UsesClass(MergeItem::class)]
 #[UsesClass(PrecItem::class)]
@@ -70,6 +74,16 @@ final class RuleParserTest extends TestCase
         self::assertSame([4, 1, 1], array_map(static fn (Alternative $alternative): int => count($alternative->items), $rule->alternatives));
         self::assertSame(['1:10', '2:5', '3:5'], array_map(static fn (Alternative $alternative): string => (string) $alternative->location, $rule->alternatives));
         self::assertTrue($stream->is(TokenKind::IdentifierColon));
+    }
+
+    public function testParseAcceptsSemicolonsBetweenAlternatives(): void
+    {
+        $stream = new TokenStream((new Scanner())->scan("a: %empty;|b;;|c;;;\nd: ;"));
+
+        $rule = (new RuleParser())->parse($stream);
+
+        self::assertSame([1, 1, 1], array_map(static fn (Alternative $alternative): int => count($alternative->items), $rule->alternatives));
+        self::assertSame('d', $stream->peek()->text);
     }
 
     public function testParseEndsAtTheNextRule(): void
@@ -128,6 +142,18 @@ final class RuleParserTest extends TestCase
         self::assertInstanceOf(EmptyItem::class, $empty);
         self::assertNull($parser->item($stream));
         self::assertTrue($stream->is(TokenKind::Semicolon));
+    }
+
+    public function testItemKeepsALineDirective(): void
+    {
+        $stream = new TokenStream((new Scanner())->scan("A\n#line 8 \"x.y\"\nB ;"));
+        $parser = new RuleParser();
+        $parser->item($stream);
+
+        $line = $parser->item($stream);
+
+        self::assertInstanceOf(Line::class, $line);
+        self::assertSame([8, 'x.y', '2:1'], [$line->line, $line->file, (string) $line->location()]);
     }
 
     public function testAction(): void

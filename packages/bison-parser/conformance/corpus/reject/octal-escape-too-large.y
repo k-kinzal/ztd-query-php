@@ -1,0 +1,1 @@
+%token A\n%%\nstart: '\\777' ;\n

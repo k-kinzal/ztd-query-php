@@ -1,0 +1,11 @@
+# Grammars Bison numbers unstably, listed by SHA-256 of their text.
+#
+# Bison orders symbols by location and breaks ties by the order its hash
+# table yields, which the layout of the file changes. A multi-start grammar
+# whose start symbol is a token gets a switching token YY_PARSE_<token> with
+# that token's location, so the two share a location and their token numbers
+# come out one way or the other. Such a file counts as a known tie, not a
+# failure. Each is a calc.y of Bison 3.8.2's test suite (calc.at, %start
+# input exp NUM).
+c5cf2127d44f16f414d7970dbf17782e058057246eef458ebbdc7b45e66e5f00 calc.at: Calculator %start input exp NUM %define api.value.type union
+8e8adda4f171ff792a81aae7543aeff286ac953b81a463f386ba89fe33d5f366 calc.at: Calculator %start input exp NUM %define api.value.type union %locations %define parse.error detailed

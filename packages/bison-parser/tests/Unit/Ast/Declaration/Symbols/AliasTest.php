@@ -23,5 +23,7 @@ final class AliasTest extends TestCase
         self::assertSame('number', $alias->text);
         self::assertTrue($alias->translatable);
         self::assertSame('2:14', (string) $alias->location);
+        self::assertNull($alias->spelling);
+        self::assertSame('_("number")', (new Alias('number', true, new Location(2, 14), '_("number")'))->spelling);
     }
 }

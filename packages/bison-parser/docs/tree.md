@@ -12,6 +12,8 @@
 
 `rules()` answers the rules of the grammar section and `allDeclarations()` the declarations of both sections.
 
+A `#line` directive is kept where it stands as a `Line` node (`line`, `file`), among the declarations, among the rules, or inside a rule as a right-hand-side item. Bison reads it as a change of location, which changes the order it numbers symbols in, so a tree without it would not print back to the same grammar. A `#line` between two entries of one `%token` list is the one place it is passed over.
+
 ## Declarations
 
 All implement `Declaration` and answer `location()`.
@@ -51,7 +53,7 @@ A `SymbolEntry` holds the `symbol`, the `tag` in force where it was written, the
 
 ## Symbols
 
-A `Symbol` has a `kind` (`SymbolKind::Identifier`, `CharLiteral` or `String`) and a `value`. The value of a character literal is the decoded byte and the value of a string is the decoded text, so `'\n'` carries a newline. `Printer` writes them back with escapes.
+A `Symbol` has a `kind` (`SymbolKind::Identifier`, `CharLiteral` or `String`), a `value` and, for a literal, its `spelling`. The value of a character literal is the decoded byte and the value of a string is the decoded text, so `'\n'` carries a newline; the spelling is the literal as written, quotes and escapes included. Bison tells string tokens apart by their spelling, `"\'"` and `"'"` being two tokens, so `Printer` writes a literal back as it was spelled and only encodes a symbol built without a spelling. An `Alias` keeps its `spelling` the same way.
 
 ## Errors
 

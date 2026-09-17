@@ -21,7 +21,7 @@ final class Token
      * @param TokenKind $kind What the token is
      * @param string $text What it stands for
      * @param Location $location Where it begins
-     * @param string $raw The directive as written, for directives
+     * @param string $raw The directive, number or literal as written; empty for other tokens
      */
     public function __construct(
         public readonly TokenKind $kind,

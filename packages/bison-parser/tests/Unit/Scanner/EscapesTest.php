@@ -50,6 +50,7 @@ final class EscapesTest extends TestCase
         self::assertSame(["\x00", 1], $escapes->escape('0', new Location(1, 1)));
         self::assertSame(["\x0A", 2], $escapes->escape('12x', new Location(1, 1)));
         self::assertSame(["\xFF", 3], $escapes->escape('3778', new Location(1, 1)));
+        self::assertSame(["\x02", 21], $escapes->escape('x00000000000000000002', new Location(1, 1)));
         self::assertSame(["\x41", 3], $escapes->escape('x41g', new Location(1, 1)));
         self::assertSame(["\xE9", 5], $escapes->escape('u00E9', new Location(1, 1)));
         self::assertSame(["\x7E", 9], $escapes->escape('U0000007E', new Location(1, 1)));
@@ -57,6 +58,24 @@ final class EscapesTest extends TestCase
         self::assertSame(["\n", 1], $escapes->escape('n', new Location(1, 1)));
         self::assertSame(["\n", 1], $escapes->escape('nx41', new Location(1, 1)));
         self::assertSame(["\t", 1], $escapes->escape('tu00E9', new Location(1, 1)));
+    }
+
+    public function testEscapeRejectsANumberAboveOneByte(): void
+    {
+        $this->expectException(SyntaxException::class);
+        $this->expectExceptionMessage('Invalid number after \\-escape: \\x100 at 1:1');
+
+        (new Escapes())->escape('x100', new Location(1, 1));
+    }
+
+    public function testByte(): void
+    {
+        $escapes = new Escapes();
+
+        self::assertSame("\xFF", $escapes->byte(255, '\\377', new Location(1, 1)));
+        $this->expectException(SyntaxException::class);
+        $this->expectExceptionMessage('Invalid number after \\-escape: \\777 at 2:3');
+        $escapes->byte(511, '\\777', new Location(2, 3));
     }
 
     public function testEscapeRejectsAWideUniversalCharacter(): void

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace BisonParser\Printer;
 
+use BisonParser\Ast\Line;
 use BisonParser\Ast\Rule\Action;
 use BisonParser\Ast\Rule\DprecItem;
 use BisonParser\Ast\Rule\EmptyItem;
@@ -24,9 +25,12 @@ final class RhsPrinter
 {
     /**
      * @param SymbolPrinter $symbols Writes symbols and literals
+     * @param DeclarationPrinter $declarations Writes `#line` directives
      */
-    public function __construct(private readonly SymbolPrinter $symbols = new SymbolPrinter())
-    {
+    public function __construct(
+        private readonly SymbolPrinter $symbols = new SymbolPrinter(),
+        private readonly DeclarationPrinter $declarations = new DeclarationPrinter(),
+    ) {
     }
 
     /**
@@ -49,6 +53,7 @@ final class RhsPrinter
             DprecItem::class => '%dprec ' . $item->value,
             MergeItem::class => "%merge <{$item->tag}>",
             ExpectItem::class => ($item->reduceReduce ? '%expect-rr ' : '%expect ') . $item->count,
+            Line::class => "\n" . $this->declarations->line($item) . "\n",
             default => throw new LogicException('Unknown right-hand side item ' . $item::class),
         };
     }
