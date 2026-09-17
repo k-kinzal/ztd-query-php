@@ -14,21 +14,12 @@ on:
         default: all
         type: choice
         options: ['all', '8.0.44', '8.4.7']
-  pull_request:
-    paths:
-      - 'packages/container/**'
-      - 'packages/ztd-query-mysqli-adapter/**'
-      - 'packages/ztd-query-mysql/**'
-      - 'packages/ztd-query-core/**'
-      - 'packages/sql-faker/**'
-      - 'packages/sql-fixture/**'
-      - '.github/workflows/ztd-query-mysqli-adapter-fuzz.yml'
 
 permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 defaults:
@@ -40,6 +31,9 @@ jobs:
     name: ${{ matrix.target.corpus }} (MySQL ${{ matrix.mysql }})
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    permissions:
+      contents: read
+      issues: write
     strategy:
       fail-fast: false
       matrix:
@@ -81,18 +75,24 @@ jobs:
           restore-keys: mysqli-fuzz-${{ matrix.mysql }}-${{ matrix.target.corpus }}-
       - name: Run bounded fuzz campaign
         env:
-          MAX_RUNS: ${{ inputs.max_runs || (github.event_name == 'pull_request' && '100') || '10000' }}
+          MAX_RUNS: ${{ inputs.max_runs || '10000' }}
           FUZZ_SCRIPT: ${{ matrix.target.script }}
           CORPUS: ${{ matrix.target.corpus }}
         run: |
           set -euo pipefail
           [[ "$MAX_RUNS" =~ ^[1-9][0-9]*$ ]] || { echo 'max_runs must be a positive integer' >&2; exit 1; }
-          mkdir -p "fuzz/corpus/$CORPUS"
-          vendor/bin/php-fuzzer fuzz "fuzz/$FUZZ_SCRIPT" "fuzz/corpus/$CORPUS/" --timeout=15 --max-runs="$MAX_RUNS"
-          if compgen -G 'crash-*' > /dev/null; then
-            echo 'Fuzzing produced crash artifacts; replay the uploaded inputs.' >&2
-            exit 1
-          fi
+          mkdir -p build/fuzz "fuzz/corpus/$CORPUS"
+          vendor/bin/php-fuzzer fuzz "fuzz/$FUZZ_SCRIPT" "fuzz/corpus/$CORPUS/" --timeout=15 --max-runs="$MAX_RUNS" 2>&1 | tee "build/fuzz/$CORPUS.log"
+      - name: Open an issue for new findings
+        if: ${{ !cancelled() }}
+        uses: ./.github/actions/fuzz-finding-issue
+        with:
+          package: ztd-query-mysqli-adapter
+          target: ${{ matrix.target.corpus }}
+          script: fuzz/${{ matrix.target.script }}
+          log: build/fuzz/${{ matrix.target.corpus }}.log
+          artifact: mysqli-fuzz-${{ matrix.mysql }}-${{ matrix.target.corpus }}
+          replay-env: MYSQL_VERSION=${{ matrix.mysql }}
       - name: Save corpus
         if: always()
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
@@ -104,5 +104,7 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: mysqli-fuzz-${{ matrix.mysql }}-${{ matrix.target.corpus }}
-          path: packages/ztd-query-mysqli-adapter/crash-*
+          path: |
+            packages/ztd-query-mysqli-adapter/crash-*
+            packages/ztd-query-mysqli-adapter/build/fuzz/${{ matrix.target.corpus }}.log
           if-no-files-found: ignore

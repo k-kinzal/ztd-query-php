@@ -5,6 +5,9 @@ jobs:
   robustness-execute:
     name: Robustness / execute (MySQL ${{ matrix.mysql }})
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     strategy:
       fail-fast: false
       matrix:
@@ -57,14 +60,21 @@ jobs:
         MYSQL_VERSION: ${{ matrix.mysql }}
         MAX_RUNS: ${{ inputs.max_runs || '10000' }}
       run: |
+        set -euo pipefail
         mkdir -p build/fuzz fuzz/corpus/robustness-execute
         vendor/bin/php-fuzzer fuzz fuzz/fuzz_robustness_execute.php \
           fuzz/corpus/robustness-execute/ \
           --max-runs="$MAX_RUNS" 2>&1 | tee build/fuzz/run.log
-        if grep -Eq '^(CORPUS )?CRASH in ' build/fuzz/run.log; then
-          echo 'Fuzzing found a counterexample; download the run artifacts and replay the input.' >&2
-          exit 1
-        fi
+    - name: Open an issue for new findings
+      if: ${{ !cancelled() }}
+      uses: ./.github/actions/fuzz-finding-issue
+      with:
+        package: ztd-query-pdo-adapter
+        target: robustness-execute
+        script: fuzz/fuzz_robustness_execute.php
+        log: build/fuzz/run.log
+        artifact: fuzz-results-robustness-execute-pdo-${{ matrix.mysql }}
+        replay-env: MYSQL_VERSION=${{ matrix.mysql }}
     - if: always()
       uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
       with:
@@ -96,6 +106,9 @@ jobs:
   correctness-mysql:
     name: Correctness / ${{ matrix.target.name }}-pdo (MySQL ${{ matrix.mysql }})
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     strategy:
       fail-fast: false
       matrix:
@@ -161,14 +174,21 @@ jobs:
         MYSQL_VERSION: ${{ matrix.mysql }}
         MAX_RUNS: ${{ inputs.max_runs || '10000' }}
       run: |
+        set -euo pipefail
         mkdir -p build/fuzz fuzz/corpus/${{ matrix.target.corpus }}
         vendor/bin/php-fuzzer fuzz fuzz/${{ matrix.target.script }} \
           fuzz/corpus/${{ matrix.target.corpus }}/ \
           --max-runs="$MAX_RUNS" 2>&1 | tee build/fuzz/run.log
-        if grep -Eq '^(CORPUS )?CRASH in ' build/fuzz/run.log; then
-          echo 'Fuzzing found a counterexample; download the run artifacts and replay the input.' >&2
-          exit 1
-        fi
+    - name: Open an issue for new findings
+      if: ${{ !cancelled() }}
+      uses: ./.github/actions/fuzz-finding-issue
+      with:
+        package: ztd-query-pdo-adapter
+        target: ${{ matrix.target.corpus }}
+        script: fuzz/${{ matrix.target.script }}
+        log: build/fuzz/run.log
+        artifact: fuzz-results-${{ matrix.target.name }}-pdo-${{ matrix.mysql }}
+        replay-env: MYSQL_VERSION=${{ matrix.mysql }}
     - if: always()
       uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
       with:
@@ -200,6 +220,9 @@ jobs:
   correctness-sqlite:
     name: Correctness / ${{ matrix.target.name }}-pdo-sqlite
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     strategy:
       fail-fast: false
       matrix:
@@ -262,16 +285,22 @@ jobs:
       name: Restore the corpus
     - name: Run the fuzz target
       run: |
+        set -euo pipefail
         mkdir -p build/fuzz fuzz/corpus/${{ matrix.target.corpus }}
         vendor/bin/php-fuzzer fuzz fuzz/${{ matrix.target.script }} \
           fuzz/corpus/${{ matrix.target.corpus }}/ \
           --max-runs="$MAX_RUNS" 2>&1 | tee build/fuzz/run.log
-        if grep -Eq '^(CORPUS )?CRASH in ' build/fuzz/run.log; then
-          echo 'Fuzzing found a counterexample; download the run artifacts and replay the input.' >&2
-          exit 1
-        fi
       env:
         MAX_RUNS: ${{ inputs.max_runs || '10000' }}
+    - name: Open an issue for new findings
+      if: ${{ !cancelled() }}
+      uses: ./.github/actions/fuzz-finding-issue
+      with:
+        package: ztd-query-pdo-adapter
+        target: ${{ matrix.target.corpus }}
+        script: fuzz/${{ matrix.target.script }}
+        log: build/fuzz/run.log
+        artifact: fuzz-results-${{ matrix.target.name }}-pdo-sqlite
     - if: always()
       uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
       with:
@@ -291,6 +320,9 @@ jobs:
   correctness-pg:
     name: Correctness / ${{ matrix.target.name }}-pdo-pg
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     strategy:
       fail-fast: false
       matrix:
@@ -353,16 +385,22 @@ jobs:
       name: Restore the corpus
     - name: Run the fuzz target
       run: |
+        set -euo pipefail
         mkdir -p build/fuzz fuzz/corpus/${{ matrix.target.corpus }}
         vendor/bin/php-fuzzer fuzz fuzz/${{ matrix.target.script }} \
           fuzz/corpus/${{ matrix.target.corpus }}/ \
           --max-runs="$MAX_RUNS" 2>&1 | tee build/fuzz/run.log
-        if grep -Eq '^(CORPUS )?CRASH in ' build/fuzz/run.log; then
-          echo 'Fuzzing found a counterexample; download the run artifacts and replay the input.' >&2
-          exit 1
-        fi
       env:
         MAX_RUNS: ${{ inputs.max_runs || '10000' }}
+    - name: Open an issue for new findings
+      if: ${{ !cancelled() }}
+      uses: ./.github/actions/fuzz-finding-issue
+      with:
+        package: ztd-query-pdo-adapter
+        target: ${{ matrix.target.corpus }}
+        script: fuzz/${{ matrix.target.script }}
+        log: build/fuzz/run.log
+        artifact: fuzz-results-${{ matrix.target.name }}-pdo-pg
     - if: always()
       uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
       with:

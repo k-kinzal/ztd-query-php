@@ -26,6 +26,9 @@ jobs:
     name: Fuzz ${{ matrix.target.name }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+      issues: write
     strategy:
       fail-fast: false
       matrix:
@@ -100,11 +103,21 @@ jobs:
             exit 2
           fi
 
-          mkdir -p "${{ matrix.target.corpus }}"
+          mkdir -p build/fuzz "${{ matrix.target.corpus }}"
           vendor/bin/php-fuzzer fuzz \
             "${{ matrix.target.script }}" \
             "${{ matrix.target.corpus }}/" \
-            "--max-runs=$FUZZ_MAX_RUNS"
+            "--max-runs=$FUZZ_MAX_RUNS" 2>&1 | tee "build/fuzz/${{ matrix.target.name }}.log"
+
+      - name: Open an issue for new findings
+        if: ${{ !cancelled() }}
+        uses: ./.github/actions/fuzz-finding-issue
+        with:
+          package: ztd-query-sqlite
+          target: ${{ matrix.target.name }}
+          script: ${{ matrix.target.script }}
+          log: build/fuzz/${{ matrix.target.name }}.log
+          artifact: fuzz-crashes-${{ matrix.target.name }}
 
       - name: Save the evolved corpus
         if: always()
@@ -118,6 +131,8 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: fuzz-crashes-${{ matrix.target.name }}
-          path: packages/ztd-query-sqlite/crash-*
+          path: |
+            packages/ztd-query-sqlite/crash-*
+            packages/ztd-query-sqlite/build/fuzz/${{ matrix.target.name }}.log
           if-no-files-found: ignore
           retention-days: 14
