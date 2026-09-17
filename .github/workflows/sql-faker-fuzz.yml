@@ -81,11 +81,29 @@ jobs:
           path: packages/sql-faker/fuzz/coverage/${{ matrix.target.database }}
           key: sql-faker-coverage-v1-${{ matrix.target.database }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: sql-faker-coverage-v1-${{ matrix.target.database }}-
+      - name: Link PDO SQLite to the SQLite release the grammar was built from
+        if: matrix.target.database == 'sqlite'
+        working-directory: ${{ runner.temp }}
+        env:
+          SQLITE_ARCHIVE: sqlite-autoconf-3470200
+          SQLITE_SHA256: f1b2ee412c28d7472bc95ba996368d6f0cdcf00362affdadb27ed286c179540b
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 3 -o "$SQLITE_ARCHIVE.tar.gz" "https://www.sqlite.org/2024/$SQLITE_ARCHIVE.tar.gz"
+          echo "$SQLITE_SHA256  $SQLITE_ARCHIVE.tar.gz" | sha256sum --check --strict
+          tar -xzf "$SQLITE_ARCHIVE.tar.gz"
+          mkdir -p sqlite-3.47.2/lib
+          gcc -O2 -fPIC -shared -DSQLITE_ENABLE_COLUMN_METADATA -Wl,-soname,libsqlite3.so.0 \
+            -o sqlite-3.47.2/lib/libsqlite3.so.0 "$SQLITE_ARCHIVE/sqlite3.c" -lm -lpthread
+          echo "SQLITE_LIBRARY_PATH=$RUNNER_TEMP/sqlite-3.47.2/lib" >> "$GITHUB_ENV"
       - name: Run PHP-Fuzzer
         env:
           FUZZ_MAX_RUNS: ${{ inputs.max_runs || '10000' }}
         run: |
           set -euo pipefail
+          if [ -n "${SQLITE_LIBRARY_PATH:-}" ]; then
+            export LD_LIBRARY_PATH="$SQLITE_LIBRARY_PATH"
+          fi
           mkdir -p build/fuzz "fuzz/corpus/${{ matrix.target.database }}"
           vendor/bin/php-fuzzer fuzz \
             "fuzz/${{ matrix.target.script }}" \
