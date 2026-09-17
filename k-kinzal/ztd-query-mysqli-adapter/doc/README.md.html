@@ -41,7 +41,7 @@
 <p>This package provides <code>ZtdMysqli</code> and <code>ZtdMysqliStatement</code>, which extend <code>mysqli</code> and <code>mysqli_stmt</code> respectively. They intercept SQL queries and transform them using CTE (Common Table Expression) shadowing, enabling SQL unit testing without modifying physical databases.</p>
 <ul><li><strong>Drop-in replacement</strong> - <code>ZtdMysqli</code> extends <code>mysqli</code> and is type-compatible everywhere <code>mysqli</code> is expected</li><li><strong>Transparent rewriting</strong> - All queries are automatically rewritten at <code>prepare()</code>/<code>query()</code>/<code>execute_query()</code> time</li><li><strong>Toggle on/off</strong> - Enable or disable ZTD mode at runtime with <code>enableZtd()</code>/<code>disableZtd()</code></li><li><strong>Wrap existing connections</strong> - Use <code>ZtdMysqli::fromMysqli()</code> to wrap an existing mysqli instance without creating a new connection</li></ul>
 <h3>Requirements</h3>
-<ul><li>PHP 8.1 or higher</li><li>MySQLi extension</li><li>MySQL 5.6 - 9.1</li><li><a href="https://github.com/k-kinzal/ztd-query-core">k-kinzal/ztd-query-php</a> (core)</li><li><a href="https://github.com/k-kinzal/ztd-query-mysql">k-kinzal/ztd-query-mysql</a> (MySQL platform)</li></ul>
+<ul><li>PHP 8.1 or higher</li><li>MySQLi extension</li><li>MySQL 8.0.11 - 9.1</li><li><a href="https://github.com/k-kinzal/ztd-query-core">k-kinzal/ztd-query-php</a> (core)</li><li><a href="https://github.com/k-kinzal/ztd-query-mysql">k-kinzal/ztd-query-mysql</a> (MySQL platform)</li></ul>
 <h3>Installation</h3>
 <pre class="code-block"><code>composer require --dev k-kinzal/ztd-query-mysqli-adapter</code></pre>
 <h3>Usage</h3>

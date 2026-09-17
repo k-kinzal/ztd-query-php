@@ -41,7 +41,7 @@
 <p>This package provides <code>ZtdPdo</code> and <code>ZtdPdoStatement</code>, which extend <code>PDO</code> and <code>PDOStatement</code> respectively. They intercept SQL queries and transform them using CTE (Common Table Expression) shadowing, enabling SQL unit testing without modifying physical databases.</p>
 <ul><li><strong>Drop-in replacement</strong> - <code>ZtdPdo</code> extends <code>PDO</code> and is type-compatible everywhere <code>PDO</code> is expected</li><li><strong>Transparent rewriting</strong> - All queries are automatically rewritten at <code>prepare()</code>/<code>query()</code>/<code>exec()</code> time</li><li><strong>Toggle on/off</strong> - Enable or disable ZTD mode at runtime with <code>enableZtd()</code>/<code>disableZtd()</code></li><li><strong>Wrap existing connections</strong> - Use <code>ZtdPdo::fromPdo()</code> to wrap an existing PDO instance without creating a new connection</li></ul>
 <h3>Requirements</h3>
-<ul><li>PHP 8.1 or higher</li><li>PDO extension</li><li>MySQL 5.6 - 9.1</li><li><a href="https://github.com/k-kinzal/ztd-query-core">k-kinzal/ztd-query-php</a> (core)</li><li><a href="https://github.com/k-kinzal/ztd-query-mysql">k-kinzal/ztd-query-mysql</a> (MySQL platform)</li></ul>
+<ul><li>PHP 8.1 or higher</li><li>PDO extension</li><li>MySQL 8.0.11 - 9.1</li><li><a href="https://github.com/k-kinzal/ztd-query-core">k-kinzal/ztd-query-php</a> (core)</li><li><a href="https://github.com/k-kinzal/ztd-query-mysql">k-kinzal/ztd-query-mysql</a> (MySQL platform)</li></ul>
 <h3>Installation</h3>
 <pre class="code-block"><code>composer require --dev k-kinzal/ztd-query-pdo-adapter</code></pre>
 <h3>Usage</h3>

@@ -42,7 +42,7 @@
 <ul><li><strong>SQL Parsing</strong> - Parse MySQL statements using <a href="https://github.com/phpmyadmin/sql-parser">phpMyAdmin SQL Parser</a></li><li><strong>Query Classification</strong> - Classify queries as READ, WRITE_SIMULATED, or DDL_SIMULATED</li><li><strong>CTE Rewriting</strong> - Transform SELECT queries to use CTE-shadowed fixture data</li><li><strong>Result Select Query</strong> - Convert INSERT/UPDATE/DELETE/REPLACE into SELECT queries returning affected rows</li><li><strong>Schema Management</strong> - Reflect and track MySQL table definitions for virtual DDL operations</li><li><strong>Error Classification</strong> - Identify MySQL-specific error codes for unknown schema detection</li></ul>
 <p>This package is used internally by the <a href="https://github.com/k-kinzal/ztd-query-pdo-adapter">PDO adapter</a> and <a href="https://github.com/k-kinzal/ztd-query-mysqli-adapter">MySQLi adapter</a>, but can also be used directly for custom adapter implementations.</p>
 <h3>Requirements</h3>
-<ul><li>PHP 8.1 or higher</li><li><a href="https://github.com/k-kinzal/ztd-query-core">k-kinzal/ztd-query-php</a> (core)</li></ul>
+<ul><li>PHP 8.1 or higher</li><li>MySQL 8.0.11 - 9.1</li><li><a href="https://github.com/k-kinzal/ztd-query-core">k-kinzal/ztd-query-php</a> (core)</li></ul>
 <h3>Installation</h3>
 <pre class="code-block"><code>composer require k-kinzal/ztd-query-mysql</code></pre>
 <h3>Usage</h3>
