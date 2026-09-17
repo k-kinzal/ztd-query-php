@@ -17,6 +17,8 @@ jobs:
         package:
           - local_path: ztd-query-core
             split_repository: ztd-query-core
+          - local_path: lemon-parser
+            split_repository: lemon-parser
           - local_path: bison-parser
             split_repository: bison-parser
           - local_path: sql-faker
@@ -69,6 +71,10 @@ jobs:
                 )
               else . end) |
               .require |= with_entries(
+                if (.key | test("^k-kinzal/(ztd-query-(core|mysql|postgres|sqlite|pdo-adapter|mysqli-adapter)|sql-faker|sql-fixture|lemon-parser)$")) and .value == "dev-main" then .value = $v else . end
+              ) |
+              ."require-dev" |= with_entries(
+                if (.key | test("^k-kinzal/(ztd-query-(core|mysql|postgres|sqlite|pdo-adapter|mysqli-adapter)|sql-faker|sql-fixture|lemon-parser)$")) and .value == "dev-main" then .value = $v else . end
                 if (.key | test("^k-kinzal/(ztd-query-(core|mysql|postgres|sqlite|pdo-adapter|mysqli-adapter)|sql-faker|sql-fixture|bison-parser)$")) and .value == "dev-main" then .value = $v else . end
               ) |
               ."require-dev" |= with_entries(

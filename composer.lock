@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0ff901d9bf683e352428a865068e9d1f",
+    "content-hash": "30993061450b344f19d64c6f2c5a3279",
     "packages": [
         {
             "name": "fakerphp/faker",
@@ -75,7 +75,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/bison-parser",
-                "reference": "e04f4a5a076b7928bd63c3d7d7b179037d4fdb12"
+                "reference": "b5e145900624d075458c95cd37011a3030721258"
             },
             "require": {
                 "php": "^8.1"
@@ -210,12 +210,152 @@
             }
         },
         {
+            "name": "k-kinzal/lemon-parser",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "packages/lemon-parser",
+                "reference": "b7e758b2272b24c724bf5e7b5fa9c00c5a11d817"
+            },
+            "require": {
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "brianium/paratest": "^7.3",
+                "deptrac/deptrac": "^3.0",
+                "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/php-ai-toolkit": "dev-main",
+                "nikic/php-fuzzer": "^0.0.11",
+                "phpbench/phpbench": "^1.4",
+                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
+                "phpstan/phpstan": "^2.1",
+                "phpstan/phpstan-strict-rules": "^2.0",
+                "phpunit/phpunit": "^10.5",
+                "squizlabs/php_codesniffer": "^4.0.4"
+            },
+            "bin": [
+                "bin/lemon-parser"
+            ],
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "LemonParser\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Tests\\": "tests/",
+                    "Fuzz\\": "fuzz/",
+                    "Bench\\": "bench/"
+                }
+            },
+            "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
+                "bench": [
+                    "phpbench run --report=aggregate"
+                ],
+                "bench:full": [
+                    "@bench"
+                ],
+                "bench:quick": [
+                    "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10"
+                ],
+                "compat": [
+                    "phpcs"
+                ],
+                "deptrac": [
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
+                ],
+                "docgen": [
+                    "docgen --packages=. --title=k-kinzal/lemon-parser"
+                ],
+                "docgen:diff": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --diff=origin/main --serve"
+                ],
+                "docgen:fresh": [
+                    "@docgen --no-cache"
+                ],
+                "docgen:serve": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --serve"
+                ],
+                "doctest": [
+                    "phpunit --testsuite doctest"
+                ],
+                "format": [
+                    "php-cs-fixer fix --allow-risky=yes"
+                ],
+                "format:check": [
+                    "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
+                ],
+                "fuzz": [
+                    "@fuzz:smoke"
+                ],
+                "fuzz:parse": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php -r \"is_dir('fuzz/corpus/parse') || mkdir('fuzz/corpus/parse', 0777, true);\" --",
+                    "php-fuzzer fuzz fuzz/fuzz_parse.php fuzz/corpus/parse/"
+                ],
+                "fuzz:roundtrip": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php -r \"is_dir('fuzz/corpus/roundtrip') || mkdir('fuzz/corpus/roundtrip', 0777, true);\" --",
+                    "php-fuzzer fuzz fuzz/fuzz_roundtrip.php fuzz/corpus/roundtrip/"
+                ],
+                "fuzz:smoke": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@fuzz:parse --max-runs=100",
+                    "@fuzz:roundtrip --max-runs=100"
+                ],
+                "lint": [
+                    "@autoload:check",
+                    "@format:check",
+                    "@phpstan",
+                    "@compat",
+                    "@loc-guard",
+                    "@tree-guard",
+                    "@deptrac"
+                ],
+                "loc-guard": [
+                    "loc-guard --config=loc.yaml"
+                ],
+                "phpstan": [
+                    "phpstan analyse --memory-limit=1G"
+                ],
+                "test": [
+                    "paratest --processes=auto"
+                ],
+                "test:coverage": [
+                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+                ],
+                "test:unit": [
+                    "phpunit --testsuite unit"
+                ],
+                "tree-guard": [
+                    "tree-guard --config=tree.yaml"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Parser for Lemon grammar files, producing a lossless syntax tree",
+            "support": {
+                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/lemon-parser",
+                "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/lemon-parser/"
+            },
+            "transport-options": {
+                "relative": true
+            }
+        },
+        {
             "name": "k-kinzal/sql-faker",
             "version": "dev-main",
             "dist": {
                 "type": "path",
                 "url": "packages/sql-faker",
-                "reference": "cae6b56d132f821b45c4062ccc4431b5ce5e20ee"
+                "reference": "5d9d47165c4609635aa5583bce903f0e9064b030"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -375,7 +515,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-fixture",
-                "reference": "8e7a220a21b6145a3baa62d3e7eb579f68f7315a"
+                "reference": "8f452d75d5539bd9a9cbaebe97bb80859008c7a5"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -519,7 +659,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-parser",
-                "reference": "75a6c677acc464b66b3776bdb75bb802efe35715"
+                "reference": "8f4c5bdae69558aa3d918cf11516a06ae569dd9c"
             },
             "require": {
                 "ext-zlib": "*",
@@ -674,7 +814,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-core",
-                "reference": "b03b757ae2e399530617340cf27b98ec5b7a1849"
+                "reference": "783d107702e8d8d644aa9d578ccb4869ca14b0e8"
             },
             "require": {
                 "php": "^8.1"
@@ -808,7 +948,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-mysql",
-                "reference": "24bdf038a85e6a70ab480298855241fb74236a4d"
+                "reference": "d2f753842fe359823a883f3fce73dc0205b6a83a"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -957,7 +1097,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-mysqli-adapter",
-                "reference": "00d90ad2f50096f3cf0e25b51b9e6b5dce885fc3"
+                "reference": "f5518d61553139639a3a496c9ad1957bee427d38"
             },
             "require": {
                 "ext-mysqli": "*",
@@ -1127,7 +1267,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-pdo-adapter",
-                "reference": "dfe763450cd587e4d87c2fdf902dc0b294c6713c"
+                "reference": "d9d3ffd7f44baf1359169ad2aad83cbe3c6d2077"
             },
             "require": {
                 "ext-pdo": "*",
@@ -1358,7 +1498,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-postgres",
-                "reference": "39afc7999c2655cb4debcb471415b19882a5db5c"
+                "reference": "6808f656ddfab036ec5547a23f196d4a34630e92"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -1509,7 +1649,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-sqlite",
-                "reference": "c677ff307062b4bd9eaa13ab376607995758f931"
+                "reference": "55c147d7a81980f3f3eefdb5fb4f7c69a94120fd"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -2573,6 +2713,7 @@
     "minimum-stability": "stable",
     "stability-flags": {
         "k-kinzal/bison-parser": 20,
+        "k-kinzal/lemon-parser": 20,
         "k-kinzal/php-ai-toolkit": 20,
         "k-kinzal/sql-faker": 20,
         "k-kinzal/sql-fixture": 20,

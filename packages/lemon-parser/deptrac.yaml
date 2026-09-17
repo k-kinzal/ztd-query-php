@@ -1,0 +1,51 @@
+# NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
+#
+# Layers follow the reading of a grammar file: the preprocessor settles
+# %ifdef blocks, the scanner splits the text into tokens, the syntax layer
+# builds the tree from them, the tree is the result, and the printer writes
+# a tree back out.
+deptrac:
+  paths:
+    - ./src
+  analyser:
+    types:
+      - class
+      - use
+  layers:
+    # The syntax tree and the positions its nodes carry.
+    - name: Ast
+      collectors:
+        - type: directory
+          value: 'src/Ast/'
+    # Settles %if, %ifdef, %ifndef, %else and %endif before scanning.
+    - name: Preprocessor
+      collectors:
+        - type: directory
+          value: 'src/Preprocessor/'
+    # Splits a grammar file into tokens.
+    - name: Scanner
+      collectors:
+        - type: directory
+          value: 'src/Scanner/'
+    # Builds the tree from tokens.
+    - name: Syntax
+      collectors:
+        - type: directory
+          value: 'src/Syntax/'
+    # Writes a tree back as a grammar file.
+    - name: Printer
+      collectors:
+        - type: directory
+          value: 'src/Printer/'
+    # Public entry points and the errors they raise.
+    - name: Entry
+      collectors:
+        - type: directory
+          value: 'src/[^/]+\.php$'
+  ruleset:
+    Ast: []
+    Preprocessor: [Ast, Entry]
+    Scanner: [Ast, Entry]
+    Syntax: [Ast, Scanner, Entry]
+    Printer: [Ast]
+    Entry: [Ast, Preprocessor, Scanner, Syntax, Printer]
