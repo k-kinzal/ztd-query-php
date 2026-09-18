@@ -27,13 +27,13 @@
 <nav class="crumbs"><a href="../../../../k-kinzal/lemon-parser/index.html">k-kinzal/lemon-parser</a><span class="crumb-sep">::</span><span class="crumb-current">conformance/README.md</span></nav>
 <div class="topbar-tools">
 <input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
-<span class="diff-range" title="Comparing 8c65c08ae to working tree">8c65c08ae <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<span class="diff-range" title="Comparing 6fc7c6e5a to working tree">6fc7c6e5a <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
 <button id="theme-toggle" title="Toggle theme">◐</button>
 </div>
 </header>
 <div class="search-results" id="search-results" hidden></div>
 <main class="content">
-<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 8c65c08ae and working tree." data-off="This page documents what 8c65c08ae had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 6fc7c6e5a and working tree." data-off="This page documents what 6fc7c6e5a had and working tree no longer has. Switch to Diff to read it." hidden></p>
 <div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Conformance with Lemon</h1><div class="symbol-meta"><span class="src-link">conformance/README.md</span></div></div>
 <section class="readme" data-diff="same"><div class="doc-block" data-diff="same"><h2>Conformance with Lemon</h2>
 </div><div class="doc-block" data-diff="same"><p><code>php conformance/run.php --lemon=PATH DIRECTORY|FILE...</code> (or <code>composer conformance -- ...</code>) compares this package with Lemon on every <code>.y</code> file found, under each set of defines its <code>.defines</code> file lists (one set per line, names separated by spaces; an empty line is the set with no defines).</p>
@@ -42,6 +42,8 @@
 </div><div class="doc-block" data-diff="same"><p>A difference in any of the three is a failure and the exit status is 1.</p>
 </div><div class="doc-block" data-diff="same"><h3>Corpus</h3>
 </div><div class="doc-block" data-diff="same"><ul><li><code>corpus/</code>: hand-written grammars that use every declaration and every rule form Lemon accepts, a preprocessor grammar read under six sets of defines, and under <code>corpus/reject/</code> files Lemon refuses.</li><li><code>corpus.txt</code>: SQLite&#039;s grammars fetched by URL with <code>php conformance/fetch.php DIRECTORY</code>, which also copies the <code>.defines</code> files under <code>defines/</code> next to them.</li></ul>
+</div><div class="doc-block" data-diff="same"><h3>What the reference is</h3>
+</div><div class="doc-block" data-diff="same"><p>The CI job builds Lemon from <code>tool/lemon.c</code> at SQLite&#039;s <code>version-3.47.2</code> tag (SHA-256 <code>3661d01cb826d443a0148d93e440d3891d27782d0c3c0656e187968febb49bc0</code>, checked before the build), the file SQLite itself is built with at that release. Lemon has no specification apart from this source, which is why the reference is that file, unmodified, and not a re-implementation.</p>
 </div><div class="doc-block" data-diff="same"><h3>Running locally</h3>
 </div><div class="doc-block" data-diff="same"><p>Lemon is <code>tool/lemon.c</code> in SQLite&#039;s repository, public domain, built with a C compiler:</p>
 </div><div class="doc-block" data-diff="same"><pre class="code-block"><code>curl -sSL -o lemon.c https://raw.githubusercontent.com/sqlite/sqlite/refs/tags/version-3.47.2/tool/lemon.c &amp;&amp; cc -O1 -o lemon lemon.c
