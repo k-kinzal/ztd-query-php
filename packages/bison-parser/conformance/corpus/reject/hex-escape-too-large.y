@@ -1,1 +1,0 @@
-%token A\n%%\nstart: '\\x100' ;\n
