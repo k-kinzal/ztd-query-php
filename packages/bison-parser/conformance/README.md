@@ -24,3 +24,7 @@ php conformance/fetch.php build/conformance/remote && composer conformance -- --
 ```
 
 Bison 3.8.2 is the reference; another release may report different automata for the same grammar and is reported in the first line of output.
+
+## What the reference is
+
+The CI job builds Bison from the GNU release tarball `bison-3.8.2.tar.gz` (SHA-256 `06c9e13bdf7eb24d4ceb6b59205a4f67c2c7e7213119644430fe82fbd14a0abb`, checked before the build). That tarball is the one signed by the Bison maintainer, Akim Demaille, with the key `7DF8 4374 B1EE 1F97 64BB E25D 0DDC AA32 78D5 264E` of the GNU keyring; the signature `bison-3.8.2.tar.gz.sig` was verified against `gnu-keyring.gpg` when the digest was pinned. Bison is the only definition of its grammar language, and its own test suite is what GNU validates each release with, which is why the reference is that release, unmodified, and not a re-implementation.
