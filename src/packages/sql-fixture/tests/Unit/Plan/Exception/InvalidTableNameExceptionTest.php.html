@@ -53,23 +53,25 @@
 <span class="src-line" id="L17"><a class="ln" href="#L17">17</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFixture\Plan\Exception\UnexpectedPlanTokenException</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L18"><a class="ln" href="#L18">18</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFixture\Plan\Exception\UnsupportedManyToManyException</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L19"><a class="ln" href="#L19">19</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFixture\Plan\Exception\CompositeArityMismatchException</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L20"><a class="ln" href="#L20">20</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">InvalidTableNameExceptionTest</span> <span class="tok-kw">extends</span> <span class="tok-id">TestCase</span></span>
-<span class="src-line" id="L21"><a class="ln" href="#L21">21</a>{</span>
-<span class="src-line" id="L22"><a class="ln" href="#L22">22</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testDescribesInvalidTableName</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L23"><a class="ln" href="#L23">23</a>    {</span>
-<span class="src-line" id="L24"><a class="ln" href="#L24">24</a>        <span class="tok-var">$exception</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlFixture\Plan\Exception\InvalidTableNameException</span>(<span class="tok-str">&#039;order.id &lt; order_detail.order_id&#039;</span>);</span>
-<span class="src-line" id="L25"><a class="ln" href="#L25">25</a>        <span class="tok-var">$message</span> = <span class="tok-var">$exception</span>-&gt;<span class="tok-id">getMessage</span>();</span>
-<span class="src-line" id="L26"><a class="ln" href="#L26">26</a></span>
-<span class="src-line" id="L27"><a class="ln" href="#L27">27</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
-<span class="src-line" id="L28"><a class="ln" href="#L28">28</a>            <span class="tok-str">&#039;A FixturePlan part must be a Relation or a plain table name, but &#039;</span></span>
-<span class="src-line" id="L29"><a class="ln" href="#L29">29</a>            . <span class="tok-str">&#039;&quot;order.id &lt; order_detail.order_id&quot; is neither. To build a plan from relation &#039;</span></span>
-<span class="src-line" id="L30"><a class="ln" href="#L30">30</a>            . <span class="tok-str">&#039;syntax, use FixturePlan::from().&#039;</span>,</span>
-<span class="src-line" id="L31"><a class="ln" href="#L31">31</a>            <span class="tok-var">$message</span></span>
-<span class="src-line" id="L32"><a class="ln" href="#L32">32</a>        );</span>
-<span class="src-line" id="L33"><a class="ln" href="#L33">33</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;order.id &lt; order_detail.order_id&#039;</span>, <span class="tok-var">$exception</span>-&gt;<span class="tok-id">part</span>);</span>
-<span class="src-line" id="L34"><a class="ln" href="#L34">34</a>    }</span>
-<span class="src-line" id="L35"><a class="ln" href="#L35">35</a>}</span>
-<span class="src-line" id="L36"><a class="ln" href="#L36">36</a></span>
+<span class="src-line" id="L20"><a class="ln" href="#L20">20</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFixture\Plan\Choice\ChoiceValidation</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L21"><a class="ln" href="#L21">21</a>#[<span class="tok-id">UsesClass</span>(<span class="tok-id">\SqlFixture\Plan\Choice\PlanContents</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L22"><a class="ln" href="#L22">22</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">InvalidTableNameExceptionTest</span> <span class="tok-kw">extends</span> <span class="tok-id">TestCase</span></span>
+<span class="src-line" id="L23"><a class="ln" href="#L23">23</a>{</span>
+<span class="src-line" id="L24"><a class="ln" href="#L24">24</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testDescribesInvalidTableName</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L25"><a class="ln" href="#L25">25</a>    {</span>
+<span class="src-line" id="L26"><a class="ln" href="#L26">26</a>        <span class="tok-var">$exception</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlFixture\Plan\Exception\InvalidTableNameException</span>(<span class="tok-str">&#039;order.id &lt; order_detail.order_id&#039;</span>);</span>
+<span class="src-line" id="L27"><a class="ln" href="#L27">27</a>        <span class="tok-var">$message</span> = <span class="tok-var">$exception</span>-&gt;<span class="tok-id">getMessage</span>();</span>
+<span class="src-line" id="L28"><a class="ln" href="#L28">28</a></span>
+<span class="src-line" id="L29"><a class="ln" href="#L29">29</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" id="L30"><a class="ln" href="#L30">30</a>            <span class="tok-str">&#039;A FixturePlan part must be a Relation or a plain table name, but &#039;</span></span>
+<span class="src-line" id="L31"><a class="ln" href="#L31">31</a>            . <span class="tok-str">&#039;&quot;order.id &lt; order_detail.order_id&quot; is neither. To build a plan from relation &#039;</span></span>
+<span class="src-line" id="L32"><a class="ln" href="#L32">32</a>            . <span class="tok-str">&#039;syntax, use FixturePlan::from().&#039;</span>,</span>
+<span class="src-line" id="L33"><a class="ln" href="#L33">33</a>            <span class="tok-var">$message</span></span>
+<span class="src-line" id="L34"><a class="ln" href="#L34">34</a>        );</span>
+<span class="src-line" id="L35"><a class="ln" href="#L35">35</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;order.id &lt; order_detail.order_id&#039;</span>, <span class="tok-var">$exception</span>-&gt;<span class="tok-id">part</span>);</span>
+<span class="src-line" id="L36"><a class="ln" href="#L36">36</a>    }</span>
+<span class="src-line" id="L37"><a class="ln" href="#L37">37</a>}</span>
+<span class="src-line" id="L38"><a class="ln" href="#L38">38</a></span>
 </code></pre>
 </main>
 <footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

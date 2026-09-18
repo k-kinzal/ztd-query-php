@@ -77,17 +77,19 @@
 <span class="src-line" id="L41"><a class="ln" href="#L41">41</a>#[<span class="tok-id">\PHPUnit\Framework\Attributes\UsesClass</span>(<span class="tok-id">\SqlFixture\Plan\Exception\DuplicateColumnBindingException</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L42"><a class="ln" href="#L42">42</a>#[<span class="tok-id">\PHPUnit\Framework\Attributes\UsesClass</span>(<span class="tok-id">\SqlFixture\Plan\Exception\CyclicDependencyException</span>::<span class="tok-kw">class</span>)]</span>
 <span class="src-line" id="L43"><a class="ln" href="#L43">43</a>#[<span class="tok-id">\PHPUnit\Framework\Attributes\UsesClass</span>(<span class="tok-id">\SqlFixture\Plan\Exception\UnboundedSelfReferenceException</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L44"><a class="ln" href="#L44">44</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">OverrideSpecsTest</span> <span class="tok-kw">extends</span> <span class="tok-id">TestCase</span></span>
-<span class="src-line" id="L45"><a class="ln" href="#L45">45</a>{</span>
-<span class="src-line" id="L46"><a class="ln" href="#L46">46</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testSpecsPreservesNamedAndPositionalRequests</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L47"><a class="ln" href="#L47">47</a>    {</span>
-<span class="src-line" id="L48"><a class="ln" href="#L48">48</a>        <span class="tok-var">$plan</span> = <span class="tok-id">FixturePlan</span>::<span class="tok-id">from</span>(<span class="tok-str">&#039;a.id &lt; b.a_id&#039;</span>);</span>
-<span class="src-line" id="L49"><a class="ln" href="#L49">49</a>        <span class="tok-var">$specs</span> = (<span class="tok-kw">new</span> <span class="tok-id">Subject</span>())-&gt;<span class="tok-id">specs</span>([<span class="tok-str">&#039;a&#039;</span> =&gt; [<span class="tok-str">&#039;id&#039;</span> =&gt; <span class="tok-num">5</span>], <span class="tok-str">&#039;b&#039;</span> =&gt; <span class="tok-num">3</span>]);</span>
-<span class="src-line" id="L50"><a class="ln" href="#L50">50</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([<span class="tok-str">&#039;id&#039;</span> =&gt; <span class="tok-num">5</span>], <span class="tok-var">$specs</span>[<span class="tok-str">&#039;a&#039;</span>]-&gt;<span class="tok-id">overridesFor</span>(<span class="tok-num">0</span>));</span>
-<span class="src-line" id="L51"><a class="ln" href="#L51">51</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-num">3</span>, <span class="tok-var">$specs</span>[<span class="tok-str">&#039;b&#039;</span>]-&gt;<span class="tok-id">count</span>);</span>
-<span class="src-line" id="L52"><a class="ln" href="#L52">52</a>    }</span>
-<span class="src-line" id="L53"><a class="ln" href="#L53">53</a>}</span>
-<span class="src-line" id="L54"><a class="ln" href="#L54">54</a></span>
+<span class="src-line" id="L44"><a class="ln" href="#L44">44</a>#[<span class="tok-id">\PHPUnit\Framework\Attributes\UsesClass</span>(<span class="tok-id">\SqlFixture\Plan\Choice\ChoiceValidation</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L45"><a class="ln" href="#L45">45</a>#[<span class="tok-id">\PHPUnit\Framework\Attributes\UsesClass</span>(<span class="tok-id">\SqlFixture\Plan\Choice\PlanContents</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L46"><a class="ln" href="#L46">46</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">OverrideSpecsTest</span> <span class="tok-kw">extends</span> <span class="tok-id">TestCase</span></span>
+<span class="src-line" id="L47"><a class="ln" href="#L47">47</a>{</span>
+<span class="src-line" id="L48"><a class="ln" href="#L48">48</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testSpecsPreservesNamedAndPositionalRequests</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L49"><a class="ln" href="#L49">49</a>    {</span>
+<span class="src-line" id="L50"><a class="ln" href="#L50">50</a>        <span class="tok-var">$plan</span> = <span class="tok-id">FixturePlan</span>::<span class="tok-id">from</span>(<span class="tok-str">&#039;a.id &lt; b.a_id&#039;</span>);</span>
+<span class="src-line" id="L51"><a class="ln" href="#L51">51</a>        <span class="tok-var">$specs</span> = (<span class="tok-kw">new</span> <span class="tok-id">Subject</span>())-&gt;<span class="tok-id">specs</span>([<span class="tok-str">&#039;a&#039;</span> =&gt; [<span class="tok-str">&#039;id&#039;</span> =&gt; <span class="tok-num">5</span>], <span class="tok-str">&#039;b&#039;</span> =&gt; <span class="tok-num">3</span>]);</span>
+<span class="src-line" id="L52"><a class="ln" href="#L52">52</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([<span class="tok-str">&#039;id&#039;</span> =&gt; <span class="tok-num">5</span>], <span class="tok-var">$specs</span>[<span class="tok-str">&#039;a&#039;</span>]-&gt;<span class="tok-id">overridesFor</span>(<span class="tok-num">0</span>));</span>
+<span class="src-line" id="L53"><a class="ln" href="#L53">53</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-num">3</span>, <span class="tok-var">$specs</span>[<span class="tok-str">&#039;b&#039;</span>]-&gt;<span class="tok-id">count</span>);</span>
+<span class="src-line" id="L54"><a class="ln" href="#L54">54</a>    }</span>
+<span class="src-line" id="L55"><a class="ln" href="#L55">55</a>}</span>
+<span class="src-line" id="L56"><a class="ln" href="#L56">56</a></span>
 </code></pre>
 </main>
 <footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
