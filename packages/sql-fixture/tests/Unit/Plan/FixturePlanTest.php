@@ -46,6 +46,13 @@ use SqlFixture\Plan\RelationSide;
 #[UsesClass(\SqlFixture\Plan\Exception\DuplicateColumnBindingException::class)]
 #[UsesClass(\SqlFixture\Plan\Exception\CyclicDependencyException::class)]
 #[UsesClass(\SqlFixture\Plan\Exception\UnboundedSelfReferenceException::class)]
+#[UsesClass(\SqlFixture\Plan\Choice\ChoiceCase::class)]
+#[UsesClass(\SqlFixture\Plan\Choice\ChoiceDefinitionException::class)]
+#[UsesClass(\SqlFixture\Plan\Choice\ChoiceLiteral::class)]
+#[UsesClass(\SqlFixture\Plan\Choice\ChoiceSyntax::class)]
+#[UsesClass(\SqlFixture\Plan\Choice\ChoiceValidation::class)]
+#[UsesClass(\SqlFixture\Plan\Choice\PlanContents::class)]
+#[UsesClass(\SqlFixture\Plan\RelationChoice::class)]
 final class FixturePlanTest extends TestCase
 {
     #[Test]
@@ -436,5 +443,45 @@ final class FixturePlanTest extends TestCase
         $plan = (new FixturePlan(...['first' => Relation::oneToMany('a.id', 'b.a_id')]))->withTable('audit_log');
 
         self::assertSame(['a', 'b', 'audit_log'], $plan->tables);
+    }
+
+    public function testWithChoiceKeepsEveryPotentialTableInOrder(): void
+    {
+        $choice = \SqlFixture\Plan\RelationChoice::on('comments.kind')->when('post', Relation::manyToOne('comments.id', 'posts.id'))->when('video', Relation::manyToOne('comments.id', 'videos.id'));
+        $base = FixturePlan::table('comments');
+        $plan = $base->withChoice($choice);
+        self::assertSame([], $base->choices);
+        self::assertSame([$choice], $plan->choices);
+        self::assertSame(['comments', 'posts', 'videos'], $plan->tables);
+        self::assertEquals($plan, FixturePlan::from($plan));
+        self::assertSame($plan->toString(), FixturePlan::from($plan->toString())->toString());
+    }
+
+    public function testSelectKeepsTheSubjectWhenABranchHasNoRelations(): void
+    {
+        $choice = \SqlFixture\Plan\RelationChoice::on('comments.kind')->when('post', Relation::manyToOne('comments.id', 'posts.id'))->when('none');
+        $plan = new FixturePlan($choice);
+        $selected = $plan->select($choice, $choice->cases[1]);
+        self::assertSame('comments', $selected->subjectTable());
+        self::assertSame([], $selected->relations);
+        self::assertSame([], $selected->choices);
+        self::assertSame([$choice], $plan->parts());
+    }
+
+    public function testWithChoiceKeepsExistingSubjectsAndOrdinaryRelations(): void
+    {
+        $plain = Relation::oneToMany('users.id', 'comments.user_id');
+        $choice = \SqlFixture\Plan\RelationChoice::on('comments.kind')->when('none');
+        $base = new FixturePlan('users', $plain, 'audit');
+        $plan = $base->withChoice($choice);
+        self::assertSame(['users', $plain, 'audit', $choice], $plan->parts());
+        self::assertSame('users', $plan->subjectTable());
+    }
+
+    public function testSelectRetainsPartsBeforeAndAfterTheChoice(): void
+    {
+        $choice = \SqlFixture\Plan\RelationChoice::on('comments.kind')->when('none');
+        $plan = new FixturePlan('users', $choice, 'audit');
+        self::assertSame(['users', 'comments', 'audit'], $plan->select($choice, $choice->cases[0])->parts());
     }
 }

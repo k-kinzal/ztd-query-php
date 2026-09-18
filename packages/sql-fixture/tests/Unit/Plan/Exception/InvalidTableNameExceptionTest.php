@@ -17,6 +17,8 @@ use PHPUnit\Framework\TestCase;
 #[UsesClass(\SqlFixture\Plan\Exception\UnexpectedPlanTokenException::class)]
 #[UsesClass(\SqlFixture\Plan\Exception\UnsupportedManyToManyException::class)]
 #[UsesClass(\SqlFixture\Plan\Exception\CompositeArityMismatchException::class)]
+#[UsesClass(\SqlFixture\Plan\Choice\ChoiceValidation::class)]
+#[UsesClass(\SqlFixture\Plan\Choice\PlanContents::class)]
 final class InvalidTableNameExceptionTest extends TestCase
 {
     public function testDescribesInvalidTableName(): void

@@ -156,6 +156,22 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\TypeMapper\IntegerWidth::class)]
 #[UsesClass(\SqlFixture\TypeMapper\DecimalRange::class)]
 #[UsesClass(\SqlFixture\Hydrator\Reflection\ConversionTarget::class)]
+#[UsesClass(\SqlFixture\Fixture\Choice\InverseRelations::class)]
+#[UsesClass(\SqlFixture\Fixture\Choice\ResolvedRow::class)]
+#[UsesClass(\SqlFixture\Fixture\Choice\RowChoices::class)]
+#[UsesClass(\SqlFixture\Plan\Choice\ChoiceValidation::class)]
+#[UsesClass(\SqlFixture\Plan\Choice\PlanContents::class)]
+#[UsesClass(\SqlFixture\Fixture\Generation\RowBindings::class)]
+#[UsesClass(\SqlFixture\Fixture\Generation\RecursiveRelationException::class)]
+#[UsesClass(\SqlFixture\Fixture\Generation\RelationValueException::class)]
+#[UsesClass(\SqlFixture\Plan\Choice\ChoiceDefinitionException::class)]
+#[UsesClass(\SqlFixture\Plan\Choice\ChoiceLiteral::class)]
+#[UsesClass(\SqlFixture\Plan\Choice\ChoiceSyntax::class)]
+#[UsesClass(\SqlFixture\Plan\Choice\ChoiceCase::class)]
+#[UsesClass(\SqlFixture\Fixture\Choice\ChoiceBindings::class)]
+#[UsesClass(\SqlFixture\Fixture\Choice\ChoiceValueException::class)]
+#[UsesClass(\SqlFixture\Fixture\Choice\CaseSelection::class)]
+#[UsesClass(\SqlFixture\Plan\RelationChoice::class)]
 final class FixtureProviderTest extends TestCase
 {
     #[Test]
@@ -796,5 +812,29 @@ final class FixtureProviderTest extends TestCase
     public static function providerNullableSeeds(): array
     {
         return array_map(static fn (int $seed): array => [$seed], range(1, 20));
+    }
+
+    /**
+     * @return list<array{string}>
+     */
+    public static function providerChoiceDialects(): array
+    {
+        return [['mysql'], ['pgsql'], ['sqlite']];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerChoiceDialects')]
+    public function testFixturesSelectsRelationsForEveryDialect(string $dialect): void
+    {
+        $provider = new FixtureProvider(Factory::create(), dialect: $dialect);
+        $provider->registerSchema('CREATE TABLE comments (target_type VARCHAR(10), target_id INTEGER)');
+        $provider->registerSchema('CREATE TABLE posts (id INTEGER NOT NULL)');
+        $provider->registerSchema('CREATE TABLE videos (id INTEGER NOT NULL)');
+        $set = $provider->fixtures(
+            "choice comments.target_type { 'post' { comments.target_id > posts.id } 'video' { comments.target_id > videos.id } }",
+            ['comments' => [['target_type' => 'post'], ['target_type' => 'video']], 'posts' => ['id' => 11], 'videos' => ['id' => 22]],
+        );
+        self::assertSame([11, 22], array_column($set->rows('comments'), 'target_id'));
+        self::assertSame([['id' => 11]], $set->rows('posts'));
+        self::assertSame([['id' => 22]], $set->rows('videos'));
     }
 }

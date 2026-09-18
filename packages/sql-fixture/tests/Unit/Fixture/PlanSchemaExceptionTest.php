@@ -36,6 +36,8 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\Fixture\Exception\GeneratedColumnReferenceException::class)]
 #[UsesClass(\SqlFixture\Fixture\Exception\MissingRelationValueException::class)]
 #[UsesClass(\SqlFixture\Fixture\Exception\UnknownPlanColumnException::class)]
+#[UsesClass(\SqlFixture\Plan\Choice\ChoiceValidation::class)]
+#[UsesClass(\SqlFixture\Plan\Choice\PlanContents::class)]
 final class PlanSchemaExceptionTest extends TestCase
 {
     #[Test]
