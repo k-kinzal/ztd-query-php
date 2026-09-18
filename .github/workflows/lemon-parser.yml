@@ -198,6 +198,8 @@ jobs:
         run: |
           set -euo pipefail
           curl -sSL -o "$RUNNER_TEMP/lemon.c" https://raw.githubusercontent.com/sqlite/sqlite/refs/tags/version-3.47.2/tool/lemon.c
+          # tool/lemon.c at SQLite's version-3.47.2 tag; its digest is pinned here.
+          echo "3661d01cb826d443a0148d93e440d3891d27782d0c3c0656e187968febb49bc0  $RUNNER_TEMP/lemon.c" | sha256sum -c -
           cc -O1 -o "$RUNNER_TEMP/lemon" "$RUNNER_TEMP/lemon.c"
           "$RUNNER_TEMP/lemon" -x
       - name: Fetch SQLite's grammars
