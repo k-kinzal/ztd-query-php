@@ -23,10 +23,6 @@ The reader follows `lemon.c` as shipped with SQLite 3.47.2: `preprocess_input` a
 - The symbol table checks Lemon makes while reading are made too: a second precedence for a terminal, a second `%type` for a symbol, a second fallback for a token, a second wildcard, and a `%token_class` named after a symbol already seen are errors.
 - Rule counts match Lemon's `-s` statistics on every corpus grammar and define set tried: `fts5parse.y` 28, `parse.y` 3.8.0 327, 3.20.0 329, 3.35.0 398, 3.47.2 409, and the reduced counts under `-DSQLITE_OMIT_...`.
 
-## Conformance suite
-
-`composer conformance -- --lemon=PATH DIR...` compares this package with Lemon on every `.y` file under the directories given, under each set of defines its `.defines` file lists. The preprocessed text must equal `lemon -E`; a file Lemon reads must parse here and print to a file from which Lemon produces the same report, the reprint of the grammar with its symbol numbering, the token numbers and the parser report with every state, action and precedence; a file Lemon stops reading must raise a `SyntaxException`. `conformance/corpus/` holds hand-written grammars that use every directive and rule form, a preprocessor grammar read under six sets of defines, and files Lemon rejects; the CI job adds SQLite's `parse.y` at four releases under five sets of defines each, `fts5parse.y` and SQLite's `lemon-test01.y`, listed in `conformance/corpus.txt`. See [conformance/README.md](../conformance/README.md).
-
 ## Where this reader is stricter
 
 Lemon reads a file to the end and simply stops; a rule cut off before its period, or a `%left` list cut off before its period, leaves no trace and no message. This reader reports both as `SyntaxException`, because a tree that silently lacks the last rule is not a tree of the file. Lemon also lets an unclosed `(` in a `%if` expression pass; this reader reports it. Nothing Lemon rejects is accepted.

@@ -1,2 +1,0 @@
-%tokens A.
-start ::= A.

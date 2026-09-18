@@ -35,8 +35,7 @@
         "psr-4": {
             "Tests\\": "tests/",
             "Fuzz\\": "fuzz/",
-            "Bench\\": "bench/",
-            "Conformance\\": "conformance/"
+            "Bench\\": "bench/"
         }
     },
     "scripts": {
@@ -89,8 +88,7 @@
         "test": "paratest --processes=auto",
         "test:coverage": "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml",
         "test:unit": "phpunit --testsuite unit",
-        "tree-guard": "tree-guard --config=tree.yaml",
-        "conformance": "php conformance/run.php"
+        "tree-guard": "tree-guard --config=tree.yaml"
     },
     "config": {
         "allow-plugins": {
@@ -107,8 +105,7 @@
     },
     "scripts-descriptions": {
         "fuzz": "Run every fuzz target with the bounded smoke budget.",
-        "fuzz:smoke": "Run each fuzz target for up to 100 executions; individual fuzz:* commands run continuously.",
-        "conformance": "Compare the parser with Lemon on a corpus of grammar files: php conformance/run.php --lemon=PATH DIR..."
+        "fuzz:smoke": "Run each fuzz target for up to 100 executions; individual fuzz:* commands run continuously."
     },
     "bin": [
         "bin/lemon-parser"

@@ -71,10 +71,6 @@ See [docs/tree.md](docs/tree.md) for every node of the tree and [docs/fidelity.m
 
 Host code is kept as written and never interpreted. Literals keep their spelling next to their decoded value, since Bison names string tokens by their spelling. Deprecated spellings such as `%pure_parser`, `%term` and `%binary` are read as Bison reads them.
 
-## Conformance with GNU Bison
-
-`composer conformance -- --bison=PATH DIR...` reads every grammar under the directories with GNU Bison and with this package, and requires that a file Bison accepts prints back to a file from which Bison produces the same XML report, and that a file Bison's scanner or parser refuses raises a `SyntaxException` here. The CI runs it against Bison 3.8.2 on Bison's examples, the grammars of Bison's own test suite, real-world grammars and a hand-written corpus. See [docs/fidelity.md](docs/fidelity.md).
-
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
