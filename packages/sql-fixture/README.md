@@ -110,9 +110,6 @@ $fixtures = $provider->fixtures(
 
 Register all candidate schemas before generating the group. The first comment
 references a generated post and the second references a generated video.
-See [Relational fixture plans](docs/relations.md) for the PHP builder API,
-conditional child tables, composite keys, optional branches, inverse generation,
-and supported relationship patterns.
 
 ### Overriding Values
 
