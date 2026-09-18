@@ -1,2 +1,0 @@
-{ no rule yet }
-start ::= .

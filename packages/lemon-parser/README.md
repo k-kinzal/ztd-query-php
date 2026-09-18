@@ -71,10 +71,6 @@ See [docs/tree.md](docs/tree.md) for every node of the tree and [docs/fidelity.m
 
 Host code is kept as written and never interpreted.
 
-## Conformance with Lemon
-
-`composer conformance -- --lemon=PATH DIR...` reads every grammar under the directories with Lemon and with this package, under each set of defines listed for it, and requires that the preprocessed text equals `lemon -E`, that a file Lemon reads prints back to a file from which Lemon produces the same report, and that a file Lemon stops reading raises a `SyntaxException` here. The CI runs it against Lemon built from SQLite 3.47.2 on SQLite's grammars and a hand-written corpus. See [docs/fidelity.md](docs/fidelity.md).
-
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.

@@ -1,3 +1,0 @@
-%if A ||
-start ::= .
-%endif

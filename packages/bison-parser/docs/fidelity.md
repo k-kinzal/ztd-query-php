@@ -20,10 +20,6 @@ The reader follows the two files that define the grammar language in GNU Bison 3
 - `%token` lists are read as `token_decls`: a tag applies to the entries after it, an identifier may carry a number and a string alias. `%left` and its kin read `token_decls_for_prec`, where a string is a token of its own. `%type` reads `symbol_decls`.
 - Rules follow `rules` and `rhs`: an alternative may hold symbols with `[name]`, tagged actions with `[name]`, predicates, `%empty`, `%prec`, `%dprec`, `%merge`, `%expect` and `%expect-rr`, in any order and number. A rule ends at `;`, at the next rule, or at a declaration; extra semicolons are accepted. A declaration among the rules must end with `;`.
 
-## Conformance suite
-
-`composer conformance -- --bison=PATH DIR...` compares this package with GNU Bison on every `.y` and `.yy` file under the directories given. For each file, Bison and this package read it under the same file name; a file Bison accepts must parse here and print to a file from which Bison produces the same XML report, rules, symbols, precedence and automaton alike, and a file Bison's scanner or parser refuses must raise a `SyntaxException`. A file Bison refuses for its meaning, an undeclared symbol for one, is only read. `conformance/corpus/` holds hand-written grammars that use every directive and rule form and files Bison rejects; the CI job adds Bison's own examples, the grammars materialised from Bison's test suite, and real-world grammars listed in `conformance/corpus.txt`. See [conformance/README.md](../conformance/README.md).
-
 ## Verification
 
 The tree is checked two ways. Every public example in the source runs as a test. And a corpus of real grammar files is read and compared with GNU Bison: the number of rules Bison numbers in its `.output` report, mid-rule actions included, equals the number of alternatives plus mid-rule actions in the tree for PostgreSQL 12 (2724), MySQL 5.5 (2496) and PL/pgSQL 16 (253). Bison's own examples, its `parse-gram.y`, PHP 8.3 and PostgreSQL 17 read and print back stably.

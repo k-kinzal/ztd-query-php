@@ -1,2 +1,0 @@
-%name "unterminated
-start ::= .

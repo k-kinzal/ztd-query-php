@@ -1,3 +1,0 @@
-%tokens A
-%%
-start: A ;
