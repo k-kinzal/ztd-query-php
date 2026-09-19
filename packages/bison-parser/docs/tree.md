@@ -57,4 +57,4 @@ A `Symbol` has a `kind` (`SymbolKind::Identifier`, `CharLiteral` or `String`), a
 
 ## Errors
 
-`SyntaxException` carries a `location` and a message that names what was expected and what was found, or what Bison's scanner rejects: an invalid directive, an invalid character, an empty or overlong character literal, an unterminated string, comment, tag or code block.
+`SyntaxException` carries a `location` and a message that names what was expected and what was found, or what Bison rejects: an invalid directive, an invalid character, an empty or overlong character literal, a null character or an escape above one byte in a literal, an integer out of range, an unterminated string, comment, tag or code block, a symbol of the wrong kind in a declaration, `%empty` on a non-empty rule, or a rules section without rules.

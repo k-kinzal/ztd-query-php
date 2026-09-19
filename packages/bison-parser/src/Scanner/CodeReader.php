@@ -38,16 +38,16 @@ final class CodeReader
         $start = $cursor->location();
         $cursor->take(1);
         $code = '';
-        $nesting = 0;
+        $nesting = 1;
         while (!$cursor->eof()) {
             $unit = $this->unit($cursor);
             if ($this->opens($unit)) {
                 $nesting++;
             } elseif ($this->closes($unit)) {
-                if ($nesting === 0) {
+                $nesting--;
+                if ($nesting === 0 && $unit === '}') {
                     return $code;
                 }
-                $nesting--;
             }
             $code .= $unit;
         }

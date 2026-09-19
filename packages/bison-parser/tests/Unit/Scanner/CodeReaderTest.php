@@ -29,12 +29,20 @@ final class CodeReaderTest extends TestCase
         self::assertSame(' tail', $cursor->take(5));
     }
 
-    public function testBracedClosesOnADigraph(): void
+    public function testBracedNeverClosesOnADigraph(): void
     {
-        $cursor = new Cursor('{ x %> y');
+        $this->expectException(SyntaxException::class);
+        $this->expectExceptionMessage("Missing '}' closing the braced code opened at 1:1");
 
-        self::assertSame(' x ', (new CodeReader())->braced($cursor));
-        self::assertSame(' y', $cursor->take(2));
+        (new CodeReader())->braced(new Cursor('{ x %> y } z'));
+    }
+
+    public function testBracedClosesOnTheBraceThatBalancesADigraph(): void
+    {
+        $cursor = new Cursor('{ x %> { y } } z');
+
+        self::assertSame(' x %> { y ', (new CodeReader())->braced($cursor));
+        self::assertSame(' } z', $cursor->take(4));
     }
 
     public function testBracedSplicesBackslashNewlines(): void

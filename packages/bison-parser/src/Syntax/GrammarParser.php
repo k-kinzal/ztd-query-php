@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace BisonParser\Syntax;
 
+use BisonParser\Ast\Declaration\Declaration;
 use BisonParser\Ast\Epilogue;
 use BisonParser\Ast\GrammarFile;
+use BisonParser\Ast\Rule\Rule;
 use BisonParser\Scanner\TokenKind;
 use BisonParser\SyntaxException;
 
@@ -63,6 +65,9 @@ final class GrammarParser
             } else {
                 throw SyntaxException::unexpected("a rule or ';'", $tokens->peek()->describe(), $tokens->peek()->location);
             }
+        }
+        if (array_filter($grammar, static fn (Rule|Declaration $item): bool => $item instanceof Rule) === []) {
+            throw SyntaxException::unexpected('a rule', $tokens->peek()->describe(), $tokens->peek()->location);
         }
         $epilogue = null;
         if ($tokens->accept(TokenKind::Section) !== null) {

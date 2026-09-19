@@ -47,7 +47,7 @@ final class EscapesTest extends TestCase
     {
         $escapes = new Escapes();
 
-        self::assertSame(["\x00", 1], $escapes->escape('0', new Location(1, 1)));
+        self::assertSame(["\x01", 1], $escapes->escape('1', new Location(1, 1)));
         self::assertSame(["\x0A", 2], $escapes->escape('12x', new Location(1, 1)));
         self::assertSame(["\xFF", 3], $escapes->escape('3778', new Location(1, 1)));
         self::assertSame(["\x02", 21], $escapes->escape('x00000000000000000002', new Location(1, 1)));
@@ -81,7 +81,7 @@ final class EscapesTest extends TestCase
     public function testEscapeRejectsAWideUniversalCharacter(): void
     {
         $this->expectException(SyntaxException::class);
-        $this->expectExceptionMessage('Invalid universal character name: \u3042 at 1:1');
+        $this->expectExceptionMessage('Invalid number after \\-escape: \\u3042 at 1:1');
 
         (new Escapes())->escape('u3042', new Location(1, 1));
     }
@@ -94,5 +94,45 @@ final class EscapesTest extends TestCase
         self::assertSame('\\\'"', $escapes->encode("'\"", "'"));
         self::assertSame('\\001\\177 ~', $escapes->encode("\x01\x7F ~", '"'));
         self::assertSame("\xC3\xA9", $escapes->encode("\xC3\xA9", '"'));
+    }
+
+    public function testEscapeRejectsANullOctalEscape(): void
+    {
+        $this->expectException(SyntaxException::class);
+        $this->expectExceptionMessage('Invalid number after \\-escape: \\0 at 3:4');
+
+        (new Escapes())->escape('0', new Location(3, 4));
+    }
+
+    public function testEscapeRejectsANullHexadecimalEscape(): void
+    {
+        $this->expectException(SyntaxException::class);
+        $this->expectExceptionMessage('Invalid number after \\-escape: \\x000 at 3:4');
+
+        (new Escapes())->escape('x000', new Location(3, 4));
+    }
+
+    public function testEscapeRejectsANullUniversalCharacter(): void
+    {
+        $this->expectException(SyntaxException::class);
+        $this->expectExceptionMessage('Invalid number after \\-escape: \\u0000 at 3:4');
+
+        (new Escapes())->escape('u0000', new Location(3, 4));
+    }
+
+    public function testEscapeRejectsANullWideUniversalCharacter(): void
+    {
+        $this->expectException(SyntaxException::class);
+        $this->expectExceptionMessage('Invalid number after \\-escape: \\U00000000 at 3:4');
+
+        (new Escapes())->escape('U00000000', new Location(3, 4));
+    }
+
+    public function testByteRejectsZero(): void
+    {
+        $this->expectException(SyntaxException::class);
+        $this->expectExceptionMessage('Invalid number after \\-escape: \\0 at 1:1');
+
+        (new Escapes())->byte(0, '\\0', new Location(1, 1));
     }
 }

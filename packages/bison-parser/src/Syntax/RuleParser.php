@@ -84,8 +84,33 @@ final class RuleParser
         while (($item = $this->item($tokens)) !== null) {
             $items[] = $item;
         }
+        $this->checkEmpty($items);
 
         return new Alternative($items, $items === [] ? $at : $items[0]->location());
+    }
+
+    /**
+     * Bison rejects `%empty` on a rule that has components: a symbol, or an
+     * action that is followed by another item and hence becomes a midrule
+     * symbol.
+     *
+     * @param list<RhsItem> $items
+     */
+    public function checkEmpty(array $items): void
+    {
+        $empty = null;
+        $code = false;
+        foreach ($items as $item) {
+            if ($item instanceof EmptyItem) {
+                $empty ??= $item;
+                continue;
+            }
+            $component = $item instanceof SymbolItem || (($item instanceof Action || $item instanceof Predicate) && $code);
+            if ($component && $empty !== null) {
+                throw SyntaxException::invalid('%empty on non-empty rule', $empty->location);
+            }
+            $code = $code || $item instanceof Action || $item instanceof Predicate;
+        }
     }
 
     /**

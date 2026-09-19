@@ -22,6 +22,11 @@ final class DirectivesTest extends TestCase
         self::assertSame('header', Directives::canonical('defines'));
         self::assertSame('expect-rr', Directives::canonical('expect_rr'));
         self::assertSame('name-prefix', Directives::canonical('name_prefix'));
+        self::assertSame('fixed-output-files', Directives::canonical('fixed-output_files'));
+        self::assertSame('no-default-prec', Directives::canonical('no_default-prec'));
+        self::assertSame('token-table', Directives::canonical('token_table'));
+        self::assertNull(Directives::canonical('token_tabl'));
+        self::assertNull(Directives::canonical('parse_param'));
         self::assertNull(Directives::canonical('tokens'));
         self::assertNull(Directives::canonical(''));
         self::assertContains('glr-parser', Directives::FLAGS);

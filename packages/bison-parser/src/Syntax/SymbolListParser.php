@@ -25,7 +25,7 @@ use BisonParser\SyntaxException;
 final class SymbolListParser
 {
     /**
-     * Reads the entries of a `%token` or `%nterm` list, where a string aliases the identifier before it.
+     * Reads the entries of a `%token` list: an identifier or character literal, its number, and the string that aliases it.
      *
      * @param TokenStream $tokens Tokens positioned after the directive
      *
@@ -35,7 +35,21 @@ final class SymbolListParser
      */
     public function tokenDeclarations(TokenStream $tokens): array
     {
-        return $this->entries($tokens, true, true);
+        return $this->entries($tokens, true, true, [SymbolKind::Identifier, SymbolKind::CharLiteral]);
+    }
+
+    /**
+     * Reads the entries of a `%nterm` list: identifiers only, under optional tags.
+     *
+     * @param TokenStream $tokens Tokens positioned after the directive
+     *
+     * @return list<SymbolEntry> The entries, at least one
+     *
+     * @throws SyntaxException When the list is empty or malformed
+     */
+    public function ntermDeclarations(TokenStream $tokens): array
+    {
+        return $this->entries($tokens, false, false, [SymbolKind::Identifier]);
     }
 
     /**
@@ -49,7 +63,7 @@ final class SymbolListParser
      */
     public function precedenceDeclarations(TokenStream $tokens): array
     {
-        return $this->entries($tokens, true, false);
+        return $this->entries($tokens, true, false, [SymbolKind::Identifier, SymbolKind::CharLiteral, SymbolKind::String]);
     }
 
     /**
@@ -63,7 +77,7 @@ final class SymbolListParser
      */
     public function typeDeclarations(TokenStream $tokens): array
     {
-        return $this->entries($tokens, false, false);
+        return $this->entries($tokens, false, false, [SymbolKind::Identifier, SymbolKind::CharLiteral, SymbolKind::String]);
     }
 
     /**
@@ -72,12 +86,13 @@ final class SymbolListParser
      * @param TokenStream $tokens Tokens positioned at the list
      * @param bool $numbered Whether an integer may follow an identifier
      * @param bool $aliased Whether a string after an identifier is its alias
+     * @param list<SymbolKind> $starts The kinds of symbol that may start an entry
      *
      * @return list<SymbolEntry> The entries, at least one
      *
-     * @throws SyntaxException When the list is empty or a tag has no symbol after it
+     * @throws SyntaxException When the list is empty, a tag has no symbol after it, or an entry starts with a symbol of another kind
      */
-    public function entries(TokenStream $tokens, bool $numbered, bool $aliased): array
+    public function entries(TokenStream $tokens, bool $numbered, bool $aliased, array $starts): array
     {
         $entries = [];
         $tag = null;
@@ -95,6 +110,9 @@ final class SymbolListParser
             }
             if (!$this->startsSymbol($tokens->peek())) {
                 break;
+            }
+            if (!in_array($this->kind($tokens->peek()), $starts, true)) {
+                throw SyntaxException::unexpected($this->describe($starts), $tokens->peek()->describe(), $tokens->peek()->location);
             }
             $entries[] = $this->entry($tokens, $tag, $numbered, $aliased);
         }
@@ -118,9 +136,6 @@ final class SymbolListParser
     public function entry(TokenStream $tokens, ?string $tag, bool $numbered, bool $aliased): SymbolEntry
     {
         $symbol = $this->symbol($tokens->next());
-        if ($symbol->kind === SymbolKind::String) {
-            return new SymbolEntry($symbol, $tag, null, null);
-        }
         $number = null;
         if ($numbered) {
             $integer = $tokens->accept(TokenKind::Integer);
@@ -235,16 +250,45 @@ final class SymbolListParser
      */
     public function symbol(Token $token): Symbol
     {
-        if ($token->is(TokenKind::Identifier) || $token->is(TokenKind::IdentifierColon)) {
-            $kind = SymbolKind::Identifier;
-        } elseif ($token->is(TokenKind::CharLiteral)) {
-            $kind = SymbolKind::CharLiteral;
-        } elseif ($token->is(TokenKind::String)) {
-            $kind = SymbolKind::String;
-        } else {
-            throw SyntaxException::unexpected('a symbol', $token->describe(), $token->location);
-        }
+        $kind = $this->kind($token) ?? throw SyntaxException::unexpected('a symbol', $token->describe(), $token->location);
 
         return new Symbol($kind, $token->text, $token->location, $kind === SymbolKind::Identifier ? null : $token->raw);
+    }
+
+    /**
+     * Tells which kind of symbol a token denotes.
+     *
+     * @param Token $token Any token
+     *
+     * @return SymbolKind|null The kind, or null when the token denotes no symbol
+     */
+    public function kind(Token $token): ?SymbolKind
+    {
+        if ($token->is(TokenKind::Identifier) || $token->is(TokenKind::IdentifierColon)) {
+            return SymbolKind::Identifier;
+        }
+        if ($token->is(TokenKind::CharLiteral)) {
+            return SymbolKind::CharLiteral;
+        }
+
+        return $token->is(TokenKind::String) ? SymbolKind::String : null;
+    }
+
+    /**
+     * Words an error message with the kinds of symbol that were expected.
+     *
+     * @param list<SymbolKind> $kinds The kinds, at least one
+     *
+     * @return string For instance "an identifier or a character literal"
+     */
+    public function describe(array $kinds): string
+    {
+        $names = [SymbolKind::Identifier->value => 'an identifier', SymbolKind::CharLiteral->value => 'a character literal', SymbolKind::String->value => 'a string'];
+        $words = array_map(static fn (SymbolKind $kind): string => $names[$kind->value], $kinds);
+        if (count($words) === 1) {
+            return $words[0];
+        }
+
+        return implode(', ', array_slice($words, 0, -1)) . ' or ' . $words[count($words) - 1];
     }
 }
