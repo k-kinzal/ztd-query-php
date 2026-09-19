@@ -69,6 +69,13 @@ Faker Provider for generating syntactically valid SQL statements for MySQL, Post
 Based on official grammar definitions, can generate any statement type (DML, DDL, TCL, etc.) and SQL fragments (expressions, clauses, subqueries, CTEs).
 Supports MySQL 5.6–9.1, PostgreSQL, and SQLite. Used for fuzz testing.
 
+### packages/sql-catalog
+
+Static analysis tool that catalogs the SQL statements a PHP application can issue.
+Reads PHP source with nikic/php-parser, reconstructs each statement from the constants, enums, properties and calls it is assembled from, and reports the statement text, the tables it names, the values bound to its placeholders and where it is issued.
+Ships the `sql-catalog` command, an extension mechanism for recognising framework database APIs (pdo, mysqli, doctrine, laravel) and swappable reporters (json, html, text).
+Soundness is checked by running an executable corpus against a recording PDO and comparing what the driver saw with what the analyzer says; fuzz targets check robustness and statement recovery.
+
 ### packages/sql-fixture
 
 Faker Provider for generating test fixture data from SQL schemas.
@@ -106,3 +113,5 @@ Loaded from each package `phpstan.neon` via `vendor/k-kinzal/phpstan-custom-rule
 - [docs/postgres-spec.md](docs/postgres-spec.md) - How ZTD handles PostgreSQL SQL statements
 - [docs/sqlite-spec.md](docs/sqlite-spec.md) - How ZTD handles SQLite SQL statements
 - [docs/sql-support-matrix.md](docs/sql-support-matrix.md) - Supported SQL statements and their status
+- [packages/sql-catalog/docs/analysis.md](packages/sql-catalog/docs/analysis.md) - How sql-catalog reconstructs the SQL a PHP application issues
+- [packages/sql-catalog/docs/verification.md](packages/sql-catalog/docs/verification.md) - How sql-catalog's accuracy is checked and what it measures

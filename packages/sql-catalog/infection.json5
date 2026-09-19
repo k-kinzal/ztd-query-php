@@ -1,0 +1,21 @@
+// NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
+{
+    "$schema": "https://raw.githubusercontent.com/infection/infection/0.35.4/resources/schema.json",
+    "source": {"directories": ["src"]},
+    "mutators": {"@default": true},
+    "minMsi": 80,
+    "minCoveredMsi": 80,
+    "timeout": 30,
+    "timeoutsAsEscaped": true,
+    "tmpDir": "build/infection-tmp",
+    "logs": {
+        "text": "build/infection/escaped.log",
+        "summary": "build/infection/summary.log",
+        "perMutator": "build/infection/per-mutator.md",
+        "json": "build/infection/infection.json"
+    },
+    // Score all behavioral tests present in this package; documentation examples run separately.
+    "testFrameworkExtraArgs": "--no-extensions --testsuite=unit,conformance",
+    "testFramework": "phpunit",
+    "phpUnit": {"configDir": ".", "customPath": "vendor/bin/phpunit"}
+}

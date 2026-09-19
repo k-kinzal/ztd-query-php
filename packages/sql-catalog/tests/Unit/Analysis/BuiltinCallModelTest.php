@@ -1,0 +1,255 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Analysis;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\TestCase;
+use SqlCatalog\Analysis\BuiltinCallModel;
+use SqlCatalog\Evaluation\ArrayEntry;
+use SqlCatalog\Evaluation\ArrayTerm;
+use SqlCatalog\Evaluation\Domain;
+use SqlCatalog\Evaluation\LiteralTerm;
+use SqlCatalog\Evaluation\OpaqueTerm;
+use SqlCatalog\Evaluation\PatternTerm;
+use SqlCatalog\Text\LiteralText;
+use SqlCatalog\Text\TextGeneralization;
+use SqlCatalog\Text\TextHole;
+use SqlCatalog\Text\TextPattern;
+use SqlCatalog\Type\TypeShape;
+
+#[CoversClass(BuiltinCallModel::class)]
+#[UsesClass(ArrayEntry::class)]
+#[UsesClass(ArrayTerm::class)]
+#[UsesClass(Domain::class)]
+#[UsesClass(LiteralTerm::class)]
+#[UsesClass(OpaqueTerm::class)]
+#[UsesClass(PatternTerm::class)]
+#[UsesClass(LiteralText::class)]
+#[UsesClass(TextGeneralization::class)]
+#[UsesClass(TextHole::class)]
+#[UsesClass(TextPattern::class)]
+#[UsesClass(TypeShape::class)]
+final class BuiltinCallModelTest extends TestCase
+{
+    /**
+     * @param list<Domain> $arguments
+     */
+    #[DataProvider('providerEvaluate')]
+    public function testEvaluateOfEveryModelledFunction(string $function, array $arguments, string $expected): void
+    {
+        self::assertSame($expected, (new BuiltinCallModel())->evaluate($function, $arguments)->patterns()[0]->display());
+    }
+
+    /**
+     * @return list<array{string, list<Domain>, string}>
+     */
+    public static function providerEvaluate(): array
+    {
+        return [
+            ['sprintf', [Domain::literal('a%s'), Domain::literal('b')], 'ab'],
+            ['vsprintf', [Domain::literal('a%s'), Domain::of(new ArrayTerm([new ArrayEntry(null, Domain::literal('b'))]))], 'ab'],
+            ['implode', [Domain::literal('-'), Domain::of(new ArrayTerm([new ArrayEntry(null, Domain::literal('a')), new ArrayEntry(null, Domain::literal('b'))]))], 'a-b'],
+            ['join', [Domain::literal('-'), Domain::of(new ArrayTerm([new ArrayEntry(null, Domain::literal('a'))]))], 'a'],
+            ['str_repeat', [Domain::literal('?'), Domain::literal(3)], '???'],
+            ['strtolower', [Domain::literal('AB')], 'ab'],
+            ['strtoupper', [Domain::literal('ab')], 'AB'],
+            ['ucfirst', [Domain::literal('ab')], 'Ab'],
+            ['lcfirst', [Domain::literal('AB')], 'aB'],
+            ['trim', [Domain::literal(' a ')], 'a'],
+            ['ltrim', [Domain::literal(' a')], 'a'],
+            ['rtrim', [Domain::literal('a ')], 'a'],
+            ['str_replace', [Domain::literal('a'), Domain::literal('b'), Domain::literal('a')], 'b'],
+            ['strval', [Domain::literal('a')], 'a'],
+            ['intval', [Domain::literal('1')], '{$}'],
+            ['count', [Domain::literal('1')], '{$}'],
+            ['strlen', [Domain::literal('1')], '{$}'],
+            ['json_encode', [Domain::literal('1')], '{$}'],
+        ];
+    }
+
+    #[DataProvider('providerSupports')]
+    public function testSupportsEveryModelledFunction(string $function): void
+    {
+        self::assertTrue((new BuiltinCallModel())->supports($function));
+    }
+
+    /**
+     * @return list<array{string}>
+     */
+    public static function providerSupports(): array
+    {
+        return [
+            ['sprintf'], ['vsprintf'], ['implode'], ['join'], ['str_repeat'],
+            ['strtolower'], ['strtoupper'], ['ucfirst'], ['lcfirst'],
+            ['trim'], ['ltrim'], ['rtrim'], ['str_replace'], ['strval'],
+            ['intval'], ['count'], ['strlen'],
+            ['json_encode'], ['addslashes'], ['htmlspecialchars'], ['str_pad'],
+            ['substr'], ['number_format'], ['date'], ['ucwords'], ['nl2br'], ['serialize'],
+        ];
+    }
+
+    public function testEvaluateOfAFunctionItDoesNotModelFallsBackToAString(): void
+    {
+        self::assertSame('string', (new BuiltinCallModel())->evaluate('addslashes', [Domain::literal('a')])->type()->display());
+    }
+
+    public function testSupportsTheFunctionsThatShapeQueryText(): void
+    {
+        $model = new BuiltinCallModel();
+        self::assertTrue($model->supports('sprintf'));
+        self::assertTrue($model->supports('\\implode'));
+        self::assertTrue($model->supports('json_encode'));
+        self::assertFalse($model->supports('array_map'));
+    }
+
+    public function testEvaluateResolvesSprintf(): void
+    {
+        $result = (new BuiltinCallModel())->evaluate('sprintf', [Domain::literal('FROM %s'), Domain::literal('users')]);
+        self::assertSame('FROM users', $result->soleLiteral()?->value);
+    }
+
+    public function testEvaluateResolvesTheStringTransformations(): void
+    {
+        $model = new BuiltinCallModel();
+        self::assertSame('ABC', $model->evaluate('strtoupper', [Domain::literal('abc')])->soleLiteral()?->value);
+        self::assertSame('abc', $model->evaluate('trim', [Domain::literal(' abc ')])->soleLiteral()?->value);
+    }
+
+    public function testEvaluateOfAStringReturningFunctionKnowsOnlyTheType(): void
+    {
+        self::assertSame('string', (new BuiltinCallModel())->evaluate('json_encode', [Domain::literal('x')])->type()->display());
+    }
+
+    public function testEvaluateOfACountingFunctionKnowsOnlyTheType(): void
+    {
+        self::assertSame('int', (new BuiltinCallModel())->evaluate('strlen', [Domain::literal('x')])->type()->display());
+    }
+
+    public function testEvaluateOfStrvalPassesTheValueThrough(): void
+    {
+        self::assertSame('x', (new BuiltinCallModel())->evaluate('strval', [Domain::literal('x')])->soleLiteral()?->value);
+    }
+
+    #[DataProvider('providerNormalize')]
+    public function testNormalize(string $written, string $expected): void
+    {
+        self::assertSame($expected, (new BuiltinCallModel())->normalize($written));
+    }
+
+    /**
+     * @return list<array{string, string}>
+     */
+    public static function providerNormalize(): array
+    {
+        return [
+            ['SPRINTF', 'sprintf'],
+            ['\\App\\implode', 'implode'],
+            ['\\sprintf', 'sprintf'],
+        ];
+    }
+
+    public function testSprintfLeavesAGapForAnArgumentThatDidNotResolve(): void
+    {
+        $result = (new BuiltinCallModel())->sprintf([Domain::unknown()], Domain::literal('FROM %s'));
+        self::assertSame('FROM {$}', $result->patterns()[0]->display());
+    }
+
+    public function testSprintfGivesUpWhenTheFormatDidNotResolve(): void
+    {
+        self::assertFalse((new BuiltinCallModel())->sprintf([], Domain::unknown())->isExact());
+    }
+
+    public function testSprintfKeepsALiteralPercentSign(): void
+    {
+        self::assertSame('100%', (new BuiltinCallModel())->sprintf([], Domain::literal('100%%'))->soleLiteral()?->value);
+    }
+
+    public function testVsprintfTakesItsArgumentsFromAnArray(): void
+    {
+        $values = Domain::of(new ArrayTerm([new ArrayEntry(null, Domain::literal('users'))]));
+        $result = (new BuiltinCallModel())->vsprintf([Domain::literal('FROM %s'), $values]);
+        self::assertSame('FROM users', $result->soleLiteral()?->value);
+    }
+
+    public function testVsprintfGivesUpWithoutAKnownArray(): void
+    {
+        self::assertFalse((new BuiltinCallModel())->vsprintf([Domain::literal('%s'), Domain::unknown()])->isExact());
+    }
+
+    public function testSplitFormatSeparatesLiteralsFromConversions(): void
+    {
+        self::assertSame(['SELECT ', '%s', ' FROM ', '%s'], (new BuiltinCallModel())->splitFormat('SELECT %s FROM %s'));
+    }
+
+    public function testImplodeJoinsTheElementsOfAKnownArray(): void
+    {
+        $array = Domain::of(new ArrayTerm([
+            new ArrayEntry(null, Domain::literal('id')),
+            new ArrayEntry(null, Domain::literal('name')),
+        ]));
+        $result = (new BuiltinCallModel())->implode([Domain::literal(', '), $array]);
+        self::assertSame('id, name', $result->soleLiteral()?->value);
+    }
+
+    public function testImplodeLeavesAGapWhenTheArrayIsIncomplete(): void
+    {
+        $array = Domain::of(new ArrayTerm([new ArrayEntry(null, Domain::literal('id'))], false));
+        self::assertFalse((new BuiltinCallModel())->implode([Domain::literal(','), $array])->isExact());
+    }
+
+    public function testImplodeGivesUpWithoutAKnownArray(): void
+    {
+        self::assertFalse((new BuiltinCallModel())->implode([Domain::literal(','), Domain::unknown()])->isExact());
+    }
+
+    public function testArrayArgumentFindsTheArrayInAnyPosition(): void
+    {
+        $array = Domain::of(new ArrayTerm([]));
+        $model = new BuiltinCallModel();
+        self::assertNotNull($model->arrayArgument([Domain::literal(','), $array]));
+        self::assertNull($model->arrayArgument([Domain::literal(',')]));
+    }
+
+    public function testRepeatResolvesAKnownRepetition(): void
+    {
+        self::assertSame('??', (new BuiltinCallModel())->repeat([Domain::literal('?'), Domain::literal(2)])->soleLiteral()?->value);
+    }
+
+    public function testRepeatGivesUpOnAnUnreasonableCount(): void
+    {
+        $model = new BuiltinCallModel();
+        self::assertFalse($model->repeat([Domain::literal('?'), Domain::literal(-1)])->isExact());
+        self::assertFalse($model->repeat([Domain::literal('?'), Domain::literal(10000)])->isExact());
+        self::assertFalse($model->repeat([Domain::literal('?'), Domain::unknown()])->isExact());
+    }
+
+    public function testTransformGivesUpWithoutAKnownSubject(): void
+    {
+        self::assertFalse((new BuiltinCallModel())->transform('strtolower', [Domain::unknown()])->isExact());
+    }
+
+    public function testTransformCoversEachOneArgumentFunction(): void
+    {
+        $model = new BuiltinCallModel();
+        self::assertSame('abc', $model->transform('strtolower', [Domain::literal('ABC')])->soleLiteral()?->value);
+        self::assertSame('Abc', $model->transform('ucfirst', [Domain::literal('abc')])->soleLiteral()?->value);
+        self::assertSame('aBC', $model->transform('lcfirst', [Domain::literal('ABC')])->soleLiteral()?->value);
+        self::assertSame('a ', $model->transform('ltrim', [Domain::literal(' a ')])->soleLiteral()?->value);
+        self::assertSame(' a', $model->transform('rtrim', [Domain::literal(' a ')])->soleLiteral()?->value);
+    }
+
+    public function testReplaceResolvesWhenEveryArgumentIsKnown(): void
+    {
+        $result = (new BuiltinCallModel())->replace([Domain::literal('a'), Domain::literal('b'), Domain::literal('aa')]);
+        self::assertSame('bb', $result->soleLiteral()?->value);
+    }
+
+    public function testReplaceGivesUpWhenAnArgumentIsNotKnown(): void
+    {
+        self::assertFalse((new BuiltinCallModel())->replace([Domain::literal('a'), Domain::literal('b'), Domain::unknown()])->isExact());
+    }
+}
