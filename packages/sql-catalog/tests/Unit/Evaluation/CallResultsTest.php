@@ -45,10 +45,10 @@ final class CallResultsTest extends TestCase
     public function testRememberStopsOnceTheMemoryIsFull(): void
     {
         $results = new CallResults();
-        array_map(
-            static fn (int $index): null => $results->remember('f' . $index, Domain::literal($index)),
-            range(0, CallResults::MAX_REMEMBERED),
-        );
+        $indexes = range(0, CallResults::MAX_REMEMBERED);
+        array_walk($indexes, static function (int $index) use ($results): void {
+            $results->remember('f' . $index, Domain::literal($index));
+        });
 
         self::assertSame(CallResults::MAX_REMEMBERED, $results->count());
     }
