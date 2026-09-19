@@ -47,15 +47,7 @@ use BisonParser\Printer\Printer;
 $text = (new Printer())->print($file);
 ```
 
-The command line does the same:
-
-```bash
-vendor/bin/bison-parser check grammar.y     # reads the file and checks that printing it is stable
-vendor/bin/bison-parser stats grammar.y     # counts declarations, rules and alternatives
-vendor/bin/bison-parser print grammar.y     # writes the file back out
-```
-
-See [docs/tree.md](docs/tree.md) for every node of the tree and [docs/fidelity.md](docs/fidelity.md) for what "as Bison reads it" covers.
+Every node of the tree is described in the [API documentation](https://k-kinzal.github.io/ztd-query-php/k-kinzal/bison-parser/), and what "as Bison reads it" covers is stated by the specification below.
 
 ## What is kept
 
