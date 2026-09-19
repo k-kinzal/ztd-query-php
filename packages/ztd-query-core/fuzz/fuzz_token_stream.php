@@ -12,6 +12,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 $profiles = [FakeSqlLexerProfiles::standard(), FakeSqlLexerProfiles::allCapabilities()];
 $config->setMaxLen(4096);
+$config->setAllowedExceptions([]);
 $config->setTarget(static function (string $input) use ($profiles): void {
     foreach ($profiles as $profile) {
         $stream = SqlTokenStream::tokenize($input, $profile);

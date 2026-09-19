@@ -337,7 +337,7 @@ final class FullPipelineFuzzTest extends TestCase
             $schemaParser = new PgSqlSchemaParser();
             $mutationResolver = new PgSqlMutationResolver($shadowStore, $registry, $schemaParser, $parser);
             $rewriter = new PgSqlRewriter($guard, $shadowStore, $registry, $transformer, $mutationResolver, $parser);
-            $operations = ['SELECT * FROM ' . (new PgSqlIdentifierQuoter())->quote($tableName), 'INSERT INTO ' . (new PgSqlIdentifierQuoter())->quote($tableName) . ' (' . implode(', ', array_map(fn (string $c) => (new PgSqlIdentifierQuoter())->quote($c), $definition->columns)) . ') VALUES (' . (new Input\InsertLiterals($this->faker))->buildInsertValues($definition) . ')'];
+            $operations = ['SELECT * FROM ' . (new PgSqlIdentifierQuoter())->quote($tableName), 'INSERT INTO ' . (new PgSqlIdentifierQuoter())->quote($tableName) . ' SELECT * FROM ' . (new PgSqlIdentifierQuoter())->quote($tableName)];
             if ($definition->primaryKeys !== []) {
                 $operations[] = 'UPDATE ' . (new PgSqlIdentifierQuoter())->quote($tableName) . ' SET ' . (new PgSqlIdentifierQuoter())->quote($definition->columns[0]) . ' = ' . (new PgSqlIdentifierQuoter())->quote($definition->columns[0]);
             }
@@ -348,8 +348,20 @@ final class FullPipelineFuzzTest extends TestCase
                     self::assertNotEmpty($plan->sql());
                     self::assertInstanceOf(QueryKind::class, $plan->kind());
                     if ($plan->mutation() !== null) {
-                        $fakeRows = (new Input\SchemaRows())->generateFixtureRows($definition, 1);
-                        $plan->mutation()->apply($shadowStore, $fakeRows);
+                        $before = $shadowStore->get($tableName);
+                        $isInsert = str_starts_with($sql, 'INSERT');
+                        if ($isInsert && $definition->candidateKeys()->keys() !== []) {
+                            try {
+                                $plan->mutation()->apply($shadowStore, $before);
+                                self::fail('INSERT SELECT must reject copying existing candidate keys.');
+                            } catch (\ZtdQuery\Exception\DuplicateKeyException) {
+                                self::assertSame($before, $shadowStore->get($tableName), 'A failed INSERT must be atomic.');
+                            }
+                        } else {
+                            $plan->mutation()->apply($shadowStore, $before);
+                            $expected = $isInsert ? array_merge($before, $before) : (str_starts_with($sql, 'DELETE') ? [] : $before);
+                            self::assertSame($expected, $shadowStore->get($tableName));
+                        }
                     }
                     $allData = $shadowStore->getAll();
                     foreach ($allData as $tblName => $tblRows) {

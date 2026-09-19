@@ -6,7 +6,6 @@ namespace Fuzz\Robustness\Target;
 
 use Error;
 use Fuzz\Robustness\Invariant\ShadowStoreConsistencyChecker;
-use ZtdQuery\Exception\SimulationException;
 use ZtdQuery\Exception\UnknownSchemaException;
 use ZtdQuery\Exception\UnsupportedSqlException;
 use ZtdQuery\Platform\MySql\Rewrite\MySqlQueryGuard;
@@ -100,12 +99,7 @@ final class RobustnessTarget
                 return;
             }
             try {
-                /**
-                 * @throws SimulationException Domain rejection declared by concrete shadow mutations.
-                 */
                 $mutation->apply($store, []);
-            } catch (SimulationException) {
-                return;
             } finally {
                 $violation = (new ShadowStoreConsistencyChecker($store))->check($sql);
                 if ($violation !== null) {

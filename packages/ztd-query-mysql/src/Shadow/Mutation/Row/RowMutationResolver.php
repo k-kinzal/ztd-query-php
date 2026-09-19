@@ -203,6 +203,9 @@ final class RowMutationResolver
             $tableName,
             $primaryKeys,
             $isIgnore,
+            tableDefinition: $definition,
+            sql: $sql,
+            validateConstraints: !$isIgnore,
             candidateKeys: $definition?->candidateKeys(),
         );
     }

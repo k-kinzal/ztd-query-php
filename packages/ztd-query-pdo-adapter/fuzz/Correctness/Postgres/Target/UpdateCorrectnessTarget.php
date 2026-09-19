@@ -54,11 +54,12 @@ final class UpdateCorrectnessTarget
         $this->faker->seed($seed);
 
         $schema = PgSchemaPool::random($this->faker);
-        $this->harness->setup($schema, $seed);
 
         try {
+            $this->harness->setup($schema, $seed);
             $sql = $this->sqlBuilder->buildUpdate($schema);
 
+            $shadowBefore = $this->fetchAll($this->harness->getZtdPdo(), $schema->name);
             $rawError = null;
             try {
                 $this->harness->getRawPdo()->exec($sql);
@@ -67,21 +68,26 @@ final class UpdateCorrectnessTarget
             }
 
             try {
-                $snapshot = \Fuzz\Correctness\PhysicalTableSnapshot::capture($this->harness->getRawPdo(), $schema->name);
+                $snapshot = \Fuzz\Correctness\PhysicalTableSnapshot::capture($this->harness->getPhysicalPdo(), $schema->name);
                 try {
                     $this->harness->getZtdPdo()->exec($sql);
                 } finally {
-                    \Fuzz\Correctness\PhysicalTableSnapshot::assertUnchanged($this->harness->getRawPdo(), $schema->name, $snapshot, $sql, $seed);
+                    \Fuzz\Correctness\PhysicalTableSnapshot::assertUnchanged($this->harness->getPhysicalPdo(), $schema->name, $snapshot, $sql, $seed);
                 }
             } catch (UnsupportedSqlException | UnknownSchemaException | DatabaseException | PDOException $e) {
                 if ($schema->primaryKeys === []) {
                     for ($cause = $e; $cause !== null; $cause = $cause->getPrevious()) {
                         if ($cause instanceof \ZtdQuery\Exception\MissingPrimaryKeyException) {
+                            if (!$this->comparator->compareRows($shadowBefore, $this->fetchAll($this->harness->getZtdPdo(), $schema->name))) {
+                                throw new Error('A rejected statement changed shadow rows: ' . $sql, 0, $e);
+                            }
                             return;
                         }
                     }
                 }
                 if ($rawError !== null) {
+                    \Fuzz\Correctness\FailureComparison::verify($rawError, $e, $sql);
+                    $this->compareTableState($schema, $seed);
                     return;
                 }
                 throw new Error("ZTD UPDATE failed after native success\nSeed: $seed\nSQL: $sql", 0, $e);

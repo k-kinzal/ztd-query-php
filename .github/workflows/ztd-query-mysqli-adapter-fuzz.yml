@@ -82,6 +82,9 @@ jobs:
           set -euo pipefail
           [[ "$MAX_RUNS" =~ ^[1-9][0-9]*$ ]] || { echo 'max_runs must be a positive integer' >&2; exit 1; }
           mkdir -p build/fuzz "fuzz/corpus/$CORPUS"
+          if [[ -d "fuzz/seeds/$CORPUS" ]]; then
+            cp "fuzz/seeds/$CORPUS/"* "fuzz/corpus/$CORPUS/"
+          fi
           vendor/bin/php-fuzzer fuzz "fuzz/$FUZZ_SCRIPT" "fuzz/corpus/$CORPUS/" --timeout=15 --max-runs="$MAX_RUNS" 2>&1 | tee "build/fuzz/$CORPUS.log"
       - name: Open an issue for a finding
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
@@ -141,4 +144,5 @@ jobs:
           path: |
             packages/ztd-query-mysqli-adapter/crash-*
             packages/ztd-query-mysqli-adapter/build/fuzz/${{ matrix.target.corpus }}.log
+            packages/ztd-query-mysqli-adapter/fuzz/corpus/
           if-no-files-found: ignore

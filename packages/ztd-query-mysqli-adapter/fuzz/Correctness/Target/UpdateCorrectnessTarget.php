@@ -50,6 +50,11 @@ final class UpdateCorrectnessTarget
             $this->harness->setup($schema, $seed);
             $sql = $this->sqlBuilder->buildUpdate($schema);
 
+            if ($schema->primaryKeys === []) {
+                $this->verifyMissingPrimaryKey($sql, $schema, $seed);
+                return;
+            }
+
             $rawError = null;
             try {
                 /** @throws mysqli_sql_exception */
@@ -64,11 +69,13 @@ final class UpdateCorrectnessTarget
                 if ($rawError === null) {
                     throw new Error("ZTD mutation failed after native success\nSeed: $seed\nSQL: $sql", 0, $exception);
                 }
+                \Fuzz\Correctness\FailureComparison::verify($rawError, $exception, $sql);
+                (new TableStateOracle($this->harness))->compare($schema, $seed, $sql);
                 return;
             }
 
             if ($rawError !== null) {
-                return;
+                throw new Error("ZTD mutation accepted a native-rejected query\nSeed: $seed\nSQL: $sql", 0, $rawError);
             }
 
             (new TableStateOracle($this->harness))->compare($schema, $seed, $sql);
@@ -79,5 +86,26 @@ final class UpdateCorrectnessTarget
 
 
 
+
+    /**
+     * Verify the declared no-primary-key rejection without executing the native write.
+     *
+     * @throws Error When the rejection differs or changes shadow state.
+     */
+    public function verifyMissingPrimaryKey(string $sql, \Fuzz\Correctness\SchemaDefinition $schema, int $seed): void
+    {
+        try {
+            $this->harness->getZtdMysqli()->query($sql);
+        } catch (ZtdMysqliException $failure) {
+            for ($cause = $failure; $cause !== null; $cause = $cause->getPrevious()) {
+                if ($cause instanceof \ZtdQuery\Exception\MissingPrimaryKeyException) {
+                    (new TableStateOracle($this->harness))->compare($schema, $seed, $sql);
+                    return;
+                }
+            }
+            throw new Error('Unexpected rejection for an UPDATE without a primary key: ' . $sql, 0, $failure);
+        }
+        throw new Error('UPDATE without a primary key must reject without changing shadow rows: ' . $sql);
+    }
 
 }

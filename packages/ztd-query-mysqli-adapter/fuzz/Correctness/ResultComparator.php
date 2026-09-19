@@ -29,9 +29,22 @@ final class ResultComparator
             return false;
         }
 
-        if (!$ordered && $primaryKeys !== []) {
-            $expected = (new RowOrdering())->sortByKeys($expected, $primaryKeys);
-            $actual = (new RowOrdering())->sortByKeys($actual, $primaryKeys);
+        unset($primaryKeys);
+        if (!$ordered) {
+            foreach ($expected as $expectedRow) {
+                $matched = false;
+                foreach ($actual as $index => $actualRow) {
+                    if ($this->compareRow($expectedRow, $actualRow, $columnTypes)) {
+                        unset($actual[$index]);
+                        $matched = true;
+                        break;
+                    }
+                }
+                if (!$matched) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         foreach ($expected as $i => $expectedRow) {

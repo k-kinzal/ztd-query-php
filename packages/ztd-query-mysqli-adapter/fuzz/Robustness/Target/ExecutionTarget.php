@@ -53,8 +53,17 @@ final class ExecutionTarget
             if ($result instanceof mysqli_result) {
                 $result->free();
             }
-        } catch (ZtdMysqliException) {
-            // Unsupported grammar and unknown schema are explicit adapter rejections.
+        } catch (ZtdMysqliException $exception) {
+            $expected = false;
+            for ($cause = $exception->getPrevious(); $cause !== null; $cause = $cause->getPrevious()) {
+                if ($cause instanceof \ZtdQuery\Exception\UnsupportedSqlException || $cause instanceof \ZtdQuery\Exception\UnknownSchemaException) {
+                    $expected = true;
+                    break;
+                }
+            }
+            if (!$expected) {
+                throw new Error("Unexpected adapter failure\nInput: " . bin2hex($input) . "\nSQL: $sql", 0, $exception);
+            }
         } catch (mysqli_sql_exception $exception) {
             // Grammar identifiers need not exist in the fixed schema.
             if (!in_array($exception->getCode(), [1054, 1146, 1109, 1327], true)) {

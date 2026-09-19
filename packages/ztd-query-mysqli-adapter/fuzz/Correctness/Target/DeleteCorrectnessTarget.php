@@ -64,11 +64,13 @@ final class DeleteCorrectnessTarget
                 if ($rawError === null) {
                     throw new Error("ZTD mutation failed after native success\nSeed: $seed\nSQL: $sql", 0, $exception);
                 }
+                \Fuzz\Correctness\FailureComparison::verify($rawError, $exception, $sql);
+                (new TableStateOracle($this->harness))->compare($schema, $seed, $sql);
                 return;
             }
 
             if ($rawError !== null) {
-                return;
+                throw new Error("ZTD mutation accepted a native-rejected query\nSeed: $seed\nSQL: $sql", 0, $rawError);
             }
 
             (new TableStateOracle($this->harness))->compare($schema, $seed, $sql);
