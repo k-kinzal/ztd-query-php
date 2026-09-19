@@ -56,6 +56,8 @@ use SqlCatalog\Php\SourceParser;
 #[UsesClass(\SqlCatalog\Analysis\ValueBinder::class)]
 #[UsesClass(\SqlCatalog\Php\FunctionShape::class)]
 #[UsesClass(\SqlCatalog\Text\TextHole::class)]
+#[UsesClass(\SqlCatalog\Analysis\SinkFinder::class)]
+#[UsesClass(\SqlCatalog\Evaluation\PathSet::class)]
 final class InterpreterTest extends TestCase
 {
     public function testAnalyzeFindsStatementsInsideAFunctionBody(): void
@@ -106,6 +108,63 @@ final class InterpreterTest extends TestCase
         self::assertInstanceOf(FunctionLike::class, $body);
 
         $interpreter->analyzeBody($body, $file, $expressions);
+
+        self::assertCount(1, $recorder->records());
+    }
+
+    public function testRestrictToNarrowsTheWalkToBodiesThatCanReachACall(): void
+    {
+        $interpreter = new Interpreter(new ProgramIndex(), []);
+        $interpreter->restrictTo(['t.php:12' => true]);
+
+        self::assertTrue($interpreter->reaches('t.php:12'));
+        self::assertFalse($interpreter->reaches('t.php:main'));
+    }
+
+    public function testReachesAcceptsEveryBodyUntilTheWalkIsNarrowed(): void
+    {
+        self::assertTrue((new Interpreter(new ProgramIndex(), []))->reaches('t.php:main'));
+    }
+
+    public function testAnalyzeStillReportsACallInsideABodyItSkipped(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php function f(PDO $d): void { $d->query("SELECT 1"); }');
+        $interpreter = new Interpreter((new ProgramIndexBuilder())->build([$file]), (new PdoExtension())->sinks());
+        $interpreter->restrictTo([]);
+
+        $records = $interpreter->analyze($file);
+
+        self::assertCount(1, $records);
+        self::assertSame('unreached', $records[0]->site->sink);
+    }
+
+    public function testRecordUnreachedKeepsADatabaseCallTheWalkNeverGotTo(): void
+    {
+        $file = (new SourceParser())->parse(
+            't.php',
+            '<?php function f(PDO $d): void { $a = 1; $b = 2; $c = 3; $d->query("SELECT 1"); }',
+        );
+        $interpreter = new Interpreter(
+            (new ProgramIndexBuilder())->build([$file]),
+            (new PdoExtension())->sinks(),
+            new EvaluationBudget(2),
+        );
+
+        $records = $interpreter->analyze($file);
+
+        self::assertCount(1, $records);
+        self::assertSame('unreached', $records[0]->site->sink);
+        self::assertFalse($records[0]->pattern->isExact());
+    }
+
+    public function testRecordUnreachedStaysQuietWhenTheWalkReachedEveryCall(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php function f(PDO $d): void { $d->query("SELECT 1"); }');
+        $interpreter = new Interpreter((new ProgramIndexBuilder())->build([$file]), (new PdoExtension())->sinks());
+        $recorder = new StatementRecorder();
+        $interpreter->analyze($file);
+
+        $interpreter->recordUnreached($file, $recorder);
 
         self::assertCount(1, $recorder->records());
     }

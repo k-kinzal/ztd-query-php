@@ -11,6 +11,7 @@ use SqlCatalog\Catalog\CallSite;
 use SqlCatalog\Catalog\CatalogEntry;
 use SqlCatalog\Catalog\Finding;
 use SqlCatalog\Catalog\FindingRule;
+use SqlCatalog\Catalog\Resolution;
 use SqlCatalog\Catalog\Severity;
 use SqlCatalog\Sql\StatementKind;
 use SqlCatalog\Text\LiteralText;
@@ -23,6 +24,7 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(CallSite::class)]
 #[UsesClass(Finding::class)]
 #[UsesClass(FindingRule::class)]
+#[UsesClass(Resolution::class)]
 #[UsesClass(Severity::class)]
 #[UsesClass(LiteralText::class)]
 #[UsesClass(TextHole::class)]
@@ -87,6 +89,31 @@ final class CatalogEntryTest extends TestCase
             [],
         );
         self::assertSame(Severity::Info, $entry->severity());
+    }
+
+    public function testResolutionReadsHowFarTheAnalyzerGot(): void
+    {
+        $resolved = new CatalogEntry('id', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'f', 's'), []);
+        $open = new CatalogEntry(
+            'id',
+            StatementKind::Select,
+            TextPattern::fromHole(new TextHole(Origin::External, TypeShape::unknown())),
+            [],
+            [],
+            new CallSite('a.php', 1, 'f', 's'),
+            [],
+        );
+
+        self::assertSame(Resolution::Resolved, $resolved->resolution());
+        self::assertSame(Resolution::ExternalInput, $open->resolution());
+    }
+
+    public function testTheAlternativesAreMarkedAsReachableOrNot(): void
+    {
+        $entry = new CatalogEntry('id', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'f', 's'), [], false, ['App\\R::find']);
+
+        self::assertFalse($entry->correlated);
+        self::assertSame(['App\\R::find'], $entry->through);
     }
 
     public function testHasFindingLooksForOneRule(): void

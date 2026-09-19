@@ -45,9 +45,11 @@ final class EvaluationBudgetTest extends TestCase
         self::assertFalse($budget->isExhausted());
     }
 
-    public function testTheDefaultsBoundDepthAndLoopPasses(): void
+    public function testTheDefaultsBoundStepsDepthAndLoopPasses(): void
     {
         $budget = new EvaluationBudget();
+
+        self::assertSame(20000, $budget->maxSteps);
         self::assertSame(4, $budget->maxDepth);
         self::assertSame(2, $budget->maxLoopPasses);
     }

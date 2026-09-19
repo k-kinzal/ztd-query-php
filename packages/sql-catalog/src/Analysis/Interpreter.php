@@ -8,14 +8,19 @@ use PhpParser\Node;
 use PhpParser\Node\FunctionLike;
 use PhpParser\Node\Stmt;
 use PhpParser\NodeFinder;
+use SqlCatalog\Catalog\CallSite;
 use SqlCatalog\Evaluation\Domain;
 use SqlCatalog\Evaluation\Environment;
+use SqlCatalog\Evaluation\PathSet;
 use SqlCatalog\Extension\SinkSpec;
 use SqlCatalog\Php\NodeText;
 use SqlCatalog\Php\ParsedFile;
 use SqlCatalog\Php\ProgramIndex;
 use SqlCatalog\Php\TypeReader;
 use SqlCatalog\Text\Origin;
+use SqlCatalog\Text\TextHole;
+use SqlCatalog\Text\TextPattern;
+use SqlCatalog\Type\TypeShape;
 
 /**
  * Runs the analysis over one parsed file, body by body.
@@ -44,6 +49,13 @@ final class Interpreter
 
     private TypeReader $types;
 
+    private SinkFinder $finder2;
+
+    /**
+     * @var array<string, true>|null
+     */
+    private ?array $reaching = null;
+
     /**
      * @param ProgramIndex $index The declarations of the whole analyzed source tree
      * @param list<SinkSpec> $sinks The database calls the enabled extensions recognise
@@ -57,6 +69,7 @@ final class Interpreter
         $this->finder = new NodeFinder();
         $this->text = new NodeText();
         $this->types = new TypeReader();
+        $this->finder2 = new SinkFinder();
     }
 
     /**
@@ -66,25 +79,82 @@ final class Interpreter
      */
     public function analyze(ParsedFile $file): array
     {
-        $this->budget->reset();
         $recorder = new StatementRecorder();
         $expressions = $this->evaluatorFor($recorder);
 
-        $expressions->bodies()->walk(
-            $file->statements,
-            new Environment(),
-            new FunctionScope($file->path, FunctionScope::MAIN),
-        );
+        if ($this->reaches($file->path . ':main')) {
+            $this->budget->reset();
+            $expressions->bodies()->walk(
+                $file->statements,
+                new PathSet(),
+                new FunctionScope($file->path, FunctionScope::MAIN, null, [FunctionScope::MAIN]),
+            );
+        }
 
         foreach ($this->finder->findInstanceOf($file->statements, FunctionLike::class) as $body) {
-            $this->analyzeBody($body, $file, $expressions);
+            if ($this->reaches($file->path . ':' . $body->getStartFilePos())) {
+                $this->analyzeBody($body, $file, $expressions);
+            }
         }
+        $this->recordUnreached($file, $recorder);
 
         return $recorder->records();
     }
 
     /**
+     * Narrows the walk to the bodies that can reach a database call.
+     *
+     * @param array<string, true> $reaching
+     */
+    public function restrictTo(array $reaching): void
+    {
+        $this->reaching = $reaching;
+    }
+
+    /**
+     * Whether a body is one the walk has anything to learn from.
+     */
+    public function reaches(string $key): bool
+    {
+        return $this->reaching === null || isset($this->reaching[$key]);
+    }
+
+    /**
+     * Records the database calls the walk never reached.
+     *
+     * A call the walk did not visit is a gap in the analysis, not an absence in
+     * the program. Reporting it with its statement left open keeps the two
+     * apart, so that stopping early is never read as having found nothing.
+     */
+    public function recordUnreached(ParsedFile $file, StatementRecorder $recorder): void
+    {
+        foreach ($this->finder2->find($file, $this->sinks) as $call) {
+            $siteKey = $file->path . ':' . $call->getStartFilePos();
+            if ($recorder->hasVisited($siteKey)) {
+                continue;
+            }
+            $body = $this->finder2->enclosingBody($call);
+            $className = $body === null ? null : $this->enclosingClass($body);
+            $recorder->record(
+                new CallSite(
+                    $file->path,
+                    $call->getStartLine(),
+                    $body === null ? FunctionScope::MAIN : $this->nameOf($body, $className),
+                    'unreached',
+                ),
+                $siteKey,
+                TextPattern::fromHole(new TextHole(Origin::Budget, TypeShape::unknown(), 'call not reached')),
+            );
+        }
+    }
+
+    /**
      * Walks one function body with its parameters left open.
+     *
+     * Each body starts with the budget refilled. Spending one budget across a
+     * whole file would let its first bodies use it up and leave the rest of the
+     * file reported as unreached, which says more about the order the file is
+     * written in than about the program.
      */
     public function analyzeBody(FunctionLike $body, ParsedFile $file, ExpressionEvaluator $expressions): void
     {
@@ -93,6 +163,7 @@ final class Interpreter
             return;
         }
 
+        $this->budget->reset();
         $className = $this->enclosingClass($body);
         $environment = new Environment();
         foreach ($body->getParams() as $parameter) {
@@ -104,10 +175,11 @@ final class Interpreter
             }
         }
 
+        $name = $this->nameOf($body, $className);
         $expressions->bodies()->walk(
             $statements,
-            $environment,
-            new FunctionScope($file->path, $this->nameOf($body, $className), $className),
+            PathSet::of($environment),
+            new FunctionScope($file->path, $name, $className, [$name]),
         );
     }
 

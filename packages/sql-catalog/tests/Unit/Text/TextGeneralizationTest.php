@@ -48,6 +48,28 @@ final class TextGeneralizationTest extends TestCase
         self::assertSame('WHERE 1 AND x{$}', $merged->display());
     }
 
+    public function testMergeResolvedAnswersOnlyForTwoResolvedStrings(): void
+    {
+        $generalization = new TextGeneralization(Origin::Branch);
+        $exact = TextPattern::fromText('SELECT a FROM t');
+        $gapped = TextPattern::fromHole(new TextHole(Origin::Loop, TypeShape::unknown()));
+
+        self::assertSame(
+            'SELECT {$} FROM t',
+            $generalization->mergeResolved($exact, TextPattern::fromText('SELECT b FROM t'))?->display(),
+        );
+        self::assertNull($generalization->mergeResolved($exact, $gapped));
+    }
+
+    public function testSharedPrefixLengthCountsTheLeadingBytesTwoStringsShare(): void
+    {
+        $generalization = new TextGeneralization(Origin::Branch);
+
+        self::assertSame(3, $generalization->sharedPrefixLength('abcd', 'abcx'));
+        self::assertSame(0, $generalization->sharedPrefixLength('a', 'b'));
+        self::assertSame(2, $generalization->sharedPrefixLength('ab', 'abcd'));
+    }
+
     public function testMergeAllFoldsEveryAlternative(): void
     {
         $merged = (new TextGeneralization(Origin::Branch))->mergeAll([

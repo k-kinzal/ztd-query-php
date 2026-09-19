@@ -19,6 +19,7 @@ use SqlCatalog\Analysis\FunctionScope;
 use SqlCatalog\Analysis\Interpreter;
 use SqlCatalog\Analysis\StatementRecorder;
 use SqlCatalog\Evaluation\Environment;
+use SqlCatalog\Evaluation\PathSet;
 use SqlCatalog\Php\ProgramIndex;
 use SqlCatalog\Php\SourceParser;
 use SqlCatalog\Text\Origin;
@@ -53,6 +54,33 @@ use SqlCatalog\Text\Origin;
 #[UsesClass(\SqlCatalog\Text\TextPattern::class)]
 #[UsesClass(\SqlCatalog\Type\TypeShape::class)]
 #[UsesClass(\SqlCatalog\Analysis\ValueBinder::class)]
+#[UsesClass(\SqlCatalog\AnalysisOptions::class)]
+#[UsesClass(\SqlCatalog\Analysis\EntryFactory::class)]
+#[UsesClass(\SqlCatalog\Analysis\QueryRecord::class)]
+#[UsesClass(\SqlCatalog\Analysis\SinkFinder::class)]
+#[UsesClass(\SqlCatalog\Analyzer::class)]
+#[UsesClass(\SqlCatalog\Catalog\CallSite::class)]
+#[UsesClass(\SqlCatalog\Catalog\Catalog::class)]
+#[UsesClass(\SqlCatalog\Catalog\CatalogEntry::class)]
+#[UsesClass(\SqlCatalog\Catalog\EntryIdentity::class)]
+#[UsesClass(\SqlCatalog\Catalog\Resolution::class)]
+#[UsesClass(PathSet::class)]
+#[UsesClass(\SqlCatalog\Extension\DoctrineExtension::class)]
+#[UsesClass(\SqlCatalog\Extension\ExtensionRegistry::class)]
+#[UsesClass(\SqlCatalog\Extension\LaravelExtension::class)]
+#[UsesClass(\SqlCatalog\Extension\MysqliExtension::class)]
+#[UsesClass(\SqlCatalog\Extension\PdoExtension::class)]
+#[UsesClass(\SqlCatalog\Extension\SinkSpec::class)]
+#[UsesClass(\SqlCatalog\Extension\WordPressExtension::class)]
+#[UsesClass(\SqlCatalog\Php\FunctionShape::class)]
+#[UsesClass(\SqlCatalog\Php\ParameterShape::class)]
+#[UsesClass(\SqlCatalog\Php\ProgramIndexBuilder::class)]
+#[UsesClass(\SqlCatalog\Source\SourceFile::class)]
+#[UsesClass(\SqlCatalog\Sql\PlaceholderScanner::class)]
+#[UsesClass(\SqlCatalog\Sql\SqlLexer::class)]
+#[UsesClass(\SqlCatalog\Sql\SqlToken::class)]
+#[UsesClass(\SqlCatalog\Sql\StatementKindReader::class)]
+#[UsesClass(\SqlCatalog\Sql\TableReader::class)]
 final class ExpressionEvaluatorTest extends TestCase
 {
     #[DataProvider('providerEvaluate')]
@@ -60,8 +88,9 @@ final class ExpressionEvaluatorTest extends TestCase
     {
         $file = (new SourceParser())->parse('t.php', '<?php $result = ' . $expression . ';');
         $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $environment = new Environment();
-        $expressions->bodies()->walk($file->statements, $environment, new FunctionScope('t.php'));
+        $paths = new PathSet();
+        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
+        $environment = $paths->join();
 
         self::assertSame($expected, $environment->read('result')->patterns()[0]->display());
     }
@@ -152,8 +181,9 @@ final class ExpressionEvaluatorTest extends TestCase
     {
         $file = (new SourceParser())->parse('t.php', '<?php $t = "users"; $result = "SELECT * FROM {$t}";');
         $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $environment = new Environment();
-        $expressions->bodies()->walk($file->statements, $environment, new FunctionScope('t.php'));
+        $paths = new PathSet();
+        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
+        $environment = $paths->join();
 
         self::assertSame('SELECT * FROM users', $environment->read('result')->soleLiteral()?->value);
     }
@@ -162,8 +192,9 @@ final class ExpressionEvaluatorTest extends TestCase
     {
         $file = (new SourceParser())->parse('t.php', '<?php $result = $c ? "a" : "b";');
         $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $environment = new Environment();
-        $expressions->bodies()->walk($file->statements, $environment, new FunctionScope('t.php'));
+        $paths = new PathSet();
+        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
+        $environment = $paths->join();
 
         self::assertCount(2, $environment->read('result')->terms);
     }
@@ -172,8 +203,9 @@ final class ExpressionEvaluatorTest extends TestCase
     {
         $file = (new SourceParser())->parse('t.php', '<?php $result = match ($c) { 1 => "a", default => "b" };');
         $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $environment = new Environment();
-        $expressions->bodies()->walk($file->statements, $environment, new FunctionScope('t.php'));
+        $paths = new PathSet();
+        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
+        $environment = $paths->join();
 
         self::assertCount(2, $environment->read('result')->terms);
     }
@@ -182,8 +214,9 @@ final class ExpressionEvaluatorTest extends TestCase
     {
         $file = (new SourceParser())->parse('t.php', '<?php $sql = "SELECT 1"; $sql .= " FROM t";');
         $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $environment = new Environment();
-        $expressions->bodies()->walk($file->statements, $environment, new FunctionScope('t.php'));
+        $paths = new PathSet();
+        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
+        $environment = $paths->join();
 
         self::assertSame('SELECT 1 FROM t', $environment->read('sql')->soleLiteral()?->value);
     }
@@ -220,13 +253,53 @@ final class ExpressionEvaluatorTest extends TestCase
         self::assertNotNull($expressions->evaluateOperator(new BooleanNot(new Variable('a')), $environment, $scope));
     }
 
-    public function testEvaluatePredicateReportsTheResultingType(): void
+    public function testEvaluateResultReportsTheTypeTheOperatorProduces(): void
     {
         $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        self::assertSame('bool', $expressions->evaluatePredicate(new BooleanNot(new Variable('a')))?->type()->display());
-        self::assertSame('int', $expressions->evaluatePredicate(new \PhpParser\Node\Expr\PostInc(new Variable('a')))?->type()->display());
-        self::assertSame('int', $expressions->evaluatePredicate(new \PhpParser\Node\Expr\PreDec(new Variable('a')))?->type()->display());
-        self::assertNull($expressions->evaluatePredicate(new Variable('a')));
+        $environment = new Environment();
+        $scope = new FunctionScope('t.php');
+
+        self::assertSame('bool', $expressions->evaluateResult(new BooleanNot(new Variable('a')), $environment, $scope)?->type()->display());
+        self::assertNull($expressions->evaluateResult(new Variable('a'), $environment, $scope));
+    }
+
+    public function testResultTypeNamesTheTypeOfEveryOperatorItCovers(): void
+    {
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
+        $left = new Variable('a');
+        $right = new Variable('b');
+
+        self::assertSame('bool', $expressions->resultType(new \PhpParser\Node\Expr\BinaryOp\BooleanAnd($left, $right)));
+        self::assertSame('bool', $expressions->resultType(new \PhpParser\Node\Expr\BinaryOp\BooleanOr($left, $right)));
+        self::assertSame('bool', $expressions->resultType(new \PhpParser\Node\Expr\BinaryOp\LogicalAnd($left, $right)));
+        self::assertSame('bool', $expressions->resultType(new \PhpParser\Node\Expr\BinaryOp\LogicalOr($left, $right)));
+        self::assertSame('bool', $expressions->resultType(new BooleanNot($left)));
+        self::assertSame('bool', $expressions->resultType(new \PhpParser\Node\Expr\Isset_([$left])));
+        self::assertSame('bool', $expressions->resultType(new \PhpParser\Node\Expr\Empty_($left)));
+        self::assertSame('bool', $expressions->resultType(new \PhpParser\Node\Expr\Instanceof_($left, new \PhpParser\Node\Name('C'))));
+        self::assertSame('int', $expressions->resultType(new \PhpParser\Node\Expr\PostInc($left)));
+        self::assertSame('int', $expressions->resultType(new \PhpParser\Node\Expr\PreInc($left)));
+        self::assertSame('int', $expressions->resultType(new \PhpParser\Node\Expr\PostDec($left)));
+        self::assertSame('int', $expressions->resultType(new \PhpParser\Node\Expr\PreDec($left)));
+        self::assertNull($expressions->resultType($left));
+    }
+
+    public function testEvaluateOperandsReachesAStatementWrittenInsideAnOperand(): void
+    {
+        $catalog = (new \SqlCatalog\Analyzer())->analyzeSource([
+            't.php' => '<?php function f(PDO $d, bool $on): void { $on && $d->query("SELECT 1"); }',
+        ]);
+
+        self::assertSame('SELECT 1', $catalog->entries()[0]->sql());
+    }
+
+    public function testEvaluateOperandsReachesAStatementNestedSeveralOperatorsDeep(): void
+    {
+        $catalog = (new \SqlCatalog\Analyzer())->analyzeSource([
+            't.php' => '<?php function f(PDO $d, bool $a, bool $b): void { $a && ($b || $d->query("SELECT 2")); }',
+        ]);
+
+        self::assertSame('SELECT 2', $catalog->entries()[0]->sql());
     }
 
     public function testEvaluateCastOfAnObjectKnowsOnlyThatItIsOne(): void
@@ -241,8 +314,9 @@ final class ExpressionEvaluatorTest extends TestCase
     {
         $file = (new SourceParser())->parse('t.php', '<?php $result = (int) $_GET["id"];');
         $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $environment = new Environment();
-        $expressions->bodies()->walk($file->statements, $environment, new FunctionScope('t.php'));
+        $paths = new PathSet();
+        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
+        $environment = $paths->join();
 
         $holes = $environment->read('result')->patterns()[0]->holes();
         self::assertSame(Origin::Call, $holes[0]->origin);
@@ -260,8 +334,9 @@ final class ExpressionEvaluatorTest extends TestCase
     {
         $file = (new SourceParser())->parse('t.php', '<?php $result = "a{$b}c";');
         $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $environment = new Environment();
-        $expressions->bodies()->walk($file->statements, $environment, new FunctionScope('t.php'));
+        $paths = new PathSet();
+        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
+        $environment = $paths->join();
 
         self::assertSame('a{$}c', $environment->read('result')->patterns()[0]->display());
     }
@@ -270,8 +345,9 @@ final class ExpressionEvaluatorTest extends TestCase
     {
         $file = (new SourceParser())->parse('t.php', '<?php $result = "a" ?: "b";');
         $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $environment = new Environment();
-        $expressions->bodies()->walk($file->statements, $environment, new FunctionScope('t.php'));
+        $paths = new PathSet();
+        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
+        $environment = $paths->join();
 
         self::assertCount(2, $environment->read('result')->terms);
     }
@@ -288,8 +364,9 @@ final class ExpressionEvaluatorTest extends TestCase
     {
         $file = (new SourceParser())->parse('t.php', '<?php $a = "x";');
         $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $environment = new Environment();
-        $expressions->bodies()->walk($file->statements, $environment, new FunctionScope('t.php'));
+        $paths = new PathSet();
+        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
+        $environment = $paths->join();
 
         self::assertSame('x', $environment->read('a')->soleLiteral()?->value);
     }
@@ -298,8 +375,9 @@ final class ExpressionEvaluatorTest extends TestCase
     {
         $file = (new SourceParser())->parse('t.php', '<?php $a = "x"; $a .= "y"; $a .= "z";');
         $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $environment = new Environment();
-        $expressions->bodies()->walk($file->statements, $environment, new FunctionScope('t.php'));
+        $paths = new PathSet();
+        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
+        $environment = $paths->join();
 
         self::assertSame('xyz', $environment->read('a')->soleLiteral()?->value);
     }

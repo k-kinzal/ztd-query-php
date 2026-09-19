@@ -5,7 +5,6 @@ paths:
 exclude:
   - '.git'
   - 'build'
-  - 'corpus'
   - 'vendor'
 
 rules:

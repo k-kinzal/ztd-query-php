@@ -19,6 +19,7 @@ enum Origin: string
     case Parameter = 'parameter';
     case Property = 'property';
     case Call = 'call';
+    case Budget = 'budget';
     case Loop = 'loop';
     case Branch = 'branch';
     case Unresolved = 'unresolved';
@@ -41,6 +42,7 @@ enum Origin: string
             self::Parameter => 'a function parameter',
             self::Property => 'an object property',
             self::Call => 'a call the analyzer did not follow',
+            self::Budget => 'a dependency the analyzer stopped following',
             self::Loop => 'a value built by a loop',
             self::Branch => 'values that differ between branches',
             self::Unresolved => 'an expression the analyzer could not resolve',

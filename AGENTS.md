@@ -72,9 +72,11 @@ Supports MySQL 5.6–9.1, PostgreSQL, and SQLite. Used for fuzz testing.
 ### packages/sql-catalog
 
 Static analysis tool that catalogs the SQL statements a PHP application can issue.
-Reads PHP source with nikic/php-parser, reconstructs each statement from the constants, enums, properties and calls it is assembled from, and reports the statement text, the tables it names, the values bound to its placeholders and where it is issued.
-Ships the `sql-catalog` command, an extension mechanism for recognising framework database APIs (pdo, mysqli, doctrine, laravel) and swappable reporters (json, html, text).
-Soundness is checked by running an executable corpus against a recording PDO and comparing what the driver saw with what the analyzer says; fuzz targets check robustness and statement recovery.
+Starts at the calls that receive SQL and works back through the definitions, branches and callers that decide their argument, rather than interpreting the program forward.
+Branches fork the analysis so values decided together stay together; alternatives paired from parts that vary independently are marked as such.
+Every statement says how far the search got (`resolved`, `external-input`, `incomplete-model`, `incomplete`) and whether it closed, so stopping early is never reported as having found nothing.
+Ships the `sql-catalog` command, an extension mechanism for framework database APIs (pdo, mysqli, doctrine, laravel, wordpress), swappable reporters (json, html, text) and a JSON Schema for the catalog format.
+Verification is contract-based: finding the call, covering the dependencies, keeping the correspondence, recovering faithfully, and judging completion honestly, with fuzz targets that look for inputs breaking them.
 
 ### packages/sql-fixture
 

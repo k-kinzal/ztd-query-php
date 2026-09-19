@@ -10,15 +10,28 @@ use PHPUnit\Framework\TestCase;
 use SqlCatalog\AnalysisOptions;
 use SqlCatalog\Analyzer;
 use SqlCatalog\Catalog\AnalysisProblem;
+use SqlCatalog\Catalog\CallSite;
 use SqlCatalog\Catalog\Catalog;
+use SqlCatalog\Catalog\CatalogEntry;
 use SqlCatalog\Reporter\CatalogArtifacts;
 use SqlCatalog\Reporter\HtmlReporter;
+use SqlCatalog\Sql\StatementKind;
+use SqlCatalog\Text\Origin;
+use SqlCatalog\Text\TextHole;
+use SqlCatalog\Text\TextPattern;
+use SqlCatalog\Type\TypeShape;
 
 #[CoversClass(HtmlReporter::class)]
 #[UsesClass(AnalysisOptions::class)]
 #[UsesClass(Analyzer::class)]
 #[UsesClass(AnalysisProblem::class)]
 #[UsesClass(Catalog::class)]
+#[UsesClass(CallSite::class)]
+#[UsesClass(CatalogEntry::class)]
+#[UsesClass(\SqlCatalog\Catalog\Resolution::class)]
+#[UsesClass(TextHole::class)]
+#[UsesClass(TextPattern::class)]
+#[UsesClass(TypeShape::class)]
 #[UsesClass(CatalogArtifacts::class)]
 #[UsesClass(\SqlCatalog\Analysis\BodyWalker::class)]
 #[UsesClass(\SqlCatalog\Analysis\CallEvaluator::class)]
@@ -33,8 +46,8 @@ use SqlCatalog\Reporter\HtmlReporter;
 #[UsesClass(\SqlCatalog\Analysis\SinkMatcher::class)]
 #[UsesClass(\SqlCatalog\Analysis\StatementRecorder::class)]
 #[UsesClass(\SqlCatalog\Analysis\ValueBinder::class)]
-#[UsesClass(\SqlCatalog\Catalog\CallSite::class)]
-#[UsesClass(\SqlCatalog\Catalog\CatalogEntry::class)]
+#[UsesClass(CallSite::class)]
+#[UsesClass(CatalogEntry::class)]
 #[UsesClass(\SqlCatalog\Catalog\EntryIdentity::class)]
 #[UsesClass(\SqlCatalog\Catalog\Finding::class)]
 #[UsesClass(\SqlCatalog\Catalog\FindingRule::class)]
@@ -70,10 +83,13 @@ use SqlCatalog\Reporter\HtmlReporter;
 #[UsesClass(\SqlCatalog\Sql\StatementKindReader::class)]
 #[UsesClass(\SqlCatalog\Sql\TableReader::class)]
 #[UsesClass(\SqlCatalog\Text\LiteralText::class)]
-#[UsesClass(\SqlCatalog\Text\Origin::class)]
-#[UsesClass(\SqlCatalog\Text\TextHole::class)]
-#[UsesClass(\SqlCatalog\Text\TextPattern::class)]
-#[UsesClass(\SqlCatalog\Type\TypeShape::class)]
+#[UsesClass(Origin::class)]
+#[UsesClass(TextHole::class)]
+#[UsesClass(TextPattern::class)]
+#[UsesClass(TypeShape::class)]
+#[UsesClass(\SqlCatalog\Analysis\SinkFinder::class)]
+#[UsesClass(\SqlCatalog\Evaluation\PathSet::class)]
+#[UsesClass(\SqlCatalog\Extension\WordPressExtension::class)]
 final class HtmlReporterTest extends TestCase
 {
     public function testNameIsHowTheCommandLineSelectsIt(): void
@@ -167,7 +183,7 @@ final class HtmlReporterTest extends TestCase
         ]);
 
         self::assertSame(
-            '<tr class="sev-info"><td><span class="kind">SELECT</span><pre>SELECT id FROM users WHERE id = ?</pre><p class="tables">users</p></td><td><code>a.php:1</code><p>f</p><p class="sink">pdo.prepare</p></td><td><ul><li><code>?</code> 7</li></ul></td><td><span class="none">none</span></td></tr>',
+            '<tr class="sev-info"><td><span class="kind">SELECT</span> <span class="resolution resolved">resolved</span><pre>SELECT id FROM users WHERE id = ?</pre><p class="tables">users</p></td><td><code>a.php:1</code><p>f</p><p class="sink">pdo.prepare</p></td><td><ul><li><code>?</code> 7</li></ul></td><td><span class="none">none</span></td></tr>',
             (new HtmlReporter())->row($catalog->entries()[0]),
         );
     }
@@ -216,7 +232,7 @@ final class HtmlReporterTest extends TestCase
 
     public function testStylesAreWrittenExactly(): void
     {
-        self::assertSame('body{font:14px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;margin:2rem;color:#111}h1{font-size:1.4rem}.summary{color:#555}table{border-collapse:collapse;width:100%}th,td{border-top:1px solid #ddd;padding:.6rem;text-align:left;vertical-align:top}th{background:#f6f8fa;font-size:.8rem;text-transform:uppercase;letter-spacing:.04em}pre{margin:.3rem 0;white-space:pre-wrap;word-break:break-word;font-size:.85rem}code{font-size:.85rem}ul{margin:0;padding-left:1.1rem}.kind{font-size:.7rem;font-weight:700;color:#57606a}.tables,.sink{color:#57606a;font-size:.8rem;margin:.2rem 0}.none{color:#8c959f}.badge{display:inline-block;padding:0 .4rem;border-radius:.6rem;font-size:.7rem;color:#fff;background:#57606a}.badge.high{background:#cf222e}.badge.medium{background:#bf8700}.badge.low{background:#0969da}tr.sev-high{background:#fff5f5}', (new HtmlReporter())->styles());
+        self::assertSame('body{font:14px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;margin:2rem;color:#111}h1{font-size:1.4rem}.summary{color:#555}table{border-collapse:collapse;width:100%}th,td{border-top:1px solid #ddd;padding:.6rem;text-align:left;vertical-align:top}th{background:#f6f8fa;font-size:.8rem;text-transform:uppercase;letter-spacing:.04em}pre{margin:.3rem 0;white-space:pre-wrap;word-break:break-word;font-size:.85rem}code{font-size:.85rem}ul{margin:0;padding-left:1.1rem}.kind{font-size:.7rem;font-weight:700;color:#57606a}.tables,.sink{color:#57606a;font-size:.8rem;margin:.2rem 0}.caveat{color:#9a6700;font-size:.8rem;margin:.2rem 0}.resolution{font-size:.7rem;color:#57606a}.resolution.external-input{color:#cf222e}.resolution.incomplete,.resolution.incomplete-model{color:#bf8700}.none{color:#8c959f}.badge{display:inline-block;padding:0 .4rem;border-radius:.6rem;font-size:.7rem;color:#fff;background:#57606a}.badge.high{background:#cf222e}.badge.medium{background:#bf8700}.badge.low{background:#0969da}tr.sev-high{background:#fff5f5}', (new HtmlReporter())->styles());
     }
 
     public function testRenderWritesTheWholePageExactly(): void
@@ -224,33 +240,53 @@ final class HtmlReporterTest extends TestCase
         $catalog = (new Analyzer())->analyzeSource([
             'a.php' => '<?php function f(PDO $d) { $d->query("SELECT 1"); }',
         ]);
+        $reporter = new HtmlReporter();
 
         self::assertSame(
             '<!DOCTYPE html>' . "\n"
             . '<html lang="en"><head><meta charset="utf-8">'
             . '<meta name="viewport" content="width=device-width, initial-scale=1">'
-            . '<title>SQL catalog</title><style>body{font:14px/1.5 -apple-system,Segoe UI,Roboto,sans-serif;'
-            . 'margin:2rem;color:#111}h1{font-size:1.4rem}.summary{color:#555}table{border-collapse:collapse;'
-            . 'width:100%}th,td{border-top:1px solid #ddd;padding:.6rem;text-align:left;vertical-align:top}'
-            . 'th{background:#f6f8fa;font-size:.8rem;text-transform:uppercase;letter-spacing:.04em}'
-            . 'pre{margin:.3rem 0;white-space:pre-wrap;word-break:break-word;font-size:.85rem}'
-            . 'code{font-size:.85rem}ul{margin:0;padding-left:1.1rem}'
-            . '.kind{font-size:.7rem;font-weight:700;color:#57606a}'
-            . '.tables,.sink{color:#57606a;font-size:.8rem;margin:.2rem 0}'
-            . '.none{color:#8c959f}'
-            . '.badge{display:inline-block;padding:0 .4rem;border-radius:.6rem;font-size:.7rem;color:#fff;background:#57606a}'
-            . '.badge.high{background:#cf222e}.badge.medium{background:#bf8700}.badge.low{background:#0969da}'
-            . 'tr.sev-high{background:#fff5f5}</style></head><body>'
+            . '<title>SQL catalog</title><style>' . $reporter->styles() . '</style></head><body>'
             . '<h1>SQL catalog</h1>'
             . '<p class="summary">1 statement(s) &middot; 1 fully resolved &middot; 0 finding(s)</p>'
             . '<table><thead><tr><th>Statement</th><th>Where</th><th>Values</th><th>Findings</th></tr></thead>'
-            . '<tbody><tr class="sev-info"><td><span class="kind">SELECT</span><pre>SELECT 1</pre>'
+            . '<tbody><tr class="sev-info"><td><span class="kind">SELECT</span> '
+            . '<span class="resolution resolved">resolved</span><pre>SELECT 1</pre>'
             . '<p class="tables"></p></td><td><code>a.php:1</code><p>f</p><p class="sink">pdo.query</p></td>'
             . '<td><span class="none">none</span></td><td><span class="none">none</span></td></tr>'
             . '</tbody></table>'
             . '</body></html>' . "\n",
-            (string) (new HtmlReporter())->render($catalog)->sole(),
+            (string) $reporter->render($catalog)->primary(),
         );
+    }
+
+    public function testCaveatsWarnAboutWhatTheStatementsDoNotSay(): void
+    {
+        $entry = new CatalogEntry(
+            'id',
+            StatementKind::Select,
+            TextPattern::fromHole(new TextHole(Origin::Budget, TypeShape::unknown())),
+            [],
+            [],
+            new CallSite('a.php', 1, 'f', 'unreached'),
+            [],
+            false,
+            ['App\\R::find', 'App\\R::run'],
+        );
+        $caveats = (new HtmlReporter())->caveats($entry);
+
+        self::assertStringContainsString('the search did not close', $caveats);
+        self::assertStringContainsString('some may be unreachable', $caveats);
+        self::assertStringContainsString('App\\R::find', $caveats);
+    }
+
+    public function testCaveatsAreSilentWhenThereIsNothingToWarnAbout(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource([
+            'a.php' => '<?php function f(PDO $d) { $d->query("SELECT 1"); }',
+        ]);
+
+        self::assertSame('', (new HtmlReporter())->caveats($catalog->entries()[0]));
     }
 
     public function testRenderCarriesTheFilesThatCouldNotBeRead(): void

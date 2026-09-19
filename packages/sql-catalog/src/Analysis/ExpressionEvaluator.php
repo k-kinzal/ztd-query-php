@@ -78,8 +78,30 @@ final class ExpressionEvaluator
         if ($reference !== null) {
             return $reference;
         }
+        $this->evaluateOperands($node, $environment, $scope);
 
         return Domain::opaque(TypeShape::unknown(), Origin::Unresolved, $this->text->render($node));
+    }
+
+    /**
+     * Evaluates whatever an expression is written over, for what those evaluations find.
+     *
+     * A statement can sit anywhere an expression can, including in an operand
+     * the analyzer has no use for the value of. `$enabled && $pdo->query(…)`
+     * issues a query whatever `$enabled` turns out to be, so finding the call
+     * must not depend on the analyzer caring about the expression around it.
+     * Every call written inside an operand is evaluated even when the value of
+     * the expression holding it is discarded.
+     */
+    public function evaluateOperands(Expr $node, Environment $environment, FunctionScope $scope): void
+    {
+        foreach (get_object_vars($node) as $subNode) {
+            foreach (is_array($subNode) ? $subNode : [$subNode] as $operand) {
+                if ($operand instanceof Expr) {
+                    $this->evaluate($operand, $environment, $scope);
+                }
+            }
+        }
     }
 
     /**
@@ -132,7 +154,7 @@ final class ExpressionEvaluator
             return $this->evaluateAppend($node, $environment, $scope);
         }
 
-        return $this->evaluatePredicate($node);
+        return $this->evaluateResult($node, $environment, $scope);
     }
 
     /**
@@ -179,24 +201,44 @@ final class ExpressionEvaluator
     }
 
     /**
-     * The value of an expression whose result is a boolean or a number.
+     * The value of an expression whose operands matter more than its result.
+     *
+     * The operands are evaluated for what those evaluations find, and the
+     * result is reported by the type the operator produces.
      */
-    public function evaluatePredicate(Expr $node): ?Domain
+    public function evaluateResult(Expr $node, Environment $environment, FunctionScope $scope): ?Domain
+    {
+        $type = $this->resultType($node);
+        if ($type === null) {
+            return null;
+        }
+        $this->evaluateOperands($node, $environment, $scope);
+
+        return Domain::opaque(TypeShape::of([$type]), Origin::Unresolved);
+    }
+
+    /**
+     * The type an operator produces, or null when the node is not one.
+     */
+    public function resultType(Expr $node): ?string
     {
         if ($node instanceof Expr\BinaryOp\BooleanAnd || $node instanceof Expr\BinaryOp\BooleanOr) {
-            return Domain::opaque(TypeShape::of(['bool']), Origin::Unresolved);
+            return 'bool';
+        }
+        if ($node instanceof Expr\BinaryOp\LogicalAnd || $node instanceof Expr\BinaryOp\LogicalOr) {
+            return 'bool';
         }
         if ($node instanceof Expr\BooleanNot || $node instanceof Expr\Isset_ || $node instanceof Expr\Empty_) {
-            return Domain::opaque(TypeShape::of(['bool']), Origin::Unresolved);
+            return 'bool';
         }
         if ($node instanceof Expr\Instanceof_) {
-            return Domain::opaque(TypeShape::of(['bool']), Origin::Unresolved);
+            return 'bool';
         }
         if ($node instanceof Expr\PostInc || $node instanceof Expr\PreInc) {
-            return Domain::opaque(TypeShape::of(['int']), Origin::Unresolved);
+            return 'int';
         }
         if ($node instanceof Expr\PostDec || $node instanceof Expr\PreDec) {
-            return Domain::opaque(TypeShape::of(['int']), Origin::Unresolved);
+            return 'int';
         }
 
         return null;
@@ -227,9 +269,8 @@ final class ExpressionEvaluator
      */
     public function evaluateTernary(Expr\Ternary $node, Environment $environment, FunctionScope $scope): Domain
     {
-        $whenTrue = $node->if === null
-            ? $this->evaluate($node->cond, $environment, $scope)
-            : $this->evaluate($node->if, $environment, $scope);
+        $condition = $this->evaluate($node->cond, $environment, $scope);
+        $whenTrue = $node->if === null ? $condition : $this->evaluate($node->if, $environment, $scope);
 
         return $whenTrue->union($this->evaluate($node->else, $environment, $scope));
     }
@@ -239,8 +280,12 @@ final class ExpressionEvaluator
      */
     public function evaluateMatch(Expr\Match_ $node, Environment $environment, FunctionScope $scope): Domain
     {
+        $this->evaluate($node->cond, $environment, $scope);
         $result = null;
         foreach ($node->arms as $arm) {
+            foreach ($arm->conds ?? [] as $condition) {
+                $this->evaluate($condition, $environment, $scope);
+            }
             $value = $this->evaluate($arm->body, $environment, $scope);
             $result = $result === null ? $value : $result->union($value);
         }

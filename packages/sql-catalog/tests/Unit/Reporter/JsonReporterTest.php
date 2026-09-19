@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Reporter;
 
+use JsonException;
+use Opis\JsonSchema\Validator;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -80,6 +82,11 @@ use SqlCatalog\Text\TextPattern;
 #[UsesClass(\SqlCatalog\Evaluation\ArrayTerm::class)]
 #[UsesClass(\SqlCatalog\Evaluation\ObjectTerm::class)]
 #[UsesClass(\SqlCatalog\Sql\PlaceholderRef::class)]
+#[UsesClass(\SqlCatalog\Analysis\SinkFinder::class)]
+#[UsesClass(\SqlCatalog\Catalog\Resolution::class)]
+#[UsesClass(\SqlCatalog\Evaluation\PathSet::class)]
+#[UsesClass(\SqlCatalog\Extension\WordPressExtension::class)]
+#[UsesClass(\SqlCatalog\Php\SyntaxException::class)]
 final class JsonReporterTest extends TestCase
 {
     public function testNameIsHowTheCommandLineSelectsIt(): void
@@ -92,11 +99,49 @@ final class JsonReporterTest extends TestCase
         self::assertStringContainsString('JSON', (new JsonReporter())->description());
     }
 
-    public function testRenderWritesOneJsonFile(): void
+    /**
+     * @throws JsonException
+     */
+    public function testTheDocumentMatchesTheSchemaItDeclares(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource([
+            'a.php' => '<?php function f(PDO $d, string $t): void {'
+                . ' $s = $d->prepare("SELECT id FROM users WHERE id = ?"); $s->execute([7]);'
+                . ' $d->query("SELECT " . $_GET["x"]); $d->query("SELECT * FROM " . $t); }',
+            'broken.php' => '<?php function {',
+        ]);
+        $reporter = new JsonReporter();
+        $document = json_decode((string) $reporter->render($catalog)->get(JsonReporter::FILE), false, 64, JSON_THROW_ON_ERROR);
+
+        $result = (new Validator())->validate($document, $reporter->schema());
+
+        self::assertNull($result->error());
+    }
+
+    public function testTheSchemaIsWrittenBesideTheDocument(): void
     {
         $artifacts = (new JsonReporter())->render(new Catalog());
-        self::assertSame([JsonReporter::FILE], $artifacts->names());
-        self::assertStringEndsWith("\n", (string) $artifacts->sole());
+
+        self::assertSame([JsonReporter::SCHEMA_FILE, JsonReporter::FILE], $artifacts->names());
+        self::assertSame($artifacts->get(JsonReporter::FILE), $artifacts->primary());
+    }
+
+    /**
+     * @throws JsonException
+     */
+    public function testSchemaIsTheShippedDocumentSchema(): void
+    {
+        $schema = json_decode((new JsonReporter())->schema(), true, 64, JSON_THROW_ON_ERROR);
+
+        self::assertIsArray($schema);
+        self::assertSame('https://json-schema.org/draft/2020-12/schema', $schema['$schema']);
+    }
+
+    public function testRenderWritesTheJsonDocument(): void
+    {
+        $artifacts = (new JsonReporter())->render(new Catalog());
+
+        self::assertStringEndsWith("\n", (string) $artifacts->get(JsonReporter::FILE));
     }
 
     public function testRenderIsTheSameForTheSameCatalog(): void
@@ -105,7 +150,8 @@ final class JsonReporterTest extends TestCase
             'a.php' => '<?php function f(PDO $d) { $d->query("SELECT 1"); }',
         ]);
         $reporter = new JsonReporter();
-        self::assertSame($reporter->render($catalog)->sole(), $reporter->render($catalog)->sole());
+
+        self::assertSame($reporter->render($catalog)->all(), $reporter->render($catalog)->all());
     }
 
     public function testRenderWritesTheWholeDocumentExactly(): void
@@ -117,11 +163,12 @@ final class JsonReporterTest extends TestCase
 
         self::assertSame(
             '{' . "\n"
+            . '    "$schema": "catalog-schema.json",' . "\n"
             . '    "version": 1,' . "\n"
             . '    "summary": {' . "\n"
             . '        "statements": 1,' . "\n"
-            . '        "exact": 1,' . "\n"
-            . '        "dynamic": 0,' . "\n"
+            . '        "resolved": 1,' . "\n"
+            . '        "undetermined": 0,' . "\n"
             . '        "findings": 0' . "\n"
             . '    },' . "\n"
             . '    "statements": [' . "\n"
@@ -130,6 +177,9 @@ final class JsonReporterTest extends TestCase
             . '            "kind": "select",' . "\n"
             . '            "sql": "SELECT id FROM users WHERE id = ?",' . "\n"
             . '            "exact": true,' . "\n"
+            . '            "resolution": "resolved",' . "\n"
+            . '            "searchClosed": true,' . "\n"
+            . '            "correlated": true,' . "\n"
             . '            "tables": [' . "\n"
             . '                "users"' . "\n"
             . '            ],' . "\n"
@@ -139,6 +189,9 @@ final class JsonReporterTest extends TestCase
             . '                "function": "f",' . "\n"
             . '                "sink": "pdo.prepare"' . "\n"
             . '            },' . "\n"
+            . '            "through": [' . "\n"
+            . '                "f"' . "\n"
+            . '            ],' . "\n"
             . '            "placeholders": [' . "\n"
             . '                {' . "\n"
             . '                    "token": "?",' . "\n"
@@ -159,7 +212,7 @@ final class JsonReporterTest extends TestCase
             . '    ],' . "\n"
             . '    "problems": []' . "\n"
             . '}' . "\n",
-            (string) (new JsonReporter())->render($catalog)->sole(),
+            (string) (new JsonReporter())->render($catalog)->get(JsonReporter::FILE),
         );
     }
 
@@ -188,8 +241,8 @@ final class JsonReporterTest extends TestCase
         ]);
         $summary = (new JsonReporter())->summary($catalog);
         self::assertSame(2, $summary['statements']);
-        self::assertSame(1, $summary['exact']);
-        self::assertSame(1, $summary['dynamic']);
+        self::assertSame(1, $summary['resolved']);
+        self::assertSame(1, $summary['undetermined']);
         self::assertGreaterThan(0, $summary['findings']);
     }
 

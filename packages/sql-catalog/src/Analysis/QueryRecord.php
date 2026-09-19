@@ -36,12 +36,16 @@ final class QueryRecord
      * @param string $siteKey What tells this call apart from every other, including one on the same line
      * @param TextPattern $pattern The statement text as far as it resolved
      * @param StatementKind|null $kind The kind the call implies, when it implies one
+     * @param bool $combined Whether the statement came from pairing parts that vary independently
+     * @param list<string> $through The path taken to this reading, from the body the walk started in, outermost first
      */
     public function __construct(
         public readonly CallSite $site,
         public readonly string $siteKey,
         public readonly TextPattern $pattern,
         public readonly ?StatementKind $kind = null,
+        public readonly bool $combined = false,
+        public readonly array $through = [],
     ) {
     }
 

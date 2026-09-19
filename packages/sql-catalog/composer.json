@@ -9,15 +9,16 @@
         "nikic/php-parser": "^5.0"
     },
     "require-dev": {
-        "brianium/paratest": "^7.3",
-        "deptrac/deptrac": "^3.0",
         "ext-pdo": "*",
         "ext-pdo_sqlite": "*",
+        "brianium/paratest": "^7.3",
+        "deptrac/deptrac": "^3.0",
         "friendsofphp/php-cs-fixer": "^3.95.25",
         "k-kinzal/php-ai-toolkit": "dev-main",
         "k-kinzal/sql-faker": "dev-main",
         "k-kinzal/sql-fixture": "dev-main",
         "nikic/php-fuzzer": "^0.0.11",
+        "opis/json-schema": "^2.4",
         "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
         "phpmyadmin/sql-parser": "^5.11",
         "phpstan/phpstan": "^2.1",
@@ -107,7 +108,6 @@
         "loc-guard": "loc-guard --config=loc.yaml",
         "phpstan": "phpstan analyse --memory-limit=512M",
         "test": "paratest --processes=auto",
-        "test:conformance": "phpunit --testsuite conformance",
         "test:coverage": "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml",
         "test:unit": "phpunit --testsuite unit",
         "tree-guard": "tree-guard --config=tree.yaml"
@@ -127,7 +127,6 @@
     },
     "scripts-descriptions": {
         "fuzz": "Run every fuzz target with the bounded smoke budget.",
-        "fuzz:smoke": "Run each fuzz target for up to 100 executions; individual fuzz:* commands run continuously.",
-        "test:conformance": "Check the analyzer against SQL observed while the corpus programs actually run."
+        "fuzz:smoke": "Run each fuzz target for up to 100 executions; individual fuzz:* commands run continuously."
     }
 }

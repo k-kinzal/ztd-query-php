@@ -20,9 +20,9 @@ use SqlCatalog\Catalog\Placeholder;
  * @phpstan-type PlaceholderNode array{token: string, position: int, name: string|null, value: BoundValue|null}
  * @phpstan-type FindingNode array{rule: string, severity: string, message: string}
  * @phpstan-type SiteNode array{file: string, line: int, function: string, sink: string}
- * @phpstan-type StatementNode array{id: string, kind: string, sql: string, exact: bool, tables: list<string>, site: SiteNode, placeholders: list<PlaceholderNode>, findings: list<FindingNode>}
- * @phpstan-type SummaryNode array{statements: int, exact: int, dynamic: int, findings: int}
- * @phpstan-type CatalogDocument array{version: int, summary: SummaryNode, statements: list<StatementNode>, problems: list<array{file: string, message: string}>}
+ * @phpstan-type StatementNode array{id: string, kind: string, sql: string, exact: bool, resolution: string, searchClosed: bool, correlated: bool, tables: list<string>, site: SiteNode, through: list<string>, placeholders: list<PlaceholderNode>, findings: list<FindingNode>}
+ * @phpstan-type SummaryNode array{statements: int, resolved: int, undetermined: int, findings: int}
+ * @phpstan-type CatalogDocument array{'$schema': string, version: int, summary: SummaryNode, statements: list<StatementNode>, problems: list<array{file: string, message: string}>}
  *
  * @visibility root
  */
@@ -37,6 +37,11 @@ final class JsonReporter implements ReporterInterface
      * The name the artifact is written under.
      */
     public const FILE = 'catalog.json';
+
+    /**
+     * The name the schema describing the artifact is written under.
+     */
+    public const SCHEMA_FILE = 'catalog-schema.json';
 
     /**
      * The name the command line selects this reporter by.
@@ -64,7 +69,27 @@ final class JsonReporter implements ReporterInterface
     {
         $encoded = json_encode($this->toArray($catalog), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
-        return CatalogArtifacts::one(self::FILE, ($encoded === false ? '{}' : $encoded) . "\n");
+        return new CatalogArtifacts(
+            [
+                self::FILE => ($encoded === false ? '{}' : $encoded) . "\n",
+                self::SCHEMA_FILE => $this->schema(),
+            ],
+            self::FILE,
+        );
+    }
+
+    /**
+     * The schema the document declares itself against.
+     *
+     * The schema is written beside the document rather than pointed at over the
+     * network, so a catalog that has been committed, copied or archived stays
+     * readable without asking anything else for the shape of it.
+     */
+    public function schema(): string
+    {
+        $schema = file_get_contents(dirname(__DIR__, 2) . '/resources/' . self::SCHEMA_FILE);
+
+        return $schema === false ? '{}' : $schema;
     }
 
     /**
@@ -84,6 +109,7 @@ final class JsonReporter implements ReporterInterface
         }
 
         return [
+            '$schema' => self::SCHEMA_FILE,
             'version' => self::VERSION,
             'summary' => $this->summary($catalog),
             'statements' => $statements,
@@ -98,16 +124,21 @@ final class JsonReporter implements ReporterInterface
      */
     public function summary(Catalog $catalog): array
     {
-        $exact = 0;
-        $dynamic = 0;
+        $resolved = 0;
+        $undetermined = 0;
         $findings = 0;
         foreach ($catalog as $entry) {
-            $exact += $entry->isExact() ? 1 : 0;
-            $dynamic += $entry->isExact() ? 0 : 1;
+            $resolved += $entry->isExact() ? 1 : 0;
+            $undetermined += $entry->isExact() ? 0 : 1;
             $findings += count($entry->findings);
         }
 
-        return ['statements' => $catalog->count(), 'exact' => $exact, 'dynamic' => $dynamic, 'findings' => $findings];
+        return [
+            'statements' => $catalog->count(),
+            'resolved' => $resolved,
+            'undetermined' => $undetermined,
+            'findings' => $findings,
+        ];
     }
 
     /**
@@ -135,6 +166,9 @@ final class JsonReporter implements ReporterInterface
             'kind' => $entry->kind->value,
             'sql' => $entry->sql(),
             'exact' => $entry->isExact(),
+            'resolution' => $entry->resolution()->value,
+            'searchClosed' => $entry->resolution()->isClosed(),
+            'correlated' => $entry->correlated,
             'tables' => $entry->tables,
             'site' => [
                 'file' => $entry->site->file,
@@ -142,6 +176,7 @@ final class JsonReporter implements ReporterInterface
                 'function' => $entry->site->function,
                 'sink' => $entry->site->sink,
             ],
+            'through' => $entry->through,
             'placeholders' => $placeholders,
             'findings' => $findings,
         ];

@@ -98,6 +98,10 @@ use SqlCatalog\Reporter\TextReporter;
 #[UsesClass(\SqlCatalog\Text\TextPattern::class)]
 #[UsesClass(\SqlCatalog\Type\TypeShape::class)]
 #[UsesClass(\SqlCatalog\Source\SourceScanException::class)]
+#[UsesClass(\SqlCatalog\Analysis\SinkFinder::class)]
+#[UsesClass(\SqlCatalog\Catalog\Resolution::class)]
+#[UsesClass(\SqlCatalog\Evaluation\PathSet::class)]
+#[UsesClass(\SqlCatalog\Extension\WordPressExtension::class)]
 final class CatalogCommandTest extends TestCase
 {
     public function testRunAnswersTheHelp(): void
@@ -121,13 +125,19 @@ final class CatalogCommandTest extends TestCase
         self::assertStringContainsString('Cannot read', $result->error);
     }
 
-    public function testRunCatalogsTheCorpusOntoStandardOutput(): void
+    public function testRunCatalogsTheNamedPathOntoStandardOutput(): void
     {
-        $root = dirname(__DIR__, 3);
-        $result = (new CatalogCommand())->run(['--root', $root, $root . '/corpus/app/Plain.php']);
+        $directory = sys_get_temp_dir() . '/sql-catalog-test-' . bin2hex(random_bytes(6));
+        mkdir($directory);
+        file_put_contents($directory . '/Repo.php', '<?php function f(PDO $d) { $d->exec("INSERT INTO users (id) VALUES (1)"); }');
+
+        $result = (new CatalogCommand())->run(['--root', $directory, $directory]);
+
         self::assertSame(ExitCode::Success, $result->exitCode);
-        self::assertStringContainsString('corpus/app/Plain.php', $result->output);
+        self::assertStringContainsString('Repo.php', $result->output);
         self::assertStringContainsString('INSERT INTO users', $result->output);
+        unlink($directory . '/Repo.php');
+        rmdir($directory);
     }
 
     public function testExecuteRefusesToRunWithoutAPath(): void
@@ -139,18 +149,27 @@ final class CatalogCommandTest extends TestCase
 
     public function testExecuteAppliesTheFilter(): void
     {
-        $root = dirname(__DIR__, 3);
+        $directory = sys_get_temp_dir() . '/sql-catalog-test-' . bin2hex(random_bytes(6));
+        mkdir($directory);
+        file_put_contents(
+            $directory . '/Repo.php',
+            '<?php function f(PDO $d) { $d->query("SELECT 1"); $d->exec("DELETE FROM users"); }',
+        );
         $command = new CommandLine(
-            [$root . '/corpus/app/Plain.php'],
+            [$directory],
             null,
             'text',
             ['pdo'],
             new CatalogFilter(kinds: [\SqlCatalog\Sql\StatementKind::Delete]),
             [],
-            $root,
+            $directory,
         );
+
         $result = (new CatalogCommand())->execute($command);
+
         self::assertStringContainsString('1 statement(s)', $result->output);
+        unlink($directory . '/Repo.php');
+        rmdir($directory);
     }
 
     public function testAnswerQueryListsTheExtensionsAndTheReporters(): void

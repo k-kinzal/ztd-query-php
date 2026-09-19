@@ -34,6 +34,11 @@ final class TextGeneralization
             return $left;
         }
 
+        $resolved = $this->mergeResolved($left, $right);
+        if ($resolved !== null) {
+            return $resolved;
+        }
+
         $leftAtoms = $this->atoms($left);
         $rightAtoms = $this->atoms($right);
         $prefix = $this->commonPrefixLength($leftAtoms, $rightAtoms);
@@ -47,6 +52,40 @@ final class TextGeneralization
         );
 
         return TextPattern::fromSegments($segments);
+    }
+
+    /**
+     * The narrowest pattern covering two fully resolved strings, or null when either has a gap.
+     *
+     * Statements are long and are merged often, so the common case of two
+     * resolved strings is answered by comparing the strings themselves rather
+     * than by walking them character by character.
+     */
+    public function mergeResolved(TextPattern $left, TextPattern $right): ?TextPattern
+    {
+        $leftText = $left->text();
+        $rightText = $right->text();
+        if ($leftText === null || $rightText === null) {
+            return null;
+        }
+
+        $prefix = $this->sharedPrefixLength($leftText, $rightText);
+        $limit = min(strlen($leftText), strlen($rightText)) - $prefix;
+        $suffix = min($limit, $this->sharedPrefixLength(strrev($leftText), strrev($rightText)));
+
+        return TextPattern::fromSegments([
+            new LiteralText(substr($leftText, 0, $prefix)),
+            new TextHole($this->origin, TypeShape::of(['string'])),
+            new LiteralText($suffix === 0 ? '' : substr($leftText, -$suffix)),
+        ]);
+    }
+
+    /**
+     * How many leading bytes two strings share.
+     */
+    public function sharedPrefixLength(string $left, string $right): int
+    {
+        return strspn($left ^ $right, "\0");
     }
 
     /**

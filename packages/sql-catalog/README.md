@@ -113,8 +113,10 @@ final class UserRepository
 the catalog holds:
 
 ```
-src/UserRepository.php:27  SELECT  SELECT id FROM users WHERE status = :status ORDER BY name
+src/UserRepository.php:27  SELECT  93af735295ad
   in App\UserRepository::findByStatus via pdo.prepare
+  SELECT id FROM users WHERE status = :status ORDER BY name
+  resolved
   :status = 'active'|'banned'
 ```
 
@@ -127,8 +129,10 @@ A statement the analyzer cannot fully resolve keeps its resolved parts and marks
 the rest:
 
 ```
-src/Search.php:17  SELECT  SELECT id FROM users WHERE name = '{$}'
+src/Search.php:17  SELECT  742968908c6b
   in App\Search::run via pdo.query
+  SELECT id FROM users WHERE name = '{$}'
+  external-input
   [MEDIUM] dynamic-sql 1 value(s) are spliced into the statement text rather than bound.
   [HIGH] external-input A value from external input reaches the statement text.
 ```
@@ -141,6 +145,7 @@ src/Search.php:17  SELECT  SELECT id FROM users WHERE name = '{$}'
 | `dynamic-sql` | medium | A value is spliced into the statement text instead of being bound. |
 | `placeholder-count-mismatch` | medium | The statement binds a different number of values than it has placeholders. |
 | `unresolved-sql` | low | The statement text did not resolve far enough to read what it does. |
+| `analysis-incomplete` | low | A cycle or an analysis budget stopped the search before it closed. |
 
 ## Extensions
 
@@ -154,6 +159,7 @@ changes.
 | `mysqli` | `mysqli` and `mysqli_stmt`, in both object and procedural form |
 | `doctrine` | Doctrine DBAL connections and prepared statements |
 | `laravel` | Raw SQL through the `DB` facade and Illuminate connections |
+| `wordpress` | `wpdb`, including the statements `wpdb::prepare()` interpolates |
 
 `pdo` and `mysqli` are enabled by default. Query builders and Eloquent assemble
 their SQL at runtime and are out of reach of a source-level analyzer; what the
@@ -166,16 +172,48 @@ Implement `SqlCatalog\Extension\ExtensionInterface` and register it on an
 
 | Reporter | Writes | Purpose |
 |----------|--------|---------|
-| `json` | `catalog.json` | A deterministic document; two runs of the same source produce the same bytes, so the diff of a pull request reads as the change in the SQL an application issues |
+| `json` | `catalog.json`, `catalog-schema.json` | A deterministic document with the JSON Schema that describes it; two runs of the same source produce the same bytes, so the diff of a pull request reads as the change in the SQL an application issues |
 | `html` | `index.html` | One self-contained page, with no scripts and no external assets |
 | `text` | `catalog.txt` | One block per statement, for reading in a terminal |
 
-## Accuracy
+## Alternatives, and saying what is not known
 
-The analyzer over-approximates: it may report a statement a run never reaches,
-but it does not miss one a run does reach. That property is checked rather than
-claimed. See [How it is verified](docs/verification.md) for the measurements and
-how they are produced.
+A statement assembled from a value that varies becomes one catalog entry per
+alternative, at the same call site:
+
+```
+src/PostRepository.php:19  SELECT  3c4c7d386d60
+  in App\PostRepository::latest via pdo.query
+  SELECT id, title FROM posts ORDER BY created_at ASC
+  resolved
+
+src/PostRepository.php:19  SELECT  d2e912a436a2
+  in App\PostRepository::latest via pdo.query
+  SELECT id, title FROM posts ORDER BY created_at DESC
+  resolved
+```
+
+Values decided together stay together, so a branch that sets both a table and a
+column produces the two statements it can produce rather than the four that
+pairing the values independently would suggest.
+
+Every statement says how far the analyzer got with it:
+
+| `resolution` | Meaning | `searchClosed` |
+|--------------|---------|----------------|
+| `resolved` | The text is fully determined. | yes |
+| `external-input` | The values were followed to runtime input; the string is not fixed. | yes |
+| `incomplete-model` | A dependency the analyzer does not model was reached. | no |
+| `incomplete` | A cycle or an analysis budget stopped the search. | no |
+
+When `searchClosed` is false the statements listed may not be all of them, and
+the `analysis-incomplete` finding says what stopped the search. When `correlated`
+is false the alternatives were paired from parts that vary independently, so some
+of them may be unreachable. Stopping early is never reported as having found
+nothing.
+
+See [How the analysis works](docs/analysis.md) and
+[How it is verified](docs/verification.md).
 
 ## Documentation
 

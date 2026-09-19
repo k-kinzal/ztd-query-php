@@ -30,16 +30,45 @@ final class StatementRecorder
     private array $prepared = [];
 
     /**
+     * @var array<string, true>
+     */
+    private array $visited = [];
+
+    /**
      * Records a statement issued at a call site.
      *
      * @param string $siteKey What tells this call apart from every other, including one on the same line
+     * @param bool $combined Whether the statement came from pairing parts that vary independently
+     * @param list<string> $through The path taken to this reading, from the body the walk started in, outermost first
      */
-    public function record(CallSite $site, string $siteKey, TextPattern $pattern, ?StatementKind $kind = null): QueryRecord
-    {
-        $record = new QueryRecord($site, $siteKey, $pattern, $kind);
+    public function record(
+        CallSite $site,
+        string $siteKey,
+        TextPattern $pattern,
+        ?StatementKind $kind = null,
+        bool $combined = false,
+        array $through = [],
+    ): QueryRecord {
+        $record = new QueryRecord($site, $siteKey, $pattern, $kind, $combined, $through);
         $this->records[] = $record;
 
         return $record;
+    }
+
+    /**
+     * Notes that the walk reached a call, whether or not it turned out to be a database call.
+     */
+    public function markVisited(string $siteKey): void
+    {
+        $this->visited[$siteKey] = true;
+    }
+
+    /**
+     * Whether the walk reached a call.
+     */
+    public function hasVisited(string $siteKey): bool
+    {
+        return isset($this->visited[$siteKey]);
     }
 
     /**

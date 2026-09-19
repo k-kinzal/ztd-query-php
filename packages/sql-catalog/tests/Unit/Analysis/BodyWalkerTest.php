@@ -17,6 +17,7 @@ use SqlCatalog\Evaluation\ArrayEntry;
 use SqlCatalog\Evaluation\ArrayTerm;
 use SqlCatalog\Evaluation\Domain;
 use SqlCatalog\Evaluation\Environment;
+use SqlCatalog\Evaluation\PathSet;
 use SqlCatalog\Php\ProgramIndex;
 use SqlCatalog\Php\SourceParser;
 
@@ -50,6 +51,8 @@ use SqlCatalog\Php\SourceParser;
 #[UsesClass(\SqlCatalog\Text\TextPattern::class)]
 #[UsesClass(\SqlCatalog\Type\TypeShape::class)]
 #[UsesClass(\SqlCatalog\Analysis\ValueBinder::class)]
+#[UsesClass(\SqlCatalog\Analysis\SinkFinder::class)]
+#[UsesClass(PathSet::class)]
 final class BodyWalkerTest extends TestCase
 {
     #[DataProvider('providerWalk')]
@@ -57,8 +60,9 @@ final class BodyWalkerTest extends TestCase
     {
         $file = (new SourceParser())->parse('t.php', $code);
         $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $environment = new Environment();
-        $expressions->bodies()->walk($file->statements, $environment, new FunctionScope('t.php'));
+        $paths = new PathSet();
+        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
+        $environment = $paths->join();
 
         self::assertSame($expected, $environment->read('sql')->patterns()[0]->display());
     }
@@ -80,21 +84,21 @@ final class BodyWalkerTest extends TestCase
     public function testWalkOfNothingReturnsNull(): void
     {
         $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $returned = $expressions->bodies()->walk([], new Environment(), new FunctionScope('t.php'));
+        $returned = $expressions->bodies()->walk([], new PathSet(), new FunctionScope('t.php'));
         self::assertNull($returned->soleLiteral()?->value);
     }
 
     public function testWalkOneOfAStatementWithNoValueReturnsNothing(): void
     {
         $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        self::assertNull($expressions->bodies()->walkOne(new Nop(), new Environment(), new FunctionScope('t.php')));
+        self::assertNull($expressions->bodies()->walkOne(new Nop(), new PathSet(), new FunctionScope('t.php')));
     }
 
     public function testWalkCollectsWhatABodyReturns(): void
     {
         $file = (new SourceParser())->parse('t.php', '<?php return "a";');
         $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $returned = $expressions->bodies()->walk($file->statements, new Environment(), new FunctionScope('t.php'));
+        $returned = $expressions->bodies()->walk($file->statements, new PathSet(), new FunctionScope('t.php'));
         self::assertSame('a', $returned->soleLiteral()?->value);
     }
 
@@ -102,8 +106,9 @@ final class BodyWalkerTest extends TestCase
     {
         $file = (new SourceParser())->parse('t.php', '<?php $sql = "base"; if ($c) { $sql = "a"; } elseif ($d) { $sql = "b"; }');
         $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $environment = new Environment();
-        $expressions->bodies()->walk($file->statements, $environment, new FunctionScope('t.php'));
+        $paths = new PathSet();
+        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
+        $environment = $paths->join();
 
         self::assertCount(3, $environment->read('sql')->terms);
     }
@@ -112,8 +117,9 @@ final class BodyWalkerTest extends TestCase
     {
         $file = (new SourceParser())->parse('t.php', '<?php $sql = "base"; if ($c) { $sql = "a"; } else { $sql = "b"; }');
         $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $environment = new Environment();
-        $expressions->bodies()->walk($file->statements, $environment, new FunctionScope('t.php'));
+        $paths = new PathSet();
+        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
+        $environment = $paths->join();
 
         self::assertCount(2, $environment->read('sql')->terms);
     }
@@ -125,8 +131,9 @@ final class BodyWalkerTest extends TestCase
             '<?php switch ($c) { case 1: $sql = "a"; break; default: $sql = "b"; }',
         );
         $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $environment = new Environment();
-        $expressions->bodies()->walk($file->statements, $environment, new FunctionScope('t.php'));
+        $paths = new PathSet();
+        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
+        $environment = $paths->join();
 
         self::assertCount(2, $environment->read('sql')->terms);
     }
@@ -134,9 +141,9 @@ final class BodyWalkerTest extends TestCase
     public function testWalkBranchesOfNothingLeavesTheEnvironmentAlone(): void
     {
         $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $environment = new Environment(['sql' => Domain::literal('a')]);
-        $expressions->bodies()->walkBranches([], $environment, new FunctionScope('t.php'), false);
-        self::assertSame('a', $environment->read('sql')->soleLiteral()?->value);
+        $paths = PathSet::of(new Environment(['sql' => Domain::literal('a')]));
+        $expressions->bodies()->walkBranches([], $paths, new FunctionScope('t.php'), false);
+        self::assertSame('a', $paths->join()->read('sql')->soleLiteral()?->value);
     }
 
     public function testWalkLoopWidensWhatKeepsGrowing(): void
@@ -146,8 +153,9 @@ final class BodyWalkerTest extends TestCase
             '<?php $sql = "WHERE 1"; foreach ($filters as $f) { $sql .= " AND x"; }',
         );
         $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $environment = new Environment();
-        $expressions->bodies()->walk($file->statements, $environment, new FunctionScope('t.php'));
+        $paths = new PathSet();
+        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
+        $environment = $paths->join();
 
         $displayed = array_map(
             static fn (\SqlCatalog\Text\TextPattern $pattern): string => $pattern->display(),
@@ -164,8 +172,9 @@ final class BodyWalkerTest extends TestCase
             '<?php $sql = "a"; while ($c) { $sql = "b"; } do { $sql = "c"; } while ($c); for ($i = 0; $i < 3; $i++) { $sql = "d"; }',
         );
         $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $environment = new Environment();
-        $expressions->bodies()->walk($file->statements, $environment, new FunctionScope('t.php'));
+        $paths = new PathSet();
+        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
+        $environment = $paths->join();
 
         self::assertNotSame([], $environment->read('sql')->terms);
     }
@@ -177,7 +186,7 @@ final class BodyWalkerTest extends TestCase
         self::assertInstanceOf(\PhpParser\Node\Stmt\If_::class, $statement);
 
         $walker = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder())->bodies();
-        $returned = $walker->walkConditional($statement, new Environment(), new FunctionScope('t.php'));
+        $returned = $walker->walkConditional($statement, new PathSet(), new FunctionScope('t.php'));
 
         self::assertNotNull($returned);
         self::assertCount(2, $returned->terms);
@@ -190,7 +199,7 @@ final class BodyWalkerTest extends TestCase
         self::assertInstanceOf(\PhpParser\Node\Stmt\Switch_::class, $statement);
 
         $walker = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder())->bodies();
-        $returned = $walker->walkSwitch($statement, new Environment(), new FunctionScope('t.php'));
+        $returned = $walker->walkSwitch($statement, new PathSet(), new FunctionScope('t.php'));
 
         self::assertNotNull($returned);
         self::assertCount(2, $returned->terms);
@@ -203,8 +212,9 @@ final class BodyWalkerTest extends TestCase
         self::assertInstanceOf(\PhpParser\Node\Stmt\While_::class, $statement);
 
         $walker = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder())->bodies();
-        $environment = new Environment();
-        $walker->walkLoop($statement, $environment, new FunctionScope('t.php'));
+        $paths = new PathSet();
+        $walker->walkLoop($statement, $paths, new FunctionScope('t.php'));
+        $environment = $paths->join();
 
         self::assertSame('a', $environment->read('sql')->soleLiteral()?->value);
     }
@@ -216,8 +226,9 @@ final class BodyWalkerTest extends TestCase
         self::assertInstanceOf(\PhpParser\Node\Stmt\Block::class, $statement);
 
         $walker = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder())->bodies();
-        $environment = new Environment();
-        $walker->walkOther($statement, $environment, new FunctionScope('t.php'));
+        $paths = new PathSet();
+        $walker->walkOther($statement, $paths, new FunctionScope('t.php'));
+        $environment = $paths->join();
 
         self::assertSame('a', $environment->read('sql')->soleLiteral()?->value);
     }
@@ -229,8 +240,9 @@ final class BodyWalkerTest extends TestCase
         self::assertInstanceOf(\PhpParser\Node\Stmt\TryCatch::class, $statement);
 
         $walker = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder())->bodies();
-        $environment = new Environment();
-        $walker->walkTry($statement, $environment, new FunctionScope('t.php'));
+        $paths = new PathSet();
+        $walker->walkTry($statement, $paths, new FunctionScope('t.php'));
+        $environment = $paths->join();
 
         self::assertCount(2, $environment->read('sql')->terms);
     }
@@ -242,8 +254,9 @@ final class BodyWalkerTest extends TestCase
         self::assertInstanceOf(\PhpParser\Node\Stmt\Foreach_::class, $statement);
 
         $walker = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder())->bodies();
-        $environment = new Environment();
-        $walker->bindIteration($statement, $environment, new FunctionScope('t.php'));
+        $paths = new PathSet();
+        $walker->bindIteration($statement, $paths, new FunctionScope('t.php'));
+        $environment = $paths->join();
 
         self::assertSame('a', $environment->read('row')->soleLiteral()?->value);
     }
@@ -260,15 +273,16 @@ final class BodyWalkerTest extends TestCase
     public function testLoopBodyOfSomethingThatIsNotALoopIsEmpty(): void
     {
         $walker = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder())->bodies();
-        self::assertSame([], $walker->loopBody(new Nop(), new Environment(), new FunctionScope('t.php')));
+        self::assertSame([], $walker->loopBody(new Nop(), new PathSet(), new FunctionScope('t.php')));
     }
 
     public function testBindIterationBindsTheValueVariable(): void
     {
         $file = (new SourceParser())->parse('t.php', '<?php foreach (["a", "b"] as $k => $sql) { }');
         $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $environment = new Environment();
-        $expressions->bodies()->walk($file->statements, $environment, new FunctionScope('t.php'));
+        $paths = new PathSet();
+        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
+        $environment = $paths->join();
 
         self::assertCount(2, $environment->read('sql')->terms);
     }
@@ -295,20 +309,47 @@ final class BodyWalkerTest extends TestCase
         self::assertCount(1, $walker->widen($first, $second)->read('a')->terms);
     }
 
-    public function testAdoptReplacesWhatTheEnvironmentKnows(): void
+    public function testWidenPathsWidensEachPathAgainstItsSecondPass(): void
     {
         $walker = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder())->bodies();
-        $environment = new Environment(['a' => Domain::literal('x')]);
-        $walker->adopt($environment, new Environment(['b' => Domain::literal('y')]));
-        self::assertSame(['b'], $environment->names());
+        $first = PathSet::of(new Environment(['a' => Domain::literal('x')]));
+        $second = PathSet::of(new Environment(['a' => Domain::literal('y')]));
+
+        self::assertCount(1, $walker->widenPaths($first, $second)->join()->read('a')->terms);
+    }
+
+    public function testWidenPathsJoinsWhenThePathCountsDiffer(): void
+    {
+        $walker = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder())->bodies();
+        $first = new PathSet([new Environment(['a' => Domain::literal('x')]), new Environment(['a' => Domain::literal('y')])]);
+        $second = PathSet::of(new Environment(['a' => Domain::literal('z')]));
+
+        self::assertCount(1, $walker->widenPaths($first, $second)->environments());
+    }
+
+    public function testEvaluateEverywhereCoversEveryPath(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php $sql;');
+        $statement = $file->statements[0];
+        self::assertInstanceOf(\PhpParser\Node\Stmt\Expression::class, $statement);
+        $walker = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder())->bodies();
+        $paths = new PathSet([
+            new Environment(['sql' => Domain::literal('a')]),
+            new Environment(['sql' => Domain::literal('b')]),
+        ]);
+
+        $read = $walker->evaluateEverywhere($statement->expr, $paths, new FunctionScope('t.php'));
+
+        self::assertCount(2, $read->terms);
     }
 
     public function testWalkOtherEvaluatesTheExpressionsOfEchoAndThrow(): void
     {
         $file = (new SourceParser())->parse('t.php', '<?php echo "a"; global $g; static $s;');
         $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $environment = new Environment(['g' => Domain::literal('x')]);
-        $expressions->bodies()->walk($file->statements, $environment, new FunctionScope('t.php'));
+        $paths = PathSet::of(new Environment(['g' => Domain::literal('x')]));
+        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
+        $environment = $paths->join();
 
         self::assertFalse($environment->has('g'));
     }
@@ -320,7 +361,7 @@ final class BodyWalkerTest extends TestCase
         $environment = new Environment(['s' => Domain::literal('x')]);
         $statement = $file->statements[0];
         self::assertInstanceOf(\PhpParser\Node\Stmt\Static_::class, $statement);
-        $walker->forgetDeclared($statement, $environment);
+        $walker->forgetDeclared($statement, PathSet::of($environment));
         self::assertFalse($environment->has('s'));
     }
 
@@ -328,7 +369,7 @@ final class BodyWalkerTest extends TestCase
     {
         $file = (new SourceParser())->parse('t.php', '<?php try { return "a"; } catch (\\RuntimeException $e) { return "b"; }');
         $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $returned = $expressions->bodies()->walk($file->statements, new Environment(), new FunctionScope('t.php'));
+        $returned = $expressions->bodies()->walk($file->statements, new PathSet(), new FunctionScope('t.php'));
         self::assertCount(2, $returned->terms);
     }
 }

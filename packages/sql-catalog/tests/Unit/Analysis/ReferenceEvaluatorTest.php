@@ -22,6 +22,7 @@ use SqlCatalog\Evaluation\ArrayEntry;
 use SqlCatalog\Evaluation\ArrayTerm;
 use SqlCatalog\Evaluation\Domain;
 use SqlCatalog\Evaluation\Environment;
+use SqlCatalog\Evaluation\PathSet;
 use SqlCatalog\Php\NodeText;
 use SqlCatalog\Php\ProgramIndex;
 use SqlCatalog\Php\ProgramIndexBuilder;
@@ -62,6 +63,8 @@ use SqlCatalog\Text\Origin;
 #[UsesClass(\SqlCatalog\Text\TextPattern::class)]
 #[UsesClass(\SqlCatalog\Type\TypeShape::class)]
 #[UsesClass(\SqlCatalog\Analysis\ValueBinder::class)]
+#[UsesClass(\SqlCatalog\Analysis\SinkFinder::class)]
+#[UsesClass(PathSet::class)]
 final class ReferenceEvaluatorTest extends TestCase
 {
     #[DataProvider('providerEvaluate')]
@@ -70,8 +73,9 @@ final class ReferenceEvaluatorTest extends TestCase
         $file = (new SourceParser())->parse('t.php', $code);
         $index = (new ProgramIndexBuilder())->build([$file]);
         $expressions = (new Interpreter($index, []))->evaluatorFor(new StatementRecorder());
-        $environment = new Environment();
-        $expressions->bodies()->walk($file->statements, $environment, new FunctionScope('t.php'));
+        $paths = new PathSet();
+        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
+        $environment = $paths->join();
 
         self::assertSame($expected, $environment->read('result')->patterns()[0]->display());
     }
@@ -173,8 +177,9 @@ final class ReferenceEvaluatorTest extends TestCase
     {
         $file = (new SourceParser())->parse('t.php', '<?php $result = ["a", ...$rest];');
         $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $environment = new Environment();
-        $expressions->bodies()->walk($file->statements, $environment, new FunctionScope('t.php'));
+        $paths = new PathSet();
+        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
+        $environment = $paths->join();
 
         self::assertFalse($environment->read('result')->soleArray()?->complete);
     }
@@ -183,8 +188,9 @@ final class ReferenceEvaluatorTest extends TestCase
     {
         $file = (new SourceParser())->parse('t.php', '<?php $result = $_POST["a"]["b"];');
         $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $environment = new Environment();
-        $expressions->bodies()->walk($file->statements, $environment, new FunctionScope('t.php'));
+        $paths = new PathSet();
+        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
+        $environment = $paths->join();
 
         self::assertSame(Origin::External, $environment->read('result')->patterns()[0]->holes()[0]->origin);
     }
@@ -276,8 +282,9 @@ final class ReferenceEvaluatorTest extends TestCase
         $file = (new SourceParser())->parse('t.php', '<?php enum S: string { case A = "a"; case B = "b"; } $result = S::A->value;');
         $index = (new ProgramIndexBuilder())->build([$file]);
         $expressions = (new Interpreter($index, []))->evaluatorFor(new StatementRecorder());
-        $environment = new Environment();
-        $expressions->bodies()->walk($file->statements, $environment, new FunctionScope('t.php'));
+        $paths = new PathSet();
+        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
+        $environment = $paths->join();
 
         self::assertSame('a', $environment->read('result')->soleLiteral()?->value);
     }
@@ -287,8 +294,9 @@ final class ReferenceEvaluatorTest extends TestCase
         $file = (new SourceParser())->parse('t.php', '<?php enum S: string { case A = "a"; } $result = S::A->name;');
         $index = (new ProgramIndexBuilder())->build([$file]);
         $expressions = (new Interpreter($index, []))->evaluatorFor(new StatementRecorder());
-        $environment = new Environment();
-        $expressions->bodies()->walk($file->statements, $environment, new FunctionScope('t.php'));
+        $paths = new PathSet();
+        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
+        $environment = $paths->join();
 
         self::assertSame('A', $environment->read('result')->soleLiteral()?->value);
     }
@@ -301,8 +309,9 @@ final class ReferenceEvaluatorTest extends TestCase
         );
         $index = (new ProgramIndexBuilder())->build([$file]);
         $expressions = (new Interpreter($index, []))->evaluatorFor(new StatementRecorder());
-        $environment = new Environment();
-        $expressions->bodies()->walk($file->statements, $environment, new FunctionScope('t.php'));
+        $paths = new PathSet();
+        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
+        $environment = $paths->join();
 
         self::assertSame('string', $environment->read('result')->type()->display());
         self::assertFalse($environment->read('result')->isExact());
@@ -337,8 +346,9 @@ final class ReferenceEvaluatorTest extends TestCase
     {
         $file = (new SourceParser())->parse('t.php', '<?php $p = []; $p[] = "a"; $p[":id"] = 1; $result = $p[":id"];');
         $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $environment = new Environment();
-        $expressions->bodies()->walk($file->statements, $environment, new FunctionScope('t.php'));
+        $paths = new PathSet();
+        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
+        $environment = $paths->join();
 
         self::assertSame(1, $environment->read('result')->soleLiteral()?->value);
         $array = $environment->read('p')->soleArray();

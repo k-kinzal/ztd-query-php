@@ -24,11 +24,17 @@ final class FunctionScopeTest extends TestCase
         self::assertSame('a.php', (new FunctionScope('a.php'))->enter('f', null, '')->file);
     }
 
-    public function testDepthCountsTheCallsBeingFollowed(): void
+    public function testDepthCountsTheCallsFollowedFromTheBodyTheWalkStartedIn(): void
     {
-        $scope = new FunctionScope('a.php');
+        $scope = new FunctionScope('a.php', 'root', null, ['root']);
+
         self::assertSame(0, $scope->depth());
         self::assertSame(2, $scope->enter('f', null, '')->enter('g', null, '')->depth());
+    }
+
+    public function testDepthIsZeroBeforeAnythingIsFollowed(): void
+    {
+        self::assertSame(0, (new FunctionScope('a.php'))->depth());
     }
 
     public function testIsFollowingDetectsRecursion(): void

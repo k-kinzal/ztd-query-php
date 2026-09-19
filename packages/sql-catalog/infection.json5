@@ -15,7 +15,7 @@
         "json": "build/infection/infection.json"
     },
     // Score all behavioral tests present in this package; documentation examples run separately.
-    "testFrameworkExtraArgs": "--no-extensions --testsuite=unit,conformance",
+    "testFrameworkExtraArgs": "--no-extensions --testsuite=unit",
     "testFramework": "phpunit",
     "phpUnit": {"configDir": ".", "customPath": "vendor/bin/phpunit"}
 }

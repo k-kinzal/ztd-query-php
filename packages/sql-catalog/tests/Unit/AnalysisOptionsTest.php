@@ -29,7 +29,7 @@ final class AnalysisOptionsTest extends TestCase
 
     public function testBudgetFallsBackToTheDefault(): void
     {
-        self::assertSame(200000, (new AnalysisOptions())->budget()->maxSteps);
+        self::assertSame(20000, (new AnalysisOptions())->budget()->maxSteps);
     }
 
     public function testBudgetIsTheOneThatWasGiven(): void

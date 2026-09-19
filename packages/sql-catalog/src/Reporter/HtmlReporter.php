@@ -89,15 +89,37 @@ final class HtmlReporter implements ReporterInterface
     public function row(CatalogEntry $entry): string
     {
         return '<tr class="sev-' . $this->escape($entry->severity()->value) . '">'
-            . '<td><span class="kind">' . $this->escape(strtoupper($entry->kind->value)) . '</span>'
+            . '<td><span class="kind">' . $this->escape(strtoupper($entry->kind->value)) . '</span> '
+            . '<span class="resolution ' . $this->escape($entry->resolution()->value) . '">'
+            . $this->escape($entry->resolution()->value) . '</span>'
             . '<pre>' . $this->escape($entry->sql()) . '</pre>'
-            . '<p class="tables">' . $this->escape(implode(', ', $entry->tables)) . '</p></td>'
+            . '<p class="tables">' . $this->escape(implode(', ', $entry->tables)) . '</p>'
+            . $this->caveats($entry) . '</td>'
             . '<td><code>' . $this->escape($entry->site->display()) . '</code>'
             . '<p>' . $this->escape($entry->site->function) . '</p>'
             . '<p class="sink">' . $this->escape($entry->site->sink) . '</p></td>'
             . '<td>' . $this->values($entry) . '</td>'
             . '<td>' . $this->findings($entry) . '</td>'
             . '</tr>';
+    }
+
+    /**
+     * What a reader has to know before trusting the statements listed for a call site.
+     */
+    public function caveats(CatalogEntry $entry): string
+    {
+        $caveats = [];
+        if (!$entry->resolution()->isClosed()) {
+            $caveats[] = 'the search did not close, so these may not be all of them';
+        }
+        if (!$entry->correlated) {
+            $caveats[] = 'assembled from parts that vary independently, so some may be unreachable';
+        }
+        if (count($entry->through) > 1) {
+            $caveats[] = 'read through ' . implode(' &rarr; ', array_map($this->escape(...), $entry->through));
+        }
+
+        return $caveats === [] ? '' : '<p class="caveat">' . implode('; ', $caveats) . '</p>';
     }
 
     /**
@@ -165,6 +187,10 @@ final class HtmlReporter implements ReporterInterface
             . 'code{font-size:.85rem}ul{margin:0;padding-left:1.1rem}'
             . '.kind{font-size:.7rem;font-weight:700;color:#57606a}'
             . '.tables,.sink{color:#57606a;font-size:.8rem;margin:.2rem 0}'
+            . '.caveat{color:#9a6700;font-size:.8rem;margin:.2rem 0}'
+            . '.resolution{font-size:.7rem;color:#57606a}'
+            . '.resolution.external-input{color:#cf222e}'
+            . '.resolution.incomplete,.resolution.incomplete-model{color:#bf8700}'
             . '.none{color:#8c959f}'
             . '.badge{display:inline-block;padding:0 .4rem;border-radius:.6rem;font-size:.7rem;color:#fff;background:#57606a}'
             . '.badge.high{background:#cf222e}.badge.medium{background:#bf8700}.badge.low{background:#0969da}'

@@ -115,7 +115,7 @@ final class CatalogCommand
         $status = $this->status($command, $catalog);
 
         if ($command->output === null) {
-            return new CommandResult($status, $artifacts->sole() ?? implode("\n", $artifacts->all()));
+            return new CommandResult($status, $artifacts->primary() ?? implode("\n", $artifacts->all()));
         }
 
         $written = $this->writer->write($command->output, $artifacts);

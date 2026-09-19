@@ -70,6 +70,7 @@ final class TextReporter implements ReporterInterface
             sprintf('%s  %s  %s', $entry->site->display(), strtoupper($entry->kind->value), $entry->id),
             sprintf('  in %s via %s', $entry->site->function, $entry->site->sink),
             '  ' . $entry->sql(),
+            '  ' . $this->statusLine($entry),
         ];
         foreach ($entry->placeholders as $placeholder) {
             $lines[] = sprintf('  %s = %s', $placeholder->token, $placeholder->value?->display() ?? '(unbound)');
@@ -79,6 +80,25 @@ final class TextReporter implements ReporterInterface
         }
 
         return $lines;
+    }
+
+    /**
+     * The line saying how far the analyzer got with a statement.
+     */
+    public function statusLine(CatalogEntry $entry): string
+    {
+        $status = [$entry->resolution()->value];
+        if (!$entry->resolution()->isClosed()) {
+            $status[] = 'search did not close';
+        }
+        if (!$entry->correlated) {
+            $status[] = 'alternatives may be unreachable';
+        }
+        if (count($entry->through) > 1) {
+            $status[] = 'via ' . implode(' -> ', $entry->through);
+        }
+
+        return implode('; ', $status);
     }
 
     /**

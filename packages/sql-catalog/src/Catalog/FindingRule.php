@@ -15,6 +15,7 @@ enum FindingRule: string
     case DynamicSql = 'dynamic-sql';
     case ExternalInput = 'external-input';
     case PlaceholderCountMismatch = 'placeholder-count-mismatch';
+    case AnalysisIncomplete = 'analysis-incomplete';
 
     /**
      * How much attention findings of this rule deserve by default.
@@ -26,6 +27,7 @@ enum FindingRule: string
             self::DynamicSql => Severity::Medium,
             self::PlaceholderCountMismatch => Severity::Medium,
             self::UnresolvedSql => Severity::Low,
+            self::AnalysisIncomplete => Severity::Low,
         };
     }
 
@@ -39,6 +41,7 @@ enum FindingRule: string
             self::DynamicSql => 'A value is spliced into the statement text instead of being bound.',
             self::ExternalInput => 'A value spliced into the statement text comes from external input.',
             self::PlaceholderCountMismatch => 'The statement binds a different number of values than it has placeholders.',
+            self::AnalysisIncomplete => 'A cycle or an analysis budget stopped the search before it closed.',
         };
     }
 }

@@ -9,6 +9,7 @@ use SqlCatalog\Catalog\EntryIdentity;
 use SqlCatalog\Catalog\Finding;
 use SqlCatalog\Catalog\FindingRule;
 use SqlCatalog\Catalog\Placeholder;
+use SqlCatalog\Catalog\Resolution;
 use SqlCatalog\Catalog\ValueDomain;
 use SqlCatalog\Evaluation\Domain;
 use SqlCatalog\Sql\PlaceholderScanner;
@@ -58,12 +59,8 @@ final class EntryFactory
     {
         $entries = [];
         foreach ($this->groupBySite($this->merge($records)) as $group) {
-            $built = [];
             foreach ($group as $record) {
-                $built[] = $this->buildOne($record, count($group) > 1);
-            }
-            foreach ($this->dropSuperseded($built) as $entry) {
-                $entries[] = $entry;
+                $entries[] = $this->buildOne($record, count($group) > 1);
             }
         }
 
@@ -126,6 +123,8 @@ final class EntryFactory
             $placeholders,
             $record->site,
             $this->findings($pattern, $record, $placeholders, $alternatives),
+            !$record->combined,
+            $record->through,
         );
     }
 
@@ -185,11 +184,12 @@ final class EntryFactory
     ): array {
         $findings = [];
         $holes = $pattern->holes();
+        $resolution = Resolution::of($pattern);
 
         if ($holes !== [] && $this->kinds->read($pattern) === StatementKind::Unknown) {
             $findings[] = Finding::of(FindingRule::UnresolvedSql, 'The statement text did not resolve far enough to read what it does.');
         }
-        if ($holes !== []) {
+        if ($holes !== [] && $resolution !== Resolution::Incomplete) {
             $findings[] = Finding::of(
                 FindingRule::DynamicSql,
                 sprintf('%d value(s) are spliced into the statement text rather than bound.', count($holes)),
@@ -203,6 +203,13 @@ final class EntryFactory
                 );
                 break;
             }
+        }
+
+        if ($resolution === Resolution::Incomplete) {
+            $findings[] = Finding::of(
+                FindingRule::AnalysisIncomplete,
+                'The search stopped at a cycle or a budget, so the statements here may not be all of them.',
+            );
         }
 
         $mismatch = $alternatives ? null : $this->countMismatch($record, $placeholders);
@@ -237,64 +244,4 @@ final class EntryFactory
         );
     }
 
-    /**
-     * The entries of one call site, without the ones a more resolved entry covers.
-     *
-     * Following a call can reach the same database call with the statement text
-     * already resolved. When that happens the unresolved reading of the same
-     * call is not a second statement, it is the same one seen with less
-     * information, and reporting both would overstate what the code does.
-     *
-     * @param list<CatalogEntry> $entries
-     * @return list<CatalogEntry>
-     */
-    public function dropSuperseded(array $entries): array
-    {
-        $kept = [];
-        foreach ($entries as $entry) {
-            if (!$entry->isExact() && $this->isSupersededAt($entry, $entries)) {
-                continue;
-            }
-            $kept[] = $entry;
-        }
-
-        return $kept;
-    }
-
-    /**
-     * Whether a resolved entry at the same call site already covers this one.
-     *
-     * @param list<CatalogEntry> $entries
-     */
-    public function isSupersededAt(CatalogEntry $entry, array $entries): bool
-    {
-        foreach ($entries as $other) {
-            if ($other !== $entry && $other->isExact() && $this->covers($entry->pattern, $other->pattern)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Whether every resolved run of the shape appears, in order, inside the exact statement.
-     */
-    public function covers(TextPattern $shape, TextPattern $exact): bool
-    {
-        $text = $exact->display();
-        $offset = 0;
-        foreach ($shape->segments as $segment) {
-            if ($segment instanceof \SqlCatalog\Text\TextHole) {
-                continue;
-            }
-            $found = strpos($text, $segment->display(), $offset);
-            if ($found === false) {
-                return false;
-            }
-            $offset = $found + strlen($segment->display());
-        }
-
-        return true;
-    }
 }

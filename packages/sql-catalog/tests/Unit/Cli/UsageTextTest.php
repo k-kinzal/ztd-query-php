@@ -28,6 +28,7 @@ use SqlCatalog\Reporter\TextReporter;
 #[UsesClass(JsonReporter::class)]
 #[UsesClass(ReporterRegistry::class)]
 #[UsesClass(TextReporter::class)]
+#[UsesClass(\SqlCatalog\Extension\WordPressExtension::class)]
 final class UsageTextTest extends TestCase
 {
     public function testHelpDocumentsEveryOptionTheParserTakes(): void

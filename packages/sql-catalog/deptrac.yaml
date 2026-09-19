@@ -41,10 +41,6 @@ deptrac:
       collectors:
         - type: directory
           value: 'src/Analysis/'
-    - name: Conformance
-      collectors:
-        - type: directory
-          value: 'src/Conformance/'
     - name: Filter
       collectors:
         - type: directory
@@ -79,7 +75,6 @@ deptrac:
     Extension: [Sql]
     Catalog: [Evaluation, Sql, Text, Type]
     Analysis: [Catalog, Evaluation, Extension, Php, Sql, Text, Type, PhpParser]
-    Conformance: [Catalog, Text]
     Filter: [Catalog, Sql]
     Reporter: [Catalog]
     Facade: [Analysis, Catalog, Extension, Php, Source]

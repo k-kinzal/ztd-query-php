@@ -16,12 +16,12 @@ use SqlCatalog\Source\SourceScanner;
 #[UsesClass(SourceScanException::class)]
 final class SourceScannerTest extends TestCase
 {
-    public function testScanFindsThePhpFilesUnderTheCorpus(): void
+    public function testScanFindsThePhpFilesUnderADirectory(): void
     {
         $root = dirname(__DIR__, 3);
-        $files = (new SourceScanner($root))->scan([$root . '/corpus/app']);
+        $files = (new SourceScanner($root))->scan([$root . '/src']);
         $paths = array_map(static fn (SourceFile $file): string => $file->path, $files);
-        self::assertContains('corpus/app/Plain.php', $paths);
+        self::assertContains('src/Analyzer.php', $paths);
         self::assertStringStartsWith('<?php', $files[0]->code);
     }
 
@@ -30,17 +30,17 @@ final class SourceScannerTest extends TestCase
         $root = dirname(__DIR__, 3);
         $scanner = new SourceScanner($root);
         self::assertSame(
-            array_map(static fn (SourceFile $file): string => $file->path, $scanner->scan([$root . '/corpus/app'])),
-            array_map(static fn (SourceFile $file): string => $file->path, $scanner->scan([$root . '/corpus/app'])),
+            array_map(static fn (SourceFile $file): string => $file->path, $scanner->scan([$root . '/src'])),
+            array_map(static fn (SourceFile $file): string => $file->path, $scanner->scan([$root . '/src'])),
         );
     }
 
     public function testScanOneReadsASingleFile(): void
     {
         $root = dirname(__DIR__, 3);
-        $files = (new SourceScanner($root))->scanOne($root . '/corpus/app/Plain.php');
+        $files = (new SourceScanner($root))->scanOne($root . '/src/Analyzer.php');
         self::assertCount(1, $files);
-        self::assertSame('corpus/app/Plain.php', $files[0]->path);
+        self::assertSame('src/Analyzer.php', $files[0]->path);
     }
 
     public function testScanOneRefusesAPathThatIsNotThere(): void
@@ -52,7 +52,7 @@ final class SourceScannerTest extends TestCase
     public function testWalkSkipsTheDirectoriesAScanNeverWants(): void
     {
         $root = dirname(__DIR__, 3);
-        $paths = (new SourceScanner($root))->walk($root . '/corpus');
+        $paths = (new SourceScanner($root))->walk($root . '/src');
         self::assertNotEmpty($paths);
         self::assertSame([], array_values(array_filter(
             $paths,
@@ -63,13 +63,13 @@ final class SourceScannerTest extends TestCase
     public function testReadNamesTheFileRelativeToTheRoot(): void
     {
         $root = dirname(__DIR__, 3);
-        self::assertSame('corpus/app/Plain.php', (new SourceScanner($root))->read($root . '/corpus/app/Plain.php')?->path);
+        self::assertSame('src/Analyzer.php', (new SourceScanner($root))->read($root . '/src/Analyzer.php')?->path);
     }
 
     public function testReadSkipsAnExcludedFile(): void
     {
         $root = dirname(__DIR__, 3);
-        self::assertNull((new SourceScanner($root, ['corpus/*']))->read($root . '/corpus/app/Plain.php'));
+        self::assertNull((new SourceScanner($root, ['src/*']))->read($root . '/src/Analyzer.php'));
     }
 
     public function testIsExcludedAcceptsAPatternOrADirectory(): void

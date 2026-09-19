@@ -15,19 +15,21 @@ use SqlCatalog\Extension\MysqliExtension;
 use SqlCatalog\Extension\PdoExtension;
 use SqlCatalog\Extension\SinkSpec;
 use SqlCatalog\Extension\UnknownExtensionException;
+use SqlCatalog\Extension\WordPressExtension;
 
 #[CoversClass(ExtensionRegistry::class)]
 #[UsesClass(DoctrineExtension::class)]
 #[UsesClass(LaravelExtension::class)]
 #[UsesClass(MysqliExtension::class)]
 #[UsesClass(PdoExtension::class)]
+#[UsesClass(WordPressExtension::class)]
 #[UsesClass(SinkSpec::class)]
 #[UsesClass(UnknownExtensionException::class)]
 final class ExtensionRegistryTest extends TestCase
 {
     public function testWithBuiltinsRegistersEverythingThatShips(): void
     {
-        self::assertSame(['doctrine', 'laravel', 'mysqli', 'pdo'], ExtensionRegistry::withBuiltins()->names());
+        self::assertSame(['doctrine', 'laravel', 'mysqli', 'pdo', 'wordpress'], ExtensionRegistry::withBuiltins()->names());
     }
 
     public function testRegisterReplacesAnExtensionOfTheSameName(): void
@@ -86,6 +88,6 @@ final class ExtensionRegistryTest extends TestCase
             static fn (ExtensionInterface $extension): string => $extension->name(),
             ExtensionRegistry::withBuiltins()->all(),
         );
-        self::assertSame(['doctrine', 'laravel', 'mysqli', 'pdo'], $names);
+        self::assertSame(['doctrine', 'laravel', 'mysqli', 'pdo', 'wordpress'], $names);
     }
 }

@@ -50,25 +50,29 @@ final class ProgramIndexBuilder
         $constants = [];
 
         foreach ($files as $file) {
-            foreach ($this->finder->findInstanceOf($file->statements, ClassLike::class) as $node) {
-                $shape = $this->readClass($node, $file->path);
-                if ($shape !== null) {
-                    $classes[strtolower($shape->name)] = $shape;
+            foreach ($this->finder->findInstanceOf($file->statements, Node::class) as $node) {
+                if ($node instanceof ClassLike) {
+                    $shape = $this->readClass($node, $file->path);
+                    if ($shape !== null) {
+                        $classes[strtolower($shape->name)] = $shape;
+                    }
+                    continue;
                 }
-            }
-            foreach ($this->finder->findInstanceOf($file->statements, Function_::class) as $node) {
-                $name = $node->namespacedName?->toString() ?? $node->name->toString();
-                $functions[strtolower($name)] = new FunctionShape(
-                    $name,
-                    $this->readParameters($node->params),
-                    $this->types->read($node->returnType),
-                    $node,
-                    $file->path,
-                );
-            }
-            foreach ($this->finder->findInstanceOf($file->statements, Node\Stmt\Const_::class) as $node) {
-                foreach ($node->consts as $const) {
-                    $constants[$const->namespacedName?->toString() ?? $const->name->toString()] = $const->value;
+                if ($node instanceof Function_) {
+                    $name = $node->namespacedName?->toString() ?? $node->name->toString();
+                    $functions[strtolower($name)] = new FunctionShape(
+                        $name,
+                        $this->readParameters($node->params),
+                        $this->types->read($node->returnType),
+                        $node,
+                        $file->path,
+                    );
+                    continue;
+                }
+                if ($node instanceof Node\Stmt\Const_) {
+                    foreach ($node->consts as $const) {
+                        $constants[$const->namespacedName?->toString() ?? $const->name->toString()] = $const->value;
+                    }
                 }
             }
         }
@@ -88,33 +92,74 @@ final class ProgramIndexBuilder
 
         $methods = [];
         $properties = [];
-        $defaults = [];
         foreach ($node->getMethods() as $method) {
             $methods[strtolower($method->name->toString())] = $this->readMethod($name, $method, $file);
             $properties += $this->readPromotedProperties($method);
         }
-        foreach ($this->finder->findInstanceOf([$node], Property::class) as $property) {
-            foreach ($property->props as $declared) {
-                $properties[$declared->name->toString()] = $this->types->read($property->type);
-                if ($declared->default !== null) {
-                    $defaults[$declared->name->toString()] = $declared->default;
-                }
-            }
-        }
+        $members = $this->readMembers($node);
 
         return new ClassShape(
             $name,
             $node instanceof Class_ ? $node->extends?->toString() : null,
             $this->readParentNames($node),
-            $this->readTraitNames($node),
+            $members['traits'],
             $node instanceof Enum_,
-            $this->readConstants($node),
-            $this->readEnumCases($node),
-            $properties,
+            $members['constants'],
+            $members['cases'],
+            array_merge($properties, $members['properties']),
             $methods,
-            $defaults,
-            $this->readAssignedProperties($node),
+            $members['defaults'],
+            $members['assigned'],
         );
+    }
+
+    /**
+     * Everything a class body declares, read in one pass over it.
+     *
+     * The body is walked once and its declarations are sorted afterwards, which
+     * matters on a source tree with thousands of classes in it.
+     *
+     * @return array{
+     *     traits: list<string>,
+     *     constants: array<string, Node\Expr>,
+     *     cases: array<string, Node\Expr|null>,
+     *     properties: array<string, TypeShape>,
+     *     defaults: array<string, Node\Expr>,
+     *     assigned: array<string, true>
+     * }
+     */
+    public function readMembers(ClassLike $node): array
+    {
+        $members = ['traits' => [], 'constants' => [], 'cases' => [], 'properties' => [], 'defaults' => [], 'assigned' => []];
+        foreach ($this->finder->findInstanceOf([$node], Node::class) as $member) {
+            if ($member instanceof TraitUse) {
+                foreach ($member->traits as $trait) {
+                    $members['traits'][] = $trait->toString();
+                }
+            }
+            if ($member instanceof ClassConst) {
+                foreach ($member->consts as $const) {
+                    $members['constants'][$const->name->toString()] = $const->value;
+                }
+            }
+            if ($member instanceof EnumCase) {
+                $members['cases'][$member->name->toString()] = $member->expr;
+            }
+            if ($member instanceof Property) {
+                foreach ($member->props as $declared) {
+                    $members['properties'][$declared->name->toString()] = $this->types->read($member->type);
+                    if ($declared->default !== null) {
+                        $members['defaults'][$declared->name->toString()] = $declared->default;
+                    }
+                }
+            }
+            $target = $member instanceof Node\Expr ? $this->assignmentTarget($member) : null;
+            if ($target !== null) {
+                $members['assigned'][$target] = true;
+            }
+        }
+
+        return $members;
     }
 
     /**

@@ -36,6 +36,7 @@ final class ExtensionRegistry
             new MysqliExtension(),
             new DoctrineExtension(),
             new LaravelExtension(),
+            new WordPressExtension(),
         ]);
     }
 

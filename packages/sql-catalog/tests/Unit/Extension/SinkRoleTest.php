@@ -14,8 +14,16 @@ final class SinkRoleTest extends TestCase
     public function testCarriesSqlOnlyForTheCallsThatTakeAStatement(): void
     {
         self::assertTrue(SinkRole::Query->carriesSql());
+        self::assertTrue(SinkRole::Compose->carriesSql());
         self::assertTrue(SinkRole::Prepare->carriesSql());
         self::assertFalse(SinkRole::Execute->carriesSql());
         self::assertFalse(SinkRole::Bind->carriesSql());
+    }
+
+    public function testReturnsSqlOnlyForTheCallThatHandsTheStatementBack(): void
+    {
+        self::assertTrue(SinkRole::Compose->returnsSql());
+        self::assertFalse(SinkRole::Query->returnsSql());
+        self::assertFalse(SinkRole::Prepare->returnsSql());
     }
 }

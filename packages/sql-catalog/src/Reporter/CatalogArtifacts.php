@@ -19,12 +19,16 @@ final class CatalogArtifacts
      */
     private array $files;
 
+    private ?string $primary;
+
     /**
      * @param array<string, string> $files Contents, keyed by the name to write them under
+     * @param string|null $primary The file a reader wants when only one can be shown
      */
-    public function __construct(array $files = [])
+    public function __construct(array $files = [], ?string $primary = null)
     {
         $this->files = $files;
+        $this->primary = $primary;
     }
 
     /**
@@ -32,7 +36,7 @@ final class CatalogArtifacts
      */
     public static function one(string $name, string $contents): self
     {
-        return new self([$name => $contents]);
+        return new self([$name => $contents], $name);
     }
 
     /**
@@ -66,6 +70,22 @@ final class CatalogArtifacts
         $files = array_values($this->files);
 
         return count($files) === 1 ? $files[0] : null;
+    }
+
+    /**
+     * The contents a reader wants when only one file can be shown.
+     *
+     * Writing into a directory can produce more than one file — a document and
+     * the schema that describes it. Printing cannot, so one of them is the one
+     * that gets printed.
+     */
+    public function primary(): ?string
+    {
+        if ($this->primary !== null) {
+            return $this->files[$this->primary] ?? null;
+        }
+
+        return $this->sole();
     }
 
     /**

@@ -57,6 +57,7 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(\SqlCatalog\Evaluation\PatternTerm::class)]
 #[UsesClass(\SqlCatalog\Text\TextGeneralization::class)]
 #[UsesClass(Origin::class)]
+#[UsesClass(\SqlCatalog\Catalog\Resolution::class)]
 final class EntryFactoryTest extends TestCase
 {
     public function testBuildTurnsRecordsIntoEntries(): void
@@ -207,55 +208,70 @@ final class EntryFactoryTest extends TestCase
         self::assertNotContains(FindingRule::PlaceholderCountMismatch, $rules);
     }
 
-    public function testDropSupersededRemovesAReadingAResolvedOneCovers(): void
+    public function testBuildKeepsBothReadingsOfTheSameCall(): void
     {
         $exact = TextPattern::fromText('SELECT * FROM users');
         $shape = TextPattern::fromText('SELECT * FROM ')
             ->concat(TextPattern::fromHole(new TextHole(Origin::Property, TypeShape::unknown())));
         $site = new CallSite('a.php', 1, 'f', 'pdo.query');
+
         $entries = (new EntryFactory())->build([
             new QueryRecord($site, 'k', $shape),
             new QueryRecord($site, 'k', $exact),
         ]);
-        self::assertCount(1, $entries);
-        self::assertTrue($entries[0]->isExact());
+
+        self::assertCount(2, $entries);
+        self::assertSame([false, true], array_map(
+            static fn (CatalogEntry $entry): bool => $entry->isExact(),
+            $entries,
+        ));
     }
 
-    public function testDropSupersededIsCalledWithTheEntries(): void
+    public function testBuildKeepsAnUndeterminedReadingBesideAResolvedOne(): void
     {
-        $factory = new EntryFactory();
         $site = new CallSite('a.php', 1, 'f', 'pdo.query');
-        $shape = TextPattern::fromText('SELECT * FROM ')
-            ->concat(TextPattern::fromHole(new TextHole(Origin::Property, TypeShape::unknown())));
-        $entries = [
-            $factory->buildOne(new QueryRecord($site, 'k', $shape)),
-            $factory->buildOne(new QueryRecord($site, 'k', TextPattern::fromText('SELECT * FROM users'))),
-        ];
+        $shape = TextPattern::fromHole(new TextHole(Origin::Parameter, TypeShape::unknown()));
+        $entries = (new EntryFactory())->build([
+            new QueryRecord($site, 'k', $shape),
+            new QueryRecord($site, 'k', TextPattern::fromText('SELECT 1')),
+        ]);
 
-        $kept = $factory->dropSuperseded($entries);
-
-        self::assertCount(1, $kept);
-        self::assertSame('SELECT * FROM users', $kept[0]->sql());
+        self::assertSame(['{$}', 'SELECT 1'], array_map(
+            static fn (CatalogEntry $entry): string => $entry->sql(),
+            $entries,
+        ));
     }
 
-    public function testIsSupersededAtIgnoresAnUnrelatedStatement(): void
+    public function testBuildOneRecordsWhetherTheAlternativesAreOnesTheCodeCanReach(): void
     {
-        $factory = new EntryFactory();
-        $shape = TextPattern::fromText('SELECT * FROM orders WHERE a = ')
-            ->concat(TextPattern::fromHole(new TextHole(Origin::Property, TypeShape::unknown())));
         $site = new CallSite('a.php', 1, 'f', 'pdo.query');
-        $entry = $factory->buildOne(new QueryRecord($site, 'k', $shape));
-        $other = $factory->buildOne(new QueryRecord($site, 'k', TextPattern::fromText('SELECT * FROM users')));
-        self::assertFalse($factory->isSupersededAt($entry, [$entry, $other]));
+        $factory = new EntryFactory();
+
+        self::assertTrue($factory->buildOne(new QueryRecord($site, 'k', TextPattern::fromText('SELECT 1')))->correlated);
+        self::assertFalse(
+            $factory->buildOne(new QueryRecord($site, 'k', TextPattern::fromText('SELECT 1'), null, true))->correlated,
+        );
     }
 
-    public function testCoversChecksThatEveryResolvedRunAppearsInOrder(): void
+    public function testBuildOneCarriesTheCallsThatWereFollowed(): void
     {
-        $factory = new EntryFactory();
-        $shape = TextPattern::fromText('SELECT ')
-            ->concat(TextPattern::fromHole(new TextHole(Origin::Property, TypeShape::unknown())))
-            ->concat(TextPattern::fromText(' FROM t'));
-        self::assertTrue($factory->covers($shape, TextPattern::fromText('SELECT a FROM t')));
-        self::assertFalse($factory->covers($shape, TextPattern::fromText('SELECT a FROM u')));
+        $site = new CallSite('a.php', 1, 'f', 'pdo.query');
+        $record = new QueryRecord($site, 'k', TextPattern::fromText('SELECT 1'), null, false, ['App\\R::find']);
+
+        self::assertSame(['App\\R::find'], (new EntryFactory())->buildOne($record)->through);
+    }
+
+    public function testFindingsReportThatTheSearchDidNotClose(): void
+    {
+        $pattern = TextPattern::fromText('SELECT * FROM ')
+            ->concat(TextPattern::fromHole(new TextHole(Origin::Budget, TypeShape::unknown())));
+        $record = new QueryRecord(new CallSite('a.php', 1, 'f', 'pdo.query'), 'k', $pattern);
+        $rules = array_map(
+            static fn (Finding $finding): FindingRule => $finding->rule,
+            (new EntryFactory())->findings($pattern, $record, []),
+        );
+
+        self::assertContains(FindingRule::AnalysisIncomplete, $rules);
+        self::assertNotContains(FindingRule::DynamicSql, $rules);
     }
 }

@@ -7,10 +7,6 @@ includes:
 
 parameters:
     toolkit:
-        restrictedTestNamespacePrefixes:
-            - 'Tests\Unit'
-            - 'Tests\Integration'
-            - 'Tests\Conformance'
         visibilityExemptNamespacePrefixes:
             - 'Tests'
             - 'Fuzz'

@@ -20,7 +20,7 @@ final class FunctionScope
      * @param string $file The file being analyzed, relative to the analysis root
      * @param string $function The enclosing function, as `Class::method`, `function` or `{main}`
      * @param string|null $className The class the body belongs to, when it belongs to one
-     * @param list<string> $stack The functions currently being followed, innermost last
+     * @param list<string> $stack The path from the body the walk started in to the one it is in, innermost last
      */
     public function __construct(
         public readonly string $file,
@@ -48,11 +48,11 @@ final class FunctionScope
     }
 
     /**
-     * How many calls deep the analyzer currently is.
+     * How many calls deep the analyzer currently is, counting from the body it started in.
      */
     public function depth(): int
     {
-        return count($this->stack);
+        return max(0, count($this->stack) - 1);
     }
 
     /**

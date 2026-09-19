@@ -40,12 +40,13 @@ final class ReporterInterfaceTest extends TestCase
         self::assertNotContains('', $descriptions);
     }
 
-    public function testRenderAlwaysProducesAtLeastOneFile(): void
+    public function testRenderAlwaysProducesSomethingToShow(): void
     {
-        $counts = array_map(
-            static fn (ReporterInterface $reporter): int => count($reporter->render(new Catalog())->names()),
+        $primary = array_map(
+            static fn (ReporterInterface $reporter): bool => $reporter->render(new Catalog())->primary() !== null,
             [new JsonReporter(), new HtmlReporter(), new TextReporter()],
         );
-        self::assertSame([1, 1, 1], $counts);
+
+        self::assertSame([true, true, true], $primary);
     }
 }

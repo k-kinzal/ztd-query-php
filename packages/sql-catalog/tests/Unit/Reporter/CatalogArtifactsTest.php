@@ -33,6 +33,25 @@ final class CatalogArtifactsTest extends TestCase
         self::assertNull((new CatalogArtifacts())->sole());
     }
 
+    public function testPrimaryIsTheFileAReaderWantsWhenOnlyOneCanBeShown(): void
+    {
+        $artifacts = new CatalogArtifacts(['a.json' => '{}', 'a-schema.json' => '{}'], 'a.json');
+
+        self::assertSame('{}', $artifacts->primary());
+        self::assertSame(['a-schema.json', 'a.json'], $artifacts->names());
+    }
+
+    public function testPrimaryFallsBackToTheOnlyFile(): void
+    {
+        self::assertSame('{}', CatalogArtifacts::one('a.json', '{}')->primary());
+        self::assertNull((new CatalogArtifacts(['a' => '1', 'b' => '2']))->primary());
+    }
+
+    public function testPrimaryIsNullWhenTheNamedFileIsNotThere(): void
+    {
+        self::assertNull((new CatalogArtifacts(['a.json' => '{}'], 'missing.json'))->primary());
+    }
+
     public function testGetReadsOneFileByName(): void
     {
         $artifacts = CatalogArtifacts::one('a.json', '{}');

@@ -87,6 +87,26 @@ final class ProgramIndexBuilderTest extends TestCase
         self::assertNull((new ProgramIndexBuilder())->readClass($node));
     }
 
+    public function testReadMembersReadsTheWholeClassBodyInOnePass(): void
+    {
+        $file = (new SourceParser())->parse(
+            'a.php',
+            '<?php trait T {} class B { use T; public const C = 1; private string $p = "x";'
+            . ' public function set(): void { $this->p = "y"; } }',
+        );
+        $node = (new NodeFinder())->findFirstInstanceOf($file->statements, Class_::class);
+        self::assertInstanceOf(Class_::class, $node);
+
+        $members = (new ProgramIndexBuilder())->readMembers($node);
+
+        self::assertSame(['T'], $members['traits']);
+        self::assertSame(['C'], array_keys($members['constants']));
+        self::assertSame([], $members['cases']);
+        self::assertSame(['p'], array_keys($members['properties']));
+        self::assertSame(['p'], array_keys($members['defaults']));
+        self::assertSame(['p' => true], $members['assigned']);
+    }
+
     public function testReadParentNamesCollectsImplementedInterfaces(): void
     {
         $file = (new SourceParser())->parse('a.php', '<?php interface A {} class B implements A {}');

@@ -10,15 +10,28 @@ use PHPUnit\Framework\TestCase;
 use SqlCatalog\AnalysisOptions;
 use SqlCatalog\Analyzer;
 use SqlCatalog\Catalog\AnalysisProblem;
+use SqlCatalog\Catalog\CallSite;
 use SqlCatalog\Catalog\Catalog;
+use SqlCatalog\Catalog\CatalogEntry;
 use SqlCatalog\Reporter\CatalogArtifacts;
 use SqlCatalog\Reporter\TextReporter;
+use SqlCatalog\Sql\StatementKind;
+use SqlCatalog\Text\Origin;
+use SqlCatalog\Text\TextHole;
+use SqlCatalog\Text\TextPattern;
+use SqlCatalog\Type\TypeShape;
 
 #[CoversClass(TextReporter::class)]
 #[UsesClass(AnalysisOptions::class)]
 #[UsesClass(Analyzer::class)]
 #[UsesClass(AnalysisProblem::class)]
 #[UsesClass(Catalog::class)]
+#[UsesClass(CallSite::class)]
+#[UsesClass(CatalogEntry::class)]
+#[UsesClass(\SqlCatalog\Catalog\Resolution::class)]
+#[UsesClass(TextHole::class)]
+#[UsesClass(TextPattern::class)]
+#[UsesClass(TypeShape::class)]
 #[UsesClass(CatalogArtifacts::class)]
 #[UsesClass(\SqlCatalog\Analysis\BodyWalker::class)]
 #[UsesClass(\SqlCatalog\Analysis\CallEvaluator::class)]
@@ -33,8 +46,8 @@ use SqlCatalog\Reporter\TextReporter;
 #[UsesClass(\SqlCatalog\Analysis\SinkMatcher::class)]
 #[UsesClass(\SqlCatalog\Analysis\StatementRecorder::class)]
 #[UsesClass(\SqlCatalog\Analysis\ValueBinder::class)]
-#[UsesClass(\SqlCatalog\Catalog\CallSite::class)]
-#[UsesClass(\SqlCatalog\Catalog\CatalogEntry::class)]
+#[UsesClass(CallSite::class)]
+#[UsesClass(CatalogEntry::class)]
 #[UsesClass(\SqlCatalog\Catalog\EntryIdentity::class)]
 #[UsesClass(\SqlCatalog\Catalog\Placeholder::class)]
 #[UsesClass(\SqlCatalog\Catalog\ValueDomain::class)]
@@ -67,13 +80,16 @@ use SqlCatalog\Reporter\TextReporter;
 #[UsesClass(\SqlCatalog\Sql\StatementKindReader::class)]
 #[UsesClass(\SqlCatalog\Sql\TableReader::class)]
 #[UsesClass(\SqlCatalog\Text\LiteralText::class)]
-#[UsesClass(\SqlCatalog\Text\TextPattern::class)]
-#[UsesClass(\SqlCatalog\Type\TypeShape::class)]
+#[UsesClass(TextPattern::class)]
+#[UsesClass(TypeShape::class)]
 #[UsesClass(\SqlCatalog\Catalog\Finding::class)]
 #[UsesClass(\SqlCatalog\Catalog\FindingRule::class)]
 #[UsesClass(\SqlCatalog\Evaluation\PatternTerm::class)]
-#[UsesClass(\SqlCatalog\Text\Origin::class)]
-#[UsesClass(\SqlCatalog\Text\TextHole::class)]
+#[UsesClass(Origin::class)]
+#[UsesClass(TextHole::class)]
+#[UsesClass(\SqlCatalog\Analysis\SinkFinder::class)]
+#[UsesClass(\SqlCatalog\Evaluation\PathSet::class)]
+#[UsesClass(\SqlCatalog\Extension\WordPressExtension::class)]
 final class TextReporterTest extends TestCase
 {
     public function testNameIsHowTheCommandLineSelectsIt(): void
@@ -107,7 +123,7 @@ final class TextReporterTest extends TestCase
         $lines = (new TextReporter())->entryLines($catalog->entries()[0]);
         self::assertStringContainsString('a.php:1', $lines[0]);
         self::assertStringContainsString('SELECT', $lines[2]);
-        self::assertStringContainsString('? = 7', $lines[3]);
+        self::assertStringContainsString('? = 7', $lines[4]);
     }
 
     public function testEntryLinesShowTheFindings(): void
@@ -129,6 +145,7 @@ final class TextReporterTest extends TestCase
             'a.php:1  SELECT  ' . $catalog->entries()[0]->id . "\n"
             . '  in f via pdo.prepare' . "\n"
             . '  SELECT id FROM users WHERE id = ?' . "\n"
+            . '  resolved' . "\n"
             . '  ? = 7' . "\n"
             . "\n"
             . '1 statement(s), 1 fully resolved, 0 finding(s), 0 unreadable file(s).' . "\n",
@@ -148,10 +165,40 @@ final class TextReporterTest extends TestCase
                 'a.php:1  SELECT  ' . $entry->id,
                 '  in f via pdo.query',
                 '  SELECT {$}',
+                '  external-input',
                 '  [MEDIUM] dynamic-sql 1 value(s) are spliced into the statement text rather than bound.',
                 '  [HIGH] external-input A value from external input reaches the statement text.',
             ],
             (new TextReporter())->entryLines($entry),
+        );
+    }
+
+    public function testStatusLineSaysHowFarTheAnalyzerGot(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource([
+            'a.php' => '<?php function f(PDO $d, string $s): void { $d->query("SELECT " . $s); }',
+        ]);
+
+        self::assertSame('incomplete-model; search did not close', (new TextReporter())->statusLine($catalog->entries()[0]));
+    }
+
+    public function testStatusLineWarnsWhenTheSearchDidNotClose(): void
+    {
+        $entry = new CatalogEntry(
+            'id',
+            StatementKind::Select,
+            TextPattern::fromHole(new TextHole(Origin::Budget, TypeShape::unknown())),
+            [],
+            [],
+            new CallSite('a.php', 1, 'f', 'unreached'),
+            [],
+            false,
+            ['App\\R::find', 'App\\R::run'],
+        );
+
+        self::assertSame(
+            'incomplete; search did not close; alternatives may be unreachable; via App\\R::find -> App\\R::run',
+            (new TextReporter())->statusLine($entry),
         );
     }
 

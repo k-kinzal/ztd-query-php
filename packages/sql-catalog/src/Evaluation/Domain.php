@@ -25,15 +25,17 @@ final class Domain
     /**
      * How many alternatives a domain keeps before generalizing them into one shape.
      */
-    public const MAX_TERMS = 24;
+    public const MAX_TERMS = 12;
 
     /**
      * @param list<Term> $terms Alternatives, deduplicated and non-empty
      * @param bool $widened Whether alternatives were merged away to stay within the bound
+     * @param bool $combined Whether alternatives came from pairing parts that vary independently
      */
     private function __construct(
         public readonly array $terms,
         public readonly bool $widened,
+        public readonly bool $combined = false,
     ) {
     }
 
@@ -74,7 +76,7 @@ final class Domain
      *
      * @param list<Term> $terms
      */
-    public static function fromTerms(array $terms, bool $widened = false): self
+    public static function fromTerms(array $terms, bool $widened = false, bool $combined = false): self
     {
         $unique = [];
         foreach ($terms as $term) {
@@ -86,10 +88,10 @@ final class Domain
             return self::unknown();
         }
         if (count($kept) <= self::MAX_TERMS) {
-            return new self($kept, $widened);
+            return new self($kept, $widened, $combined);
         }
 
-        return new self([self::generalize($kept, Origin::Branch)], true);
+        return new self([self::generalize($kept, Origin::Branch)], true, $combined);
     }
 
     /**
@@ -115,11 +117,17 @@ final class Domain
         return self::fromTerms(
             array_merge($this->terms, $other->terms),
             $this->widened || $other->widened,
+            $this->combined || $other->combined,
         );
     }
 
     /**
      * The domain of the strings produced by writing this domain then the other.
+     *
+     * Pairing two sides that each hold several alternatives produces every
+     * combination of them, and nothing here can tell which combinations the
+     * program can actually reach. The result is marked as combined so that a
+     * report can say the alternatives may be wider than the code allows.
      */
     public function concat(self $other): self
     {
@@ -129,8 +137,9 @@ final class Domain
                 $terms[] = self::asTerm($left->toPattern()->concat($right->toPattern()));
             }
         }
+        $paired = count($this->terms) > 1 && count($other->terms) > 1;
 
-        return self::fromTerms($terms, $this->widened || $other->widened);
+        return self::fromTerms($terms, $this->widened || $other->widened, $this->combined || $other->combined || $paired);
     }
 
     /**
@@ -152,7 +161,7 @@ final class Domain
             return $this;
         }
 
-        return new self([self::generalize($this->terms, $origin)], true);
+        return new self([self::generalize($this->terms, $origin)], true, $this->combined);
     }
 
     /**

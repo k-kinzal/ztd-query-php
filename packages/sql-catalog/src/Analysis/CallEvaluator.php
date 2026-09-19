@@ -7,9 +7,11 @@ namespace SqlCatalog\Analysis;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use SqlCatalog\Catalog\CallSite;
+use SqlCatalog\Evaluation\CallResults;
 use SqlCatalog\Evaluation\Domain;
 use SqlCatalog\Evaluation\Environment;
 use SqlCatalog\Evaluation\ObjectTerm;
+use SqlCatalog\Evaluation\PathSet;
 use SqlCatalog\Extension\SinkRole;
 use SqlCatalog\Extension\SinkSpec;
 use SqlCatalog\Php\FunctionShape;
@@ -33,6 +35,13 @@ final class CallEvaluator
     private StatementRecorder $recorder;
 
     private ValueBinder $binder;
+
+    /**
+     * @var list<string>
+     */
+    private array $through = [];
+
+    private CallResults $followed;
 
     private BuiltinCallModel $builtins;
 
@@ -58,6 +67,7 @@ final class CallEvaluator
         $this->sinks = $sinks;
         $this->recorder = $recorder;
         $this->binder = new ValueBinder($recorder);
+        $this->followed = new CallResults();
         $this->builtins = $builtins;
         $this->external = $external;
         $this->budget = $budget;
@@ -74,6 +84,7 @@ final class CallEvaluator
         ExpressionEvaluator $expressions,
         BodyWalker $bodies,
     ): Domain {
+        $this->recorder->markVisited($scope->file . ':' . $node->getStartFilePos());
         $arguments = $this->arguments($node, $environment, $scope, $expressions);
 
         if ($node instanceof Expr\New_) {
@@ -266,7 +277,11 @@ final class CallEvaluator
     ): Domain {
         $site = $this->siteOf($node, $scope, $sink->id);
         $siteKey = $this->siteKeyOf($node, $scope, $sink->id);
+        $this->through = $scope->stack;
 
+        if ($sink->role === SinkRole::Compose) {
+            return $arguments[$sink->sqlParameter ?? 0] ?? Domain::unknown();
+        }
         if ($sink->role === SinkRole::Query) {
             $records = $this->recordStatements($sink, $arguments, $site, $siteKey);
             $this->binder->bindValues($records, $sink, $arguments);
@@ -309,7 +324,7 @@ final class CallEvaluator
 
         $records = [];
         foreach ($sql->patterns() as $pattern) {
-            $records[] = $this->recorder->record($site, $siteKey, $pattern, $sink->kind);
+            $records[] = $this->recorder->record($site, $siteKey, $pattern, $sink->kind, $sql->combined, $this->through);
         }
 
         return $records;
@@ -331,8 +346,17 @@ final class CallEvaluator
     ): Domain {
         $name = $callee instanceof MethodShape ? $callee->qualifiedName() : $callee->name;
         $body = $callee->node?->getStmts();
-        if ($body === null || $scope->depth() >= $this->budget->maxDepth || $scope->isFollowing($name)) {
+        if ($scope->depth() >= $this->budget->maxDepth || $scope->isFollowing($name)) {
+            return Domain::opaque($callee->returnType, Origin::Budget, $name . '()');
+        }
+        if ($body === null) {
             return Domain::opaque($callee->returnType, Origin::Call, $name . '()');
+        }
+
+        $memo = $this->followed->keyFor($name, $arguments);
+        $remembered = $this->followed->recall($memo);
+        if ($remembered !== null) {
+            return $remembered;
         }
 
         $environment = new Environment();
@@ -344,7 +368,10 @@ final class CallEvaluator
         }
         $className = $callee instanceof MethodShape ? $callee->className : $scope->className;
 
-        return $bodies->walk($body, $environment, $scope->enter($name, $className, $callee->file));
+        $result = $bodies->walk($body, PathSet::of($environment), $scope->enter($name, $className, $callee->file));
+        $this->followed->remember($memo, $result);
+
+        return $result;
     }
 
     /**

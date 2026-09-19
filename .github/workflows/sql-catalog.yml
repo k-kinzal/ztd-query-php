@@ -60,7 +60,7 @@ jobs:
       - name: Check library requirements outside the locked ParaTest PHP range
         if: matrix.php == '8.4' || matrix.php == '8.5'
         run: composer check-platform-reqs --no-dev
-      - name: Run the unit, conformance and documentation tests in parallel
+      - name: Run the unit and documentation tests in parallel
         run: composer test
 
   lint:

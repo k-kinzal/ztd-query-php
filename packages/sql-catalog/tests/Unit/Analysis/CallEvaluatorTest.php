@@ -69,6 +69,10 @@ use SqlCatalog\Text\TextPattern;
 #[UsesClass(\SqlCatalog\Extension\DoctrineExtension::class)]
 #[UsesClass(\SqlCatalog\Extension\LaravelExtension::class)]
 #[UsesClass(\SqlCatalog\Extension\MysqliExtension::class)]
+#[UsesClass(\SqlCatalog\Analysis\SinkFinder::class)]
+#[UsesClass(\SqlCatalog\Evaluation\CallResults::class)]
+#[UsesClass(\SqlCatalog\Evaluation\PathSet::class)]
+#[UsesClass(\SqlCatalog\Extension\WordPressExtension::class)]
 final class CallEvaluatorTest extends TestCase
 {
     public function testTheCallMethodsAreReachedDirectly(): void
@@ -324,6 +328,22 @@ final class CallEvaluatorTest extends TestCase
         $sinks = ExtensionRegistry::withBuiltins()->sinksOf(['mysqli']);
         $records = (new Interpreter((new ProgramIndexBuilder())->build([$file]), $sinks))->analyze($file);
         self::assertSame('a', $records[0]->positional()[0]->soleLiteral()?->value);
+    }
+
+    public function testFollowReadsTheSameCallOnceForTheSameArguments(): void
+    {
+        $file = (new SourceParser())->parse(
+            't.php',
+            '<?php function sql(): string { return "SELECT 1"; }'
+            . ' function f(PDO $d): void { $d->query(sql()); $d->query(sql()); }',
+        );
+
+        $records = (new Interpreter((new ProgramIndexBuilder())->build([$file]), (new PdoExtension())->sinks()))->analyze($file);
+
+        self::assertSame(['SELECT 1', 'SELECT 1'], array_map(
+            static fn (QueryRecord $record): ?string => $record->pattern->text(),
+            $records,
+        ));
     }
 
     public function testFollowStopsAtRecursion(): void

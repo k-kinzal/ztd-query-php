@@ -6,6 +6,7 @@ namespace SqlCatalog;
 
 use SqlCatalog\Analysis\EntryFactory;
 use SqlCatalog\Analysis\Interpreter;
+use SqlCatalog\Analysis\SinkFinder;
 use SqlCatalog\Catalog\AnalysisProblem;
 use SqlCatalog\Catalog\Catalog;
 use SqlCatalog\Catalog\CatalogEntry;
@@ -134,11 +135,9 @@ final class Analyzer
      */
     public function entriesOf(array $files, AnalysisOptions $options): array
     {
-        $interpreter = new Interpreter(
-            $this->indexes->build($files),
-            $this->extensions->sinksOf($options->extensions),
-            $options->budget(),
-        );
+        $sinks = $this->extensions->sinksOf($options->extensions);
+        $interpreter = new Interpreter($this->indexes->build($files), $sinks, $options->budget());
+        $interpreter->restrictTo((new SinkFinder())->reaching($files, $sinks));
 
         $records = [];
         foreach ($files as $file) {

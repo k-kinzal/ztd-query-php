@@ -19,12 +19,12 @@ final class EvaluationBudget
     private int $steps;
 
     /**
-     * @param int $maxSteps How many expressions may be evaluated in one file
+     * @param int $maxSteps How many expressions may be evaluated while walking one body
      * @param int $maxDepth How many nested calls may be followed
      * @param int $maxLoopPasses How many times a loop body is re-walked
      */
     public function __construct(
-        public readonly int $maxSteps = 200000,
+        public readonly int $maxSteps = 20000,
         public readonly int $maxDepth = 4,
         public readonly int $maxLoopPasses = 2,
     ) {
@@ -58,7 +58,7 @@ final class EvaluationBudget
     }
 
     /**
-     * Restarts the step count, at the beginning of a new file.
+     * Refills the budget, at the beginning of a new body.
      */
     public function reset(): void
     {
