@@ -189,7 +189,36 @@ what each reading found. A public method callable with any integer is reported a
 
 ## Bounds
 
-`EvaluationBudget` bounds the work: expressions per file, frames of call
+`EvaluationBudget` bounds the work: expressions per body, frames of call
 following, and passes over a loop body. `PathSet::MAX_PATHS` bounds the paths and
 `Domain::MAX_TERMS` the alternatives. Every one of these degrades the result into
 a stated gap rather than into silence.
+
+The budget is refilled for each body. Spending one budget across a whole file
+would let its first bodies use it up and report the rest of the file as
+unreached, which says more about the order the file is written in than about the
+program.
+
+## Known limits
+
+These are measured, not suspected. Each shows up in the output rather than
+silently changing an answer.
+
+**Reachability is matched by name.** `SinkFinder::reaching()` decides which
+bodies to walk by spreading backwards over calls matched on their written name,
+to a fixpoint. On a codebase that uses names like `query` or `prepare` for things
+other than databases — WordPress being the extreme case — this keeps far more
+bodies than it needs to: about 63% of them. The result is wasted time, never a
+missed statement. Bounding the spread to `EvaluationBudget::$maxDepth` hops would
+match what the walk can actually use a caller for.
+
+**Correspondence is not established across separate calls.** Two calls that
+decide their values from the same condition are paired into every combination,
+because nothing relates one call's branch to the other's. Those statements are
+marked `correlated: false`, so the report says the combinations may be wider than
+the code allows rather than presenting them as fact.
+
+**Large trees take minutes.** Parsing and indexing dominate for a few thousand
+files, and the walk scales with how many bodies reachability keeps. Pointing the
+command at the directories that talk to a database, rather than at a whole
+repository, is the practical answer until reachability is tightened.
