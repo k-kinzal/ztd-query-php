@@ -19,9 +19,9 @@ jobs:
         working-directory: packages/ztd-query-pdo-adapter
     steps:
     - name: Check out the repository
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     - name: Set up PHP
-      uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+      uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
       with:
         php-version: '8.3'
         extensions: ctype, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, pdo_mysql, pdo_pgsql, pdo_sqlite,
@@ -31,7 +31,7 @@ jobs:
     - name: Validate Composer metadata
       run: composer validate --strict --no-check-publish
     - name: Install dependencies
-      uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+      uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda # 4.0.0
       with:
         working-directory: packages/ztd-query-pdo-adapter
         dependency-versions: locked
@@ -48,7 +48,7 @@ jobs:
           exit 1
         fi
         if (( MAX_RUNS > 1000000 )); then exit 1; fi
-    - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+    - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: packages/ztd-query-pdo-adapter/fuzz/corpus/robustness-execute
         key: fuzz-robustness-execute-pdo-${{ matrix.mysql }}-${{ github.run_id }}
@@ -66,7 +66,7 @@ jobs:
           fuzz/corpus/robustness-execute/ \
           --max-runs="$MAX_RUNS" 2>&1 | tee build/fuzz/run.log
     - name: Open an issue for a finding
-      uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+      uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
       env:
         FUZZ_CORPUS: robustness-execute
         FUZZ_SCRIPT: fuzz_robustness_execute.php
@@ -111,13 +111,13 @@ jobs:
             body
           });
     - if: always()
-      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: packages/ztd-query-pdo-adapter/fuzz/corpus/robustness-execute
         key: fuzz-robustness-execute-pdo-${{ matrix.mysql }}-${{ github.run_id }}
       name: Save the corpus
     - if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/build/fuzz/run.log') != '' }}
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: fuzz-results-robustness-execute-pdo-${{ matrix.mysql }}
         path: |
@@ -168,9 +168,9 @@ jobs:
         working-directory: packages/ztd-query-pdo-adapter
     steps:
     - name: Check out the repository
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     - name: Set up PHP
-      uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+      uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
       with:
         php-version: '8.3'
         extensions: ctype, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, pdo_mysql, pdo_pgsql, pdo_sqlite,
@@ -180,7 +180,7 @@ jobs:
     - name: Validate Composer metadata
       run: composer validate --strict --no-check-publish
     - name: Install dependencies
-      uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+      uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda # 4.0.0
       with:
         working-directory: packages/ztd-query-pdo-adapter
         dependency-versions: locked
@@ -197,7 +197,7 @@ jobs:
           exit 1
         fi
         if (( MAX_RUNS > 1000000 )); then exit 1; fi
-    - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+    - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}
         key: fuzz-${{ matrix.target.corpus }}-pdo-${{ matrix.mysql }}-${{ github.run_id }}
@@ -215,7 +215,7 @@ jobs:
           fuzz/corpus/${{ matrix.target.corpus }}/ \
           --max-runs="$MAX_RUNS" 2>&1 | tee build/fuzz/run.log
     - name: Open an issue for a finding
-      uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+      uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
       env:
         FUZZ_CORPUS: ${{ matrix.target.corpus }}
         FUZZ_SCRIPT: ${{ matrix.target.script }}
@@ -260,13 +260,13 @@ jobs:
             body
           });
     - if: always()
-      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}
         key: fuzz-${{ matrix.target.corpus }}-pdo-${{ matrix.mysql }}-${{ github.run_id }}
       name: Save the corpus
     - if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/build/fuzz/run.log') != '' }}
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: fuzz-results-${{ matrix.target.name }}-pdo-${{ matrix.mysql }}
         path: |
@@ -317,9 +317,9 @@ jobs:
         working-directory: packages/ztd-query-pdo-adapter
     steps:
     - name: Check out the repository
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     - name: Set up PHP
-      uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+      uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
       with:
         php-version: '8.3'
         extensions: ctype, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, pdo_mysql, pdo_pgsql, pdo_sqlite,
@@ -329,7 +329,7 @@ jobs:
     - name: Validate Composer metadata
       run: composer validate --strict --no-check-publish
     - name: Install dependencies
-      uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+      uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda # 4.0.0
       with:
         working-directory: packages/ztd-query-pdo-adapter
         dependency-versions: locked
@@ -346,7 +346,7 @@ jobs:
           exit 1
         fi
         if (( MAX_RUNS > 1000000 )); then exit 1; fi
-    - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+    - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}
         key: fuzz-${{ matrix.target.corpus }}-pdo-sqlite-${{ github.run_id }}
@@ -363,7 +363,7 @@ jobs:
       env:
         MAX_RUNS: ${{ inputs.max_runs || '10000' }}
     - name: Open an issue for a finding
-      uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+      uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
       env:
         FUZZ_CORPUS: ${{ matrix.target.corpus }}
         FUZZ_SCRIPT: ${{ matrix.target.script }}
@@ -408,13 +408,13 @@ jobs:
             body
           });
     - if: always()
-      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}
         key: fuzz-${{ matrix.target.corpus }}-pdo-sqlite-${{ github.run_id }}
       name: Save the corpus
     - if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/build/fuzz/run.log') != '' }}
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: fuzz-results-${{ matrix.target.name }}-pdo-sqlite
         path: |
@@ -453,9 +453,9 @@ jobs:
         working-directory: packages/ztd-query-pdo-adapter
     steps:
     - name: Check out the repository
-      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     - name: Set up PHP
-      uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+      uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # 2.37.2
       with:
         php-version: '8.3'
         extensions: ctype, dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, pdo_mysql, pdo_pgsql, pdo_sqlite,
@@ -465,7 +465,7 @@ jobs:
     - name: Validate Composer metadata
       run: composer validate --strict --no-check-publish
     - name: Install dependencies
-      uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+      uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda # 4.0.0
       with:
         working-directory: packages/ztd-query-pdo-adapter
         dependency-versions: locked
@@ -482,7 +482,7 @@ jobs:
           exit 1
         fi
         if (( MAX_RUNS > 1000000 )); then exit 1; fi
-    - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+    - uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}
         key: fuzz-${{ matrix.target.corpus }}-pdo-pg-${{ github.run_id }}
@@ -499,7 +499,7 @@ jobs:
       env:
         MAX_RUNS: ${{ inputs.max_runs || '10000' }}
     - name: Open an issue for a finding
-      uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
+      uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
       env:
         FUZZ_CORPUS: ${{ matrix.target.corpus }}
         FUZZ_SCRIPT: ${{ matrix.target.script }}
@@ -544,13 +544,13 @@ jobs:
             body
           });
     - if: always()
-      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+      uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: packages/ztd-query-pdo-adapter/fuzz/corpus/${{ matrix.target.corpus }}
         key: fuzz-${{ matrix.target.corpus }}-pdo-pg-${{ github.run_id }}
       name: Save the corpus
     - if: ${{ always() && hashFiles('packages/ztd-query-pdo-adapter/build/fuzz/run.log') != '' }}
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: fuzz-results-${{ matrix.target.name }}-pdo-pg
         path: |
