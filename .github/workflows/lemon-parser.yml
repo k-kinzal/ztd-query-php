@@ -60,6 +60,8 @@ jobs:
         run: composer check-platform-reqs --no-dev
       - name: Run the tests in parallel
         run: composer test
+      - name: Run the specification of the grammar-file language
+        run: composer spec
 
   lint:
     name: Lint
