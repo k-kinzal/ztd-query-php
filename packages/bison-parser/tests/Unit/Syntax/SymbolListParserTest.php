@@ -76,7 +76,7 @@ final class SymbolListParserTest extends TestCase
 
     public function testEntries(): void
     {
-        $entries = (new SymbolListParser())->entries(new TokenStream((new Scanner())->scan('A B <t> C %%')), false, false);
+        $entries = (new SymbolListParser())->entries(new TokenStream((new Scanner())->scan('A B <t> C %%')), false, false, [SymbolKind::Identifier]);
 
         self::assertSame([['A', null], ['B', null], ['C', 't']], array_map(static fn (SymbolEntry $entry): array => [$entry->symbol->value, $entry->tag], $entries));
     }
@@ -86,7 +86,7 @@ final class SymbolListParserTest extends TestCase
         $this->expectException(SyntaxException::class);
         $this->expectExceptionMessage("Expected a symbol but found '%%' at 1:1");
 
-        (new SymbolListParser())->entries(new TokenStream((new Scanner())->scan('%%')), true, true);
+        (new SymbolListParser())->entries(new TokenStream((new Scanner())->scan('%%')), true, true, [SymbolKind::Identifier]);
     }
 
     public function testEntriesRejectsATagWithoutASymbol(): void
@@ -94,7 +94,7 @@ final class SymbolListParserTest extends TestCase
         $this->expectException(SyntaxException::class);
         $this->expectExceptionMessage("Expected a symbol after the tag but found '%%' at 1:7");
 
-        (new SymbolListParser())->entries(new TokenStream((new Scanner())->scan('<int> %%')), true, true);
+        (new SymbolListParser())->entries(new TokenStream((new Scanner())->scan('<int> %%')), true, true, [SymbolKind::Identifier]);
     }
 
     public function testEntry(): void
@@ -105,7 +105,7 @@ final class SymbolListParserTest extends TestCase
 
         self::assertSame(['NUM', 'int', 258, null], [$numbered->symbol->value, $numbered->tag, $numbered->number, $numbered->alias]);
         self::assertSame('_("text")', $parser->entry(new TokenStream((new Scanner())->scan('STR _("text")')), null, true, true)->alias?->spelling);
-        self::assertSame(['n', null, null, null], [$string->symbol->value, $string->tag, $string->number, $string->alias]);
+        self::assertSame(['n', null, 258, null], [$string->symbol->value, $string->tag, $string->number, $string->alias]);
     }
 
     public function testSymbols(): void
@@ -158,7 +158,7 @@ final class SymbolListParserTest extends TestCase
     {
         $stream = new TokenStream((new Scanner())->scan("A\n#line 2\n<t> B\n#line 3\n%%"));
 
-        $entries = (new SymbolListParser())->entries($stream, false, false);
+        $entries = (new SymbolListParser())->entries($stream, false, false, [SymbolKind::Identifier]);
 
         self::assertSame([['A', null], ['B', 't']], array_map(static fn (SymbolEntry $entry): array => [$entry->symbol->value, $entry->tag], $entries));
         self::assertTrue($stream->is(TokenKind::Line));
@@ -195,5 +195,75 @@ final class SymbolListParserTest extends TestCase
         $this->expectExceptionMessage('Expected a symbol but found braced code at 1:1');
 
         (new SymbolListParser())->symbol(new Token(TokenKind::Code, 'x', new Location(1, 1)));
+    }
+
+    public function testNtermDeclarations(): void
+    {
+        $stream = new TokenStream((new Scanner())->scan('<int> expr <str> name term %%'));
+
+        $entries = (new SymbolListParser())->ntermDeclarations($stream);
+
+        self::assertSame([['expr', 'int'], ['name', 'str'], ['term', 'str']], array_map(static fn (SymbolEntry $entry): array => [$entry->symbol->value, $entry->tag], $entries));
+        self::assertTrue($stream->is(TokenKind::Section));
+    }
+
+    public function testNtermDeclarationsLeaveANumberUnread(): void
+    {
+        $stream = new TokenStream((new Scanner())->scan('expr 258'));
+
+        self::assertCount(1, (new SymbolListParser())->ntermDeclarations($stream));
+        self::assertTrue($stream->is(TokenKind::Integer));
+    }
+
+    public function testNtermDeclarationsRejectAStringAlias(): void
+    {
+        $this->expectException(SyntaxException::class);
+        $this->expectExceptionMessage('Expected an identifier but found string at 1:6');
+
+        (new SymbolListParser())->ntermDeclarations(new TokenStream((new Scanner())->scan('expr "e"')));
+    }
+
+    public function testNtermDeclarationsRejectACharacterLiteral(): void
+    {
+        $this->expectException(SyntaxException::class);
+        $this->expectExceptionMessage('Expected an identifier but found character literal at 1:1');
+
+        (new SymbolListParser())->ntermDeclarations(new TokenStream((new Scanner())->scan("'c'")));
+    }
+
+    public function testTokenDeclarationsRejectAStringStartingAnEntry(): void
+    {
+        $this->expectException(SyntaxException::class);
+        $this->expectExceptionMessage('Expected an identifier or a character literal but found string at 1:7');
+
+        (new SymbolListParser())->tokenDeclarations(new TokenStream((new Scanner())->scan('X "a" "b"')));
+    }
+
+    public function testEntriesRejectASymbolOfAnotherKind(): void
+    {
+        $this->expectException(SyntaxException::class);
+        $this->expectExceptionMessage('Expected an identifier or a character literal but found string at 1:3');
+
+        (new SymbolListParser())->entries(new TokenStream((new Scanner())->scan('a "b"')), false, false, [SymbolKind::Identifier, SymbolKind::CharLiteral]);
+    }
+
+    public function testKind(): void
+    {
+        $parser = new SymbolListParser();
+
+        self::assertSame(SymbolKind::Identifier, $parser->kind(new Token(TokenKind::Identifier, 'x', new Location(1, 1))));
+        self::assertSame(SymbolKind::Identifier, $parser->kind(new Token(TokenKind::IdentifierColon, 'x', new Location(1, 1))));
+        self::assertSame(SymbolKind::CharLiteral, $parser->kind(new Token(TokenKind::CharLiteral, 'x', new Location(1, 1))));
+        self::assertSame(SymbolKind::String, $parser->kind(new Token(TokenKind::String, 'x', new Location(1, 1))));
+        self::assertNull($parser->kind(new Token(TokenKind::Tag, 'x', new Location(1, 1))));
+    }
+
+    public function testDescribe(): void
+    {
+        $parser = new SymbolListParser();
+
+        self::assertSame('an identifier', $parser->describe([SymbolKind::Identifier]));
+        self::assertSame('an identifier or a character literal', $parser->describe([SymbolKind::Identifier, SymbolKind::CharLiteral]));
+        self::assertSame('an identifier, a character literal or a string', $parser->describe([SymbolKind::Identifier, SymbolKind::CharLiteral, SymbolKind::String]));
     }
 }

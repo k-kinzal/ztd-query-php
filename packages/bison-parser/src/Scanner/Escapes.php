@@ -67,12 +67,7 @@ final class Escapes
             return [$this->byte((int) hexdec(ltrim($match[1], '0') === '' ? '0' : substr(ltrim($match[1], '0'), 0, 8)), '\\' . $match[0], $location), strlen($match[0])];
         }
         if (preg_match('/^(u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})/', $rest, $match) === 1) {
-            $code = hexdec(substr($match[0], 1));
-            if ($code > 0xFF) {
-                throw SyntaxException::invalid("invalid universal character name: \\{$match[0]}", $location);
-            }
-
-            return [chr((int) $code), strlen($match[0])];
+            return [$this->byte((int) hexdec(substr($match[0], 1)), '\\' . $match[0], $location), strlen($match[0])];
         }
         $simple = ['a' => "\x07", 'b' => "\x08", 'f' => "\f", 'n' => "\n", 'r' => "\r", 't' => "\t", 'v' => "\v", '"' => '"', "'" => "'", '?' => '?', '\\' => '\\'];
         $first = $rest[0] ?? '';
@@ -96,7 +91,7 @@ final class Escapes
      */
     public function byte(int $code, string $escape, Location $location): string
     {
-        if ($code > 0xFF) {
+        if ($code === 0 || $code > 0xFF) {
             throw SyntaxException::invalid("invalid number after \\-escape: {$escape}", $location);
         }
 

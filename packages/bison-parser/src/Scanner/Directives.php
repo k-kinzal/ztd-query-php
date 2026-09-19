@@ -23,20 +23,16 @@ final class Directives
         'code' => 'code',
         'debug' => 'debug',
         'default-prec' => 'default-prec',
-        'default_prec' => 'default-prec',
         'define' => 'define',
         'defines' => 'header',
         'destructor' => 'destructor',
         'dprec' => 'dprec',
         'empty' => 'empty',
         'error-verbose' => 'error-verbose',
-        'error_verbose' => 'error-verbose',
         'expect' => 'expect',
         'expect-rr' => 'expect-rr',
-        'expect_rr' => 'expect-rr',
         'file-prefix' => 'file-prefix',
         'fixed-output-files' => 'fixed-output-files',
-        'fixed_output_files' => 'fixed-output-files',
         'glr-parser' => 'glr-parser',
         'header' => 'header',
         'initial-action' => 'initial-action',
@@ -46,11 +42,8 @@ final class Directives
         'locations' => 'locations',
         'merge' => 'merge',
         'name-prefix' => 'name-prefix',
-        'name_prefix' => 'name-prefix',
         'no-default-prec' => 'no-default-prec',
-        'no_default_prec' => 'no-default-prec',
         'no-lines' => 'no-lines',
-        'no_lines' => 'no-lines',
         'nonassoc' => 'nonassoc',
         'nondeterministic-parser' => 'nondeterministic-parser',
         'nterm' => 'nterm',
@@ -61,7 +54,6 @@ final class Directives
         'precedence' => 'precedence',
         'printer' => 'printer',
         'pure-parser' => 'pure-parser',
-        'pure_parser' => 'pure-parser',
         'require' => 'require',
         'right' => 'right',
         'skeleton' => 'skeleton',
@@ -69,7 +61,6 @@ final class Directives
         'term' => 'token',
         'token' => 'token',
         'token-table' => 'token-table',
-        'token_table' => 'token-table',
         'type' => 'type',
         'union' => 'union',
         'verbose' => 'verbose',
@@ -92,6 +83,12 @@ final class Directives
     public const EQUAL_OPTIONAL = ['file-prefix', 'name-prefix', 'output'];
 
     /**
+     * Directives Bison also reads with underscores in place of any of the
+     * dashes, as deprecated spellings.
+     */
+    public const DASH_OR_UNDERSCORE = ['default-prec', 'error-verbose', 'expect-rr', 'fixed-output-files', 'name-prefix', 'no-default-prec', 'no-lines', 'pure-parser', 'token-table'];
+
+    /**
      * Answers the canonical name of a directive as spelled.
      *
      * @param string $spelling The directive without its percent sign, as written
@@ -100,6 +97,11 @@ final class Directives
      */
     public static function canonical(string $spelling): ?string
     {
-        return self::SPELLINGS[$spelling] ?? null;
+        if (isset(self::SPELLINGS[$spelling])) {
+            return self::SPELLINGS[$spelling];
+        }
+        $dashed = str_replace('_', '-', $spelling);
+
+        return in_array($dashed, self::DASH_OR_UNDERSCORE, true) ? $dashed : null;
     }
 }
