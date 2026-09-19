@@ -111,4 +111,20 @@ final class GrammarParserTest extends TestCase
 
         (new GrammarParser())->parse(new TokenStream((new Scanner())->scan('%% %start a   a: ;')));
     }
+
+    public function testParseRejectsARulesSectionWithoutRules(): void
+    {
+        $this->expectException(SyntaxException::class);
+        $this->expectExceptionMessage('Expected a rule but found end of file at 3:1');
+
+        (new GrammarParser())->parse(new TokenStream((new Scanner())->scan("%token A\n%%\n")));
+    }
+
+    public function testParseRejectsARulesSectionHoldingOnlyDeclarations(): void
+    {
+        $this->expectException(SyntaxException::class);
+        $this->expectExceptionMessage("Expected a rule but found '%%' at 1:13");
+
+        (new GrammarParser())->parse(new TokenStream((new Scanner())->scan('%% %start a;%%')));
+    }
 }

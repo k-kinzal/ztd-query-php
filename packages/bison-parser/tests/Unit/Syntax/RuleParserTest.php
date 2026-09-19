@@ -231,4 +231,42 @@ final class RuleParserTest extends TestCase
 
         (new RuleParser())->symbolToken(new TokenStream((new Scanner())->scan(';')));
     }
+
+    public function testCheckEmpty(): void
+    {
+        $parser = new RuleParser();
+        $at = new Location(1, 1);
+        $empty = new EmptyItem($at);
+        $action = new Action(null, ' x ', null, $at);
+        $predicate = new Predicate(' p ', $at);
+        $prec = new PrecItem(new Symbol(SymbolKind::Identifier, 'P', $at), $at);
+
+        $parser->checkEmpty([]);
+        $parser->checkEmpty([$empty]);
+        $parser->checkEmpty([$empty, $action]);
+        $parser->checkEmpty([$empty, $predicate]);
+        $parser->checkEmpty([$action, $empty, $prec]);
+        $parser->checkEmpty([$action, $prec, $action]);
+        $parser->checkEmpty([new SymbolItem(new Symbol(SymbolKind::Identifier, 'b', $at), null), $action]);
+
+        $this->expectException(SyntaxException::class);
+        $this->expectExceptionMessage('%empty on non-empty rule at 2:3');
+        $parser->checkEmpty([$action, new EmptyItem(new Location(2, 3)), $action]);
+    }
+
+    public function testCheckEmptyRejectsASymbol(): void
+    {
+        $this->expectException(SyntaxException::class);
+        $this->expectExceptionMessage('%empty on non-empty rule at 1:4');
+
+        (new RuleParser())->parse(new TokenStream((new Scanner())->scan("a: %empty 'b';")));
+    }
+
+    public function testCheckEmptyRejectsAMidrulePredicate(): void
+    {
+        $this->expectException(SyntaxException::class);
+        $this->expectExceptionMessage('%empty on non-empty rule at 1:4');
+
+        (new RuleParser())->parse(new TokenStream((new Scanner())->scan('a: %empty %?{ p } { x };')));
+    }
 }
