@@ -69,6 +69,15 @@ Faker Provider for generating syntactically valid SQL statements for MySQL, Post
 Based on official grammar definitions, can generate any statement type (DML, DDL, TCL, etc.) and SQL fragments (expressions, clauses, subqueries, CTEs).
 Supports MySQL 5.6–9.1, PostgreSQL, and SQLite. Used for fuzz testing.
 
+### packages/sql-catalog
+
+Static analysis tool that catalogs the SQL statements a PHP application can issue.
+Starts at the calls that receive SQL and works back through the definitions, branches and callers that decide their argument, rather than interpreting the program forward.
+Branches fork the analysis so values decided together stay together; alternatives paired from parts that vary independently are marked as such.
+Every statement says how far the search got (`resolved`, `external-input`, `incomplete-model`, `incomplete`) and whether it closed, so stopping early is never reported as having found nothing.
+Ships the `sql-catalog` command, an extension mechanism for framework database APIs (pdo, mysqli, doctrine, laravel, wordpress), swappable reporters (json, html, text) and a JSON Schema for the catalog format.
+Verification is contract-based: finding the call, covering the dependencies, keeping the correspondence, recovering faithfully, and judging completion honestly, with fuzz targets that look for inputs breaking them.
+
 ### packages/sql-fixture
 
 Faker Provider for generating test fixture data from SQL schemas.
@@ -106,3 +115,5 @@ Loaded from each package `phpstan.neon` via `vendor/k-kinzal/phpstan-custom-rule
 - [docs/postgres-spec.md](docs/postgres-spec.md) - How ZTD handles PostgreSQL SQL statements
 - [docs/sqlite-spec.md](docs/sqlite-spec.md) - How ZTD handles SQLite SQL statements
 - [docs/sql-support-matrix.md](docs/sql-support-matrix.md) - Supported SQL statements and their status
+- [packages/sql-catalog/docs/analysis.md](packages/sql-catalog/docs/analysis.md) - How sql-catalog reconstructs the SQL a PHP application issues
+- [packages/sql-catalog/docs/verification.md](packages/sql-catalog/docs/verification.md) - How sql-catalog's accuracy is checked and what it measures

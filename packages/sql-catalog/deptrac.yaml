@@ -1,0 +1,82 @@
+# NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
+# Layers follow the path a run takes: source in, values reasoned about, statements out.
+deptrac:
+  paths: [./src]
+  analyser:
+    types: [class, use]
+  layers:
+    - name: Type
+      collectors:
+        - type: directory
+          value: 'src/Type/'
+    - name: Text
+      collectors:
+        - type: directory
+          value: 'src/Text/'
+    - name: Sql
+      collectors:
+        - type: directory
+          value: 'src/Sql/'
+    - name: Evaluation
+      collectors:
+        - type: directory
+          value: 'src/Evaluation/'
+    - name: Php
+      collectors:
+        - type: directory
+          value: 'src/Php/'
+    - name: Source
+      collectors:
+        - type: directory
+          value: 'src/Source/'
+    - name: Extension
+      collectors:
+        - type: directory
+          value: 'src/Extension/'
+    - name: Catalog
+      collectors:
+        - type: directory
+          value: 'src/Catalog/'
+    - name: Analysis
+      collectors:
+        - type: directory
+          value: 'src/Analysis/'
+    - name: Filter
+      collectors:
+        - type: directory
+          value: 'src/Filter/'
+    - name: Reporter
+      collectors:
+        - type: directory
+          value: 'src/Reporter/'
+        # The JSON document shape is written as @phpstan-type aliases, which resolve
+        # against the declaring namespace and would otherwise be uncovered names.
+        - type: classLike
+          value: '^SqlCatalog\\Reporter\\.*'
+    - name: Facade
+      collectors:
+        - type: directory
+          value: 'src/[^/]+\.php$'
+    - name: Cli
+      collectors:
+        - type: directory
+          value: 'src/Cli/'
+    - name: PhpParser
+      collectors:
+        - type: classLike
+          value: '^PhpParser\\.*'
+  ruleset:
+    Type: []
+    Text: [Type]
+    Sql: [Text]
+    Evaluation: [Text, Type]
+    Php: [Type, PhpParser]
+    Source: []
+    Extension: [Sql]
+    Catalog: [Evaluation, Sql, Text, Type]
+    Analysis: [Catalog, Evaluation, Extension, Php, Sql, Text, Type, PhpParser]
+    Filter: [Catalog, Sql]
+    Reporter: [Catalog]
+    Facade: [Analysis, Catalog, Extension, Php, Source]
+    Cli: [Catalog, Extension, Facade, Filter, Reporter, Source, Sql]
+    PhpParser: []
