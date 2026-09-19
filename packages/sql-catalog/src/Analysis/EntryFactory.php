@@ -58,13 +58,35 @@ final class EntryFactory
     public function build(array $records): array
     {
         $entries = [];
+        $occurrences = [];
         foreach ($this->groupBySite($this->merge($records)) as $group) {
             foreach ($group as $record) {
-                $entries[] = $this->buildOne($record, count($group) > 1);
+                $entry = $this->buildOne($record, count($group) > 1);
+                $seen = $occurrences[$entry->id] ?? 0;
+                $occurrences[$entry->id] = $seen + 1;
+                $entries[] = $seen === 0 ? $entry : $this->renumber($entry, $record, $seen);
             }
         }
 
         return $entries;
+    }
+
+    /**
+     * The same statement under an identifier that tells it apart from its twin.
+     */
+    public function renumber(CatalogEntry $entry, QueryRecord $record, int $occurrence): CatalogEntry
+    {
+        return new CatalogEntry(
+            $this->identity->compute($record->site, $record->pattern, $occurrence),
+            $entry->kind,
+            $entry->pattern,
+            $entry->tables,
+            $entry->placeholders,
+            $entry->site,
+            $entry->findings,
+            $entry->correlated,
+            $entry->through,
+        );
     }
 
     /**

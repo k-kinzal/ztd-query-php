@@ -69,6 +69,32 @@ final class EntryFactoryTest extends TestCase
         self::assertSame(['users'], $entries[0]->tables);
     }
 
+    public function testBuildGivesTwoIndistinguishableStatementsDistinctIdentifiers(): void
+    {
+        $pattern = TextPattern::fromHole(new TextHole(Origin::Budget, TypeShape::unknown()));
+        $entries = (new EntryFactory())->build([
+            new QueryRecord(new CallSite('a.php', 5, 'f', 'unreached'), 'a.php:40:unreached', $pattern),
+            new QueryRecord(new CallSite('a.php', 5, 'f', 'unreached'), 'a.php:80:unreached', $pattern),
+        ]);
+
+        self::assertCount(2, $entries);
+        self::assertNotSame($entries[0]->id, $entries[1]->id);
+    }
+
+    public function testRenumberKeepsEverythingButTheIdentifier(): void
+    {
+        $factory = new EntryFactory();
+        $record = new QueryRecord(new CallSite('a.php', 5, 'f', 'pdo.query'), 'k', TextPattern::fromText('SELECT 1'));
+        $entry = $factory->buildOne($record);
+
+        $renumbered = $factory->renumber($entry, $record, 1);
+
+        self::assertNotSame($entry->id, $renumbered->id);
+        self::assertSame($entry->sql(), $renumbered->sql());
+        self::assertSame($entry->kind, $renumbered->kind);
+        self::assertSame($entry->site, $renumbered->site);
+    }
+
     public function testBuildOfNothingIsEmpty(): void
     {
         self::assertSame([], (new EntryFactory())->build([]));

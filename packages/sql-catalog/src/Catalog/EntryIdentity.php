@@ -25,10 +25,20 @@ final class EntryIdentity
 
     /**
      * The identifier of a statement issued at the given site.
+     *
+     * Two calls in the same function can produce statements the catalog cannot
+     * tell apart — two unreached calls, say, whose text is entirely unknown.
+     * The occurrence separates them without bringing the line number back in,
+     * so they stay distinct and still survive an edit above them.
+     *
+     * @param int $occurrence Which of the otherwise identical statements this is, counting from zero
      */
-    public function compute(CallSite $site, TextPattern $pattern): string
+    public function compute(CallSite $site, TextPattern $pattern, int $occurrence = 0): string
     {
         $material = implode("\x1f", [$site->file, $site->function, $site->sink, $pattern->signature()]);
+        if ($occurrence > 0) {
+            $material .= "\x1f" . $occurrence;
+        }
 
         return substr(hash('sha256', $material), 0, self::LENGTH);
     }

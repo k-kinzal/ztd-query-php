@@ -51,6 +51,17 @@ final class EntryIdentityTest extends TestCase
         );
     }
 
+    public function testComputeSeparatesStatementsItCannotOtherwiseTellApart(): void
+    {
+        $identity = new EntryIdentity();
+        $site = new CallSite('a.php', 3, 'f', 'unreached');
+
+        self::assertNotSame(
+            $identity->compute($site, TextPattern::fromText('SELECT 1')),
+            $identity->compute($site, TextPattern::fromText('SELECT 1'), 1),
+        );
+    }
+
     public function testComputeIsAsLongAsItSaysItIs(): void
     {
         $computed = (new EntryIdentity())->compute(
