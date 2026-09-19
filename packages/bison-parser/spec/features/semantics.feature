@@ -1,14 +1,28 @@
+@manual
 Feature: Defining Language Semantics
-  GNU Bison 3.8.2 manual, chapter "Bison Grammar Files", section "Defining
-  Language Semantics" with its subsections "Data Types of Semantic Values",
-  "More Than One Value Type", "Generating the Semantic Value Type", "The Union
-  Declaration", "Providing a Structured Semantic Value Type", "Actions", "Data
-  Types of Values in Actions" and "Actions in Midrule".
+  Source: GNU Bison Manual, version 3.8.2, as doc/bison.texi of the bison-3.8.2
+  release (https://ftp.gnu.org/gnu/bison/bison-3.8.2.tar.xz, also at
+  https://cgit.git.savannah.gnu.org/cgit/bison.git/tree/doc/bison.texi?h=v3.8.2).
+  Every scenario is tagged with the node of the manual it states, as
+  "manual:" followed by the node name with dashes for spaces; online, that
+  node is https://www.gnu.org/software/bison/manual/html_node/<node>.html in
+  the edition the GNU project publishes (Bison 3.8.1 at the time of writing).
+  The nodes stated in this feature:
+    Chapter 3, Bison Grammar Files
+    3.4.1    Data Types of Semantic Values                manual:Value-Type
+    3.4.3    Generating the Semantic Value Type           manual:Type-Generation
+    3.4.4    The Union Declaration                        manual:Union-Decl
+    3.4.5    Providing a Structured Semantic Value Type   manual:Structured-Value-Type
+    3.4.6    Actions                                      manual:Actions
+    3.4.7    Data Types of Values in Actions              manual:Action-Types
+    3.4.8.1  Using Midrule Actions                        manual:Using-Midrule-Actions
+    3.4.8.2  Typed Midrule Actions                        manual:Typed-Midrule-Actions
 
   The parser keeps the code of actions verbatim: what the value and location
   references ($$, $n, $<tag>n, @$, @n) mean is decided by Bison when it
   copies the actions, not by the reader of the grammar file.
 
+  @manual:Value-Type
   Scenario: The value type is set with %define api.value.type and a braced type name
     Given the grammar file:
       """
@@ -26,6 +40,7 @@ Feature: Defining Language Semantics
           SymbolItem 'a'
       """
 
+  @manual:Value-Type
   Scenario: The braced type name may be several words
     Given the grammar file:
       """
@@ -43,6 +58,7 @@ Feature: Defining Language Semantics
           SymbolItem 'a'
       """
 
+  @manual:Type-Generation
   Scenario: With api.value.type union, the tags of %token, %nterm and %type are genuine types
     Given the grammar file:
       """
@@ -72,6 +88,7 @@ Feature: Defining Language Semantics
           SymbolItem INT
       """
 
+  @manual:Union-Decl
   Scenario: %union is followed by braced code holding the members of the union
     Given the grammar file:
       """
@@ -92,6 +109,7 @@ Feature: Defining Language Semantics
           SymbolItem 'a'
       """
 
+  @manual:Union-Decl
   Scenario: As an extension to POSIX, a tag is allowed after %union
     Given the grammar file:
       """
@@ -112,6 +130,7 @@ Feature: Defining Language Semantics
           SymbolItem 'a'
       """
 
+  @manual:Union-Decl
   Scenario: As another extension to POSIX, several %union declarations may be given
     Given the grammar file:
       """
@@ -138,6 +157,7 @@ Feature: Defining Language Semantics
           SymbolItem CHR
       """
 
+  @manual:Union-Decl
   Scenario: No semicolon is needed after the closing brace of %union
     Given the grammar file:
       """
@@ -158,6 +178,7 @@ Feature: Defining Language Semantics
           SymbolItem NUM
       """
 
+  @manual:Structured-Value-Type
   Scenario: A structured value type of your own is named with api.value.type and used through tags
     Given the grammar file:
       """
@@ -185,6 +206,7 @@ Feature: Defining Language Semantics
           SymbolItem ID
       """
 
+  @manual:Structured-Value-Type
   Scenario: Type tags may be composite, using the . and -> operators
     Given the grammar file:
       """
@@ -208,6 +230,7 @@ Feature: Defining Language Semantics
           SymbolItem INT
       """
 
+  @manual:Actions
   Scenario: An action refers to the component values with $n and to the result with $$
     Given the grammar file:
       """
@@ -226,6 +249,7 @@ Feature: Defining Language Semantics
           Action { $$ = $1 + $3; }
       """
 
+  @manual:Actions
   Scenario: An action may use named references instead of positions
     Given the grammar file:
       """
@@ -244,6 +268,7 @@ Feature: Defining Language Semantics
           Action { $result = $left + $right; }
       """
 
+  @manual:Actions
   Scenario: The vertical bar separates rules, so an action belongs to one alternative only
     Given the grammar file:
       """
@@ -262,6 +287,7 @@ Feature: Defining Language Semantics
           Action { a_or_b_found = 1; }
       """
 
+  @manual:Actions
   Scenario: $n with n zero or negative refers to values on the stack before the rule
     Given the grammar file:
       """
@@ -290,6 +316,7 @@ Feature: Defining Language Semantics
           Action { previous_expr = $0; }
       """
 
+  @manual:Action-Types
   Scenario: A value reference may carry its type, as $<tag>n
     Given the grammar file:
       """
@@ -311,6 +338,7 @@ Feature: Defining Language Semantics
           Action { $<dtype>$ = $<itype>1; }
       """
 
+  @manual:Using-Midrule-Actions
   Scenario: A midrule action is an action written before the last component
     Given the grammar file:
       """
@@ -343,6 +371,7 @@ Feature: Defining Language Semantics
           Action {\n      $$ = $6;\n      pop_context ($<context>5);\n    }
       """
 
+  @manual:Typed-Midrule-Actions
   Scenario: A midrule action may be given a semantic type by a tag written before its brace
     Given the grammar file:
       """
@@ -375,6 +404,7 @@ Feature: Defining Language Semantics
           Action {\n      $$ = $6;\n      pop_context ($5);\n    }
       """
 
+  @manual:Using-Midrule-Actions
   Scenario: A midrule action may be named with a bracketed name after its closing brace
     Given the grammar file:
       """

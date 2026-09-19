@@ -73,10 +73,12 @@ Host code is kept as written and never interpreted. Literals keep their spelling
 
 ## Specification
 
-The language is specified in [spec/features](spec/features): one feature per section of the GNU Bison 3.8.2 manual that defines the grammar-file language (chapter "Bison Grammar Files", the GLR and precedence sections that add to it, and the appendix "Bison Symbols"), one scenario per clause. Where the manual is silent, Bison's own test suite fixes the behaviour, and those scenarios name the test they follow. Every scenario gives a grammar file, parses it with `Parser`, and states either the whole tree or the position of the error, so the scenarios are both the reading of the manual and the check that the parser follows it.
+The language is specified in [spec/features](spec/features): one feature per section of the GNU Bison 3.8.2 manual that defines the grammar-file language (chapter "Bison Grammar Files", the GLR and precedence sections that add to it, and the appendix "Bison Symbols"), one scenario per clause. Every feature opens with its source: the manual's edition, the file it is in, and the section numbers, titles and node names it states. Every scenario is tagged with the node of the manual it states (`@manual:Token-Decl`, which reads online at `https://www.gnu.org/software/bison/manual/html_node/Token-Decl.html`). Where the manual is silent, Bison's own test suite fixes the behaviour; those scenarios are tagged with the test file (`@tests:input.at`) and named after the test they follow. Every scenario gives a grammar file, parses it with `Parser`, and states either the whole tree or the position of the error, so the scenarios are both the reading of the manual and the check that the parser follows it.
 
 ```bash
-composer spec
+composer spec                                   # the whole specification
+vendor/bin/behat --tags=@manual:Symbols         # one section of the manual
+vendor/bin/behat --tags=@tests:input.at         # the clauses taken from one test file
 ```
 
 The specification covers the language of grammar files. What Bison checks on the grammar the file describes, such as undeclared symbols, redeclarations, unused rules or conflicts, is not part of reading the file and is out of scope.

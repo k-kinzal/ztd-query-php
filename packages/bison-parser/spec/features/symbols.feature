@@ -1,10 +1,20 @@
+@manual
 Feature: Symbols, Terminal and Nonterminal
-  GNU Bison 3.8.2 manual, chapter "Bison Grammar Files", section "Symbols,
-  Terminal and Nonterminal".
+  Source: GNU Bison Manual, version 3.8.2, as doc/bison.texi of the bison-3.8.2
+  release (https://ftp.gnu.org/gnu/bison/bison-3.8.2.tar.xz, also at
+  https://cgit.git.savannah.gnu.org/cgit/bison.git/tree/doc/bison.texi?h=v3.8.2).
+  Every scenario is tagged with the node of the manual it states, as
+  "manual:" followed by the node name with dashes for spaces; online, that
+  node is https://www.gnu.org/software/bison/manual/html_node/<node>.html in
+  the edition the GNU project publishes (Bison 3.8.1 at the time of writing).
+  The nodes stated in this feature:
+    Chapter 3, Bison Grammar Files
+    3.2      Symbols, Terminal and Nonterminal            manual:Symbols
 
   Terminal symbols are written as identifiers, as C character constants, or as
   C string constants; nonterminal symbols are identifiers.
 
+  @manual:Symbols
   Scenario: Symbol names may contain letters, underscores, periods, and non-initial digits and dashes
     Given the grammar file:
       """
@@ -29,6 +39,7 @@ Feature: Symbols, Terminal and Nonterminal
           SymbolItem d1g1t5
       """
 
+  @manual:Symbols
   Scenario: A dash cannot start a symbol name
     Given the grammar file:
       """
@@ -39,6 +50,7 @@ Feature: Symbols, Terminal and Nonterminal
     When the file is parsed
     Then parsing fails at line 1 column 8
 
+  @manual:Symbols
   Scenario: A digit cannot start a symbol name
     Given the grammar file:
       """
@@ -49,6 +61,7 @@ Feature: Symbols, Terminal and Nonterminal
     When the file is parsed
     Then parsing fails at line 1 column 8
 
+  @manual:Symbols
   Scenario: A named token kind is written as an identifier and declared with %token
     Given the grammar file:
       """
@@ -67,6 +80,7 @@ Feature: Symbols, Terminal and Nonterminal
           SymbolItem NUM
       """
 
+  @manual:Symbols
   Scenario: A character token kind is written like a C character constant and needs no declaration
     Given the grammar file:
       """
@@ -84,6 +98,7 @@ Feature: Symbols, Terminal and Nonterminal
           SymbolItem exp
       """
 
+  @manual:Symbols
   Scenario: The usual C escape sequences can be used in character literals
     Given the grammar file:
       """
@@ -107,6 +122,7 @@ Feature: Symbols, Terminal and Nonterminal
           SymbolItem '?' spelled '\?'
       """
 
+  @manual:Symbols
   Scenario: The null character must not be used as a character literal
     Given the grammar file:
       """
@@ -116,6 +132,7 @@ Feature: Symbols, Terminal and Nonterminal
     When the file is parsed
     Then parsing fails at line 2 column 6
 
+  @manual:Symbols
   Scenario: Trigraphs have no special meaning in character literals, so '??=' is not one character
     Given the grammar file:
       """
@@ -125,6 +142,7 @@ Feature: Symbols, Terminal and Nonterminal
     When the file is parsed
     Then parsing fails at line 2 column 6
 
+  @manual:Symbols
   Scenario: Backslash-newline is not allowed in a character literal
     Given the grammar file:
       """
@@ -135,6 +153,7 @@ Feature: Symbols, Terminal and Nonterminal
     When the file is parsed
     Then parsing fails at line 2 column 6
 
+  @manual:Symbols
   Scenario: A literal string token is written like a C string constant and needs no declaration
     Given the grammar file:
       """
@@ -152,6 +171,7 @@ Feature: Symbols, Terminal and Nonterminal
           SymbolItem exp
       """
 
+  @manual:Symbols
   Scenario: The usual C escape sequences can be used in string literals
     Given the grammar file:
       """
@@ -169,6 +189,7 @@ Feature: Symbols, Terminal and Nonterminal
           SymbolItem "\"q\""
       """
 
+  @manual:Symbols
   Scenario: A null character must not be used within a string literal
     Given the grammar file:
       """
@@ -178,6 +199,7 @@ Feature: Symbols, Terminal and Nonterminal
     When the file is parsed
     Then parsing fails at line 2 column 6
 
+  @manual:Symbols
   Scenario: Trigraphs have no special meaning in string literals
     Given the grammar file:
       """
@@ -193,6 +215,7 @@ Feature: Symbols, Terminal and Nonterminal
           SymbolItem "??="
       """
 
+  @manual:Symbols
   Scenario: Backslash-newline is not allowed in a string literal
     Given the grammar file:
       """
@@ -203,6 +226,7 @@ Feature: Symbols, Terminal and Nonterminal
     When the file is parsed
     Then parsing fails at line 2 column 6
 
+  @manual:Symbols
   Scenario: A literal string token may be given a symbolic name as an alias with %token
     Given the grammar file:
       """
@@ -227,6 +251,7 @@ Feature: Symbols, Terminal and Nonterminal
           SymbolItem exp
       """
 
+  @manual:Symbols
   Scenario: error is a terminal symbol reserved for error recovery and may be used in rules
     Given the grammar file:
       """
