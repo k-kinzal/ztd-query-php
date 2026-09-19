@@ -1,14 +1,30 @@
+@manual
 Feature: Bison Declarations
-  GNU Bison 3.8.2 manual, chapter "Bison Grammar Files", section "Bison
-  Declarations" with its subsections "Require a Version of Bison", "Token Kind
-  Names", "Operator Precedence", "Nonterminal Symbols", "Syntax of Symbol
-  Declarations", "Performing Actions before Parsing", "Freeing Discarded
-  Symbols", "Printing Semantic Values", "Suppressing Conflict Warnings", "The
-  Start-Symbol", "A Pure (Reentrant) Parser" and "A Push Parser".
+  Source: GNU Bison Manual, version 3.8.2, as doc/bison.texi of the bison-3.8.2
+  release (https://ftp.gnu.org/gnu/bison/bison-3.8.2.tar.xz, also at
+  https://cgit.git.savannah.gnu.org/cgit/bison.git/tree/doc/bison.texi?h=v3.8.2).
+  Every scenario is tagged with the node of the manual it states, as
+  "manual:" followed by the node name with dashes for spaces; online, that
+  node is https://www.gnu.org/software/bison/manual/html_node/<node>.html in
+  the edition the GNU project publishes (Bison 3.8.1 at the time of writing).
+  The nodes stated in this feature:
+    Chapter 3, Bison Grammar Files
+    3.7.1    Require a Version of Bison                   manual:Require-Decl
+    3.7.2    Token Kind Names                             manual:Token-Decl
+    3.7.3    Operator Precedence                          manual:Precedence-Decl
+    3.7.4    Nonterminal Symbols                          manual:Type-Decl
+    3.7.5    Syntax of Symbol Declarations                manual:Symbol-Decls
+    3.7.6    Performing Actions before Parsing            manual:Initial-Action-Decl
+    3.7.7    Freeing Discarded Symbols                    manual:Destructor-Decl
+    3.7.8    Printing Semantic Values                     manual:Printer-Decl
+    3.7.9    Suppressing Conflict Warnings                manual:Expect-Decl
+    3.7.10   The Start-Symbol                             manual:Start-Decl
+    3.7.11   A Pure (Reentrant) Parser                    manual:Pure-Decl
+    3.7.12   A Push Parser                                manual:Push-Decl
+    Chapter 4, Parser C-Language Interface
+    4.6.2    Token Internationalization                   manual:Token-I18n
 
-  The token internationalization form _("...") of a string alias comes from
-  chapter "Parser C-Language Interface", section "Token Internationalization".
-
+  @manual:Require-Decl
   Scenario: %require names the minimum version of Bison as a string
     Given the grammar file:
       """
@@ -26,6 +42,7 @@ Feature: Bison Declarations
           SymbolItem 'a'
       """
 
+  @manual:Token-Decl
   Scenario: %token declares a token kind name
     Given the grammar file:
       """
@@ -44,6 +61,7 @@ Feature: Bison Declarations
           SymbolItem NUM
       """
 
+  @manual:Token-Decl
   Scenario: The numeric code of a token kind is a nonnegative decimal or hexadecimal integer after its name
     Given the grammar file:
       """
@@ -66,6 +84,7 @@ Feature: Bison Declarations
           SymbolItem XNUM
       """
 
+  @manual:Token-Decl
   Scenario: A token declaration may carry the data type alternative in angle brackets
     Given the grammar file:
       """
@@ -89,6 +108,7 @@ Feature: Bison Declarations
           SymbolItem NUM
       """
 
+  @manual:Token-Decl
   Scenario: A literal string written at the end of a %token declaration is an alias of the name
     Given the grammar file:
       """
@@ -107,6 +127,7 @@ Feature: Bison Declarations
           SymbolItem ARROW
       """
 
+  @manual:Token-Decl
   Scenario: Tag, name, code and alias may all be given, and a precedence declaration may then list the alias
     Given the grammar file:
       """
@@ -138,6 +159,7 @@ Feature: Bison Declarations
           SymbolItem exp
       """
 
+  @manual:Token-Decl
   Scenario: String aliases may be marked for internationalization with _("...")
     Given the grammar file:
       """
@@ -166,6 +188,7 @@ Feature: Bison Declarations
           SymbolItem NUM
       """
 
+  @manual:Token-I18n
   Scenario: The end-of-file token may be renamed by declaring a token with code 0
     Given the grammar file:
       """
@@ -184,6 +207,7 @@ Feature: Bison Declarations
           SymbolItem END
       """
 
+  @manual:Precedence-Decl
   Scenario: %left, %right, %nonassoc and %precedence declare tokens with associativity and precedence
     Given the grammar file:
       """
@@ -216,6 +240,7 @@ Feature: Bison Declarations
           SymbolItem exp
       """
 
+  @manual:Precedence-Decl
   Scenario: A precedence declaration may carry a type like %token
     Given the grammar file:
       """
@@ -237,6 +262,7 @@ Feature: Bison Declarations
           SymbolItem exp
       """
 
+  @manual:Precedence-Decl
   Scenario: In a precedence declaration a literal string is a separate token, never an alias
     Given the grammar file:
       """
@@ -262,6 +288,7 @@ Feature: Bison Declarations
           SymbolItem exp
       """
 
+  @manual:Type-Decl
   Scenario: %type declares the value type of nonterminal symbols, several at a time
     Given the grammar file:
       """
@@ -282,6 +309,7 @@ Feature: Bison Declarations
           SymbolItem term
       """
 
+  @manual:Type-Decl
   Scenario: Bison accepts %type on terminal symbols as well
     Given the grammar file:
       """
@@ -302,6 +330,7 @@ Feature: Bison Declarations
           SymbolItem NUM
       """
 
+  @manual:Type-Decl
   Scenario: %nterm declares exclusively nonterminal symbols
     Given the grammar file:
       """
@@ -321,6 +350,7 @@ Feature: Bison Declarations
           SymbolItem term
       """
 
+  @manual:Symbol-Decls
   Scenario: %token takes an optional tag, then one or more names each with an optional number and string, repeated per tag
     Given the grammar file:
       """
@@ -342,6 +372,7 @@ Feature: Bison Declarations
           SymbolItem X
       """
 
+  @manual:Symbol-Decls
   Scenario: %left takes an optional tag, then one or more names each with an optional number, repeated per tag
     Given the grammar file:
       """
@@ -362,6 +393,7 @@ Feature: Bison Declarations
           SymbolItem X
       """
 
+  @manual:Symbol-Decls
   Scenario: %type takes an optional tag, then one or more identifiers, characters or strings, repeated per tag
     Given the grammar file:
       """
@@ -383,6 +415,7 @@ Feature: Bison Declarations
           SymbolItem 'c'
       """
 
+  @manual:Symbol-Decls
   Scenario: %nterm takes an optional tag, then one or more identifiers, repeated per tag
     Given the grammar file:
       """
@@ -403,6 +436,7 @@ Feature: Bison Declarations
           SymbolItem 'c'
       """
 
+  @manual:Symbol-Decls
   Scenario: A %token entry starts with an identifier or a character, so a string cannot start one
     Given the grammar file:
       """
@@ -413,6 +447,7 @@ Feature: Bison Declarations
     When the file is parsed
     Then parsing fails at line 1 column 8
 
+  @manual:Symbol-Decls
   Scenario: A %token entry takes at most one string, so a second string cannot start the next entry
     Given the grammar file:
       """
@@ -423,6 +458,7 @@ Feature: Bison Declarations
     When the file is parsed
     Then parsing fails at line 1 column 14
 
+  @manual:Symbol-Decls
   Scenario: %nterm takes identifiers only, not characters
     Given the grammar file:
       """
@@ -433,6 +469,7 @@ Feature: Bison Declarations
     When the file is parsed
     Then parsing fails at line 1 column 8
 
+  @manual:Symbol-Decls
   Scenario: %nterm takes identifiers only, not strings
     Given the grammar file:
       """
@@ -443,6 +480,7 @@ Feature: Bison Declarations
     When the file is parsed
     Then parsing fails at line 1 column 8
 
+  @manual:Symbol-Decls
   Scenario: %nterm identifiers take no number
     Given the grammar file:
       """
@@ -453,6 +491,7 @@ Feature: Bison Declarations
     When the file is parsed
     Then parsing fails at line 1 column 10
 
+  @manual:Symbol-Decls
   Scenario: %nterm identifiers take no string alias
     Given the grammar file:
       """
@@ -463,6 +502,7 @@ Feature: Bison Declarations
     When the file is parsed
     Then parsing fails at line 1 column 10
 
+  @manual:Symbol-Decls
   Scenario: %type symbols take no number
     Given the grammar file:
       """
@@ -473,6 +513,7 @@ Feature: Bison Declarations
     When the file is parsed
     Then parsing fails at line 1 column 13
 
+  @manual:Symbol-Decls
   Scenario: A tag must be followed by at least one symbol
     Given the grammar file:
       """
@@ -483,6 +524,7 @@ Feature: Bison Declarations
     When the file is parsed
     Then parsing fails at line 2 column 1
 
+  @manual:Symbol-Decls
   Scenario: A symbol declaration must declare at least one symbol
     Given the grammar file:
       """
@@ -493,6 +535,7 @@ Feature: Bison Declarations
     When the file is parsed
     Then parsing fails at line 2 column 1
 
+  @manual:Initial-Action-Decl
   Scenario: %initial-action holds braced code run before parsing, and may use the %parse-param
     Given the grammar file:
       """
@@ -515,6 +558,7 @@ Feature: Bison Declarations
           SymbolItem 'a'
       """
 
+  @manual:Destructor-Decl
   Scenario: %destructor takes braced code and the symbols or type tags it applies to, including <*> and <>
     Given the grammar file:
       """
@@ -560,6 +604,7 @@ Feature: Bison Declarations
           SymbolItem STRING1
       """
 
+  @manual:Printer-Decl
   Scenario: %printer has the same syntax as %destructor
     Given the grammar file:
       """
@@ -583,6 +628,7 @@ Feature: Bison Declarations
           SymbolItem STRING1
       """
 
+  @manual:Printer-Decl
   Scenario: The symbols of %destructor and %printer may be identifiers, characters, strings and type tags
     Given the grammar file:
       """
@@ -600,6 +646,7 @@ Feature: Bison Declarations
           SymbolItem NUM
       """
 
+  @manual:Destructor-Decl
   Scenario: %destructor requires at least one symbol or tag
     Given the grammar file:
       """
@@ -610,6 +657,7 @@ Feature: Bison Declarations
     When the file is parsed
     Then parsing fails at line 2 column 1
 
+  @manual:Expect-Decl
   Scenario: %expect declares the expected number of shift/reduce conflicts as a decimal integer
     Given the grammar file:
       """
@@ -627,6 +675,7 @@ Feature: Bison Declarations
           SymbolItem 'a'
       """
 
+  @manual:Expect-Decl
   Scenario: %expect-rr declares the expected number of reduce/reduce conflicts of a GLR parser
     Given the grammar file:
       """
@@ -646,6 +695,7 @@ Feature: Bison Declarations
           SymbolItem 'a'
       """
 
+  @manual:Expect-Decl
   Scenario: %expect requires a number
     Given the grammar file:
       """
@@ -656,6 +706,7 @@ Feature: Bison Declarations
     When the file is parsed
     Then parsing fails at line 2 column 1
 
+  @manual:Expect-Decl
   Scenario: %expect and %expect-rr may also be attached to individual rules, after the components
     Given the grammar file:
       """
@@ -692,6 +743,7 @@ Feature: Bison Declarations
           SymbolItem ']'
       """
 
+  @manual:Expect-Decl
   Scenario: To annotate a midrule action, %expect or %expect-rr is written before the action
     Given the grammar file:
       """
@@ -728,6 +780,7 @@ Feature: Bison Declarations
           SymbolItem ')'
       """
 
+  @manual:Start-Decl
   Scenario: %start names the start symbol
     Given the grammar file:
       """
@@ -749,6 +802,7 @@ Feature: Bison Declarations
           SymbolItem exp
       """
 
+  @manual:Start-Decl
   Scenario: %start requires a symbol
     Given the grammar file:
       """
@@ -759,6 +813,7 @@ Feature: Bison Declarations
     When the file is parsed
     Then parsing fails at line 2 column 1
 
+  @manual:Pure-Decl
   Scenario: A pure, reentrant parser is requested with %define api.pure full
     Given the grammar file:
       """
@@ -776,6 +831,7 @@ Feature: Bison Declarations
           SymbolItem 'a'
       """
 
+  @manual:Push-Decl
   Scenario: A push parser is requested with %define api.push-pull push, usually together with api.pure
     Given the grammar file:
       """
@@ -795,6 +851,7 @@ Feature: Bison Declarations
           SymbolItem 'a'
       """
 
+  @manual:Push-Decl
   Scenario: Both interfaces are requested with %define api.push-pull both
     Given the grammar file:
       """

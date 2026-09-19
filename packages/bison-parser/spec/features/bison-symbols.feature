@@ -1,10 +1,22 @@
+@manual
 Feature: Bison Symbols
-  GNU Bison 3.8.2 manual, appendix "Bison Symbols": the entries that belong
-  to the grammar-file language.  Each directive of the "Bison Declaration
-  Summary" has its own scenario in that feature; this one covers the
-  punctuation, the comment forms, the in-rule directives and the reserved
-  symbol.
+  Source: GNU Bison Manual, version 3.8.2, as doc/bison.texi of the bison-3.8.2
+  release (https://ftp.gnu.org/gnu/bison/bison-3.8.2.tar.xz, also at
+  https://cgit.git.savannah.gnu.org/cgit/bison.git/tree/doc/bison.texi?h=v3.8.2).
+  Every scenario is tagged with the node of the manual it states, as
+  "manual:" followed by the node name with dashes for spaces; online, that
+  node is https://www.gnu.org/software/bison/manual/html_node/<node>.html in
+  the edition the GNU project publishes (Bison 3.8.1 at the time of writing).
+  The nodes stated in this feature:
+    Appendix A, Bison Symbols
+    Appendix ABison Symbols                                manual:Table-of-Symbols
 
+  The entries of the appendix that belong to the grammar-file language. Each
+  directive of the Bison Declaration Summary has its own scenario in that
+  feature; this one covers the punctuation, the comment forms, the in-rule
+  directives and the reserved symbol.
+
+  @manual:Table-of-Symbols
   Scenario: %% separates the declarations from the rules, and the rules from the epilogue
     Given the grammar file:
       """
@@ -27,6 +39,7 @@ Feature: Bison Symbols
       Epilogue {\nint yylex (void);\n}
       """
 
+  @manual:Table-of-Symbols
   Scenario: %{ code %} is the prologue
     Given the grammar file:
       """
@@ -44,6 +57,7 @@ Feature: Bison Symbols
           SymbolItem 'a'
       """
 
+  @manual:Table-of-Symbols
   Scenario: %?{ expression } is a predicate action inside a rule
     Given the grammar file:
       """
@@ -60,6 +74,7 @@ Feature: Bison Symbols
           SymbolItem 'a'
       """
 
+  @manual:Table-of-Symbols
   Scenario: A colon separates the result of a rule from its components
     Given the grammar file:
       """
@@ -75,6 +90,7 @@ Feature: Bison Symbols
       exp: 'a';
       """
 
+  @manual:Table-of-Symbols
   Scenario: A semicolon terminates a rule
     Given the grammar file:
       """
@@ -93,6 +109,7 @@ Feature: Bison Symbols
           SymbolItem 'b'
       """
 
+  @manual:Table-of-Symbols
   Scenario: A vertical bar separates alternate rules for the same result
     Given the grammar file:
       """
@@ -112,6 +129,7 @@ Feature: Bison Symbols
           SymbolItem 'c'
       """
 
+  @manual:Table-of-Symbols
   Scenario: <*> and <> in %destructor and %printer stand for all typed and all untyped symbols
     Given the grammar file:
       """
@@ -131,6 +149,7 @@ Feature: Bison Symbols
           SymbolItem 'a'
       """
 
+  @manual:Table-of-Symbols
   Scenario: /* ... */ and // ... are comments
     Given the grammar file:
       """
@@ -146,6 +165,7 @@ Feature: Bison Symbols
       exp: NUM;
       """
 
+  @manual:Table-of-Symbols
   Scenario: %empty, %prec, %dprec and %merge are directives written among the components
     Given the grammar file:
       """
@@ -177,6 +197,7 @@ Feature: Bison Symbols
           MergeItem <merge>
       """
 
+  @manual:Table-of-Symbols
   Scenario: A rule directive cannot appear among the declarations
     Given the grammar file:
       """
@@ -187,6 +208,7 @@ Feature: Bison Symbols
     When the file is parsed
     Then parsing fails at line 1 column 1
 
+  @manual:Table-of-Symbols
   Scenario: error is the reserved token for error recovery
     Given the grammar file:
       """
@@ -208,6 +230,7 @@ Feature: Bison Symbols
           SymbolItem ';'
       """
 
+  @manual:Table-of-Symbols
   Scenario Outline: <declaration> is a declaration listed in the appendix
     Given the grammar file:
       """
@@ -235,6 +258,7 @@ Feature: Bison Symbols
       | %param { int *nastiness }                 | Param param { int *nastiness }                      |
       | %printer { print ($$); } <*>              | CodeProps printer { print ($$); } <*>               |
 
+  @manual:Table-of-Symbols
   Scenario: %precedence declares symbols with precedence only
     Given the grammar file:
       """
@@ -256,6 +280,7 @@ Feature: Bison Symbols
           SymbolItem 'a'
       """
 
+  @manual:Table-of-Symbols
   Scenario: %lex-param, %parse-param and %param take one or more braced argument declarations
     Given the grammar file:
       """
@@ -277,6 +302,7 @@ Feature: Bison Symbols
           SymbolItem 'a'
       """
 
+  @manual:Table-of-Symbols
   Scenario: %parse-param requires braced code
     Given the grammar file:
       """
@@ -287,6 +313,7 @@ Feature: Bison Symbols
     When the file is parsed
     Then parsing fails at line 2 column 1
 
+  @manual:Table-of-Symbols
   Scenario: Positional and named references in the action code are kept verbatim
     Given the grammar file:
       """

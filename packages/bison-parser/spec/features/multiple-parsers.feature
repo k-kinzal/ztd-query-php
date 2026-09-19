@@ -1,7 +1,17 @@
+@manual
 Feature: Multiple Parsers in the Same Program
-  GNU Bison 3.8.2 manual, chapter "Bison Grammar Files", section "Multiple
-  Parsers in the Same Program".
+  Source: GNU Bison Manual, version 3.8.2, as doc/bison.texi of the bison-3.8.2
+  release (https://ftp.gnu.org/gnu/bison/bison-3.8.2.tar.xz, also at
+  https://cgit.git.savannah.gnu.org/cgit/bison.git/tree/doc/bison.texi?h=v3.8.2).
+  Every scenario is tagged with the node of the manual it states, as
+  "manual:" followed by the node name with dashes for spaces; online, that
+  node is https://www.gnu.org/software/bison/manual/html_node/<node>.html in
+  the edition the GNU project publishes (Bison 3.8.1 at the time of writing).
+  The nodes stated in this feature:
+    Chapter 3, Bison Grammar Files
+    3.8      Multiple Parsers in the Same Program         manual:Multiple-Parsers
 
+  @manual:Multiple-Parsers
   Scenario: api.prefix renames the interface, and %code provides may declare the scanner accordingly
     Given the grammar file:
       """
@@ -30,6 +40,7 @@ Feature: Multiple Parsers in the Same Program
           SymbolItem 'a'
       """
 
+  @manual:Multiple-Parsers
   Scenario: The obsolete %name-prefix takes the prefix as a string
     Given the grammar file:
       """
