@@ -8,7 +8,6 @@ on:
     paths:
       - 'packages/lemon-parser/**'
       - '.github/workflows/lemon-parser.yml'
-      - '.github/workflows/lemon-parser-fuzz.yml'
 
 permissions:
   contents: read
@@ -136,44 +135,6 @@ jobs:
         with:
           name: lemon-parser-phpbench
           path: packages/lemon-parser/build/phpbench/
-          if-no-files-found: ignore
-
-  fuzz:
-    name: Fuzz smoke / ${{ matrix.target.name }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        target:
-          - { name: parse, script: fuzz_parse.php }
-          - { name: roundtrip, script: fuzz_roundtrip.php }
-    steps:
-      - name: Check out the repository
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-      - name: Set up PHP
-        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
-        with:
-          php-version: '8.3'
-          extensions: dom, filter, hash, iconv, json, libxml, mbstring, pcntl, pcre, pdo, phar, reflection, simplexml, spl, tokenizer, xml, xmlwriter, zlib
-          coverage: none
-      - name: Install dependencies
-        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
-        with:
-          working-directory: packages/lemon-parser
-          dependency-versions: locked
-          composer-options: --prefer-dist
-          require-lock-file: true
-      - name: Feed a bounded sample of inputs to the parser
-        run: |
-          mkdir -p "fuzz/corpus/${{ matrix.target.name }}"
-          vendor/bin/php-fuzzer fuzz "fuzz/${{ matrix.target.script }}" "fuzz/corpus/${{ matrix.target.name }}/" --max-runs=300
-      - name: Upload findings
-        if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: lemon-parser-fuzz-smoke-${{ matrix.target.name }}
-          path: packages/lemon-parser/crash-*
           if-no-files-found: ignore
 
   mutation:
