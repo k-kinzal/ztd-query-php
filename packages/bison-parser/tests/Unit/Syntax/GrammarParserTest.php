@@ -117,7 +117,7 @@ final class GrammarParserTest extends TestCase
         $this->expectException(SyntaxException::class);
         $this->expectExceptionMessage('Expected a rule but found end of file at 3:1');
 
-        (new GrammarParser())->parse(new TokenStream((new Scanner())->scan("%token A\n%%\n")));
+        (new GrammarParser())->parse(new TokenStream((new Scanner())->scan("%debug\n%%\n")));
     }
 
     public function testParseRejectsARulesSectionHoldingOnlyDeclarations(): void
