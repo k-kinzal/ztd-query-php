@@ -63,15 +63,25 @@
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a></span>
 <span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com">     * The identifier of a statement issued at the given site.</span></span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">compute</span>(<span class="tok-id">CallSite</span> <span class="tok-var">$site</span>, <span class="tok-id">TextPattern</span> <span class="tok-var">$pattern</span>): <span class="tok-id">string</span></span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    {</span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>        <span class="tok-var">$material</span> = <span class="tok-id">implode</span>(<span class="tok-str">&quot;\x1f&quot;</span>, [<span class="tok-var">$site</span>-&gt;<span class="tok-id">file</span>, <span class="tok-var">$site</span>-&gt;<span class="tok-id">function</span>, <span class="tok-var">$site</span>-&gt;<span class="tok-id">sink</span>, <span class="tok-var">$pattern</span>-&gt;<span class="tok-id">signature</span>()]);</span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a></span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>        <span class="tok-kw">return</span> <span class="tok-id">substr</span>(<span class="tok-id">hash</span>(<span class="tok-str">&#039;sha256&#039;</span>, <span class="tok-var">$material</span>), <span class="tok-num">0</span>, <span class="tok-id">self</span>::<span class="tok-id">LENGTH</span>);</span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    }</span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>}</span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com">     * Two calls in the same function can produce statements the catalog cannot</span></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com">     * tell apart — two unreached calls, say, whose text is entirely unknown.</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     * The occurrence separates them without bringing the line number back in,</span></span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com">     * so they stay distinct and still survive an edit above them.</span></span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-com">     * @param int $occurrence Which of the otherwise identical statements this is, counting from zero</span></span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">compute</span>(<span class="tok-id">CallSite</span> <span class="tok-var">$site</span>, <span class="tok-id">TextPattern</span> <span class="tok-var">$pattern</span>, <span class="tok-id">int</span> <span class="tok-var">$occurrence</span> = <span class="tok-num">0</span>): <span class="tok-id">string</span></span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    {</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        <span class="tok-var">$material</span> = <span class="tok-id">implode</span>(<span class="tok-str">&quot;\x1f&quot;</span>, [<span class="tok-var">$site</span>-&gt;<span class="tok-id">file</span>, <span class="tok-var">$site</span>-&gt;<span class="tok-id">function</span>, <span class="tok-var">$site</span>-&gt;<span class="tok-id">sink</span>, <span class="tok-var">$pattern</span>-&gt;<span class="tok-id">signature</span>()]);</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>        <span class="tok-kw">if</span> (<span class="tok-var">$occurrence</span> &gt; <span class="tok-num">0</span>) {</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>            <span class="tok-var">$material</span> .= <span class="tok-str">&quot;\x1f&quot;</span> . <span class="tok-var">$occurrence</span>;</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>        }</span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a></span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>        <span class="tok-kw">return</span> <span class="tok-id">substr</span>(<span class="tok-id">hash</span>(<span class="tok-str">&#039;sha256&#039;</span>, <span class="tok-var">$material</span>), <span class="tok-num">0</span>, <span class="tok-id">self</span>::<span class="tok-id">LENGTH</span>);</span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    }</span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>}</span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a></span>
 </code></pre>
 </main>
 <footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
