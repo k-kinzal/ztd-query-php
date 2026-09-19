@@ -76,16 +76,16 @@
 <span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        <span class="tok-var">$start</span> = <span class="tok-var">$cursor</span>-&gt;<span class="tok-id">location</span>();</span>
 <span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>        <span class="tok-var">$cursor</span>-&gt;<span class="tok-id">take</span>(<span class="tok-num">1</span>);</span>
 <span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>        <span class="tok-var">$code</span> = <span class="tok-str">&#039;&#039;</span>;</span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>        <span class="tok-var">$nesting</span> = <span class="tok-num">0</span>;</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>        <span class="tok-var">$nesting</span> = <span class="tok-num">1</span>;</span>
 <span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>        <span class="tok-kw">while</span> (!<span class="tok-var">$cursor</span>-&gt;<span class="tok-id">eof</span>()) {</span>
 <span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>            <span class="tok-var">$unit</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">unit</span>(<span class="tok-var">$cursor</span>);</span>
 <span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>            <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">opens</span>(<span class="tok-var">$unit</span>)) {</span>
 <span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>                <span class="tok-var">$nesting</span>++;</span>
 <span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>            } <span class="tok-kw">elseif</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">closes</span>(<span class="tok-var">$unit</span>)) {</span>
-<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>                <span class="tok-kw">if</span> (<span class="tok-var">$nesting</span> === <span class="tok-num">0</span>) {</span>
-<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>                    <span class="tok-kw">return</span> <span class="tok-var">$code</span>;</span>
-<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>                }</span>
-<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>                <span class="tok-var">$nesting</span>--;</span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>                <span class="tok-var">$nesting</span>--;</span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>                <span class="tok-kw">if</span> (<span class="tok-var">$nesting</span> === <span class="tok-num">0</span> &amp;&amp; <span class="tok-var">$unit</span> === <span class="tok-str">&#039;}&#039;</span>) {</span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>                    <span class="tok-kw">return</span> <span class="tok-var">$code</span>;</span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>                }</span>
 <span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>            }</span>
 <span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>            <span class="tok-var">$code</span> .= <span class="tok-var">$unit</span>;</span>
 <span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>        }</span>
