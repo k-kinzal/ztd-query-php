@@ -5,8 +5,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use SqlFaker\Compiler\Bison\BisonParser;
-use SqlFaker\Compiler\Bison\GrammarCompiler;
+use SqlFaker\Compiler\Bison\BisonGrammarCompiler;
 use SqlFaker\Compiler\Resource\GrammarWriter;
 use SqlFaker\Grammar\Resource\SqlVersion;
 
@@ -82,8 +81,7 @@ function fetchYaccFile(string $url): string
 
 function buildVersion(
     string $tag,
-    BisonParser $parser,
-    GrammarCompiler $compiler,
+    BisonGrammarCompiler $compiler,
 ): bool {
     try {
         $version = SqlVersion::resolve('mysql', $tag);
@@ -105,8 +103,7 @@ function buildVersion(
     fwrite(STDOUT, "Parsing grammar...\n");
 
     try {
-        $ast = $parser->parse($contents);
-        $grammar = $compiler->compile($ast);
+        $grammar = $compiler->compile($contents);
     } catch (Throwable $e) {
         fwrite(STDERR, "Error building {$tag}: {$e->getMessage()}\n");
         return false;
@@ -161,15 +158,14 @@ function main(array $argv): int
 
     fwrite(STDOUT, 'Building ' . count($tags) . ' version(s): ' . implode(', ', $tags) . "\n");
 
-    $parser = new BisonParser();
-    $compiler = new GrammarCompiler();
+    $compiler = new BisonGrammarCompiler();
 
     $success = 0;
     $failed = 0;
     $failedTags = [];
 
     foreach ($tags as $tag) {
-        if (buildVersion($tag, $parser, $compiler)) {
+        if (buildVersion($tag, $compiler)) {
             $success++;
         } else {
             $failed++;

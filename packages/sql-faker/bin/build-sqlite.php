@@ -5,7 +5,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use SqlFaker\Compiler\Lemon\LemonParser;
+use SqlFaker\Compiler\Lemon\LemonGrammarCompiler;
 use SqlFaker\Compiler\Resource\GrammarWriter;
 use SqlFaker\Grammar\Resource\SqlVersion;
 
@@ -81,7 +81,7 @@ function sqliteFetchGramFile(string $url): string
 
 function sqliteBuildVersion(
     string $version,
-    LemonParser $parser,
+    LemonGrammarCompiler $compiler,
 ): bool {
     try {
         $sqlVersion = SqlVersion::resolve('sqlite', $version);
@@ -103,7 +103,7 @@ function sqliteBuildVersion(
     fwrite(STDOUT, "Parsing grammar...\n");
 
     try {
-        $grammar = $parser->parse($contents);
+        $grammar = $compiler->compile($contents);
     } catch (Throwable $e) {
         fwrite(STDERR, "Error building {$version}: {$e->getMessage()}\n");
         fwrite(STDERR, "Trace: {$e->getTraceAsString()}\n");
@@ -162,14 +162,14 @@ function sqliteMain(array $argv): int
 
     fwrite(STDOUT, 'Building ' . count($versions) . ' SQLite version(s): ' . implode(', ', $versions) . "\n");
 
-    $parser = new LemonParser();
+    $compiler = new LemonGrammarCompiler();
 
     $success = 0;
     $failed = 0;
     $failedVersions = [];
 
     foreach ($versions as $version) {
-        if (sqliteBuildVersion($version, $parser)) {
+        if (sqliteBuildVersion($version, $compiler)) {
             $success++;
         } else {
             $failed++;

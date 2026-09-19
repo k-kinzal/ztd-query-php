@@ -1,0 +1,44 @@
+# NOTE: You do not have permission to overwrite this file. Please ask a human operator to perform the changes for you.
+#
+# Layers follow the reading of a grammar file: the scanner splits it into
+# tokens, the syntax layer builds the tree from them, the tree is the
+# result, and the printer writes a tree back out.
+deptrac:
+  paths:
+    - ./src
+  analyser:
+    types:
+      - class
+      - use
+  layers:
+    # The syntax tree and the positions its nodes carry.
+    - name: Ast
+      collectors:
+        - type: directory
+          value: 'src/Ast/'
+    # Splits a grammar file into tokens.
+    - name: Scanner
+      collectors:
+        - type: directory
+          value: 'src/Scanner/'
+    # Builds the tree from tokens.
+    - name: Syntax
+      collectors:
+        - type: directory
+          value: 'src/Syntax/'
+    # Writes a tree back as a grammar file, with the scanner's escape rules so that it reads back the same.
+    - name: Printer
+      collectors:
+        - type: directory
+          value: 'src/Printer/'
+    # Public entry points and the errors they raise.
+    - name: Entry
+      collectors:
+        - type: directory
+          value: 'src/[^/]+\.php$'
+  ruleset:
+    Ast: []
+    Scanner: [Ast, Entry]
+    Syntax: [Ast, Scanner, Entry]
+    Printer: [Ast, Scanner]
+    Entry: [Ast, Scanner, Syntax, Printer]
