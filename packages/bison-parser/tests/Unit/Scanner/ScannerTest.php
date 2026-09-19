@@ -206,6 +206,41 @@ final class ScannerTest extends TestCase
 
         self::assertSame([TokenKind::Integer, '258', '258'], [$decimal->kind, $decimal->text, $decimal->raw]);
         self::assertSame(['31', '0x1F'], [$hex->text, $hex->raw]);
+        self::assertSame('2147483647', $scanner->integer(new Cursor('2147483647'), new Location(1, 1))->text);
+        self::assertSame('2147483647', $scanner->integer(new Cursor('0x000000007FFFFFFF'), new Location(1, 1))->text);
+        self::assertSame('0', $scanner->integer(new Cursor('0x0'), new Location(1, 1))->text);
+    }
+
+    public function testIntegerRejectsADecimalOutOfRange(): void
+    {
+        $this->expectException(SyntaxException::class);
+        $this->expectExceptionMessage("Integer out of range: '2147483648' at 2:5");
+
+        (new Scanner())->integer(new Cursor('2147483648'), new Location(2, 5));
+    }
+
+    public function testIntegerRejectsADecimalTooLongToRead(): void
+    {
+        $this->expectException(SyntaxException::class);
+        $this->expectExceptionMessage("Integer out of range: '999999999999999999999' at 2:5");
+
+        (new Scanner())->integer(new Cursor('999999999999999999999'), new Location(2, 5));
+    }
+
+    public function testIntegerRejectsAHexadecimalOutOfRange(): void
+    {
+        $this->expectException(SyntaxException::class);
+        $this->expectExceptionMessage("Integer out of range: '0x80000000' at 2:5");
+
+        (new Scanner())->integer(new Cursor('0x80000000'), new Location(2, 5));
+    }
+
+    public function testIntegerRejectsAHexadecimalTooLongToRead(): void
+    {
+        $this->expectException(SyntaxException::class);
+        $this->expectExceptionMessage("Integer out of range: '0xFFFFFFFFFFFFFFFFFFF' at 2:5");
+
+        (new Scanner())->integer(new Cursor('0xFFFFFFFFFFFFFFFFFFF'), new Location(2, 5));
     }
 
     public function testIntegerRejectsAnIdentifierStartingWithADigit(): void

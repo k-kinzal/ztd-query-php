@@ -239,7 +239,12 @@ final class Scanner
         if ($cursor->lookingAt('[-.A-Za-z0-9_]')) {
             throw SyntaxException::invalid('invalid identifier: ' . $text . $cursor->match('[-.A-Za-z0-9_]*'), $location);
         }
-        $value = str_starts_with(strtolower($text), '0x') ? hexdec(substr($text, 2)) : (int) $text;
+        $hex = str_starts_with(strtolower($text), '0x');
+        $digits = ltrim($hex ? substr($text, 2) : $text, '0');
+        if (strlen($digits) > ($hex ? 8 : 10) || ($hex ? hexdec($digits) : (int) $digits) > 0x7FFFFFFF) {
+            throw SyntaxException::invalid("integer out of range: '{$text}'", $location);
+        }
+        $value = $hex ? hexdec($digits) : (int) $digits;
 
         return new Token(TokenKind::Integer, (string) $value, $location, $text);
     }

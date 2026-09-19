@@ -238,4 +238,26 @@ final class DeclarationParserTest extends TestCase
 
         (new DeclarationParser())->codes(new TokenStream((new Scanner())->scan('%%')), 'param');
     }
+
+    public function testDirectiveReadsNtermAsNonterminals(): void
+    {
+        $parser = new DeclarationParser();
+        $tokens = new TokenStream((new Scanner())->scan('%nterm <t> a b %%'));
+
+        $declaration = $parser->directive($tokens->next(), $tokens);
+
+        self::assertInstanceOf(SymbolDeclaration::class, $declaration);
+        self::assertSame(SymbolClass::Nonterminal, $declaration->class);
+        self::assertSame(['a', 'b'], array_map(static fn (SymbolEntry $entry): string => $entry->symbol->value, $declaration->entries));
+    }
+
+    public function testDirectiveRejectsANtermThatIsNotAnIdentifier(): void
+    {
+        $tokens = new TokenStream((new Scanner())->scan("%nterm 'c'"));
+
+        $this->expectException(SyntaxException::class);
+        $this->expectExceptionMessage('Expected an identifier but found character literal at 1:8');
+
+        (new DeclarationParser())->directive($tokens->next(), $tokens);
+    }
 }
