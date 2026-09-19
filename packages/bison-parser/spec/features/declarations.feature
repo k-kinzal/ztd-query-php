@@ -24,6 +24,11 @@ Feature: Bison Declarations
     Chapter 4, Parser C-Language Interface
     4.6.2    Token Internationalization                   manual:Token-I18n
 
+  One reading is recorded here because the manual and Bison's own grammar of
+  grammar files differ: the example %left OR 134 "<=" 135 in "Operator
+  Precedence" gives a string token a number, which parse-gram.y of Bison
+  3.8.2 does not accept after a string. The manual is followed.
+
   @manual:Require-Decl
   Scenario: %require names the minimum version of Bison as a string
     Given the grammar file:
