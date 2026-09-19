@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How the analysis works — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/354/k-kinzal/sql-catalog/doc/docs/analysis.md.html">
+<meta name="description" content="How the analysis works, a document of the k-kinzal/sql-catalog package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="How the analysis works — ZTD Query PHP">
+<meta property="og:description" content="How the analysis works, a document of the k-kinzal/sql-catalog package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/354/k-kinzal/sql-catalog/doc/docs/analysis.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/354/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../">
+<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sb-pkg"><a href="../../../../k-kinzal/sql-catalog/index.html">k-kinzal/sql-catalog</a></div><nav class="sb-block"><div class="sb-title">Package</div><ul class="sb-list"><li data-diff="modified"><a href="../../../../k-kinzal/sql-catalog/all-items.html">All items</a></li><li data-diff="added"><a href="../../../../k-kinzal/sql-catalog/index.html#documents">Documents</a></li></ul></nav><nav class="sb-block"><div class="sb-title">Namespaces</div><ul class="sb-list"><li data-diff="added"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/index.html" title="SqlCatalog">SqlCatalog</a></li><li data-diff="added"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Analysis/index.html" title="SqlCatalog\Analysis">SqlCatalog\Analysis</a></li><li data-diff="added"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Catalog/index.html" title="SqlCatalog\Catalog">SqlCatalog\Catalog</a></li><li data-diff="added"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Cli/index.html" title="SqlCatalog\Cli">SqlCatalog\Cli</a></li><li data-diff="added"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Conformance/index.html" title="SqlCatalog\Conformance">SqlCatalog\Conformance</a></li><li data-diff="added"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Evaluation/index.html" title="SqlCatalog\Evaluation">SqlCatalog\Evaluation</a></li><li data-diff="added"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Extension/index.html" title="SqlCatalog\Extension">SqlCatalog\Extension</a></li><li data-diff="added"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Filter/index.html" title="SqlCatalog\Filter">SqlCatalog\Filter</a></li><li data-diff="added"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Php/index.html" title="SqlCatalog\Php">SqlCatalog\Php</a></li><li data-diff="added"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Reporter/index.html" title="SqlCatalog\Reporter">SqlCatalog\Reporter</a></li><li data-diff="added"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Source/index.html" title="SqlCatalog\Source">SqlCatalog\Source</a></li><li data-diff="added"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Sql/index.html" title="SqlCatalog\Sql">SqlCatalog\Sql</a></li><li data-diff="added"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Text/index.html" title="SqlCatalog\Text">SqlCatalog\Text</a></li><li data-diff="added"><a href="../../../../k-kinzal/sql-catalog/SqlCatalog/Type/index.html" title="SqlCatalog\Type">SqlCatalog\Type</a></li></ul></nav></nav>
+<div class="page">
+<header class="topbar">
+<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
+<nav class="crumbs"><a href="../../../../k-kinzal/sql-catalog/index.html">k-kinzal/sql-catalog</a><span class="crumb-sep">::</span><span class="crumb-current">docs/analysis.md</span></nav>
+<div class="topbar-tools">
+<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 0ad05525b9 to working tree">0ad05525b9 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 0ad05525b9 and working tree." data-off="This page documents what 0ad05525b9 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>How the analysis works</h1><div class="symbol-meta"><span class="src-link">docs/analysis.md</span></div></div>
+<div class="notice diff-banner" data-diff="added">Added in working tree, compared to 0ad05525b9.</div>
+<section class="readme" data-diff="added"><div class="doc-block" data-diff="added"><h2>How the analysis works</h2>
+</div><div class="doc-block" data-diff="added"><p>The analyzer answers one question: what SQL can this source send to a database? It answers it without running anything, which means it has to reconstruct each statement from the pieces the code assembles it out of.</p>
+</div><div class="doc-block" data-diff="added"><h3>The pipeline</h3>
+</div><div class="doc-block" data-diff="added"><pre class="code-block"><code>sources ──▶ parse ──▶ index ──▶ walk each body ──▶ record statements ──▶ catalog</code></pre>
+</div><div class="doc-block" data-diff="added"><ol><li><strong>Parse.</strong> Every file is read into a statement tree with names resolved to their fully qualified form (<code>SqlCatalog\Php\SourceParser</code>). A file that does not parse is reported as a problem and the run continues.</li><li><strong>Index.</strong> Every class, enum, function, constant, property and method in the whole source tree is collected first (<code>ProgramIndexBuilder</code>). This is what lets a statement built from a constant in one file resolve while walking another.</li><li><strong>Walk.</strong> Each function body is walked on its own, with its parameters standing for whatever a caller may pass (<code>Interpreter</code>, <code>BodyWalker</code>).</li><li><strong>Record.</strong> A call that matches an extension&#039;s database call is recorded with the statement text as far as it resolved (<code>CallEvaluator</code>, <code>StatementRecorder</code>).</li><li><strong>Report.</strong> Records become catalog entries: statement kind, tables, placeholders with what is bound to them, and findings (<code>EntryFactory</code>).</li></ol>
+</div><div class="doc-block" data-diff="added"><h3>What a value is</h3>
+</div><div class="doc-block" data-diff="added"><p>Every expression evaluates to a <code>Domain</code>: a bounded set of alternatives the expression can take. An alternative is a resolved scalar, a string with gaps in it, an array, an object, or a value known only by its static type.</p>
+</div><div class="doc-block" data-diff="added"><p>Two operations matter:</p>
+</div><div class="doc-block" data-diff="added"><ul><li><strong>Concatenation</strong> takes the cartesian product. <code>&#039;ORDER BY &#039; . ($asc ? &#039;a&#039; : &#039;b&#039;)</code> is two statements, not one statement with a gap.</li><li><strong>Union</strong> merges alternatives at a branch join.</li></ul>
+</div><div class="doc-block" data-diff="added"><p>A domain holds at most <code>Domain::MAX_TERMS</code> alternatives. Past that it is generalized into one shape that covers all of them, with the part the alternatives disagree on replaced by a gap. The approximation only ever widens.</p>
+</div><div class="doc-block" data-diff="added"><h3>What a gap is</h3>
+</div><div class="doc-block" data-diff="added"><p>A gap is a value the analyzer could not pin down, and it carries where it came from:</p>
+</div><div class="doc-block" data-diff="added"><div class="table-wrap"><table><thead><tr><th>Origin</th><th>Introduced by</th></tr></thead><tbody><tr><td><code>external</code></td><td>A superglobal, <code>getenv()</code>, <code>filter_input()</code> and the like</td></tr><tr><td><code>parameter</code></td><td>A parameter of the body being walked</td></tr><tr><td><code>property</code></td><td>A property read with no settled default</td></tr><tr><td><code>call</code></td><td>A call the analyzer did not follow</td></tr><tr><td><code>loop</code></td><td>A value a loop kept changing</td></tr><tr><td><code>branch</code></td><td>Alternatives merged away to stay within the bound</td></tr><tr><td><code>unresolved</code></td><td>Anything else</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="added"><p>The origin is what separates a query built from request input from one that is merely dynamic. A cast to <code>int</code>, <code>float</code> or <code>bool</code> deliberately ends the trail: <code>(int) $_GET[&#039;id&#039;]</code> is reported as <code>call</code>, not <code>external</code>, because the cast neutralises the value as a source of injected SQL. A cast to <code>string</code> does not.</p>
+</div><div class="doc-block" data-diff="added"><h3>What resolves</h3>
+</div><div class="doc-block" data-diff="added"><ul><li>String and number literals, interpolated strings and heredocs.</li><li>Global constants, class constants, <code>::class</code>, and enum cases.</li><li><code>-&gt;value</code> and <code>-&gt;name</code> on an enum. A value typed as a backed enum resolves to the union of that enum&#039;s cases, which is what turns a parameter typed <code>Status</code> into the handful of strings a column can hold.</li><li>Properties declared with a default that nothing in the class assigns to again.</li><li><code>sprintf</code>, <code>vsprintf</code>, <code>implode</code>, <code>str_repeat</code>, <code>str_replace</code>, the trim and case functions, and the casts.</li><li>Calls into the analyzed source, followed up to <code>EvaluationBudget::$maxDepth</code> frames deep. A call on an abstract class or an interface is resolved across the implementations the source declares.</li><li><code>if</code>, <code>switch</code>, <code>match</code> and the ternaries: every branch is kept, not chosen between.</li><li>Loops: the body is walked twice and whatever kept changing is widened into one shape. The familiar <code>$sql .= &#039; AND …&#039;</code> becomes two alternatives — the statement with no iterations, and the shape covering every number of them.</li><li><code>$params[] = $value</code> and <code>$params[&#039;:id&#039;] = $value</code>, so a bound value survives being collected into an array before it is passed.</li></ul>
+</div><div class="doc-block" data-diff="added"><h3>What does not</h3>
+</div><div class="doc-block" data-diff="added"><ul><li>Anything assembled at runtime from data the source does not contain: a query builder, an ORM&#039;s generated SQL, a statement read from a file or a database.</li><li>A property assigned outside its declaration.</li><li>Virtual dispatch through a value whose class the analyzer cannot name.</li><li>Recursion, and calls past the depth budget.</li></ul>
+</div><div class="doc-block" data-diff="added"><p>Each of these produces a gap rather than a wrong answer.</p>
+</div><div class="doc-block" data-diff="added"><h3>Binding values to placeholders</h3>
+</div><div class="doc-block" data-diff="added"><p>A <code>prepare()</code> returns a handle that identifies the call site it came from. The <code>execute()</code> or <code>bindValue()</code> that follows finds the statements filed under that handle and attaches what it binds. The handle travels through variables and chained calls, so both of these are read the same way:</p>
+</div><div class="doc-block" data-diff="added"><pre class="code-block"><code><span class="tok-var">$statement</span> = <span class="tok-var">$pdo</span>-&gt;<span class="tok-id">prepare</span>(<span class="tok-var">$sql</span>);
+<span class="tok-var">$statement</span>-&gt;<span class="tok-id">execute</span>(<span class="tok-var">$values</span>);
+
+<span class="tok-var">$pdo</span>-&gt;<span class="tok-id">prepare</span>(<span class="tok-var">$sql</span>)-&gt;<span class="tok-id">execute</span>(<span class="tok-var">$values</span>);</code></pre>
+</div><div class="doc-block" data-diff="added"><p>Placeholders are read out of the statement text with a dialect-neutral lexer that knows string bodies, comments, <code>?</code>, <code>:name</code>, <code>$1</code> and Postgres casts, so a question mark inside a quoted string is not mistaken for a parameter.</p>
+</div><div class="doc-block" data-diff="added"><h3>Reading the same call twice</h3>
+</div><div class="doc-block" data-diff="added"><p>A method is walked on its own, with its parameters open, and again through every caller the analyzer follows. Both readings are kept and merged: the bound values take the union of what each reading found, so a public method callable with any integer is reported as <code>int</code> rather than as whichever literal a caller happened to pass. Where a resolved reading covers an unresolved one at the same call site, the unresolved one is dropped — it is the same statement seen with less information, and reporting both would overstate what the code does.</p>
+</div><div class="doc-block" data-diff="added"><h3>Bounds</h3>
+</div><div class="doc-block" data-diff="added"><p><code>EvaluationBudget</code> bounds the work: how many expressions one file may cost, how many frames deep calls are followed, and how many times a loop body is re-walked. An exhausted budget degrades the result into gaps rather than hanging the run.</p>
+</div></section>
+</main>
+<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div>
+<script src="../../../../assets/search-index.js" defer></script>
+<script src="../../../../assets/app.js" defer></script>
+</body>
+</html>
