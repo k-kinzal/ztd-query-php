@@ -7,10 +7,5 @@
 /phpunit.xml
 /phpcs.xml
 /.php-cs-fixer.php
-/fuzz/corpus/
-/fuzz/coverage/
-/crash-*
-/minimized-*
-/timeout-*
-/oom-*
 !/composer.lock
+/behat.yml
