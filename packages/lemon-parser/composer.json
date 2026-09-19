@@ -7,11 +7,11 @@
         "php": "^8.1"
     },
     "require-dev": {
+        "behat/behat": "^3.14",
         "brianium/paratest": "^7.3",
         "deptrac/deptrac": "^3.0",
         "friendsofphp/php-cs-fixer": "^3.95.25",
         "k-kinzal/php-ai-toolkit": "dev-main",
-        "nikic/php-fuzzer": "^0.0.11",
         "phpbench/phpbench": "^1.4",
         "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
         "phpstan/phpstan": "^2.1",
@@ -34,8 +34,8 @@
     "autoload-dev": {
         "psr-4": {
             "Tests\\": "tests/",
-            "Fuzz\\": "fuzz/",
-            "Bench\\": "bench/"
+            "Bench\\": "bench/",
+            "Spec\\": "spec/"
         }
     },
     "scripts": {
@@ -58,22 +58,6 @@
         "doctest": "phpunit --testsuite doctest",
         "format": "php-cs-fixer fix --allow-risky=yes",
         "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
-        "fuzz": "@fuzz:smoke",
-        "fuzz:parse": [
-            "Composer\\Config::disableProcessTimeout",
-            "@php -r \"is_dir('fuzz/corpus/parse') || mkdir('fuzz/corpus/parse', 0777, true);\" --",
-            "php-fuzzer fuzz fuzz/fuzz_parse.php fuzz/corpus/parse/"
-        ],
-        "fuzz:roundtrip": [
-            "Composer\\Config::disableProcessTimeout",
-            "@php -r \"is_dir('fuzz/corpus/roundtrip') || mkdir('fuzz/corpus/roundtrip', 0777, true);\" --",
-            "php-fuzzer fuzz fuzz/fuzz_roundtrip.php fuzz/corpus/roundtrip/"
-        ],
-        "fuzz:smoke": [
-            "Composer\\Config::disableProcessTimeout",
-            "@fuzz:parse --max-runs=100",
-            "@fuzz:roundtrip --max-runs=100"
-        ],
         "lint": [
             "@autoload:check",
             "@format:check",
@@ -85,6 +69,7 @@
         ],
         "loc-guard": "loc-guard --config=loc.yaml",
         "phpstan": "phpstan analyse --memory-limit=1G",
+        "spec": "behat --strict --no-interaction --no-snippets",
         "test": "paratest --processes=auto",
         "test:coverage": "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml",
         "test:unit": "phpunit --testsuite unit",
@@ -104,10 +89,6 @@
         "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/lemon-parser/"
     },
     "scripts-descriptions": {
-        "fuzz": "Run every fuzz target with the bounded smoke budget.",
-        "fuzz:smoke": "Run each fuzz target for up to 100 executions; individual fuzz:* commands run continuously."
-    },
-    "bin": [
-        "bin/lemon-parser"
-    ]
+        "spec": "Run the Behat specification of the Lemon grammar-file language against the parser."
+    }
 }

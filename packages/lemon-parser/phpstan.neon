@@ -10,7 +10,7 @@ parameters:
         visibilityExemptNamespacePrefixes:
             - 'Tests'
             - 'Bench'
-            - 'Fuzz'
+            - 'Spec'
         forbiddenNamespacePrefixes:
             - 'Tests\Fixture'
             - 'Tests\Fixtures'
@@ -19,5 +19,5 @@ parameters:
     paths:
         - src
         - tests
-        - fuzz
         - bench
+        - spec
