@@ -1,0 +1,70 @@
+{
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
+  description: 'Automated dependency updates for the ZTD Query monorepo. Every non-major update is merged automatically once Merge Gatekeeper passes and the auto-approve workflow has approved the pull request.',
+  extends: [
+    'config:recommended',
+    'helpers:pinGitHubActionDigests',
+  ],
+  timezone: 'Asia/Tokyo',
+  labels: ['dependencies'],
+  // Keep the composer.json constraints stable; update the committed lock files and only widen a constraint when the new release falls outside it.
+  rangeStrategy: 'update-lockfile',
+  lockFileMaintenance: {
+    enabled: true,
+    automerge: true,
+  },
+  // Renovate enables GitHub auto-merge on each pull request; GitHub merges once the "merge-gatekeeper" required check passes.
+  automerge: true,
+  automergeType: 'pr',
+  platformAutomerge: true,
+  packageRules: [
+    {
+      description: 'Major updates need a human review before they are merged.',
+      matchUpdateTypes: ['major'],
+      automerge: false,
+    },
+    {
+      description: 'Keep every GitHub Actions bump in one pull request.',
+      matchManagers: ['github-actions'],
+      groupName: 'github-actions',
+    },
+    {
+      description: 'Workspace packages are resolved from path repositories and pinned to dev-main; never touch them.',
+      matchPackageNames: ['k-kinzal/**'],
+      enabled: false,
+    },
+    {
+      description: 'Each MySQL container class targets one major.minor series, so only accept patch releases.',
+      matchDatasources: ['docker'],
+      matchPackageNames: ['mysql', 'container-registry.oracle.com/mysql/community-server'],
+      matchUpdateTypes: ['major', 'minor'],
+      enabled: false,
+    },
+    {
+      description: 'Each PostgreSQL container class targets one major series; minor releases are point releases and stay in scope.',
+      matchDatasources: ['docker'],
+      matchPackageNames: ['postgres'],
+      matchUpdateTypes: ['major'],
+      enabled: false,
+    },
+  ],
+  customManagers: [
+    {
+      customType: 'regex',
+      description: 'Database images embedded in the container package sources and their unit tests.',
+      managerFilePatterns: ['/^packages/container/(src|tests)/.+\\.php$/'],
+      matchStrings: [
+        "'(?<depName>mysql|postgres|container-registry\\.oracle\\.com/mysql/community-server):(?<currentValue>\\d[\\d.]*)'",
+      ],
+      datasourceTemplate: 'docker',
+    },
+    {
+      customType: 'regex',
+      description: 'Infection installed through the setup-php tools input in the mutation-testing jobs.',
+      managerFilePatterns: ['/^\\.github/workflows/.+\\.ya?ml$/'],
+      matchStrings: ['tools:\\s*infection:(?<currentValue>\\d[\\d.]*)'],
+      depNameTemplate: 'infection/infection',
+      datasourceTemplate: 'packagist',
+    },
+  ],
+}
