@@ -1,6 +1,6 @@
 # Fidelity to Bison
 
-The reader follows the GNU Bison 3.8.2 manual, whose clauses run as the scenarios in `spec/features` (`composer spec`), and where the manual is silent, Bison's own test suite. The notes below name the points where reading the manual takes a decision.
+The reader follows the GNU Bison 3.8.2 manual, whose clauses run as the scenarios in `spec/features` (`composer spec`), and where the manual is silent, Bison's own test suite. Each feature names its source, and each scenario is tagged with the manual node (`@manual:Symbols`) or the test file (`@tests:input.at`) it states. The notes below name the points where reading the manual takes a decision.
 
 ## Scanner
 
