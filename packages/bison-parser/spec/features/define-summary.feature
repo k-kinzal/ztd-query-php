@@ -1,11 +1,21 @@
+@manual
 Feature: %define Summary
-  GNU Bison 3.8.2 manual, chapter "Bison Grammar Files", section "%define
-  Summary".
+  Source: GNU Bison Manual, version 3.8.2, as doc/bison.texi of the bison-3.8.2
+  release (https://ftp.gnu.org/gnu/bison/bison-3.8.2.tar.xz, also at
+  https://cgit.git.savannah.gnu.org/cgit/bison.git/tree/doc/bison.texi?h=v3.8.2).
+  Every scenario is tagged with the node of the manual it states, as
+  "manual:" followed by the node name with dashes for spaces; online, that
+  node is https://www.gnu.org/software/bison/manual/html_node/<node>.html in
+  the edition the GNU project publishes (Bison 3.8.1 at the time of writing).
+  The nodes stated in this feature:
+    Chapter 3, Bison Grammar Files
+    3.7.14   %define Summary                              manual:_0025define-Summary
 
   A %define assigns a variable. Braces hold a value in the target language,
   a bare keyword selects a finite choice, and a string covers the remaining
   cases.
 
+  @manual:_0025define-Summary
   Scenario: %define with the variable alone
     Given the grammar file:
       """
@@ -23,6 +33,7 @@ Feature: %define Summary
           SymbolItem 'a'
       """
 
+  @manual:_0025define-Summary
   Scenario: %define with a keyword value
     Given the grammar file:
       """
@@ -40,6 +51,7 @@ Feature: %define Summary
           SymbolItem 'a'
       """
 
+  @manual:_0025define-Summary
   Scenario: %define with a braced value in the target language
     Given the grammar file:
       """
@@ -57,6 +69,7 @@ Feature: %define Summary
           SymbolItem 'a'
       """
 
+  @manual:_0025define-Summary
   Scenario: %define with a string value
     Given the grammar file:
       """
@@ -74,6 +87,7 @@ Feature: %define Summary
           SymbolItem 'a'
       """
 
+  @manual:_0025define-Summary
   Scenario: A Boolean variable accepts true, false, no value, or the empty string
     Given the grammar file:
       """
@@ -97,6 +111,7 @@ Feature: %define Summary
           SymbolItem 'a'
       """
 
+  @manual:_0025define-Summary
   Scenario: %define requires a variable name
     Given the grammar file:
       """
@@ -107,6 +122,7 @@ Feature: %define Summary
     When the file is parsed
     Then parsing fails at line 2 column 1
 
+  @manual:_0025define-Summary
   Scenario Outline: <declaration> is accepted as the manual describes it
     Given the grammar file:
       """

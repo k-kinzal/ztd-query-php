@@ -1,7 +1,14 @@
+@tests
 Feature: Behaviour fixed by Bison's own test suite
-  Where the manual is silent, the tests shipped with GNU Bison 3.8.2 fix the
-  behaviour.  Each scenario names the test it paraphrases (file and title).
+  Source: the test suite of GNU Bison 3.8.2, tests/*.at (GNU Autotest) of the
+  bison-3.8.2 release (https://ftp.gnu.org/gnu/bison/bison-3.8.2.tar.xz, also at
+  https://cgit.git.savannah.gnu.org/cgit/bison.git/tree/tests?h=v3.8.2).
+  Where the manual is silent, these tests fix the behaviour. Every scenario is
+  tagged with the file its test is in, as "tests:" followed by the file name,
+  and its title starts with that file and the AT_SETUP title of the test, in
+  quotes. The grammar files are those of the tests, cut down to the clause.
 
+  @tests:input.at
   Scenario: tests/input.at "Deprecated directives": old spellings with underscores, and = after a value directive, are still read
     Given the grammar file:
       """
@@ -57,6 +64,7 @@ Feature: Behaviour fixed by Bison's own test suite
           SymbolItem '0'
       """
 
+  @tests:input.at
   Scenario: tests/input.at "Non-deprecated directives": the current spellings
     Given the grammar file:
       """
@@ -90,6 +98,7 @@ Feature: Behaviour fixed by Bison's own test suite
           SymbolItem '0'
       """
 
+  @tests:input.at
   Scenario: tests/input.at "Torturing the Scanner": a lone brace among the declarations is an error
     Given the grammar file:
       """
@@ -98,6 +107,7 @@ Feature: Behaviour fixed by Bison's own test suite
     When the file is parsed
     Then parsing fails at line 1 column 1
 
+  @tests:input.at
   Scenario: tests/input.at "Torturing the Scanner": %{ and %} inside a comment or a string do not end the prologue
     Given the grammar file:
       """
@@ -119,6 +129,7 @@ Feature: Behaviour fixed by Bison's own test suite
           SymbolItem 'a'
       """
 
+  @tests:input.at
   Scenario: tests/input.at "Torturing the Scanner": backslash-newlines inside a comment in the prologue are part of the comment
     Given the grammar file:
       """
@@ -141,6 +152,7 @@ Feature: Behaviour fixed by Bison's own test suite
           SymbolItem 'a'
       """
 
+  @tests:input.at
   Scenario: tests/input.at "Torturing the Scanner": backslash-newlines inside a string in the prologue are part of the string
     Given the grammar file:
       """
@@ -163,6 +175,7 @@ Feature: Behaviour fixed by Bison's own test suite
           SymbolItem 'a'
       """
 
+  @tests:input.at
   Scenario: tests/input.at "Torturing the Scanner": semicolons may separate the alternatives of a rule
     Given the grammar file:
       """
@@ -182,6 +195,7 @@ Feature: Behaviour fixed by Bison's own test suite
           SymbolItem output
       """
 
+  @tests:input.at
   Scenario: tests/input.at "Torturing the Scanner": quotes inside braced code are kept
     Given the grammar file:
       """
@@ -214,6 +228,7 @@ Feature: Behaviour fixed by Bison's own test suite
           Action {\n    /* Exercise quotes in braces.  */\n    char tmp[] = "[%c],\\n";\n    printf (tmp, $1);\n  }
       """
 
+  @tests:diagnostics.at
   Scenario: tests/diagnostics.at "Line is too short, and then you die": a #line directive in the grammar file is read
     Given the grammar file:
       """
@@ -234,6 +249,7 @@ Feature: Behaviour fixed by Bison's own test suite
           SymbolItem foo
       """
 
+  @tests:diagnostics.at
   Scenario: tests/diagnostics.at "Line is too short, and then you die": #line may name the file
     Given the grammar file:
       """
@@ -251,6 +267,7 @@ Feature: Behaviour fixed by Bison's own test suite
           SymbolItem 'a'
       """
 
+  @tests:input.at
   Scenario Outline: tests/input.at "Bad escapes in literals": <literal> is rejected
     Given the grammar file:
       """
@@ -275,6 +292,7 @@ Feature: Behaviour fixed by Bison's own test suite
       | "\0"           |
       | "\x100"        |
 
+  @tests:input.at
   Scenario: tests/input.at "Bad character literals": an empty character literal is an error
     Given the grammar file:
       """
@@ -284,6 +302,7 @@ Feature: Behaviour fixed by Bison's own test suite
     When the file is parsed
     Then parsing fails at line 2 column 8
 
+  @tests:input.at
   Scenario: tests/input.at "Bad character literals": extra characters in a character literal are an error
     Given the grammar file:
       """
@@ -293,6 +312,7 @@ Feature: Behaviour fixed by Bison's own test suite
     When the file is parsed
     Then parsing fails at line 2 column 8
 
+  @tests:input.at
   Scenario: tests/input.at "Bad character literals": a character literal open at the end of the line is an error
     Given the grammar file:
       """
@@ -302,6 +322,7 @@ Feature: Behaviour fixed by Bison's own test suite
     When the file is parsed
     Then parsing fails at line 2 column 8
 
+  @tests:input.at
   Scenario: tests/input.at "Bad character literals": a character literal open at the end of the file is an error
     Given the grammar file without a final newline:
       """
@@ -311,6 +332,7 @@ Feature: Behaviour fixed by Bison's own test suite
     When the file is parsed
     Then parsing fails at line 2 column 8
 
+  @tests:input.at
   Scenario: tests/input.at "Unclosed constructs": a string open at the end of the line is an error
     Given the grammar file:
       """
@@ -322,6 +344,7 @@ Feature: Behaviour fixed by Bison's own test suite
     When the file is parsed
     Then parsing fails at line 1 column 10
 
+  @tests:input.at
   Scenario: tests/input.at "Unclosed constructs": braced code open at the end of the file is an error
     Given the grammar file:
       """
@@ -332,6 +355,7 @@ Feature: Behaviour fixed by Bison's own test suite
     When the file is parsed
     Then parsing fails at line 3 column 13
 
+  @tests:input.at
   Scenario Outline: tests/input.at "Unexpected end of file": <construct> open at the end of the file is an error
     Given the grammar file without a final newline:
       """
@@ -349,6 +373,7 @@ Feature: Behaviour fixed by Bison's own test suite
       | _("       |
       | _("\      |
 
+  @tests:input.at
   Scenario: tests/input.at "Unexpected end of file": an empty file is an error
     Given the grammar file without a final newline:
       """
@@ -356,6 +381,7 @@ Feature: Behaviour fixed by Bison's own test suite
     When the file is parsed
     Then parsing fails at line 1 column 1
 
+  @tests:input.at
   Scenario Outline: tests/input.at "Invalid inputs": <input> is not valid at the start of the file
     Given the grammar file:
       """
@@ -374,6 +400,7 @@ Feature: Behaviour fixed by Bison's own test suite
       | %-                |
       | %{                |
 
+  @tests:input.at
   Scenario: tests/input.at "Invalid inputs": a closing brace outside braced code is an error
     Given the grammar file:
       """
@@ -383,6 +410,7 @@ Feature: Behaviour fixed by Bison's own test suite
     When the file is parsed
     Then parsing fails at line 2 column 14
 
+  @tests:input.at
   Scenario: tests/input.at "Symbols": periods are letters and may start an identifier
     Given the grammar file:
       """
@@ -401,6 +429,7 @@ Feature: Behaviour fixed by Bison's own test suite
           SymbolItem .GOOD
       """
 
+  @tests:input.at
   Scenario Outline: tests/input.at "Symbols": digits and dashes cannot start an identifier, so <name> is rejected
     Given the grammar file:
       """
@@ -417,6 +446,7 @@ Feature: Behaviour fixed by Bison's own test suite
       | 1NV4L1D |
       | -123    |
 
+  @tests:input.at
   Scenario: tests/input.at "Numbered tokens": hexadecimal codes are read as numbers
     Given the grammar file:
       """
@@ -442,6 +472,7 @@ Feature: Behaviour fixed by Bison's own test suite
           SymbolItem HEXADECIMAL_2
       """
 
+  @tests:input.at
   Scenario Outline: tests/input.at "Numbered tokens": <number> is out of range
     Given the grammar file:
       """
@@ -458,6 +489,7 @@ Feature: Behaviour fixed by Bison's own test suite
       | 0xFFFFFFFFFFFFFFFFFFF  |
       | 2147483648             |
 
+  @tests:input.at
   Scenario: tests/input.at "String aliases for character tokens": a character token may have a string alias
     Given the grammar file:
       """
@@ -476,6 +508,7 @@ Feature: Behaviour fixed by Bison's own test suite
           SymbolItem 'a'
       """
 
+  @tests:input.at
   Scenario: tests/input.at "Typed symbol aliases": a semicolon after %union is tolerated
     Given the grammar file:
       """
@@ -502,6 +535,7 @@ Feature: Behaviour fixed by Bison's own test suite
           SymbolItem "MY TOKEN"
       """
 
+  @tests:input.at
   Scenario: tests/input.at "Multiple %code": every occurrence is kept
     Given the grammar file:
       """
@@ -526,6 +560,7 @@ Feature: Behaviour fixed by Bison's own test suite
           EmptyItem
       """
 
+  @tests:input.at
   Scenario: tests/input.at "Stray $ or @": stray $ and @ in code are kept verbatim
     Given the grammar file:
       """
@@ -569,6 +604,7 @@ Feature: Behaviour fixed by Bison's own test suite
       Epilogue {\n$ @ // Should not warn.\n}
       """
 
+  @tests:input.at
   Scenario: tests/input.at "%start after first rule": %start may follow the rules
     Given the grammar file:
       """
@@ -590,6 +626,7 @@ Feature: Behaviour fixed by Bison's own test suite
       Start start
       """
 
+  @tests:named-refs.at
   Scenario Outline: tests/named-refs.at "<test>": the brackets must hold exactly one identifier
     Given the grammar file:
       """
@@ -607,6 +644,21 @@ Feature: Behaviour fixed by Bison's own test suite
       | Comments in brackets            | foo[/* comment */]       | 25     |
       | Stray symbols in brackets       | foo[ % /* aaa */ *&-.+ ] | 13     |
 
+  @tests:named-refs.at
+  Scenario: tests/named-refs.at "Redundant words in brackets": white space is allowed inside the brackets
+    Given the grammar file:
+      """
+      %%
+      exp[ result ]: exp[ left ] '+' exp[ right ];
+      """
+    When the file is parsed
+    Then the tree is the same as for:
+      """
+      %%
+      exp[result]: exp[left] '+' exp[right];
+      """
+
+  @tests:named-refs.at
   Scenario: tests/named-refs.at "Redundant words in LHS brackets": the same holds for the result of a rule
     Given the grammar file:
       """
@@ -616,6 +668,7 @@ Feature: Behaviour fixed by Bison's own test suite
     When the file is parsed
     Then parsing fails at line 2 column 9
 
+  @tests:named-refs.at
   Scenario: tests/named-refs.at "Factored LHS": a named result applies to every alternative
     Given the grammar file:
       """

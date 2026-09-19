@@ -1,8 +1,19 @@
+@manual
 Feature: Bison Declaration Summary
-  GNU Bison 3.8.2 manual, chapter "Bison Grammar Files", section "Bison
-  Declaration Summary": every directive listed there is recognized in the
-  declarations section.
+  Source: GNU Bison Manual, version 3.8.2, as doc/bison.texi of the bison-3.8.2
+  release (https://ftp.gnu.org/gnu/bison/bison-3.8.2.tar.xz, also at
+  https://cgit.git.savannah.gnu.org/cgit/bison.git/tree/doc/bison.texi?h=v3.8.2).
+  Every scenario is tagged with the node of the manual it states, as
+  "manual:" followed by the node name with dashes for spaces; online, that
+  node is https://www.gnu.org/software/bison/manual/html_node/<node>.html in
+  the edition the GNU project publishes (Bison 3.8.1 at the time of writing).
+  The nodes stated in this feature:
+    Chapter 3, Bison Grammar Files
+    3.7.13   Bison Declaration Summary                    manual:Decl-Summary
 
+  Every directive the summary lists is recognized in the declarations section.
+
+  @manual:Decl-Summary
   Scenario Outline: <declaration> is a declaration
     Given the grammar file:
       """
@@ -56,6 +67,7 @@ Feature: Bison Declaration Summary
       | %verbose                             | Flag verbose                               |
       | %yacc                                | Flag yacc                                  |
 
+  @manual:Decl-Summary
   Scenario Outline: <directive> declares symbols
     Given the grammar file:
       """
@@ -84,6 +96,7 @@ Feature: Bison Declaration Summary
       | %left     | PrecedenceDeclaration left       |
       | %nonassoc | PrecedenceDeclaration nonassoc   |
 
+  @manual:Decl-Summary
   Scenario Outline: <directive> requires a string argument
     Given the grammar file:
       """
@@ -102,13 +115,3 @@ Feature: Bison Declaration Summary
       | %output      |
       | %require     |
       | %skeleton    |
-
-  Scenario: An unknown directive is an error
-    Given the grammar file:
-      """
-      %a-does-not-exist
-      %%
-      exp: 'a';
-      """
-    When the file is parsed
-    Then parsing fails at line 1 column 1

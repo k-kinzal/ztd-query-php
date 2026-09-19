@@ -1,7 +1,17 @@
+@manual
 Feature: %code Summary
-  GNU Bison 3.8.2 manual, chapter "Bison Grammar Files", section "%code
-  Summary".
+  Source: GNU Bison Manual, version 3.8.2, as doc/bison.texi of the bison-3.8.2
+  release (https://ftp.gnu.org/gnu/bison/bison-3.8.2.tar.xz, also at
+  https://cgit.git.savannah.gnu.org/cgit/bison.git/tree/doc/bison.texi?h=v3.8.2).
+  Every scenario is tagged with the node of the manual it states, as
+  "manual:" followed by the node name with dashes for spaces; online, that
+  node is https://www.gnu.org/software/bison/manual/html_node/<node>.html in
+  the edition the GNU project publishes (Bison 3.8.1 at the time of writing).
+  The nodes stated in this feature:
+    Chapter 3, Bison Grammar Files
+    3.7.15   %code Summary                                manual:_0025code-Summary
 
+  @manual:_0025code-Summary
   Scenario: The unqualified form inserts code at the default location
     Given the grammar file:
       """
@@ -21,6 +31,7 @@ Feature: %code Summary
           SymbolItem 'a'
       """
 
+  @manual:_0025code-Summary
   Scenario Outline: The qualified form names the purpose of the code with <qualifier>
     Given the grammar file:
       """
@@ -45,6 +56,7 @@ Feature: %code Summary
       | top       | #define _GNU_SOURCE        |
       | imports   | import java.util.List;     |
 
+  @manual:_0025code-Summary
   Scenario: Several occurrences of %code with the same qualifier are kept in the order they appear
     Given the grammar file:
       """
@@ -68,6 +80,7 @@ Feature: %code Summary
           SymbolItem 'a'
       """
 
+  @manual:_0025code-Summary
   Scenario: %code requires braced code
     Given the grammar file:
       """
