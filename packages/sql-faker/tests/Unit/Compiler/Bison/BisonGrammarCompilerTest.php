@@ -64,7 +64,6 @@ use PHPUnit\Framework\Attributes\Small;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Compiler\Bison\BisonGrammarCompiler;
-use SqlFaker\Compiler\GrammarParseException;
 use SqlFaker\Compiler\UnknownSymbolException;
 use SqlFaker\Grammar\Model\Grammar;
 use SqlFaker\Grammar\Model\NonTerminal;
@@ -128,7 +127,6 @@ use SqlFaker\Grammar\Model\Terminal;
 #[UsesClass(RuleParser::class)]
 #[UsesClass(SymbolListParser::class)]
 #[UsesClass(TokenStream::class)]
-#[UsesClass(GrammarParseException::class)]
 #[UsesClass(UnknownSymbolException::class)]
 #[UsesClass(Grammar::class)]
 #[UsesClass(NonTerminal::class)]
@@ -159,7 +157,8 @@ final class BisonGrammarCompilerTest extends TestCase
 
     public function testCompileRejectsAFileWithoutRules(): void
     {
-        $this->expectException(GrammarParseException::class);
+        $this->expectException(SyntaxException::class);
+        $this->expectExceptionMessage('Expected a rule but found end of file at 3:1');
 
         (new BisonGrammarCompiler())->compile("%token NUM\n%%\n");
     }

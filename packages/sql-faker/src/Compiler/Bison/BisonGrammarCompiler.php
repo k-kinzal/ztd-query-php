@@ -12,7 +12,6 @@ use BisonParser\Ast\Rule\Alternative;
 use BisonParser\Ast\SymbolKind;
 use BisonParser\Parser;
 use BisonParser\SyntaxException;
-use SqlFaker\Compiler\GrammarParseException;
 use SqlFaker\Compiler\UnknownSymbolException;
 use SqlFaker\Grammar\Model\Grammar;
 use SqlFaker\Grammar\Model\NonTerminal;
@@ -54,17 +53,13 @@ final class BisonGrammarCompiler
      *
      * @return Grammar The grammar
      *
-     * @throws SyntaxException When the file is not a grammar Bison accepts
-     * @throws GrammarParseException When the file defines no rule
+     * @throws SyntaxException When the file is not a grammar Bison accepts, which includes a file without rules
      * @throws UnknownSymbolException When a rule uses a name that is neither a rule nor a declared token
      */
     public function compile(string $source): Grammar
     {
         $file = $this->parser->parse($source);
         $rules = $file->rules();
-        if ($rules === []) {
-            throw GrammarParseException::noRulesParsed('Bison');
-        }
         $defined = [];
         foreach ($rules as $rule) {
             $defined[$rule->name->value] = true;
