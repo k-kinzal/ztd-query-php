@@ -60,62 +60,74 @@
 <span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com">     * @param list&lt;Placeholder&gt; $placeholders The bind parameters, in order</span></span>
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com">     * @param CallSite $site Where the statement is issued</span></span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com">     * @param list&lt;Finding&gt; $findings What is worth reporting about the statement</span></span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$id</span>,</span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">StatementKind</span> <span class="tok-var">$kind</span>,</span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">TextPattern</span> <span class="tok-var">$pattern</span>,</span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$tables</span>,</span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$placeholders</span>,</span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">CallSite</span> <span class="tok-var">$site</span>,</span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$findings</span>,</span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    ) {</span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    }</span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a></span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a><span class="tok-com">     * The statement text, with every gap shown as `{$}`.</span></span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">sql</span>(): <span class="tok-id">string</span></span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    {</span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">pattern</span>-&gt;<span class="tok-id">display</span>();</span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>    }</span>
-<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a></span>
-<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a><span class="tok-com">     * Whether every character of the statement is known.</span></span>
-<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">isExact</span>(): <span class="tok-id">bool</span></span>
-<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>    {</span>
-<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">pattern</span>-&gt;<span class="tok-id">isExact</span>();</span>
-<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>    }</span>
-<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a></span>
-<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a><span class="tok-com">     * The highest severity among the findings, or `Info` when there are none.</span></span>
-<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">severity</span>(): <span class="tok-id">Severity</span></span>
-<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>    {</span>
-<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>        <span class="tok-var">$highest</span> = <span class="tok-id">Severity</span>::<span class="tok-id">Info</span>;</span>
-<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">findings</span> <span class="tok-kw">as</span> <span class="tok-var">$finding</span>) {</span>
-<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>            <span class="tok-var">$highest</span> = <span class="tok-var">$finding</span>-&gt;<span class="tok-id">severity</span>-&gt;<span class="tok-id">atLeast</span>(<span class="tok-var">$highest</span>) ? <span class="tok-var">$finding</span>-&gt;<span class="tok-id">severity</span> : <span class="tok-var">$highest</span>;</span>
-<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>        }</span>
-<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a></span>
-<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>        <span class="tok-kw">return</span> <span class="tok-var">$highest</span>;</span>
-<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>    }</span>
-<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a></span>
-<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a><span class="tok-com">     * Whether the statement carries a finding of the given rule.</span></span>
-<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">hasFinding</span>(<span class="tok-id">FindingRule</span> <span class="tok-var">$rule</span>): <span class="tok-id">bool</span></span>
-<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>    {</span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com">     * @param bool $correlated Whether the alternatives at this call site are ones the code can reach</span></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com">     * @param list&lt;string&gt; $through The path taken to this reading, from the body the walk started in, outermost first</span></span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$id</span>,</span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">StatementKind</span> <span class="tok-var">$kind</span>,</span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">TextPattern</span> <span class="tok-var">$pattern</span>,</span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$tables</span>,</span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$placeholders</span>,</span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">CallSite</span> <span class="tok-var">$site</span>,</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$findings</span>,</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$correlated</span> = <span class="tok-id">true</span>,</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$through</span> = [],</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    ) {</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    }</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a></span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a><span class="tok-com">     * How far the analyzer got with the statement, and why it got no further.</span></span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">resolution</span>(): <span class="tok-id">Resolution</span></span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>    {</span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>        <span class="tok-kw">return</span> <span class="tok-id">Resolution</span>::<span class="tok-id">of</span>(<span class="tok-var">$this</span>-&gt;<span class="tok-id">pattern</span>);</span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>    }</span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a></span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a><span class="tok-com">     * The statement text, with every gap shown as `{$}`.</span></span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">sql</span>(): <span class="tok-id">string</span></span>
+<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>    {</span>
+<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">pattern</span>-&gt;<span class="tok-id">display</span>();</span>
+<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>    }</span>
+<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a></span>
+<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a><span class="tok-com">     * Whether every character of the statement is known.</span></span>
+<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">isExact</span>(): <span class="tok-id">bool</span></span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>    {</span>
+<span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">pattern</span>-&gt;<span class="tok-id">isExact</span>();</span>
+<span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>    }</span>
+<span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a></span>
+<span class="src-line" id="L65" data-diff="added"><a class="ln" href="#L65">65</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L66" data-diff="added"><a class="ln" href="#L66">66</a><span class="tok-com">     * The highest severity among the findings, or `Info` when there are none.</span></span>
+<span class="src-line" id="L67" data-diff="added"><a class="ln" href="#L67">67</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L68" data-diff="added"><a class="ln" href="#L68">68</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">severity</span>(): <span class="tok-id">Severity</span></span>
+<span class="src-line" id="L69" data-diff="added"><a class="ln" href="#L69">69</a>    {</span>
+<span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>        <span class="tok-var">$highest</span> = <span class="tok-id">Severity</span>::<span class="tok-id">Info</span>;</span>
 <span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">findings</span> <span class="tok-kw">as</span> <span class="tok-var">$finding</span>) {</span>
-<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>            <span class="tok-kw">if</span> (<span class="tok-var">$finding</span>-&gt;<span class="tok-id">rule</span> === <span class="tok-var">$rule</span>) {</span>
-<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>                <span class="tok-kw">return</span> <span class="tok-id">true</span>;</span>
-<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>            }</span>
-<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>        }</span>
-<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a></span>
-<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>        <span class="tok-kw">return</span> <span class="tok-id">false</span>;</span>
-<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>    }</span>
-<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>}</span>
-<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a></span>
+<span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>            <span class="tok-var">$highest</span> = <span class="tok-var">$finding</span>-&gt;<span class="tok-id">severity</span>-&gt;<span class="tok-id">atLeast</span>(<span class="tok-var">$highest</span>) ? <span class="tok-var">$finding</span>-&gt;<span class="tok-id">severity</span> : <span class="tok-var">$highest</span>;</span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>        }</span>
+<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a></span>
+<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>        <span class="tok-kw">return</span> <span class="tok-var">$highest</span>;</span>
+<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>    }</span>
+<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a></span>
+<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a><span class="tok-com">     * Whether the statement carries a finding of the given rule.</span></span>
+<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">hasFinding</span>(<span class="tok-id">FindingRule</span> <span class="tok-var">$rule</span>): <span class="tok-id">bool</span></span>
+<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a>    {</span>
+<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">findings</span> <span class="tok-kw">as</span> <span class="tok-var">$finding</span>) {</span>
+<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>            <span class="tok-kw">if</span> (<span class="tok-var">$finding</span>-&gt;<span class="tok-id">rule</span> === <span class="tok-var">$rule</span>) {</span>
+<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>                <span class="tok-kw">return</span> <span class="tok-id">true</span>;</span>
+<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>            }</span>
+<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a>        }</span>
+<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a></span>
+<span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a>        <span class="tok-kw">return</span> <span class="tok-id">false</span>;</span>
+<span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a>    }</span>
+<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a>}</span>
+<span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a></span>
 </code></pre>
 </main>
 <footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

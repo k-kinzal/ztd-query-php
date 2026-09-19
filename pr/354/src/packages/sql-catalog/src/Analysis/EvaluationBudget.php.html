@@ -57,12 +57,12 @@
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a>    <span class="tok-kw">private</span> <span class="tok-id">int</span> <span class="tok-var">$steps</span>;</span>
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a></span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com">     * @param int $maxSteps How many expressions may be evaluated in one file</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com">     * @param int $maxSteps How many expressions may be evaluated while walking one body</span></span>
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com">     * @param int $maxDepth How many nested calls may be followed</span></span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com">     * @param int $maxLoopPasses How many times a loop body is re-walked</span></span>
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">int</span> <span class="tok-var">$maxSteps</span> = <span class="tok-num">200000</span>,</span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">int</span> <span class="tok-var">$maxSteps</span> = <span class="tok-num">20000</span>,</span>
 <span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">int</span> <span class="tok-var">$maxDepth</span> = <span class="tok-num">4</span>,</span>
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">int</span> <span class="tok-var">$maxLoopPasses</span> = <span class="tok-num">2</span>,</span>
 <span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    ) {</span>
@@ -96,7 +96,7 @@
 <span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>    }</span>
 <span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a></span>
 <span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a><span class="tok-com">     * Restarts the step count, at the beginning of a new file.</span></span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a><span class="tok-com">     * Refills the budget, at the beginning of a new body.</span></span>
 <span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">reset</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>    {</span>
