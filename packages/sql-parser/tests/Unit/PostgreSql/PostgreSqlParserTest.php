@@ -84,6 +84,16 @@ final class PostgreSqlParserTest extends TestCase
         self::assertSame('SELECT id FROM users WHERE id = $1', $tree->find('SelectStmt')[0]->text($sql));
     }
 
+    public function testParseWritesTheTextBackWithItsCommentsAndWhitespace(): void
+    {
+        $sql = "  SELECT /* one */ a NOT   IN (1,2)\nFROM  t ;   -- done\n";
+        $unicode = "SELECT U&'d\\0061t'  UESCAPE  '!' FROM t";
+
+        self::assertSame($sql, (new PostgreSqlParser())->parse($sql)->toString());
+        self::assertSame($unicode, (new PostgreSqlParser())->parse($unicode)->toString());
+        self::assertSame("-- nothing at all\n/* either */", (new PostgreSqlParser())->parse("-- nothing at all\n/* either */")->toString());
+    }
+
     public function testParseAcceptsAnEmptyInput(): void
     {
         self::assertSame('parse_toplevel', (new PostgreSqlParser())->parse('')->name);

@@ -83,6 +83,20 @@ final class LrParserTest extends TestCase
         self::assertSame('aa', $tree->text('aa'));
     }
 
+    public function testParseGivesTheTreeTheTextThatFollowsTheLastToken(): void
+    {
+        $builder = new GrammarBuilder();
+        $builder->terminal('NUM');
+        $builder->rule('expr', ['NUM']);
+        $table = (new ParseTableBuilder())->build($builder->build())->table;
+        $sql = " 1  -- done\n";
+        $tokens = [new Token($table->symbols->id('NUM') ?? -1, 'NUM', '1', 1, ' '), new Token(0, '$end', '', 12, "  -- done\n")];
+        $tree = (new LrParser($table))->parse($tokens, $sql);
+
+        self::assertSame("  -- done\n", $tree->trailing);
+        self::assertSame($sql, $tree->toString());
+    }
+
     public function testParseRejectsAnUnexpectedToken(): void
     {
         $builder = new GrammarBuilder();

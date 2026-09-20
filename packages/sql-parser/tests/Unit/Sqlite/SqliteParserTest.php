@@ -92,6 +92,15 @@ final class SqliteParserTest extends TestCase
         self::assertCount(1, $tree->find('select'));
     }
 
+    public function testParseWritesTheTextBackWithItsCommentsAndWhitespace(): void
+    {
+        $sql = "  SELECT /* one */ a , b\nFROM  t ;  -- done\n";
+
+        self::assertSame($sql, (new SqliteParser())->parse($sql)->toString());
+        self::assertSame('SELECT a FROM t  ', (new SqliteParser())->parse('SELECT a FROM t  ')->toString());
+        self::assertSame('-- nothing at all', (new SqliteParser())->parse('-- nothing at all')->toString());
+    }
+
     public function testParseAcceptsAnEmptyInput(): void
     {
         self::assertSame('input', (new SqliteParser())->parse('')->name);
