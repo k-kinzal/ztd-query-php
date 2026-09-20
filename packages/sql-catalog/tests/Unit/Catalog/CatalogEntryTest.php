@@ -13,6 +13,7 @@ use SqlCatalog\Catalog\Finding;
 use SqlCatalog\Catalog\FindingRule;
 use SqlCatalog\Catalog\Resolution;
 use SqlCatalog\Catalog\Severity;
+use SqlCatalog\Catalog\StatementPart;
 use SqlCatalog\Sql\StatementKind;
 use SqlCatalog\Text\LiteralText;
 use SqlCatalog\Text\Origin;
@@ -26,10 +27,12 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(FindingRule::class)]
 #[UsesClass(Resolution::class)]
 #[UsesClass(Severity::class)]
+#[UsesClass(StatementPart::class)]
 #[UsesClass(LiteralText::class)]
 #[UsesClass(TextHole::class)]
 #[UsesClass(TextPattern::class)]
 #[UsesClass(TypeShape::class)]
+#[UsesClass(Origin::class)]
 final class CatalogEntryTest extends TestCase
 {
     public function testSqlWritesThePatternWithItsGaps(): void
@@ -129,5 +132,51 @@ final class CatalogEntryTest extends TestCase
         );
         self::assertTrue($entry->hasFinding(FindingRule::DynamicSql));
         self::assertFalse($entry->hasFinding(FindingRule::ExternalInput));
+    }
+
+    public function testPartsAreTheRunsAndGapsTheStatementIsKnownIn(): void
+    {
+        $entry = new CatalogEntry(
+            'id',
+            StatementKind::Select,
+            TextPattern::fromSegments([
+                new LiteralText('SELECT * FROM t WHERE id = '),
+                new TextHole(Origin::External, TypeShape::unknown()),
+            ]),
+            ['t'],
+            [],
+            new CallSite('a.php', 1, 'f', 'pdo.query'),
+            [],
+        );
+
+        self::assertSame(
+            [false, true],
+            array_map(static fn (StatementPart $part): bool => $part->isGap, $entry->parts()),
+        );
+    }
+
+    public function testFirstGapIsTheFirstOneOrNothingWhenThereIsNone(): void
+    {
+        $open = new CatalogEntry(
+            'id',
+            StatementKind::Select,
+            TextPattern::fromHole(new TextHole(Origin::Unreached, TypeShape::unknown(), '$db->query($sql)')),
+            [],
+            [],
+            new CallSite('a.php', 1, 'f', CallSite::UNREACHED),
+            [],
+        );
+        $closed = new CatalogEntry(
+            'id',
+            StatementKind::Select,
+            TextPattern::fromText('SELECT 1'),
+            [],
+            [],
+            new CallSite('a.php', 1, 'f', 'pdo.query'),
+            [],
+        );
+
+        self::assertSame('$db->query($sql)', $open->firstGap()?->expression);
+        self::assertNull($closed->firstGap());
     }
 }

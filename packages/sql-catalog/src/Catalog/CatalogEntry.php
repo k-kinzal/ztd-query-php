@@ -55,6 +55,30 @@ final class CatalogEntry
     }
 
     /**
+     * The statement as the parts it is known in: runs of text and the gaps between them.
+     *
+     * @return list<StatementPart>
+     */
+    public function parts(): array
+    {
+        return StatementPart::of($this->pattern);
+    }
+
+    /**
+     * The first gap in the statement, or null when there is none.
+     */
+    public function firstGap(): ?StatementPart
+    {
+        foreach ($this->parts() as $part) {
+            if ($part->isGap) {
+                return $part;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Whether every character of the statement is known.
      */
     public function isExact(): bool

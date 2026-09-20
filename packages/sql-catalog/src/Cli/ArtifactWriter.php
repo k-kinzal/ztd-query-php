@@ -16,6 +16,10 @@ final class ArtifactWriter
     /**
      * The files written, in the order they were written.
      *
+     * A reporter may name its artifacts with a path rather than a bare name —
+     * a site of pages does — so the directory each file is written into is
+     * made before the file is.
+     *
      * @return list<string>
      * @throws WriteFailureException When the directory or one of the files cannot be written
      */
@@ -26,6 +30,7 @@ final class ArtifactWriter
         $written = [];
         foreach ($artifacts->all() as $name => $contents) {
             $path = rtrim($directory, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $name;
+            $this->prepare(dirname($path));
             if (file_put_contents($path, $contents) === false) {
                 throw new WriteFailureException($path, 'the file could not be written');
             }

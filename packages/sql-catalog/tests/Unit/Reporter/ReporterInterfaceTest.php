@@ -20,6 +20,19 @@ use SqlCatalog\Reporter\TextReporter;
 #[UsesClass(HtmlReporter::class)]
 #[UsesClass(JsonReporter::class)]
 #[UsesClass(TextReporter::class)]
+#[UsesClass(\SqlCatalog\Catalog\Resolution::class)]
+#[UsesClass(\SqlCatalog\Reporter\Html\CatalogStatistics::class)]
+#[UsesClass(\SqlCatalog\Reporter\Html\FindingPage::class)]
+#[UsesClass(\SqlCatalog\Reporter\Html\HtmlText::class)]
+#[UsesClass(\SqlCatalog\Reporter\Html\OverviewPage::class)]
+#[UsesClass(\SqlCatalog\Reporter\Html\PageShell::class)]
+#[UsesClass(\SqlCatalog\Reporter\Html\ReportAssets::class)]
+#[UsesClass(\SqlCatalog\Reporter\Html\ReportSite::class)]
+#[UsesClass(\SqlCatalog\Reporter\Html\SearchIndex::class)]
+#[UsesClass(\SqlCatalog\Reporter\Html\SqlHighlighter::class)]
+#[UsesClass(\SqlCatalog\Reporter\Html\StatementCard::class)]
+#[UsesClass(\SqlCatalog\Reporter\Html\StatementPage::class)]
+#[UsesClass(\SqlCatalog\Reporter\Html\TablePage::class)]
 final class ReporterInterfaceTest extends TestCase
 {
     public function testNameIsUniqueAcrossTheReportersThatShip(): void
