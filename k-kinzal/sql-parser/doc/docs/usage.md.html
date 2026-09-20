@@ -52,6 +52,15 @@
 <span class="tok-var">$select</span>-&gt;<span class="tok-id">tokens</span>();                  <span class="tok-com">// every Token under the node</span></code></pre>
 <p><code>find()</code> searches the subtree, the node itself included. <code>span()</code> and <code>text()</code> cover the first through the last token under the node, so a node built by an empty alternative has no span. Tokens carry their terminal <code>name</code>, <code>text</code> and byte <code>offset</code>.</p>
 <p>Tokens the server synthesises are in the tree with empty text: MySQL&#039;s <code>END_OF_INPUT</code> and the semicolon SQLite supplies at the end. MySQL&#039;s <code>WITH ROLLUP</code> is one token spanning both words, as it is in the server.</p>
+<h3>Writing the text back</h3>
+<p>Nothing of the text is left out of the tree. A token carries in <code>leading</code> the whitespace and comments written before it, and the tree carries in <code>trailing</code> whatever follows its last token, so <code>toString()</code> answers the text the tree was parsed from without being given it.</p>
+<pre class="code-block"><code><span class="tok-var">$sql</span> = <span class="tok-str">&quot;SELECT a -- the column\nFROM t;  &quot;</span>;
+<span class="tok-var">$tree</span> = (<span class="tok-kw">new</span> <span class="tok-id">\SqlParser\Sqlite\SqliteParser</span>())-&gt;<span class="tok-id">parse</span>(<span class="tok-var">$sql</span>);
+
+<span class="tok-var">$tree</span>-&gt;<span class="tok-id">toString</span>() === <span class="tok-var">$sql</span>;         <span class="tok-com">// true</span>
+<span class="tok-var">$tree</span>-&gt;<span class="tok-id">find</span>(<span class="tok-str">&#039;select&#039;</span>)[<span class="tok-num">0</span>]-&gt;<span class="tok-id">toString</span>();   <span class="tok-com">// &quot;SELECT a -- the column\nFROM t&quot;</span>
+<span class="tok-var">$tree</span>-&gt;<span class="tok-id">tokens</span>()[<span class="tok-num">1</span>]-&gt;<span class="tok-id">leading</span>;        <span class="tok-com">// &#039; &#039;</span></code></pre>
+<p>A node under the root writes back from the trivia before its first token through its last token, so printing a subtree gives the text of that subtree with its comments, which is what <code>text()</code> answers when the source is at hand. Text that holds no token at all, such as a PostgreSQL input that is only a comment, is carried by the tree alone.</p>
 <h3>Errors</h3>
 <p><code>SqlParser\Parser\SyntaxException</code> carries the rejected <code>token</code>, the <code>expected</code> terminal names, the byte <code>offset</code> and the line and column <code>position</code>. <code>SqlParser\Lexer\LexicalException</code> reports text no token starts with, such as an unterminated string. Both extend <code>SqlParser\Lexer\SourceException</code>.</p>
 <h3>MySQL modes</h3>
