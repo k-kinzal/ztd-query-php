@@ -100,6 +100,26 @@ final class PrinterTest extends TestCase
         self::assertSame('SELECT 1', Printer::of(new SqliteParser())->render($tree));
     }
 
+    public function testRenderSeparatesATokenARewriteBuiltFromTheOneBeforeIt(): void
+    {
+        $parser = new MySqlParser();
+        $swap = static function (Node|Token $branch) use (&$swap): Node|Token {
+            if ($branch instanceof Token) {
+                return $branch->text === 'users'
+                    ? new Token($branch->symbol, $branch->name, 'shadow_users', Token::DETACHED)
+                    : $branch;
+            }
+
+            /** @var callable(Node|Token): (Node|Token) $swap */
+            return new Node($branch->name, $branch->ordinal, array_map($swap, $branch->children), $branch->trailing);
+        };
+        /** @var Node $rewritten */
+        $rewritten = $swap($parser->parse('SELECT id FROM users WHERE id = 1'));
+
+        self::assertSame('SELECT id FROMshadow_users WHERE id = 1', $rewritten->toString());
+        self::assertSame('SELECT id FROM shadow_users WHERE id = 1', $parser->render($rewritten));
+    }
+
     #[DataProvider('providerStatements')]
     public function testRenderWritesAStatementBackOut(string $sql, string $expected): void
     {
