@@ -25,7 +25,10 @@ issues a query whatever `$enabled` is. The condition decides whether the query
 runs, not what it says, and the two are kept apart: `SinkFinder` collects the
 calls written the way a database call is written, independently of anything the
 evaluation manages to work out. A call the walk never reached is reported with
-its statement left open, never dropped.
+its statement left open, never dropped, and so is a call it reached without
+being able to tell what the call was made on. A call it *could* tell apart — one
+made on a class that is simply not a database handle — is not reported, because
+that is an answer rather than a gap.
 
 **Bodies that cannot reach such a call are not walked.** `SinkFinder::reaching()`
 marks the bodies that write a database call, then spreads that backwards over
@@ -95,7 +98,7 @@ when it is not.
 
 ## Saying why something is open
 
-`resolution` distinguishes three ways of not being determined:
+`resolution` distinguishes four ways of not being determined:
 
 | Resolution | Meaning | Search closed |
 |------------|---------|---------------|
@@ -103,10 +106,12 @@ when it is not.
 | `external-input` | The values were followed to runtime input. The trail ended; the string simply is not fixed. | yes |
 | `incomplete-model` | A dependency the analyzer does not model was reached. | no |
 | `incomplete` | A cycle or an analysis budget stopped the search. | no |
+| `not-analyzed` | The call was found but never examined, so nothing was read from it. | no |
 
 `searchClosed` is the part that matters for trusting a call site: when it is
 false, the statements listed may not be all of them, and the `analysis-incomplete`
-finding says so. Stopping early is never reported as having found nothing.
+or `call-not-analyzed` finding says so. Stopping early is never reported as
+having found nothing.
 
 Injection risk is judged separately, from where the values came from, not from
 whether the text resolved. A statement can be fully determined and still splice
@@ -160,6 +165,12 @@ injected SQL. A cast to `string` does not.
 - `$params[] = $value` and `$params[':id'] = $value`.
 - A call that interpolates a statement and hands it back, such as
   `wpdb::prepare()`, declared by an extension as a composing call.
+- A handle reached through a global. `global $wpdb;` says nothing about what the
+  name holds, and in WordPress nearly every statement is written after that line.
+  An `@global` or `@var` tag documenting the declaration is read first; failing
+  that, an extension says what the name stands for. Without this the calls are
+  not recognised at all, which is the difference between 100 statements and 820
+  on WordPress.
 
 ## What does not
 
@@ -168,6 +179,12 @@ Each of these produces a gap with a stated reason, never a wrong answer:
 - SQL assembled at runtime from data the source does not contain: a query
   builder, an ORM's generated SQL, a statement read from a file or a database.
 - A property assigned outside its declaration.
+- The inside of a class an extension already models. An extension that names a
+  class's calls is the model of that class, so `$wpdb->insert(...)` is not walked
+  into from each of its callers: doing so re-derives the statements `wpdb` issues
+  at the sites they are already read from, once per caller. The class's own
+  source is still read like any other, and a call it makes on itself is followed
+  normally.
 - Dispatch through a value whose class cannot be named.
 - Recursion and calls past the depth budget.
 - Correspondence between values that separate calls decide from a shared
@@ -219,6 +236,14 @@ marked `correlated: false`, so the report says the combinations may be wider tha
 the code allows rather than presenting them as fact.
 
 **Large trees take minutes.** Parsing and indexing dominate for a few thousand
-files, and the walk scales with how many bodies reachability keeps. Pointing the
-command at the directories that talk to a database, rather than at a whole
-repository, is the practical answer until reachability is tightened.
+files, and the walk scales with how many bodies reachability keeps. The 93
+WordPress files that name `$wpdb` take about four minutes and yield 820
+statements. Pointing the command at the directories that talk to a database,
+rather than at a whole repository, is the practical answer until reachability is
+tightened.
+
+**A receiver that cannot be named leaves the call unread.** A call written the
+way a database call is written, on something the walk could not type, is
+reported with a `sink` of `unmatched` and a `not-analyzed` resolution rather
+than a statement. On WordPress this is a few dozen calls out of several hundred,
+and each one says so in the catalog instead of being absent from it.

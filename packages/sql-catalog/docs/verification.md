@@ -9,7 +9,7 @@ it does not.
 
 | Contract | What must hold |
 |----------|----------------|
-| **Finding the call** | A call that receives SQL is reported even when its statement cannot be recovered, and even when the walk never reached it. |
+| **Finding the call** | A call that receives SQL is reported even when its statement cannot be recovered, even when the walk never reached it, and even when the walk could not tell what it was called on. A call the walk *did* tell apart is not reported, so the report says "gap" only where there is one. |
 | **Covering the dependencies** | A definition, branch or caller that can change the SQL is not skipped. |
 | **Keeping the correspondence** | Values decided together stay together. Where the analyzer cannot establish that, it says so rather than presenting invented combinations as fact. |
 | **Recovering faithfully** | Substitution, concatenation and generalization do not change what the statement says. |
@@ -23,13 +23,16 @@ it does not.
 
 - a call whose SQL argument never resolves is still reported, with its statement open;
 - a call the walk could not reach — budget exhausted before it — is reported as
-  `incomplete`, with `searchClosed` false and an `analysis-incomplete` finding;
+  `not-analyzed`, with `searchClosed` false and a `call-not-analyzed` finding;
 - a call written in an operand nothing needs the value of, `$on && $pdo->query(…)`,
   is found.
 
 `SinkFinder` collects such calls independently of evaluation, and
-`StatementRecorder` records which calls the walk reached, so the second case is
-answered by comparing the two rather than by hoping.
+`StatementRecorder` records both which calls the walk reached and which it could
+explain, so the second case is answered by comparing the three rather than by
+hoping. `AnalyzerTest` also pins the other side of the contract: a call on a
+class the enabled extensions do not name is left out of the catalog entirely,
+because naming it is an answer and not a gap.
 
 ### Covering the dependencies
 
@@ -72,8 +75,14 @@ says the analyzer did not finish, the second says the program's own string is no
 fixed.
 
 `EntryFactoryTest` checks that a resolved reading of a call does not delete an
-unresolved one, and that a statement stopped by a budget is reported as
-`analysis-incomplete` rather than as merely dynamic.
+unresolved one, that a statement stopped by a budget is reported as
+`analysis-incomplete` rather than as merely dynamic, and that a call no statement
+was read from says which of the two reasons applies — never reached, or reached
+and not identifiable.
+
+`ResolutionTest` also covers `wasRead()`, which is what keeps the two apart in
+the reports: a gap left by the analyzer stopping is not a value spliced into a
+statement, and must not be reported as one.
 
 ## The rest of the gates
 

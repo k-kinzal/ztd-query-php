@@ -166,15 +166,22 @@ their SQL at runtime and are out of reach of a source-level analyzer; what the
 framework extensions catalog is the raw SQL an application still writes by hand.
 
 Implement `SqlCatalog\Extension\ExtensionInterface` and register it on an
-`ExtensionRegistry` to recognise an API this package does not ship.
+`ExtensionRegistry` to recognise an API this package does not ship. An extension
+also says which global variables hold its handle, which is what makes the
+`global $wpdb;` idiom readable as the database calls that follow it. The
+analyzer reads an `@global` or `@var` tag documenting the declaration first, so
+an application that annotates its own globals needs no extension at all.
 
 ## Reporters
 
 | Reporter | Writes | Purpose |
 |----------|--------|---------|
 | `json` | `catalog.json`, `catalog-schema.json` | A deterministic document with the JSON Schema that describes it; two runs of the same source produce the same bytes, so the diff of a pull request reads as the change in the SQL an application issues |
-| `html` | `index.html` | One self-contained page, with no scripts and no external assets |
+| `html` | `index.html`, `tables.html`, `findings.html`, `statements/page-N.html`, `assets/` | A site of linked pages: an overview, the statements split across pages by the file they are written in, every table with what reads and writes it, every finding under the rule that reported it, and a search over all of them |
 | `text` | `catalog.txt` | One block per statement, for reading in a terminal |
+
+`html` writes a directory, so give it `--output`: printed to standard output it
+is the overview page alone, without the pages it links to.
 
 ## Alternatives, and saying what is not known
 
@@ -205,9 +212,10 @@ Every statement says how far the analyzer got with it:
 | `external-input` | The values were followed to runtime input; the string is not fixed. | yes |
 | `incomplete-model` | A dependency the analyzer does not model was reached. | no |
 | `incomplete` | A cycle or an analysis budget stopped the search. | no |
+| `not-analyzed` | The call was found but never examined, so nothing was read from it. | no |
 
 When `searchClosed` is false the statements listed may not be all of them, and
-the `analysis-incomplete` finding says what stopped the search. When `correlated`
+the `analysis-incomplete` or `call-not-analyzed` finding says what stopped the search. When `correlated`
 is false the alternatives were paired from parts that vary independently, so some
 of them may be unreachable. Stopping early is never reported as having found
 nothing.
