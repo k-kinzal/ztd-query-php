@@ -10,19 +10,18 @@ use SqlParser\Lexer\Tokenizer;
 /**
  * Writes a syntax tree back out as SQL text.
  *
- * A tree that has been rewritten no longer stands for a span of the text it
- * was parsed from, so its SQL has to be written from the tokens themselves.
- * Comments and whitespace are dropped before the parser sees them, so they
- * are not the tree's to keep; what is the tree's to keep is that the text it
- * is written to reads back as the tokens it holds, and that is what is
- * checked rather than assumed.
+ * A tree still standing in the text it was parsed from writes itself back
+ * with `Node::toString()`, which is what that is for. A tree a rewrite has
+ * changed stands nowhere: tokens it built carry no trivia, so writing them
+ * out as they stand would run them together, and what two tokens run
+ * together read back as is not what they are.
  *
- * The text is first written the way the tokens were read, tokens that
- * touched held together and tokens that stood apart separated, and then read
- * back. That is right nearly always and the whole of it costs one reading.
- * Where it is wrong, and it is wrong wherever what stands between two tokens
- * decides what they read back as, the text is written again a token at a
- * time, each held where it reads back as itself.
+ * So the text is written and then read back rather than trusted. Every token
+ * is first written after the trivia it was read with, which settles a tree
+ * whose tokens were all read, and the whole of that costs one reading. Where
+ * it does not settle, and it does not wherever a token was built or what
+ * stands between two of them decides what they read back as, the text is
+ * written again a token at a time, each held where it reads back as itself.
  *
  * @visibility root
  */
@@ -78,8 +77,10 @@ final class Printer
         $sql = '';
         $previous = null;
         foreach ($tokens as $token) {
-            if ($previous !== null && $this->spacing->separates($previous, $token)) {
-                $sql .= ' ';
+            if ($previous !== null) {
+                $sql .= $token->isDetached()
+                    ? ($this->spacing->separates($previous, $token) ? ' ' : '')
+                    : $token->leading;
             }
             $sql .= $token->text;
             $previous = $token;

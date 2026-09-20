@@ -14,7 +14,9 @@ use SqlParser\Table\ParseTable;
  * This is the shift-reduce loop every LALR(1) parser runs. A shift pushes
  * the token; a reduce pops the symbols of a rule and pushes a node for its
  * nonterminal, unless the rule stands in for a mid-rule action, which leaves
- * no node. Accepting yields the node of the grammar's start symbol.
+ * no node. Accepting yields the node of the grammar's start symbol, which
+ * takes over the trivia of the end marker the augmented start rule ends with,
+ * so the text after the last token of the stream belongs to the tree too.
  *
  * @visibility root
  */
@@ -63,9 +65,13 @@ final class LrParser
                 array_splice($states, -$rule->length);
             }
             if ($action === ActionCode::ACCEPT) {
+                $end = array_pop($children);
+                $trailing = $end instanceof Token ? $end->leading : '';
                 $start = $children[0] ?? null;
 
-                return $start instanceof Node ? $start : new Node($table->symbols->name($rule->lhs), 0, $children);
+                return $start instanceof Node
+                    ? new Node($start->name, $start->ordinal, $start->children, $trailing)
+                    : new Node($table->symbols->name($rule->lhs), 0, $children, $trailing);
             }
             $states[] = $table->action($states[count($states) - 1], $rule->lhs);
             $nodes[] = $rule->hidden ? null : new Node($table->symbols->name($rule->lhs), $rule->ordinal, $children);

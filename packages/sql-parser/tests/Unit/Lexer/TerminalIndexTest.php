@@ -35,13 +35,23 @@ final class TerminalIndexTest extends TestCase
         self::assertSame(8, $tokens[2]->offset);
     }
 
+    public function testTokensGivesTheSkippedTextToTheTokenThatFollowsIt(): void
+    {
+        $index = new TerminalIndex(new SymbolTable(['$end', 'SELECT', 'NUM'], ['$accept', 'stmt']));
+        $tokens = $index->tokens([new Lexeme('SELECT', 'SELECT', 2), new Lexeme('NUM', '1', 19)], "  SELECT /* one */ 1  -- done\n");
+
+        self::assertSame(['  ', ' /* one */ ', "  -- done\n"], array_map(static fn (Token $token): string => $token->leading, $tokens));
+        self::assertSame(30, $tokens[2]->offset);
+    }
+
     public function testToken(): void
     {
         $index = new TerminalIndex(new SymbolTable(['$end', 'NUM'], ['$accept', 'stmt']));
-        $token = $index->token(new Lexeme('NUM', '42', 3), 'xx 42');
+        $token = $index->token(new Lexeme('NUM', '42', 3), 'xx 42', ' ');
 
         self::assertSame(1, $token->symbol);
         self::assertSame('42', $token->text);
+        self::assertSame(' ', $token->leading);
     }
 
     public function testTokenRejectsAnUnknownTerminal(): void

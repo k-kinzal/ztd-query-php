@@ -29,7 +29,7 @@ final class PrinterTest extends TestCase
 {
     public function testOfBuildsAPrinterThatWritesForOneDialect(): void
     {
-        self::assertSame('SELECT 1', Printer::of(new SqliteParser())->render((new SqliteParser())->parse('SELECT   1')));
+        self::assertSame('SELECT   1', Printer::of(new SqliteParser())->render((new SqliteParser())->parse('SELECT   1')));
     }
 
     public function testRenderWritesAnEmptyTreeAsNothing(): void
@@ -61,10 +61,10 @@ final class PrinterTest extends TestCase
     public static function providerStatements(): array
     {
         return [
-            'collapses the spacing it does not need' => ['SELECT  a,   b FROM t', 'SELECT a, b FROM t'],
+            'keeps the spacing it was written with' => ['SELECT  a,   b FROM t', 'SELECT  a,   b FROM t'],
             'keeps a call against its bracket' => ['SELECT count(*) FROM t', 'SELECT count(*) FROM t'],
             'keeps a qualified name whole' => ['SELECT t.a FROM t', 'SELECT t.a FROM t'],
-            'drops a comment the lexer dropped' => ['SELECT /* why */ a FROM t', 'SELECT a FROM t'],
+            'keeps a comment that was written' => ['SELECT /* why */ a FROM t', 'SELECT /* why */ a FROM t'],
             'writes a semicolon that was written' => ['SELECT a FROM t;', 'SELECT a FROM t;'],
             'leaves out a semicolon that was supplied' => ['SELECT a FROM t', 'SELECT a FROM t'],
         ];

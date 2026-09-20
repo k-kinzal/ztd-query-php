@@ -17,44 +17,19 @@ use SqlParser\Parser\Spacing;
 #[Small]
 final class SpacingTest extends TestCase
 {
-    public function testSeparatesTokensThatStoodApart(): void
+    #[DataProvider('providerNeighbours')]
+    public function testSeparatesGuessesByThePunctuationBetweenTwoTokens(string $left, string $right, bool $expected): void
     {
-        $left = new Token(1, 'IDENT', 'a', 0);
-        $right = new Token(2, 'IDENT', 'b', 4);
-
-        self::assertTrue((new Spacing())->separates($left, $right));
-    }
-
-    public function testDoesNotSeparateTokensThatTouched(): void
-    {
-        $left = new Token(1, 'IDENT', 'a', 0);
-        $right = new Token(2, '.', '.', 1);
-
-        self::assertFalse((new Spacing())->separates($left, $right));
-    }
-
-    public function testSeparatesReadTokensByWhereTheyStoodRatherThanByPunctuation(): void
-    {
-        $left = new Token(1, 'COMMENT_SYM', 'comment', 7);
-        $right = new Token(2, '.', '.', 15);
-
-        self::assertTrue((new Spacing())->separates($left, $right));
-    }
-
-    #[DataProvider('providerBuiltNeighbours')]
-    public function testDecidesBuiltTokensByTheirPunctuation(string $left, string $right, bool $expected): void
-    {
-        $spacing = new Spacing();
         $leftToken = new Token(1, 'LEFT', $left, Token::DETACHED);
         $rightToken = new Token(2, 'RIGHT', $right, Token::DETACHED);
 
-        self::assertSame($expected, $spacing->separates($leftToken, $rightToken));
+        self::assertSame($expected, (new Spacing())->separates($leftToken, $rightToken));
     }
 
     /**
      * @return array<string, array{string, string, bool}>
      */
-    public static function providerBuiltNeighbours(): array
+    public static function providerNeighbours(): array
     {
         return [
             'two words' => ['SELECT', 'a', true],
@@ -71,10 +46,10 @@ final class SpacingTest extends TestCase
         ];
     }
 
-    public function testDecidesByPunctuationWhenOnlyOneSideWasBuilt(): void
+    public function testSeparatesGuessesTheSameWhicheverTokensItIsGiven(): void
     {
         $spacing = new Spacing();
-        $read = new Token(1, 'IDENT', 'a', 0);
+        $read = new Token(1, 'IDENT', 'a', 0, '  ');
         $built = new Token(2, 'IDENT', 'b', Token::DETACHED);
 
         self::assertTrue($spacing->separates($read, $built));

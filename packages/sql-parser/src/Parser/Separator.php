@@ -16,12 +16,14 @@ use SqlParser\Lexer\Tokenizer;
  * asks it: a candidate is written out, read back, and kept when it reads as
  * the tokens it was written from.
  *
- * Nothing at all is one candidate, a space is another, and an empty comment
- * is the last. All three are needed. A number has to touch a dot to spell a
- * name and stand off it to stay a number; two minus signs have to touch to
- * stay operators, while what follows them has to touch the second one or be
- * taken for a comment; and a name is held off its bracket by a comment where
- * a space would be ignored and the name read as a call.
+ * The trivia a token was read after is the first candidate, since a token
+ * still standing where it was read wants what stood there. After it come
+ * nothing at all, a space, and an empty comment. All of them are needed. A
+ * number has to touch a dot to spell a name and stand off it to stay a
+ * number; two minus signs have to touch to stay operators, while what
+ * follows them has to touch the second one or be taken for a comment; and a
+ * name is held off its bracket by a comment where a space would be ignored
+ * and the name read as a call.
  *
  * Two things make this a search rather than a walk. A token is not always
  * settled when it is written, because what follows it can still decide what
@@ -199,7 +201,7 @@ final class Separator
      */
     public function candidates(Token $previous, Token $token): array
     {
-        $preferred = $this->spacing->separates($previous, $token) ? ' ' : '';
+        $preferred = $token->isDetached() ? ($this->spacing->separates($previous, $token) ? ' ' : '') : $token->leading;
 
         return [$preferred, ...array_values(array_filter(self::CANDIDATES, static fn (string $candidate): bool => $candidate !== $preferred))];
     }

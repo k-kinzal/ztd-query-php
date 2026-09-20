@@ -52,4 +52,18 @@ final class TokenTest extends TestCase
 
         self::assertSame($token, $token->detached());
     }
+
+    public function testDetachedLosesTheTriviaItStoodAfter(): void
+    {
+        $token = new Token(3, 'SELECT_SYM', 'SELECT', 12, '  ');
+
+        self::assertSame('', $token->detached()->leading);
+    }
+
+    public function testToStringWritesTheTriviaBeforeTheText(): void
+    {
+        self::assertSame(' /* one */ 1', (new Token(7, 'NUM', '1', 11, ' /* one */ '))->toString());
+        self::assertSame('SELECT', (new Token(3, 'SELECT_SYM', 'SELECT', 0))->toString());
+        self::assertSame("\n-- done\n", (new Token(0, '$end', '', 9, "\n-- done\n"))->toString());
+    }
 }

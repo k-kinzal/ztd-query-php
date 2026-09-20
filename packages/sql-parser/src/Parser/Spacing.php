@@ -7,7 +7,7 @@ namespace SqlParser\Parser;
 use SqlParser\Lexer\Token;
 
 /**
- * Decides whether two neighbouring tokens have to be written apart.
+ * Says what to write before a token that has nothing written before it.
  *
  * How much space stands between two tokens never matters, because a lexer
  * drops whitespace and comments before the parser sees them. Whether any
@@ -16,23 +16,24 @@ use SqlParser\Lexer\Token;
  * the keyword it spells, may start a variable only where its sigil touches
  * the name, and may read a call only where the name touches its bracket.
  *
- * Two tokens still standing where they were read say for themselves whether
- * they touched, in the offsets they carry. Once either has been built or
- * detached there is nothing to go by, and the punctuation decides: brackets,
- * commas, semicolons, dots and sigils are held against what they belong to,
- * and everything else is separated.
+ * A token that was read carries the trivia it stood after, which says what
+ * it needs better than any rule could. A token a rewrite built carries none,
+ * and this is the guess made for it: brackets, commas, semicolons, dots and
+ * sigils are held against what they belong to, and everything else is
+ * separated. It is only ever a first guess, because the guess is read back
+ * before it is kept.
  *
  * @visibility root
  */
 final class Spacing
 {
     /**
-     * Texts a separator never precedes, for tokens with no offset to go by.
+     * Texts a separator never precedes, for tokens with no trivia to go by.
      */
     private const TIGHT_BEFORE = ['(' => true, ')' => true, ',' => true, '.' => true, ';' => true];
 
     /**
-     * Texts a separator never follows, for tokens with no offset to go by.
+     * Texts a separator never follows, for tokens with no trivia to go by.
      */
     private const TIGHT_AFTER = ['(' => true, '.' => true, '@' => true];
 
@@ -46,10 +47,6 @@ final class Spacing
      */
     public function separates(Token $left, Token $right): bool
     {
-        if (!$left->isDetached() && !$right->isDetached()) {
-            return $left->end() !== $right->offset;
-        }
-
         return !isset(self::TIGHT_BEFORE[$right->text]) && !isset(self::TIGHT_AFTER[$left->text]);
     }
 }

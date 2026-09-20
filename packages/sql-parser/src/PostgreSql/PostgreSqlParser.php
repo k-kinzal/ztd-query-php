@@ -34,6 +34,10 @@ use SqlParser\Table\TableFile;
  *     $tree = $parser->parse('SELECT id FROM users WHERE id = $1');
  *     $tree->name // => 'parse_toplevel'
  *     count($tree->find('relation_expr')) // => 1
+ * @example Writing a parsed statement back
+ *     $sql = "SELECT id FROM users -- everyone\n";
+ *     $parser = new \SqlParser\PostgreSql\PostgreSqlParser();
+ *     $parser->parse($sql)->toString() === $sql // => true
  * @example Rejecting an unsupported release
  *     new \SqlParser\PostgreSql\PostgreSqlParser('pg-9.6.0') // throws \RuntimeException: Unsupported
  */
@@ -73,6 +77,10 @@ final class PostgreSqlParser implements Tokenizer
     /**
      * Reads SQL text into the terminals of the grammar, the end marker last.
      *
+     * A token carries the whitespace and comments skipped before it and the
+     * end marker what follows the last of them, so the tokens hold every byte
+     * of the text.
+     *
      * @param string $sql The SQL text
      *
      * @return list<Token> The tokens in text order
@@ -89,7 +97,7 @@ final class PostgreSqlParser implements Tokenizer
      *
      * @param string $sql The SQL text
      *
-     * @return Node The tree, rooted at the grammar's start symbol
+     * @return Node The tree, rooted at the grammar's start symbol, holding every byte of the text
      *
      * @throws LexicalException When the text holds something no token starts with
      * @throws SyntaxException When the text is not in the grammar of the release
@@ -117,7 +125,7 @@ final class PostgreSqlParser implements Tokenizer
      *
      * @example Writing a parsed statement back out
      *     $parser = new \SqlParser\PostgreSql\PostgreSqlParser();
-     *     $parser->render($parser->parse('SELECT  id  FROM users')) // => 'SELECT id FROM users'
+     *     $parser->render($parser->parse('SELECT  id  FROM users')) // => 'SELECT  id  FROM users'
      */
     public function render(Node|Token $tree): string
     {

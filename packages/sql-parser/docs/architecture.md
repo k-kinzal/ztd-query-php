@@ -26,6 +26,8 @@ A state's most common reduction becomes its default, except where Lemon's wildca
 
 `SqlParser\Lexer` holds the cursor, tokens and exceptions the dialect lexers share. `SqlParser\Parser\LrParser` runs the shift-reduce loop over the tokens and builds the tree.
 
+A dialect lexer answers the lexemes it recognised and says nothing about what it skipped between them. `SqlParser\Lexer\TerminalIndex`, which numbers those lexemes against the grammar, is where the skipped text is put back: each token is given the bytes between the lexeme before it and itself, and the end marker the bytes after the last lexeme. The end marker ends the augmented start rule, so on accepting, the parser hands what it carries to the tree. Nothing of the text is left out of the tree, which is what lets a tree write itself back byte for byte.
+
 ## Dialects
 
 Each dialect has a parser front door, a version registry, a lexer ported from the server's scanner, and a build-time reader of the server's keyword table:

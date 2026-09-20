@@ -63,14 +63,25 @@ final class SeparatorTest extends TestCase
         self::assertFalse((new Separator(new SqliteParser()))->reads("SELECT 'x", $tokens, false));
     }
 
-    public function testCandidatesPutsWhatTheTokensLookToNeedFirst(): void
+    public function testCandidatesPutsTheTriviaATokenWasReadAfterFirst(): void
     {
         $separator = new Separator(new SqliteParser());
-        $apart = new Token(1, 'SELECT', 'SELECT', 0);
-        $name = new Token(2, 'ID', 'a', 7);
-        $dot = new Token(3, 'DOT', '.', 8);
+        $select = new Token(1, 'SELECT', 'SELECT', 0);
+        $name = new Token(2, 'ID', 'a', 8, '  ');
+        $dot = new Token(3, 'DOT', '.', 9);
 
-        self::assertSame([' ', '', '/**/'], $separator->candidates($apart, $name));
+        self::assertSame(['  ', '', ' ', '/**/'], $separator->candidates($select, $name));
+        self::assertSame(['', ' ', '/**/'], $separator->candidates($name, $dot));
+    }
+
+    public function testCandidatesGuessesForATokenThatWasBuilt(): void
+    {
+        $separator = new Separator(new SqliteParser());
+        $select = new Token(1, 'SELECT', 'SELECT', Token::DETACHED);
+        $name = new Token(2, 'ID', 'a', Token::DETACHED);
+        $dot = new Token(3, 'DOT', '.', Token::DETACHED);
+
+        self::assertSame([' ', '', '/**/'], $separator->candidates($select, $name));
         self::assertSame(['', ' ', '/**/'], $separator->candidates($name, $dot));
     }
 
@@ -83,16 +94,16 @@ final class SeparatorTest extends TestCase
 
     public function testOptionsNeverLeavesTheLastTokenOpen(): void
     {
-        $select = new Token(1, 'SELECT', 'SELECT', 0);
-        $one = new Token(2, 'INTEGER', '1', 7);
+        $select = new Token(1, 'SELECT', 'SELECT', Token::DETACHED);
+        $one = new Token(2, 'INTEGER', '1', Token::DETACHED);
 
         self::assertSame([[' ', true], ['', true], ['/**/', true]], (new Separator(new SqliteParser()))->options($select, $one, true));
     }
 
     public function testOptionsAsksEveryCandidateToSettleBeforeLeavingATokenOpen(): void
     {
-        $select = new Token(1, 'SELECT', 'SELECT', 0);
-        $name = new Token(2, 'ID', 'a', 7);
+        $select = new Token(1, 'SELECT', 'SELECT', Token::DETACHED);
+        $name = new Token(2, 'ID', 'a', Token::DETACHED);
 
         self::assertSame(
             [[' ', true], ['', true], ['/**/', true], [' ', false], ['', false], ['/**/', false]],
