@@ -36,6 +36,8 @@ use SqlFixture\Plan\Parsing\PlanStatements as Subject;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Plan\Exception\DuplicateColumnBindingException::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Plan\Exception\CyclicDependencyException::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Plan\Exception\UnboundedSelfReferenceException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Plan\Choice\ChoiceValidation::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Plan\Choice\PlanContents::class)]
 final class PlanStatementsTest extends TestCase
 {
     public function testSplitKeepsGroupedAndCompositeSeparators(): void
@@ -43,5 +45,22 @@ final class PlanStatementsTest extends TestCase
         self::assertSame([0 => 'a.id < b.a_id', 2 => 'c'], (new Subject())->split(' a.id < b.a_id;
          c; '));
         self::assertSame(['a.(id, tenant) < [b.(a_id, tenant), c.(a_id, tenant)]'], (new Subject())->split('a.(id, tenant) < [b.(a_id, tenant), c.(a_id, tenant)]'));
+    }
+
+    public function testQuotedEndSkipsDoubledQuotes(): void
+    {
+        self::assertSame(5, (new Subject())->quotedEnd("'a''b'", 0));
+    }
+
+    public function testSplitKeepsChoiceBlocksAndLiteralSeparatorsTogether(): void
+    {
+        $choice = "choice c.kind { 'a,;{}' { c.id > a.id } 'b' {} }";
+        self::assertSame([$choice, 'audit'], (new Subject())->split($choice . ', audit'));
+    }
+
+    public function testQuotedEndAcceptsEmptyLiterals(): void
+    {
+        self::assertSame(1, (new Subject())->quotedEnd("''", 0));
+        self::assertSame(3, (new Subject())->quotedEnd("  ''", 2));
     }
 }

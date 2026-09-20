@@ -32,10 +32,6 @@ final class PlanParser
      */
     public function parse(string $plan): FixturePlan
     {
-        if (str_contains($plan, '<>')) {
-            throw new Exception\UnsupportedManyToManyException($plan);
-        }
-
         $statements = (new Parsing\PlanStatements())->split($plan);
         if ($statements === []) {
             throw new Exception\EmptyPlanException();
@@ -44,6 +40,13 @@ final class PlanParser
         $parts = [];
 
         foreach ($statements as $statement) {
+            if (preg_match('/^choice\s+/', $statement) === 1) {
+                $parts[] = (new Choice\ChoiceSyntax())->parse($statement);
+                continue;
+            }
+            if (str_contains($statement, '<>')) {
+                throw new Exception\UnsupportedManyToManyException($plan);
+            }
             $parsed = (new Parsing\RelationReader(new Parsing\RelationCursor($statement)))->parseStatement();
             if (is_string($parsed)) {
                 $parts[] = $parsed;

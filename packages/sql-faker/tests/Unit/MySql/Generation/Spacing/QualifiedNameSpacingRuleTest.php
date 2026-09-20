@@ -41,4 +41,15 @@ final class QualifiedNameSpacingRuleTest extends TestCase
         $plain = new Lexeme('word', 'keyword', new TerminalOccurrence('OTHER', 2), 'other');
         self::assertNull($rule->apply(new LexemeBoundary($plain, $plain), $input));
     }
+
+    public function testApplyKeepsAKeywordApartFromALeadingDot(): void
+    {
+        $origin = new TerminalOccurrence('TOKEN', 1, [0], []);
+        $input = new LexemeInput(new TerminalSequence([$origin]), 0, new ResolvedOutput());
+        $keyword = new Lexeme('FROM', 'keyword', $origin, 'sql/lex.h:SYM');
+        $dot = new Lexeme('.', 'symbol', $origin, 'source');
+        $rule = new QualifiedNameSpacingRule();
+        self::assertSame(SpacingConstraint::SPACE, $rule->apply(new LexemeBoundary($keyword, $dot), $input)?->allowed);
+        self::assertSame(SpacingConstraint::JOIN, $rule->apply(new LexemeBoundary($dot, $keyword), $input)?->allowed);
+    }
 }

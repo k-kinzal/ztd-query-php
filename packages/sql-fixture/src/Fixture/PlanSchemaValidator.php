@@ -36,6 +36,10 @@ final class PlanSchemaValidator
             $this->schemas->resolve($table);
         }
 
+        foreach ($plan->choices as $choice) {
+            (new Validation\EndpointValidator())->checkEndpoint($this->schemas, $choice->discriminator);
+        }
+
         foreach ($plan->relations as $relation) {
             (new Validation\EndpointValidator())->checkEndpoint($this->schemas, $relation->left);
             (new Validation\EndpointValidator())->checkEndpoint($this->schemas, $relation->right);

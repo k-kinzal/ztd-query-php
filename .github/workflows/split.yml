@@ -17,10 +17,16 @@ jobs:
         package:
           - local_path: ztd-query-core
             split_repository: ztd-query-core
+          - local_path: bison-parser
+            split_repository: bison-parser
+          - local_path: lemon-parser
+            split_repository: lemon-parser
           - local_path: sql-faker
             split_repository: sql-faker
           - local_path: sql-fixture
             split_repository: sql-fixture
+          - local_path: sql-parser
+            split_repository: sql-parser
           - local_path: ztd-query-mysql
             split_repository: ztd-query-mysql
           - local_path: ztd-query-postgres
@@ -65,10 +71,10 @@ jobs:
                 )
               else . end) |
               .require |= with_entries(
-                if (.key | test("^k-kinzal/(ztd-query-(core|mysql|postgres|sqlite|pdo-adapter|mysqli-adapter)|sql-faker|sql-fixture)$")) and .value == "dev-main" then .value = $v else . end
+                if (.key | test("^k-kinzal/(ztd-query-(core|mysql|postgres|sqlite|pdo-adapter|mysqli-adapter)|sql-faker|sql-fixture|bison-parser|lemon-parser|sql-parser)$")) and .value == "dev-main" then .value = $v else . end
               ) |
               ."require-dev" |= with_entries(
-                if (.key | test("^k-kinzal/(ztd-query-(core|mysql|postgres|sqlite|pdo-adapter|mysqli-adapter)|sql-faker|sql-fixture)$")) and .value == "dev-main" then .value = $v else . end
+                if (.key | test("^k-kinzal/(ztd-query-(core|mysql|postgres|sqlite|pdo-adapter|mysqli-adapter)|sql-faker|sql-fixture|bison-parser|lemon-parser|sql-parser)$")) and .value == "dev-main" then .value = $v else . end
               )
             ' "$FILE" > "${FILE}.tmp" && mv "${FILE}.tmp" "$FILE"
           else

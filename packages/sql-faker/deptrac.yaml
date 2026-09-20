@@ -21,6 +21,14 @@ deptrac:
       collectors:
         - type: directory
           value: 'src/Compiler/'
+    - name: BisonParser
+      collectors:
+        - type: classNameRegex
+          value: '/^BisonParser\\/'
+    - name: LemonParser
+      collectors:
+        - type: classNameRegex
+          value: '/^LemonParser\\/'
     # Plans, derives, rewrites, realizes and measures generated SQL.
     - name: Generation
       collectors:
@@ -74,7 +82,9 @@ deptrac:
           value: '^Faker\\.*'
   ruleset:
     Grammar: []
-    Compiler: [Grammar]
+    Compiler: [Grammar, BisonParser, LemonParser]
+    BisonParser: []
+    LemonParser: []
     Generation: [Grammar, Faker]
     MySqlGrammar: [Grammar]
     MySqlGeneration: [Grammar, Generation, MySqlGrammar, Faker]
