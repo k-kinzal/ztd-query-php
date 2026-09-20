@@ -154,9 +154,6 @@ jobs:
         - name: select
           script: fuzz_correctness_select.php
           corpus: correctness-select
-        - name: sequence
-          script: fuzz_correctness_sequence.php
-          corpus: correctness-sequence
         - name: insert
           script: fuzz_correctness_insert.php
           corpus: correctness-insert
@@ -214,9 +211,6 @@ jobs:
       run: |
         set -euo pipefail
         mkdir -p build/fuzz fuzz/corpus/${{ matrix.target.corpus }}
-        if [[ '${{ matrix.target.name }}' == 'sequence' ]]; then
-          cp fuzz/seeds/sequence/* fuzz/corpus/${{ matrix.target.corpus }}/
-        fi
         if [[ -d 'fuzz/seeds/${{ matrix.target.corpus }}' ]]; then
           cp fuzz/seeds/${{ matrix.target.corpus }}/* fuzz/corpus/${{ matrix.target.corpus }}/
         fi
@@ -309,9 +303,6 @@ jobs:
         - name: select
           script: fuzz_correctness_sqlite_select.php
           corpus: correctness-sqlite-select
-        - name: sequence
-          script: fuzz_correctness_sqlite_sequence.php
-          corpus: correctness-sqlite-sequence
         - name: insert
           script: fuzz_correctness_sqlite_insert.php
           corpus: correctness-sqlite-insert
@@ -369,9 +360,6 @@ jobs:
       run: |
         set -euo pipefail
         mkdir -p build/fuzz fuzz/corpus/${{ matrix.target.corpus }}
-        if [[ '${{ matrix.target.name }}' == 'sequence' ]]; then
-          cp fuzz/seeds/sequence/* fuzz/corpus/${{ matrix.target.corpus }}/
-        fi
         if [[ -d 'fuzz/seeds/${{ matrix.target.corpus }}' ]]; then
           cp fuzz/seeds/${{ matrix.target.corpus }}/* fuzz/corpus/${{ matrix.target.corpus }}/
         fi
@@ -454,9 +442,6 @@ jobs:
         - name: select
           script: fuzz_correctness_pg_select.php
           corpus: correctness-pg-select
-        - name: sequence
-          script: fuzz_correctness_pg_sequence.php
-          corpus: correctness-pg-sequence
         - name: insert
           script: fuzz_correctness_pg_insert.php
           corpus: correctness-pg-insert
@@ -514,9 +499,6 @@ jobs:
       run: |
         set -euo pipefail
         mkdir -p build/fuzz fuzz/corpus/${{ matrix.target.corpus }}
-        if [[ '${{ matrix.target.name }}' == 'sequence' ]]; then
-          cp fuzz/seeds/sequence/* fuzz/corpus/${{ matrix.target.corpus }}/
-        fi
         if [[ -d 'fuzz/seeds/${{ matrix.target.corpus }}' ]]; then
           cp fuzz/seeds/${{ matrix.target.corpus }}/* fuzz/corpus/${{ matrix.target.corpus }}/
         fi

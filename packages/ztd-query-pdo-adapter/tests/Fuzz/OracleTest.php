@@ -8,8 +8,6 @@ use Fuzz\Correctness\FailureComparison;
 use Fuzz\Correctness\OracleViolation;
 use Fuzz\Correctness\ResultComparator;
 use Fuzz\Correctness\SchemaDefinition;
-use Fuzz\Correctness\SequenceInput;
-use Fuzz\Correctness\SequenceTarget;
 use Fuzz\Correctness\Sqlite\SqliteCorrectnessHarness;
 use PDOException;
 use PHPUnit\Framework\Attributes\CoversNothing;
@@ -59,23 +57,6 @@ final class OracleTest extends TestCase
     }
 
     /**
-     * Bypassing the adapter cannot match the oracle.
-     */
-    public function testBypassingTheAdapterCannotMatchTheOracle(): void
-    {
-        $harness = new SqliteCorrectnessHarness();
-        try {
-            $harness->setup(new SchemaDefinition('fuzz_rows', 'CREATE TABLE fuzz_rows (id INTEGER PRIMARY KEY, quantity INTEGER, name TEXT)', ['id', 'quantity', 'name'], ['id']), 42);
-            self::assertCount(3, SequenceTarget::rows($harness->getRawPdo()));
-            self::assertCount(1, SequenceTarget::rows($harness->getPhysicalPdo()));
-            $this->expectException(OracleViolation::class);
-            SequenceTarget::compare(SequenceTarget::rows($harness->getRawPdo()), SequenceTarget::rows($harness->getPhysicalPdo()), 'Bypassed adapter');
-        } finally {
-            $harness->teardown();
-        }
-    }
-
-    /**
      * Ordering and duplicate multiplicity are observable.
      */
     public function testOrderingAndDuplicateMultiplicityAreObservable(): void
@@ -96,22 +77,4 @@ final class OracleTest extends TestCase
         (new ResultComparator())->compareJson('invalid', 'also invalid');
     }
 
-    /**
-     * Seed programs execute every operation and reset their state.
-     */
-    public function testSeedProgramsExecuteEveryOperationAndResetTheirState(): void
-    {
-        $harness = new SqliteCorrectnessHarness();
-        $target = new SequenceTarget($harness);
-        $paths = glob(__DIR__ . '/../../fuzz/seeds/sequence/*');
-        self::assertNotFalse($paths);
-        self::assertNotEmpty($paths);
-        foreach ($paths as $path) {
-            $input = file_get_contents($path);
-            self::assertNotFalse($input);
-            $target($input);
-            self::assertNull($harness->getCurrentSchema());
-        }
-        self::assertCount(8, (new SequenceInput())->commands('@@A@BCD@A@A@BCD@B@A@BCD@C@A@BCD@D@A@BCD@E@A@BCD@F@A@BCD@G@A@BCD@'));
-    }
 }

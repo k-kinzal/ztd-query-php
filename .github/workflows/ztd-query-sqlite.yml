@@ -6,6 +6,7 @@ on:
     branches: [main]
   pull_request:
     paths:
+      - 'fuzz/**'
       - 'packages/ztd-query-sqlite/**'
       - 'packages/ztd-query-core/**'
       - 'packages/sql-faker/**'
@@ -62,6 +63,8 @@ jobs:
         run: composer check-platform-reqs --no-dev
       - name: Run the tests in parallel
         run: composer test
+      - name: Verify the fuzz oracles
+        run: composer test:fuzz
 
   lint:
     name: Lint

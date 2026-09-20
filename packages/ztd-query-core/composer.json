@@ -38,7 +38,8 @@
         "psr-4": {
             "Tests\\": "tests/",
             "Fuzz\\": "fuzz/",
-            "Bench\\": "bench/"
+            "Bench\\": "bench/",
+            "Fuzz\\Shared\\": "../../fuzz/Shared/"
         }
     },
     "scripts": {
@@ -46,7 +47,10 @@
         "bench": "phpbench run --report=aggregate",
         "bench:full": "@bench",
         "bench:quick": "phpbench run --report=aggregate --warmup=1 --iterations=3 --retry-threshold=10",
-        "compat": "phpcs",
+        "compat": [
+            "phpcs",
+            "phpcs ../../fuzz/Shared"
+        ],
         "deptrac": "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered",
         "docgen": "docgen --packages=. --title=k-kinzal/ztd-query-core --exclude=src/Compatibility/ClassAliases.php",
         "docgen:diff": [
@@ -59,17 +63,23 @@
             "@docgen --serve"
         ],
         "doctest": "phpunit --testsuite doctest",
-        "format": "php-cs-fixer fix --allow-risky=yes",
-        "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
+        "format": [
+            "php-cs-fixer fix --allow-risky=yes",
+            "php-cs-fixer fix --allow-risky=yes ../../fuzz/Shared"
+        ],
+        "format:check": [
+            "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
+            "php-cs-fixer fix --dry-run --diff --allow-risky=yes ../../fuzz/Shared"
+        ],
         "fuzz": "@fuzz:smoke",
+        "fuzz:session-state": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php -r '$dir=\"fuzz/corpus/session-state\"; is_dir($dir) || mkdir($dir,0777,true); foreach (glob(\"fuzz/seeds/session-state/*\") as $seed) { copy($seed,$dir.\"/\".basename($seed)); }' --",
+            "php-fuzzer fuzz fuzz/fuzz_session_state.php fuzz/corpus/session-state/ --timeout=15"
+        ],
         "fuzz:smoke": [
             "Composer\\Config::disableProcessTimeout",
-            "@fuzz:token-stream --max-runs=100"
-        ],
-        "fuzz:token-stream": [
-            "Composer\\Config::disableProcessTimeout",
-            "@php -r \"is_dir('fuzz/corpus/token-stream') || mkdir('fuzz/corpus/token-stream', 0777, true);\" --",
-            "php-fuzzer fuzz fuzz/fuzz_token_stream.php fuzz/corpus/token-stream/"
+            "@fuzz:session-state --max-runs=100"
         ],
         "lint": [
             "@autoload:check",
@@ -81,9 +91,10 @@
             "@deptrac"
         ],
         "loc-guard": "loc-guard --config=loc.yaml",
-        "phpstan": "phpstan analyse --memory-limit=512M",
+        "phpstan": "phpstan analyse --memory-limit=512M src tests fuzz bench ../../fuzz/Shared",
         "test": "paratest --processes=auto",
         "test:coverage": "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml",
+        "test:fuzz": "phpunit tests/Fuzz",
         "test:unit": "phpunit --testsuite unit",
         "tree-guard": "tree-guard --config=tree.yaml"
     },

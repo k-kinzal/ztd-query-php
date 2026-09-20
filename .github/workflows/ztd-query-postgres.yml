@@ -6,6 +6,7 @@ on:
     branches: [main]
   pull_request:
     paths:
+      - 'fuzz/**'
       - 'packages/ztd-query-postgres/**'
       - 'packages/ztd-query-core/**'
       - 'packages/sql-faker/**'
