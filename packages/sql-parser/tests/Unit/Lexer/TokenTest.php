@@ -26,4 +26,30 @@ final class TokenTest extends TestCase
         self::assertTrue($token->is('SELECT_SYM'));
         self::assertFalse($token->is('select'));
     }
+
+    public function testIsDetached(): void
+    {
+        self::assertFalse((new Token(3, 'SELECT_SYM', 'SELECT', 0))->isDetached());
+        self::assertTrue((new Token(3, 'SELECT_SYM', 'SELECT', Token::DETACHED))->isDetached());
+        self::assertTrue((new Token(3, 'SELECT_SYM', 'SELECT', -7))->isDetached());
+    }
+
+    public function testDetached(): void
+    {
+        $token = new Token(3, 'SELECT_SYM', 'SELECT', 12);
+        $detached = $token->detached();
+
+        self::assertSame(Token::DETACHED, $detached->offset);
+        self::assertSame(3, $detached->symbol);
+        self::assertSame('SELECT_SYM', $detached->name);
+        self::assertSame('SELECT', $detached->text);
+        self::assertSame(12, $token->offset);
+    }
+
+    public function testDetachedKeepsAnAlreadyDetachedToken(): void
+    {
+        $token = (new Token(3, 'SELECT_SYM', 'SELECT', 12))->detached();
+
+        self::assertSame($token, $token->detached());
+    }
 }

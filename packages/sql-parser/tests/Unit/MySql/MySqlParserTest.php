@@ -14,6 +14,7 @@ use SqlParser\Lexer\Token;
 use SqlParser\MySql\MySqlParser;
 use SqlParser\MySql\MySqlVersion;
 use SqlParser\MySql\SqlMode;
+use SqlParser\Parser\Node;
 use SqlParser\Parser\SyntaxException;
 
 #[CoversClass(MySqlParser::class)]
@@ -37,7 +38,7 @@ use SqlParser\Parser\SyntaxException;
 #[UsesClass(\SqlParser\MySql\Lexer\VariableScanner::class)]
 #[UsesClass(\SqlParser\MySql\Lexer\WordScanner::class)]
 #[UsesClass(\SqlParser\Parser\LrParser::class)]
-#[UsesClass(\SqlParser\Parser\Node::class)]
+#[UsesClass(Node::class)]
 #[UsesClass(\SqlParser\Resource\SqlVersion::class)]
 #[UsesClass(\SqlParser\Resource\VersionRegistry::class)]
 #[UsesClass(\SqlParser\Table\ActionCode::class)]
@@ -47,6 +48,9 @@ use SqlParser\Parser\SyntaxException;
 #[UsesClass(\SqlParser\Table\TableFile::class)]
 #[UsesClass(\SqlParser\Table\TableRule::class)]
 #[UsesClass(\SqlParser\Lexer\SourceException::class)]
+#[UsesClass(\SqlParser\Parser\Printer::class)]
+#[UsesClass(\SqlParser\Parser\Separator::class)]
+#[UsesClass(\SqlParser\Parser\Spacing::class)]
 #[Small]
 final class MySqlParserTest extends TestCase
 {
@@ -123,5 +127,31 @@ final class MySqlParserTest extends TestCase
         self::assertSame('mysql-5.6.51', $versions[0]);
         self::assertContains('mysql-8.4.7', $versions);
         self::assertCount(9, $versions);
+    }
+
+    public function testRenderWritesATreeBackOutAsText(): void
+    {
+        $parser = new MySqlParser();
+
+        self::assertSame('SELECT COUNT(*) FROM users', $parser->render($parser->parse('SELECT  COUNT(*)  FROM users')));
+    }
+
+    public function testRenderWritesATreeOfBuiltTokensSoItReadsBack(): void
+    {
+        $parser = new MySqlParser();
+        $detach = static function (Node|Token $branch) use (&$detach): Node|Token {
+            return $branch instanceof Token
+                ? $branch->detached()
+                /** @var callable(Node|Token): (Node|Token) $detach */
+                : new Node($branch->name, $branch->ordinal, array_map($detach, $branch->children));
+        };
+        $tree = $parser->parse('SELECT  COUNT(*)  FROM users');
+        /** @var Node|Token $built */
+        $built = $detach($tree);
+
+        self::assertSame(
+            array_map(static fn (Token $token): string => $token->name, $tree->tokens()),
+            array_map(static fn (Token $token): string => $token->name, $parser->parse($parser->render($built))->tokens()),
+        );
     }
 }

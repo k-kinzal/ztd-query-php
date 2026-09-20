@@ -8,8 +8,11 @@ use RuntimeException;
 use SqlParser\Lexer\LexicalException;
 use SqlParser\Lexer\TerminalIndex;
 use SqlParser\Lexer\Token;
+use SqlParser\Lexer\Tokenizer;
 use SqlParser\Parser\LrParser;
 use SqlParser\Parser\Node;
+use SqlParser\Parser\Printer;
+use SqlParser\Parser\RenderException;
 use SqlParser\Parser\SyntaxException;
 use SqlParser\PostgreSql\Lexer\KeywordTable;
 use SqlParser\PostgreSql\Lexer\PostgreSqlLexer;
@@ -34,7 +37,7 @@ use SqlParser\Table\TableFile;
  * @example Rejecting an unsupported release
  *     new \SqlParser\PostgreSql\PostgreSqlParser('pg-9.6.0') // throws \RuntimeException: Unsupported
  */
-final class PostgreSqlParser
+final class PostgreSqlParser implements Tokenizer
 {
     private readonly PostgreSqlVersion $version;
 
@@ -94,6 +97,31 @@ final class PostgreSqlParser
     public function parse(string $sql): Node
     {
         return (new LrParser($this->table))->parse($this->tokenize($sql), $sql);
+    }
+
+
+    /**
+     * Writes a tree back out as PostgreSQL text.
+     *
+     * A tree a rewrite has changed no longer stands for the text it was
+     * parsed from, so its SQL is written from its tokens, and written so
+     * that this parser reads it back as the tree holds it.
+     *
+     * @param Node|Token $tree The tree, or one token of it
+     *
+     * @return string The SQL text
+     *
+     * @throws RenderException When two tokens of the tree cannot be written next to each other
+     *
+     * @visibility public
+     *
+     * @example Writing a parsed statement back out
+     *     $parser = new \SqlParser\PostgreSql\PostgreSqlParser();
+     *     $parser->render($parser->parse('SELECT  id  FROM users')) // => 'SELECT id FROM users'
+     */
+    public function render(Node|Token $tree): string
+    {
+        return Printer::of($this)->render($tree);
     }
 
     /**

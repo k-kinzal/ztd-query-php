@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlParser\Lexer\LexicalException;
 use SqlParser\Lexer\Token;
+use SqlParser\Parser\Node;
 use SqlParser\Parser\SyntaxException;
 use SqlParser\PostgreSql\PostgreSqlParser;
 use SqlParser\PostgreSql\PostgreSqlVersion;
@@ -26,7 +27,7 @@ use SqlParser\PostgreSql\PostgreSqlVersion;
 #[UsesClass(\SqlParser\Lexer\SourcePosition::class)]
 #[UsesClass(\SqlParser\Lexer\TerminalIndex::class)]
 #[UsesClass(\SqlParser\Parser\LrParser::class)]
-#[UsesClass(\SqlParser\Parser\Node::class)]
+#[UsesClass(Node::class)]
 #[UsesClass(\SqlParser\PostgreSql\Lexer\KeywordTable::class)]
 #[UsesClass(\SqlParser\PostgreSql\Lexer\LookaheadFilter::class)]
 #[UsesClass(\SqlParser\PostgreSql\Lexer\NumberScanner::class)]
@@ -45,6 +46,9 @@ use SqlParser\PostgreSql\PostgreSqlVersion;
 #[UsesClass(\SqlParser\Table\TableFile::class)]
 #[UsesClass(\SqlParser\Table\TableRule::class)]
 #[UsesClass(\SqlParser\Lexer\SourceException::class)]
+#[UsesClass(\SqlParser\Parser\Printer::class)]
+#[UsesClass(\SqlParser\Parser\Separator::class)]
+#[UsesClass(\SqlParser\Parser\Spacing::class)]
 #[Small]
 final class PostgreSqlParserTest extends TestCase
 {
@@ -99,5 +103,31 @@ final class PostgreSqlParserTest extends TestCase
     public function testVersions(): void
     {
         self::assertSame(['pg-17.2'], PostgreSqlParser::versions());
+    }
+
+    public function testRenderWritesATreeBackOutAsText(): void
+    {
+        $parser = new PostgreSqlParser();
+
+        self::assertSame('SELECT id FROM users', $parser->render($parser->parse('SELECT  id  FROM users')));
+    }
+
+    public function testRenderWritesATreeOfBuiltTokensSoItReadsBack(): void
+    {
+        $parser = new PostgreSqlParser();
+        $detach = static function (Node|Token $branch) use (&$detach): Node|Token {
+            return $branch instanceof Token
+                ? $branch->detached()
+                /** @var callable(Node|Token): (Node|Token) $detach */
+                : new Node($branch->name, $branch->ordinal, array_map($detach, $branch->children));
+        };
+        $tree = $parser->parse('SELECT  id  FROM users');
+        /** @var Node|Token $built */
+        $built = $detach($tree);
+
+        self::assertSame(
+            array_map(static fn (Token $token): string => $token->name, $tree->tokens()),
+            array_map(static fn (Token $token): string => $token->name, $parser->parse($parser->render($built))->tokens()),
+        );
     }
 }

@@ -8,10 +8,13 @@ use RuntimeException;
 use SqlParser\Lexer\LexicalException;
 use SqlParser\Lexer\TerminalIndex;
 use SqlParser\Lexer\Token;
+use SqlParser\Lexer\Tokenizer;
 use SqlParser\MySql\Lexer\KeywordTable;
 use SqlParser\MySql\Lexer\MySqlLexer;
 use SqlParser\Parser\LrParser;
 use SqlParser\Parser\Node;
+use SqlParser\Parser\Printer;
+use SqlParser\Parser\RenderException;
 use SqlParser\Parser\SyntaxException;
 use SqlParser\Resource\VersionRegistry;
 use SqlParser\Table\ParseTable;
@@ -37,7 +40,7 @@ use SqlParser\Table\TableFile;
  * @example Rejecting an unsupported release
  *     new \SqlParser\MySql\MySqlParser('mysql-4.1.0') // throws \RuntimeException: Unsupported
  */
-final class MySqlParser
+final class MySqlParser implements Tokenizer
 {
     private readonly MySqlVersion $version;
 
@@ -98,6 +101,31 @@ final class MySqlParser
     public function parse(string $sql): Node
     {
         return (new LrParser($this->table))->parse($this->tokenize($sql), $sql);
+    }
+
+
+    /**
+     * Writes a tree back out as MySQL text.
+     *
+     * A tree a rewrite has changed no longer stands for the text it was
+     * parsed from, so its SQL is written from its tokens, and written so
+     * that this parser reads it back as the tree holds it.
+     *
+     * @param Node|Token $tree The tree, or one token of it
+     *
+     * @return string The SQL text
+     *
+     * @throws RenderException When two tokens of the tree cannot be written next to each other
+     *
+     * @visibility public
+     *
+     * @example Writing a parsed statement back out
+     *     $parser = new \SqlParser\MySql\MySqlParser();
+     *     $parser->render($parser->parse('SELECT  COUNT(*)  FROM users')) // => 'SELECT COUNT(*) FROM users'
+     */
+    public function render(Node|Token $tree): string
+    {
+        return Printer::of($this)->render($tree);
     }
 
     /**

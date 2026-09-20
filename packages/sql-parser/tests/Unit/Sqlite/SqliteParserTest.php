@@ -11,6 +11,7 @@ use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlParser\Lexer\LexicalException;
 use SqlParser\Lexer\Token;
+use SqlParser\Parser\Node;
 use SqlParser\Parser\SyntaxException;
 use SqlParser\Sqlite\SqliteParser;
 use SqlParser\Sqlite\SqliteVersion;
@@ -26,7 +27,7 @@ use SqlParser\Sqlite\SqliteVersion;
 #[UsesClass(\SqlParser\Lexer\SourcePosition::class)]
 #[UsesClass(\SqlParser\Lexer\TerminalIndex::class)]
 #[UsesClass(\SqlParser\Parser\LrParser::class)]
-#[UsesClass(\SqlParser\Parser\Node::class)]
+#[UsesClass(Node::class)]
 #[UsesClass(\SqlParser\Resource\SqlVersion::class)]
 #[UsesClass(\SqlParser\Resource\VersionRegistry::class)]
 #[UsesClass(\SqlParser\Sqlite\Lexer\KeywordTable::class)]
@@ -45,6 +46,9 @@ use SqlParser\Sqlite\SqliteVersion;
 #[UsesClass(\SqlParser\Table\TableFile::class)]
 #[UsesClass(\SqlParser\Table\TableRule::class)]
 #[UsesClass(\SqlParser\Lexer\SourceException::class)]
+#[UsesClass(\SqlParser\Parser\Printer::class)]
+#[UsesClass(\SqlParser\Parser\Separator::class)]
+#[UsesClass(\SqlParser\Parser\Spacing::class)]
 #[Small]
 final class SqliteParserTest extends TestCase
 {
@@ -107,5 +111,31 @@ final class SqliteParserTest extends TestCase
     public function testVersions(): void
     {
         self::assertSame(['sqlite-3.47.2'], SqliteParser::versions());
+    }
+
+    public function testRenderWritesATreeBackOutAsText(): void
+    {
+        $parser = new SqliteParser();
+
+        self::assertSame('SELECT id, name FROM users', $parser->render($parser->parse('SELECT  id,   name FROM users')));
+    }
+
+    public function testRenderWritesATreeOfBuiltTokensSoItReadsBack(): void
+    {
+        $parser = new SqliteParser();
+        $detach = static function (Node|Token $branch) use (&$detach): Node|Token {
+            return $branch instanceof Token
+                ? $branch->detached()
+                /** @var callable(Node|Token): (Node|Token) $detach */
+                : new Node($branch->name, $branch->ordinal, array_map($detach, $branch->children));
+        };
+        $tree = $parser->parse('SELECT  id,   name FROM users');
+        /** @var Node|Token $built */
+        $built = $detach($tree);
+
+        self::assertSame(
+            array_map(static fn (Token $token): string => $token->name, $tree->tokens()),
+            array_map(static fn (Token $token): string => $token->name, $parser->parse($parser->render($built))->tokens()),
+        );
     }
 }
