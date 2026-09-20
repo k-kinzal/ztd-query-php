@@ -1,0 +1,96 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Ast;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\SemanticException;
+
+#[CoversClass(\SqlSemantics\Ast\Tree::class)]
+#[UsesClass(\SqlSemantics\Analysis\ExpressionReader::class)]
+#[UsesClass(\SqlSemantics\Analysis\ExpressionRules::class)]
+#[UsesClass(\SqlSemantics\Analysis\FromReader::class)]
+#[UsesClass(\SqlSemantics\Analysis\LiteralReader::class)]
+#[UsesClass(\SqlSemantics\Analysis\NullFacts::class)]
+#[UsesClass(\SqlSemantics\Analysis\ProjectionReader::class)]
+#[UsesClass(\SqlSemantics\Analysis\SelectReader::class)]
+#[UsesClass(\SqlSemantics\Analysis\SyntaxGuard::class)]
+#[UsesClass(\SqlSemantics\Analysis\TailReader::class)]
+#[UsesClass(\SqlSemantics\Analysis\TypeResolution::class)]
+#[UsesClass(\SqlSemantics\Analyzer::class)]
+#[UsesClass(\SqlSemantics\Ast\ColumnReader::class)]
+#[UsesClass(\SqlSemantics\Ast\ConstraintReader::class)]
+#[UsesClass(\SqlSemantics\Ast\Identifiers::class)]
+#[UsesClass(\SqlSemantics\Ast\SchemaReader::class)]
+#[UsesClass(\SqlSemantics\Ast\StatementList::class)]
+#[UsesClass(\SqlSemantics\Ast\TokenGroups::class)]
+#[UsesClass(\SqlSemantics\Ast\TypeReader::class)]
+#[UsesClass(\SqlSemantics\Binding\BoundRelation::class)]
+#[UsesClass(\SqlSemantics\Binding\IdentitySequence::class)]
+#[UsesClass(\SqlSemantics\Binding\Scope::class)]
+#[UsesClass(\SqlSemantics\Binding\TableResolver::class)]
+#[UsesClass(\SqlSemantics\Model\ColumnBinding::class)]
+#[UsesClass(\SqlSemantics\Model\Expression::class)]
+#[UsesClass(\SqlSemantics\Model\Join::class)]
+#[UsesClass(\SqlSemantics\Model\Ordering::class)]
+#[UsesClass(\SqlSemantics\Model\OutputColumn::class)]
+#[UsesClass(\SqlSemantics\Model\SelectQuery::class)]
+#[UsesClass(\SqlSemantics\Model\TableUse::class)]
+#[UsesClass(\SqlSemantics\Schema\Catalog::class)]
+#[UsesClass(\SqlSemantics\Schema\ColumnDefinition::class)]
+#[UsesClass(\SqlSemantics\Schema\TableConstraint::class)]
+#[UsesClass(\SqlSemantics\Schema\TableDefinition::class)]
+#[UsesClass(SemanticException::class)]
+#[UsesClass(\SqlSemantics\Type\TypeDescriptor::class)]
+#[Medium]
+final class TreeTest extends TestCase
+{
+    public function testOuterStopsAtTheRequestedGrammarBoundary(): void
+    {
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser())->parse('SELECT 1+2');
+        $nodes = \SqlSemantics\Ast\Tree::outer($tree, ['a_expr']);
+        self::assertCount(1, $nodes);
+        self::assertSame('1 + 2', \SqlSemantics\Ast\Tree::text($nodes[0]));
+        self::assertCount(3, $tree->find('a_expr'));
+    }
+
+
+    public function testChildDoesNotSearchNestedScopes(): void
+    {
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser())->parse('SELECT id FROM users');
+        self::assertNull(\SqlSemantics\Ast\Tree::child($tree, ['columnref']));
+        self::assertNotNull(\SqlSemantics\Ast\Tree::child($tree->find('c_expr')[0], ['columnref']));
+    }
+
+    public function testSignificantRemovesEmptyProductions(): void
+    {
+        $token = new \SqlParser\Lexer\Token(1, 'ICONST', '1', 7);
+        $node = new \SqlParser\Parser\Node('expr', 0, [new \SqlParser\Parser\Node('empty', 0, []), $token]);
+        self::assertSame([$token], \SqlSemantics\Ast\Tree::significant($node));
+    }
+
+    public function testTextKeepsTerminalSpellings(): void
+    {
+        $token = new \SqlParser\Lexer\Token(1, 'SCONST', "'a b'", 0);
+        self::assertSame("'a b'", \SqlSemantics\Ast\Tree::text($token));
+    }
+
+    public function testUnsupportedCarriesOriginalSyntax(): void
+    {
+        $node = new \SqlParser\Parser\Node('expr', 0, []);
+        $this->expectException(SemanticException::class);
+        $this->expectExceptionMessage('Unsupported custom operation');
+        \SqlSemantics\Ast\Tree::unsupported($node, 'custom operation');
+    }
+
+    public function testAssertChildrenRejectsUnknownClauses(): void
+    {
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser())->parse('SELECT id FROM users');
+        $this->expectException(SemanticException::class);
+        \SqlSemantics\Ast\Tree::assertChildren($tree->find('simple_select')[0], [], ['SELECT']);
+    }
+}

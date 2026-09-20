@@ -44,6 +44,14 @@ $result = $stmt->fetchAll();
 
 See [packages/ztd-query-core/README.md](packages/ztd-query-core/README.md) for full documentation.
 
+## SQL semantic analysis
+
+[`packages/sql-semantics`](packages/sql-semantics/) binds SQL parser trees to
+schema declarations and returns types, conservative NULL facts, occurrence-aware
+lineage, and logical query structure for fixture and catalog consumers. See its
+[semantic design](packages/sql-semantics/docs/design.md) and
+[supported surface](packages/sql-semantics/docs/support.md).
+
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
