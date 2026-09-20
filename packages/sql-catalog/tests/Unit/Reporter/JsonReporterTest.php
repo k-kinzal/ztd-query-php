@@ -87,6 +87,7 @@ use SqlCatalog\Text\TextPattern;
 #[UsesClass(\SqlCatalog\Evaluation\PathSet::class)]
 #[UsesClass(\SqlCatalog\Extension\WordPressExtension::class)]
 #[UsesClass(\SqlCatalog\Php\SyntaxException::class)]
+#[UsesClass(\SqlCatalog\Php\DeclaredGlobals::class)]
 final class JsonReporterTest extends TestCase
 {
     public function testNameIsHowTheCommandLineSelectsIt(): void

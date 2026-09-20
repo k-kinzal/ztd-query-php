@@ -58,6 +58,7 @@ use SqlCatalog\Php\SourceParser;
 #[UsesClass(\SqlCatalog\Text\TextHole::class)]
 #[UsesClass(\SqlCatalog\Analysis\SinkFinder::class)]
 #[UsesClass(\SqlCatalog\Evaluation\PathSet::class)]
+#[UsesClass(\SqlCatalog\Php\DeclaredGlobals::class)]
 final class InterpreterTest extends TestCase
 {
     public function testAnalyzeFindsStatementsInsideAFunctionBody(): void
@@ -138,7 +139,7 @@ final class InterpreterTest extends TestCase
         self::assertSame('unreached', $records[0]->site->sink);
     }
 
-    public function testRecordUnreachedKeepsADatabaseCallTheWalkNeverGotTo(): void
+    public function testRecordUnmatchedKeepsADatabaseCallTheWalkNeverGotTo(): void
     {
         $file = (new SourceParser())->parse(
             't.php',
@@ -157,14 +158,14 @@ final class InterpreterTest extends TestCase
         self::assertFalse($records[0]->pattern->isExact());
     }
 
-    public function testRecordUnreachedStaysQuietWhenTheWalkReachedEveryCall(): void
+    public function testRecordUnmatchedStaysQuietWhenTheWalkToldEveryCallApart(): void
     {
         $file = (new SourceParser())->parse('t.php', '<?php function f(PDO $d): void { $d->query("SELECT 1"); }');
         $interpreter = new Interpreter((new ProgramIndexBuilder())->build([$file]), (new PdoExtension())->sinks());
         $recorder = new StatementRecorder();
         $interpreter->analyze($file);
 
-        $interpreter->recordUnreached($file, $recorder);
+        $interpreter->recordUnmatched($file, $recorder);
 
         self::assertCount(1, $recorder->records());
     }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlCatalog\Analysis;
 
+use SqlCatalog\Catalog\CallSite;
 use SqlCatalog\Catalog\CatalogEntry;
 use SqlCatalog\Catalog\EntryIdentity;
 use SqlCatalog\Catalog\Finding;
@@ -208,10 +209,10 @@ final class EntryFactory
         $holes = $pattern->holes();
         $resolution = Resolution::of($pattern);
 
-        if ($holes !== [] && $this->kinds->read($pattern) === StatementKind::Unknown) {
+        if ($holes !== [] && $resolution !== Resolution::NotAnalyzed && $this->kinds->read($pattern) === StatementKind::Unknown) {
             $findings[] = Finding::of(FindingRule::UnresolvedSql, 'The statement text did not resolve far enough to read what it does.');
         }
-        if ($holes !== [] && $resolution !== Resolution::Incomplete) {
+        if ($holes !== [] && $resolution->wasRead()) {
             $findings[] = Finding::of(
                 FindingRule::DynamicSql,
                 sprintf('%d value(s) are spliced into the statement text rather than bound.', count($holes)),
@@ -233,10 +234,26 @@ final class EntryFactory
                 'The search stopped at a cycle or a budget, so the statements here may not be all of them.',
             );
         }
+        if ($resolution === Resolution::NotAnalyzed) {
+            $findings[] = Finding::of(FindingRule::CallNotAnalyzed, $this->notAnalyzedReason($record));
+        }
 
         $mismatch = $alternatives ? null : $this->countMismatch($record, $placeholders);
 
         return $mismatch === null ? $findings : array_merge($findings, [$mismatch]);
+    }
+
+    /**
+     * Why no statement was read from a call that is written the way a database call is.
+     */
+    public function notAnalyzedReason(QueryRecord $record): string
+    {
+        $quoted = $record->pattern->holes()[0]->expression ?? null;
+        $call = $quoted === null ? 'The call' : '`' . $quoted . '`';
+
+        return $record->site->sink === CallSite::UNMATCHED
+            ? $call . ' is written the way a database call is written, but what it is called on could not be identified.'
+            : $call . ' is written the way a database call is written, but the walk never reached it.';
     }
 
     /**

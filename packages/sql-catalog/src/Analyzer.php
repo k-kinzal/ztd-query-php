@@ -11,6 +11,7 @@ use SqlCatalog\Catalog\AnalysisProblem;
 use SqlCatalog\Catalog\Catalog;
 use SqlCatalog\Catalog\CatalogEntry;
 use SqlCatalog\Extension\ExtensionRegistry;
+use SqlCatalog\Php\DeclaredGlobals;
 use SqlCatalog\Php\ParsedFile;
 use SqlCatalog\Php\ProgramIndexBuilder;
 use SqlCatalog\Php\SourceParser;
@@ -136,7 +137,12 @@ final class Analyzer
     public function entriesOf(array $files, AnalysisOptions $options): array
     {
         $sinks = $this->extensions->sinksOf($options->extensions);
-        $interpreter = new Interpreter($this->indexes->build($files), $sinks, $options->budget());
+        $interpreter = new Interpreter(
+            $this->indexes->build($files),
+            $sinks,
+            $options->budget(),
+            new DeclaredGlobals($this->extensions->globalsOf($options->extensions)),
+        );
         $interpreter->restrictTo((new SinkFinder())->reaching($files, $sinks));
 
         $records = [];

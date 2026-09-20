@@ -9,6 +9,7 @@ use PhpParser\Node\InterpolatedStringPart;
 use PhpParser\Node\Scalar;
 use SqlCatalog\Evaluation\Domain;
 use SqlCatalog\Evaluation\Environment;
+use SqlCatalog\Php\DeclaredGlobals;
 use SqlCatalog\Php\NodeText;
 use SqlCatalog\Text\Origin;
 use SqlCatalog\Type\TypeShape;
@@ -38,12 +39,13 @@ final class ExpressionEvaluator
         CallEvaluator $calls,
         EvaluationBudget $budget,
         NodeText $text,
+        ?DeclaredGlobals $globals = null,
     ) {
         $this->references = $references;
         $this->calls = $calls;
         $this->budget = $budget;
         $this->text = $text;
-        $this->bodies = new BodyWalker($this, $budget);
+        $this->bodies = new BodyWalker($this, $budget, $globals);
     }
 
     /**

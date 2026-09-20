@@ -12,6 +12,16 @@ namespace SqlCatalog\Catalog;
 final class CallSite
 {
     /**
+     * The sink reported for a database call the walk never reached.
+     */
+    public const UNREACHED = 'unreached';
+
+    /**
+     * The sink reported for a database call whose receiver could not be identified.
+     */
+    public const UNMATCHED = 'unmatched';
+
+    /**
      * @param string $file The path the statement was found in, relative to the analysis root
      * @param int $line The line the call is written on
      * @param string $function The enclosing function, as `Class::method`, `function` or `{main}`

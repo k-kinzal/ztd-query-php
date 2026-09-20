@@ -85,4 +85,24 @@ final class ResolutionTest extends TestCase
         self::assertCount(count(Resolution::cases()), array_unique($descriptions));
         self::assertStringContainsString('runtime input', Resolution::ExternalInput->describe());
     }
+
+    /**
+     * @return list<array{Resolution, bool}>
+     */
+    public static function providerWasRead(): array
+    {
+        return [
+            [Resolution::Resolved, true],
+            [Resolution::ExternalInput, true],
+            [Resolution::IncompleteModel, true],
+            [Resolution::Incomplete, false],
+            [Resolution::NotAnalyzed, false],
+        ];
+    }
+
+    #[DataProvider('providerWasRead')]
+    public function testWasReadSaysWhetherAStatementWasReadFromTheCallAtAll(Resolution $resolution, bool $expected): void
+    {
+        self::assertSame($expected, $resolution->wasRead());
+    }
 }

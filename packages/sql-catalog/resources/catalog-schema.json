@@ -79,8 +79,8 @@
                 },
                 "resolution": {
                     "type": "string",
-                    "enum": ["resolved", "external-input", "incomplete-model", "incomplete"],
-                    "description": "How far the analyzer got, and why it got no further. `external-input` means the values were followed to runtime input, so the text cannot be fixed; `incomplete-model` means a dependency the analyzer does not model was reached; `incomplete` means a cycle or a budget stopped the search."
+                    "enum": ["resolved", "external-input", "incomplete-model", "incomplete", "not-analyzed"],
+                    "description": "How far the analyzer got, and why it got no further. `external-input` means the values were followed to runtime input, so the text cannot be fixed; `incomplete-model` means a dependency the analyzer does not model was reached; `incomplete` means a cycle or a budget stopped the search; `not-analyzed` means the call was found but never examined, so no statement was read from it."
                 },
                 "searchClosed": {
                     "type": "boolean",
@@ -165,7 +165,7 @@
             "properties": {
                 "rule": {
                     "type": "string",
-                    "enum": ["unresolved-sql", "dynamic-sql", "external-input", "placeholder-count-mismatch", "analysis-incomplete"],
+                    "enum": ["unresolved-sql", "dynamic-sql", "external-input", "placeholder-count-mismatch", "analysis-incomplete", "call-not-analyzed"],
                     "description": "What the finding is about."
                 },
                 "severity": {"type": "string", "enum": ["info", "low", "medium", "high"]},
@@ -174,7 +174,7 @@
         },
         "origin": {
             "type": "string",
-            "enum": ["external", "parameter", "property", "call", "budget", "loop", "branch", "unresolved"],
+            "enum": ["external", "parameter", "property", "call", "budget", "unreached", "loop", "branch", "unresolved"],
             "description": "Where a value the analyzer could not pin down comes from."
         }
     }

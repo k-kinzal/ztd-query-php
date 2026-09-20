@@ -69,4 +69,9 @@ final class PdoExtensionTest extends TestCase
             $described,
         );
     }
+
+    public function testGlobalsAreEmptyBecauseTheHandleIsNotReachedThroughOne(): void
+    {
+        self::assertSame([], (new PdoExtension())->globals());
+    }
 }

@@ -35,6 +35,11 @@ final class StatementRecorder
     private array $visited = [];
 
     /**
+     * @var array<string, true>
+     */
+    private array $explained = [];
+
+    /**
      * Records a statement issued at a call site.
      *
      * @param string $siteKey What tells this call apart from every other, including one on the same line
@@ -69,6 +74,27 @@ final class StatementRecorder
     public function hasVisited(string $siteKey): bool
     {
         return isset($this->visited[$siteKey]);
+    }
+
+    /**
+     * Notes that the walk established what a call is.
+     *
+     * A call is established either by matching a database call or by being
+     * made on something the walk could name: a call on a known class that is
+     * not a database handle is not a database call, and saying so is different
+     * from not having been able to tell.
+     */
+    public function markExplained(string $siteKey): void
+    {
+        $this->explained[$siteKey] = true;
+    }
+
+    /**
+     * Whether the walk established what a call is.
+     */
+    public function hasExplained(string $siteKey): bool
+    {
+        return isset($this->explained[$siteKey]);
     }
 
     /**

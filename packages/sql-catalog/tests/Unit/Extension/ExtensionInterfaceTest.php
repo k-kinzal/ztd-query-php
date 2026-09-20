@@ -45,4 +45,13 @@ final class ExtensionInterfaceTest extends TestCase
         $ids = array_map(static fn (SinkSpec $sink): string => $sink->id, (new PdoExtension())->sinks());
         self::assertSame($ids, array_values(array_unique($ids)));
     }
+
+    public function testGlobalsAreDeclaredOnlyByAnExtensionThatHandsOneOut(): void
+    {
+        $globals = array_map(
+            static fn (ExtensionInterface $extension): array => $extension->globals(),
+            [new PdoExtension(), new MysqliExtension(), new DoctrineExtension(), new LaravelExtension()],
+        );
+        self::assertSame([[], [], [], []], $globals);
+    }
 }

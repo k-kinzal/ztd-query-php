@@ -84,7 +84,7 @@ final class CallEvaluator
         ExpressionEvaluator $expressions,
         BodyWalker $bodies,
     ): Domain {
-        $this->recorder->markVisited($scope->file . ':' . $node->getStartFilePos());
+        $this->recorder->markVisited($this->callKeyOf($node, $scope));
         $arguments = $this->arguments($node, $environment, $scope, $expressions);
 
         if ($node instanceof Expr\New_) {
@@ -161,6 +161,12 @@ final class CallEvaluator
         if ($sink !== null) {
             return $this->applySink($sink, $node, $arguments, $receiver, $scope);
         }
+        if ($receiver->type()->classNames() !== []) {
+            $this->recorder->markExplained($this->callKeyOf($node, $scope));
+        }
+        if (!$this->isOwnReceiver($node) && $this->sinks->models($receiver)) {
+            return Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node));
+        }
 
         $className = $receiver->type()->soleClassName();
         $method = $this->index->findMethod($className, $name);
@@ -174,6 +180,18 @@ final class CallEvaluator
         return $method === null
             ? Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node))
             : $this->follow($method, $arguments, $scope, $bodies);
+    }
+
+    /**
+     * Whether the call is written on the object the body it is written in belongs to.
+     *
+     * A class an extension models is not followed into from outside, but its
+     * own source is still read the way any other source is, so a call it makes
+     * on itself is followed like any other.
+     */
+    public function isOwnReceiver(Expr\MethodCall|Expr\NullsafeMethodCall $node): bool
+    {
+        return $node->var instanceof Expr\Variable && $node->var->name === 'this';
     }
 
     /**
@@ -221,6 +239,7 @@ final class CallEvaluator
         if ($sink !== null) {
             return $this->applySink($sink, $node, $arguments, Domain::of(new ObjectTerm($className)), $scope);
         }
+        $this->recorder->markExplained($this->callKeyOf($node, $scope));
 
         $method = $this->index->findMethod($className, $name);
 
@@ -249,6 +268,7 @@ final class CallEvaluator
         if ($sink !== null) {
             return $this->applySink($sink, $node, $arguments, Domain::unknown(), $scope);
         }
+        $this->recorder->markExplained($this->callKeyOf($node, $scope));
         if ($this->external->isFunction($name)) {
             return Domain::opaque(TypeShape::unknown(), Origin::External, $name . '()');
         }
@@ -278,6 +298,7 @@ final class CallEvaluator
         $site = $this->siteOf($node, $scope, $sink->id);
         $siteKey = $this->siteKeyOf($node, $scope, $sink->id);
         $this->through = $scope->stack;
+        $this->recorder->markExplained($this->callKeyOf($node, $scope));
 
         if ($sink->role === SinkRole::Compose) {
             return $arguments[$sink->sqlParameter ?? 0] ?? Domain::unknown();
@@ -391,6 +412,14 @@ final class CallEvaluator
      */
     public function siteKeyOf(Expr\CallLike $node, FunctionScope $scope, string $sinkId): string
     {
-        return $scope->file . ':' . $node->getStartFilePos() . ':' . $sinkId;
+        return $this->callKeyOf($node, $scope) . ':' . $sinkId;
+    }
+
+    /**
+     * What tells one call apart from every other, by where it is written.
+     */
+    public function callKeyOf(Expr\CallLike $node, FunctionScope $scope): string
+    {
+        return $scope->file . ':' . $node->getStartFilePos();
     }
 }

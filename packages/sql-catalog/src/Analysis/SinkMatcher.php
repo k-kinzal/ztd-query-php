@@ -89,6 +89,26 @@ final class SinkMatcher
     }
 
     /**
+     * Whether an extension already models what the receiver is.
+     *
+     * An extension that names a class's calls is the model of that class.
+     * Walking into that class's own implementation from every call site
+     * re-derives the statements it issues at the sites they are already read
+     * from, once per caller, which costs a great deal and adds nothing that
+     * reading the class itself does not give.
+     */
+    public function models(Domain $receiver): bool
+    {
+        foreach ($this->sinks as $sink) {
+            if ($sink->receiverType !== null && $this->receiverMatches($receiver, $sink->receiverType)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Whether a receiver of the given domain can be of the expected class.
      */
     public function receiverMatches(Domain $receiver, string $expected): bool

@@ -53,6 +53,7 @@ use SqlCatalog\Php\SourceParser;
 #[UsesClass(\SqlCatalog\Analysis\ValueBinder::class)]
 #[UsesClass(\SqlCatalog\Analysis\SinkFinder::class)]
 #[UsesClass(PathSet::class)]
+#[UsesClass(\SqlCatalog\Php\DeclaredGlobals::class)]
 final class BodyWalkerTest extends TestCase
 {
     #[DataProvider('providerWalk')]
@@ -354,15 +355,33 @@ final class BodyWalkerTest extends TestCase
         self::assertFalse($environment->has('g'));
     }
 
-    public function testForgetDeclaredDropsWhatAStaticDeclarationRebinds(): void
+    public function testRebindDeclaredDropsWhatAStaticDeclarationRebinds(): void
     {
         $file = (new SourceParser())->parse('t.php', '<?php static $s = 1;');
         $walker = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder())->bodies();
         $environment = new Environment(['s' => Domain::literal('x')]);
         $statement = $file->statements[0];
         self::assertInstanceOf(\PhpParser\Node\Stmt\Static_::class, $statement);
-        $walker->forgetDeclared($statement, PathSet::of($environment));
+        $walker->rebindDeclared($statement, PathSet::of($environment));
         self::assertFalse($environment->has('s'));
+    }
+
+    public function testRebindDeclaredBindsAGlobalWhateverDeclaresItsClass(): void
+    {
+        $file = (new SourceParser())->parse(
+            't.php',
+            '<?php' . "\n" . '/** @global \\PDO $db */' . "\n" . 'function f() { global $db; }',
+        );
+        $walker = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder())->bodies();
+        $function = $file->statements[0];
+        self::assertInstanceOf(\PhpParser\Node\Stmt\Function_::class, $function);
+        $statement = $function->stmts[0];
+        self::assertInstanceOf(\PhpParser\Node\Stmt\Global_::class, $statement);
+        $environment = new Environment();
+
+        $walker->rebindDeclared($statement, PathSet::of($environment));
+
+        self::assertSame(['PDO'], $environment->read('db')->type()->names);
     }
 
     public function testWalkTryKeepsWhatTheHandlersReturn(): void

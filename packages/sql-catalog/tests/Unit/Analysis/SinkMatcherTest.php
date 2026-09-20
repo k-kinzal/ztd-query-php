@@ -98,4 +98,12 @@ final class SinkMatcherTest extends TestCase
         self::assertTrue($matcher->classMatches('PDOStatement', 'PDOStatement'));
         self::assertFalse($matcher->classMatches('App\\Unknown', 'PDO'));
     }
+
+    public function testModelsSaysWhetherAnExtensionAlreadyStandsForTheReceiver(): void
+    {
+        $matcher = new SinkMatcher((new PdoExtension())->sinks(), new ProgramIndex());
+
+        self::assertTrue($matcher->models(Domain::of(new ObjectTerm('PDO'))));
+        self::assertFalse($matcher->models(Domain::of(new ObjectTerm('App\\Repository'))));
+    }
 }

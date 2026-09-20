@@ -87,4 +87,9 @@ final class WordPressExtensionTest extends TestCase
             $described,
         );
     }
+
+    public function testGlobalsDeclareTheHandleWordPressHandsOut(): void
+    {
+        self::assertSame(['wpdb' => 'wpdb'], (new WordPressExtension())->globals());
+    }
 }

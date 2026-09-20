@@ -65,4 +65,17 @@ final class StatementRecorderTest extends TestCase
     {
         self::assertSame([], (new StatementRecorder())->records());
     }
+
+    public function testMarkExplainedNotesThatTheWalkToldTheCallApart(): void
+    {
+        $recorder = new StatementRecorder();
+        $recorder->markExplained('a.php:10');
+
+        self::assertTrue($recorder->hasExplained('a.php:10'));
+    }
+
+    public function testHasExplainedIsFalseUntilTheWalkTellsTheCallApart(): void
+    {
+        self::assertFalse((new StatementRecorder())->hasExplained('a.php:10'));
+    }
 }

@@ -65,6 +65,7 @@ use SqlCatalog\Text\Origin;
 #[UsesClass(\SqlCatalog\Analysis\ValueBinder::class)]
 #[UsesClass(\SqlCatalog\Analysis\SinkFinder::class)]
 #[UsesClass(PathSet::class)]
+#[UsesClass(\SqlCatalog\Php\DeclaredGlobals::class)]
 final class ReferenceEvaluatorTest extends TestCase
 {
     #[DataProvider('providerEvaluate')]

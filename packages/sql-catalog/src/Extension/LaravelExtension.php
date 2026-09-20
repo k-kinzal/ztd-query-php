@@ -93,4 +93,15 @@ final class LaravelExtension implements ExtensionInterface
             'unprepared' => null,
         ];
     }
+
+    /**
+     * The extension declares no globals.
+     *
+     * @return array<string, string>
+     */
+    #[Override]
+    public function globals(): array
+    {
+        return [];
+    }
 }

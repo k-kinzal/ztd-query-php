@@ -10,7 +10,9 @@ use PhpParser\Node\Stmt;
 use SqlCatalog\Evaluation\ArrayTerm;
 use SqlCatalog\Evaluation\Domain;
 use SqlCatalog\Evaluation\Environment;
+use SqlCatalog\Evaluation\ObjectTerm;
 use SqlCatalog\Evaluation\PathSet;
+use SqlCatalog\Php\DeclaredGlobals;
 use SqlCatalog\Text\Origin;
 use SqlCatalog\Type\TypeShape;
 
@@ -33,13 +35,19 @@ final class BodyWalker
 
     private EvaluationBudget $budget;
 
+    private DeclaredGlobals $globals;
+
     /**
      * Wires the walker to the evaluator it runs expressions with.
      */
-    public function __construct(ExpressionEvaluator $expressions, EvaluationBudget $budget)
-    {
+    public function __construct(
+        ExpressionEvaluator $expressions,
+        EvaluationBudget $budget,
+        ?DeclaredGlobals $globals = null,
+    ) {
         $this->expressions = $expressions;
         $this->budget = $budget;
+        $this->globals = $globals ?? new DeclaredGlobals();
     }
 
     /**
@@ -135,24 +143,35 @@ final class BodyWalker
             return $this->walk($statement->stmts, $paths, $scope);
         }
         if ($statement instanceof Stmt\Global_ || $statement instanceof Stmt\Static_) {
-            $this->forgetDeclared($statement, $paths);
+            $this->rebindDeclared($statement, $paths);
         }
 
         return null;
     }
 
     /**
-     * Drops what was known about variables a declaration rebinds, on every path.
+     * Rebinds the variables a declaration brings into the body, on every path.
+     *
+     * A declaration replaces whatever the name held, so the walk has to let go
+     * of it. A global whose class is declared is bound to an object of that
+     * class instead of being let go of entirely, which is what keeps the
+     * database handle an application passes around as a global recognisable as
+     * one.
      */
-    public function forgetDeclared(Stmt\Global_|Stmt\Static_ $statement, PathSet $paths): void
+    public function rebindDeclared(Stmt\Global_|Stmt\Static_ $statement, PathSet $paths): void
     {
         foreach ($statement->vars as $variable) {
             $name = $variable instanceof Node\StaticVar ? $variable->var : $variable;
             if (!$name instanceof Expr\Variable || !is_string($name->name)) {
                 continue;
             }
+            $className = $statement instanceof Stmt\Global_ ? $this->globals->classOf($statement, $name->name) : null;
             foreach ($paths->environments() as $environment) {
-                $environment->forget($name->name);
+                if ($className === null) {
+                    $environment->forget($name->name);
+                    continue;
+                }
+                $environment->write($name->name, Domain::of(new ObjectTerm($className)));
             }
         }
     }

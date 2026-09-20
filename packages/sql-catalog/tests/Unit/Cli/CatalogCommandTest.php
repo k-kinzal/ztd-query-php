@@ -102,6 +102,7 @@ use SqlCatalog\Reporter\TextReporter;
 #[UsesClass(\SqlCatalog\Catalog\Resolution::class)]
 #[UsesClass(\SqlCatalog\Evaluation\PathSet::class)]
 #[UsesClass(\SqlCatalog\Extension\WordPressExtension::class)]
+#[UsesClass(\SqlCatalog\Php\DeclaredGlobals::class)]
 final class CatalogCommandTest extends TestCase
 {
     public function testRunAnswersTheHelp(): void

@@ -88,4 +88,9 @@ final class DoctrineExtensionTest extends TestCase
             $described,
         );
     }
+
+    public function testGlobalsAreEmptyBecauseTheHandleIsNotReachedThroughOne(): void
+    {
+        self::assertSame([], (new DoctrineExtension())->globals());
+    }
 }

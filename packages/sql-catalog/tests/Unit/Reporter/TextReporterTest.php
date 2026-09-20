@@ -90,6 +90,7 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(\SqlCatalog\Analysis\SinkFinder::class)]
 #[UsesClass(\SqlCatalog\Evaluation\PathSet::class)]
 #[UsesClass(\SqlCatalog\Extension\WordPressExtension::class)]
+#[UsesClass(\SqlCatalog\Php\DeclaredGlobals::class)]
 final class TextReporterTest extends TestCase
 {
     public function testNameIsHowTheCommandLineSelectsIt(): void

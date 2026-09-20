@@ -81,6 +81,7 @@ use SqlCatalog\Text\Origin;
 #[UsesClass(\SqlCatalog\Sql\SqlToken::class)]
 #[UsesClass(\SqlCatalog\Sql\StatementKindReader::class)]
 #[UsesClass(\SqlCatalog\Sql\TableReader::class)]
+#[UsesClass(\SqlCatalog\Php\DeclaredGlobals::class)]
 final class ExpressionEvaluatorTest extends TestCase
 {
     #[DataProvider('providerEvaluate')]

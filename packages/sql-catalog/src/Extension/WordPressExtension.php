@@ -75,6 +75,21 @@ final class WordPressExtension implements ExtensionInterface
     }
 
     /**
+     * The global the handle is reached through.
+     *
+     * Almost every statement WordPress issues is written after `global $wpdb;`,
+     * which says nothing about what the name holds. Declaring it here is what
+     * lets those calls be read as the database calls they are.
+     *
+     * @return array<string, string>
+     */
+    #[Override]
+    public function globals(): array
+    {
+        return [self::DATABASE => self::DATABASE];
+    }
+
+    /**
      * The wpdb methods that take a statement, and the kind each implies.
      *
      * @return array<string, StatementKind|null>

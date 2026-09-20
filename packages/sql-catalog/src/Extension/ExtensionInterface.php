@@ -30,4 +30,15 @@ interface ExtensionInterface
      * @return list<SinkSpec>
      */
     public function sinks(): array;
+
+    /**
+     * The global variables the extension knows the class of.
+     *
+     * A framework that hands its database handle out through a global leaves
+     * nothing in the source for the analyzer to read the type from, so the
+     * extension that knows the framework is what says the name stands for it.
+     *
+     * @return array<string, string> Class names, keyed by the variable name written without its `$`
+     */
+    public function globals(): array;
 }

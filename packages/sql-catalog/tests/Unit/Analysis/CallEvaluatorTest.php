@@ -73,6 +73,7 @@ use SqlCatalog\Text\TextPattern;
 #[UsesClass(\SqlCatalog\Evaluation\CallResults::class)]
 #[UsesClass(\SqlCatalog\Evaluation\PathSet::class)]
 #[UsesClass(\SqlCatalog\Extension\WordPressExtension::class)]
+#[UsesClass(\SqlCatalog\Php\DeclaredGlobals::class)]
 final class CallEvaluatorTest extends TestCase
 {
     public function testTheCallMethodsAreReachedDirectly(): void
@@ -387,6 +388,29 @@ final class CallEvaluatorTest extends TestCase
         self::assertNotSame($records[0]->siteKey, $records[1]->siteKey);
     }
 
+    public function testCallKeyOfTellsOneCallApartFromEveryOther(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php function f($d): void { $d->q(); $d->q(); }');
+        $calls = (new \PhpParser\NodeFinder())->findInstanceOf($file->statements, \PhpParser\Node\Expr\MethodCall::class);
+        $index = (new ProgramIndexBuilder())->build([$file]);
+        $evaluator = new CallEvaluator(
+            $index,
+            new \SqlCatalog\Analysis\SinkMatcher([], $index),
+            new StatementRecorder(),
+            new \SqlCatalog\Analysis\BuiltinCallModel(),
+            new \SqlCatalog\Analysis\ExternalInput(),
+            new \SqlCatalog\Analysis\EvaluationBudget(),
+            new \SqlCatalog\Php\NodeText(),
+        );
+        $scope = new FunctionScope('t.php', 'f', null);
+
+        self::assertNotSame(
+            $evaluator->callKeyOf($calls[0], $scope),
+            $evaluator->callKeyOf($calls[1], $scope),
+        );
+        self::assertStringStartsWith('t.php:', $evaluator->callKeyOf($calls[0], $scope));
+    }
+
     public function testDispatchResolvesAcrossTheImplementationsTheSourceDeclares(): void
     {
         $file = (new SourceParser())->parse(
@@ -399,5 +423,24 @@ final class CallEvaluatorTest extends TestCase
         $records = (new Interpreter((new ProgramIndexBuilder())->build([$file]), (new PdoExtension())->sinks()))->analyze($file);
         $texts = array_map(static fn (QueryRecord $record): ?string => $record->pattern->text(), $records);
         self::assertContains('SELECT * FROM users', $texts);
+    }
+
+    public function testIsOwnReceiverTellsACallOnItselfApartFromOneOnSomethingElse(): void
+    {
+        $file = (new SourceParser())->parse('a.php', '<?php class C { function f($d) { $this->g(); $d->g(); } }');
+        $calls = (new \PhpParser\NodeFinder())->findInstanceOf($file->statements, \PhpParser\Node\Expr\MethodCall::class);
+        $index = (new ProgramIndexBuilder())->build([$file]);
+        $evaluator = new CallEvaluator(
+            $index,
+            new \SqlCatalog\Analysis\SinkMatcher([], $index),
+            new StatementRecorder(),
+            new \SqlCatalog\Analysis\BuiltinCallModel(),
+            new \SqlCatalog\Analysis\ExternalInput(),
+            new \SqlCatalog\Analysis\EvaluationBudget(),
+            new \SqlCatalog\Php\NodeText(),
+        );
+
+        self::assertTrue($evaluator->isOwnReceiver($calls[0]));
+        self::assertFalse($evaluator->isOwnReceiver($calls[1]));
     }
 }

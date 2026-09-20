@@ -13,6 +13,7 @@ use SqlCatalog\Evaluation\Domain;
 use SqlCatalog\Evaluation\Environment;
 use SqlCatalog\Evaluation\PathSet;
 use SqlCatalog\Extension\SinkSpec;
+use SqlCatalog\Php\DeclaredGlobals;
 use SqlCatalog\Php\NodeText;
 use SqlCatalog\Php\ParsedFile;
 use SqlCatalog\Php\ProgramIndex;
@@ -51,6 +52,8 @@ final class Interpreter
 
     private SinkFinder $finder2;
 
+    private DeclaredGlobals $globals;
+
     /**
      * @var array<string, true>|null
      */
@@ -60,12 +63,18 @@ final class Interpreter
      * @param ProgramIndex $index The declarations of the whole analyzed source tree
      * @param list<SinkSpec> $sinks The database calls the enabled extensions recognise
      * @param EvaluationBudget|null $budget How much work one file may cost
+     * @param DeclaredGlobals|null $globals What the global variables the source declares are known to hold
      */
-    public function __construct(ProgramIndex $index, array $sinks, ?EvaluationBudget $budget = null)
-    {
+    public function __construct(
+        ProgramIndex $index,
+        array $sinks,
+        ?EvaluationBudget $budget = null,
+        ?DeclaredGlobals $globals = null,
+    ) {
         $this->index = $index;
         $this->sinks = $sinks;
         $this->budget = $budget ?? new EvaluationBudget();
+        $this->globals = $globals ?? new DeclaredGlobals();
         $this->finder = new NodeFinder();
         $this->text = new NodeText();
         $this->types = new TypeReader();
@@ -96,7 +105,7 @@ final class Interpreter
                 $this->analyzeBody($body, $file, $expressions);
             }
         }
-        $this->recordUnreached($file, $recorder);
+        $this->recordUnmatched($file, $recorder);
 
         return $recorder->records();
     }
@@ -120,30 +129,39 @@ final class Interpreter
     }
 
     /**
-     * Records the database calls the walk never reached.
+     * Records the calls written as database calls that no statement was read from.
      *
-     * A call the walk did not visit is a gap in the analysis, not an absence in
-     * the program. Reporting it with its statement left open keeps the two
-     * apart, so that stopping early is never read as having found nothing.
+     * A call the walk did not visit is a gap in the analysis, and so is a call
+     * it visited without being able to tell what the call was made on. Neither
+     * is an absence in the program. Reporting both with the statement left open
+     * keeps them apart from a statement that was read, so that stopping early
+     * and failing to recognise a receiver are never read as having found
+     * nothing. A call the walk did tell apart — one made on a class that is
+     * simply not a database handle — is not reported: that is an answer.
      */
-    public function recordUnreached(ParsedFile $file, StatementRecorder $recorder): void
+    public function recordUnmatched(ParsedFile $file, StatementRecorder $recorder): void
     {
         foreach ($this->finder2->find($file, $this->sinks) as $call) {
             $siteKey = $file->path . ':' . $call->getStartFilePos();
-            if ($recorder->hasVisited($siteKey)) {
+            if ($recorder->hasExplained($siteKey)) {
                 continue;
             }
             $body = $this->finder2->enclosingBody($call);
             $className = $body === null ? null : $this->enclosingClass($body);
+            $reached = $recorder->hasVisited($siteKey);
             $recorder->record(
                 new CallSite(
                     $file->path,
                     $call->getStartLine(),
                     $body === null ? FunctionScope::MAIN : $this->nameOf($body, $className),
-                    'unreached',
+                    $reached ? CallSite::UNMATCHED : CallSite::UNREACHED,
                 ),
                 $siteKey,
-                TextPattern::fromHole(new TextHole(Origin::Budget, TypeShape::unknown(), 'call not reached')),
+                TextPattern::fromHole(new TextHole(
+                    Origin::Unreached,
+                    TypeShape::unknown(),
+                    $this->text->render($call),
+                )),
             );
         }
     }
@@ -203,6 +221,7 @@ final class Interpreter
             ),
             $this->budget,
             $this->text,
+            $this->globals,
         );
     }
 

@@ -86,4 +86,9 @@ final class MysqliExtensionTest extends TestCase
             $described,
         );
     }
+
+    public function testGlobalsAreEmptyBecauseTheHandleIsNotReachedThroughOne(): void
+    {
+        self::assertSame([], (new MysqliExtension())->globals());
+    }
 }

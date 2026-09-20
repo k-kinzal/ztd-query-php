@@ -300,4 +300,32 @@ final class EntryFactoryTest extends TestCase
         self::assertContains(FindingRule::AnalysisIncomplete, $rules);
         self::assertNotContains(FindingRule::DynamicSql, $rules);
     }
+
+    public function testNotAnalyzedReasonSaysTheWalkNeverGotToTheCall(): void
+    {
+        $record = new QueryRecord(
+            new CallSite('a.php', 1, 'f', CallSite::UNREACHED),
+            'a.php:10',
+            TextPattern::fromHole(new TextHole(Origin::Unreached, TypeShape::unknown(), '$db->query($sql)')),
+        );
+
+        self::assertSame(
+            '`$db->query($sql)` is written the way a database call is written, but the walk never reached it.',
+            (new EntryFactory())->notAnalyzedReason($record),
+        );
+    }
+
+    public function testNotAnalyzedReasonSaysTheReceiverCouldNotBeIdentified(): void
+    {
+        $record = new QueryRecord(
+            new CallSite('a.php', 1, 'f', CallSite::UNMATCHED),
+            'a.php:10',
+            TextPattern::fromHole(new TextHole(Origin::Unreached, TypeShape::unknown())),
+        );
+
+        self::assertSame(
+            'The call is written the way a database call is written, but what it is called on could not be identified.',
+            (new EntryFactory())->notAnalyzedReason($record),
+        );
+    }
 }

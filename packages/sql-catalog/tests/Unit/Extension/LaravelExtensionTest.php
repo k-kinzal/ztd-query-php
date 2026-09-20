@@ -88,4 +88,9 @@ final class LaravelExtensionTest extends TestCase
             $described,
         );
     }
+
+    public function testGlobalsAreEmptyBecauseTheHandleIsNotReachedThroughOne(): void
+    {
+        self::assertSame([], (new LaravelExtension())->globals());
+    }
 }

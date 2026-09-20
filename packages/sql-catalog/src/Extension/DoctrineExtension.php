@@ -110,4 +110,15 @@ final class DoctrineExtension implements ExtensionInterface
             'iterateAssociative' => StatementKind::Select,
         ];
     }
+
+    /**
+     * The extension declares no globals.
+     *
+     * @return array<string, string>
+     */
+    #[Override]
+    public function globals(): array
+    {
+        return [];
+    }
 }

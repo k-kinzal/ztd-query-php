@@ -112,6 +112,25 @@ final class ExtensionRegistry
     }
 
     /**
+     * The global variables the named extensions know the class of.
+     *
+     * @param list<string> $names
+     * @return array<string, string>
+     * @throws UnknownExtensionException When one of the names is not registered
+     */
+    public function globalsOf(array $names): array
+    {
+        $globals = [];
+        foreach ($names as $name) {
+            foreach ($this->get($name)->globals() as $variable => $className) {
+                $globals[$variable] = $className;
+            }
+        }
+
+        return $globals;
+    }
+
+    /**
      * The registered extensions, in alphabetical order.
      *
      * @return list<ExtensionInterface>

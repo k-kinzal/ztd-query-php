@@ -90,4 +90,18 @@ final class ExtensionRegistryTest extends TestCase
         );
         self::assertSame(['doctrine', 'laravel', 'mysqli', 'pdo', 'wordpress'], $names);
     }
+
+    public function testGlobalsOfCollectsWhatTheNamedExtensionsDeclare(): void
+    {
+        self::assertSame(
+            ['wpdb' => 'wpdb'],
+            ExtensionRegistry::withBuiltins()->globalsOf(['pdo', 'wordpress']),
+        );
+    }
+
+    public function testGlobalsOfRefusesAnUnknownName(): void
+    {
+        $this->expectException(UnknownExtensionException::class);
+        ExtensionRegistry::withBuiltins()->globalsOf(['symfony']);
+    }
 }

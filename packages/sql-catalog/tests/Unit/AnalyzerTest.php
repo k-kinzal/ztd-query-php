@@ -11,8 +11,10 @@ use SqlCatalog\Analysis\EvaluationBudget;
 use SqlCatalog\AnalysisOptions;
 use SqlCatalog\Analyzer;
 use SqlCatalog\Catalog\AnalysisProblem;
+use SqlCatalog\Catalog\CallSite;
 use SqlCatalog\Catalog\Catalog;
 use SqlCatalog\Catalog\CatalogEntry;
+use SqlCatalog\Catalog\FindingRule;
 use SqlCatalog\Catalog\Resolution;
 use SqlCatalog\Extension\ExtensionRegistry;
 use SqlCatalog\Extension\PdoExtension;
@@ -47,7 +49,7 @@ use SqlCatalog\Source\SourceScanException;
 #[UsesClass(\SqlCatalog\Analysis\SinkMatcher::class)]
 #[UsesClass(\SqlCatalog\Analysis\StatementRecorder::class)]
 #[UsesClass(\SqlCatalog\Analysis\ValueBinder::class)]
-#[UsesClass(\SqlCatalog\Catalog\CallSite::class)]
+#[UsesClass(CallSite::class)]
 #[UsesClass(\SqlCatalog\Catalog\EntryIdentity::class)]
 #[UsesClass(\SqlCatalog\Catalog\Placeholder::class)]
 #[UsesClass(\SqlCatalog\Catalog\ValueDomain::class)]
@@ -84,13 +86,15 @@ use SqlCatalog\Source\SourceScanException;
 #[UsesClass(\SqlCatalog\Analysis\BuiltinCallModel::class)]
 #[UsesClass(\SqlCatalog\Analysis\SinkFinder::class)]
 #[UsesClass(\SqlCatalog\Catalog\Finding::class)]
-#[UsesClass(\SqlCatalog\Catalog\FindingRule::class)]
+#[UsesClass(FindingRule::class)]
 #[UsesClass(\SqlCatalog\Evaluation\CallResults::class)]
 #[UsesClass(\SqlCatalog\Evaluation\PathSet::class)]
 #[UsesClass(\SqlCatalog\Evaluation\PatternTerm::class)]
 #[UsesClass(\SqlCatalog\Extension\WordPressExtension::class)]
 #[UsesClass(\SqlCatalog\Text\Origin::class)]
 #[UsesClass(\SqlCatalog\Text\TextHole::class)]
+#[UsesClass(\SqlCatalog\Php\DeclaredGlobals::class)]
+#[UsesClass(\SqlCatalog\Php\MethodShape::class)]
 final class AnalyzerTest extends TestCase
 {
     public function testACallSiteSurvivesFailingToResolveItsStatement(): void
@@ -112,8 +116,51 @@ final class AnalyzerTest extends TestCase
         ], $options);
 
         self::assertCount(1, $catalog);
-        self::assertSame(Resolution::Incomplete, $catalog->entries()[0]->resolution());
+        self::assertSame(Resolution::NotAnalyzed, $catalog->entries()[0]->resolution());
         self::assertFalse($catalog->entries()[0]->resolution()->isClosed());
+        self::assertTrue($catalog->entries()[0]->hasFinding(FindingRule::CallNotAnalyzed));
+    }
+
+    public function testACallOnAClassTheExtensionsDoNotNameIsNotReportedAtAll(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource([
+            'a.php' => '<?php class Q { public function query(string $s): void {} }'
+                . ' function f(Q $q): void { $q->query("SELECT 1"); }',
+        ], new AnalysisOptions(['pdo']));
+
+        self::assertCount(0, $catalog);
+    }
+
+    public function testACallOnSomethingThatCouldNotBeNamedIsReportedAsUnmatched(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource([
+            'a.php' => '<?php function f($q): void { $q->query("SELECT 1"); }',
+        ], new AnalysisOptions(['pdo']));
+
+        self::assertCount(1, $catalog);
+        self::assertSame(CallSite::UNMATCHED, $catalog->entries()[0]->site->sink);
+        self::assertSame(Resolution::NotAnalyzed, $catalog->entries()[0]->resolution());
+    }
+
+    public function testAHandleReachedThroughAGlobalIsRecognisedWhenSomethingSaysWhatItIs(): void
+    {
+        $analyzer = new Analyzer();
+
+        $undocumented = $analyzer->analyzeSource([
+            'a.php' => '<?php function f(): void { global $db; $db->query("SELECT 1"); }',
+        ], new AnalysisOptions(['pdo']));
+
+        self::assertSame(CallSite::UNMATCHED, $undocumented->entries()[0]->site->sink);
+
+        $documented = $analyzer->analyzeSource([
+            'a.php' => '<?php' . "\n" . '/** @global PDO $db */' . "\n"
+                . 'function f(): void { global $db; $db->query("SELECT 1"); }',
+        ], new AnalysisOptions(['pdo']));
+
+        self::assertSame(['SELECT 1'], array_map(
+            static fn (CatalogEntry $entry): string => $entry->sql(),
+            $documented->entries(),
+        ));
     }
 
     public function testACallSiteSurvivesSittingInAnOperandNothingNeedsTheValueOf(): void
@@ -307,7 +354,7 @@ final class AnalyzerTest extends TestCase
             \SqlCatalog\Text\TextPattern::fromText('SELECT 1'),
             [],
             [],
-            new \SqlCatalog\Catalog\CallSite('b.php', 1, 'f', 's'),
+            new CallSite('b.php', 1, 'f', 's'),
             [],
         );
         $earlier = new CatalogEntry(
@@ -316,7 +363,7 @@ final class AnalyzerTest extends TestCase
             \SqlCatalog\Text\TextPattern::fromText('SELECT 2'),
             [],
             [],
-            new \SqlCatalog\Catalog\CallSite('a.php', 1, 'f', 's'),
+            new CallSite('a.php', 1, 'f', 's'),
             [],
         );
 
