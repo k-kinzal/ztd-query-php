@@ -5,7 +5,7 @@
 [![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
-SQL Parser is a set of LALR(1) parsers for MySQL, PostgreSQL, and SQLite written in PHP. Each parser is generated from the official grammar of a server release: `sql_yacc.yy` for MySQL, `gram.y` for PostgreSQL, and `parse.y` for SQLite. The lexers are ports of the servers' own scanners, so text is tokenized the way the server tokenizes it, and the syntax tree names the nonterminals of the upstream grammar. Grammar releases are selected at parse time.
+SQL Parser is a set of LALR(1) parsers for MySQL, PostgreSQL, and SQLite written in PHP. Each parser is generated from the official grammar of a server release: `sql_yacc.yy` for MySQL, `gram.y` for PostgreSQL, and `parse.y` for SQLite. The lexers are ports of the servers' own scanners, so text is tokenized the way the server tokenizes it, and the syntax tree names the nonterminals of the upstream grammar. Grammar releases are selected at parse time. Parsing is lossless: a tree writes back the text it was parsed from, byte for byte, comments and whitespace included.
 
 The package has no runtime dependency beyond PHP and `ext-zlib`.
 
@@ -62,9 +62,10 @@ $tree = $parser->parse($sql);
 $tree->name;                                     // 'start_entry', the grammar's start symbol
 $tree->find('where_clause')[0]->text($sql);      // 'WHERE u.id = ?'
 $tree->find('table_reference')[0]->text($sql);   // 'users u'
+$tree->toString();                               // the statement again, byte for byte
 ```
 
-`PostgreSqlParser` and `SqliteParser` work the same way. Every token of the text is a leaf of the tree, and every node is named after the rule of the upstream grammar that built it, so the tree of a MySQL statement is shaped exactly as `sql_yacc.yy` shapes it. A rejected statement raises `SyntaxException` with the offending token, its position, and the terminals the parser would have accepted; text no token starts with raises `LexicalException`. Both extend `SourceException`.
+`PostgreSqlParser` and `SqliteParser` work the same way. Every token of the text is a leaf of the tree, and every node is named after the rule of the upstream grammar that built it, so the tree of a MySQL statement is shaped exactly as `sql_yacc.yy` shapes it. Nothing is dropped on the way in: a token carries the whitespace and comments written before it and the tree carries what follows its last token, so `toString()` answers the text the tree was parsed from without needing it. A rejected statement raises `SyntaxException` with the offending token, its position, and the terminals the parser would have accepted; text no token starts with raises `LexicalException`. Both extend `SourceException`.
 
 ```php
 use SqlParser\MySql\MySqlParser;
@@ -90,7 +91,7 @@ composer build-sqlite
 
 ## Fuzzing
 
-`composer fuzz:mysql`, `composer fuzz:pg` and `composer fuzz:sqlite` generate statements with sql-faker and require every one of them to parse. See [fuzz/README.md](fuzz/README.md).
+`composer fuzz:mysql`, `composer fuzz:pg` and `composer fuzz:sqlite` generate statements with sql-faker and require every one of them to parse and to write back as the same text. See [fuzz/README.md](fuzz/README.md).
 
 ## License
 

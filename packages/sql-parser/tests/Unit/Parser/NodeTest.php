@@ -58,4 +58,17 @@ final class NodeTest extends TestCase
         self::assertSame('SELECT 1', $tree->text($sql));
         self::assertSame('', (new Node('opt', 0, []))->text($sql));
     }
+
+    public function testToStringWritesBackTheTextTheTreeWasParsedFrom(): void
+    {
+        $sql = "SELECT /* one */ 1 -- done\n";
+        $tree = new Node('statement', 0, [
+            new Token(3, 'SELECT', 'SELECT', 0),
+            new Node('expr', 2, [new Token(7, 'NUM', '1', 17, ' /* one */ ')]),
+            new Node('opt', 0, []),
+        ], " -- done\n");
+
+        self::assertSame($sql, $tree->toString());
+        self::assertSame('', (new Node('opt', 0, []))->toString());
+    }
 }
