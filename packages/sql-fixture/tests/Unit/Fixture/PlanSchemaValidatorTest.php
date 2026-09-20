@@ -76,6 +76,8 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\Schema\Exception\InvalidSqlException::class)]
 #[UsesClass(\SqlFixture\Schema\Exception\ExpectedCreateTableException::class)]
 #[UsesClass(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class)]
+#[UsesClass(\SqlFixture\Plan\Choice\ChoiceValidation::class)]
+#[UsesClass(\SqlFixture\Plan\Choice\PlanContents::class)]
 final class PlanSchemaValidatorTest extends TestCase
 {
     #[Test]

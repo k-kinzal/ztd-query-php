@@ -157,6 +157,14 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\TypeMapper\IntegerWidth::class)]
 #[UsesClass(\SqlFixture\TypeMapper\DecimalRange::class)]
 #[UsesClass(\SqlFixture\Hydrator\Reflection\ConversionTarget::class)]
+#[UsesClass(\SqlFixture\Fixture\Choice\InverseRelations::class)]
+#[UsesClass(\SqlFixture\Fixture\Choice\ResolvedRow::class)]
+#[UsesClass(\SqlFixture\Fixture\Choice\RowChoices::class)]
+#[UsesClass(\SqlFixture\Plan\Choice\ChoiceValidation::class)]
+#[UsesClass(\SqlFixture\Plan\Choice\PlanContents::class)]
+#[UsesClass(\SqlFixture\Fixture\Generation\RowBindings::class)]
+#[UsesClass(\SqlFixture\Fixture\Generation\RecursiveRelationException::class)]
+#[UsesClass(\SqlFixture\Fixture\Generation\RelationValueException::class)]
 final class SqliteIntegrationTest extends TestCase
 {
     #[Test]

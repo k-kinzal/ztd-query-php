@@ -36,6 +36,8 @@ use SqlFixture\Plan\PlanSyntaxException;
 #[UsesClass(\SqlFixture\Plan\Exception\UnexpectedPlanTokenException::class)]
 #[UsesClass(\SqlFixture\Plan\Exception\UnsupportedManyToManyException::class)]
 #[UsesClass(\SqlFixture\Plan\Exception\CompositeArityMismatchException::class)]
+#[UsesClass(\SqlFixture\Plan\Choice\ChoiceValidation::class)]
+#[UsesClass(\SqlFixture\Plan\Choice\PlanContents::class)]
 final class PlanSyntaxExceptionTest extends TestCase
 {
     #[Test]

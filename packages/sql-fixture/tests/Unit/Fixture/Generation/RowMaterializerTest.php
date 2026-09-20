@@ -106,6 +106,14 @@ use SqlFixture\Schema\TableSchema;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\IntegerWidth::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\TypeMapper\DecimalRange::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Hydrator\Reflection\ConversionTarget::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Plan\Choice\ChoiceValidation::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Plan\Choice\PlanContents::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\Choice\RowChoices::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\Choice\ResolvedRow::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\Choice\InverseRelations::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\Generation\RowBindings::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\Generation\RelationValueException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Fixture\Generation\RecursiveRelationException::class)]
 final class RowMaterializerTest extends TestCase
 {
     public function testMaterializeLinksEveryChildToTheGeneratedParent(): void
@@ -183,5 +191,20 @@ final class RowMaterializerTest extends TestCase
         $run = new GenerationRun(['b' => RowSpec::from('b', 2)]);
         $materializer->toChildren($plan, $relation, ['id' => 9], false, $run);
         self::assertSame([['a_id' => 9], ['a_id' => 9]], $run->toSet($plan)->rows('b'));
+    }
+
+    public function testMaterializeBoundsAnOptionalSelfRelationAfterAnotherTable(): void
+    {
+        $schemas = new StaticSchemaResolver([
+            new TableSchema('category', [
+                'id' => new ColumnDefinition('id', 'INT', autoIncrement: true),
+                'parent_id' => new ColumnDefinition('parent_id', 'INT'),
+            ]),
+        ]);
+        $faker = Factory::create();
+        $plan = FixturePlan::from('category.id <? category.parent_id');
+        $run = new GenerationRun(['category' => RowSpec::from('category', 1)]);
+        (new Subject($schemas, new FixtureGenerator($faker), $faker))->materialize($plan, 'category', [], 1, false, null, $run, ['unrelated']);
+        self::assertSame([1, 2, 3], array_column($run->toSet($plan)->rows('category'), 'id'));
     }
 }

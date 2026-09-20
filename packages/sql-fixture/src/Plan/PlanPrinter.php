@@ -18,6 +18,13 @@ final class PlanPrinter
      */
     public function print(FixturePlan $plan): string
     {
+        if ($plan->choices !== []) {
+            return implode(', ', array_map(static fn (Relation|RelationChoice|string $part): string => match (true) {
+                is_string($part) => $part,
+                $part instanceof RelationChoice => (new Choice\ChoiceSyntax())->print($part),
+                default => (new self())->printRelation($part),
+            }, $plan->parts()));
+        }
         $statements = [];
 
         foreach ((new Printing\RelationGroups())->group($plan->relations) as $group) {
