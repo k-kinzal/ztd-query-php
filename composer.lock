@@ -75,17 +75,17 @@
             "dist": {
                 "type": "path",
                 "url": "packages/bison-parser",
-                "reference": "b5e145900624d075458c95cd37011a3030721258"
+                "reference": "c34fbddb46dba8244cee73d79780a83daa1ff837"
             },
             "require": {
                 "php": "^8.1"
             },
             "require-dev": {
+                "behat/behat": "^3.14",
                 "brianium/paratest": "^7.3",
                 "deptrac/deptrac": "^3.0",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
                 "k-kinzal/php-ai-toolkit": "dev-main",
-                "nikic/php-fuzzer": "^0.0.11",
                 "phpbench/phpbench": "^1.4",
                 "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
                 "phpstan/phpstan": "^2.1",
@@ -93,9 +93,6 @@
                 "phpunit/phpunit": "^10.5",
                 "squizlabs/php_codesniffer": "^4.0.4"
             },
-            "bin": [
-                "bin/bison-parser"
-            ],
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -105,8 +102,8 @@
             "autoload-dev": {
                 "psr-4": {
                     "Tests\\": "tests/",
-                    "Fuzz\\": "fuzz/",
-                    "Bench\\": "bench/"
+                    "Bench\\": "bench/",
+                    "Spec\\": "spec/"
                 }
             },
             "scripts": {
@@ -151,24 +148,6 @@
                 "format:check": [
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
                 ],
-                "fuzz": [
-                    "@fuzz:smoke"
-                ],
-                "fuzz:parse": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/parse') || mkdir('fuzz/corpus/parse', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_parse.php fuzz/corpus/parse/"
-                ],
-                "fuzz:roundtrip": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/roundtrip') || mkdir('fuzz/corpus/roundtrip', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_roundtrip.php fuzz/corpus/roundtrip/"
-                ],
-                "fuzz:smoke": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@fuzz:parse --max-runs=100",
-                    "@fuzz:roundtrip --max-runs=100"
-                ],
                 "lint": [
                     "@autoload:check",
                     "@format:check",
@@ -183,6 +162,9 @@
                 ],
                 "phpstan": [
                     "phpstan analyse --memory-limit=1G"
+                ],
+                "spec": [
+                    "behat --strict"
                 ],
                 "test": [
                     "paratest --processes=auto"
@@ -215,17 +197,17 @@
             "dist": {
                 "type": "path",
                 "url": "packages/lemon-parser",
-                "reference": "b7e758b2272b24c724bf5e7b5fa9c00c5a11d817"
+                "reference": "a710daddd9c47fe31831143f70b2ea799b72e660"
             },
             "require": {
                 "php": "^8.1"
             },
             "require-dev": {
+                "behat/behat": "^3.14",
                 "brianium/paratest": "^7.3",
                 "deptrac/deptrac": "^3.0",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
                 "k-kinzal/php-ai-toolkit": "dev-main",
-                "nikic/php-fuzzer": "^0.0.11",
                 "phpbench/phpbench": "^1.4",
                 "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
                 "phpstan/phpstan": "^2.1",
@@ -233,9 +215,6 @@
                 "phpunit/phpunit": "^10.5",
                 "squizlabs/php_codesniffer": "^4.0.4"
             },
-            "bin": [
-                "bin/lemon-parser"
-            ],
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -245,8 +224,8 @@
             "autoload-dev": {
                 "psr-4": {
                     "Tests\\": "tests/",
-                    "Fuzz\\": "fuzz/",
-                    "Bench\\": "bench/"
+                    "Bench\\": "bench/",
+                    "Spec\\": "spec/"
                 }
             },
             "scripts": {
@@ -291,24 +270,6 @@
                 "format:check": [
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
                 ],
-                "fuzz": [
-                    "@fuzz:smoke"
-                ],
-                "fuzz:parse": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/parse') || mkdir('fuzz/corpus/parse', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_parse.php fuzz/corpus/parse/"
-                ],
-                "fuzz:roundtrip": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/roundtrip') || mkdir('fuzz/corpus/roundtrip', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_roundtrip.php fuzz/corpus/roundtrip/"
-                ],
-                "fuzz:smoke": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@fuzz:parse --max-runs=100",
-                    "@fuzz:roundtrip --max-runs=100"
-                ],
                 "lint": [
                     "@autoload:check",
                     "@format:check",
@@ -323,6 +284,9 @@
                 ],
                 "phpstan": [
                     "phpstan analyse --memory-limit=1G"
+                ],
+                "spec": [
+                    "behat --strict --no-interaction --no-snippets"
                 ],
                 "test": [
                     "paratest --processes=auto"
@@ -355,7 +319,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-faker",
-                "reference": "5d9d47165c4609635aa5583bce903f0e9064b030"
+                "reference": "df02746ed307d2e212163be6e268506ce1ea988b"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -365,7 +329,9 @@
                 "brianium/paratest": "^7.3",
                 "deptrac/deptrac": "^3.0",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/bison-parser": "dev-main",
                 "k-kinzal/container": "dev-main",
+                "k-kinzal/lemon-parser": "dev-main",
                 "k-kinzal/php-ai-toolkit": "dev-main",
                 "nikic/php-fuzzer": "^0.0.11",
                 "phpbench/phpbench": "^1.4",
@@ -375,6 +341,10 @@
                 "phpunit/phpunit": "^10.5",
                 "squizlabs/php_codesniffer": "^4.0.4",
                 "symfony/filesystem": "^6.4"
+            },
+            "suggest": {
+                "k-kinzal/bison-parser": "To rebuild the MySQL and PostgreSQL grammar resources with bin/build-mysql.php and bin/build-pg.php",
+                "k-kinzal/lemon-parser": "To rebuild the SQLite grammar resources with bin/build-sqlite.php"
             },
             "type": "library",
             "autoload": {
@@ -515,12 +485,12 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-fixture",
-                "reference": "8f452d75d5539bd9a9cbaebe97bb80859008c7a5"
+                "reference": "731d32d683e8eec34e223a3f241688e685278a69"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
-                "php": "^8.1",
-                "phpmyadmin/sql-parser": "^5.11"
+                "k-kinzal/sql-parser": "dev-main",
+                "php": "^8.1"
             },
             "require-dev": {
                 "brianium/paratest": "^7.3",

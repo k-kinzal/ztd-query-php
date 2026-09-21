@@ -4,67 +4,53 @@ declare(strict_types=1);
 
 namespace SqlFixture\Platform\MySql\Schema;
 
-use PhpMyAdmin\SqlParser\Components\OptionsArray;
-use UnexpectedValueException;
+use SqlFixture\Syntax\NodeReader;
+use SqlFixture\Syntax\NumericLiteral;
+use SqlParser\Parser\Node;
 
 /**
- * Interprets a SQL default expression.
+ * Interprets the DEFAULT attribute of a column, keeping expressions as SQL text.
  *
  * @visibility root
  */
 final class DefaultExpression
 {
     /**
-     * Interprets a DEFAULT clause while preserving SQL expressions.
-     * @throws UnexpectedValueException
+     * Returns the literal value a DEFAULT attribute declares, or the text of its expression.
      */
-    public function extractDefault(?OptionsArray $options): int|float|bool|string|null
+    public function extractDefault(Node $attribute, string $sql): int|float|bool|string|null
     {
-        if ($options === null || $options->has('DEFAULT') === false) {
-            return null;
+        $reader = new NodeReader();
+        $literal = $reader->child($attribute, 'now_or_signed_literal');
+        if ($literal === null) {
+            return $reader->textOf(array_slice($attribute->tokens(), 1), $sql);
         }
-
-        $optionsArray = $options->options;
-
-        foreach ($optionsArray as $option) {
-            if (!is_array($option)) {
+        $sign = '';
+        foreach ($literal->tokens() as $token) {
+            if ($token->text === '-' || $token->text === '+') {
+                $sign = $token->text;
                 continue;
             }
-
-            $name = $option['name'] ?? null;
-            if ($name === 'DEFAULT') {
-                $value = $option['value'] ?? null;
-                if ($value === null) {
-                    return null;
-                }
-                if (is_string($value)) {
-                    if (preg_match('/^[\'"](.*)[\'"]\s*$/s', $value, $matches) === 1) {
-                        return $matches[1];
-                    }
-                    if (strtoupper($value) === 'NULL') {
-                        return null;
-                    }
-                    if (strtoupper($value) === 'TRUE') {
-                        return true;
-                    }
-                    if (strtoupper($value) === 'FALSE') {
-                        return false;
-                    }
-                    if (is_numeric($value)) {
-                        if (str_contains($value, '.')) {
-                            return (float) $value;
-                        }
-                        return (int) $value;
-                    }
-                    return $value;
-                }
-                if (!is_scalar($value)) {
-                    throw new UnexpectedValueException('The SQL parser returned a non-scalar DEFAULT value.');
-                }
-                return $value;
+            if ($token->is('TEXT_STRING') || $token->is('NCHAR_STRING')) {
+                return (new StringLiteral())->decode($token);
+            }
+            if ($token->is('NUM') || $token->is('LONG_NUM') || $token->is('ULONGLONG_NUM') || $token->is('DECIMAL_NUM') || $token->is('FLOAT_NUM')) {
+                return (new NumericLiteral())->decode($sign . $token->text);
+            }
+            if ($token->is('TRUE_SYM')) {
+                return true;
+            }
+            if ($token->is('FALSE_SYM')) {
+                return false;
+            }
+            if ($token->is('NULL_SYM')) {
+                return null;
+            }
+            if (!$token->is('UNDERSCORE_CHARSET')) {
+                break;
             }
         }
 
-        return null;
+        return $literal->text($sql);
     }
 }

@@ -6,21 +6,27 @@ namespace SqlFixture\Platform\PostgreSql\Schema;
 
 use PDO;
 use RuntimeException;
-use SqlFixture\Schema\ColumnDefinition;
 use SqlFixture\Schema\TableSchema;
 
 /**
- * Builds a schema directly from information_schema columns.
+ * Builds a schema from information_schema columns and the catalog primary key.
  *
  * @visibility root
  */
 final class CatalogSchema
 {
     /**
-     * Reads schema from information schema.
+     * Keeps the grammar-backed reader for catalog default expressions.
+     */
+    public function __construct(private readonly CatalogExpression $expressions)
+    {
+    }
+
+    /**
+     * Reads the named table, which may carry a schema qualifier, from the catalog.
      * @throws RuntimeException
      */
-    public function fetchSchemaFromInformationSchema(PDO $pdo, string $tableName): TableSchema
+    public function fetchSchema(PDO $pdo, string $tableName): TableSchema
     {
         $schema = 'public';
         $table = $tableName;
@@ -31,37 +37,17 @@ final class CatalogSchema
         }
 
         $rows = (new CatalogQuery())->columns($pdo, $schema, $table);
-
         if ($rows === []) {
             throw new RuntimeException("Table not found: {$tableName}");
         }
+        $primaryKeys = (new CatalogQuery())->primaryKeys($pdo, $schema, $table);
 
         $columns = [];
         foreach ($rows as $row) {
-            $columnName = $row['column_name'];
-            $type = (new CatalogColumn())->resolveType($row);
-            $length = $row['character_maximum_length'] !== null ? (int) $row['character_maximum_length'] : null;
-            $precision = $row['numeric_precision'] !== null ? (int) $row['numeric_precision'] : null;
-            $scale = $row['numeric_scale'] !== null ? (int) $row['numeric_scale'] : null;
-            $nullable = $row['is_nullable'] === 'YES';
-            $default = (new CatalogColumn())->parseDefault($row['column_default']);
-            $autoIncrement = $row['column_default'] !== null && str_contains($row['column_default'], 'nextval(');
-
-            $columns[$columnName] = new ColumnDefinition(
-                name: $columnName,
-                type: $type,
-                length: $length,
-                precision: $precision,
-                scale: $scale,
-                nullable: $nullable,
-                unsigned: false,
-                default: $default,
-                autoIncrement: $autoIncrement,
-                generated: false,
-                enumValues: null,
-            );
+            $column = (new CatalogColumn())->parse($row, $this->expressions, in_array($row['column_name'], $primaryKeys, true));
+            $columns[$column->name] = $column;
         }
 
-        return new TableSchema($table, $columns, []);
+        return new TableSchema($table, $columns, $primaryKeys);
     }
 }

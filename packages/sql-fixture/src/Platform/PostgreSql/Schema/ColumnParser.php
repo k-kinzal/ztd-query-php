@@ -5,53 +5,47 @@ declare(strict_types=1);
 namespace SqlFixture\Platform\PostgreSql\Schema;
 
 use SqlFixture\Schema\ColumnDefinition;
+use SqlFixture\Syntax\NodeReader;
+use SqlParser\Parser\Node;
 
 /**
- * Reads a column declaration into a schema value.
+ * Reads a columnDef node into a schema column.
  *
  * @visibility root
  */
 final class ColumnParser
 {
     /**
+     * Returns the column the node declares, or null when it names no typed column.
+     *
      * @param list<string> $tablePrimaryKeys
      */
-    public function parseColumnDefinition(string $definition, array $tablePrimaryKeys): ?ColumnDefinition
+    public function parseColumnDefinition(Node $columnDef, string $sql, array $tablePrimaryKeys): ?ColumnDefinition
     {
-        if (preg_match('/^"?(\w+)"?\s*(.*)/is', $definition, $matches) !== 1) {
+        $reader = new NodeReader();
+        $nameToken = $reader->firstToken($columnDef);
+        $typename = $reader->child($columnDef, 'Typename');
+        if ($nameToken === null || $typename === null) {
             return null;
         }
-
-        $columnName = $matches[1];
-        $rest = trim($matches[2]);
-
-        $shape = (new TypeDeclaration())->parse($rest);
-        $type = $shape->type;
-        $autoIncrement = $shape->autoIncrement;
-
-        $upperRest = strtoupper($rest);
-        $nullable = !str_contains($upperRest, 'NOT NULL');
-
-        $isPrimaryKey = str_contains($upperRest, 'PRIMARY KEY') || in_array($columnName, $tablePrimaryKeys, true);
-        if ($isPrimaryKey) {
-            $nullable = false;
-        }
-
-        $default = (new DefaultExpression())->extractDefault($rest);
-
-        $generated = preg_match('/\bGENERATED\s+/i', $rest) === 1;
+        $name = (new Identifier())->decode($nameToken);
+        $constraints = (new ColumnConstraints())->read($columnDef);
+        $shape = (new TypeDeclaration())->parse($typename);
+        $autoIncrement = $shape->autoIncrement || $constraints->identity;
+        $primaryKey = $constraints->primaryKey || in_array($name, $tablePrimaryKeys, true);
+        $default = $constraints->default === null ? null : (new DefaultExpression())->evaluate($constraints->default, $sql);
 
         return new ColumnDefinition(
-            name: $columnName,
-            type: $type,
+            name: $name,
+            type: $shape->type,
             length: $shape->length,
             precision: $shape->precision,
             scale: $shape->scale,
-            nullable: $nullable,
+            nullable: $constraints->nullable && !$primaryKey && !$autoIncrement,
             unsigned: false,
             default: $default,
             autoIncrement: $autoIncrement,
-            generated: $generated,
+            generated: $constraints->generated,
             enumValues: null,
         );
     }

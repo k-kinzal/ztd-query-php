@@ -7,23 +7,25 @@ namespace SqlFixture\Platform\PostgreSql;
 use PDO;
 use SqlFixture\Schema\SchemaFetcherInterface;
 use SqlFixture\Schema\TableSchema;
+use SqlParser\PostgreSql\PostgreSqlParser;
 
 /**
  * Fetches table schemas from PostgreSQL databases.
  *
- * Uses information_schema to query column definitions, since PostgreSQL
- * does not have a SHOW CREATE TABLE equivalent.
+ * PostgreSQL has no SHOW CREATE TABLE, so the schema is built from the
+ * information_schema and pg_catalog rows, and each column default the
+ * catalog reports is parsed with the PostgreSQL grammar.
  */
 final class PostgreSqlSchemaFetcher implements SchemaFetcherInterface
 {
-    private PostgreSqlSchemaParser $parser;
+    private PostgreSqlParser $parser;
 
     /**
-     * Initializes the collaborators and declared state for this object.
+     * Loads the grammar tables used to interpret catalog default expressions.
      */
-    public function __construct(?PostgreSqlSchemaParser $parser = null)
+    public function __construct(?PostgreSqlParser $parser = null)
     {
-        $this->parser = $parser ?? new PostgreSqlSchemaParser();
+        $this->parser = $parser ?? new PostgreSqlParser();
     }
 
     /**
@@ -31,13 +33,6 @@ final class PostgreSqlSchemaFetcher implements SchemaFetcherInterface
      */
     public function fetchSchema(PDO $pdo, string $tableName): TableSchema
     {
-        $createTableSql = (new Schema\CatalogDdl())->reconstructCreateTable($pdo, $tableName);
-
-        if ($createTableSql !== null) {
-            return $this->parser->parse($createTableSql);
-        }
-
-        return (new Schema\CatalogSchema())->fetchSchemaFromInformationSchema($pdo, $tableName);
+        return (new Schema\CatalogSchema(new Schema\CatalogExpression($this->parser)))->fetchSchema($pdo, $tableName);
     }
-
 }

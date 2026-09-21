@@ -4,57 +4,26 @@ declare(strict_types=1);
 
 namespace SqlFixture\Platform\PostgreSql\Schema;
 
+use SqlFixture\Schema\ColumnDefinition;
+
 /**
- * Interprets PostgreSQL catalog type and default metadata.
+ * Converts an information_schema.columns row into a column definition.
  *
  * @visibility root
  */
 final class CatalogColumn
 {
     /**
-     * @param array{data_type: string, character_maximum_length: ?string, numeric_precision: ?string, numeric_scale: ?string, udt_name: string} $col
-     */
-    public function mapDataType(array $col): string
-    {
-        $type = strtoupper($col['data_type']);
-
-        if ($type === 'CHARACTER VARYING' && $col['character_maximum_length'] !== null) {
-            return 'VARCHAR(' . $col['character_maximum_length'] . ')';
-        }
-
-        if ($type === 'CHARACTER' && $col['character_maximum_length'] !== null) {
-            return 'CHAR(' . $col['character_maximum_length'] . ')';
-        }
-
-        if ($type === 'NUMERIC' && $col['numeric_precision'] !== null) {
-            $precision = $col['numeric_precision'];
-            if ($col['numeric_scale'] !== null && $col['numeric_scale'] !== '0') {
-                return "NUMERIC({$precision}, {$col['numeric_scale']})";
-            }
-            return "NUMERIC({$precision})";
-        }
-
-        if ($type === 'ARRAY') {
-            return strtoupper($col['udt_name']);
-        }
-
-        if ($type === 'USER-DEFINED') {
-            return strtoupper($col['udt_name']);
-        }
-
-        return $type;
-    }
-
-    /**
-     * @param array{data_type: string, udt_name: string, character_maximum_length: ?string, numeric_precision: ?string, numeric_scale: ?string} $row
+     * Maps the catalog data type to the type name the value generators expect.
+     *
+     * @param array{data_type: string, udt_name: string} $row
      */
     public function resolveType(array $row): string
     {
         $type = strtoupper($row['data_type']);
 
         if ($type === 'ARRAY') {
-            $elementType = strtoupper(ltrim($row['udt_name'], '_'));
-            return $elementType . '_ARRAY';
+            return strtoupper(ltrim($row['udt_name'], '_')) . '_ARRAY';
         }
 
         if ($type === 'USER-DEFINED') {
@@ -65,44 +34,28 @@ final class CatalogColumn
     }
 
     /**
-     * Parses default.
+     * Builds the column, reading its default through the grammar and marking sequence and identity columns.
+     *
+     * @param array{column_name: string, data_type: string, character_maximum_length: ?string, numeric_precision: ?string, numeric_scale: ?string, is_nullable: string, column_default: ?string, udt_name: string, is_identity: string, is_generated: string} $row
      */
-    public function parseDefault(?string $value): int|float|bool|string|null
+    public function parse(array $row, CatalogExpression $expressions, bool $primaryKey): ColumnDefinition
     {
-        if ($value === null) {
-            return null;
-        }
+        $default = $row['column_default'];
+        $sequence = $default !== null && $expressions->isSequence($default);
+        $autoIncrement = $sequence || $row['is_identity'] === 'YES';
 
-        if (strtoupper($value) === 'NULL' || strtoupper($value) === 'NULL::') {
-            return null;
-        }
-
-        if (str_contains($value, 'nextval(')) {
-            return null;
-        }
-
-        if (preg_match("/^'(.*)'::.*$/s", $value, $matches) === 1) {
-            return $matches[1];
-        }
-
-        if (preg_match("/^'(.*)'$/s", $value, $matches) === 1) {
-            return $matches[1];
-        }
-
-        if (strtolower($value) === 'true') {
-            return true;
-        }
-        if (strtolower($value) === 'false') {
-            return false;
-        }
-
-        if (is_numeric($value)) {
-            if (str_contains($value, '.')) {
-                return (float) $value;
-            }
-            return (int) $value;
-        }
-
-        return $value;
+        return new ColumnDefinition(
+            name: $row['column_name'],
+            type: $this->resolveType($row),
+            length: $row['character_maximum_length'] !== null ? (int) $row['character_maximum_length'] : null,
+            precision: $row['numeric_precision'] !== null ? (int) $row['numeric_precision'] : null,
+            scale: $row['numeric_scale'] !== null ? (int) $row['numeric_scale'] : null,
+            nullable: $row['is_nullable'] === 'YES' && !$primaryKey,
+            unsigned: false,
+            default: $default === null || $sequence ? null : $expressions->evaluate($default),
+            autoIncrement: $autoIncrement,
+            generated: $row['is_generated'] === 'ALWAYS',
+            enumValues: null,
+        );
     }
 }

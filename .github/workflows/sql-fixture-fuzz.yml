@@ -30,8 +30,8 @@ jobs:
       fail-fast: false
       matrix:
         target:
-          - { name: create-table, script: fuzz_create_table.php, corpus: create-table, extensions: "mbstring, pcntl" }
-          - { name: insert-select, script: fuzz_insert_select.php, corpus: insert-select, extensions: "mbstring, pcntl, pdo, pdo_mysql" }
+          - { name: create-table, script: fuzz_create_table.php, corpus: create-table, extensions: "mbstring, pcntl, zlib" }
+          - { name: insert-select, script: fuzz_insert_select.php, corpus: insert-select, extensions: "mbstring, pcntl, pdo, pdo_mysql, zlib" }
     defaults:
       run:
         working-directory: packages/sql-fixture

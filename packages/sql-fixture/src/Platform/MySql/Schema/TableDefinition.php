@@ -4,98 +4,95 @@ declare(strict_types=1);
 
 namespace SqlFixture\Platform\MySql\Schema;
 
-use PhpMyAdmin\SqlParser\Components\DataType;
-use PhpMyAdmin\SqlParser\Components\OptionsArray;
-use PhpMyAdmin\SqlParser\Statements\CreateStatement;
 use SqlFixture\Schema\ColumnDefinition;
+use SqlFixture\Schema\Exception\InvalidSqlException;
+use SqlFixture\Schema\Exception\MissingColumnDefinitionsException;
+use SqlFixture\Syntax\NodeReader;
+use SqlParser\Parser\Node;
 
 /**
- * Reads the table name, columns and primary key from a CREATE TABLE statement.
+ * Reads the table name, columns and primary key from a create_table_stmt node.
  *
  * @visibility root
  */
 final class TableDefinition
 {
     /**
-     * Reads the declared table identifier.
-     * @throws \SqlFixture\Schema\Exception\InvalidSqlException
+     * Reads the declared table identifier without its database qualifier.
+     * @throws InvalidSqlException
      */
-    public function extractTableName(CreateStatement $stmt, string $sql): string
+    public function extractTableName(Node $statement, string $sql): string
     {
-        if ($stmt->name === null) {
-            throw new \SqlFixture\Schema\Exception\InvalidSqlException($sql, 'Table name not found');
+        $tableIdent = (new NodeReader())->child($statement, 'table_ident');
+        $idents = $tableIdent === null ? [] : $tableIdent->find('ident');
+        $last = end($idents);
+        $name = $last === false ? null : (new Identifier())->decode($last);
+        if ($name === null || $name === '') {
+            throw new InvalidSqlException($sql, 'Table name not found');
         }
 
-        $name = $stmt->name->table ?? '';
         return $name;
     }
 
     /**
      * @return array<string, ColumnDefinition>
-     * @throws \SqlFixture\Schema\Exception\MissingColumnDefinitionsException
+     * @throws MissingColumnDefinitionsException
      */
-    public function extractColumns(CreateStatement $stmt, string $tableName): array
+    public function extractColumns(Node $statement, string $sql, string $tableName): array
     {
-        if (!is_iterable($stmt->fields)) {
-            throw new \SqlFixture\Schema\Exception\MissingColumnDefinitionsException($tableName);
-        }
-
         $columns = [];
-        $primaryKeyColumns = $this->extractPrimaryKeys($stmt);
-
-        foreach ($stmt->fields as $field) {
-            $name = $field->name;
-            if (!is_string($name) || $name === '') {
+        $primaryKeys = $this->extractPrimaryKeys($statement);
+        foreach ((new CreateTableStatement())->elements($statement) as $element) {
+            $columnDef = (new NodeReader())->child($element, 'column_def');
+            if ($columnDef === null) {
                 continue;
             }
-
-            if (!$field->type instanceof DataType) {
-                continue;
-            }
-
-            $columnName = $name;
-            $column = (new ColumnParser())->parseColumnDefinition($field, $columnName, $primaryKeyColumns);
-
+            $column = (new ColumnParser())->parseColumnDefinition($columnDef, $sql, $primaryKeys);
             if ($column !== null) {
-                $columns[$columnName] = $column;
+                $columns[$column->name] = $column;
             }
         }
-
         if ($columns === []) {
-            throw new \SqlFixture\Schema\Exception\MissingColumnDefinitionsException($tableName);
+            throw new MissingColumnDefinitionsException($tableName);
         }
 
         return $columns;
     }
 
     /**
+     * Collects the primary key columns declared on columns and as a table constraint.
+     *
      * @return list<string>
      */
-    public function extractPrimaryKeys(CreateStatement $stmt): array
+    public function extractPrimaryKeys(Node $statement): array
     {
-        if (!is_iterable($stmt->fields)) {
-            return [];
-        }
-
+        $reader = new NodeReader();
         $primaryKeys = [];
-        foreach ($stmt->fields as $field) {
-            if ($field->options instanceof OptionsArray && $field->options->has('PRIMARY KEY') !== false) {
-                $name = $field->name;
-                if (is_string($name) && $name !== '') {
+        foreach ((new CreateTableStatement())->elements($statement) as $element) {
+            $columnDef = $reader->child($element, 'column_def');
+            if ($columnDef !== null) {
+                $ident = $reader->child($columnDef, 'ident');
+                $fieldDef = $reader->child($columnDef, 'field_def');
+                $name = $ident === null ? null : (new Identifier())->decode($ident);
+                if ($name !== null && $name !== '' && $fieldDef !== null && (new ColumnAttributes())->read($fieldDef)->primaryKey) {
+                    $primaryKeys[] = $name;
+                }
+                continue;
+            }
+            $constraint = $reader->child($element, 'table_constraint_def');
+            $keyType = $constraint === null ? null : $reader->child($constraint, 'constraint_key_type');
+            if ($constraint === null || $keyType === null || $reader->token($keyType, 'PRIMARY_SYM') === null) {
+                continue;
+            }
+            foreach ($constraint->find('key_part') as $part) {
+                $ident = $reader->child($part, 'ident');
+                $name = $ident === null ? null : (new Identifier())->decode($ident);
+                if ($name !== null && $name !== '') {
                     $primaryKeys[] = $name;
                 }
             }
-
-            if ($field->key !== null && $field->key->type === 'PRIMARY KEY') {
-                foreach ($field->key->columns as $col) {
-                    $colName = $col['name'] ?? null;
-                    if (is_string($colName) && $colName !== '') {
-                        $primaryKeys[] = $colName;
-                    }
-                }
-            }
         }
 
-        return $primaryKeys;
+        return array_values(array_unique($primaryKeys));
     }
 }

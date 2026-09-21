@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 
-A [FakerPHP](https://github.com/FakerPHP/Faker) provider for generating test fixture data from SQL schemas. Parses CREATE TABLE statements and generates type-appropriate fake data.
+A [FakerPHP](https://github.com/FakerPHP/Faker) provider for generating test fixture data from SQL schemas. Parses CREATE TABLE statements with the grammar of each database and generates type-appropriate fake data.
 
 ## Overview
 
@@ -19,7 +19,7 @@ All modes support object hydration via `ReflectionHydrator`, converting generate
 
 - PHP 8.1 or higher
 - [fakerphp/faker](https://github.com/FakerPHP/Faker) ^1.23
-- [phpmyadmin/sql-parser](https://github.com/phpmyadmin/sql-parser) ^5.11
+- [k-kinzal/sql-parser](../sql-parser/) for reading CREATE TABLE statements with the MySQL, PostgreSQL and SQLite grammars
 
 ## Installation
 
