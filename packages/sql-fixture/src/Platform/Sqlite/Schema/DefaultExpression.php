@@ -24,7 +24,8 @@ final class DefaultExpression
         $tokens = array_slice($constraint->tokens(), 1);
         $sign = '';
         $first = $tokens[0] ?? null;
-        if ($first !== null && ($first->is('PLUS') || $first->is('MINUS'))) {
+        $signed = $tokens[1] ?? null;
+        if ($first !== null && ($first->is('PLUS') || $first->is('MINUS')) && count($tokens) === 2 && $signed !== null && ($signed->is('INTEGER') || $signed->is('FLOAT'))) {
             $sign = $first->text;
             array_shift($tokens);
         }

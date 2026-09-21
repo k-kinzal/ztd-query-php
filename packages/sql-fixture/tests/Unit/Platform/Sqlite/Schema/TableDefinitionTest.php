@@ -7,6 +7,7 @@ namespace Tests\Unit\Platform\Sqlite\Schema;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use SqlFixture\Platform\Sqlite\Schema\TableDefinition as Subject;
+use SqlFixture\Syntax\SqlText;
 use SqlParser\Parser\Node;
 use SqlParser\Sqlite\SqliteParser;
 
@@ -24,6 +25,7 @@ use SqlParser\Sqlite\SqliteParser;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\Sqlite\Schema\DefaultExpression::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\Sqlite\Schema\Identifier::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\Sqlite\Schema\TypeDeclaration::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(SqlText::class)]
 final class TableDefinitionTest extends TestCase
 {
     public function testExtractTableNameDropsTheDatabaseQualifierAndQuotes(): void
@@ -64,7 +66,7 @@ final class TableDefinitionTest extends TestCase
     {
         $sql = 'CREATE TABLE t (a INT PRIMARY KEY, "b" INT, c INT, CONSTRAINT pk PRIMARY KEY (a, "b" DESC, c COLLATE nocase), UNIQUE (c), FOREIGN KEY (c) REFERENCES o (id))';
 
-        self::assertSame(['a', 'b'], (new Subject())->extractPrimaryKeys((new SqliteParser())->parse($sql)->find('cmd')[0]));
+        self::assertSame(['a', 'b', 'c'], (new Subject())->extractPrimaryKeys((new SqliteParser())->parse($sql)->find('cmd')[0]));
         self::assertSame([], (new Subject())->extractPrimaryKeys(new Node('cmd', 0, [])));
     }
 
@@ -76,5 +78,18 @@ final class TableDefinitionTest extends TestCase
         self::assertSame(['b', 'a'], (new Subject())->keyColumns($sortlists[0]));
         self::assertSame(['b'], (new Subject())->keyColumns($sortlists[1]));
         self::assertSame([], (new Subject())->keyColumns($sortlists[2]));
+    }
+
+    public function testKeyColumnReadsAColumnWrittenWithACollation(): void
+    {
+        $sql = 'CREATE TABLE t (a INT, b INT, PRIMARY KEY (a COLLATE nocase, b + 1))';
+        $sortlist = (new SqliteParser())->parse($sql)->find('sortlist')[0];
+        $collated = $sortlist->find('expr')[0];
+        $summed = $sortlist->find('expr')[2];
+
+        self::assertSame('a COLLATE nocase', (new SqlText())->ofNode($collated));
+        self::assertSame('a', (new Subject())->keyColumn($collated));
+        self::assertSame('b + 1', (new SqlText())->ofNode($summed));
+        self::assertNull((new Subject())->keyColumn($summed));
     }
 }

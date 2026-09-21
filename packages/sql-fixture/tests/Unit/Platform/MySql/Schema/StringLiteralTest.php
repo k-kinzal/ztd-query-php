@@ -12,6 +12,7 @@ use SqlParser\Lexer\Token;
 use SqlParser\MySql\MySqlParser;
 
 #[CoversClass(Subject::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Syntax\QuotedText::class)]
 final class StringLiteralTest extends TestCase
 {
     #[DataProvider('providerLiterals')]
@@ -61,5 +62,22 @@ final class StringLiteralTest extends TestCase
         self::assertSame('end\\', (new Subject())->unescape('end\\', "'"));
         self::assertSame("it's", (new Subject())->unescape("it''s", "'"));
         self::assertSame("it''s", (new Subject())->unescape("it''s", '"'));
+    }
+
+    public function testBytesReadsHexadecimalAndBinaryLiterals(): void
+    {
+        $tokens = (new MySqlParser())->tokenize("SELECT 0x4142, x'41', b'01000001', 0b01000001");
+
+        self::assertSame('AB', (new Subject())->bytes($tokens[1]));
+        self::assertSame('A', (new Subject())->bytes($tokens[3]));
+        self::assertSame('A', (new Subject())->bytes($tokens[5]));
+        self::assertSame('A', (new Subject())->bytes($tokens[7]));
+    }
+
+    public function testBytesPadsAnIncompleteHexadecimalOrBinaryRun(): void
+    {
+        self::assertSame("\x0a", (new Subject())->bytes(new Token(1, 'HEX_NUM', '0xA', 0)));
+        self::assertSame("\x05", (new Subject())->bytes(new Token(1, 'BIN_NUM', "b'101'", 0)));
+        self::assertSame("\0", (new Subject())->bytes(new Token(1, 'BIN_NUM', "b''", 0)));
     }
 }

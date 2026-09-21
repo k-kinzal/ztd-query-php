@@ -102,12 +102,30 @@ final class TableDefinition
                 array_push($names, ...$this->keyColumns($child));
                 continue;
             }
-            $tokens = $child->tokens();
-            if ($child->name === 'expr' && count($tokens) === 1) {
-                $names[] = (new Identifier())->decode($tokens[0]);
+            $name = $child->name === 'expr' ? $this->keyColumn($child) : null;
+            if ($name !== null) {
+                $names[] = $name;
             }
         }
 
         return $names;
+    }
+
+    /**
+     * Reads the column one key part names, a collation written after it included, or null for an expression.
+     */
+    public function keyColumn(Node $expr): ?string
+    {
+        $reader = new NodeReader();
+        $tokens = $expr->tokens();
+        if (count($tokens) === 1) {
+            return (new Identifier())->decode($tokens[0]);
+        }
+        $collated = $reader->child($expr, 'expr');
+        if ($collated === null || $reader->token($expr, 'COLLATE') === null) {
+            return null;
+        }
+
+        return $this->keyColumn($collated);
     }
 }

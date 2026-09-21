@@ -16,13 +16,22 @@ use SqlParser\PostgreSql\PostgreSqlParser;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Schema\Exception\ExpectedCreateTableException::class)]
 final class CreateTableStatementTest extends TestCase
 {
-    public function testLocateReturnsTheFirstCreateTableStatement(): void
+    public function testLocateReadsTheOneCreateTableBesideOtherStatements(): void
     {
-        $sql = 'SELECT 1; CREATE TABLE t (id INT); CREATE TABLE u (id INT);';
+        $sql = 'DROP TABLE IF EXISTS t; CREATE TABLE t (id INT);';
         $statement = (new Subject())->locate((new PostgreSqlParser())->parse($sql), $sql);
 
         self::assertSame('CreateStmt', $statement->name);
         self::assertSame('CREATE TABLE t (id INT)', $statement->text($sql));
+    }
+
+    public function testLocateRejectsTextDeclaringMoreThanOneTable(): void
+    {
+        $sql = 'CREATE TABLE t (id INT); CREATE TABLE u (id INT);';
+
+        $this->expectException(\SqlFixture\Schema\Exception\InvalidSqlException::class);
+        $this->expectExceptionMessage('More than one CREATE TABLE statement');
+        (new Subject())->locate((new PostgreSqlParser())->parse($sql), $sql);
     }
 
     public function testLocateRejectsEmptyInput(): void

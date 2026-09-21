@@ -67,4 +67,14 @@ final class DefaultExpressionTest extends TestCase
 
         self::assertSame('x', (new Subject())->extractDefault($tree->find('column_attribute')[1]));
     }
+
+    public function testStringsJoinsAdjacentStringsAndLeavesOtherLiteralsAlone(): void
+    {
+        $sql = "CREATE TABLE t (a VARCHAR(4) DEFAULT 'x' 'y', b DATE DEFAULT DATE '2020-01-01', c BIT(1) DEFAULT b'0')";
+        $literals = (new MySqlParser())->parse($sql)->find('now_or_signed_literal');
+
+        self::assertSame('xy', (new Subject())->strings($literals[0]));
+        self::assertNull((new Subject())->strings($literals[1]));
+        self::assertNull((new Subject())->strings($literals[2]));
+    }
 }

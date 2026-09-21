@@ -18,6 +18,10 @@ final class CreateTableStatement
 {
     /**
      * Returns the cmd node that holds a create_table clause.
+     *
+     * Other statements may stand beside it, a DROP TABLE before it for
+     * instance, but a text declaring more than one table does not say which
+     * of them was meant.
      * @throws InvalidSqlException
      * @throws ExpectedCreateTableException
      */
@@ -27,13 +31,20 @@ final class CreateTableStatement
         if ($reader->wordsOutsideParentheses($tree) === []) {
             throw new InvalidSqlException($sql, 'No statements found');
         }
+        $commands = [];
         foreach ($tree->find('cmd') as $command) {
             if ($reader->child($command, 'create_table') !== null) {
-                return $command;
+                $commands[] = $command;
             }
         }
+        if ($commands === []) {
+            throw new ExpectedCreateTableException($sql);
+        }
+        if (count($commands) > 1) {
+            throw new InvalidSqlException($sql, 'More than one CREATE TABLE statement');
+        }
 
-        throw new ExpectedCreateTableException($sql);
+        return $commands[0];
     }
 
     /**

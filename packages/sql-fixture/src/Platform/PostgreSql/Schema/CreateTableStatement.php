@@ -17,7 +17,11 @@ use SqlParser\Parser\Node;
 final class CreateTableStatement
 {
     /**
-     * Returns the first CreateStmt node of the parsed text.
+     * Returns the CreateStmt node of the parsed text.
+     *
+     * Other statements may stand beside it, a DROP TABLE before it for
+     * instance, but a text declaring more than one table does not say which
+     * of them was meant.
      * @throws InvalidSqlException
      * @throws ExpectedCreateTableException
      */
@@ -30,6 +34,9 @@ final class CreateTableStatement
         $statements = $tree->find('CreateStmt');
         if ($statements === []) {
             throw new ExpectedCreateTableException($sql);
+        }
+        if (count($statements) > 1) {
+            throw new InvalidSqlException($sql, 'More than one CREATE TABLE statement');
         }
 
         return $statements[0];

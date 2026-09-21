@@ -6,6 +6,7 @@ namespace SqlFixture\Platform\PostgreSql\Schema;
 
 use SqlFixture\Schema\TypeShape;
 use SqlFixture\Syntax\NodeReader;
+use SqlFixture\Syntax\QuotedText;
 use SqlParser\Parser\Node;
 
 /**
@@ -36,7 +37,7 @@ final class TypeDeclaration
                 $words = [];
                 continue;
             }
-            $words[] = $word;
+            $words[] = str_starts_with($word, '"') ? (new QuotedText())->unquote($word) : $word;
         }
 
         return strtoupper(implode(' ', $words));
@@ -51,9 +52,15 @@ final class TypeDeclaration
         $name = $this->typeName($typename);
         $simple = $reader->child($typename, 'SimpleTypename');
         $numbers = [];
+        $sign = 1;
         foreach ($simple === null ? [] : $simple->tokens() as $token) {
+            if ($token->text === '-') {
+                $sign = -1;
+                continue;
+            }
             if ($token->is('ICONST')) {
-                $numbers[] = (int) $token->text;
+                $numbers[] = $sign * (int) $token->text;
+                $sign = 1;
             }
         }
         $bounds = $reader->child($typename, 'opt_array_bounds');
@@ -68,13 +75,7 @@ final class TypeDeclaration
         if ($serial !== null) {
             return new TypeShape($serial . $suffix, autoIncrement: true);
         }
-        if ($numbers === []) {
-            return new TypeShape($name . $suffix);
-        }
-        if ($this->isDecimalType($name)) {
-            return new TypeShape($name . $suffix, null, $numbers[0], $numbers[1] ?? 0);
-        }
 
-        return new TypeShape($name . $suffix, $numbers[0]);
+        return TypeShape::fromNumbers($name . $suffix, $numbers, $this->isDecimalType($name));
     }
 }

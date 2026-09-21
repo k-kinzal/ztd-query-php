@@ -73,7 +73,7 @@ final class TypeParametersTest extends TestCase
         $tree = (new MySqlParser())->parse("CREATE TABLE t (s ENUM('a,b', 'c''d', \"e\", 0x41), n INT)");
         $types = $tree->find('type');
 
-        self::assertSame(['a,b', "c'd", 'e', '0x41'], (new Subject())->extractEnumValues($types[0]));
+        self::assertSame(['a,b', "c'd", 'e', 'A'], (new Subject())->extractEnumValues($types[0]));
         self::assertSame([], (new Subject())->extractEnumValues($types[1]));
     }
 
@@ -88,14 +88,14 @@ final class TypeParametersTest extends TestCase
         self::assertSame(['FIXED', 4, 1], [$shapes[3]->type, $shapes[3]->precision, $shapes[3]->scale]);
     }
 
-    public function testParseReadsTheFirstNumberAsLengthForOtherTypes(): void
+    public function testParseReadsOneNumberAsALengthAndTwoAsAPrecisionAndScale(): void
     {
         $tree = (new MySqlParser())->parse('CREATE TABLE t (a VARCHAR(255), b BIT(3), c FLOAT(7,3), d INT, e TIMESTAMP(6))');
         $shapes = array_map(static fn ($type): \SqlFixture\Schema\TypeShape => (new Subject())->parse($type), $tree->find('type'));
 
         self::assertSame([255, null, null], [$shapes[0]->length, $shapes[0]->precision, $shapes[0]->scale]);
         self::assertSame(3, $shapes[1]->length);
-        self::assertSame(['FLOAT', 7], [$shapes[2]->type, $shapes[2]->length]);
+        self::assertSame(['FLOAT', null, 7, 3], [$shapes[2]->type, $shapes[2]->length, $shapes[2]->precision, $shapes[2]->scale]);
         self::assertNull($shapes[3]->length);
         self::assertSame(6, $shapes[4]->length);
         self::assertFalse($shapes[3]->autoIncrement);

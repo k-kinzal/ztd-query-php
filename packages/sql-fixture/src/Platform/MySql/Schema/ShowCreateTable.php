@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlFixture\Platform\MySql\Schema;
 
+use SqlFixture\Schema\Exception\UnreadableTableNameException;
 use SqlParser\Lexer\SourceException;
 use SqlParser\MySql\MySqlParser;
 
@@ -11,10 +12,11 @@ use SqlParser\MySql\MySqlParser;
  * Writes the statement that reads the declaration of one table.
  *
  * The name is written into the statement and the statement is read back with
- * the grammar of the server, so what is issued is what the grammar accepted
- * as one table's declaration. A name the grammar does not read that way, a
- * reserved word or a name written with a space in it, is written as one
- * quoted identifier rather than taken apart.
+ * the grammar of the server, and it is issued only when the grammar read the
+ * whole of it as one table's declaration and nothing else: no second
+ * statement, no comment and no spacing of its own. A name that is not read
+ * that way, a reserved word or a name written with a space in it, is written
+ * as one quoted identifier and read back again.
  *
  * @visibility root
  */
@@ -29,16 +31,21 @@ final class ShowCreateTable
 
     /**
      * Answers the statement that reads the declaration of the named table.
+     * @throws UnreadableTableNameException
      */
     public function statement(string $tableName): string
     {
-        $quoted = 'SHOW CREATE TABLE ' . $this->quoted($tableName);
+        $statement = $this->readable('SHOW CREATE TABLE ' . $tableName)
+            ?? $this->readable('SHOW CREATE TABLE ' . $this->quoted($tableName));
+        if ($statement === null) {
+            throw new UnreadableTableNameException($tableName);
+        }
 
-        return $this->readable('SHOW CREATE TABLE ' . $tableName) ?? $this->readable($quoted) ?? $quoted;
+        return $statement;
     }
 
     /**
-     * Answers the statement as the grammar reads it back, or null when it does not name one table.
+     * Answers the statement as the grammar reads it back, or null when it is anything but one table's declaration.
      */
     public function readable(string $statement): ?string
     {
@@ -47,8 +54,16 @@ final class ShowCreateTable
         } catch (SourceException) {
             return null;
         }
+        $idents = $tree->find('table_ident');
+        if (count($idents) !== 1) {
+            return null;
+        }
+        $written = 'SHOW CREATE TABLE ';
+        foreach ($idents[0]->tokens() as $token) {
+            $written .= $token->text;
+        }
 
-        return count($tree->find('table_ident')) === 1 ? $tree->toString() : null;
+        return $tree->toString() === $written ? $written : null;
     }
 
     /**

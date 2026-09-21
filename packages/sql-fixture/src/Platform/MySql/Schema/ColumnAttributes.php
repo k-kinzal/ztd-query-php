@@ -58,8 +58,6 @@ final class ColumnAttributes
             } elseif ($first->is('SERIAL_SYM')) {
                 $autoIncrement = true;
                 $nullable = false;
-            } elseif ($first->is('KEY_SYM') || $first->is('PRIMARY_SYM')) {
-                $primaryKey = true;
             }
         }
 

@@ -44,13 +44,6 @@ final class TypeDeclaration
                 }
             }
         }
-        if ($numbers === []) {
-            return new TypeShape($name);
-        }
-        if (count($numbers) >= 2) {
-            return new TypeShape($name, null, $numbers[0], $numbers[1]);
-        }
-
-        return new TypeShape($name, $numbers[0]);
+        return TypeShape::fromNumbers($name, $numbers);
     }
 }

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlFixture\Platform\MySql\Schema;
 
+use SqlFixture\Syntax\QuotedText;
 use SqlParser\Lexer\Token;
 
 /**
@@ -25,6 +26,28 @@ final class StringLiteral
         }
 
         return $this->unescape(substr($text, 1, -1), $quote);
+    }
+
+    /**
+     * Answers the bytes a hexadecimal or binary literal denotes.
+     */
+    public function bytes(Token $token): string
+    {
+        $text = $token->text;
+        $digits = str_starts_with(strtolower($text), '0x') || str_starts_with(strtolower($text), '0b')
+            ? substr($text, 2)
+            : (new QuotedText())->unquote(substr($text, 1));
+        if ($token->is('HEX_NUM')) {
+            return (string) hex2bin(strlen($digits) % 2 === 0 ? $digits : '0' . $digits);
+        }
+
+        $bytes = '';
+        $padded = str_pad($digits, (int) ceil(strlen($digits) / 8) * 8, '0', STR_PAD_LEFT);
+        foreach (str_split($padded === '' ? '00000000' : $padded, 8) as $bits) {
+            $bytes .= chr((int) bindec($bits));
+        }
+
+        return $bytes;
     }
 
     /**

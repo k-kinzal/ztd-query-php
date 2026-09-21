@@ -17,6 +17,10 @@ final class Identifier
 {
     /**
      * Returns the identifier text, or null when the node holds no token.
+     *
+     * The lexer names a word holding anything but plain ASCII a quoted
+     * identifier even when it was written without quotes, so what is written
+     * decides whether there is a quote to take off.
      */
     public function decode(Node $ident): ?string
     {
@@ -25,6 +29,6 @@ final class Identifier
             return null;
         }
 
-        return $token->is('IDENT_QUOTED') ? (new QuotedText())->unquote($token->text) : $token->text;
+        return str_starts_with($token->text, '`') ? (new QuotedText())->unquote($token->text) : $token->text;
     }
 }

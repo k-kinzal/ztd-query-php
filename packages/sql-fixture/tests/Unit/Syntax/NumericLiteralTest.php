@@ -32,6 +32,23 @@ final class NumericLiteralTest extends TestCase
             ['-1.5', -1.5],
             ['1e3', 1000.0],
             ['99999999999999999999', 1.0E+20],
+            ['1_000', 1000],
+            ['1_000.5', 1000.5],
+            ['0x1F', 31],
+            ['0X1f', 31],
+            ['0b1010', 10],
+            ['0o17', 15],
+            ['-0x10', -16],
+            ['0123', 123],
+            ['000', 0],
         ];
+    }
+
+    public function testWholeReadsDigitsWrittenWithLeadingZerosAndRefusesWhatIsNotOne(): void
+    {
+        self::assertSame(123, (new Subject())->whole('0123'));
+        self::assertSame(0, (new Subject())->whole('000'));
+        self::assertNull((new Subject())->whole('12.5'));
+        self::assertNull((new Subject())->whole('00099999999999999999999'));
     }
 }

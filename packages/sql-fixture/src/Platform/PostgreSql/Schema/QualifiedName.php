@@ -42,6 +42,10 @@ final class QualifiedName
     /**
      * Answers the identifiers the name is written from, or null when it does not read as one table.
      *
+     * The name must be written as identifiers separated by dots and nothing
+     * else: the grammar also reads a subscript as part of a name, and that
+     * names a value rather than a table.
+     *
      * @return non-empty-list<string>|null The identifiers, outermost first
      */
     public function parts(string $tableName): ?array
@@ -57,8 +61,12 @@ final class QualifiedName
         }
 
         $parts = [];
-        foreach ($names[0]->tokens() as $token) {
-            if ($token->text !== '.') {
+        foreach ($names[0]->tokens() as $position => $token) {
+            $separator = $position % 2 === 1;
+            if ($separator !== ($token->text === '.')) {
+                return null;
+            }
+            if (!$separator) {
                 $parts[] = (new Identifier())->fold($token);
             }
         }

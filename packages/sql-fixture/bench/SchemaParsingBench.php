@@ -11,9 +11,14 @@ use SqlFixture\Platform\Sqlite\SqliteSchemaParser;
 
 /**
  * Measures uncached schema parsing with equivalent declarations in each dialect.
+ *
+ * A declaration is read with the grammar of its server, which costs
+ * milliseconds rather than the microseconds text matching cost, so a
+ * revolution count that keeps a run short is what makes the measurement
+ * repeatable here.
  */
 #[Bench\Groups(['schema'])]
-#[Bench\Revs(5000)]
+#[Bench\Revs(50)]
 final class SchemaParsingBench
 {
     /**

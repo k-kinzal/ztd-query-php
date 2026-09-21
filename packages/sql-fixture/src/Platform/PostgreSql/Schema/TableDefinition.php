@@ -62,6 +62,9 @@ final class TableDefinition
     /**
      * Collects the primary key columns declared on columns and as a table constraint.
      *
+     * The columns a covering index INCLUDEs are not part of the key, so only
+     * the list the constraint names directly is read.
+     *
      * @return list<string>
      */
     public function extractPrimaryKeys(Node $statement): array
@@ -82,7 +85,8 @@ final class TableDefinition
             if ($constraintElem === null || $reader->token($constraintElem, 'PRIMARY') === null) {
                 continue;
             }
-            foreach ($constraintElem->find('columnElem') as $columnElem) {
+            $columnList = $reader->child($constraintElem, 'columnList');
+            foreach ($columnList === null ? [] : $columnList->find('columnElem') as $columnElem) {
                 $token = $reader->firstToken($columnElem);
                 if ($token !== null) {
                     $primaryKeys[] = (new Identifier())->decode($token);

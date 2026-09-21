@@ -51,7 +51,7 @@ final class ColumnConstraints
                 $default = $reader->child($constraint, 'b_expr');
             } elseif ($first->is('PRIMARY')) {
                 $primaryKey = true;
-            } elseif ($first->is('GENERATED') && $reader->containsToken($constraint, 'IDENTITY_P')) {
+            } elseif ($first->is('GENERATED') && $reader->token($constraint, 'IDENTITY_P') !== null) {
                 $identity = true;
             } elseif ($first->is('GENERATED')) {
                 $generated = true;

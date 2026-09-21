@@ -44,7 +44,7 @@ final class TypeParameters
             'DOUBLE PRECISION' => 'DOUBLE',
             'CHARACTER', 'NATIONAL CHAR', 'NATIONAL CHARACTER', 'NCHAR' => 'CHAR',
             'CHAR VARYING', 'CHARACTER VARYING', 'NATIONAL VARCHAR', 'NVARCHAR', 'NCHAR VARCHAR', 'NATIONAL CHAR VARYING', 'NATIONAL CHARACTER VARYING', 'NCHAR VARYING' => 'VARCHAR',
-            'LONG', 'LONG VARCHAR' => 'MEDIUMTEXT',
+            'LONG', 'LONG VARCHAR', 'LONG CHAR VARYING', 'LONG CHARACTER VARYING' => 'MEDIUMTEXT',
             'LONG VARBINARY' => 'MEDIUMBLOB',
             'SERIAL' => 'BIGINT',
             default => $name,
@@ -64,7 +64,11 @@ final class TypeParameters
             if ($token === null) {
                 continue;
             }
-            $values[] = $token->is('TEXT_STRING') ? (new StringLiteral())->decode($token) : $token->text;
+            $values[] = match (true) {
+                $token->is('TEXT_STRING'), $token->is('NCHAR_STRING') => (new StringLiteral())->decode($token),
+                $token->is('HEX_NUM'), $token->is('BIN_NUM') => (new StringLiteral())->bytes($token),
+                default => $token->text,
+            };
         }
 
         return $values;
@@ -84,13 +88,6 @@ final class TypeParameters
                 $numbers[] = (int) $token->text;
             }
         }
-        if ($numbers === []) {
-            return new TypeShape($name, autoIncrement: $autoIncrement);
-        }
-        if ($this->isDecimalType($name)) {
-            return new TypeShape($name, null, $numbers[0], $numbers[1] ?? 0, $autoIncrement);
-        }
-
-        return new TypeShape($name, $numbers[0], autoIncrement: $autoIncrement);
+        return TypeShape::fromNumbers($name, $numbers, $this->isDecimalType($name), $autoIncrement);
     }
 }
