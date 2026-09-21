@@ -1,0 +1,88 @@
+{
+  "cli_version": "0.10.3",
+  "checkpoint_id": "01M31AHX4SVENKK7X71V67JB91",
+  "session_id": "01a0bec4-88d2-7373-8dde-0319d01bf558",
+  "strategy": "manual-commit",
+  "created_at": "2026-09-21T06:30:51.730164Z",
+  "branch": "feat/sql-faker-plan-constraints",
+  "checkpoints_count": 1,
+  "save_step_count": 1,
+  "files_touched": [
+    "packages/sql-faker/docs/plan.md",
+    "packages/sql-faker/src/Generation/Choice/PlanBuilder.php",
+    "packages/sql-faker/src/Generation/Derivation/Completion/CompletionWitness.php",
+    "packages/sql-faker/src/Generation/Derivation/Completion/PatternProductions.php",
+    "packages/sql-faker/src/Generation/Derivation/ConstrainedCompletion.php",
+    "packages/sql-faker/src/Generation/Derivation/ConstraintDependencies.php",
+    "packages/sql-faker/src/Generation/Derivation/Derivation.php",
+    "packages/sql-faker/src/Generation/Derivation/TokenGenerator.php",
+    "packages/sql-faker/src/Generation/Plan/Compilation/GrammarCompiler.php",
+    "packages/sql-faker/src/Generation/Plan/Compilation/PreparedGrammar.php",
+    "packages/sql-faker/src/Generation/Plan/Compilation/Scope.php",
+    "packages/sql-faker/src/Generation/Plan/Compilation/ScopedGeneration.php",
+    "packages/sql-faker/src/Generation/Plan/GenerationPlan.php",
+    "packages/sql-faker/src/Generation/Plan/LexemeConstraint.php",
+    "packages/sql-faker/src/Generation/Plan/ProductionPattern.php",
+    "packages/sql-faker/src/Generation/Plan/RulePlan.php",
+    "packages/sql-faker/src/Generation/SqlGenerator.php",
+    "packages/sql-faker/src/Grammar/Model/Grammar.php",
+    "packages/sql-faker/tests/Unit/Generation/Derivation/Completion/PatternProductionsTest.php",
+    "packages/sql-faker/tests/Unit/Generation/Derivation/TokenGeneratorTest.php",
+    "packages/sql-faker/tests/Unit/Generation/Plan/Compilation/GrammarCompilerTest.php",
+    "packages/sql-faker/tests/Unit/Generation/Plan/Compilation/PreparedGrammarTest.php",
+    "packages/sql-faker/tests/Unit/Generation/Plan/Compilation/ScopeTest.php",
+    "packages/sql-faker/tests/Unit/Generation/Plan/Compilation/ScopedGenerationTest.php",
+    "packages/sql-faker/tests/Unit/Generation/Plan/GenerationPlanTest.php",
+    "packages/sql-faker/tests/Unit/Generation/Plan/LexemeConstraintTest.php",
+    "packages/sql-faker/tests/Unit/Generation/Plan/ProductionPatternTest.php",
+    "packages/sql-faker/tests/Unit/Generation/Plan/RulePlanTest.php",
+    "packages/sql-faker/tests/Unit/Grammar/Model/GrammarTest.php",
+    "packages/sql-faker/tests/Unit/MySqlProviderTest.php",
+    "packages/sql-faker/tests/Unit/PostgreSqlProviderTest.php",
+    "packages/ztd-query-sqlite/fuzz/Semantics/CommandSequence.php",
+    "packages/ztd-query-sqlite/fuzz/Semantics/StatementPlans.php",
+    "packages/ztd-query-sqlite/fuzz/fuzz_semantics.php"
+  ],
+  "agent": "Codex",
+  "model": "gpt-6-astra",
+  "turn_id": "7d56ac1b52f1",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 504689,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 10861184,
+    "output_tokens": 90886,
+    "api_call_count": 96
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-09-21T06:30:51.342182Z",
+    "agent_lines": 1785,
+    "agent_removed": 177,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 1785,
+    "total_lines_changed": 1962,
+    "agent_percentage": 100,
+    "metric_version": 2
+  },
+  "prompt_attributions": [
+    {
+      "checkpoint_number": 1,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 0,
+      "agent_lines_removed": 0
+    },
+    {
+      "checkpoint_number": 2,
+      "user_lines_added": 0,
+      "user_lines_removed": 0,
+      "agent_lines_added": 1785,
+      "agent_lines_removed": 177
+    }
+  ]
+}
