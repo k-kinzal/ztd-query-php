@@ -37,6 +37,7 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\Syntax\NodeReader::class)]
 #[UsesClass(\SqlFixture\Syntax\NumericLiteral::class)]
 #[UsesClass(\SqlFixture\Syntax\QuotedText::class)]
+#[UsesClass(\SqlFixture\Syntax\SqlText::class)]
 final class SqliteSchemaFetcherTest extends TestCase
 {
     #[Test]

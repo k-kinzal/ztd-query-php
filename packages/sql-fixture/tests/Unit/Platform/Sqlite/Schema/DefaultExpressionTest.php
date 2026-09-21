@@ -15,6 +15,7 @@ use SqlParser\Sqlite\SqliteParser;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Syntax\NodeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Syntax\NumericLiteral::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Syntax\QuotedText::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Syntax\SqlText::class)]
 final class DefaultExpressionTest extends TestCase
 {
     #[DataProvider('providerDefaults')]

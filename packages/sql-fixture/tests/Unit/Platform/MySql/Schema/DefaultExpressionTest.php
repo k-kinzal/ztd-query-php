@@ -14,6 +14,7 @@ use SqlParser\MySql\MySqlParser;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Syntax\NodeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Syntax\NumericLiteral::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\StringLiteral::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Syntax\SqlText::class)]
 final class DefaultExpressionTest extends TestCase
 {
     #[DataProvider('providerDefaults')]

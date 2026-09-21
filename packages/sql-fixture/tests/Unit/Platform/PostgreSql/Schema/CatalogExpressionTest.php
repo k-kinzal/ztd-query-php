@@ -16,6 +16,7 @@ use SqlParser\PostgreSql\PostgreSqlParser;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Syntax\QuotedText::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\PostgreSql\Schema\DefaultExpression::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\PostgreSql\Schema\StringLiteral::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Syntax\SqlText::class)]
 final class CatalogExpressionTest extends TestCase
 {
     #[DataProvider('providerCatalogDefaults')]
