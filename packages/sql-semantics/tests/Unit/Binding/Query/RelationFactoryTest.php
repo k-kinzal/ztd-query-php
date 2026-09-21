@@ -96,4 +96,25 @@ final class RelationFactoryTest extends TestCase
         self::assertSame('Value', $query->outputs[0]->name);
     }
 
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['json_each'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['json_tree'])]
+    public function testFunctionBindsJsonTableColumnsAndArguments(string $name): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('SELECT * FROM ' . $name . "('[1,2]') AS items");
+        self::assertSame(['key','value','type','atom','id','parent','fullkey','path'], array_column($query->outputs, 'name'));
+        self::assertSame(['dynamic','dynamic','text','dynamic','integer','integer','text','text'], array_map(static fn ($output): string => $output->expression->type->name, $query->outputs));
+        self::assertSame('items', $query->relations[0]->alias);
+        self::assertNotNull($query->relations[0]->query);
+        self::assertSame(strtoupper($name), $query->relations[0]->query->outputs[0]->expression->symbol);
+        self::assertSame("'[1,2]'", $query->relations[0]->query->outputs[0]->expression->operands[0]->symbol);
+    }
+
+    public function testFunctionKeepsTheImplicitFunctionName(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT * FROM generate_series(1, 2)');
+        self::assertSame(['generate_series'], array_column($query->outputs, 'name'));
+        self::assertSame('integer', $query->outputs[0]->expression->type->name);
+    }
+
 }

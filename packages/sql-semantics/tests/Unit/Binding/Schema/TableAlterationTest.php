@@ -107,4 +107,14 @@ final class TableAlterationTest extends TestCase
     }
 
 
+
+    public function testApplySqliteColumnAdditionKeepsItsAttributes(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t (id INTEGER)', 'ALTER TABLE t ADD COLUMN n TEXT NOT NULL DEFAULT \'value\'');
+        self::assertSame(['id','n'], array_column($schema->tables[0]->columns, 'name'));
+        self::assertSame('text', $schema->tables[0]->columns[1]->type->name);
+        self::assertSame('not-null', $schema->tables[0]->columns[1]->nullability->value);
+        self::assertNotNull($schema->tables[0]->columns[1]->defaultExpression);
+    }
+
 }

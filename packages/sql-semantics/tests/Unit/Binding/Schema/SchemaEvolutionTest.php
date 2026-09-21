@@ -127,4 +127,12 @@ final class SchemaEvolutionTest extends TestCase
         self::assertSame('>', $query->where?->symbol);
     }
 
+
+    public function testApplyReportsDuplicateDeclarations(): void
+    {
+        $this->expectException(\SqlSemantics\SemanticException::class);
+        $this->expectExceptionMessage('Duplicate table declaration: t');
+        (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER)', 'CREATE TABLE t (n TEXT)');
+    }
+
 }

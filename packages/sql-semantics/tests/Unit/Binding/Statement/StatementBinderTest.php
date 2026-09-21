@@ -97,4 +97,12 @@ final class StatementBinderTest extends TestCase
         self::assertNotNull($statement->assignments['n']->query);
     }
 
+
+    public function testBindRequiresOneStatement(): void
+    {
+        $this->expectException(\SqlSemantics\SemanticException::class);
+        $this->expectExceptionMessage('bind() requires one statement; use bindAll() for a script.');
+        (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1; SELECT 2');
+    }
+
 }

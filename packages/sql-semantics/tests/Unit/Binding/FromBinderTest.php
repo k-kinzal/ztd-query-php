@@ -177,4 +177,15 @@ final class FromBinderTest extends TestCase
         self::assertSame('integer', $query->outputs[0]->expression->type->name);
     }
 
+
+    public function testSqliteInputBindsParenthesizedJoins(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE a (id INTEGER)', 'CREATE TABLE b (id INTEGER)');
+        $query = (new Binder($schema))->bind('SELECT a.id, b.id FROM (a JOIN b ON a.id=b.id)');
+        self::assertSame(['a','b'], array_map(static fn ($relation): string => $relation->declaration->name, $query->relations));
+        self::assertInstanceOf(\SqlSemantics\Model\Join::class, $query->from);
+        self::assertSame('=', $query->from->condition?->symbol);
+        self::assertSame(['id','id'], array_column($query->outputs, 'name'));
+    }
+
 }

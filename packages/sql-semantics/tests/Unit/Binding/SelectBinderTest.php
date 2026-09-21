@@ -84,4 +84,25 @@ final class SelectBinderTest extends TestCase
         self::assertNull($statement->limit);
         self::assertNull($statement->offset);
     }
+
+    public function testBindIsAvailableToQueryConsumersDirectly(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
+        $tables = new \SqlSemantics\Binding\TableResolver($schema, new \SqlSemantics\Ast\Identifiers($schema->dialect), $schema->defaultSchema);
+        $tree = (new \SqlSemantics\Ast\DialectParser($schema->dialect))->parse('SELECT 1 AS value');
+        $query = (new \SqlSemantics\Binding\SelectBinder($tables))->bind($tree);
+        self::assertSame('value', $query->outputs[0]->name);
+        self::assertSame('1', $query->outputs[0]->expression->symbol);
+    }
+
+    public function testBindRejectsMultipleQueries(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
+        $tables = new \SqlSemantics\Binding\TableResolver($schema, new \SqlSemantics\Ast\Identifiers($schema->dialect), $schema->defaultSchema);
+        $tree = (new \SqlSemantics\Ast\DialectParser($schema->dialect))->parse('SELECT 1; SELECT 2');
+        $this->expectException(SemanticException::class);
+        $this->expectExceptionMessage('multiple query statements');
+        (new \SqlSemantics\Binding\SelectBinder($tables))->bind($tree);
+    }
+
 }

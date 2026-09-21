@@ -89,4 +89,12 @@ final class ValuesBinderTest extends TestCase
         self::assertSame(\SqlSemantics\Type\Nullability::MaybeNull, $query->outputs[0]->expression->nullability);
     }
 
+
+    public function testOutputsRejectsInconsistentRowWidths(): void
+    {
+        $this->expectException(\SqlSemantics\SemanticException::class);
+        $this->expectExceptionMessage('VALUES rows must have the same width.');
+        (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('VALUES (1,2), (3)');
+    }
+
 }

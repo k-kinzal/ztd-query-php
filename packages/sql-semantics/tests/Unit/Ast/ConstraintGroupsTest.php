@@ -79,4 +79,12 @@ final class ConstraintGroupsTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t (id INTEGER CONSTRAINT pk PRIMARY KEY, CONSTRAINT positive CHECK (id > 0))');
         self::assertSame(['pk', 'positive'], array_column($schema->tables[0]->constraints, 'name'));
     }
+
+    public function testReadKeepsMultipleLowercaseNamedConstraints(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::Sqlite))->build('create table t (id integer constraint positive check(id>0), n integer, constraint both unique(id,n), constraint valid check(n>0))');
+        self::assertSame(['positive','both','valid'], array_column($schema->tables[0]->constraints, 'name'));
+        self::assertSame(['id','n'], $schema->tables[0]->constraints[1]->columns);
+    }
+
 }

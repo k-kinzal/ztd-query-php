@@ -128,4 +128,35 @@ final class SchemaReaderTest extends TestCase
         $table = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE users (id INTEGER, PRIMARY KEY (ID))')->tables[0];
         self::assertSame(Nullability::NotNull, $table->columns[0]->nullability);
     }
+
+    #[TestWith(['strict'])]
+    #[TestWith(['without rowid'])]
+    public function testPrimaryKeysPromotesOnlyTheSqliteKey(string $option): void
+    {
+        $schema = (new SchemaBuilder(Dialect::Sqlite))->build('create table t (ID text primary key, value text) ' . $option);
+        self::assertSame('not-null', $schema->tables[0]->columns[0]->nullability->value);
+        self::assertSame('maybe-null', $schema->tables[0]->columns[1]->nullability->value);
+    }
+
+    #[TestWith([Dialect::PostgreSql])]
+    #[TestWith([Dialect::MySql])]
+    public function testPrimaryKeysPreservesIdentifierCaseRules(Dialect $dialect): void
+    {
+        $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE t (ID INTEGER PRIMARY KEY, value TEXT)');
+        self::assertSame('not-null', $schema->tables[0]->columns[0]->nullability->value);
+        self::assertSame('maybe-null', $schema->tables[0]->columns[1]->nullability->value);
+    }
+
+    public function testReadCanReadMultipleDeclarationTreesDirectly(): void
+    {
+        $parser = new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql);
+        $reader = new \SqlSemantics\Ast\SchemaReader(new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql), 'public');
+        $tree = $parser->parse('CREATE TABLE a (id INTEGER); CREATE TABLE b (name TEXT)');
+        $tables = $reader->read([$tree]);
+        self::assertSame(['a','b'], array_column($tables, 'name'));
+        self::assertSame('id', $tables[0]->columns[0]->name);
+        self::assertSame('name', $tables[1]->columns[0]->name);
+        self::assertCount(1, $reader->columnNodes($tree->find('CreateStmt')[0]));
+    }
+
 }
