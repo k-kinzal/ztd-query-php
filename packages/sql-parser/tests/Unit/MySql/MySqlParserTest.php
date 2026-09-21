@@ -95,6 +95,19 @@ final class MySqlParserTest extends TestCase
         self::assertSame('WHERE u.id = ? AND name LIKE \'a%\'', $tree->find('where_clause')[0]->text($sql));
     }
 
+    public function testParseWritesTheTextBackWithItsCommentsAndWhitespace(): void
+    {
+        $sql = "  SELECT /* one */ 1 , 2 # two\nFROM  t  ;\n\n-- done\n";
+        $versioned = 'SELECT 1 /*!40101 , 2 */ FROM t';
+
+        $rollup = 'SELECT a FROM t GROUP BY a WITH  ROLLUP';
+
+        self::assertSame($sql, (new MySqlParser())->parse($sql)->toString());
+        self::assertSame($versioned, (new MySqlParser())->parse($versioned)->toString());
+        self::assertSame($rollup, (new MySqlParser())->parse($rollup)->toString());
+        self::assertSame('-- nothing at all', (new MySqlParser())->parse('-- nothing at all')->toString());
+    }
+
     public function testParseFollowsTheChosenRelease(): void
     {
         self::assertSame('query', (new MySqlParser('mysql-5.6.51'))->parse('SELECT 1')->name);

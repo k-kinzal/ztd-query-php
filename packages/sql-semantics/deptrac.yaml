@@ -1,0 +1,48 @@
+deptrac:
+  paths: [./src]
+  analyser:
+    types: [class, use]
+  layers:
+    - name: API
+      collectors:
+        - type: classNameRegex
+          value: '/^SqlSemantics\\(Binder|SchemaBuilder)$/'
+    - name: Foundation
+      collectors:
+        - type: classNameRegex
+          value: '/^SqlSemantics\\(Dialect|SemanticException)$/'
+    - name: Syntax
+      collectors:
+        - type: directory
+          value: 'src/Ast/'
+    - name: Binding
+      collectors:
+        - type: directory
+          value: 'src/Binding/'
+    - name: Model
+      collectors:
+        - type: directory
+          value: 'src/Model/'
+    - name: Schema
+      collectors:
+        - type: classNameRegex
+          value: '/^SqlSemantics\\Schema$/'
+        - type: directory
+          value: 'src/Schema/'
+    - name: Types
+      collectors:
+        - type: directory
+          value: 'src/Type/'
+    - name: Parser
+      collectors:
+        - type: classNameRegex
+          value: '/^SqlParser\\/'
+  ruleset:
+    API: [Foundation, Syntax, Binding, Schema, Model, Parser]
+    Foundation: [Parser]
+    Syntax: [Foundation, Schema, Types, Parser]
+    Binding: [Foundation, Syntax, Schema, Model, Types, Parser]
+    Model: [Schema, Types, Parser]
+    Schema: [Foundation, Types, Parser]
+    Types: [Foundation]
+    Parser: []

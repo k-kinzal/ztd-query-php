@@ -45,6 +45,15 @@ $result = $stmt->fetchAll();
 
 See [packages/ztd-query-core/README.md](packages/ztd-query-core/README.md) for full documentation.
 
+## SQL semantics
+
+[`packages/sql-semantics`](packages/sql-semantics/) implements the semantic phase
+of a database front end. It accepts schema DDL and SELECT strings and returns
+bound statements with types, conservative NULL facts, value provenance, and
+relational structure for fixture generation and SQL metadata consumers. See its
+[semantic design](packages/sql-semantics/docs/design.md) and
+[supported surface](packages/sql-semantics/docs/support.md).
+
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.

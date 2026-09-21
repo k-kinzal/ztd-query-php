@@ -14,6 +14,10 @@ use SqlParser\Lexer\Token;
  * the rule of the upstream grammar file that built it. The ordinal says
  * which alternative of the rule matched.
  *
+ * Nothing of the text is left out. Every token carries the whitespace and
+ * comments written before it and the tree carries what follows its last
+ * token, so a tree writes back the text it was parsed from, byte for byte.
+ *
  * @visibility public
  *
  * @example Reading the text a node covers
@@ -23,6 +27,11 @@ use SqlParser\Lexer\Token;
  *     $tree = new \SqlParser\Parser\Node('statement', 0, [$select, new \SqlParser\Parser\Node('expr', 2, [$one])]);
  *     $tree->find('expr')[0]->text($sql) // => '1'
  *     $tree->text($sql) // => 'SELECT 1'
+ * @example Writing the tree back as the text it was parsed from
+ *     $select = new \SqlParser\Lexer\Token(3, 'SELECT', 'SELECT', 0);
+ *     $one = new \SqlParser\Lexer\Token(7, 'NUM', '1', 9, '   ');
+ *     $tree = new \SqlParser\Parser\Node('statement', 0, [$select, new \SqlParser\Parser\Node('expr', 2, [$one])], ' ');
+ *     $tree->toString() // => 'SELECT   1 '
  */
 final class Node
 {
@@ -30,11 +39,13 @@ final class Node
      * @param string $name Nonterminal name as the grammar spells it
      * @param int $ordinal Which alternative of the nonterminal matched, counted from zero
      * @param list<Node|Token> $children What the alternative matched, in order
+     * @param string $trailing Whitespace and comments written after the last token, which only the root of a tree carries
      */
     public function __construct(
         public readonly string $name,
         public readonly int $ordinal,
         public readonly array $children,
+        public readonly string $trailing = '',
     ) {
     }
 
@@ -113,5 +124,20 @@ final class Node
         $span = $this->span();
 
         return $span === null ? '' : substr($source, $span[0], $span[1] - $span[0]);
+    }
+
+    /**
+     * Writes the node back as the SQL text it was parsed from, trivia included.
+     *
+     * @return string The text, which for the root of a tree is the whole of what was parsed
+     */
+    public function toString(): string
+    {
+        $text = '';
+        foreach ($this->children as $child) {
+            $text .= $child->toString();
+        }
+
+        return $text . $this->trailing;
     }
 }

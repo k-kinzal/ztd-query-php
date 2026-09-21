@@ -30,6 +30,21 @@ $select->tokens();                  // every Token under the node
 
 Tokens the server synthesises are in the tree with empty text: MySQL's `END_OF_INPUT` and the semicolon SQLite supplies at the end. MySQL's `WITH ROLLUP` is one token spanning both words, as it is in the server.
 
+## Writing the text back
+
+Nothing of the text is left out of the tree. A token carries in `leading` the whitespace and comments written before it, and the tree carries in `trailing` whatever follows its last token, so `toString()` answers the text the tree was parsed from without being given it.
+
+```php
+$sql = "SELECT a -- the column\nFROM t;  ";
+$tree = (new \SqlParser\Sqlite\SqliteParser())->parse($sql);
+
+$tree->toString() === $sql;         // true
+$tree->find('select')[0]->toString();   // "SELECT a -- the column\nFROM t"
+$tree->tokens()[1]->leading;        // ' '
+```
+
+A node under the root writes back from the trivia before its first token through its last token, so printing a subtree gives the text of that subtree with its comments, which is what `text()` answers when the source is at hand. Text that holds no token at all, such as a PostgreSQL input that is only a comment, is carried by the tree alone.
+
 ## Errors
 
 `SqlParser\Parser\SyntaxException` carries the rejected `token`, the `expected` terminal names, the byte `offset` and the line and column `position`. `SqlParser\Lexer\LexicalException` reports text no token starts with, such as an unterminated string. Both extend `SqlParser\Lexer\SourceException`.
