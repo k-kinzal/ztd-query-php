@@ -31,6 +31,10 @@ use SqlParser\Table\TableFile;
  *     $tree = $parser->parse('SELECT id FROM users WHERE id = ?');
  *     $tree->name // => 'start_entry'
  *     count($tree->find('table_reference')) // => 1
+ * @example Writing a parsed statement back
+ *     $sql = "SELECT id FROM users -- everyone\n";
+ *     $parser = new \SqlParser\MySql\MySqlParser();
+ *     $parser->parse($sql)->toString() === $sql // => true
  * @example Choosing a release
  *     $parser = new \SqlParser\MySql\MySqlParser('mysql-5.7.44');
  *     $parser->version() // => 'mysql-5.7.44'
@@ -74,6 +78,10 @@ final class MySqlParser
     /**
      * Reads SQL text into the terminals of the grammar, the end marker last.
      *
+     * A token carries the whitespace and comments skipped before it and the
+     * end marker what follows the last of them, so the tokens hold every byte
+     * of the text.
+     *
      * @param string $sql The SQL text
      *
      * @return list<Token> The tokens in text order
@@ -90,7 +98,7 @@ final class MySqlParser
      *
      * @param string $sql The SQL text
      *
-     * @return Node The tree, rooted at the grammar's start symbol
+     * @return Node The tree, rooted at the grammar's start symbol, holding every byte of the text
      *
      * @throws LexicalException When the text holds something no token starts with
      * @throws SyntaxException When the statement is not in the grammar of the release

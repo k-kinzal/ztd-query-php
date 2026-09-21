@@ -26,4 +26,11 @@ final class TokenTest extends TestCase
         self::assertTrue($token->is('SELECT_SYM'));
         self::assertFalse($token->is('select'));
     }
+
+    public function testToStringWritesTheTriviaBeforeTheText(): void
+    {
+        self::assertSame(' /* one */ 1', (new Token(7, 'NUM', '1', 11, ' /* one */ '))->toString());
+        self::assertSame('SELECT', (new Token(3, 'SELECT_SYM', 'SELECT', 0))->toString());
+        self::assertSame("\n-- done\n", (new Token(0, '$end', '', 9, "\n-- done\n"))->toString());
+    }
 }
