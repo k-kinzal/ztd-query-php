@@ -39,6 +39,9 @@ final class MutationBinder
         $scope = $input->scope ?? new Scope($this->context->tables->identifiers, $targets, queries: $this->context);
         $scope = $this->conflictScope($scope, $targets, $statement, $id);
         $writes = (new \SqlSemantics\Binding\Write\AssignmentBinder())->bind($statement, $scope, new Scope($scope->identifiers, $targets, queries: $this->context));
+        if ($kind === 'UPDATE') {
+            $targets = $this->updatedTargets($targets, $writes, $scope);
+        }
         $conflicts = (new \SqlSemantics\Binding\Write\ConflictBinder())->bind($statement, $scope);
         $assignments = $this->assignments([...$writes, ...array_merge([], ...array_map(static fn ($conflict): array => $conflict->assignments, $conflicts))]);
         $whereNode = in_array($kind, ['INSERT', 'REPLACE'], true) ? null : (QueryNodes::local($statement, ['where_clause', 'opt_where_clause', 'where_or_current_clause', 'where_opt', 'where_opt_ret'])[0] ?? null);
@@ -107,6 +110,33 @@ final class MutationBinder
             }
         }
         return $targets;
+    }
+
+    /**
+     * Keeps only written relation occurrences; unresolved unqualified names retain candidates.
+     *
+     * @param list<TableUse> $targets
+     * @param list<\SqlSemantics\Model\Write\Assignment> $writes
+     * @return list<TableUse>
+     */
+    public function updatedTargets(array $targets, array $writes, Scope $scope): array
+    {
+        $ids = [];
+        foreach ($writes as $write) {
+            foreach ($write->targets as $destination) {
+                $column = \SqlSemantics\Model\Write\Destination::column($destination);
+                if ($column->binding !== null) {
+                    $ids[] = $column->binding->relationId;
+                    continue;
+                }
+                foreach ($targets as $target) {
+                    if ($scope->matches($target, array_slice($column->reference, 0, -1))) {
+                        $ids[] = $target->id;
+                    }
+                }
+            }
+        }
+        return array_values(array_filter($targets, static fn (TableUse $target): bool => in_array($target->id, $ids, true)));
     }
 
     /**

@@ -192,4 +192,30 @@ final class MutationBinderTest extends TestCase
         self::assertSame(['a'], array_column($statement->targets, 'alias'));
         self::assertSame(['a','b'], array_column($statement->relations, 'alias'));
     }
+
+    public function testUpdatedTargetsExcludesReadOnlyJoinInputs(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INTEGER)')))->bind('UPDATE t a JOIN t b ON a.id=b.id SET a.id=b.id');
+        self::assertSame(['a'], array_column($statement->targets, 'alias'));
+        self::assertSame(['a','b'], array_column($statement->relations, 'alias'));
+        self::assertSame($statement->relations[1]->id, $statement->writes[0]->value->binding?->relationId);
+    }
+    public function testUpdatedTargetsPreservesMultipleWrittenAliases(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INTEGER)')))->bind('UPDATE t a JOIN t b ON a.id=b.id SET a.id=1,b.id=2');
+        self::assertSame(['a','b'], array_column($statement->targets, 'alias'));
+        self::assertSame(['1','2'], array_map(static fn ($write) => $write->value->symbol, $statement->writes));
+    }
+    public function testUpdatedTargetsRetainsQualifiedUnresolvedDestinations(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->analyze('UPDATE missing a JOIN missing b ON a.id=b.id SET a.id=1')->statement;
+        self::assertSame(['a'], array_column($statement->targets, 'alias'));
+        self::assertSame(['a','id'], $statement->writes[0]->targets[0]->reference);
+    }
+    public function testUpdatedTargetsRetainsCandidatesForUnqualifiedUnknownColumns(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->analyze('UPDATE missing a JOIN missing b ON a.id=b.id SET value=1')->statement;
+        self::assertSame(['a','b'], array_column($statement->targets, 'alias'));
+        self::assertSame(['value'], $statement->writes[0]->targets[0]->reference);
+    }
 }
