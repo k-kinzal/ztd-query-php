@@ -113,4 +113,53 @@ final class ExpressionInvariantTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new \SqlSemantics\Model\Expression(\SqlSemantics\Model\ExpressionKind::Literal, $value->type, $value->nullability, $value->source, symbol: '2');
     }
+
+    public function testCheckPreservesAnUnresolvedReference(): void
+    {
+        $expression = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->analyze('SELECT missing')->statement->outputs[0]->expression;
+        self::assertSame('unresolved-column', $expression->kind->value);
+        self::assertSame(['missing'], $expression->reference);
+        self::assertSame('unknown', $expression->type->name);
+    }
+    /**
+     * @param list<string> $reference
+     */
+    #[\PHPUnit\Framework\Attributes\TestWith(['unknown', []])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['integer', ['missing']])]
+    public function testCheckRejectsIncompleteUnknownFacts(string $type, array $reference): void
+    {
+        $source = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1')->source;
+        $this->expectException(InvalidStructure::class);
+        new \SqlSemantics\Model\Expression(\SqlSemantics\Model\ExpressionKind::UnresolvedColumn, new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, $type), \SqlSemantics\Type\Nullability::Unknown, $source, reference: $reference);
+    }
+    public function testCheckRejectsMixedDialectOperands(): void
+    {
+        $value = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('SELECT 1')->outputs[0]->expression;
+        $this->expectException(InvalidStructure::class);
+        new \SqlSemantics\Model\Expression(\SqlSemantics\Model\ExpressionKind::Operator, new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, 'integer'), $value->nullability, $value->source, [$value], symbol: '-');
+    }
+    #[\PHPUnit\Framework\Attributes\TestWith([\SqlSemantics\Model\ExpressionKind::Subquery])]
+    #[\PHPUnit\Framework\Attributes\TestWith([\SqlSemantics\Model\ExpressionKind::Field])]
+    #[\PHPUnit\Framework\Attributes\TestWith([\SqlSemantics\Model\ExpressionKind::Subscript])]
+    public function testCheckRequiresOperationInputs(\SqlSemantics\Model\ExpressionKind $kind): void
+    {
+        $value = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1')->outputs[0]->expression;
+        $this->expectException(InvalidStructure::class);
+        new \SqlSemantics\Model\Expression($kind, $value->type, $value->nullability, $value->source);
+    }
+    public function testCheckRejectsDefaultWithOperands(): void
+    {
+        $value = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1')->outputs[0]->expression;
+        $this->expectException(InvalidStructure::class);
+        new \SqlSemantics\Model\Expression(\SqlSemantics\Model\ExpressionKind::DefaultValue, $value->type, $value->nullability, $value->source, [$value]);
+    }
+    public function testCheckAcceptsSubqueryDefaultAndAccessOperations(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER[])'));
+        $query = $binder->bind('SELECT (SELECT 1), a[1], $1 FROM t');
+        self::assertSame('subquery', $query->outputs[0]->expression->kind->value);
+        self::assertSame('subscript', $query->outputs[1]->expression->kind->value);
+        self::assertSame('$1', $query->outputs[2]->expression->symbol);
+        self::assertSame('default', $binder->bind('INSERT INTO t VALUES(DEFAULT)')->rows[0][0]->kind->value);
+    }
 }

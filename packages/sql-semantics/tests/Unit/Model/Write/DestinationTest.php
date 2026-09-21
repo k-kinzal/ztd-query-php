@@ -95,6 +95,7 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ConstraintReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\Identifiers::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\StatementList::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
 final class DestinationTest extends TestCase
 {
     public function testColumnRetainsArrayAndRecordDestinationRoots(): void

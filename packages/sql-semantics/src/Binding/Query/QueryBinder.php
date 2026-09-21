@@ -12,7 +12,7 @@ use SqlSemantics\Binding\FromBinder;
 use SqlSemantics\Binding\ProjectionBinder;
 use SqlSemantics\Binding\Scope;
 use SqlSemantics\Binding\SelectModifiersBinder;
-use SqlSemantics\Binding\Statement\MutationBinder;
+use SqlSemantics\Binding\Statement\StatementBinder;
 use SqlSemantics\Binding\TypeResolution;
 use SqlSemantics\Model\BoundSelect;
 use SqlSemantics\Model\BoundStatement;
@@ -113,7 +113,7 @@ final class QueryBinder
                 $name = $this->context->tables->identifiers->parts($nameNode)[0];
                 $context = new QueryContext($this->context->tables, $this->context->ids, $ctes);
                 if (in_array($queryNode->name, ['InsertStmt', 'UpdateStmt', 'DeleteStmt', 'MergeStmt'], true)) {
-                    $ctes[$name] = $this->rename((new MutationBinder($context))->bind($queryNode, $queryNode), $cte);
+                    $ctes[$name] = $this->rename((new StatementBinder($context->tables))->node($queryNode, $queryNode, $context), $cte);
                     continue;
                 }
                 $body = QueryNodes::body($queryNode);
@@ -143,7 +143,7 @@ final class QueryBinder
             $outputs[] = new OutputColumn($index, $names[$index] ?? $output->name, $output->expression);
         }
         $class = $query::class;
-        return new $class($query->scopeId, $query->from, $query->relations, $outputs, $query->where, $query->distinct, $query->orderBy, $query->limit, $query->offset, $query->source, $query->groupBy, $query->having, $query->ctes, $query->branches, $query->setOperator, $query->clauses, kind: $query->kind, targets: $query->targets, assignments: $query->assignments, queries: $query->queries, rows: $query->rows, withTies: $query->withTies, syntaxClauses: $query->syntaxClauses, declarations: $query->declarations, insertion: $query->insertion, writes: $query->writes, settings: $query->settings, conflicts: $query->conflicts, definitions: $query->definitions, merge: $query->merge);
+        return new $class($query->scopeId, $query->from, $query->relations, $outputs, $query->where, $query->distinct, $query->orderBy, $query->limit, $query->offset, $query->source, $query->groupBy, $query->having, $query->ctes, $query->branches, $query->setOperator, $query->clauses, kind: $query->kind, targets: $query->targets, assignments: $query->assignments, queries: $query->queries, rows: $query->rows, withTies: $query->withTies, syntaxClauses: $query->syntaxClauses, declarations: $query->declarations, insertion: $query->insertion, writes: $query->writes, settings: $query->settings, conflicts: $query->conflicts, definitions: $query->definitions, merge: $query->merge, statements: $query->statements);
     }
 
     /**

@@ -37,15 +37,21 @@ final class StatementBinder
         if (count($statements) !== 1) {
             throw new SemanticException('statement-count', 'bind() requires one statement; use bindAll() for a script.', $tree);
         }
-        $statement = $statements[0];
+        return $this->node($tree, $statements[0], new QueryContext($this->tables));
+    }
+
+    /**
+     * Binds a nested command without reparsing or losing its shared identity allocator.
+     */
+    public function node(Node $tree, Node $statement, QueryContext $context): BoundStatement
+    {
         $operation = self::operation($statement);
-        $context = new QueryContext($this->tables);
         $select = Tree::child($statement, ['SelectStmt', 'select_stmt', 'select']);
-        if (($select !== null && !in_array($operation, ['INSERT', 'REPLACE', 'CREATE'], true)) || in_array($operation, ['SELECT', 'VALUES', 'TABLE'], true)) {
+        if (($operation === 'WITH' && $select !== null) || in_array($operation, ['SELECT', 'VALUES', 'TABLE', '('], true)) {
             return $context->bind($tree);
         }
         $mutation = Tree::outer($statement, ['InsertStmt', 'UpdateStmt', 'DeleteStmt', 'MergeStmt', 'insert_stmt', 'update_stmt', 'delete_stmt', 'replace_stmt'])[0] ?? null;
-        if ($mutation !== null || in_array($operation, ['INSERT', 'REPLACE', 'UPDATE', 'DELETE', 'MERGE'], true)) {
+        if (in_array($operation, ['INSERT', 'REPLACE', 'UPDATE', 'DELETE', 'MERGE'], true)) {
             $context = (new \SqlSemantics\Binding\Query\QueryBinder($context))->with($tree, null);
             if ($operation === 'MERGE') {
                 return (new \SqlSemantics\Binding\Write\MergeBinder())->bind($tree, $mutation ?? $statement, $context);

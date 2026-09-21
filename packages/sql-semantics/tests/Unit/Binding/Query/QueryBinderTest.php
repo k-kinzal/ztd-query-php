@@ -267,4 +267,15 @@ final class QueryBinderTest extends TestCase
         self::assertSame('n', $statement->ctes['q']->outputs[0]->name);
     }
 
+
+    public function testWithRetainsNestedMergeEffectsAndOutputAliases(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER); CREATE TABLE s(id INTEGER)');
+        $statement = (new Binder($schema))->bind('WITH changed(result) AS (WITH input AS (SELECT id FROM s) MERGE INTO t USING input ON t.id=input.id WHEN MATCHED THEN DELETE RETURNING t.id) SELECT result FROM changed');
+        self::assertSame('MERGE', $statement->ctes['changed']->kind);
+        self::assertNotNull($statement->ctes['changed']->merge);
+        self::assertSame('delete', $statement->ctes['changed']->merge->actions[0]->action);
+        self::assertSame(['input'], array_keys($statement->ctes['changed']->ctes));
+        self::assertSame(['result'], array_column($statement->ctes['changed']->outputs, 'name'));
+    }
 }

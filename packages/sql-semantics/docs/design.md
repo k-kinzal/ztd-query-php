@@ -62,7 +62,10 @@ built-in types and invalid name bindings still produce semantic diagnostics.
 `BoundStatement` provides the common immutable result. `BoundSelect` identifies a
 query. Mutation results additionally retain targets, assignments, VALUES tuples,
 input queries, and returned output columns. Configuration commands expose named effects and typed values. Other utility
-commands retain their source operation, argument expressions, and embedded queries. `Binder::bindAll()` keeps script boundaries.
+commands retain their source operation, argument expressions, and embedded queries.
+The `statements` collection preserves nested command boundaries, including
+EXPLAIN, DECLARE, and prepared statements; nested mutations use the same binding
+path as top-level statements and share the identity allocator. `Binder::bindAll()` keeps script boundaries.
 
 A fixture generator must traverse declaration constraints, input relations,
 nested queries, join conditions, filters, groups, and output requirements. It owns

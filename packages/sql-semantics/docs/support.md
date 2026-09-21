@@ -38,7 +38,8 @@ collations, dialect-specific types, named constraints, or table options.
 ## Queries and fixture inputs
 
 `Binder::bind()` returns a `BoundStatement`; a query returns its `BoundSelect`
-subtype. `bindAll()` retains script statement boundaries. Query results expose:
+subtype. `bindAll()` retains script statement boundaries. `statements` retains nested
+command boundaries inside utility wrappers. Query results expose:
 
 - Ordered outputs and their typed expression graphs.
 - Relation occurrences, aliases, derived queries, CTEs, and correlated scopes.

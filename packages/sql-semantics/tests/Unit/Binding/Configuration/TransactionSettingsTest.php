@@ -112,4 +112,18 @@ final class TransactionSettingsTest extends TestCase
         self::assertSame('next-transaction', $statement->settings[0]->scope);
         self::assertSame('READ COMMITTED', $statement->settings[0]->values[0]->symbol);
     }
+
+    public function testBindRetainsIsolationAccessAndDeferrability(): void
+    {
+        $settings = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY, NOT DEFERRABLE')->settings;
+        self::assertSame(['transaction_isolation','transaction_access','transaction_deferrable'], array_map(static fn ($setting) => $setting->name[0], $settings));
+        self::assertSame(['session','session','session'], array_column($settings, 'scope'));
+        self::assertSame(['REPEATABLE READ','READ ONLY','NOT DEFERRABLE'], array_map(static fn ($setting) => $setting->values[0]->symbol, $settings));
+    }
+    public function testBindRetainsGlobalMysqlIsolation(): void
+    {
+        $settings = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SET GLOBAL TRANSACTION ISOLATION LEVEL READ COMMITTED, READ WRITE')->settings;
+        self::assertSame(['global','global'], array_column($settings, 'scope'));
+        self::assertSame(['READ COMMITTED','READ WRITE'], array_map(static fn ($setting) => $setting->values[0]->symbol, $settings));
+    }
 }

@@ -123,4 +123,30 @@ final class AssignmentBinderTest extends TestCase
         self::assertSame('t', $statement->writes[0]->targets[0]->binding?->table->name);
         self::assertSame('u', $statement->writes[0]->value->binding?->table->name);
     }
+
+    public function testTargetTreatsKeywordColumnNamesAsStorageReferences(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(xmlnamespaces INTEGER[])'));
+        $statement = $binder->bind('UPDATE t SET xmlnamespaces[1]=2');
+        self::assertSame('subscript', $statement->writes[0]->targets[0]->kind->value);
+        self::assertSame('xmlnamespaces', $statement->writes[0]->targets[0]->operands[0]->binding?->column->name);
+        self::assertSame('1', $statement->writes[0]->targets[0]->operands[1]->symbol);
+    }
+    public function testAssignmentChecksSubqueryValuesAgainstTupleDestinations(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER,b TEXT)'));
+        $statement = $binder->bind("UPDATE t SET (a,b)=(SELECT 1,'x')");
+        self::assertSame(['a','b'], array_map(static fn ($target) => $target->binding?->column->name, $statement->writes[0]->targets));
+        self::assertNotNull($statement->writes[0]->value->query);
+        self::assertSame('1', $statement->writes[0]->value->query->outputs[0]->expression->symbol);
+        self::assertSame('implicit', $statement->writes[0]->value->query->outputs[1]->expression->symbol);
+        self::assertSame("'x'", $statement->writes[0]->value->query->outputs[1]->expression->operands[0]->symbol);
+    }
+    public function testAssignmentDiagnosesKnownTypeMismatch(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER,b TEXT)'));
+        $this->expectException(SemanticException::class);
+        $this->expectExceptionMessage('Cannot assign boolean to integer');
+        $binder->bind("UPDATE t SET (a,b)=(TRUE,'x')");
+    }
 }

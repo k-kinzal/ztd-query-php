@@ -119,4 +119,26 @@ final class AssignmentRulesTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INTEGER)')))->bind("UPDATE t SET id='42'");
         self::assertSame("'42'", $statement->writes[0]->value->symbol);
     }
+
+    public function testCheckAllowsNullableArrayElementsInANonNullArray(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER[] NOT NULL)'));
+        self::assertSame('NULL', $binder->bind('UPDATE t SET a[1]=NULL')->writes[0]->value->symbol);
+        self::assertSame('default', $binder->bind('UPDATE t SET a=DEFAULT')->writes[0]->value->kind->value);
+    }
+    #[\PHPUnit\Framework\Attributes\TestWith(['SMALLINT','1'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['VARCHAR(20)','1'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['CHAR(20)','1'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['TEXT','TRUE'])]
+    public function testCheckRetainsAssignmentCoercions(string $type, string $value): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a '.$type.')')))->bind('INSERT INTO t VALUES('.$value.')');
+        self::assertSame($value, $statement->rows[0][0]->symbol);
+    }
+    public function testCheckKeepsUnresolvedDestinationDiagnostics(): void
+    {
+        $analysis = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->analyze('UPDATE missing SET a=NULL');
+        self::assertContains('unknown-column', array_column($analysis->diagnostics, 'reason'));
+        self::assertSame('unresolved-column', $analysis->statement->writes[0]->targets[0]->kind->value);
+    }
 }

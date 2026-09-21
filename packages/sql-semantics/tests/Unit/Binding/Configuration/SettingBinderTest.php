@@ -150,4 +150,22 @@ final class SettingBinderTest extends TestCase
         self::assertSame(['max_connections'], $named->name);
         self::assertTrue($named->ifExists);
     }
+
+    public function testBindHandlesLowercaseVariablesAndScopedNames(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
+        $statement = $binder->bind("set @@local.sql_mode='ANSI', @x:=2, persist_only.max_connections=3");
+        self::assertSame(['session','user','session'], array_column($statement->settings, 'scope'));
+        self::assertSame([['sql_mode'],['x'],['persist_only','max_connections']], array_column($statement->settings, 'name'));
+        self::assertSame('2', $statement->settings[1]->values[0]->symbol);
+    }
+    public function testPragmaRetainsParenthesizedValue(): void
+    {
+        $setting = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('pragma main.cache_size(-2000);')->settings[0];
+        self::assertSame(['main','cache_size'], $setting->name);
+        self::assertSame('set', $setting->action);
+        self::assertCount(1, $setting->values);
+        self::assertSame('-', $setting->values[0]->symbol);
+        self::assertSame('2000', $setting->values[0]->operands[0]->symbol);
+    }
 }

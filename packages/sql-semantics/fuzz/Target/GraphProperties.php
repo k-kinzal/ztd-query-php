@@ -66,7 +66,7 @@ final class GraphProperties
         foreach ($statement->orderBy as $ordering) {
             $this->expression($ordering->expression);
         }
-        foreach ([...array_values($statement->ctes), ...$statement->branches, ...$statement->queries] as $query) {
+        foreach ([...array_values($statement->ctes), ...$statement->branches, ...$statement->queries, ...$statement->statements] as $query) {
             $this->statement($query);
         }
         foreach ([...$statement->relations, ...$statement->targets] as $relation) {

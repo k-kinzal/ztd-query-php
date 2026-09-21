@@ -145,4 +145,32 @@ final class ExpressionEditTest extends TestCase
         self::assertSame('local', $changed->settings[0]->scope);
         self::assertSame("'64MB'", $statement->settings[0]->values[0]->symbol);
     }
+
+    public function testSqlEditsAScriptStatementWithNonzeroSourceOffsets(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $statement = $binder->bindAll('SELECT 1; /* second */ SELECT 2+3;')[1];
+        $edited = $binder->replaceExpression($statement, $statement->outputs[0]->expression->operands[0], '4');
+        self::assertStringContainsString('/* second */', $edited->toSql());
+        self::assertSame('4', $edited->outputs[0]->expression->operands[0]->symbol);
+        self::assertSame('3', $edited->outputs[0]->expression->operands[1]->symbol);
+    }
+    public function testSqlRequiresOwnershipBeforeConsideringMatchingText(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $statement = $binder->bind('SELECT 1');
+        $foreign = $binder->bind('SELECT 1')->outputs[0]->expression;
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('The expression does not belong to this statement.');
+        $binder->replaceExpression($statement, $foreign, '2');
+    }
+    public function testSqlKeepsCommentsFromAbsorbingSettingSeparators(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
+        $statement = $binder->bind('SET @a=1,@b=2');
+        $edited = $binder->replaceExpression($statement, $statement->settings[0]->values[0], '3 -- keep');
+        self::assertCount(2, $edited->settings);
+        self::assertSame('3', $edited->settings[0]->values[0]->symbol);
+        self::assertSame('2', $edited->settings[1]->values[0]->symbol);
+    }
 }

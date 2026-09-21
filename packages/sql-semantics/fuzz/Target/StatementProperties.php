@@ -28,7 +28,7 @@ final class StatementProperties
         if (in_array($statement->kind, ['INSERT', 'REPLACE'], true)) {
             $this->insertion($statement);
         }
-        if ($statement->kind === 'MERGE' && ($statement->merge === null || count($statement->merge->actions) !== count(Tree::outer($statement->source, ['merge_when_clause'])))) {
+        if ($statement->kind === 'MERGE' && ($statement->merge === null || count($statement->merge->actions) !== count(QueryNodes::local($statement->source, ['merge_when_clause'])))) {
             throw new RuntimeException('MERGE matching or ordered branches were omitted.');
         }
         if ($statement->kind === 'UPDATE' && $statement->writes === []) {

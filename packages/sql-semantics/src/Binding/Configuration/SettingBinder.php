@@ -83,7 +83,7 @@ final class SettingBinder
     {
         $settingScope = 'session';
         $words = SettingTokens::words($tokens);
-        if (in_array($words[0] ?? '', ['SESSION', 'LOCAL', 'GLOBAL', 'PERSIST', 'PERSIST_ONLY'], true) && ($words[1] ?? '') !== 'AUTHORIZATION') {
+        if (in_array($words[0] ?? '', ['SESSION', 'LOCAL', 'GLOBAL', 'PERSIST', 'PERSIST_ONLY'], true) && !in_array($words[1] ?? '', ['AUTHORIZATION', '.', '=', ':=', 'TO'], true)) {
             $settingScope = strtolower(str_replace('_', '-', array_shift($words)));
             array_shift($tokens);
         }

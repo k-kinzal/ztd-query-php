@@ -51,6 +51,7 @@ final class StatementInvariant
         Collections::objects($statement->orderBy, \SqlSemantics\Model\Ordering::class);
         Collections::objects($statement->groupBy, \SqlSemantics\Model\Expression::class);
         Collections::objects($statement->assignments, \SqlSemantics\Model\Expression::class, false);
+        Collections::objects($statement->statements, BoundStatement::class);
         Collections::objects($statement->ctes, BoundStatement::class, false);
         Collections::objects($statement->queries, \SqlSemantics\Model\BoundSelect::class);
         Collections::objects($statement->branches, \SqlSemantics\Model\BoundSelect::class);

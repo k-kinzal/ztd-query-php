@@ -107,4 +107,26 @@ final class ConflictActionTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new \SqlSemantics\Model\Write\ConflictAction('delete', [], null, null, [], null, $statement->source);
     }
+
+    public function testRejectsAConditionOnDoNothing(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT TRUE');
+        $this->expectException(InvalidStructure::class);
+        new \SqlSemantics\Model\Write\ConflictAction('nothing', [], null, null, [], $statement->outputs[0]->expression, $statement->source);
+    }
+    public function testRejectsAssignmentsOnReplace(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('UPDATE t SET id=1');
+        $this->expectException(InvalidStructure::class);
+        new \SqlSemantics\Model\Write\ConflictAction('replace', [], null, null, $statement->writes, null, $statement->source);
+    }
+    public function testRetainsValidConflictActions(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
+        self::assertSame('nothing', $binder->bind('INSERT INTO t VALUES(1) ON CONFLICT DO NOTHING')->conflicts[0]->action);
+        $update = $binder->bind('INSERT INTO t VALUES(1) ON CONFLICT(id) DO UPDATE SET id=2 WHERE t.id=1')->conflicts[0];
+        self::assertSame('2', $update->assignments[0]->value->symbol);
+        self::assertSame('=', $update->where?->symbol);
+        self::assertSame('replace', (new \SqlSemantics\Model\Write\ConflictAction('replace', [], null, null, [], null, $update->source))->action);
+    }
 }

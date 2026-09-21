@@ -94,6 +94,8 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ConstraintReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\Identifiers::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\StatementList::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\SemanticException::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\TableUse::class)]
 final class MergeBinderTest extends TestCase
 {
     public function testBindRetainsInputsMatchingAndOrderedBranches(): void
@@ -130,5 +132,17 @@ final class MergeBinderTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER); CREATE TABLE s(id INTEGER)'));
         $this->expectException(\SqlSemantics\SemanticException::class);
         $binder->bind('MERGE INTO t USING s ON t.id=s.id WHEN NOT MATCHED BY SOURCE AND s.id>0 THEN DELETE');
+    }
+
+    public function testBindDoesNotCollectBranchesFromNestedInputs(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER); CREATE TABLE s(id INTEGER)');
+        $statement = (new Binder($schema))->analyze('MERGE INTO t USING (WITH changed AS (MERGE INTO t USING s ON t.id=s.id WHEN MATCHED THEN DELETE RETURNING t.id) SELECT id FROM changed) AS input ON t.id=input.id WHEN MATCHED THEN DO NOTHING')->statement;
+        self::assertNotNull($statement->merge);
+        self::assertCount(1, $statement->merge->actions);
+        self::assertSame('nothing', $statement->merge->actions[0]->action);
+        self::assertInstanceOf(\SqlSemantics\Model\TableUse::class, $statement->merge->input);
+        self::assertNotNull($statement->merge->input->query);
+        self::assertSame('delete', $statement->merge->input->query->ctes['changed']->merge?->actions[0]->action);
     }
 }

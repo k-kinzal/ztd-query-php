@@ -42,7 +42,7 @@ final class MergeBinder
         if ($condition === null) {
             Tree::invalid($statement, 'MERGE matching condition');
         }
-        $actions = array_map(fn (Node $node): MergeAction => $this->action($node, $target, $scope, $input->scope, $destinations), Tree::outer($statement, ['merge_when_clause']));
+        $actions = array_map(fn (Node $node): MergeAction => $this->action($node, $target, $scope, $input->scope, $destinations), \SqlSemantics\Binding\Query\QueryNodes::local($statement, ['merge_when_clause']));
         $returning = Tree::child($statement, ['returning_clause']);
         $outputs = $returning === null ? [] : (new ProjectionBinder())->bind($returning, $scope);
         return new BoundStatement($id, $input->relation, $scope->relations, $outputs, null, false, [], null, null, $source, ctes: $context->ctes, kind: 'MERGE', targets: [$target], merge: new Merge($target, $input->relation, $condition, $actions));

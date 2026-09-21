@@ -115,4 +115,33 @@ final class StatementInvariantTest extends TestCase
         self::assertSame(0, $statement->outputs[0]->ordinal);
     }
 
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['','SELECT'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['s0',''])]
+    public function testCheckRejectsMissingStatementIdentity(string $scopeId, string $kind): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1');
+        $this->expectException(InvalidStructure::class);
+        new \SqlSemantics\Model\BoundStatement($scopeId, null, [], [], null, false, [], null, null, $statement->source, kind: $kind);
+    }
+    public function testCheckRejectsAReadRelationFromAnotherScope(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('SELECT id FROM t');
+        $this->expectException(InvalidStructure::class);
+        new \SqlSemantics\Model\BoundStatement('different', $statement->from, $statement->relations, $statement->outputs, null, false, [], null, null, $statement->source);
+    }
+    #[\PHPUnit\Framework\Attributes\TestWith(['INSERT INTO t VALUES(1)'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['MERGE INTO t USING t AS s ON t.id=s.id WHEN MATCHED THEN DELETE'])]
+    public function testCheckRequiresDeclaredEffectTargets(string $sql): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind($sql);
+        $this->expectException(InvalidStructure::class);
+        new \SqlSemantics\Model\BoundStatement($statement->scopeId, $statement->from, $statement->relations, [], null, false, [], null, null, $statement->source, kind: $statement->kind, insertion: $statement->insertion, merge: $statement->merge);
+    }
+    public function testCheckAllowsOrderedWritesRowsAndNamedAssignments(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
+        self::assertSame('1', $binder->bind('UPDATE t SET id=1')->assignments['id']->symbol);
+        self::assertSame('1', $binder->bind('INSERT INTO t VALUES(1)')->rows[0][0]->symbol);
+    }
 }

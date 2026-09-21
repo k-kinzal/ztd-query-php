@@ -95,6 +95,7 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ConstraintReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\Identifiers::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\StatementList::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
 final class MergeTest extends TestCase
 {
     public function testRequiresAtLeastOneDecision(): void
@@ -104,5 +105,23 @@ final class MergeTest extends TestCase
         self::assertNotNull($merge);
         $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
         new \SqlSemantics\Model\Write\Merge($merge->target, $merge->input, $merge->condition, []);
+    }
+
+    public function testRejectsAnInsertionIntoAnotherTarget(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER); CREATE TABLE u(id INTEGER)'));
+        $merge = $binder->bind('MERGE INTO t USING t AS s ON t.id=s.id WHEN MATCHED THEN DELETE')->merge;
+        $insert = $binder->bind('INSERT INTO u VALUES(1)');
+        self::assertNotNull($merge);
+        self::assertNotNull($insert->insertion);
+        $action = new \SqlSemantics\Model\Write\MergeAction('not-matched-by-target', 'insert', null, [], $insert->insertion, $insert->rows, $insert->source);
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        new \SqlSemantics\Model\Write\Merge($merge->target, $merge->input, $merge->condition, [$action]);
+    }
+    public function testRetainsAValidInsertionDecision(): void
+    {
+        $merge = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('MERGE INTO t USING t AS s ON t.id=s.id WHEN NOT MATCHED THEN INSERT VALUES(s.id)')->merge;
+        self::assertNotNull($merge);
+        self::assertSame($merge->target, $merge->actions[0]->insertion?->target);
     }
 }

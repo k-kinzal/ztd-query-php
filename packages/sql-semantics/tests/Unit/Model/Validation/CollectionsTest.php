@@ -115,4 +115,15 @@ final class CollectionsTest extends TestCase
         $this->expectException(InvalidStructure::class);
         \SqlSemantics\Model\Validation\Collections::objects([2 => $expression], \SqlSemantics\Model\Expression::class);
     }
+
+    public function testStringsAcceptsAnOrderedName(): void
+    {
+        \SqlSemantics\Model\Validation\Collections::strings(['schema','table']);
+        $this->addToAssertionCount(1);
+    }
+    public function testStringsRejectsAssociativeNames(): void
+    {
+        $this->expectException(InvalidStructure::class);
+        \SqlSemantics\Model\Validation\Collections::strings(['name' => 'table']);
+    }
 }

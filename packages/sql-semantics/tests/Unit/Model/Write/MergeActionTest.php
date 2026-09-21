@@ -95,6 +95,7 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ConstraintReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\Identifiers::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\StatementList::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
 final class MergeActionTest extends TestCase
 {
     public function testRejectsAnInsertionWithoutDestinations(): void
@@ -102,5 +103,38 @@ final class MergeActionTest extends TestCase
         $source = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1')->source;
         $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
         new \SqlSemantics\Model\Write\MergeAction('not-matched-by-target', 'insert', null, [], null, [], $source);
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['invalid','delete'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['matched','invalid'])]
+    public function testRejectsInvalidDecisionNames(string $match, string $action): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('MERGE INTO t USING t AS s ON t.id=s.id WHEN MATCHED THEN DELETE');
+        self::assertNotNull($statement->merge);
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        new \SqlSemantics\Model\Write\MergeAction($match, $action, null, [], null, [], $statement->source);
+    }
+    public function testRetainsEachValidDecisionAndItsEffects(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('MERGE INTO t USING t AS s ON t.id=s.id WHEN MATCHED THEN UPDATE SET id=s.id WHEN NOT MATCHED BY SOURCE THEN DELETE WHEN NOT MATCHED AND s.id=0 THEN DO NOTHING WHEN NOT MATCHED THEN INSERT VALUES(s.id)');
+        self::assertNotNull($statement->merge);
+        self::assertSame(['update','delete','nothing','insert'], array_column($statement->merge->actions, 'action'));
+        self::assertCount(1, $statement->merge->actions[0]->assignments);
+        self::assertSame('t', $statement->merge->actions[3]->rows[0][0]->binding?->table->name);
+        self::assertInstanceOf(\SqlSemantics\Model\TableUse::class, $statement->merge->input);
+        self::assertSame('s', $statement->merge->input->alias);
+    }
+    public function testRejectsWritesAttachedToDoNothing(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
+        $update = $binder->bind('UPDATE t SET id=1');
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        new \SqlSemantics\Model\Write\MergeAction('matched', 'nothing', null, $update->writes, null, [], $update->source);
+    }
+    public function testRejectsRowsAttachedToDelete(): void
+    {
+        $insert = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('INSERT INTO t VALUES(1)');
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        new \SqlSemantics\Model\Write\MergeAction('matched', 'delete', null, [], null, $insert->rows, $insert->source);
     }
 }

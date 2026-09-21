@@ -113,4 +113,21 @@ final class SettingTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new \SqlSemantics\Model\Configuration\Setting(['x'], 'session', 'reset', [$statement->outputs[0]->expression], $statement->source);
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['','set'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['session','invalid'])]
+    public function testRejectsInvalidSettingMetadata(string $scope, string $action): void
+    {
+        $setting = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SET work_mem TO DEFAULT')->settings[0];
+        $this->expectException(InvalidStructure::class);
+        new \SqlSemantics\Model\Configuration\Setting($setting->name, $scope, $action, $setting->values, $setting->source);
+    }
+    public function testRetainsSettingActionsAndValues(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        self::assertSame('default', $binder->bind('SET work_mem TO DEFAULT')->settings[0]->values[0]->kind->value);
+        self::assertSame('reset', $binder->bind('RESET work_mem')->settings[0]->action);
+        self::assertSame('from-current', $binder->bind('SET work_mem FROM CURRENT')->settings[0]->action);
+        self::assertSame('read', (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('PRAGMA cache_size')->settings[0]->action);
+    }
 }

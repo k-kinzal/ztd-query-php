@@ -110,4 +110,14 @@ final class UtilityBinderTest extends TestCase
         self::assertSame('CREATE', $statement->kind);
         self::assertSame('id', $statement->queries[0]->outputs[0]->name);
     }
+
+    public function testCommandsRetainsCursorAndQueryBoundaries(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
+        $statement = (new Binder($schema))->bind('EXPLAIN DECLARE cur CURSOR FOR SELECT id FROM t');
+        self::assertSame('EXPLAIN', $statement->kind);
+        self::assertSame('DECLARE', $statement->statements[0]->kind);
+        self::assertSame('SELECT', $statement->statements[0]->statements[0]->kind);
+        self::assertSame('id', $statement->statements[0]->statements[0]->outputs[0]->name);
+    }
 }

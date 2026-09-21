@@ -117,4 +117,26 @@ final class DefinitionBinderTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE t(id INTEGER NOT NULL DEFAULT NULL)');
         self::assertSame('always-null', $statement->definitions[0]->defaults['id']->nullability->value);
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['CREATE TABLE t(a INTEGER DEFAULT TRUE)'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['CREATE TABLE t(a INTEGER GENERATED ALWAYS AS(TRUE) STORED)'])]
+    public function testBindValidatesDeclaredExpressionTypes(string $sql): void
+    {
+        $this->expectException(\SqlSemantics\SemanticException::class);
+        $this->expectExceptionMessage('Cannot assign boolean to integer');
+        (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql);
+    }
+    public function testBindValidatesCheckPredicateTypes(): void
+    {
+        $this->expectException(\SqlSemantics\SemanticException::class);
+        $this->expectExceptionMessage('predicate must have boolean type');
+        (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE t(a INTEGER CHECK(1))');
+    }
+    public function testBindRetainsExpressionsAfterUnadornedColumns(): void
+    {
+        $definition = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE t(a INTEGER,b INTEGER NOT NULL GENERATED ALWAYS AS(NULL) STORED,c INTEGER DEFAULT (1+2))')->definitions[0];
+        self::assertSame('NULL', $definition->generated['b']->symbol);
+        self::assertSame('+', $definition->defaults['c']->symbol);
+        self::assertSame(['1','2'], array_column($definition->defaults['c']->operands, 'symbol'));
+    }
 }

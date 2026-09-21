@@ -107,4 +107,12 @@ final class AssignmentTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new \SqlSemantics\Model\Write\Assignment([], $statement->outputs[0]->expression, $statement->source);
     }
+
+    public function testRejectsMixedDialectStorageValues(): void
+    {
+        $targets = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('UPDATE t SET id=1')->writes[0];
+        $value = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('SELECT 1')->outputs[0]->expression;
+        $this->expectException(InvalidStructure::class);
+        new \SqlSemantics\Model\Write\Assignment($targets->targets, $value, $targets->source);
+    }
 }

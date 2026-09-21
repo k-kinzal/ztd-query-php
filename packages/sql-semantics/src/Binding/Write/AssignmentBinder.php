@@ -74,7 +74,11 @@ final class AssignmentBinder
     {
         $base = Tree::child($name, ['ColId']);
         if ($base !== null && Tree::child($name, ['opt_indirection']) !== null) {
-            return (new \SqlSemantics\Binding\Scalar\IndirectionBinder())->postfix($name, $base, $scope);
+            $value = $scope->column($scope->identifiers->parts($base), $base);
+            foreach (Tree::outer($name, ['indirection_el']) as $element) {
+                $value = (new \SqlSemantics\Binding\Scalar\IndirectionBinder())->apply($value, $element, $scope);
+            }
+            return $value;
         }
         return $scope->column($scope->identifiers->parts($base ?? $name), $name);
     }

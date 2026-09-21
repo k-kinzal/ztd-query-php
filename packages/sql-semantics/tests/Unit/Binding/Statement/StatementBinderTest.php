@@ -133,4 +133,14 @@ final class StatementBinderTest extends TestCase
         (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1; SELECT 2');
     }
 
+
+    public function testNodePreservesExplainedMutationAsANestedStatement(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER,n INTEGER)');
+        $statement = (new Binder($schema))->bind('EXPLAIN UPDATE t SET n=1 WHERE id=2');
+        self::assertSame('EXPLAIN', $statement->kind);
+        self::assertSame('UPDATE', $statement->statements[0]->kind);
+        self::assertSame('n', $statement->statements[0]->writes[0]->targets[0]->binding?->column->name);
+        self::assertNotSame($statement->scopeId, $statement->statements[0]->scopeId);
+    }
 }

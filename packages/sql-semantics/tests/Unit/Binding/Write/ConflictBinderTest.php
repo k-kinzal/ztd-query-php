@@ -139,4 +139,35 @@ final class ConflictBinderTest extends TestCase
         self::assertSame(['cur'], $statement->where->reference);
         self::assertSame('boolean', $statement->where->type->name);
     }
+
+    public function testActionRetainsNamedConstraintAndConditionalUpdate(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER,n INTEGER)'));
+        $conflict = $binder->bind('INSERT INTO t VALUES(1,2) ON CONFLICT ON CONSTRAINT t_key DO UPDATE SET n=excluded.n WHERE t.n<excluded.n')->conflicts[0];
+        self::assertSame('t_key', $conflict->constraint);
+        self::assertSame([], $conflict->keys);
+        self::assertNull($conflict->indexPredicate);
+        self::assertSame('<', $conflict->where?->symbol);
+        self::assertSame('n', $conflict->assignments[0]->targets[0]->binding?->column->name);
+    }
+    public function testActionSeparatesSqliteIndexAndUpdatePredicates(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER,n INTEGER)'));
+        $statement = $binder->bind('INSERT INTO t VALUES(1,2) ON CONFLICT(id) WHERE id>0 DO UPDATE SET n=excluded.n WHERE n<3 ON CONFLICT DO NOTHING');
+        self::assertSame(['update','nothing'], array_column($statement->conflicts, 'action'));
+        self::assertSame('id', $statement->conflicts[0]->keys[0]->binding?->column->name);
+        self::assertSame('>', $statement->conflicts[0]->indexPredicate?->symbol);
+        self::assertSame('<', $statement->conflicts[0]->where?->symbol);
+        self::assertSame('3', $statement->conflicts[0]->where->operands[1]->symbol);
+        self::assertSame([], $statement->conflicts[1]->assignments);
+        self::assertNull($statement->conflicts[1]->where);
+    }
+    public function testBindKeepsMysqlDuplicateKeyWritesSeparate(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INTEGER,n INTEGER)')))->bind('INSERT INTO t VALUES(1,2) ON DUPLICATE KEY UPDATE n=3');
+        self::assertSame('update', $statement->conflicts[0]->action);
+        self::assertSame('3', $statement->conflicts[0]->assignments[0]->value->symbol);
+        self::assertSame([], $statement->writes);
+        self::assertNull($statement->where);
+    }
 }
