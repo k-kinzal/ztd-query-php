@@ -12,21 +12,37 @@ use SqlFixture\Platform\Sqlite\SqliteSchemaParser;
 /**
  * Measures uncached schema parsing with equivalent declarations in each dialect.
  *
- * A declaration is read with the grammar of its server, which costs
- * milliseconds rather than the microseconds text matching cost, so a
- * revolution count that keeps a run short is what makes the measurement
- * repeatable here.
+ * A parser loads the tables of its grammar when it is built, which a caller
+ * does once and a measurement should not do at all, so the parsers are built
+ * before the measured statement is read.
  */
 #[Bench\Groups(['schema'])]
-#[Bench\Revs(50)]
+#[Bench\BeforeMethods('setUp')]
+#[Bench\Revs(100)]
 final class SchemaParsingBench
 {
+    private MySqlSchemaParser $mysql;
+
+    private PostgreSqlSchemaParser $postgres;
+
+    private SqliteSchemaParser $sqlite;
+
+    /**
+     * Loads the grammar tables of each dialect outside the measured operation.
+     */
+    public function setUp(): void
+    {
+        $this->mysql = new MySqlSchemaParser();
+        $this->postgres = new PostgreSqlSchemaParser();
+        $this->sqlite = new SqliteSchemaParser();
+    }
+
     /**
      * Parses MySQL DDL without a provider cache.
      */
     public function benchMySql(): void
     {
-        (new MySqlSchemaParser())->parse('CREATE TABLE items (id INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(80) NOT NULL, price DECIMAL(8, 2), active BOOLEAN DEFAULT TRUE)');
+        $this->mysql->parse('CREATE TABLE items (id INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(80) NOT NULL, price DECIMAL(8, 2), active BOOLEAN DEFAULT TRUE)');
     }
 
     /**
@@ -34,7 +50,7 @@ final class SchemaParsingBench
      */
     public function benchPostgreSql(): void
     {
-        (new PostgreSqlSchemaParser())->parse('CREATE TABLE items (id SERIAL PRIMARY KEY, name VARCHAR(80) NOT NULL, price NUMERIC(8, 2), active BOOLEAN DEFAULT TRUE)');
+        $this->postgres->parse('CREATE TABLE items (id SERIAL PRIMARY KEY, name VARCHAR(80) NOT NULL, price NUMERIC(8, 2), active BOOLEAN DEFAULT TRUE)');
     }
 
     /**
@@ -42,6 +58,6 @@ final class SchemaParsingBench
      */
     public function benchSqlite(): void
     {
-        (new SqliteSchemaParser())->parse('CREATE TABLE items (id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(80) NOT NULL, price DECIMAL(8, 2), active BOOLEAN DEFAULT TRUE)');
+        $this->sqlite->parse('CREATE TABLE items (id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(80) NOT NULL, price DECIMAL(8, 2), active BOOLEAN DEFAULT TRUE)');
     }
 }
