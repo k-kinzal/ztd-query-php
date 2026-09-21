@@ -16,9 +16,11 @@ for declaring that SQL unsupported.
 
 Pass `grammarVersion` to `SchemaBuilder`. The resulting `Schema` retains that
 release and the binder uses it too. Syntax introduced after the selected release
-is a version error. Invalid syntax, unresolved names, ambiguous references, and
-incompatible built-in types remain errors; accepting the language does not mean
-accepting invalid SQL.
+is a version error. `bind()` requires resolved, valid semantic facts and raises
+`SemanticException` for unresolved names, ambiguity, or incompatible built-in
+types. `analyze()` processes the same language while retaining these problems
+as structured diagnostics alongside the entire statement graph. Syntax or
+internal lowering failures are never converted into successful analysis.
 
 ## Declarations and fixture inputs
 
@@ -73,3 +75,23 @@ foreign-key actions, and source locations remain available to consumers.
 Regression tests should verify semantic facts for valid SQL and diagnostics for
 invalid SQL. Tests must not enshrine an implementation gap as an intentional
 language restriction.
+
+## Unrestricted grammar fuzzing
+
+The property is: every SQL statement produced by `sql-faker` from the selected
+release's complete statement rule must produce a structured `Analysis`. The
+fuzzer uses the same statement roots, byte-plan compiler, expansion settings,
+and maximum input length as `sql-parser`. It does not filter statement kinds,
+clauses, names, or expressions, and permits no exceptions.
+
+Generated SQL is syntactically derived, but does not come with a consistent
+catalog. An unresolved table therefore retains its name with `resolved=false`;
+an unresolved column retains its qualified reference, unknown type and NULL
+fact. An unexpandable star is an explicit `wildcard`, whose result width is
+unknown. Diagnostics accompany these structures and never replace them.
+
+The property also checks output order, relation scopes, declaration membership,
+expression types, nested graphs, deterministic analysis, and agreement with
+strict binding when no diagnostics occur. Regression tests assert concrete
+facts for queries, writes, and DDL. See [the fuzz instructions](../fuzz/README.md)
+for running every release and replaying failures.

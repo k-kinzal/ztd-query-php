@@ -66,6 +66,10 @@ use SqlSemantics\SemanticException;
 #[UsesClass(\SqlSemantics\Binding\Scalar\FunctionRules::class)]
 #[UsesClass(\SqlSemantics\Model\BoundStatement::class)]
 #[UsesClass(\SqlSemantics\Ast\ConstraintGroups::class)]
+#[UsesClass(\SqlSemantics\Binding\Analysis\Diagnostics::class)]
+#[UsesClass(\SqlSemantics\Model\Analysis::class)]
+#[UsesClass(\SqlSemantics\Model\Diagnostic::class)]
+#[UsesClass(\SqlSemantics\Binding\Scalar\IndirectionBinder::class)]
 final class JoinKindTest extends TestCase
 {
     public function testExposesLogicalJoinOperations(): void

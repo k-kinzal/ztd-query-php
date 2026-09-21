@@ -128,6 +128,21 @@ $statement->outputs[1]->expression->type->name; // numeric
 Unknown runtime or catalog facts remain explicit while the original operation,
 operands, nested queries, and dependencies are retained.
 
+## Analysis with an incomplete catalog
+
+```php
+$schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
+$analysis = (new Binder($schema))->analyze('SELECT t.id, t.* FROM missing t');
+$analysis->statement->outputs[0]->expression->reference; // ['t', 'id']
+$analysis->statement->outputs[1]->expression->kind->value; // 'wildcard'
+$analysis->diagnostics[0]->reason; // 'unknown-table'
+```
+
+`analyze()` keeps the statement graph even when semantic facts cannot be
+resolved. It does not invent declarations or discard the rest of the SQL after
+one diagnostic. `bind()` remains available when the consumer requires fully
+resolved references. Both methods use the same binder.
+
 ## Consumers
 
 A fixture generator can use declaration constraints to construct candidate rows,
@@ -148,6 +163,7 @@ composer install
 composer lint
 composer test
 composer bench:quick
+composer fuzz:smoke
 ```
 
 PHP-AI-Toolkit supplies the PHPUnit AI reporter, executable PHPDoc examples,

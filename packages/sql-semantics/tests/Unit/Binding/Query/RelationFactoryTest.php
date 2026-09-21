@@ -72,6 +72,10 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\Type\TypeDescriptor::class)]
 #[Medium]
 #[CoversClass(\SqlSemantics\Binding\Query\QueryRelation::class)]
+#[UsesClass(\SqlSemantics\Binding\Analysis\Diagnostics::class)]
+#[UsesClass(\SqlSemantics\Model\Analysis::class)]
+#[UsesClass(\SqlSemantics\Model\Diagnostic::class)]
+#[UsesClass(\SqlSemantics\Binding\Scalar\IndirectionBinder::class)]
 final class RelationFactoryTest extends TestCase
 {
     public function testFunctionExposesTypedTableFunctionColumns(): void

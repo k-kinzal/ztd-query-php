@@ -20,7 +20,7 @@ final class TableResolver
     /**
      * Binds the dependencies used for semantic binding.
      */
-    public function __construct(public readonly Schema $schema, public readonly Identifiers $identifiers, public readonly string $defaultSchema)
+    public function __construct(public readonly Schema $schema, public readonly Identifiers $identifiers, public readonly string $defaultSchema, public readonly Analysis\Diagnostics $diagnostics = new Analysis\Diagnostics())
     {
     }
 
@@ -40,7 +40,8 @@ final class TableResolver
             }
         }
         if (count($matches) !== 1) {
-            throw new SemanticException($matches === [] ? 'unknown-table' : 'ambiguous-table', 'Cannot resolve table: ' . implode('.', $parts), $source);
+            $this->diagnostics->report($matches === [] ? 'unknown-table' : 'ambiguous-table', 'Cannot resolve table: ' . implode('.', $parts), $source);
+            return new TableDefinition($schema, $name, [], [], $source, resolved: false);
         }
 
         return $matches[0];

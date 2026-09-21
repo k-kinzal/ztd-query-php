@@ -26,10 +26,17 @@ final class ExpressionBinder
         if ($node instanceof Token) {
             return $this->token($node, $scope);
         }
-        if (in_array($node->name, ['SelectStmt', 'select_with_parens', 'subquery', 'select'], true) && $scope->queries !== null) {
+        if (in_array($node->name, ['SelectStmt', 'select_with_parens', 'subquery', 'subselect', 'select'], true) && $scope->queries !== null) {
             return (new ScalarBinder())->subquery($node, $node, $scope);
         }
-        if (in_array($node->name, ['columnref', 'simple_ident'], true)) {
+        if ($node->name === 'columnref') {
+            return (new Scalar\IndirectionBinder())->column($node, $scope);
+        }
+        $base = Tree::child($node, ['a_expr']);
+        if ($base !== null && Tree::child($node, ['opt_indirection']) !== null) {
+            return (new Scalar\IndirectionBinder())->postfix($node, $base, $scope);
+        }
+        if ($node->name === 'simple_ident') {
             return $scope->column($scope->identifiers->parts($node), $node);
         }
         $children = Tree::significant($node);
@@ -102,7 +109,7 @@ final class ExpressionBinder
      */
     public function operation(Node $node, array $children, Scope $scope): ?Expression
     {
-        $rules = new ExpressionRules($scope->identifiers->dialect);
+        $rules = new ExpressionRules($scope->identifiers->dialect, $scope->diagnostics());
         if (count($children) === 2 && in_array(strtoupper(Tree::text($children[0])), ['+', '-', 'NOT'], true)) {
             return $rules->operator(Tree::text($children[0]), [$this->bind($children[1], $scope)], $node);
         }

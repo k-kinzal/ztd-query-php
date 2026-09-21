@@ -69,6 +69,10 @@ use SqlSemantics\Type\Nullability;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Scalar\FunctionRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ConstraintGroups::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Analysis\Diagnostics::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Analysis::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Diagnostic::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Scalar\IndirectionBinder::class)]
 final class FromBinderTest extends TestCase
 {
     #[TestWith([Dialect::PostgreSql])]
@@ -186,6 +190,25 @@ final class FromBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Join::class, $query->from);
         self::assertSame('=', $query->from->condition?->symbol);
         self::assertSame(['id','id'], array_column($query->outputs, 'name'));
+    }
+
+    public function testExplicitBindsTableQueryAsAnOrderedProjection(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER NOT NULL, name TEXT)');
+        $query = (new Binder($schema))->bind('TABLE t');
+        self::assertSame(['id', 'name'], array_column($query->outputs, 'name'));
+        self::assertSame($schema->tables[0], $query->relations[0]->declaration);
+        self::assertSame('id', $query->outputs[0]->expression->binding?->column->name);
+    }
+
+    public function testDerivedBindsLegacySelectFactorInItsOwnScope(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build('CREATE TABLE t (id INTEGER)');
+        $query = (new Binder($schema))->bind('SELECT * FROM SELECT id FROM t');
+        self::assertSame(['id'], array_column($query->outputs, 'name'));
+        self::assertNotNull($query->relations[0]->query);
+        self::assertSame('t', $query->relations[0]->query->relations[0]->declaration->name);
+        self::assertNotSame($query->scopeId, $query->relations[0]->query->scopeId);
     }
 
 }

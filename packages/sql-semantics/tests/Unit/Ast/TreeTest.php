@@ -65,6 +65,10 @@ use SqlSemantics\SemanticException;
 #[UsesClass(\SqlSemantics\Binding\Scalar\FunctionRules::class)]
 #[UsesClass(\SqlSemantics\Model\BoundStatement::class)]
 #[UsesClass(\SqlSemantics\Ast\ConstraintGroups::class)]
+#[UsesClass(\SqlSemantics\Binding\Analysis\Diagnostics::class)]
+#[UsesClass(\SqlSemantics\Model\Analysis::class)]
+#[UsesClass(\SqlSemantics\Model\Diagnostic::class)]
+#[UsesClass(\SqlSemantics\Binding\Scalar\IndirectionBinder::class)]
 final class TreeTest extends TestCase
 {
     public function testOuterStopsAtTheRequestedGrammarBoundary(): void
@@ -110,4 +114,15 @@ final class TreeTest extends TestCase
         $this->expectException(SemanticException::class);
         \SqlSemantics\Ast\Tree::assertChildren($tree->find('simple_select')[0], [], ['SELECT']);
     }
+    public function testHasTokensDistinguishesNestedEmptyProductions(): void
+    {
+        $empty = new \SqlParser\Parser\Node('empty', 0, []);
+        self::assertFalse(\SqlSemantics\Ast\Tree::hasTokens(new \SqlParser\Parser\Node('nested', 0, [$empty])));
+        $token = new \SqlParser\Lexer\Token(1, 'ICONST', '1', 7);
+        $node = new \SqlParser\Parser\Node('expr', 0, [$empty, new \SqlParser\Parser\Node('value', 0, [$token])]);
+        self::assertTrue(\SqlSemantics\Ast\Tree::hasTokens($node));
+        self::assertSame('1', \SqlSemantics\Ast\Tree::text($node));
+        self::assertSame('1', \SqlSemantics\Ast\Tree::text($node));
+    }
+
 }

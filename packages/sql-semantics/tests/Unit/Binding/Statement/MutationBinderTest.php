@@ -72,6 +72,10 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\Type\TypeDescriptor::class)]
 #[Medium]
 #[UsesClass(\SqlSemantics\Binding\Query\RelationFactory::class)]
+#[UsesClass(\SqlSemantics\Binding\Analysis\Diagnostics::class)]
+#[UsesClass(\SqlSemantics\Model\Analysis::class)]
+#[UsesClass(\SqlSemantics\Model\Diagnostic::class)]
+#[UsesClass(\SqlSemantics\Binding\Scalar\IndirectionBinder::class)]
 final class MutationBinderTest extends TestCase
 {
     public function testBindReturnsAssignmentPredicateAndReturningColumns(): void
@@ -121,6 +125,17 @@ final class MutationBinderTest extends TestCase
         self::assertSame('source', $query->assignments['n']->binding?->table->name);
         self::assertSame(['id'], array_column($query->outputs, 'name'));
         self::assertSame('=', $query->where?->symbol);
+    }
+
+    public function testBindKeepsLegacyInsertQuerySeparateFromItsTarget(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build('CREATE TABLE target (id INTEGER)', 'CREATE TABLE source (id INTEGER)');
+        $query = (new Binder($schema))->bind('INSERT INTO target(id) (SELECT id FROM source)');
+        self::assertSame(['target'], array_map(static fn ($target): string => $target->declaration->name, $query->targets));
+        self::assertCount(1, $query->queries);
+        self::assertSame('source', $query->queries[0]->relations[0]->declaration->name);
+        self::assertSame(['id'], array_column($query->queries[0]->outputs, 'name'));
+        self::assertNotSame($query->scopeId, $query->queries[0]->scopeId);
     }
 
 }

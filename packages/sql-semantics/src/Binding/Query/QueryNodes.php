@@ -25,7 +25,7 @@ final class QueryNodes
         }
         $result = [];
         foreach ($node->children as $child) {
-            if (!$child instanceof Node || (in_array($child->name, ['SelectStmt', 'select_stmt', 'select', 'select_with_parens', 'subquery', 'table_subquery', 'select_derived_union', 'with_clause', 'wqlist', 'a_expr', 'expr', 'func_expr'], true) && !in_array($node->name, ['parse_toplevel', 'stmtmulti', 'toplevel_stmt', 'stmt', 'start_entry', 'sql_statement', 'simple_statement_or_begin', 'simple_statement', 'input', 'cmdlist', 'ecmd', 'cmdx', 'cmd', 'query', 'verb_clause', 'statement'], true))) {
+            if (!$child instanceof Node || ($child->name === 'table_factor' && self::isBody($child)) || (in_array($child->name, ['SelectStmt', 'select_stmt', 'select', 'select_with_parens', 'subquery', 'subselect', 'table_subquery', 'select_derived_union', 'insert_query_expression', 'create_select', 'with_clause', 'wqlist', 'a_expr', 'expr', 'func_expr'], true) && !in_array($node->name, ['parse_toplevel', 'stmtmulti', 'toplevel_stmt', 'stmt', 'start_entry', 'sql_statement', 'simple_statement_or_begin', 'simple_statement', 'input', 'cmdlist', 'ecmd', 'cmdx', 'cmd', 'query', 'verb_clause', 'statement'], true))) {
                 continue;
             }
             array_push($result, ...self::local($child, $names));
@@ -38,18 +38,30 @@ final class QueryNodes
      */
     public static function body(Node $node): Node
     {
-        if (in_array($node->name, ['simple_select', 'query_specification', 'select_part2', 'select_derived2', 'oneselect', 'values_clause'], true) || self::setOperator($node) !== null) {
+        if (self::isBody($node)) {
             return $node;
         }
         foreach ($node->children as $child) {
-            if ($child instanceof Node && $child->tokens() !== [] && !in_array($child->name, ['with_clause', 'wqlist'], true)) {
+            if ($child instanceof Node && Tree::hasTokens($child) && !in_array($child->name, ['with_clause', 'wqlist'], true)) {
                 $body = self::body($child);
-                if (in_array($body->name, ['simple_select', 'query_specification', 'select_part2', 'select_derived2', 'oneselect', 'values_clause'], true) || self::setOperator($body) !== null) {
+                if (self::isBody($body)) {
                     return $body;
                 }
             }
         }
         return $node;
+    }
+
+    /**
+     * Recognizes query bodies, including SELECT productions in legacy table factors.
+     */
+    public static function isBody(Node $node): bool
+    {
+        if (in_array($node->name, ['table_factor', 'create_select'], true)) {
+            $children = Tree::significant($node);
+            return $children !== [] && strtoupper(Tree::text($children[0])) === 'SELECT';
+        }
+        return in_array($node->name, ['simple_select', 'query_specification', 'select_part2', 'select_part2_derived', 'select_derived2', 'oneselect', 'values_clause', 'explicit_table'], true) || self::setOperator($node) !== null;
     }
 
     /**
@@ -79,7 +91,7 @@ final class QueryNodes
                 $names[$node->name] = true;
             }
             foreach ($node->children as $child) {
-                if ($child instanceof Node && $child->tokens() !== []) {
+                if ($child instanceof Node && Tree::hasTokens($child)) {
                     $pending[] = $child;
                 }
             }

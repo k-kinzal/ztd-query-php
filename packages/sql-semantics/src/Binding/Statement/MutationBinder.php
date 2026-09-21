@@ -38,7 +38,7 @@ final class MutationBinder
         $kind = StatementBinder::operation($statement);
         $targets = $this->targets($statement, $id);
         $scope = new Scope($this->context->tables->identifiers, $targets, queries: $this->context);
-        $readNode = QueryNodes::local($statement, ['from_clause', 'using_clause', 'from'])[0] ?? null;
+        $readNode = in_array($kind, ['INSERT', 'REPLACE'], true) ? null : (QueryNodes::local($statement, ['from_clause', 'using_clause', 'from'])[0] ?? null);
         $read = $readNode === null ? null : (new FromBinder($this->context->tables, $this->context->ids, $this->context, scopeId: $id))->bind($readNode);
         if ($read !== null) {
             $scope = $scope->combine($read->scope, $statement);
@@ -50,7 +50,7 @@ final class MutationBinder
             $value = Tree::child($assignment, ['a_expr', 'expr', 'expr_or_default']);
             if ($nameNode !== null && $value !== null) {
                 $name = $scope->identifiers->parts($nameNode)[0];
-                (new Scope($scope->identifiers, $targets))->column([$name], $nameNode);
+                (new Scope($scope->identifiers, $targets, queries: $this->context))->column([$name], $nameNode);
                 $assignments[$name] = (new ExpressionBinder())->bind($value, $scope);
             }
         }
@@ -60,7 +60,7 @@ final class MutationBinder
         $returning = QueryNodes::local($statement, ['returning_clause', 'where_opt_ret'])[0] ?? null;
         $outputs = $returning === null || !str_contains(strtoupper(Tree::text($returning)), 'RETURNING') ? [] : (new ProjectionBinder())->bind($returning, $scope);
         $queries = [];
-        foreach (Tree::outer($statement, ['SelectStmt', 'query_expression', 'select']) as $query) {
+        foreach (Tree::outer($statement, ['SelectStmt', 'query_expression', 'select', 'select_init', 'select_paren', 'insert_query_expression', 'create_select']) as $query) {
             $queries[] = $this->context->bind($query);
         }
         $values = (new ValuesBinder())->rows($statement, $scope);
@@ -73,7 +73,7 @@ final class MutationBinder
     public function targets(Node $statement, string $id): array
     {
         $tables = $this->context->tables;
-        $from = QueryNodes::local($statement, ['table_reference_list'])[0] ?? null;
+        $from = in_array(StatementBinder::operation($statement), ['UPDATE', 'DELETE'], true) ? (QueryNodes::local($statement, ['table_reference_list'])[0] ?? null) : null;
         if ($from !== null) {
             return (new FromBinder($tables, $this->context->ids, $this->context, scopeId: $id))->bind($from)?->scope->relations ?? [];
         }

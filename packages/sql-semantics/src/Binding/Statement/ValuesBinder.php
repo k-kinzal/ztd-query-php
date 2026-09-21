@@ -44,11 +44,13 @@ final class ValuesBinder
             $values = [];
             foreach ($rows as $row) {
                 if (count($row) !== count($rows[0])) {
-                    throw new \SqlSemantics\SemanticException('values-column-count', 'VALUES rows must have the same width.', $source);
+                    $scope->diagnostics()->report('values-column-count', 'VALUES rows must have the same width.', $source);
                 }
-                $values[] = $row[$ordinal];
+                if (isset($row[$ordinal])) {
+                    $values[] = $row[$ordinal];
+                }
             }
-            $type = (new \SqlSemantics\Binding\TypeResolution($scope->identifiers->dialect))->common($values, $source);
+            $type = (new \SqlSemantics\Binding\TypeResolution($scope->identifiers->dialect, $scope->diagnostics()))->common($values, $source);
             $nullability = \SqlSemantics\Binding\NullFacts::alternatives($values);
             $expression = count($rows) === 1 ? $first : new Expression(\SqlSemantics\Model\ExpressionKind::Row, $type, $nullability, $source, $values, symbol: 'VALUES');
             $outputs[] = new \SqlSemantics\Model\OutputColumn($ordinal, 'column' . ($ordinal + 1), $expression);

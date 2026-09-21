@@ -10,8 +10,11 @@
     "require-dev": {
         "brianium/paratest": "^7.3",
         "deptrac/deptrac": "^3.0",
+        "fakerphp/faker": "^1.24",
         "friendsofphp/php-cs-fixer": "^3.95.25",
         "k-kinzal/php-ai-toolkit": "dev-main",
+        "k-kinzal/sql-faker": "dev-main",
+        "nikic/php-fuzzer": "^0.0.11",
         "phpbench/phpbench": "^1.4",
         "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
         "phpstan/phpstan": "^2.1",
@@ -33,6 +36,15 @@
                     "k-kinzal/sql-parser": "dev-main"
                 }
             }
+        },
+        {
+            "type": "path",
+            "url": "../sql-faker",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-faker": "dev-main"
+                }
+            }
         }
     ],
     "autoload": {
@@ -43,7 +55,8 @@
     "autoload-dev": {
         "psr-4": {
             "Tests\\": "tests/",
-            "Bench\\": "bench/"
+            "Bench\\": "bench/",
+            "Fuzz\\": "fuzz/"
         }
     },
     "config": {
@@ -75,6 +88,23 @@
         "doctest": "phpunit --testsuite doctest",
         "format": "php-cs-fixer fix --allow-risky=yes",
         "format:check": "php-cs-fixer fix --dry-run --diff --allow-risky=yes",
+        "fuzz": "@fuzz:smoke",
+        "fuzz:mysql": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php fuzz/run.php mysql 10000"
+        ],
+        "fuzz:pg": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php fuzz/run.php pg 10000"
+        ],
+        "fuzz:smoke": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php fuzz/run.php"
+        ],
+        "fuzz:sqlite": [
+            "Composer\\Config::disableProcessTimeout",
+            "@php fuzz/run.php sqlite 10000"
+        ],
         "lint": [
             "@autoload:check",
             "@format:check",
@@ -86,8 +116,12 @@
         ],
         "loc-guard": "loc-guard --config=loc.yaml",
         "phpstan": "phpstan analyse --memory-limit=1G",
-        "test": "paratest --processes=auto",
+        "test": [
+            "paratest --processes=auto",
+            "@test:fuzz"
+        ],
         "test:coverage": "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml",
+        "test:fuzz": "phpunit tests/Fuzz",
         "test:unit": "phpunit --testsuite unit",
         "tree-guard": "tree-guard --config=tree.yaml"
     },

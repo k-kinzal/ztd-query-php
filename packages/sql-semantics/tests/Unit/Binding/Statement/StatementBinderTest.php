@@ -72,6 +72,10 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\Type\TypeDescriptor::class)]
 #[Medium]
 #[UsesClass(\SqlSemantics\Binding\Query\RelationFactory::class)]
+#[UsesClass(\SqlSemantics\Binding\Analysis\Diagnostics::class)]
+#[UsesClass(\SqlSemantics\Model\Analysis::class)]
+#[UsesClass(\SqlSemantics\Model\Diagnostic::class)]
+#[UsesClass(\SqlSemantics\Binding\Scalar\IndirectionBinder::class)]
 final class StatementBinderTest extends TestCase
 {
     public function testBindRetainsNonSelectOperation(): void

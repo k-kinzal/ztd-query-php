@@ -22,9 +22,14 @@ final class QueryRelation
     public static function declaration(BoundStatement $query, string $name, array $aliases, Node $source): TableDefinition
     {
         $columns = [];
+        $resolved = true;
         foreach ($query->outputs as $index => $output) {
+            if ($output->expression->kind === \SqlSemantics\Model\ExpressionKind::Wildcard) {
+                $resolved = false;
+                continue;
+            }
             $columns[] = new ColumnDefinition($aliases[$index] ?? $output->name ?? '?column?', $output->expression->type, $output->expression->nullability, $source);
         }
-        return new TableDefinition('', $name, $columns, [], $source);
+        return new TableDefinition('', $name, $columns, [], $source, $resolved);
     }
 }

@@ -44,6 +44,12 @@ final class TypeReader
                 }
             }
         }
+        $array = $this->dialect === Dialect::PostgreSql && (in_array('[', $words, true) || in_array('ARRAY', $words, true));
+        if ($array) {
+            $position = array_search('[', $words, true);
+            $keyword = array_search('ARRAY', $words, true);
+            $words = array_slice($words, 0, $keyword !== false ? $keyword : ($position !== false ? $position : count($words)));
+        }
         $name = implode(' ', $words);
         if ($this->dialect === Dialect::Sqlite) {
             return new TypeDescriptor($this->dialect, strtolower($name), $modifiers, $this->affinity($name));
@@ -51,7 +57,7 @@ final class TypeReader
         $canonical = $this->canonical($name);
         $canonical ??= strtolower($name);
 
-        return new TypeDescriptor($this->dialect, $canonical, $modifiers);
+        return new TypeDescriptor($this->dialect, $canonical . ($array ? '[]' : ''), $modifiers);
     }
 
     /**

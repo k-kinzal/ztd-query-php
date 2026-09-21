@@ -72,6 +72,10 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\Type\TypeDescriptor::class)]
 #[Medium]
 #[UsesClass(\SqlSemantics\Binding\Query\RelationFactory::class)]
+#[UsesClass(\SqlSemantics\Binding\Analysis\Diagnostics::class)]
+#[UsesClass(\SqlSemantics\Model\Analysis::class)]
+#[UsesClass(\SqlSemantics\Model\Diagnostic::class)]
+#[UsesClass(\SqlSemantics\Binding\Scalar\IndirectionBinder::class)]
 final class QueryNodesTest extends TestCase
 {
     public function testLocalDoesNotLeakNestedPagination(): void
@@ -101,6 +105,14 @@ final class QueryNodesTest extends TestCase
         $query = (new Binder($schema))->bind('SELECT id FROM t FOR UPDATE SKIP LOCKED');
         self::assertArrayHasKey('for_locking_clause', $query->syntaxClauses);
         self::assertStringContainsString('SKIP LOCKED', \SqlSemantics\Ast\Tree::text($query->syntaxClauses['for_locking_clause'][0]));
+    }
+
+    public function testIsBodyRecognizesLegacySelectFactors(): void
+    {
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql, 'mysql-5.7.44'))->parse('SELECT * FROM SELECT id FROM t');
+        $factor = $tree->find('table_factor')[0];
+        self::assertTrue(\SqlSemantics\Binding\Query\QueryNodes::isBody($factor));
+        self::assertFalse(\SqlSemantics\Binding\Query\QueryNodes::isBody($tree->find('table_factor')[1]));
     }
 
 }

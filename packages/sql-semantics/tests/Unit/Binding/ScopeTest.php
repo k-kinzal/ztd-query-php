@@ -68,6 +68,10 @@ use SqlSemantics\SemanticException;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Scalar\FunctionRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ConstraintGroups::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Analysis\Diagnostics::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Analysis::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Diagnostic::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Scalar\IndirectionBinder::class)]
 final class ScopeTest extends TestCase
 {
     #[TestWith([Dialect::PostgreSql])]
@@ -132,6 +136,18 @@ final class ScopeTest extends TestCase
         $query = (new Binder($schema))->bind('SELECT id FROM x LEFT JOIN (a JOIN b USING(id)) ON x.k=a.id');
         self::assertSame('maybe-null', $query->outputs[0]->expression->nullability->value);
         self::assertSame(['j0'], $query->outputs[0]->expression->nullExtendedBy);
+    }
+
+    public function testDiagnosticsPropagatesThroughLexicalScopes(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
+        $diagnostics = new \SqlSemantics\Binding\Analysis\Diagnostics(true);
+        $ids = new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql);
+        $tables = new \SqlSemantics\Binding\TableResolver($schema, $ids, 'public', $diagnostics);
+        $parent = new \SqlSemantics\Binding\Scope($ids, queries: new \SqlSemantics\Binding\Query\QueryContext($tables));
+        self::assertSame($diagnostics, $parent->diagnostics());
+        self::assertSame($diagnostics, (new \SqlSemantics\Binding\Scope($ids, parent: $parent))->diagnostics());
+        self::assertFalse((new \SqlSemantics\Binding\Scope($ids))->diagnostics()->collect);
     }
 
 }

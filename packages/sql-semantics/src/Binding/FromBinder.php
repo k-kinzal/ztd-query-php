@@ -29,10 +29,29 @@ final class FromBinder
     }
 
     /**
+     * TABLE name is a query over all columns of the named relation.
+     */
+    public function explicit(Node $body): ?BoundRelation
+    {
+        $children = Tree::significant($body);
+        if ($children === [] || strtoupper(Tree::text($children[0])) !== 'TABLE') {
+            return null;
+        }
+        $name = Tree::outer($body, ['qualified_name', 'table_ident'])[0] ?? null;
+        if ($name === null) {
+            Tree::invalid($body, 'TABLE relation');
+        }
+        return $this->table($body, $this->tables->identifiers->parts($name), null);
+    }
+
+    /**
      * Builds the FROM tree in SQL binding order.
      */
     public function bind(Node $from): ?BoundRelation
     {
+        if ($this->tables->identifiers->dialect === \SqlSemantics\Dialect::MySql && strtoupper(Tree::text($from)) === 'FROM DUAL') {
+            return null;
+        }
         $nodes = Tree::outer($from, ['table_ref', 'table_reference', 'seltablist']);
         $result = null;
         foreach ($nodes as $node) {
@@ -41,7 +60,7 @@ final class FromBinder
             $right = $binder->relation($node);
             $result = $result === null ? $right : $this->join($result, $right, JoinKind::Cross, null, $from, $this->ids->join());
         }
-        if ($result === null && $from->tokens() !== []) {
+        if ($result === null && Tree::hasTokens($from)) {
             Tree::invalid($from, 'FROM clause');
         }
 
@@ -62,8 +81,12 @@ final class FromBinder
             $alias = Tree::child($node, ['alias_clause', 'opt_alias_clause']);
             return $alias === null ? $relation : (new RelationFactory())->alias($relation, $alias, $node, $this->queries ?? new QueryContext($this->tables, $this->ids), $this->scopeId);
         }
-        $derived = Tree::outer($node, ['select_with_parens', 'table_subquery', 'select_derived_union'])[0] ?? null;
-        if ($derived !== null && $this->queries !== null) {
+        $derived = Tree::outer($node, ['select_with_parens', 'table_subquery', 'select_derived_union', 'select_derived2'])[0] ?? null;
+        $factor = Tree::outer($node, ['table_factor'])[0] ?? null;
+        if ($derived === null && $factor !== null && QueryNodes::isBody($factor)) {
+            $derived = $factor;
+        }
+        if ($derived !== null) {
             return $this->derived($node, $derived, QueryNodes::local($node, ['alias_clause', 'opt_table_alias'])[0] ?? null);
         }
         $function = QueryNodes::local($node, ['func_table', 'table_function'])[0] ?? null;
@@ -186,7 +209,7 @@ final class FromBinder
     public function table(Node $source, array $parts, ?Node $aliasNode): BoundRelation
     {
         $alias = null;
-        if ($aliasNode !== null && $aliasNode->tokens() !== []) {
+        if ($aliasNode !== null && Tree::hasTokens($aliasNode)) {
             $tokens = $aliasNode->tokens();
             if (strtoupper($tokens[0]->text) === 'AS') {
                 $tokens = array_slice($tokens, 1);
@@ -248,7 +271,7 @@ final class FromBinder
         $scope = $left->scope->combine($right->scope, $source);
         $expression = $condition === null ? null : (new ExpressionBinder())->bind($condition, $scope);
         if ($expression !== null) {
-            (new ExpressionRules($this->tables->identifiers->dialect))->predicate($expression);
+            (new ExpressionRules($this->tables->identifiers->dialect, $this->tables->diagnostics))->predicate($expression);
         }
         $leftScope = in_array($kind, [JoinKind::Right, JoinKind::Full], true) ? $left->scope->extend($id) : $left->scope;
         $rightScope = in_array($kind, [JoinKind::Left, JoinKind::Full], true) ? $right->scope->extend($id) : $right->scope;

@@ -42,6 +42,7 @@ class BoundStatement
      * @param list<list<Expression>> $rows Explicit VALUES rows
      * @param bool $withTies Include peers of the final ordered row
      * @param array<string, list<Node>> $syntaxClauses Complete clauses, including non-expression modifiers
+     * @param list<\SqlSemantics\Schema\TableDefinition> $declarations Table declarations defined by this statement
      */
     public function __construct(
         public readonly string $scopeId,
@@ -67,6 +68,7 @@ class BoundStatement
         public readonly array $rows = [],
         public readonly bool $withTies = false,
         public readonly array $syntaxClauses = [],
+        public readonly array $declarations = [],
     ) {
     }
 }

@@ -28,7 +28,7 @@ final class FunctionRules
     public function bind(string $name, array $operands, Node $source, Scope $scope): Expression
     {
         if (in_array($name, ['COALESCE', 'NULLIF'], true)) {
-            return (new ExpressionRules($scope->identifiers->dialect))->call($name, $operands, $source);
+            return (new ExpressionRules($scope->identifiers->dialect, $scope->diagnostics()))->call($name, $operands, $source);
         }
         $dialect = $scope->identifiers->dialect;
         $aggregate = in_array($name, ['COUNT', 'SUM', 'AVG', 'MIN', 'MAX', 'TOTAL', 'GROUP_CONCAT', 'STRING_AGG', 'ARRAY_AGG', 'JSON_AGG', 'JSONB_AGG', 'BOOL_AND', 'BOOL_OR', 'EVERY'], true);

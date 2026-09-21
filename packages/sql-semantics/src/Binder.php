@@ -48,6 +48,20 @@ final class Binder
         return (new Binding\Statement\StatementBinder($tables))->bind($this->parser->parse($sql));
     }
     /**
+     * Analyzes the entire statement even when names or types cannot be resolved.
+     *
+     * Unresolved references retain their spelling and unknown type; diagnostics never
+     * substitute for lowering an unimplemented syntax production.
+     */
+    public function analyze(string $sql): Model\Analysis
+    {
+        $diagnostics = new Binding\Analysis\Diagnostics(true);
+        $tables = new TableResolver($this->schema, new Identifiers($this->schema->dialect), $this->schema->defaultSchema, $diagnostics);
+        $statement = (new Binding\Statement\StatementBinder($tables))->bind($this->parser->parse($sql));
+        return new Model\Analysis($statement, $diagnostics->items);
+    }
+
+    /**
      * Binds a script while preserving statement boundaries.
      *
      * @return list<BoundStatement> Statements in source order

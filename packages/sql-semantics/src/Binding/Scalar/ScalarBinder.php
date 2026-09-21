@@ -58,7 +58,7 @@ final class ScalarBinder
         }
         $operator = $this->operator($children);
         if ($operator !== '' && $operands !== []) {
-            return (new ExpressionRules($scope->identifiers->dialect))->operator($operator, $operands, $node);
+            return (new ExpressionRules($scope->identifiers->dialect, $scope->diagnostics()))->operator($operator, $operands, $node);
         }
         return new Expression(ExpressionKind::Operator, new TypeDescriptor($scope->identifiers->dialect, 'unknown'), Nullability::Unknown, $node, $operands, symbol: $node->name);
     }
@@ -70,7 +70,7 @@ final class ScalarBinder
     {
         $operands = [];
         foreach ($node->children as $child) {
-            if (!$child instanceof Node || $child->tokens() === [] || in_array($child->name, ['func_name', 'function_call_keyword', 'Typename', 'cast_type', 'typetoken', 'collate', 'collate_clause', 'opt_collate'], true)) {
+            if (!$child instanceof Node || !Tree::hasTokens($child) || in_array($child->name, ['func_name', 'function_call_keyword', 'Typename', 'cast_type', 'typetoken', 'collate', 'collate_clause', 'opt_collate'], true)) {
                 continue;
             }
             if (in_array($child->name, ['a_expr', 'b_expr', 'c_expr', 'expr', 'bool_pri', 'predicate', 'bit_expr', 'simple_expr', 'func_application', 'func_expr', 'sum_expr', 'window_func_call', 'columnref', 'simple_ident', 'term'], true)) {
@@ -115,7 +115,7 @@ final class ScalarBinder
         if ($default !== null) {
             array_push($values, ...$this->operands($default, $scope));
         }
-        $type = (new TypeResolution($scope->identifiers->dialect))->common($values, $node);
+        $type = (new TypeResolution($scope->identifiers->dialect, $scope->diagnostics()))->common($values, $node);
         $nullability = $default === null ? Nullability::MaybeNull : NullFacts::alternatives($values);
         return new Expression(ExpressionKind::CaseExpression, $type, $nullability, $node, $operands, symbol: 'CASE');
     }
@@ -135,7 +135,7 @@ final class ScalarBinder
         $text = strtoupper(Tree::text($source));
         $exists = str_starts_with($text, 'EXISTS');
         $membership = str_contains($text, ' IN ');
-        $type = $exists || $membership ? (new TypeResolution($scope->identifiers->dialect))->boolean() : ($query->outputs[0]->expression->type ?? new TypeDescriptor($scope->identifiers->dialect, 'unknown'));
+        $type = $exists || $membership ? (new TypeResolution($scope->identifiers->dialect, $scope->diagnostics()))->boolean() : ($query->outputs[0]->expression->type ?? new TypeDescriptor($scope->identifiers->dialect, 'unknown'));
         $operands = [];
         if ($source !== $node) {
             foreach ($source->children as $child) {
@@ -152,13 +152,13 @@ final class ScalarBinder
      */
     public function nestedQuery(Node $source): ?Node
     {
-        $boundaries = ['SelectStmt', 'select_with_parens', 'subquery', 'select', 'a_expr', 'expr', 'c_expr', 'func_arg_list', 'exprlist', 'func_application'];
+        $boundaries = ['SelectStmt', 'select_with_parens', 'subquery', 'subselect', 'select', 'a_expr', 'expr', 'c_expr', 'func_arg_list', 'exprlist', 'func_application'];
         foreach ($source->children as $child) {
             if (!$child instanceof Node) {
                 continue;
             }
             foreach (Tree::outer($child, $boundaries) as $node) {
-                if (in_array($node->name, ['SelectStmt', 'select_with_parens', 'subquery', 'select'], true)) {
+                if (in_array($node->name, ['SelectStmt', 'select_with_parens', 'subquery', 'subselect', 'select'], true)) {
                     return $node;
                 }
             }

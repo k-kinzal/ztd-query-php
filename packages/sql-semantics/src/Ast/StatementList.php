@@ -33,7 +33,7 @@ final class StatementList
         if ($tree->name !== $root) {
             throw new SemanticException('dialect-mismatch', 'Expected a ' . $dialect->value . ' parser root.', $tree);
         }
-        $statements = array_values(array_filter(Tree::outer($tree, [$statement]), static fn (Node $node): bool => $node->tokens() !== []));
+        $statements = array_values(array_filter(Tree::outer($tree, [$statement]), static fn (Node $node): bool => Tree::hasTokens($node)));
         if ($statements === []) {
             $statements = Tree::outer($tree, $dialect === Dialect::PostgreSql ? ['TransactionStmtLegacy'] : ['simple_statement_or_begin']);
         }

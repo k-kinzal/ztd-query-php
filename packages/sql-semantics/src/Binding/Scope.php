@@ -71,12 +71,21 @@ final class Scope
             return $this->parent->column($parts, $source);
         }
         if (count($matches) !== 1) {
-            throw new SemanticException($matches === [] ? 'unknown-column' : 'ambiguous-column', 'Cannot resolve column unambiguously: ' . implode('.', $parts), $source);
+            $this->diagnostics()->report($matches === [] ? 'unknown-column' : 'ambiguous-column', 'Cannot resolve column unambiguously: ' . implode('.', $parts), $source);
+            return new Expression(ExpressionKind::UnresolvedColumn, new \SqlSemantics\Type\TypeDescriptor($this->identifiers->dialect, 'unknown'), Nullability::Unknown, $source, symbol: implode('.', $parts), reference: $parts);
         }
         $binding = $matches[0];
         $extensions = $this->extensions[$binding->relationId] ?? [];
 
         return new Expression(ExpressionKind::Column, $binding->column->type, $extensions === [] ? $binding->column->nullability : Nullability::MaybeNull, $source, $origins, binding: $binding, nullExtendedBy: $extensions);
+    }
+
+    /**
+     * Shares diagnostics across nested scopes.
+     */
+    public function diagnostics(): Analysis\Diagnostics
+    {
+        return $this->queries?->tables->diagnostics ?? $this->parent?->diagnostics() ?? new Analysis\Diagnostics();
     }
 
     /**
@@ -104,7 +113,7 @@ final class Scope
         foreach ($this->relations as $leftRelation) {
             foreach ($right->relations as $rightRelation) {
                 if ($this->identifiers->relationEqual($leftRelation->alias ?? $leftRelation->declaration->name, $rightRelation->alias ?? $rightRelation->declaration->name)) {
-                    throw new SemanticException('duplicate-relation', 'Duplicate relation name in scope.', $source);
+                    $this->diagnostics()->report('duplicate-relation', 'Duplicate relation name in scope.', $source);
                 }
             }
         }
@@ -122,7 +131,7 @@ final class Scope
             $extensions[$relation->id] = [...($extensions[$relation->id] ?? []), $joinId];
         }
 
-        $merged = array_map(static fn (Expression $value): Expression => new Expression($value->kind, $value->type, Nullability::MaybeNull, $value->source, $value->operands, $value->binding, $value->symbol, [...$value->nullExtendedBy, $joinId], $value->query), $this->merged);
+        $merged = array_map(static fn (Expression $value): Expression => new Expression($value->kind, $value->type, Nullability::MaybeNull, $value->source, $value->operands, $value->binding, $value->symbol, [...$value->nullExtendedBy, $joinId], $value->query, $value->reference), $this->merged);
         return new self($this->identifiers, $this->relations, $extensions, $this->parent, $this->queries, $merged);
     }
     /**

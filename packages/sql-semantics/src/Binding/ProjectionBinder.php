@@ -30,7 +30,14 @@ final class ProjectionBinder
             $items = array_reverse((new Query\SqliteLists())->projection($select));
         }
         if ($items === []) {
-            $list = Tree::child($select, ['select_item_list']);
+            $children = Tree::significant($select);
+            if ($children !== [] && strtoupper(Tree::text($children[0])) === 'TABLE') {
+                return $this->star([], $scope, $select, 0);
+            }
+            if ($scope->identifiers->dialect === Dialect::PostgreSql && Tree::outer($select, ['opt_target_list']) !== []) {
+                return [];
+            }
+            $list = QueryNodes::local($select, ['select_item_list'])[0] ?? null;
             if ($list !== null && Tree::text($list) === '*') {
                 return $this->star([], $scope, $list, 0);
             }
@@ -83,7 +90,7 @@ final class ProjectionBinder
             $alias = $scope->identifiers->name($aliasTokens[count($aliasTokens) - 1]);
         }
 
-        return [new OutputColumn($ordinal, $alias ?? $bound->binding?->column->name, $bound)];
+        return [new OutputColumn($ordinal, $alias ?? $bound->binding?->column->name ?? ($bound->reference[count($bound->reference) - 1] ?? null), $bound)];
     }
 
     /**
@@ -103,6 +110,9 @@ final class ProjectionBinder
             if (!$scope->matches($relation, $qualifiers)) {
                 continue;
             }
+            if (!$relation->declaration->resolved) {
+                $outputs[] = new OutputColumn($ordinal + count($outputs), null, new \SqlSemantics\Model\Expression(ExpressionKind::Wildcard, new TypeDescriptor($scope->identifiers->dialect, 'unknown'), \SqlSemantics\Type\Nullability::Unknown, $source, reference: [$relation->alias ?? $relation->declaration->name]));
+            }
             foreach ($relation->declaration->columns as $column) {
                 if ($qualifiers === [] && isset($scope->merged[$column->name])) {
                     continue;
@@ -112,7 +122,8 @@ final class ProjectionBinder
             }
         }
         if ($outputs === []) {
-            throw new SemanticException('unknown-relation', 'Star has no matching relation.', $source);
+            $scope->diagnostics()->report('unknown-relation', 'Star has no matching relation.', $source);
+            $outputs[] = new OutputColumn($ordinal, null, new \SqlSemantics\Model\Expression(ExpressionKind::Wildcard, new TypeDescriptor($scope->identifiers->dialect, 'unknown'), \SqlSemantics\Type\Nullability::Unknown, $source, reference: $qualifiers));
         }
 
         return $outputs;

@@ -22,7 +22,7 @@ final class ExpressionRules
     /**
      * Binds the dependencies used for semantic binding.
      */
-    public function __construct(public readonly Dialect $dialect)
+    public function __construct(public readonly Dialect $dialect, public readonly Analysis\Diagnostics $diagnostics = new Analysis\Diagnostics())
     {
     }
 
@@ -36,11 +36,12 @@ final class ExpressionRules
             return (new Scalar\FunctionRules())->bind($name, $operands, $source, new Scope(new \SqlSemantics\Ast\Identifiers($this->dialect)));
         }
         if ($operands === [] || ($name === 'NULLIF' && count($operands) !== 2)) {
-            throw new SemanticException('invalid-arity', 'Invalid argument count for ' . $name, $source);
+            $this->diagnostics->report('invalid-arity', 'Invalid argument count for ' . $name, $source);
+            return new Expression(ExpressionKind::Function, new TypeDescriptor($this->dialect, 'unknown'), Nullability::Unknown, $source, $operands, symbol: $name);
         }
-        $type = (new TypeResolution($this->dialect))->common($operands, $source);
+        $type = (new TypeResolution($this->dialect, $this->diagnostics))->common($operands, $source);
         if ($name === 'COALESCE') {
-            if ($this->dialect === Dialect::PostgreSql) {
+            if ($this->dialect === Dialect::PostgreSql && $type->name !== 'unknown') {
                 $operands = array_map(fn (Expression $operand): Expression => $this->coerce($operand, $type), $operands);
             }
             $nullability = NullFacts::coalesce($operands);
@@ -70,7 +71,7 @@ final class ExpressionRules
     {
         $operator = strtoupper($operator);
         $nullability = NullFacts::strict($operands);
-        $types = new TypeResolution($this->dialect);
+        $types = new TypeResolution($this->dialect, $this->diagnostics);
         if (in_array($operator, ['IS NULL', 'IS NOT NULL'], true)) {
             $type = $types->boolean();
             $nullability = Nullability::NotNull;
@@ -103,7 +104,7 @@ final class ExpressionRules
      */
     public function arithmetic(string $operator, array $operands, Node $source): TypeDescriptor
     {
-        $type = (new TypeResolution($this->dialect))->common($operands, $source);
+        $type = (new TypeResolution($this->dialect, $this->diagnostics))->common($operands, $source);
         if ($this->dialect === Dialect::PostgreSql && $operator === '-' && count($operands) === 1 && $operands[0]->kind === ExpressionKind::Literal) {
             $magnitude = str_replace('_', '', $operands[0]->symbol ?? '');
             $type = match ($magnitude) {
@@ -126,7 +127,7 @@ final class ExpressionRules
     public function predicate(Expression $expression): void
     {
         if ($this->dialect === Dialect::PostgreSql && !in_array($expression->type->name, ['boolean', 'unknown'], true)) {
-            throw new SemanticException('non-boolean-predicate', 'A PostgreSQL predicate must have boolean type.', $expression->source);
+            $this->diagnostics->report('non-boolean-predicate', 'A PostgreSQL predicate must have boolean type.', $expression->source);
         }
     }
 }

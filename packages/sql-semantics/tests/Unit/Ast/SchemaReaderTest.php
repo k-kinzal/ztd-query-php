@@ -69,6 +69,10 @@ use SqlSemantics\Type\Nullability;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Scalar\FunctionRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ConstraintGroups::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Analysis\Diagnostics::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Analysis::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Diagnostic::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Scalar\IndirectionBinder::class)]
 final class SchemaReaderTest extends TestCase
 {
     #[TestWith([Dialect::PostgreSql])]
@@ -157,6 +161,16 @@ final class SchemaReaderTest extends TestCase
         self::assertSame('id', $tables[0]->columns[0]->name);
         self::assertSame('name', $tables[1]->columns[0]->name);
         self::assertCount(1, $reader->columnNodes($tree->find('CreateStmt')[0]));
+    }
+
+    public function testReportAllowsDeclarationDiagnosticsWithoutDroppingStructure(): void
+    {
+        $analysis = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->analyze('CREATE TABLE t (id INTEGER, id TEXT, PRIMARY KEY (missing))');
+        self::assertSame(['duplicate-column', 'unknown-column'], array_column($analysis->diagnostics, 'reason'));
+        self::assertSame('t', $analysis->statement->declarations[0]->name);
+        self::assertSame(['id', 'id'], array_column($analysis->statement->declarations[0]->columns, 'name'));
+        self::assertSame('text', $analysis->statement->declarations[0]->columns[1]->type->name);
+        self::assertSame(['missing'], $analysis->statement->declarations[0]->constraints[0]->columns);
     }
 
 }

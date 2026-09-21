@@ -31,6 +31,7 @@ final class Expression
      * @param string|null $symbol Operator, parameter name, or literal spelling
      * @param list<string> $nullExtendedBy Join IDs that can introduce NULL into this result
      * @param BoundSelect|null $query Bound scalar, EXISTS, or membership subquery
+     * @param list<string> $reference Unresolved name parts or wildcard qualifier
      */
     public function __construct(
         public readonly ExpressionKind $kind,
@@ -42,6 +43,7 @@ final class Expression
         public readonly ?string $symbol = null,
         public readonly array $nullExtendedBy = [],
         public readonly ?BoundSelect $query = null,
+        public readonly array $reference = [],
     ) {
     }
 

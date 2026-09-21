@@ -32,3 +32,11 @@ infection --configuration=infection.json5 --with-uncovered --threads=4 --only-co
 
 The CI workflow checks PHP 8.1 through 8.5 and runs lint, mutation testing, and the
 benchmark smoke test. The library and these checks require no live database.
+
+## Grammar property fuzzing
+
+Run `composer fuzz:smoke` to check semantic analysis against the unrestricted
+sql-faker statement generators for every declared release. The dedicated
+`sql-semantics-fuzz.yml` workflow runs this property on pull requests and daily
+with a larger mutation budget. Findings fail the job and retain replay inputs.
+See [fuzz/README.md](../fuzz/README.md) for the invariants and reproduction commands.

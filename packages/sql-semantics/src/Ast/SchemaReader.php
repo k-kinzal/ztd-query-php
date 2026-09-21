@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Ast;
 
+use Closure;
 use SqlParser\Parser\Node;
 use SqlSemantics\Dialect;
 use SqlSemantics\Schema\ColumnDefinition;
@@ -22,9 +23,24 @@ final class SchemaReader
 {
     /**
      * Binds the dependencies used for semantic binding.
+     *
+     * @param Closure(string, string, Node): void|null $onDiagnostic Optional analysis diagnostic receiver
      */
-    public function __construct(public readonly Identifiers $identifiers, public readonly string $defaultSchema)
+    public function __construct(public readonly Identifiers $identifiers, public readonly string $defaultSchema, public readonly ?Closure $onDiagnostic = null)
     {
+    }
+
+    /**
+     * Reports an invalid declaration without discarding other declarations during analysis.
+     *
+     * @throws SemanticException
+     */
+    public function report(string $reason, string $message, Node $source): void
+    {
+        if ($this->onDiagnostic === null) {
+            throw new SemanticException($reason, $message, $source);
+        }
+        ($this->onDiagnostic)($reason, $message, $source);
     }
 
     /**
@@ -47,7 +63,7 @@ final class SchemaReader
                     $key = strtolower($key);
                 }
                 if (isset($tables[$key])) {
-                    throw new SemanticException('duplicate-table', 'Duplicate table declaration: ' . $table->name, $create);
+                    $this->report('duplicate-table', 'Duplicate table declaration: ' . $table->name, $create);
                 }
                 $tables[$key] = $table;
             }
@@ -122,18 +138,18 @@ final class SchemaReader
     {
         $names = array_map(fn (ColumnDefinition $column): string => $this->identifiers->dialect === Dialect::PostgreSql ? $column->name : strtolower($column->name), $columns);
         if (count(array_unique($names)) !== count($names)) {
-            throw new SemanticException('duplicate-column', 'Duplicate column declaration.', $source);
+            $this->report('duplicate-column', 'Duplicate column declaration.', $source);
         }
         $primary = [];
         foreach ($constraints as $constraint) {
             foreach ($constraint->columns as $name) {
                 if (!in_array($this->identifiers->dialect === Dialect::PostgreSql ? $name : strtolower($name), $names, true)) {
-                    throw new SemanticException('unknown-column', 'Constraint references unknown column: ' . $name, $constraint->source);
+                    $this->report('unknown-column', 'Constraint references unknown column: ' . $name, $constraint->source);
                 }
             }
             if ($constraint->kind === ConstraintKind::PrimaryKey) {
                 if ($primary !== []) {
-                    throw new SemanticException('duplicate-primary-key', 'More than one primary key.', $constraint->source);
+                    $this->report('duplicate-primary-key', 'More than one primary key.', $constraint->source);
                 }
                 $primary = array_map(fn (string $name): string => $this->identifiers->dialect === Dialect::PostgreSql ? $name : strtolower($name), $constraint->columns);
             }

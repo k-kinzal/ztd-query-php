@@ -23,6 +23,7 @@ final class TableDefinition
      * @param list<ColumnDefinition> $columns Columns in declaration order
      * @param list<TableConstraint> $constraints Declared integrity conditions
      * @param Node $source Original CREATE TABLE syntax
+     * @param bool $resolved Whether the declaration and its column set are known
      */
     public function __construct(
         public readonly string $schema,
@@ -30,6 +31,7 @@ final class TableDefinition
         public readonly array $columns,
         public readonly array $constraints,
         public readonly Node $source,
+        public readonly bool $resolved = true,
     ) {
     }
 }

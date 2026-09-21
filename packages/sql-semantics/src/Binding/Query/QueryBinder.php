@@ -49,13 +49,14 @@ final class QueryBinder
             return $this->compound($source, $body, $context, $id, $operator, $parent);
         }
         $fromNode = QueryNodes::local($body, ['from_clause', 'select_from', 'from'])[0] ?? null;
-        $from = $fromNode === null ? null : (new FromBinder($context->tables, $context->ids, $context, $parent, $id))->bind($fromNode);
+        $inputs = new FromBinder($context->tables, $context->ids, $context, $parent, $id);
+        $from = $fromNode === null ? $inputs->explicit($body) : $inputs->bind($fromNode);
         $scope = $from->scope ?? new Scope($context->tables->identifiers, parent: $parent, queries: $context);
         $where = $this->expressions($body, ['where_clause', 'opt_where_clause', 'where_opt'], $scope)[0] ?? null;
         $having = $this->expressions($body, ['having_clause', 'opt_having_clause', 'having_opt'], $scope)[0] ?? null;
         foreach ([$where, $having] as $predicate) {
             if ($predicate !== null) {
-                (new ExpressionRules($scope->identifiers->dialect))->predicate($predicate);
+                (new ExpressionRules($scope->identifiers->dialect, $scope->diagnostics()))->predicate($predicate);
             }
         }
         $values = (new \SqlSemantics\Binding\Statement\ValuesBinder())->rows($body, $scope);
@@ -142,7 +143,7 @@ final class QueryBinder
             $outputs[] = new OutputColumn($index, $names[$index] ?? $output->name, $output->expression);
         }
         $class = $query::class;
-        return new $class($query->scopeId, $query->from, $query->relations, $outputs, $query->where, $query->distinct, $query->orderBy, $query->limit, $query->offset, $query->source, $query->groupBy, $query->having, $query->ctes, $query->branches, $query->setOperator, $query->clauses, kind: $query->kind, targets: $query->targets, assignments: $query->assignments, queries: $query->queries, rows: $query->rows, withTies: $query->withTies, syntaxClauses: $query->syntaxClauses);
+        return new $class($query->scopeId, $query->from, $query->relations, $outputs, $query->where, $query->distinct, $query->orderBy, $query->limit, $query->offset, $query->source, $query->groupBy, $query->having, $query->ctes, $query->branches, $query->setOperator, $query->clauses, kind: $query->kind, targets: $query->targets, assignments: $query->assignments, queries: $query->queries, rows: $query->rows, withTies: $query->withTies, syntaxClauses: $query->syntaxClauses, declarations: $query->declarations);
     }
 
     /**
@@ -154,7 +155,7 @@ final class QueryBinder
     {
         $branches = [];
         foreach ($body->children as $child) {
-            if ($child instanceof Node && in_array($child->name, ['select_clause', 'query_expression_body', 'selectnowith', 'oneselect'], true)) {
+            if ($child instanceof Node && in_array($child->name, ['select_clause', 'query_expression_body', 'query_specification', 'selectnowith', 'oneselect'], true)) {
                 $branches[] = $child;
             }
         }
@@ -177,12 +178,15 @@ final class QueryBinder
             $operands = [];
             foreach ($branches as $branch) {
                 if (count($branch->outputs) !== count($branches[0]->outputs)) {
-                    throw new SemanticException('set-column-count', 'Compound query operands must have the same width.', $body);
+                    $context->tables->diagnostics->report('set-column-count', 'Compound query operands must have the same width.', $body);
+                }
+                if (!isset($branch->outputs[$index])) {
+                    continue;
                 }
                 $value = $branch->outputs[$index]->expression;
                 $operands[] = $value->kind === ExpressionKind::Cast && $value->symbol === 'implicit' && isset($value->operands[0]) && $value->operands[0]->type->name === 'unknown' ? $value->operands[0] : $value;
             }
-            $type = (new TypeResolution($context->tables->identifiers->dialect))->common($operands, $body);
+            $type = (new TypeResolution($context->tables->identifiers->dialect, $context->tables->diagnostics))->common($operands, $body);
             $nullable = array_filter($operands, static fn (Expression $value): bool => $value->nullability !== Nullability::NotNull) !== [];
             $outputs[] = new OutputColumn($index, $output->name, new Expression(ExpressionKind::Operator, $type, $nullable ? Nullability::MaybeNull : Nullability::NotNull, $body, $operands, symbol: $operator));
         }

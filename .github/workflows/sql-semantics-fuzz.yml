@@ -1,0 +1,99 @@
+name: Fuzz (sql-semantics)
+
+on:
+  pull_request:
+    paths:
+      - 'packages/sql-semantics/**'
+      - 'packages/sql-parser/**'
+      - 'packages/sql-faker/**'
+      - '.github/workflows/sql-semantics-fuzz.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'packages/sql-semantics/**'
+      - 'packages/sql-parser/**'
+      - 'packages/sql-faker/**'
+      - '.github/workflows/sql-semantics-fuzz.yml'
+  schedule:
+    - cron: '37 4 * * *'
+  workflow_dispatch:
+    inputs:
+      runs:
+        description: Mutations per grammar release, in addition to corpus replay
+        default: '10000'
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fuzz:
+    name: Semantic properties (${{ matrix.dialect }} ${{ matrix.version }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { dialect: mysql, version: '5.6.51' }
+          - { dialect: mysql, version: '5.7.44' }
+          - { dialect: mysql, version: '8.0.44' }
+          - { dialect: mysql, version: '8.1.0' }
+          - { dialect: mysql, version: '8.2.0' }
+          - { dialect: mysql, version: '8.3.0' }
+          - { dialect: mysql, version: '8.4.7' }
+          - { dialect: mysql, version: '9.0.1' }
+          - { dialect: mysql, version: '9.1.0' }
+          - { dialect: pg, version: '17.2' }
+          - { dialect: sqlite, version: '3.47.2' }
+    defaults:
+      run:
+        working-directory: packages/sql-semantics
+        shell: bash
+    env:
+      MYSQL_VERSION: ${{ matrix.version }}
+      FUZZ_DIALECT: ${{ matrix.dialect }}
+      FUZZ_RUNS: ${{ github.event.inputs.runs || (github.event_name == 'schedule' && '10000') || '300' }}
+      COMPOSER_NO_INTERACTION: '1'
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Set up PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240
+        with:
+          php-version: '8.5'
+          extensions: pcntl, mbstring, dom, xml, xmlwriter
+          coverage: none
+      - name: Install dependencies
+        uses: ramsey/composer-install@65e4f84970763564f46a70b8a54b90d033b3bdda
+        with:
+          working-directory: packages/sql-semantics
+          dependency-versions: locked
+          require-lock-file: true
+      - name: Restore accumulated corpus
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: packages/sql-semantics/fuzz/corpus/
+          key: semantics-fuzz-${{ matrix.dialect }}-${{ matrix.version }}-${{ github.run_id }}
+          restore-keys: semantics-fuzz-${{ matrix.dialect }}-${{ matrix.version }}-
+      - name: Check semantic properties for every generated statement
+        run: php fuzz/run.php "$FUZZ_DIALECT" "$FUZZ_RUNS"
+      - name: Save accumulated corpus
+        if: always()
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: packages/sql-semantics/fuzz/corpus/
+          key: semantics-fuzz-${{ matrix.dialect }}-${{ matrix.version }}-${{ github.run_id }}
+      - name: Upload logs, findings, and grammar coverage
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: semantics-fuzz-${{ matrix.dialect }}-${{ matrix.version }}
+          path: |
+            packages/sql-semantics/build/fuzz/
+            packages/sql-semantics/fuzz/coverage/
+          if-no-files-found: error

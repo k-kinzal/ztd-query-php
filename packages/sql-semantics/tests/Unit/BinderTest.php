@@ -70,6 +70,10 @@ use SqlSemantics\Type\Nullability;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Scalar\FunctionRules::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ConstraintGroups::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Analysis\Diagnostics::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Analysis::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Diagnostic::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Scalar\IndirectionBinder::class)]
 final class BinderTest extends TestCase
 {
     #[TestWith([Dialect::PostgreSql])]
@@ -302,6 +306,26 @@ final class BinderTest extends TestCase
         self::assertSame([], $query->outputs);
         self::assertSame([], $query->rows);
         self::assertNull($query->limit);
+    }
+
+    #[DataProvider('providerReleases')]
+    public function testAnalyzeMatchesStrictBindingWithACompleteCatalog(Dialect $dialect, string $version): void
+    {
+        $schema = (new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(id INTEGER NOT NULL)');
+        $binder = new Binder($schema);
+        $analysis = $binder->analyze('SELECT id + 1 AS next_id FROM t');
+        self::assertSame([], $analysis->diagnostics);
+        self::assertEquals($binder->bind('SELECT id + 1 AS next_id FROM t'), $analysis->statement);
+        self::assertSame('id', $analysis->statement->outputs[0]->expression->lineage()[0]->column->name);
+    }
+
+    public function testBindEmptyPostgreSqlProjectionAndOrdinaryDualTable(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE dual(id INTEGER)');
+        $binder = new Binder($schema);
+        self::assertSame([], $binder->bind('SELECT')->outputs);
+        self::assertSame([], $binder->bind('SELECT FROM dual')->outputs);
+        self::assertSame($schema->tables[0], $binder->bind('SELECT id FROM dual')->relations[0]->declaration);
     }
 
 }

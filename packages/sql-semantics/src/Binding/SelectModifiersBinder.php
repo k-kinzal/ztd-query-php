@@ -61,14 +61,16 @@ final class SelectModifiersBinder
             if (ctype_digit($text)) {
                 $ordinal = (int) $text - 1;
                 if (!isset($outputs[$ordinal])) {
-                    throw new SemanticException('invalid-output-position', 'ORDER BY position is outside the result.', $node);
+                    $scope->diagnostics()->report('invalid-output-position', 'ORDER BY position is outside the result.', $node);
+                    return (new ExpressionBinder())->bind($node, $scope);
                 }
                 return $outputs[$ordinal]->expression;
             }
             $name = $scope->identifiers->name($tokens[0]);
             $matches = array_values(array_filter($outputs, static fn (OutputColumn $output): bool => $output->name !== null && $scope->identifiers->equal($output->name, $name)));
             if (count($matches) > 1) {
-                throw new SemanticException('ambiguous-output', 'ORDER BY alias is ambiguous.', $node);
+                $scope->diagnostics()->report('ambiguous-output', 'ORDER BY alias is ambiguous.', $node);
+                return (new ExpressionBinder())->bind($node, $scope);
             }
             if ($matches !== []) {
                 return $matches[0]->expression;
@@ -100,7 +102,7 @@ final class SelectModifiersBinder
             }
             return [$bound[0] ?? null, (new ExpressionBinder())->bind($node, $scope)];
         }
-        if ($limit !== null && $limit->tokens() !== [] && $bound === [] && strtoupper(Tree::text($limit)) !== 'LIMIT ALL') {
+        if ($limit !== null && Tree::hasTokens($limit) && $bound === [] && strtoupper(Tree::text($limit)) !== 'LIMIT ALL') {
             Tree::invalid($limit, 'limit');
         }
 

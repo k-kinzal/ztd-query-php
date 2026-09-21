@@ -1,0 +1,111 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Binding\Scalar;
+
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Binder;
+use SqlSemantics\Dialect;
+use SqlSemantics\SchemaBuilder;
+
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Ast\ColumnReader::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Ast\ConstraintGroups::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Ast\ConstraintReader::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Ast\DialectParser::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Ast\Identifiers::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Ast\SchemaReader::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Ast\StatementList::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Ast\TokenGroups::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Ast\Tree::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Ast\TypeReader::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(Binder::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\Analysis\Diagnostics::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\BoundRelation::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\ExpressionBinder::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\ExpressionRules::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\FromBinder::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\IdentitySequence::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\LiteralBinder::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\NullFacts::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\ProjectionBinder::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\Query\QueryBinder::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\Query\QueryContext::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\Query\QueryNodes::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\Query\QueryRelation::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\Query\RelationFactory::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\Query\SqliteLists::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\Query\UsingJoin::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\Scalar\FunctionRules::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\Scalar\ScalarBinder::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\Schema\SchemaEvolution::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\Schema\TableAlteration::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\Scope::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\SelectBinder::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\SelectModifiersBinder::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\Statement\MutationBinder::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\Statement\StatementBinder::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\Statement\UtilityBinder::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\Statement\ValuesBinder::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\TableResolver::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\TypeResolution::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(Dialect::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Model\Analysis::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Model\BoundSelect::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Model\BoundStatement::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Model\ColumnBinding::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Model\Diagnostic::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Model\Expression::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Model\ExpressionKind::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Model\Join::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Model\JoinKind::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Model\Ordering::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Model\OutputColumn::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Model\TableUse::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Schema\ColumnDefinition::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Schema\ConstraintKind::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Schema\TableConstraint::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Schema\TableDefinition::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Schema::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(SchemaBuilder::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\SemanticException::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Type\Nullability::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Type\TypeDescriptor::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
+#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\Scalar\IndirectionBinder::class)]
+final class IndirectionBinderTest extends TestCase
+{
+    public function testColumnBindsQualifiedArrayNamesAndIndexDependencies(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER[], i INTEGER)');
+        $query = (new Binder($schema))->bind('SELECT t.a[i] FROM t');
+        $value = $query->outputs[0]->expression;
+        self::assertSame('[]', $value->symbol);
+        self::assertSame('integer', $value->type->name);
+        self::assertSame('maybe-null', $value->nullability->value);
+        self::assertSame('a', $value->operands[0]->binding?->column->name);
+        self::assertSame('i', $value->operands[1]->binding?->column->name);
+        self::assertCount(2, $value->lineage());
+    }
+
+    public function testApplyRetainsArraySlicesAndOpenBounds(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER[])');
+        $query = (new Binder($schema))->bind('SELECT a[1:2], a[:2] FROM t');
+        self::assertSame('[:]', $query->outputs[0]->expression->symbol);
+        self::assertSame('integer[]', $query->outputs[0]->expression->type->name);
+        self::assertCount(3, $query->outputs[0]->expression->operands);
+        self::assertCount(2, $query->outputs[1]->expression->operands);
+        self::assertSame('2', $query->outputs[1]->expression->operands[1]->symbol);
+    }
+
+    public function testPostfixPreservesRecordAndArrayAccessOperations(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER[], r custom_record)');
+        $query = (new Binder($schema))->bind('SELECT (a)[1], (r).field FROM t');
+        self::assertSame('integer', $query->outputs[0]->expression->type->name);
+        self::assertSame('.field', $query->outputs[1]->expression->symbol);
+        self::assertSame('unknown', $query->outputs[1]->expression->type->name);
+        self::assertSame('r', $query->outputs[1]->expression->lineage()[0]->column->name);
+    }
+}

@@ -7,6 +7,7 @@ namespace SqlSemantics\Ast;
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
 use SqlSemantics\SemanticException;
+use WeakMap;
 
 /**
  * Navigates grammar boundaries without flattening nested query or expression scopes.
@@ -15,6 +16,24 @@ use SqlSemantics\SemanticException;
  */
 final class Tree
 {
+    /**
+     * @var WeakMap<Node, string>|null
+     */
+    private static ?WeakMap $spellings = null;
+
+    /**
+     * Tests for a terminal without repeatedly flattening entire expression subtrees.
+     */
+    public static function hasTokens(Node $node): bool
+    {
+        foreach ($node->children as $child) {
+            if ($child instanceof Token || self::hasTokens($child)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * @param list<string> $nodes
      * @param list<string> $tokens
@@ -57,7 +76,7 @@ final class Tree
     public static function child(Node $node, array $names): ?Node
     {
         foreach ($node->children as $child) {
-            if ($child instanceof Node && in_array($child->name, $names, true) && $child->tokens() !== []) {
+            if ($child instanceof Node && in_array($child->name, $names, true) && Tree::hasTokens($child)) {
                 return $child;
             }
         }
@@ -70,7 +89,7 @@ final class Tree
      */
     public static function significant(Node $node): array
     {
-        return array_values(array_filter($node->children, static fn (Node|Token $child): bool => $child instanceof Token ? $child->text !== '' : $child->tokens() !== []));
+        return array_values(array_filter($node->children, static fn (Node|Token $child): bool => $child instanceof Token ? $child->text !== '' : Tree::hasTokens($child)));
     }
 
     /**
@@ -78,7 +97,11 @@ final class Tree
      */
     public static function text(Node|Token $node): string
     {
-        return $node instanceof Token ? $node->text : implode(' ', array_map(static fn (Token $token): string => $token->text, $node->tokens()));
+        if ($node instanceof Token) {
+            return $node->text;
+        }
+        self::$spellings ??= new WeakMap();
+        return self::$spellings[$node] ??= implode(' ', array_map(static fn (Token $token): string => $token->text, $node->tokens()));
     }
 
     /**

@@ -28,10 +28,26 @@ final class UtilityBinder
      */
     public function bind(Node $source, Node $statement, string $kind): BoundStatement
     {
+        $id = $this->context->ids->scope();
         $queries = [];
         foreach (Tree::outer($statement, ['SelectStmt', 'select_stmt', 'query_expression', 'select']) as $node) {
             $queries[] = $this->context->bind($node);
         }
-        return new BoundStatement($this->context->ids->scope(), null, [], [], null, false, [], null, null, $source, kind: $kind, queries: $queries);
+        $tables = $this->context->tables;
+        $create = Tree::outer($statement, ['CreateStmt', 'create_table_stmt', 'create_table'])[0] ?? null;
+        $declarations = [];
+        if ($create !== null) {
+            $reader = new \SqlSemantics\Ast\SchemaReader($tables->identifiers, $tables->defaultSchema, $tables->diagnostics->report(...));
+            $declarations[] = $reader->table($tables->identifiers->dialect === \SqlSemantics\Dialect::Sqlite ? $statement : $create);
+        }
+        $targets = array_map(fn (\SqlSemantics\Schema\TableDefinition $table): \SqlSemantics\Model\TableUse => new \SqlSemantics\Model\TableUse($this->context->ids->relation(), $id, $table, null, $table->source), $declarations);
+        $scope = new \SqlSemantics\Binding\Scope($tables->identifiers, $targets, queries: $this->context);
+        $expressions = [];
+        foreach (Tree::outer($statement, ['a_expr', 'expr', 'SelectStmt', 'select_stmt', 'query_expression', 'select']) as $node) {
+            if (in_array($node->name, ['a_expr', 'expr'], true)) {
+                $expressions[] = (new \SqlSemantics\Binding\ExpressionBinder())->bind($node, $scope);
+            }
+        }
+        return new BoundStatement($id, null, [], [], null, false, [], null, null, $source, clauses: ['arguments' => $expressions], kind: $kind, targets: $targets, queries: $queries, syntaxClauses: \SqlSemantics\Binding\Query\QueryNodes::clauses($statement), declarations: $declarations);
     }
 }

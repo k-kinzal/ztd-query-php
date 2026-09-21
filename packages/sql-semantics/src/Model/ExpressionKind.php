@@ -15,6 +15,8 @@ namespace SqlSemantics\Model;
 enum ExpressionKind: string
 {
     case Column = 'column';
+    case UnresolvedColumn = 'unresolved-column';
+    case Wildcard = 'wildcard';
     case Literal = 'literal';
     case Parameter = 'parameter';
     case Operator = 'operator';

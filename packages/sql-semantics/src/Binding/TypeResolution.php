@@ -21,7 +21,7 @@ final class TypeResolution
     /**
      * Binds the dependencies used for semantic binding.
      */
-    public function __construct(public readonly Dialect $dialect)
+    public function __construct(public readonly Dialect $dialect, public readonly Analysis\Diagnostics $diagnostics = new Analysis\Diagnostics())
     {
     }
 
@@ -33,6 +33,9 @@ final class TypeResolution
     {
         $types = [];
         foreach ($expressions as $expression) {
+            if ($expression->type->name === 'unknown' && !in_array($expression->kind, [\SqlSemantics\Model\ExpressionKind::Literal, \SqlSemantics\Model\ExpressionKind::Parameter], true)) {
+                return new TypeDescriptor($this->dialect, 'unknown');
+            }
             if ($expression->type->name !== 'unknown') {
                 $types[] = $expression->type;
             }
@@ -62,7 +65,7 @@ final class TypeResolution
         }
 
         if ($this->dialect === Dialect::PostgreSql && array_diff($names, [...$numeric, 'text', 'varchar', 'char', 'boolean']) === []) {
-            throw new SemanticException('incompatible-types', 'Cannot establish a common type for: ' . implode(', ', $names), $source);
+            $this->diagnostics->report('incompatible-types', 'Cannot establish a common type for: ' . implode(', ', $names), $source);
         }
         return new TypeDescriptor($this->dialect, 'unknown');
     }
