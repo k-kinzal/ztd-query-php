@@ -59,8 +59,8 @@
 <span class="tok-var">$result</span> = <span class="tok-var">$stmt</span>-&gt;<span class="tok-id">fetchAll</span>();
 <span class="tok-com">// [[&#039;id&#039; =&gt; 1, &#039;name&#039; =&gt; &#039;Alice&#039;]]</span></code></pre>
 <p>See <span class="md-target" title="packages/ztd-query-core/README.md">packages/ztd-query-core/README.md</span> for full documentation.</p>
-<h3>SQL semantic analysis</h3>
-<p><span class="md-target" title="packages/sql-semantics/"><code>packages/sql-semantics</code></span> binds SQL parser trees to schema declarations and returns types, conservative NULL facts, occurrence-aware lineage, and logical query structure for fixture and catalog consumers. See its <span class="md-target" title="packages/sql-semantics/docs/design.md">semantic design</span> and <span class="md-target" title="packages/sql-semantics/docs/support.md">supported surface</span>.</p>
+<h3>SQL semantics</h3>
+<p><span class="md-target" title="packages/sql-semantics/"><code>packages/sql-semantics</code></span> implements the semantic phase of a database front end. It accepts schema DDL and SELECT strings and returns bound statements with types, conservative NULL facts, value provenance, and relational structure for fixture generation and SQL metadata consumers. See its <span class="md-target" title="packages/sql-semantics/docs/design.md">semantic design</span> and <span class="md-target" title="packages/sql-semantics/docs/support.md">supported surface</span>.</p>
 <h3>License</h3>
 <p>MIT License. See <span class="md-target" title="LICENSE">LICENSE</span> for details.</p>
 </section>
