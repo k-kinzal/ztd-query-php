@@ -82,28 +82,29 @@
 <span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">BoundSelect</span> <span class="tok-var">$query</span> = <span class="tok-id">null</span>,</span>
 <span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$reference</span> = [],</span>
 <span class="src-line" id="L47" data-diff="same"><a class="ln" href="#L47">47</a>    ) {</span>
-<span class="src-line" id="L48" data-diff="same"><a class="ln" href="#L48">48</a>    }</span>
-<span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a></span>
-<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a><span class="tok-com">     * Collects value dependencies without collapsing separate uses of the same table.</span></span>
-<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a><span class="tok-com">     * @return list&lt;ColumnBinding&gt; Unique relation-and-column bindings in encounter order</span></span>
-<span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L55" data-diff="same"><a class="ln" href="#L55">55</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">lineage</span>(): <span class="tok-kw">array</span></span>
-<span class="src-line" id="L56" data-diff="same"><a class="ln" href="#L56">56</a>    {</span>
-<span class="src-line" id="L57" data-diff="same"><a class="ln" href="#L57">57</a>        <span class="tok-var">$bindings</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">binding</span> === <span class="tok-id">null</span> ? [] : [<span class="tok-var">$this</span>-&gt;<span class="tok-id">binding</span>];</span>
-<span class="src-line" id="L58" data-diff="same"><a class="ln" href="#L58">58</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">operands</span> <span class="tok-kw">as</span> <span class="tok-var">$operand</span>) {</span>
-<span class="src-line" id="L59" data-diff="same"><a class="ln" href="#L59">59</a>            <span class="tok-id">array_push</span>(<span class="tok-var">$bindings</span>, ...<span class="tok-var">$operand</span>-&gt;<span class="tok-id">lineage</span>());</span>
-<span class="src-line" id="L60" data-diff="same"><a class="ln" href="#L60">60</a>        }</span>
-<span class="src-line" id="L61" data-diff="same"><a class="ln" href="#L61">61</a>        <span class="tok-var">$unique</span> = [];</span>
-<span class="src-line" id="L62" data-diff="same"><a class="ln" href="#L62">62</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$bindings</span> <span class="tok-kw">as</span> <span class="tok-var">$binding</span>) {</span>
-<span class="src-line" id="L63" data-diff="same"><a class="ln" href="#L63">63</a>            <span class="tok-var">$unique</span>[<span class="tok-var">$binding</span>-&gt;<span class="tok-id">relationId</span> . <span class="tok-str">&#039;:&#039;</span> . <span class="tok-var">$binding</span>-&gt;<span class="tok-id">column</span>-&gt;<span class="tok-id">name</span>] = <span class="tok-var">$binding</span>;</span>
-<span class="src-line" id="L64" data-diff="same"><a class="ln" href="#L64">64</a>        }</span>
-<span class="src-line" id="L65" data-diff="same"><a class="ln" href="#L65">65</a></span>
-<span class="src-line" id="L66" data-diff="same"><a class="ln" href="#L66">66</a>        <span class="tok-kw">return</span> <span class="tok-id">array_values</span>(<span class="tok-var">$unique</span>);</span>
-<span class="src-line" id="L67" data-diff="same"><a class="ln" href="#L67">67</a>    }</span>
-<span class="src-line" id="L68" data-diff="same"><a class="ln" href="#L68">68</a>}</span>
-<span class="src-line" id="L69" data-diff="same"><a class="ln" href="#L69">69</a></span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>        <span class="tok-id">Validation\ExpressionInvariant</span>::<span class="tok-id">check</span>(<span class="tok-var">$this</span>);</span>
+<span class="src-line" id="L49" data-diff="same"><a class="ln" href="#L49">49</a>    }</span>
+<span class="src-line" id="L50" data-diff="same"><a class="ln" href="#L50">50</a></span>
+<span class="src-line" id="L51" data-diff="same"><a class="ln" href="#L51">51</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L52" data-diff="same"><a class="ln" href="#L52">52</a><span class="tok-com">     * Collects value dependencies without collapsing separate uses of the same table.</span></span>
+<span class="src-line" id="L53" data-diff="same"><a class="ln" href="#L53">53</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L54" data-diff="same"><a class="ln" href="#L54">54</a><span class="tok-com">     * @return list&lt;ColumnBinding&gt; Unique relation-and-column bindings in encounter order</span></span>
+<span class="src-line" id="L55" data-diff="same"><a class="ln" href="#L55">55</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L56" data-diff="same"><a class="ln" href="#L56">56</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">lineage</span>(): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L57" data-diff="same"><a class="ln" href="#L57">57</a>    {</span>
+<span class="src-line" id="L58" data-diff="same"><a class="ln" href="#L58">58</a>        <span class="tok-var">$bindings</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">binding</span> === <span class="tok-id">null</span> ? [] : [<span class="tok-var">$this</span>-&gt;<span class="tok-id">binding</span>];</span>
+<span class="src-line" id="L59" data-diff="same"><a class="ln" href="#L59">59</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">operands</span> <span class="tok-kw">as</span> <span class="tok-var">$operand</span>) {</span>
+<span class="src-line" id="L60" data-diff="same"><a class="ln" href="#L60">60</a>            <span class="tok-id">array_push</span>(<span class="tok-var">$bindings</span>, ...<span class="tok-var">$operand</span>-&gt;<span class="tok-id">lineage</span>());</span>
+<span class="src-line" id="L61" data-diff="same"><a class="ln" href="#L61">61</a>        }</span>
+<span class="src-line" id="L62" data-diff="same"><a class="ln" href="#L62">62</a>        <span class="tok-var">$unique</span> = [];</span>
+<span class="src-line" id="L63" data-diff="same"><a class="ln" href="#L63">63</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$bindings</span> <span class="tok-kw">as</span> <span class="tok-var">$binding</span>) {</span>
+<span class="src-line" id="L64" data-diff="same"><a class="ln" href="#L64">64</a>            <span class="tok-var">$unique</span>[<span class="tok-var">$binding</span>-&gt;<span class="tok-id">relationId</span> . <span class="tok-str">&#039;:&#039;</span> . <span class="tok-var">$binding</span>-&gt;<span class="tok-id">column</span>-&gt;<span class="tok-id">name</span>] = <span class="tok-var">$binding</span>;</span>
+<span class="src-line" id="L65" data-diff="same"><a class="ln" href="#L65">65</a>        }</span>
+<span class="src-line" id="L66" data-diff="same"><a class="ln" href="#L66">66</a></span>
+<span class="src-line" id="L67" data-diff="same"><a class="ln" href="#L67">67</a>        <span class="tok-kw">return</span> <span class="tok-id">array_values</span>(<span class="tok-var">$unique</span>);</span>
+<span class="src-line" id="L68" data-diff="same"><a class="ln" href="#L68">68</a>    }</span>
+<span class="src-line" id="L69" data-diff="same"><a class="ln" href="#L69">69</a>}</span>
+<span class="src-line" id="L70" data-diff="same"><a class="ln" href="#L70">70</a></span>
 </code></pre>
 </main>
 <footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
