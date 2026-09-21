@@ -43,6 +43,9 @@ final class GraphProperties
         if ($statement->kind === '' || $statement->scopeId === '') {
             throw new RuntimeException('A statement must have an operation and a scope.');
         }
+        foreach ($statement->declarations as $declaration) {
+            $this->declaration($declaration);
+        }
         $this->join($statement->from);
         foreach ($statement->outputs as $ordinal => $output) {
             if ($output->ordinal !== $ordinal) {
@@ -65,11 +68,26 @@ final class GraphProperties
             $this->statement($query);
         }
         foreach ([...$statement->relations, ...$statement->targets] as $relation) {
+            $this->declaration($relation->declaration);
             if ($relation->scopeId !== $statement->scopeId) {
                 throw new RuntimeException('A relation belongs to the wrong scope.');
             }
             if ($relation->query !== null) {
                 $this->statement($relation->query);
+            }
+        }
+    }
+
+    /**
+     * Checks the structured schema facts that fixture generation consumes.
+     *
+     * @throws RuntimeException
+     */
+    public function declaration(\SqlSemantics\Schema\TableDefinition $table): void
+    {
+        foreach ($table->columns as $column) {
+            if ($column->type->dialect !== $this->dialect || $column->type->name === '') {
+                throw new RuntimeException('A declaration has an invalid column type descriptor.');
             }
         }
     }

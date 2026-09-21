@@ -121,4 +121,19 @@ final class RelationFactoryTest extends TestCase
         self::assertSame('integer', $query->outputs[0]->expression->type->name);
     }
 
+    public function testRescopeAssignsAliasedJoinInputsToTheirInnerScope(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER)');
+        $query = (new Binder($schema))->bind('SELECT q.a, q.b FROM (t a JOIN t b ON a.id=b.id) AS q(a,b)');
+        $inner = $query->relations[0]->query;
+        self::assertNotNull($inner);
+        self::assertNotSame($query->scopeId, $inner->scopeId);
+        self::assertSame([$inner->scopeId, $inner->scopeId], array_column($inner->relations, 'scopeId'));
+        self::assertInstanceOf(\SqlSemantics\Model\Join::class, $inner->from);
+        self::assertSame($inner->relations[0], $inner->from->left);
+        self::assertSame($inner->relations[1], $inner->from->right);
+        self::assertSame($inner->relations[0]->id, $inner->outputs[0]->expression->binding?->relationId);
+        self::assertSame($inner->relations[1]->id, $inner->from->condition?->operands[1]->binding?->relationId);
+    }
+
 }

@@ -93,4 +93,50 @@ final class AlternativeParserTest extends TestCase
         self::assertSame([], $table->alternatives);
         self::assertNull((new \SqlParser\Parser\AlternativeParser($table))->parse([$a, $eq, $a, $eq, $a]));
     }
+    public function testParseKeepsEarlierSuccessfulReduceAlternatives(): void
+    {
+        $builder = new GrammarBuilder();
+        $builder->terminal('A');
+        $builder->terminal('B');
+        $builder->rule('s', ['preferred', 'A']);
+        $builder->rule('s', ['first', 'B']);
+        $builder->rule('s', ['second', 'B']);
+        $builder->rule('preferred', ['A']);
+        $builder->rule('first', ['A']);
+        $builder->rule('second', ['A']);
+        $table = (new ParseTableBuilder())->build($builder->build())->table;
+        $tree = (new \SqlParser\Parser\AlternativeParser($table))->parse([new Token($table->symbols->id('A') ?? -1, 'A', 'a', 0), new Token($table->symbols->id('B') ?? -1, 'B', 'b', 2, ' ')]);
+        self::assertNotNull($tree);
+        self::assertSame(1, $tree->ordinal);
+        self::assertCount(1, $tree->find('first'));
+        self::assertSame('a b', $tree->toString());
+    }
+
+    public function testParseDoesNotConfuseRepeatedStatesAtDifferentPositions(): void
+    {
+        $builder = new GrammarBuilder();
+        $builder->terminal('A');
+        $builder->rule('s', ['s', 'A']);
+        $builder->rule('s', []);
+        $table = (new ParseTableBuilder())->build($builder->build())->table;
+        $a = new Token($table->symbols->id('A') ?? -1, 'A', 'a', 0);
+        $tree = (new \SqlParser\Parser\AlternativeParser($table))->parse([$a, $a, $a]);
+        self::assertNotNull($tree);
+        self::assertSame('aaa', $tree->toString());
+        self::assertCount(4, $tree->find('s'));
+    }
+
+    public function testParseAcceptsAnEmptyDerivation(): void
+    {
+        $builder = new GrammarBuilder();
+        $builder->rule('s', []);
+        $table = (new ParseTableBuilder())->build($builder->build())->table;
+        $tree = (new \SqlParser\Parser\AlternativeParser($table))->parse([]);
+        self::assertNotNull($tree);
+        self::assertSame('s', $tree->name);
+        self::assertSame(0, $tree->ordinal);
+        self::assertSame([], $tree->children);
+        self::assertSame('', $tree->toString());
+    }
+
 }

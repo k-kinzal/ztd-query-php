@@ -31,14 +31,15 @@ final class AlternativeParser
      */
     public function parse(array $tokens): ?Node
     {
+        $end = new Token(0, '$end', '', 0);
         $pending = [new ParseBranch()];
         $seen = [];
         while ($pending !== []) {
             $branch = array_pop($pending);
             while (true) {
                 $state = $branch->states[count($branch->states) - 1];
-                $token = $tokens[$branch->index] ?? new Token(0, $this->table->symbols->name(0), '', ($tokens[count($tokens) - 1] ?? new Token(0, '', '', 0))->end());
-                $key = $branch->index . ':' . implode(',', $branch->states) . ':' . $branch->forced;
+                $token = $tokens[$branch->index] ?? $end;
+                $key = serialize([$branch->index, $branch->states, $branch->forced]);
                 if (isset($seen[$key])) {
                     break;
                 }

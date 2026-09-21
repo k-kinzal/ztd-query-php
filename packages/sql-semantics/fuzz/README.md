@@ -16,7 +16,7 @@ The MySQL roots are `statement` for 5.6/5.7 and
 catalog, checks the entire returned graph, and repeats analysis to test
 determinism. Diagnostic-free results must equal strict `bind()` results.
 `GraphProperties` checks ordered output positions, relation scope ownership,
-column declaration membership, dialect-consistent types, and explicit
+column declaration membership, dialect-consistent declaration and expression types, and explicit
 unresolved references. It visits CTEs, branches, relation queries, scalar
 subqueries, assignments, VALUES rows, predicates, ordering, and clause
 expressions. Shared graph nodes are checked once.
@@ -67,6 +67,10 @@ The target reports the grammar release, generated SQL and input hex for parse
 or semantic exceptions. Other errors retain their original stack trace and
 binary reproducer. Keep every finding as a regression and fix the implementation;
 do not add exception allowances or alter the generation plan to avoid it.
+If a generator serialization bug is found, preserve the selected grammar
+alternatives and their operands when repairing the emitted SQL. For example,
+legacy MySQL joins use the same grouping repair as modern joins so their
+ON/USING predicates stay attached to the generated operands.
 
 PR/push jobs run 300 mutations per release, daily jobs 10,000, and manual jobs
 accept a positive run count. CI saves the corpus and uploads logs, crash inputs,

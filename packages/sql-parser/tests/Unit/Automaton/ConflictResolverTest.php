@@ -124,4 +124,15 @@ final class ConflictResolverTest extends TestCase
         self::assertNull($lemon->reduceOrReduce(1, 1));
         self::assertNull($bison->reduceOrReduce(1, 2));
     }
+    public function testResolveClearsEarlierAlternativesForANonassociativeError(): void
+    {
+        $symbols = new SymbolTable(['$end', 'NUM', '='], ['$accept', 'expr']);
+        $grammar = new Grammar($symbols, [new Rule(0, 3, [4, 0], 0), new Rule(1, 4, [1], 0), new Rule(2, 4, [4, 2, 4], 1)], [2 => new Precedence(1, Associativity::NonAssoc)]);
+        $set = Bitset::empty(3);
+        Bitset::add($set, 2);
+        $resolved = (new ConflictResolver($grammar))->resolve([2 => 5], [1 => $set, 2 => $set]);
+        self::assertSame([2 => ActionCode::ERROR], $resolved->actions);
+        self::assertSame([], $resolved->alternatives);
+    }
+
 }

@@ -54,11 +54,26 @@ final class RelationFactory
     {
         $names = $this->aliases($alias, $context);
         $outputs = (new \SqlSemantics\Binding\ProjectionBinder())->star([], $relation->scope, $source, 0);
-        $query = new BoundSelect($context->ids->scope(), $relation->relation, $relation->scope->relations, $outputs, null, false, [], null, null, $source);
+        $id = $context->ids->scope();
+        $inputs = array_map(static fn (TableUse $input): TableUse => new TableUse($input->id, $id, $input->declaration, $input->alias, $input->source, $input->query), $relation->scope->relations);
+        $query = new BoundSelect($id, $this->rescope($relation->relation, array_column($inputs, null, 'id')), $inputs, $outputs, null, false, [], null, null, $source);
         $name = $names[0] ?? $query->scopeId;
         $declaration = QueryRelation::declaration($query, $name, array_slice($names, 1), $source);
         $table = new TableUse($context->ids->relation(), $scopeId, $declaration, $name, $source, $query);
         return new BoundRelation($table, new Scope($context->tables->identifiers, [$table], parent: $relation->scope->parent, queries: $context));
+    }
+
+    /**
+     * Reuses relation identities while moving an aliased join's inputs into its inner scope.
+     *
+     * @param array<string, TableUse> $inputs Relation occurrences owned by the inner scope
+     */
+    public function rescope(\SqlSemantics\Model\Join|TableUse $relation, array $inputs): \SqlSemantics\Model\Join|TableUse
+    {
+        if ($relation instanceof TableUse) {
+            return $inputs[$relation->id];
+        }
+        return new \SqlSemantics\Model\Join($relation->id, $relation->kind, $this->rescope($relation->left, $inputs), $this->rescope($relation->right, $inputs), $relation->condition, $relation->source);
     }
 
     /**

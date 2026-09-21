@@ -18,16 +18,18 @@ use SqlFaker\MySql\Generation\Rewrite\Query\JoinGroupingRule;
 #[UsesClass(TerminalSequence::class)]
 final class JoinGroupingRuleTest extends TestCase
 {
-    public function testRewriteKeepsNestedJoinConditionsWithTheirOwnOperands(): void
+    #[\PHPUnit\Framework\Attributes\TestWith(['joined_table'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['join_table'])]
+    public function testRewriteKeepsNestedJoinConditionsWithTheirOwnOperands(string $production): void
     {
-        $a = new TerminalOccurrence('A', 10, [0], ['joined_table']);
-        $outer = new TerminalOccurrence('LEFT', 11, [0], ['joined_table']);
-        $b = new TerminalOccurrence('B', 12, [0, 1], ['joined_table', 'joined_table']);
-        $inner = new TerminalOccurrence('JOIN_SYM', 13, [0, 1], ['joined_table', 'joined_table']);
-        $c = new TerminalOccurrence('C', 14, [0, 1], ['joined_table', 'joined_table']);
-        $using = new TerminalOccurrence('USING', 15, [0], ['joined_table']);
+        $a = new TerminalOccurrence('A', 10, [0], [$production]);
+        $outer = new TerminalOccurrence('LEFT', 11, [0], [$production]);
+        $b = new TerminalOccurrence('B', 12, [0, 1], [$production, $production]);
+        $inner = new TerminalOccurrence('JOIN_SYM', 13, [0, 1], [$production, $production]);
+        $c = new TerminalOccurrence('C', 14, [0, 1], [$production, $production]);
+        $using = new TerminalOccurrence('USING', 15, [0], [$production]);
         $tokens = [$a, $outer, $b, $inner, $c, $using];
-        $input = new TerminalSequence($tokens, $tokens, [], [new ProductionOccurrence(0, null, 'joined_table', 3), new ProductionOccurrence(1, 0, 'joined_table', 4), new ProductionOccurrence(9, null, 'joined_table', 0)]);
+        $input = new TerminalSequence($tokens, $tokens, [], [new ProductionOccurrence(0, null, $production, 3), new ProductionOccurrence(1, 0, $production, 4), new ProductionOccurrence(9, null, $production, 0)]);
         $rule = new JoinGroupingRule();
         $result = $rule->rewrite($input);
         self::assertSame(['(', 'A', 'LEFT', '(', 'B', 'JOIN_SYM', 'C', ')', 'USING', ')'], $result->names());

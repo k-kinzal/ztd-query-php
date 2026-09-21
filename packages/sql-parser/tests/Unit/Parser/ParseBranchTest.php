@@ -60,4 +60,17 @@ final class ParseBranchTest extends TestCase
         self::assertSame([$token], $tree->children);
         self::assertSame('a trailing', $tree->toString());
     }
+    public function testAdvanceAcceptsHiddenStartWithoutFabricatingAChild(): void
+    {
+        $builder = new GrammarBuilder();
+        $builder->rule('$@1', [], null, true);
+        $table = (new ParseTableBuilder())->build($builder->build())->table;
+        $tree = (new \SqlParser\Parser\AlternativeParser($table))->parse([new Token(0, '$end', '', 0, '  ')]);
+        self::assertNotNull($tree);
+        self::assertSame('$accept', $tree->name);
+        self::assertSame(0, $tree->ordinal);
+        self::assertSame([], $tree->children);
+        self::assertSame('  ', $tree->toString());
+    }
+
 }

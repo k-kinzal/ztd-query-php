@@ -9,7 +9,7 @@ use SqlFaker\Generation\Token\TerminalOccurrence;
 use SqlFaker\Generation\Token\TerminalSequence;
 
 /**
- * sql_yacc.yy:joined_table defers conditionless joins; joined_table_parens preserves each derived join operand.
+ * sql_yacc.yy join productions need parentheses to preserve each derived operand and its condition.
  * @see https://github.com/mysql/mysql-server/blob/mysql-8.4.7/sql/sql_yacc.yy
  */
 final class JoinGroupingRule implements RewriteRule
@@ -19,7 +19,7 @@ final class JoinGroupingRule implements RewriteRule
      */
     public function rewrite(TerminalSequence $sequence): TerminalSequence
     {
-        foreach ($sequence->occurrences('joined_table') as $id) {
+        foreach ([...$sequence->occurrences('joined_table'), ...$sequence->occurrences('join_table')] as $id) {
             $range = $sequence->range($id);
             if ($range === null) {
                 continue;

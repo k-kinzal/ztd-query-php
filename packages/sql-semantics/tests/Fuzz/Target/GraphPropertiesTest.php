@@ -115,4 +115,15 @@ final class GraphPropertiesTest extends TestCase
         $this->expectExceptionMessage('fabricated type');
         (new \Fuzz\Target\GraphProperties(Dialect::PostgreSql))->expression($broken);
     }
+    /**
+     * Checks declarations as well as query expression types.
+     */
+    public function testDeclarationRejectsAColumnFromAnotherDialect(): void
+    {
+        $table = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (id INTEGER)')->tables[0];
+        $this->expectException(RuntimeException::class);
+        $this->expectExceptionMessage('declaration has an invalid column type');
+        (new \Fuzz\Target\GraphProperties(Dialect::PostgreSql))->declaration($table);
+    }
+
 }

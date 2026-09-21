@@ -63,6 +63,7 @@ final class ConflictResolver
                         $alternatives[$terminal][] = ActionCode::reduce($rule);
                     } elseif ($winner === ActionCode::ERROR) {
                         $actions[$terminal] = ActionCode::ERROR;
+                        unset($alternatives[$terminal]);
                     } elseif (ActionCode::isReduce($winner)) {
                         $actions[$terminal] = $winner;
                         $counts[$rule]++;
