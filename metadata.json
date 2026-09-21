@@ -3,7 +3,7 @@
   "checkpoint_id": "01M31AHX4SVENKK7X71V67JB91",
   "strategy": "manual-commit",
   "branch": "feat/sql-faker-plan-constraints",
-  "checkpoints_count": 1,
+  "checkpoints_count": 2,
   "files_touched": [
     "packages/sql-faker/docs/plan.md",
     "packages/sql-faker/src/Generation/Choice/PlanBuilder.php",
@@ -47,13 +47,20 @@
       "compact_transcript": "/0/transcript.jsonl",
       "content_hash": "/0/content_hash.txt",
       "prompt": "/0/prompt.txt"
+    },
+    {
+      "metadata": "/1/metadata.json",
+      "transcript": "/1/full.jsonl",
+      "compact_transcript": "/1/transcript.jsonl",
+      "content_hash": "/1/content_hash.txt",
+      "prompt": "/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 504689,
+    "input_tokens": 565900,
     "cache_creation_tokens": 0,
-    "cache_read_tokens": 10861184,
-    "output_tokens": 90886,
-    "api_call_count": 96
+    "cache_read_tokens": 11243904,
+    "output_tokens": 97792,
+    "api_call_count": 105
   }
 }
