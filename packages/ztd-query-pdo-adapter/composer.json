@@ -21,6 +21,7 @@
         "k-kinzal/php-ai-toolkit": "dev-main",
         "k-kinzal/sql-faker": "dev-main",
         "k-kinzal/sql-fixture": "dev-main",
+        "k-kinzal/sql-parser": "dev-main",
         "k-kinzal/ztd-query-mysql": "dev-main",
         "k-kinzal/ztd-query-postgres": "dev-main",
         "k-kinzal/ztd-query-sqlite": "dev-main",
@@ -33,6 +34,16 @@
         "squizlabs/php_codesniffer": "^4.0.4"
     },
     "repositories": [
+        {
+            "name": "sql-parser",
+            "type": "path",
+            "url": "../sql-parser",
+            "options": {
+                "versions": {
+                    "k-kinzal/sql-parser": "dev-main"
+                }
+            }
+        },
         {
             "name": "php-ai-toolkit",
             "type": "vcs",
