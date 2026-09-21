@@ -180,4 +180,19 @@ final class TokenGeneratorTest extends TestCase
         self::assertSame(['A'], $generator->generate('root', $a)->names());
     }
 
+
+    public function testMinimumExpansionsUsesTheCurrentRootPlanAndExplicitBudget(): void
+    {
+        $grammar = new Grammar('root', [
+            'root' => new ProductionRule('root', [new Production([new Terminal('A')]), new Production([new NonTerminal('leaf')])]),
+            'leaf' => new ProductionRule('leaf', [new Production([new Terminal('B')])]),
+        ]);
+        $generator = new TokenGenerator($grammar, Factory::create(), static fn (string $name): bool => false);
+        $scoped = GenerationPlan::all()->withRule('root', RulePlan::any()->allowing(ProductionPattern::exactly('leaf')));
+        self::assertSame(2, $generator->minimumExpansions('root', $scoped));
+        self::assertSame(1, $generator->minimumExpansions('leaf', $scoped));
+        self::assertSame(1, $generator->minimumExpansions('root', GenerationPlan::all()));
+        self::assertSame(PHP_INT_MAX, $generator->minimumExpansions('root', $scoped->withPatternForEveryOccurrence('leaf', ProductionPattern::exactly('B'))->withExpansionBudget(1)));
+    }
+
 }

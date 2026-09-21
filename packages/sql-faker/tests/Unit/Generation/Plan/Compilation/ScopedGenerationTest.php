@@ -40,6 +40,7 @@ final class ScopedGenerationTest extends TestCase
         $sequence = new TerminalSequence([new TerminalOccurrence('ID', 1, [0])]);
         $scope = new ScopedGeneration($sequence, [0 => ['ID' => LexemeConstraint::oneOf('target')]]);
         $this->expectException(LexicalException::class);
+        $this->expectExceptionMessage('Explicit lexeme contradicts the plan for ID.');
         $scope->lexicalPlan($sequence, GenerationPlan::all()->withLexemes(['ID' => ['different']]), static fn (int $count): int => 0);
     }
 
@@ -59,6 +60,21 @@ final class ScopedGenerationTest extends TestCase
         $scope = new ScopedGeneration($sequence, [0 => ['RENAMED' => LexemeConstraint::oneOf('users', 'orders')]]);
         $plan = $scope->lexicalPlan($sequence, GenerationPlan::all()->withLexemes(['ID' => ['orders']]), static fn (int $count): int => 0);
         self::assertSame('orders', $plan->lexemeAt('RENAMED', 0));
+    }
+
+
+    public function testLexicalPlanMatchesRenamedOccurrencesByIdentityAndHonorsFinalTokenOverrides(): void
+    {
+        $sequence = new TerminalSequence([
+            new TerminalOccurrence('RENAMED', 2, [0]),
+            new TerminalOccurrence('OVERRIDDEN', 1, [0]),
+        ], original: [new TerminalOccurrence('ID', 1, [0]), new TerminalOccurrence('ID', 2, [0])]);
+        $scope = new ScopedGeneration($sequence);
+        $plan = $scope->lexicalPlan($sequence, GenerationPlan::all()->withLexemes([
+            'ID' => ['first', 'second'], 'OVERRIDDEN' => ['final'],
+        ]), static fn (int $count): int => 0);
+        self::assertSame('second', $plan->lexemeAt('RENAMED', 0));
+        self::assertSame('final', $plan->lexemeAt('OVERRIDDEN', 0));
     }
 
 }

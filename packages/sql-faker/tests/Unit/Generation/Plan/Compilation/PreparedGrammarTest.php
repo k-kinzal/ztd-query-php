@@ -9,6 +9,7 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Generation\Plan\Compilation\PreparedGrammar;
 use SqlFaker\Generation\Plan\Compilation\ScopedGeneration;
+use SqlFaker\Generation\Plan\LexemeConstraint;
 use SqlFaker\Generation\Token\ProductionOccurrence;
 use SqlFaker\Generation\Token\TerminalOccurrence;
 use SqlFaker\Generation\Token\TerminalSequence;
@@ -26,6 +27,7 @@ use SqlFaker\Grammar\Model\Terminal;
 #[UsesClass(ProductionOccurrence::class)]
 #[UsesClass(TerminalOccurrence::class)]
 #[UsesClass(TerminalSequence::class)]
+#[UsesClass(LexemeConstraint::class)]
 final class PreparedGrammarTest extends TestCase
 {
     public function testRestoreKeepsOriginalOrdinalsAndAncestorIdentity(): void
@@ -39,4 +41,15 @@ final class PreparedGrammarTest extends TestCase
         self::assertSame([0], $restored->terminals[0]->ancestors);
         self::assertSame($restored->terminals, $restored->original);
     }
+
+    public function testRestoreRetainsTheLexicalScopeOfEachSelectedProduction(): void
+    {
+        $grammar = new Grammar('special', ['special' => new ProductionRule('special', [new Production([new Terminal('ID')], 7)])], ['special' => 'name']);
+        $name = LexemeConstraint::oneOf('users');
+        $sequence = new TerminalSequence([new TerminalOccurrence('ID', 4, [3], ['special'])], productions: [new ProductionOccurrence(3, null, 'special', 0)]);
+        $restored = (new PreparedGrammar($grammar, ['special' => [0 => ['ID' => $name]]]))->restore($sequence);
+        self::assertSame($name, $restored->constraint($restored->sequence->terminals[0]));
+        self::assertSame(7, $restored->sequence->productions[0]->ordinal);
+    }
+
 }

@@ -7,6 +7,7 @@ namespace Tests\Unit\Generation\Choice;
 use Closure;
 use Faker\Factory;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Generation\Candidate\ChoiceLexemeGenerator;
@@ -46,7 +47,9 @@ use SqlFaker\Generation\Output\CombinedSpacingRule;
 use SqlFaker\Generation\Output\ReverseLexemeGenerator;
 use SqlFaker\Generation\Output\SqlSerializer;
 use SqlFaker\Generation\Plan\GenerationPlan;
+use SqlFaker\Generation\Plan\LexemeConstraint;
 use SqlFaker\Generation\Plan\ProductionPattern;
+use SqlFaker\Generation\Plan\RulePlan;
 use SqlFaker\Generation\SqlGenerator;
 use SqlFaker\Generation\Token\ProductionOccurrence;
 use SqlFaker\Generation\Token\TerminalMappingRule;
@@ -111,6 +114,12 @@ use SqlFaker\Grammar\Model\Terminal;
 #[UsesClass(PatternProductions::class)]
 #[UsesClass(CompletionWitness::class)]
 #[UsesClass(CharacterDomain::class)]
+#[UsesClass(RulePlan::class)]
+#[UsesClass(LexemeConstraint::class)]
+#[UsesClass(\SqlFaker\Generation\Plan\Compilation\GrammarCompiler::class)]
+#[UsesClass(\SqlFaker\Generation\Plan\Compilation\Scope::class)]
+#[UsesClass(\SqlFaker\Generation\Plan\Compilation\PreparedGrammar::class)]
+#[UsesClass(\SqlFaker\Generation\Plan\Compilation\ScopedGeneration::class)]
 final class PlanBuilderTest extends TestCase
 {
     public function testRootResolvesOnlyAnExplicitReleaseAlias(): void
@@ -440,4 +449,36 @@ final class PlanBuilderTest extends TestCase
         self::assertSame(3, $plan->expansionBudget());
         self::assertSame('U', (new SqlGenerator($grammar, Factory::create(), $lexical))->generate($plan));
     }
+
+    #[DataProvider('providerScopedLexicalChoice')]
+    public function testBuildFreezesScopedValuesAndDefaultsWhenChoiceBytesRunOut(?int $choice, string $name, string $value): void
+    {
+        $grammar = new Grammar('root', ['root' => new ProductionRule('root', [new Production([new Terminal('ID'), new Terminal('VALUE')])])]);
+        $domain = new CharacterDomain(range('a', 'z'), 1, 20);
+        $pipeline = new ReverseLexemeGenerator(new ChoiceLexemeGenerator(
+            new ValueLexemeGenerator('ID', $domain, ['unplanned'], 'fixture', 'identifier'),
+            new ValueLexemeGenerator('VALUE', $domain, ['first', 'last'], 'fixture', 'value'),
+        ), new CandidateResolver(new CombinedSpacingRule()), 'fixture');
+        $lexical = $this->createMock(LexicalGrammar::class);
+        $lexical->method('resolveSequence')->willReturnCallback(
+            static fn (TerminalSequence $sequence, ?GenerationPlan $plan, Closure $choose) => $pipeline->generate($sequence, $plan, $choose),
+        );
+        $constraints = GenerationPlan::fromRule('root')->withRule('root', RulePlan::any()->withLexeme('ID', LexemeConstraint::oneOf('users', 'orders')));
+        $frozen = (new PlanBuilder($grammar, $lexical))->build($constraints, 1, static fn (int $count): ?int => null, static fn (int $count): ?int => $choice);
+        self::assertSame($name, $frozen->lexemeAt('ID', 0));
+        self::assertSame($value, $frozen->lexemeAt('VALUE', 0));
+        $generator = new SqlGenerator($grammar, Factory::create(), $lexical);
+        self::assertSame($name . ' ' . $value, $generator->generate($frozen));
+        self::assertSame($name . ' ' . $value, $generator->generate($frozen));
+    }
+
+    /**
+     * @return iterable<string, array{?int, string, string}>
+     */
+    public static function providerScopedLexicalChoice(): iterable
+    {
+        yield 'exhausted choices use the first value' => [null, 'users', 'first'];
+        yield 'explicit choices remain selectable' => [1, 'orders', 'last'];
+    }
+
 }

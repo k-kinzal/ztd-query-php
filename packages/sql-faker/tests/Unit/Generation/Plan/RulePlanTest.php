@@ -88,4 +88,25 @@ final class RulePlanTest extends TestCase
         self::assertTrue($names->lexemes['ID']->accepts('name'));
     }
 
+
+    public function testWithItemsAcceptsNamedArgumentsAndKeepsEveryItemInOrder(): void
+    {
+        $id = RulePlan::any()->withLexeme('ID', LexemeConstraint::oneOf('id'));
+        $name = RulePlan::any()->withLexeme('ID', LexemeConstraint::oneOf('name'));
+        $score = RulePlan::any()->withLexeme('ID', LexemeConstraint::oneOf('score'));
+        self::assertSame([$id, $name, $score], RulePlan::any()->withItems($id, name: $name, score: $score)->items);
+    }
+
+    public function testMergeCombinesNestedRulesAndPreservesIndependentBindings(): void
+    {
+        $outer = RulePlan::any()->withRule('name', RulePlan::any()->withLexeme('ID', LexemeConstraint::oneOf('users', 'orders')));
+        $other = RulePlan::any()->withRule('name', RulePlan::any()->withLexeme('ID', LexemeConstraint::oneOf('users')))
+            ->withRule('value', RulePlan::any()->withLexeme('INTEGER', LexemeConstraint::oneOf('1')));
+        $merged = $outer->merge($other);
+        self::assertTrue($merged->rules['name']->lexemes['ID']->accepts('users'));
+        self::assertFalse($merged->rules['name']->lexemes['ID']->accepts('orders'));
+        self::assertSame($other->rules['value'], $merged->rules['value']);
+        self::assertTrue($outer->rules['name']->lexemes['ID']->accepts('orders'));
+    }
+
 }

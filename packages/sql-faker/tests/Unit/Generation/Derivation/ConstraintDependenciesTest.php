@@ -55,4 +55,18 @@ final class ConstraintDependenciesTest extends TestCase
         self::assertSame([], $dependencies->affected($plan, ['child' => 1]));
         self::assertSame(['free' => true, 'root' => true, 'child' => true], $dependencies->affected(GenerationPlan::all()->withPatternForEveryOccurrence('free', ProductionPattern::at(0)), ['free' => 50]));
     }
+
+    public function testAffectedPropagatesSourceConstraintsToEverySpecializationAndItsParents(): void
+    {
+        $grammar = new Grammar('root', [
+            'root' => new ProductionRule('root', [new Production([new NonTerminal('left'), new NonTerminal('right')])]),
+            'left' => new ProductionRule('left', [new Production([new Terminal('ID')])]),
+            'right' => new ProductionRule('right', [new Production([new Terminal('ID')])]),
+        ], ['left' => 'name', 'right' => 'name']);
+        $dependencies = new ConstraintDependencies($grammar);
+        $plan = GenerationPlan::constrained('root', ['name' => [ProductionPattern::at(0)]]);
+        self::assertSame(['name' => true, 'left' => true, 'right' => true, 'root' => true], $dependencies->affected($plan, []));
+        self::assertSame([], $dependencies->affected($plan, ['name' => 1]));
+    }
+
 }

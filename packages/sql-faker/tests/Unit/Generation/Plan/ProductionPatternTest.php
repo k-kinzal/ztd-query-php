@@ -103,4 +103,27 @@ final class ProductionPatternTest extends TestCase
         self::assertFalse(ProductionPattern::excluding(ProductionPattern::exactly())->matches([]));
     }
 
+
+    public function testAnyOfKeepsTheThirdAlternativeAvailable(): void
+    {
+        $pattern = ProductionPattern::anyOf(
+            ProductionPattern::containing('INSERT'),
+            ProductionPattern::containing('UPDATE'),
+            ProductionPattern::containing('DELETE'),
+        );
+        self::assertTrue($pattern->matches(['DELETE', 'table']));
+        self::assertFalse($pattern->matches(['SELECT', 'table']));
+    }
+
+    public function testAllOfEnforcesEveryCondition(): void
+    {
+        $pattern = ProductionPattern::allOf(
+            ProductionPattern::nonEmpty(),
+            ProductionPattern::containing('INSERT'),
+            ProductionPattern::excluding(ProductionPattern::containing('WITH')),
+        );
+        self::assertFalse($pattern->matches(['WITH', 'INSERT']));
+        self::assertTrue($pattern->matches(['INSERT']));
+    }
+
 }

@@ -11,6 +11,7 @@ use SqlFaker\Generation\Exception\GenerationException;
 use SqlFaker\Generation\Plan\Compilation\GrammarCompiler;
 use SqlFaker\Generation\Plan\Compilation\PreparedGrammar;
 use SqlFaker\Generation\Plan\Compilation\Scope;
+use SqlFaker\Generation\Plan\LexemeConstraint;
 use SqlFaker\Generation\Plan\ProductionPattern;
 use SqlFaker\Generation\Plan\RulePlan;
 use SqlFaker\Grammar\Model\Grammar;
@@ -32,6 +33,7 @@ use SqlFaker\Grammar\Model\Terminal;
 #[UsesClass(Production::class)]
 #[UsesClass(ProductionRule::class)]
 #[UsesClass(Terminal::class)]
+#[UsesClass(LexemeConstraint::class)]
 final class GrammarCompilerTest extends TestCase
 {
     public function testCompileListItemsPreserveOutputOrderForBothRecursionDirections(): void
@@ -156,6 +158,60 @@ final class GrammarCompilerTest extends TestCase
         $tail = $prepared->grammar->ruleMap[$root[0]->symbols[0]->value()]->alternatives;
         self::assertCount(1, $tail);
         self::assertSame('INTEGER', $tail[0]->symbols[0]->value());
+    }
+
+
+    public function testCompileAppliesProductionConditionsToEachListItem(): void
+    {
+        $grammar = new Grammar('list', ['list' => new ProductionRule('list', [new Production([new Terminal('ID')]), new Production([new Terminal('INTEGER')])])]);
+        $plan = RulePlan::any()->withItems(RulePlan::any()->allowing(ProductionPattern::exactly('INTEGER')));
+        $prepared = (new GrammarCompiler($grammar))->compile('list', ['list' => $plan]);
+        $alternatives = $prepared->grammar->ruleMap[$prepared->grammar->startSymbol]->alternatives;
+        self::assertCount(1, $alternatives);
+        self::assertSame('INTEGER', $alternatives[0]->symbols[0]->value());
+    }
+
+    public function testItemSupportsUnseparatedListsButRejectsRecursionBetweenFields(): void
+    {
+        $compiler = new GrammarCompiler(new Grammar('list', []));
+        $first = RulePlan::any()->allowing(ProductionPattern::containing('ID'));
+        $second = RulePlan::any()->allowing(ProductionPattern::containing('INTEGER'));
+        self::assertSame($second, $compiler->item('list', new Production([new NonTerminal('list'), new Terminal('INTEGER')]), [$first, $second]));
+        self::assertSame($first, $compiler->item('list', new Production([new Terminal('ID'), new NonTerminal('list')]), [$first, $second]));
+        self::assertFalse($compiler->item('list', new Production([new Terminal('LP'), new NonTerminal('list'), new Terminal('RP')]), [$first, $second]));
+    }
+
+    public function testHasChildrenRejectsARequiredRoleAbsentFromTheProduction(): void
+    {
+        $compiler = new GrammarCompiler(new Grammar('root', []));
+        self::assertFalse($compiler->hasChildren(new Production([new Terminal('ID')]), ['name' => [RulePlan::any()]]));
+        self::assertTrue($compiler->hasChildren(new Production([new NonTerminal('name')]), ['name' => [RulePlan::any()]]));
+    }
+
+    public function testRuleDoesNotShareACompiledSubtreeBetweenDifferentLexicalScopes(): void
+    {
+        $grammar = new Grammar('name', ['name' => new ProductionRule('name', [new Production([new Terminal('ID')])])]);
+        $compiler = new GrammarCompiler($grammar);
+        $users = new Scope([], ['ID' => LexemeConstraint::oneOf('users')]);
+        $orders = new Scope([], ['ID' => LexemeConstraint::oneOf('orders')]);
+        self::assertNotSame($compiler->rule('name', $users), $compiler->rule('name', $orders));
+        self::assertSame($compiler->rule('name', $users), $compiler->rule('name', $users));
+    }
+
+    public function testSymbolsPreserveInheritedRulesWhenSelectingAnOperand(): void
+    {
+        $grammar = new Grammar('expr', [
+            'expr' => new ProductionRule('expr', [new Production([new NonTerminal('term')])]),
+            'term' => new ProductionRule('term', [new Production([new Terminal('INTEGER')]), new Production([new Terminal('STRING')])]),
+        ]);
+        $compiler = new GrammarCompiler($grammar);
+        $scope = new Scope(['term' => RulePlan::any()->allowing(ProductionPattern::exactly('INTEGER'))]);
+        $symbols = $compiler->symbols('pair', new Production([new NonTerminal('expr')]), $scope, $scope, null, ['expr' => [RulePlan::any()]]);
+        $prepared = $compiler->compile('expr', $scope->rules);
+        $expression = $prepared->grammar->ruleMap[$symbols[0]->value()]->alternatives[0];
+        $terms = $prepared->grammar->ruleMap[$expression->symbols[0]->value()]->alternatives;
+        self::assertCount(1, $terms);
+        self::assertSame('INTEGER', $terms[0]->symbols[0]->value());
     }
 
 }

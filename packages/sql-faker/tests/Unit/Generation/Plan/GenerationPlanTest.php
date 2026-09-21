@@ -284,4 +284,13 @@ final class GenerationPlanTest extends TestCase
         self::assertTrue($original->usesStepBudget());
     }
 
+
+    public function testWithExpansionBudgetReplacesThePreviousBudgetWithoutChangingTheOriginal(): void
+    {
+        $original = GenerationPlan::fromRule('stmt')->withExpansionBudget(10);
+        self::assertSame(30, $original->withExpansionBudget(30)->expansionBudget());
+        self::assertSame(5, $original->withExpansionBudget(5)->expansionBudget());
+        self::assertSame(10, $original->expansionBudget());
+    }
+
 }

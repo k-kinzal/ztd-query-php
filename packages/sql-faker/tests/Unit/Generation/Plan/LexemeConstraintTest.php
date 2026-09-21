@@ -69,4 +69,26 @@ final class LexemeConstraintTest extends TestCase
         self::assertTrue($range->intersect($set)->accepts('15'));
     }
 
+
+    public function testOneOfDeduplicatesValuesWithoutLeavingChoiceIndexGaps(): void
+    {
+        $names = LexemeConstraint::oneOf('users', 'users', 'orders');
+        self::assertSame('orders', $names->choose(static fn (int $count): int => $count - 1));
+    }
+
+    public function testIntegersSupportsSingletonIntervalsIncludingZero(): void
+    {
+        $zero = LexemeConstraint::integers(0, 0);
+        self::assertSame('0', $zero->choose(static fn (int $count): int => $count - 1));
+        self::assertTrue($zero->accepts('0'));
+        self::assertSame('42', LexemeConstraint::integers(42, 42)->choose(static fn (int $count): int => 0));
+    }
+
+    public function testChooseDefaultIntegerDomainIncludesZero(): void
+    {
+        $domain = new LexemeConstraint([]);
+        self::assertSame('0', $domain->choose(static fn (int $count): int => 0));
+        self::assertSame((string) PHP_INT_MAX, $domain->choose(static fn (int $count): int => $count - 1));
+    }
+
 }
