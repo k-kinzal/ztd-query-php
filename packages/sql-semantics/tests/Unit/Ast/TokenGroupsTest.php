@@ -1,0 +1,70 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Ast;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Dialect;
+use SqlSemantics\SemanticException;
+
+#[CoversClass(\SqlSemantics\Ast\TokenGroups::class)]
+#[UsesClass(\SqlSemantics\Binding\ExpressionBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\ExpressionRules::class)]
+#[UsesClass(\SqlSemantics\Binding\FromBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\LiteralBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\NullFacts::class)]
+#[UsesClass(\SqlSemantics\Binding\ProjectionBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\SelectBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\SyntaxGuard::class)]
+#[UsesClass(\SqlSemantics\Binding\SelectModifiersBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\TypeResolution::class)]
+#[UsesClass(\SqlSemantics\Binder::class)]
+#[UsesClass(\SqlSemantics\SchemaBuilder::class)]
+#[UsesClass(\SqlSemantics\Ast\DialectParser::class)]
+#[UsesClass(\SqlSemantics\Ast\ColumnReader::class)]
+#[UsesClass(\SqlSemantics\Ast\ConstraintReader::class)]
+#[UsesClass(\SqlSemantics\Ast\Identifiers::class)]
+#[UsesClass(\SqlSemantics\Ast\SchemaReader::class)]
+#[UsesClass(\SqlSemantics\Ast\StatementList::class)]
+#[UsesClass(\SqlSemantics\Ast\Tree::class)]
+#[UsesClass(\SqlSemantics\Ast\TypeReader::class)]
+#[UsesClass(\SqlSemantics\Binding\BoundRelation::class)]
+#[UsesClass(\SqlSemantics\Binding\IdentitySequence::class)]
+#[UsesClass(\SqlSemantics\Binding\Scope::class)]
+#[UsesClass(\SqlSemantics\Binding\TableResolver::class)]
+#[UsesClass(\SqlSemantics\Model\ColumnBinding::class)]
+#[UsesClass(\SqlSemantics\Model\Expression::class)]
+#[UsesClass(\SqlSemantics\Model\Join::class)]
+#[UsesClass(\SqlSemantics\Model\Ordering::class)]
+#[UsesClass(\SqlSemantics\Model\OutputColumn::class)]
+#[UsesClass(\SqlSemantics\Model\BoundSelect::class)]
+#[UsesClass(\SqlSemantics\Model\TableUse::class)]
+#[UsesClass(\SqlSemantics\Schema::class)]
+#[UsesClass(\SqlSemantics\Schema\ColumnDefinition::class)]
+#[UsesClass(\SqlSemantics\Schema\TableConstraint::class)]
+#[UsesClass(\SqlSemantics\Schema\TableDefinition::class)]
+#[UsesClass(SemanticException::class)]
+#[UsesClass(\SqlSemantics\Type\TypeDescriptor::class)]
+#[Medium]
+final class TokenGroupsTest extends TestCase
+{
+    public function testParenthesesRetainsNestedGroups(): void
+    {
+        $tree = (new \SqlParser\PostgreSql\PostgreSqlParser())->parse('SELECT COALESCE((1), 2), (3)');
+        $groups = \SqlSemantics\Ast\TokenGroups::parentheses($tree->tokens());
+        self::assertCount(2, $groups);
+        self::assertSame(['(', '1', ')', ',', '2'], array_column($groups[0], 'text'));
+        self::assertSame(['3'], array_column($groups[1], 'text'));
+    }
+
+    public function testNamesPreservesQuotedCommas(): void
+    {
+        $node = (new \SqlParser\PostgreSql\PostgreSqlParser())->parse('CREATE TABLE users ("a,b" INTEGER, c INTEGER, PRIMARY KEY ("a,b", c))')->find('columnList')[0];
+        $names = \SqlSemantics\Ast\TokenGroups::names($node->tokens(), new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql));
+        self::assertSame(['a,b', 'c'], $names);
+    }
+}

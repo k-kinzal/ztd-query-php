@@ -1,0 +1,10 @@
+/vendor/
+/build/
+/.phpunit.cache/
+/.php-cs-fixer.cache
+/.deptrac.cache
+/phpbench.json
+/phpunit.xml
+/phpcs.xml
+/.php-cs-fixer.php
+!/composer.lock
