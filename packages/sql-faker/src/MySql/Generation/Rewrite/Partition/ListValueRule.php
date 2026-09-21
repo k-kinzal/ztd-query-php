@@ -29,9 +29,9 @@ final class ListValueRule implements RewriteRule
                 ], 'sql/parse_tree_partitions.cc:PT_part_value_item_max');
             }
         }
-        foreach ($sequence->occurrences('part_value_item') as $id) {
+        foreach ([...$sequence->occurrences('part_value_item'), ...$sequence->occurrences('part_value_expr_item')] as $id) {
             $range = $sequence->range($id);
-            if ($range === null || $sequence->nameAt($range[0]) !== '(' || !$sequence->terminals[$range[0]]->within('part_values_in')) {
+            if ($sequence->child($id, 'part_value_item_list') !== null || $range === null || $sequence->nameAt($range[0]) !== '(' || !$sequence->terminals[$range[0]]->within('part_values_in')) {
                 continue;
             }
             $sequence = $sequence->replace($range[0], 0, [

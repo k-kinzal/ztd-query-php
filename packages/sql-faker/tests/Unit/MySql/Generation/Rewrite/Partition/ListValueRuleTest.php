@@ -45,4 +45,23 @@ final class ListValueRuleTest extends TestCase
         $input = new TerminalSequence([], productions: [new ProductionOccurrence(0, null, 'part_value_item', 0)]);
         self::assertSame($input, (new ListValueRule())->rewrite($input));
     }
+    public function testRewritePreservesLegacyListParenthesesAndGroupsTheirScalarExpressions(): void
+    {
+        $open = new TerminalOccurrence('(', 10, [0, 1], ['part_values_in', 'part_value_item']);
+        $innerOpen = new TerminalOccurrence('(', 11, [0, 1, 2, 3], ['part_values_in', 'part_value_item', 'part_value_item_list', 'part_value_expr_item']);
+        $value = new TerminalOccurrence('NUM', 12, $innerOpen->ancestors, $innerOpen->rules);
+        $innerClose = new TerminalOccurrence(')', 13, $innerOpen->ancestors, $innerOpen->rules);
+        $close = new TerminalOccurrence(')', 14, $open->ancestors, $open->rules);
+        $tokens = [$open, $innerOpen, $value, $innerClose, $close];
+        $input = new TerminalSequence($tokens, $tokens, productions: [new ProductionOccurrence(0, null, 'part_values_in', 0), new ProductionOccurrence(1, 0, 'part_value_item', 0), new ProductionOccurrence(2, 1, 'part_value_item_list', 0), new ProductionOccurrence(3, 2, 'part_value_expr_item', 0)]);
+        $rule = new ListValueRule();
+        $result = $rule->rewrite($input);
+        self::assertSame(['(', '+', '(', 'NUM', ')', ')'], $result->names());
+        self::assertSame($open, $result->terminals[0]);
+        self::assertSame($close, $result->terminals[5]);
+        self::assertSame($input->original, $result->original);
+        self::assertSame($input->productions, $result->productions);
+        self::assertSame($result, $rule->rewrite($result));
+    }
+
 }

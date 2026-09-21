@@ -25,6 +25,10 @@ final class ProjectionBinder
      */
     public function bind(Node $select, Scope $scope): array
     {
+        if ($select->name === 'derived_table_list') {
+            $scope->diagnostics()->report('invalid-query-input', 'A query operand requires SELECT, VALUES, or TABLE.', $select);
+            return [];
+        }
         $items = QueryNodes::local($select, ['target_el', 'select_item']);
         if ($scope->identifiers->dialect === Dialect::Sqlite) {
             $items = array_reverse((new Query\SqliteLists())->projection($select));

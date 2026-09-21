@@ -48,7 +48,7 @@ final class QueryBinder
         if ($operator !== null) {
             return $this->compound($source, $body, $context, $id, $operator, $parent);
         }
-        $fromNode = QueryNodes::local($body, ['from_clause', 'select_from', 'from'])[0] ?? null;
+        $fromNode = $body->name === 'derived_table_list' ? $body : (QueryNodes::local($body, ['from_clause', 'select_from', 'from'])[0] ?? null);
         $inputs = new FromBinder($context->tables, $context->ids, $context, $parent, $id);
         $from = $fromNode === null ? $inputs->explicit($body) : $inputs->bind($fromNode);
         $scope = $from->scope ?? new Scope($context->tables->identifiers, parent: $parent, queries: $context);

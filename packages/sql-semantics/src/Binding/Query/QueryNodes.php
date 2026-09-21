@@ -38,6 +38,11 @@ final class QueryNodes
      */
     public static function body(Node $node): Node
     {
+        if ($node->name === 'derived_table_list') {
+            $reference = Tree::outer($node, ['table_ref'])[0] ?? null;
+            $factor = $reference === null ? null : Tree::child($reference, ['table_factor']);
+            return $factor !== null && self::isBody($factor) ? $factor : $node;
+        }
         if (Tree::child($node, ['union_clause', 'opt_union_clause']) !== null) {
             return self::legacyCompound($node);
         }
@@ -86,7 +91,7 @@ final class QueryNodes
             $children = Tree::significant($node);
             return $children !== [] && strtoupper(Tree::text($children[0])) === 'SELECT';
         }
-        return in_array($node->name, ['simple_select', 'query_specification', 'select_part2', 'select_part2_derived', 'select_derived2', 'oneselect', 'values_clause', 'explicit_table'], true) || self::setOperator($node) !== null;
+        return in_array($node->name, ['simple_select', 'query_specification', 'select_part2', 'select_part2_derived', 'select_derived2', 'oneselect', 'values_clause', 'explicit_table', 'derived_table_list'], true) || self::setOperator($node) !== null;
     }
 
     /**
