@@ -3,9 +3,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 
-Resolve [sql-parser](../sql-parser/) syntax trees against table declarations and
-return a logical query with bound columns, database types, conservative NULL
-facts, and occurrence-aware value lineage. No database connection is required.
+The semantic phase of a database front end: parse SQL with
+[sql-parser](../sql-parser/), bind names against a schema, resolve expression
+types, and derive conservative NULL facts and value provenance. The result is a
+bound statement that later stages can plan or evaluate. No database connection
+is required.
 
 A table declaration and a use of that table are different objects. A self join
 therefore has two relation identities, and an outer join can make one use of a
@@ -17,64 +19,75 @@ NOT NULL column nullable without changing the declaration.
 composer require k-kinzal/sql-semantics
 ```
 
-Requires PHP 8.1+ and `k-kinzal/sql-parser`. Select the parser's dialect explicitly;
-the analyzer checks parser roots and catalog dialects.
+Requires PHP 8.1+ and `k-kinzal/sql-parser`. Both public entry points accept SQL
+strings; parsing is handled inside the package.
 
 ## Usage
 
 ```php
-use SqlParser\PostgreSql\PostgreSqlParser;
-use SqlSemantics\Analyzer;
+use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
+use SqlSemantics\SchemaBuilder;
 
-$parser = new PostgreSqlParser();
-$analyzer = new Analyzer(Dialect::PostgreSql);
-$catalog = $analyzer->schema($parser->parse(<<<'SQL'
+$schema = (new SchemaBuilder(Dialect::PostgreSql))->build(<<<'SQL'
 CREATE TABLE users (
     id INTEGER PRIMARY KEY,
     parent_id INTEGER,
     score INTEGER NOT NULL
 );
-SQL));
+SQL);
 
-$query = $analyzer->analyze($parser->parse(<<<'SQL'
+$binder = new Binder($schema);
+$statement = $binder->bind(<<<'SQL'
 SELECT
     child.id,
     parent.score AS parent_score,
     COALESCE(parent.score, 0) AS effective_score
 FROM users AS child
 LEFT JOIN users AS parent ON child.parent_id = parent.id;
-SQL), $catalog);
+SQL);
 
-$query->relations[0]->id;                               // r0
-$query->relations[1]->id;                               // r1
-$query->outputs[1]->expression->type->name;               // integer
-$query->outputs[1]->expression->nullability->value;       // maybe-null
-$query->outputs[1]->expression->nullExtendedBy;           // ['j0']
-$query->outputs[2]->expression->nullability->value;       // not-null
-$query->outputs[2]->expression->lineage()[0]->relationId; // r1
+$statement->relations[0]->id;                                             // r0
+$statement->relations[1]->id;                                             // r1
+$statement->outputs[1]->expression->type->name;                           // integer
+$statement->outputs[1]->expression->nullability->value;                   // maybe-null
+$statement->outputs[1]->expression->nullExtendedBy;                       // ['j0']
+$statement->outputs[2]->expression->nullability->value;                   // not-null
+$statement->outputs[2]->expression->lineage()[0]->relationId;             // r1
 ```
 
-Use `Dialect::MySql` with `MySqlParser`, or `Dialect::Sqlite` with `SqliteParser`,
-for the same supported query shapes. The grammar version is selected on the
-parser; semantic coverage is deliberately smaller than its grammar coverage.
+`SchemaBuilder::build(string ...$sql): Schema` constructs a reusable schema from
+CREATE TABLE strings. `Binder::bind(string $sql): BoundSelect` performs semantic
+binding of one SELECT against that schema. `Schema` contains declarations and
+their language context; `BoundSelect` is the output of the semantic phase.
+
+Use `Dialect::MySql` or `Dialect::Sqlite` for the other supported dialects.
+`SchemaBuilder` accepts optional `defaultSchema` and `grammarVersion` arguments,
+for example `new SchemaBuilder(Dialect::PostgreSql, 'app', 'pg-17.2')`. The schema
+retains the resolved grammar release and default namespace, so the binder uses
+the same settings. Semantic coverage is smaller than grammar coverage.
+
+Call `build()` without arguments for a schema with no tables, such as when
+binding `SELECT 1`. Each build creates a new schema; it does not apply migrations.
+A binder can be reused for multiple SELECTs against the same schema.
 
 The result is an immutable PHP object graph, not serialized SQL or YAML.
 `Expression::source`, `TableUse::source`, and declaration sources retain the
-original parser nodes or tokens, including their source locations. The input
-syntax tree is never modified. IDs are deterministic within each analysis and
-restart for a new query.
+original parser nodes or tokens, including their source locations. Binding
+preserves that syntax tree. IDs are deterministic within each bound statement and restart for
+each call to `bind()`. Syntax and lexical errors propagate from `sql-parser`;
+semantic failures use `SemanticException`.
 
 ## What the result means
 
 | Information | Representation |
 | --- | --- |
-| Schema snapshot | `Catalog`, `TableDefinition`, ordered `ColumnDefinition` objects |
+| Schema snapshot | `Schema`, `TableDefinition`, ordered `ColumnDefinition` objects |
 | Declared integrity | Primary/unique keys, foreign references, CHECK and default syntax |
 | Names and scope | `TableUse`, `ColumnBinding`, query-local relation and scope IDs |
 | Values | `Expression`, ordered operands, dialect `TypeDescriptor`, NULL facts |
 | Value dependencies | `Expression::lineage()`, distinguished by relation occurrence |
-| Row dependencies | Logical `Join` tree and its `condition`, then `SelectQuery::where` |
+| Row dependencies | Logical `Join` tree and its `condition`, then `BoundSelect::where` |
 | Result shape | Ordered `OutputColumn` objects; duplicate names remain distinct |
 | Result modifiers | DISTINCT, ordering, LIMIT, and OFFSET |
 | Incomplete knowledge | `unknown` parameter types and `Nullability::Unknown` |
@@ -122,15 +135,13 @@ change `sql-fixture` behavior.
 composer install
 composer lint
 composer test
-composer fuzz:smoke
-composer fuzz:semantics -- --max-runs=100
 composer bench:quick
 ```
 
 PHP-AI-Toolkit supplies the PHPUnit AI reporter, executable PHPDoc examples,
 PHPStan rules, LOC/directory guards, and documentation generator. PHP-CS-Fixer,
-PHPCompatibility, Deptrac, ParaTest, PHPBench, and PHP-Fuzzer follow the other
-packages' conventions. Development property tests require `ext-pdo_sqlite`.
+PHPCompatibility, Deptrac, ParaTest, and PHPBench follow the other packages'
+conventions.
 
 - [Semantic design and evaluation requirements](docs/design.md)
 - [Supported language and conservative facts](docs/support.md)

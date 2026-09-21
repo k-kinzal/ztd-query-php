@@ -10,10 +10,8 @@ use SqlParser\Parser\Node;
  * A declared integrity condition, retaining its complete syntax for downstream consumers.
  *
  * @example Reading semantic facts
- *     $parser = new \SqlParser\PostgreSql\PostgreSqlParser();
- *     $analyzer = new \SqlSemantics\Analyzer(\SqlSemantics\Dialect::PostgreSql);
- *     $catalog = $analyzer->schema($parser->parse('CREATE TABLE users (id INTEGER PRIMARY KEY, score INTEGER NOT NULL)'));
- *     $catalog->tables[0]->constraints[0]->columns // => ['id']
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, score INTEGER NOT NULL)');
+ *     $schema->tables[0]->constraints[0]->columns // => ['id']
  *
  * @visibility public
  */

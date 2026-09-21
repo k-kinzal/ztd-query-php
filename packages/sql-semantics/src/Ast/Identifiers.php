@@ -16,7 +16,7 @@ use SqlSemantics\Dialect;
 final class Identifiers
 {
     /**
-     * Binds the dependencies used for this analysis.
+     * Binds the dependencies used for semantic binding.
      */
     public function __construct(public readonly Dialect $dialect)
     {
@@ -61,7 +61,7 @@ final class Identifiers
     }
 
     /**
-     * Compares relation names under the default catalog case policy.
+     * Compares relation names under the default table name case policy.
      */
     public function relationEqual(string $left, string $right): bool
     {

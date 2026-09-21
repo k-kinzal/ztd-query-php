@@ -11,11 +11,9 @@ use SqlSemantics\Schema\TableDefinition;
  * The particular relation occurrence and declared column a reference denotes.
  *
  * @example Reading semantic facts
- *     $parser = new \SqlParser\PostgreSql\PostgreSqlParser();
- *     $analyzer = new \SqlSemantics\Analyzer(\SqlSemantics\Dialect::PostgreSql);
- *     $catalog = $analyzer->schema($parser->parse('CREATE TABLE users (id INTEGER PRIMARY KEY, score INTEGER NOT NULL)'));
- *     $query = $analyzer->analyze($parser->parse('SELECT a.id, b.score FROM users a LEFT JOIN users b ON a.id=b.id ORDER BY a.id DESC'), $catalog);
- *     $query->outputs[1]->expression->binding->relationId // => 'r1'
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, score INTEGER NOT NULL)');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('SELECT a.id, b.score FROM users a LEFT JOIN users b ON a.id=b.id ORDER BY a.id DESC');
+ *     $statement->outputs[1]->expression->binding->relationId // => 'r1'
  *
  * @visibility public
  */

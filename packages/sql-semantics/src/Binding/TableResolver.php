@@ -6,7 +6,7 @@ namespace SqlSemantics\Binding;
 
 use SqlParser\Parser\Node;
 use SqlSemantics\Ast\Identifiers;
-use SqlSemantics\Schema\Catalog;
+use SqlSemantics\Schema;
 use SqlSemantics\Schema\TableDefinition;
 use SqlSemantics\SemanticException;
 
@@ -18,9 +18,9 @@ use SqlSemantics\SemanticException;
 final class TableResolver
 {
     /**
-     * Binds the dependencies used for this analysis.
+     * Binds the dependencies used for semantic binding.
      */
-    public function __construct(public readonly Catalog $catalog, public readonly Identifiers $identifiers, public readonly string $defaultSchema)
+    public function __construct(public readonly Schema $schema, public readonly Identifiers $identifiers, public readonly string $defaultSchema)
     {
     }
 
@@ -33,7 +33,7 @@ final class TableResolver
         $schema = count($parts) === 2 ? $parts[0] : $this->defaultSchema;
         $name = $parts[count($parts) - 1];
         $matches = [];
-        foreach ($this->catalog->tables as $table) {
+        foreach ($this->schema->tables as $table) {
             $matchesName = $this->identifiers->relationEqual($table->schema, $schema) && $this->identifiers->relationEqual($table->name, $name);
             if ($matchesName && count($parts) <= 2) {
                 $matches[] = $table;

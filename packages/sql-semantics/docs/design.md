@@ -1,4 +1,4 @@
-# Semantic analysis as a database front end
+# The semantic phase of a database front end
 
 A syntax tree says what was written. A database must additionally determine what
 each name denotes, which operation an expression invokes, what values it can
@@ -10,7 +10,7 @@ executes a physical query plan.
 
 | Concern | Needed for evaluation | Initial representation / extension boundary |
 | --- | --- | --- |
-| Resolution environment | Dialect/version, visible schemas, catalog, case rules, parameter declarations | Explicit dialect and default schema; parser selects grammar release; closed catalog |
+| Resolution environment | Dialect/version, schema declarations, case rules, parameter declarations | Schema records dialect, grammar release, default namespace, and explicit declarations |
 | Declarations | Table/column identity, ordinal, type modifiers, defaults, generated values | Ordered declarations, primary/unique/foreign/CHECK constraints and default syntax; generated expressions are a future extension |
 | Binding | Relation occurrences, aliases, scopes, correlation, visibility | Bound table/column uses in one scope; nested scopes and correlation must be added together |
 | Expression meaning | Operation, ordered arguments, overload, coercions, result type | Small explicit scalar operation set; modeled PostgreSQL COALESCE conversions; no invented function signatures |
@@ -50,7 +50,7 @@ are rejected until that graph exists.
 
 ## NULL facts have an evaluation stage
 
-A declaration's NULL allowance does not change during analysis. Each expression
+A declaration's NULL allowance does not change during binding. Each expression
 receives the allowance that applies where it is evaluated. A join's ON predicate
 is bound before that join adds null-extended rows. Expressions above a LEFT JOIN
 see its right-side columns as nullable. An ancestor outer join may add another
@@ -68,7 +68,7 @@ Facts are upper bounds over successfully evaluated rows:
 - `NotNull`: NULL is excluded.
 - `MaybeNull`: NULL is permitted by the modeled semantics.
 - `AlwaysNull`: every successfully evaluated value is NULL.
-- `Unknown`: the analysis lacks the input information needed to classify it.
+- `Unknown`: binding lacks the input information needed to classify it.
 
 No predicate-based narrowing is currently performed. For example, filtering an
 outer-joined column with `IS NOT NULL` may leave a conservative `MaybeNull` result.
@@ -123,7 +123,20 @@ semantic facts. `sql-fixture` can consume those facts to plan and solve data.
 `sql-catalog` can attach them to a recovered statement and keep any semantic
 failure as a finding. Neither consumer is a runtime dependency of this package.
 
-Within the package, `Ast` navigates grammar productions and reads declarations;
-`Binding` owns namespaces and occurrence identities; `Analysis` builds typed
-expressions and logical SELECTs; `Schema`, `Model`, and `Type` are public immutable
-results. `Analyzer` composes these stages. Deptrac checks these dependencies.
+The public API follows the semantic phase's inputs and output:
+
+1. `SchemaBuilder::build(string ...$sql): Schema` parses CREATE TABLE declarations
+   and establishes their dialect, grammar release, and default namespace.
+2. `new Binder($schema)` establishes the binding environment for statements.
+3. `Binder::bind(string $sql): BoundSelect` parses a SELECT, resolves each name,
+   checks expression rules, inserts modeled coercions, and derives NULL facts.
+
+`BoundSelect` is a semantic intermediate representation. Its table occurrences,
+column bindings, expressions, and row predicates describe what the statement
+means before optimization or execution. It is the phase result a planner,
+evaluator, or fixture generator consumes.
+
+Within the package, `Ast` selects the syntax parser, navigates grammar productions,
+and reads declarations. `Binding` resolves scopes and occurrence identities and
+binds typed expressions and SELECT clauses. `Schema`, the declaration classes,
+`Model`, and `Type` are immutable results. Deptrac checks these dependencies.

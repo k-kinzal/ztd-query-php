@@ -6,7 +6,7 @@ deptrac:
     - name: API
       collectors:
         - type: classNameRegex
-          value: '/^SqlSemantics\\Analyzer$/'
+          value: '/^SqlSemantics\\(Binder|SchemaBuilder)$/'
     - name: Foundation
       collectors:
         - type: classNameRegex
@@ -19,16 +19,14 @@ deptrac:
       collectors:
         - type: directory
           value: 'src/Binding/'
-    - name: Analysis
-      collectors:
-        - type: directory
-          value: 'src/Analysis/'
     - name: Model
       collectors:
         - type: directory
           value: 'src/Model/'
     - name: Schema
       collectors:
+        - type: classNameRegex
+          value: '/^SqlSemantics\\Schema$/'
         - type: directory
           value: 'src/Schema/'
     - name: Types
@@ -40,11 +38,10 @@ deptrac:
         - type: classNameRegex
           value: '/^SqlParser\\/'
   ruleset:
-    API: [Foundation, Syntax, Binding, Analysis, Schema, Model, Parser]
+    API: [Foundation, Syntax, Binding, Schema, Model, Parser]
     Foundation: [Parser]
     Syntax: [Foundation, Schema, Types, Parser]
     Binding: [Foundation, Syntax, Schema, Model, Types, Parser]
-    Analysis: [Foundation, Syntax, Binding, Schema, Model, Types, Parser]
     Model: [Schema, Types, Parser]
     Schema: [Foundation, Types, Parser]
     Types: [Foundation]

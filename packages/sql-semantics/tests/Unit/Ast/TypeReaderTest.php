@@ -6,26 +6,29 @@ namespace Tests\Unit\Ast;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
-use PHPUnit\Framework\Attributes\DataProviderExternal;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
+use SqlSemantics\SchemaBuilder;
 use SqlSemantics\SemanticException;
 use SqlSemantics\Type\Nullability;
-use Tests\Scenario\AnalysisCase;
 
 #[CoversClass(\SqlSemantics\Ast\TypeReader::class)]
-#[CoversClass(\SqlSemantics\Analysis\ExpressionReader::class)]
-#[CoversClass(\SqlSemantics\Analysis\ExpressionRules::class)]
-#[CoversClass(\SqlSemantics\Analysis\FromReader::class)]
-#[CoversClass(\SqlSemantics\Analysis\LiteralReader::class)]
-#[CoversClass(\SqlSemantics\Analysis\NullFacts::class)]
-#[CoversClass(\SqlSemantics\Analysis\ProjectionReader::class)]
-#[CoversClass(\SqlSemantics\Analysis\SelectReader::class)]
-#[CoversClass(\SqlSemantics\Analysis\SyntaxGuard::class)]
-#[CoversClass(\SqlSemantics\Analysis\TailReader::class)]
-#[CoversClass(\SqlSemantics\Analysis\TypeResolution::class)]
-#[CoversClass(\SqlSemantics\Analyzer::class)]
+#[CoversClass(\SqlSemantics\Binding\ExpressionBinder::class)]
+#[CoversClass(\SqlSemantics\Binding\ExpressionRules::class)]
+#[CoversClass(\SqlSemantics\Binding\FromBinder::class)]
+#[CoversClass(\SqlSemantics\Binding\LiteralBinder::class)]
+#[CoversClass(\SqlSemantics\Binding\NullFacts::class)]
+#[CoversClass(\SqlSemantics\Binding\ProjectionBinder::class)]
+#[CoversClass(\SqlSemantics\Binding\SelectBinder::class)]
+#[CoversClass(\SqlSemantics\Binding\SyntaxGuard::class)]
+#[CoversClass(\SqlSemantics\Binding\SelectModifiersBinder::class)]
+#[CoversClass(\SqlSemantics\Binding\TypeResolution::class)]
+#[CoversClass(Binder::class)]
+#[CoversClass(SchemaBuilder::class)]
+#[CoversClass(\SqlSemantics\Ast\DialectParser::class)]
 #[CoversClass(\SqlSemantics\Ast\ColumnReader::class)]
 #[CoversClass(\SqlSemantics\Ast\ConstraintReader::class)]
 #[CoversClass(\SqlSemantics\Ast\Identifiers::class)]
@@ -42,9 +45,9 @@ use Tests\Scenario\AnalysisCase;
 #[CoversClass(\SqlSemantics\Model\Join::class)]
 #[CoversClass(\SqlSemantics\Model\Ordering::class)]
 #[CoversClass(\SqlSemantics\Model\OutputColumn::class)]
-#[CoversClass(\SqlSemantics\Model\SelectQuery::class)]
+#[CoversClass(\SqlSemantics\Model\BoundSelect::class)]
 #[CoversClass(\SqlSemantics\Model\TableUse::class)]
-#[CoversClass(\SqlSemantics\Schema\Catalog::class)]
+#[CoversClass(\SqlSemantics\Schema::class)]
 #[CoversClass(\SqlSemantics\Schema\ColumnDefinition::class)]
 #[CoversClass(\SqlSemantics\Schema\TableConstraint::class)]
 #[CoversClass(\SqlSemantics\Schema\TableDefinition::class)]
@@ -53,19 +56,21 @@ use Tests\Scenario\AnalysisCase;
 #[Medium]
 final class TypeReaderTest extends TestCase
 {
-    #[DataProviderExternal(AnalysisCase::class, 'providerLanguages')]
+    #[TestWith([Dialect::PostgreSql])]
+    #[TestWith([Dialect::MySql])]
+    #[TestWith([Dialect::Sqlite])]
     public function testReadPreservesDecimalPrecisionAndScale(Dialect $dialect): void
     {
-        $table = (new AnalysisCase($dialect))->schema('CREATE TABLE users (amount DECIMAL(10, 2))')->tables[0];
+        $table = (new SchemaBuilder($dialect))->build('CREATE TABLE users (amount DECIMAL(10, 2))')->tables[0];
         self::assertSame(['10', '2'], $table->columns[0]->type->modifiers);
     }
+
     public function testAffinityPreservesSqliteDeclaredTypes(): void
     {
-        $table = (new AnalysisCase(Dialect::Sqlite))->schema('CREATE TABLE users (id TEXT PRIMARY KEY, score INTEGER)')->tables[0];
+        $table = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE users (id TEXT PRIMARY KEY, score INTEGER)')->tables[0];
         self::assertSame(Nullability::MaybeNull, $table->columns[0]->nullability);
         self::assertSame('text', $table->columns[0]->type->affinity);
     }
-
 
     public function testCanonicalRejectsUnsupportedDomainNames(): void
     {

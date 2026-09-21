@@ -5,8 +5,8 @@ includes:
 
 parameters:
     toolkit:
-        visibilityExemptNamespacePrefixes: ['Tests', 'Bench', 'Fuzz']
+        visibilityExemptNamespacePrefixes: ['Tests', 'Bench']
         forbiddenNamespacePrefixes: ['Tests\Fixture', 'Tests\Fixtures']
     phpVersion: 80100
     level: max
-    paths: [src, tests, fuzz, bench]
+    paths: [src, tests, bench]

@@ -44,11 +44,12 @@ $result = $stmt->fetchAll();
 
 See [packages/ztd-query-core/README.md](packages/ztd-query-core/README.md) for full documentation.
 
-## SQL semantic analysis
+## SQL semantics
 
-[`packages/sql-semantics`](packages/sql-semantics/) binds SQL parser trees to
-schema declarations and returns types, conservative NULL facts, occurrence-aware
-lineage, and logical query structure for fixture and catalog consumers. See its
+[`packages/sql-semantics`](packages/sql-semantics/) implements the semantic phase
+of a database front end. It accepts schema DDL and SELECT strings and returns
+bound statements with types, conservative NULL facts, value provenance, and
+relational structure for fixture generation and SQL metadata consumers. See its
 [semantic design](packages/sql-semantics/docs/design.md) and
 [supported surface](packages/sql-semantics/docs/support.md).
 

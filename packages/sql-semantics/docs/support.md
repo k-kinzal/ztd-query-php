@@ -5,7 +5,7 @@ SQLite 3.47.2) with standard server defaults. The tree does not encode every
 server/session setting; alternate behaviors such as MySQL REAL_AS_FLOAT need a
 future explicit semantic environment.
 
-The parser accepts far more syntax than the semantic analyzer. Parsing success
+The parser accepts far more syntax than the semantic binder. Parsing success
 does not imply semantic support. Unsupported behavior raises `SemanticException`
 with `reason = unsupported-syntax` (or `unsupported-coercion` for a type rule).
 There is no success flag that can conceal a skipped clause.
@@ -26,21 +26,21 @@ expressions, table options, STRICT/WITHOUT ROWID, inheritance, CREATE AS/LIKE,
 ALTER, and DROP are unsupported. Named SQLite constraints whose grammar separates
 the name from its constraint body are also currently rejected.
 
-The schema is an explicit snapshot, not a server catalog reflection service.
+The schema is an explicit snapshot, not a database reflection service.
 It validates duplicate declarations and local constraint columns, but does not
 validate all server-specific DDL legality or foreign reference targets.
 
 ## Name resolution
 
 Default schemas are `public` (PostgreSQL), `main` (SQLite), and an unnamed database
-(MySQL). Pass `defaultSchema` to `Analyzer` for a different context. Unqualified
+(MySQL). Pass `defaultSchema` to `SchemaBuilder` for a different context. Unqualified
 names use that one schema; PostgreSQL search paths, temporary-schema precedence,
-catalog qualification, and server-specific schema search are not modeled.
+three-part table qualification, and server-specific schema search are not modeled.
 
 PostgreSQL folds unquoted names and preserves quoted case. SQLite column and table
 matching is case-insensitive. MySQL table/database matching assumes a case-sensitive
-catalog (`lower_case_table_names=0`); table aliases follow the same case-sensitive policy, while column names and output aliases are case-insensitive. Alternate
-MySQL catalog case policies and collation-sensitive identifier rules need an
+schema (`lower_case_table_names=0`); table aliases follow the same case-sensitive policy, while column names and output aliases are case-insensitive. Alternate
+MySQL table name case policies and collation-sensitive identifier rules need an
 explicit resolution policy before they can be supported.
 
 Nested scopes, CTEs, derived tables, lateral/correlated references, table functions,

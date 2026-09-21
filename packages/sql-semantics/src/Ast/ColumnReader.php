@@ -17,7 +17,7 @@ use SqlSemantics\Type\Nullability;
 final class ColumnReader
 {
     /**
-     * Binds the dependencies used for this analysis.
+     * Binds the dependencies used for semantic binding.
      */
     public function __construct(public readonly Identifiers $identifiers)
     {

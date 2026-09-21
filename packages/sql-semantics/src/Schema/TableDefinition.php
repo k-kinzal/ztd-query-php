@@ -10,10 +10,8 @@ use SqlParser\Parser\Node;
  * An ordered table declaration with a schema-qualified identity and integrity constraints.
  *
  * @example Reading semantic facts
- *     $parser = new \SqlParser\PostgreSql\PostgreSqlParser();
- *     $analyzer = new \SqlSemantics\Analyzer(\SqlSemantics\Dialect::PostgreSql);
- *     $catalog = $analyzer->schema($parser->parse('CREATE TABLE users (id INTEGER PRIMARY KEY, score INTEGER NOT NULL)'));
- *     $catalog->tables[0]->schema // => 'public'
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, score INTEGER NOT NULL)');
+ *     $schema->tables[0]->schema // => 'public'
  *
  * @visibility public
  */

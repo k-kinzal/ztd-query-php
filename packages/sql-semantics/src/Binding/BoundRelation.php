@@ -15,7 +15,7 @@ use SqlSemantics\Model\TableUse;
 final class BoundRelation
 {
     /**
-     * Binds the dependencies used for this analysis.
+     * Binds the dependencies used for semantic binding.
      */
     public function __construct(public readonly TableUse|Join $relation, public readonly Scope $scope)
     {

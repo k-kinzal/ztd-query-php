@@ -10,11 +10,9 @@ use SqlParser\Parser\Node;
  * A join with its own match predicate and NULL extension identity.
  *
  * @example Reading semantic facts
- *     $parser = new \SqlParser\PostgreSql\PostgreSqlParser();
- *     $analyzer = new \SqlSemantics\Analyzer(\SqlSemantics\Dialect::PostgreSql);
- *     $catalog = $analyzer->schema($parser->parse('CREATE TABLE users (id INTEGER PRIMARY KEY, score INTEGER NOT NULL)'));
- *     $query = $analyzer->analyze($parser->parse('SELECT a.id, b.score FROM users a LEFT JOIN users b ON a.id=b.id ORDER BY a.id DESC'), $catalog);
- *     $query->from->kind->value // => 'left'
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, score INTEGER NOT NULL)');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('SELECT a.id, b.score FROM users a LEFT JOIN users b ON a.id=b.id ORDER BY a.id DESC');
+ *     $statement->from->kind->value // => 'left'
  *
  * @visibility public
  */

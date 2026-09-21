@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Binding;
 
 /**
- * Allocates deterministic occurrence identities for one analysis only.
+ * Allocates deterministic occurrence identities for one bound statement.
  *
  * @visibility SqlSemantics
  */

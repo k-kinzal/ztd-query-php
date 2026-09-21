@@ -6,7 +6,6 @@ namespace SqlSemantics\Ast;
 
 use SqlParser\Parser\Node;
 use SqlSemantics\Dialect;
-use SqlSemantics\Schema\Catalog;
 use SqlSemantics\Schema\ColumnDefinition;
 use SqlSemantics\Schema\ConstraintKind;
 use SqlSemantics\Schema\TableConstraint;
@@ -22,7 +21,7 @@ use SqlSemantics\Type\Nullability;
 final class SchemaReader
 {
     /**
-     * Binds the dependencies used for this analysis.
+     * Binds the dependencies used for semantic binding.
      */
     public function __construct(public readonly Identifiers $identifiers, public readonly string $defaultSchema)
     {
@@ -30,9 +29,10 @@ final class SchemaReader
 
     /**
      * @param list<Node> $trees
+     * @return list<TableDefinition>
      * @throws SemanticException
      */
-    public function read(array $trees): Catalog
+    public function read(array $trees): array
     {
         $tables = [];
         foreach ($trees as $tree) {
@@ -53,7 +53,7 @@ final class SchemaReader
             }
         }
 
-        return new Catalog($this->identifiers->dialect, array_values($tables));
+        return array_values($tables);
     }
 
     /**
@@ -72,7 +72,7 @@ final class SchemaReader
             $parts = [$parts[0], ...$this->identifiers->parts($sqliteDb)];
         }
         if (count($parts) > 2) {
-            Tree::unsupported($nameNode, 'catalog-qualified table');
+            Tree::unsupported($nameNode, 'three-part table name');
         }
         $this->validate($create, $header);
         $columns = [];

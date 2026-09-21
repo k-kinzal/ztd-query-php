@@ -5,25 +5,28 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\DataProviderExternal;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
+use SqlSemantics\SchemaBuilder;
 use SqlSemantics\SemanticException;
-use Tests\Scenario\AnalysisCase;
 
 #[CoversClass(\SqlSemantics\Binding\Scope::class)]
-#[CoversClass(\SqlSemantics\Analysis\ExpressionReader::class)]
-#[CoversClass(\SqlSemantics\Analysis\ExpressionRules::class)]
-#[CoversClass(\SqlSemantics\Analysis\FromReader::class)]
-#[CoversClass(\SqlSemantics\Analysis\LiteralReader::class)]
-#[CoversClass(\SqlSemantics\Analysis\NullFacts::class)]
-#[CoversClass(\SqlSemantics\Analysis\ProjectionReader::class)]
-#[CoversClass(\SqlSemantics\Analysis\SelectReader::class)]
-#[CoversClass(\SqlSemantics\Analysis\SyntaxGuard::class)]
-#[CoversClass(\SqlSemantics\Analysis\TailReader::class)]
-#[CoversClass(\SqlSemantics\Analysis\TypeResolution::class)]
-#[CoversClass(\SqlSemantics\Analyzer::class)]
+#[CoversClass(\SqlSemantics\Binding\ExpressionBinder::class)]
+#[CoversClass(\SqlSemantics\Binding\ExpressionRules::class)]
+#[CoversClass(\SqlSemantics\Binding\FromBinder::class)]
+#[CoversClass(\SqlSemantics\Binding\LiteralBinder::class)]
+#[CoversClass(\SqlSemantics\Binding\NullFacts::class)]
+#[CoversClass(\SqlSemantics\Binding\ProjectionBinder::class)]
+#[CoversClass(\SqlSemantics\Binding\SelectBinder::class)]
+#[CoversClass(\SqlSemantics\Binding\SyntaxGuard::class)]
+#[CoversClass(\SqlSemantics\Binding\SelectModifiersBinder::class)]
+#[CoversClass(\SqlSemantics\Binding\TypeResolution::class)]
+#[CoversClass(Binder::class)]
+#[CoversClass(SchemaBuilder::class)]
+#[CoversClass(\SqlSemantics\Ast\DialectParser::class)]
 #[CoversClass(\SqlSemantics\Ast\ColumnReader::class)]
 #[CoversClass(\SqlSemantics\Ast\ConstraintReader::class)]
 #[CoversClass(\SqlSemantics\Ast\Identifiers::class)]
@@ -40,9 +43,9 @@ use Tests\Scenario\AnalysisCase;
 #[CoversClass(\SqlSemantics\Model\Join::class)]
 #[CoversClass(\SqlSemantics\Model\Ordering::class)]
 #[CoversClass(\SqlSemantics\Model\OutputColumn::class)]
-#[CoversClass(\SqlSemantics\Model\SelectQuery::class)]
+#[CoversClass(\SqlSemantics\Model\BoundSelect::class)]
 #[CoversClass(\SqlSemantics\Model\TableUse::class)]
-#[CoversClass(\SqlSemantics\Schema\Catalog::class)]
+#[CoversClass(\SqlSemantics\Schema::class)]
 #[CoversClass(\SqlSemantics\Schema\ColumnDefinition::class)]
 #[CoversClass(\SqlSemantics\Schema\TableConstraint::class)]
 #[CoversClass(\SqlSemantics\Schema\TableDefinition::class)]
@@ -51,37 +54,50 @@ use Tests\Scenario\AnalysisCase;
 #[Medium]
 final class ScopeTest extends TestCase
 {
-    #[DataProviderExternal(AnalysisCase::class, 'providerLanguages')]
+    #[TestWith([Dialect::PostgreSql])]
+    #[TestWith([Dialect::MySql])]
+    #[TestWith([Dialect::Sqlite])]
     public function testColumnRejectsAmbiguousUnqualifiedNames(Dialect $dialect): void
     {
+        $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $this->expectException(SemanticException::class);
         $this->expectExceptionMessage('unambiguously');
-        (new AnalysisCase($dialect))->query('SELECT id FROM users a JOIN users b ON a.id=b.id');
-    }
-    #[DataProviderExternal(AnalysisCase::class, 'providerLanguages')]
-    public function testMatchesAliasHidesOriginalTableName(Dialect $dialect): void
-    {
-        $this->expectException(SemanticException::class);
-        (new AnalysisCase($dialect))->query('SELECT users.id FROM users AS child');
-    }
-    #[DataProviderExternal(AnalysisCase::class, 'providerLanguages')]
-    public function testCombineRejectsDuplicateAliases(Dialect $dialect): void
-    {
-        $this->expectException(SemanticException::class);
-        $this->expectExceptionMessage('Duplicate relation');
-        (new AnalysisCase($dialect))->query('SELECT a.id FROM users a, users a');
-    }
-    public function testRejectsReferencesOutsideJoinOperands(): void
-    {
-        $this->expectException(SemanticException::class);
-        (new AnalysisCase())->query('SELECT a.id FROM users a, users b JOIN users c ON a.id = c.id');
+        (new Binder($schema))->bind('SELECT id FROM users a JOIN users b ON a.id=b.id');
     }
 
+    #[TestWith([Dialect::PostgreSql])]
+    #[TestWith([Dialect::MySql])]
+    #[TestWith([Dialect::Sqlite])]
+    public function testMatchesAliasHidesOriginalTableName(Dialect $dialect): void
+    {
+        $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
+        $this->expectException(SemanticException::class);
+        (new Binder($schema))->bind('SELECT users.id FROM users AS child');
+    }
+
+    #[TestWith([Dialect::PostgreSql])]
+    #[TestWith([Dialect::MySql])]
+    #[TestWith([Dialect::Sqlite])]
+    public function testCombineRejectsDuplicateAliases(Dialect $dialect): void
+    {
+        $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
+        $this->expectException(SemanticException::class);
+        $this->expectExceptionMessage('Duplicate relation');
+        (new Binder($schema))->bind('SELECT a.id FROM users a, users a');
+    }
+
+    public function testRejectsReferencesOutsideJoinOperands(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
+        $this->expectException(SemanticException::class);
+        (new Binder($schema))->bind('SELECT a.id FROM users a, users b JOIN users c ON a.id = c.id');
+    }
 
     public function testExtendDoesNotMutateTheInputScope(): void
     {
-        $query = (new AnalysisCase())->query('SELECT id FROM users');
-        $scope = new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql), $query->relations);
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
+        $statement = (new Binder($schema))->bind('SELECT id FROM users');
+        $scope = new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql), $statement->relations);
         $extended = $scope->extend('j0');
         self::assertSame([], $scope->extensions);
         self::assertSame(['r0' => ['j0']], $extended->extensions);

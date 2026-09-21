@@ -820,7 +820,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-semantics",
-                "reference": "98057fd166d448b8c539eba02accd5ca290d3e5b"
+                "reference": "19a1ddd3cd5b708df553566a3ae7c91e1086626e"
             },
             "require": {
                 "k-kinzal/sql-parser": "dev-main",
@@ -829,10 +829,8 @@
             "require-dev": {
                 "brianium/paratest": "^7.3",
                 "deptrac/deptrac": "^3.0",
-                "ext-pdo_sqlite": "*",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
                 "k-kinzal/php-ai-toolkit": "dev-main",
-                "nikic/php-fuzzer": "^0.0.11",
                 "phpbench/phpbench": "^1.4",
                 "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
                 "phpstan/phpstan": "^2.1",
@@ -849,7 +847,6 @@
             "autoload-dev": {
                 "psr-4": {
                     "Tests\\": "tests/",
-                    "Fuzz\\": "fuzz/",
                     "Bench\\": "bench/"
                 }
             },
@@ -921,23 +918,12 @@
                 ],
                 "tree-guard": [
                     "tree-guard --config=tree.yaml"
-                ],
-                "fuzz": [
-                    "@fuzz:smoke"
-                ],
-                "fuzz:smoke": [
-                    "@php fuzz/smoke.php"
-                ],
-                "fuzz:semantics": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/semantics') || mkdir('fuzz/corpus/semantics', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_semantics.php fuzz/corpus/semantics/"
                 ]
             },
             "license": [
                 "MIT"
             ],
-            "description": "Semantic analysis of SQL syntax trees: binding, types, nullability, lineage, and relational structure",
+            "description": "SQL semantic binding: schema declarations, bound statements, types, nullability, and value provenance",
             "support": {
                 "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics",
                 "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics/"

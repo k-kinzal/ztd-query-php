@@ -11,17 +11,19 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\SemanticException;
 
 #[CoversClass(\SqlSemantics\Schema\ConstraintKind::class)]
-#[UsesClass(\SqlSemantics\Analysis\ExpressionReader::class)]
-#[UsesClass(\SqlSemantics\Analysis\ExpressionRules::class)]
-#[UsesClass(\SqlSemantics\Analysis\FromReader::class)]
-#[UsesClass(\SqlSemantics\Analysis\LiteralReader::class)]
-#[UsesClass(\SqlSemantics\Analysis\NullFacts::class)]
-#[UsesClass(\SqlSemantics\Analysis\ProjectionReader::class)]
-#[UsesClass(\SqlSemantics\Analysis\SelectReader::class)]
-#[UsesClass(\SqlSemantics\Analysis\SyntaxGuard::class)]
-#[UsesClass(\SqlSemantics\Analysis\TailReader::class)]
-#[UsesClass(\SqlSemantics\Analysis\TypeResolution::class)]
-#[UsesClass(\SqlSemantics\Analyzer::class)]
+#[UsesClass(\SqlSemantics\Binding\ExpressionBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\ExpressionRules::class)]
+#[UsesClass(\SqlSemantics\Binding\FromBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\LiteralBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\NullFacts::class)]
+#[UsesClass(\SqlSemantics\Binding\ProjectionBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\SelectBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\SyntaxGuard::class)]
+#[UsesClass(\SqlSemantics\Binding\SelectModifiersBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\TypeResolution::class)]
+#[UsesClass(\SqlSemantics\Binder::class)]
+#[UsesClass(\SqlSemantics\SchemaBuilder::class)]
+#[UsesClass(\SqlSemantics\Ast\DialectParser::class)]
 #[UsesClass(\SqlSemantics\Ast\ColumnReader::class)]
 #[UsesClass(\SqlSemantics\Ast\ConstraintReader::class)]
 #[UsesClass(\SqlSemantics\Ast\Identifiers::class)]
@@ -39,9 +41,9 @@ use SqlSemantics\SemanticException;
 #[UsesClass(\SqlSemantics\Model\Join::class)]
 #[UsesClass(\SqlSemantics\Model\Ordering::class)]
 #[UsesClass(\SqlSemantics\Model\OutputColumn::class)]
-#[UsesClass(\SqlSemantics\Model\SelectQuery::class)]
+#[UsesClass(\SqlSemantics\Model\BoundSelect::class)]
 #[UsesClass(\SqlSemantics\Model\TableUse::class)]
-#[UsesClass(\SqlSemantics\Schema\Catalog::class)]
+#[UsesClass(\SqlSemantics\Schema::class)]
 #[UsesClass(\SqlSemantics\Schema\ColumnDefinition::class)]
 #[UsesClass(\SqlSemantics\Schema\TableConstraint::class)]
 #[UsesClass(\SqlSemantics\Schema\TableDefinition::class)]
@@ -54,5 +56,4 @@ final class ConstraintKindTest extends TestCase
     {
         self::assertSame(['primary-key', 'unique', 'foreign-key', 'check'], array_column(\SqlSemantics\Schema\ConstraintKind::cases(), 'value'));
     }
-
 }

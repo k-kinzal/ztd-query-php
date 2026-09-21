@@ -7,21 +7,25 @@ namespace Tests\Unit\Model;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Binder;
+use SqlSemantics\Dialect;
+use SqlSemantics\SchemaBuilder;
 use SqlSemantics\SemanticException;
-use Tests\Scenario\AnalysisCase;
 
 #[CoversClass(\SqlSemantics\Model\Join::class)]
-#[CoversClass(\SqlSemantics\Analysis\ExpressionReader::class)]
-#[CoversClass(\SqlSemantics\Analysis\ExpressionRules::class)]
-#[CoversClass(\SqlSemantics\Analysis\FromReader::class)]
-#[CoversClass(\SqlSemantics\Analysis\LiteralReader::class)]
-#[CoversClass(\SqlSemantics\Analysis\NullFacts::class)]
-#[CoversClass(\SqlSemantics\Analysis\ProjectionReader::class)]
-#[CoversClass(\SqlSemantics\Analysis\SelectReader::class)]
-#[CoversClass(\SqlSemantics\Analysis\SyntaxGuard::class)]
-#[CoversClass(\SqlSemantics\Analysis\TailReader::class)]
-#[CoversClass(\SqlSemantics\Analysis\TypeResolution::class)]
-#[CoversClass(\SqlSemantics\Analyzer::class)]
+#[CoversClass(\SqlSemantics\Binding\ExpressionBinder::class)]
+#[CoversClass(\SqlSemantics\Binding\ExpressionRules::class)]
+#[CoversClass(\SqlSemantics\Binding\FromBinder::class)]
+#[CoversClass(\SqlSemantics\Binding\LiteralBinder::class)]
+#[CoversClass(\SqlSemantics\Binding\NullFacts::class)]
+#[CoversClass(\SqlSemantics\Binding\ProjectionBinder::class)]
+#[CoversClass(\SqlSemantics\Binding\SelectBinder::class)]
+#[CoversClass(\SqlSemantics\Binding\SyntaxGuard::class)]
+#[CoversClass(\SqlSemantics\Binding\SelectModifiersBinder::class)]
+#[CoversClass(\SqlSemantics\Binding\TypeResolution::class)]
+#[CoversClass(Binder::class)]
+#[CoversClass(SchemaBuilder::class)]
+#[CoversClass(\SqlSemantics\Ast\DialectParser::class)]
 #[CoversClass(\SqlSemantics\Ast\ColumnReader::class)]
 #[CoversClass(\SqlSemantics\Ast\ConstraintReader::class)]
 #[CoversClass(\SqlSemantics\Ast\Identifiers::class)]
@@ -38,9 +42,9 @@ use Tests\Scenario\AnalysisCase;
 #[CoversClass(\SqlSemantics\Model\Expression::class)]
 #[CoversClass(\SqlSemantics\Model\Ordering::class)]
 #[CoversClass(\SqlSemantics\Model\OutputColumn::class)]
-#[CoversClass(\SqlSemantics\Model\SelectQuery::class)]
+#[CoversClass(\SqlSemantics\Model\BoundSelect::class)]
 #[CoversClass(\SqlSemantics\Model\TableUse::class)]
-#[CoversClass(\SqlSemantics\Schema\Catalog::class)]
+#[CoversClass(\SqlSemantics\Schema::class)]
 #[CoversClass(\SqlSemantics\Schema\ColumnDefinition::class)]
 #[CoversClass(\SqlSemantics\Schema\TableConstraint::class)]
 #[CoversClass(\SqlSemantics\Schema\TableDefinition::class)]
@@ -51,11 +55,11 @@ final class JoinTest extends TestCase
 {
     public function testRetainsTheMatchTree(): void
     {
-        $query = (new AnalysisCase())->query('SELECT a.id FROM users a LEFT JOIN users b ON a.id=b.id');
-        self::assertInstanceOf(\SqlSemantics\Model\Join::class, $query->from);
-        self::assertSame($query->relations[0], $query->from->left);
-        self::assertSame($query->relations[1], $query->from->right);
-        self::assertSame('=', $query->from->condition?->symbol);
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
+        $statement = (new Binder($schema))->bind('SELECT a.id FROM users a LEFT JOIN users b ON a.id=b.id');
+        self::assertInstanceOf(\SqlSemantics\Model\Join::class, $statement->from);
+        self::assertSame($statement->relations[0], $statement->from->left);
+        self::assertSame($statement->relations[1], $statement->from->right);
+        self::assertSame('=', $statement->from->condition?->symbol);
     }
-
 }

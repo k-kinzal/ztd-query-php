@@ -12,10 +12,8 @@ use SqlSemantics\Type\TypeDescriptor;
  * A column declaration, before a query can change its nullability.
  *
  * @example Reading semantic facts
- *     $parser = new \SqlParser\PostgreSql\PostgreSqlParser();
- *     $analyzer = new \SqlSemantics\Analyzer(\SqlSemantics\Dialect::PostgreSql);
- *     $catalog = $analyzer->schema($parser->parse('CREATE TABLE users (id INTEGER PRIMARY KEY, score INTEGER NOT NULL)'));
- *     $catalog->tables[0]->columns[0]->nullability->value // => 'not-null'
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, score INTEGER NOT NULL)');
+ *     $schema->tables[0]->columns[0]->nullability->value // => 'not-null'
  *
  * @visibility public
  */

@@ -5,42 +5,34 @@ declare(strict_types=1);
 namespace Bench;
 
 use PhpBench\Attributes as Benchmark;
-use SqlParser\Parser\Node;
-use SqlParser\PostgreSql\PostgreSqlParser;
-use SqlSemantics\Analyzer;
+use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
-use SqlSemantics\Schema\Catalog;
+use SqlSemantics\SchemaBuilder;
 
 /**
- * Measures semantic binding separately from parsing and schema construction.
+ * Measures the public SQL-to-bound-statement pipeline with a reusable schema.
  */
 final class SemanticsBench
 {
-    private Analyzer $analyzer;
-
-    private Catalog $catalog;
-
-    private Node $query;
+    private Binder $binder;
 
     /**
-     * Parses the immutable inputs before measurement.
+     * Builds declarations and loads parser resources before measurement.
      */
     public function setUp(): void
     {
-        $parser = new PostgreSqlParser();
-        $this->analyzer = new Analyzer(Dialect::PostgreSql);
-        $this->catalog = $this->analyzer->schema($parser->parse('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)'));
-        $this->query = $parser->parse('SELECT child.id, parent.score, COALESCE(parent.score, 0) AS effective_score FROM users child LEFT JOIN users parent ON child.parent_id=parent.id WHERE child.score>0 ORDER BY child.id LIMIT 10');
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
+        $this->binder = new Binder($schema);
     }
 
     /**
-     * Binds and annotates a self join against a reusable catalog.
+     * Parses and binds a self join against the same schema on each iteration.
      */
     #[Benchmark\BeforeMethods('setUp')]
     #[Benchmark\Revs(100)]
     #[Benchmark\Iterations(5)]
-    public function benchAnalyze(): void
+    public function benchBind(): void
     {
-        $this->analyzer->analyze($this->query, $this->catalog);
+        $this->binder->bind('SELECT child.id, parent.score, COALESCE(parent.score, 0) AS effective_score FROM users child LEFT JOIN users parent ON child.parent_id=parent.id WHERE child.score>0 ORDER BY child.id LIMIT 10');
     }
 }

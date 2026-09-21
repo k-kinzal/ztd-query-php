@@ -9,7 +9,7 @@ use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
 
 /**
- * An explicit semantic failure; callers must not treat a rejected tree as analyzed.
+ * An explicit semantic failure; callers must not treat a rejected tree as bound.
  *
  * @example Reading semantic facts
  *     $source = new \SqlParser\Parser\Node('expr', 0, []);
