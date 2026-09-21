@@ -15,6 +15,8 @@ use SqlCatalog\Type\TypeShape;
  */
 final class LiteralTerm implements Term
 {
+    private ?string $signature = null;
+
     /**
      * @param string|int|float|bool|null $value The resolved value
      */
@@ -77,6 +79,6 @@ final class LiteralTerm implements Term
     #[Override]
     public function signature(): string
     {
-        return 'literal:' . $this->type()->display() . ':' . $this->toText();
+        return $this->signature ??= 'literal:' . get_debug_type($this->value) . ':' . $this->toText();
     }
 }

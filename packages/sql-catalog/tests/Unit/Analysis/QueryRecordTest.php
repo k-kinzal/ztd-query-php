@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Analysis;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlCatalog\Analysis\QueryRecord;
@@ -83,6 +84,38 @@ final class QueryRecordTest extends TestCase
     public function testNamedIsEmptyUntilSomethingIsBoundByName(): void
     {
         self::assertSame([], (new QueryRecord(new CallSite('a.php', 1, 'f', 's'), 'k', TextPattern::fromText('SELECT 1')))->named());
+    }
+
+    public function testIsTruncatedOnlyWhenABoundCutTheSearchShort(): void
+    {
+        $site = new CallSite('a.php', 1, 'f', 's');
+
+        self::assertFalse((new QueryRecord($site, 'k', TextPattern::fromText('SELECT 1')))->isTruncated());
+        self::assertTrue((new QueryRecord($site, 'k', TextPattern::fromText('SELECT 1'), truncated: true))->isTruncated());
+    }
+
+    #[DataProvider('providerIsTruncatedAfterAbsorb')]
+    public function testIsTruncatedOnceEitherReadingWasCutShort(bool $held, bool $absorbed, bool $expected): void
+    {
+        $site = new CallSite('a.php', 1, 'f', 's');
+        $record = new QueryRecord($site, 'k', TextPattern::fromText('SELECT 1'), truncated: $held);
+
+        $record->absorb(new QueryRecord($site, 'k', TextPattern::fromText('SELECT 1'), truncated: $absorbed));
+
+        self::assertSame($expected, $record->isTruncated());
+    }
+
+    /**
+     * @return list<array{bool, bool, bool}>
+     */
+    public static function providerIsTruncatedAfterAbsorb(): array
+    {
+        return [
+            [false, false, false],
+            [true, false, true],
+            [false, true, true],
+            [true, true, true],
+        ];
     }
 
     public function testIsBoundOnlyAfterSomethingWasBound(): void

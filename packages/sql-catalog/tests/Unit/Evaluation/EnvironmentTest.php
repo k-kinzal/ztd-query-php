@@ -81,6 +81,41 @@ final class EnvironmentTest extends TestCase
         self::assertSame(1, $joined->read('a')->soleLiteral()?->value);
     }
 
+    public function testSignatureWritesEachBindingSortedByName(): void
+    {
+        $environment = new Environment([
+            'b' => Domain::literal(2),
+            'a' => Domain::literal('x')->union(Domain::literal('w')),
+        ]);
+
+        self::assertSame(
+            'a=literal:string:w|literal:string:x;b=literal:int:2',
+            $environment->signature(),
+        );
+    }
+
+    public function testSignatureIsEmptyWithoutBindings(): void
+    {
+        self::assertSame('', (new Environment())->signature());
+    }
+
+    public function testSignatureIsTheSameForTheSameBindingsInAnyOrder(): void
+    {
+        $left = new Environment(['a' => Domain::literal(1), 'b' => Domain::literal('x')]);
+        $right = new Environment(['b' => Domain::literal('x'), 'a' => Domain::literal(1)]);
+
+        self::assertSame($left->signature(), $right->signature());
+    }
+
+    public function testSignatureDiffersForDifferentBindings(): void
+    {
+        $environment = new Environment(['a' => Domain::literal(1)]);
+
+        self::assertNotSame($environment->signature(), (new Environment(['a' => Domain::literal('1')]))->signature());
+        self::assertNotSame($environment->signature(), (new Environment(['b' => Domain::literal(1)]))->signature());
+        self::assertNotSame($environment->signature(), (new Environment(['a' => Domain::literal(1), 'b' => Domain::literal(1)]))->signature());
+    }
+
     public function testEqualsComparesBindings(): void
     {
         $left = new Environment(['a' => Domain::literal(1)]);

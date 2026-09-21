@@ -16,7 +16,7 @@ use SqlCatalog\Php\ParsedFile;
  *
  * Reading a statement and finding the call that carries it are separate jobs.
  * A call whose statement cannot be reconstructed is still a place the program
- * talks to a database, and a call the walk never reached is a gap in the
+ * talks to a database, and a call nothing could be read from is a gap in the
  * analysis rather than an absence in the program. This pass answers the second
  * question on its own, so neither can be lost to a failure of the first.
  *
@@ -46,6 +46,27 @@ final class SinkFinder
     }
 
     /**
+     * The calls in a file written the way any database call is written, including those that only bind values.
+     *
+     * Calls that compose a statement are left out: they hand the statement back
+     * rather than sending it, so they are read as part of whatever call does.
+     *
+     * @param list<SinkSpec> $sinks
+     * @return list<Expr\CallLike>
+     */
+    public function findAll(ParsedFile $file, array $sinks): array
+    {
+        $names = [];
+        foreach ($sinks as $sink) {
+            if ($sink->role !== SinkRole::Compose) {
+                $names[strtolower(ltrim($sink->name, '\\'))] = true;
+            }
+        }
+
+        return $this->findIn($file->statements, $names);
+    }
+
+    /**
      * The calls among the given nodes that are written the way a statement-carrying call is written.
      *
      * @param array<array-key, Node> $nodes
@@ -65,121 +86,6 @@ final class SinkFinder
         }
 
         return $found;
-    }
-
-    /**
-     * The bodies that can reach a database call, keyed by where they are written.
-     *
-     * Walking a function that cannot reach a database call learns nothing: the
-     * analysis starts at the call that receives SQL and works back from there.
-     * A body qualifies when it writes such a call itself, or when it calls
-     * something that does. Matching callees by their written name
-     * over-approximates, which keeps bodies in rather than dropping them.
-     *
-     * @param list<ParsedFile> $files
-     * @param list<SinkSpec> $sinks
-     * @return array<string, true>
-     */
-    public function reaching(array $files, array $sinks): array
-    {
-        $names = $this->namesOf($sinks);
-        $bodies = [];
-        foreach ($files as $file) {
-            foreach ($this->bodiesOf($file) as $key => $body) {
-                $bodies[$key] = ['direct' => false, 'calls' => [], 'declares' => $this->declaredName($body)];
-            }
-            foreach ($this->finder->findInstanceOf($file->statements, Expr\CallLike::class) as $call) {
-                $written = $this->nameOf($call);
-                $key = $this->bodyKeyOf($file, $call);
-                if ($written === null || !isset($bodies[$key])) {
-                    continue;
-                }
-                $bodies[$key]['calls'][] = strtolower($this->shortName($written));
-                $bodies[$key]['direct'] = $bodies[$key]['direct'] || isset($names[strtolower($written)]);
-            }
-        }
-
-        return $this->propagate($bodies);
-    }
-
-    /**
-     * Every body of a file, keyed by where it is written, with the file itself under `main`.
-     *
-     * @return array<string, Node\FunctionLike|null>
-     */
-    public function bodiesOf(ParsedFile $file): array
-    {
-        $bodies = [$file->path . ':main' => null];
-        foreach ($this->finder->findInstanceOf($file->statements, Node\FunctionLike::class) as $body) {
-            $bodies[$file->path . ':' . $body->getStartFilePos()] = $body;
-        }
-
-        return $bodies;
-    }
-
-    /**
-     * The key of the body a node is written in.
-     */
-    public function bodyKeyOf(ParsedFile $file, Node $node): string
-    {
-        $body = $this->enclosingBody($node);
-
-        return $file->path . ':' . ($body === null ? 'main' : $body->getStartFilePos());
-    }
-
-    /**
-     * The name a body is declared under, or null when it is not declared under one.
-     */
-    public function declaredName(?Node\FunctionLike $body): ?string
-    {
-        if ($body instanceof Node\Stmt\ClassMethod || $body instanceof Node\Stmt\Function_) {
-            return strtolower($body->name->toString());
-        }
-
-        return null;
-    }
-
-    /**
-     * A name without the namespace it is written in.
-     */
-    public function shortName(string $written): string
-    {
-        $parts = explode('\\', ltrim($written, '\\'));
-
-        return $parts[count($parts) - 1];
-    }
-
-    /**
-     * The bodies that reach a database call, once reaching has spread through the calls.
-     *
-     * @param array<string, array{direct: bool, calls: list<string>, declares: string|null}> $bodies
-     * @return array<string, true>
-     */
-    public function propagate(array $bodies): array
-    {
-        $reaching = [];
-        $reachingNames = [];
-        foreach ($bodies as $key => $body) {
-            if ($body['direct']) {
-                $reaching[$key] = true;
-                $reachingNames[$body['declares'] ?? ''] = true;
-            }
-        }
-
-        $changed = true;
-        while ($changed) {
-            $changed = false;
-            foreach ($bodies as $key => $body) {
-                if (isset($reaching[$key]) || array_intersect_key($reachingNames, array_flip($body['calls'])) === []) {
-                    continue;
-                }
-                $reaching[$key] = true;
-                $reachingNames[$body['declares'] ?? ''] = true;
-                $changed = true;
-            }
-        }
-
-        return $reaching;
     }
 
     /**

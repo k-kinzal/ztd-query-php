@@ -12,11 +12,6 @@ namespace SqlCatalog\Catalog;
 final class CallSite
 {
     /**
-     * The sink reported for a database call the walk never reached.
-     */
-    public const UNREACHED = 'unreached';
-
-    /**
      * The sink reported for a database call whose receiver could not be identified.
      */
     public const UNMATCHED = 'unmatched';

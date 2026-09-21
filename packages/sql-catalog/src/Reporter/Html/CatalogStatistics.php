@@ -59,7 +59,7 @@ final class CatalogStatistics
     {
         $open = 0;
         foreach ($this->catalog as $entry) {
-            $open += $entry->resolution()->isClosed() ? 0 : 1;
+            $open += $entry->searchClosed() ? 0 : 1;
         }
 
         return $open;
@@ -176,7 +176,7 @@ final class CatalogStatistics
         foreach ($this->catalog as $entry) {
             $row = $files[$entry->site->file] ?? ['statements' => 0, 'open' => 0, 'findings' => 0];
             $row['statements']++;
-            $row['open'] += $entry->resolution()->isClosed() ? 0 : 1;
+            $row['open'] += $entry->searchClosed() ? 0 : 1;
             $row['findings'] += count($entry->findings);
             $files[$entry->site->file] = $row;
         }

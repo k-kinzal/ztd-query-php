@@ -75,7 +75,7 @@ enum Resolution: string
     /**
      * Whether a statement was read from the call at all.
      *
-     * A budget and a call the walk never reached both leave the text open for
+     * A budget and a call nothing was read from both leave the text open for
      * a reason about the analyzer rather than about the program, so what is
      * left is not a statement with values spliced into it and must not be
      * reported as one.

@@ -72,11 +72,11 @@ Supports MySQL 5.6–9.1, PostgreSQL, and SQLite. Used for fuzz testing.
 ### packages/sql-catalog
 
 Static analysis tool that catalogs the SQL statements a PHP application can issue.
-Starts at the calls that receive SQL and works back through the definitions, branches and callers that decide their argument, rather than interpreting the program forward.
-Branches fork the analysis so values decided together stay together; alternatives paired from parts that vary independently are marked as such.
-Every statement says how far the search got (`resolved`, `external-input`, `incomplete-model`, `incomplete`) and whether it closed, so stopping early is never reported as having found nothing.
+Derives each statement backward from the call that issues it: walks back to the start of the body keeping only the assignments the SQL depends on, binds what is still needed from the callers (climbing as far as the budget allows), the class's property writes or the extensions' globals, then runs the kept assignments forward once per way in.
+Branches, loop passes and callers each become alternatives, and a run splits wherever a variable takes several values, so values decided together stay together; runs joined to stay within the budget are marked as such.
+Every statement says how far the search got (`resolved`, `external-input`, `incomplete-model`, `incomplete`, `not-analyzed`) and whether it closed, including when a bound on loop passes or callers cut it short, so stopping early is never reported as having found nothing.
 Ships the `sql-catalog` command, an extension mechanism for framework database APIs (pdo, mysqli, doctrine, laravel, wordpress), swappable reporters (json, html, text) and a JSON Schema for the catalog format.
-Verification is contract-based: finding the call, covering the dependencies, keeping the correspondence, recovering faithfully, and judging completion honestly, with fuzz targets that look for inputs breaking them.
+Verification is contract-based: finding the call, covering the dependencies, keeping the correspondence, recovering faithfully, and judging completion honestly, with fuzz targets that look for inputs breaking them and a cross-check of the call graph it climbs against peq.
 
 ### packages/sql-fixture
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Reporter;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlCatalog\Catalog\AnalysisProblem;
@@ -65,6 +66,7 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(TypeShape::class)]
 #[UsesClass(\SqlCatalog\Catalog\StatementPart::class)]
 #[UsesClass(StatementKind::class)]
+#[Medium]
 final class HtmlReporterTest extends TestCase
 {
     public function testNameIsHowTheCommandLineSelectsIt(): void
@@ -147,7 +149,7 @@ final class HtmlReporterTest extends TestCase
                 TextPattern::fromHole(new TextHole(Origin::Unreached, TypeShape::unknown(), '$db->query($sql)')),
                 [],
                 [],
-                new CallSite('a.php', 1, 'f', CallSite::UNREACHED),
+                new CallSite('a.php', 1, 'f', 'pdo.query'),
                 [],
             ),
         ]);

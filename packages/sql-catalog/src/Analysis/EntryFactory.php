@@ -87,6 +87,7 @@ final class EntryFactory
             $entry->findings,
             $entry->correlated,
             $entry->through,
+            $entry->truncated,
         );
     }
 
@@ -148,6 +149,7 @@ final class EntryFactory
             $this->findings($pattern, $record, $placeholders, $alternatives),
             !$record->combined,
             $record->through,
+            $record->isTruncated(),
         );
     }
 
@@ -237,6 +239,12 @@ final class EntryFactory
         if ($resolution === Resolution::NotAnalyzed) {
             $findings[] = Finding::of(FindingRule::CallNotAnalyzed, $this->notAnalyzedReason($record));
         }
+        if ($record->isTruncated() && $resolution !== Resolution::Incomplete && $resolution !== Resolution::NotAnalyzed) {
+            $findings[] = Finding::of(
+                FindingRule::AnalysisIncomplete,
+                'A limit on loop passes or on callers cut the search short, so the statements here may not be all of them.',
+            );
+        }
 
         $mismatch = $alternatives ? null : $this->countMismatch($record, $placeholders);
 
@@ -253,7 +261,7 @@ final class EntryFactory
 
         return $record->site->sink === CallSite::UNMATCHED
             ? $call . ' is written the way a database call is written, but what it is called on could not be identified.'
-            : $call . ' is written the way a database call is written, but the walk never reached it.';
+            : $call . ' is a database call, but the analysis stopped before it read what the call is given.';
     }
 
     /**

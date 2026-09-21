@@ -6,12 +6,10 @@ namespace SqlCatalog\Analysis;
 
 use PhpParser\Node;
 use PhpParser\Node\Expr;
-use SqlCatalog\Catalog\CallSite;
-use SqlCatalog\Evaluation\CallResults;
+use SqlCatalog\Analysis\Derivation\CalleeReturns;
 use SqlCatalog\Evaluation\Domain;
 use SqlCatalog\Evaluation\Environment;
 use SqlCatalog\Evaluation\ObjectTerm;
-use SqlCatalog\Evaluation\PathSet;
 use SqlCatalog\Extension\SinkRole;
 use SqlCatalog\Extension\SinkSpec;
 use SqlCatalog\Php\FunctionShape;
@@ -22,7 +20,13 @@ use SqlCatalog\Text\Origin;
 use SqlCatalog\Type\TypeShape;
 
 /**
- * Evaluates a call: records it when it reaches the database, follows it otherwise.
+ * Works out what a call produces.
+ *
+ * A database call produces what the driver hands back: a statement handle
+ * from a preparing call, the statement text itself from a call that composes
+ * one. A call into the analyzed source produces what the callee returns for
+ * these arguments. Recording statements is not done here; it is done at each
+ * database call, from the call itself.
  *
  * @visibility root
  */
@@ -32,24 +36,13 @@ final class CallEvaluator
 
     private SinkMatcher $sinks;
 
-    private StatementRecorder $recorder;
-
-    private ValueBinder $binder;
-
-    /**
-     * @var list<string>
-     */
-    private array $through = [];
-
-    private CallResults $followed;
-
     private BuiltinCallModel $builtins;
 
     private ExternalInput $external;
 
-    private EvaluationBudget $budget;
-
     private NodeText $text;
+
+    private ?CalleeReturns $returns;
 
     /**
      * Wires the evaluator to everything a call may need.
@@ -57,47 +50,44 @@ final class CallEvaluator
     public function __construct(
         ProgramIndex $index,
         SinkMatcher $sinks,
-        StatementRecorder $recorder,
         BuiltinCallModel $builtins,
         ExternalInput $external,
-        EvaluationBudget $budget,
         NodeText $text,
+        ?CalleeReturns $returns = null,
     ) {
         $this->index = $index;
         $this->sinks = $sinks;
-        $this->recorder = $recorder;
-        $this->binder = new ValueBinder($recorder);
-        $this->followed = new CallResults();
         $this->builtins = $builtins;
         $this->external = $external;
-        $this->budget = $budget;
         $this->text = $text;
+        $this->returns = $returns;
     }
 
     /**
-     * The value a call produces, after recording whatever it sends to the database.
+     * The value a call produces.
      */
     public function evaluate(
         Expr\CallLike $node,
         Environment $environment,
         FunctionScope $scope,
         ExpressionEvaluator $expressions,
-        BodyWalker $bodies,
     ): Domain {
-        $this->recorder->markVisited($this->callKeyOf($node, $scope));
+        if ($node->isFirstClassCallable()) {
+            return Domain::of(new ObjectTerm('Closure'));
+        }
         $arguments = $this->arguments($node, $environment, $scope, $expressions);
 
         if ($node instanceof Expr\New_) {
             return $this->evaluateInstantiation($node, $scope);
         }
         if ($node instanceof Expr\MethodCall || $node instanceof Expr\NullsafeMethodCall) {
-            return $this->evaluateMethod($node, $arguments, $environment, $scope, $expressions, $bodies);
+            return $this->evaluateMethod($node, $arguments, $environment, $scope, $expressions);
         }
         if ($node instanceof Expr\StaticCall) {
-            return $this->evaluateStatic($node, $arguments, $scope, $bodies);
+            return $this->evaluateStatic($node, $arguments, $scope, $expressions);
         }
         if ($node instanceof Expr\FuncCall) {
-            return $this->evaluateFunction($node, $arguments, $scope, $bodies);
+            return $this->evaluateFunction($node, $arguments, $scope, $expressions);
         }
 
         return Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node));
@@ -149,7 +139,6 @@ final class CallEvaluator
         Environment $environment,
         FunctionScope $scope,
         ExpressionEvaluator $expressions,
-        BodyWalker $bodies,
     ): Domain {
         $name = $node->name instanceof Node\Identifier ? $node->name->toString() : null;
         if ($name === null) {
@@ -159,10 +148,7 @@ final class CallEvaluator
         $receiver = $expressions->evaluate($node->var, $environment, $scope);
         $sink = $this->sinks->matchMethod($receiver, $name);
         if ($sink !== null) {
-            return $this->applySink($sink, $node, $arguments, $receiver, $scope);
-        }
-        if ($receiver->type()->classNames() !== []) {
-            $this->recorder->markExplained($this->callKeyOf($node, $scope));
+            return $this->applySink($sink, $node, $arguments, $scope);
         }
         if (!$this->isOwnReceiver($node) && $this->sinks->models($receiver)) {
             return Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node));
@@ -171,7 +157,7 @@ final class CallEvaluator
         $className = $receiver->type()->soleClassName();
         $method = $this->index->findMethod($className, $name);
         if ($method?->node?->getStmts() === null) {
-            $dispatched = $this->dispatch($className, $name, $arguments, $scope, $bodies);
+            $dispatched = $this->dispatch($className, $name, $arguments, $scope, $expressions);
             if ($dispatched !== null) {
                 return $dispatched;
             }
@@ -179,7 +165,7 @@ final class CallEvaluator
 
         return $method === null
             ? Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node))
-            : $this->follow($method, $arguments, $scope, $bodies);
+            : $this->follow($method, $arguments, $scope, $expressions);
     }
 
     /**
@@ -204,11 +190,11 @@ final class CallEvaluator
         string $method,
         array $arguments,
         FunctionScope $scope,
-        BodyWalker $bodies,
+        ExpressionEvaluator $expressions,
     ): ?Domain {
         $result = null;
         foreach ($this->index->implementationsOf($className, $method) as $implementation) {
-            $value = $this->follow($implementation, $arguments, $scope, $bodies);
+            $value = $this->follow($implementation, $arguments, $scope, $expressions);
             $result = $result === null ? $value : $result->union($value);
         }
 
@@ -224,7 +210,7 @@ final class CallEvaluator
         Expr\StaticCall $node,
         array $arguments,
         FunctionScope $scope,
-        BodyWalker $bodies,
+        ExpressionEvaluator $expressions,
     ): Domain {
         $name = $node->name instanceof Node\Identifier ? $node->name->toString() : null;
         $className = $node->class instanceof Node\Name ? $node->class->toString() : null;
@@ -237,15 +223,14 @@ final class CallEvaluator
 
         $sink = $this->sinks->matchStatic($className, $name);
         if ($sink !== null) {
-            return $this->applySink($sink, $node, $arguments, Domain::of(new ObjectTerm($className)), $scope);
+            return $this->applySink($sink, $node, $arguments, $scope);
         }
-        $this->recorder->markExplained($this->callKeyOf($node, $scope));
 
         $method = $this->index->findMethod($className, $name);
 
         return $method === null
             ? Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node))
-            : $this->follow($method, $arguments, $scope, $bodies);
+            : $this->follow($method, $arguments, $scope, $expressions);
     }
 
     /**
@@ -257,7 +242,7 @@ final class CallEvaluator
         Expr\FuncCall $node,
         array $arguments,
         FunctionScope $scope,
-        BodyWalker $bodies,
+        ExpressionEvaluator $expressions,
     ): Domain {
         if (!$node->name instanceof Node\Name) {
             return Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node));
@@ -266,9 +251,8 @@ final class CallEvaluator
 
         $sink = $this->sinks->matchFunction($name);
         if ($sink !== null) {
-            return $this->applySink($sink, $node, $arguments, Domain::unknown(), $scope);
+            return $this->applySink($sink, $node, $arguments, $scope);
         }
-        $this->recorder->markExplained($this->callKeyOf($node, $scope));
         if ($this->external->isFunction($name)) {
             return Domain::opaque(TypeShape::unknown(), Origin::External, $name . '()');
         }
@@ -280,82 +264,34 @@ final class CallEvaluator
 
         return $function === null
             ? Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node))
-            : $this->follow($function, $arguments, $scope, $bodies);
+            : $this->follow($function, $arguments, $scope, $expressions);
     }
 
     /**
-     * Records what a matched database call sends, and returns what it produces.
+     * What a database call hands back.
+     *
+     * A preparing call hands back a handle naming the call it came from, which
+     * is how a later `execute()` finds the statement it binds to. A composing
+     * call hands back the statement it was given.
      *
      * @param list<Domain> $arguments
      */
-    public function applySink(
-        SinkSpec $sink,
-        Expr\CallLike $node,
-        array $arguments,
-        Domain $receiver,
-        FunctionScope $scope,
-    ): Domain {
-        $site = $this->siteOf($node, $scope, $sink->id);
-        $siteKey = $this->siteKeyOf($node, $scope, $sink->id);
-        $this->through = $scope->stack;
-        $this->recorder->markExplained($this->callKeyOf($node, $scope));
-
-        if ($sink->role === SinkRole::Compose) {
-            return $arguments[$sink->sqlParameter ?? 0] ?? Domain::unknown();
-        }
-        if ($sink->role === SinkRole::Query) {
-            $records = $this->recordStatements($sink, $arguments, $site, $siteKey);
-            $this->binder->bindValues($records, $sink, $arguments);
-
-            return Domain::opaque(TypeShape::unknown(), Origin::Call, $sink->id);
-        }
-        if ($sink->role === SinkRole::Prepare) {
-            return $this->applyPrepare($sink, $arguments, $site, $siteKey);
-        }
-
-        $this->binder->bindValues($this->binder->openRecords($receiver), $sink, $arguments);
-
-        return Domain::opaque(TypeShape::of(['bool']), Origin::Call, $sink->id);
-    }
-
-    /**
-     * Records the statement a preparing call carries and hands back its handle.
-     *
-     * @param list<Domain> $arguments
-     */
-    public function applyPrepare(SinkSpec $sink, array $arguments, CallSite $site, string $siteKey): Domain
+    public function applySink(SinkSpec $sink, Expr\CallLike $node, array $arguments, FunctionScope $scope): Domain
     {
-        $this->recorder->filePrepared($siteKey, $this->recordStatements($sink, $arguments, $site, $siteKey));
-
-        return Domain::of(new ObjectTerm($sink->handleType ?? 'PDOStatement', null, $siteKey));
+        return match ($sink->role) {
+            SinkRole::Compose => $arguments[$sink->sqlParameter ?? 0] ?? Domain::unknown(),
+            SinkRole::Prepare => Domain::of(new ObjectTerm(
+                $sink->handleType ?? 'PDOStatement',
+                null,
+                $this->siteKeyOf($node, $scope, $sink->id),
+            )),
+            SinkRole::Query => Domain::opaque(TypeShape::unknown(), Origin::Call, $sink->id),
+            SinkRole::Execute, SinkRole::Bind => Domain::opaque(TypeShape::of(['bool']), Origin::Call, $sink->id),
+        };
     }
 
     /**
-     * The statements a call carries, one for each alternative the text resolved to.
-     *
-     * @param list<Domain> $arguments
-     * @return list<QueryRecord>
-     */
-    public function recordStatements(SinkSpec $sink, array $arguments, CallSite $site, string $siteKey): array
-    {
-        $sql = $sink->sqlParameter === null ? null : ($arguments[$sink->sqlParameter] ?? null);
-        if ($sql === null) {
-            return [];
-        }
-
-        $records = [];
-        foreach ($sql->patterns() as $pattern) {
-            $records[] = $this->recorder->record($site, $siteKey, $pattern, $sink->kind, $sql->combined, $this->through);
-        }
-
-        return $records;
-    }
-
-    /**
-     * The value a call into analyzed code produces, following it when the budget allows.
-     *
-     * Following a call is what resolves a statement that a repository assembles
-     * in one method and issues in another. The budget bounds how deep that goes.
+     * What a call into the analyzed source returns for these arguments.
      *
      * @param list<Domain> $arguments
      */
@@ -363,44 +299,15 @@ final class CallEvaluator
         MethodShape|FunctionShape $callee,
         array $arguments,
         FunctionScope $scope,
-        BodyWalker $bodies,
+        ExpressionEvaluator $expressions,
     ): Domain {
-        $name = $callee instanceof MethodShape ? $callee->qualifiedName() : $callee->name;
-        $body = $callee->node?->getStmts();
-        if ($scope->depth() >= $this->budget->maxDepth || $scope->isFollowing($name)) {
-            return Domain::opaque($callee->returnType, Origin::Budget, $name . '()');
-        }
-        if ($body === null) {
+        if ($this->returns === null) {
+            $name = $callee instanceof MethodShape ? $callee->qualifiedName() : $callee->name;
+
             return Domain::opaque($callee->returnType, Origin::Call, $name . '()');
         }
 
-        $memo = $this->followed->keyFor($name, $arguments);
-        $remembered = $this->followed->recall($memo);
-        if ($remembered !== null) {
-            return $remembered;
-        }
-
-        $environment = new Environment();
-        foreach ($callee->parameters as $position => $parameter) {
-            $environment->write(
-                $parameter->name,
-                $arguments[$position] ?? Domain::opaque($parameter->type, Origin::Parameter, '$' . $parameter->name),
-            );
-        }
-        $className = $callee instanceof MethodShape ? $callee->className : $scope->className;
-
-        $result = $bodies->walk($body, PathSet::of($environment), $scope->enter($name, $className, $callee->file));
-        $this->followed->remember($memo, $result);
-
-        return $result;
-    }
-
-    /**
-     * Where a call is written.
-     */
-    public function siteOf(Expr\CallLike $node, FunctionScope $scope, string $sinkId): CallSite
-    {
-        return new CallSite($scope->file, $node->getStartLine(), $scope->function, $sinkId);
+        return $this->returns->valueOf($callee, $arguments, $scope, $expressions);
     }
 
     /**

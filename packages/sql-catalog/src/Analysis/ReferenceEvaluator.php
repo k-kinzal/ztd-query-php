@@ -30,6 +30,8 @@ final class ReferenceEvaluator
 
     private NodeText $text;
 
+    private ConstantReader $constants;
+
     /**
      * Wires the reader to the declarations it resolves names against.
      */
@@ -38,6 +40,7 @@ final class ReferenceEvaluator
         $this->index = $index;
         $this->external = $external;
         $this->text = $text;
+        $this->constants = new ConstantReader($index, $text);
     }
 
     /**
@@ -59,10 +62,10 @@ final class ReferenceEvaluator
             return $this->readElement($node, $environment, $scope, $expressions);
         }
         if ($node instanceof Expr\ConstFetch) {
-            return $this->readConstant($node, $scope, $expressions);
+            return $this->constants->readConstant($node, $scope, $expressions);
         }
         if ($node instanceof Expr\ClassConstFetch) {
-            return $this->readClassConstant($node, $scope, $expressions);
+            return $this->constants->readClassConstant($node, $scope, $expressions);
         }
         if ($node instanceof Expr\PropertyFetch || $node instanceof Expr\NullsafePropertyFetch) {
             return $this->readProperty($node, $environment, $scope, $expressions);
@@ -172,94 +175,17 @@ final class ReferenceEvaluator
      */
     public function originOf(Domain $domain): Origin
     {
+        $origin = Origin::Unresolved;
         foreach ($domain->terms as $term) {
             if ($term instanceof OpaqueTerm && $term->origin === Origin::External) {
                 return Origin::External;
             }
+            if ($term instanceof OpaqueTerm && $origin === Origin::Unresolved) {
+                $origin = $term->origin;
+            }
         }
 
-        return Origin::Unresolved;
-    }
-
-    /**
-     * The value of a global constant.
-     */
-    public function readConstant(Expr\ConstFetch $node, FunctionScope $scope, ExpressionEvaluator $expressions): Domain
-    {
-        $name = $this->constantName($node);
-        $keyword = strtolower($node->name->toString());
-        if ($keyword === 'true' || $keyword === 'false') {
-            return Domain::literal($keyword === 'true');
-        }
-        if ($keyword === 'null') {
-            return Domain::literal(null);
-        }
-
-        $declared = $this->index->findConstant($name);
-        if ($declared !== null) {
-            return $expressions->evaluate($declared, new Environment(), $scope);
-        }
-
-        return $this->readRuntimeConstant($name);
-    }
-
-    /**
-     * The name a constant reference resolves to.
-     *
-     * An unqualified constant is looked for in its own namespace first and in
-     * the global one second, which is the order PHP itself resolves it in.
-     */
-    public function constantName(Expr\ConstFetch $node): string
-    {
-        $namespaced = $node->name->getAttribute('namespacedName');
-        if ($namespaced instanceof Node\Name && $this->index->findConstant($namespaced->toString()) !== null) {
-            return $namespaced->toString();
-        }
-
-        return $node->name->toString();
-    }
-
-    /**
-     * The value of a constant the running process already defines.
-     */
-    public function readRuntimeConstant(string $name): Domain
-    {
-        $bare = ltrim($name, '\\');
-        if (!str_starts_with($bare, 'PHP_') || !defined($bare)) {
-            return Domain::opaque(TypeShape::unknown(), Origin::Unresolved, $bare);
-        }
-        $value = constant($bare);
-
-        return is_scalar($value) || $value === null ? Domain::literal($value) : Domain::unknown($bare);
-    }
-
-    /**
-     * The value of a class constant, an enum case, or a `::class` reference.
-     */
-    public function readClassConstant(
-        Expr\ClassConstFetch $node,
-        FunctionScope $scope,
-        ExpressionEvaluator $expressions,
-    ): Domain {
-        $className = $this->resolveClassName($node->class, $scope);
-        $constant = $node->name instanceof Node\Identifier ? $node->name->toString() : null;
-        if ($className === null || $constant === null) {
-            return Domain::opaque(TypeShape::unknown(), Origin::Unresolved, $this->text->render($node));
-        }
-        if (strtolower($constant) === 'class') {
-            return Domain::literal($className);
-        }
-
-        $shape = $this->index->findClass($className);
-        if ($shape !== null && $shape->enum && array_key_exists($constant, $shape->enumCases)) {
-            return Domain::of(new ObjectTerm($shape->name, $constant));
-        }
-
-        $declared = $this->index->findClassConstant($className, $constant);
-
-        return $declared === null
-            ? Domain::opaque(TypeShape::unknown(), Origin::Unresolved, $className . '::' . $constant)
-            : $expressions->evaluate($declared, new Environment(), $scope);
+        return $origin;
     }
 
     /**
@@ -271,6 +197,10 @@ final class ReferenceEvaluator
         FunctionScope $scope,
         ExpressionEvaluator $expressions,
     ): Domain {
+        $tracked = $this->trackedName($node);
+        if ($tracked !== null && $environment->has($tracked)) {
+            return $environment->read($tracked);
+        }
         $name = $node->name instanceof Node\Identifier ? $node->name->toString() : null;
         $receiver = $expressions->evaluate($node->var, $environment, $scope);
         $owner = $receiver->type()->soleClassName();
@@ -335,7 +265,7 @@ final class ReferenceEvaluator
      */
     public function readInstance(Expr\New_ $node, FunctionScope $scope): Domain
     {
-        $className = $node->class instanceof Node\Name ? $this->resolveClassName($node->class, $scope) : null;
+        $className = $node->class instanceof Node\Name ? $this->constants->resolveClassName($node->class, $scope) : null;
 
         return $className === null
             ? Domain::opaque(TypeShape::of(['object']), Origin::Unresolved, 'new')
@@ -343,19 +273,24 @@ final class ReferenceEvaluator
     }
 
     /**
-     * The class a written class reference names, resolving `self` and `static`.
+     * The name a target is tracked under in the environment, or null when it is not tracked.
+     *
+     * A variable is tracked under its name, and a property of `$this` under
+     * `this->property`, so that assigning it earlier in a body is seen when it
+     * is read later in the same body.
      */
-    public function resolveClassName(Node\Name|Expr|Node\Stmt\Class_ $reference, FunctionScope $scope): ?string
+    public function trackedName(Expr $target): ?string
     {
-        if (!$reference instanceof Node\Name) {
-            return null;
+        if ($target instanceof Expr\Variable) {
+            return is_string($target->name) ? $target->name : null;
         }
-        $written = $reference->toString();
+        if (($target instanceof Expr\PropertyFetch || $target instanceof Expr\NullsafePropertyFetch)
+            && $target->var instanceof Expr\Variable && $target->var->name === 'this'
+            && $target->name instanceof Node\Identifier) {
+            return 'this->' . $target->name->toString();
+        }
 
-        return match (strtolower($written)) {
-            'self', 'static', 'parent' => $scope->className,
-            default => $written,
-        };
+        return null;
     }
 
     /**
@@ -368,18 +303,57 @@ final class ReferenceEvaluator
         FunctionScope $scope,
         ExpressionEvaluator $expressions,
     ): void {
-        if ($target instanceof Expr\Variable && is_string($target->name)) {
-            $environment->write($target->name, $value);
+        $name = $this->trackedName($target);
+        if ($name !== null) {
+            $environment->write($name, $value);
 
             return;
         }
         if ($target instanceof Expr\ArrayDimFetch) {
             $this->assignElement($target, $value, $environment, $scope, $expressions);
+
+            return;
+        }
+        if ($target instanceof Expr\List_ || $target instanceof Expr\Array_) {
+            $this->assignList($target, $value, $environment, $scope, $expressions);
         }
     }
 
     /**
-     * Writes a value into an array held by a variable, keeping the key when one is written.
+     * Writes the elements of an array into the targets a destructuring assignment lists.
+     */
+    public function assignList(
+        Expr\List_|Expr\Array_ $target,
+        Domain $value,
+        Environment $environment,
+        FunctionScope $scope,
+        ExpressionEvaluator $expressions,
+    ): void {
+        $array = $value->soleArray();
+        $position = 0;
+        foreach ($target->items as $item) {
+            if ($item === null) {
+                $position++;
+                continue;
+            }
+            $key = $item->key === null ? $position++ : $expressions->evaluate($item->key, $environment, $scope)->soleLiteral()?->value;
+            $element = $array === null || $key === null ? null : $this->lookup($array, $key);
+            $this->assign(
+                $item->value,
+                $element ?? Domain::opaque(TypeShape::unknown(), $this->originOf($value), $this->text->render($item->value)),
+                $environment,
+                $scope,
+                $expressions,
+            );
+        }
+    }
+
+    /**
+     * Writes a value into an array held by a tracked name, keeping the key when one is written.
+     *
+     * A write one level down, such as `$parts['where'][] = …`, is not followed
+     * element by element: the array it goes into is marked as no longer known
+     * in full, so reading it back never claims to have seen all of it.
      */
     public function assignElement(
         Expr\ArrayDimFetch $target,
@@ -388,15 +362,32 @@ final class ReferenceEvaluator
         FunctionScope $scope,
         ExpressionEvaluator $expressions,
     ): void {
-        if (!$target->var instanceof Expr\Variable || !is_string($target->var->name)) {
+        $name = $this->trackedName($target->var);
+        if ($name === null) {
+            $this->loseTrack($target->var, $environment);
+
             return;
         }
-        $name = $target->var->name;
         $key = $target->dim === null ? null : $expressions->evaluate($target->dim, $environment, $scope);
-        $array = $environment->read($name)->soleArray();
+        $array = $environment->has($name) ? $environment->read($name)->soleArray() : null;
         $entries = $array === null ? [] : $array->entries;
         $entries[] = new ArrayEntry($key, $value);
 
-        $environment->write($name, Domain::of(new ArrayTerm($entries, $array !== null && $array->complete)));
+        $environment->write($name, Domain::of(new ArrayTerm($entries, $array === null || $array->complete)));
+    }
+
+    /**
+     * Marks the array a nested write goes into as no longer known in full.
+     */
+    public function loseTrack(Expr $target, Environment $environment): void
+    {
+        while ($target instanceof Expr\ArrayDimFetch) {
+            $target = $target->var;
+        }
+        $name = $this->trackedName($target);
+        $array = $name === null || !$environment->has($name) ? null : $environment->read($name)->soleArray();
+        if ($name !== null && $array !== null) {
+            $environment->write($name, Domain::of(new ArrayTerm($array->entries, false)));
+        }
     }
 }

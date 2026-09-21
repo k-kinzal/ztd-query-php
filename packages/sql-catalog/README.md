@@ -212,9 +212,11 @@ Every statement says how far the analyzer got with it:
 | `external-input` | The values were followed to runtime input; the string is not fixed. | yes |
 | `incomplete-model` | A dependency the analyzer does not model was reached. | no |
 | `incomplete` | A cycle or an analysis budget stopped the search. | no |
-| `not-analyzed` | The call was found but never examined, so nothing was read from it. | no |
+| `not-analyzed` | The call was found but nothing was read from it. | no |
 
-When `searchClosed` is false the statements listed may not be all of them, and
+A statement whose text resolved is still not `searchClosed` when a bound on loop
+passes or on callers cut the search short, since other statements may lie beyond
+it. When `searchClosed` is false the statements listed may not be all of them, and
 the `analysis-incomplete` or `call-not-analyzed` finding says what stopped the search. When `correlated`
 is false the alternatives were paired from parts that vary independently, so some
 of them may be unreachable. Stopping early is never reported as having found

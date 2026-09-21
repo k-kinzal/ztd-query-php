@@ -47,35 +47,8 @@ final class StatementRecorderTest extends TestCase
         self::assertSame([], (new StatementRecorder())->prepared('missing'));
     }
 
-    public function testMarkVisitedRecordsThatTheWalkReachedACall(): void
-    {
-        $recorder = new StatementRecorder();
-
-        self::assertFalse($recorder->hasVisited('a.php:12'));
-        $recorder->markVisited('a.php:12');
-        self::assertTrue($recorder->hasVisited('a.php:12'));
-    }
-
-    public function testHasVisitedIsFalseForACallTheWalkNeverReached(): void
-    {
-        self::assertFalse((new StatementRecorder())->hasVisited('a.php:99'));
-    }
-
     public function testRecordsIsEmptyBeforeAnythingIsRecorded(): void
     {
         self::assertSame([], (new StatementRecorder())->records());
-    }
-
-    public function testMarkExplainedNotesThatTheWalkToldTheCallApart(): void
-    {
-        $recorder = new StatementRecorder();
-        $recorder->markExplained('a.php:10');
-
-        self::assertTrue($recorder->hasExplained('a.php:10'));
-    }
-
-    public function testHasExplainedIsFalseUntilTheWalkTellsTheCallApart(): void
-    {
-        self::assertFalse((new StatementRecorder())->hasExplained('a.php:10'));
     }
 }

@@ -88,7 +88,7 @@ final class TextReporter implements ReporterInterface
     public function statusLine(CatalogEntry $entry): string
     {
         $status = [$entry->resolution()->value];
-        if (!$entry->resolution()->isClosed()) {
+        if (!$entry->searchClosed()) {
             $status[] = 'search did not close';
         }
         if (!$entry->correlated) {

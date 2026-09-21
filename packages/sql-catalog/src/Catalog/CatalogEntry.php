@@ -24,6 +24,7 @@ final class CatalogEntry
      * @param list<Finding> $findings What is worth reporting about the statement
      * @param bool $correlated Whether the alternatives at this call site are ones the code can reach
      * @param list<string> $through The path taken to this reading, from the body the walk started in, outermost first
+     * @param bool $truncated Whether a bound — on loop passes, callers or ways in — cut the search short of every way the statement can be
      */
     public function __construct(
         public readonly string $id,
@@ -35,6 +36,7 @@ final class CatalogEntry
         public readonly array $findings,
         public readonly bool $correlated = true,
         public readonly array $through = [],
+        public readonly bool $truncated = false,
     ) {
     }
 
@@ -44,6 +46,19 @@ final class CatalogEntry
     public function resolution(): Resolution
     {
         return Resolution::of($this->pattern);
+    }
+
+    /**
+     * Whether the analyzer followed every way the statement can be to its end.
+     *
+     * A statement whose text reached runtime input is closed: the trail was
+     * followed as far as it goes. One cut short by a budget, or by a limit on
+     * how many loop passes or callers are followed, is not, however much of
+     * its text resolved.
+     */
+    public function searchClosed(): bool
+    {
+        return $this->resolution()->isClosed() && !$this->truncated;
     }
 
     /**

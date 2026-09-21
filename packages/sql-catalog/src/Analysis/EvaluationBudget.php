@@ -16,6 +16,11 @@ namespace SqlCatalog\Analysis;
  */
 final class EvaluationBudget
 {
+    /**
+     * How many times the search's budget reading what was found may take.
+     */
+    public const READING_ALLOWANCE = 4;
+
     private int $steps;
 
     /**
@@ -47,6 +52,19 @@ final class EvaluationBudget
     public function isExhausted(): bool
     {
         return $this->steps > $this->maxSteps;
+    }
+
+    /**
+     * Whether even the work of reading what is already in hand has to stop.
+     *
+     * Running out of budget stops the search from going anywhere new, but the
+     * statement it has found so far is still read, so a search cut short keeps
+     * the parts of the statement it did find. Reading has a limit of its own,
+     * several times the search's, so a pathological input still ends.
+     */
+    public function isSpent(): bool
+    {
+        return $this->steps > $this->maxSteps * self::READING_ALLOWANCE;
     }
 
     /**

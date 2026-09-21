@@ -111,6 +111,8 @@ final class StatementCard
             $caveats[] = $entry->resolution()->describe();
         } elseif (!$entry->resolution()->isClosed()) {
             $caveats[] = $entry->resolution()->describe() . ' The statements listed here may not be all of them.';
+        } elseif ($entry->truncated) {
+            $caveats[] = 'A limit on loop passes or on callers cut the search short. The statements listed here may not be all of them.';
         }
         if (!$entry->correlated) {
             $caveats[] = 'Assembled from parts that vary independently, so some of these may be unreachable.';

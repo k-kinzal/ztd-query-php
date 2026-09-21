@@ -31,6 +31,8 @@ final class QueryRecord
 
     private bool $bound = false;
 
+    private bool $truncated;
+
     /**
      * @param CallSite $site Where the statement is issued
      * @param string $siteKey What tells this call apart from every other, including one on the same line
@@ -38,6 +40,7 @@ final class QueryRecord
      * @param StatementKind|null $kind The kind the call implies, when it implies one
      * @param bool $combined Whether the statement came from pairing parts that vary independently
      * @param list<string> $through The path taken to this reading, from the body the walk started in, outermost first
+     * @param bool $truncated Whether a bound cut the search short of every way the statement can be
      */
     public function __construct(
         public readonly CallSite $site,
@@ -46,7 +49,17 @@ final class QueryRecord
         public readonly ?StatementKind $kind = null,
         public readonly bool $combined = false,
         public readonly array $through = [],
+        bool $truncated = false,
     ) {
+        $this->truncated = $truncated;
+    }
+
+    /**
+     * Whether a bound cut the search short of every way the statement can be.
+     */
+    public function isTruncated(): bool
+    {
+        return $this->truncated;
     }
 
     /**
@@ -104,6 +117,7 @@ final class QueryRecord
             $this->named[$name] = $held === null ? $value : $held->union($value);
         }
         $this->bound = $this->bound || $other->bound;
+        $this->truncated = $this->truncated || $other->truncated;
     }
 
     /**

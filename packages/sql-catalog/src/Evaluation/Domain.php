@@ -22,6 +22,8 @@ use SqlCatalog\Type\TypeShape;
  */
 final class Domain
 {
+    private ?string $signature = null;
+
     /**
      * How many alternatives a domain keeps before generalizing them into one shape.
      */
@@ -241,13 +243,16 @@ final class Domain
      */
     public function signature(): string
     {
+        if ($this->signature !== null) {
+            return $this->signature;
+        }
         $parts = [];
         foreach ($this->terms as $term) {
             $parts[] = $term->signature();
         }
         sort($parts);
 
-        return implode('|', $parts);
+        return $this->signature = implode('|', $parts);
     }
 
     /**

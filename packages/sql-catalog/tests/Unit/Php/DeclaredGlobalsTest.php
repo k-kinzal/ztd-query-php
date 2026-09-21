@@ -40,6 +40,21 @@ final class DeclaredGlobalsTest extends TestCase
         self::assertNull((new DeclaredGlobals())->classOf($declaration, 'other'));
     }
 
+    public function testDeclaredNamesTheClassAnExtensionGivesAGlobal(): void
+    {
+        $globals = new DeclaredGlobals(['wpdb' => 'App\\Db', 'cache' => 'App\\Cache']);
+
+        self::assertSame('App\\Db', $globals->declared('wpdb'));
+        self::assertSame('App\\Cache', $globals->declared('cache'));
+    }
+
+    public function testDeclaredIsSilentForAGlobalNoExtensionDeclares(): void
+    {
+        self::assertNull((new DeclaredGlobals(['wpdb' => 'App\\Db']))->declared('other'));
+        self::assertNull((new DeclaredGlobals(['wpdb' => 'App\\Db']))->declared('$wpdb'));
+        self::assertNull((new DeclaredGlobals())->declared('wpdb'));
+    }
+
     public function testDocumentedReadsTheTagOnTheEnclosingDeclaration(): void
     {
         $file = (new SourceParser())->parse(

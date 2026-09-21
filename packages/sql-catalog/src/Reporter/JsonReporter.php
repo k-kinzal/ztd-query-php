@@ -167,7 +167,7 @@ final class JsonReporter implements ReporterInterface
             'sql' => $entry->sql(),
             'exact' => $entry->isExact(),
             'resolution' => $entry->resolution()->value,
-            'searchClosed' => $entry->resolution()->isClosed(),
+            'searchClosed' => $entry->searchClosed(),
             'correlated' => $entry->correlated,
             'tables' => $entry->tables,
             'site' => [

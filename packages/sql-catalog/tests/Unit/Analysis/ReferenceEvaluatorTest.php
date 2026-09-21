@@ -4,15 +4,22 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Analysis;
 
+use PhpParser\Node\ArrayItem;
+use PhpParser\Node\Expr;
 use PhpParser\Node\Expr\ArrayDimFetch;
-use PhpParser\Node\Expr\ConstFetch;
+use PhpParser\Node\Expr\List_;
+use PhpParser\Node\Expr\NullsafePropertyFetch;
+use PhpParser\Node\Expr\PropertyFetch;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Name;
 use PhpParser\Node\Scalar\String_;
+use PhpParser\Node\Stmt;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlCatalog\Analysis\Derivation\Slice\SliceStep;
+use SqlCatalog\Analysis\Derivation\SliceExecutor;
 use SqlCatalog\Analysis\ExternalInput;
 use SqlCatalog\Analysis\FunctionScope;
 use SqlCatalog\Analysis\Interpreter;
@@ -22,12 +29,12 @@ use SqlCatalog\Evaluation\ArrayEntry;
 use SqlCatalog\Evaluation\ArrayTerm;
 use SqlCatalog\Evaluation\Domain;
 use SqlCatalog\Evaluation\Environment;
-use SqlCatalog\Evaluation\PathSet;
 use SqlCatalog\Php\NodeText;
 use SqlCatalog\Php\ProgramIndex;
 use SqlCatalog\Php\ProgramIndexBuilder;
 use SqlCatalog\Php\SourceParser;
 use SqlCatalog\Text\Origin;
+use SqlCatalog\Type\TypeShape;
 
 #[CoversClass(ReferenceEvaluator::class)]
 #[UsesClass(Interpreter::class)]
@@ -42,7 +49,6 @@ use SqlCatalog\Text\Origin;
 #[UsesClass(ArrayEntry::class)]
 #[UsesClass(ArrayTerm::class)]
 #[UsesClass(Domain::class)]
-#[UsesClass(\SqlCatalog\Analysis\BodyWalker::class)]
 #[UsesClass(\SqlCatalog\Analysis\BuiltinCallModel::class)]
 #[UsesClass(\SqlCatalog\Analysis\CallEvaluator::class)]
 #[UsesClass(\SqlCatalog\Analysis\EvaluationBudget::class)]
@@ -61,11 +67,25 @@ use SqlCatalog\Text\Origin;
 #[UsesClass(\SqlCatalog\Text\TextGeneralization::class)]
 #[UsesClass(\SqlCatalog\Text\TextHole::class)]
 #[UsesClass(\SqlCatalog\Text\TextPattern::class)]
-#[UsesClass(\SqlCatalog\Type\TypeShape::class)]
+#[UsesClass(TypeShape::class)]
 #[UsesClass(\SqlCatalog\Analysis\ValueBinder::class)]
 #[UsesClass(\SqlCatalog\Analysis\SinkFinder::class)]
-#[UsesClass(PathSet::class)]
 #[UsesClass(\SqlCatalog\Php\DeclaredGlobals::class)]
+#[UsesClass(\SqlCatalog\Analysis\ConstantReader::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\CalleeReturns::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\CallerIndex::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\Callers::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\Deriver::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\EntryBinder::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\FreeNames::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\ModifiedNames::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\PropertyWrites::class)]
+#[UsesClass(SliceExecutor::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\AssignmentSteps::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\BackwardSlicer::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\LoopPasses::class)]
+#[UsesClass(SliceStep::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\SourceTree::class)]
 final class ReferenceEvaluatorTest extends TestCase
 {
     #[DataProvider('providerEvaluate')]
@@ -73,10 +93,16 @@ final class ReferenceEvaluatorTest extends TestCase
     {
         $file = (new SourceParser())->parse('t.php', $code);
         $index = (new ProgramIndexBuilder())->build([$file]);
-        $expressions = (new Interpreter($index, []))->evaluatorFor(new StatementRecorder());
-        $paths = new PathSet();
-        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
-        $environment = $paths->join();
+        $expressions = (new Interpreter($index, []))->evaluatorFor();
+        $environment = array_reduce(
+            (new SliceExecutor())->run(
+                array_map(static fn (Stmt $statement): SliceStep => new SliceStep($statement instanceof Stmt\Expression ? $statement->expr : $statement), $file->statements),
+                new Environment(),
+                new FunctionScope('t.php'),
+                $expressions,
+            ),
+            static fn (?Environment $joined, Environment $run): Environment => $joined === null ? $run : $joined->join($run),
+        ) ?? new Environment();
 
         self::assertSame($expected, $environment->read('result')->patterns()[0]->display());
     }
@@ -105,12 +131,12 @@ final class ReferenceEvaluatorTest extends TestCase
     {
         $file = (new SourceParser())->parse('t.php', '<?php ["a", "b"];');
         $statement = $file->statements[0];
-        self::assertInstanceOf(\PhpParser\Node\Stmt\Expression::class, $statement);
+        self::assertInstanceOf(Stmt\Expression::class, $statement);
         $node = $statement->expr;
-        self::assertInstanceOf(\PhpParser\Node\Expr\Array_::class, $node);
+        self::assertInstanceOf(Expr\Array_::class, $node);
 
         $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
         $read = $evaluator->readArray($node, new Environment(), new FunctionScope('t.php'), $expressions);
 
         $array = $read->soleArray();
@@ -122,12 +148,12 @@ final class ReferenceEvaluatorTest extends TestCase
     {
         $file = (new SourceParser())->parse('t.php', '<?php ["a", "b"][1];');
         $statement = $file->statements[0];
-        self::assertInstanceOf(\PhpParser\Node\Stmt\Expression::class, $statement);
+        self::assertInstanceOf(Stmt\Expression::class, $statement);
         $node = $statement->expr;
         self::assertInstanceOf(ArrayDimFetch::class, $node);
 
         $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
         $read = $evaluator->readElement($node, new Environment(), new FunctionScope('t.php'), $expressions);
 
         self::assertSame('b', $read->soleLiteral()?->value);
@@ -138,12 +164,12 @@ final class ReferenceEvaluatorTest extends TestCase
         $file = (new SourceParser())->parse('t.php', '<?php class C { public string $t = "users"; } $c = new C(); $c->t;');
         $index = (new ProgramIndexBuilder())->build([$file]);
         $statement = $file->statements[2];
-        self::assertInstanceOf(\PhpParser\Node\Stmt\Expression::class, $statement);
+        self::assertInstanceOf(Stmt\Expression::class, $statement);
         $node = $statement->expr;
-        self::assertInstanceOf(\PhpParser\Node\Expr\PropertyFetch::class, $node);
+        self::assertInstanceOf(PropertyFetch::class, $node);
 
         $evaluator = new ReferenceEvaluator($index, new ExternalInput(), new NodeText());
-        $expressions = (new Interpreter($index, []))->evaluatorFor(new StatementRecorder());
+        $expressions = (new Interpreter($index, []))->evaluatorFor();
         $environment = new Environment(['c' => Domain::of(new \SqlCatalog\Evaluation\ObjectTerm('C'))]);
         $read = $evaluator->readProperty($node, $environment, new FunctionScope('t.php'), $expressions);
 
@@ -153,7 +179,7 @@ final class ReferenceEvaluatorTest extends TestCase
     public function testEvaluateOnlyAnswersForReferences(): void
     {
         $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
         $answer = $evaluator->evaluate(new String_('a'), new Environment(), new FunctionScope('t.php'), $expressions);
         self::assertNull($answer);
     }
@@ -177,10 +203,16 @@ final class ReferenceEvaluatorTest extends TestCase
     public function testReadArrayMarksAnUnpackedLiteralIncomplete(): void
     {
         $file = (new SourceParser())->parse('t.php', '<?php $result = ["a", ...$rest];');
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $paths = new PathSet();
-        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
-        $environment = $paths->join();
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = array_reduce(
+            (new SliceExecutor())->run(
+                array_map(static fn (Stmt $statement): SliceStep => new SliceStep($statement instanceof Stmt\Expression ? $statement->expr : $statement), $file->statements),
+                new Environment(),
+                new FunctionScope('t.php'),
+                $expressions,
+            ),
+            static fn (?Environment $joined, Environment $run): Environment => $joined === null ? $run : $joined->join($run),
+        ) ?? new Environment();
 
         self::assertFalse($environment->read('result')->soleArray()?->complete);
     }
@@ -188,10 +220,16 @@ final class ReferenceEvaluatorTest extends TestCase
     public function testReadElementFallsBackToTheOriginOfTheArray(): void
     {
         $file = (new SourceParser())->parse('t.php', '<?php $result = $_POST["a"]["b"];');
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $paths = new PathSet();
-        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
-        $environment = $paths->join();
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = array_reduce(
+            (new SliceExecutor())->run(
+                array_map(static fn (Stmt $statement): SliceStep => new SliceStep($statement instanceof Stmt\Expression ? $statement->expr : $statement), $file->statements),
+                new Environment(),
+                new FunctionScope('t.php'),
+                $expressions,
+            ),
+            static fn (?Environment $joined, Environment $run): Environment => $joined === null ? $run : $joined->join($run),
+        ) ?? new Environment();
 
         self::assertSame(Origin::External, $environment->read('result')->patterns()[0]->holes()[0]->origin);
     }
@@ -212,55 +250,9 @@ final class ReferenceEvaluatorTest extends TestCase
     public function testOriginOfReportsExternalInputWhenAnyTermCarriesIt(): void
     {
         $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
-        $external = Domain::opaque(\SqlCatalog\Type\TypeShape::unknown(), Origin::External);
+        $external = Domain::opaque(TypeShape::unknown(), Origin::External);
         self::assertSame(Origin::External, $evaluator->originOf($external));
         self::assertSame(Origin::Unresolved, $evaluator->originOf(Domain::literal('a')));
-    }
-
-    public function testReadRuntimeConstantOnlyTrustsThePhpConstants(): void
-    {
-        $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
-        self::assertSame(PHP_INT_MAX, $evaluator->readRuntimeConstant('PHP_INT_MAX')->soleLiteral()?->value);
-        self::assertNull($evaluator->readRuntimeConstant('DIRECTORY_SEPARATOR')->soleLiteral());
-    }
-
-    public function testConstantNamePrefersTheOneTheNamespaceDeclares(): void
-    {
-        $file = (new SourceParser())->parse('t.php', '<?php namespace App; const T = "x"; $result = T;');
-        $index = (new ProgramIndexBuilder())->build([$file]);
-        $evaluator = new ReferenceEvaluator($index, new ExternalInput(), new NodeText());
-        self::assertSame('T', $evaluator->constantName(new ConstFetch(new Name('T'))));
-    }
-
-    public function testReadConstantResolvesTheKeywordsAndTheDeclarations(): void
-    {
-        $file = (new SourceParser())->parse('t.php', '<?php const T = "users";');
-        $index = (new ProgramIndexBuilder())->build([$file]);
-        $evaluator = new ReferenceEvaluator($index, new ExternalInput(), new NodeText());
-        $expressions = (new Interpreter($index, []))->evaluatorFor(new StatementRecorder());
-        $scope = new FunctionScope('t.php');
-
-        self::assertTrue($evaluator->readConstant(new ConstFetch(new Name('true')), $scope, $expressions)->soleLiteral()?->value);
-        self::assertFalse($evaluator->readConstant(new ConstFetch(new Name('false')), $scope, $expressions)->soleLiteral()?->value);
-        self::assertNull($evaluator->readConstant(new ConstFetch(new Name('null')), $scope, $expressions)->soleLiteral()?->value);
-        self::assertSame('users', $evaluator->readConstant(new ConstFetch(new Name('T')), $scope, $expressions)->soleLiteral()?->value);
-    }
-
-    public function testReadClassConstantGivesUpWhenTheClassIsNotWritten(): void
-    {
-        $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $node = new \PhpParser\Node\Expr\ClassConstFetch(new Variable('c'), 'T');
-        $read = $evaluator->readClassConstant($node, new FunctionScope('t.php'), $expressions);
-        self::assertSame('mixed', $read->type()->display());
-    }
-
-    public function testReadClassConstantGivesUpOnAConstantNothingDeclares(): void
-    {
-        $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $node = new \PhpParser\Node\Expr\ClassConstFetch(new Name('C'), 'MISSING');
-        self::assertFalse($evaluator->readClassConstant($node, new FunctionScope('t.php'), $expressions)->isExact());
     }
 
     public function testReadEnumPropertyOnlyAnswersForAnEnum(): void
@@ -268,7 +260,7 @@ final class ReferenceEvaluatorTest extends TestCase
         $file = (new SourceParser())->parse('t.php', '<?php enum S: string { case A = "a"; case B = "b"; } class C {}');
         $index = (new ProgramIndexBuilder())->build([$file]);
         $evaluator = new ReferenceEvaluator($index, new ExternalInput(), new NodeText());
-        $expressions = (new Interpreter($index, []))->evaluatorFor(new StatementRecorder());
+        $expressions = (new Interpreter($index, []))->evaluatorFor();
         $scope = new FunctionScope('t.php');
 
         $all = $evaluator->readEnumProperty(Domain::unknown(), 'S', 'value', $scope, $expressions);
@@ -282,10 +274,16 @@ final class ReferenceEvaluatorTest extends TestCase
     {
         $file = (new SourceParser())->parse('t.php', '<?php enum S: string { case A = "a"; case B = "b"; } $result = S::A->value;');
         $index = (new ProgramIndexBuilder())->build([$file]);
-        $expressions = (new Interpreter($index, []))->evaluatorFor(new StatementRecorder());
-        $paths = new PathSet();
-        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
-        $environment = $paths->join();
+        $expressions = (new Interpreter($index, []))->evaluatorFor();
+        $environment = array_reduce(
+            (new SliceExecutor())->run(
+                array_map(static fn (Stmt $statement): SliceStep => new SliceStep($statement instanceof Stmt\Expression ? $statement->expr : $statement), $file->statements),
+                new Environment(),
+                new FunctionScope('t.php'),
+                $expressions,
+            ),
+            static fn (?Environment $joined, Environment $run): Environment => $joined === null ? $run : $joined->join($run),
+        ) ?? new Environment();
 
         self::assertSame('a', $environment->read('result')->soleLiteral()?->value);
     }
@@ -294,10 +292,16 @@ final class ReferenceEvaluatorTest extends TestCase
     {
         $file = (new SourceParser())->parse('t.php', '<?php enum S: string { case A = "a"; } $result = S::A->name;');
         $index = (new ProgramIndexBuilder())->build([$file]);
-        $expressions = (new Interpreter($index, []))->evaluatorFor(new StatementRecorder());
-        $paths = new PathSet();
-        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
-        $environment = $paths->join();
+        $expressions = (new Interpreter($index, []))->evaluatorFor();
+        $environment = array_reduce(
+            (new SliceExecutor())->run(
+                array_map(static fn (Stmt $statement): SliceStep => new SliceStep($statement instanceof Stmt\Expression ? $statement->expr : $statement), $file->statements),
+                new Environment(),
+                new FunctionScope('t.php'),
+                $expressions,
+            ),
+            static fn (?Environment $joined, Environment $run): Environment => $joined === null ? $run : $joined->join($run),
+        ) ?? new Environment();
 
         self::assertSame('A', $environment->read('result')->soleLiteral()?->value);
     }
@@ -309,10 +313,16 @@ final class ReferenceEvaluatorTest extends TestCase
             '<?php class C { public string $t = "u"; public function set(): void { $this->t = "v"; } } $c = new C(); $result = $c->t;',
         );
         $index = (new ProgramIndexBuilder())->build([$file]);
-        $expressions = (new Interpreter($index, []))->evaluatorFor(new StatementRecorder());
-        $paths = new PathSet();
-        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
-        $environment = $paths->join();
+        $expressions = (new Interpreter($index, []))->evaluatorFor();
+        $environment = array_reduce(
+            (new SliceExecutor())->run(
+                array_map(static fn (Stmt $statement): SliceStep => new SliceStep($statement instanceof Stmt\Expression ? $statement->expr : $statement), $file->statements),
+                new Environment(),
+                new FunctionScope('t.php'),
+                $expressions,
+            ),
+            static fn (?Environment $joined, Environment $run): Environment => $joined === null ? $run : $joined->join($run),
+        ) ?? new Environment();
 
         self::assertSame('string', $environment->read('result')->type()->display());
         self::assertFalse($environment->read('result')->isExact());
@@ -323,33 +333,30 @@ final class ReferenceEvaluatorTest extends TestCase
         $file = (new SourceParser())->parse('t.php', '<?php class C { public function make(): self { return new static(); } }');
         $index = (new ProgramIndexBuilder())->build([$file]);
         $evaluator = new ReferenceEvaluator($index, new ExternalInput(), new NodeText());
-        $node = new \PhpParser\Node\Expr\New_(new Name('static'));
+        $node = new Expr\New_(new Name('static'));
         self::assertSame('C', $evaluator->readInstance($node, new FunctionScope('t.php', 'C::make', 'C'))->soleObject()?->className);
     }
 
     public function testReadInstanceGivesUpOnAnExpressionClass(): void
     {
         $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
-        $node = new \PhpParser\Node\Expr\New_(new Variable('class'));
+        $node = new Expr\New_(new Variable('class'));
         self::assertSame('object', $evaluator->readInstance($node, new FunctionScope('t.php'))->type()->display());
-    }
-
-    public function testResolveClassNameResolvesTheSelfKeywords(): void
-    {
-        $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
-        $scope = new FunctionScope('t.php', 'C::m', 'C');
-        self::assertSame('C', $evaluator->resolveClassName(new Name('self'), $scope));
-        self::assertSame('Other', $evaluator->resolveClassName(new Name('Other'), $scope));
-        self::assertNull($evaluator->resolveClassName(new Variable('c'), $scope));
     }
 
     public function testAssignWritesIntoAnArrayHeldByAVariable(): void
     {
         $file = (new SourceParser())->parse('t.php', '<?php $p = []; $p[] = "a"; $p[":id"] = 1; $result = $p[":id"];');
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $paths = new PathSet();
-        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
-        $environment = $paths->join();
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = array_reduce(
+            (new SliceExecutor())->run(
+                array_map(static fn (Stmt $statement): SliceStep => new SliceStep($statement instanceof Stmt\Expression ? $statement->expr : $statement), $file->statements),
+                new Environment(),
+                new FunctionScope('t.php'),
+                $expressions,
+            ),
+            static fn (?Environment $joined, Environment $run): Environment => $joined === null ? $run : $joined->join($run),
+        ) ?? new Environment();
 
         self::assertSame(1, $environment->read('result')->soleLiteral()?->value);
         $array = $environment->read('p')->soleArray();
@@ -360,10 +367,196 @@ final class ReferenceEvaluatorTest extends TestCase
     public function testAssignElementIgnoresATargetItCannotName(): void
     {
         $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
         $environment = new Environment();
         $target = new ArrayDimFetch(new Variable(new Variable('name')));
         $evaluator->assignElement($target, Domain::literal('a'), $environment, new FunctionScope('t.php'), $expressions);
         self::assertSame([], $environment->names());
+    }
+
+    #[DataProvider('providerTrackedName')]
+    public function testTrackedNameNamesAVariableOrAPropertyOfThis(Expr $target, ?string $expected): void
+    {
+        $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
+
+        self::assertSame($expected, $evaluator->trackedName($target));
+    }
+
+    /**
+     * @return array<string, array{Expr, string|null}>
+     */
+    public static function providerTrackedName(): array
+    {
+        return [
+            'variable' => [new Variable('sql'), 'sql'],
+            'variable variable' => [new Variable(new Variable('name')), null],
+            'property of this' => [new PropertyFetch(new Variable('this'), 'table'), 'this->table'],
+            'nullsafe property of this' => [new NullsafePropertyFetch(new Variable('this'), 'table'), 'this->table'],
+            'property of another object' => [new PropertyFetch(new Variable('other'), 'table'), null],
+            'dynamic property of this' => [new PropertyFetch(new Variable('this'), new Variable('name')), null],
+            'property of a property' => [new PropertyFetch(new PropertyFetch(new Variable('this'), 'db'), 'table'), null],
+            'element' => [new ArrayDimFetch(new Variable('parts')), null],
+        ];
+    }
+
+    public function testAssignListWritesEachElementIntoTheTargetAtItsPosition(): void
+    {
+        $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = new Environment();
+        $value = Domain::of(new ArrayTerm([
+            new ArrayEntry(null, Domain::literal('x')),
+            new ArrayEntry(null, Domain::literal('y')),
+            new ArrayEntry(null, Domain::literal('z')),
+        ]));
+
+        $evaluator->assignList(
+            new List_([new ArrayItem(new Variable('a')), null, new ArrayItem(new PropertyFetch(new Variable('this'), 'b'))]),
+            $value,
+            $environment,
+            new FunctionScope('t.php'),
+            $expressions,
+        );
+
+        self::assertSame(['a', 'this->b'], $environment->names());
+        self::assertSame('x', $environment->read('a')->soleLiteral()?->value);
+        self::assertSame('z', $environment->read('this->b')->soleLiteral()?->value);
+    }
+
+    public function testAssignListReadsAKeyedTargetByItsKey(): void
+    {
+        $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = new Environment();
+        $value = Domain::of(new ArrayTerm([
+            new ArrayEntry(Domain::literal('first'), Domain::literal('x')),
+            new ArrayEntry(Domain::literal('second'), Domain::literal('y')),
+        ]));
+
+        $evaluator->assignList(
+            new Expr\Array_([
+                new ArrayItem(new Variable('b'), new String_('second')),
+                new ArrayItem(new Variable('a'), new String_('first')),
+            ]),
+            $value,
+            $environment,
+            new FunctionScope('t.php'),
+            $expressions,
+        );
+
+        self::assertSame('x', $environment->read('a')->soleLiteral()?->value);
+        self::assertSame('y', $environment->read('b')->soleLiteral()?->value);
+    }
+
+    public function testAssignListDescendsIntoANestedList(): void
+    {
+        $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = new Environment();
+        $value = Domain::of(new ArrayTerm([
+            new ArrayEntry(null, Domain::of(new ArrayTerm([
+                new ArrayEntry(null, Domain::literal('p')),
+                new ArrayEntry(null, Domain::literal('q')),
+            ]))),
+            new ArrayEntry(null, Domain::literal('r')),
+        ]));
+
+        $evaluator->assignList(
+            new List_([
+                new ArrayItem(new List_([new ArrayItem(new Variable('a')), new ArrayItem(new Variable('b'))])),
+                new ArrayItem(new Variable('c')),
+            ]),
+            $value,
+            $environment,
+            new FunctionScope('t.php'),
+            $expressions,
+        );
+
+        self::assertSame('p', $environment->read('a')->soleLiteral()?->value);
+        self::assertSame('q', $environment->read('b')->soleLiteral()?->value);
+        self::assertSame('r', $environment->read('c')->soleLiteral()?->value);
+    }
+
+    public function testAssignListLeavesAGapCarryingTheOriginOfAValueThatIsNotAKnownArray(): void
+    {
+        $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = new Environment();
+
+        $evaluator->assignList(
+            new List_([new ArrayItem(new Variable('a'))]),
+            Domain::opaque(TypeShape::unknown(), Origin::External),
+            $environment,
+            new FunctionScope('t.php'),
+            $expressions,
+        );
+
+        $hole = $environment->read('a')->patterns()[0]->holes()[0];
+        self::assertSame(Origin::External, $hole->origin);
+        self::assertSame('$a', $hole->expression);
+    }
+
+    public function testAssignListLeavesAGapForAnElementTheArrayDoesNotHold(): void
+    {
+        $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = new Environment();
+
+        $evaluator->assignList(
+            new List_([
+                new ArrayItem(new Variable('a')),
+                new ArrayItem(new Variable('b')),
+                new ArrayItem(new Variable('c'), new Variable('key')),
+            ]),
+            Domain::of(new ArrayTerm([new ArrayEntry(null, Domain::literal('x'))])),
+            $environment,
+            new FunctionScope('t.php'),
+            $expressions,
+        );
+
+        self::assertSame('x', $environment->read('a')->soleLiteral()?->value);
+        self::assertSame(Origin::Unresolved, $environment->read('b')->patterns()[0]->holes()[0]->origin);
+        self::assertSame('$b', $environment->read('b')->patterns()[0]->holes()[0]->expression);
+        self::assertSame('$c', $environment->read('c')->patterns()[0]->holes()[0]->expression);
+    }
+
+    public function testLoseTrackMarksTheArrayANestedWriteGoesIntoAsIncomplete(): void
+    {
+        $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
+        $environment = new Environment([
+            'parts' => Domain::of(new ArrayTerm([new ArrayEntry(Domain::literal('where'), Domain::literal('a = 1'))])),
+        ]);
+
+        $evaluator->loseTrack(new ArrayDimFetch(new ArrayDimFetch(new Variable('parts'), new String_('where')), new String_('and')), $environment);
+
+        $array = $environment->read('parts')->soleArray();
+        self::assertNotNull($array);
+        self::assertFalse($array->complete);
+        self::assertCount(1, $array->entries);
+        self::assertSame('where', $array->entries[0]->key?->soleLiteral()?->value);
+        self::assertSame('a = 1', $array->entries[0]->value->soleLiteral()?->value);
+    }
+
+    public function testLoseTrackMarksAnArrayHeldByAPropertyOfThisAsIncomplete(): void
+    {
+        $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
+        $environment = new Environment(['this->parts' => Domain::of(new ArrayTerm([]))]);
+
+        $evaluator->loseTrack(new PropertyFetch(new Variable('this'), 'parts'), $environment);
+
+        self::assertFalse($environment->read('this->parts')->soleArray()?->complete);
+    }
+
+    public function testLoseTrackLeavesAnythingThatIsNotATrackedArrayAlone(): void
+    {
+        $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
+        $environment = new Environment(['sql' => Domain::literal('SELECT 1')]);
+
+        $evaluator->loseTrack(new ArrayDimFetch(new Variable('sql')), $environment);
+        $evaluator->loseTrack(new ArrayDimFetch(new Variable('missing')), $environment);
+        $evaluator->loseTrack(new ArrayDimFetch(new Variable(new Variable('name'))), $environment);
+
+        self::assertSame(['sql'], $environment->names());
+        self::assertSame('SELECT 1', $environment->read('sql')->soleLiteral()?->value);
     }
 }

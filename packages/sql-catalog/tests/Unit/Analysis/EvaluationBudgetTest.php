@@ -27,6 +27,35 @@ final class EvaluationBudgetTest extends TestCase
         self::assertTrue($budget->isExhausted());
     }
 
+    public function testIsSpentOnlyOnceFourTimesTheStepBudgetWasSpent(): void
+    {
+        $budget = new EvaluationBudget(2);
+        self::assertFalse($budget->isSpent());
+
+        array_map(static fn (int $step): bool => $budget->spend(), range(1, 8));
+        self::assertSame(8, $budget->spent());
+        self::assertTrue($budget->isExhausted());
+        self::assertFalse($budget->isSpent());
+
+        $budget->spend();
+        self::assertTrue($budget->isSpent());
+    }
+
+    public function testIsSpentIsClearedByAReset(): void
+    {
+        $budget = new EvaluationBudget(1);
+        array_map(static fn (int $step): bool => $budget->spend(), range(1, 5));
+        self::assertTrue($budget->isSpent());
+
+        $budget->reset();
+        self::assertFalse($budget->isSpent());
+    }
+
+    public function testTheReadingAllowanceIsFourTimesTheSearch(): void
+    {
+        self::assertSame(4, EvaluationBudget::READING_ALLOWANCE);
+    }
+
     public function testSpentCountsTheStepsTaken(): void
     {
         $budget = new EvaluationBudget();

@@ -9,7 +9,6 @@ use PhpParser\Node\InterpolatedStringPart;
 use PhpParser\Node\Scalar;
 use SqlCatalog\Evaluation\Domain;
 use SqlCatalog\Evaluation\Environment;
-use SqlCatalog\Php\DeclaredGlobals;
 use SqlCatalog\Php\NodeText;
 use SqlCatalog\Text\Origin;
 use SqlCatalog\Type\TypeShape;
@@ -25,8 +24,6 @@ final class ExpressionEvaluator
 
     private CallEvaluator $calls;
 
-    private BodyWalker $bodies;
-
     private EvaluationBudget $budget;
 
     private NodeText $text;
@@ -39,21 +36,19 @@ final class ExpressionEvaluator
         CallEvaluator $calls,
         EvaluationBudget $budget,
         NodeText $text,
-        ?DeclaredGlobals $globals = null,
     ) {
         $this->references = $references;
         $this->calls = $calls;
         $this->budget = $budget;
         $this->text = $text;
-        $this->bodies = new BodyWalker($this, $budget, $globals);
     }
 
     /**
-     * The walker that runs statement bodies with this evaluator.
+     * The reader that resolves names and writes assignments for this evaluator.
      */
-    public function bodies(): BodyWalker
+    public function references(): ReferenceEvaluator
     {
-        return $this->bodies;
+        return $this->references;
     }
 
     /**
@@ -61,8 +56,9 @@ final class ExpressionEvaluator
      */
     public function evaluate(Expr $node, Environment $environment, FunctionScope $scope): Domain
     {
-        if (!$this->budget->spend()) {
-            return Domain::opaque(TypeShape::unknown(), Origin::Unresolved, 'budget exhausted');
+        $this->budget->spend();
+        if ($this->budget->isSpent()) {
+            return Domain::opaque(TypeShape::unknown(), Origin::Budget, 'budget exhausted');
         }
 
         $scalar = $this->evaluateScalar($node);
@@ -74,7 +70,7 @@ final class ExpressionEvaluator
             return $operator;
         }
         if ($node instanceof Expr\CallLike) {
-            return $this->calls->evaluate($node, $environment, $scope, $this, $this->bodies);
+            return $this->calls->evaluate($node, $environment, $scope, $this);
         }
         $reference = $this->references->evaluate($node, $environment, $scope, $this);
         if ($reference !== null) {

@@ -132,7 +132,7 @@ final class StatementCardTest extends TestCase
             TextPattern::fromHole(new TextHole(Origin::Unreached, TypeShape::unknown(), '$db->query($sql)')),
             [],
             [],
-            new CallSite('a.php', 3, 'f', CallSite::UNREACHED),
+            new CallSite('a.php', 3, 'f', 'pdo.query'),
             [],
         );
 
@@ -188,7 +188,7 @@ final class StatementCardTest extends TestCase
             TextPattern::fromHole(new TextHole(Origin::Unreached, TypeShape::unknown())),
             [],
             [],
-            new CallSite('a.php', 3, 'f', CallSite::UNREACHED),
+            new CallSite('a.php', 3, 'f', 'pdo.query'),
             [],
         );
 

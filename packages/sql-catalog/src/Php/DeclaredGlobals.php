@@ -44,6 +44,18 @@ final class DeclaredGlobals
     }
 
     /**
+     * The class an extension declares a global to hold, or null when none does.
+     *
+     * Code at the top of a file reads globals without declaring them, so
+     * there is no `global` statement for a tag to be written on; what an
+     * extension says is all there is to go on.
+     */
+    public function declared(string $name): ?string
+    {
+        return $this->declared[$name] ?? null;
+    }
+
+    /**
      * The class a doc comment around the declaration gives the variable, or null when none does.
      */
     public function documented(Stmt\Global_ $statement, string $name): ?string

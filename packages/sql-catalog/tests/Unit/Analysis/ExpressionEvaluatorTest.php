@@ -10,16 +10,18 @@ use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Scalar\Float_;
 use PhpParser\Node\Scalar\Int_;
 use PhpParser\Node\Scalar\String_;
+use PhpParser\Node\Stmt;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlCatalog\Analysis\Derivation\Slice\SliceStep;
+use SqlCatalog\Analysis\Derivation\SliceExecutor;
 use SqlCatalog\Analysis\ExpressionEvaluator;
 use SqlCatalog\Analysis\FunctionScope;
 use SqlCatalog\Analysis\Interpreter;
 use SqlCatalog\Analysis\StatementRecorder;
 use SqlCatalog\Evaluation\Environment;
-use SqlCatalog\Evaluation\PathSet;
 use SqlCatalog\Php\ProgramIndex;
 use SqlCatalog\Php\SourceParser;
 use SqlCatalog\Text\Origin;
@@ -31,7 +33,6 @@ use SqlCatalog\Text\Origin;
 #[UsesClass(ProgramIndex::class)]
 #[UsesClass(Environment::class)]
 #[UsesClass(FunctionScope::class)]
-#[UsesClass(\SqlCatalog\Analysis\BodyWalker::class)]
 #[UsesClass(\SqlCatalog\Analysis\BuiltinCallModel::class)]
 #[UsesClass(\SqlCatalog\Analysis\CallEvaluator::class)]
 #[UsesClass(\SqlCatalog\Analysis\EvaluationBudget::class)]
@@ -64,7 +65,6 @@ use SqlCatalog\Text\Origin;
 #[UsesClass(\SqlCatalog\Catalog\CatalogEntry::class)]
 #[UsesClass(\SqlCatalog\Catalog\EntryIdentity::class)]
 #[UsesClass(\SqlCatalog\Catalog\Resolution::class)]
-#[UsesClass(PathSet::class)]
 #[UsesClass(\SqlCatalog\Extension\DoctrineExtension::class)]
 #[UsesClass(\SqlCatalog\Extension\ExtensionRegistry::class)]
 #[UsesClass(\SqlCatalog\Extension\LaravelExtension::class)]
@@ -82,16 +82,42 @@ use SqlCatalog\Text\Origin;
 #[UsesClass(\SqlCatalog\Sql\StatementKindReader::class)]
 #[UsesClass(\SqlCatalog\Sql\TableReader::class)]
 #[UsesClass(\SqlCatalog\Php\DeclaredGlobals::class)]
+#[UsesClass(\SqlCatalog\Analysis\ConstantReader::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\Binding::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\CalleeReturns::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\CallerIndex::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\Callers::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\Deriver::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\EntryBinder::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\FreeNames::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\ModifiedNames::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\PropertyWrites::class)]
+#[UsesClass(SliceExecutor::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\Arrival::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\AssignmentSteps::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\BackwardSlicer::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\LoopPasses::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\Pending::class)]
+#[UsesClass(SliceStep::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\Solution::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\SourceTree::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\CallerSet::class)]
 final class ExpressionEvaluatorTest extends TestCase
 {
     #[DataProvider('providerEvaluate')]
     public function testEvaluate(string $expression, string $expected): void
     {
         $file = (new SourceParser())->parse('t.php', '<?php $result = ' . $expression . ';');
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $paths = new PathSet();
-        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
-        $environment = $paths->join();
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = array_reduce(
+            (new SliceExecutor())->run(
+                array_map(static fn (Stmt $statement): SliceStep => new SliceStep($statement instanceof Stmt\Expression ? $statement->expr : $statement), $file->statements),
+                new Environment(),
+                new FunctionScope('t.php'),
+                $expressions,
+            ),
+            static fn (?Environment $joined, Environment $run): Environment => $joined === null ? $run : $joined->join($run),
+        ) ?? new Environment();
 
         self::assertSame($expected, $environment->read('result')->patterns()[0]->display());
     }
@@ -124,11 +150,11 @@ final class ExpressionEvaluatorTest extends TestCase
     {
         $file = (new SourceParser())->parse('t.php', '<?php "a{$b}c";');
         $statement = $file->statements[0];
-        self::assertInstanceOf(\PhpParser\Node\Stmt\Expression::class, $statement);
+        self::assertInstanceOf(Stmt\Expression::class, $statement);
         $node = $statement->expr;
         self::assertInstanceOf(\PhpParser\Node\Scalar\InterpolatedString::class, $node);
 
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
         $result = $expressions->evaluateInterpolation($node, new Environment(), new FunctionScope('t.php'));
 
         self::assertSame('a{$}c', $result->patterns()[0]->display());
@@ -138,11 +164,11 @@ final class ExpressionEvaluatorTest extends TestCase
     {
         $file = (new SourceParser())->parse('t.php', '<?php $c ? "a" : "b";');
         $statement = $file->statements[0];
-        self::assertInstanceOf(\PhpParser\Node\Stmt\Expression::class, $statement);
+        self::assertInstanceOf(Stmt\Expression::class, $statement);
         $node = $statement->expr;
         self::assertInstanceOf(\PhpParser\Node\Expr\Ternary::class, $node);
 
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
 
         self::assertCount(2, $expressions->evaluateTernary($node, new Environment(), new FunctionScope('t.php'))->terms);
     }
@@ -151,11 +177,11 @@ final class ExpressionEvaluatorTest extends TestCase
     {
         $file = (new SourceParser())->parse('t.php', '<?php $a = "x";');
         $statement = $file->statements[0];
-        self::assertInstanceOf(\PhpParser\Node\Stmt\Expression::class, $statement);
+        self::assertInstanceOf(Stmt\Expression::class, $statement);
         $node = $statement->expr;
         self::assertInstanceOf(\PhpParser\Node\Expr\Assign::class, $node);
 
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
         $environment = new Environment();
         $result = $expressions->evaluateAssign($node, $environment, new FunctionScope('t.php'));
 
@@ -167,11 +193,11 @@ final class ExpressionEvaluatorTest extends TestCase
     {
         $file = (new SourceParser())->parse('t.php', '<?php $a .= "y";');
         $statement = $file->statements[0];
-        self::assertInstanceOf(\PhpParser\Node\Stmt\Expression::class, $statement);
+        self::assertInstanceOf(Stmt\Expression::class, $statement);
         $node = $statement->expr;
         self::assertInstanceOf(\PhpParser\Node\Expr\AssignOp\Concat::class, $node);
 
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
         $environment = new Environment(['a' => \SqlCatalog\Evaluation\Domain::literal('x')]);
         $result = $expressions->evaluateAppend($node, $environment, new FunctionScope('t.php'));
 
@@ -181,10 +207,16 @@ final class ExpressionEvaluatorTest extends TestCase
     public function testEvaluateOfAnInterpolatedStringJoinsItsParts(): void
     {
         $file = (new SourceParser())->parse('t.php', '<?php $t = "users"; $result = "SELECT * FROM {$t}";');
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $paths = new PathSet();
-        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
-        $environment = $paths->join();
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = array_reduce(
+            (new SliceExecutor())->run(
+                array_map(static fn (Stmt $statement): SliceStep => new SliceStep($statement instanceof Stmt\Expression ? $statement->expr : $statement), $file->statements),
+                new Environment(),
+                new FunctionScope('t.php'),
+                $expressions,
+            ),
+            static fn (?Environment $joined, Environment $run): Environment => $joined === null ? $run : $joined->join($run),
+        ) ?? new Environment();
 
         self::assertSame('SELECT * FROM users', $environment->read('result')->soleLiteral()?->value);
     }
@@ -192,10 +224,16 @@ final class ExpressionEvaluatorTest extends TestCase
     public function testEvaluateOfATernaryKeepsBothBranches(): void
     {
         $file = (new SourceParser())->parse('t.php', '<?php $result = $c ? "a" : "b";');
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $paths = new PathSet();
-        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
-        $environment = $paths->join();
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = array_reduce(
+            (new SliceExecutor())->run(
+                array_map(static fn (Stmt $statement): SliceStep => new SliceStep($statement instanceof Stmt\Expression ? $statement->expr : $statement), $file->statements),
+                new Environment(),
+                new FunctionScope('t.php'),
+                $expressions,
+            ),
+            static fn (?Environment $joined, Environment $run): Environment => $joined === null ? $run : $joined->join($run),
+        ) ?? new Environment();
 
         self::assertCount(2, $environment->read('result')->terms);
     }
@@ -203,10 +241,16 @@ final class ExpressionEvaluatorTest extends TestCase
     public function testEvaluateOfAMatchKeepsEveryArm(): void
     {
         $file = (new SourceParser())->parse('t.php', '<?php $result = match ($c) { 1 => "a", default => "b" };');
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $paths = new PathSet();
-        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
-        $environment = $paths->join();
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = array_reduce(
+            (new SliceExecutor())->run(
+                array_map(static fn (Stmt $statement): SliceStep => new SliceStep($statement instanceof Stmt\Expression ? $statement->expr : $statement), $file->statements),
+                new Environment(),
+                new FunctionScope('t.php'),
+                $expressions,
+            ),
+            static fn (?Environment $joined, Environment $run): Environment => $joined === null ? $run : $joined->join($run),
+        ) ?? new Environment();
 
         self::assertCount(2, $environment->read('result')->terms);
     }
@@ -214,10 +258,16 @@ final class ExpressionEvaluatorTest extends TestCase
     public function testEvaluateOfAnAppendingAssignmentExtendsTheVariable(): void
     {
         $file = (new SourceParser())->parse('t.php', '<?php $sql = "SELECT 1"; $sql .= " FROM t";');
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $paths = new PathSet();
-        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
-        $environment = $paths->join();
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = array_reduce(
+            (new SliceExecutor())->run(
+                array_map(static fn (Stmt $statement): SliceStep => new SliceStep($statement instanceof Stmt\Expression ? $statement->expr : $statement), $file->statements),
+                new Environment(),
+                new FunctionScope('t.php'),
+                $expressions,
+            ),
+            static fn (?Environment $joined, Environment $run): Environment => $joined === null ? $run : $joined->join($run),
+        ) ?? new Environment();
 
         self::assertSame('SELECT 1 FROM t', $environment->read('sql')->soleLiteral()?->value);
     }
@@ -225,20 +275,20 @@ final class ExpressionEvaluatorTest extends TestCase
     public function testEvaluateGivesUpOnceTheBudgetIsSpent(): void
     {
         $expressions = (new Interpreter(new ProgramIndex(), [], new \SqlCatalog\Analysis\EvaluationBudget(0)))
-            ->evaluatorFor(new StatementRecorder());
+            ->evaluatorFor();
         $result = $expressions->evaluate(new String_('SELECT 1'), new Environment(), new FunctionScope('t.php'));
         self::assertFalse($result->isExact());
     }
 
-    public function testBodiesWalksWithThisEvaluator(): void
+    public function testReferencesIsTheReaderThisEvaluatorResolvesNamesWith(): void
     {
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        self::assertSame($expressions->bodies(), $expressions->bodies());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        self::assertSame($expressions->references(), $expressions->references());
     }
 
     public function testEvaluateScalarOnlyAnswersForLiterals(): void
     {
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
         self::assertSame('a', $expressions->evaluateScalar(new String_('a'))?->soleLiteral()?->value);
         self::assertSame(1, $expressions->evaluateScalar(new Int_(1))?->soleLiteral()?->value);
         self::assertSame(1.5, $expressions->evaluateScalar(new Float_(1.5))?->soleLiteral()?->value);
@@ -247,7 +297,7 @@ final class ExpressionEvaluatorTest extends TestCase
 
     public function testEvaluateOperatorOnlyAnswersForOperators(): void
     {
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
         $environment = new Environment();
         $scope = new FunctionScope('t.php');
         self::assertNull($expressions->evaluateOperator(new Variable('a'), $environment, $scope));
@@ -256,7 +306,7 @@ final class ExpressionEvaluatorTest extends TestCase
 
     public function testEvaluateResultReportsTheTypeTheOperatorProduces(): void
     {
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
         $environment = new Environment();
         $scope = new FunctionScope('t.php');
 
@@ -266,7 +316,7 @@ final class ExpressionEvaluatorTest extends TestCase
 
     public function testResultTypeNamesTheTypeOfEveryOperatorItCovers(): void
     {
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
         $left = new Variable('a');
         $right = new Variable('b');
 
@@ -305,7 +355,7 @@ final class ExpressionEvaluatorTest extends TestCase
 
     public function testEvaluateCastOfAnObjectKnowsOnlyThatItIsOne(): void
     {
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
         $cast = new Cast\Object_(new Variable('a'));
         $result = $expressions->evaluateCast($cast, new Environment(), new FunctionScope('t.php'));
         self::assertSame('object', $result->type()->display());
@@ -314,10 +364,16 @@ final class ExpressionEvaluatorTest extends TestCase
     public function testEvaluateCastEndsTheTrailBackToExternalInput(): void
     {
         $file = (new SourceParser())->parse('t.php', '<?php $result = (int) $_GET["id"];');
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $paths = new PathSet();
-        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
-        $environment = $paths->join();
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = array_reduce(
+            (new SliceExecutor())->run(
+                array_map(static fn (Stmt $statement): SliceStep => new SliceStep($statement instanceof Stmt\Expression ? $statement->expr : $statement), $file->statements),
+                new Environment(),
+                new FunctionScope('t.php'),
+                $expressions,
+            ),
+            static fn (?Environment $joined, Environment $run): Environment => $joined === null ? $run : $joined->join($run),
+        ) ?? new Environment();
 
         $holes = $environment->read('result')->patterns()[0]->holes();
         self::assertSame(Origin::Call, $holes[0]->origin);
@@ -325,7 +381,7 @@ final class ExpressionEvaluatorTest extends TestCase
 
     public function testCastLiteralWritesTheValueAsTheTypeItIsCastTo(): void
     {
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
         self::assertSame(12, $expressions->castLiteral('12', 'int')->soleLiteral()?->value);
         self::assertSame(1.5, $expressions->castLiteral('1.5', 'float')->soleLiteral()?->value);
         self::assertTrue($expressions->castLiteral(1, 'bool')->soleLiteral()?->value);
@@ -334,10 +390,16 @@ final class ExpressionEvaluatorTest extends TestCase
     public function testEvaluateInterpolationJoinsLiteralPartsAndExpressions(): void
     {
         $file = (new SourceParser())->parse('t.php', '<?php $result = "a{$b}c";');
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $paths = new PathSet();
-        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
-        $environment = $paths->join();
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = array_reduce(
+            (new SliceExecutor())->run(
+                array_map(static fn (Stmt $statement): SliceStep => new SliceStep($statement instanceof Stmt\Expression ? $statement->expr : $statement), $file->statements),
+                new Environment(),
+                new FunctionScope('t.php'),
+                $expressions,
+            ),
+            static fn (?Environment $joined, Environment $run): Environment => $joined === null ? $run : $joined->join($run),
+        ) ?? new Environment();
 
         self::assertSame('a{$}c', $environment->read('result')->patterns()[0]->display());
     }
@@ -345,17 +407,23 @@ final class ExpressionEvaluatorTest extends TestCase
     public function testEvaluateTernaryHandlesTheShortForm(): void
     {
         $file = (new SourceParser())->parse('t.php', '<?php $result = "a" ?: "b";');
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $paths = new PathSet();
-        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
-        $environment = $paths->join();
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = array_reduce(
+            (new SliceExecutor())->run(
+                array_map(static fn (Stmt $statement): SliceStep => new SliceStep($statement instanceof Stmt\Expression ? $statement->expr : $statement), $file->statements),
+                new Environment(),
+                new FunctionScope('t.php'),
+                $expressions,
+            ),
+            static fn (?Environment $joined, Environment $run): Environment => $joined === null ? $run : $joined->join($run),
+        ) ?? new Environment();
 
         self::assertCount(2, $environment->read('result')->terms);
     }
 
     public function testEvaluateMatchOfNoArmsKnowsNothing(): void
     {
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
         $match = new \PhpParser\Node\Expr\Match_(new Variable('a'), []);
         $result = $expressions->evaluateMatch($match, new Environment(), new FunctionScope('t.php'));
         self::assertSame('mixed', $result->type()->display());
@@ -364,10 +432,16 @@ final class ExpressionEvaluatorTest extends TestCase
     public function testEvaluateAssignWritesIntoTheEnvironment(): void
     {
         $file = (new SourceParser())->parse('t.php', '<?php $a = "x";');
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $paths = new PathSet();
-        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
-        $environment = $paths->join();
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = array_reduce(
+            (new SliceExecutor())->run(
+                array_map(static fn (Stmt $statement): SliceStep => new SliceStep($statement instanceof Stmt\Expression ? $statement->expr : $statement), $file->statements),
+                new Environment(),
+                new FunctionScope('t.php'),
+                $expressions,
+            ),
+            static fn (?Environment $joined, Environment $run): Environment => $joined === null ? $run : $joined->join($run),
+        ) ?? new Environment();
 
         self::assertSame('x', $environment->read('a')->soleLiteral()?->value);
     }
@@ -375,10 +449,16 @@ final class ExpressionEvaluatorTest extends TestCase
     public function testEvaluateAppendStartsFromWhatTheVariableAlreadyHolds(): void
     {
         $file = (new SourceParser())->parse('t.php', '<?php $a = "x"; $a .= "y"; $a .= "z";');
-        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor(new StatementRecorder());
-        $paths = new PathSet();
-        $expressions->bodies()->walk($file->statements, $paths, new FunctionScope('t.php'));
-        $environment = $paths->join();
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = array_reduce(
+            (new SliceExecutor())->run(
+                array_map(static fn (Stmt $statement): SliceStep => new SliceStep($statement instanceof Stmt\Expression ? $statement->expr : $statement), $file->statements),
+                new Environment(),
+                new FunctionScope('t.php'),
+                $expressions,
+            ),
+            static fn (?Environment $joined, Environment $run): Environment => $joined === null ? $run : $joined->join($run),
+        ) ?? new Environment();
 
         self::assertSame('xyz', $environment->read('a')->soleLiteral()?->value);
     }

@@ -103,7 +103,7 @@
                         "file": {"type": "string", "description": "The file, relative to the analysis root."},
                         "line": {"type": "integer", "minimum": 0, "description": "The line the call is written on."},
                         "function": {"type": "string", "description": "The enclosing function, as Class::method, a function name, or {main}."},
-                        "sink": {"type": "string", "description": "The database call that was matched, such as pdo.prepare. The value `unreached` means the call was found but the walk never got to it."}
+                        "sink": {"type": "string", "description": "The database call that was matched, such as pdo.prepare. The value `unmatched` means the call is written the way a database call is written but what it is called on could not be worked out."}
                     }
                 },
                 "through": {

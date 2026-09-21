@@ -6,7 +6,12 @@ namespace SqlCatalog\Analysis;
 
 use SqlCatalog\Evaluation\ArrayTerm;
 use SqlCatalog\Evaluation\Domain;
+use SqlCatalog\Evaluation\LiteralTerm;
+use SqlCatalog\Evaluation\OpaqueTerm;
+use SqlCatalog\Evaluation\PatternTerm;
+use SqlCatalog\Text\LiteralText;
 use SqlCatalog\Text\Origin;
+use SqlCatalog\Text\TextPattern;
 use SqlCatalog\Type\TypeShape;
 
 /**
@@ -93,31 +98,69 @@ final class BuiltinCallModel
     }
 
     /**
-     * The result of `sprintf()`, resolved as far as the arguments allow.
+     * The result of `sprintf()`, resolved as far as the format and the arguments allow.
+     *
+     * A format the analyzer knows only in part — `"SELECT * FROM $table WHERE
+     * id IN (%s)"` — still has conversions in the parts it knows, so those are
+     * filled in and the gaps are carried through, rather than the whole result
+     * becoming one gap because one piece of the format was not fixed.
      *
      * @param list<Domain> $arguments
      */
     public function sprintf(array $arguments, Domain $format): Domain
     {
-        $literal = $format->soleLiteral();
-        if ($literal === null) {
-            return Domain::opaque(TypeShape::of(['string']), Origin::Call, 'sprintf');
+        $result = null;
+        foreach ($format->terms as $term) {
+            $value = $term instanceof LiteralTerm || $term instanceof PatternTerm
+                ? $this->formatPattern($term->toPattern(), $arguments)
+                : Domain::opaque(TypeShape::of(['string']), $this->originOf($format, Origin::Call), 'sprintf');
+            $result = $result === null ? $value : $result->union($value);
         }
 
+        return $result ?? Domain::opaque(TypeShape::of(['string']), Origin::Call, 'sprintf');
+    }
+
+    /**
+     * A known or partly known format with its conversions filled in by the arguments.
+     *
+     * @param list<Domain> $arguments
+     */
+    public function formatPattern(TextPattern $format, array $arguments): Domain
+    {
         $result = Domain::literal('');
         $index = 0;
-        foreach ($this->splitFormat($literal->toText()) as $piece) {
-            if (!str_starts_with($piece, '%') || $piece === '%%') {
-                $result = $result->concat(Domain::literal($piece === '%%' ? '%' : $piece));
+        foreach ($format->segments as $segment) {
+            if (!$segment instanceof LiteralText) {
+                $result = $result->concat(Domain::of(Domain::asTerm(TextPattern::fromSegments([$segment]))));
                 continue;
             }
-            $result = $result->concat(
-                $arguments[$index] ?? Domain::opaque(TypeShape::unknown(), Origin::Call, 'sprintf'),
-            );
-            $index++;
+            foreach ($this->splitFormat($segment->text) as $piece) {
+                if (!str_starts_with($piece, '%') || $piece === '%%') {
+                    $result = $result->concat(Domain::literal($piece === '%%' ? '%' : $piece));
+                    continue;
+                }
+                $result = $result->concat(
+                    $arguments[$index] ?? Domain::opaque(TypeShape::unknown(), Origin::Call, 'sprintf'),
+                );
+                $index++;
+            }
         }
 
         return $result;
+    }
+
+    /**
+     * Where the unresolved part of a value comes from, or the fallback when nothing in it says.
+     */
+    public function originOf(Domain $domain, Origin $fallback): Origin
+    {
+        foreach ($domain->terms as $term) {
+            if ($term instanceof OpaqueTerm) {
+                return $term->origin;
+            }
+        }
+
+        return $fallback;
     }
 
     /**
@@ -160,7 +203,9 @@ final class BuiltinCallModel
         $glue = count($arguments) > 1 ? $arguments[0] : Domain::literal('');
         $array = $this->arrayArgument($arguments);
         if ($array === null) {
-            return Domain::opaque(TypeShape::of(['string']), Origin::Call, 'implode');
+            $pieces = $arguments[count($arguments) - 1] ?? Domain::unknown();
+
+            return Domain::opaque(TypeShape::of(['string']), $this->originOf($pieces, Origin::Call), 'implode');
         }
 
         $result = Domain::literal('');

@@ -6,7 +6,6 @@ namespace SqlCatalog;
 
 use SqlCatalog\Analysis\EntryFactory;
 use SqlCatalog\Analysis\Interpreter;
-use SqlCatalog\Analysis\SinkFinder;
 use SqlCatalog\Catalog\AnalysisProblem;
 use SqlCatalog\Catalog\Catalog;
 use SqlCatalog\Catalog\CatalogEntry;
@@ -143,16 +142,8 @@ final class Analyzer
             $options->budget(),
             new DeclaredGlobals($this->extensions->globalsOf($options->extensions)),
         );
-        $interpreter->restrictTo((new SinkFinder())->reaching($files, $sinks));
 
-        $records = [];
-        foreach ($files as $file) {
-            foreach ($interpreter->analyze($file) as $record) {
-                $records[] = $record;
-            }
-        }
-
-        return $this->sortRecords($this->entries->build($records));
+        return $this->sortRecords($this->entries->build($interpreter->analyze($files)));
     }
 
     /**

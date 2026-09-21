@@ -12,6 +12,8 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlCatalog\Analysis\SinkFinder;
 use SqlCatalog\Extension\PdoExtension;
+use SqlCatalog\Extension\SinkCallKind;
+use SqlCatalog\Extension\SinkRole;
 use SqlCatalog\Extension\SinkSpec;
 use SqlCatalog\Php\ParsedFile;
 use SqlCatalog\Php\SourceParser;
@@ -32,84 +34,6 @@ final class SinkFinderTest extends TestCase
         self::assertSame([], $finder->findIn($file->statements, ['prepare' => true]));
     }
 
-    public function testReachingKeepsOnlyTheBodiesThatCanReachADatabaseCall(): void
-    {
-        $file = (new SourceParser())->parse(
-            't.php',
-            '<?php function issues(PDO $d): void { $d->query("SELECT 1"); }'
-            . ' function leadsThere(PDO $d): void { issues($d); }'
-            . ' function unrelated(): int { return 1; }',
-        );
-        $finder = new SinkFinder();
-        $reaching = $finder->reaching([$file], (new PdoExtension())->sinks());
-
-        $named = array_map(
-            static fn (?\PhpParser\Node\FunctionLike $body): string => $finder->declaredName($body) ?? 'main',
-            array_keys(array_diff_key($finder->bodiesOf($file), $reaching)) === []
-                ? []
-                : array_intersect_key($finder->bodiesOf($file), $reaching),
-        );
-        sort($named);
-
-        self::assertSame(['issues', 'leadsthere'], $named);
-    }
-
-    public function testReachingKeepsTopLevelCodeThatIssuesAStatement(): void
-    {
-        $file = (new SourceParser())->parse('t.php', '<?php $d = new PDO("sqlite::memory:"); $d->query("SELECT 1");');
-
-        self::assertArrayHasKey('t.php:main', (new SinkFinder())->reaching([$file], (new PdoExtension())->sinks()));
-    }
-
-    public function testBodiesOfListsEveryBodyAndTheFileItself(): void
-    {
-        $file = (new SourceParser())->parse('t.php', '<?php function f(): void {} class C { public function g(): void {} }');
-
-        self::assertCount(3, (new SinkFinder())->bodiesOf($file));
-    }
-
-    public function testBodyKeyOfNamesTheBodyANodeIsWrittenIn(): void
-    {
-        $file = (new SourceParser())->parse('t.php', '<?php function f(PDO $d): void { $d->query("SELECT 1"); } $d->query("SELECT 2");');
-        $finder = new SinkFinder();
-        $calls = $finder->find($file, (new PdoExtension())->sinks());
-
-        self::assertNotSame('t.php:main', $finder->bodyKeyOf($file, $calls[0]));
-        self::assertSame('t.php:main', $finder->bodyKeyOf($file, $calls[1]));
-    }
-
-    public function testDeclaredNameReadsTheNameABodyIsDeclaredUnder(): void
-    {
-        $file = (new SourceParser())->parse('t.php', '<?php function f(): void {} $c = static function (): void {};');
-        $finder = new SinkFinder();
-        $bodies = array_values($finder->bodiesOf($file));
-
-        self::assertNull($finder->declaredName($bodies[0]));
-        self::assertSame('f', $finder->declaredName($bodies[1]));
-        self::assertNull($finder->declaredName($bodies[2]));
-    }
-
-    public function testShortNameDropsTheNamespace(): void
-    {
-        $finder = new SinkFinder();
-
-        self::assertSame('query', $finder->shortName('App\\Db\\query'));
-        self::assertSame('query', $finder->shortName('\\query'));
-        self::assertSame('query', $finder->shortName('query'));
-    }
-
-    public function testPropagateSpreadsReachingThroughTheCalls(): void
-    {
-        $bodies = [
-            'a' => ['direct' => true, 'calls' => [], 'declares' => 'issues'],
-            'b' => ['direct' => false, 'calls' => ['issues'], 'declares' => 'leads'],
-            'c' => ['direct' => false, 'calls' => ['leads'], 'declares' => 'outer'],
-            'd' => ['direct' => false, 'calls' => ['elsewhere'], 'declares' => 'apart'],
-        ];
-
-        self::assertSame(['a' => true, 'b' => true, 'c' => true], (new SinkFinder())->propagate($bodies));
-    }
-
     public function testFindCollectsTheCallsWrittenLikeDatabaseCalls(): void
     {
         $file = (new SourceParser())->parse(
@@ -125,6 +49,50 @@ final class SinkFinderTest extends TestCase
         $file = (new SourceParser())->parse('t.php', '<?php function f(PDO $d, string $m): void { $d->$m("SELECT 1"); }');
 
         self::assertSame([], (new SinkFinder())->find($file, (new PdoExtension())->sinks()));
+    }
+
+    public function testFindAllCollectsEveryDatabaseCallButTheOnesThatComposeAStatement(): void
+    {
+        $file = (new SourceParser())->parse(
+            't.php',
+            '<?php function f(PDO $d, PDOStatement $s): void { $d->query("a"); $s->execute(); $s->bindValue(1, 2); $d->prepare("b"); $d->interpolate("c"); \\mysqli_query($d, "d"); $d->fetchAll(); }',
+        );
+        $finder = new SinkFinder();
+        $sinks = [
+            new SinkSpec('t.query', SinkCallKind::Method, 'PDO', 'query', SinkRole::Query),
+            new SinkSpec('t.execute', SinkCallKind::Method, 'PDOStatement', 'execute', SinkRole::Execute),
+            new SinkSpec('t.bind', SinkCallKind::Method, 'PDOStatement', 'BindValue', SinkRole::Bind),
+            new SinkSpec('t.prepare', SinkCallKind::Method, 'PDO', 'prepare', SinkRole::Prepare),
+            new SinkSpec('t.compose', SinkCallKind::Method, 'PDO', 'interpolate', SinkRole::Compose),
+            new SinkSpec('t.mysqli', SinkCallKind::FunctionCall, null, '\\mysqli_query', SinkRole::Query),
+        ];
+
+        self::assertSame(
+            ['query', 'execute', 'bindValue', 'prepare', 'mysqli_query'],
+            array_map(static fn (Expr\CallLike $call): ?string => $finder->nameOf($call), $finder->findAll($file, $sinks)),
+        );
+    }
+
+    public function testFindAllFindsNothingWhenEverySinkComposesAStatement(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php function f(PDO $d): void { $d->interpolate("a"); $d->query("b"); }');
+
+        self::assertSame([], (new SinkFinder())->findAll($file, [
+            new SinkSpec('t.compose', SinkCallKind::Method, 'PDO', 'interpolate', SinkRole::Compose),
+        ]));
+    }
+
+    public function testFindAllTakesInTheCallsThatOnlyBindValues(): void
+    {
+        $file = (new SourceParser())->parse(
+            't.php',
+            '<?php function f(PDO $d): void { $s = $d->prepare("SELECT ?"); $s->bindValue(1, 2); $s->execute(); }',
+        );
+        $finder = new SinkFinder();
+        $sinks = (new PdoExtension())->sinks();
+
+        self::assertCount(1, $finder->find($file, $sinks));
+        self::assertCount(3, $finder->findAll($file, $sinks));
     }
 
     public function testNamesOfKeepsOnlyTheCallsThatCarryAStatement(): void

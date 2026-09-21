@@ -99,7 +99,21 @@ final class Environment
     }
 
     /**
-     * Whether the two environments bind the same variables to the same domains.
+     * A canonical string used to compare environments.
+     */
+    public function signature(): string
+    {
+        $parts = [];
+        foreach ($this->variables as $name => $domain) {
+            $parts[] = $name . '=' . $domain->signature();
+        }
+        sort($parts);
+
+        return implode(';', $parts);
+    }
+
+    /**
+     * Whether the two environments bind the same names to the same values.
      */
     public function equals(self $other): bool
     {

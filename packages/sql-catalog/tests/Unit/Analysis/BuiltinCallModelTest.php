@@ -16,6 +16,7 @@ use SqlCatalog\Evaluation\LiteralTerm;
 use SqlCatalog\Evaluation\OpaqueTerm;
 use SqlCatalog\Evaluation\PatternTerm;
 use SqlCatalog\Text\LiteralText;
+use SqlCatalog\Text\Origin;
 use SqlCatalog\Text\TextGeneralization;
 use SqlCatalog\Text\TextHole;
 use SqlCatalog\Text\TextPattern;
@@ -166,6 +167,88 @@ final class BuiltinCallModelTest extends TestCase
     public function testSprintfKeepsALiteralPercentSign(): void
     {
         self::assertSame('100%', (new BuiltinCallModel())->sprintf([], Domain::literal('100%%'))->soleLiteral()?->value);
+    }
+
+    /**
+     * @param list<Domain> $arguments
+     */
+    #[DataProvider('providerFormatPattern')]
+    public function testFormatPatternFillsEachConversionWithTheNextArgument(string $format, array $arguments, string $expected): void
+    {
+        self::assertSame($expected, (new BuiltinCallModel())->formatPattern(TextPattern::fromText($format), $arguments)->soleLiteral()?->value);
+    }
+
+    /**
+     * @return list<array{string, list<Domain>, string}>
+     */
+    public static function providerFormatPattern(): array
+    {
+        return [
+            ['SELECT %s FROM %s', [Domain::literal('id'), Domain::literal('users')], 'SELECT id FROM users'],
+            ['LIMIT %d', [Domain::literal(10)], 'LIMIT 10'],
+            ['100%%', [], '100%'],
+            ['%%%s%%', [Domain::literal('a')], '%a%'],
+            ['%05.2f|%-3s|%x', [Domain::literal('1'), Domain::literal('2'), Domain::literal('3')], '1|2|3'],
+            ['no conversions', [Domain::literal('unused')], 'no conversions'],
+            ['', [Domain::literal('unused')], ''],
+        ];
+    }
+
+    public function testFormatPatternLeavesAGapForAConversionWithoutAnArgument(): void
+    {
+        $pattern = (new BuiltinCallModel())->formatPattern(TextPattern::fromText('%s-%s'), [Domain::literal('only')])->patterns()[0];
+
+        self::assertSame('only-{$}', $pattern->display());
+        self::assertSame(Origin::Call, $pattern->holes()[0]->origin);
+        self::assertSame('mixed', $pattern->holes()[0]->type->display());
+        self::assertSame('sprintf', $pattern->holes()[0]->expression);
+    }
+
+    public function testFormatPatternCarriesAGapInTheFormatAndKeepsCountingArgumentsPastIt(): void
+    {
+        $format = TextPattern::fromSegments([
+            new LiteralText('SELECT %s FROM '),
+            new TextHole(Origin::Parameter, TypeShape::of(['string']), '$table'),
+            new LiteralText(' WHERE id = %d'),
+        ]);
+
+        $pattern = (new BuiltinCallModel())->formatPattern($format, [Domain::literal('name'), Domain::literal(7)])->patterns()[0];
+
+        self::assertSame('SELECT name FROM {$} WHERE id = 7', $pattern->display());
+        self::assertCount(1, $pattern->holes());
+        self::assertSame(Origin::Parameter, $pattern->holes()[0]->origin);
+        self::assertSame('$table', $pattern->holes()[0]->expression);
+    }
+
+    public function testFormatPatternKeepsEveryAlternativeOfAnArgument(): void
+    {
+        $result = (new BuiltinCallModel())->formatPattern(
+            TextPattern::fromText('id = %s'),
+            [Domain::literal(1)->union(Domain::literal(2))],
+        );
+
+        self::assertSame(
+            ['id = 1', 'id = 2'],
+            array_map(static fn (TextPattern $pattern): string => $pattern->display(), $result->patterns()),
+        );
+    }
+
+    public function testOriginOfIsTheOriginOfTheFirstOpaqueAlternative(): void
+    {
+        $domain = Domain::literal('a')
+            ->union(Domain::opaque(TypeShape::of(['string']), Origin::Parameter))
+            ->union(Domain::opaque(TypeShape::of(['int']), Origin::External));
+
+        self::assertSame(Origin::Parameter, (new BuiltinCallModel())->originOf($domain, Origin::Call));
+    }
+
+    public function testOriginOfFallsBackWhenNothingInTheValueIsOpaque(): void
+    {
+        $model = new BuiltinCallModel();
+
+        self::assertSame(Origin::Loop, $model->originOf(Domain::literal('a'), Origin::Loop));
+        self::assertSame(Origin::Call, $model->originOf(Domain::literal('a'), Origin::Call));
+        self::assertSame(Origin::External, $model->originOf(Domain::opaque(TypeShape::unknown(), Origin::External), Origin::Loop));
     }
 
     public function testVsprintfTakesItsArgumentsFromAnArray(): void

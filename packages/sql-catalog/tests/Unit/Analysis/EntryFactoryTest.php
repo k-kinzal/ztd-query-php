@@ -301,16 +301,16 @@ final class EntryFactoryTest extends TestCase
         self::assertNotContains(FindingRule::DynamicSql, $rules);
     }
 
-    public function testNotAnalyzedReasonSaysTheWalkNeverGotToTheCall(): void
+    public function testNotAnalyzedReasonSaysTheAnalysisStoppedBeforeReadingTheCall(): void
     {
         $record = new QueryRecord(
-            new CallSite('a.php', 1, 'f', CallSite::UNREACHED),
+            new CallSite('a.php', 1, 'f', 'pdo.query'),
             'a.php:10',
             TextPattern::fromHole(new TextHole(Origin::Unreached, TypeShape::unknown(), '$db->query($sql)')),
         );
 
         self::assertSame(
-            '`$db->query($sql)` is written the way a database call is written, but the walk never reached it.',
+            '`$db->query($sql)` is a database call, but the analysis stopped before it read what the call is given.',
             (new EntryFactory())->notAnalyzedReason($record),
         );
     }

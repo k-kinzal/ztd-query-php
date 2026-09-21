@@ -20,6 +20,8 @@ use SqlCatalog\Type\TypeShape;
  */
 final class ArrayTerm implements Term
 {
+    private ?string $signature = null;
+
     /**
      * @param list<ArrayEntry> $entries Elements in source order
      * @param bool $complete Whether every element of the runtime array is present
@@ -93,11 +95,14 @@ final class ArrayTerm implements Term
     #[Override]
     public function signature(): string
     {
+        if ($this->signature !== null) {
+            return $this->signature;
+        }
         $parts = [];
         foreach ($this->entries as $entry) {
             $parts[] = $entry->signature();
         }
 
-        return 'array:' . ($this->complete ? 'all' : 'some') . ':' . implode(',', $parts);
+        return $this->signature = 'array:' . ($this->complete ? 'all' : 'some') . ':' . implode(',', $parts);
     }
 }

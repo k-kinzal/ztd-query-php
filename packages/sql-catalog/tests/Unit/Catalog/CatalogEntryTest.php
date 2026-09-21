@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Catalog;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlCatalog\Catalog\CallSite;
@@ -111,6 +112,30 @@ final class CatalogEntryTest extends TestCase
         self::assertSame(Resolution::ExternalInput, $open->resolution());
     }
 
+    #[DataProvider('providerSearchClosed')]
+    public function testSearchClosedOnlyWhenTheResolutionIsClosedAndNoBoundCutItShort(TextPattern $pattern, bool $truncated, bool $expected): void
+    {
+        $entry = new CatalogEntry('id', StatementKind::Select, $pattern, [], [], new CallSite('a.php', 1, 'f', 's'), [], truncated: $truncated);
+
+        self::assertSame($expected, $entry->searchClosed());
+    }
+
+    /**
+     * @return array<string, array{TextPattern, bool, bool}>
+     */
+    public static function providerSearchClosed(): array
+    {
+        return [
+            'resolved' => [TextPattern::fromText('SELECT 1'), false, true],
+            'resolved but truncated' => [TextPattern::fromText('SELECT 1'), true, false],
+            'external input' => [TextPattern::fromHole(new TextHole(Origin::External, TypeShape::unknown())), false, true],
+            'external input but truncated' => [TextPattern::fromHole(new TextHole(Origin::External, TypeShape::unknown())), true, false],
+            'incomplete model' => [TextPattern::fromHole(new TextHole(Origin::Property, TypeShape::unknown())), false, false],
+            'budget' => [TextPattern::fromHole(new TextHole(Origin::Budget, TypeShape::unknown())), false, false],
+            'not analyzed' => [TextPattern::fromHole(new TextHole(Origin::Unreached, TypeShape::unknown())), false, false],
+        ];
+    }
+
     public function testTheAlternativesAreMarkedAsReachableOrNot(): void
     {
         $entry = new CatalogEntry('id', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'f', 's'), [], false, ['App\\R::find']);
@@ -163,7 +188,7 @@ final class CatalogEntryTest extends TestCase
             TextPattern::fromHole(new TextHole(Origin::Unreached, TypeShape::unknown(), '$db->query($sql)')),
             [],
             [],
-            new CallSite('a.php', 1, 'f', CallSite::UNREACHED),
+            new CallSite('a.php', 1, 'f', 'pdo.query'),
             [],
         );
         $closed = new CatalogEntry(
