@@ -1,0 +1,38 @@
+{
+  "cli_version": "0.10.3",
+  "checkpoint_id": "01M32BFT70DY6PC3EA602BHG6N",
+  "strategy": "manual-commit",
+  "branch": "feat/sql-faker-plan-constraints",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "packages/sql-faker/tests/Unit/Generation/Choice/PlanBuilderTest.php",
+    "packages/sql-faker/tests/Unit/Generation/Derivation/Completion/PatternProductionsTest.php",
+    "packages/sql-faker/tests/Unit/Generation/Derivation/ConstraintDependenciesTest.php",
+    "packages/sql-faker/tests/Unit/Generation/Derivation/DerivationTest.php",
+    "packages/sql-faker/tests/Unit/Generation/Derivation/TokenGeneratorTest.php",
+    "packages/sql-faker/tests/Unit/Generation/Plan/Compilation/GrammarCompilerTest.php",
+    "packages/sql-faker/tests/Unit/Generation/Plan/Compilation/PreparedGrammarTest.php",
+    "packages/sql-faker/tests/Unit/Generation/Plan/Compilation/ScopeTest.php",
+    "packages/sql-faker/tests/Unit/Generation/Plan/Compilation/ScopedGenerationTest.php",
+    "packages/sql-faker/tests/Unit/Generation/Plan/GenerationPlanTest.php",
+    "packages/sql-faker/tests/Unit/Generation/Plan/LexemeConstraintTest.php",
+    "packages/sql-faker/tests/Unit/Generation/Plan/ProductionPatternTest.php",
+    "packages/sql-faker/tests/Unit/Generation/Plan/RulePlanTest.php"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 273313,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 4360832,
+    "output_tokens": 17933,
+    "api_call_count": 53
+  }
+}
