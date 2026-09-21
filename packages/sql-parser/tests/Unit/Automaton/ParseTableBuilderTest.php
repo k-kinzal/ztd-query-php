@@ -54,6 +54,9 @@ use SqlParser\Table\TableRule;
 #[UsesClass(Rule::class)]
 #[UsesClass(SymbolTable::class)]
 #[Small]
+#[UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class ParseTableBuilderTest extends TestCase
 {
     public function testBuildSettlesAnAmbiguousGrammarWithPrecedence(): void

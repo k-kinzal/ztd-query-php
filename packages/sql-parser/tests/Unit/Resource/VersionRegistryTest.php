@@ -15,6 +15,9 @@ use SqlParser\Resource\VersionRegistry;
 #[CoversClass(VersionRegistry::class)]
 #[UsesClass(SqlVersion::class)]
 #[Small]
+#[UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class VersionRegistryTest extends TestCase
 {
     public function testResolveDefaultsToTheNewestRelease(): void

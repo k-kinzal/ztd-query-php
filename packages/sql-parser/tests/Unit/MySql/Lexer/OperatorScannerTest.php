@@ -31,6 +31,9 @@ use SqlParser\MySql\SqlMode;
 #[UsesClass(\SqlParser\Resource\VersionRegistry::class)]
 #[UsesClass(\SqlParser\Lexer\SourceException::class)]
 #[Small]
+#[UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class OperatorScannerTest extends TestCase
 {
     public function testScan(): void

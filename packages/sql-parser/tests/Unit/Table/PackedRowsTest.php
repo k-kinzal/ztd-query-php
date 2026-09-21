@@ -14,6 +14,9 @@ use SqlParser\Table\TableCodec;
 #[CoversClass(PackedRows::class)]
 #[UsesClass(TableCodec::class)]
 #[Small]
+#[UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class PackedRowsTest extends TestCase
 {
     public function testRow(): void

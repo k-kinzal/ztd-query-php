@@ -20,6 +20,9 @@ use SqlParser\Grammar\SymbolTable;
 #[UsesClass(Rule::class)]
 #[UsesClass(SymbolTable::class)]
 #[Small]
+#[UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class ClosureIndexTest extends TestCase
 {
     public function testReachable(): void

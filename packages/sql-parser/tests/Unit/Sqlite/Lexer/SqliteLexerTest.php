@@ -36,6 +36,9 @@ use SqlParser\Sqlite\Lexer\WordScanner;
 #[UsesClass(\SqlParser\Lexer\SourcePosition::class)]
 #[UsesClass(\SqlParser\Lexer\SourceException::class)]
 #[Small]
+#[UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class SqliteLexerTest extends TestCase
 {
     public function testScanEndsWithAStatementTerminator(): void

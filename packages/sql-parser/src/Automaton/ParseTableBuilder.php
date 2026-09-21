@@ -48,6 +48,7 @@ final class ParseTableBuilder
         $symbols = $grammar->symbols;
         $rows = [];
         $defaults = [];
+        $alternatives = [];
         $shiftReduce = 0;
         $reduceReduce = 0;
         for ($state = 0; $state < $automaton->stateCount(); $state++) {
@@ -61,6 +62,9 @@ final class ParseTableBuilder
                 }
             }
             $resolved = $resolver->resolve($this->expandShifts($shifts, $grammar), $this->expandLookaheads($lookaheads->of($state), $grammar));
+            if ($resolved->alternatives !== []) {
+                $alternatives[$state] = $resolved->alternatives;
+            }
             $shiftReduce += $resolved->shiftReduceConflicts;
             $reduceReduce += $resolved->reduceReduceConflicts;
             $usesWildcard = $grammar->wildcard !== null && isset($resolved->actions[$grammar->wildcard]);
@@ -72,7 +76,7 @@ final class ParseTableBuilder
             static fn ($rule): TableRule => new TableRule($rule->lhs, $rule->length(), $rule->ordinal, $rule->hidden),
             $grammar->rules,
         );
-        $table = new ParseTable($symbols, $rules, $defaults, new ArrayRows($rows), $grammar->fallbacks, $grammar->wildcard);
+        $table = new ParseTable($symbols, $rules, $defaults, new ArrayRows($rows), $grammar->fallbacks, $grammar->wildcard, $alternatives);
 
         return new BuildResult($table, new ConflictSummary($shiftReduce, $reduceReduce, $grammar->expectedConflicts), $automaton->stateCount());
     }

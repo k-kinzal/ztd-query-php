@@ -16,12 +16,14 @@ final class ResolvedState
      * @param array<int, int> $reductionCounts How many terminals each completed rule still reduces on
      * @param int $shiftReduceConflicts Terminals where a shift won by default
      * @param int $reduceReduceConflicts Terminals where an earlier rule won by default
+     * @param array<int, list<int>> $alternatives Unranked alternatives retained for complete grammar recognition
      */
     public function __construct(
         public readonly array $actions,
         public readonly array $reductionCounts,
         public readonly int $shiftReduceConflicts,
         public readonly int $reduceReduceConflicts,
+        public readonly array $alternatives = [],
     ) {
     }
 }

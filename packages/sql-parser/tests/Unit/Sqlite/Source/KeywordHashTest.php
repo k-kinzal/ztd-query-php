@@ -12,6 +12,9 @@ use SqlParser\Sqlite\Source\KeywordHash;
 
 #[CoversClass(KeywordHash::class)]
 #[Small]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class KeywordHashTest extends TestCase
 {
     public function testParse(): void

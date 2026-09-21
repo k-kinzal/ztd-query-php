@@ -44,6 +44,9 @@ use SqlParser\Parser\SyntaxException;
 #[UsesClass(\SqlParser\Table\TableRule::class)]
 #[UsesClass(\SqlParser\Lexer\SourceException::class)]
 #[Small]
+#[UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class LrParserTest extends TestCase
 {
     public function testParseBuildsATreeNamedAfterTheRules(): void
@@ -135,4 +138,14 @@ final class LrParserTest extends TestCase
 
         self::assertSame(['A', 'B'], (new LrParser($table))->expected(0));
     }
+    public function testPreferredKeepsTheOrdinaryLalrDerivation(): void
+    {
+        $builder = new GrammarBuilder();
+        $builder->terminal('A');
+        $builder->rule('s', ['A']);
+        $table = (new ParseTableBuilder())->build($builder->build())->table;
+        $token = new Token($table->symbols->id('A') ?? -1, 'A', 'a', 0);
+        self::assertSame('a', (new LrParser($table))->preferred([$token], 'a')->toString());
+    }
+
 }

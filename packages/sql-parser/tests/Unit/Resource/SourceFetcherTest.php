@@ -12,6 +12,9 @@ use SqlParser\Resource\SourceFetcher;
 
 #[CoversClass(SourceFetcher::class)]
 #[Small]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class SourceFetcherTest extends TestCase
 {
     public function testFetchReadsTheCachedCopy(): void

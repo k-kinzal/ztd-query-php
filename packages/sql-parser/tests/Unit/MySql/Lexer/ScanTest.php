@@ -25,6 +25,9 @@ use SqlParser\MySql\SqlMode;
 #[UsesClass(\SqlParser\Resource\SqlVersion::class)]
 #[UsesClass(\SqlParser\Resource\VersionRegistry::class)]
 #[Small]
+#[UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class ScanTest extends TestCase
 {
     public function testLexeme(): void

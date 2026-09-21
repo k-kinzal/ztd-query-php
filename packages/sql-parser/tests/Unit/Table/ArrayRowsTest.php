@@ -11,6 +11,9 @@ use SqlParser\Table\ArrayRows;
 
 #[CoversClass(ArrayRows::class)]
 #[Small]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class ArrayRowsTest extends TestCase
 {
     public function testRow(): void

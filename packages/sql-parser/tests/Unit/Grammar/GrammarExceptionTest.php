@@ -14,6 +14,9 @@ use SqlParser\Grammar\UnknownSymbolException;
 #[CoversClass(GrammarException::class)]
 #[UsesClass(UnknownSymbolException::class)]
 #[Small]
+#[UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class GrammarExceptionTest extends TestCase
 {
     public function testCarriesAMessage(): void

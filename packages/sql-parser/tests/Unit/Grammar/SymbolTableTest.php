@@ -14,6 +14,9 @@ use SqlParser\Grammar\SymbolTable;
 #[CoversClass(SymbolTable::class)]
 #[UsesClass(GrammarException::class)]
 #[Small]
+#[UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class SymbolTableTest extends TestCase
 {
     public function testId(): void

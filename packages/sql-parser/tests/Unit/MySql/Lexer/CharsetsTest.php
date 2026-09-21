@@ -11,6 +11,9 @@ use SqlParser\MySql\Lexer\Charsets;
 
 #[CoversClass(Charsets::class)]
 #[Small]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class CharsetsTest extends TestCase
 {
     public function testHas(): void

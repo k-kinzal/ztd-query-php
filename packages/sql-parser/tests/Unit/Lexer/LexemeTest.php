@@ -11,6 +11,9 @@ use SqlParser\Lexer\Lexeme;
 
 #[CoversClass(Lexeme::class)]
 #[Small]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class LexemeTest extends TestCase
 {
     public function testEnd(): void

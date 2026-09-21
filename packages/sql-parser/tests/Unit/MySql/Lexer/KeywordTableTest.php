@@ -21,6 +21,9 @@ use SqlParser\Resource\VersionRegistry;
 #[UsesClass(SqlVersion::class)]
 #[UsesClass(VersionRegistry::class)]
 #[Small]
+#[UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class KeywordTableTest extends TestCase
 {
     public function testLoad(): void

@@ -24,6 +24,9 @@ use SqlParser\Sqlite\Lexer\WordScanner;
 #[UsesClass(Scan::class)]
 #[UsesClass(TriviaScanner::class)]
 #[Small]
+#[UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class WordScannerTest extends TestCase
 {
     public function testScan(): void

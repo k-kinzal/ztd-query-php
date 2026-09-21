@@ -17,6 +17,9 @@ use SqlParser\Parser\SyntaxException;
 #[UsesClass(Token::class)]
 #[UsesClass(\SqlParser\Lexer\SourceException::class)]
 #[Small]
+#[UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class SyntaxExceptionTest extends TestCase
 {
     public function testMessageNamesTheTokenAndTheExpectation(): void

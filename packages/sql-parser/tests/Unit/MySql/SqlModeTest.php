@@ -11,6 +11,9 @@ use SqlParser\MySql\SqlMode;
 
 #[CoversClass(SqlMode::class)]
 #[Small]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class SqlModeTest extends TestCase
 {
     public function testDefault(): void

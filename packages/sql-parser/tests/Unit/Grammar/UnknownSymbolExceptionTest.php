@@ -11,6 +11,9 @@ use SqlParser\Grammar\UnknownSymbolException;
 
 #[CoversClass(UnknownSymbolException::class)]
 #[Small]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class UnknownSymbolExceptionTest extends TestCase
 {
     public function testMessageNamesTheSymbol(): void

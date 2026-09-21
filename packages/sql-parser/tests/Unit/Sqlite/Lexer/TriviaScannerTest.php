@@ -18,6 +18,9 @@ use SqlParser\Sqlite\Lexer\TriviaScanner;
 #[UsesClass(KeywordTable::class)]
 #[UsesClass(Scan::class)]
 #[Small]
+#[UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class TriviaScannerTest extends TestCase
 {
     public function testSkip(): void

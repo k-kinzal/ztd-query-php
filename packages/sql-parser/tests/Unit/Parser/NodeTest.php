@@ -14,6 +14,9 @@ use SqlParser\Parser\Node;
 #[CoversClass(Node::class)]
 #[UsesClass(Token::class)]
 #[Small]
+#[UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class NodeTest extends TestCase
 {
     public function testIsEmpty(): void

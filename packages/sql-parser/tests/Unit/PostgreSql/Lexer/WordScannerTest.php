@@ -20,6 +20,9 @@ use SqlParser\PostgreSql\Lexer\WordScanner;
 #[UsesClass(KeywordTable::class)]
 #[UsesClass(Scan::class)]
 #[Small]
+#[UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class WordScannerTest extends TestCase
 {
     public function testScan(): void

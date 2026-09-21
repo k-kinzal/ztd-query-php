@@ -11,6 +11,9 @@ use SqlParser\Lexer\Cursor;
 
 #[CoversClass(Cursor::class)]
 #[Small]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class CursorTest extends TestCase
 {
     public function testEof(): void

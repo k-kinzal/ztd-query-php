@@ -11,6 +11,9 @@ use SqlParser\Lexer\SourcePosition;
 
 #[CoversClass(SourcePosition::class)]
 #[Small]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class SourcePositionTest extends TestCase
 {
     public function testAt(): void

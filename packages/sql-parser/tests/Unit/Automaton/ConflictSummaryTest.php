@@ -11,6 +11,9 @@ use SqlParser\Automaton\ConflictSummary;
 
 #[CoversClass(ConflictSummary::class)]
 #[Small]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class ConflictSummaryTest extends TestCase
 {
     public function testIsExpected(): void

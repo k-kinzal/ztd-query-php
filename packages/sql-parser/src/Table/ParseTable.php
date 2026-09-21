@@ -25,6 +25,7 @@ final class ParseTable
      * @param ActionRows $rows Explicit actions of each state
      * @param array<int, int> $fallbacks Terminal to retry with by the terminal that failed
      * @param int|null $wildcard Terminal whose action applies to any other terminal without one
+     * @param array<int, array<int, list<int>>> $alternatives Unranked alternatives by state and terminal
      */
     public function __construct(
         public readonly SymbolTable $symbols,
@@ -33,6 +34,7 @@ final class ParseTable
         public readonly ActionRows $rows,
         public readonly array $fallbacks = [],
         public readonly ?int $wildcard = null,
+        public readonly array $alternatives = [],
     ) {
     }
 

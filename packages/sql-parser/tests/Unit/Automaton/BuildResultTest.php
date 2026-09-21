@@ -20,6 +20,9 @@ use SqlParser\Table\ParseTable;
 #[UsesClass(ParseTable::class)]
 #[UsesClass(SymbolTable::class)]
 #[Small]
+#[UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class BuildResultTest extends TestCase
 {
     public function testPropertiesAreKept(): void

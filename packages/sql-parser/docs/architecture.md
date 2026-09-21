@@ -39,3 +39,23 @@ Each dialect has a parser front door, a version registry, a lexer ported from th
 ## Resources
 
 `resources/version.php` names the shipped releases and their files. `bin/build-*.php` regenerate them from the upstream sources, keeping downloaded copies under `build/sources`.
+
+## Unranked grammar conflicts
+
+A successful LALR parse keeps the upstream conflict resolution and its exact
+syntax tree. Parse tables additionally retain unranked shift/reduce and
+reduce/reduce alternatives. If the preferred derivation fails, the parser
+tries those alternatives with memoized configurations. It never retries an
+explicitly ranked precedence decision or a nonassociative error.
+
+This matters for the legacy MySQL parenthesized query grammar. For example,
+`DO ((SELECT * FROM DUAL FOR UPDATE) LIMIT 1 UNION SELECT *)` has a complete
+derivation through `subselect` and `query_expression_body`, but the default
+shift commits its opening parenthesis to a scalar expression too early.
+The alternative retains the upstream nonterminal names and source bytes.
+If no derivation accepts the complete input, the original syntax diagnostic
+is raised. The ordinary successful parse path does not perform a search.
+
+The binary table format stores alternatives after the existing row region;
+legacy tables without that extension continue to load. Rebuilding a grammar
+records its alternatives along with the ordinary LALR actions.

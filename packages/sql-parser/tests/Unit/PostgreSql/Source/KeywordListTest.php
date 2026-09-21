@@ -12,6 +12,9 @@ use SqlParser\PostgreSql\Source\KeywordList;
 
 #[CoversClass(KeywordList::class)]
 #[Small]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class KeywordListTest extends TestCase
 {
     public function testParse(): void

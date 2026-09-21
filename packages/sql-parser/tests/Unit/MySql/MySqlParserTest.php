@@ -48,6 +48,9 @@ use SqlParser\Parser\SyntaxException;
 #[UsesClass(\SqlParser\Table\TableRule::class)]
 #[UsesClass(\SqlParser\Lexer\SourceException::class)]
 #[Small]
+#[UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class MySqlParserTest extends TestCase
 {
     public function testVersion(): void
@@ -137,4 +140,14 @@ final class MySqlParserTest extends TestCase
         self::assertContains('mysql-8.4.7', $versions);
         self::assertCount(9, $versions);
     }
+    public function testParseLegacyParenthesizedUnionWithoutLosingSyntax(): void
+    {
+        $sql = 'DO ((SELECT * FROM DUAL FOR UPDATE) LIMIT 1 UNION SELECT *)';
+        $tree = (new MySqlParser('mysql-5.6.51'))->parse($sql);
+        self::assertSame($sql, $tree->toString());
+        self::assertCount(1, $tree->find('subselect'));
+        self::assertCount(2, $tree->find('query_specification'));
+        self::assertCount(1, $tree->find('limit_clause'));
+    }
+
 }

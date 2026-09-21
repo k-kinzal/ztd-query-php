@@ -28,6 +28,9 @@ use SqlParser\Table\ActionCode;
 #[UsesClass(Rule::class)]
 #[UsesClass(SymbolTable::class)]
 #[Small]
+#[UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class ConflictResolverTest extends TestCase
 {
     public function testResolveKeepsPlainShiftsAndReductions(): void
@@ -53,6 +56,7 @@ final class ConflictResolverTest extends TestCase
 
         self::assertSame([2 => 5], $resolved->actions);
         self::assertSame(1, $resolved->shiftReduceConflicts);
+        self::assertSame([2 => [ActionCode::reduce(1)]], $resolved->alternatives);
         self::assertSame([1 => 0], $resolved->reductionCounts);
     }
 
@@ -66,6 +70,7 @@ final class ConflictResolverTest extends TestCase
 
         self::assertSame([0 => ActionCode::reduce(1)], $resolved->actions);
         self::assertSame(1, $resolved->reduceReduceConflicts);
+        self::assertSame([0 => [ActionCode::reduce(2)]], $resolved->alternatives);
     }
 
     public function testResolveLetsAHigherRankedLaterRuleWinUnderLemonsPolicy(): void

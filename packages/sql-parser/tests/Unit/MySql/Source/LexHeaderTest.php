@@ -12,6 +12,9 @@ use SqlParser\MySql\Source\LexHeader;
 
 #[CoversClass(LexHeader::class)]
 #[Small]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class LexHeaderTest extends TestCase
 {
     public function testParseReadsTheModernSpelling(): void

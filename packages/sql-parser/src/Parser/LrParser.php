@@ -41,6 +41,25 @@ final class LrParser
      */
     public function parse(array $tokens, string $source = ''): Node
     {
+        try {
+            return $this->preferred($tokens, $source);
+        } catch (SyntaxException $error) {
+            $alternative = $this->table->alternatives === [] ? null : (new AlternativeParser($this->table))->parse($tokens);
+            if ($alternative === null) {
+                throw $error;
+            }
+            return $alternative;
+        }
+    }
+
+    /**
+     * Runs the ordinary LALR derivation, preserving its precedence and diagnostics.
+     *
+     * @param list<Token> $tokens Complete token stream
+     * @throws SyntaxException
+     */
+    public function preferred(array $tokens, string $source): Node
+    {
         $table = $this->table;
         $states = [0];
         $nodes = [];

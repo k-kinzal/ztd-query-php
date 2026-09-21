@@ -26,6 +26,9 @@ use SqlParser\Table\TableFile;
 #[UsesClass(TableCodec::class)]
 #[UsesClass(TableFile::class)]
 #[Small]
+#[UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class ResourceWriterTest extends TestCase
 {
     public function testWriteTable(): void

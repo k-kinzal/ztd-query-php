@@ -25,6 +25,9 @@ use SqlParser\Table\TableRule;
 #[UsesClass(SymbolTable::class)]
 #[UsesClass(TableRule::class)]
 #[Small]
+#[UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class TableCodecTest extends TestCase
 {
     public function testEncodeAndDecodeRoundTrip(): void

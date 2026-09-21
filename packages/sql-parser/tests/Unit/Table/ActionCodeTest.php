@@ -11,6 +11,9 @@ use SqlParser\Table\ActionCode;
 
 #[CoversClass(ActionCode::class)]
 #[Small]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class ActionCodeTest extends TestCase
 {
     public function testShift(): void

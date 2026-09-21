@@ -14,6 +14,9 @@ use SqlParser\Automaton\Digraph;
 #[CoversClass(Digraph::class)]
 #[UsesClass(Bitset::class)]
 #[Small]
+#[UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class DigraphTest extends TestCase
 {
     public function testCloseUnionsAlongEdgesAndAcrossCycles(): void

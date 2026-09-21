@@ -11,6 +11,9 @@ use SqlParser\Lexer\Token;
 
 #[CoversClass(Token::class)]
 #[Small]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class TokenTest extends TestCase
 {
     public function testEnd(): void

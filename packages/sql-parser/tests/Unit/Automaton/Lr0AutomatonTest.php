@@ -11,6 +11,9 @@ use SqlParser\Automaton\Lr0Automaton;
 
 #[CoversClass(Lr0Automaton::class)]
 #[Small]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class Lr0AutomatonTest extends TestCase
 {
     public function testStateCount(): void

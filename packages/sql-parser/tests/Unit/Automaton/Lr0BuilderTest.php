@@ -24,6 +24,9 @@ use SqlParser\Grammar\SymbolTable;
 #[UsesClass(Rule::class)]
 #[UsesClass(SymbolTable::class)]
 #[Small]
+#[UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class Lr0BuilderTest extends TestCase
 {
     public function testBuildDiscoversEveryStateOfTheTextbookGrammar(): void

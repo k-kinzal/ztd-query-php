@@ -24,6 +24,9 @@ use SqlParser\Sqlite\Lexer\VariableScanner;
 #[UsesClass(\SqlParser\Lexer\SourcePosition::class)]
 #[UsesClass(\SqlParser\Lexer\SourceException::class)]
 #[Small]
+#[UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class VariableScannerTest extends TestCase
 {
     public function testScan(): void

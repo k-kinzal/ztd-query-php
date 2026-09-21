@@ -62,7 +62,8 @@ final class TableCodec
             . pack('l*', ...$table->defaults)
             . $fallbacks
             . pack('V*', ...$offsets)
-            . $rows;
+            . $rows
+            . (new AlternativeCodec())->encode($table->alternatives);
     }
 
     /**
@@ -159,6 +160,7 @@ final class TableCodec
             new PackedRows(substr($bytes, $offset), $offsets),
             $fallbacks,
             $header['wildcard'] === 0xFFFFFFFF ? null : $header['wildcard'],
+            (new AlternativeCodec())->decode(substr($bytes, $offset + $offsets[count($offsets) - 1])),
         );
     }
 }

@@ -45,6 +45,7 @@ final class ConflictResolver
             $actions[$terminal] = ActionCode::shift($target);
         }
         $counts = [];
+        $alternatives = [];
         $shiftReduce = 0;
         $reduceReduce = 0;
         ksort($lookaheads);
@@ -59,6 +60,7 @@ final class ConflictResolver
                     $winner = $this->shiftOrReduce($terminal, $rule);
                     if ($winner === null) {
                         $shiftReduce++;
+                        $alternatives[$terminal][] = ActionCode::reduce($rule);
                     } elseif ($winner === ActionCode::ERROR) {
                         $actions[$terminal] = ActionCode::ERROR;
                     } elseif (ActionCode::isReduce($winner)) {
@@ -69,6 +71,7 @@ final class ConflictResolver
                     $winner = $this->reduceOrReduce(ActionCode::rule($current), $rule);
                     if ($winner === null) {
                         $reduceReduce++;
+                        $alternatives[$terminal][] = ActionCode::reduce($rule);
                     } elseif ($winner === $rule) {
                         $counts[ActionCode::rule($current)]--;
                         $actions[$terminal] = ActionCode::reduce($rule);
@@ -78,7 +81,7 @@ final class ConflictResolver
             }
         }
 
-        return new ResolvedState($actions, $counts, $shiftReduce, $reduceReduce);
+        return new ResolvedState($actions, $counts, $shiftReduce, $reduceReduce, $alternatives);
     }
 
     /**

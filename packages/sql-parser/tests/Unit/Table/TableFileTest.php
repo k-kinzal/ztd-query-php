@@ -25,6 +25,9 @@ use SqlParser\Table\TableRule;
 #[UsesClass(TableCodec::class)]
 #[UsesClass(TableRule::class)]
 #[Small]
+#[UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class TableFileTest extends TestCase
 {
     public function testSaveAndLoadRoundTrip(): void

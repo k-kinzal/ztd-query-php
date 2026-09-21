@@ -11,6 +11,9 @@ use SqlParser\Automaton\ResolvedState;
 
 #[CoversClass(ResolvedState::class)]
 #[Small]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\AlternativeParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Parser\ParseBranch::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlParser\Table\AlternativeCodec::class)]
 final class ResolvedStateTest extends TestCase
 {
     public function testPropertiesAreKept(): void
