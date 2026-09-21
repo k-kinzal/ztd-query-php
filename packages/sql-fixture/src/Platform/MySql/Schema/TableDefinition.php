@@ -38,7 +38,7 @@ final class TableDefinition
      * @return array<string, ColumnDefinition>
      * @throws MissingColumnDefinitionsException
      */
-    public function extractColumns(Node $statement, string $sql, string $tableName): array
+    public function extractColumns(Node $statement, string $tableName): array
     {
         $columns = [];
         $primaryKeys = $this->extractPrimaryKeys($statement);
@@ -47,7 +47,7 @@ final class TableDefinition
             if ($columnDef === null) {
                 continue;
             }
-            $column = (new ColumnParser())->parseColumnDefinition($columnDef, $sql, $primaryKeys);
+            $column = (new ColumnParser())->parseColumnDefinition($columnDef, $primaryKeys);
             if ($column !== null) {
                 $columns[$column->name] = $column;
             }

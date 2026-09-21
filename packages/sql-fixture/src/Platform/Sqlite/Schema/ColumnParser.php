@@ -20,7 +20,7 @@ final class ColumnParser
      *
      * @param list<string> $tablePrimaryKeys
      */
-    public function parseColumnDefinition(Node $columnname, Node $carglist, string $sql, array $tablePrimaryKeys): ?ColumnDefinition
+    public function parseColumnDefinition(Node $columnname, Node $carglist, array $tablePrimaryKeys): ?ColumnDefinition
     {
         $reader = new NodeReader();
         $nameNode = $reader->child($columnname, 'nm');
@@ -33,7 +33,7 @@ final class ColumnParser
         $constraints = (new ColumnConstraints())->read($carglist);
         $shape = (new TypeDeclaration())->parse($typetoken);
         $primaryKey = $constraints->primaryKey || in_array($name, $tablePrimaryKeys, true);
-        $default = $constraints->default === null ? null : (new DefaultExpression())->extractDefault($constraints->default, $sql);
+        $default = $constraints->default === null ? null : (new DefaultExpression())->extractDefault($constraints->default);
 
         return new ColumnDefinition(
             name: $name,

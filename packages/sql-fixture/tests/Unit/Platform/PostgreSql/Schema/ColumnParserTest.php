@@ -27,7 +27,7 @@ final class ColumnParserTest extends TestCase
     {
         $sql = 'CREATE TABLE t ("amount" NUMERIC(8, 2) NOT NULL DEFAULT 12.5 CHECK (amount > 0))';
         $tree = (new PostgreSqlParser())->parse($sql);
-        $column = (new Subject())->parseColumnDefinition($tree->find('columnDef')[0], $sql, []);
+        $column = (new Subject())->parseColumnDefinition($tree->find('columnDef')[0], []);
 
         self::assertNotNull($column);
         self::assertSame('amount', $column->name);
@@ -48,11 +48,11 @@ final class ColumnParserTest extends TestCase
         $sql = 'CREATE TABLE t (id SERIAL, seq INT GENERATED ALWAYS AS IDENTITY, g INT GENERATED ALWAYS AS (id + 1) STORED, k INT, pk INT PRIMARY KEY)';
         $tree = (new PostgreSqlParser())->parse($sql);
         $definitions = $tree->find('columnDef');
-        $id = (new Subject())->parseColumnDefinition($definitions[0], $sql, []);
-        $seq = (new Subject())->parseColumnDefinition($definitions[1], $sql, []);
-        $g = (new Subject())->parseColumnDefinition($definitions[2], $sql, []);
-        $k = (new Subject())->parseColumnDefinition($definitions[3], $sql, ['k']);
-        $pk = (new Subject())->parseColumnDefinition($definitions[4], $sql, []);
+        $id = (new Subject())->parseColumnDefinition($definitions[0], []);
+        $seq = (new Subject())->parseColumnDefinition($definitions[1], []);
+        $g = (new Subject())->parseColumnDefinition($definitions[2], []);
+        $k = (new Subject())->parseColumnDefinition($definitions[3], ['k']);
+        $pk = (new Subject())->parseColumnDefinition($definitions[4], []);
 
         self::assertNotNull($id);
         self::assertSame(['INTEGER', true, false], [$id->type, $id->autoIncrement, $id->nullable]);
@@ -73,8 +73,8 @@ final class ColumnParserTest extends TestCase
         $typename = $tree->find('Typename')[0];
         $name = $tree->find('columnDef')[0]->tokens()[0];
 
-        self::assertNull((new Subject())->parseColumnDefinition(new Node('columnDef', 0, []), $sql, []));
-        self::assertNull((new Subject())->parseColumnDefinition(new Node('columnDef', 0, [$name]), $sql, []));
-        self::assertNotNull((new Subject())->parseColumnDefinition(new Node('columnDef', 0, [$name, $typename]), $sql, []));
+        self::assertNull((new Subject())->parseColumnDefinition(new Node('columnDef', 0, []), []));
+        self::assertNull((new Subject())->parseColumnDefinition(new Node('columnDef', 0, [$name]), []));
+        self::assertNotNull((new Subject())->parseColumnDefinition(new Node('columnDef', 0, [$name, $typename]), []));
     }
 }

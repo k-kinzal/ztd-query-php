@@ -72,7 +72,7 @@ Supports MySQL 5.6–9.1, PostgreSQL, and SQLite. Used for fuzz testing.
 ### packages/sql-fixture
 
 Faker Provider for generating test fixture data from SQL schemas.
-Parses CREATE TABLE statements and generates type-appropriate fake data using PHP-Faker.
+Reads CREATE TABLE statements with the sql-parser grammar of each dialect and generates type-appropriate fake data using PHP-Faker; the schema is read from the syntax tree, never from the statement text.
 Provides three usage modes: SQL string-based (`FixtureProvider`), PDO connection-based (`DatabaseFixtureProvider`), and DDL file directory-based (`FileFixtureProvider`).
 Supports MySQL, PostgreSQL, and SQLite. Includes object hydration via `ReflectionHydrator`. Used for fuzz testing and integration tests.
 

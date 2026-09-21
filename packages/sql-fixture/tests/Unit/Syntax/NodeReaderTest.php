@@ -73,13 +73,4 @@ final class NodeReaderTest extends TestCase
         self::assertSame(['TIMESTAMP', 'WITH', 'TIME'], (new Subject())->wordsOutsideParentheses($node));
         self::assertSame([], (new Subject())->wordsOutsideParentheses(new Node('empty', 0, [])));
     }
-
-    public function testTextOfCoversTheFirstThroughTheLastToken(): void
-    {
-        $sql = 'DEFAULT (1 + 2) NOT NULL';
-        $tokens = [new Token(1, '(', '(', 8), new Token(2, 'NUM', '1', 9), new Token(3, ')', ')', 14)];
-
-        self::assertSame('(1 + 2)', (new Subject())->textOf($tokens, $sql));
-        self::assertSame('', (new Subject())->textOf([], $sql));
-    }
 }

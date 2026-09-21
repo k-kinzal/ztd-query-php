@@ -12,7 +12,6 @@ use SqlFixture\Platform\MySql\MySqlSchemaFetcher as Subject;
 #[CoversClass(Subject::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
 #[CoversClass(\SqlFixture\Platform\MySql\Schema\CreateTableQuery::class)]
-#[CoversClass(\SqlFixture\Platform\MySql\Schema\IdentifierQuoter::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\MySqlSchemaParser::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Schema\ColumnDefinition::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Schema\SchemaFetcherInterface::class)]

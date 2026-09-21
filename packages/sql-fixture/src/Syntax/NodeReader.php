@@ -94,19 +94,4 @@ final class NodeReader
         return $words;
     }
 
-    /**
-     * Returns the SQL text from the first through the last of the given tokens.
-     *
-     * @param list<Token> $tokens
-     */
-    public function textOf(array $tokens, string $source): string
-    {
-        $first = $tokens[0] ?? null;
-        $last = $tokens[count($tokens) - 1] ?? null;
-        if ($first === null || $last === null) {
-            return '';
-        }
-
-        return substr($source, $first->offset, $last->end() - $first->offset);
-    }
 }

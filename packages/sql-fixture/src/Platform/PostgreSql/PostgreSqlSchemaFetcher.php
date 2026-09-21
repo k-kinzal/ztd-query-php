@@ -18,14 +18,15 @@ use SqlParser\PostgreSql\PostgreSqlParser;
  */
 final class PostgreSqlSchemaFetcher implements SchemaFetcherInterface
 {
-    private PostgreSqlParser $parser;
+    private Schema\CatalogSchema $catalog;
 
     /**
-     * Loads the grammar tables used to interpret catalog default expressions.
+     * Loads the grammar the table name and the catalog default expressions are read with.
      */
     public function __construct(?PostgreSqlParser $parser = null)
     {
-        $this->parser = $parser ?? new PostgreSqlParser();
+        $grammar = $parser ?? new PostgreSqlParser();
+        $this->catalog = new Schema\CatalogSchema(new Schema\CatalogExpression($grammar), new Schema\QualifiedName($grammar));
     }
 
     /**
@@ -33,6 +34,6 @@ final class PostgreSqlSchemaFetcher implements SchemaFetcherInterface
      */
     public function fetchSchema(PDO $pdo, string $tableName): TableSchema
     {
-        return (new Schema\CatalogSchema(new Schema\CatalogExpression($this->parser)))->fetchSchema($pdo, $tableName);
+        return $this->catalog->fetchSchema($pdo, $tableName);
     }
 }

@@ -31,10 +31,9 @@ final class CatalogExpression
      */
     public function evaluate(string $expression): int|float|bool|string|null
     {
-        $sql = 'SELECT ' . $expression;
-        $node = $this->expression($sql);
+        $node = $this->expression('SELECT ' . $expression);
 
-        return $node === null ? $expression : (new DefaultExpression())->evaluate($node, $sql);
+        return $node === null ? $expression : (new DefaultExpression())->evaluate($node);
     }
 
     /**

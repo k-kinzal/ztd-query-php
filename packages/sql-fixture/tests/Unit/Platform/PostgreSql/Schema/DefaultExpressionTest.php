@@ -23,7 +23,7 @@ final class DefaultExpressionTest extends TestCase
         $sql = "CREATE TABLE t (c {$declaration})";
         $tree = (new PostgreSqlParser())->parse($sql);
 
-        self::assertSame($expected, (new Subject())->evaluate($tree->find('b_expr')[0], $sql));
+        self::assertSame($expected, (new Subject())->evaluate($tree->find('b_expr')[0]));
     }
 
     /**
@@ -61,7 +61,7 @@ final class DefaultExpressionTest extends TestCase
 
     public function testEvaluateReturnsTheTextOfAnEmptyNode(): void
     {
-        self::assertSame('', (new Subject())->evaluate(new Node('a_expr', 0, []), 'SELECT 1'));
+        self::assertSame('', (new Subject())->evaluate(new Node('a_expr', 0, [])));
     }
 
     public function testIsCastAcceptsExactlyOneTypeCastAfterTheConstant(): void

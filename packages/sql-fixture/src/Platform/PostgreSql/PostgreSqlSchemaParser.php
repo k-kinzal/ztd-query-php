@@ -45,7 +45,7 @@ final class PostgreSqlSchemaParser implements SchemaParserInterface
 
         $statement = (new Schema\CreateTableStatement())->locate($tree, $createTableSql);
         $tableName = (new Schema\TableDefinition())->extractTableName($statement, $createTableSql);
-        $columns = (new Schema\TableDefinition())->extractColumns($statement, $createTableSql, $tableName);
+        $columns = (new Schema\TableDefinition())->extractColumns($statement, $tableName);
         $primaryKeys = (new Schema\TableDefinition())->extractPrimaryKeys($statement);
 
         return new TableSchema($tableName, $columns, $primaryKeys);

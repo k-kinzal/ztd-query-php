@@ -45,7 +45,7 @@ final class TableDefinitionTest extends TestCase
     public function testExtractColumnsKeepsDeclarationOrderAndMarksKeyColumns(): void
     {
         $sql = 'CREATE TABLE t (id INTEGER, name VARCHAR(10) NOT NULL, PRIMARY KEY (id))';
-        $columns = (new Subject())->extractColumns((new SqliteParser())->parse($sql)->find('cmd')[0], $sql, 't');
+        $columns = (new Subject())->extractColumns((new SqliteParser())->parse($sql)->find('cmd')[0], 't');
 
         self::assertSame(['id', 'name'], array_keys($columns));
         self::assertFalse($columns['id']->nullable);
@@ -57,7 +57,7 @@ final class TableDefinitionTest extends TestCase
         $sql = 'CREATE TABLE t AS SELECT 1';
 
         $this->expectException(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class);
-        (new Subject())->extractColumns((new SqliteParser())->parse($sql)->find('cmd')[0], $sql, 't');
+        (new Subject())->extractColumns((new SqliteParser())->parse($sql)->find('cmd')[0], 't');
     }
 
     public function testExtractPrimaryKeysCombinesColumnAndTableLevelKeysWithoutDuplicates(): void

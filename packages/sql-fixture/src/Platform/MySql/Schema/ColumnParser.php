@@ -20,7 +20,7 @@ final class ColumnParser
      *
      * @param list<string> $primaryKeyColumns
      */
-    public function parseColumnDefinition(Node $columnDef, string $sql, array $primaryKeyColumns): ?ColumnDefinition
+    public function parseColumnDefinition(Node $columnDef, array $primaryKeyColumns): ?ColumnDefinition
     {
         $reader = new NodeReader();
         $ident = $reader->child($columnDef, 'ident');
@@ -35,7 +35,7 @@ final class ColumnParser
         $shape = (new TypeParameters())->parse($type);
         $autoIncrement = $attributes->autoIncrement || $shape->autoIncrement;
         $nullable = $attributes->nullable && !$shape->autoIncrement && !in_array($name, $primaryKeyColumns, true);
-        $default = $attributes->default === null ? null : (new DefaultExpression())->extractDefault($attributes->default, $sql);
+        $default = $attributes->default === null ? null : (new DefaultExpression())->extractDefault($attributes->default);
         $enumValues = in_array($shape->type, ['ENUM', 'SET'], true) ? (new TypeParameters())->extractEnumValues($type) : null;
 
         return new ColumnDefinition(

@@ -22,7 +22,7 @@ final class DefaultExpressionTest extends TestCase
         $sql = "CREATE TABLE t (c {$declaration})";
         $tree = (new MySqlParser())->parse($sql);
 
-        self::assertSame($expected, (new Subject())->extractDefault($tree->find('column_attribute')[0], $sql));
+        self::assertSame($expected, (new Subject())->extractDefault($tree->find('column_attribute')[0]));
     }
 
     /**
@@ -64,6 +64,6 @@ final class DefaultExpressionTest extends TestCase
         $sql = "CREATE TABLE t (c VARCHAR(5) NOT NULL DEFAULT 'x' COMMENT 'c')";
         $tree = (new MySqlParser())->parse($sql);
 
-        self::assertSame('x', (new Subject())->extractDefault($tree->find('column_attribute')[1], $sql));
+        self::assertSame('x', (new Subject())->extractDefault($tree->find('column_attribute')[1]));
     }
 }

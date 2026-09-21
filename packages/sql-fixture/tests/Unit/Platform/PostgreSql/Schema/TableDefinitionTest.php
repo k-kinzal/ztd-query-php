@@ -44,7 +44,7 @@ final class TableDefinitionTest extends TestCase
     public function testExtractColumnsKeepsDeclarationOrderAndSkipsConstraints(): void
     {
         $sql = 'CREATE TABLE t (id INT, PRIMARY KEY (id), name VARCHAR(10) NOT NULL, LIKE o, EXCLUDE USING gist (id WITH =))';
-        $columns = (new Subject())->extractColumns((new PostgreSqlParser())->parse($sql)->find('CreateStmt')[0], $sql, 't');
+        $columns = (new Subject())->extractColumns((new PostgreSqlParser())->parse($sql)->find('CreateStmt')[0], 't');
 
         self::assertSame(['id', 'name'], array_keys($columns));
         self::assertFalse($columns['id']->nullable);
@@ -56,7 +56,7 @@ final class TableDefinitionTest extends TestCase
         $sql = 'CREATE TABLE t ()';
 
         $this->expectException(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class);
-        (new Subject())->extractColumns((new PostgreSqlParser())->parse($sql)->find('CreateStmt')[0], $sql, 't');
+        (new Subject())->extractColumns((new PostgreSqlParser())->parse($sql)->find('CreateStmt')[0], 't');
     }
 
     public function testExtractPrimaryKeysCombinesColumnAndTableLevelKeysWithoutDuplicates(): void

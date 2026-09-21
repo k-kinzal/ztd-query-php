@@ -27,7 +27,7 @@ final class ColumnParserTest extends TestCase
     {
         $sql = "CREATE TABLE t (`amount` DECIMAL(8, 2) UNSIGNED NOT NULL DEFAULT 12.5 COMMENT 'money')";
         $tree = (new MySqlParser())->parse($sql);
-        $column = (new Subject())->parseColumnDefinition($tree->find('column_def')[0], $sql, []);
+        $column = (new Subject())->parseColumnDefinition($tree->find('column_def')[0], []);
 
         self::assertNotNull($column);
         self::assertSame('amount', $column->name);
@@ -48,9 +48,9 @@ final class ColumnParserTest extends TestCase
         $sql = "CREATE TABLE t (status ENUM('a', 'b') DEFAULT 'a', id INT AUTO_INCREMENT, other INT)";
         $tree = (new MySqlParser())->parse($sql);
         $definitions = $tree->find('column_def');
-        $status = (new Subject())->parseColumnDefinition($definitions[0], $sql, ['id']);
-        $id = (new Subject())->parseColumnDefinition($definitions[1], $sql, ['id']);
-        $other = (new Subject())->parseColumnDefinition($definitions[2], $sql, ['id']);
+        $status = (new Subject())->parseColumnDefinition($definitions[0], ['id']);
+        $id = (new Subject())->parseColumnDefinition($definitions[1], ['id']);
+        $other = (new Subject())->parseColumnDefinition($definitions[2], ['id']);
 
         self::assertNotNull($status);
         self::assertSame(['a', 'b'], $status->enumValues);
@@ -69,8 +69,8 @@ final class ColumnParserTest extends TestCase
         $sql = 'CREATE TABLE t (a INT, b INT GENERATED ALWAYS AS (a + 1) STORED, c INT AS (a) VIRTUAL NOT NULL)';
         $tree = (new MySqlParser())->parse($sql);
         $definitions = $tree->find('column_def');
-        $b = (new Subject())->parseColumnDefinition($definitions[1], $sql, []);
-        $c = (new Subject())->parseColumnDefinition($definitions[2], $sql, []);
+        $b = (new Subject())->parseColumnDefinition($definitions[1], []);
+        $c = (new Subject())->parseColumnDefinition($definitions[2], []);
 
         self::assertNotNull($b);
         self::assertTrue($b->generated);
@@ -84,7 +84,7 @@ final class ColumnParserTest extends TestCase
     {
         $sql = 'CREATE TABLE t (id SERIAL)';
         $tree = (new MySqlParser())->parse($sql);
-        $column = (new Subject())->parseColumnDefinition($tree->find('column_def')[0], $sql, []);
+        $column = (new Subject())->parseColumnDefinition($tree->find('column_def')[0], []);
 
         self::assertNotNull($column);
         self::assertSame('BIGINT', $column->type);
@@ -101,9 +101,9 @@ final class ColumnParserTest extends TestCase
         $ident = $tree->find('ident')[1];
         $fieldDef = $tree->find('field_def')[0];
 
-        self::assertNull((new Subject())->parseColumnDefinition(new Node('column_def', 0, [$fieldDef]), $sql, []));
-        self::assertNull((new Subject())->parseColumnDefinition(new Node('column_def', 0, [$ident]), $sql, []));
-        self::assertNull((new Subject())->parseColumnDefinition(new Node('column_def', 0, [$ident, new Node('field_def', 0, [])]), $sql, []));
-        self::assertNotNull((new Subject())->parseColumnDefinition($columnDef, $sql, []));
+        self::assertNull((new Subject())->parseColumnDefinition(new Node('column_def', 0, [$fieldDef]), []));
+        self::assertNull((new Subject())->parseColumnDefinition(new Node('column_def', 0, [$ident]), []));
+        self::assertNull((new Subject())->parseColumnDefinition(new Node('column_def', 0, [$ident, new Node('field_def', 0, [])]), []));
+        self::assertNotNull((new Subject())->parseColumnDefinition($columnDef, []));
     }
 }

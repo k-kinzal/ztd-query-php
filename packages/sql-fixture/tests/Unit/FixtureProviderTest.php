@@ -89,7 +89,6 @@ use SqlFixture\Schema\TableSchema;
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\ColumnParser::class)]
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\CreateTableQuery::class)]
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\DefaultExpression::class)]
-#[UsesClass(\SqlFixture\Platform\MySql\Schema\IdentifierQuoter::class)]
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinition::class)]
 #[UsesClass(\SqlFixture\Platform\MySql\Schema\TypeParameters::class)]
 #[UsesClass(\SqlFixture\Platform\MySql\Value\ColumnGenerator::class)]

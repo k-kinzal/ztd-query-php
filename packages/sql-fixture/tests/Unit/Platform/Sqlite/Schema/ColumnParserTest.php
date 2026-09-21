@@ -28,7 +28,7 @@ final class ColumnParserTest extends TestCase
     {
         $sql = 'CREATE TABLE t ("amount" DECIMAL(8, 2) NOT NULL DEFAULT 12.5 COLLATE NOCASE)';
         $tree = (new SqliteParser())->parse($sql);
-        $column = (new Subject())->parseColumnDefinition($tree->find('columnname')[0], $tree->find('carglist')[0], $sql, []);
+        $column = (new Subject())->parseColumnDefinition($tree->find('columnname')[0], $tree->find('carglist')[0], []);
 
         self::assertNotNull($column);
         self::assertSame('amount', $column->name);
@@ -48,10 +48,10 @@ final class ColumnParserTest extends TestCase
     {
         $sql = 'CREATE TABLE t (id INTEGER PRIMARY KEY AUTOINCREMENT, a INT, g INT AS (a + 1), b INT)';
         $columns = (new CreateTableStatement())->columns((new SqliteParser())->parse($sql)->find('cmd')[0]);
-        $id = (new Subject())->parseColumnDefinition($columns[0][0], $columns[0][1], $sql, []);
-        $a = (new Subject())->parseColumnDefinition($columns[1][0], $columns[1][1], $sql, ['a']);
-        $g = (new Subject())->parseColumnDefinition($columns[2][0], $columns[2][1], $sql, []);
-        $b = (new Subject())->parseColumnDefinition($columns[3][0], $columns[3][1], $sql, []);
+        $id = (new Subject())->parseColumnDefinition($columns[0][0], $columns[0][1], []);
+        $a = (new Subject())->parseColumnDefinition($columns[1][0], $columns[1][1], ['a']);
+        $g = (new Subject())->parseColumnDefinition($columns[2][0], $columns[2][1], []);
+        $b = (new Subject())->parseColumnDefinition($columns[3][0], $columns[3][1], []);
 
         self::assertNotNull($id);
         self::assertTrue($id->autoIncrement);
@@ -62,7 +62,7 @@ final class ColumnParserTest extends TestCase
         self::assertTrue($g->generated);
         self::assertNotNull($b);
         self::assertTrue($b->nullable);
-        self::assertSame('BLOB', (new Subject())->parseColumnDefinition((new SqliteParser())->parse('CREATE TABLE t (v)')->find('columnname')[0], $columns[3][1], $sql, [])?->type);
+        self::assertSame('BLOB', (new Subject())->parseColumnDefinition((new SqliteParser())->parse('CREATE TABLE t (v)')->find('columnname')[0], $columns[3][1], [])?->type);
     }
 
     public function testParseColumnDefinitionReturnsNullWithoutANameOrType(): void
@@ -73,8 +73,8 @@ final class ColumnParserTest extends TestCase
         $typetoken = $tree->find('typetoken')[0];
         $nm = $tree->find('columnname')[0]->find('nm')[0];
 
-        self::assertNull((new Subject())->parseColumnDefinition(new Node('columnname', 0, [$typetoken]), $carglist, $sql, []));
-        self::assertNull((new Subject())->parseColumnDefinition(new Node('columnname', 0, [$nm]), $carglist, $sql, []));
-        self::assertNull((new Subject())->parseColumnDefinition(new Node('columnname', 0, [new Node('nm', 0, []), $typetoken]), $carglist, $sql, []));
+        self::assertNull((new Subject())->parseColumnDefinition(new Node('columnname', 0, [$typetoken]), $carglist, []));
+        self::assertNull((new Subject())->parseColumnDefinition(new Node('columnname', 0, [$nm]), $carglist, []));
+        self::assertNull((new Subject())->parseColumnDefinition(new Node('columnname', 0, [new Node('nm', 0, []), $typetoken]), $carglist, []));
     }
 }

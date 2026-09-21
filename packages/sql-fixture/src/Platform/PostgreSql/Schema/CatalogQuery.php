@@ -53,8 +53,8 @@ final class CatalogQuery
         );
 
         try {
-            $qualifiedTable = $schema === 'public' ? "\"{$table}\"" : "\"{$schema}\".\"{$table}\"";
-            $pkStmt->execute(['table_oid' => $qualifiedTable]);
+            $identifiers = new Identifier();
+            $pkStmt->execute(['table_oid' => $identifiers->quote($schema) . '.' . $identifiers->quote($table)]);
             /**
              * @var list<array{attname: string}> $pkRows
              */

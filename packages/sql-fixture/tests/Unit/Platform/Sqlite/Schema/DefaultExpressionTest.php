@@ -23,7 +23,7 @@ final class DefaultExpressionTest extends TestCase
         $sql = "CREATE TABLE t (c {$declaration})";
         $tree = (new SqliteParser())->parse($sql);
 
-        self::assertSame($expected, (new Subject())->extractDefault($tree->find('ccons')[0], $sql));
+        self::assertSame($expected, (new Subject())->extractDefault($tree->find('ccons')[0]));
     }
 
     /**
@@ -61,7 +61,7 @@ final class DefaultExpressionTest extends TestCase
 
     public function testExtractDefaultReturnsNullWithoutAValue(): void
     {
-        self::assertNull((new Subject())->extractDefault(new Node('ccons', 0, [new \SqlParser\Lexer\Token(1, 'DEFAULT', 'DEFAULT', 0)]), 'DEFAULT'));
+        self::assertNull((new Subject())->extractDefault(new Node('ccons', 0, [new \SqlParser\Lexer\Token(1, 'DEFAULT', 'DEFAULT', 0)])));
     }
 
     public function testIdentifierValueReadsBooleansAndQuotedWords(): void

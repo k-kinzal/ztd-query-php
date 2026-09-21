@@ -40,12 +40,12 @@ final class TableDefinition
      * @return array<string, ColumnDefinition>
      * @throws MissingColumnDefinitionsException
      */
-    public function extractColumns(Node $command, string $sql, string $tableName): array
+    public function extractColumns(Node $command, string $tableName): array
     {
         $columns = [];
         $primaryKeys = $this->extractPrimaryKeys($command);
         foreach ((new CreateTableStatement())->columns($command) as [$columnname, $carglist]) {
-            $column = (new ColumnParser())->parseColumnDefinition($columnname, $carglist, $sql, $primaryKeys);
+            $column = (new ColumnParser())->parseColumnDefinition($columnname, $carglist, $primaryKeys);
             if ($column !== null) {
                 $columns[$column->name] = $column;
             }

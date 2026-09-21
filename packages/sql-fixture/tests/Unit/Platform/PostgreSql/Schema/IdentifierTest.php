@@ -22,4 +22,18 @@ final class IdentifierTest extends TestCase
         self::assertSame(['Plain', 'Quo"ted', 'name'], $names);
         self::assertSame('x', (new Subject())->decode(new Token(1, 'IDENT', 'x', 0)));
     }
+
+    public function testFoldLowercasesOnlyTheNamesWrittenWithoutQuotes(): void
+    {
+        self::assertSame('users', (new Subject())->fold(new Token(1, 'IDENT', 'Users', 0)));
+        self::assertSame('Users', (new Subject())->fold(new Token(1, 'IDENT', '"Users"', 0)));
+        self::assertSame('a"b', (new Subject())->fold(new Token(1, 'IDENT', '"a""b"', 0)));
+    }
+
+    public function testQuoteWritesOneIdentifierWithItsQuoteDoubled(): void
+    {
+        self::assertSame('"users"', (new Subject())->quote('users'));
+        self::assertSame('"a""b"', (new Subject())->quote('a"b'));
+        self::assertSame('"My.Table"', (new Subject())->quote('My.Table'));
+    }
 }

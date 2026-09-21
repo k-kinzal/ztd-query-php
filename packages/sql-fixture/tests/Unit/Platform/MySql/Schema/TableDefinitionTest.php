@@ -46,7 +46,7 @@ final class TableDefinitionTest extends TestCase
     {
         $sql = 'CREATE TABLE t (id INT, PRIMARY KEY (id), name VARCHAR(10) NOT NULL, KEY k (name))';
         $statement = (new MySqlParser())->parse($sql)->find('create_table_stmt')[0];
-        $columns = (new Subject())->extractColumns($statement, $sql, 't');
+        $columns = (new Subject())->extractColumns($statement, 't');
 
         self::assertSame(['id', 'name'], array_keys($columns));
         self::assertFalse($columns['id']->nullable);
@@ -59,7 +59,7 @@ final class TableDefinitionTest extends TestCase
         $statement = (new MySqlParser())->parse($sql)->find('create_table_stmt')[0];
 
         $this->expectException(\SqlFixture\Schema\Exception\MissingColumnDefinitionsException::class);
-        (new Subject())->extractColumns($statement, $sql, 't');
+        (new Subject())->extractColumns($statement, 't');
     }
 
     public function testExtractPrimaryKeysCombinesColumnAndTableLevelKeysWithoutDuplicates(): void

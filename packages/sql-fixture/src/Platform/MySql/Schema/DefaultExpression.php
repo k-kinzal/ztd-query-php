@@ -6,6 +6,7 @@ namespace SqlFixture\Platform\MySql\Schema;
 
 use SqlFixture\Syntax\NodeReader;
 use SqlFixture\Syntax\NumericLiteral;
+use SqlFixture\Syntax\SqlText;
 use SqlParser\Parser\Node;
 
 /**
@@ -18,12 +19,11 @@ final class DefaultExpression
     /**
      * Returns the literal value a DEFAULT attribute declares, or the text of its expression.
      */
-    public function extractDefault(Node $attribute, string $sql): int|float|bool|string|null
+    public function extractDefault(Node $attribute): int|float|bool|string|null
     {
-        $reader = new NodeReader();
-        $literal = $reader->child($attribute, 'now_or_signed_literal');
+        $literal = (new NodeReader())->child($attribute, 'now_or_signed_literal');
         if ($literal === null) {
-            return $reader->textOf(array_slice($attribute->tokens(), 1), $sql);
+            return (new SqlText())->ofTokens(array_slice($attribute->tokens(), 1));
         }
         $sign = '';
         foreach ($literal->tokens() as $token) {
@@ -51,6 +51,6 @@ final class DefaultExpression
             }
         }
 
-        return $literal->text($sql);
+        return (new SqlText())->ofNode($literal);
     }
 }

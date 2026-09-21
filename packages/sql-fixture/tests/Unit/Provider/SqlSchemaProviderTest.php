@@ -76,7 +76,6 @@ use SqlFixture\Provider\SqlSchemaProvider as Subject;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\ColumnParser::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\CreateTableQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\DefaultExpression::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\IdentifierQuoter::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\TableDefinition::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Schema\TypeParameters::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlFixture\Platform\MySql\Value\ColumnGenerator::class)]

@@ -16,9 +16,9 @@ use SqlFixture\Schema\TableSchema;
 final class CatalogSchema
 {
     /**
-     * Keeps the grammar-backed reader for catalog default expressions.
+     * Keeps the grammar-backed readers for table names and catalog default expressions.
      */
-    public function __construct(private readonly CatalogExpression $expressions)
+    public function __construct(private readonly CatalogExpression $expressions, private readonly QualifiedName $names)
     {
     }
 
@@ -28,13 +28,7 @@ final class CatalogSchema
      */
     public function fetchSchema(PDO $pdo, string $tableName): TableSchema
     {
-        $schema = 'public';
-        $table = $tableName;
-        if (str_contains($tableName, '.')) {
-            $parts = explode('.', $tableName, 2);
-            $schema = $parts[0];
-            $table = $parts[1];
-        }
+        [$schema, $table] = $this->names->split($tableName);
 
         $rows = (new CatalogQuery())->columns($pdo, $schema, $table);
         if ($rows === []) {

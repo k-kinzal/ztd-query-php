@@ -201,6 +201,20 @@ $faker->addProvider(new DatabaseFixtureProvider($faker, $pdo));
 | BLOB | BLOB, BINARY, VARBINARY |
 | NUMERIC | BOOLEAN, DATE, DATETIME, TIMESTAMP, DECIMAL |
 
+## How Schemas Are Read
+
+Every dialect reads its `CREATE TABLE` with the grammar of the server through
+[sql-parser](../sql-parser/): the table name, the columns, their types, the
+constraints and the defaults are read from the syntax tree, so a declaration is
+either understood as the server understands it or rejected with the position
+the server would reject it at. Nothing about a statement is decided by matching
+its text.
+
+The same holds for the statements the package issues. `DatabaseFixtureProvider`
+writes the table name into `SHOW CREATE TABLE` and reads the statement back
+with the grammar before it is sent, and a PostgreSQL table name is split into
+its schema and its table by the grammar rather than at the first dot.
+
 ## Column Handling
 
 - **AUTO_INCREMENT / AUTOINCREMENT** columns are skipped (not generated)

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlFixture\Platform\PostgreSql\Schema;
 
 use SqlFixture\Syntax\NumericLiteral;
+use SqlFixture\Syntax\SqlText;
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
 
@@ -18,7 +19,7 @@ final class DefaultExpression
     /**
      * Returns the constant the expression denotes, dropping a type cast, or the expression text.
      */
-    public function evaluate(Node $expression, string $sql): int|float|bool|string|null
+    public function evaluate(Node $expression): int|float|bool|string|null
     {
         $tokens = $expression->tokens();
         $sign = '';
@@ -29,7 +30,7 @@ final class DefaultExpression
         }
         $constant = array_shift($tokens);
         if ($constant === null || ($tokens !== [] && !$this->isCast($expression, $tokens))) {
-            return $expression->text($sql);
+            return (new SqlText())->ofNode($expression);
         }
 
         return match ($constant->name) {
@@ -38,7 +39,7 @@ final class DefaultExpression
             'TRUE_P' => true,
             'FALSE_P' => false,
             'NULL_P' => null,
-            default => $expression->text($sql),
+            default => (new SqlText())->ofNode($expression),
         };
     }
 
