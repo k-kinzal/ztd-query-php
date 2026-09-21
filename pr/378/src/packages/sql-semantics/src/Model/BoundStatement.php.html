@@ -69,13 +69,13 @@
 <span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     * @param Node $source Original statement tree</span></span>
 <span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com">     * @param list&lt;Expression&gt; $groupBy Grouping expressions</span></span>
 <span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-com">     * @param Expression|null $having Group filter</span></span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-com">     * @param array&lt;string, BoundStatement&gt; $ctes Local common table expressions</span></span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-com">     * @param array&lt;int|string, BoundStatement&gt; $ctes Local common table expressions</span></span>
 <span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a><span class="tok-com">     * @param list&lt;BoundSelect&gt; $branches Compound query operands</span></span>
 <span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a><span class="tok-com">     * @param string|null $setOperator Compound operation, including ALL</span></span>
 <span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a><span class="tok-com">     * @param array&lt;string, list&lt;Expression&gt;&gt; $clauses Additional expression-bearing clauses</span></span>
 <span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a><span class="tok-com">     * @param string $kind Statement operation</span></span>
 <span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a><span class="tok-com">     * @param list&lt;TableUse&gt; $targets Written or affected relations</span></span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a><span class="tok-com">     * @param array&lt;string, Expression&gt; $assignments Assigned column values</span></span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a><span class="tok-com">     * @param array&lt;int|string, Expression&gt; $assignments Assigned column values</span></span>
 <span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a><span class="tok-com">     * @param list&lt;BoundSelect&gt; $queries Input queries</span></span>
 <span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a><span class="tok-com">     * @param list&lt;list&lt;Expression&gt;&gt; $rows Explicit VALUES rows</span></span>
 <span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a><span class="tok-com">     * @param bool $withTies Include peers of the final ordered row</span></span>
