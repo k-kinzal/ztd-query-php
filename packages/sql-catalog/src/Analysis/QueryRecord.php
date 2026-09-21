@@ -121,15 +121,19 @@ final class QueryRecord
     }
 
     /**
-     * The values bound by position, in order.
+     * The values bound by position, keyed by position counting from zero, in order.
      *
-     * @return list<Domain>
+     * A position nothing was bound to is absent rather than closed up, so a
+     * value bound to the second placeholder alone stays with the second
+     * placeholder.
+     *
+     * @return array<int, Domain>
      */
     public function positional(): array
     {
         ksort($this->positional);
 
-        return array_values($this->positional);
+        return $this->positional;
     }
 
     /**

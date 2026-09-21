@@ -125,4 +125,63 @@ final class QueryRecordTest extends TestCase
         $record->bind([], []);
         self::assertTrue($record->isBound());
     }
+
+    public function testIsBoundAfterASingleValueIsBound(): void
+    {
+        $record = new QueryRecord(new CallSite('a.php', 1, 'f', 's'), 'k', TextPattern::fromText('SELECT :id'));
+
+        $record->bindOne(':id', Domain::literal(1));
+
+        self::assertTrue($record->isBound());
+    }
+
+    public function testIsBoundAfterAbsorbOnlyWhenEitherReadingWasBound(): void
+    {
+        $site = new CallSite('a.php', 1, 'f', 's');
+        $neither = new QueryRecord($site, 'k', TextPattern::fromText('SELECT 1'));
+        $neither->absorb(new QueryRecord($site, 'k', TextPattern::fromText('SELECT 1')));
+        $both = new QueryRecord($site, 'k', TextPattern::fromText('SELECT 1'));
+        $both->bind([], []);
+        $other = new QueryRecord($site, 'k', TextPattern::fromText('SELECT 1'));
+        $other->bind([], []);
+        $both->absorb($other);
+
+        self::assertFalse($neither->isBound());
+        self::assertTrue($both->isBound());
+    }
+
+    public function testBindOneWritesAPositionCountedFromOne(): void
+    {
+        $record = new QueryRecord(new CallSite('a.php', 1, 'f', 's'), 'k', TextPattern::fromText('SELECT ?, ?'));
+        $record->bind([Domain::literal('a'), Domain::literal('b')], []);
+
+        $record->bindOne(1, Domain::literal('x'));
+
+        self::assertSame(['x', 'b'], array_map(
+            static fn (Domain $domain): string|int|float|bool|null => $domain->soleLiteral()?->value,
+            $record->positional(),
+        ));
+    }
+
+    public function testPositionalKeepsAValueAtThePositionItWasBoundTo(): void
+    {
+        $record = new QueryRecord(new CallSite('a.php', 1, 'f', 's'), 'k', TextPattern::fromText('SELECT ?, ?, ?'));
+
+        $record->bindOne(3, Domain::literal('third'));
+        $record->bindOne(1, Domain::literal('first'));
+
+        self::assertSame([0, 2], array_keys($record->positional()));
+        self::assertSame('third', $record->positional()[2]->soleLiteral()?->value);
+    }
+
+    public function testIsTruncatedIsFalseAndCombinedIsFalseUnlessToldOtherwise(): void
+    {
+        $site = new CallSite('a.php', 1, 'f', 's');
+
+        $fresh = new QueryRecord($site, 'k', TextPattern::fromText('SELECT 1'));
+
+        self::assertFalse($fresh->isTruncated());
+        self::assertFalse($fresh->combined);
+        self::assertTrue((new QueryRecord($site, 'k', TextPattern::fromText('SELECT 1'), null, true))->combined);
+    }
 }

@@ -9,6 +9,7 @@ use PhpParser\NodeFinder;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
+use SqlCatalog\Analysis\Derivation\Solution;
 use SqlCatalog\Analysis\EvaluationBudget;
 use SqlCatalog\Analysis\FunctionScope;
 use SqlCatalog\Analysis\Interpreter;
@@ -49,7 +50,7 @@ use SqlCatalog\Text\Origin;
 #[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\LoopPasses::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\Pending::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\SliceStep::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\Solution::class)]
+#[UsesClass(Solution::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\SourceTree::class)]
 #[UsesClass(EvaluationBudget::class)]
 #[UsesClass(\SqlCatalog\Analysis\ExpressionEvaluator::class)]
@@ -282,5 +283,272 @@ final class InterpreterTest extends TestCase
         $records = (new Interpreter((new ProgramIndexBuilder())->build([$file]), $sinks, new EvaluationBudget(1)))->analyze([$file]);
 
         self::assertCount(1, $records);
+    }
+
+    public function testAnalyzeSpendsNoMoreThanTheBudgetItIsGiven(): void
+    {
+        $source = '<?php function f(PDO $d): void { $a = "a"; $b = $a . "b"; $c = $b . "c"; $e = $c . "e"; $g = $e . "g"; $d->query("SELECT " . $g); }';
+        $file = (new SourceParser())->parse('t.php', $source);
+        $index = (new ProgramIndexBuilder())->build([$file]);
+
+        $tight = (new Interpreter($index, (new PdoExtension())->sinks(), new EvaluationBudget(5)))->analyze([$file]);
+        $ample = (new Interpreter($index, (new PdoExtension())->sinks()))->analyze([$file]);
+
+        self::assertFalse($tight[0]->pattern->isExact());
+        self::assertSame('SELECT abceg', $ample[0]->pattern->text());
+    }
+
+    public function testAnalyzeGivesEveryCallTheWholeBudget(): void
+    {
+        $body = '(PDO $d): void { $a = "a"; $b = $a . "b"; $c = $b . "c"; $e = $c . "e"; $g = $e . "g"; $d->query("SELECT " . $g); }';
+        $file = (new SourceParser())->parse('t.php', '<?php function f' . $body . ' function h' . $body);
+
+        $records = (new Interpreter((new ProgramIndexBuilder())->build([$file]), (new PdoExtension())->sinks(), new EvaluationBudget(10)))->analyze([$file]);
+
+        self::assertSame(['SELECT abceg', 'SELECT abceg'], array_map(static fn (QueryRecord $record): ?string => $record->pattern->text(), $records));
+        self::assertSame(['pdo.query', 'pdo.query'], array_map(static fn (QueryRecord $record): string => $record->site->sink, $records));
+    }
+
+    public function testAnalyzeKeepsWhatEveryCallBinds(): void
+    {
+        $file = (new SourceParser())->parse(
+            't.php',
+            '<?php function f(PDO $d): void { $s = $d->prepare("SELECT :a, :b"); $s->bindValue(":a", 1); $s->bindValue(":b", 2); $s->execute(); }',
+        );
+
+        $records = (new Interpreter((new ProgramIndexBuilder())->build([$file]), (new PdoExtension())->sinks()))->analyze([$file]);
+
+        self::assertSame(['a' => 1, 'b' => 2], array_map(
+            static fn (\SqlCatalog\Evaluation\Domain $value): string|int|float|bool|null => $value->soleLiteral()?->value,
+            $records[0]->named(),
+        ));
+    }
+
+    public function testAnalyzeBindsWhatANullsafeExecuteBinds(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php function f(PDO $d): void { $s = $d->prepare("SELECT ?"); $s?->execute([7]); }');
+
+        $records = (new Interpreter((new ProgramIndexBuilder())->build([$file]), (new PdoExtension())->sinks()))->analyze([$file]);
+
+        self::assertSame(7, $records[0]->positional()[0]->soleLiteral()?->value);
+    }
+
+    public function testAnalyzeBindsWhatAQueryCallCarriesAlongsideItsStatement(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php function f(mysqli $m): void { $m->execute_query("SELECT ?", [7]); }');
+
+        $records = (new Interpreter((new ProgramIndexBuilder())->build([$file]), (new \SqlCatalog\Extension\MysqliExtension())->sinks()))->analyze([$file]);
+
+        self::assertSame('SELECT ?', $records[0]->pattern->text());
+        self::assertSame(7, $records[0]->positional()[0]->soleLiteral()?->value);
+    }
+
+    public function testAnalyzeRecordsNothingAtACallThatOnlyComposesAStatement(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php function f(): void { global $wpdb; $wpdb->query($wpdb->prepare("SELECT %d", 1)); }');
+        $interpreter = new Interpreter(
+            (new ProgramIndexBuilder())->build([$file]),
+            ExtensionRegistry::withBuiltins()->sinksOf(['pdo', 'wordpress']),
+            null,
+            new DeclaredGlobals(['wpdb' => 'wpdb']),
+        );
+
+        $records = $interpreter->analyze([$file]);
+
+        self::assertSame(['wordpress.query'], array_map(static fn (QueryRecord $record): string => $record->site->sink, $records));
+    }
+
+    public function testVisitRecordsNothingForACallWithoutItsStatement(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php function f(PDO $d): void { $d->query(); }');
+        $interpreter = new Interpreter((new ProgramIndexBuilder())->build([$file]), (new PdoExtension())->sinks());
+        $call = (new NodeFinder())->findFirstInstanceOf($file->statements, Expr\MethodCall::class);
+        self::assertInstanceOf(Expr\MethodCall::class, $call);
+        $recorder = new StatementRecorder();
+
+        $later = $interpreter->visit(
+            $call,
+            $interpreter->deriverFor([$file]),
+            new SinkMatcher((new PdoExtension())->sinks(), new ProgramIndex()),
+            $recorder,
+            new ValueBinder($recorder),
+        );
+
+        self::assertSame([], $later);
+        self::assertSame([], $recorder->records());
+    }
+
+    public function testVisitRecordsNothingForADatabaseCallThatTakesNoStatement(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php function f(Db $d): void { $d->ping("SELECT 1"); }');
+        $sinks = [new \SqlCatalog\Extension\SinkSpec('db.ping', \SqlCatalog\Extension\SinkCallKind::Method, 'Db', 'ping', \SqlCatalog\Extension\SinkRole::Query)];
+        $interpreter = new Interpreter((new ProgramIndexBuilder())->build([$file]), $sinks);
+        $call = (new NodeFinder())->findFirstInstanceOf($file->statements, Expr\MethodCall::class);
+        self::assertInstanceOf(Expr\MethodCall::class, $call);
+        $recorder = new StatementRecorder();
+
+        $interpreter->visit($call, $interpreter->deriverFor([$file]), new SinkMatcher($sinks, new ProgramIndex()), $recorder, new ValueBinder($recorder));
+
+        self::assertSame([], $recorder->records());
+    }
+
+    public function testVisitHandsBackNothingForABindingCallWrittenWithoutAReceiver(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php function f($s): void { stmt_execute($s, [1]); }');
+        $sinks = [new \SqlCatalog\Extension\SinkSpec('db.execute', \SqlCatalog\Extension\SinkCallKind::FunctionCall, null, 'stmt_execute', \SqlCatalog\Extension\SinkRole::Execute, valuesParameter: 1)];
+        $interpreter = new Interpreter(new ProgramIndex(), $sinks);
+        $call = (new NodeFinder())->findFirstInstanceOf($file->statements, Expr\FuncCall::class);
+        self::assertInstanceOf(Expr\FuncCall::class, $call);
+        $recorder = new StatementRecorder();
+
+        $later = $interpreter->visit($call, $interpreter->deriverFor([$file]), new SinkMatcher($sinks, new ProgramIndex()), $recorder, new ValueBinder($recorder));
+
+        self::assertSame([], $later);
+    }
+
+    public function testSinkOfReadsANullsafeCallAndAFunctionCall(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php function f(mysqli $m, ?mysqli $n, callable $g): void { $n?->query("SELECT 1"); mysqli_query($m, "SELECT 2"); $g("SELECT 3"); }');
+        $sinks = (new \SqlCatalog\Extension\MysqliExtension())->sinks();
+        $index = (new ProgramIndexBuilder())->build([$file]);
+        $interpreter = new Interpreter($index, $sinks);
+        $deriver = $interpreter->deriverFor([$file]);
+        $matcher = new SinkMatcher($sinks, $index);
+        $calls = (new NodeFinder())->findInstanceOf($file->statements, Expr\CallLike::class);
+
+        self::assertSame(
+            ['mysqli.query', 'mysqli.fn.query', null],
+            array_map(static fn (Expr\CallLike $call): ?string => $interpreter->sinkOf($call, $deriver, $matcher, $deriver->scopeOf($call))?->id, $calls),
+        );
+    }
+
+    public function testSinkOfResolvesAStaticCallOnTheEnclosingClass(): void
+    {
+        $file = (new SourceParser())->parse(
+            't.php',
+            '<?php class DB { static function all(): void { self::select("a"); SELF::select("b"); static::select("c"); } }'
+            . ' class Other { function m(string $c): void { DB::select("d"); $c::select("e"); self::select("f"); } }',
+        );
+        $sinks = [new \SqlCatalog\Extension\SinkSpec('db.select', \SqlCatalog\Extension\SinkCallKind::StaticCall, 'DB', 'select', \SqlCatalog\Extension\SinkRole::Query, sqlParameter: 0)];
+        $index = (new ProgramIndexBuilder())->build([$file]);
+        $interpreter = new Interpreter($index, $sinks);
+        $deriver = $interpreter->deriverFor([$file]);
+        $matcher = new SinkMatcher($sinks, $index);
+        $calls = (new NodeFinder())->findInstanceOf($file->statements, Expr\StaticCall::class);
+
+        self::assertSame(
+            ['db.select', 'db.select', 'db.select', 'db.select', null, null],
+            array_map(static fn (Expr\CallLike $call): ?string => $interpreter->sinkOf($call, $deriver, $matcher, $deriver->scopeOf($call))?->id, $calls),
+        );
+    }
+
+    public function testReceiverOfJoinsEveryWayTheReceiverCanBe(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php class A {} class B {} function f(bool $c): void { if ($c) { $d = new A(); } else { $d = new B(); } $d->query("SELECT 1"); }');
+        $interpreter = new Interpreter((new ProgramIndexBuilder())->build([$file]), (new PdoExtension())->sinks());
+        $call = (new NodeFinder())->findFirstInstanceOf($file->statements, Expr\MethodCall::class);
+        self::assertInstanceOf(Expr\MethodCall::class, $call);
+
+        self::assertSame(['A', 'B'], $interpreter->receiverOf($call, $interpreter->deriverFor([$file]))->type()->classNames());
+    }
+
+    public function testUnidentifiedCoversANullsafeCallButNotAFunctionCall(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php function f($x): void { $x?->query("SELECT 1"); query("SELECT 1"); }');
+        $sinks = (new PdoExtension())->sinks();
+        $interpreter = new Interpreter(new ProgramIndex(), $sinks);
+        $deriver = $interpreter->deriverFor([$file]);
+        $matcher = new SinkMatcher($sinks, new ProgramIndex());
+        $nullsafe = (new NodeFinder())->findFirstInstanceOf($file->statements, Expr\NullsafeMethodCall::class);
+        self::assertInstanceOf(Expr\NullsafeMethodCall::class, $nullsafe);
+        $function = (new NodeFinder())->findFirstInstanceOf($file->statements, Expr\FuncCall::class);
+        self::assertInstanceOf(Expr\FuncCall::class, $function);
+
+        self::assertTrue($interpreter->unidentified($nullsafe, $deriver, $matcher));
+        self::assertFalse($interpreter->unidentified($function, $deriver, $matcher));
+    }
+
+    public function testRecordStatementsSkipsAReadingWithoutTheStatement(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php function f(PDO $d): void { $d->query("SELECT 1"); }');
+        $call = (new NodeFinder())->findFirstInstanceOf($file->statements, Expr\MethodCall::class);
+        self::assertInstanceOf(Expr\MethodCall::class, $call);
+        $recorder = new StatementRecorder();
+
+        (new Interpreter(new ProgramIndex(), []))->recordStatements(
+            $call,
+            (new PdoExtension())->sinks()[0],
+            [new Solution([], []), new Solution([\SqlCatalog\Evaluation\Domain::literal('SELECT 2')], [])],
+            new FunctionScope('t.php', 'f'),
+            $recorder,
+            new ValueBinder($recorder),
+        );
+
+        self::assertSame(['SELECT 2'], array_map(static fn (QueryRecord $record): ?string => $record->pattern->text(), $recorder->records()));
+    }
+
+    public function testRecordStatementsMarksAStatementCombinedWhenEitherTheTextOrTheReadingIs(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php function f(PDO $d): void { $d->query("SELECT 1"); }');
+        $call = (new NodeFinder())->findFirstInstanceOf($file->statements, Expr\MethodCall::class);
+        self::assertInstanceOf(Expr\MethodCall::class, $call);
+        $recorder = new StatementRecorder();
+        $plain = \SqlCatalog\Evaluation\Domain::literal('SELECT 1');
+        $combined = \SqlCatalog\Evaluation\Domain::fromTerms([new \SqlCatalog\Evaluation\LiteralTerm('SELECT 2')], false, true);
+
+        (new Interpreter(new ProgramIndex(), []))->recordStatements(
+            $call,
+            (new PdoExtension())->sinks()[0],
+            [
+                new Solution([$plain], []),
+                new Solution([$plain], [], false, true),
+                new Solution([$combined], []),
+            ],
+            new FunctionScope('t.php', 'f'),
+            $recorder,
+            new ValueBinder($recorder),
+        );
+
+        self::assertSame([false, true, true], array_map(static fn (QueryRecord $record): bool => $record->combined, $recorder->records()));
+    }
+
+    public function testRecordStatementsFilesTheStatementsOfEveryReadingUnderThePreparedHandle(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php function f(PDO $d): void { $d->prepare("SELECT 1"); }');
+        $call = (new NodeFinder())->findFirstInstanceOf($file->statements, Expr\MethodCall::class);
+        self::assertInstanceOf(Expr\MethodCall::class, $call);
+        $recorder = new StatementRecorder();
+
+        (new Interpreter(new ProgramIndex(), []))->recordStatements(
+            $call,
+            (new PdoExtension())->sinks()[2],
+            [
+                new Solution([\SqlCatalog\Evaluation\Domain::literal('SELECT 1')], []),
+                new Solution([\SqlCatalog\Evaluation\Domain::literal('SELECT 2')], []),
+            ],
+            new FunctionScope('t.php', 'f'),
+            $recorder,
+            new ValueBinder($recorder),
+        );
+
+        self::assertSame(
+            ['SELECT 1', 'SELECT 2'],
+            array_map(
+                static fn (QueryRecord $record): ?string => $record->pattern->text(),
+                $recorder->prepared('t.php:' . $call->getStartFilePos() . ':pdo.prepare'),
+            ),
+        );
+    }
+
+    public function testRecordUnmatchedKeysTheCallByItsFileAndOffset(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php $x->query("SELECT 1");');
+        $call = (new NodeFinder())->findFirstInstanceOf($file->statements, Expr\MethodCall::class);
+        self::assertInstanceOf(Expr\MethodCall::class, $call);
+        $recorder = new StatementRecorder();
+
+        (new Interpreter(new ProgramIndex(), []))->recordUnmatched($call, new FunctionScope('t.php'), $recorder);
+
+        self::assertSame('t.php:' . $call->getStartFilePos(), $recorder->records()[0]->siteKey);
     }
 }

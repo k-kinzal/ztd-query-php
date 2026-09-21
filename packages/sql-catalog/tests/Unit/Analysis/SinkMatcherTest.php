@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Analysis;
 
+use ArrayObject;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -73,6 +74,53 @@ final class SinkMatcherTest extends TestCase
         $matcher = new SinkMatcher((new PdoExtension())->sinks(), new ProgramIndex());
         self::assertCount(1, $matcher->byName(SinkCallKind::Method, 'prepare'));
         self::assertSame([], $matcher->byName(SinkCallKind::FunctionCall, 'prepare'));
+    }
+
+    public function testByNameKeepsEveryCallOfThatName(): void
+    {
+        $matcher = new SinkMatcher([
+            new SinkSpec('a.run', SinkCallKind::Method, 'App\\A', 'run', \SqlCatalog\Extension\SinkRole::Query, sqlParameter: 0),
+            new SinkSpec('b.run', SinkCallKind::Method, 'App\\B', 'run', \SqlCatalog\Extension\SinkRole::Query, sqlParameter: 0),
+        ], new ProgramIndex());
+
+        self::assertSame(['a.run', 'b.run'], array_map(
+            static fn (SinkSpec $sink): string => $sink->id,
+            $matcher->byName(SinkCallKind::Method, 'run'),
+        ));
+    }
+
+    public function testClassMatchesIgnoresALeadingBackslashAndTheCaseOfTheName(): void
+    {
+        $matcher = new SinkMatcher([], new ProgramIndex());
+
+        self::assertTrue($matcher->classMatches('\\App\\Repository', 'App\\Repository'));
+        self::assertTrue($matcher->classMatches('App\\Repository', '\\App\\Repository'));
+        self::assertTrue($matcher->classMatches('App\\Repository', 'app\\repository'));
+        self::assertFalse($matcher->classMatches('App\\A', 'App\\B'));
+        self::assertFalse($matcher->classMatches('App\\B', 'App\\A'));
+    }
+
+    public function testClassMatchesReadsTheRunningProcessOnlyForAClassThatIsRelated(): void
+    {
+        $matcher = new SinkMatcher([], new ProgramIndex());
+
+        self::assertTrue($matcher->classMatches('ArrayIterator', 'Traversable'));
+        self::assertFalse($matcher->classMatches('PDOStatement', 'PDO'));
+    }
+
+    public function testClassMatchesNeverLoadsAClassOfTheAnalyzedSource(): void
+    {
+        $requested = new ArrayObject();
+        $loader = static function (string $class) use ($requested): void {
+            $requested->append($class);
+        };
+        spl_autoload_register($loader);
+
+        $matches = (new SinkMatcher([], new ProgramIndex()))->classMatches('App\\NeverDeclared', 'PDO');
+        spl_autoload_unregister($loader);
+
+        self::assertFalse($matches);
+        self::assertSame([], $requested->getArrayCopy());
     }
 
     public function testReceiverMatchesReadsTheClassOutOfTheDomain(): void

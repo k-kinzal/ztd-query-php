@@ -268,6 +268,17 @@ final class AnalyzerTest extends TestCase
         self::assertFalse($catalog->entries()[0]->correlated);
     }
 
+    public function testAValueBoundToOnePlaceholderStaysWithThatPlaceholder(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource([
+            't.php' => '<?php function f(PDO $d): void { $s = $d->prepare("SELECT * FROM t WHERE a = ? AND b = ?"); $s->bindValue(2, "x"); $s->execute(); }',
+        ]);
+
+        self::assertNull($catalog->entries()[0]->placeholders[0]->value);
+        self::assertSame(['x'], $catalog->entries()[0]->placeholders[1]->value?->values);
+        self::assertTrue($catalog->entries()[0]->hasFinding(FindingRule::PlaceholderCountMismatch));
+    }
+
     public function testExtensionsAreTheOnesTheRunCanAskFor(): void
     {
         self::assertSame(['doctrine', 'laravel', 'mysqli', 'pdo', 'wordpress'], (new Analyzer())->extensions()->names());

@@ -135,6 +135,33 @@ final class BuiltinCallModelTest extends TestCase
         self::assertSame('x', (new BuiltinCallModel())->evaluate('strval', [Domain::literal('x')])->soleLiteral()?->value);
     }
 
+    /**
+     * @param list<Domain> $arguments
+     */
+    #[DataProvider('providerEvaluateUnresolved')]
+    public function testEvaluateKnowsTheTypeOfAResultItCouldNotResolve(string $function, array $arguments, string $expected): void
+    {
+        self::assertSame($expected, (new BuiltinCallModel())->evaluate($function, $arguments)->type()->display());
+    }
+
+    /**
+     * @return array<string, array{string, list<Domain>, string}>
+     */
+    public static function providerEvaluateUnresolved(): array
+    {
+        return [
+            'intval' => ['intval', [Domain::unknown()], 'int'],
+            'count' => ['count', [Domain::unknown()], 'int'],
+            'strlen' => ['strlen', [Domain::unknown()], 'int'],
+            'sprintf of an unknown format' => ['sprintf', [Domain::unknown()], 'string'],
+            'vsprintf without an array' => ['vsprintf', [Domain::literal('%s'), Domain::unknown()], 'string'],
+            'implode without an array' => ['implode', [Domain::literal(','), Domain::unknown()], 'string'],
+            'str_repeat of an unknown count' => ['str_repeat', [Domain::literal('?'), Domain::unknown()], 'string'],
+            'strtolower of an unknown subject' => ['strtolower', [Domain::unknown()], 'string'],
+            'str_replace of an unknown subject' => ['str_replace', [Domain::literal('a'), Domain::literal('b'), Domain::unknown()], 'string'],
+        ];
+    }
+
     #[DataProvider('providerNormalize')]
     public function testNormalize(string $written, string $expected): void
     {
@@ -162,6 +189,29 @@ final class BuiltinCallModelTest extends TestCase
     public function testSprintfGivesUpWhenTheFormatDidNotResolve(): void
     {
         self::assertFalse((new BuiltinCallModel())->sprintf([], Domain::unknown())->isExact());
+    }
+
+    public function testSprintfOfAFormatThatIsNotTextKeepsItsOriginButNotItsExpression(): void
+    {
+        $result = (new BuiltinCallModel())->sprintf([Domain::literal('a')], Domain::opaque(TypeShape::unknown(), Origin::External, '$format'));
+        $hole = $result->patterns()[0]->holes()[0];
+
+        self::assertSame(Origin::External, $hole->origin);
+        self::assertSame('sprintf', $hole->expression);
+        self::assertSame('string', $hole->type->display());
+    }
+
+    public function testSprintfFillsAPartlyKnownFormat(): void
+    {
+        $format = Domain::of(new PatternTerm(
+            TextPattern::fromText('SELECT * FROM ')
+                ->concat(TextPattern::fromHole(new TextHole(Origin::Parameter, TypeShape::of(['string']), '$table')))
+                ->concat(TextPattern::fromText(' WHERE id = %d')),
+        ));
+
+        $result = (new BuiltinCallModel())->sprintf([Domain::literal(7)], $format);
+
+        self::assertSame('SELECT * FROM {$} WHERE id = 7', $result->patterns()[0]->display());
     }
 
     public function testSprintfKeepsALiteralPercentSign(): void
@@ -268,6 +318,40 @@ final class BuiltinCallModelTest extends TestCase
         self::assertSame(['SELECT ', '%s', ' FROM ', '%s'], (new BuiltinCallModel())->splitFormat('SELECT %s FROM %s'));
     }
 
+    public function testSplitFormatListsThePiecesOfAFormatStartingWithAConversion(): void
+    {
+        self::assertSame(['%s', ' = ', '%d'], (new BuiltinCallModel())->splitFormat('%s = %d'));
+    }
+
+    public function testImplodeWithoutGlueJoinsTheElementsDirectly(): void
+    {
+        $array = Domain::of(new ArrayTerm([
+            new ArrayEntry(null, Domain::literal('a')),
+            new ArrayEntry(null, Domain::literal('b')),
+        ]));
+
+        self::assertSame('ab', (new BuiltinCallModel())->implode([$array])->soleLiteral()?->value);
+    }
+
+    public function testImplodeWithoutAKnownArrayKeepsTheOriginOfThePieces(): void
+    {
+        $result = (new BuiltinCallModel())->implode([Domain::literal(','), Domain::opaque(TypeShape::unknown(), Origin::External)]);
+        $hole = $result->patterns()[0]->holes()[0];
+
+        self::assertSame(Origin::External, $hole->origin);
+        self::assertSame('implode', $hole->expression);
+    }
+
+    public function testImplodeOfAnIncompleteArrayEndsInAStringGap(): void
+    {
+        $array = Domain::of(new ArrayTerm([new ArrayEntry(null, Domain::literal('id'))], false));
+        $holes = (new BuiltinCallModel())->implode([Domain::literal(','), $array])->patterns()[0]->holes();
+
+        self::assertCount(1, $holes);
+        self::assertSame('string', $holes[0]->type->display());
+        self::assertSame('implode', $holes[0]->expression);
+    }
+
     public function testImplodeJoinsTheElementsOfAKnownArray(): void
     {
         $array = Domain::of(new ArrayTerm([
@@ -310,6 +394,15 @@ final class BuiltinCallModelTest extends TestCase
         self::assertFalse($model->repeat([Domain::literal('?'), Domain::unknown()])->isExact());
     }
 
+    public function testRepeatResolvesTheBoundsOfAReasonableCount(): void
+    {
+        $model = new BuiltinCallModel();
+
+        self::assertSame('', $model->repeat([Domain::literal('?'), Domain::literal(0)])->soleLiteral()?->value);
+        self::assertSame(str_repeat('?', 1000), $model->repeat([Domain::literal('?'), Domain::literal(1000)])->soleLiteral()?->value);
+        self::assertFalse($model->repeat([Domain::literal('?'), Domain::literal(1001)])->isExact());
+    }
+
     public function testTransformGivesUpWithoutAKnownSubject(): void
     {
         self::assertFalse((new BuiltinCallModel())->transform('strtolower', [Domain::unknown()])->isExact());
@@ -333,6 +426,8 @@ final class BuiltinCallModelTest extends TestCase
 
     public function testReplaceGivesUpWhenAnArgumentIsNotKnown(): void
     {
+        self::assertFalse((new BuiltinCallModel())->replace([Domain::unknown(), Domain::literal('b'), Domain::literal('a')])->isExact());
+        self::assertFalse((new BuiltinCallModel())->replace([Domain::literal('a'), Domain::unknown(), Domain::literal('a')])->isExact());
         self::assertFalse((new BuiltinCallModel())->replace([Domain::literal('a'), Domain::literal('b'), Domain::unknown()])->isExact());
     }
 }

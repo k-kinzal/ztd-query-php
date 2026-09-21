@@ -105,6 +105,17 @@ final class SinkFinderTest extends TestCase
         self::assertArrayNotHasKey('execute', $names);
     }
 
+    public function testNamesOfWritesEachNameInLowerCaseWithoutALeadingBackslash(): void
+    {
+        $names = (new SinkFinder())->namesOf([
+            new SinkSpec('t.query', SinkCallKind::Method, 'Db', 'Query', SinkRole::Query),
+            new SinkSpec('t.prepare', SinkCallKind::FunctionCall, null, '\\Db_Prepare', SinkRole::Prepare),
+            new SinkSpec('t.execute', SinkCallKind::Method, 'Db', 'execute', SinkRole::Execute),
+        ]);
+
+        self::assertSame(['query' => true, 'db_prepare' => true], $names);
+    }
+
     public function testNameOfReadsEveryFormOfCall(): void
     {
         $file = (new SourceParser())->parse(

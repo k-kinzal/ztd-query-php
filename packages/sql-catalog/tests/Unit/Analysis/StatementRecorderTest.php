@@ -34,6 +34,21 @@ final class StatementRecorderTest extends TestCase
         self::assertSame(StatementKind::Select, $record->kind);
     }
 
+    public function testRecordKeepsAStatementUncombinedAndWholeUnlessToldOtherwise(): void
+    {
+        $recorder = new StatementRecorder();
+        $site = new CallSite('a.php', 1, 'f', 'pdo.query');
+
+        $plain = $recorder->record($site, 'a.php:0:pdo.query', TextPattern::fromText('SELECT 1'));
+        $marked = $recorder->record($site, 'a.php:0:pdo.query', TextPattern::fromText('SELECT 1'), null, true, ['g'], true);
+
+        self::assertFalse($plain->combined);
+        self::assertFalse($plain->isTruncated());
+        self::assertTrue($marked->combined);
+        self::assertTrue($marked->isTruncated());
+        self::assertSame(['g'], $marked->through);
+    }
+
     public function testFilePreparedFilesAStatementUnderItsHandle(): void
     {
         $recorder = new StatementRecorder();

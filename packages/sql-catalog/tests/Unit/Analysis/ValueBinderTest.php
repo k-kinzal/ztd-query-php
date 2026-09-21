@@ -126,6 +126,51 @@ final class ValueBinderTest extends TestCase
         self::assertFalse($record->isBound());
     }
 
+    public function testBindOneRecordLeavesAnArrayOfValuesThatDidNotResolveUnboundEvenWhenValuesCouldBeListed(): void
+    {
+        $record = new QueryRecord(new CallSite('a.php', 1, 'f', 's'), 'h', TextPattern::fromText('SELECT ?'));
+        $sink = new SinkSpec('s', SinkCallKind::Method, 'Db', 'run', SinkRole::Execute, valuesParameter: 0, valuesFrom: 1);
+
+        (new ValueBinder(new StatementRecorder()))->bindOneRecord($record, $sink, [Domain::unknown(), Domain::literal('a')]);
+
+        self::assertFalse($record->isBound());
+    }
+
+    public function testBindOneRecordReadsVariadicValuesWithoutAlsoReadingOneNamedValue(): void
+    {
+        $record = new QueryRecord(new CallSite('a.php', 1, 'f', 's'), 'h', TextPattern::fromText('SELECT ?'));
+        $sink = new SinkSpec('s', SinkCallKind::Method, 'Db', 'run', SinkRole::Bind, valuesFrom: 1, nameParameter: 0, valueParameter: 1);
+
+        (new ValueBinder(new StatementRecorder()))->bindOneRecord($record, $sink, [Domain::literal(':id'), Domain::literal('a')]);
+
+        self::assertSame('a', $record->positional()[0]->soleLiteral()?->value);
+        self::assertSame([], $record->named());
+    }
+
+    public function testBindOneRecordNeedsBothTheNameAndTheValueOfASingleBind(): void
+    {
+        $record = new QueryRecord(new CallSite('a.php', 1, 'f', 's'), 'h', TextPattern::fromText('SELECT :id'));
+        $nameOnly = new SinkSpec('s', SinkCallKind::Method, 'Db', 'name', SinkRole::Bind, nameParameter: 0);
+        $valueOnly = new SinkSpec('s', SinkCallKind::Method, 'Db', 'value', SinkRole::Bind, valueParameter: 1);
+        $binder = new ValueBinder(new StatementRecorder());
+
+        $binder->bindOneRecord($record, $nameOnly, [Domain::literal(':id'), Domain::literal(9)]);
+        $binder->bindOneRecord($record, $valueOnly, [Domain::literal(':id'), Domain::literal(9)]);
+
+        self::assertFalse($record->isBound());
+    }
+
+    public function testBindOneRecordAppendsAValueWhoseNameDidNotResolve(): void
+    {
+        $record = new QueryRecord(new CallSite('a.php', 1, 'f', 's'), 'h', TextPattern::fromText('SELECT ?'));
+        $sink = new SinkSpec('s', SinkCallKind::Method, 'PDOStatement', 'bindValue', SinkRole::Bind, nameParameter: 0, valueParameter: 1);
+
+        (new ValueBinder(new StatementRecorder()))->bindOneRecord($record, $sink, [Domain::unknown(), Domain::literal(9)]);
+
+        self::assertSame(9, $record->positional()[0]->soleLiteral()?->value);
+        self::assertSame([], $record->named());
+    }
+
     public function testBindingKeyReadsOnlyScalarKeys(): void
     {
         $binder = new ValueBinder(new StatementRecorder());

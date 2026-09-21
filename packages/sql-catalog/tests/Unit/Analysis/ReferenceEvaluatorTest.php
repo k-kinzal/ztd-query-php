@@ -559,4 +559,178 @@ final class ReferenceEvaluatorTest extends TestCase
         self::assertSame(['sql'], $environment->names());
         self::assertSame('SELECT 1', $environment->read('sql')->soleLiteral()?->value);
     }
+
+    public function testEvaluateReadsAnInstantiationAStaticPropertyAndAClosure(): void
+    {
+        $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = new Environment();
+        $scope = new FunctionScope('t.php');
+
+        $instance = $evaluator->evaluate(new Expr\New_(new Name('C')), $environment, $scope, $expressions);
+        $static = $evaluator->evaluate(new Expr\StaticPropertyFetch(new Name('C'), 'table'), $environment, $scope, $expressions);
+        $closure = $evaluator->evaluate(new Expr\Closure(), $environment, $scope, $expressions);
+        $arrow = $evaluator->evaluate(new Expr\ArrowFunction(['expr' => new String_('a')]), $environment, $scope, $expressions);
+
+        self::assertSame('C', $instance?->soleObject()?->className);
+        self::assertSame(Origin::Property, $static?->patterns()[0]->holes()[0]->origin);
+        self::assertSame('C::$table', $static->patterns()[0]->holes()[0]->expression);
+        self::assertSame('Closure', $closure?->soleObject()?->className);
+        self::assertSame('Closure', $arrow?->soleObject()?->className);
+    }
+
+    public function testReadVariableNamesTheExternalInputItReads(): void
+    {
+        $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
+
+        $hole = $evaluator->readVariable(new Variable('_GET'), new Environment(), new FunctionScope('t.php'))->patterns()[0]->holes()[0];
+
+        self::assertSame(Origin::External, $hole->origin);
+        self::assertSame('$_GET', $hole->expression);
+    }
+
+    public function testReadArrayKnowsALiteralWithoutUnpackingInFull(): void
+    {
+        $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $node = new Expr\Array_([new ArrayItem(new String_('a'))]);
+
+        self::assertTrue($evaluator->readArray($node, new Environment(), new FunctionScope('t.php'), $expressions)->soleArray()?->complete);
+    }
+
+    public function testReadArrayKeepsTheElementsWrittenAfterAnUnpacking(): void
+    {
+        $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $node = new Expr\Array_([
+            new ArrayItem(new Variable('rest'), null, false, [], true),
+            new ArrayItem(new String_('a')),
+        ]);
+
+        $array = $evaluator->readArray($node, new Environment(), new FunctionScope('t.php'), $expressions)->soleArray();
+
+        self::assertNotNull($array);
+        self::assertFalse($array->complete);
+        self::assertSame(['a'], array_map(static fn (ArrayEntry $entry): string|int|float|bool|null => $entry->value->soleLiteral()?->value, $array->entries));
+    }
+
+    public function testLookupNeverReadsAnElementUnderABooleanOrANullKey(): void
+    {
+        $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
+        $array = new ArrayTerm([
+            new ArrayEntry(null, Domain::literal('first')),
+            new ArrayEntry(null, Domain::literal('second')),
+            new ArrayEntry(Domain::literal(''), Domain::literal('empty')),
+        ]);
+
+        self::assertNull($evaluator->lookup($array, true));
+        self::assertNull($evaluator->lookup($array, null));
+    }
+
+    public function testOriginOfIsTheOriginOfTheFirstGapUnlessAnyGapIsExternalInput(): void
+    {
+        $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
+        $parameter = Domain::opaque(TypeShape::unknown(), Origin::Parameter);
+        $property = Domain::opaque(TypeShape::of(['string']), Origin::Property);
+        $external = Domain::opaque(TypeShape::of(['int']), Origin::External);
+
+        self::assertSame(Origin::Parameter, $evaluator->originOf($parameter));
+        self::assertSame(Origin::Parameter, $evaluator->originOf(Domain::literal('a')->union($parameter)->union($property)));
+        self::assertSame(Origin::External, $evaluator->originOf($parameter->union($external)));
+    }
+
+    public function testReadPropertyPrefersWhatTheBodyAssignedEarlier(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php class C { public string $t = "users"; function m(): void { $this->t; } }');
+        $index = (new ProgramIndexBuilder())->build([$file]);
+        $node = (new \PhpParser\NodeFinder())->findFirstInstanceOf($file->statements, PropertyFetch::class);
+        self::assertInstanceOf(PropertyFetch::class, $node);
+        $evaluator = new ReferenceEvaluator($index, new ExternalInput(), new NodeText());
+        $expressions = (new Interpreter($index, []))->evaluatorFor();
+        $scope = new FunctionScope('t.php', 'C::m', 'C');
+
+        $assigned = $evaluator->readProperty($node, new Environment(['this->t' => Domain::literal('admins')]), $scope, $expressions);
+        $declared = $evaluator->readProperty($node, new Environment(), $scope, $expressions);
+
+        self::assertSame('admins', $assigned->soleLiteral()?->value);
+        self::assertSame('users', $declared->soleLiteral()?->value);
+    }
+
+    public function testReadPropertyQuotesAPropertyItCannotName(): void
+    {
+        $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = new Environment(['c' => Domain::of(new \SqlCatalog\Evaluation\ObjectTerm('C'))]);
+        $scope = new FunctionScope('t.php');
+
+        $dynamic = $evaluator->readProperty(new PropertyFetch(new Variable('c'), new Variable('p')), $environment, $scope, $expressions);
+        $unknown = $evaluator->readProperty(new PropertyFetch(new Variable('x'), 't'), $environment, $scope, $expressions);
+
+        self::assertSame(Origin::Property, $dynamic->patterns()[0]->holes()[0]->origin);
+        self::assertSame('$c->{$p}', $dynamic->patterns()[0]->holes()[0]->expression);
+        self::assertSame('$x->t', $unknown->patterns()[0]->holes()[0]->expression);
+    }
+
+    public function testReadEnumPropertyReadsTheCaseTheValueIs(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php enum S: string { case A = "a"; case B = "b"; case C = "c"; }');
+        $index = (new ProgramIndexBuilder())->build([$file]);
+        $evaluator = new ReferenceEvaluator($index, new ExternalInput(), new NodeText());
+        $expressions = (new Interpreter($index, []))->evaluatorFor();
+
+        $read = $evaluator->readEnumProperty(Domain::of(new \SqlCatalog\Evaluation\ObjectTerm('S', 'B')), 'S', 'value', new FunctionScope('t.php'), $expressions);
+
+        self::assertSame('b', $read?->soleLiteral()?->value);
+    }
+
+    public function testReadEnumPropertyIgnoresAClassTheSourceDoesNotDeclare(): void
+    {
+        $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+
+        self::assertNull($evaluator->readEnumProperty(Domain::unknown(), 'Missing', 'value', new FunctionScope('t.php'), $expressions));
+    }
+
+    public function testAssignLeavesATargetItDoesNotTrackAlone(): void
+    {
+        $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = new Environment();
+
+        $evaluator->assign(new PropertyFetch(new Variable('other'), 'table'), Domain::literal('users'), $environment, new FunctionScope('t.php'), $expressions);
+        $evaluator->assign(new Expr\StaticPropertyFetch(new Name('C'), 'table'), Domain::literal('users'), $environment, new FunctionScope('t.php'), $expressions);
+
+        self::assertSame([], $environment->names());
+    }
+
+    public function testAssignElementMarksTheArrayANestedWriteGoesIntoAsIncomplete(): void
+    {
+        $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = new Environment(['parts' => Domain::of(new ArrayTerm([]))]);
+
+        $evaluator->assignElement(
+            new ArrayDimFetch(new ArrayDimFetch(new Variable('parts'), new String_('where'))),
+            Domain::literal('a = 1'),
+            $environment,
+            new FunctionScope('t.php'),
+            $expressions,
+        );
+
+        self::assertFalse($environment->read('parts')->soleArray()?->complete);
+    }
+
+    public function testAssignElementKeepsWhetherTheArrayIsKnownInFull(): void
+    {
+        $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = new Environment(['partial' => Domain::of(new ArrayTerm([], false))]);
+        $scope = new FunctionScope('t.php');
+
+        $evaluator->assignElement(new ArrayDimFetch(new Variable('fresh')), Domain::literal('a'), $environment, $scope, $expressions);
+        $evaluator->assignElement(new ArrayDimFetch(new Variable('partial')), Domain::literal('a'), $environment, $scope, $expressions);
+
+        self::assertTrue($environment->read('fresh')->soleArray()?->complete);
+        self::assertFalse($environment->read('partial')->soleArray()?->complete);
+    }
 }

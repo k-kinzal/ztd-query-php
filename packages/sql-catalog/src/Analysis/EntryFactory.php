@@ -183,7 +183,7 @@ final class EntryFactory
     /**
      * The value a numbered parameter such as `$1` binds to.
      *
-     * @param list<Domain> $positional
+     * @param array<int, Domain> $positional
      */
     public function numberedValue(?string $name, array $positional): ?Domain
     {

@@ -462,4 +462,91 @@ final class ExpressionEvaluatorTest extends TestCase
 
         self::assertSame('xyz', $environment->read('a')->soleLiteral()?->value);
     }
+
+    public function testEvaluateSeesAnAssignmentWrittenInsideAnOperatorItDoesNotModel(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php ($sql = "SELECT 1") + 1;');
+        $statement = $file->statements[0];
+        self::assertInstanceOf(Stmt\Expression::class, $statement);
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = new Environment();
+
+        $expressions->evaluate($statement->expr, $environment, new FunctionScope('t.php'));
+
+        self::assertSame('SELECT 1', $environment->read('sql')->soleLiteral()?->value);
+    }
+
+    public function testEvaluateOperandsEvaluatesEveryOperandInPlace(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php ($sql = "SELECT 1") - f($table = "users");');
+        $statement = $file->statements[0];
+        self::assertInstanceOf(Stmt\Expression::class, $statement);
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = new Environment();
+
+        $expressions->evaluateOperands($statement->expr, $environment, new FunctionScope('t.php'));
+
+        self::assertSame(['sql', 'table'], $environment->names());
+        self::assertSame('SELECT 1', $environment->read('sql')->soleLiteral()?->value);
+    }
+
+    public function testEvaluateOperatorOfACoalesceKeepsBothSides(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php $a ?? "b";');
+        $statement = $file->statements[0];
+        self::assertInstanceOf(Stmt\Expression::class, $statement);
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = new Environment(['a' => \SqlCatalog\Evaluation\Domain::literal('a')]);
+
+        $result = $expressions->evaluateOperator($statement->expr, $environment, new FunctionScope('t.php'));
+
+        self::assertSame(['a', 'b'], array_map(
+            static fn (\SqlCatalog\Text\TextPattern $pattern): string => $pattern->display(),
+            $result?->patterns() ?? [],
+        ));
+    }
+
+    public function testEvaluateCastNamesTheTypeACastProducesWhenTheValueIsNotKnown(): void
+    {
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = new Environment();
+        $scope = new FunctionScope('t.php');
+
+        $array = $expressions->evaluateCast(new Cast\Array_(new Variable('a')), $environment, $scope);
+        $int = $expressions->evaluateCast(new Cast\Int_(new Variable('a')), $environment, $scope);
+
+        self::assertSame('array', $array->type()->display());
+        self::assertSame('(array) cast', $array->patterns()[0]->holes()[0]->expression);
+        self::assertSame('int', $int->type()->display());
+        self::assertSame('(int) cast', $int->patterns()[0]->holes()[0]->expression);
+    }
+
+    public function testEvaluateResultSeesAnAssignmentWrittenInsideTheOperand(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php !($sql = "SELECT 1");');
+        $statement = $file->statements[0];
+        self::assertInstanceOf(Stmt\Expression::class, $statement);
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = new Environment();
+
+        $expressions->evaluateResult($statement->expr, $environment, new FunctionScope('t.php'));
+
+        self::assertSame('SELECT 1', $environment->read('sql')->soleLiteral()?->value);
+    }
+
+    public function testEvaluateMatchSeesAssignmentsInTheSubjectAndInTheConditions(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php match ($kind = "a") { ($table = "users") => 1, default => 2 };');
+        $statement = $file->statements[0];
+        self::assertInstanceOf(Stmt\Expression::class, $statement);
+        $node = $statement->expr;
+        self::assertInstanceOf(\PhpParser\Node\Expr\Match_::class, $node);
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $environment = new Environment();
+
+        $expressions->evaluateMatch($node, $environment, new FunctionScope('t.php'));
+
+        self::assertSame('a', $environment->read('kind')->soleLiteral()?->value);
+        self::assertSame('users', $environment->read('table')->soleLiteral()?->value);
+    }
 }

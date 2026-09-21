@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Analysis;
 
+use PhpParser\Node\Expr\ClassConstFetch;
 use PhpParser\Node\Expr\ConstFetch;
 use PhpParser\Node\Expr\Variable;
 use PhpParser\Node\Name;
+use PhpParser\NodeFinder;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -44,6 +46,8 @@ use SqlCatalog\Php\SourceParser;
 #[UsesClass(\SqlCatalog\Evaluation\Environment::class)]
 #[UsesClass(\SqlCatalog\Evaluation\LiteralTerm::class)]
 #[UsesClass(\SqlCatalog\Evaluation\OpaqueTerm::class)]
+#[UsesClass(\SqlCatalog\Evaluation\ObjectTerm::class)]
+#[UsesClass(\SqlCatalog\Php\ClassShape::class)]
 #[UsesClass(\SqlCatalog\Php\DeclaredGlobals::class)]
 #[UsesClass(NodeText::class)]
 #[UsesClass(\SqlCatalog\Php\ParsedFile::class)]
@@ -88,7 +92,7 @@ final class ConstantReaderTest extends TestCase
     {
         $evaluator = new ConstantReader(new ProgramIndex(), new NodeText());
         $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
-        $node = new \PhpParser\Node\Expr\ClassConstFetch(new Variable('c'), 'T');
+        $node = new ClassConstFetch(new Variable('c'), 'T');
         $read = $evaluator->readClassConstant($node, new FunctionScope('t.php'), $expressions);
         self::assertSame('mixed', $read->type()->display());
     }
@@ -97,8 +101,101 @@ final class ConstantReaderTest extends TestCase
     {
         $evaluator = new ConstantReader(new ProgramIndex(), new NodeText());
         $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
-        $node = new \PhpParser\Node\Expr\ClassConstFetch(new Name('C'), 'MISSING');
+        $node = new ClassConstFetch(new Name('C'), 'MISSING');
         self::assertFalse($evaluator->readClassConstant($node, new FunctionScope('t.php'), $expressions)->isExact());
+    }
+
+    public function testReadConstantReadsTheKeywordsWhateverTheirCase(): void
+    {
+        $evaluator = new ConstantReader(new ProgramIndex(), new NodeText());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $scope = new FunctionScope('t.php');
+
+        self::assertTrue($evaluator->readConstant(new ConstFetch(new Name('TRUE')), $scope, $expressions)->soleLiteral()?->value);
+        self::assertFalse($evaluator->readConstant(new ConstFetch(new Name('False')), $scope, $expressions)->soleLiteral()?->value);
+        self::assertTrue($evaluator->readConstant(new ConstFetch(new Name('NULL')), $scope, $expressions)->isExact());
+        self::assertTrue($evaluator->readConstant(new ConstFetch(new Name('null')), $scope, $expressions)->isExact());
+    }
+
+    public function testConstantNameReadsTheNamespacedConstantOnlyWhenTheNamespaceDeclaresIt(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php namespace App; const T = "x"; $a = T; $b = PHP_EOL;');
+        $index = (new ProgramIndexBuilder())->build([$file]);
+        $fetches = (new NodeFinder())->findInstanceOf($file->statements, ConstFetch::class);
+
+        $names = array_map(
+            static fn (ConstFetch $fetch): string => (new ConstantReader($index, new NodeText()))->constantName($fetch),
+            $fetches,
+        );
+
+        self::assertSame(['App\\T', 'PHP_EOL'], $names);
+    }
+
+    public function testReadRuntimeConstantReadsAFullyQualifiedName(): void
+    {
+        $evaluator = new ConstantReader(new ProgramIndex(), new NodeText());
+
+        self::assertSame(PHP_INT_MAX, $evaluator->readRuntimeConstant('\\PHP_INT_MAX')->soleLiteral()?->value);
+        self::assertSame('SQL_CATALOG_UNDEFINED', $evaluator->readRuntimeConstant('\\SQL_CATALOG_UNDEFINED')->patterns()[0]->holes()[0]->expression);
+    }
+
+    public function testReadClassConstantReadsWhatTheClassDeclares(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php class C { const T = "users"; }');
+        $index = (new ProgramIndexBuilder())->build([$file]);
+        $expressions = (new Interpreter($index, []))->evaluatorFor();
+        $node = new ClassConstFetch(new Name('C'), 'T');
+
+        self::assertSame('users', (new ConstantReader($index, new NodeText()))->readClassConstant($node, new FunctionScope('t.php'), $expressions)->soleLiteral()?->value);
+    }
+
+    public function testReadClassConstantReadsTheClassKeywordWhateverItsCase(): void
+    {
+        $evaluator = new ConstantReader(new ProgramIndex(), new NodeText());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $scope = new FunctionScope('t.php', 'C::m', 'C');
+
+        self::assertSame('App\\C', $evaluator->readClassConstant(new ClassConstFetch(new Name('App\\C'), 'class'), $scope, $expressions)->soleLiteral()?->value);
+        self::assertSame('C', $evaluator->readClassConstant(new ClassConstFetch(new Name('self'), 'CLASS'), $scope, $expressions)->soleLiteral()?->value);
+    }
+
+    public function testReadClassConstantTellsAnEnumCaseFromAConstantOfTheEnum(): void
+    {
+        $file = (new SourceParser())->parse('t.php', '<?php enum S: string { case A = "a"; const X = "x"; }');
+        $index = (new ProgramIndexBuilder())->build([$file]);
+        $evaluator = new ConstantReader($index, new NodeText());
+        $expressions = (new Interpreter($index, []))->evaluatorFor();
+        $scope = new FunctionScope('t.php');
+
+        $case = $evaluator->readClassConstant(new ClassConstFetch(new Name('S'), 'A'), $scope, $expressions)->soleObject();
+        $constant = $evaluator->readClassConstant(new ClassConstFetch(new Name('S'), 'X'), $scope, $expressions);
+
+        self::assertSame('S', $case?->className);
+        self::assertSame('A', $case->enumCase);
+        self::assertSame('x', $constant->soleLiteral()?->value);
+    }
+
+    public function testReadClassConstantQuotesWhatItCouldNotRead(): void
+    {
+        $evaluator = new ConstantReader(new ProgramIndex(), new NodeText());
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $scope = new FunctionScope('t.php');
+
+        $missing = $evaluator->readClassConstant(new ClassConstFetch(new Name('C'), 'MISSING'), $scope, $expressions);
+        $unwritten = $evaluator->readClassConstant(new ClassConstFetch(new Variable('c'), 'T'), $scope, $expressions);
+
+        self::assertSame('C::MISSING', $missing->patterns()[0]->holes()[0]->expression);
+        self::assertSame('$c::T', $unwritten->patterns()[0]->holes()[0]->expression);
+    }
+
+    public function testResolveClassNameResolvesEveryKeywordForTheEnclosingClass(): void
+    {
+        $evaluator = new ConstantReader(new ProgramIndex(), new NodeText());
+        $scope = new FunctionScope('t.php', 'C::m', 'C');
+
+        self::assertSame('C', $evaluator->resolveClassName(new Name('static'), $scope));
+        self::assertSame('C', $evaluator->resolveClassName(new Name('parent'), $scope));
+        self::assertSame('C', $evaluator->resolveClassName(new Name('SELF'), $scope));
     }
 
     public function testResolveClassNameResolvesTheSelfKeywords(): void

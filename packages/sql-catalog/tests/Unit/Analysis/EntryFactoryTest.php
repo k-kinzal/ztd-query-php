@@ -139,6 +139,17 @@ final class EntryFactoryTest extends TestCase
         self::assertSame(['b'], $bound[1]->value?->values);
     }
 
+    public function testBindPlaceholdersLeavesAPlaceholderNothingWasBoundToEmpty(): void
+    {
+        $record = new QueryRecord(new CallSite('a.php', 1, 'f', 'pdo.prepare'), 'k', TextPattern::fromText('SELECT * FROM t WHERE a = ? AND b = ?'));
+        $record->bindOne(2, Domain::literal('x'));
+
+        $bound = (new EntryFactory())->bindPlaceholders($record->pattern, $record);
+
+        self::assertNull($bound[0]->value);
+        self::assertSame(['x'], $bound[1]->value?->values);
+    }
+
     public function testBindPlaceholdersLinesValuesUpByName(): void
     {
         $record = new QueryRecord(new CallSite('a.php', 1, 'f', 'pdo.prepare'), 'k', TextPattern::fromText('SELECT :id'));
@@ -299,6 +310,189 @@ final class EntryFactoryTest extends TestCase
 
         self::assertContains(FindingRule::AnalysisIncomplete, $rules);
         self::assertNotContains(FindingRule::DynamicSql, $rules);
+    }
+
+    public function testBuildNamesALoneStatementAsItsOwnReadingWould(): void
+    {
+        $record = new QueryRecord(new CallSite('a.php', 1, 'f', 'pdo.query'), 'k', TextPattern::fromText('SELECT 1'));
+        $factory = new EntryFactory();
+
+        self::assertSame($factory->buildOne($record)->id, $factory->build([$record])[0]->id);
+    }
+
+    public function testBuildNumbersEachFurtherTwinOnceMore(): void
+    {
+        $pattern = TextPattern::fromHole(new TextHole(Origin::Budget, TypeShape::unknown()));
+        $site = new CallSite('a.php', 5, 'f', 'unreached');
+        $records = [
+            new QueryRecord($site, 'a.php:40:unreached', $pattern),
+            new QueryRecord($site, 'a.php:80:unreached', $pattern),
+            new QueryRecord($site, 'a.php:120:unreached', $pattern),
+        ];
+        $factory = new EntryFactory();
+
+        $entries = $factory->build($records);
+
+        self::assertSame(
+            [
+                $factory->buildOne($records[0])->id,
+                $factory->renumber($factory->buildOne($records[1]), $records[1], 1)->id,
+                $factory->renumber($factory->buildOne($records[2]), $records[2], 2)->id,
+            ],
+            array_map(static fn (CatalogEntry $entry): string => $entry->id, $entries),
+        );
+    }
+
+    public function testBuildReportsAStatementBoundWithTheWrongNumberOfValues(): void
+    {
+        $record = new QueryRecord(new CallSite('a.php', 1, 'f', 'pdo.prepare'), 'k', TextPattern::fromText('SELECT ?'));
+        $record->bind([Domain::literal(1), Domain::literal(2)], []);
+
+        $rules = array_map(
+            static fn (Finding $finding): FindingRule => $finding->rule,
+            (new EntryFactory())->build([$record])[0]->findings,
+        );
+
+        self::assertSame([FindingRule::PlaceholderCountMismatch], $rules);
+    }
+
+    public function testBuildOneReportsAStatementBoundWithTheWrongNumberOfValues(): void
+    {
+        $record = new QueryRecord(new CallSite('a.php', 1, 'f', 'pdo.prepare'), 'k', TextPattern::fromText('SELECT ?'));
+        $record->bind([Domain::literal(1), Domain::literal(2)], []);
+
+        $rules = array_map(
+            static fn (Finding $finding): FindingRule => $finding->rule,
+            (new EntryFactory())->buildOne($record)->findings,
+        );
+
+        self::assertSame([FindingRule::PlaceholderCountMismatch], $rules);
+    }
+
+    public function testMergeKeepsTwoStatementsApartWhenTheirKeyAndTextRunTogether(): void
+    {
+        $site = new CallSite('a.php', 1, 'f', 'pdo.query');
+        $first = new QueryRecord($site, 'k', TextPattern::fromText('text:X'));
+        $second = new QueryRecord($site, 'ktext:', TextPattern::fromText('X'));
+
+        self::assertCount(2, (new EntryFactory())->merge([$first, $second]));
+    }
+
+    public function testBindPlaceholdersPrefersAValueBoundUnderTheNumberAsAName(): void
+    {
+        $record = new QueryRecord(new CallSite('a.php', 1, 'f', 'pg.query'), 'k', TextPattern::fromText('SELECT $1'));
+        $record->bindOne(1, Domain::literal('by position'));
+        $record->bindOne(':1', Domain::literal('by name'));
+
+        $bound = (new EntryFactory())->bindPlaceholders($record->pattern, $record);
+
+        self::assertSame(['by name'], $bound[0]->value?->values);
+    }
+
+    public function testBindPlaceholdersReadsANumberedPlaceholderByPosition(): void
+    {
+        $record = new QueryRecord(new CallSite('a.php', 1, 'f', 'pg.query'), 'k', TextPattern::fromText('SELECT $2, $1'));
+        $record->bind([Domain::literal('a'), Domain::literal('b')], []);
+
+        $bound = (new EntryFactory())->bindPlaceholders($record->pattern, $record);
+
+        self::assertSame(['b'], $bound[0]->value?->values);
+        self::assertSame(['a'], $bound[1]->value?->values);
+    }
+
+    public function testNumberedValueIgnoresANameThatOnlyStartsWithDigits(): void
+    {
+        self::assertNull((new EntryFactory())->numberedValue('1a', [Domain::literal('a')]));
+    }
+
+    public function testFindingsReportAStatementBoundWithTheWrongNumberOfValues(): void
+    {
+        $pattern = TextPattern::fromText('SELECT ?');
+        $record = new QueryRecord(new CallSite('a.php', 1, 'f', 'pdo.prepare'), 'k', $pattern);
+        $record->bind([Domain::literal(1), Domain::literal(2)], []);
+
+        $rules = array_map(
+            static fn (Finding $finding): FindingRule => $finding->rule,
+            (new EntryFactory())->findings($pattern, $record, [new Placeholder('?', 0, null, null)]),
+        );
+
+        self::assertSame([FindingRule::PlaceholderCountMismatch], $rules);
+    }
+
+    public function testFindingsNeverCallAFullyResolvedStatementUnresolved(): void
+    {
+        $pattern = TextPattern::fromText('hello world');
+        $record = new QueryRecord(new CallSite('a.php', 1, 'f', 'pdo.query'), 'k', $pattern);
+
+        self::assertSame([], (new EntryFactory())->findings($pattern, $record, []));
+    }
+
+    public function testFindingsReportExternalInputOnceHoweverManyValuesCarryIt(): void
+    {
+        $pattern = TextPattern::fromText('SELECT * FROM users WHERE a = ')
+            ->concat(TextPattern::fromHole(new TextHole(Origin::External, TypeShape::unknown())))
+            ->concat(TextPattern::fromText(' AND b = '))
+            ->concat(TextPattern::fromHole(new TextHole(Origin::External, TypeShape::unknown())));
+        $record = new QueryRecord(new CallSite('a.php', 1, 'f', 'pdo.query'), 'k', $pattern);
+
+        $rules = array_map(
+            static fn (Finding $finding): FindingRule => $finding->rule,
+            (new EntryFactory())->findings($pattern, $record, []),
+        );
+
+        self::assertSame([FindingRule::DynamicSql, FindingRule::ExternalInput], $rules);
+    }
+
+    public function testFindingsReportAReadingALimitCutShortAlongsideAWrongCount(): void
+    {
+        $pattern = TextPattern::fromText('SELECT ?');
+        $record = new QueryRecord(new CallSite('a.php', 1, 'f', 'pdo.prepare'), 'k', $pattern, truncated: true);
+        $record->bind([Domain::literal(1), Domain::literal(2)], []);
+
+        $rules = array_map(
+            static fn (Finding $finding): FindingRule => $finding->rule,
+            (new EntryFactory())->findings($pattern, $record, [new Placeholder('?', 0, null, null)]),
+        );
+
+        self::assertSame([FindingRule::AnalysisIncomplete, FindingRule::PlaceholderCountMismatch], $rules);
+    }
+
+    public function testFindingsReportAnIncompleteSearchOnceEvenWhenALimitAlsoCutItShort(): void
+    {
+        $pattern = TextPattern::fromText('SELECT * FROM ')
+            ->concat(TextPattern::fromHole(new TextHole(Origin::Budget, TypeShape::unknown())));
+        $record = new QueryRecord(new CallSite('a.php', 1, 'f', 'pdo.query'), 'k', $pattern, truncated: true);
+
+        $rules = array_map(
+            static fn (Finding $finding): FindingRule => $finding->rule,
+            (new EntryFactory())->findings($pattern, $record, []),
+        );
+
+        self::assertSame([FindingRule::AnalysisIncomplete], $rules);
+    }
+
+    public function testFindingsReportACallNotAnalyzedWithoutClaimingALimitCutItShort(): void
+    {
+        $pattern = TextPattern::fromHole(new TextHole(Origin::Unreached, TypeShape::unknown(), '$db->query($sql)'));
+        $record = new QueryRecord(new CallSite('a.php', 1, 'f', 'pdo.query'), 'k', $pattern, truncated: true);
+
+        $rules = array_map(
+            static fn (Finding $finding): FindingRule => $finding->rule,
+            (new EntryFactory())->findings($pattern, $record, []),
+        );
+
+        self::assertSame([FindingRule::CallNotAnalyzed], $rules);
+    }
+
+    public function testCountMismatchCountsValuesBoundByPositionAndByName(): void
+    {
+        $record = new QueryRecord(new CallSite('a.php', 1, 'f', 'pdo.prepare'), 'k', TextPattern::fromText('SELECT ?, :id'));
+        $record->bind([Domain::literal(1)], ['id' => Domain::literal(2)]);
+
+        self::assertNull((new EntryFactory())->countMismatch($record, [
+            new Placeholder('?', 0, null, null),
+            new Placeholder(':id', 1, 'id', null),
+        ]));
     }
 
     public function testNotAnalyzedReasonSaysTheAnalysisStoppedBeforeReadingTheCall(): void
