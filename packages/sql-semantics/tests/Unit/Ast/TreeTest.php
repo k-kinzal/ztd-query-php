@@ -18,7 +18,6 @@ use SqlSemantics\SemanticException;
 #[UsesClass(\SqlSemantics\Binding\NullFacts::class)]
 #[UsesClass(\SqlSemantics\Binding\ProjectionBinder::class)]
 #[UsesClass(\SqlSemantics\Binding\SelectBinder::class)]
-#[UsesClass(\SqlSemantics\Binding\SyntaxGuard::class)]
 #[UsesClass(\SqlSemantics\Binding\SelectModifiersBinder::class)]
 #[UsesClass(\SqlSemantics\Binding\TypeResolution::class)]
 #[UsesClass(\SqlSemantics\Binder::class)]
@@ -49,6 +48,23 @@ use SqlSemantics\SemanticException;
 #[UsesClass(SemanticException::class)]
 #[UsesClass(\SqlSemantics\Type\TypeDescriptor::class)]
 #[Medium]
+#[UsesClass(\SqlSemantics\Binding\Statement\ValuesBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Statement\StatementBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Statement\MutationBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Statement\UtilityBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Schema\SchemaEvolution::class)]
+#[UsesClass(\SqlSemantics\Binding\Schema\TableAlteration::class)]
+#[UsesClass(\SqlSemantics\Binding\Query\QueryRelation::class)]
+#[UsesClass(\SqlSemantics\Binding\Query\QueryContext::class)]
+#[UsesClass(\SqlSemantics\Binding\Query\UsingJoin::class)]
+#[UsesClass(\SqlSemantics\Binding\Query\RelationFactory::class)]
+#[UsesClass(\SqlSemantics\Binding\Query\SqliteLists::class)]
+#[UsesClass(\SqlSemantics\Binding\Query\QueryBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Query\QueryNodes::class)]
+#[UsesClass(\SqlSemantics\Binding\Scalar\ScalarBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Scalar\FunctionRules::class)]
+#[UsesClass(\SqlSemantics\Model\BoundStatement::class)]
+#[UsesClass(\SqlSemantics\Ast\ConstraintGroups::class)]
 final class TreeTest extends TestCase
 {
     public function testOuterStopsAtTheRequestedGrammarBoundary(): void
@@ -80,12 +96,12 @@ final class TreeTest extends TestCase
         self::assertSame("'a b'", \SqlSemantics\Ast\Tree::text($token));
     }
 
-    public function testUnsupportedCarriesOriginalSyntax(): void
+    public function testInvalidCarriesOriginalSyntax(): void
     {
         $node = new \SqlParser\Parser\Node('expr', 0, []);
         $this->expectException(SemanticException::class);
-        $this->expectExceptionMessage('Unsupported custom operation');
-        \SqlSemantics\Ast\Tree::unsupported($node, 'custom operation');
+        $this->expectExceptionMessage('Cannot bind custom operation');
+        \SqlSemantics\Ast\Tree::invalid($node, 'custom operation');
     }
 
     public function testAssertChildrenRejectsUnknownClauses(): void

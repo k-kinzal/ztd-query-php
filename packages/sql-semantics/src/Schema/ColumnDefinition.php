@@ -25,6 +25,8 @@ final class ColumnDefinition
      * @param Nullability $nullability Declaration-level NULL allowance
      * @param Node $source Original column declaration
      * @param Node|null $defaultExpression Original default syntax, evaluated on insertion
+     * @param list<Node> $attributes Complete column attributes, including collation and identity
+     * @param Node|null $generatedExpression Generated value expression
      */
     public function __construct(
         public readonly string $name,
@@ -32,6 +34,8 @@ final class ColumnDefinition
         public readonly Nullability $nullability,
         public readonly Node $source,
         public readonly ?Node $defaultExpression = null,
+        public readonly array $attributes = [],
+        public readonly ?Node $generatedExpression = null,
     ) {
     }
 }

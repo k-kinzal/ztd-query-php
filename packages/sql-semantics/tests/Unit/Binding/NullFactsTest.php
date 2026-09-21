@@ -22,7 +22,6 @@ use SqlSemantics\Type\Nullability;
 #[CoversClass(\SqlSemantics\Binding\LiteralBinder::class)]
 #[CoversClass(\SqlSemantics\Binding\ProjectionBinder::class)]
 #[CoversClass(\SqlSemantics\Binding\SelectBinder::class)]
-#[CoversClass(\SqlSemantics\Binding\SyntaxGuard::class)]
 #[CoversClass(\SqlSemantics\Binding\SelectModifiersBinder::class)]
 #[CoversClass(\SqlSemantics\Binding\TypeResolution::class)]
 #[CoversClass(Binder::class)]
@@ -54,6 +53,23 @@ use SqlSemantics\Type\Nullability;
 #[CoversClass(SemanticException::class)]
 #[CoversClass(\SqlSemantics\Type\TypeDescriptor::class)]
 #[Medium]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Statement\ValuesBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Statement\StatementBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Statement\MutationBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Statement\UtilityBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\SchemaEvolution::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\TableAlteration::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryRelation::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryContext::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\UsingJoin::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\RelationFactory::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\SqliteLists::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryNodes::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Scalar\ScalarBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Scalar\FunctionRules::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundStatement::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ConstraintGroups::class)]
 final class NullFactsTest extends TestCase
 {
     #[TestWith([Dialect::PostgreSql])]
@@ -119,4 +135,15 @@ final class NullFactsTest extends TestCase
         yield 'Unknown-AlwaysNull' => [Nullability::Unknown, Nullability::AlwaysNull, Nullability::AlwaysNull, Nullability::Unknown];
         yield 'Unknown-Unknown' => [Nullability::Unknown, Nullability::Unknown, Nullability::Unknown, Nullability::Unknown];
     }
+    public function testAlternativesCombinesValuesWithoutStrictPropagation(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $nonnull = $binder->bind('SELECT 1')->outputs[0]->expression;
+        $nullable = $binder->bind('SELECT NULL')->outputs[0]->expression;
+        self::assertSame(Nullability::NotNull, \SqlSemantics\Binding\NullFacts::alternatives([$nonnull]));
+        self::assertSame(Nullability::AlwaysNull, \SqlSemantics\Binding\NullFacts::alternatives([$nullable]));
+        self::assertSame(Nullability::MaybeNull, \SqlSemantics\Binding\NullFacts::alternatives([$nonnull, $nullable]));
+        self::assertSame(Nullability::Unknown, \SqlSemantics\Binding\NullFacts::alternatives([]));
+    }
+
 }

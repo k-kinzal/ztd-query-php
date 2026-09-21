@@ -49,9 +49,7 @@ final class TypeReader
             return new TypeDescriptor($this->dialect, strtolower($name), $modifiers, $this->affinity($name));
         }
         $canonical = $this->canonical($name);
-        if ($canonical === null) {
-            Tree::unsupported($node, 'type declaration');
-        }
+        $canonical ??= strtolower($name);
 
         return new TypeDescriptor($this->dialect, $canonical, $modifiers);
     }

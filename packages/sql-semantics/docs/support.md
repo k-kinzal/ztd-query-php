@@ -1,90 +1,75 @@
-# Supported language and confidence contract
+# Versioned SQL support contract
 
-Semantic rules target the default parser releases (PostgreSQL 17.2, MySQL 8.4.7,
-SQLite 3.47.2) with standard server defaults. The tree does not encode every
-server/session setting; alternate behaviors such as MySQL REAL_AS_FLOAT need a
-future explicit semantic environment.
+The support boundary is the database release, as it is in `sql-faker` and
+`sql-parser`. Every SQL statement and construct in a selected release is in
+scope. There is no second allowlist of statement kinds, clauses, expressions,
+types, or table options. A missing semantic rule is a defect to fix, not grounds
+for declaring that SQL unsupported.
 
-The parser accepts far more syntax than the semantic binder. Parsing success
-does not imply semantic support. Unsupported behavior raises `SemanticException`
-with `reason = unsupported-syntax` (or `unsupported-coercion` for a type rule).
-There is no success flag that can conceal a skipped clause.
+## Database releases
 
-## Declarations
+| Database | Grammar releases | Default |
+| --- | --- | --- |
+| MySQL | `mysql-5.6.51`, `mysql-5.7.44`, `mysql-8.0.44`, `mysql-8.1.0`, `mysql-8.2.0`, `mysql-8.3.0`, `mysql-8.4.7`, `mysql-9.0.1`, `mysql-9.1.0` | `mysql-8.4.7` |
+| PostgreSQL | `pg-17.2` | `pg-17.2` |
+| SQLite | `sqlite-3.47.2` | `sqlite-3.47.2` |
 
-Supported inputs are ordinary CREATE TABLE statements with named columns,
-modeled built-in types, NOT NULL/NULL, DEFAULT syntax, and primary, unique,
-foreign-key, or CHECK constraints. Primary key tuples imply NOT NULL in
-PostgreSQL and MySQL. In SQLite, only the modeled INTEGER PRIMARY KEY rowid case
-implies NOT NULL: ordinary primary keys can still contain NULL, including the
-inline INTEGER PRIMARY KEY DESC exception. See [SQLite's constraint rules](https://www.sqlite.org/lang_createtable.html).
+Pass `grammarVersion` to `SchemaBuilder`. The resulting `Schema` retains that
+release and the binder uses it too. Syntax introduced after the selected release
+is a version error. Invalid syntax, unresolved names, ambiguous references, and
+incompatible built-in types remain errors; accepting the language does not mean
+accepting invalid SQL.
 
-Columns and key tuples preserve declaration order. CHECK, DEFAULT, foreign-key
-actions, and deferrability retain their original syntax; they are not executed
-or fully validated. Column modifiers such as collation, identity/generated
-expressions, table options, STRICT/WITHOUT ROWID, inheritance, CREATE AS/LIKE,
-ALTER, and DROP are unsupported. Named SQLite constraints whose grammar separates
-the name from its constraint body are also currently rejected.
+## Declarations and fixture inputs
 
-The schema is an explicit snapshot, not a database reflection service.
-It validates duplicate declarations and local constraint columns, but does not
-validate all server-specific DDL legality or foreign reference targets.
+`SchemaBuilder::build()` processes DDL in declaration order. Tables expose ordered
+columns, types, nullability, defaults, generated expressions, column attributes,
+and integrity constraints. Table options and auxiliary declarations remain in
+the original source; `Schema::statements` preserves the declaration sequence.
+CREATE AS and view outputs can supply column declarations, LIKE can copy an
+existing declaration, and ALTER/DROP update the snapshot.
 
-## Name resolution
+Do not remove declarations because they contain generated values, identities,
+collations, dialect-specific types, named constraints, or table options.
+`sql-fixture` needs these facts to generate data from table definitions.
 
-Default schemas are `public` (PostgreSQL), `main` (SQLite), and an unnamed database
-(MySQL). Pass `defaultSchema` to `SchemaBuilder` for a different context. Unqualified
-names use that one schema; PostgreSQL search paths, temporary-schema precedence,
-three-part table qualification, and server-specific schema search are not modeled.
+## Queries and fixture inputs
 
-PostgreSQL folds unquoted names and preserves quoted case. SQLite column and table
-matching is case-insensitive. MySQL table/database matching assumes a case-sensitive
-schema (`lower_case_table_names=0`); table aliases follow the same case-sensitive policy, while column names and output aliases are case-insensitive. Alternate
-MySQL table name case policies and collation-sensitive identifier rules need an
-explicit resolution policy before they can be supported.
+`Binder::bind()` returns a `BoundStatement`; a query returns its `BoundSelect`
+subtype. `bindAll()` retains script statement boundaries. Query results expose:
 
-Nested scopes, CTEs, derived tables, lateral/correlated references, table functions,
-column alias lists, and aliases on join results are unsupported. An alias hides
-the original relation name. Duplicate correlation names, ambiguous columns, and
-missing declarations are errors.
+- Ordered outputs and their typed expression graphs.
+- Relation occurrences, aliases, derived queries, CTEs, and correlated scopes.
+- Join predicates and null extension, including merged USING/NATURAL columns.
+- WHERE, grouping, HAVING, compound-query branches and their set operation.
+- Scalar, aggregate, window, conditional, cast, and subquery expressions.
+- Ordering, pagination, and FETCH WITH TIES.
+- Mutation targets, assignments, VALUES tuples, input queries, and RETURNING.
 
-## Queries and expressions
+Nested queries remain reachable through relation and expression `query` fields.
+CTEs and compound branches retain their own relational stages. A consumer must
+traverse those stages as well as `Expression::lineage()`: a constant projection
+can still depend on rows and predicates.
 
-Supported query stages are FROM, ON, WHERE, projection, DISTINCT, ORDER BY,
-LIMIT, and OFFSET. Join precedence comes from the syntax tree. Table aliases,
-qualified references, stars, duplicate result labels, and order aliases/positions
-are preserved. Full joins apply to PostgreSQL and SQLite; the MySQL parser rejects
-them. An engine-generated result label is returned as `null` instead of invented.
+`sql-fixture` must be able to consume SELECT requirements to generate candidate
+data. CTEs, grouping, functions, or other query forms are not reasons to exclude
+that use case. The semantic phase describes the requirements; the consumer owns
+data generation and predicate solving.
 
-Scalar support includes:
+## Facts and uncertainty
 
-- Column references and decimal integer/string/NULL literals; supported boolean
-  terminals and numeric literal categories from each lexer.
-- Parameters with unknown type/nullability when no declaration is available.
-- Parentheses, integer `+`, `-`, `*`, comparisons, AND/OR/NOT, and NULL tests.
-- COALESCE with modeled common types and NULLIF with compatible input types.
+Language support and the certainty of a fact are different concepts. A parameter
+without a declaration, a catalog function without its signature, or an operation
+whose result depends on runtime values may have an `unknown` type or NULL fact.
+The operation, original syntax, arguments, and known dependencies must still be
+retained. Unknown facts must not erase a clause, fabricate a result column, or
+turn a query into a dependency-free success.
 
-Non-decimal numeric literals and unsupported coercions are rejected. Arbitrary
-operator overloads, non-integer arithmetic, division, explicit casts, CASE,
-collations, string functions, user-defined functions, and aggregates/windows
-require additional semantic rules. SQLite arithmetic returns a dynamic type;
-affinity is not a guarantee of a runtime integer.
+`NotNull` concerns successfully evaluated values; it does not guarantee execution
+or the existence of a row. SQLite affinity is distinct from a runtime storage
+class. Literal spellings, defaults, CHECK conditions, generated expressions,
+foreign-key actions, and source locations remain available to consumers.
 
-GROUP BY, HAVING, set operations, DISTINCT ON, locks, SELECT INTO, and DML are
-unsupported. PostgreSQL ON and WHERE require boolean-compatible expressions.
-No semantic facts imply successful execution: conversion failures, overflow,
-constraint violations, and other runtime errors are separate concerns.
-
-## Confidence and consumers
-
-Unknown parameters remain visible as `ExpressionKind::Parameter` with their
-original token spelling. This version does not infer a complete parameter
-signature across occurrences. NULL facts are conservative and do not incorporate
-WHERE refinements or data statistics. Cardinality, uniqueness preservation, and
-row existence are not proved. Rejected syntax is never downgraded to a columnless
-or dependency-free successful query.
-
-Literal spellings are preserved, not decoded into PHP values. COALESCE operands
-can include inserted PostgreSQL implicit-cast nodes, which retain their original
-source object. Consumers should traverse the semantic operands rather than assume
-that every COALESCE child is a direct column.
+Regression tests should verify semantic facts for valid SQL and diagnostics for
+invalid SQL. Tests must not enshrine an implementation gap as an intentional
+language restriction.

@@ -23,10 +23,10 @@ final class Tree
     {
         foreach (Tree::significant($source) as $child) {
             if ($child instanceof Node && !in_array($child->name, $nodes, true)) {
-                Tree::unsupported($child, 'clause');
+                Tree::invalid($child, 'clause');
             }
             if ($child instanceof Token && !in_array(strtoupper($child->text), $tokens, true)) {
-                Tree::unsupported($child, 'clause terminal');
+                Tree::invalid($child, 'clause terminal');
             }
         }
     }
@@ -84,8 +84,8 @@ final class Tree
     /**
      * @throws SemanticException
      */
-    public static function unsupported(Node|Token $node, string $context): never
+    public static function invalid(Node|Token $node, string $context): never
     {
-        throw new SemanticException('unsupported-syntax', 'Unsupported ' . $context . ': ' . self::text($node), $node);
+        throw new SemanticException('invalid-structure', 'Cannot bind ' . $context . ': ' . self::text($node), $node);
     }
 }

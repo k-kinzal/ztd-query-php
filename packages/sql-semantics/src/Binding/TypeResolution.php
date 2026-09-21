@@ -12,7 +12,7 @@ use SqlSemantics\SemanticException;
 use SqlSemantics\Type\TypeDescriptor;
 
 /**
- * Resolves the supported built-in common types; unknown coercions are rejected.
+ * Resolves built-in common types while preserving catalog-dependent uncertainty.
  *
  * @visibility SqlSemantics
  */
@@ -61,7 +61,10 @@ final class TypeResolution
             return new TypeDescriptor($this->dialect, 'text');
         }
 
-        throw new SemanticException('unsupported-coercion', 'Cannot establish a common type for: ' . implode(', ', $names), $source);
+        if ($this->dialect === Dialect::PostgreSql && array_diff($names, [...$numeric, 'text', 'varchar', 'char', 'boolean']) === []) {
+            throw new SemanticException('incompatible-types', 'Cannot establish a common type for: ' . implode(', ', $names), $source);
+        }
+        return new TypeDescriptor($this->dialect, 'unknown');
     }
 
     /**

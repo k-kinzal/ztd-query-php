@@ -25,6 +25,7 @@ final class TableUse
      * @param TableDefinition $declaration Resolved table
      * @param string|null $alias Explicit alias, hiding the declaration name in this scope
      * @param Node $source Original table reference
+     * @param BoundStatement|null $query Definition of a derived relation or CTE
      */
     public function __construct(
         public readonly string $id,
@@ -32,6 +33,7 @@ final class TableUse
         public readonly TableDefinition $declaration,
         public readonly ?string $alias,
         public readonly Node $source,
+        public readonly ?BoundStatement $query = null,
     ) {
     }
 }

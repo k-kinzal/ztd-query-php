@@ -39,7 +39,7 @@ final class SchemaReader
             foreach (StatementList::read($tree, $this->identifiers->dialect) as $statement) {
                 $create = Tree::outer($statement, ['CreateStmt', 'create_table_stmt', 'create_table'])[0] ?? null;
                 if ($create === null) {
-                    Tree::unsupported($statement, 'schema statement');
+                    Tree::invalid($statement, 'schema statement');
                 }
                 $table = $this->table($this->identifiers->dialect === Dialect::Sqlite ? $statement : $create);
                 $key = $table->schema . "\0" . $table->name;
@@ -62,19 +62,15 @@ final class SchemaReader
     public function table(Node $create): TableDefinition
     {
         $header = Tree::outer($create, ['create_table'])[0] ?? $create;
-        $nameNode = Tree::child($header, ['qualified_name', 'table_ident', 'nm']);
+        $nameNode = Tree::outer($header, ['qualified_name', 'table_ident', 'nm'])[0] ?? null;
         if ($nameNode === null) {
-            Tree::unsupported($create, 'table name');
+            Tree::invalid($create, 'table name');
         }
         $parts = $this->identifiers->parts($nameNode);
         $sqliteDb = Tree::child($header, ['dbnm']);
         if ($sqliteDb !== null) {
             $parts = [$parts[0], ...$this->identifiers->parts($sqliteDb)];
         }
-        if (count($parts) > 2) {
-            Tree::unsupported($nameNode, 'three-part table name');
-        }
-        $this->validate($create, $header);
         $columns = [];
         $constraints = [];
         foreach ($this->columnNodes($create) as [$column, $attributes]) {
@@ -82,40 +78,15 @@ final class SchemaReader
             $columns[] = $definition;
             array_push($constraints, ...$localConstraints);
         }
-        foreach (Tree::outer($create, ['TableConstraint', 'table_constraint_def', 'tcons']) as $node) {
+        foreach ((new ConstraintGroups())->read(Tree::outer($create, ['TableConstraint', 'table_constraint_def', 'tcons'])) as $node) {
             $constraint = (new ConstraintReader($this->identifiers))->read($node);
-            if ($constraint === null) {
-                Tree::unsupported($node, 'table constraint');
+            if ($constraint !== null) {
+                $constraints[] = $constraint;
             }
-            $constraints[] = $constraint;
-        }
-        if ($columns === []) {
-            Tree::unsupported($create, 'CREATE TABLE without column declarations');
         }
         $columns = $this->primaryKeys($columns, $constraints, $create);
 
         return new TableDefinition(count($parts) === 2 ? $parts[0] : $this->defaultSchema, $parts[count($parts) - 1], $columns, $constraints, $create);
-    }
-
-    /**
-     * Rejects table options that change the declared schema semantics.
-     */
-    public function validate(Node $source, Node $header): void
-    {
-        if ($this->identifiers->dialect === Dialect::Sqlite) {
-            Tree::assertChildren($source, ['create_table', 'create_table_args'], []);
-            Tree::assertChildren($header, ['createkw', 'nm', 'dbnm'], ['TABLE']);
-            $arguments = Tree::child($source, ['create_table_args']);
-            if ($arguments === null) {
-                Tree::unsupported($source, 'table arguments');
-            }
-            Tree::assertChildren($arguments, ['columnlist', 'conslist_opt'], ['(', ')']);
-            return;
-        }
-        Tree::assertChildren($source, ['qualified_name', 'OptTableElementList', 'table_ident', 'table_element_list'], ['CREATE', 'TABLE', '(', ')']);
-        foreach ($source->find('field_def') as $field) {
-            Tree::assertChildren($field, ['type', 'opt_column_attribute_list'], []);
-        }
     }
 
     /**
@@ -135,7 +106,7 @@ final class SchemaReader
             return array_reverse($columns);
         }
         foreach (Tree::outer($create, ['columnDef', 'column_def']) as $column) {
-            $columns[] = [$column, Tree::outer($column, ['ColConstraint', 'column_attribute'])];
+            $columns[] = [$column, Tree::outer($column, ['ColConstraint', 'column_attribute', 'attribute'])];
         }
 
         return $columns;
@@ -169,8 +140,8 @@ final class SchemaReader
         }
         $result = [];
         foreach ($columns as $column) {
-            $notNull = in_array($this->identifiers->dialect === Dialect::PostgreSql ? $column->name : strtolower($column->name), $primary, true) && $this->primaryNotNull($column, $primary, $constraints);
-            $result[] = new ColumnDefinition($column->name, $column->type, $notNull ? Nullability::NotNull : $column->nullability, $column->source, $column->defaultExpression);
+            $notNull = in_array($this->identifiers->dialect === Dialect::PostgreSql ? $column->name : strtolower($column->name), $primary, true) && $this->primaryNotNull($column, $primary, $constraints) || (in_array(strtolower($column->name), $primary, true) && $this->identifiers->dialect === Dialect::Sqlite && (str_contains(strtoupper(Tree::text($source)), 'WITHOUT ROWID') || str_contains(strtoupper(Tree::text($source)), 'STRICT')));
+            $result[] = new ColumnDefinition($column->name, $column->type, $notNull ? Nullability::NotNull : $column->nullability, $column->source, $column->defaultExpression, $column->attributes, $column->generatedExpression);
         }
 
         return $result;

@@ -6,9 +6,8 @@ namespace SqlSemantics;
 
 use SqlSemantics\Ast\DialectParser;
 use SqlSemantics\Ast\Identifiers;
-use SqlSemantics\Binding\SelectBinder;
 use SqlSemantics\Binding\TableResolver;
-use SqlSemantics\Model\BoundSelect;
+use SqlSemantics\Model\BoundStatement;
 
 /**
  * Performs the SQL semantic phase: name binding, type resolution, and NULL propagation.
@@ -34,18 +33,31 @@ final class Binder
     }
 
     /**
-     * Parses SQL and binds one SELECT into an immutable semantic representation.
+     * Parses and binds one SQL statement into an immutable semantic representation.
      *
-     * @param string $sql One SELECT statement in the schema's dialect
-     * @return BoundSelect Bound relations and expressions with types, NULL facts, and source syntax
-     * @throws SemanticException When names, types, or supported semantics cannot be resolved
+     * @param string $sql One SQL statement in the schema's dialect
+     * @return BoundStatement Bound relations and expressions with types, NULL facts, and source syntax
+     * @throws SemanticException When names or types cannot be resolved
      * @throws \SqlParser\Lexer\LexicalException When SQL contains invalid tokens
      * @throws \SqlParser\Parser\SyntaxException When SQL does not match the selected grammar
      */
-    public function bind(string $sql): BoundSelect
+    public function bind(string $sql): BoundStatement
     {
         $tables = new TableResolver($this->schema, new Identifiers($this->schema->dialect), $this->schema->defaultSchema);
 
-        return (new SelectBinder($tables))->bind($this->parser->parse($sql));
+        return (new Binding\Statement\StatementBinder($tables))->bind($this->parser->parse($sql));
     }
+    /**
+     * Binds a script while preserving statement boundaries.
+     *
+     * @return list<BoundStatement> Statements in source order
+     */
+    public function bindAll(string $sql): array
+    {
+        $tree = $this->parser->parse($sql);
+        $tables = new TableResolver($this->schema, new Identifiers($this->schema->dialect), $this->schema->defaultSchema);
+        $statements = Ast\StatementList::read($tree, $this->schema->dialect);
+        return array_map(fn (\SqlParser\Parser\Node $statement): BoundStatement => (new Binding\Statement\StatementBinder($tables))->bind(new \SqlParser\Parser\Node($tree->name, $tree->ordinal, [$statement])), $statements);
+    }
+
 }

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Binding;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Ast\Tree;
 use SqlSemantics\Dialect;
 use SqlSemantics\Model\Expression;
 use SqlSemantics\Model\ExpressionKind;
@@ -33,6 +32,9 @@ final class ExpressionRules
      */
     public function call(string $name, array $operands, Node $source): Expression
     {
+        if (!in_array($name, ['COALESCE', 'NULLIF'], true)) {
+            return (new Scalar\FunctionRules())->bind($name, $operands, $source, new Scope(new \SqlSemantics\Ast\Identifiers($this->dialect)));
+        }
         if ($operands === [] || ($name === 'NULLIF' && count($operands) !== 2)) {
             throw new SemanticException('invalid-arity', 'Invalid argument count for ' . $name, $source);
         }
@@ -44,16 +46,9 @@ final class ExpressionRules
             $nullability = NullFacts::coalesce($operands);
             return new Expression(ExpressionKind::Coalesce, $type, $nullability, $source, $operands, symbol: $name, nullExtendedBy: NullFacts::extensions($operands, $nullability));
         }
-        if ($name === 'NULLIF') {
-            if ($operands[0]->type->name !== $operands[1]->type->name && $operands[1]->type->name !== 'unknown') {
-                Tree::unsupported($source, 'NULLIF overload with different input types');
-            }
-            $type = $operands[0]->type;
-            $nullability = $operands[0]->nullability === Nullability::AlwaysNull ? Nullability::AlwaysNull : Nullability::MaybeNull;
-            return new Expression(ExpressionKind::NullIf, $type, $nullability, $source, $operands, symbol: $name, nullExtendedBy: NullFacts::extensions($operands, $nullability));
-        }
-
-        Tree::unsupported($source, 'function');
+        $type = $operands[0]->type;
+        $nullability = $operands[0]->nullability === Nullability::AlwaysNull ? Nullability::AlwaysNull : Nullability::MaybeNull;
+        return new Expression(ExpressionKind::NullIf, $type, $nullability, $source, $operands, symbol: $name, nullExtendedBy: NullFacts::extensions($operands, $nullability));
     }
 
     /**
@@ -85,16 +80,17 @@ final class ExpressionRules
             }
             $type = $types->boolean();
             $nullability = NullFacts::coalesce($operands) === Nullability::NotNull && NullFacts::strict($operands) === Nullability::NotNull ? Nullability::NotNull : Nullability::MaybeNull;
-        } elseif (in_array($operator, ['=', '<>', '!=', '<', '>', '<=', '>=', 'IS', 'IS NOT', '<=>'], true)) {
+        } elseif (in_array($operator, ['=', '<>', '!=', '<', '>', '<=', '>=', 'IS', 'IS NOT', '<=>', 'LIKE', 'NOT LIKE', 'ILIKE', 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN', 'REGEXP', 'GLOB', 'MATCH', 'IS DISTINCT FROM', 'IS NOT DISTINCT FROM'], true)) {
             $types->common($operands, $source);
             $type = $types->boolean();
             if (in_array($operator, ['IS', 'IS NOT', '<=>'], true)) {
                 $nullability = Nullability::NotNull;
             }
-        } elseif (in_array($operator, ['+', '-', '*'], true)) {
+        } elseif (in_array($operator, ['+', '-', '*', '/', '%', 'DIV', 'MOD', '^', '&', '|', '<<', '>>'], true)) {
             $type = $this->arithmetic($operator, $operands, $source);
         } else {
-            Tree::unsupported($source, 'operator');
+            $type = new TypeDescriptor($this->dialect, $operator === '||' ? 'text' : 'unknown');
+            $nullability = Nullability::Unknown;
         }
 
         return new Expression(ExpressionKind::Operator, $type, $nullability, $source, $operands, symbol: $operator, nullExtendedBy: NullFacts::extensions($operands, $nullability));
@@ -116,11 +112,8 @@ final class ExpressionRules
                 default => $type,
             };
         }
-        if ($this->dialect !== Dialect::Sqlite && !in_array(strtolower($type->name), ['smallint', 'integer', 'bigint'], true)) {
-            Tree::unsupported($source, 'arithmetic type');
-        }
         if ($this->dialect === Dialect::MySql) {
-            $type = new TypeDescriptor($this->dialect, 'bigint');
+            $type = new TypeDescriptor($this->dialect, in_array($type->name, ['real', 'double precision'], true) ? 'double precision' : ($operator === '/' || $type->name === 'numeric' ? 'numeric' : 'bigint'));
         } elseif ($this->dialect === Dialect::Sqlite) {
             $type = new TypeDescriptor($this->dialect, 'dynamic');
         }

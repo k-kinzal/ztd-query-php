@@ -50,8 +50,9 @@ final class LiteralBinder
     {
         $name = $token->name;
         $number = str_replace('_', '', $token->text);
-        if (in_array($name, ['ICONST', 'FCONST', 'INTEGER', 'NUM', 'LONG_NUM', 'ULONGLONG_NUM'], true) && preg_match('/^0[xob]/i', $number) === 1) {
-            \SqlSemantics\Ast\Tree::unsupported($token, 'non-decimal numeric literal');
+        $baseType = $this->nonDecimal($token);
+        if ($baseType !== null) {
+            return $baseType;
         }
         $text = strtoupper($token->text);
         return match (true) {
@@ -60,6 +61,7 @@ final class LiteralBinder
             $name === 'ULONGLONG_NUM' => 'bigint unsigned',
             $name === 'FCONST' => ctype_digit($number) ? $this->integer($number) : 'numeric',
             $name === 'DECIMAL_NUM' => 'numeric',
+            in_array($name, ['XCONST', 'BCONST', 'HEX_NUM', 'BIN_NUM', 'BLOB'], true) => $this->dialect === Dialect::PostgreSql ? 'bit' : 'blob',
             in_array($name, ['FLOAT_NUM', 'FLOAT'], true) => $this->dialect === Dialect::Sqlite ? 'real' : 'double precision',
             in_array($name, ['SCONST', 'USCONST', 'TEXT_STRING', 'STRING'], true) => $this->dialect === Dialect::PostgreSql ? 'unknown' : 'text',
             in_array($name, ['NULL_P', 'NULL_SYM', 'NULL'], true) => 'unknown',
@@ -83,4 +85,20 @@ final class LiteralBinder
 
         return strlen($digits) < 19 || (strlen($digits) === 19 && strcmp($digits, '9223372036854775807') <= 0) ? 'bigint' : 'numeric';
     }
+    /**
+     * Determines a base-prefixed number's dialect-specific integer width.
+     */
+    public function nonDecimal(Token $token): ?string
+    {
+        $name = $token->name;
+        $number = str_replace('_', '', $token->text);
+        if (in_array($name, ['ICONST', 'FCONST', 'INTEGER', 'NUM', 'LONG_NUM', 'ULONGLONG_NUM'], true) && preg_match('/^0[xob]/i', $number) === 1) {
+            $base = match (strtolower($number[1])) {
+                'x' => 16, 'o' => 8, default => 2
+            };
+            return $this->integer(base_convert(substr($number, 2), $base, 10));
+        }
+        return null;
+    }
+
 }

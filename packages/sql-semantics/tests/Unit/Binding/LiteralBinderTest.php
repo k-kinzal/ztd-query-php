@@ -7,6 +7,7 @@ namespace Tests\Unit\Binding;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
@@ -21,7 +22,6 @@ use SqlSemantics\Type\Nullability;
 #[CoversClass(\SqlSemantics\Binding\NullFacts::class)]
 #[CoversClass(\SqlSemantics\Binding\ProjectionBinder::class)]
 #[CoversClass(\SqlSemantics\Binding\SelectBinder::class)]
-#[CoversClass(\SqlSemantics\Binding\SyntaxGuard::class)]
 #[CoversClass(\SqlSemantics\Binding\SelectModifiersBinder::class)]
 #[CoversClass(\SqlSemantics\Binding\TypeResolution::class)]
 #[CoversClass(Binder::class)]
@@ -53,6 +53,23 @@ use SqlSemantics\Type\Nullability;
 #[CoversClass(SemanticException::class)]
 #[CoversClass(\SqlSemantics\Type\TypeDescriptor::class)]
 #[Medium]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Statement\ValuesBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Statement\StatementBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Statement\MutationBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Statement\UtilityBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\SchemaEvolution::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\TableAlteration::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryRelation::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryContext::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\UsingJoin::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\RelationFactory::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\SqliteLists::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryNodes::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Scalar\ScalarBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Scalar\FunctionRules::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundStatement::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ConstraintGroups::class)]
 final class LiteralBinderTest extends TestCase
 {
     public function testIntegerClassifiesPostgresWidthsWithoutPhpOverflow(): void
@@ -123,4 +140,26 @@ final class LiteralBinderTest extends TestCase
         self::assertSame('unknown', $reader->typeName(new \SqlParser\Lexer\Token(1, 'SCONST', "'value'", 0)));
         self::assertNull($reader->typeName(new \SqlParser\Lexer\Token(1, 'IDENT', 'value', 0)));
     }
+    public function testNonDecimalKeepsOriginalLiteralSpelling(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 0xff');
+        self::assertSame('integer', $query->outputs[0]->expression->type->name);
+        self::assertSame('0xff', $query->outputs[0]->expression->symbol);
+    }
+
+    #[TestWith(['0x7fffffff', 'integer'])]
+    #[TestWith(['0x80000000', 'bigint'])]
+    #[TestWith(['0x7fffffffffffffff', 'bigint'])]
+    #[TestWith(['0x8000000000000000', 'numeric'])]
+    #[TestWith(['0o17777777777', 'integer'])]
+    #[TestWith(['0o20000000000', 'bigint'])]
+    #[TestWith(['0b1111111111111111111111111111111', 'integer'])]
+    #[TestWith(['0b10000000000000000000000000000000', 'bigint'])]
+    public function testNonDecimalResolvesIntegerWidths(string $literal, string $type): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('select ' . $literal);
+        self::assertSame($type, $query->outputs[0]->expression->type->name);
+        self::assertSame($literal, $query->outputs[0]->expression->symbol);
+    }
+
 }

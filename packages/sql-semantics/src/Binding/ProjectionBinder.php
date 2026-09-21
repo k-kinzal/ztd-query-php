@@ -6,6 +6,7 @@ namespace SqlSemantics\Binding;
 
 use SqlParser\Parser\Node;
 use SqlSemantics\Ast\Tree;
+use SqlSemantics\Binding\Query\QueryNodes;
 use SqlSemantics\Dialect;
 use SqlSemantics\Model\ExpressionKind;
 use SqlSemantics\Model\OutputColumn;
@@ -24,16 +25,16 @@ final class ProjectionBinder
      */
     public function bind(Node $select, Scope $scope): array
     {
-        $items = Tree::outer($select, ['target_el', 'select_item']);
+        $items = QueryNodes::local($select, ['target_el', 'select_item']);
         if ($scope->identifiers->dialect === Dialect::Sqlite) {
-            $items = array_reverse($select->find('selcollist'));
+            $items = array_reverse((new Query\SqliteLists())->projection($select));
         }
         if ($items === []) {
             $list = Tree::child($select, ['select_item_list']);
             if ($list !== null && Tree::text($list) === '*') {
                 return $this->star([], $scope, $list, 0);
             }
-            Tree::unsupported($select, 'empty projection');
+            Tree::invalid($select, 'empty projection');
         }
         $outputs = [];
         foreach ($items as $item) {
@@ -70,7 +71,7 @@ final class ProjectionBinder
             return $this->star($parts, $scope, $item, $ordinal);
         }
         if ($expression === null) {
-            Tree::unsupported($item, 'projection');
+            Tree::invalid($item, 'projection');
         }
         $bound = (new ExpressionBinder())->bind($expression, $scope);
         if ($scope->identifiers->dialect === Dialect::PostgreSql && $bound->kind === ExpressionKind::Literal && $bound->type->name === 'unknown') {
@@ -93,11 +94,19 @@ final class ProjectionBinder
     public function star(array $qualifiers, Scope $scope, Node $source, int $ordinal): array
     {
         $outputs = [];
+        if ($qualifiers === []) {
+            foreach ($scope->merged as $name => $expression) {
+                $outputs[] = new OutputColumn($ordinal + count($outputs), $name, $expression);
+            }
+        }
         foreach ($scope->relations as $relation) {
             if (!$scope->matches($relation, $qualifiers)) {
                 continue;
             }
             foreach ($relation->declaration->columns as $column) {
+                if ($qualifiers === [] && isset($scope->merged[$column->name])) {
+                    continue;
+                }
                 $bound = $scope->column([$relation->alias ?? $relation->declaration->name, $column->name], $source);
                 $outputs[] = new OutputColumn($ordinal + count($outputs), $column->name, $bound);
             }

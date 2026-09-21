@@ -22,7 +22,6 @@ use SqlSemantics\Type\Nullability;
 #[CoversClass(\SqlSemantics\Binding\NullFacts::class)]
 #[CoversClass(\SqlSemantics\Binding\ProjectionBinder::class)]
 #[CoversClass(\SqlSemantics\Binding\SelectBinder::class)]
-#[CoversClass(\SqlSemantics\Binding\SyntaxGuard::class)]
 #[CoversClass(\SqlSemantics\Binding\SelectModifiersBinder::class)]
 #[CoversClass(\SqlSemantics\Binding\TypeResolution::class)]
 #[CoversClass(Binder::class)]
@@ -53,6 +52,23 @@ use SqlSemantics\Type\Nullability;
 #[CoversClass(SemanticException::class)]
 #[CoversClass(\SqlSemantics\Type\TypeDescriptor::class)]
 #[Medium]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Statement\ValuesBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Statement\StatementBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Statement\MutationBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Statement\UtilityBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\SchemaEvolution::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\TableAlteration::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryRelation::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryContext::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\UsingJoin::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\RelationFactory::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\SqliteLists::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryNodes::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Scalar\ScalarBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Scalar\FunctionRules::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundStatement::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ConstraintGroups::class)]
 final class SchemaReaderTest extends TestCase
 {
     #[TestWith([Dialect::PostgreSql])]
@@ -100,10 +116,11 @@ final class SchemaReaderTest extends TestCase
         self::assertSame(Nullability::MaybeNull, $table->columns[0]->nullability);
     }
 
-    public function testValidateRejectsCreateAsSelect(): void
+    public function testCreateAsSelectExtractsResultColumns(): void
     {
-        $this->expectException(SemanticException::class);
-        (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE users AS SELECT 1 AS id');
+        $schema = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE users AS SELECT 1 AS id');
+        self::assertSame('id', $schema->tables[0]->columns[0]->name);
+        self::assertSame('integer', $schema->tables[0]->columns[0]->type->name);
     }
 
     public function testPrimaryKeysResolvesCaseInsensitiveSqliteConstraintColumns(): void

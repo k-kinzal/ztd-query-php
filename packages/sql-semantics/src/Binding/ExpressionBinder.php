@@ -7,6 +7,8 @@ namespace SqlSemantics\Binding;
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
 use SqlSemantics\Ast\Tree;
+use SqlSemantics\Binding\Scalar\FunctionRules;
+use SqlSemantics\Binding\Scalar\ScalarBinder;
 use SqlSemantics\Model\Expression;
 
 /**
@@ -23,6 +25,9 @@ final class ExpressionBinder
     {
         if ($node instanceof Token) {
             return $this->token($node, $scope);
+        }
+        if (in_array($node->name, ['SelectStmt', 'select_with_parens', 'subquery', 'select'], true) && $scope->queries !== null) {
+            return (new ScalarBinder())->subquery($node, $node, $scope);
         }
         if (in_array($node->name, ['columnref', 'simple_ident'], true)) {
             return $scope->column($scope->identifiers->parts($node), $node);
@@ -45,7 +50,7 @@ final class ExpressionBinder
             return $expression;
         }
 
-        Tree::unsupported($node, 'expression');
+        return (new ScalarBinder())->bind($node, $scope);
     }
 
     /**
@@ -61,7 +66,7 @@ final class ExpressionBinder
             return $scope->column([$scope->identifiers->name($token)], $token);
         }
 
-        Tree::unsupported($token, 'expression terminal');
+        return (new FunctionRules())->bind(strtoupper($token->text), [], new Node('terminal_expression', 0, [$token]), $scope);
     }
 
     /**
@@ -89,20 +94,7 @@ final class ExpressionBinder
      */
     public function call(Node $node, array $children, Scope $scope): Expression
     {
-        $name = strtoupper(Tree::text($children[0]));
-        if (!in_array($name, ['COALESCE', 'NULLIF'], true)) {
-            Tree::unsupported($node, 'function');
-        }
-        $operands = [];
-        foreach (array_slice($children, 2, -1) as $child) {
-            if ($child instanceof Node) {
-                foreach (Tree::outer($child, ['a_expr', 'expr']) as $argument) {
-                    $operands[] = $this->bind($argument, $scope);
-                }
-            }
-        }
-
-        return (new ExpressionRules($scope->identifiers->dialect))->call($name, $operands, $node);
+        return (new ScalarBinder())->bind($node, $scope);
     }
 
     /**
@@ -120,7 +112,7 @@ final class ExpressionBinder
                 return $rules->operator(in_array($tail, ['IS NULL', 'ISNULL'], true) ? 'IS NULL' : 'IS NOT NULL', [$this->bind($children[0], $scope)], $node);
             }
         }
-        if (count($children) === 3 && in_array(strtoupper(Tree::text($children[1])), ['+', '-', '*', '=', '<>', '!=', '<', '>', '<=', '>=', 'AND', 'OR', 'IS', '<=>'], true)) {
+        if (count($children) === 3 && in_array(strtoupper(Tree::text($children[1])), ['+', '-', '*', '/', '%', '||', '=', '<>', '!=', '<', '>', '<=', '>=', 'AND', 'OR', 'IS', '<=>'], true)) {
             return $rules->operator(Tree::text($children[1]), [$this->bind($children[0], $scope), $this->bind($children[2], $scope)], $node);
         }
 

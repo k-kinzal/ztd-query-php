@@ -6,11 +6,9 @@ namespace SqlSemantics;
 
 use SqlParser\Parser\Node;
 use SqlSemantics\Ast\DialectParser;
-use SqlSemantics\Ast\Identifiers;
-use SqlSemantics\Ast\SchemaReader;
 
 /**
- * Constructs schema declarations and their resolution context from CREATE TABLE SQL.
+ * Constructs schema declarations and their resolution context from ordered DDL.
  *
  * @example Building a schema from SQL strings
  *     $builder = new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql);
@@ -45,18 +43,17 @@ final class SchemaBuilder
     }
 
     /**
-     * Builds an independent schema from zero or more SQL strings containing CREATE TABLE statements.
+     * Builds an independent schema from zero or more SQL strings containing schema statements.
      *
      * @param string ...$sql DDL strings in declaration order; no arguments builds an empty schema
-     * @throws SemanticException When declarations conflict or use unsupported semantics
+     * @throws SemanticException When declarations conflict or cannot be resolved
      * @throws \SqlParser\Lexer\LexicalException When SQL contains invalid tokens
      * @throws \SqlParser\Parser\SyntaxException When SQL does not match the selected grammar
      */
     public function build(string ...$sql): Schema
     {
         $trees = array_map(fn (string $text): Node => $this->parser->parse($text), array_values($sql));
-        $tables = (new SchemaReader(new Identifiers($this->dialect), $this->defaultSchema))->read($trees);
-
-        return new Schema($this->dialect, $tables, $this->defaultSchema, $this->parser->version());
+        $initial = new Schema($this->dialect, [], $this->defaultSchema, $this->parser->version());
+        return (new Binding\Schema\SchemaEvolution($initial))->build($trees);
     }
 }

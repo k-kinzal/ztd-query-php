@@ -1,0 +1,233 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Binding\Query;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Binder;
+use SqlSemantics\Dialect;
+use SqlSemantics\SchemaBuilder;
+
+#[CoversClass(\SqlSemantics\Binding\Query\QueryBinder::class)]
+#[UsesClass(\SqlSemantics\Ast\ColumnReader::class)]
+#[UsesClass(\SqlSemantics\Ast\ConstraintGroups::class)]
+#[UsesClass(\SqlSemantics\Ast\ConstraintReader::class)]
+#[UsesClass(\SqlSemantics\Ast\DialectParser::class)]
+#[UsesClass(\SqlSemantics\Ast\Identifiers::class)]
+#[UsesClass(\SqlSemantics\Ast\SchemaReader::class)]
+#[UsesClass(\SqlSemantics\Ast\StatementList::class)]
+#[UsesClass(\SqlSemantics\Ast\TokenGroups::class)]
+#[UsesClass(\SqlSemantics\Ast\Tree::class)]
+#[UsesClass(\SqlSemantics\Ast\TypeReader::class)]
+#[UsesClass(Binder::class)]
+#[UsesClass(\SqlSemantics\Binding\BoundRelation::class)]
+#[UsesClass(\SqlSemantics\Binding\ExpressionBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\ExpressionRules::class)]
+#[CoversClass(\SqlSemantics\Binding\FromBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\IdentitySequence::class)]
+#[UsesClass(\SqlSemantics\Binding\LiteralBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\NullFacts::class)]
+#[CoversClass(\SqlSemantics\Binding\ProjectionBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Query\QueryContext::class)]
+#[CoversClass(\SqlSemantics\Binding\Query\QueryNodes::class)]
+#[CoversClass(\SqlSemantics\Binding\Query\QueryRelation::class)]
+#[UsesClass(\SqlSemantics\Binding\Query\SqliteLists::class)]
+#[UsesClass(\SqlSemantics\Binding\Query\UsingJoin::class)]
+#[CoversClass(\SqlSemantics\Binding\Scalar\FunctionRules::class)]
+#[CoversClass(\SqlSemantics\Binding\Scalar\ScalarBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Schema\SchemaEvolution::class)]
+#[UsesClass(\SqlSemantics\Binding\Schema\TableAlteration::class)]
+#[CoversClass(\SqlSemantics\Binding\Scope::class)]
+#[UsesClass(\SqlSemantics\Binding\SelectBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\SelectModifiersBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Statement\MutationBinder::class)]
+#[CoversClass(\SqlSemantics\Binding\Statement\StatementBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Statement\UtilityBinder::class)]
+#[CoversClass(\SqlSemantics\Binding\Statement\ValuesBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\TableResolver::class)]
+#[UsesClass(\SqlSemantics\Binding\TypeResolution::class)]
+#[UsesClass(Dialect::class)]
+#[UsesClass(\SqlSemantics\Model\BoundSelect::class)]
+#[UsesClass(\SqlSemantics\Model\BoundStatement::class)]
+#[UsesClass(\SqlSemantics\Model\ColumnBinding::class)]
+#[UsesClass(\SqlSemantics\Model\Expression::class)]
+#[UsesClass(\SqlSemantics\Model\ExpressionKind::class)]
+#[UsesClass(\SqlSemantics\Model\Join::class)]
+#[UsesClass(\SqlSemantics\Model\JoinKind::class)]
+#[UsesClass(\SqlSemantics\Model\Ordering::class)]
+#[UsesClass(\SqlSemantics\Model\OutputColumn::class)]
+#[UsesClass(\SqlSemantics\Model\TableUse::class)]
+#[UsesClass(\SqlSemantics\Schema\ColumnDefinition::class)]
+#[UsesClass(\SqlSemantics\Schema\ConstraintKind::class)]
+#[UsesClass(\SqlSemantics\Schema\TableConstraint::class)]
+#[UsesClass(\SqlSemantics\Schema\TableDefinition::class)]
+#[UsesClass(\SqlSemantics\Schema::class)]
+#[UsesClass(SchemaBuilder::class)]
+#[UsesClass(\SqlSemantics\SemanticException::class)]
+#[UsesClass(\SqlSemantics\Type\Nullability::class)]
+#[UsesClass(\SqlSemantics\Type\TypeDescriptor::class)]
+#[Medium]
+#[UsesClass(\SqlSemantics\Binding\Query\RelationFactory::class)]
+final class QueryBinderTest extends TestCase
+{
+    public function testCompoundPreservesGroupingAndOutputs(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER, n INTEGER)');
+        $query = (new Binder($schema))->bind('WITH x(k, v) AS (SELECT id, n FROM t) SELECT k, sum(v) AS total FROM x GROUP BY k HAVING count(*) > 1 UNION ALL SELECT id, n FROM t');
+        self::assertSame('UNION ALL', $query->setOperator);
+        self::assertCount(2, $query->branches);
+        self::assertSame(['k', 'total'], array_column($query->outputs, 'name'));
+        self::assertCount(1, $query->branches[0]->groupBy);
+        self::assertSame('>', $query->branches[0]->having?->symbol);
+        self::assertSame('bigint', $query->outputs[1]->expression->type->name);
+    }
+
+    public function testWithRetainsAnchorAndRecursiveDependencies(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('WITH RECURSIVE nums(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM nums WHERE n < 5) SELECT n FROM nums');
+        self::assertSame('n', $query->outputs[0]->name);
+        self::assertCount(2, $query->ctes['nums']->branches);
+        self::assertSame('<', $query->ctes['nums']->branches[1]->where?->symbol);
+    }
+    public function testBindConstant(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1');
+        self::assertSame('integer', $query->outputs[0]->expression->type->name);
+    }
+
+    public function testExpressionsRetainsHaving(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT count(*) HAVING count(*) > 0');
+        self::assertSame('>', $query->having?->symbol);
+    }
+
+    public function testRenameAppliesCteColumnLists(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('WITH x(a,b) AS (SELECT 1,2) SELECT * FROM x');
+        self::assertSame(['a', 'b'], array_column($query->outputs, 'name'));
+    }
+
+    public function testBranchesRetainsBagOperation(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1 UNION ALL SELECT 2');
+        self::assertSame('UNION ALL', $query->setOperator);
+        self::assertFalse($query->distinct);
+        self::assertCount(2, $query->branches);
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['select 1 union all select NULL', 'integer', 'maybe-null', false])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['select 1 union select 2', 'integer', 'not-null', true])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['select 1.5 intersect select 2', 'numeric', 'not-null', true])]
+    public function testCompoundInfersAcrossAllBranches(string $sql, string $type, string $nullable, bool $distinct): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql);
+        self::assertSame($type, $query->outputs[0]->expression->type->name);
+        self::assertSame($nullable, $query->outputs[0]->expression->nullability->value);
+        self::assertSame($distinct, $query->distinct);
+        self::assertCount(2, $query->outputs[0]->expression->operands);
+    }
+
+    public function testBindPreservesMultipleGroupingAndDistinctOnKeys(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('create table t (id integer, n integer)');
+        $query = (new Binder($schema))->bind('select distinct on (id,n) id,n from t group by id,n having count(*)>0 order by id,n limit 4 offset 2');
+        self::assertTrue($query->distinct);
+        self::assertCount(2, $query->groupBy);
+        self::assertCount(2, $query->clauses['distinct_clause']);
+        self::assertCount(2, $query->orderBy);
+        self::assertSame('4', $query->limit?->symbol);
+        self::assertSame('2', $query->offset?->symbol);
+        self::assertFalse($query->withTies);
+    }
+
+    public function testBindRejectsNonBooleanWhere(): void
+    {
+        $this->expectException(\SqlSemantics\SemanticException::class);
+        $this->expectExceptionMessage('boolean');
+        (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('select 1 where 2');
+    }
+
+    public function testCompoundRejectsDifferentWidths(): void
+    {
+        $this->expectException(\SqlSemantics\SemanticException::class);
+        $this->expectExceptionMessage('same width');
+        (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('select 1 union select 2,3');
+    }
+
+
+    public function testExpressionsBindsAllClauseValuesDirectly(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
+        $tables = new \SqlSemantics\Binding\TableResolver($schema, new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql), 'public');
+        $context = new \SqlSemantics\Binding\Query\QueryContext($tables);
+        $binder = new \SqlSemantics\Binding\Query\QueryBinder($context);
+        $parser = new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql);
+        $tree = $parser->parse('SELECT 1 GROUP BY 1, 2');
+        $body = \SqlSemantics\Binding\Query\QueryNodes::body($tree);
+        $values = $binder->expressions($body, ['group_clause'], new \SqlSemantics\Binding\Scope($tables->identifiers));
+        self::assertSame(['1', '2'], array_column($values, 'symbol'));
+    }
+
+    public function testWithExposesCtesToItsCaller(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
+        $tables = new \SqlSemantics\Binding\TableResolver($schema, new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql), 'public');
+        $context = new \SqlSemantics\Binding\Query\QueryContext($tables);
+        $binder = new \SqlSemantics\Binding\Query\QueryBinder($context);
+        $parser = new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql);
+        $tree = $parser->parse('WITH a AS (SELECT 1 AS n), b AS (SELECT n FROM a) SELECT n FROM b');
+        $visible = $binder->with($tree, null);
+        self::assertSame(['a', 'b'], array_keys($visible->ctes));
+        self::assertSame('n', $visible->ctes['b']->outputs[0]->name);
+    }
+
+    public function testRenameKeepsTheRelationalStages(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
+        $tables = new \SqlSemantics\Binding\TableResolver($schema, new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql), 'public');
+        $context = new \SqlSemantics\Binding\Query\QueryContext($tables);
+        $binder = new \SqlSemantics\Binding\Query\QueryBinder($context);
+        $parser = new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql);
+        $query = $context->bind($parser->parse('SELECT 1 AS original LIMIT 1'));
+        $cte = $parser->parse('WITH a(renamed) AS (SELECT 1) SELECT 1')->find('common_table_expr')[0];
+        $renamed = $binder->rename($query, $cte);
+        self::assertSame('renamed', $renamed->outputs[0]->name);
+        self::assertSame($query->limit, $renamed->limit);
+        self::assertSame($query->source, $renamed->source);
+        self::assertSame($query->outputs[0]->expression, $renamed->outputs[0]->expression);
+    }
+
+    public function testBranchesAndCompoundAreComposable(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
+        $tables = new \SqlSemantics\Binding\TableResolver($schema, new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql), 'public');
+        $context = new \SqlSemantics\Binding\Query\QueryContext($tables);
+        $binder = new \SqlSemantics\Binding\Query\QueryBinder($context);
+        $parser = new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql);
+        $tree = $parser->parse('SELECT 1 AS n UNION ALL SELECT 2');
+        $body = \SqlSemantics\Binding\Query\QueryNodes::body($tree);
+        self::assertCount(2, $binder->branches($body));
+        $query = $binder->compound($tree, $body, $context, 'outer', 'UNION ALL', null);
+        self::assertSame('outer', $query->scopeId);
+        self::assertSame('n', $query->outputs[0]->name);
+        self::assertSame($tree, $query->source);
+    }
+
+    public function testWithRetainsDataModifyingCteAndReturningAliases(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER, n INTEGER)');
+        $query = (new Binder($schema))->bind('WITH moved(x) AS (DELETE FROM t WHERE n<0 RETURNING id) SELECT x FROM moved');
+        self::assertSame('SELECT', $query->kind);
+        self::assertSame('DELETE', $query->ctes['moved']->kind);
+        self::assertSame(['x'], array_column($query->outputs, 'name'));
+        self::assertSame('t', $query->ctes['moved']->targets[0]->declaration->name);
+        self::assertSame('<', $query->ctes['moved']->where?->symbol);
+        self::assertSame($query->ctes['moved'], $query->relations[0]->query);
+        self::assertSame('id', $query->outputs[0]->expression->operands[0]->binding?->column->name);
+    }
+
+}

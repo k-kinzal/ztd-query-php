@@ -6,6 +6,7 @@ namespace SqlSemantics\Binding;
 
 use SqlParser\Parser\Node;
 use SqlSemantics\Ast\Tree;
+use SqlSemantics\Binding\Query\QueryNodes;
 use SqlSemantics\Model\Expression;
 use SqlSemantics\Model\Ordering;
 use SqlSemantics\Model\OutputColumn;
@@ -24,19 +25,22 @@ final class SelectModifiersBinder
      */
     public function ordering(Node $statement, Scope $scope, array $outputs): array
     {
-        $nodes = Tree::outer($statement, ['sortby', 'order_expr']);
-        $sqlite = Tree::outer($statement, ['orderby_opt'])[0] ?? null;
+        $nodes = QueryNodes::local($statement, ['sortby', 'order_expr']);
+        $sqlite = QueryNodes::local($statement, ['orderby_opt'])[0] ?? null;
         if ($sqlite !== null) {
             $nodes = array_reverse($sqlite->find('sortlist'));
         }
+        if ($nodes === []) {
+            $legacy = QueryNodes::local($statement, ['order_clause'])[0] ?? null;
+            $nodes = $legacy === null ? [] : array_reverse($legacy->find('order_list'));
+        }
         $result = [];
         foreach ($nodes as $node) {
-            Tree::assertChildren($node, ['sortlist', 'a_expr', 'expr', 'opt_asc_desc', 'opt_ordering_direction', 'ordering_direction', 'sortorder', 'opt_nulls_order', 'nulls'], [',']);
-            $expr = Tree::child($node, ['a_expr', 'expr']);
+            $expr = Tree::child(Tree::child($node, ['order_ident']) ?? $node, ['a_expr', 'expr']);
             if ($expr === null) {
-                Tree::unsupported($node, 'ordering');
+                Tree::invalid($node, 'ordering');
             }
-            $direction = Tree::child($node, ['opt_asc_desc', 'opt_ordering_direction', 'ordering_direction', 'sortorder']);
+            $direction = Tree::child($node, ['opt_asc_desc', 'opt_ordering_direction', 'ordering_direction', 'order_dir', 'sortorder']);
             $nulls = Tree::child($node, ['opt_nulls_order', 'nulls']);
             $expression = $this->sortExpression($expr, $scope, $outputs);
             $result[] = new Ordering($expression, $direction !== null && strtoupper(Tree::text($direction)) === 'DESC', $nulls === null ? null : str_contains(strtoupper(Tree::text($nulls)), 'FIRST'));
@@ -79,28 +83,25 @@ final class SelectModifiersBinder
      */
     public function pagination(Node $statement, Scope $scope): array
     {
-        $limit = Tree::outer($statement, ['limit_clause', 'limit_opt'])[0] ?? null;
-        $offset = Tree::outer($statement, ['offset_clause'])[0] ?? null;
-        if ($limit !== null && $limit->tokens() !== [] && strtoupper($limit->tokens()[0]->text) !== 'LIMIT') {
-            Tree::unsupported($limit, 'FETCH pagination');
-        }
-        $expressions = $limit === null ? [] : Tree::outer($limit, ['a_expr', 'expr', 'limit_option']);
+        $limit = QueryNodes::local($statement, ['limit_clause', 'limit_opt'])[0] ?? null;
+        $offset = QueryNodes::local($statement, ['offset_clause'])[0] ?? null;
+        $expressions = $limit === null ? [] : Tree::outer($limit, ['a_expr', 'expr', 'limit_option', 'select_fetch_first_value']);
         $bound = array_map(static fn (Node $node): Expression => (new ExpressionBinder())->bind($node, $scope), $expressions);
         if (count($bound) > 2) {
-            Tree::unsupported($statement, 'pagination');
+            Tree::invalid($statement, 'pagination');
         }
         if ($limit !== null && count($bound) === 2 && str_contains(Tree::text($limit), ',')) {
             return [$bound[1], $bound[0]];
         }
         if ($offset !== null) {
-            $node = Tree::outer($offset, ['a_expr', 'expr'])[0] ?? null;
+            $node = Tree::outer($offset, ['a_expr', 'expr', 'select_fetch_first_value'])[0] ?? null;
             if ($node === null) {
-                Tree::unsupported($offset, 'offset');
+                Tree::invalid($offset, 'offset');
             }
             return [$bound[0] ?? null, (new ExpressionBinder())->bind($node, $scope)];
         }
-        if ($limit !== null && $limit->tokens() !== [] && $bound === []) {
-            Tree::unsupported($limit, 'limit');
+        if ($limit !== null && $limit->tokens() !== [] && $bound === [] && strtoupper(Tree::text($limit)) !== 'LIMIT ALL') {
+            Tree::invalid($limit, 'limit');
         }
 
         return [$bound[0] ?? null, $bound[1] ?? null];

@@ -20,7 +20,6 @@ use SqlSemantics\SemanticException;
 #[CoversClass(\SqlSemantics\Binding\NullFacts::class)]
 #[CoversClass(\SqlSemantics\Binding\ProjectionBinder::class)]
 #[CoversClass(\SqlSemantics\Binding\SelectBinder::class)]
-#[CoversClass(\SqlSemantics\Binding\SyntaxGuard::class)]
 #[CoversClass(\SqlSemantics\Binding\SelectModifiersBinder::class)]
 #[CoversClass(Binder::class)]
 #[CoversClass(SchemaBuilder::class)]
@@ -51,6 +50,23 @@ use SqlSemantics\SemanticException;
 #[CoversClass(SemanticException::class)]
 #[CoversClass(\SqlSemantics\Type\TypeDescriptor::class)]
 #[Medium]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Statement\ValuesBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Statement\StatementBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Statement\MutationBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Statement\UtilityBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\SchemaEvolution::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\TableAlteration::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryRelation::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryContext::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\UsingJoin::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\RelationFactory::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\SqliteLists::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryNodes::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Scalar\ScalarBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Scalar\FunctionRules::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundStatement::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ConstraintGroups::class)]
 final class TypeResolutionTest extends TestCase
 {
     public function testCommonPromotesIntegerOperands(): void
@@ -60,7 +76,7 @@ final class TypeResolutionTest extends TestCase
         self::assertSame('bigint', $statement->outputs[0]->expression->type->name);
     }
 
-    public function testRejectsUnmodeledCoercion(): void
+    public function testCommonRejectsIncompatibleBuiltInTypes(): void
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $this->expectException(SemanticException::class);

@@ -57,18 +57,18 @@ $statement->outputs[2]->expression->lineage()[0]->relationId;             // r1
 ```
 
 `SchemaBuilder::build(string ...$sql): Schema` constructs a reusable schema from
-CREATE TABLE strings. `Binder::bind(string $sql): BoundSelect` performs semantic
-binding of one SELECT against that schema. `Schema` contains declarations and
+CREATE TABLE strings. `Binder::bind(string $sql): BoundStatement` performs semantic
+binding against that schema; SELECT returns a `BoundSelect`. `Schema` contains declarations and
 their language context; `BoundSelect` is the output of the semantic phase.
 
 Use `Dialect::MySql` or `Dialect::Sqlite` for the other supported dialects.
 `SchemaBuilder` accepts optional `defaultSchema` and `grammarVersion` arguments,
 for example `new SchemaBuilder(Dialect::PostgreSql, 'app', 'pg-17.2')`. The schema
 retains the resolved grammar release and default namespace, so the binder uses
-the same settings. Semantic coverage is smaller than grammar coverage.
+the same settings. The database release is the support boundary; there is no separate semantic syntax allowlist.
 
 Call `build()` without arguments for a schema with no tables, such as when
-binding `SELECT 1`. Each build creates a new schema; it does not apply migrations.
+binding `SELECT 1`. Each build creates a new schema and applies its DDL statements in order.
 A binder can be reused for multiple SELECTs against the same schema.
 
 The result is an immutable PHP object graph, not serialized SQL or YAML.
@@ -91,7 +91,7 @@ semantic failures use `SemanticException`.
 | Result shape | Ordered `OutputColumn` objects; duplicate names remain distinct |
 | Result modifiers | DISTINCT, ordering, LIMIT, and OFFSET |
 | Incomplete knowledge | `unknown` parameter types and `Nullability::Unknown` |
-| Unsupported or invalid binding | `SemanticException` with a stable `reason` and original `source` |
+| Invalid binding | `SemanticException` with a stable `reason` and original `source` |
 
 `NotNull` describes successfully evaluated values; it does not promise that
 execution cannot fail. `MaybeNull` is conservative, not a prediction that a NULL
@@ -99,22 +99,33 @@ will occur. A WHERE predicate is retained but does not currently refine output
 nullability. SQLite's declared types carry a separate `affinity`; these are not
 runtime storage-class guarantees.
 
-## Supported surface
+## Versioned language support
 
-The initial implementation handles ordinary CREATE TABLE declarations and
-single-scope SELECTs over named tables, including aliases, schema qualification,
-self joins, cross/inner/left/right joins, PostgreSQL/SQLite full joins, ON and
-WHERE predicates, star expansion, DISTINCT, ordering, and pagination. Scalar
-models cover column references, decimal literals, parameters, integer arithmetic
-(`+`, `-`, `*`), comparisons, boolean operations, NULL tests, COALESCE, and NULLIF
-with compatible input types. PostgreSQL COALESCE conversions are explicit cast
-nodes in the semantic graph.
+All SQL in the selected database release is in scope, using the same releases as
+`sql-faker` and `sql-parser`. Missing semantic behavior is a bug, not an exclusion
+from the support contract. See [the support contract](docs/support.md).
 
-This is a bounded semantic implementation, not a full database binder. CTEs,
-subqueries, set operations, grouping/aggregates, window functions, USING/NATURAL
-joins, explicit casts, collations, arbitrary functions, generated columns,
-DDL schema evolution, and DML are rejected rather than silently omitted. See
-[the support contract](docs/support.md) for dialect assumptions and exact limits.
+The semantic graph includes nested query scopes, CTEs, correlated and lateral
+references, derived relations, USING/NATURAL joins, grouping, set operations,
+aggregate/window expressions, CASE, casts, and functions. DDL retains generated
+expressions and column attributes and can derive tables and views from queries.
+DML retains targets, assignments, input queries, VALUES rows, and RETURNING.
+`bindAll()` binds scripts in statement order.
+
+```php
+$schema = (new SchemaBuilder(Dialect::PostgreSql))->build(
+    'CREATE TABLE sales (id INTEGER PRIMARY KEY, amount NUMERIC(10,2))',
+    'CREATE VIEW totals AS SELECT id, SUM(amount) AS total FROM sales GROUP BY id',
+);
+$statement = (new Binder($schema))->bind(
+    'WITH positive AS (SELECT * FROM totals WHERE total > 0) SELECT * FROM positive',
+);
+$statement->relations[0]->query; // Bound CTE, including its filter and inputs
+$statement->outputs[1]->expression->type->name; // numeric
+```
+
+Unknown runtime or catalog facts remain explicit while the original operation,
+operands, nested queries, and dependencies are retained.
 
 ## Consumers
 
@@ -126,8 +137,8 @@ synthesize data or execute queries.
 
 A SQL catalog can enrich a recovered statement with output types, declarations,
 relation occurrences, and source spans. It should retain semantic failures as
-findings. This package does not depend on the unmerged `sql-catalog` package or
-change `sql-fixture` behavior.
+findings. The semantic model is designed for consumers including `sql-fixture`;
+these consumers are not runtime dependencies.
 
 ## Development
 

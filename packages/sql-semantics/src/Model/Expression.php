@@ -30,6 +30,7 @@ final class Expression
      * @param ColumnBinding|null $binding Resolved declaration for a column reference
      * @param string|null $symbol Operator, parameter name, or literal spelling
      * @param list<string> $nullExtendedBy Join IDs that can introduce NULL into this result
+     * @param BoundSelect|null $query Bound scalar, EXISTS, or membership subquery
      */
     public function __construct(
         public readonly ExpressionKind $kind,
@@ -40,6 +41,7 @@ final class Expression
         public readonly ?ColumnBinding $binding = null,
         public readonly ?string $symbol = null,
         public readonly array $nullExtendedBy = [],
+        public readonly ?BoundSelect $query = null,
     ) {
     }
 

@@ -22,6 +22,19 @@ final class IdentitySequence
     public int $join = 0;
 
     /**
+     * Next unused query scope ordinal.
+     */
+    public int $scope = 0;
+
+    /**
+     * Allocates a query scope.
+     */
+    public function scope(): string
+    {
+        return 's' . $this->scope++;
+    }
+
+    /**
      * Allocates the next relation occurrence ID.
      */
     public function relation(): string

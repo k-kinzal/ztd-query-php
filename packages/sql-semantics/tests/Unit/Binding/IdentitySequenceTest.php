@@ -18,7 +18,6 @@ use SqlSemantics\SemanticException;
 #[UsesClass(\SqlSemantics\Binding\NullFacts::class)]
 #[UsesClass(\SqlSemantics\Binding\ProjectionBinder::class)]
 #[UsesClass(\SqlSemantics\Binding\SelectBinder::class)]
-#[UsesClass(\SqlSemantics\Binding\SyntaxGuard::class)]
 #[UsesClass(\SqlSemantics\Binding\SelectModifiersBinder::class)]
 #[UsesClass(\SqlSemantics\Binding\TypeResolution::class)]
 #[UsesClass(\SqlSemantics\Binder::class)]
@@ -49,6 +48,23 @@ use SqlSemantics\SemanticException;
 #[UsesClass(SemanticException::class)]
 #[UsesClass(\SqlSemantics\Type\TypeDescriptor::class)]
 #[Medium]
+#[UsesClass(\SqlSemantics\Binding\Statement\ValuesBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Statement\StatementBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Statement\MutationBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Statement\UtilityBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Schema\SchemaEvolution::class)]
+#[UsesClass(\SqlSemantics\Binding\Schema\TableAlteration::class)]
+#[UsesClass(\SqlSemantics\Binding\Query\QueryRelation::class)]
+#[UsesClass(\SqlSemantics\Binding\Query\QueryContext::class)]
+#[UsesClass(\SqlSemantics\Binding\Query\UsingJoin::class)]
+#[UsesClass(\SqlSemantics\Binding\Query\RelationFactory::class)]
+#[UsesClass(\SqlSemantics\Binding\Query\SqliteLists::class)]
+#[UsesClass(\SqlSemantics\Binding\Query\QueryBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Query\QueryNodes::class)]
+#[UsesClass(\SqlSemantics\Binding\Scalar\ScalarBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Scalar\FunctionRules::class)]
+#[UsesClass(\SqlSemantics\Model\BoundStatement::class)]
+#[UsesClass(\SqlSemantics\Ast\ConstraintGroups::class)]
 final class IdentitySequenceTest extends TestCase
 {
     public function testRelationAllocatesDeterministicSequence(): void
@@ -67,4 +83,11 @@ final class IdentitySequenceTest extends TestCase
         self::assertSame('j1', $ids->join());
         self::assertSame('r0', $ids->relation());
     }
+    public function testScopeAllocatesDistinctScopes(): void
+    {
+        $ids = new \SqlSemantics\Binding\IdentitySequence();
+        self::assertSame('s0', $ids->scope());
+        self::assertSame('s1', $ids->scope());
+    }
+
 }

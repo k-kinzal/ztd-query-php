@@ -21,4 +21,10 @@ enum ExpressionKind: string
     case Coalesce = 'coalesce';
     case NullIf = 'null-if';
     case Cast = 'cast';
+    case Function = 'function';
+    case Aggregate = 'aggregate';
+    case Window = 'window';
+    case CaseExpression = 'case';
+    case Subquery = 'subquery';
+    case Row = 'row';
 }

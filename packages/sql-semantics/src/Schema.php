@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics;
 
+use SqlParser\Parser\Node;
 use SqlSemantics\Schema\TableDefinition;
 
 /**
@@ -22,12 +23,14 @@ final class Schema
      * @param list<TableDefinition> $tables Declarations visible to semantic binding
      * @param string $defaultSchema Schema used for unqualified table declarations and references
      * @param string $grammarVersion Resolved sql-parser grammar release shared by DDL and SELECT
+     * @param list<Node> $statements Ordered original schema statements, including auxiliary objects
      */
     public function __construct(
         public readonly Dialect $dialect,
         public readonly array $tables,
         public readonly string $defaultSchema,
         public readonly string $grammarVersion,
+        public readonly array $statements = [],
     ) {
     }
 }

@@ -66,4 +66,18 @@ final class NullFacts
 
         return array_values(array_unique($ids));
     }
+    /**
+     * Joins facts for alternative result rows or conditional value branches.
+     *
+     * @param list<Expression> $values
+     */
+    public static function alternatives(array $values): Nullability
+    {
+        $facts = array_values(array_unique(array_map(static fn (Expression $value): string => $value->nullability->value, $values)));
+        if (count($facts) === 1) {
+            return Nullability::from($facts[0]);
+        }
+        return in_array(Nullability::Unknown->value, $facts, true) || $facts === [] ? Nullability::Unknown : Nullability::MaybeNull;
+    }
+
 }
