@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Semantic properties over the complete SQL grammar — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/378/k-kinzal/sql-semantics/doc/fuzz/README.md.html">
+<meta name="description" content="Semantic properties over the complete SQL grammar, a document of the k-kinzal/sql-semantics package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="Semantic properties over the complete SQL grammar — ZTD Query PHP">
+<meta property="og:description" content="Semantic properties over the complete SQL grammar, a document of the k-kinzal/sql-semantics package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/378/k-kinzal/sql-semantics/doc/fuzz/README.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/378/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../">
+<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sb-pkg"><a href="../../../../k-kinzal/sql-semantics/index.html">k-kinzal/sql-semantics</a></div><nav class="sb-block"><div class="sb-title">Package</div><ul class="sb-list"><li data-diff="modified"><a href="../../../../k-kinzal/sql-semantics/all-items.html">All items</a></li><li data-diff="modified"><a href="../../../../k-kinzal/sql-semantics/index.html#documents">Documents</a></li></ul></nav><nav class="sb-block"><div class="sb-title">Namespaces</div><ul class="sb-list"><li data-diff="modified"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/index.html" title="SqlSemantics">SqlSemantics</a></li><li data-diff="modified"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Ast/index.html" title="SqlSemantics\Ast">SqlSemantics\Ast</a></li><li data-diff="modified"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Binding/index.html" title="SqlSemantics\Binding">SqlSemantics\Binding</a></li><li data-diff="added"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Binding/Analysis/index.html" title="SqlSemantics\Binding\Analysis">SqlSemantics\Binding\Analysis</a></li><li data-diff="added"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Binding/Query/index.html" title="SqlSemantics\Binding\Query">SqlSemantics\Binding\Query</a></li><li data-diff="added"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Binding/Scalar/index.html" title="SqlSemantics\Binding\Scalar">SqlSemantics\Binding\Scalar</a></li><li data-diff="added"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Binding/Schema/index.html" title="SqlSemantics\Binding\Schema">SqlSemantics\Binding\Schema</a></li><li data-diff="added"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Binding/Statement/index.html" title="SqlSemantics\Binding\Statement">SqlSemantics\Binding\Statement</a></li><li data-diff="modified"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Model/index.html" title="SqlSemantics\Model">SqlSemantics\Model</a></li><li data-diff="modified"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Schema/index.html" title="SqlSemantics\Schema">SqlSemantics\Schema</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Type/index.html" title="SqlSemantics\Type">SqlSemantics\Type</a></li></ul></nav></nav>
+<div class="page">
+<header class="topbar">
+<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
+<nav class="crumbs"><a href="../../../../k-kinzal/sql-semantics/index.html">k-kinzal/sql-semantics</a><span class="crumb-sep">::</span><span class="crumb-current">fuzz/README.md</span></nav>
+<div class="topbar-tools">
+<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 524dd75927 to working tree">524dd75927 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 524dd75927 and working tree." data-off="This page documents what 524dd75927 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Semantic properties over the complete SQL grammar</h1><div class="symbol-meta"><span class="src-link">fuzz/README.md</span></div></div>
+<div class="notice diff-banner" data-diff="added">Added in working tree, compared to 524dd75927.</div>
+<section class="readme" data-diff="added"><div class="doc-block" data-diff="added"><h2>Semantic properties over the complete SQL grammar</h2>
+</div><div class="doc-block" data-diff="added"><p>Every SQL statement that <code>sql-faker</code> generates for a declared release must be analyzable into semantic structure. The targets use the same generators as <code>sql-parser</code>: <code>BytePlanCompiler</code>, an unrestricted nonempty statement plan, default expansion settings, and an 80,004-byte maximum input. No statements, productions, expressions, or exceptions are excluded.</p>
+</div><div class="doc-block" data-diff="added"><p>The MySQL roots are <code>statement</code> for 5.6/5.7 and <code>simple_statement_or_begin</code> for 8.0–9.1; PostgreSQL uses <code>stmt</code>; SQLite uses <code>cmd</code>. All eleven releases in <code>docs/support.md</code> run in CI.</p>
+</div><div class="doc-block" data-diff="added"><h3>Properties</h3>
+</div><div class="doc-block" data-diff="added"><p><code>SemanticsTarget</code> calls the public <code>Binder::analyze()</code> API against an empty catalog, checks the entire returned graph, and repeats analysis to test determinism. Diagnostic-free results must equal strict <code>bind()</code> results. <code>GraphProperties</code> checks ordered output positions, relation scope ownership, column declaration membership, dialect-consistent types, and explicit unresolved references. It visits CTEs, branches, relation queries, scalar subqueries, assignments, VALUES rows, predicates, ordering, and clause expressions. Shared graph nodes are checked once.</p>
+</div><div class="doc-block" data-diff="added"><p>An empty catalog is deliberate: sql-faker generates syntax, including unknown names and semantically inconsistent combinations. Analysis must return all the structure and report such problems as diagnostics. An <code>unknown-table</code> diagnostic cannot stand in for a statement, and neither an implementation exception nor an <code>invalid-structure</code> exception is allowed. This exercises the same semantic lowering used with a complete catalog; unit and regression tests check the resolved facts and DDL constraints too.</p>
+</div><div class="doc-block" data-diff="added"><h3>Run every release</h3>
+</div><div class="doc-block" data-diff="added"><pre class="code-block"><code>composer install
+composer fuzz:smoke
+php fuzz/run.php all 1000</code></pre>
+</div><div class="doc-block" data-diff="added"><p>The default smoke run performs 300 mutations per release, in addition to replay of the accumulated corpus. Each release starts with 64 deterministic byte inputs spanning different structural and lexical choices. Those inputs do not restrict the generator or subsequent mutations. Corpus and grammar coverage are retained under <code>fuzz/corpus/</code> and <code>fuzz/coverage/</code>.</p>
+</div><div class="doc-block" data-diff="added"><pre class="code-block"><code>MYSQL_VERSION=5.6.51 php fuzz/run.php mysql 10000
+php fuzz/run.php pg 10000
+php fuzz/run.php sqlite 10000
+SQLFAKER_COVERAGE=0 php fuzz/run.php all 300</code></pre>
+</div><div class="doc-block" data-diff="added"><p>The per-input timeout is ten seconds because the property performs semantic analysis twice and, when resolved, strict binding as well, under instrumentation. Timeouts are failures. <code>run.php</code> also fails on PHP-Fuzzer&#039;s crash output: its process exit code alone is insufficient. Logs, stderr, and binary crash inputs are written to <code>build/fuzz/&lt;dialect&gt;-&lt;release&gt;/</code>.</p>
+</div><div class="doc-block" data-diff="added"><h3>Reproduce a finding</h3>
+</div><div class="doc-block" data-diff="added"><pre class="code-block"><code>MYSQL_VERSION=5.6.51 vendor/bin/php-fuzzer run-single \
+  fuzz/fuzz_mysql_semantics.php build/fuzz/mysql-5.6.51/crash-&lt;hash&gt;.txt</code></pre>
+</div><div class="doc-block" data-diff="added"><p>The target reports the grammar release, generated SQL and input hex for parse or semantic exceptions. Other errors retain their original stack trace and binary reproducer. Keep every finding as a regression and fix the implementation; do not add exception allowances or alter the generation plan to avoid it.</p>
+</div><div class="doc-block" data-diff="added"><p>PR/push jobs run 300 mutations per release, daily jobs 10,000, and manual jobs accept a positive run count. CI saves the corpus and uploads logs, crash inputs, and grammar coverage. Fuzzing supplies repeatable evidence for the property; a finite run is not an exhaustive proof over infinitely many SQL strings.</p>
+</div></section>
+</main>
+<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div>
+<script src="../../../../assets/search-index.js" defer></script>
+<script src="../../../../assets/app.js" defer></script>
+</body>
+</html>
