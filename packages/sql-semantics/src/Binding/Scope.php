@@ -25,7 +25,7 @@ final class Scope
     /**
      * @param list<TableUse> $relations
      * @param array<string, list<string>> $extensions
-     * @param array<string, Expression> $merged USING columns visible without a qualifier
+     * @param array<int|string, Expression> $merged USING columns visible without a qualifier
      */
     public function __construct(
         public readonly Identifiers $identifiers,
@@ -47,7 +47,7 @@ final class Scope
         $qualifiers = array_slice($parts, 0, -1);
         if ($qualifiers === []) {
             foreach ($this->merged as $label => $expression) {
-                if ($this->identifiers->equal($label, $name)) {
+                if ($this->identifiers->equal((string) $label, $name)) {
                     return $expression;
                 }
             }
@@ -135,7 +135,7 @@ final class Scope
         return new self($this->identifiers, $this->relations, $extensions, $this->parent, $this->queries, $merged);
     }
     /**
-     * @return array<string, Expression> Unqualified joined output columns
+     * @return array<int|string, Expression> Unqualified joined output columns
      */
     public function outputColumns(Node $source): array
     {

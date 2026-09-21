@@ -219,7 +219,7 @@ final class FromBinder
         $query = null;
         if (count($parts) === 1) {
             foreach ($this->queries->ctes ?? [] as $name => $candidate) {
-                if ($this->tables->identifiers->equal($name, $parts[0])) {
+                if ($this->tables->identifiers->equal((string) $name, $parts[0])) {
                     $query = $candidate;
                     break;
                 }

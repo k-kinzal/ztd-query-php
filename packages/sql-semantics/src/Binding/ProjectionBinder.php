@@ -30,6 +30,10 @@ final class ProjectionBinder
             return [];
         }
         $items = QueryNodes::local($select, ['target_el', 'select_item']);
+        $mysqlList = QueryNodes::local($select, ['select_item_list'])[0] ?? null;
+        if ($mysqlList !== null) {
+            $items = $this->mysqlItems($mysqlList);
+        }
         if ($scope->identifiers->dialect === Dialect::Sqlite) {
             $items = array_reverse((new Query\SqliteLists())->projection($select));
         }
@@ -41,10 +45,6 @@ final class ProjectionBinder
             if ($scope->identifiers->dialect === Dialect::PostgreSql && Tree::outer($select, ['opt_target_list']) !== []) {
                 return [];
             }
-            $list = QueryNodes::local($select, ['select_item_list'])[0] ?? null;
-            if ($list !== null && Tree::text($list) === '*') {
-                return $this->star([], $scope, $list, 0);
-            }
             Tree::invalid($select, 'empty projection');
         }
         $outputs = [];
@@ -53,6 +53,25 @@ final class ProjectionBinder
         }
 
         return $outputs;
+    }
+
+    /**
+     * Keeps a leading unqualified star alongside subsequent MySQL projection items.
+     *
+     * @return list<Node>
+     */
+    public function mysqlItems(Node $node): array
+    {
+        if ($node->name === 'select_item' || Tree::text($node) === '*') {
+            return [$node];
+        }
+        $items = [];
+        foreach ($node->children as $child) {
+            if ($child instanceof Node && in_array($child->name, ['select_item_list', 'select_item'], true)) {
+                array_push($items, ...$this->mysqlItems($child));
+            }
+        }
+        return $items;
     }
 
     /**
@@ -107,7 +126,7 @@ final class ProjectionBinder
         $outputs = [];
         if ($qualifiers === []) {
             foreach ($scope->merged as $name => $expression) {
-                $outputs[] = new OutputColumn($ordinal + count($outputs), $name, $expression);
+                $outputs[] = new OutputColumn($ordinal + count($outputs), (string) $name, $expression);
             }
         }
         foreach ($scope->relations as $relation) {

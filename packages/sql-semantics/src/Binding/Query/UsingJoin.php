@@ -27,10 +27,11 @@ final class UsingJoin
         $leftColumns = $left->scope->outputColumns($source);
         $rightColumns = $right->scope->outputColumns($source);
         $names = $using === null ? array_values(array_intersect(array_keys($leftColumns), array_keys($rightColumns))) : TokenGroups::names(TokenGroups::parentheses($using->tokens())[0] ?? [], $left->scope->identifiers);
-        $rules = new ExpressionRules($left->scope->identifiers->dialect);
+        $rules = new ExpressionRules($left->scope->identifiers->dialect, $left->scope->diagnostics());
         $predicate = null;
         $merged = [];
         foreach ($names as $name) {
+            $name = (string) $name;
             $a = $left->scope->column([$name], $source);
             $b = $right->scope->column([$name], $source);
             $comparison = $rules->operator('=', [$a, $b], $source);

@@ -120,4 +120,13 @@ final class ProjectionBinderTest extends TestCase
         self::assertSame('points', $statement->outputs[0]->name);
         self::assertSame($statement->outputs[0]->expression, $statement->orderBy[0]->expression);
     }
+    public function testMysqlItemsPreservesLeadingStarBeforeOtherOutputs(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (id INTEGER, n INTEGER)');
+        $query = (new Binder($schema))->bind('SELECT *, id AS again FROM t');
+        self::assertSame(['id', 'n', 'again'], array_column($query->outputs, 'name'));
+        self::assertSame([0, 1, 2], array_column($query->outputs, 'ordinal'));
+        self::assertSame($query->outputs[0]->expression->binding?->column, $query->outputs[2]->expression->binding?->column);
+    }
+
 }

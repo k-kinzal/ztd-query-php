@@ -224,4 +224,12 @@ final class FromBinderTest extends TestCase
         self::assertNull($query->relations[0]->query);
     }
 
+    public function testTableResolvesNumericCteNames(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('WITH "123" AS (SELECT 1 AS id) SELECT id FROM "123"');
+        self::assertSame('123', $query->relations[0]->declaration->name);
+        self::assertSame(['id'], array_column($query->outputs, 'name'));
+        self::assertSame($query->ctes[123], $query->relations[0]->query);
+    }
+
 }

@@ -31,13 +31,13 @@ class BoundStatement
      * @param Node $source Original statement tree
      * @param list<Expression> $groupBy Grouping expressions
      * @param Expression|null $having Group filter
-     * @param array<string, BoundStatement> $ctes Local common table expressions
+     * @param array<int|string, BoundStatement> $ctes Local common table expressions
      * @param list<BoundSelect> $branches Compound query operands
      * @param string|null $setOperator Compound operation, including ALL
      * @param array<string, list<Expression>> $clauses Additional expression-bearing clauses
      * @param string $kind Statement operation
      * @param list<TableUse> $targets Written or affected relations
-     * @param array<string, Expression> $assignments Assigned column values
+     * @param array<int|string, Expression> $assignments Assigned column values
      * @param list<BoundSelect> $queries Input queries
      * @param list<list<Expression>> $rows Explicit VALUES rows
      * @param bool $withTies Include peers of the final ordered row

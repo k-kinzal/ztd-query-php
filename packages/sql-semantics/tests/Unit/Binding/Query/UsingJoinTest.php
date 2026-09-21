@@ -31,7 +31,7 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\Binding\IdentitySequence::class)]
 #[UsesClass(\SqlSemantics\Binding\LiteralBinder::class)]
 #[UsesClass(\SqlSemantics\Binding\NullFacts::class)]
-#[UsesClass(\SqlSemantics\Binding\ProjectionBinder::class)]
+#[CoversClass(\SqlSemantics\Binding\ProjectionBinder::class)]
 #[UsesClass(\SqlSemantics\Binding\Query\QueryBinder::class)]
 #[UsesClass(\SqlSemantics\Binding\Query\QueryContext::class)]
 #[UsesClass(\SqlSemantics\Binding\Query\QueryNodes::class)]
@@ -41,7 +41,7 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\Binding\Scalar\ScalarBinder::class)]
 #[UsesClass(\SqlSemantics\Binding\Schema\SchemaEvolution::class)]
 #[UsesClass(\SqlSemantics\Binding\Schema\TableAlteration::class)]
-#[UsesClass(\SqlSemantics\Binding\Scope::class)]
+#[CoversClass(\SqlSemantics\Binding\Scope::class)]
 #[UsesClass(\SqlSemantics\Binding\SelectBinder::class)]
 #[UsesClass(\SqlSemantics\Binding\SelectModifiersBinder::class)]
 #[UsesClass(\SqlSemantics\Binding\Statement\MutationBinder::class)]
@@ -99,6 +99,28 @@ final class UsingJoinTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Join::class, $query->from);
         self::assertSame('AND', $query->from->condition?->symbol);
         self::assertCount(2, $query->from->condition->operands);
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, '"'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, '`'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::Sqlite, '"'])]
+    public function testBindPreservesNumericColumnNamesInMergedNamespaces(Dialect $dialect, string $quote): void
+    {
+        $column = $quote . '1' . $quote;
+        $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE a (' . $column . ' INTEGER)', 'CREATE TABLE b (' . $column . ' INTEGER)', 'CREATE TABLE c (' . $column . ' INTEGER)');
+        $query = (new Binder($schema))->bind('SELECT *, ' . $column . ' FROM a NATURAL JOIN b JOIN c USING (' . $column . ')');
+        self::assertSame(['1', '1'], array_column($query->outputs, 'name'));
+        self::assertSame('integer', $query->outputs[0]->expression->type->name);
+        self::assertSame('1', $query->outputs[1]->expression->binding?->column->name);
+    }
+
+    public function testBindCollectsTypeDiagnosticsForFullUsingJoins(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE a (id INTEGER)', 'CREATE TABLE b (id BOOLEAN)');
+        $analysis = (new Binder($schema))->analyze('SELECT * FROM a FULL JOIN b USING (id)');
+        self::assertNotSame([], $analysis->diagnostics);
+        self::assertSame(['id'], array_column($analysis->statement->outputs, 'name'));
+        self::assertSame('COALESCE', $analysis->statement->outputs[0]->expression->symbol);
     }
 
 }

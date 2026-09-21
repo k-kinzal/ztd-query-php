@@ -19,7 +19,7 @@ use SqlSemantics\Model\BoundStatement;
 final class QueryContext
 {
     /**
-     * @param array<string, BoundStatement> $ctes Visible CTE declarations
+     * @param array<int|string, BoundStatement> $ctes Visible CTE declarations
      */
     public function __construct(
         public readonly TableResolver $tables,
