@@ -65,6 +65,9 @@ final class ExpressionBinder
      */
     public function token(Token $token, Scope $scope): Expression
     {
+        if (in_array($token->name, ['DEFAULT', 'DEFAULT_SYM'], true)) {
+            return new Expression(\SqlSemantics\Model\ExpressionKind::DefaultValue, new \SqlSemantics\Type\TypeDescriptor($scope->identifiers->dialect, 'unknown'), \SqlSemantics\Type\Nullability::Unknown, $token, symbol: 'DEFAULT');
+        }
         $literal = (new LiteralBinder($scope->identifiers->dialect))->bind($token);
         if ($literal !== null) {
             return $literal;

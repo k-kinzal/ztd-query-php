@@ -76,3 +76,19 @@ PR/push jobs run 300 mutations per release, daily jobs 10,000, and manual jobs
 accept a positive run count. CI saves the corpus and uploads logs, crash inputs,
 and grammar coverage. Fuzzing supplies repeatable evidence for the property;
 a finite run is not an exhaustive proof over infinitely many SQL strings.
+
+## Semantic meaning and model construction
+
+`StatementProperties` checks obligations imposed by the statement: INSERT must
+retain input destinations, UPDATE must retain assignments, configuration commands
+must retain named effects, and row predicates must not disappear. `GraphProperties`
+also visits insertion destinations, assignments, conflict handlers, settings, and
+bound declaration expressions. Constructor invariants run under the fuzzer too.
+
+Every fuzz input additionally drives `SchemaProperties` against a known catalog
+of the same database release. This independently checks reordered INSERT column
+mapping, assigned values, predicate references, diagnostics for unknown storage
+destinations and invalid PostgreSQL predicates, and expression edits that must
+update lineage and reproduce a freshly bound graph. These companion statements
+do not replace, filter, or constrain the SQL generated from the complete grammar.
+They supplement the empty-catalog property with known semantic expectations.

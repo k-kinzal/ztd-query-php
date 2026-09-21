@@ -29,4 +29,9 @@ enum ExpressionKind: string
     case CaseExpression = 'case';
     case Subquery = 'subquery';
     case Row = 'row';
+    case DefaultValue = 'default';
+    case Subscript = 'subscript';
+    case Field = 'field';
+    case CurrentRow = 'current-row';
+    case ConfigurationValue = 'configuration-value';
 }

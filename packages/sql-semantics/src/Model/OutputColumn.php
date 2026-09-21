@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Model;
 
+use SqlSemantics\Model\Validation\InvalidStructure;
+
 /**
  * An ordered result column; duplicate output names remain separate positions.
  *
@@ -20,11 +22,15 @@ final class OutputColumn
      * @param int $ordinal Zero-based result position
      * @param string|null $name Explicit alias or direct column name; null for an engine-generated label
      * @param Expression $expression Typed result expression
+     * @throws InvalidStructure
      */
     public function __construct(
         public readonly int $ordinal,
         public readonly ?string $name,
         public readonly Expression $expression,
     ) {
+        if ($ordinal < 0) {
+            throw new InvalidStructure('An output position cannot be negative.');
+        }
     }
 }

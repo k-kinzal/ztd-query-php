@@ -61,8 +61,8 @@ built-in types and invalid name bindings still produce semantic diagnostics.
 
 `BoundStatement` provides the common immutable result. `BoundSelect` identifies a
 query. Mutation results additionally retain targets, assignments, VALUES tuples,
-input queries, and returned output columns. Utility commands retain their source
-operation and embedded queries. `Binder::bindAll()` keeps script boundaries.
+input queries, and returned output columns. Configuration commands expose named effects and typed values. Other utility
+commands retain their source operation, argument expressions, and embedded queries. `Binder::bindAll()` keeps script boundaries.
 
 A fixture generator must traverse declaration constraints, input relations,
 nested queries, join conditions, filters, groups, and output requirements. It owns
@@ -74,3 +74,61 @@ The package layers are checked by Deptrac: `Ast` reads declarations and navigate
 syntax, `Binding` assembles semantic graphs, and `Schema`, `Model`, and `Type`
 provide result objects. Public entry points accept SQL strings and preserve the
 selected parser release throughout construction and binding.
+
+## Storage and configuration effects
+
+An INSERT's `insertion` identifies its target and ordered destination expressions.
+The order is the SQL column-list order, which can differ from declaration order.
+It also distinguishes explicit columns from inferred destinations, DEFAULT VALUES,
+and columns omitted from the input. `rows` and `queries` retain the input values;
+`ExpressionKind::DefaultValue` is a storage instruction, not a function call.
+Unknown destinations retain their qualified reference and receive diagnostics.
+
+`writes` keeps assignments in source order. Each assignment has destination
+expressions and a scalar, row, or subquery value. Tuple assignments retain their
+shared value. The existing `assignments` map remains a convenience view; consumers
+that execute writes should use the ordered `writes` collection.
+
+`conflicts` separates index inference, partial-index predicates, and conditional
+conflict updates from the main statement. A conflict-update WHERE is not the
+INSERT's row filter. Predicate and storage validation share the same rules used
+by queries and ordinary writes.
+
+Array subscripts and record fields remain structured storage accesses with a
+column root. Multi-table DELETE separates named targets from read-only inputs.
+UPDATE FROM and DELETE USING keep the target in their relational input tree.
+
+MERGE exposes a `merge` plan with a target, data source, matching predicate, and
+ordered `actions`. Each action retains its match state, additional predicate,
+operation, and branch-local writes or insertion. An absent source and an absent
+target are distinct states with different name visibility. These effects are not
+flattened into unconditional assignments.
+
+SET, RESET, and PRAGMA expose `settings`: qualified names, scopes, actions, and
+ordered typed values. Unquoted setting values are configuration values rather than
+column references. Local, session, global, user-variable, and transaction lifetimes
+remain explicit. DEFAULT and FROM CURRENT remain distinguishable operations.
+RESET PERSIST retains the optional IF EXISTS behavior and represents an omitted
+variable name as all persisted settings.
+
+CREATE TABLE additionally exposes `definitions`, associating bound DEFAULT,
+generated-column, and CHECK expressions with the table declaration. Consumers can
+follow column lineage without interpreting the declaration's concrete syntax tree.
+
+## Construction and editing invariants
+
+Model construction validates output positions, relation ownership, declaration
+membership, reference states, dialect consistency, and collection element types.
+A resolved column requires its declaration binding; unresolved references retain
+their names and unknown types. Literal and parameter spellings must agree with
+their source. Invalid construction raises `InvalidStructure`. These checks run in
+normal library use, independently of the fuzz harness. SQL validity diagnostics
+remain separate so that invalid SQL can still have a well-formed analysis graph.
+
+`BoundStatement::toSql()` reproduces the SQL represented by a parsed snapshot.
+`Binder::replaceExpression()` replaces an expression owned by that snapshot,
+checks that the replacement stays within one expression, preserves precedence
+and surrounding source, then parses and binds the whole result against the schema.
+It returns a new snapshot with updated types, scopes, and lineage. The old snapshot
+is unchanged. A replacement that introduces an invalid reference or predicate is
+rejected. This source-based editing path does not require a general SQL serializer.

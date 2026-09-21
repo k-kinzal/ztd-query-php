@@ -40,6 +40,8 @@ final class GraphProperties
             return;
         }
         $this->visited[$statement] = true;
+        (new StatementProperties())->verify($statement);
+        $this->effects($statement);
         if ($statement->kind === '' || $statement->scopeId === '') {
             throw new RuntimeException('A statement must have an operation and a scope.');
         }
@@ -74,6 +76,47 @@ final class GraphProperties
             }
             if ($relation->query !== null) {
                 $this->statement($relation->query);
+            }
+        }
+    }
+
+    /**
+     * Visits the structured effects that write, configuration, and fixture consumers execute.
+     */
+    public function effects(BoundStatement $statement): void
+    {
+        foreach ($statement->insertion->columns ?? [] as $column) {
+            $this->expression($column);
+        }
+        $writes = $statement->writes;
+        if ($statement->merge !== null) {
+            $this->expression($statement->merge->condition);
+            foreach ($statement->merge->actions as $action) {
+                array_push($writes, ...$action->assignments);
+                foreach ([...array_filter([$action->condition]), ...($action->insertion->columns ?? []), ...array_merge([], ...$action->rows)] as $value) {
+                    $this->expression($value);
+                }
+            }
+        }
+        foreach ($statement->conflicts as $conflict) {
+            array_push($writes, ...$conflict->assignments);
+            foreach ([...$conflict->keys, ...array_filter([$conflict->indexPredicate, $conflict->where])] as $value) {
+                $this->expression($value);
+            }
+        }
+        foreach ($writes as $write) {
+            foreach ([...$write->targets, $write->value] as $value) {
+                $this->expression($value);
+            }
+        }
+        foreach ($statement->settings as $setting) {
+            foreach ($setting->values as $value) {
+                $this->expression($value);
+            }
+        }
+        foreach ($statement->definitions as $definition) {
+            foreach ([...array_values($definition->defaults), ...array_values($definition->generated), ...array_values($definition->checks)] as $value) {
+                $this->expression($value);
             }
         }
     }

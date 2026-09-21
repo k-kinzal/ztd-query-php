@@ -46,7 +46,10 @@ subtype. `bindAll()` retains script statement boundaries. Query results expose:
 - WHERE, grouping, HAVING, compound-query branches and their set operation.
 - Scalar, aggregate, window, conditional, cast, and subquery expressions.
 - Ordering, pagination, and FETCH WITH TIES.
-- Mutation targets, assignments, VALUES tuples, input queries, and RETURNING.
+- Ordered INSERT destinations, omitted/default values, assignments, conflict handlers, and RETURNING.
+- Distinct mutation read inputs and write targets, including ordered MERGE decisions.
+- Named SET/RESET/PRAGMA effects, their scopes, and structured values.
+- Bound declaration defaults, generated expressions, and CHECK conditions.
 
 Nested queries remain reachable through relation and expression `query` fields.
 CTEs and compound branches retain their own relational stages. A consumer must
@@ -92,6 +95,10 @@ unknown. Diagnostics accompany these structures and never replace them.
 
 The property also checks output order, relation scopes, declaration membership,
 expression types, nested graphs, deterministic analysis, and agreement with
-strict binding when no diagnostics occur. Regression tests assert concrete
+strict binding when no diagnostics occur. Statement-specific obligations require
+write destinations, settings, conditions, and MERGE branches to exist independently
+of retaining source syntax. Known-schema companion properties vary values and
+column order, check diagnostics, and verify semantic rebinding after edits.
+Regression tests assert concrete
 facts for queries, writes, and DDL. See [the fuzz instructions](../fuzz/README.md)
 for running every release and replaying failures.

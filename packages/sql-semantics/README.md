@@ -156,6 +156,35 @@ relation occurrences, and source spans. It should retain semantic failures as
 findings. The semantic model is designed for consumers including `sql-fixture`;
 these consumers are not runtime dependencies.
 
+## Structured writes, settings, and edits
+
+```php
+$schema = (new SchemaBuilder(Dialect::PostgreSql))->build(
+    'CREATE TABLE users (id INTEGER NOT NULL, score INTEGER DEFAULT 0)',
+);
+$binder = new Binder($schema);
+$insert = $binder->bind('INSERT INTO users(score,id) VALUES(10,1)');
+$insert->insertion->columns[0]->binding->column->name; // score
+$insert->rows[0][0]->symbol; // 10
+
+$setting = $binder->bind("SET LOCAL work_mem = '64MB'");
+$setting->settings[0]->name; // ['work_mem']
+$setting->settings[0]->scope; // local
+
+$query = $binder->bind('SELECT score*2 FROM users');
+$edited = $binder->replaceExpression(
+    $query,
+    $query->outputs[0]->expression->operands[0],
+    'score+1',
+);
+$edited->toSql(); // SELECT (\nscore+1\n)*2 FROM users
+```
+
+Edits are parsed and rebound before a new immutable snapshot is returned. Invalid
+column references, invalid predicates, and fragments that escape an expression
+boundary are rejected. Model constructors enforce structural invariants and report
+invalid construction with `Model\Validation\InvalidStructure`.
+
 ## Development
 
 ```bash

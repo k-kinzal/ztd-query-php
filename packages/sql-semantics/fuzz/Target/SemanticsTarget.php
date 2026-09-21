@@ -12,11 +12,14 @@ use SqlSemantics\Binder;
  */
 final class SemanticsTarget
 {
+    private readonly SchemaProperties $schemaProperties;
+
     /**
      * Uses the same public analyzer consumers use.
      */
     public function __construct(public readonly Binder $binder)
     {
+        $this->schemaProperties = new SchemaProperties($binder->schema->dialect, $binder->schema->grammarVersion);
     }
 
     /**
@@ -28,7 +31,8 @@ final class SemanticsTarget
     {
         try {
             $analysis = $this->binder->analyze($sql);
-            if ($sql === '' || $analysis->statement->source->toString() !== $sql) {
+            $this->schemaProperties->verify($input);
+            if ($sql === '' || $analysis->statement->toSql() !== $sql) {
                 throw new RuntimeException('Analysis lost the original statement.');
             }
             (new GraphProperties($this->binder->schema->dialect))->statement($analysis->statement);

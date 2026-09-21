@@ -76,6 +76,30 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\Model\Analysis::class)]
 #[UsesClass(\SqlSemantics\Model\Diagnostic::class)]
 #[UsesClass(\SqlSemantics\Binding\Scalar\IndirectionBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Write\ConflictBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Write\AssignmentRules::class)]
+#[UsesClass(\SqlSemantics\Binding\Write\InsertionBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Write\AssignmentBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Configuration\TransactionSettings::class)]
+#[UsesClass(\SqlSemantics\Binding\Configuration\SettingBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Configuration\SpecialSettings::class)]
+#[UsesClass(\SqlSemantics\Binding\Configuration\SettingTokens::class)]
+#[UsesClass(\SqlSemantics\Binding\Editing\ExpressionEdit::class)]
+#[UsesClass(\SqlSemantics\Model\Write\Insertion::class)]
+#[UsesClass(\SqlSemantics\Model\Write\Assignment::class)]
+#[UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
+#[UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
+#[UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
+#[UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
+#[UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
+#[UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
+#[UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
+#[UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
+#[UsesClass(\SqlSemantics\Binding\Schema\DefinitionBinder::class)]
+#[UsesClass(\SqlSemantics\Model\Write\Destination::class)]
+#[UsesClass(\SqlSemantics\Model\Write\Merge::class)]
+#[UsesClass(\SqlSemantics\Model\Write\MergeAction::class)]
+#[UsesClass(\SqlSemantics\Binding\Write\MergeBinder::class)]
 final class MutationBinderTest extends TestCase
 {
     public function testBindReturnsAssignmentPredicateAndReturningColumns(): void
@@ -138,4 +162,34 @@ final class MutationBinderTest extends TestCase
         self::assertNotSame($query->scopeId, $query->queries[0]->scopeId);
     }
 
+    public function testAssignmentsRetainsTheScalarCompatibilityView(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(n INTEGER)')))->bind('UPDATE t SET n=2');
+        self::assertSame($statement->writes[0]->value, $statement->assignments['n']);
+    }
+
+
+    public function testInputRetainsTargetAndUsingJoinForDelete(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER); CREATE TABLE s(id INTEGER)')))->bind('DELETE FROM t USING s WHERE t.id=s.id');
+        self::assertInstanceOf(\SqlSemantics\Model\Join::class, $statement->from);
+        self::assertSame('cross', $statement->from->kind->value);
+        self::assertSame($statement->targets[0], $statement->from->left);
+        self::assertSame(['t','s'], array_map(static fn ($relation) => $relation->declaration->name, $statement->relations));
+    }
+    public function testDeleteTargetsKeepsOnlyNamedMysqlAliases(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INTEGER)')))->bind('DELETE a FROM t AS a JOIN t AS b ON a.id=b.id');
+        self::assertCount(2, $statement->relations);
+        self::assertSame(['a'], array_column($statement->targets, 'alias'));
+        self::assertSame($statement->relations[0], $statement->targets[0]);
+        self::assertInstanceOf(\SqlSemantics\Model\Join::class, $statement->from);
+        self::assertSame('=', $statement->from->condition?->symbol);
+    }
+    public function testDeleteTargetsRetainsLegacyJoinAliases(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.6.51'))->build('CREATE TABLE t(id INTEGER)')))->bind('DELETE a FROM t AS a JOIN t AS b ON a.id=b.id');
+        self::assertSame(['a'], array_column($statement->targets, 'alias'));
+        self::assertSame(['a','b'], array_column($statement->relations, 'alias'));
+    }
 }

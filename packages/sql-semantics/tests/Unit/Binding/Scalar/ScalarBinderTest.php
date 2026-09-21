@@ -76,6 +76,30 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\Model\Analysis::class)]
 #[UsesClass(\SqlSemantics\Model\Diagnostic::class)]
 #[UsesClass(\SqlSemantics\Binding\Scalar\IndirectionBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Write\ConflictBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Write\AssignmentRules::class)]
+#[UsesClass(\SqlSemantics\Binding\Write\InsertionBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Write\AssignmentBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Configuration\TransactionSettings::class)]
+#[UsesClass(\SqlSemantics\Binding\Configuration\SettingBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Configuration\SpecialSettings::class)]
+#[UsesClass(\SqlSemantics\Binding\Configuration\SettingTokens::class)]
+#[UsesClass(\SqlSemantics\Binding\Editing\ExpressionEdit::class)]
+#[UsesClass(\SqlSemantics\Model\Write\Insertion::class)]
+#[UsesClass(\SqlSemantics\Model\Write\Assignment::class)]
+#[UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
+#[UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
+#[UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
+#[UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
+#[UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
+#[UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
+#[UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
+#[UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
+#[UsesClass(\SqlSemantics\Binding\Schema\DefinitionBinder::class)]
+#[UsesClass(\SqlSemantics\Model\Write\Destination::class)]
+#[UsesClass(\SqlSemantics\Model\Write\Merge::class)]
+#[UsesClass(\SqlSemantics\Model\Write\MergeAction::class)]
+#[UsesClass(\SqlSemantics\Binding\Write\MergeBinder::class)]
 final class ScalarBinderTest extends TestCase
 {
     public function testConditionalRetainsBranchesAndExplicitCast(): void
@@ -157,4 +181,26 @@ final class ScalarBinderTest extends TestCase
     }
 
 
+
+    public function testSubqueryRetainsNegationAndQuantifiedComparison(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER,n INTEGER)'));
+        $negative = $binder->bind('SELECT id FROM t WHERE id NOT IN (SELECT n FROM t)');
+        self::assertNotNull($negative->where);
+        self::assertSame('NOT IN', $negative->where->symbol);
+        self::assertSame('id', $negative->where->operands[0]->binding?->column->name);
+        $all = $binder->bind('SELECT id FROM t WHERE id = ALL (SELECT n FROM t)');
+        self::assertNotNull($all->where);
+        self::assertSame('= ALL', $all->where->symbol);
+        self::assertSame('boolean', $all->where->type->name);
+    }
+    public function testSubqueryRetainsMysqlComparisonInput(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INTEGER,n INTEGER)'));
+        $statement = $binder->bind('SELECT id FROM t WHERE id = ANY (SELECT n FROM t)');
+        self::assertNotNull($statement->where);
+        self::assertSame('= ANY', $statement->where->symbol);
+        self::assertSame('id', $statement->where->operands[0]->binding?->column->name);
+        self::assertSame('NOT IN', $binder->bind('SELECT id NOT IN (SELECT n FROM t) FROM t')->outputs[0]->expression->symbol);
+    }
 }

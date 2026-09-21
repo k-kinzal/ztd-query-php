@@ -45,6 +45,7 @@ final class Expression
         public readonly ?BoundSelect $query = null,
         public readonly array $reference = [],
     ) {
+        Validation\ExpressionInvariant::check($this);
     }
 
     /**

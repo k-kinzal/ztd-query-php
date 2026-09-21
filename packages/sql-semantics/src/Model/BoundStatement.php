@@ -43,6 +43,12 @@ class BoundStatement
      * @param bool $withTies Include peers of the final ordered row
      * @param array<string, list<Node>> $syntaxClauses Complete clauses, including non-expression modifiers
      * @param list<\SqlSemantics\Schema\TableDefinition> $declarations Table declarations defined by this statement
+     * @param Write\Insertion|null $insertion Ordered INSERT input destinations
+     * @param list<Write\Assignment> $writes Ordered assignments, including tuple destinations
+     * @param list<Configuration\Setting> $settings Ordered configuration effects
+     * @param list<Write\ConflictAction> $conflicts Ordered conflict handlers
+     * @param list<Definition\TableDeclaration> $definitions Bound declaration expressions by role
+     * @param Write\Merge|null $merge Conditional write plan
      */
     public function __construct(
         public readonly string $scopeId,
@@ -69,6 +75,21 @@ class BoundStatement
         public readonly bool $withTies = false,
         public readonly array $syntaxClauses = [],
         public readonly array $declarations = [],
+        public readonly ?Write\Insertion $insertion = null,
+        public readonly array $writes = [],
+        public readonly array $settings = [],
+        public readonly array $conflicts = [],
+        public readonly array $definitions = [],
+        public readonly ?Write\Merge $merge = null,
     ) {
+        Validation\StatementInvariant::check($this);
+    }
+
+    /**
+     * Writes this parsed statement back as SQL, preserving its trivia.
+     */
+    public function toSql(): string
+    {
+        return $this->source->toString();
     }
 }

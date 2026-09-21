@@ -76,6 +76,30 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\Model\Analysis::class)]
 #[UsesClass(\SqlSemantics\Model\Diagnostic::class)]
 #[UsesClass(\SqlSemantics\Binding\Scalar\IndirectionBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Write\ConflictBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Write\AssignmentRules::class)]
+#[UsesClass(\SqlSemantics\Binding\Write\InsertionBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Write\AssignmentBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Configuration\TransactionSettings::class)]
+#[UsesClass(\SqlSemantics\Binding\Configuration\SettingBinder::class)]
+#[UsesClass(\SqlSemantics\Binding\Configuration\SpecialSettings::class)]
+#[UsesClass(\SqlSemantics\Binding\Configuration\SettingTokens::class)]
+#[UsesClass(\SqlSemantics\Binding\Editing\ExpressionEdit::class)]
+#[UsesClass(\SqlSemantics\Model\Write\Insertion::class)]
+#[UsesClass(\SqlSemantics\Model\Write\Assignment::class)]
+#[UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
+#[UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
+#[UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
+#[UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
+#[UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
+#[UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
+#[UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
+#[UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
+#[UsesClass(\SqlSemantics\Binding\Schema\DefinitionBinder::class)]
+#[UsesClass(\SqlSemantics\Model\Write\Destination::class)]
+#[UsesClass(\SqlSemantics\Model\Write\Merge::class)]
+#[UsesClass(\SqlSemantics\Model\Write\MergeAction::class)]
+#[UsesClass(\SqlSemantics\Binding\Write\MergeBinder::class)]
 final class QueryBinderTest extends TestCase
 {
     public function testCompoundPreservesGroupingAndOutputs(): void
@@ -232,6 +256,15 @@ final class QueryBinderTest extends TestCase
         self::assertSame('<', $query->ctes['moved']->where?->symbol);
         self::assertSame($query->ctes['moved'], $query->relations[0]->query);
         self::assertSame('id', $query->outputs[0]->expression->operands[0]->binding?->column->name);
+    }
+
+    public function testRenameRetainsMutationEffectsInAliasedCte(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
+        $statement = (new Binder($schema))->bind('WITH q(n) AS (INSERT INTO t(id) VALUES(1) RETURNING id) SELECT n FROM q');
+        self::assertNotNull($statement->ctes['q']->insertion);
+        self::assertSame('id', $statement->ctes['q']->insertion->columns[0]->binding?->column->name);
+        self::assertSame('n', $statement->ctes['q']->outputs[0]->name);
     }
 
 }

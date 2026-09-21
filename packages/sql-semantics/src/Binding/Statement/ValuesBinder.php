@@ -22,11 +22,11 @@ final class ValuesBinder
      */
     public function rows(Node $statement, Scope $scope): array
     {
-        $nodes = Tree::outer($statement, ['values_clause', 'mvalues', 'values', 'values_list', 'table_value_constructor']);
+        $nodes = Tree::outer($statement, ['values_clause', 'merge_values_clause', 'mvalues', 'values', 'values_list', 'table_value_constructor']);
         $rows = [];
         foreach ($nodes as $node) {
-            foreach (Tree::outer($node, ['expr_list', 'exprlist', 'nexprlist', 'row_value', 'row_value_explicit']) as $row) {
-                $expressions = Tree::outer($row, ['a_expr', 'expr']);
+            foreach (Tree::outer($node, ['expr_list', 'exprlist', 'nexprlist', 'row_value', 'row_value_explicit', 'no_braces']) as $row) {
+                $expressions = Tree::outer($row, ['a_expr', 'expr_or_default', 'expr']);
                 $rows[] = array_map(static fn (Node $expression): Expression => (new ExpressionBinder())->bind($expression, $scope), $expressions);
             }
         }

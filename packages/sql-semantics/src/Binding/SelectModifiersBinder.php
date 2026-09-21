@@ -85,7 +85,7 @@ final class SelectModifiersBinder
      */
     public function pagination(Node $statement, Scope $scope): array
     {
-        $limit = QueryNodes::local($statement, ['limit_clause', 'limit_opt'])[0] ?? null;
+        $limit = QueryNodes::local($statement, ['limit_clause', 'limit_opt', 'opt_simple_limit'])[0] ?? null;
         $offset = QueryNodes::local($statement, ['offset_clause'])[0] ?? null;
         $expressions = $limit === null ? [] : Tree::outer($limit, ['a_expr', 'expr', 'limit_option', 'select_fetch_first_value']);
         $bound = array_map(static fn (Node $node): Expression => (new ExpressionBinder())->bind($node, $scope), $expressions);

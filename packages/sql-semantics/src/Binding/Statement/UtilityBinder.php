@@ -42,12 +42,14 @@ final class UtilityBinder
         }
         $targets = array_map(fn (\SqlSemantics\Schema\TableDefinition $table): \SqlSemantics\Model\TableUse => new \SqlSemantics\Model\TableUse($this->context->ids->relation(), $id, $table, null, $table->source), $declarations);
         $scope = new \SqlSemantics\Binding\Scope($tables->identifiers, $targets, queries: $this->context);
+        $definitions = array_map(static fn ($target): \SqlSemantics\Model\Definition\TableDeclaration => (new \SqlSemantics\Binding\Schema\DefinitionBinder())->bind($target, $scope), $targets);
+        $settings = in_array($kind, ['SET', 'RESET', 'PRAGMA'], true) ? (new \SqlSemantics\Binding\Configuration\SettingBinder())->bind($statement, $scope) : [];
         $expressions = [];
         foreach (Tree::outer($statement, ['a_expr', 'expr', 'SelectStmt', 'select_stmt', 'query_expression', 'select']) as $node) {
             if (in_array($node->name, ['a_expr', 'expr'], true)) {
                 $expressions[] = (new \SqlSemantics\Binding\ExpressionBinder())->bind($node, $scope);
             }
         }
-        return new BoundStatement($id, null, [], [], null, false, [], null, null, $source, clauses: ['arguments' => $expressions], kind: $kind, targets: $targets, queries: $queries, syntaxClauses: \SqlSemantics\Binding\Query\QueryNodes::clauses($statement), declarations: $declarations);
+        return new BoundStatement($id, null, [], [], null, false, [], null, null, $source, clauses: ['arguments' => $expressions], kind: $kind, targets: $targets, queries: $queries, syntaxClauses: \SqlSemantics\Binding\Query\QueryNodes::clauses($statement), declarations: $declarations, settings: $settings, definitions: $definitions);
     }
 }

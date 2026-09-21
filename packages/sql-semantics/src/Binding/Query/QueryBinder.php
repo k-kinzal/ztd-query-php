@@ -143,7 +143,7 @@ final class QueryBinder
             $outputs[] = new OutputColumn($index, $names[$index] ?? $output->name, $output->expression);
         }
         $class = $query::class;
-        return new $class($query->scopeId, $query->from, $query->relations, $outputs, $query->where, $query->distinct, $query->orderBy, $query->limit, $query->offset, $query->source, $query->groupBy, $query->having, $query->ctes, $query->branches, $query->setOperator, $query->clauses, kind: $query->kind, targets: $query->targets, assignments: $query->assignments, queries: $query->queries, rows: $query->rows, withTies: $query->withTies, syntaxClauses: $query->syntaxClauses, declarations: $query->declarations);
+        return new $class($query->scopeId, $query->from, $query->relations, $outputs, $query->where, $query->distinct, $query->orderBy, $query->limit, $query->offset, $query->source, $query->groupBy, $query->having, $query->ctes, $query->branches, $query->setOperator, $query->clauses, kind: $query->kind, targets: $query->targets, assignments: $query->assignments, queries: $query->queries, rows: $query->rows, withTies: $query->withTies, syntaxClauses: $query->syntaxClauses, declarations: $query->declarations, insertion: $query->insertion, writes: $query->writes, settings: $query->settings, conflicts: $query->conflicts, definitions: $query->definitions, merge: $query->merge);
     }
 
     /**

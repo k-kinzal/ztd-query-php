@@ -6,7 +6,10 @@ binding and alias visibility, self joins, nested outer joins, NULL provenance,
 ON versus WHERE stages, stars and duplicate names, ordering, pagination,
 declaration constraints, type promotion, source identity, nested scopes, grouping,
 compound queries, mutations, DDL evolution, and regressions for formerly rejected
-syntax. Shared SELECT and UPDATE regressions exercise all 11 grammar releases.
+syntax. Storage and configuration tests assert ordered destinations and values,
+DEFAULT positions, conflict predicates, tuple and subscripted assignments, MERGE
+branches, cursor predicates, SET scopes, declaration expression lineage, invalid
+model construction, and safe edits with fresh semantic facts. Shared SELECT and UPDATE regressions exercise all 11 grammar releases.
 The database release is the only language support boundary. Each test declares
 its own inputs. Every source class has a paired unit test and every public API
 class has an executable PHPDoc example.

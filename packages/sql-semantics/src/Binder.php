@@ -62,6 +62,18 @@ final class Binder
     }
 
     /**
+     * Replaces one owned expression and returns a freshly parsed, validated semantic graph.
+     *
+     * Parentheses preserve precedence. The fragment must be one expression; additional
+     * clauses or statements are rejected. Name, type, and scope facts are rebound.
+     */
+    public function replaceExpression(BoundStatement $statement, Model\Expression $target, string $replacement): BoundStatement
+    {
+        $sql = (new Binding\Editing\ExpressionEdit())->sql($statement, $target, $replacement, $this->parser);
+        return $this->bind($sql);
+    }
+
+    /**
      * Binds a script while preserving statement boundaries.
      *
      * @return list<BoundStatement> Statements in source order

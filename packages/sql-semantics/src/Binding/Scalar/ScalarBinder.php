@@ -89,7 +89,7 @@ final class ScalarBinder
     {
         $words = [];
         foreach ($children as $child) {
-            if ($child instanceof Token || in_array($child->name, ['comp_op', 'qual_Op', 'subquery_Op', 'likeop', 'between_op', 'in_op'], true)) {
+            if ($child instanceof Token || in_array($child->name, ['comp_op', 'qual_Op', 'subquery_Op', 'likeop', 'between_op', 'in_op', 'not', 'sub_type', 'all_or_any'], true)) {
                 $text = strtoupper(Tree::text($child));
                 if (!in_array($text, ['(', ')', ',', 'AND'], true)) {
                     $words[] = $text;
@@ -132,20 +132,21 @@ final class ScalarBinder
             throw new LogicException('Subquery binding requires a query context.');
         }
         $query = $context->bind($node, $scope);
-        $text = strtoupper(Tree::text($source));
-        $exists = str_starts_with($text, 'EXISTS');
-        $membership = str_contains($text, ' IN ');
-        $type = $exists || $membership ? (new TypeResolution($scope->identifiers->dialect, $scope->diagnostics()))->boolean() : ($query->outputs[0]->expression->type ?? new TypeDescriptor($scope->identifiers->dialect, 'unknown'));
+        $operator = $source === $node ? '' : $this->operator(Tree::significant($source));
+        $symbol = $operator === '' ? 'SCALAR' : $operator;
+        $exists = $symbol === 'EXISTS';
+        $predicate = $exists || in_array($symbol, ['IN', 'NOT IN'], true) || preg_match('/ (ALL|ANY|SOME)$/', $symbol) === 1;
+        $type = $predicate ? (new TypeResolution($scope->identifiers->dialect, $scope->diagnostics()))->boolean() : ($query->outputs[0]->expression->type ?? new TypeDescriptor($scope->identifiers->dialect, 'unknown'));
         $operands = [];
         if ($source !== $node) {
             foreach ($source->children as $child) {
-                if ($child instanceof Node && in_array($child->name, ['a_expr', 'expr', 'bit_expr'], true)) {
+                if ($child instanceof Node && in_array($child->name, ['a_expr', 'expr', 'bit_expr', 'bool_pri'], true)) {
                     $operands[] = (new ExpressionBinder())->bind($child, $scope);
                 }
             }
         }
         array_push($operands, ...array_map(static fn ($output): Expression => $output->expression, $query->outputs));
-        return new Expression(ExpressionKind::Subquery, $type, $exists ? Nullability::NotNull : Nullability::MaybeNull, $source, $operands, symbol: $exists ? 'EXISTS' : ($membership ? 'IN' : 'SCALAR'), query: $query);
+        return new Expression(ExpressionKind::Subquery, $type, $exists ? Nullability::NotNull : Nullability::MaybeNull, $source, $operands, symbol: $symbol, query: $query);
     }
     /**
      * Finds this operation's query operand without entering a scalar argument.

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Model;
 
 use SqlParser\Parser\Node;
+use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\Schema\TableDefinition;
 
 /**
@@ -26,6 +27,7 @@ final class TableUse
      * @param string|null $alias Explicit alias, hiding the declaration name in this scope
      * @param Node $source Original table reference
      * @param BoundStatement|null $query Definition of a derived relation or CTE
+     * @throws InvalidStructure
      */
     public function __construct(
         public readonly string $id,
@@ -35,5 +37,8 @@ final class TableUse
         public readonly Node $source,
         public readonly ?BoundStatement $query = null,
     ) {
+        if ($id === '' || $scopeId === '') {
+            throw new InvalidStructure('A relation requires occurrence and scope identities.');
+        }
     }
 }

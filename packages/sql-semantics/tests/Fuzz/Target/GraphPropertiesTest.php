@@ -8,6 +8,7 @@ use PHPUnit\Framework\TestCase;
 use RuntimeException;
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
+use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\SchemaBuilder;
 
 /**
@@ -78,6 +79,26 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\CoversClass(\Fuzz\Target\GraphProperties::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Scalar\IndirectionBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Write\ConflictBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Write\AssignmentRules::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Write\InsertionBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Write\AssignmentBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Configuration\TransactionSettings::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Configuration\SettingBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Configuration\SpecialSettings::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Configuration\SettingTokens::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ExpressionEdit::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Insertion::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Assignment::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(InvalidStructure::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\DefinitionBinder::class)]
 final class GraphPropertiesTest extends TestCase
 {
     /**
@@ -86,9 +107,8 @@ final class GraphPropertiesTest extends TestCase
     public function testStatementRejectsDroppedProjectionOrder(): void
     {
         $valid = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1');
+        $this->expectException(InvalidStructure::class);
         $broken = new \SqlSemantics\Model\BoundStatement('s0', null, [], [new \SqlSemantics\Model\OutputColumn(2, null, $valid->outputs[0]->expression)], null, false, [], null, null, $valid->source);
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('Output ordinals');
         (new \Fuzz\Target\GraphProperties(Dialect::PostgreSql))->statement($broken);
     }
 
@@ -98,9 +118,8 @@ final class GraphPropertiesTest extends TestCase
     public function testExpressionRejectsAResolvedColumnWithoutItsBinding(): void
     {
         $value = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1')->outputs[0]->expression;
+        $this->expectException(InvalidStructure::class);
         $broken = new \SqlSemantics\Model\Expression(\SqlSemantics\Model\ExpressionKind::Column, $value->type, $value->nullability, $value->source);
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('missing its declaration');
         (new \Fuzz\Target\GraphProperties(Dialect::PostgreSql))->expression($broken);
     }
 
@@ -110,9 +129,8 @@ final class GraphPropertiesTest extends TestCase
     public function testExpressionRejectsFabricatedUnresolvedTypes(): void
     {
         $value = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1')->outputs[0]->expression;
+        $this->expectException(InvalidStructure::class);
         $broken = new \SqlSemantics\Model\Expression(\SqlSemantics\Model\ExpressionKind::UnresolvedColumn, $value->type, $value->nullability, $value->source, reference: ['missing']);
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('fabricated type');
         (new \Fuzz\Target\GraphProperties(Dialect::PostgreSql))->expression($broken);
     }
     /**

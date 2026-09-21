@@ -29,15 +29,17 @@ final class IndirectionBinder
         $parts = $scope->identifiers->parts($name ?? $node);
         $elements = Tree::outer($node, ['indirection_el']);
         $tail = [];
+        $prefix = [$name ?? $node];
         foreach ($elements as $element) {
             $attribute = Tree::child($element, ['attr_name']);
             if ($tail === [] && $attribute !== null) {
                 array_push($parts, ...$scope->identifiers->parts($attribute));
+                $prefix[] = $element;
             } else {
                 $tail[] = $element;
             }
         }
-        $value = $scope->column($parts, $node);
+        $value = $scope->column($parts, $tail === [] ? $node : new Node('column_reference', 0, $prefix));
         foreach ($tail as $element) {
             $value = $this->apply($value, $element, $scope);
         }
@@ -49,14 +51,15 @@ final class IndirectionBinder
      */
     public function apply(Expression $base, Node $element, Scope $scope): Expression
     {
+        $source = new Node('indirection', 0, [$base->source, $element]);
         $attribute = Tree::child($element, ['attr_name']);
         if ($attribute !== null) {
-            return new Expression(ExpressionKind::Operator, new TypeDescriptor($scope->identifiers->dialect, 'unknown'), Nullability::Unknown, $element, [$base], symbol: '.' . $scope->identifiers->parts($attribute)[0]);
+            return new Expression(ExpressionKind::Field, new TypeDescriptor($scope->identifiers->dialect, 'unknown'), Nullability::Unknown, $source, [$base], symbol: '.' . $scope->identifiers->parts($attribute)[0]);
         }
         $indices = array_map(static fn (Node $node): Expression => (new ExpressionBinder())->bind($node, $scope), Tree::outer($element, ['a_expr']));
         $slice = in_array(':', array_map(Tree::text(...), $element->children), true);
         $type = $slice ? $base->type->name : (str_ends_with($base->type->name, '[]') ? substr($base->type->name, 0, -2) : 'unknown');
-        return new Expression(ExpressionKind::Operator, new TypeDescriptor($scope->identifiers->dialect, $type), Nullability::MaybeNull, $element, [$base, ...$indices], symbol: $slice ? '[:]' : '[]');
+        return new Expression(ExpressionKind::Subscript, new TypeDescriptor($scope->identifiers->dialect, $type), Nullability::MaybeNull, $source, [$base, ...$indices], symbol: $slice ? '[:]' : '[]');
     }
 
     /**

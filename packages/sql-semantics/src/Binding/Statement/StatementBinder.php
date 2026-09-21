@@ -47,6 +47,9 @@ final class StatementBinder
         $mutation = Tree::outer($statement, ['InsertStmt', 'UpdateStmt', 'DeleteStmt', 'MergeStmt', 'insert_stmt', 'update_stmt', 'delete_stmt', 'replace_stmt'])[0] ?? null;
         if ($mutation !== null || in_array($operation, ['INSERT', 'REPLACE', 'UPDATE', 'DELETE', 'MERGE'], true)) {
             $context = (new \SqlSemantics\Binding\Query\QueryBinder($context))->with($tree, null);
+            if ($operation === 'MERGE') {
+                return (new \SqlSemantics\Binding\Write\MergeBinder())->bind($tree, $mutation ?? $statement, $context);
+            }
             return (new MutationBinder($context))->bind($tree, $mutation ?? $statement);
         }
         return (new UtilityBinder($context))->bind($tree, $statement, $operation);

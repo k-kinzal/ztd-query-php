@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Model;
 
+use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\Schema\ColumnDefinition;
 use SqlSemantics\Schema\TableDefinition;
 
@@ -23,11 +24,15 @@ final class ColumnBinding
      * @param string $relationId Query-local relation occurrence, such as r0
      * @param TableDefinition $table Table declaration
      * @param ColumnDefinition $column Column declaration
+     * @throws InvalidStructure
      */
     public function __construct(
         public readonly string $relationId,
         public readonly TableDefinition $table,
         public readonly ColumnDefinition $column,
     ) {
+        if ($relationId === '' || !in_array($column, $table->columns, true)) {
+            throw new InvalidStructure('A column binding must refer to a member of its declaration.');
+        }
     }
 }
