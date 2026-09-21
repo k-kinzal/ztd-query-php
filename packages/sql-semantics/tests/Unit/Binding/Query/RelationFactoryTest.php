@@ -22,7 +22,7 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\Ast\StatementList::class)]
 #[UsesClass(\SqlSemantics\Ast\TokenGroups::class)]
 #[UsesClass(\SqlSemantics\Ast\Tree::class)]
-#[UsesClass(\SqlSemantics\Ast\TypeReader::class)]
+#[CoversClass(\SqlSemantics\Ast\TypeReader::class)]
 #[UsesClass(Binder::class)]
 #[UsesClass(\SqlSemantics\Binding\BoundRelation::class)]
 #[UsesClass(\SqlSemantics\Binding\ExpressionBinder::class)]
@@ -134,6 +134,38 @@ final class RelationFactoryTest extends TestCase
         self::assertSame($inner->relations[1], $inner->from->right);
         self::assertSame($inner->relations[0]->id, $inner->outputs[0]->expression->binding?->relationId);
         self::assertSame($inner->relations[1]->id, $inner->from->condition?->operands[1]->binding?->relationId);
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, 'integer'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'int unsigned'])]
+    public function testTableColumnsPreservesJsonTableSchemaAndInputDependencies(Dialect $dialect, string $ordinalType): void
+    {
+        $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE t (data JSON)');
+        $query = (new Binder($schema))->bind("SELECT j.n, j.label FROM t, JSON_TABLE (t.data, '$[*]' COLUMNS (n FOR ORDINALITY, label VARCHAR(50) PATH '$.name')) AS j");
+        self::assertSame(['n', 'label'], array_column($query->outputs, 'name'));
+        self::assertSame([$ordinalType, 'varchar'], array_map(static fn ($output): string => $output->expression->type->name, $query->outputs));
+        self::assertSame(['50'], $query->outputs[1]->expression->type->modifiers);
+        self::assertSame('not-null', $query->outputs[0]->expression->nullability->value);
+        self::assertSame('maybe-null', $query->outputs[1]->expression->nullability->value);
+        self::assertSame(['label', 'data'], array_map(static fn ($binding): string => $binding->column->name, $query->outputs[1]->expression->lineage()));
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql])]
+    public function testTableColumnsPreservesNestedJsonColumnsAndTheirNullableRows(Dialect $dialect): void
+    {
+        $query = (new Binder((new SchemaBuilder($dialect))->build()))->bind("SELECT j.* FROM JSON_TABLE ('[]', '$[*]' COLUMNS (n FOR ORDINALITY, NESTED PATH '$.children[*]' COLUMNS (child FOR ORDINALITY, value INTEGER PATH '$'))) AS j");
+        self::assertSame(['n', 'child', 'value'], array_column($query->outputs, 'name'));
+        self::assertSame('maybe-null', $query->outputs[1]->expression->nullability->value);
+        self::assertSame('integer', $query->outputs[2]->expression->type->name);
+    }
+
+    public function testTableColumnsReadsXmlTableDeclarations(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("SELECT x.n, x.value FROM XMLTABLE ('/rows/row' PASSING '<rows/>' COLUMNS n FOR ORDINALITY, value INTEGER PATH '@id') AS x");
+        self::assertSame(['n', 'value'], array_column($query->outputs, 'name'));
+        self::assertSame(['integer', 'integer'], array_map(static fn ($output): string => $output->expression->type->name, $query->outputs));
+        self::assertSame('XMLTABLE', $query->relations[0]->query?->outputs[1]->expression->symbol);
     }
 
 }

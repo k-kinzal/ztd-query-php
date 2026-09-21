@@ -211,4 +211,17 @@ final class FromBinderTest extends TestCase
         self::assertNotSame($query->scopeId, $query->relations[0]->query->scopeId);
     }
 
+    #[TestWith(['mysql-5.6.51'])]
+    #[TestWith(['mysql-5.7.44'])]
+    public function testGroupedKeepsParenthesizedJoinsAsRelations(string $version): void
+    {
+        $schema = (new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE a (id INTEGER)', 'CREATE TABLE b (n INTEGER)');
+        $query = (new Binder($schema))->bind('SELECT a.id, b.n FROM (a JOIN b ON a.id=b.n)');
+        self::assertSame(['id', 'n'], array_column($query->outputs, 'name'));
+        self::assertSame(['a', 'b'], array_map(static fn ($relation): string => $relation->declaration->name, $query->relations));
+        self::assertInstanceOf(\SqlSemantics\Model\Join::class, $query->from);
+        self::assertSame('=', $query->from->condition?->symbol);
+        self::assertNull($query->relations[0]->query);
+    }
+
 }

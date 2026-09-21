@@ -32,7 +32,7 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\Binding\LiteralBinder::class)]
 #[UsesClass(\SqlSemantics\Binding\NullFacts::class)]
 #[UsesClass(\SqlSemantics\Binding\ProjectionBinder::class)]
-#[UsesClass(\SqlSemantics\Binding\Query\QueryBinder::class)]
+#[CoversClass(\SqlSemantics\Binding\Query\QueryBinder::class)]
 #[UsesClass(\SqlSemantics\Binding\Query\QueryContext::class)]
 #[UsesClass(\SqlSemantics\Binding\Query\QueryRelation::class)]
 #[UsesClass(\SqlSemantics\Binding\Query\SqliteLists::class)]
@@ -113,6 +113,21 @@ final class QueryNodesTest extends TestCase
         $factor = $tree->find('table_factor')[0];
         self::assertTrue(\SqlSemantics\Binding\Query\QueryNodes::isBody($factor));
         self::assertFalse(\SqlSemantics\Binding\Query\QueryNodes::isBody($tree->find('table_factor')[1]));
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-5.6.51'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-5.7.44'])]
+    public function testLegacyCompoundKeepsAllBranchesAndUnionQuantifiers(string $version): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build());
+        $query = $binder->bind('SELECT 1 FROM DUAL WHERE 1 UNION ALL SELECT 2 UNION SELECT 3');
+        self::assertSame('UNION', $query->setOperator);
+        self::assertCount(2, $query->branches);
+        self::assertSame('UNION ALL', $query->branches[0]->setOperator);
+        self::assertSame('1', $query->branches[0]->branches[0]->outputs[0]->expression->symbol);
+        self::assertSame('1', $query->branches[0]->branches[0]->where?->symbol);
+        self::assertSame('2', $query->branches[0]->branches[1]->outputs[0]->expression->symbol);
+        self::assertSame('3', $query->branches[1]->outputs[0]->expression->symbol);
     }
 
 }

@@ -41,10 +41,42 @@ final class RelationFactory
             $value = new Expression($expression->kind, $type, $expression->nullability, $expression->source, $expression->operands, symbol: $expression->symbol);
             $outputs[] = new OutputColumn($index, $label, $value);
         }
+        $declared = $this->tableColumns($function, $expression, $scope);
+        if ($declared !== []) {
+            $outputs = $declared;
+        }
         $query = new BoundSelect($context->ids->scope(), null, [], $outputs, null, false, [], null, null, $function);
         $declaration = QueryRelation::declaration($query, $name, [], $source);
         $table = new TableUse($context->ids->relation(), $scopeId, $declaration, $name, $source, $query);
         return new BoundRelation($table, new Scope($scope->identifiers, [$table], parent: $parent, queries: $context));
+    }
+
+    /**
+     * Reads the explicit output schema of JSON_TABLE and XMLTABLE, including nested columns.
+     *
+     * @return list<OutputColumn>
+     */
+    public function tableColumns(Node $node, Expression $call, Scope $scope, bool $nested = false): array
+    {
+        $outputs = [];
+        foreach (\SqlSemantics\Ast\Tree::outer($node, ['json_table_column_definition', 'jt_column', 'xmltable_column_el']) as $column) {
+            $name = \SqlSemantics\Ast\Tree::child($column, ['ColId', 'ident']);
+            if ($name === null) {
+                $children = \SqlSemantics\Ast\Tree::child($column, ['columns_clause', 'json_table_column_definition_list']);
+                if ($children !== null) {
+                    foreach ($this->tableColumns($children, $call, $scope, true) as $output) {
+                        $outputs[] = new OutputColumn(count($outputs), $output->name, $output->expression);
+                    }
+                }
+                continue;
+            }
+            $typeNode = \SqlSemantics\Ast\Tree::child($column, ['Typename', 'type']);
+            $type = $typeNode === null ? new TypeDescriptor($scope->identifiers->dialect, $scope->identifiers->dialect === \SqlSemantics\Dialect::MySql ? 'int unsigned' : 'integer') : (new \SqlSemantics\Ast\TypeReader($scope->identifiers->dialect))->read($typeNode);
+            $nullable = $typeNode === null && !$nested ? \SqlSemantics\Type\Nullability::NotNull : \SqlSemantics\Type\Nullability::MaybeNull;
+            $value = new Expression(\SqlSemantics\Model\ExpressionKind::Function, $type, $nullable, $column, [$call], symbol: $typeNode === null ? 'ORDINALITY' : $call->symbol);
+            $outputs[] = new OutputColumn(count($outputs), $scope->identifiers->parts($name)[0], $value);
+        }
+        return $outputs;
     }
 
     /**

@@ -38,6 +38,9 @@ final class QueryNodes
      */
     public static function body(Node $node): Node
     {
+        if (Tree::child($node, ['union_clause', 'opt_union_clause']) !== null) {
+            return self::legacyCompound($node);
+        }
         if (self::isBody($node)) {
             return $node;
         }
@@ -50,6 +53,28 @@ final class QueryNodes
             }
         }
         return $node;
+    }
+
+    /**
+     * Normalizes legacy right-recursive UNION syntax into its left-associative query graph.
+     */
+    public static function legacyCompound(Node $node): Node
+    {
+        $left = Tree::child($node, ['select_part2']) ?? $node;
+        $tail = Tree::child($node, ['union_clause', 'opt_union_clause']);
+        while ($tail !== null) {
+            $union = Tree::child($tail, ['union_list']);
+            $right = $union === null ? null : Tree::child($union, ['select_init', 'select_paren', 'query_specification']);
+            if ($union === null || $right === null) {
+                Tree::invalid($tail, 'UNION operands');
+            }
+            $container = Tree::child($right, ['select_init2']) ?? $right;
+            $body = Tree::child($container, ['select_part2']) ?? $right;
+            $operator = array_values(array_filter($union->children, static fn ($child): bool => !$child instanceof Node || $child->name === 'union_option'));
+            $left = new Node('query_expression_body', 0, [$left, ...$operator, $body]);
+            $tail = Tree::child($container, ['union_clause', 'opt_union_clause']);
+        }
+        return $left;
     }
 
     /**

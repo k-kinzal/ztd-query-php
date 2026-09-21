@@ -86,10 +86,18 @@ final class GraphProperties
     public function declaration(\SqlSemantics\Schema\TableDefinition $table): void
     {
         foreach ($table->columns as $column) {
-            if ($column->type->dialect !== $this->dialect || $column->type->name === '') {
+            if (!$this->validType($column->type)) {
                 throw new RuntimeException('A declaration has an invalid column type descriptor.');
             }
         }
+    }
+
+    /**
+     * SQLite's absent declared type is represented by an empty name with BLOB affinity.
+     */
+    public function validType(\SqlSemantics\Type\TypeDescriptor $type): bool
+    {
+        return $type->dialect === $this->dialect && ($type->name !== '' || ($this->dialect === Dialect::Sqlite && $type->affinity === 'blob'));
     }
 
     /**
@@ -117,7 +125,7 @@ final class GraphProperties
             return;
         }
         $this->visited[$expression] = true;
-        if ($expression->type->dialect !== $this->dialect || $expression->type->name === '') {
+        if (!$this->validType($expression->type)) {
             throw new RuntimeException('An expression has an invalid type descriptor.');
         }
         if ($expression->kind === ExpressionKind::Column && $expression->binding === null) {

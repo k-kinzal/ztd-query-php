@@ -155,7 +155,7 @@ final class QueryBinder
     {
         $branches = [];
         foreach ($body->children as $child) {
-            if ($child instanceof Node && in_array($child->name, ['select_clause', 'query_expression_body', 'query_specification', 'selectnowith', 'oneselect'], true)) {
+            if ($child instanceof Node && in_array($child->name, ['select_clause', 'query_expression_body', 'query_specification', 'selectnowith', 'oneselect', 'select_part2', 'select_init', 'select_paren', 'select_derived_union', 'select_derived'], true)) {
                 $branches[] = $child;
             }
         }

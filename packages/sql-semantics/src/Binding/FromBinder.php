@@ -49,13 +49,13 @@ final class FromBinder
      */
     public function bind(Node $from): ?BoundRelation
     {
-        if ($this->tables->identifiers->dialect === \SqlSemantics\Dialect::MySql && strtoupper(Tree::text($from)) === 'FROM DUAL') {
+        if ($this->tables->identifiers->dialect === \SqlSemantics\Dialect::MySql && str_starts_with(strtoupper(Tree::text($from)) . ' ', 'FROM DUAL ')) {
             return null;
         }
         $nodes = Tree::outer($from, ['table_ref', 'table_reference', 'seltablist']);
         $result = null;
         foreach ($nodes as $node) {
-            $lateral = str_starts_with(strtoupper(Tree::text($node)), 'LATERAL') || QueryNodes::local($node, ['func_table']) !== [];
+            $lateral = str_starts_with(strtoupper(Tree::text($node)), 'LATERAL') || QueryNodes::local($node, ['func_table', 'table_function', 'json_table', 'xmltable']) !== [];
             $binder = $lateral && $result !== null ? new self($this->tables, $this->ids, $this->queries, $result->scope, $this->scopeId) : $this;
             $right = $binder->relation($node);
             $result = $result === null ? $right : $this->join($result, $right, JoinKind::Cross, null, $from, $this->ids->join());
@@ -89,7 +89,7 @@ final class FromBinder
         if ($derived !== null) {
             return $this->derived($node, $derived, QueryNodes::local($node, ['alias_clause', 'opt_table_alias'])[0] ?? null);
         }
-        $function = QueryNodes::local($node, ['func_table', 'table_function'])[0] ?? null;
+        $function = QueryNodes::local($node, ['func_table', 'table_function', 'json_table', 'xmltable'])[0] ?? null;
         if ($function !== null) {
             return (new RelationFactory())->function($node, $function, $this->queries ?? new QueryContext($this->tables, $this->ids), $this->parent, $this->scopeId);
         }
@@ -130,7 +130,7 @@ final class FromBinder
         }
         $id = $this->ids->join();
         $left = $this->relation($references[0]);
-        $lateral = str_starts_with(strtoupper(Tree::text($references[1])), 'LATERAL') || QueryNodes::local($references[1], ['func_table']) !== [];
+        $lateral = str_starts_with(strtoupper(Tree::text($references[1])), 'LATERAL') || QueryNodes::local($references[1], ['func_table', 'table_function', 'json_table', 'xmltable']) !== [];
         $right = ($lateral ? new self($this->tables, $this->ids, $this->queries, $left->scope, $this->scopeId) : $this)->relation($references[1]);
         if (($qualifier !== null && str_starts_with(strtoupper(Tree::text($qualifier)), 'USING')) || str_contains(strtoupper(Tree::text($kindNode ?? $node)), 'NATURAL')) {
             return (new Query\UsingJoin())->bind($left, $right, $kind, $node, $id, $qualifier);
@@ -237,6 +237,10 @@ final class FromBinder
      */
     public function derived(Node $source, Node $node, ?Node $aliasNode): BoundRelation
     {
+        $group = $this->grouped($source, $node, $aliasNode);
+        if ($group !== null) {
+            return $group;
+        }
         $context = $this->queries ?? new QueryContext($this->tables, $this->ids);
         $query = $context->bind($node, $this->parent);
         $aliasParts = $aliasNode === null ? [] : $this->tables->identifiers->parts($aliasNode);
@@ -245,6 +249,29 @@ final class FromBinder
         $declaration = QueryRelation::declaration($query, $alias, array_slice($aliasParts, 1), $source);
         $table = new TableUse($this->ids->relation(), $this->scopeId, $declaration, $alias, $source, $query);
         return new BoundRelation($table, new Scope($this->tables->identifiers, [$table], parent: $this->parent, queries: $context));
+    }
+
+    /**
+     * Legacy derived-table productions also contain parenthesized relation lists.
+     */
+    public function grouped(Node $source, Node $node, ?Node $alias): ?BoundRelation
+    {
+        if ($node->name !== 'select_derived_union' || QueryNodes::setOperator($node) !== null) {
+            return null;
+        }
+        $references = Tree::outer($node, ['table_ref']);
+        if ($references === []) {
+            return null;
+        }
+        $factor = Tree::child($references[0], ['table_factor']);
+        if ($factor !== null && QueryNodes::isBody($factor)) {
+            return null;
+        }
+        $relation = $this->bind($node);
+        if ($relation === null || $alias === null || !Tree::hasTokens($alias)) {
+            return $relation;
+        }
+        return (new RelationFactory())->alias($relation, $alias, $source, $this->queries ?? new QueryContext($this->tables, $this->ids), $this->scopeId);
     }
 
     /**

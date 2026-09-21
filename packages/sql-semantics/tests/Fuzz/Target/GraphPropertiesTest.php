@@ -126,4 +126,19 @@ final class GraphPropertiesTest extends TestCase
         (new \Fuzz\Target\GraphProperties(Dialect::PostgreSql))->declaration($table);
     }
 
+    /**
+     * SQLite permits columns without a declared type and assigns them BLOB affinity.
+     */
+    public function testValidTypeRetainsTypelessSqliteDeclarationsAndReferences(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t (value)');
+        $property = new \Fuzz\Target\GraphProperties(Dialect::Sqlite);
+        self::assertTrue($property->validType($schema->tables[0]->columns[0]->type));
+        self::assertSame('', $schema->tables[0]->columns[0]->type->name);
+        self::assertSame('blob', $schema->tables[0]->columns[0]->type->affinity);
+        $property->statement((new Binder($schema))->bind('SELECT value FROM t'));
+        $property->statement((new Binder($schema))->analyze('CREATE TABLE t (value CHECK (value > 0))')->statement);
+        self::assertFalse($property->validType(new \SqlSemantics\Type\TypeDescriptor(Dialect::Sqlite, '')));
+    }
+
 }

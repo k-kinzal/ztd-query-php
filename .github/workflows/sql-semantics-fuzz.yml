@@ -96,4 +96,5 @@ jobs:
           path: |
             packages/sql-semantics/build/fuzz/
             packages/sql-semantics/fuzz/coverage/
+            packages/sql-semantics/fuzz/corpus/
           if-no-files-found: error

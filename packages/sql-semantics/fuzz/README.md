@@ -63,9 +63,9 @@ MYSQL_VERSION=5.6.51 vendor/bin/php-fuzzer run-single \
   fuzz/fuzz_mysql_semantics.php build/fuzz/mysql-5.6.51/crash-<hash>.txt
 ```
 
-The target reports the grammar release, generated SQL and input hex for parse
-or semantic exceptions. Other errors retain their original stack trace and
-binary reproducer. Keep every finding as a regression and fix the implementation;
+Parser, semantic, and property exceptions report the grammar release, generated
+SQL and input hex, with the original exception retained as the cause. CI artifacts include the
+corpus too, so failures during corpus replay retain their binary reproducer. Keep every finding as a regression and fix the implementation;
 do not add exception allowances or alter the generation plan to avoid it.
 If a generator serialization bug is found, preserve the selected grammar
 alternatives and their operands when repairing the emitted SQL. For example,

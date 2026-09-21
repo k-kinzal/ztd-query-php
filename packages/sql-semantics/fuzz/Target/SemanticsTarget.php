@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Fuzz\Target;
 
 use RuntimeException;
-use SqlParser\Lexer\SourceException;
 use SqlSemantics\Binder;
-use SqlSemantics\SemanticException;
 
 /**
  * The total-analysis property for arbitrary SQL generated from the complete grammar.
@@ -40,7 +38,7 @@ final class SemanticsTarget
             if ($analysis->diagnostics === [] && serialize($analysis->statement) !== serialize($this->binder->bind($sql))) {
                 throw new RuntimeException('Diagnostic-free analysis disagrees with strict binding.');
             }
-        } catch (SemanticException|SourceException $error) {
+        } catch (RuntimeException $error) {
             throw new RuntimeException('Semantic property failed for ' . $this->binder->schema->grammarVersion . "\nInput hex: " . bin2hex($input) . "\nSQL:\n" . $sql . "\n" . $error->getMessage(), 0, $error);
         }
     }
