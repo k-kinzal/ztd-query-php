@@ -82,8 +82,9 @@ final class Derivation
 
             /** @var NonTerminal $nonTerminal */
             $nonTerminal = $form[$index];
-            $occurrence = $occurrences[$nonTerminal->value] ?? 0;
-            $occurrences[$nonTerminal->value] = $occurrence + 1;
+            $source = $this->grammar->sourceRule($nonTerminal->value);
+            $occurrence = $occurrences[$source] ?? 0;
+            $occurrences[$source] = $occurrence + 1;
             $alternatives = $this->alternatives($nonTerminal, $plan, $occurrence);
 
             $alternatives = count($alternatives) === 1
@@ -212,14 +213,14 @@ final class Derivation
         if ($alternatives === []) {
             throw GenerationException::noRealizableAlternative($nonTerminal->value);
         }
-        $pattern = $plan->patternAt($nonTerminal->value, $occurrence);
+        $pattern = $plan->patternAt($this->grammar->sourceRule($nonTerminal->value), $occurrence);
         if ($pattern !== null) {
             $alternatives = array_values(array_filter(
                 $alternatives,
-                static fn (Production $production, int $ordinal): bool => $pattern->matches(array_map(
-                    static fn (Symbol $symbol): string => $symbol->value(),
+                fn (Production $production, int $ordinal): bool => $pattern->matches(array_map(
+                    fn (Symbol $symbol): string => $this->grammar->sourceRule($symbol->value()),
                     $production->symbols,
-                ), $ordinal),
+                ), $this->grammar->sourceOrdinal($nonTerminal->value, $ordinal)),
                 ARRAY_FILTER_USE_BOTH,
             ));
             if ($alternatives === []) {

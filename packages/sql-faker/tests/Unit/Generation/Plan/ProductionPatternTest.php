@@ -74,4 +74,33 @@ final class ProductionPatternTest extends TestCase
         self::assertFalse($pattern->matches(['T'], 1));
         self::assertFalse($pattern->matches(['T']));
     }
+    public function testAllOfBooleanPatternsRetainEveryAllowedAlternative(): void
+    {
+        $pattern = ProductionPattern::allOf(
+            ProductionPattern::anyOf(ProductionPattern::containing('VALUES'), ProductionPattern::containing('SELECT')),
+            ProductionPattern::excluding(ProductionPattern::containing('WITH')),
+        );
+        self::assertTrue($pattern->matches(['VALUES', 'row']));
+        self::assertTrue($pattern->matches(['SELECT', 'expr']));
+        self::assertFalse($pattern->matches(['WITH', 'SELECT', 'expr']));
+        self::assertFalse($pattern->matches(['DELETE', 'table']));
+    }
+
+
+    public function testAnyOfAcceptsEitherFormWithoutAcceptingUnrelatedForms(): void
+    {
+        $pattern = ProductionPattern::anyOf(ProductionPattern::containing('VALUES'), ProductionPattern::containing('SELECT'));
+        self::assertTrue($pattern->matches(['VALUES', 'row']));
+        self::assertTrue($pattern->matches(['SELECT', 'expr']));
+        self::assertFalse($pattern->matches(['UPDATE', 'table']));
+    }
+
+    public function testExcludingCanExcludeAnOrdinalOrAnEmptyAlternative(): void
+    {
+        $pattern = ProductionPattern::excluding(ProductionPattern::at(1));
+        self::assertTrue($pattern->matches(['ID'], 0));
+        self::assertFalse($pattern->matches(['ID'], 1));
+        self::assertFalse(ProductionPattern::excluding(ProductionPattern::exactly())->matches([]));
+    }
+
 }

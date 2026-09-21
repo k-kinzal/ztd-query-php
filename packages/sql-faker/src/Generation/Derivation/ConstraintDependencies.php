@@ -28,6 +28,9 @@ final class ConstraintDependencies
     public function __construct(Grammar $grammar)
     {
         foreach ($grammar->ruleMap as $name => $rule) {
+            if ($grammar->sourceRule($name) !== $name) {
+                $this->parents[$grammar->sourceRule($name)][$name] = true;
+            }
             foreach ($rule->alternatives as $production) {
                 foreach ($production->symbols as $symbol) {
                     if ($symbol instanceof NonTerminal) {

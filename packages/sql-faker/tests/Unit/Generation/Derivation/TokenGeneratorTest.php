@@ -39,6 +39,8 @@ use SqlFaker\Generation\Output\CombinedSpacingRule;
 use SqlFaker\Generation\Output\ReverseLexemeGenerator;
 use SqlFaker\Generation\Output\SqlSerializer;
 use SqlFaker\Generation\Plan\GenerationPlan;
+use SqlFaker\Generation\Plan\ProductionPattern;
+use SqlFaker\Generation\Plan\RulePlan;
 use SqlFaker\Generation\Token\ProductionOccurrence;
 use SqlFaker\Generation\Token\RewriteRule;
 use SqlFaker\Generation\Token\TerminalOccurrence;
@@ -93,7 +95,7 @@ use SqlFaker\MySql\Generation\Spacing\KeywordPhraseSpacingRule;
 #[UsesClass(Terminal::class)]
 #[UsesClass(GenerationException::class)]
 #[UsesClass(LexicalException::class)]
-#[UsesClass(\SqlFaker\Generation\Plan\ProductionPattern::class)]
+#[UsesClass(ProductionPattern::class)]
 #[UsesClass(\SqlFaker\Generation\Output\BoundaryCompletion::class)]
 #[UsesClass(\SqlFaker\Generation\Derivation\CompletionState::class)]
 #[UsesClass(\SqlFaker\Generation\Derivation\CompletionFrontier::class)]
@@ -105,6 +107,12 @@ use SqlFaker\MySql\Generation\Spacing\KeywordPhraseSpacingRule;
 #[UsesClass(\SqlFaker\Generation\Choice\BytePlanCompiler::class)]
 #[UsesClass(\SqlFaker\Generation\Derivation\Completion\PatternProductions::class)]
 #[UsesClass(\SqlFaker\Generation\Derivation\Completion\CompletionWitness::class)]
+#[UsesClass(RulePlan::class)]
+#[UsesClass(\SqlFaker\Generation\Derivation\DerivationNode::class)]
+#[UsesClass(\SqlFaker\Generation\Plan\Compilation\GrammarCompiler::class)]
+#[UsesClass(\SqlFaker\Generation\Plan\Compilation\Scope::class)]
+#[UsesClass(\SqlFaker\Generation\Plan\Compilation\PreparedGrammar::class)]
+#[UsesClass(\SqlFaker\Generation\Plan\Compilation\ScopedGeneration::class)]
 final class TokenGeneratorTest extends TestCase
 {
     public function testGenerateCanChooseNullableChildrenWhenAnotherSiblingProvidesOutput(): void
@@ -127,4 +135,49 @@ final class TokenGeneratorTest extends TestCase
         $generator = new TokenGenerator($grammar, Factory::create(), static fn (string $name): bool => $name === 'EOF');
         self::assertSame(['UNKNOWN'], $generator->generate('root', GenerationPlan::all()->requiringNonEmpty())->names());
     }
+
+    public function testDeriveRetainsOriginalRuleIdentityForRepeatedChoices(): void
+    {
+        $grammar = new Grammar('root', [
+            'root' => new ProductionRule('root', [new Production([new NonTerminal('value'), new NonTerminal('value')])]),
+            'value' => new ProductionRule('value', [new Production([new Terminal('ID')]), new Production([new Terminal('INTEGER')])]),
+        ]);
+        $generator = new TokenGenerator($grammar, Factory::create(), static fn (string $name): bool => false);
+        $plan = GenerationPlan::constrained('root', ['value' => [ProductionPattern::at(1), ProductionPattern::at(0)]]);
+        self::assertSame(['INTEGER', 'ID'], $generator->derive('root', $plan)->names());
+        $scoped = $plan->withRule('root', RulePlan::any()->withChild('value', 0, RulePlan::any()->allowing(ProductionPattern::exactly('INTEGER'))));
+        $sequence = $generator->generate('root', $scoped);
+        self::assertSame(['INTEGER', 'ID'], $sequence->names());
+        self::assertSame(['root', 'value', 'value'], array_column($sequence->productions, 'rule'));
+        self::assertSame([0, 1, 0], array_column($sequence->productions, 'ordinal'));
+    }
+
+    public function testMinimumExpansionsIncludesEveryPlannedListItem(): void
+    {
+        $grammar = new Grammar('list', [
+            'list' => new ProductionRule('list', [new Production([new NonTerminal('list'), new Terminal(','), new NonTerminal('item')]), new Production([new NonTerminal('item')])]),
+            'item' => new ProductionRule('item', [new Production([new Terminal('ID')]), new Production([new Terminal('INTEGER')])]),
+        ]);
+        $generator = new TokenGenerator($grammar, Factory::create(), static fn (string $name): bool => false);
+        $item = RulePlan::any()->withRule('item', RulePlan::any()->allowing(ProductionPattern::exactly('INTEGER')));
+        $plan = GenerationPlan::all()->withRule('list', RulePlan::any()->withItems($item, $item, $item));
+        self::assertSame(6, $generator->minimumExpansions('list', $plan));
+        self::assertSame(['INTEGER', ',', 'INTEGER', ',', 'INTEGER'], $generator->generate('list', $plan->withExpansionBudget(6))->names());
+    }
+
+    public function testPrepareKeepsPlansAndUnconstrainedCallsIndependent(): void
+    {
+        $grammar = new Grammar('root', ['root' => new ProductionRule('root', [new Production([new Terminal('A')]), new Production([new Terminal('B')])])]);
+        $generator = new TokenGenerator($grammar, Factory::create(), static fn (string $name): bool => false);
+        $a = GenerationPlan::all()->withRule('root', RulePlan::any()->allowing(ProductionPattern::exactly('A')));
+        $b = GenerationPlan::all()->withRule('root', RulePlan::any()->allowing(ProductionPattern::exactly('B')));
+        $generator->prepare('root', $a);
+        self::assertSame(['A'], $generator->generate('root', $a)->names());
+        self::assertSame(['A'], $generator->generate('root', $a)->names());
+        self::assertSame(['B'], $generator->generate('root', GenerationPlan::all(), static fn (int $count): int => $count - 1)->names());
+        self::assertNull($generator->lastScope);
+        self::assertSame(['B'], $generator->generate('root', $b)->names());
+        self::assertSame(['A'], $generator->generate('root', $a)->names());
+    }
+
 }

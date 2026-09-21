@@ -35,4 +35,15 @@ final class PatternProductionsTest extends TestCase
         self::assertSame([], $choices->matching('other', ProductionPattern::at(1)));
         self::assertSame([], $choices->matching('missing', null));
     }
+
+    public function testSourceRuleAndMatchingUseOriginalNamesAndOrdinals(): void
+    {
+        $production = new Production([new Terminal('T')], 4);
+        $grammar = new Grammar('@plan0', ['@plan0' => new ProductionRule('@plan0', [$production])], ['@plan0' => 'root']);
+        $choices = new PatternProductions($grammar);
+        self::assertSame('root', $choices->sourceRule('@plan0'));
+        self::assertSame([$production], $choices->matching('@plan0', ProductionPattern::at(4)));
+        self::assertSame([], $choices->matching('@plan0', ProductionPattern::at(0)));
+    }
+
 }

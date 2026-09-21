@@ -13,7 +13,9 @@ use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlFaker\Generation\Derivation\TerminationAnalyzer;
 use SqlFaker\Generation\Plan\GenerationPlan;
+use SqlFaker\Generation\Plan\LexemeConstraint;
 use SqlFaker\Generation\Plan\ProductionPattern;
+use SqlFaker\Generation\Plan\RulePlan;
 use SqlFaker\Generation\SqlGenerator;
 use SqlFaker\Grammar\Model\Grammar;
 use SqlFaker\Grammar\Model\NonTerminal;
@@ -225,6 +227,12 @@ use SqlFaker\PostgreSqlProvider;
 #[UsesClass(\SqlFaker\Generation\Value\RepeatDomain::class)]
 #[UsesClass(\SqlFaker\Generation\Value\Utf8::class)]
 #[UsesClass(\SqlFaker\PostgreSql\Generation\Lexeme\LexicalDefinition::class)]
+#[UsesClass(RulePlan::class)]
+#[UsesClass(LexemeConstraint::class)]
+#[UsesClass(\SqlFaker\Generation\Plan\Compilation\GrammarCompiler::class)]
+#[UsesClass(\SqlFaker\Generation\Plan\Compilation\Scope::class)]
+#[UsesClass(\SqlFaker\Generation\Plan\Compilation\PreparedGrammar::class)]
+#[UsesClass(\SqlFaker\Generation\Plan\Compilation\ScopedGeneration::class)]
 final class PostgreSqlProviderTest extends TestCase
 {
     #[DataProvider('providerTargetedGenerationSeed')]
@@ -1268,4 +1276,41 @@ final class PostgreSqlProviderTest extends TestCase
         self::assertNull($plan->startRule());
         self::assertSame($provider->generate($plan), $provider->generate($plan));
     }
+
+    /**
+     * @param GenerationPlan<true> $constraints
+     */
+    #[DataProvider('providerScopedInsertPlan')]
+    public function testGenerateSchemaBoundInsertAndFreezeChoices(GenerationPlan $constraints, int $seed): void
+    {
+        $faker = Factory::create();
+        $faker->seed($seed);
+        $provider = new PostgreSqlProvider($faker, 'pg-17.2');
+        self::assertMatchesRegularExpression("/^INSERT INTO users VALUES \( (?:1[0-9]|20) , '(?:Alice|Bob)' \)$/", $provider->generate($constraints));
+        $frozen = (new \SqlFaker\Generation\Choice\BytePlanCompiler())->compile(str_repeat(chr($seed), 64), $provider->planner(), $constraints);
+        $sql = $provider->generate($frozen);
+        $faker->seed(999);
+        self::assertSame($sql, $provider->generate($frozen));
+        self::assertMatchesRegularExpression("/^INSERT INTO users VALUES \( (?:1[0-9]|20) , '(?:Alice|Bob)' \)$/", $sql);
+    }
+
+    /**
+     * @return iterable<string, array{GenerationPlan<true>, int}>
+     */
+    public static function providerScopedInsertPlan(): iterable
+    {
+        $integer = RulePlan::any()->allowing(ProductionPattern::exactly('c_expr'))->withRule('c_expr', RulePlan::any()->allowing(ProductionPattern::exactly('AexprConst')))->withRule('AexprConst', RulePlan::any()->allowing(ProductionPattern::exactly('Iconst')))->withLexeme('ICONST', LexemeConstraint::integers(10, 20));
+        $string = RulePlan::any()->allowing(ProductionPattern::exactly('c_expr'))->withRule('c_expr', RulePlan::any()->allowing(ProductionPattern::exactly('AexprConst')))->withRule('AexprConst', RulePlan::any()->allowing(ProductionPattern::exactly('Sconst')))->withLexeme('SCONST', LexemeConstraint::oneOf("'Alice'", "'Bob'"));
+        $plan = GenerationPlan::fromRule('InsertStmt')->withRule('insert_target', RulePlan::any()->allowing(ProductionPattern::exactly('qualified_name'))->withLexeme('IDENT', LexemeConstraint::oneOf('users')))
+         ->withRule('expr_list', RulePlan::any()->withItems(RulePlan::any()->withRule('a_expr', $integer), RulePlan::any()->withRule('a_expr', $string)))
+         ->requiringNonEmpty()->withExpansionBudget(100);
+        foreach (['opt_with_clause' => [],'opt_on_conflict' => [],'returning_clause' => [],'qualified_name' => ['ColId'],'ColId' => ['IDENT'],'insert_rest' => ['SelectStmt'],'SelectStmt' => ['select_no_parens'],'select_no_parens' => ['simple_select'],'simple_select' => ['values_clause'],'values_clause' => ['VALUES','(','expr_list',')']] as $name => $symbols) {
+            $plan = $plan->withRule($name, RulePlan::any()->allowing(ProductionPattern::exactly(...$symbols)));
+        }
+
+        foreach ([0, 1, 7, 31] as $seed) {
+            yield 'seed ' . $seed => [$plan, $seed];
+        }
+    }
+
 }

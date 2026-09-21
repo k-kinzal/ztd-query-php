@@ -27,6 +27,14 @@ final class PatternProductions
     }
 
     /**
+     * Keeps legacy occurrence counters shared across specialized copies of a rule.
+     */
+    public function sourceRule(string $name): string
+    {
+        return $this->grammar->sourceRule($name);
+    }
+
+    /**
      * @return list<Production>
      */
     public function matching(string $name, ?ProductionPattern $pattern): array
@@ -35,7 +43,7 @@ final class PatternProductions
         if (!isset($this->cache[$key])) {
             $matches = [];
             foreach ($this->grammar->ruleMap[$name]->alternatives ?? [] as $ordinal => $production) {
-                if ($pattern === null || $pattern->matches(array_map(static fn (Symbol $symbol): string => $symbol->value(), $production->symbols), $ordinal)) {
+                if ($pattern === null || $pattern->matches(array_map(fn (Symbol $symbol): string => $this->grammar->sourceRule($symbol->value()), $production->symbols), $this->grammar->sourceOrdinal($name, $ordinal))) {
                     $matches[] = $production;
                 }
             }
