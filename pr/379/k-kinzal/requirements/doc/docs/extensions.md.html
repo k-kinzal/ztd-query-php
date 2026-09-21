@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Source and test runner extensions — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/379/k-kinzal/requirements/doc/docs/extensions.md.html">
+<meta name="description" content="Source and test runner extensions, a document of the k-kinzal/requirements package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="Source and test runner extensions — ZTD Query PHP">
+<meta property="og:description" content="Source and test runner extensions, a document of the k-kinzal/requirements package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/379/k-kinzal/requirements/doc/docs/extensions.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/379/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../">
+<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sb-pkg"><a href="../../../../k-kinzal/requirements/index.html">k-kinzal/requirements</a></div><nav class="sb-block"><div class="sb-title">Package</div><ul class="sb-list"><li data-diff="added"><a href="../../../../k-kinzal/requirements/all-items.html">All items</a></li><li data-diff="added"><a href="../../../../k-kinzal/requirements/index.html#documents">Documents</a></li></ul></nav><nav class="sb-block"><div class="sb-title">Namespaces</div><ul class="sb-list"><li data-diff="added"><a href="../../../../k-kinzal/requirements/Requirements/Config/index.html" title="Requirements\Config">Requirements\Config</a></li><li data-diff="added"><a href="../../../../k-kinzal/requirements/Requirements/Console/index.html" title="Requirements\Console">Requirements\Console</a></li><li data-diff="added"><a href="../../../../k-kinzal/requirements/Requirements/Model/index.html" title="Requirements\Model">Requirements\Model</a></li><li data-diff="added"><a href="../../../../k-kinzal/requirements/Requirements/Report/index.html" title="Requirements\Report">Requirements\Report</a></li><li data-diff="added"><a href="../../../../k-kinzal/requirements/Requirements/Source/index.html" title="Requirements\Source">Requirements\Source</a></li><li data-diff="added"><a href="../../../../k-kinzal/requirements/Requirements/Test/index.html" title="Requirements\Test">Requirements\Test</a></li></ul></nav></nav>
+<div class="page">
+<header class="topbar">
+<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
+<nav class="crumbs"><a href="../../../../k-kinzal/requirements/index.html">k-kinzal/requirements</a><span class="crumb-sep">::</span><span class="crumb-current">docs/extensions.md</span></nav>
+<div class="topbar-tools">
+<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 524dd75927 to working tree">524dd75927 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 524dd75927 and working tree." data-off="This page documents what 524dd75927 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Source and test runner extensions</h1><div class="symbol-meta"><span class="src-link">docs/extensions.md</span></div></div>
+<div class="notice diff-banner" data-diff="added">Added in working tree, compared to 524dd75927.</div>
+<section class="readme" data-diff="added"><div class="doc-block" data-diff="added"><h2>Source and test runner extensions</h2>
+</div><div class="doc-block" data-diff="added"><p>The built-ins use the public interfaces in <code>Requirements\Source</code> and <code>Requirements\Test</code>. Add a PSR-4 class to the consuming project&#039;s autoloader, load that autoloader using configuration <code>bootstrap</code>, and register the class name. The package does not require Slack, Jira or any other service SDK.</p>
+</div><div class="doc-block" data-diff="added"><pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">Requirements\Model\Source</span>;
+<span class="tok-kw">use</span> <span class="tok-id">Requirements\Source\SourceExtension</span>;
+<span class="tok-kw">use</span> <span class="tok-id">Requirements\Source\Unit</span>;
+
+<span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">IssueSource</span> <span class="tok-kw">implements</span> <span class="tok-id">SourceExtension</span>
+{
+    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">select</span>(<span class="tok-id">Source</span> <span class="tok-var">$source</span>, <span class="tok-id">string</span> <span class="tok-var">$selector</span>, <span class="tok-id">string</span> <span class="tok-var">$directory</span>, <span class="tok-id">bool</span> <span class="tok-var">$live</span>): <span class="tok-kw">array</span>
+    {
+        <span class="tok-com">// Retrieve the issue described by $source-&gt;uri using your service client.</span>
+        <span class="tok-com">// Interpret $selector against a stable issue version or snapshot.</span>
+        <span class="tok-com">// Return one Unit per requirement, with its stable service field ID.</span>
+        <span class="tok-kw">return</span> [<span class="tok-kw">new</span> <span class="tok-id">Unit</span>(<span class="tok-str">&#039;acceptance-criterion:1&#039;</span>, <span class="tok-str">&#039;A name starts with a letter.&#039;</span>)];
+    }
+}</code></pre>
+</div><div class="doc-block" data-diff="added"><p>The illustration uses a literal response; replace retrieval with the service API. A source extension owns both retrieval and selection. The same method enumerates the complete scope and resolves individual evidence selectors. Locations must be stable across calls, nonempty and unique inside the resource. Equal location IDs must have equal text. Selectors must not silently ignore unsupported syntax. The core verifies exact quote equality and scope membership; do not prefilter scope results based on known specification IDs. Report failed retrieval by throwing an exception. <code>Source::options</code> carries service-specific configuration. Use environment variables for credentials. <code>ResourceLoader</code> is available when plain HTTP(S), local resources or SHA-256 snapshots are sufficient.</p>
+</div><div class="doc-block" data-diff="added"><pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">Requirements\Test\RunnerConfig</span>;
+<span class="tok-kw">use</span> <span class="tok-id">Requirements\Test\RunnerExtension</span>;
+<span class="tok-kw">use</span> <span class="tok-id">Requirements\Test\TestResult</span>;
+
+<span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">AcceptanceRunner</span> <span class="tok-kw">implements</span> <span class="tok-id">RunnerExtension</span>
+{
+    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">run</span>(<span class="tok-id">RunnerConfig</span> <span class="tok-var">$config</span>, <span class="tok-id">string</span> <span class="tok-var">$target</span>): <span class="tok-id">TestResult</span>
+    {
+        <span class="tok-com">// Select the target, execute $config-&gt;command without a shell,</span>
+        <span class="tok-com">// and check actual test outcomes before returning a passing result.</span>
+        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-id">TestResult</span>(<span class="tok-str">&#039;unverified&#039;</span>, <span class="tok-num">0</span>, <span class="tok-str">&#039;Implement the service runner here.&#039;</span>);
+    }
+}</code></pre>
+</div><div class="doc-block" data-diff="added"><p>Return <code>passed</code> only for positive executed test counts with every selected test passing. Other statuses fail verification. The core deduplicates identical runner-name/target pairs during each <code>spec</code> command. <code>RunnerConfig</code> provides an argument-array command, absolute working directory and timeout. Custom extensions must enforce their own timeout and report protocol; built-ins use <code>ProcessRunner</code> and the strict <code>JUnit</code> reader.</p>
+</div><div class="doc-block" data-diff="added"><pre class="code-block"><code>extensions:
+  sources:
+    issue: App\Traceability\IssueSource
+  runners:
+    acceptance: App\Traceability\AcceptanceRunner</code></pre>
+</div><div class="doc-block" data-diff="added"><p>Registered names can override a built-in deliberately. Registration validates the interface before any source selection or test execution. A built-in runner does not need to be registered explicitly: use <code>extension: phpunit</code> or <code>extension: behat</code>.</p>
+</div><div class="doc-block" data-diff="added"><p>The PHPUnit adapter uses exact escaped <code>Class::method</code> filters, including all data sets, and a fresh <code>--log-junit</code> report. The Behat adapter selects a scenario header by <code>file.feature:line</code> and uses strict JUnit output; outlines execute every example. See the <a href="https://docs.phpunit.de/en/10.5/textui.html">PHPUnit 10.5 CLI documentation</a> and <a href="https://docs.behat.org/en/latest/user_guide/command_line_tool.html">Behat CLI documentation</a>. English scenario headers are supported; localized Gherkin requires a custom runner.</p>
+</div></section>
+</main>
+<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div>
+<script src="../../../../assets/search-index.js" defer></script>
+<script src="../../../../assets/app.js" defer></script>
+</body>
+</html>

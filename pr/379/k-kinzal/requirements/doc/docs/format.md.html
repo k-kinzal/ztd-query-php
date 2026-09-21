@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Document format (version 1) — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/379/k-kinzal/requirements/doc/docs/format.md.html">
+<meta name="description" content="Document format (version 1), a document of the k-kinzal/requirements package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="Document format (version 1) — ZTD Query PHP">
+<meta property="og:description" content="Document format (version 1), a document of the k-kinzal/requirements package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/379/k-kinzal/requirements/doc/docs/format.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/379/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../">
+<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sb-pkg"><a href="../../../../k-kinzal/requirements/index.html">k-kinzal/requirements</a></div><nav class="sb-block"><div class="sb-title">Package</div><ul class="sb-list"><li data-diff="added"><a href="../../../../k-kinzal/requirements/all-items.html">All items</a></li><li data-diff="added"><a href="../../../../k-kinzal/requirements/index.html#documents">Documents</a></li></ul></nav><nav class="sb-block"><div class="sb-title">Namespaces</div><ul class="sb-list"><li data-diff="added"><a href="../../../../k-kinzal/requirements/Requirements/Config/index.html" title="Requirements\Config">Requirements\Config</a></li><li data-diff="added"><a href="../../../../k-kinzal/requirements/Requirements/Console/index.html" title="Requirements\Console">Requirements\Console</a></li><li data-diff="added"><a href="../../../../k-kinzal/requirements/Requirements/Model/index.html" title="Requirements\Model">Requirements\Model</a></li><li data-diff="added"><a href="../../../../k-kinzal/requirements/Requirements/Report/index.html" title="Requirements\Report">Requirements\Report</a></li><li data-diff="added"><a href="../../../../k-kinzal/requirements/Requirements/Source/index.html" title="Requirements\Source">Requirements\Source</a></li><li data-diff="added"><a href="../../../../k-kinzal/requirements/Requirements/Test/index.html" title="Requirements\Test">Requirements\Test</a></li></ul></nav></nav>
+<div class="page">
+<header class="topbar">
+<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
+<nav class="crumbs"><a href="../../../../k-kinzal/requirements/index.html">k-kinzal/requirements</a><span class="crumb-sep">::</span><span class="crumb-current">docs/format.md</span></nav>
+<div class="topbar-tools">
+<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 524dd75927 to working tree">524dd75927 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 524dd75927 and working tree." data-off="This page documents what 524dd75927 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Document format (version 1)</h1><div class="symbol-meta"><span class="src-link">docs/format.md</span></div></div>
+<div class="notice diff-banner" data-diff="added">Added in working tree, compared to 524dd75927.</div>
+<section class="readme" data-diff="added"><div class="doc-block" data-diff="added"><h2>Document format (version 1)</h2>
+</div><div class="doc-block" data-diff="added"><p>Configuration and definitions use YAML. Paths are relative to the configuration file&#039;s directory; definition file locations do not change that base. Definition patterns use PHP <code>glob</code> syntax (<code>*</code> is not a recursive glob). Overlapping patterns load a file once. Every pattern must match. Unknown fields fail lint, except keys inside extension <code>options</code> and item <code>metadata</code>.</p>
+</div><div class="doc-block" data-diff="added"><pre class="code-block"><code>version: 1
+definitions:
+  - requirements/*.yaml
+bootstrap: vendor/autoload.php
+extensions:
+  sources:
+    company: App\Traceability\CompanySource
+  runners:
+    custom: App\Traceability\CustomRunner
+runners:
+  unit:
+    extension: phpunit
+    command: [php, vendor/bin/phpunit, --configuration, phpunit.xml.dist]
+    cwd: .
+    timeout: 60
+  behavior:
+    extension: behat
+    command: [php, vendor/bin/behat]
+    timeout: 60
+coverage:
+  minimum: 80
+  diff_minimum: 0
+  sources:
+    grammar-manual: 80</code></pre>
+</div><div class="doc-block" data-diff="added"><p><code>bootstrap</code>, <code>extensions</code>, <code>runners</code> and <code>coverage</code> are optional. Commands must be nonempty argument lists. Thresholds range from 0 to 100. Source threshold keys must name an existing source. Extensions are instantiated without constructor arguments. The bootstrap is project code and must be trusted, like the test suite itself.</p>
+</div><div class="doc-block" data-diff="added"><p>Each definition declares one source, or explicitly <code>source: null</code>:</p>
+</div><div class="doc-block" data-diff="added"><pre class="code-block"><code>version: 1
+source:
+  id: grammar-manual
+  uri: https://example.org/releases/1/manual.html
+  format: html
+  selector: &#039;main p&#039;
+  snapshot: requirements/sources/manual.html
+  sha256: &lt;64 lowercase hexadecimal characters&gt;
+  options: {}
+items:
+  - id: REQ-001
+    kind: requirement
+    statement: A name starts with a letter.
+    evidence:
+      - selector: &#039;#names&#039;
+        quote: A name starts with a letter.
+  - id: SPEC-001
+    statement: When a name is read, the parser shall require a leading letter.
+    requirements: [REQ-001]
+    tests:
+      - runner: unit
+        target: &#039;Tests\Unit\NameTest::testLeadingLetter&#039;
+      - runner: behavior
+        target: spec/features/names.feature:12
+    labels: [grammar, lexical]
+    category: names
+    related: [SPEC-002]
+    design:
+      - url: https://example.org/design/names
+      - text: Preserve the spelling in the concrete syntax tree.
+    metadata:
+      owner: parser-maintainers
+  - id: SPEC-002
+    statement: The generator shall produce C code.
+    status: unsupported
+    reason: This library reads grammar files and does not generate parsers.
+    evidence:
+      - selector: &#039;#generation&#039;
+        quote: The generator produces C code.</code></pre>
+</div><div class="doc-block" data-diff="added"><p>Source IDs and item IDs must be unique throughout the project. Item IDs start with a letter and otherwise contain letters, digits, dots, underscores or dashes. <code>kind</code> defaults to <code>specification</code>, <code>status</code> to <code>supported</code>, and <code>origin</code> to <code>sourced</code>. Tests, labels, related links, requirement links and evidence are lists. Each evidence entry has exactly <code>selector</code> and <code>quote</code>. Each test has <code>runner</code> and <code>target</code>. Items may contain several evidence entries and several tests. A full quoted unit can be linked to multiple specifications.</p>
+</div><div class="doc-block" data-diff="added"><p>Requirements are optional. They cannot have tests, requirement parents or an unsupported status. A specification may derive from multiple sourced requirements across definition files, have its own evidence, or both. A requirement cannot be its own reference. General <code>related</code> edges may connect either kind and can be reciprocal. Dangling, duplicate or self links fail lint. Design records accept <code>url</code>, <code>text</code>, or both. Metadata is an unrestricted mapping.</p>
+</div><div class="doc-block" data-diff="added"><p>Source-free declarations require an explicit origin and reason:</p>
+</div><div class="doc-block" data-diff="added"><pre class="code-block"><code>version: 1
+source: null
+items:
+  - id: READER-001
+    statement: If input ends inside a rule, then the reader shall report an error.
+    origin: original
+    reason: Reject incomplete input instead of silently losing the final rule.
+    labels: [strictness]
+    tests:
+      - runner: behavior
+        target: spec/features/reader-decisions.feature:14</code></pre>
+</div><div class="doc-block" data-diff="added"><p>Use <code>original</code> for deliberate project behavior and <code>undocumented</code> for behavior whose source has not yet been identified. Neither may claim source evidence or requirement provenance. Both appear under <code>list --without-source</code>; filter an exact origin with <code>--origin</code>. A source-free file may instead hold sourced specifications with requirement links; those remain sourced and are not independent items.</p>
+</div><div class="doc-block" data-diff="added"><h3>Source formats and selectors</h3>
+</div><div class="doc-block" data-diff="added"><div class="table-wrap"><table><thead><tr><th>Format</th><th>Scope/evidence selector</th><th>Unit</th></tr></thead><tbody><tr><td><code>html</code></td><td>CSS, e.g. <code>main p</code>, <code>#names</code></td><td>Selected element text</td></tr><tr><td><code>xml</code></td><td>CSS, e.g. <code>section &gt; rule</code></td><td>Selected element text</td></tr><tr><td><code>ietf</code></td><td>RFC XML CSS, e.g. <code>section[anchor=&quot;rules&quot;] &gt; t</code></td><td>Selected RFC paragraph; use <code>html</code> or <code>text</code> for other RFC representations</td></tr><tr><td><code>markdown</code></td><td>CSS over CommonMark-rendered HTML, e.g. <code>h2 + p</code>, <code>li</code></td><td>Selected element text; raw HTML is stripped</td></tr><tr><td><code>json</code></td><td>JSONPath child names, quoted keys, nonnegative indices, <code>*</code>, recursive names</td><td>Selected JSON value at a canonical JSON Pointer</td></tr><tr><td><code>text</code></td><td><code>lines:10-30</code> or <code>lines:12</code></td><td>Nonblank physical line</td></tr></tbody></table></div>
+</div><div class="doc-block" data-diff="added"><p>JSONPath examples: <code>$.rules[*].text</code>, <code>$[&#039;rules&#039;][0][&#039;text&#039;]</code>, <code>$..requirement</code>. Filters, slices, unions, escaped quoted property names and other JSONPath features are intentionally unsupported and fail explicitly. Register a source extension if a broader query dialect is needed. Objects/arrays are quoted as compact JSON; strings are quoted as their text. Null, Boolean and numeric values use JSON text.</p>
+</div><div class="doc-block" data-diff="added"><p>Scope selectors can select many units. Evidence selectors must select exactly one of those units. Parent and descendant DOM elements cannot both be selected in a single scope. URI spelling is significant: use one canonical URI for a resource. A snapshot is optional but requires SHA-256; the snapshot&#039;s content must be exactly the downloaded resource. A SHA-256 without a snapshot pins the URI contents too. All built-in sources accept local paths or HTTP(S). HTTP reads are limited to 16 MiB and 20 seconds; extensions own their service-specific limits.</p>
+</div><div class="doc-block" data-diff="added"><h3>EARS authoring</h3>
+</div><div class="doc-block" data-diff="added"><p>Specifications use an English subject, <code>shall</code>, a response and a final period. Accepted forms include:</p>
+</div><div class="doc-block" data-diff="added"><ul><li><code>The parser shall preserve whitespace.</code></li><li><code>When a token is read, the parser shall record its position.</code></li><li><code>While a conditional is disabled, the parser shall ignore its body.</code></li><li><code>Where strict mode is enabled, the parser shall reject incomplete input.</code></li><li><code>If the rule is incomplete, then the parser shall report an error.</code></li></ul>
+</div><div class="doc-block" data-diff="added"><p>Conditions can be combined inside these forms. Lint enforces the surface structure; it does not evaluate language meaning. Requirement text need not use EARS.</p>
+</div></section>
+</main>
+<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div>
+<script src="../../../../assets/search-index.js" defer></script>
+<script src="../../../../assets/app.js" defer></script>
+</body>
+</html>
