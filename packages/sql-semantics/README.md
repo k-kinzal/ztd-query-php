@@ -57,9 +57,9 @@ $statement->outputs[2]->expression->lineage()[0]->relationId;             // r1
 ```
 
 `SchemaBuilder::build(string ...$sql): Schema` constructs a reusable schema from
-CREATE TABLE strings. `Binder::bind(string $sql): BoundStatement` performs semantic
-binding against that schema; SELECT returns a `BoundSelect`. `Schema` contains declarations and
-their language context; `BoundSelect` is the output of the semantic phase.
+DDL strings. `Binder::bind(string $sql): BoundStatement` performs semantic binding
+against that schema; SELECT returns a `BoundSelect`. `Schema` contains declarations
+and their language context; `BoundStatement` is the output of the semantic phase.
 
 Use `Dialect::MySql` or `Dialect::Sqlite` for the other supported dialects.
 `SchemaBuilder` accepts optional `defaultSchema` and `grammarVersion` arguments,
@@ -69,7 +69,7 @@ the same settings. The database release is the support boundary; there is no sep
 
 Call `build()` without arguments for a schema with no tables, such as when
 binding `SELECT 1`. Each build creates a new schema and applies its DDL statements in order.
-A binder can be reused for multiple SELECTs against the same schema.
+A binder can be reused for multiple statements against the same schema.
 
 The result is an immutable PHP object graph, not serialized SQL or YAML.
 `Expression::source`, `TableUse::source`, and declaration sources retain the
@@ -105,7 +105,8 @@ All SQL in the selected database release is in scope, using the same releases as
 `sql-faker` and `sql-parser`. Missing semantic behavior is a bug, not an exclusion
 from the support contract. See [the support contract](docs/support.md).
 
-The semantic graph includes nested query scopes, CTEs, correlated and lateral
+The semantic graph includes nested query scopes, recursive and data-modifying
+CTEs, correlated and lateral
 references, derived relations, USING/NATURAL joins, grouping, set operations,
 aggregate/window expressions, CASE, casts, and functions. DDL retains generated
 expressions and column attributes and can derive tables and views from queries.

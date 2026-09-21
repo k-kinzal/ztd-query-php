@@ -4,10 +4,12 @@ The SQL-string public API is tested with PostgreSQL, MySQL, and SQLite. Tests
 cover schema construction and reuse, default namespaces and grammar context,
 binding and alias visibility, self joins, nested outer joins, NULL provenance,
 ON versus WHERE stages, stars and duplicate names, ordering, pagination,
-declaration constraints, type promotion, source identity, nested scopes, grouping, compound queries, mutations, DDL evolution, and
-regressions for formerly rejected syntax. The database release is the only
-language support boundary. Each test declares its own inputs. Every source class has
-a paired unit test and every public API class has an executable PHPDoc example.
+declaration constraints, type promotion, source identity, nested scopes, grouping,
+compound queries, mutations, DDL evolution, and regressions for formerly rejected
+syntax. Shared SELECT and UPDATE regressions exercise all 11 grammar releases.
+The database release is the only language support boundary. Each test declares
+its own inputs. Every source class has a paired unit test and every public API
+class has an executable PHPDoc example.
 
 `composer lint` runs strict autoload checks, PHP-CS-Fixer, PHPStan at max level
 with all PHP-AI-Toolkit rules, PHPCompatibility for PHP 8.1+, LOC guard, directory

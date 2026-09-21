@@ -24,7 +24,9 @@ The identity allocator is shared across nested queries; scope, relation, and joi
 IDs are deterministic within a statement. Correlated queries carry a parent
 namespace. A local name shadows its outer equivalent. CTEs are made visible in
 declaration order. A recursive CTE has an anchor declaration and retained compound
-branches. Aliases and column alias lists establish the visible relation shape.
+branches. A data-modifying CTE retains its mutation targets and exposes its
+RETURNING columns to subsequent references. Aliases and column alias lists
+establish the visible relation shape.
 
 The graph separates the FROM/join tree, WHERE, grouping, HAVING, projection,
 compound-query operands, ordering, and pagination. Join ON conditions are bound
