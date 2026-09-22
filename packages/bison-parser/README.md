@@ -78,3 +78,11 @@ The specification covers the language of grammar files. What Bison checks on the
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
+
+## Source traceability
+
+[Requirements definitions](requirements/README.md) link selected official manual
+sections to this package's Behat scenarios, report uncovered source units and
+record generator behavior that this grammar reader does not support. Run
+`php ../requirements/bin/requirements coverage` or `spec` from this directory
+after installing `../requirements` in the monorepo.
