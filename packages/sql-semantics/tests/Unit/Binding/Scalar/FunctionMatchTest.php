@@ -153,4 +153,40 @@ final class FunctionMatchTest extends TestCase
         self::assertFalse(\SqlSemantics\Binding\Scalar\FunctionMatch::compatible('boolean', 'integer'));
     }
 
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerConversions')]
+    public function testScoreBindsPermittedArgumentConversions(Dialect $dialect, string $input, string $parameter): void
+    {
+        $type = new TypeDescriptor($dialect, $parameter);
+        $schema = (new SchemaBuilder($dialect))->build()->withFunctions(new FunctionSignature('convert_input', [$type], $type));
+        $expression = (new Binder($schema))->bind('SELECT convert_input(' . $input . ')')->outputs[0]->expression;
+        self::assertSame($parameter, $expression->operands[0]->type->name);
+        self::assertSame($parameter, $expression->type->name);
+        self::assertSame([], (new Binder($schema))->bind('SELECT convert_input(' . $input . ')')->diagnostics);
+    }
+
+    /**
+
+     * @return iterable<array{Dialect, string, string}>
+
+     */
+    public static function providerConversions(): iterable
+    {
+        yield [Dialect::PostgreSql, '1', 'bigint'];
+        yield [Dialect::PostgreSql, '$1', 'integer'];
+        yield [Dialect::PostgreSql, "CAST('x' AS VARCHAR)", 'text'];
+        yield [Dialect::MySql, '1', 'text'];
+        yield [Dialect::Sqlite, '1', 'text'];
+    }
+
+    public function testScoreDoesNotIgnoreLaterArgumentsWhenAnEarlierTypeIsUnspecified(): void
+    {
+        $unknown = new TypeDescriptor(Dialect::PostgreSql, 'unknown');
+        $integer = new TypeDescriptor(Dialect::PostgreSql, 'integer');
+        $text = new TypeDescriptor(Dialect::PostgreSql, 'text');
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build()->withFunctions(new FunctionSignature('choose', [$unknown, $integer], $integer), new FunctionSignature('choose', [$unknown, $text], $text));
+        self::assertSame('integer', (new Binder($schema))->bind('SELECT choose(NULL, 1)')->outputs[0]->expression->type->name);
+        self::assertSame('text', (new Binder($schema))->bind("SELECT choose(NULL, CAST('x' AS TEXT))")->outputs[0]->expression->type->name);
+    }
+
 }

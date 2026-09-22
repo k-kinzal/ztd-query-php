@@ -150,4 +150,14 @@ final class IndexBinderTest extends TestCase
         }
     }
 
+
+    public function testBindResolvesIncludedColumns(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
+        $statement = (new Binder($schema))->bind('CREATE INDEX ix ON t(id) INCLUDE(missing)', strict: false);
+        self::assertSame(['unknown-column'], array_column($statement->diagnostics, 'reason'));
+        self::assertSame(['missing'], $statement->indexes[0]->definition->include);
+        self::assertNull($statement->indexes[0]->predicate);
+    }
+
 }

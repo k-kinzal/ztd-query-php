@@ -158,4 +158,18 @@ final class IndexKeysTest extends TestCase
         self::assertNotNull($keys[1]->expression);
     }
 
+
+    public function testValueReadsSqliteCollationAndExpressionKeys(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(name TEXT); CREATE INDEX ix ON t(name COLLATE nocase DESC, length(name))');
+        $keys = $schema->tables[0]->indexes[0]->elements;
+        self::assertSame(['nocase'], $keys[0]->collation);
+        self::assertSame('name', $keys[0]->column);
+        self::assertSame('DESC', $keys[0]->direction);
+        self::assertSame([], $keys[0]->operatorClass);
+        self::assertNull($keys[0]->prefixLength);
+        self::assertNull($keys[1]->column);
+        self::assertNotNull($keys[1]->expression);
+    }
+
 }

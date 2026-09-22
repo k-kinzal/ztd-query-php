@@ -137,4 +137,45 @@ final class BuiltinsTest extends TestCase
         }
     }
 
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerDefaultFacts')]
+    public function testForDialectProvidesDeclaredResultAndNullFacts(Dialect $dialect, string $name, string $type, Nullability $nullable, bool $strict, bool $aggregate): void
+    {
+        $functions = array_column((new SchemaBuilder($dialect))->build()->functions, null, 'name');
+        $signature = $functions[$name];
+        self::assertInstanceOf(TypeDescriptor::class, $signature->returnType);
+        self::assertSame($dialect, $signature->returnType->dialect);
+        self::assertSame($type, $signature->returnType->name);
+        self::assertSame($nullable, $signature->nullability);
+        self::assertSame($strict, $signature->nullOnNull);
+        self::assertSame($aggregate, $signature->aggregate);
+    }
+
+    /**
+     * @return iterable<array{Dialect, string, string, Nullability, bool, bool}>
+     */
+    public static function providerDefaultFacts(): iterable
+    {
+        yield [Dialect::PostgreSql, 'count', 'bigint', Nullability::NotNull, false, true];
+        yield [Dialect::Sqlite, 'count', 'integer', Nullability::NotNull, false, true];
+        yield [Dialect::PostgreSql, 'length', 'integer', Nullability::NotNull, true, false];
+        yield [Dialect::PostgreSql, 'lower', 'text', Nullability::NotNull, true, false];
+        yield [Dialect::Sqlite, 'total', 'double precision', Nullability::NotNull, false, true];
+        yield [Dialect::PostgreSql, 'bool_and', 'boolean', Nullability::MaybeNull, false, true];
+        yield [Dialect::PostgreSql, 'json_agg', 'json', Nullability::MaybeNull, false, true];
+        yield [Dialect::PostgreSql, 'jsonb_agg', 'jsonb', Nullability::MaybeNull, false, true];
+        yield [Dialect::PostgreSql, 'current_date', 'date', Nullability::NotNull, false, false];
+        yield [Dialect::PostgreSql, 'current_timestamp', 'timestamp', Nullability::NotNull, false, false];
+        yield [Dialect::PostgreSql, 'random', 'unknown', Nullability::NotNull, false, false];
+        yield [Dialect::MySql, 'concat', 'text', Nullability::Unknown, false, false];
+    }
+
+    public function testForDialectRegistersArgumentDependentResults(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT generate_series(1, 3), min(1), array_agg(1)');
+        self::assertSame('integer', $statement->outputs[0]->expression->type->name);
+        self::assertSame('integer', $statement->outputs[1]->expression->type->name);
+        self::assertSame('integer[]', $statement->outputs[2]->expression->type->name);
+    }
+
 }

@@ -156,4 +156,51 @@ final class IndexEvolutionTest extends TestCase
         self::assertCount(1, $schema->tables[1]->indexes);
     }
 
+
+    public function testApplyRejectsUnknownIndexedColumns(): void
+    {
+        $this->expectException(\SqlSemantics\SemanticException::class);
+        $this->expectExceptionMessage('Index references unknown column: missing');
+        (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER); CREATE INDEX ix ON t(missing)');
+    }
+
+    public function testDropPreservesOtherIndexesAndSupportsQualifiedNames(): void
+    {
+        $table = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE app.t(id INTEGER); CREATE INDEX first ON app.t(id); CREATE INDEX second ON app.t(id); DROP INDEX app.first')->tables[0];
+        self::assertSame(['second'], array_column($table->indexes, 'name'));
+        self::assertSame(['app', 't'], $table->indexes[0]->table);
+    }
+
+
+    public function testApplyRetainsMultipleAndExpressionIndexes(): void
+    {
+        $table = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)', 'CREATE INDEX first ON t(id)', 'CREATE INDEX second ON t((id + n)) INCLUDE(n)')->tables[0];
+        self::assertSame(['first', 'second'], array_column($table->indexes, 'name'));
+        self::assertNull($table->indexes[1]->elements[0]->column);
+        self::assertNotNull($table->indexes[1]->elements[0]->expression);
+        self::assertSame(['n'], $table->indexes[1]->include);
+    }
+
+    public function testApplyRejectsUnknownColumnsAfterValidKeys(): void
+    {
+        $this->expectException(\SqlSemantics\SemanticException::class);
+        $this->expectExceptionMessage('Index references unknown column: missing');
+        (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER); CREATE INDEX ix ON t(id, missing)');
+    }
+
+    public function testAddReportsTheDuplicateName(): void
+    {
+        $this->expectException(\SqlSemantics\SemanticException::class);
+        $this->expectExceptionMessage('Duplicate index declaration: ix');
+        (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER); CREATE INDEX ix ON t(id); CREATE INDEX ix ON t(id)');
+    }
+
+    public function testDropUsesTheMysqlTargetNamespaceAndRetainsEarlierTables(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::MySql))->build('create table a(id int, key ix(id))', 'create table app.b(id int, key ix(id))', 'drop index ix on app.b');
+        self::assertCount(2, $schema->tables);
+        self::assertSame(['ix'], array_column($schema->tables[0]->indexes, 'name'));
+        self::assertSame([], $schema->tables[1]->indexes);
+    }
+
 }

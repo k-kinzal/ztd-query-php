@@ -134,4 +134,26 @@ final class UtilityBinderTest extends TestCase
         self::assertSame('SELECT', $statement->statements[0]->statements[0]->kind);
         self::assertSame('id', $statement->statements[0]->statements[0]->outputs[0]->name);
     }
+
+    public function testBindSeparatesIndexDefinitionsFromExistingTableDefinitions(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER DEFAULT 1)');
+        $statement = (new Binder($schema))->bind('CREATE INDEX ix ON t(id)');
+        self::assertSame([], $statement->definitions);
+        self::assertSame([], $statement->declarations);
+        self::assertCount(1, $statement->indexes);
+        self::assertSame('id', $statement->indexes[0]->keys[0]->binding?->column->name);
+        self::assertSame('ix', $statement->indexes[0]->definition->name);
+    }
+
+    public function testBindRetainsCreateTableDefinitionsWithInlineIndexes(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('create temporary table t(id integer default 1, constraint pk primary key(id))');
+        self::assertCount(1, $statement->definitions);
+        self::assertCount(1, $statement->declarations);
+        self::assertCount(1, $statement->indexes);
+        self::assertSame('pk', $statement->indexes[0]->definition->name);
+        self::assertSame('integer', $statement->indexes[0]->keys[0]->type->name);
+    }
+
 }

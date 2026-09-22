@@ -40,6 +40,9 @@ final class ReferenceReader
                 }
             }
         }
+        if ($identifiers->dialect === \SqlSemantics\Dialect::PostgreSql && $result['initiallyDeferred']) {
+            $result['deferrable'] = true;
+        }
         return $result;
     }
 

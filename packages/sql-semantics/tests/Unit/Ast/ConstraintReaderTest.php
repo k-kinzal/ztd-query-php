@@ -125,4 +125,13 @@ final class ConstraintReaderTest extends TestCase
         self::assertSame(['other', 'users'], $table->constraints[0]->referencedTable);
         self::assertSame(['parent_id', 'id'], $table->constraints[0]->referencedColumns);
     }
+
+    public function testReferencesSeparatesDeleteColumnsFromOmittedReferenceColumns(): void
+    {
+        $constraint = (new SchemaBuilder(Dialect::PostgreSql))->build('create table t(tenant integer, id integer, foreign key(tenant,id) references p on delete set null(id))')->tables[0]->constraints[0];
+        self::assertSame(['p'], $constraint->referencedTable);
+        self::assertSame([], $constraint->referencedColumns);
+        self::assertSame(['id'], $constraint->deleteColumns);
+    }
+
 }

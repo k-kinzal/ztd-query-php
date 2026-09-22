@@ -134,4 +134,43 @@ final class SchemaTest extends TestCase
     }
 
 
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerCaseInsensitiveDialects')]
+    public function testWithFunctionsReplacesCaseInsensitiveNamesWithoutRemovingOtherOverloads(Dialect $dialect): void
+    {
+        $integer = new \SqlSemantics\Type\TypeDescriptor($dialect, 'integer');
+        $text = new \SqlSemantics\Type\TypeDescriptor($dialect, 'text');
+        $schema = (new SchemaBuilder($dialect))->build()->withFunctions(
+            new \SqlSemantics\Schema\FunctionSignature('a', [], $integer),
+            new \SqlSemantics\Schema\FunctionSignature('f', [], $integer),
+            new \SqlSemantics\Schema\FunctionSignature('f', [], $integer, schema: 'other'),
+            new \SqlSemantics\Schema\FunctionSignature('f', [$integer], $integer),
+        );
+        $changed = $schema->withFunctions(new \SqlSemantics\Schema\FunctionSignature('F', [], $text));
+        self::assertCount(count($schema->functions), $changed->functions);
+        self::assertSame(range(0, count($changed->functions) - 1), array_keys($changed->functions));
+        self::assertSame('text', (new Binder($changed))->bind('SELECT f()')->outputs[0]->expression->type->name);
+        self::assertSame('integer', (new Binder($changed))->bind('SELECT f(1)')->outputs[0]->expression->type->name);
+        self::assertSame('integer', (new Binder($changed))->bind('SELECT a()')->outputs[0]->expression->type->name);
+    }
+
+    /**
+     * @return iterable<array{Dialect}>
+     */
+    public static function providerCaseInsensitiveDialects(): iterable
+    {
+        yield [Dialect::MySql];
+        yield [Dialect::Sqlite];
+    }
+
+    public function testWithFunctionsKeepsQuotedPostgresNamesDistinct(): void
+    {
+        $integer = new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, 'integer');
+        $text = new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, 'text');
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build()->withFunctions(new \SqlSemantics\Schema\FunctionSignature('F', [], $text), new \SqlSemantics\Schema\FunctionSignature('f', [], $integer));
+        $binder = new Binder($schema);
+        self::assertSame('text', $binder->bind('SELECT "F"()')->outputs[0]->expression->type->name);
+        self::assertSame('integer', $binder->bind('SELECT f()')->outputs[0]->expression->type->name);
+    }
+
 }

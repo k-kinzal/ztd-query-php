@@ -126,4 +126,37 @@ final class BuiltinResultTest extends TestCase
         self::assertSame('real', (new \SqlSemantics\Schema\Functions\BuiltinResult('AVG', Dialect::Sqlite))->resolve([new TypeDescriptor(Dialect::Sqlite, 'integer')])->name);
     }
 
+
+    public function testResolveSQLiteSumAndUnknownNumericInputs(): void
+    {
+        self::assertSame('dynamic', (new \SqlSemantics\Schema\Functions\BuiltinResult('SUM', Dialect::Sqlite))->resolve([new TypeDescriptor(Dialect::Sqlite, 'integer')])->name);
+        self::assertSame('unknown', (new \SqlSemantics\Schema\Functions\BuiltinResult('SUM', Dialect::PostgreSql))->resolve([])->name);
+        self::assertSame('unknown', (new \SqlSemantics\Schema\Functions\BuiltinResult('AVG', Dialect::PostgreSql))->resolve([])->name);
+        self::assertSame('numeric', (new \SqlSemantics\Schema\Functions\BuiltinResult('AVG', Dialect::MySql))->resolve([new TypeDescriptor(Dialect::MySql, 'integer')])->name);
+    }
+
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerNumericResults')]
+    public function testResolvePreservesOrWidensNumericInputs(Dialect $dialect, string $name, string $input, string $expected): void
+    {
+        $result = (new \SqlSemantics\Schema\Functions\BuiltinResult($name, $dialect))->resolve([new TypeDescriptor($dialect, $input)]);
+        self::assertSame($dialect, $result->dialect);
+        self::assertSame($expected, $result->name);
+    }
+
+    /**
+     * @return iterable<array{Dialect, string, string, string}>
+     */
+    public static function providerNumericResults(): iterable
+    {
+        yield [Dialect::PostgreSql, 'SUM', 'smallint', 'bigint'];
+        yield [Dialect::PostgreSql, 'SUM', 'integer', 'bigint'];
+        yield [Dialect::PostgreSql, 'SUM', 'bigint', 'numeric'];
+        yield [Dialect::PostgreSql, 'SUM', 'real', 'real'];
+        yield [Dialect::PostgreSql, 'SUM', 'double precision', 'double precision'];
+        yield [Dialect::PostgreSql, 'AVG', 'real', 'double precision'];
+        yield [Dialect::MySql, 'SUM', 'integer', 'numeric'];
+        yield [Dialect::MySql, 'SUM', 'double precision', 'double precision'];
+    }
+
 }

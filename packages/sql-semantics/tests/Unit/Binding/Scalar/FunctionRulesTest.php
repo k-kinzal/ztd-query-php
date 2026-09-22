@@ -229,4 +229,35 @@ final class FunctionRulesTest extends TestCase
         self::assertCount(3, $query->outputs[0]->expression->operands);
     }
 
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerNullContracts')]
+    public function testNullabilityHonorsReturnFactsForEveryArgumentState(string $input, \SqlSemantics\Type\Nullability $declared, bool $strict, \SqlSemantics\Type\Nullability $expected): void
+    {
+        $integer = new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, 'integer');
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build()->withFunctions(new \SqlSemantics\Schema\FunctionSignature('f', [$integer], $integer, $declared, $strict));
+        self::assertSame($expected, (new Binder($schema))->bind('SELECT f(' . $input . ')')->outputs[0]->expression->nullability);
+    }
+
+    /**
+     * @return iterable<array{string, \SqlSemantics\Type\Nullability, bool, \SqlSemantics\Type\Nullability}>
+     */
+    public static function providerNullContracts(): iterable
+    {
+        yield ['1', \SqlSemantics\Type\Nullability::MaybeNull, true, \SqlSemantics\Type\Nullability::MaybeNull];
+        yield ['$1', \SqlSemantics\Type\Nullability::MaybeNull, true, \SqlSemantics\Type\Nullability::Unknown];
+        yield ['NULL', \SqlSemantics\Type\Nullability::MaybeNull, true, \SqlSemantics\Type\Nullability::AlwaysNull];
+        yield ['NULL', \SqlSemantics\Type\Nullability::NotNull, false, \SqlSemantics\Type\Nullability::NotNull];
+        yield ['1', \SqlSemantics\Type\Nullability::AlwaysNull, true, \SqlSemantics\Type\Nullability::AlwaysNull];
+        yield ['$1', \SqlSemantics\Type\Nullability::Unknown, true, \SqlSemantics\Type\Nullability::Unknown];
+    }
+
+    public function testBindResolvesDefaultsWithoutAQueryContext(): void
+    {
+        $expression = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("SELECT lower('X')")->outputs[0]->expression;
+        self::assertInstanceOf(\SqlParser\Parser\Node::class, $expression->source);
+        $bound = (new \SqlSemantics\Binding\Scalar\FunctionRules())->bind('LOWER', $expression->operands, $expression->source, new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql)));
+        self::assertSame('text', $bound->type->name);
+        self::assertSame(\SqlSemantics\Type\Nullability::NotNull, $bound->nullability);
+    }
+
 }

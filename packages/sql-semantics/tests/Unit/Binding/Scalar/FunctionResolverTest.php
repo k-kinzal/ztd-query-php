@@ -153,4 +153,25 @@ final class FunctionResolverTest extends TestCase
         self::assertSame('integer', $script[1]->outputs[0]->expression->type->name);
     }
 
+
+    public function testResolveUsesTheDefaultNamespaceAndExplicitBuiltinNamespace(): void
+    {
+        $integer = new TypeDescriptor(Dialect::PostgreSql, 'integer');
+        $schema = (new SchemaBuilder(Dialect::PostgreSql, 'app'))->build()->withFunctions(new FunctionSignature('f', [], $integer, schema: 'app'));
+        $binder = new Binder($schema);
+        self::assertSame('integer', $binder->bind('SELECT f()')->outputs[0]->expression->type->name);
+        self::assertSame('text', $binder->bind("SELECT pg_catalog.lower('X')")->outputs[0]->expression->type->name);
+        self::assertSame('unknown', $binder->bind("SELECT other.lower('X')")->outputs[0]->expression->type->name);
+        self::assertSame('unknown', $binder->bind('SELECT public.f()')->outputs[0]->expression->type->name);
+    }
+
+    public function testOverloadReportsTheNameAndResponsibleSource(): void
+    {
+        $integer = new TypeDescriptor(Dialect::PostgreSql, 'integer');
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build()->withFunctions(new FunctionSignature('takes_integer', [$integer], $integer));
+        $statement = (new Binder($schema))->bind('SELECT takes_integer()', strict: false);
+        self::assertSame('Cannot resolve a unique function signature for takes_integer', $statement->diagnostics[0]->message);
+        self::assertSame($statement->outputs[0]->expression->source, $statement->diagnostics[0]->source);
+    }
+
 }

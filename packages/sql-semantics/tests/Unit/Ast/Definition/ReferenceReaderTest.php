@@ -160,4 +160,44 @@ final class ReferenceReaderTest extends TestCase
         self::assertFalse($constraint->initiallyDeferred);
     }
 
+
+    public function testReadLowercaseAttributesKeepCheckingTime(): void
+    {
+        $table = (new SchemaBuilder(Dialect::PostgreSql))->build('create table t(id integer references p(id) match simple on update set default on delete no action deferrable initially deferred, other integer references p(id) not deferrable initially immediate)')->tables[0];
+        self::assertTrue($table->constraints[0]->deferrable);
+        self::assertTrue($table->constraints[0]->initiallyDeferred);
+        self::assertSame('set-default', $table->constraints[0]->onUpdate->value);
+        self::assertSame('no-action', $table->constraints[0]->onDelete->value);
+        self::assertFalse($table->constraints[1]->deferrable);
+        self::assertFalse($table->constraints[1]->initiallyDeferred);
+        self::assertSame('simple', $table->constraints[0]->match);
+    }
+
+
+    public function testReadDeferredCheckingImpliesDeferrabilityInPostgres(): void
+    {
+        $constraint = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, FOREIGN KEY(id) REFERENCES parent(id) INITIALLY DEFERRED)')->tables[0]->constraints[0];
+        self::assertTrue($constraint->deferrable);
+        self::assertTrue($constraint->initiallyDeferred);
+    }
+
+    public function testReadDefaultActionsAndCheckingTime(): void
+    {
+        $constraint = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER REFERENCES parent(id))')->tables[0]->constraints[0];
+        self::assertSame(\SqlSemantics\Schema\ReferentialAction::NoAction, $constraint->onDelete);
+        self::assertSame(\SqlSemantics\Schema\ReferentialAction::NoAction, $constraint->onUpdate);
+        self::assertFalse($constraint->deferrable);
+        self::assertFalse($constraint->initiallyDeferred);
+        self::assertSame('simple', $constraint->match);
+        self::assertSame([], $constraint->deleteColumns);
+    }
+
+    public function testReadKeepsPartialDeleteColumnsSeparateFromCompositeForeignKeys(): void
+    {
+        $constraint = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(tenant INTEGER, id INTEGER, FOREIGN KEY(tenant,id) REFERENCES parent(tenant,key) ON DELETE SET NULL(id))')->tables[0]->constraints[0];
+        self::assertSame(['id'], $constraint->deleteColumns);
+        self::assertSame(['tenant', 'id'], $constraint->columns);
+        self::assertSame(['tenant', 'key'], $constraint->referencedColumns);
+    }
+
 }

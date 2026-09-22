@@ -67,19 +67,7 @@ final class OptionReader
             return [];
         }
         $words = array_map(static fn (Token $token): string => strtoupper($token->text), $tokens);
-        $prefix = match (true) {
-            array_slice($words, 0, 3) === ['DEFAULT', 'CHARACTER', 'SET'] => 3,
-            in_array(implode(' ', array_slice($words, 0, 2)), ['CHARACTER SET', 'DEFAULT CHARSET', 'DEFAULT COLLATE', 'DATA DIRECTORY', 'INDEX DIRECTORY', 'ON COMMIT', 'ON UPDATE', 'PARTITION BY', 'START WITH', 'INCREMENT BY', 'WITH PARSER'], true) => 2,
-            default => 1,
-        };
-        $key = strtolower(implode('_', array_slice($words, 0, $prefix)));
-        $key = match ($key) {
-            'default_character_set', 'character_set', 'default_charset', 'charset' => 'character_set',
-            'default_collate', 'collate' => 'collation',
-            'start_with' => 'start', 'increment_by' => 'increment',
-            'temp' => 'temporary',
-            default => $key,
-        };
+        [$key, $prefix] = self::name($tokens, $identifiers);
         $values = array_values(array_filter(array_slice($tokens, $prefix), static fn (Token $token): bool => !in_array($token->text, ['=', ',', '(', ')', '.'], true)));
         $decoded = array_map(static fn (Token $token): string => self::value($token, $identifiers), $values);
         if ($key === 'without' && array_slice($words, 1) === ['ROWID']) {
@@ -92,6 +80,35 @@ final class OptionReader
             return ['if_not_exists' => true];
         }
         return [$key => $decoded === [] ? true : (count($decoded) === 1 ? $decoded[0] : $decoded)];
+    }
+
+    /**
+     * Reads the normalized option name and the offset of its value.
+     *
+     * @param non-empty-list<Token> $tokens
+     * @return array{string, int}
+     */
+    public static function name(array $tokens, Identifiers $identifiers): array
+    {
+        $words = array_map(static fn (Token $token): string => strtoupper($token->text), $tokens);
+        $prefix = match (true) {
+            array_slice($words, 0, 3) === ['DEFAULT', 'CHARACTER', 'SET'] => 3,
+            in_array(implode(' ', array_slice($words, 0, 2)), ['CHARACTER SET', 'DEFAULT CHARSET', 'DEFAULT COLLATE', 'DATA DIRECTORY', 'INDEX DIRECTORY', 'ON COMMIT', 'ON UPDATE', 'PARTITION BY', 'START WITH', 'INCREMENT BY', 'WITH PARSER'], true) => 2,
+            default => 1,
+        };
+        $key = $prefix === 1 && in_array(substr($tokens[0]->text, 0, 1), ['"', '`', '['], true) ? $identifiers->name($tokens[0]) : strtolower(implode('_', array_slice($words, 0, $prefix)));
+        $key = match ($key) {
+            'default_character_set', 'character_set', 'default_charset', 'charset' => 'character_set',
+            'default_collate', 'collate' => 'collation',
+            'start_with' => 'start', 'increment_by' => 'increment',
+            'temp' => 'temporary',
+            default => $key,
+        };
+        if (($tokens[$prefix]->text ?? '') === '.' && isset($tokens[$prefix + 1])) {
+            $key .= '.' . $identifiers->name($tokens[$prefix + 1]);
+            $prefix += 2;
+        }
+        return [$key, $prefix];
     }
 
     /**

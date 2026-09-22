@@ -133,7 +133,8 @@ separate argument, as shown for CREATE TABLE LIKE. Paths below are relative to t
 | MySQL: `CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin, KEY names(name(10))) ENGINE=InnoDB` | `options['engine'] = 'InnoDB'`; `id.options['auto_increment'] = true`; `name.options` exposes `character_set` and `collation`; the index key has `prefixLength = 10`. |
 | SQLite: `CREATE TABLE users (id INTEGER PRIMARY KEY) WITHOUT ROWID, STRICT` | `options = ['without_rowid' => true, 'strict' => true]`. |
 
-Option names use lowercase words separated by underscores. Flag values are
+Unquoted option names use lowercase words separated by underscores; qualified
+storage parameters retain their dot, and quoted names retain their case. Flag values are
 booleans; other values are decoded strings or ordered string lists. Numeric
 spellings remain strings, so declaration precision is preserved. These maps
 contain explicit declarations, not values fetched from a running server.

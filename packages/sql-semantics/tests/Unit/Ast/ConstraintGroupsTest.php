@@ -129,4 +129,27 @@ final class ConstraintGroupsTest extends TestCase
         self::assertSame(['id','n'], $schema->tables[0]->constraints[1]->columns);
     }
 
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerCheckingTime')]
+    public function testReadAssociatesPostgresCheckingTimeWithItsConstraint(string $attributes, bool $deferrable, bool $deferred): void
+    {
+        $table = (new SchemaBuilder(Dialect::PostgreSql))->build('create table t(id integer references parent(id) ' . $attributes . ', other integer references parent(id))')->tables[0];
+        self::assertCount(2, $table->constraints);
+        self::assertSame($deferrable, $table->constraints[0]->deferrable);
+        self::assertSame($deferred, $table->constraints[0]->initiallyDeferred);
+        self::assertFalse($table->constraints[1]->deferrable);
+        self::assertFalse($table->constraints[1]->initiallyDeferred);
+    }
+
+    /**
+     * @return iterable<array{string, bool, bool}>
+     */
+    public static function providerCheckingTime(): iterable
+    {
+        yield ['deferrable', true, false];
+        yield ['not deferrable', false, false];
+        yield ['deferrable initially deferred', true, true];
+        yield ['initially deferred', true, true];
+    }
+
 }

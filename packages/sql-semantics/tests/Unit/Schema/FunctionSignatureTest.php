@@ -128,4 +128,16 @@ final class FunctionSignatureTest extends TestCase
     }
 
 
+
+    public function testDefaultsDescribeAnOrdinaryFixedArityFunction(): void
+    {
+        $signature = new FunctionSignature('f', [new TypeDescriptor(Dialect::PostgreSql, 'integer')], new TypeDescriptor(Dialect::PostgreSql, 'integer'));
+        self::assertFalse($signature->nullOnNull);
+        self::assertFalse($signature->variadic);
+        self::assertFalse($signature->aggregate);
+        self::assertSame(0, $signature->optionalParameters);
+        self::assertSame(Nullability::Unknown, $signature->nullability);
+        self::assertNull($signature->schema);
+    }
+
 }

@@ -149,4 +149,50 @@ final class IndexReaderTest extends TestCase
         self::assertNotNull($index->predicate);
     }
 
+
+    public function testReadLowercaseMysqlHeaderMethodAndOptions(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::MySql, 'app'))->build('create table t(name varchar(10))', "create index ix using HASH on app.t(name(5) asc) comment 'key' visible");
+        $index = $schema->tables[0]->indexes[0];
+        self::assertSame('ix', $index->name);
+        self::assertSame('app', $index->schema);
+        self::assertSame(['app', 't'], $index->table);
+        self::assertFalse($index->unique);
+        self::assertSame('hash', $index->method);
+        self::assertSame(['comment' => 'key', 'visible' => true], $index->options);
+        self::assertSame('ASC', $index->elements[0]->direction);
+        self::assertSame([], $index->include);
+        self::assertNull($index->predicate);
+    }
+
+    public function testTableRetainsNamedConstraintsAfterAnUnrelatedConstraint(): void
+    {
+        $table = (new SchemaBuilder(Dialect::PostgreSql))->build('create table t(id integer, foreign key(id) references p(id), constraint uq unique(id), constraint pk primary key(id))')->tables[0];
+        self::assertSame(['uq', 'pk'], array_column($table->indexes, 'name'));
+        self::assertSame([true, true], array_column($table->indexes, 'unique'));
+        self::assertSame(['public', 'public'], array_column($table->indexes, 'schema'));
+        self::assertSame(['id'], array_column($table->indexes[1]->elements, 'column'));
+    }
+
+    public function testReadSpatialAndFulltextKindsDoNotImplyUniqueness(): void
+    {
+        $table = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(g GEOMETRY, name TEXT, SPATIAL INDEX shape(g), FULLTEXT KEY words(name))')->tables[0];
+        self::assertSame('spatial', $table->indexes[0]->options['kind']);
+        self::assertSame('fulltext', $table->indexes[1]->options['kind']);
+        self::assertSame([false, false], array_column($table->indexes, 'unique'));
+        self::assertSame(['shape', 'words'], array_column($table->indexes, 'name'));
+    }
+
+    public function testReadPostgresHeaderAndSqliteSchemaQuoting(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('create table app.t(id integer); create unique index concurrently if not exists ix on only app.t using btree(id) nulls distinct');
+        $index = $schema->tables[0]->indexes[0];
+        self::assertSame(['app', 't'], $index->table);
+        self::assertSame(['concurrently' => true, 'nulls_distinct' => true, 'if_not_exists' => true], $index->options);
+        $schema = (new SchemaBuilder(Dialect::Sqlite))->build('create table "aux".t(id integer); create index if not exists "aux"."i.x" on t(id)');
+        self::assertSame('i.x', $schema->tables[0]->indexes[0]->name);
+        self::assertSame('aux', $schema->tables[0]->indexes[0]->schema);
+        self::assertTrue($schema->tables[0]->indexes[0]->options['if_not_exists']);
+    }
+
 }
