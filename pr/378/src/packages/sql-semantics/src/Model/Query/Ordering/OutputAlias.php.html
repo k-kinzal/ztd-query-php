@@ -47,21 +47,25 @@
 <span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-com"> * Sorts by a projected result column by its alias.</span></span>
 <span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">OutputAlias</span></span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a>{</span>
-<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com">     * @throws \SqlSemantics\Model\Validation\InvalidStructure</span></span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">OutputColumn</span> <span class="tok-var">$output</span>)</span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a>    {</span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>        <span class="tok-kw">if</span> (<span class="tok-var">$output</span>-&gt;<span class="tok-id">name</span> === <span class="tok-id">null</span>) {</span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>            <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Model\Validation\InvalidStructure</span>(<span class="tok-str">&#039;An output alias requires a named result column.&#039;</span>);</span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>        }</span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a></span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>    }</span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>}</span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a></span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-com">  * @example Inspecting OutputAlias</span></span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))-&gt;build()))-&gt;bind(&#039;SELECT random() AS draw ORDER BY draw&#039;, strict: false);</span></span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> *     $key = $statement-&gt;orderBy[0]-&gt;key;</span></span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> *     $key instanceof \SqlSemantics\Model\Query\Ordering\OutputAlias // =&gt; true</span></span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">OutputAlias</span></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a>{</span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com">     * @throws \SqlSemantics\Model\Validation\InvalidStructure</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">OutputColumn</span> <span class="tok-var">$output</span>)</span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>    {</span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>        <span class="tok-kw">if</span> (<span class="tok-var">$output</span>-&gt;<span class="tok-id">name</span> === <span class="tok-id">null</span>) {</span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>            <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Model\Validation\InvalidStructure</span>(<span class="tok-str">&#039;An output alias requires a named result column.&#039;</span>);</span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>        }</span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>    }</span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>}</span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a></span>
 </code></pre>
 </main>
 <footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

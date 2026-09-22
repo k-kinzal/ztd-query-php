@@ -45,17 +45,21 @@
 <span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-com"> * A single row located relative to the start or the current cursor position.</span></span>
 <span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">PositionedRow</span> <span class="tok-kw">implements</span> <span class="tok-id">Movement</span></span>
-<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a>{</span>
-<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com">     * Requires an offset whenever an absolute or relative position is requested.</span></span>
-<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">OffsetOrigin</span> <span class="tok-var">$origin</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">IntegerOffset</span> <span class="tok-var">$offset</span>)</span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a>    {</span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a>    }</span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a>}</span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a></span>
+<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-com">  * @example Inspecting PositionedRow</span></span>
+<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-com"> *     $binder = new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))-&gt;build());</span></span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-com"> *     $statement = $binder-&gt;bind(&#039;MOVE ABSOLUTE -2 FROM cur&#039;);</span></span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> *     $statement-&gt;movement instanceof \SqlSemantics\Model\Cursor\PositionedRow // =&gt; true</span></span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">PositionedRow</span> <span class="tok-kw">implements</span> <span class="tok-id">Movement</span></span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a>{</span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com">     * Requires an offset whenever an absolute or relative position is requested.</span></span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(<span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">OffsetOrigin</span> <span class="tok-var">$origin</span>, <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">IntegerOffset</span> <span class="tok-var">$offset</span>)</span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>    {</span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>    }</span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>}</span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a></span>
 </code></pre>
 </main>
 <footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

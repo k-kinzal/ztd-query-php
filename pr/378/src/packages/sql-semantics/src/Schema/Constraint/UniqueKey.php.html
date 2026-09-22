@@ -48,47 +48,54 @@
 <span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-com"> * An ordered nonempty key with an explicit checking policy.</span></span>
 <span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">UniqueKey</span> <span class="tok-kw">extends</span> <span class="tok-id">\SqlSemantics\Schema\TableConstraint</span></span>
-<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a>{</span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com">     * @var non-empty-list&lt;\SqlSemantics\Schema\IndexElement&gt; Validated ordered operands</span></span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a>    <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$keys</span>;</span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a></span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com">     * @param list&lt;\SqlSemantics\Schema\IndexElement&gt; $keys</span></span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com">     * Constructs a valid declaration.</span></span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com">     * @throws \SqlSemantics\Model\Validation\InvalidStructure</span></span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>        <span class="tok-kw">array</span> <span class="tok-var">$keys</span>,</span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">CheckingTime</span> <span class="tok-var">$checking</span> = <span class="tok-id">CheckingTime</span>::<span class="tok-id">Immediate</span>,</span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$nullsDistinct</span> = <span class="tok-id">true</span>,</span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>        ?<span class="tok-id">string</span> <span class="tok-var">$name</span> = <span class="tok-id">null</span>,</span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>        <span class="tok-id">\SqlParser\Parser\Node</span> <span class="tok-var">$source</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlParser\Parser\Node</span>(<span class="tok-str">&#039;constraint&#039;</span>, <span class="tok-num">0</span>, []),</span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>    ) {</span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>        <span class="tok-id">parent</span>::<span class="tok-id">__construct</span>(<span class="tok-var">$name</span>, <span class="tok-var">$source</span>);</span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>        <span class="tok-id">\SqlSemantics\Model\Validation\Collections</span>::<span class="tok-id">objects</span>(<span class="tok-var">$keys</span>, <span class="tok-id">\SqlSemantics\Schema\IndexElement</span>::<span class="tok-kw">class</span>);</span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>        <span class="tok-kw">if</span> (<span class="tok-var">$keys</span> === []) {</span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>            <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Model\Validation\InvalidStructure</span>(<span class="tok-str">&#039;A key requires distinct column names.&#039;</span>);</span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>        }</span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">keys</span> = <span class="tok-id">\SqlSemantics\Model\Validation\Collections</span>::<span class="tok-id">nonEmpty</span>(<span class="tok-var">$keys</span>);</span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    }</span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a></span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    #[<span class="tok-id">Override</span>]</span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>    <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">operation</span>(): <span class="tok-id">\SqlSemantics\Schema\ConstraintKind</span></span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>    {</span>
-<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>        <span class="tok-kw">return</span> <span class="tok-id">\SqlSemantics\Schema\ConstraintKind</span>::<span class="tok-id">Unique</span>;</span>
-<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>    }</span>
-<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a></span>
-<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>    #[<span class="tok-id">Override</span>]</span>
-<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">localColumns</span>(): <span class="tok-kw">array</span></span>
-<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>    {</span>
-<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>        <span class="tok-kw">return</span> <span class="tok-id">array_values</span>(<span class="tok-id">array_filter</span>(<span class="tok-id">array_map</span>(<span class="tok-kw">static</span> <span class="tok-kw">fn</span> (<span class="tok-id">\SqlSemantics\Schema\IndexElement</span> <span class="tok-var">$key</span>): ?<span class="tok-id">string</span> =&gt; <span class="tok-var">$key</span> <span class="tok-kw">instanceof</span> <span class="tok-id">\SqlSemantics\Schema\Index\ColumnKey</span> ? (<span class="tok-var">$key</span>-&gt;<span class="tok-id">column</span>-&gt;<span class="tok-id">columnBinding</span>()?-&gt;<span class="tok-id">column</span>-&gt;<span class="tok-id">name</span> ?? <span class="tok-var">$key</span>-&gt;<span class="tok-id">column</span>-&gt;<span class="tok-id">referenceParts</span>()[<span class="tok-num">0</span>]) : <span class="tok-id">null</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">keys</span>), <span class="tok-kw">static</span> <span class="tok-kw">fn</span> (?<span class="tok-id">string</span> <span class="tok-var">$name</span>): <span class="tok-id">bool</span> =&gt; <span class="tok-var">$name</span> !== <span class="tok-id">null</span>));</span>
-<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>    }</span>
-<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>}</span>
-<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a></span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com">  * @example Inspecting UniqueKey</span></span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> *     $table = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))-&gt;build(&#039;create table t(id integer, foreign key(id) references p(id), constraint uq unique(id), constraint pk primary key(id))&#039;)-&gt;tables[0];</span></span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> *     $table-&gt;constraints[1] instanceof \SqlSemantics\Schema\Constraint\UniqueKey // =&gt; true</span></span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">UniqueKey</span> <span class="tok-kw">extends</span> <span class="tok-id">\SqlSemantics\Schema\TableConstraint</span></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a>{</span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com">     * @var non-empty-list&lt;\SqlSemantics\Schema\IndexElement&gt; Validated ordered operands</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>    <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$keys</span>;</span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a></span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com">     * @param list&lt;\SqlSemantics\Schema\IndexElement&gt; $keys</span></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com">     * Constructs a valid declaration.</span></span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com">     * @throws \SqlSemantics\Model\Validation\InvalidStructure</span></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>        <span class="tok-kw">array</span> <span class="tok-var">$keys</span>,</span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">CheckingTime</span> <span class="tok-var">$checking</span> = <span class="tok-id">CheckingTime</span>::<span class="tok-id">Immediate</span>,</span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">bool</span> <span class="tok-var">$nullsDistinct</span> = <span class="tok-id">true</span>,</span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>        ?<span class="tok-id">string</span> <span class="tok-var">$name</span> = <span class="tok-id">null</span>,</span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>        <span class="tok-id">\SqlParser\Parser\Node</span> <span class="tok-var">$source</span> = <span class="tok-kw">new</span> <span class="tok-id">\SqlParser\Parser\Node</span>(<span class="tok-str">&#039;constraint&#039;</span>, <span class="tok-num">0</span>, []),</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    ) {</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>        <span class="tok-id">parent</span>::<span class="tok-id">__construct</span>(<span class="tok-var">$name</span>, <span class="tok-var">$source</span>);</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>        <span class="tok-id">\SqlSemantics\Model\Validation\Collections</span>::<span class="tok-id">objects</span>(<span class="tok-var">$keys</span>, <span class="tok-id">\SqlSemantics\Schema\IndexElement</span>::<span class="tok-kw">class</span>);</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>        <span class="tok-kw">if</span> (<span class="tok-var">$keys</span> === []) {</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>            <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Model\Validation\InvalidStructure</span>(<span class="tok-str">&#039;A key requires distinct column names.&#039;</span>);</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>        }</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">keys</span> = <span class="tok-id">\SqlSemantics\Model\Validation\Collections</span>::<span class="tok-id">nonEmpty</span>(<span class="tok-var">$keys</span>);</span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>    }</span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a></span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    #[<span class="tok-id">Override</span>]</span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>    <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">operation</span>(): <span class="tok-id">\SqlSemantics\Schema\ConstraintKind</span></span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>    {</span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>        <span class="tok-kw">return</span> <span class="tok-id">\SqlSemantics\Schema\ConstraintKind</span>::<span class="tok-id">Unique</span>;</span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>    }</span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a></span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a><span class="tok-com">     * Returns the local column names constrained by this declaration.</span></span>
+<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a><span class="tok-com">     * @return list&lt;string&gt;</span></span>
+<span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>    #[<span class="tok-id">Override</span>]</span>
+<span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">localColumns</span>(): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>    {</span>
+<span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>        <span class="tok-kw">return</span> <span class="tok-id">array_values</span>(<span class="tok-id">array_filter</span>(<span class="tok-id">array_map</span>(<span class="tok-kw">static</span> <span class="tok-kw">fn</span> (<span class="tok-id">\SqlSemantics\Schema\IndexElement</span> <span class="tok-var">$key</span>): ?<span class="tok-id">string</span> =&gt; <span class="tok-var">$key</span> <span class="tok-kw">instanceof</span> <span class="tok-id">\SqlSemantics\Schema\Index\ColumnKey</span> ? (<span class="tok-var">$key</span>-&gt;<span class="tok-id">column</span>-&gt;<span class="tok-id">columnBinding</span>()?-&gt;<span class="tok-id">column</span>-&gt;<span class="tok-id">name</span> ?? <span class="tok-var">$key</span>-&gt;<span class="tok-id">column</span>-&gt;<span class="tok-id">referenceParts</span>()[<span class="tok-num">0</span>]) : <span class="tok-id">null</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">keys</span>), <span class="tok-kw">static</span> <span class="tok-kw">fn</span> (?<span class="tok-id">string</span> <span class="tok-var">$name</span>): <span class="tok-id">bool</span> =&gt; <span class="tok-var">$name</span> !== <span class="tok-id">null</span>));</span>
+<span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>    }</span>
+<span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>}</span>
+<span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a></span>
 </code></pre>
 </main>
 <footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

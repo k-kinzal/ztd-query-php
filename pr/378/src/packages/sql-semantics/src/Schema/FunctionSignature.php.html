@@ -43,7 +43,7 @@
 <span class="src-line" id="L5" data-diff="added"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Schema</span>;</span>
 <span class="src-line" id="L6" data-diff="added"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">Closure</span>;</span>
-<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">InvalidArgumentException</span>;</span>
+<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Model\Validation\InvalidStructure</span>;</span>
 <span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Type\Nullability</span>;</span>
 <span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Type\TypeDescriptor</span>;</span>
 <span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a></span>
@@ -51,7 +51,7 @@
 <span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> * A function overload, including argument, result, and NULL behavior.</span></span>
 <span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> *</span></span>
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> * @example Registering a typed function</span></span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> *     $type = \SqlSemantics\Type\TypeDescriptor::builtin(\SqlSemantics\Dialect::PostgreSql, &#039;integer&#039;);</span></span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> *     $type = new \SqlSemantics\Type\TypeDescriptor(\SqlSemantics\Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::Integer);</span></span>
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> *     $function = new \SqlSemantics\Schema\FunctionSignature(&#039;twice&#039;, [$type], $type);</span></span>
 <span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> *     $function-&gt;name // =&gt; &#039;twice&#039;</span></span>
 <span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> *</span></span>
@@ -69,7 +69,7 @@
 <span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     * @param int $optionalParameters Number of optional trailing parameters, including a variadic parameter</span></span>
 <span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com">     * @param bool $aggregate Whether the function aggregates input rows</span></span>
 <span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-com">     * @param string|null $schema Resolved namespace; null makes the overload available without qualification</span></span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-com">     * @throws InvalidArgumentException</span></span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-com">     * @throws InvalidStructure</span></span>
 <span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
 <span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$name</span>,</span>

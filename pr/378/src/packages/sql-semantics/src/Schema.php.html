@@ -41,8 +41,8 @@
 <span class="src-line" id="L4" data-diff="same"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5" data-diff="same"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics</span>;</span>
 <span class="src-line" id="L6" data-diff="same"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">InvalidArgumentException</span>;</span>
-<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlParser\Parser\Node</span>;</span>
+<span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlParser\Parser\Node</span>;</span>
+<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Model\Validation\InvalidStructure</span>;</span>
 <span class="src-line" id="L9" data-diff="same"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Schema\TableDefinition</span>;</span>
 <span class="src-line" id="L10" data-diff="same"><a class="ln" href="#L10">10</a></span>
 <span class="src-line" id="L11" data-diff="same"><a class="ln" href="#L11">11</a><span class="tok-com">/**</span></span>
@@ -69,7 +69,7 @@
 <span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com">     * @param list&lt;Node&gt; $statements Ordered original schema statements, including auxiliary objects</span></span>
 <span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-com">     * @param list&lt;Schema\FunctionSignature&gt;|null $functions Function overloads; null registers the defaults</span></span>
 <span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-com">     * @param list&lt;Schema\VariableDefinition&gt; $variables Declared variables without runtime values</span></span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a><span class="tok-com">     * @throws InvalidArgumentException</span></span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a><span class="tok-com">     * @throws InvalidStructure</span></span>
 <span class="src-line" id="L36" data-diff="same"><a class="ln" href="#L36">36</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L37" data-diff="same"><a class="ln" href="#L37">37</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
 <span class="src-line" id="L38" data-diff="same"><a class="ln" href="#L38">38</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Dialect</span> <span class="tok-var">$dialect</span>,</span>
@@ -84,18 +84,18 @@
 <span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>        <span class="tok-id">Model\Validation\Collections</span>::<span class="tok-id">objects</span>(<span class="tok-var">$statements</span>, <span class="tok-id">Node</span>::<span class="tok-kw">class</span>);</span>
 <span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$tables</span> <span class="tok-kw">as</span> <span class="tok-var">$table</span>) {</span>
 <span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>            <span class="tok-kw">if</span> (<span class="tok-var">$table</span>-&gt;<span class="tok-id">properties</span> !== <span class="tok-id">null</span> &amp;&amp; <span class="tok-var">$table</span>-&gt;<span class="tok-id">properties</span>-&gt;<span class="tok-id">dialect</span>() !== <span class="tok-var">$dialect</span>) {</span>
-<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>                <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">InvalidArgumentException</span>(<span class="tok-str">&#039;A table must use the schema dialect.&#039;</span>);</span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>                <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">InvalidStructure</span>(<span class="tok-str">&#039;A table must use the schema dialect.&#039;</span>);</span>
 <span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>            }</span>
 <span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a>            <span class="tok-kw">foreach</span> (<span class="tok-var">$table</span>-&gt;<span class="tok-id">columns</span> <span class="tok-kw">as</span> <span class="tok-var">$column</span>) {</span>
 <span class="src-line" id="L53" data-diff="added"><a class="ln" href="#L53">53</a>                <span class="tok-kw">if</span> (<span class="tok-var">$column</span>-&gt;<span class="tok-id">type</span>-&gt;<span class="tok-id">dialect</span> !== <span class="tok-var">$dialect</span>) {</span>
-<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>                    <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">InvalidArgumentException</span>(<span class="tok-str">&#039;A column must use the schema dialect.&#039;</span>);</span>
+<span class="src-line" id="L54" data-diff="added"><a class="ln" href="#L54">54</a>                    <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">InvalidStructure</span>(<span class="tok-str">&#039;A column must use the schema dialect.&#039;</span>);</span>
 <span class="src-line" id="L55" data-diff="added"><a class="ln" href="#L55">55</a>                }</span>
 <span class="src-line" id="L56" data-diff="added"><a class="ln" href="#L56">56</a>            }</span>
 <span class="src-line" id="L57" data-diff="added"><a class="ln" href="#L57">57</a>        }</span>
 <span class="src-line" id="L58" data-diff="added"><a class="ln" href="#L58">58</a>        <span class="tok-id">Model\Validation\Collections</span>::<span class="tok-id">objects</span>(<span class="tok-var">$variables</span>, <span class="tok-id">Schema\VariableDefinition</span>::<span class="tok-kw">class</span>);</span>
 <span class="src-line" id="L59" data-diff="added"><a class="ln" href="#L59">59</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$variables</span> <span class="tok-kw">as</span> <span class="tok-var">$variable</span>) {</span>
 <span class="src-line" id="L60" data-diff="added"><a class="ln" href="#L60">60</a>            <span class="tok-kw">if</span> (<span class="tok-var">$variable</span>-&gt;<span class="tok-id">type</span>-&gt;<span class="tok-id">dialect</span> !== <span class="tok-var">$dialect</span>) {</span>
-<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>                <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">InvalidArgumentException</span>(<span class="tok-str">&#039;A variable must use the schema dialect.&#039;</span>);</span>
+<span class="src-line" id="L61" data-diff="added"><a class="ln" href="#L61">61</a>                <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">InvalidStructure</span>(<span class="tok-str">&#039;A variable must use the schema dialect.&#039;</span>);</span>
 <span class="src-line" id="L62" data-diff="added"><a class="ln" href="#L62">62</a>            }</span>
 <span class="src-line" id="L63" data-diff="added"><a class="ln" href="#L63">63</a>        }</span>
 <span class="src-line" id="L64" data-diff="added"><a class="ln" href="#L64">64</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">functions</span> = <span class="tok-var">$functions</span> ?? <span class="tok-id">Schema\Functions\Builtins</span>::<span class="tok-id">forDialect</span>(<span class="tok-var">$dialect</span>);</span>
@@ -109,7 +109,7 @@
 <span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a><span class="tok-com">     * Returns an independent snapshot with added or replaced function overloads.</span></span>
 <span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a><span class="tok-com">     * An overload has the same identity when its name, namespace, and parameters agree.</span></span>
 <span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a><span class="tok-com">     * @throws InvalidArgumentException</span></span>
+<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a><span class="tok-com">     * @throws InvalidStructure</span></span>
 <span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">withFunctions</span>(<span class="tok-id">Schema\FunctionSignature</span> ...<span class="tok-var">$functions</span>): <span class="tok-id">self</span></span>
 <span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>    {</span>

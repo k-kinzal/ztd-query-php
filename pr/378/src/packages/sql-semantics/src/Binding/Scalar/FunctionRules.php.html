@@ -42,13 +42,13 @@
 <span class="src-line" id="L4" data-diff="added"><a class="ln" href="#L4">4</a></span>
 <span class="src-line" id="L5" data-diff="added"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">SqlSemantics\Binding\Scalar</span>;</span>
 <span class="src-line" id="L6" data-diff="added"><a class="ln" href="#L6">6</a></span>
-<span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">InvalidArgumentException</span>;</span>
-<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlParser\Parser\Node</span>;</span>
-<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Binding\ExpressionRules</span>;</span>
-<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Binding\NullFacts</span>;</span>
-<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Binding\Scope</span>;</span>
-<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Model\Expression</span>;</span>
-<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Model\ExpressionKind</span>;</span>
+<span class="src-line" id="L7" data-diff="added"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">SqlParser\Parser\Node</span>;</span>
+<span class="src-line" id="L8" data-diff="added"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Binding\ExpressionRules</span>;</span>
+<span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Binding\NullFacts</span>;</span>
+<span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Binding\Scope</span>;</span>
+<span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Model\Expression</span>;</span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Model\ExpressionKind</span>;</span>
+<span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Model\Validation\InvalidStructure</span>;</span>
 <span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Schema\FunctionSignature</span>;</span>
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Type\Nullability</span>;</span>
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Type\TypeDescriptor</span>;</span>
@@ -62,7 +62,7 @@
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>{</span>
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com">     * @param list&lt;Expression&gt; $operands</span></span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com">     * @throws InvalidArgumentException</span></span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com">     * @throws InvalidStructure</span></span>
 <span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">bind</span>(<span class="tok-id">string</span> <span class="tok-var">$name</span>, <span class="tok-kw">array</span> <span class="tok-var">$operands</span>, <span class="tok-id">Node</span> <span class="tok-var">$source</span>, <span class="tok-id">Scope</span> <span class="tok-var">$scope</span>): <span class="tok-id">Expression</span></span>
 <span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    {</span>
@@ -81,7 +81,7 @@
 <span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>            <span class="tok-var">$orderedInputs</span> = <span class="tok-id">array_slice</span>(<span class="tok-var">$boundArguments</span>, <span class="tok-var">$argumentCount</span>);</span>
 <span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>            <span class="tok-var">$type</span> = <span class="tok-var">$signature</span>-&gt;<span class="tok-id">returnType</span> <span class="tok-kw">instanceof</span> <span class="tok-id">TypeDescriptor</span> ? <span class="tok-var">$signature</span>-&gt;<span class="tok-id">returnType</span> : (<span class="tok-var">$signature</span>-&gt;<span class="tok-id">returnType</span>)(<span class="tok-id">array_map</span>(<span class="tok-kw">static</span> <span class="tok-kw">fn</span> (<span class="tok-id">Expression</span> <span class="tok-var">$argument</span>): <span class="tok-id">TypeDescriptor</span> =&gt; <span class="tok-var">$argument</span>-&gt;<span class="tok-id">type</span>, <span class="tok-var">$boundArguments</span>));</span>
 <span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>            <span class="tok-kw">if</span> (<span class="tok-var">$type</span>-&gt;<span class="tok-id">dialect</span> !== <span class="tok-var">$scope</span>-&gt;<span class="tok-id">identifiers</span>-&gt;<span class="tok-id">dialect</span>) {</span>
-<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>                <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">InvalidArgumentException</span>(<span class="tok-str">&#039;A function result must use the schema dialect.&#039;</span>);</span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>                <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">InvalidStructure</span>(<span class="tok-str">&#039;A function result must use the schema dialect.&#039;</span>);</span>
 <span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>            }</span>
 <span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>            <span class="tok-var">$nullable</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">nullability</span>(<span class="tok-var">$signature</span>, <span class="tok-var">$operands</span>);</span>
 <span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>        }</span>

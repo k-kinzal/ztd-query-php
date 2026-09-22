@@ -52,38 +52,42 @@
 <span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com">/**</span></span>
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> * The structured operands of a CLOSE cursor operation.</span></span>
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">CloseAllCursorsStatement</span> <span class="tok-kw">extends</span> <span class="tok-id">BoundStatement</span></span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a>{</span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com">     * @throws InvalidStructure</span></span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>        <span class="tok-id">Origin</span> <span class="tok-var">$origin</span>,</span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>    ) {</span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>        <span class="tok-kw">if</span> (<span class="tok-var">$origin</span>-&gt;<span class="tok-id">dialect</span> !== <span class="tok-id">Dialect</span>::<span class="tok-id">PostgreSql</span>) {</span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>            <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">InvalidStructure</span>(<span class="tok-str">&#039;This cursor command requires PostgreSQL.&#039;</span>);</span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>        }</span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a></span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>        <span class="tok-id">parent</span>::<span class="tok-id">__construct</span>(<span class="tok-var">$origin</span>);</span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>    }</span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a></span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    #[<span class="tok-id">Override</span>]</span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">operation</span>(): <span class="tok-id">StatementKind</span></span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    {</span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>        <span class="tok-kw">return</span> <span class="tok-id">StatementKind</span>::<span class="tok-id">Close</span>;</span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    }</span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a></span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a><span class="tok-com">     * Retains the cursor request when updating diagnostic provenance.</span></span>
-<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>    #[<span class="tok-id">Override</span>]</span>
-<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">withOrigin</span>(<span class="tok-id">Origin</span> <span class="tok-var">$origin</span>): <span class="tok-kw">static</span></span>
-<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    {</span>
-<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-kw">static</span>(<span class="tok-var">$origin</span>);</span>
-<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>    }</span>
-<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>}</span>
-<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com">  * @example Inspecting CloseAllCursorsStatement</span></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> *     $binder = new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))-&gt;build());</span></span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> *     $statement = $binder-&gt;bind(&#039;CLOSE ALL&#039;);</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> *     $statement instanceof \SqlSemantics\Model\Statement\Cursor\CloseAllCursorsStatement // =&gt; true</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">CloseAllCursorsStatement</span> <span class="tok-kw">extends</span> <span class="tok-id">BoundStatement</span></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>{</span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com">     * @throws InvalidStructure</span></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>        <span class="tok-id">Origin</span> <span class="tok-var">$origin</span>,</span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>    ) {</span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>        <span class="tok-kw">if</span> (<span class="tok-var">$origin</span>-&gt;<span class="tok-id">dialect</span> !== <span class="tok-id">Dialect</span>::<span class="tok-id">PostgreSql</span>) {</span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>            <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">InvalidStructure</span>(<span class="tok-str">&#039;This cursor command requires PostgreSQL.&#039;</span>);</span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>        }</span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a></span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>        <span class="tok-id">parent</span>::<span class="tok-id">__construct</span>(<span class="tok-var">$origin</span>);</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    }</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a></span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    #[<span class="tok-id">Override</span>]</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    <span class="tok-kw">protected</span> <span class="tok-kw">function</span> <span class="tok-id">operation</span>(): <span class="tok-id">StatementKind</span></span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>    {</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>        <span class="tok-kw">return</span> <span class="tok-id">StatementKind</span>::<span class="tok-id">Close</span>;</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    }</span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a></span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a><span class="tok-com">     * Retains the cursor request when updating diagnostic provenance.</span></span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>    #[<span class="tok-id">Override</span>]</span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">withOrigin</span>(<span class="tok-id">Origin</span> <span class="tok-var">$origin</span>): <span class="tok-kw">static</span></span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>    {</span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>        <span class="tok-kw">return</span> <span class="tok-kw">new</span> <span class="tok-kw">static</span>(<span class="tok-var">$origin</span>);</span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>    }</span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a>}</span>
+<span class="src-line" id="L52" data-diff="added"><a class="ln" href="#L52">52</a></span>
 </code></pre>
 </main>
 <footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
