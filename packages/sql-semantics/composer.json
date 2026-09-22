@@ -91,19 +91,24 @@
         "fuzz": "@fuzz:smoke",
         "fuzz:mysql": [
             "Composer\\Config::disableProcessTimeout",
-            "@php fuzz/run.php mysql 10000"
+            "@php -r \"is_dir('fuzz/corpus/mysql') || mkdir('fuzz/corpus/mysql', 0777, true);\" --",
+            "@php -d memory_limit=2G vendor/bin/php-fuzzer fuzz fuzz/fuzz_mysql_semantics.php fuzz/corpus/mysql/ --timeout=10"
         ],
         "fuzz:pg": [
             "Composer\\Config::disableProcessTimeout",
-            "@php fuzz/run.php pg 10000"
+            "@php -r \"is_dir('fuzz/corpus/pg') || mkdir('fuzz/corpus/pg', 0777, true);\" --",
+            "@php -d memory_limit=2G vendor/bin/php-fuzzer fuzz fuzz/fuzz_pg_semantics.php fuzz/corpus/pg/ --timeout=10"
         ],
         "fuzz:smoke": [
             "Composer\\Config::disableProcessTimeout",
-            "@php fuzz/run.php"
+            "@fuzz:mysql --max-runs=100",
+            "@fuzz:pg --max-runs=100",
+            "@fuzz:sqlite --max-runs=100"
         ],
         "fuzz:sqlite": [
             "Composer\\Config::disableProcessTimeout",
-            "@php fuzz/run.php sqlite 10000"
+            "@php -r \"is_dir('fuzz/corpus/sqlite') || mkdir('fuzz/corpus/sqlite', 0777, true);\" --",
+            "@php -d memory_limit=2G vendor/bin/php-fuzzer fuzz fuzz/fuzz_sqlite_semantics.php fuzz/corpus/sqlite/ --timeout=10"
         ],
         "lint": [
             "@autoload:check",
@@ -116,17 +121,17 @@
         ],
         "loc-guard": "loc-guard --config=loc.yaml",
         "phpstan": "phpstan analyse --memory-limit=1G",
-        "test": [
-            "paratest --processes=auto",
-            "@test:fuzz"
-        ],
+        "test": "paratest --processes=auto",
         "test:coverage": "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml",
-        "test:fuzz": "phpunit tests/Fuzz",
         "test:unit": "phpunit --testsuite unit",
         "tree-guard": "tree-guard --config=tree.yaml"
     },
     "support": {
         "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-semantics",
         "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-semantics/"
+    },
+    "scripts-descriptions": {
+        "fuzz": "Run every fuzz target with the bounded smoke budget.",
+        "fuzz:smoke": "Run each fuzz target for 100 mutation iterations after corpus replay; individual fuzz:* commands run continuously."
     }
 }
