@@ -7,7 +7,6 @@ namespace SqlSemantics\Binding;
 use SqlParser\Lexer\Token;
 use SqlSemantics\Dialect;
 use SqlSemantics\Model\Expression;
-use SqlSemantics\Model\ExpressionKind;
 use SqlSemantics\Type\Nullability;
 use SqlSemantics\Type\TypeDescriptor;
 
@@ -33,14 +32,14 @@ final class LiteralBinder
         $name = $token->name;
         $text = strtoupper($token->text);
         if (in_array($name, ['PARAM', 'PARAM_MARKER', 'VARIABLE'], true)) {
-            return new Expression(ExpressionKind::Parameter, new TypeDescriptor($this->dialect, 'unknown'), Nullability::Unknown, $token, symbol: $token->text);
+            return new \SqlSemantics\Model\Scalar\Reference\Parameter(new \SqlSemantics\Model\Scalar\ExpressionFacts(TypeDescriptor::builtin($this->dialect, 'unknown'), Nullability::Unknown, []), $token, $token->text);
         }
         $type = $this->typeName($token);
         if ($type === null) {
             return null;
         }
 
-        return new Expression(ExpressionKind::Literal, new TypeDescriptor($this->dialect, $type), $text === 'NULL' ? Nullability::AlwaysNull : Nullability::NotNull, $token, symbol: $token->text);
+        return new \SqlSemantics\Model\Scalar\Value\Literal(new \SqlSemantics\Model\Scalar\ExpressionFacts(($type === 'bigint unsigned' ? new TypeDescriptor($this->dialect, new \SqlSemantics\Type\Identity\Numeric\IntegerStorage(\SqlSemantics\Type\Identity\BuiltinIdentity::BigInt, unsigned: true)) : TypeDescriptor::builtin($this->dialect, $type)), $text === 'NULL' ? Nullability::AlwaysNull : Nullability::NotNull, []), $token, \SqlSemantics\Model\Scalar\Value\LiteralClassification::of($token->text, $this->dialect), $token->text);
     }
 
     /**
@@ -60,6 +59,7 @@ final class LiteralBinder
             $name === 'LONG_NUM' => 'bigint',
             $name === 'ULONGLONG_NUM' => 'bigint unsigned',
             $name === 'FCONST' => ctype_digit($number) ? $this->integer($number) : 'numeric',
+            $name === 'QNUMBER' => preg_match('/[.eE]/', $number) === 1 && !str_starts_with(strtolower($number), '0x') ? 'real' : $this->integer($number),
             $name === 'DECIMAL_NUM' => 'numeric',
             in_array($name, ['XCONST', 'BCONST', 'HEX_NUM', 'BIN_NUM', 'BLOB'], true) => $this->dialect === Dialect::PostgreSql ? 'bit' : 'blob',
             in_array($name, ['FLOAT_NUM', 'FLOAT'], true) => $this->dialect === Dialect::Sqlite ? 'real' : 'double precision',
@@ -92,7 +92,7 @@ final class LiteralBinder
     {
         $name = $token->name;
         $number = str_replace('_', '', $token->text);
-        if (in_array($name, ['ICONST', 'FCONST', 'INTEGER', 'NUM', 'LONG_NUM', 'ULONGLONG_NUM'], true) && preg_match('/^0[xob]/i', $number) === 1) {
+        if (in_array($name, ['ICONST', 'FCONST', 'INTEGER', 'QNUMBER', 'NUM', 'LONG_NUM', 'ULONGLONG_NUM'], true) && preg_match('/^0[xob]/i', $number) === 1) {
             $base = match (strtolower($number[1])) {
                 'x' => 16, 'o' => 8, default => 2
             };
@@ -111,6 +111,6 @@ final class LiteralBinder
         if ($this->dialect !== Dialect::Sqlite || !in_array(strtoupper($text), ['TRUE', 'FALSE'], true)) {
             return null;
         }
-        return new Expression(ExpressionKind::Literal, new TypeDescriptor($this->dialect, 'integer'), Nullability::NotNull, $source, symbol: $text);
+        return new \SqlSemantics\Model\Scalar\Value\Literal(new \SqlSemantics\Model\Scalar\ExpressionFacts(TypeDescriptor::builtin($this->dialect, 'integer'), Nullability::NotNull, []), $source, \SqlSemantics\Model\Scalar\Value\LiteralClassification::of($text, $this->dialect), $text);
     }
 }

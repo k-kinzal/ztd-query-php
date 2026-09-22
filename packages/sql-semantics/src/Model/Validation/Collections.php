@@ -12,6 +12,42 @@ namespace SqlSemantics\Model\Validation;
 final class Collections
 {
     /**
+     * @template T
+     * @param array<array-key, T> $values
+     * @return non-empty-list<T>
+     * @throws InvalidStructure
+     */
+    public static function nonEmpty(array $values): array
+    {
+        if ($values === [] || !array_is_list($values)) {
+            throw new InvalidStructure('The operation requires a nonempty ordered list.');
+        }
+        return $values;
+    }
+
+    /**
+     * @template T
+     * @param array<array-key, T> $values
+     * @param non-empty-list<class-string> $classes
+     * @throws InvalidStructure
+     */
+    public static function alternatives(array $values, array $classes): void
+    {
+        if (!array_is_list($values)) {
+            throw new InvalidStructure('Semantic operands must form an ordered list.');
+        }
+        foreach ($values as $value) {
+            $matched = false;
+            foreach ($classes as $class) {
+                $matched = $matched || $value instanceof $class;
+            }
+            if (!$matched) {
+                throw new InvalidStructure('The operand is not an alternative allowed by this operation.');
+            }
+        }
+    }
+
+    /**
      * @template TValue
      * @param array<array-key, TValue> $values Runtime collection
      * @param class-string $class Required element class

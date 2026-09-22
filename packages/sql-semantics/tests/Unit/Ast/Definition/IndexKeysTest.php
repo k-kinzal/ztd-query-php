@@ -95,9 +95,7 @@ use SqlSemantics\Type\TypeDescriptor;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\IndexDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ConstraintGroups::class)]
@@ -118,19 +116,13 @@ use SqlSemantics\Type\TypeDescriptor;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\StatementFactory::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -151,9 +143,9 @@ final class IndexKeysTest extends TestCase
     {
         $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE t(id INTEGER, name TEXT)', 'CREATE INDEX ix ON t(name DESC, (id+1))');
         $keys = $schema->tables[0]->indexes[0]->elements;
-        self::assertSame('name', $keys[0]->column);
-        self::assertSame('DESC', $keys[0]->direction);
-        self::assertNull($keys[1]->column);
+        self::assertSame('name', $keys[0]->column->binding->column->name);
+        self::assertSame('DESC', $keys[0]->direction?->value);
+        self::assertInstanceOf(\SqlSemantics\Schema\Index\ExpressionKey::class, $keys[1]);
         self::assertNotNull($keys[1]->expression);
     }
 
@@ -161,9 +153,9 @@ final class IndexKeysTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(name TEXT); CREATE INDEX ix ON t(name COLLATE "C" text_pattern_ops DESC NULLS LAST)');
         $key = $schema->tables[0]->indexes[0]->elements[0];
-        self::assertSame(['C'], $key->collation);
-        self::assertSame(['text_pattern_ops'], $key->operatorClass);
-        self::assertSame('LAST', $key->nulls);
+        self::assertSame(['C'], $key->collation->parts);
+        self::assertSame(['text_pattern_ops'], $key->operatorClass->parts);
+        self::assertSame('LAST', $key->nulls?->value);
         $schema = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(name VARCHAR(10), KEY ix(name(5) DESC))');
         self::assertSame(5, $schema->tables[0]->indexes[0]->elements[0]->prefixLength);
     }
@@ -182,8 +174,8 @@ final class IndexKeysTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::Sqlite))->build("CREATE TABLE t(name TEXT); CREATE INDEX ix ON t(name, 'name')");
         $keys = $schema->tables[0]->indexes[0]->elements;
-        self::assertSame('name', $keys[0]->column);
-        self::assertNull($keys[1]->column);
+        self::assertSame('name', $keys[0]->column->binding->column->name);
+        self::assertInstanceOf(\SqlSemantics\Schema\Index\ExpressionKey::class, $keys[1]);
         self::assertNotNull($keys[1]->expression);
     }
 
@@ -192,12 +184,12 @@ final class IndexKeysTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(name TEXT); CREATE INDEX ix ON t(name COLLATE nocase DESC, length(name))');
         $keys = $schema->tables[0]->indexes[0]->elements;
-        self::assertSame(['nocase'], $keys[0]->collation);
-        self::assertSame('name', $keys[0]->column);
-        self::assertSame('DESC', $keys[0]->direction);
-        self::assertSame([], $keys[0]->operatorClass);
+        self::assertSame(['nocase'], $keys[0]->collation->parts);
+        self::assertSame('name', $keys[0]->column->binding->column->name);
+        self::assertSame('DESC', $keys[0]->direction?->value);
+        self::assertNull($keys[0]->operatorClass);
         self::assertNull($keys[0]->prefixLength);
-        self::assertNull($keys[1]->column);
+        self::assertInstanceOf(\SqlSemantics\Schema\Index\ExpressionKey::class, $keys[1]);
         self::assertNotNull($keys[1]->expression);
     }
 

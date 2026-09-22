@@ -8,16 +8,13 @@ use LogicException;
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
 use SqlSemantics\Ast\Tree;
-use SqlSemantics\Ast\TypeReader;
 use SqlSemantics\Binding\ExpressionBinder;
 use SqlSemantics\Binding\ExpressionRules;
 use SqlSemantics\Binding\NullFacts;
 use SqlSemantics\Binding\Scope;
 use SqlSemantics\Binding\TypeResolution;
 use SqlSemantics\Model\Expression;
-use SqlSemantics\Model\ExpressionKind;
 use SqlSemantics\Type\Nullability;
-use SqlSemantics\Type\TypeDescriptor;
 
 /**
  * Binds function, conditional, cast, and subquery expression productions.
@@ -28,39 +25,49 @@ final class ScalarBinder
 {
     /**
      * Retains all expression operands, including predicates and window clauses.
+     * @throws \SqlSemantics\Binding\Statement\UnclassifiedSql
      */
-    public function bind(Node $node, Scope $scope): Expression
+    public function bind(Node $node, Scope $scope, bool $rowSubquery = false): Expression
     {
+        $context = (new ContextValueBinder())->bind($node, $scope);
+        if ($context !== null) {
+            return $context;
+        }
+        if ($scope->identifiers->dialect === \SqlSemantics\Dialect::Sqlite && ($node->children[0] ?? null) instanceof Token && strtoupper($node->children[0]->text) === 'RAISE') {
+            return RaiseBinder::bind($node, $scope);
+        }
+        $collated = ConversionBinder::collation($node, $scope);
+        if ($collated !== null) {
+            return $collated;
+        }
         $children = Tree::significant($node);
-        $text = strtoupper(Tree::text($node));
         $subquery = $this->nestedQuery($node);
         if ($subquery !== null && $scope->queries !== null) {
-            return $this->subquery($node, $subquery, $scope);
+            return $this->subquery($node, $subquery, $scope, $rowSubquery);
+        }
+        if ($node->name === 'func_expr' || $node->name === 'set_function_specification') {
+            $application = Tree::child($node, ['func_application']);
+            if ($application !== null) {
+                return (new FunctionRules())->bind(strtoupper(Tree::text($application->children[0])), $this->operands($application, $scope), $node, $scope);
+            }
         }
         $operands = $this->operands($node, $scope);
-        $typeNode = Tree::child($node, ['Typename', 'cast_type', 'typetoken']);
-        if ($typeNode !== null && (str_starts_with($text, 'CAST ') || str_contains($text, ' :: '))) {
-            $type = (new TypeReader($scope->identifiers->dialect))->read($typeNode);
-            return new Expression(ExpressionKind::Cast, $type, $operands[0]->nullability ?? Nullability::Unknown, $node, $operands, symbol: 'explicit');
+        $cast = ConversionBinder::cast($node, $scope, $operands);
+        if ($cast !== null) {
+            return $cast;
         }
-        if ($node->name === 'case_expr' || str_starts_with($text, 'CASE ')) {
+        if ($node->name === 'case_expr' || ($node->children[0] ?? null) instanceof Token && strtoupper($node->children[0]->text) === 'CASE') {
             return $this->conditional($node, $scope, $operands);
         }
         $symbol = isset($children[0]) ? strtoupper(Tree::text($children[0])) : $node->name;
         if (isset($children[1]) && Tree::text($children[1]) === '(') {
             return (new FunctionRules())->bind($symbol, $operands, $node, $scope);
         }
-        if ($node->name === 'func_expr' || $node->name === 'set_function_specification') {
-            $base = $operands[0] ?? null;
-            if ($base !== null) {
-                return new Expression(ExpressionKind::Window, $base->type, $base->nullability, $node, $operands, symbol: $base->symbol);
-            }
-        }
         $operator = $this->operator($children);
         if ($operator !== '' && $operands !== []) {
             return (new ExpressionRules($scope->identifiers->dialect, $scope->diagnostics()))->operator($operator, $operands, $node);
         }
-        return new Expression(ExpressionKind::Operator, new TypeDescriptor($scope->identifiers->dialect, 'unknown'), Nullability::Unknown, $node, $operands, symbol: $node->name);
+        throw new \SqlSemantics\Binding\Statement\UnclassifiedSql('Unclassified expression ' . $node->name . ': ' . $node->toString());
     }
 
     /**
@@ -70,7 +77,7 @@ final class ScalarBinder
     {
         $operands = [];
         foreach ($node->children as $child) {
-            if (!$child instanceof Node || !Tree::hasTokens($child) || in_array($child->name, ['func_name', 'function_call_keyword', 'Typename', 'cast_type', 'typetoken', 'collate', 'collate_clause', 'opt_collate'], true)) {
+            if (!$child instanceof Node || !Tree::hasTokens($child) || in_array($child->name, ['func_name', 'function_call_keyword', 'Typename', 'cast_type', 'typetoken', 'collate', 'collate_clause', 'opt_collate', 'filter_clause', 'over_clause', 'windowing_clause', 'opt_windowing_clause', 'within_group_clause', 'opt_sort_clause', 'orderby_opt', 'sortlist', 'order_clause'], true)) {
                 continue;
             }
             if (in_array($child->name, ['a_expr', 'b_expr', 'c_expr', 'expr', 'bool_pri', 'predicate', 'bit_expr', 'simple_expr', 'func_application', 'func_expr', 'sum_expr', 'window_func_call', 'columnref', 'simple_ident', 'term'], true)) {
@@ -104,20 +111,23 @@ final class ScalarBinder
      */
     public function conditional(Node $node, Scope $scope, array $operands): Expression
     {
-        $values = [];
+        $branches = [];
         foreach (Tree::outer($node, ['when_clause', 'case_exprlist', 'when_list']) as $when) {
             $expressions = Tree::outer($when, ['a_expr', 'expr']);
-            for ($index = 1; $index < count($expressions); $index += 2) {
-                $values[] = (new ExpressionBinder())->bind($expressions[$index], $scope);
+            for ($index = 0; $index + 1 < count($expressions); $index += 2) {
+                $branches[] = new \SqlSemantics\Model\Scalar\Conditional\When((new ExpressionBinder())->bind($expressions[$index], $scope), (new ExpressionBinder())->bind($expressions[$index + 1], $scope));
             }
         }
         $default = Tree::child($node, ['case_default', 'case_else', 'opt_else']);
-        if ($default !== null) {
-            array_push($values, ...$this->operands($default, $scope));
-        }
+        $otherwise = $default === null ? null : ($this->operands($default, $scope)[0] ?? null);
+        $values = [...array_map(static fn ($branch): Expression => $branch->result, $branches), ...($otherwise === null ? [] : [$otherwise])];
         $type = (new TypeResolution($scope->identifiers->dialect, $scope->diagnostics()))->common($values, $node);
-        $nullability = $default === null ? Nullability::MaybeNull : NullFacts::alternatives($values);
-        return new Expression(ExpressionKind::CaseExpression, $type, $nullability, $node, $operands, symbol: 'CASE');
+        $facts = new \SqlSemantics\Model\Scalar\ExpressionFacts($type, $otherwise === null ? Nullability::MaybeNull : NullFacts::alternatives($values));
+        $argument = Tree::child($node, ['case_arg', 'case_operand', 'opt_expr']);
+        $value = $argument === null ? null : ($this->operands($argument, $scope)[0] ?? null);
+        return $value === null
+            ? new \SqlSemantics\Model\Scalar\Conditional\SearchedCase($facts, $node, $branches, $otherwise)
+            : new \SqlSemantics\Model\Scalar\Conditional\SimpleCase($facts, $node, $value, $branches, $otherwise);
     }
 
     /**
@@ -125,29 +135,11 @@ final class ScalarBinder
      *
      * @throws LogicException
      */
-    public function subquery(Node $source, Node $node, Scope $scope): Expression
+    public function subquery(Node $source, Node $node, Scope $scope, bool $rowSubquery = false): Expression
     {
-        $context = $scope->queries;
-        if ($context === null) {
-            throw new LogicException('Subquery binding requires a query context.');
-        }
-        $query = $context->bind($node, $scope);
-        $operator = $source === $node ? '' : $this->operator(Tree::significant($source));
-        $symbol = $operator === '' ? 'SCALAR' : $operator;
-        $exists = $symbol === 'EXISTS';
-        $predicate = $exists || in_array($symbol, ['IN', 'NOT IN'], true) || preg_match('/ (ALL|ANY|SOME)$/', $symbol) === 1;
-        $type = $predicate ? (new TypeResolution($scope->identifiers->dialect, $scope->diagnostics()))->boolean() : ($query->outputs[0]->expression->type ?? new TypeDescriptor($scope->identifiers->dialect, 'unknown'));
-        $operands = [];
-        if ($source !== $node) {
-            foreach ($source->children as $child) {
-                if ($child instanceof Node && in_array($child->name, ['a_expr', 'expr', 'bit_expr', 'bool_pri'], true)) {
-                    $operands[] = (new ExpressionBinder())->bind($child, $scope);
-                }
-            }
-        }
-        array_push($operands, ...array_map(static fn ($output): Expression => $output->expression, $query->outputs));
-        return new Expression(ExpressionKind::Subquery, $type, $exists ? Nullability::NotNull : Nullability::MaybeNull, $source, $operands, symbol: $symbol, query: $query);
+        return (new QueryExpressionBinder())->bind($source, $node, $scope, $rowSubquery);
     }
+
     /**
      * Finds this operation's query operand without entering a scalar argument.
      */

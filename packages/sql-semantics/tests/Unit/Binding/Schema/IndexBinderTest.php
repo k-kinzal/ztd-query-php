@@ -95,9 +95,7 @@ use SqlSemantics\Type\TypeDescriptor;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\IndexDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ConstraintGroups::class)]
@@ -118,19 +116,13 @@ use SqlSemantics\Type\TypeDescriptor;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\StatementFactory::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -151,20 +143,21 @@ final class IndexBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE t(id INTEGER, name TEXT)');
         $statement = (new Binder($schema))->bind('CREATE INDEX ix ON t(name, (id+1)) WHERE id>0');
-        self::assertSame('t', $statement->targets[0]->declaration->name);
-        self::assertSame([], $statement->definitions);
-        self::assertSame([], $statement->declarations);
-        self::assertSame('name', $statement->indexes[0]->keys[0]->binding?->column->name);
-        self::assertSame('id', $statement->indexes[0]->keys[1]->lineage()[0]->column->name);
-        self::assertSame('id', $statement->indexes[0]->predicate?->lineage()[0]->column->name);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateIndexStatement::class, $statement);
+        self::assertSame('t', $statement->table->declaration->name);
+
+        self::assertSame('name', $statement->index->definition->elements[0]->value()->columnBinding()?->column->name);
+        self::assertSame('id', $statement->index->definition->elements[1]->value()->lineage()[0]->column->name);
+        self::assertSame('id', $statement->index->definition->predicate?->lineage()[0]->column->name);
     }
 
     public function testBindRetainsIndexOnInvalidReferences(): void
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
         $statement = (new Binder($schema))->bind('CREATE INDEX ix ON t(missing) WHERE 42', strict: false);
-        self::assertSame('ix', $statement->indexes[0]->definition->name);
-        self::assertSame('unresolved-column', $statement->indexes[0]->keys[0]->kind->value);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateIndexStatement::class, $statement);
+        self::assertSame('ix', $statement->index->definition->name);
+        self::assertSame('unresolved-column', $statement->index->definition->elements[0]->value()->kind->value);
         self::assertContains('unknown-column', array_column($statement->diagnostics, 'reason'));
         self::assertContains('non-boolean-predicate', array_column($statement->diagnostics, 'reason'));
     }
@@ -184,9 +177,10 @@ final class IndexBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
         $statement = (new Binder($schema))->bind('CREATE INDEX ix ON t(id) INCLUDE(missing)', strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateIndexStatement::class, $statement);
         self::assertSame(['unknown-column'], array_column($statement->diagnostics, 'reason'));
-        self::assertSame(['missing'], $statement->indexes[0]->definition->include);
-        self::assertNull($statement->indexes[0]->predicate);
+        self::assertSame(['missing'], $statement->index->definition->include);
+        self::assertNull($statement->index->definition->predicate);
     }
 
 }

@@ -78,9 +78,7 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ConstraintGroups::class)]
@@ -113,20 +111,14 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\StatementFactory::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -146,20 +138,19 @@ final class MergeBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER,n INTEGER); CREATE TABLE s(id INTEGER,n INTEGER)');
         $statement = (new Binder($schema))->bind('MERGE INTO t USING s ON t.id=s.id WHEN MATCHED AND s.n>0 THEN UPDATE SET n=s.n WHEN NOT MATCHED THEN INSERT(id,n) VALUES(s.id,s.n) RETURNING t.id');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\MergeStatement::class, $statement);
         $merge = $statement->merge;
         self::assertNotNull($merge);
         self::assertSame('t', $merge->target->declaration->name);
         self::assertInstanceOf(\SqlSemantics\Model\TableUse::class, $merge->input);
         self::assertSame('s', $merge->input->declaration->name);
-        self::assertSame('=', $merge->condition->symbol);
-        self::assertSame(['update','insert'], array_column($merge->actions, 'action'));
-        self::assertSame(['matched','not-matched-by-target'], array_column($merge->actions, 'match'));
-        self::assertSame('>', $merge->actions[0]->condition?->symbol);
-        self::assertSame('s', $merge->actions[0]->assignments[0]->value->binding?->table->name);
-        self::assertSame(['id','n'], array_map(static fn ($column) => $column->binding?->column->name, $merge->actions[1]->insertion->columns ?? []));
-        self::assertSame('s', $merge->actions[1]->rows[0][0]->binding?->table->name);
-        self::assertSame([], $statement->writes);
-        self::assertNull($statement->where);
+        self::assertSame('=', $merge->condition->spelling());
+        self::assertSame(['update','insert'], array_map(static fn ($item) => $item->action->value, $merge->actions));
+        self::assertSame(['matched','not-matched-by-target'], array_map(static fn ($item) => $item->match->value, $merge->actions));
+        self::assertSame('>', $merge->actions[0]->condition?->spelling());
+        self::assertSame('s', $merge->actions[0]->assignments[0]->value->columnBinding()?->table->name);
+        self::assertSame(['id','n'], array_map(static fn ($column) => $column->column()->columnBinding()?->column->name, $merge->actions[1]->insertion->columns ?? []));
+        self::assertSame('s', $merge->actions[1]->row->items[0]->columnBinding()?->table->name);
         self::assertSame(['id'], array_column($statement->outputs, 'name'));
     }
     public function testActionSeparatesAbsentSourceFromAbsentTarget(): void
@@ -167,9 +158,9 @@ final class MergeBinderTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER); CREATE TABLE s(id INTEGER)'));
         $merge = $binder->bind('MERGE INTO t USING s ON t.id=s.id WHEN NOT MATCHED BY SOURCE AND t.id>0 THEN DELETE WHEN NOT MATCHED BY TARGET THEN DO NOTHING')->merge;
         self::assertNotNull($merge);
-        self::assertSame(['not-matched-by-source','not-matched-by-target'], array_column($merge->actions, 'match'));
-        self::assertSame(['delete','nothing'], array_column($merge->actions, 'action'));
-        self::assertSame('t', $merge->actions[0]->condition?->operands[0]->binding?->table->name);
+        self::assertSame(['not-matched-by-source','not-matched-by-target'], array_map(static fn ($item) => $item->match->value, $merge->actions));
+        self::assertSame(['delete','nothing'], array_map(static fn ($item) => $item->action->value, $merge->actions));
+        self::assertSame('t', $merge->actions[0]->condition?->inputs()[0]->columnBinding()?->table->name);
     }
     public function testActionRejectsReferencesToAbsentMatchInputs(): void
     {
@@ -182,11 +173,12 @@ final class MergeBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER); CREATE TABLE s(id INTEGER)');
         $statement = (new Binder($schema))->bind('MERGE INTO t USING (WITH changed AS (MERGE INTO t USING s ON t.id=s.id WHEN MATCHED THEN DELETE RETURNING t.id) SELECT id FROM changed) AS input ON t.id=input.id WHEN MATCHED THEN DO NOTHING', strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\MergeStatement::class, $statement);
         self::assertNotNull($statement->merge);
         self::assertCount(1, $statement->merge->actions);
-        self::assertSame('nothing', $statement->merge->actions[0]->action);
+        self::assertSame('nothing', $statement->merge->actions[0]->action->value);
         self::assertInstanceOf(\SqlSemantics\Model\TableUse::class, $statement->merge->input);
         self::assertNotNull($statement->merge->input->query);
-        self::assertSame('delete', $statement->merge->input->query->ctes['changed']->merge?->actions[0]->action);
+        self::assertSame('delete', $statement->merge->input->query->ctes->definitions[0]->query->merge?->actions[0]->action->value);
     }
 }

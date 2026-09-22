@@ -1,0 +1,70 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Binding\Schema;
+
+use SqlSemantics\Ast\Declaration\TableConstraint as ParsedConstraint;
+use SqlSemantics\Binding\ExpressionBinder;
+use SqlSemantics\Binding\ExpressionRules;
+use SqlSemantics\Binding\Scope;
+use SqlSemantics\Binding\Statement\UnclassifiedSql;
+use SqlSemantics\Model\Relation\QualifiedName;
+use SqlSemantics\Schema\Constraint;
+use SqlSemantics\Schema\ConstraintKind;
+use SqlSemantics\Schema\TableConstraint;
+
+/**
+ * Selects a native integrity-condition type with mandatory operands.
+ *
+ * @visibility SqlSemantics
+ */
+final class ConstraintBinder
+{
+    /**
+     * Binds CHECK expressions against the complete table declaration.
+     * @throws UnclassifiedSql
+     * @throws \SqlSemantics\InvalidSql
+     */
+    public static function bind(ParsedConstraint $constraint, Scope $scope): TableConstraint
+    {
+        if ($constraint->kind === ConstraintKind::ForeignKey && $constraint->referencedColumns !== [] && count($constraint->columns) !== count($constraint->referencedColumns)) {
+            throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::ForeignKeyWidth, $constraint->source);
+        }
+        $checking = !$constraint->deferrable ? Constraint\CheckingTime::Immediate : ($constraint->initiallyDeferred ? Constraint\CheckingTime::DeferrableDeferred : Constraint\CheckingTime::DeferrableImmediate);
+        if ($constraint->kind === ConstraintKind::Check) {
+            $predicate = (new ExpressionBinder())->bind($constraint->expression ?? throw new UnclassifiedSql('A CHECK requires a predicate.'), $scope);
+            (new ExpressionRules($scope->identifiers->dialect, $scope->diagnostics()))->predicate($predicate);
+            return new Constraint\Check($predicate, name: $constraint->name, source: $constraint->source);
+        }
+        return match ($constraint->kind) {
+            ConstraintKind::PrimaryKey => new Constraint\PrimaryKey(self::keys($constraint, $scope), $checking, name: $constraint->name, source: $constraint->source),
+            ConstraintKind::Unique => new Constraint\UniqueKey(self::keys($constraint, $scope), $checking, nullsDistinct: (\SqlSemantics\Ast\Definition\OptionReader::read($constraint->source, $scope->identifiers)['nulls_distinct'] ?? true) !== false, name: $constraint->name, source: $constraint->source),
+            ConstraintKind::ForeignKey => new Constraint\ForeignKey($constraint->columns, new QualifiedName($constraint->referencedTable), $constraint->referencedColumns, $constraint->onDelete, $constraint->onUpdate, $scope->identifiers->dialect === \SqlSemantics\Dialect::Sqlite ? Constraint\MatchMode::Simple : Constraint\MatchMode::from($constraint->match), $checking, $constraint->deleteColumns, $constraint->name, $constraint->source),
+        };
+    }
+    /**
+     * @return non-empty-list<\SqlSemantics\Schema\IndexElement>
+     * @throws UnclassifiedSql
+     */
+    public static function keys(ParsedConstraint $constraint, Scope $scope): array
+    {
+        $parsed = \SqlSemantics\Ast\Definition\IndexKeys::read($constraint->source, $scope->identifiers);
+        if ($parsed !== []) {
+            return array_map(static fn ($key): \SqlSemantics\Schema\IndexElement => IndexBinder::element($key, $scope), $parsed);
+        }
+        $result = [];
+        foreach ($constraint->columns as $name) {
+            $column = $scope->column([$name], $constraint->source);
+            if (!$column instanceof \SqlSemantics\Model\Scalar\Reference\ColumnReference && !$column instanceof \SqlSemantics\Model\Scalar\Reference\UnresolvedColumnReference) {
+                throw new UnclassifiedSql('A key requires a column reference.');
+            }
+            $result[] = new \SqlSemantics\Schema\Index\ColumnKey($column, source: $constraint->source);
+        }
+        if ($result === []) {
+            throw new UnclassifiedSql('A key requires at least one column.');
+        }
+        return $result;
+    }
+
+}

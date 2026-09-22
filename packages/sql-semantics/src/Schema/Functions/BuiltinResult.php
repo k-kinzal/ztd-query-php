@@ -30,9 +30,9 @@ final class BuiltinResult
     {
         $name = $this->name;
         $dialect = $this->dialect;
-        $input = $arguments[0] ?? new TypeDescriptor($dialect, 'unknown');
+        $input = $arguments[0] ?? TypeDescriptor::builtin($dialect, 'unknown');
         if ($name === 'ARRAY_AGG') {
-            return new TypeDescriptor($dialect, $input->name === 'unknown' ? 'unknown' : $input->name . '[]', $input->modifiers);
+            return $input->name === 'unknown' ? $input : new TypeDescriptor($dialect, new \SqlSemantics\Type\Identity\ArrayStorage($input, [new \SqlSemantics\Type\Identity\ArrayDimension()]));
         }
         if (!in_array($name, ['AVG', 'SUM'], true)) {
             return $input;
@@ -41,8 +41,8 @@ final class BuiltinResult
             return $input;
         }
         if ($name === 'AVG') {
-            return new TypeDescriptor($dialect, $dialect === Dialect::Sqlite ? 'real' : (in_array($input->name, ['real', 'double precision'], true) ? 'double precision' : 'numeric'));
+            return TypeDescriptor::builtin($dialect, $dialect === Dialect::Sqlite ? 'real' : (in_array($input->name, ['real', 'double precision'], true) ? 'double precision' : 'numeric'));
         }
-        return new TypeDescriptor($dialect, $dialect === Dialect::Sqlite ? 'dynamic' : ($dialect === Dialect::PostgreSql && in_array($input->name, ['smallint', 'integer'], true) ? 'bigint' : (in_array($input->name, ['real', 'double precision'], true) ? $input->name : 'numeric')));
+        return TypeDescriptor::builtin($dialect, $dialect === Dialect::Sqlite ? 'dynamic' : ($dialect === Dialect::PostgreSql && in_array($input->name, ['smallint', 'integer'], true) ? 'bigint' : (in_array($input->name, ['real', 'double precision'], true) ? $input->name : 'numeric')));
     }
 }

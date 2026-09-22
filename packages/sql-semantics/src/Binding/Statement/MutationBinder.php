@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Binding\Statement;
 
+use LogicException;
 use SqlParser\Parser\Node;
 use SqlSemantics\Ast\Tree;
 use SqlSemantics\Binding\FromBinder;
@@ -24,35 +25,47 @@ final class MutationBinder
     /**
      * Shares statement identities and schema resolution with query inputs.
      */
-    public function __construct(public readonly QueryContext $context)
+    public function __construct(public readonly QueryContext $context, public readonly ?Scope $parent = null)
     {
     }
 
     /**
      * Binds a mutation while keeping its result separate from its input query.
+     * @throws LogicException
      */
     public function bind(Node $source, Node $statement): BoundStatement
     {
         $id = $this->context->ids->scope();
         $kind = StatementBinder::operation($statement);
         [$input, $targets] = $this->input($statement, $id, $kind);
-        $scope = $input->scope ?? new Scope($this->context->tables->identifiers, $targets, queries: $this->context);
+        $scope = $input->scope ?? new Scope($this->context->tables->identifiers, $targets, parent: $this->parent, queries: $this->context);
         $scope = $this->conflictScope($scope, $targets, $statement, $id);
         $writes = (new \SqlSemantics\Binding\Write\AssignmentBinder())->bind($statement, $scope, new Scope($scope->identifiers, $targets, queries: $this->context));
         if ($kind === 'UPDATE') {
             $targets = $this->updatedTargets($targets, $writes, $scope);
         }
         $conflicts = (new \SqlSemantics\Binding\Write\ConflictBinder())->bind($statement, $scope);
-        $assignments = $this->assignments([...$writes, ...array_merge([], ...array_map(static fn ($conflict): array => $conflict->assignments, $conflicts))]);
         $whereNode = in_array($kind, ['INSERT', 'REPLACE'], true) ? null : (QueryNodes::local($statement, ['where_clause', 'opt_where_clause', 'where_or_current_clause', 'where_opt', 'where_opt_ret'])[0] ?? null);
+        if ($whereNode !== null && strtoupper($whereNode->tokens()[0]->text ?? '') !== 'WHERE') {
+            $whereNode = null;
+        }
         $where = (new \SqlSemantics\Binding\Write\ConflictBinder())->predicate($whereNode, $scope);
-        $returning = QueryNodes::local($statement, ['returning_clause', 'where_opt_ret', 'upsert'])[0] ?? null;
+        $returning = QueryNodes::local($statement, ['returning_clause', 'returning', 'where_opt_ret', 'upsert'])[0] ?? null;
         $outputs = $returning === null || !str_contains(strtoupper(Tree::text($returning)), 'RETURNING') ? [] : (new ProjectionBinder())->bind($returning, $scope);
         $queries = [];
-        foreach (Tree::outer($statement, ['SelectStmt', 'query_expression', 'select', 'select_init', 'select_paren', 'insert_query_expression', 'create_select']) as $query) {
-            $queries[] = $this->context->bind($query);
+        $directRows = [];
+        $queryNames = ['SelectStmt', 'query_expression', 'select', 'select_init', 'select_paren', 'insert_query_expression', 'create_select'];
+        foreach (Tree::outer($statement, [...$queryNames, 'with_clause', 'with', 'wqlist', 'a_expr', 'expr', 'expr_or_default', 'values_list', 'opt_on_conflict', 'upsert', 'insert_update_list']) as $query) {
+            if (in_array($query->name, $queryNames, true)) {
+                $body = QueryNodes::body($query);
+                if (strtoupper($body->tokens()[0]->text ?? '') === 'VALUES' && QueryNodes::local($query, ['sort_clause', 'order_clause', 'orderby_opt', 'limit_clause', 'limit_opt', 'with_clause']) === []) {
+                    $directRows = \SqlSemantics\Binding\Write\WriteInputs::rows($body, $scope);
+                    continue;
+                }
+                $queries[] = $this->context->bind($query, $this->parent);
+            }
         }
-        $values = (new ValuesBinder())->rows($statement, $scope);
+        $values = $queries === [] ? ($directRows !== [] ? $directRows : \SqlSemantics\Binding\Write\WriteInputs::rows($statement, $scope)) : ($queries[0] instanceof \SqlSemantics\Model\Statement\ValuesStatement ? $queries[0]->rows : []);
         $insertion = null;
         if (in_array($kind, ['INSERT', 'REPLACE'], true)) {
             if ($targets === []) {
@@ -62,12 +75,14 @@ final class MutationBinder
         }
         $modifiers = new \SqlSemantics\Binding\SelectModifiersBinder();
         [$limit, $offset] = $modifiers->pagination($statement, $scope);
-        $class = match ($kind) {
-            'UPDATE' => \SqlSemantics\Model\Statement\UpdateStatement::class,
-            'DELETE' => \SqlSemantics\Model\Statement\DeleteStatement::class,
-            default => \SqlSemantics\Model\Statement\InsertStatement::class,
+        $origin = new \SqlSemantics\Model\Statement\Origin($id, $source, $this->context->tables->identifiers->dialect);
+        $order = $modifiers->ordering($statement, $scope, null);
+        return match ($kind) {
+            'UPDATE' => MutationForms::update($origin, $statement, $input, $targets, $writes, $where, $outputs, $this->context, $order, $limit),
+            'DELETE' => MutationForms::delete($origin, $statement, $input, $targets, $where, $outputs, $this->context, $order, $limit),
+            'INSERT', 'REPLACE' => (new InsertBinder())->statement($origin, $statement, $insertion, $values, $queries, $writes, \SqlSemantics\Model\Write\InsertMode::from($kind), $outputs, $conflicts, (new \SqlSemantics\Binding\Query\CteBinder())->clause($source, $this->context)),
+            default => throw new LogicException('Unclassified mutation: ' . $kind),
         };
-        return new $class($id, $input->relation ?? ($targets[0] ?? null), $scope->relations, $outputs, $where, false, $modifiers->ordering($statement, $scope, $outputs), $limit, $offset, $source, ctes: $this->context->ctes, kind: $kind, targets: $targets, assignments: $assignments, queries: $queries, rows: $values, insertion: $insertion, writes: $writes, conflicts: $conflicts);
     }
 
     /**
@@ -78,7 +93,7 @@ final class MutationBinder
     public function input(Node $statement, string $id, string $kind): array
     {
         $joined = QueryNodes::local($statement, ['table_reference_list', 'join_table_list'])[0] ?? null;
-        $binder = new FromBinder($this->context->tables, $this->context->ids, $this->context, scopeId: $id);
+        $binder = new FromBinder($this->context->tables, $this->context->ids, $this->context, $this->parent, scopeId: $id);
         $input = $joined === null ? null : $binder->bind($joined);
         $targets = $input?->scope->relations ?? $this->targets($statement, $id);
         if ($kind === 'DELETE' && $input !== null) {
@@ -87,7 +102,7 @@ final class MutationBinder
         $readNode = in_array($kind, ['INSERT', 'REPLACE'], true) ? null : (QueryNodes::local($statement, ['from_clause', 'using_clause', 'from'])[0] ?? null);
         $read = $readNode === null ? null : $binder->bind($readNode);
         if ($read !== null && $targets !== []) {
-            $left = $input ?? new \SqlSemantics\Binding\BoundRelation($targets[0], new Scope($this->context->tables->identifiers, $targets, queries: $this->context));
+            $left = $input ?? new \SqlSemantics\Binding\BoundRelation($targets[0], new Scope($this->context->tables->identifiers, $targets, parent: $this->parent, queries: $this->context));
             $input = $binder->join($left, $read, \SqlSemantics\Model\JoinKind::Cross, null, $statement, $this->context->ids->join());
         }
         return [$input, $targets];
@@ -109,7 +124,7 @@ final class MutationBinder
             if (count($matches) !== 1) {
                 $scope->diagnostics()->report('unknown-write-target', 'A DELETE target must identify one input relation.', $name);
                 $table = $this->context->tables->resolve($parts, $name);
-                $targets[] = new TableUse($this->context->ids->relation(), $id, $table, null, $name);
+                $targets[] = new \SqlSemantics\Model\Relation\TableReference($this->context->ids->relation(), $id, $table, $this->context->tables->name($parts, $table), null, $name);
             } else {
                 $targets[] = $matches[0];
             }
@@ -128,37 +143,20 @@ final class MutationBinder
     {
         $ids = [];
         foreach ($writes as $write) {
-            foreach ($write->targets as $destination) {
-                $column = \SqlSemantics\Model\Write\Destination::column($destination);
-                if ($column->binding !== null) {
-                    $ids[] = $column->binding->relationId;
+            foreach ($write->destinations() as $destination) {
+                $column = $destination->column();
+                if ($column->columnBinding() !== null) {
+                    $ids[] = $column->columnBinding()->relationId;
                     continue;
                 }
                 foreach ($targets as $target) {
-                    if ($scope->matches($target, array_slice($column->reference, 0, -1))) {
+                    if ($scope->matches($target, array_slice($column->referenceParts(), 0, -1))) {
                         $ids[] = $target->id;
                     }
                 }
             }
         }
         return array_values(array_filter($targets, static fn (TableUse $target): bool => in_array($target->id, $ids, true)));
-    }
-
-    /**
-     * @param list<\SqlSemantics\Model\Write\Assignment> $writes
-     * @return array<int|string, \SqlSemantics\Model\Expression> Compatibility view of scalar assignments
-     */
-    public function assignments(array $writes): array
-    {
-        $result = [];
-        foreach ($writes as $write) {
-            foreach ($write->targets as $target) {
-                $column = \SqlSemantics\Model\Write\Destination::column($target);
-                $name = $column->binding?->column->name ?? implode('.', $column->reference);
-                $result[$name] = $write->value;
-            }
-        }
-        return $result;
     }
 
     /**
@@ -169,16 +167,21 @@ final class MutationBinder
         $tables = $this->context->tables;
         $from = in_array(StatementBinder::operation($statement), ['UPDATE', 'DELETE'], true) ? (QueryNodes::local($statement, ['table_reference_list'])[0] ?? null) : null;
         if ($from !== null) {
-            return (new FromBinder($tables, $this->context->ids, $this->context, scopeId: $id))->bind($from)?->scope->relations ?? [];
+            return (new FromBinder($tables, $this->context->ids, $this->context, $this->parent, scopeId: $id))->bind($from)?->scope->relations ?? [];
         }
-        $node = QueryNodes::local($statement, ['insert_target', 'relation_expr_opt_alias', 'relation_expr', 'table_ident', 'xfullname'])[0] ?? null;
+        $node = QueryNodes::local($statement, ['insert_target', 'relation_expr_opt_alias', 'relation_expr', 'table_ident', 'xfullname', 'trnm'])[0] ?? null;
         if ($node === null) {
             return [];
         }
-        $name = Tree::outer($node, ['qualified_name', 'table_ident', 'nm'])[0] ?? $node;
+        $name = Tree::outer($node, ['qualified_name', 'table_ident'])[0] ?? $node;
+        if ($node->name === 'xfullname') {
+            $tokens = $node->tokens();
+            $aliasPosition = array_search('AS', array_map(static fn ($token): string => strtoupper($token->text), $tokens), true);
+            $name = new Node('relation_name', 0, $aliasPosition === false ? $tokens : array_slice($tokens, 0, $aliasPosition));
+        }
         $declaration = $tables->resolve($tables->identifiers->parts($name), $name);
         $alias = Tree::child($node, ['ColId', 'as']);
-        return [new TableUse($this->context->ids->relation(), $id, $declaration, $alias === null ? null : $tables->identifiers->parts($alias)[0], $node)];
+        return [new \SqlSemantics\Model\Relation\TableReference($this->context->ids->relation(), $id, $declaration, $tables->name($tables->identifiers->parts($name), $declaration), $alias === null ? null : $tables->identifiers->parts($alias)[0], $node)];
     }
     /**
      * @param list<TableUse> $targets
@@ -188,7 +191,7 @@ final class MutationBinder
         if ($targets === [] || !str_contains(strtoupper(Tree::text($source)), 'ON CONFLICT')) {
             return $scope;
         }
-        $excluded = new TableUse($this->context->ids->relation(), $id, $targets[0]->declaration, 'excluded', $source);
+        $excluded = new \SqlSemantics\Model\Relation\ProposedRow($this->context->ids->relation(), $id, $targets[0]->declaration, 'excluded', $source, $targets[0]);
         $parent = new Scope($scope->identifiers, [$excluded], queries: $this->context);
         return new Scope($scope->identifiers, $scope->relations, $scope->extensions, $parent, $this->context, $scope->merged);
     }

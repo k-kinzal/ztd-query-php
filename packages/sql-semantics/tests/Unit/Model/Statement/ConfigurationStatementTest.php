@@ -56,8 +56,6 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\IndexEvolution::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\TableAlteration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryRelation::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryContext::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\UsingJoin::class)]
@@ -102,15 +100,11 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Assignment::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -119,9 +113,7 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\IndexDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(InvalidStructure::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Sql\Literal::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Sql\ExpressionFactory::class)]
@@ -153,17 +145,20 @@ final class ConfigurationStatementTest extends TestCase
         $statement = $binder->bind('SET search_path=public');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\ConfigurationStatement::class, $statement);
         $changed = $statement->withValues($statement->settings[0], [Expression::literal('a', Dialect::PostgreSql), Expression::literal('b', Dialect::PostgreSql)]);
-        self::assertSame(["'a'", "'b'"], array_column($changed->settings[0]->values, 'symbol'));
+        self::assertSame(["'a'", "'b'"], array_map(static fn ($value) => $value->spelling(), $changed->settings[0]->values));
         self::assertCount(1, $statement->settings[0]->values);
     }
 
     public function testWithValuesRejectsAnInvalidTarget(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
-        $statement = $binder->bind('RESET ALL');
+        $statement = $binder->bind('SET work_mem=1');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\ConfigurationStatement::class, $statement);
+        $foreign = $binder->bind('SET work_mem=2');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $foreign);
+
         $this->expectException(InvalidStructure::class);
-        $this->expectExceptionMessage('The target must be an owned SET value list.');
-        $statement->withValues($statement->settings[0], [Expression::literal(1, Dialect::PostgreSql)]);
+        $this->expectExceptionMessage('The setting does not belong to this statement.');
+        $statement->withValues($foreign->settings[0], [Expression::literal(1, Dialect::PostgreSql)]);
     }
 }

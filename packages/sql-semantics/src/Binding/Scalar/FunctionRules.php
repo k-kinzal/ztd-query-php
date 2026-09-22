@@ -6,7 +6,6 @@ namespace SqlSemantics\Binding\Scalar;
 
 use InvalidArgumentException;
 use SqlParser\Parser\Node;
-use SqlSemantics\Ast\Tree;
 use SqlSemantics\Binding\ExpressionRules;
 use SqlSemantics\Binding\NullFacts;
 use SqlSemantics\Binding\Scope;
@@ -32,19 +31,27 @@ final class FunctionRules
         if (in_array($name, ['COALESCE', 'NULLIF'], true)) {
             return (new ExpressionRules($scope->identifiers->dialect, $scope->diagnostics()))->call($name, $operands, $source);
         }
-        $signature = (new FunctionResolver())->resolve($source, $operands, $scope);
-        $kind = Tree::outer($source, ['over_clause', 'windowing_clause']) !== [] ? ExpressionKind::Window : ($signature?->aggregate === true ? ExpressionKind::Aggregate : ExpressionKind::Function);
-        $type = new TypeDescriptor($scope->identifiers->dialect, 'unknown');
+        $orderedInputs = FunctionClauses::orderedInputs($source, $scope);
+        $argumentCount = count($operands);
+        $signature = (new FunctionResolver())->resolve($source, [...$operands, ...$orderedInputs], $scope);
+        $kind = $signature?->aggregate === true ? ExpressionKind::Aggregate : ExpressionKind::Function;
+        $type = TypeDescriptor::builtin($scope->identifiers->dialect, 'unknown');
         $nullable = Nullability::Unknown;
         if ($signature !== null) {
-            $operands = $this->arguments($signature, $operands, $scope);
-            $type = $signature->returnType instanceof TypeDescriptor ? $signature->returnType : ($signature->returnType)(array_map(static fn (Expression $argument): TypeDescriptor => $argument->type, $operands));
+            $boundArguments = $this->arguments($signature, [...$operands, ...$orderedInputs], $scope);
+            $operands = array_slice($boundArguments, 0, $argumentCount);
+            $orderedInputs = array_slice($boundArguments, $argumentCount);
+            $type = $signature->returnType instanceof TypeDescriptor ? $signature->returnType : ($signature->returnType)(array_map(static fn (Expression $argument): TypeDescriptor => $argument->type, $boundArguments));
             if ($type->dialect !== $scope->identifiers->dialect) {
                 throw new InvalidArgumentException('A function result must use the schema dialect.');
             }
             $nullable = $this->nullability($signature, $operands);
         }
-        return new Expression($kind, $type, $nullable, $source, $operands, symbol: $name, nullExtendedBy: NullFacts::extensions($operands, $nullable));
+        $facts = new \SqlSemantics\Model\Scalar\ExpressionFacts($type, $nullable, NullFacts::extensions($operands, $nullable));
+        $reference = $signature === null
+            ? new \SqlSemantics\Model\Scalar\Function\UnresolvedFunction(new \SqlSemantics\Model\Scalar\Function\FunctionName($scope->identifiers->parts(FunctionClauses::find($source, ['func_name']) ?? new Node('function_name', 0, [$source->tokens()[0]]))))
+            : new \SqlSemantics\Model\Scalar\Function\DeclaredFunction($signature);
+        return (new Function\InvocationBinder())->bind($source, $scope, $reference, $facts, $operands, $kind === ExpressionKind::Aggregate, $orderedInputs);
     }
 
     /**

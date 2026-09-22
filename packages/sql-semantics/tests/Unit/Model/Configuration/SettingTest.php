@@ -74,8 +74,6 @@ use SqlSemantics\SemanticException;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\OutputColumn::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\TableUse::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Assignment::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Insertion::class)]
@@ -116,20 +114,14 @@ use SqlSemantics\SemanticException;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\StatementFactory::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -145,33 +137,24 @@ use SqlSemantics\SemanticException;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Sql\Format::class)]
 final class SettingTest extends TestCase
 {
-    public function testRejectsNamelessSetting(): void
-    {
-        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1');
-        $this->expectException(InvalidStructure::class);
-        new \SqlSemantics\Model\Configuration\Setting([], 'session', 'set', [], $statement->source);
-    }
-    public function testRejectsResetWithValue(): void
-    {
-        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1');
-        $this->expectException(InvalidStructure::class);
-        new \SqlSemantics\Model\Configuration\Setting(['x'], 'session', 'reset', [$statement->outputs[0]->expression], $statement->source);
-    }
-
-    #[\PHPUnit\Framework\Attributes\TestWith(['','set'])]
-    #[\PHPUnit\Framework\Attributes\TestWith(['session','invalid'])]
-    public function testRejectsInvalidSettingMetadata(string $scope, string $action): void
-    {
-        $setting = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SET work_mem TO DEFAULT')->settings[0];
-        $this->expectException(InvalidStructure::class);
-        new \SqlSemantics\Model\Configuration\Setting($setting->name, $scope, $action, $setting->values, $setting->source);
-    }
     public function testRetainsSettingActionsAndValues(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
-        self::assertSame('default', $binder->bind('SET work_mem TO DEFAULT')->settings[0]->values[0]->kind->value);
-        self::assertSame('reset', $binder->bind('RESET work_mem')->settings[0]->action);
-        self::assertSame('from-current', $binder->bind('SET work_mem FROM CURRENT')->settings[0]->action);
-        self::assertSame('read', (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('PRAGMA cache_size')->settings[0]->action);
+        $set = $binder->bind('SET work_mem TO DEFAULT')->settings[0];
+        $reset = $binder->bind('RESET work_mem')->setting;
+        $current = $binder->bind('SET work_mem FROM CURRENT')->settings[0];
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\DefaultSetting::class, $set);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\ResetSetting::class, $reset);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\CurrentSetting::class, $current);
+        self::assertSame(\SqlSemantics\Model\Configuration\SettingAction::Default, $set->action);
+        self::assertSame(\SqlSemantics\Model\Configuration\SettingAction::Reset, $reset->action);
+        self::assertSame(\SqlSemantics\Model\Configuration\SettingAction::CopyCurrent, $current->action);
+    }
+
+    public function testReadPragmaHasItsOwnStatementType(): void
+    {
+        $read = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('PRAGMA cache_size');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\ReadPragmaStatement::class, $read);
+        self::assertSame(['cache_size'], $read->name->parts);
     }
 }

@@ -56,8 +56,6 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\IndexEvolution::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\TableAlteration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryRelation::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryContext::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\UsingJoin::class)]
@@ -102,16 +100,12 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Assignment::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -120,9 +114,7 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\IndexDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(InvalidStructure::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Sql\Literal::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Sql\Build::class)]
@@ -150,15 +142,15 @@ final class ExpressionFactoryTest extends TestCase
     public function testLiteralProvidesConservativeNullFacts(): void
     {
         $value = Sql\ExpressionFactory::literal(null, Dialect::PostgreSql);
-        self::assertSame('NULL', $value->sql->toString());
+        self::assertSame('NULL', $value->structure()->toString());
         self::assertSame('always-null', $value->nullability->value);
     }
     public function testReferenceDefersNameResolutionToItsDestination(): void
     {
         $reference = Sql\ExpressionFactory::reference(['t','id'], Dialect::PostgreSql);
-        self::assertSame(['t','id'], $reference->reference);
+        self::assertSame(['t','id'], $reference->referenceParts());
         self::assertSame('unresolved-column', $reference->kind->value);
-        self::assertSame('"t"."id"', $reference->sql->toString());
+        self::assertSame('"t"."id"', $reference->structure()->toString());
     }
     public function testReferenceRejectsMissingIdentifiers(): void
     {
@@ -168,8 +160,8 @@ final class ExpressionFactoryTest extends TestCase
     public function testBinaryProtectsBothOperands(): void
     {
         $value = Sql\ExpressionFactory::binary('*', Expression::literal(2, Dialect::PostgreSql), Expression::literal(3, Dialect::PostgreSql));
-        self::assertSame('((2) * (3))', $value->sql->toString());
-        self::assertCount(2, $value->operands);
+        self::assertSame('(2 * 3)', $value->structure()->toString());
+        self::assertCount(2, $value->inputs());
     }
     public function testBinaryRejectsSqlInAnOperator(): void
     {
@@ -195,7 +187,7 @@ final class ExpressionFactoryTest extends TestCase
     public function testBinaryAcceptsCaseInsensitiveWordOperators(): void
     {
         $expression = Sql\ExpressionFactory::binary('and', Expression::literal(true, Dialect::PostgreSql), Expression::literal(false, Dialect::PostgreSql));
-        self::assertSame('AND', $expression->symbol);
-        self::assertSame('((TRUE) AND (FALSE))', $expression->sql->toString());
+        self::assertSame('AND', $expression->spelling());
+        self::assertSame('(TRUE AND FALSE)', $expression->structure()->toString());
     }
 }

@@ -34,11 +34,14 @@ final class StatementFactory
     }
 
     /**
-     * Constructs any statement form from a complete SQL structure and validates it.
+     * Validates a typed statement against this schema and preserves its concrete form.
+     * @template T of BoundStatement
+     * @param T $statement
+     * @return T
      */
-    public function create(Sql\Tree $structure): BoundStatement
+    public function create(BoundStatement $statement): BoundStatement
     {
-        return (new StatementContext($this->schema))->bind($structure);
+        return (new StatementContext($this->schema))->rebind($statement, Serialization\Statements::write($statement));
     }
 
     /**
@@ -52,7 +55,7 @@ final class StatementFactory
             $parts[] = new Sql\Tree('from', [Sql\Build::keyword('FROM'), Sql\Build::identifier($from->schema === '' ? [$from->name] : [$from->schema, $from->name], $this->schema->dialect)]);
         }
         $parts[] = Sql\Parts::expressions('WHERE', $where === null ? [] : [$where]);
-        $statement = $this->create(new Sql\Tree('select', $parts));
+        $statement = (new StatementContext($this->schema))->bind(new Sql\Tree('select', $parts));
         if (!$statement instanceof BoundSelect) {
             throw new InvalidStructure('A projection must produce a SELECT statement.');
         }

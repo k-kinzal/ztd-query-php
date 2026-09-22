@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace SqlSemantics\Ast\Definition;
 
 use SqlParser\Parser\Node;
+use SqlSemantics\Ast\Declaration\IndexElement;
 use SqlSemantics\Ast\Identifiers;
 use SqlSemantics\Ast\Tree;
-use SqlSemantics\Schema\IndexElement;
 
 /**
  * Reads ordered index keys without flattening nested expressions into column names.

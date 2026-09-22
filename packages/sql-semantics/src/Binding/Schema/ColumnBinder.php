@@ -1,0 +1,77 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Binding\Schema;
+
+use SqlSemantics\Ast\Declaration\ColumnDefinition as ParsedColumn;
+use SqlSemantics\Ast\Tree;
+use SqlSemantics\Binding\ExpressionBinder;
+use SqlSemantics\Binding\Scope;
+use SqlSemantics\Binding\Statement\UnclassifiedSql;
+use SqlSemantics\Schema\Column;
+use SqlSemantics\Schema\ColumnDefinition;
+
+/**
+ * Resolves the value source and attributes of a parsed column declaration.
+ *
+ * @visibility SqlSemantics
+ */
+final class ColumnBinder
+{
+    /**
+     * Binds the declaration against its complete column namespace.
+     */
+    public static function bind(ParsedColumn $column, Scope $scope): ColumnDefinition
+    {
+        $generation = self::generation($column, $scope);
+        foreach ($generation->expressions() as $expression) {
+            (new \SqlSemantics\Binding\Write\AssignmentRules())->checkType($column->type, $expression, $scope);
+        }
+        $options = $column->options;
+        $attributes = new Column\Attributes(
+            collation: OptionBinding::qualified($options, 'collation'),
+            characterSet: $column->type->identity instanceof \SqlSemantics\Type\Identity\StringStorage ? null : OptionBinding::string($options, 'character_set'),
+            comment: OptionBinding::string($options, 'comment'),
+            visible: isset($options['invisible']) ? false : (isset($options['visible']) ? true : null),
+            storage: ($value = OptionBinding::string($options, 'storage')) === null ? null : Column\Storage::from(strtolower($value)),
+            format: ($value = OptionBinding::string($options, 'column_format')) === null ? null : Column\Format::from(strtolower($value)),
+            compression: OptionBinding::string($options, 'compression'),
+            engineAttribute: OptionBinding::string($options, 'engine_attribute'),
+            secondaryEngineAttribute: OptionBinding::string($options, 'secondary_engine_attribute'),
+            spatialReferenceId: OptionBinding::integer($options, 'srid'),
+            zeroFill: isset($options['zerofill']),
+            binary: !$column->type->identity instanceof \SqlSemantics\Type\Identity\StringStorage && isset($options['binary']),
+        );
+        OptionBinding::classified($options, ['collation', 'character_set', 'comment', 'invisible', 'visible', 'storage', 'column_format', 'compression', 'engine_attribute', 'secondary_engine_attribute', 'srid', 'zerofill', 'binary', 'signed', 'unsigned', 'auto_increment', 'identity', 'start', 'increment', 'minvalue', 'maxvalue', 'cache', 'cycle', 'no', 'generated_storage', 'on_update']);
+        return new ColumnDefinition($column->name, $column->type, $column->nullability, $column->source, $generation, $attributes);
+    }
+
+    /**
+     * Selects one value-generation form without evaluating the expression.
+     * @throws UnclassifiedSql
+     */
+    public static function generation(ParsedColumn $column, Scope $scope): Column\Generation
+    {
+        if (isset($column->options['auto_increment'])) {
+            return new Column\AutoIncrementColumn();
+        }
+        if (isset($column->options['identity'])) {
+            return new Column\IdentityColumn(Column\IdentityMode::from(OptionBinding::string($column->options, 'identity') ?? 'by-default'), SequenceBinding::read($column->attributes, $scope));
+        }
+        if ($column->generatedExpression !== null) {
+            return new Column\ComputedColumn((new DefinitionBinder())->expression($column->generatedExpression, $scope), Column\GeneratedStorage::from(OptionBinding::string($column->options, 'generated_storage') ?? ($scope->identifiers->dialect === \SqlSemantics\Dialect::PostgreSql ? 'stored' : 'virtual')));
+        }
+        $onUpdate = null;
+        foreach ($column->attributes as $attribute) {
+            if (str_starts_with(strtoupper(Tree::text($attribute)), 'ON UPDATE ')) {
+                $value = Tree::outer($attribute, ['now', 'expr', 'a_expr'])[0] ?? null;
+                if ($value === null) {
+                    throw new UnclassifiedSql('An ON UPDATE attribute requires a classified value expression.');
+                }
+                $onUpdate = (new ExpressionBinder())->bind($value, $scope);
+            }
+        }
+        return new Column\SuppliedColumn($column->defaultExpression === null ? null : (new DefinitionBinder())->expression($column->defaultExpression, $scope), $onUpdate);
+    }
+}

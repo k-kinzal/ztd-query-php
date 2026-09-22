@@ -27,37 +27,7 @@ final class TypeReader
      */
     public function read(Node $node): TypeDescriptor
     {
-        $tokens = $node->tokens();
-        $words = [];
-        $modifiers = [];
-        $inModifiers = false;
-        foreach ($tokens as $token) {
-            if ($token->text === '(') {
-                $inModifiers = true;
-            } elseif ($token->text === ')') {
-                $inModifiers = false;
-            } elseif ($token->text !== ',') {
-                if ($inModifiers) {
-                    $modifiers[] = $token->text;
-                } else {
-                    $words[] = strtoupper($token->text);
-                }
-            }
-        }
-        $array = $this->dialect === Dialect::PostgreSql && (in_array('[', $words, true) || in_array('ARRAY', $words, true));
-        if ($array) {
-            $position = array_search('[', $words, true);
-            $keyword = array_search('ARRAY', $words, true);
-            $words = array_slice($words, 0, $keyword !== false ? $keyword : ($position !== false ? $position : count($words)));
-        }
-        $name = implode(' ', $words);
-        if ($this->dialect === Dialect::Sqlite) {
-            return new TypeDescriptor($this->dialect, strtolower($name), $modifiers, $this->affinity($name));
-        }
-        $canonical = $this->canonical($name);
-        $canonical ??= strtolower($name);
-
-        return new TypeDescriptor($this->dialect, $canonical . ($array ? '[]' : ''), $modifiers);
+        return (new Type\DeclarationReader($this))->read($node);
     }
 
     /**

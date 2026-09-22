@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Schema;
 
 use SqlParser\Parser\Node;
+use SqlSemantics\Model\Expression;
 
 /**
  * A declared index with ordered keys, included columns, and a partial-index predicate.
@@ -25,9 +26,10 @@ final class IndexDefinition
      * @param bool $unique Whether indexed values must be unique
      * @param string|null $method Declared access method
      * @param list<string> $include Non-key columns stored in the index
-     * @param Node|null $predicate Partial-index WHERE expression
+     * @param Expression|null $predicate Partial-index WHERE expression
      * @param Node $source Complete index declaration
-     * @param array<string, string|bool|list<string>> $options Visibility, storage, and dialect options
+     * @param Index\Properties $properties Index storage and access properties
+     * @throws \SqlSemantics\Model\Validation\InvalidStructure
      */
     public function __construct(
         public readonly string $schema,
@@ -37,9 +39,14 @@ final class IndexDefinition
         public readonly bool $unique,
         public readonly ?string $method,
         public readonly array $include,
-        public readonly ?Node $predicate,
+        public readonly ?Expression $predicate,
         public readonly Node $source,
-        public readonly array $options = [],
+        public readonly Index\Properties $properties = new Index\Properties(),
     ) {
+        \SqlSemantics\Model\Validation\Collections::objects($elements, IndexElement::class);
+        \SqlSemantics\Model\Validation\Collections::strings($include);
+        if ($table === [] || $elements === []) {
+            throw new \SqlSemantics\Model\Validation\InvalidStructure('An index requires a target table and at least one key.');
+        }
     }
 }

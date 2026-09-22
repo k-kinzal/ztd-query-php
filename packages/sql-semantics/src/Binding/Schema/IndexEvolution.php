@@ -41,7 +41,9 @@ final class IndexEvolution
                     $this->tables->diagnostics->report('unknown-column', 'Index references unknown column: ' . $name, $statement);
                 }
             }
-            return array_map(fn (TableDefinition $table): TableDefinition => $table === $target ? $this->add($table, $index) : $table, $this->tables->schema->tables);
+            $scope = new \SqlSemantics\Binding\Scope($this->tables->identifiers, [new \SqlSemantics\Model\Relation\TableReference('declaration', 'declaration', $target, new \SqlSemantics\Model\Relation\QualifiedName($target->schema === '' ? [$target->name] : [$target->schema, $target->name]), null, $statement)], queries: new \SqlSemantics\Binding\Query\QueryContext($this->tables));
+            $definition = IndexBinder::definition($index, $scope);
+            return array_map(fn (TableDefinition $table): TableDefinition => $table === $target ? $this->add($table, $definition, ($index->options['if_not_exists'] ?? false) === true) : $table, $this->tables->schema->tables);
         }
         if (!str_starts_with(strtoupper(Tree::text($statement)), 'DROP INDEX ')) {
             return $this->tables->schema->tables;
@@ -55,17 +57,17 @@ final class IndexEvolution
      * Adds one index while respecting IF NOT EXISTS.
 
      */
-    public function add(TableDefinition $table, IndexDefinition $index): TableDefinition
+    public function add(TableDefinition $table, IndexDefinition $index, bool $ifNotExists = false): TableDefinition
     {
         foreach ($table->indexes as $existing) {
             if ($index->name !== null && $existing->name === $index->name) {
-                if (($index->options['if_not_exists'] ?? false) === true) {
+                if ($ifNotExists) {
                     return $table;
                 }
                 $this->tables->diagnostics->report('duplicate-index', 'Duplicate index declaration: ' . $index->name, $index->source);
             }
         }
-        return new TableDefinition($table->schema, $table->name, $table->columns, $table->constraints, $table->source, $table->resolved, [...$table->indexes, $index], $table->options);
+        return new TableDefinition($table->schema, $table->name, $table->columns, $table->constraints, $table->source, $table->resolved, [...$table->indexes, $index], $table->properties);
     }
     /**
      * Removes only indexes in the named namespace and, for MySQL, the named table.
@@ -91,7 +93,7 @@ final class IndexEvolution
                 continue;
             }
             $indexes = array_values(array_filter($table->indexes, fn (IndexDefinition $index): bool => array_filter($drop, fn (array $parts): bool => $this->tables->identifiers->relationEqual($index->schema, $parts[0]) && $index->name !== null && $this->tables->identifiers->equal($index->name, $parts[1])) === []));
-            $result[] = new TableDefinition($table->schema, $table->name, $table->columns, $table->constraints, $table->source, $table->resolved, $indexes, $table->options);
+            $result[] = new TableDefinition($table->schema, $table->name, $table->columns, $table->constraints, $table->source, $table->resolved, $indexes, $table->properties);
         }
         return $result;
     }

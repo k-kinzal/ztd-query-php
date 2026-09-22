@@ -56,8 +56,6 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\IndexEvolution::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\TableAlteration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryRelation::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryContext::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\UsingJoin::class)]
@@ -102,15 +100,11 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Assignment::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -119,9 +113,7 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\IndexDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(InvalidStructure::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Sql\Literal::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Sql\ExpressionFactory::class)]
@@ -159,16 +151,18 @@ final class ContextTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::Sqlite))->build();
         $context = new \SqlSemantics\Binding\Editing\StatementContext($schema);
         $original = (new Binder($schema))->bind('SELECT 1');
-        $changed = $context->rebind($original, (new Binder($schema))->bind('SELECT 2')->sql);
-        self::assertSame('2', $changed->outputs[0]->expression->symbol);
-        self::assertSame('1', $original->outputs[0]->expression->symbol);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $original);
+        $changed = $context->rebind($original, \SqlSemantics\Serialization\Statements::write((new Binder($schema))->bind('SELECT 2')));
+        self::assertSame('2', $changed->outputs[0]->expression->spelling());
+        self::assertSame('1', $original->outputs[0]->expression->spelling());
     }
     public function testClauseValidatesAnOptionalPredicate(): void
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
         $context = new \SqlSemantics\Binding\Editing\StatementContext($schema);
         $statement = (new Binder($schema))->bind('SELECT 1');
-        self::assertSame('TRUE', $context->clause($statement, 'where', Sql\Parts::expressions('WHERE', [Expression::literal(true, $schema->dialect)]))->where?->symbol);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertSame('TRUE', $statement->withWhere(Expression::literal(true, $schema->dialect))->where?->spelling());
     }
     public function testSettingRetainsItsEffectScope(): void
     {
@@ -176,8 +170,8 @@ final class ContextTest extends TestCase
         $context = new \SqlSemantics\Binding\Editing\StatementContext($schema);
         $statement = (new Binder($schema))->bind('SET LOCAL work_mem=1');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\ConfigurationStatement::class, $statement);
-        $changed = $context->setting($statement, $statement->settings[0], [Expression::literal(2, $schema->dialect)]);
-        self::assertSame('local', $changed->settings[0]->scope);
-        self::assertSame('2', $changed->settings[0]->values[0]->symbol);
+        $changed = $statement->withValues($statement->settings[0], [Expression::literal(2, $schema->dialect)]);
+        self::assertSame('local', $changed->settings[0]->scope->value);
+        self::assertSame('2', $changed->settings[0]->values[0]->spelling());
     }
 }

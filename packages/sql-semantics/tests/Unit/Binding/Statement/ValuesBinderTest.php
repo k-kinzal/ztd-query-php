@@ -88,8 +88,6 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
 #[UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
-#[UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
 #[UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
@@ -117,20 +115,14 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\StatementFactory::class)]
 #[UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -150,13 +142,15 @@ final class ValuesBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER, n INTEGER)');
         $statement = (new Binder($schema))->bind('INSERT INTO t(id,n) VALUES (1,2),(3,4)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
         self::assertCount(2, $statement->rows);
-        self::assertSame('3', $statement->rows[1][0]->symbol);
-        self::assertSame('4', $statement->rows[1][1]->symbol);
+        self::assertSame('3', $statement->rows[1][0]->spelling());
+        self::assertSame('4', $statement->rows[1][1]->spelling());
     }
     public function testOutputsPromotesEveryRowByColumnPosition(): void
     {
         $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('VALUES (1), (2.5), (NULL)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\ValuesStatement::class, $query);
         self::assertSame('numeric', $query->outputs[0]->expression->type->name);
         self::assertSame(\SqlSemantics\Type\Nullability::MaybeNull, $query->outputs[0]->expression->nullability);
     }

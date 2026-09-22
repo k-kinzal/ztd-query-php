@@ -7,32 +7,36 @@ namespace SqlSemantics\Model;
 use SqlParser\Parser\Node;
 
 /**
- * A join with its own match predicate and NULL extension identity.
+ * Two relation inputs combined by a concrete join form.
  *
- * @example Reading semantic facts
- *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, score INTEGER NOT NULL)');
- *     $statement = (new \SqlSemantics\Binder($schema))->bind('SELECT a.id, b.score FROM users a LEFT JOIN users b ON a.id=b.id ORDER BY a.id DESC');
- *     $statement->from->kind->value // => 'left'
+ * @example An ON join retains its predicate
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER)');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('SELECT a.id FROM users a LEFT JOIN users b ON a.id = b.id');
+ *     $statement->from instanceof \SqlSemantics\Model\Relation\Joining\OnJoin // => true
  *
  * @visibility public
  */
-final class Join
+abstract class Join
 {
     /**
      * @param string $id Query-local join identity
-     * @param JoinKind $kind Join operation
+     * @param JoinKind $kind Logical join operation
      * @param TableUse|Join $left Left input
      * @param TableUse|Join $right Right input
-     * @param Expression|null $condition Match predicate, evaluated before this join extends NULLs
      * @param Node $source Original join syntax
+     * @visibility SqlSemantics
      */
     public function __construct(
         public readonly string $id,
         public readonly JoinKind $kind,
         public readonly TableUse|self $left,
         public readonly TableUse|self $right,
-        public readonly ?Expression $condition,
         public readonly Node $source,
     ) {
     }
+
+    /**
+     * Replaces both inputs while retaining this join's concrete matching operation.
+     */
+    abstract public function withInputs(TableUse|self $left, TableUse|self $right): static;
 }

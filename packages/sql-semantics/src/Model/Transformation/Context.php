@@ -29,15 +29,4 @@ interface Context
      */
     public function rebind(BoundStatement $previous, Tree $sql): BoundStatement;
 
-    /**
-     * @template T of BoundStatement
-     * @param T $previous
-     * @return T
-     */
-    public function clause(BoundStatement $previous, string $role, Tree $replacement): BoundStatement;
-
-    /**
-     * @param list<\SqlSemantics\Model\Expression> $values
-     */
-    public function setting(\SqlSemantics\Model\Statement\ConfigurationStatement $previous, \SqlSemantics\Model\Configuration\Setting $setting, array $values): \SqlSemantics\Model\Statement\ConfigurationStatement;
 }

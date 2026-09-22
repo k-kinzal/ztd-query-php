@@ -25,6 +25,7 @@ final class UtilityBinder
 
     /**
      * Binds DDL, transaction, maintenance, and administrative grammar statements.
+     * @throws UnclassifiedSql
      */
     public function bind(Node $source, Node $statement, string $kind): BoundStatement
     {
@@ -34,40 +35,23 @@ final class UtilityBinder
             $statement = $children[0];
             $children = Tree::significant($statement);
         }
-        $commands = [];
-        foreach ($children as $child) {
-            if ($child instanceof Node) {
-                array_push($commands, ...$this->commands($child));
-            }
+        $origin = new \SqlSemantics\Model\Statement\Origin($id, $source, $this->context->tables->identifiers->dialect);
+        $operation = Session\ExecutionBinder::bind($origin, $statement, $this->context);
+        if ($operation !== null) {
+            return $operation;
         }
-        $statements = array_map(fn (Node $command): BoundStatement => (new StatementBinder($this->context->tables))->node($command, $command, $this->context), $commands);
-        $queries = array_values(array_filter($statements, static fn (BoundStatement $command): bool => $command instanceof \SqlSemantics\Model\BoundQuery));
-        $tables = $this->context->tables;
-        $create = Tree::outer($statement, ['CreateStmt', 'create_table_stmt', 'create_table'])[0] ?? (preg_match('/^CREATE (TEMPORARY )?TABLE /i', Tree::text($statement)) === 1 ? $statement : null);
-        $declarations = [];
-        if ($create !== null) {
-            $reader = new \SqlSemantics\Ast\SchemaReader($tables->identifiers, $tables->defaultSchema, $tables->diagnostics->report(...));
-            $declarations[] = $reader->table($tables->identifiers->dialect === \SqlSemantics\Dialect::Sqlite ? $statement : $create);
+        if ($kind === 'PRAGMA') {
+            return \SqlSemantics\Binding\Configuration\PragmaBinder::bind($origin, $statement, new \SqlSemantics\Binding\Scope($this->context->tables->identifiers, queries: $this->context));
         }
-        $targets = array_map(fn (\SqlSemantics\Schema\TableDefinition $table): \SqlSemantics\Model\TableUse => new \SqlSemantics\Model\TableUse($this->context->ids->relation(), $id, $table, null, $table->source), $declarations);
-        $index = (new \SqlSemantics\Ast\Definition\IndexReader($tables->identifiers, $tables->defaultSchema))->read($statement);
-        if ($index !== null) {
-            $target = $tables->resolve($index->table, $statement);
-            $targets[] = new \SqlSemantics\Model\TableUse($this->context->ids->relation(), $id, $target, null, $statement);
+        $declaration = Definition\CreateBinder::bind($origin, $statement, $this->context);
+        if ($declaration !== null) {
+            return $declaration;
         }
-        $scope = new \SqlSemantics\Binding\Scope($tables->identifiers, $targets, queries: $this->context);
-        $indexes = $index === null ? array_merge(...array_map(static fn ($table): array => $table->indexes, $declarations)) : [$index];
-        $boundIndexes = array_map(static fn ($definition): \SqlSemantics\Model\Definition\IndexDeclaration => \SqlSemantics\Binding\Schema\IndexBinder::bind($definition, $scope), $indexes);
-        $definitions = array_map(static fn ($target): \SqlSemantics\Model\Definition\TableDeclaration => (new \SqlSemantics\Binding\Schema\DefinitionBinder())->bind($target, $scope), array_slice($targets, 0, count($declarations)));
-        $settings = in_array($kind, ['SET', 'RESET', 'PRAGMA'], true) ? (new \SqlSemantics\Binding\Configuration\SettingBinder())->bind($statement, $scope) : [];
-        $expressions = [];
-        foreach (Tree::outer($statement, ['a_expr', 'expr', 'SelectStmt', 'select_stmt', 'query_expression', 'select', ...array_column($commands, 'name')]) as $node) {
-            if (in_array($node->name, ['a_expr', 'expr'], true)) {
-                $expressions[] = (new \SqlSemantics\Binding\ExpressionBinder())->bind($node, $scope);
-            }
+        $configuration = \SqlSemantics\Binding\Configuration\ConfigurationBinder::bind($origin, $statement, $kind, new \SqlSemantics\Binding\Scope($this->context->tables->identifiers, queries: $this->context));
+        if ($configuration !== null) {
+            return $configuration;
         }
-        $class = $declarations !== [] ? \SqlSemantics\Model\Statement\CreateTableStatement::class : ($index !== null ? \SqlSemantics\Model\Statement\CreateIndexStatement::class : (in_array($kind, ['SET', 'RESET', 'PRAGMA'], true) ? \SqlSemantics\Model\Statement\ConfigurationStatement::class : \SqlSemantics\Model\Statement\CommandStatement::class));
-        return new $class($id, null, [], [], null, false, [], null, null, $source, clauses: ['arguments' => $expressions], kind: $kind, targets: $targets, queries: $queries, syntaxClauses: \SqlSemantics\Binding\Query\QueryNodes::clauses($statement), declarations: $declarations, settings: $settings, definitions: $definitions, statements: $statements, indexes: $boundIndexes);
+        throw new UnclassifiedSql('Unclassified statement ' . $statement->name . ': ' . $source->toString());
     }
     /**
      * Stops at each nested command boundary, including utility wrappers around queries.

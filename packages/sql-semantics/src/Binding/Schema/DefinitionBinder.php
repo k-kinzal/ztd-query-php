@@ -7,9 +7,7 @@ namespace SqlSemantics\Binding\Schema;
 use SqlParser\Parser\Node;
 use SqlSemantics\Ast\Tree;
 use SqlSemantics\Binding\ExpressionBinder;
-use SqlSemantics\Binding\ExpressionRules;
 use SqlSemantics\Binding\Scope;
-use SqlSemantics\Binding\Write\AssignmentRules;
 use SqlSemantics\Model\Definition\TableDeclaration;
 use SqlSemantics\Model\Expression;
 use SqlSemantics\Model\TableUse;
@@ -26,30 +24,7 @@ final class DefinitionBinder
      */
     public function bind(TableUse $target, Scope $scope): TableDeclaration
     {
-        $defaults = [];
-        $generated = [];
-        foreach ($target->declaration->columns as $column) {
-            if ($column->defaultExpression === null && $column->generatedExpression === null) {
-                continue;
-            }
-            $destination = $scope->column([$target->declaration->name, $column->name], $column->source);
-            if ($column->defaultExpression !== null) {
-                $defaults[$column->name] = $this->expression($column->defaultExpression, $scope);
-                (new AssignmentRules())->check($destination, $defaults[$column->name], $scope, false);
-            }
-            if ($column->generatedExpression !== null) {
-                $generated[$column->name] = $this->expression($column->generatedExpression, $scope);
-                (new AssignmentRules())->check($destination, $generated[$column->name], $scope, false);
-            }
-        }
-        $checks = [];
-        foreach ($target->declaration->constraints as $index => $constraint) {
-            if ($constraint->expression !== null) {
-                $checks[$index] = (new ExpressionBinder())->bind($constraint->expression, $scope);
-                (new ExpressionRules($scope->identifiers->dialect, $scope->diagnostics()))->predicate($checks[$index]);
-            }
-        }
-        return new TableDeclaration($target->declaration, $defaults, $generated, $checks);
+        return new TableDeclaration($target->declaration);
     }
 
     /**
@@ -62,8 +37,13 @@ final class DefinitionBinder
             return (new ExpressionBinder())->bind($expression, $scope);
         }
         $tokens = $source->tokens();
-        if (strtoupper($tokens[0]->text ?? '') === 'DEFAULT') {
-            array_shift($tokens);
+        $default = array_search('DEFAULT', array_map(static fn ($token): string => strtoupper($token->text), $tokens), true);
+        if ($default !== false) {
+            $tokens = array_slice($tokens, $default + 1);
+            if ($scope->identifiers->dialect === \SqlSemantics\Dialect::Sqlite && count($tokens) === 1 && in_array($tokens[0]->name, ['ID', 'INDEXED'], true)) {
+                $literal = Expression::literal($scope->identifiers->name($tokens[0]), $scope->identifiers->dialect);
+                return new \SqlSemantics\Model\Scalar\Value\Literal($literal->facts, $source, \SqlSemantics\Model\Scalar\Value\LiteralKind::Text, $literal->spelling() ?? '');
+            }
         }
         return (new ExpressionBinder())->bind(new Node('declaration_value', 0, $tokens), $scope);
     }

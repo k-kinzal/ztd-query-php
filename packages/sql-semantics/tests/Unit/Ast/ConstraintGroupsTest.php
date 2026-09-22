@@ -88,8 +88,6 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
 #[UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
-#[UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
 #[UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
@@ -117,20 +115,14 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\StatementFactory::class)]
 #[UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -156,30 +148,29 @@ final class ConstraintGroupsTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::Sqlite))->build('create table t (id integer constraint positive check(id>0), n integer, constraint both unique(id,n), constraint valid check(n>0))');
         self::assertSame(['positive','both','valid'], array_column($schema->tables[0]->constraints, 'name'));
-        self::assertSame(['id','n'], $schema->tables[0]->constraints[1]->columns);
+        self::assertSame(['id','n'], $schema->tables[0]->constraints[1]->localColumns());
     }
 
 
     #[\PHPUnit\Framework\Attributes\DataProvider('providerCheckingTime')]
-    public function testReadAssociatesPostgresCheckingTimeWithItsConstraint(string $attributes, bool $deferrable, bool $deferred): void
+    public function testReadAssociatesPostgresCheckingTimeWithItsConstraint(string $attributes, \SqlSemantics\Schema\Constraint\CheckingTime $checking): void
     {
         $table = (new SchemaBuilder(Dialect::PostgreSql))->build('create table t(id integer references parent(id) ' . $attributes . ', other integer references parent(id))')->tables[0];
         self::assertCount(2, $table->constraints);
-        self::assertSame($deferrable, $table->constraints[0]->deferrable);
-        self::assertSame($deferred, $table->constraints[0]->initiallyDeferred);
-        self::assertFalse($table->constraints[1]->deferrable);
-        self::assertFalse($table->constraints[1]->initiallyDeferred);
+        self::assertSame($checking, $table->constraints[0]->checking);
+        self::assertSame(\SqlSemantics\Schema\Constraint\CheckingTime::Immediate, $table->constraints[1]->checking);
+        self::assertNotSame(\SqlSemantics\Schema\Constraint\CheckingTime::DeferrableDeferred, $table->constraints[1]->checking);
     }
 
     /**
-     * @return iterable<array{string, bool, bool}>
+     * @return iterable<array{string, \SqlSemantics\Schema\Constraint\CheckingTime}>
      */
     public static function providerCheckingTime(): iterable
     {
-        yield ['deferrable', true, false];
-        yield ['not deferrable', false, false];
-        yield ['deferrable initially deferred', true, true];
-        yield ['initially deferred', true, true];
+        yield ['deferrable', \SqlSemantics\Schema\Constraint\CheckingTime::DeferrableImmediate];
+        yield ['not deferrable', \SqlSemantics\Schema\Constraint\CheckingTime::Immediate];
+        yield ['deferrable initially deferred', \SqlSemantics\Schema\Constraint\CheckingTime::DeferrableDeferred];
+        yield ['initially deferred', \SqlSemantics\Schema\Constraint\CheckingTime::DeferrableDeferred];
     }
 
 }

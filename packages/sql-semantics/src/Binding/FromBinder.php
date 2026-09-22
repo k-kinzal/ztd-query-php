@@ -12,7 +12,6 @@ use SqlSemantics\Binding\Query\QueryRelation;
 use SqlSemantics\Binding\Query\RelationFactory;
 use SqlSemantics\Model\Join;
 use SqlSemantics\Model\JoinKind;
-use SqlSemantics\Model\TableUse;
 
 /**
  * Binds relation trees, keeping ON visibility and NULL extension at their correct stages.
@@ -125,14 +124,14 @@ final class FromBinder
         $kind = $this->kind($kindNode === null ? $joinWords : Tree::text($kindNode), $node);
         $qualifier = Tree::child($node, ['join_qual']);
         $condition = $qualifier === null ? Tree::child($node, ['expr']) : (Tree::outer($qualifier, ['a_expr'])[0] ?? null);
-        if ($kindNode === null && in_array('CROSS', array_map(static fn ($token): string => strtoupper($token->text), $node->tokens()), true)) {
+        if ($kindNode === null && in_array('CROSS', explode(' ', strtoupper($joinWords)), true)) {
             $kind = JoinKind::Cross;
         }
         $id = $this->ids->join();
         $left = $this->relation($references[0]);
         $lateral = str_starts_with(strtoupper(Tree::text($references[1])), 'LATERAL') || QueryNodes::local($references[1], ['func_table', 'table_function', 'json_table', 'xmltable']) !== [];
         $right = ($lateral ? new self($this->tables, $this->ids, $this->queries, $left->scope, $this->scopeId) : $this)->relation($references[1]);
-        if (($qualifier !== null && str_starts_with(strtoupper(Tree::text($qualifier)), 'USING')) || str_contains(strtoupper(Tree::text($kindNode ?? $node)), 'NATURAL')) {
+        if (($qualifier !== null && str_starts_with(strtoupper(Tree::text($qualifier)), 'USING')) || str_contains(strtoupper($joinWords . ' ' . ($kindNode === null ? '' : Tree::text($kindNode))), 'NATURAL')) {
             return (new Query\UsingJoin())->bind($left, $right, $kind, $node, $id, $qualifier);
         }
         $using = Tree::child($node, ['using_list']);
@@ -216,17 +215,19 @@ final class FromBinder
             }
             $alias = $this->tables->identifiers->name($tokens[0]);
         }
-        $query = null;
+        $definition = null;
         if (count($parts) === 1) {
             foreach ($this->queries->ctes ?? [] as $name => $candidate) {
                 if ($this->tables->identifiers->equal((string) $name, $parts[0])) {
-                    $query = $candidate;
+                    $definition = $candidate;
                     break;
                 }
             }
         }
-        $declaration = $query === null ? $this->tables->resolve($parts, $source) : QueryRelation::declaration($query, $parts[0], [], $source);
-        $table = new TableUse($this->ids->relation(), $this->scopeId, $declaration, $alias, $source, $query);
+        $declaration = $definition === null ? $this->tables->resolve($parts, $source) : QueryRelation::declaration($definition->query, $definition->name, $definition->columns, $source);
+        $table = $definition === null
+            ? new \SqlSemantics\Model\Relation\TableReference($this->ids->relation(), $this->scopeId, $declaration, $this->tables->name($parts, $declaration), $alias, $source)
+            : new \SqlSemantics\Model\Relation\CteReference($this->ids->relation(), $this->scopeId, $declaration, $alias, $source, $definition);
 
         $relation = new BoundRelation($table, new Scope($this->tables->identifiers, [$table], parent: $this->parent, queries: $this->queries));
         return $aliasNode !== null && str_contains(Tree::text($aliasNode), '(') ? (new RelationFactory())->alias($relation, $aliasNode, $source, $this->queries ?? new QueryContext($this->tables, $this->ids), $this->scopeId) : $relation;
@@ -247,7 +248,7 @@ final class FromBinder
         $aliasParts = array_values(array_filter($aliasParts, static fn (string $name): bool => !in_array(strtoupper($name), ['AS', '(', ')', ','], true)));
         $alias = $aliasParts[0] ?? $query->scopeId;
         $declaration = QueryRelation::declaration($query, $alias, array_slice($aliasParts, 1), $source);
-        $table = new TableUse($this->ids->relation(), $this->scopeId, $declaration, $alias, $source, $query);
+        $table = new \SqlSemantics\Model\Relation\DerivedRelation($this->ids->relation(), $this->scopeId, $declaration, $alias, $source, $query, array_slice($aliasParts, 1), str_starts_with(strtoupper(Tree::text($source)), 'LATERAL '));
         return new BoundRelation($table, new Scope($this->tables->identifiers, [$table], parent: $this->parent, queries: $context));
     }
 
@@ -303,6 +304,11 @@ final class FromBinder
         $leftScope = in_array($kind, [JoinKind::Right, JoinKind::Full], true) ? $left->scope->extend($id) : $left->scope;
         $rightScope = in_array($kind, [JoinKind::Left, JoinKind::Full], true) ? $right->scope->extend($id) : $right->scope;
 
-        return new BoundRelation(new Join($id, $kind, $left->relation, $right->relation, $expression, $source), $leftScope->combine($rightScope, $source));
+        $relation = match (true) {
+            $expression !== null => new \SqlSemantics\Model\Relation\Joining\OnJoin($id, $kind, $left->relation, $right->relation, $expression, $source),
+            in_array($kind, [JoinKind::Left, JoinKind::Right, JoinKind::Full], true) => new \SqlSemantics\Model\Relation\Joining\UnconditionalOuterJoin($id, $kind, $left->relation, $right->relation, $source),
+            default => new \SqlSemantics\Model\Relation\Joining\CrossJoin($id, $left->relation, $right->relation, $source),
+        };
+        return new BoundRelation($relation, $leftScope->combine($rightScope, $source));
     }
 }

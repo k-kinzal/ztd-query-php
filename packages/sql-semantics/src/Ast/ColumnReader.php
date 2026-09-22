@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Ast;
 
 use SqlParser\Parser\Node;
-use SqlSemantics\Schema\ColumnDefinition;
-use SqlSemantics\Schema\TableConstraint;
+use SqlSemantics\Ast\Declaration\ColumnDefinition;
+use SqlSemantics\Ast\Declaration\TableConstraint;
 use SqlSemantics\Type\Nullability;
 use SqlSemantics\Type\TypeDescriptor;
 
@@ -36,7 +36,7 @@ final class ColumnReader
             Tree::invalid($node, 'column declaration');
         }
         $name = $this->identifiers->parts($nameNode)[0];
-        $type = $typeNode === null ? new TypeDescriptor($this->identifiers->dialect, '', affinity: 'blob') : (new TypeReader($this->identifiers->dialect))->read($typeNode);
+        $type = $typeNode === null ? new TypeDescriptor($this->identifiers->dialect, new \SqlSemantics\Type\Identity\SqliteDeclaration('', \SqlSemantics\Type\Identity\StorageAffinity::Blob)) : (new TypeReader($this->identifiers->dialect))->read($typeNode);
         $nullability = Nullability::MaybeNull;
         $default = null;
         $constraints = [];

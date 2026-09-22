@@ -37,7 +37,7 @@ final class ExpressionRules
         }
         if ($operands === [] || ($name === 'NULLIF' && count($operands) !== 2)) {
             $this->diagnostics->report('invalid-arity', 'Invalid argument count for ' . $name, $source);
-            return new Expression(ExpressionKind::Function, new TypeDescriptor($this->dialect, 'unknown'), Nullability::Unknown, $source, $operands, symbol: $name);
+            return new \SqlSemantics\Model\Scalar\Function\FunctionCall(new \SqlSemantics\Model\Scalar\ExpressionFacts(TypeDescriptor::builtin($this->dialect, 'unknown'), Nullability::Unknown), $source, new \SqlSemantics\Model\Scalar\Function\UnresolvedFunction(new \SqlSemantics\Model\Scalar\Function\FunctionName([$name])), $operands);
         }
         $type = (new TypeResolution($this->dialect, $this->diagnostics))->common($operands, $source);
         if ($name === 'COALESCE') {
@@ -45,11 +45,11 @@ final class ExpressionRules
                 $operands = array_map(fn (Expression $operand): Expression => $this->coerce($operand, $type), $operands);
             }
             $nullability = NullFacts::coalesce($operands);
-            return new Expression(ExpressionKind::Coalesce, $type, $nullability, $source, $operands, symbol: $name, nullExtendedBy: NullFacts::extensions($operands, $nullability));
+            return new \SqlSemantics\Model\Scalar\Conditional\Coalesce(new \SqlSemantics\Model\Scalar\ExpressionFacts($type, $nullability, NullFacts::extensions($operands, $nullability)), $source, $operands);
         }
         $type = $operands[0]->type;
         $nullability = $operands[0]->nullability === Nullability::AlwaysNull ? Nullability::AlwaysNull : Nullability::MaybeNull;
-        return new Expression(ExpressionKind::NullIf, $type, $nullability, $source, $operands, symbol: $name, nullExtendedBy: NullFacts::extensions($operands, $nullability));
+        return new \SqlSemantics\Model\Scalar\Conditional\NullIf(new \SqlSemantics\Model\Scalar\ExpressionFacts($type, $nullability, NullFacts::extensions($operands, $nullability)), $source, ($operands)[0], ($operands)[1]);
     }
 
     /**
@@ -61,7 +61,7 @@ final class ExpressionRules
             return $operand;
         }
 
-        return new Expression(ExpressionKind::Cast, $type, $operand->nullability, $operand->source, [$operand], symbol: 'implicit', nullExtendedBy: $operand->nullExtendedBy);
+        return new \SqlSemantics\Model\Scalar\Operator\CastExpression(new \SqlSemantics\Model\Scalar\ExpressionFacts($type, $operand->nullability, $operand->nullExtendedBy), $operand->source, ([$operand])[0], \SqlSemantics\Model\Scalar\Operator\CastMode::Implicit);
     }
 
     /**
@@ -69,7 +69,18 @@ final class ExpressionRules
      */
     public function operator(string $operator, array $operands, Node $source): Expression
     {
-        $operator = strtoupper($operator);
+        $operator = match (strtoupper($operator)) {
+            'ISNULL' => 'IS NULL',
+            'NOTNULL', 'NOT NULL' => 'IS NOT NULL',
+            default => strtoupper($operator),
+        };
+        if (in_array($operator, ['MEMBER', 'MEMBER OF'], true) && count($operands) === 2) {
+            return new \SqlSemantics\Model\Scalar\Conditional\JsonMembership(new \SqlSemantics\Model\Scalar\ExpressionFacts((new TypeResolution($this->dialect, $this->diagnostics))->boolean(), NullFacts::strict($operands)), $source, $operands[0], $operands[1]);
+        }
+        $pattern = preg_replace('/^(?:NOT )?(LIKE|ILIKE|GLOB|REGEXP|RLIKE|MATCH|SIMILAR TO)(?: ESCAPE)?$/', '$1', $operator);
+        if ($pattern !== null && \SqlSemantics\Model\Scalar\Conditional\PatternOperator::tryFrom($pattern === 'RLIKE' ? 'REGEXP' : $pattern) !== null) {
+            return \SqlSemantics\Model\Scalar\Operator\Operations::make(new \SqlSemantics\Model\Scalar\ExpressionFacts((new TypeResolution($this->dialect, $this->diagnostics))->boolean(), NullFacts::strict($operands)), $source, $operator, $operands);
+        }
         $nullability = NullFacts::strict($operands);
         $types = new TypeResolution($this->dialect, $this->diagnostics);
         if (in_array($operator, ['IS NULL', 'IS NOT NULL'], true)) {
@@ -81,7 +92,7 @@ final class ExpressionRules
             }
             $type = $types->boolean();
             $nullability = NullFacts::coalesce($operands) === Nullability::NotNull && NullFacts::strict($operands) === Nullability::NotNull ? Nullability::NotNull : Nullability::MaybeNull;
-        } elseif (in_array($operator, ['=', '<>', '!=', '<', '>', '<=', '>=', 'IS', 'IS NOT', '<=>', 'LIKE', 'NOT LIKE', 'ILIKE', 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN', 'REGEXP', 'GLOB', 'MATCH', 'IS DISTINCT FROM', 'IS NOT DISTINCT FROM'], true)) {
+        } elseif (in_array($operator, ['=', '<>', '!=', '<', '>', '<=', '>=', 'IS', 'IS NOT', '<=>', 'LIKE', 'NOT LIKE', 'ILIKE', 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN', 'REGEXP', 'NOT REGEXP', 'GLOB', 'NOT GLOB', 'MATCH', 'NOT MATCH', 'SIMILAR TO', 'NOT SIMILAR TO', 'IS DISTINCT FROM', 'IS NOT DISTINCT FROM'], true)) {
             $types->common($operands, $source);
             $type = $types->boolean();
             if (in_array($operator, ['IS', 'IS NOT', '<=>'], true)) {
@@ -90,11 +101,11 @@ final class ExpressionRules
         } elseif (in_array($operator, ['+', '-', '*', '/', '%', 'DIV', 'MOD', '^', '&', '|', '<<', '>>'], true)) {
             $type = $this->arithmetic($operator, $operands, $source);
         } else {
-            $type = new TypeDescriptor($this->dialect, $operator === '||' ? 'text' : 'unknown');
+            $type = TypeDescriptor::builtin($this->dialect, $operator === '||' ? 'text' : 'unknown');
             $nullability = Nullability::Unknown;
         }
 
-        return new Expression(ExpressionKind::Operator, $type, $nullability, $source, $operands, symbol: $operator, nullExtendedBy: NullFacts::extensions($operands, $nullability));
+        return \SqlSemantics\Model\Scalar\Operator\Operations::make(new \SqlSemantics\Model\Scalar\ExpressionFacts($type, $nullability, NullFacts::extensions($operands, $nullability)), $source, $operator, $operands);
     }
 
     /**
@@ -106,17 +117,17 @@ final class ExpressionRules
     {
         $type = (new TypeResolution($this->dialect, $this->diagnostics))->common($operands, $source);
         if ($this->dialect === Dialect::PostgreSql && $operator === '-' && count($operands) === 1 && $operands[0]->kind === ExpressionKind::Literal) {
-            $magnitude = str_replace('_', '', $operands[0]->symbol ?? '');
+            $magnitude = str_replace('_', '', $operands[0]->spelling() ?? '');
             $type = match ($magnitude) {
-                '2147483648' => new TypeDescriptor($this->dialect, 'integer'),
-                '9223372036854775808' => new TypeDescriptor($this->dialect, 'bigint'),
+                '2147483648' => TypeDescriptor::builtin($this->dialect, 'integer'),
+                '9223372036854775808' => TypeDescriptor::builtin($this->dialect, 'bigint'),
                 default => $type,
             };
         }
         if ($this->dialect === Dialect::MySql) {
-            $type = new TypeDescriptor($this->dialect, in_array($type->name, ['real', 'double precision'], true) ? 'double precision' : ($operator === '/' || $type->name === 'numeric' ? 'numeric' : 'bigint'));
+            $type = TypeDescriptor::builtin($this->dialect, in_array($type->name, ['real', 'double precision'], true) ? 'double precision' : ($operator === '/' || $type->name === 'numeric' ? 'numeric' : 'bigint'));
         } elseif ($this->dialect === Dialect::Sqlite) {
-            $type = new TypeDescriptor($this->dialect, 'dynamic');
+            $type = TypeDescriptor::builtin($this->dialect, 'dynamic');
         }
         return $type;
     }

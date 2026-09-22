@@ -95,9 +95,7 @@ use SqlSemantics\Type\TypeDescriptor;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\IndexDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ConstraintGroups::class)]
@@ -118,19 +116,13 @@ use SqlSemantics\Type\TypeDescriptor;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\StatementFactory::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -148,27 +140,27 @@ final class BuiltinResultTest extends TestCase
 {
     public function testResolvePreservesModifiersForArgumentDependentFunctions(): void
     {
-        $type = new TypeDescriptor(Dialect::PostgreSql, 'numeric', ['10', '2']);
+        $type = new TypeDescriptor(Dialect::PostgreSql, new \SqlSemantics\Type\Identity\Numeric\NumericStorage(\SqlSemantics\Type\Identity\BuiltinIdentity::Numeric, new \SqlSemantics\Type\Identity\Numeric\NumericParameter('10'), new \SqlSemantics\Type\Identity\Numeric\NumericParameter('2')));
         self::assertSame($type, (new \SqlSemantics\Schema\Functions\BuiltinResult('MIN', Dialect::PostgreSql))->resolve([$type]));
-        self::assertSame('integer[]', (new \SqlSemantics\Schema\Functions\BuiltinResult('ARRAY_AGG', Dialect::PostgreSql))->resolve([new TypeDescriptor(Dialect::PostgreSql, 'integer')])->name);
+        self::assertSame('integer[]', (new \SqlSemantics\Schema\Functions\BuiltinResult('ARRAY_AGG', Dialect::PostgreSql))->resolve([new TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('integer'))])->name);
         self::assertSame('unknown', (new \SqlSemantics\Schema\Functions\BuiltinResult('ARRAY_AGG', Dialect::PostgreSql))->resolve([])->name);
-        self::assertSame('real', (new \SqlSemantics\Schema\Functions\BuiltinResult('AVG', Dialect::Sqlite))->resolve([new TypeDescriptor(Dialect::Sqlite, 'integer')])->name);
+        self::assertSame('real', (new \SqlSemantics\Schema\Functions\BuiltinResult('AVG', Dialect::Sqlite))->resolve([new TypeDescriptor(Dialect::Sqlite, \SqlSemantics\Type\Identity\BuiltinIdentity::from('integer'))])->name);
     }
 
 
     public function testResolveSQLiteSumAndUnknownNumericInputs(): void
     {
-        self::assertSame('dynamic', (new \SqlSemantics\Schema\Functions\BuiltinResult('SUM', Dialect::Sqlite))->resolve([new TypeDescriptor(Dialect::Sqlite, 'integer')])->name);
+        self::assertSame('dynamic', (new \SqlSemantics\Schema\Functions\BuiltinResult('SUM', Dialect::Sqlite))->resolve([new TypeDescriptor(Dialect::Sqlite, \SqlSemantics\Type\Identity\BuiltinIdentity::from('integer'))])->name);
         self::assertSame('unknown', (new \SqlSemantics\Schema\Functions\BuiltinResult('SUM', Dialect::PostgreSql))->resolve([])->name);
         self::assertSame('unknown', (new \SqlSemantics\Schema\Functions\BuiltinResult('AVG', Dialect::PostgreSql))->resolve([])->name);
-        self::assertSame('numeric', (new \SqlSemantics\Schema\Functions\BuiltinResult('AVG', Dialect::MySql))->resolve([new TypeDescriptor(Dialect::MySql, 'integer')])->name);
+        self::assertSame('numeric', (new \SqlSemantics\Schema\Functions\BuiltinResult('AVG', Dialect::MySql))->resolve([new TypeDescriptor(Dialect::MySql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('integer'))])->name);
     }
 
 
     #[\PHPUnit\Framework\Attributes\DataProvider('providerNumericResults')]
     public function testResolvePreservesOrWidensNumericInputs(Dialect $dialect, string $name, string $input, string $expected): void
     {
-        $result = (new \SqlSemantics\Schema\Functions\BuiltinResult($name, $dialect))->resolve([new TypeDescriptor($dialect, $input)]);
+        $result = (new \SqlSemantics\Schema\Functions\BuiltinResult($name, $dialect))->resolve([new TypeDescriptor($dialect, \SqlSemantics\Type\Identity\BuiltinIdentity::from($input))]);
         self::assertSame($dialect, $result->dialect);
         self::assertSame($expected, $result->name);
     }

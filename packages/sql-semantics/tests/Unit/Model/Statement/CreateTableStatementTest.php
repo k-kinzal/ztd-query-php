@@ -56,8 +56,6 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\IndexEvolution::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\TableAlteration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryRelation::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryContext::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\UsingJoin::class)]
@@ -102,16 +100,12 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Assignment::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -119,9 +113,7 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\IndexDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(InvalidStructure::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Sql\Literal::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Sql\ExpressionFactory::class)]
@@ -152,19 +144,24 @@ final class CreateTableStatementTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)'));
         $statement = $binder->bind('CREATE TABLE x(id INTEGER)');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $statement);
-        $replacement = $binder->bind('CREATE TABLE y(id TEXT NOT NULL)')->declarations[0]->columns[0];
-        $changed = $statement->withColumn($statement->declarations[0]->columns[0], $replacement);
-        self::assertSame('text', $changed->declarations[0]->columns[0]->type->name);
-        self::assertSame('not-null', $changed->declarations[0]->columns[0]->nullability->value);
-        self::assertSame('integer', $statement->declarations[0]->columns[0]->type->name);
+        $boundQuery1 = $binder->bind('CREATE TABLE y(id TEXT NOT NULL)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $boundQuery1);
+        $replacement = $boundQuery1->definition->table->columns[0];
+        $changed = $statement->withColumn($statement->definition->table->columns[0], $replacement);
+        self::assertSame('text', $changed->definition->table->columns[0]->type->name);
+        self::assertSame('not-null', $changed->definition->table->columns[0]->nullability->value);
+        self::assertSame('integer', $statement->definition->table->columns[0]->type->name);
     }
 
     public function testWithColumnRejectsAnInvalidTarget(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
         $statement = $binder->bind('CREATE TABLE x(id INTEGER)');
-        $column = $binder->bind('CREATE TABLE y(id INTEGER)')->declarations[0]->columns[0];
         self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $statement);
+        $boundQuery1 = $binder->bind('CREATE TABLE y(id INTEGER)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $boundQuery1);
+        $column = $boundQuery1->definition->table->columns[0];
+
         $this->expectException(InvalidStructure::class);
         $this->expectExceptionMessage('The column does not belong to this table declaration.');
         $statement->withColumn($column, $column);

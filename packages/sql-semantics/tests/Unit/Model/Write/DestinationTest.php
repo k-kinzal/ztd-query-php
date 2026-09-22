@@ -80,8 +80,6 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ConstraintGroups::class)]
@@ -113,20 +111,14 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\StatementFactory::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -147,16 +139,18 @@ final class DestinationTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER[],r custom_record)'));
         $input = $binder->bind('INSERT INTO t(a[1],r.field) VALUES(1,2)')->insertion;
         self::assertNotNull($input);
-        self::assertSame('subscript', $input->columns[0]->kind->value);
-        self::assertSame('field', $input->columns[1]->kind->value);
-        self::assertSame('a', \SqlSemantics\Model\Write\Destination::column($input->columns[0])->binding?->column->name);
-        self::assertSame('1', $input->columns[0]->operands[1]->symbol);
-        self::assertSame('r', \SqlSemantics\Model\Write\Destination::column($input->columns[1])->binding?->column->name);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Storage\ElementPath::class, $input->columns[0]);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Storage\FieldPath::class, $input->columns[1]);
+        self::assertSame('a', $input->columns[0]->column()->columnBinding()?->column->name);
+        self::assertSame('1', $input->columns[0]->index->spelling());
+        self::assertSame('r', $input->columns[1]->column()->columnBinding()?->column->name);
         self::assertSame([], $input->omittedColumns);
     }
     public function testColumnRejectsAnArithmeticDestination(): void
     {
-        $value = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1+2')->outputs[0]->expression;
+        $boundQuery1 = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1+2');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery1);
+        $value = $boundQuery1->outputs[0]->expression;
         $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
         \SqlSemantics\Model\Write\Destination::column($value);
     }

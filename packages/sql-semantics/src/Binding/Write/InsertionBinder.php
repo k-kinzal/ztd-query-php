@@ -23,7 +23,7 @@ use SqlSemantics\Model\Write\Insertion;
 final class InsertionBinder
 {
     /**
-     * @param list<list<Expression>> $rows
+     * @param list<list<Expression|\SqlSemantics\Model\Write\DefaultSource>> $rows
      * @param list<BoundQuery> $queries
      * @param list<Assignment> $assignments
      */
@@ -35,28 +35,28 @@ final class InsertionBinder
         $columns = array_map(static fn (Node $name): Expression => (new AssignmentBinder())->target($name, $destinations ?? $scope), $names);
         $defaults = $this->defaultValues($statement);
         if ($assignments !== []) {
-            $columns = array_merge(...array_map(static fn (Assignment $assignment): array => $assignment->targets, $assignments));
+            $columns = array_merge(...array_map(static fn (Assignment $assignment): array => $assignment->destinations(), $assignments));
         } elseif (!$explicit && !$defaults) {
             $width = count($target->declaration->columns);
             if ($scope->identifiers->dialect === \SqlSemantics\Dialect::PostgreSql) {
-                $width = count($rows[0] ?? ($queries[0]->outputs ?? $target->declaration->columns));
+                $width = count($rows[0] ?? (isset($queries[0]) ? $queries[0]->resultColumns() : $target->declaration->columns));
             }
             foreach (array_slice($target->declaration->columns, 0, $width) as $column) {
                 $columns[] = $scope->column([$target->alias ?? $target->declaration->name, $column->name], $statement);
             }
         }
+        $columns = array_map(static fn (Expression|\SqlSemantics\Model\Write\Storage\Path $column): \SqlSemantics\Model\Write\Storage\Path => $column instanceof Expression ? StoragePathBinder::bind($column) : $column, $columns);
         $seen = [];
         foreach ($columns as $destination) {
-            $column = \SqlSemantics\Model\Write\Destination::column($destination);
-            $name = $column->binding?->column->name ?? implode('.', $column->reference);
-            if ($destination === $column && in_array($name, $seen, true)) {
+            $column = $destination->column();
+            $name = $column->columnBinding()?->column->name ?? implode('.', $column->referenceParts());
+            if ($destination instanceof \SqlSemantics\Model\Write\Storage\ColumnPath && in_array($name, $seen, true)) {
                 $scope->diagnostics()->report('duplicate-insert-column', 'An INSERT column is specified more than once.', $column->source);
             }
             $seen[] = $name;
         }
-        $omitted = array_values(array_filter($target->declaration->columns, static fn ($column): bool => !in_array($column->name, $seen, true)));
-        $insertion = new Insertion($target, $columns, $explicit, $defaults, $omitted);
-        $inputs = $rows !== [] ? $rows : array_map(static fn (BoundQuery $query): array => array_map(static fn ($output): Expression => $output->expression, $query->outputs), $queries);
+        $insertion = new Insertion($target, $columns, $explicit);
+        $inputs = $rows !== [] ? $rows : array_map(static fn (BoundQuery $query): array => array_map(static fn ($output): Expression => $output->expression, $query->resultColumns()), $queries);
         if ($explicit || $target->declaration->resolved) {
             foreach ($inputs as $row) {
                 $this->checkRow($insertion, $row, $scope, $statement);
@@ -79,19 +79,20 @@ final class InsertionBinder
     /**
      * Unknown-width stars defer width checking while retaining their input query.
      *
-     * @param list<Expression> $values
+     * @param list<Expression|\SqlSemantics\Model\Write\DefaultSource> $values
+     * @throws \SqlSemantics\InvalidSql
      */
     public function checkRow(Insertion $insertion, array $values, Scope $scope, Node $source): void
     {
-        if (array_filter($values, static fn (Expression $value): bool => $value->kind === ExpressionKind::Wildcard) !== []) {
+        if (array_filter($values, static fn (Expression|\SqlSemantics\Model\Write\DefaultSource $value): bool => $value instanceof Expression && $value->kind === ExpressionKind::Wildcard) !== []) {
             return;
         }
         if (count($values) !== count($insertion->columns) && $values !== []) {
-            $scope->diagnostics()->report('insert-column-count', 'INSERT destinations and input values have different widths.', $source);
+            throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::InsertWidth, $source);
         }
         foreach ($insertion->columns as $index => $column) {
             if (isset($values[$index])) {
-                (new AssignmentRules())->check($column, $values[$index], $scope);
+                (new AssignmentRules())->checkPath($column, $values[$index], $scope);
             }
         }
     }

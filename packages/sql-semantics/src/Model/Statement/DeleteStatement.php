@@ -4,27 +4,56 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Model\Statement;
 
-use SqlSemantics\Model\BoundStatement;
-use SqlSemantics\Model\Expression;
-use SqlSemantics\Model\Sql;
+use Override;
 
 /**
- * A DELETE with distinct affected tables, read inputs, and a row predicate.
- *
- * @example Reading the statement structure
- *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
- *     $statement = (new \SqlSemantics\Binder($schema))->bind('DELETE FROM t WHERE id=1');
- *     $statement->where->symbol // => '='
+ * Common delete effects; each concrete form owns its mandatory table inputs.
  *
  * @visibility public
  */
-final class DeleteStatement extends BoundStatement
+abstract class DeleteStatement extends \SqlSemantics\Model\BoundStatement implements \SqlSemantics\Model\ResultStatement
 {
     /**
-     * Sets or removes the predicate without changing the deletion targets.
+     * @param list<\SqlSemantics\Model\OutputColumn> $outputs
+     * @throws \SqlSemantics\Model\Validation\InvalidStructure
      */
-    public function withWhere(?Expression $where): self
-    {
-        return $this->clause('where', Sql\Parts::expressions('WHERE', $where === null ? [] : [$where]));
+    public function __construct(
+        Origin $origin,
+        public readonly ?\SqlSemantics\Model\Expression $where,
+        public readonly array $outputs = [],
+        public readonly ?\SqlSemantics\Model\Query\WithClause $ctes = null,
+    ) {
+        parent::__construct($origin);
+        \SqlSemantics\Model\Validation\StatementOperands::ctes($ctes, $origin->dialect);
+        \SqlSemantics\Model\Validation\StatementOperands::expressions([$where], $origin->dialect);
+        \SqlSemantics\Model\Validation\StatementOperands::outputs($outputs, $origin->dialect, true);
     }
+
+    /**
+     * Returns the fixed operation identity.
+     */
+    #[Override]
+    protected function operation(): StatementKind
+    {
+        return StatementKind::Delete;
+    }
+
+    /**
+     * @return list<\SqlSemantics\Model\OutputColumn>
+     */
+    #[Override]
+    public function resultColumns(): array
+    {
+        return $this->outputs;
+    }
+
+    /**
+     * @return non-empty-list<\SqlSemantics\Model\TableUse>
+     */
+    abstract public function affectedTables(): array;
+
+    /**
+     * Replaces the row predicate without mutating table inputs.
+     */
+    abstract public function withWhere(?\SqlSemantics\Model\Expression $where): static;
 }

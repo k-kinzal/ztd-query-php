@@ -105,7 +105,7 @@ final class ProjectionBinder
         }
         $bound = (new ExpressionBinder())->bind($expression, $scope);
         if ($scope->identifiers->dialect === Dialect::PostgreSql && $bound->kind === ExpressionKind::Literal && $bound->type->name === 'unknown') {
-            $bound = (new ExpressionRules(Dialect::PostgreSql))->coerce($bound, new TypeDescriptor(Dialect::PostgreSql, 'text'));
+            $bound = (new ExpressionRules(Dialect::PostgreSql))->coerce($bound, TypeDescriptor::builtin(Dialect::PostgreSql, 'text'));
         }
         $alias = null;
         if ($aliasNode !== null) {
@@ -113,7 +113,7 @@ final class ProjectionBinder
             $alias = $scope->identifiers->name($aliasTokens[count($aliasTokens) - 1]);
         }
 
-        return [new OutputColumn($ordinal, $alias ?? $bound->binding?->column->name ?? ($bound->reference[count($bound->reference) - 1] ?? null), $bound)];
+        return [new OutputColumn($ordinal, $alias ?? $bound->columnBinding()?->column->name ?? ($bound->referenceParts()[count($bound->referenceParts()) - 1] ?? null), $bound)];
     }
 
     /**
@@ -134,7 +134,7 @@ final class ProjectionBinder
                 continue;
             }
             if (!$relation->declaration->resolved) {
-                $outputs[] = new OutputColumn($ordinal + count($outputs), null, new \SqlSemantics\Model\Expression(ExpressionKind::Wildcard, new TypeDescriptor($scope->identifiers->dialect, 'unknown'), \SqlSemantics\Type\Nullability::Unknown, $source, reference: [$relation->alias ?? $relation->declaration->name]));
+                $outputs[] = new OutputColumn($ordinal + count($outputs), null, new \SqlSemantics\Model\Scalar\Reference\Wildcard(new \SqlSemantics\Model\Scalar\ExpressionFacts(TypeDescriptor::builtin($scope->identifiers->dialect, 'unknown'), \SqlSemantics\Type\Nullability::Unknown, []), $source, [$relation->alias ?? $relation->declaration->name]));
             }
             foreach ($relation->declaration->columns as $column) {
                 if ($qualifiers === [] && isset($scope->merged[$column->name])) {
@@ -146,7 +146,7 @@ final class ProjectionBinder
         }
         if ($outputs === []) {
             $scope->diagnostics()->report('unknown-relation', 'Star has no matching relation.', $source);
-            $outputs[] = new OutputColumn($ordinal, null, new \SqlSemantics\Model\Expression(ExpressionKind::Wildcard, new TypeDescriptor($scope->identifiers->dialect, 'unknown'), \SqlSemantics\Type\Nullability::Unknown, $source, reference: $qualifiers));
+            $outputs[] = new OutputColumn($ordinal, null, new \SqlSemantics\Model\Scalar\Reference\Wildcard(new \SqlSemantics\Model\Scalar\ExpressionFacts(TypeDescriptor::builtin($scope->identifiers->dialect, 'unknown'), \SqlSemantics\Type\Nullability::Unknown, []), $source, $qualifiers));
         }
 
         return $outputs;

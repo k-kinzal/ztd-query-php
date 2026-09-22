@@ -66,5 +66,5 @@ $config->setAllowedExceptions([]);
 $config->setMaxLen(80004);
 $config->setTarget(static function (string $input) use ($provider, $planner, $constraints, $target): void {
     $plan = (new BytePlanCompiler())->compile($input, $planner, $constraints);
-    $target->verify($provider->generate($plan), $input);
+    $target->verify($provider->generate($plan));
 });

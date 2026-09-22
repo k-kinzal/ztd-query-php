@@ -40,7 +40,7 @@ final class Builtins
                 $aggregate = in_array($name, ['COUNT', 'SUM', 'AVG', 'MIN', 'MAX', 'TOTAL', 'GROUP_CONCAT', 'STRING_AGG', 'ARRAY_AGG', 'JSON_AGG', 'JSONB_AGG', 'BOOL_AND', 'BOOL_OR', 'EVERY'], true);
                 $notNull = in_array($name, ['COUNT', 'ROW_NUMBER', 'RANK', 'DENSE_RANK', 'NTILE', 'CURRENT_DATE', 'CURRENT_TIMESTAMP', 'RANDOM', 'RAND', 'TOTAL'], true);
                 $strict = in_array($name, ['LOWER', 'UPPER', 'LENGTH', 'CHAR_LENGTH', 'ABS', 'ROUND', 'TRIM', 'LTRIM', 'RTRIM'], true);
-                $return = $type === 'argument' ? (new BuiltinResult($name, $dialect))->resolve(...) : new TypeDescriptor($dialect, $type === 'bigint' && $dialect === Dialect::Sqlite ? 'integer' : $type);
+                $return = $type === 'argument' ? (new BuiltinResult($name, $dialect))->resolve(...) : TypeDescriptor::builtin($dialect, $type === 'bigint' && $dialect === Dialect::Sqlite ? 'integer' : $type);
                 $result[] = new FunctionSignature(strtolower($name), null, $return, $notNull || $strict ? Nullability::NotNull : ($aggregate ? Nullability::MaybeNull : Nullability::Unknown), $strict, aggregate: $aggregate);
             }
         }

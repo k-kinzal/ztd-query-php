@@ -85,8 +85,6 @@ use SqlSemantics\Type\Nullability;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
@@ -115,24 +113,18 @@ use SqlSemantics\Type\Nullability;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Dialect::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\ConstraintKind::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Nullability::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\ExpressionKind::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\JoinKind::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -156,7 +148,7 @@ final class ColumnReaderTest extends TestCase
         $table = (new SchemaBuilder($dialect))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)')->tables[0];
         self::assertSame(Nullability::MaybeNull, $table->columns[1]->nullability);
         self::assertSame(Nullability::NotNull, $table->columns[2]->nullability);
-        self::assertNull($table->columns[1]->defaultExpression);
+        self::assertNull($table->columns[1]->generation->default);
     }
     public function testReadPreservesNamedNullabilityIdentityAndCollation(): void
     {
@@ -164,16 +156,16 @@ final class ColumnReaderTest extends TestCase
         self::assertSame('not-null', $schema->tables[0]->columns[0]->nullability->value);
         self::assertSame('not-null', $schema->tables[0]->columns[1]->nullability->value);
         self::assertSame('maybe-null', $schema->tables[0]->columns[2]->nullability->value);
-        self::assertNull($schema->tables[0]->columns[2]->generatedExpression);
-        self::assertCount(1, $schema->tables[0]->columns[2]->attributes);
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\SuppliedColumn::class, $schema->tables[0]->columns[2]->generation);
+        self::assertSame(['C'], $schema->tables[0]->columns[2]->attributes->collation->parts);
     }
 
     public function testReadSqliteTypelessGeneratedColumn(): void
     {
         $schema = (new SchemaBuilder(Dialect::Sqlite))->build('create table t (id, value as (id + 1))');
         self::assertSame('', $schema->tables[0]->columns[0]->type->name);
-        self::assertSame('blob', $schema->tables[0]->columns[0]->type->affinity);
-        self::assertSame('id + 1', \SqlSemantics\Ast\Tree::text($schema->tables[0]->columns[1]->generatedExpression ?? $schema->tables[0]->source));
+        self::assertSame('blob', $schema->tables[0]->columns[0]->type->affinity?->value);
+        self::assertSame('id + 1', $schema->tables[0]->columns[1]->generation->expression->source->toString());
     }
 
 
@@ -186,11 +178,12 @@ final class ColumnReaderTest extends TestCase
         $schema = (new SchemaBuilder($dialect))->build('create table t (n integer default 1, computed integer generated always as (n + 2) stored)');
         $base = $schema->tables[0]->columns[0];
         $generated = $schema->tables[0]->columns[1];
-        self::assertNull($base->generatedExpression);
-        self::assertNotNull($base->defaultExpression);
-        self::assertNotNull($generated->generatedExpression);
-        self::assertNull($generated->defaultExpression);
-        self::assertSame('n + 2', \SqlSemantics\Ast\Tree::text($generated->generatedExpression));
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\SuppliedColumn::class, $base->generation);
+        self::assertNotNull($base->generation->default);
+        self::assertNotNull($generated->generation->expression);
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\ComputedColumn::class, $generated->generation);
+        self::assertSame('+', $generated->generation->expression->spelling());
+        self::assertSame('n', $generated->generation->expression->lineage()[0]->column->name);
     }
 
 }

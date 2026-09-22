@@ -95,9 +95,7 @@ use SqlSemantics\Type\TypeDescriptor;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\IndexDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ConstraintGroups::class)]
@@ -118,19 +116,13 @@ use SqlSemantics\Type\TypeDescriptor;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\StatementFactory::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -149,79 +141,94 @@ final class OptionReaderTest extends TestCase
     public function testReadTableOptionsWithoutMixingColumnOptions(): void
     {
         $table = (new SchemaBuilder(Dialect::MySql))->build("CREATE TABLE t(id INT, name VARCHAR(10) COLLATE utf8mb4_bin COMMENT 'column') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 ROW_FORMAT=DYNAMIC COMMENT='table'")->tables[0];
-        self::assertSame(['engine' => 'InnoDB', 'character_set' => 'utf8mb4', 'row_format' => 'DYNAMIC', 'comment' => 'table'], $table->options);
-        self::assertSame(['collation' => 'utf8mb4_bin', 'comment' => 'column'], $table->columns[1]->options);
+        self::assertSame('InnoDB', $table->properties->engine);
+        self::assertSame('utf8mb4', $table->properties->characterSet);
+        self::assertSame(\SqlSemantics\Schema\Table\RowFormat::Dynamic, $table->properties->rowFormat);
+        self::assertSame('table', $table->properties->comment);
+        self::assertSame(['utf8mb4_bin'], $table->columns[1]->attributes->collation->parts);
+        self::assertSame('column', $table->columns[1]->attributes->comment);
     }
 
     public function testColumnReadsIdentityAndCharacterSet(): void
     {
         $table = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER GENERATED ALWAYS AS IDENTITY (START WITH 5 INCREMENT BY 2), name TEXT COLLATE "C")')->tables[0];
-        self::assertSame(['identity' => 'always', 'start' => '5', 'increment' => '2'], $table->columns[0]->options);
-        self::assertSame('C', $table->columns[1]->options['collation']);
+        self::assertSame(\SqlSemantics\Schema\Column\IdentityMode::Always, $table->columns[0]->generation->mode);
+        self::assertSame('5', $table->columns[0]->generation->sequence->start->text);
+        self::assertSame('2', $table->columns[0]->generation->sequence->increment->text);
+        self::assertSame(['C'], $table->columns[1]->attributes->collation->parts);
         $mysql = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(10) CHARACTER SET utf8mb4)')->tables[0];
-        self::assertTrue($mysql->columns[0]->options['auto_increment']);
-        self::assertSame('utf8mb4', $mysql->columns[1]->options['character_set']);
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\AutoIncrementColumn::class, $mysql->columns[0]->generation);
+        self::assertSame('utf8mb4', $mysql->columns[1]->type->identity->characterSet);
     }
 
     public function testOptionReadsFlagsAndStorageParameters(): void
     {
         $table = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER PRIMARY KEY) WITHOUT ROWID, STRICT')->tables[0];
-        self::assertSame(['without_rowid' => true, 'strict' => true], $table->options);
+        self::assertTrue($table->properties->withoutRowId);
+        self::assertTrue($table->properties->strict);
         $table = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER) USING heap WITH (fillfactor=80) TABLESPACE fast')->tables[0];
-        self::assertSame(['using' => 'heap', 'fillfactor' => '80', 'tablespace' => 'fast'], $table->options);
+        self::assertSame('heap', $table->properties->accessMethod);
+        self::assertSame('fast', $table->properties->tablespace);
+        self::assertSame(['fillfactor'], $table->properties->storageParameters[0]->name->parts);
+        self::assertSame('80', $table->properties->storageParameters[0]->value->spelling());
     }
 
     public function testValueDecodesQuotedValues(): void
     {
         $table = (new SchemaBuilder(Dialect::MySql))->build("CREATE TABLE t(id INT COMMENT 'it''s a column') COMMENT='it''s a table'")->tables[0];
-        self::assertSame("it's a column", $table->columns[0]->options['comment']);
-        self::assertSame("it's a table", $table->options['comment']);
+        self::assertSame("it's a column", $table->columns[0]->attributes->comment);
+        self::assertSame("it's a table", $table->properties->comment);
     }
 
     public function testColumnReadsNumericAndGeneratedStorageOptions(): void
     {
         $table = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT UNSIGNED ZEROFILL, n INT GENERATED ALWAYS AS (id+1) STORED)')->tables[0];
-        self::assertSame(['unsigned' => true, 'zerofill' => true], $table->columns[0]->options);
-        self::assertSame('stored', $table->columns[1]->options['generated_storage']);
+        self::assertTrue($table->columns[0]->type->identity->unsigned);
+        self::assertTrue($table->columns[0]->attributes->zeroFill);
+        self::assertSame('stored', $table->columns[1]->generation->storage->value);
     }
 
 
     public function testReadKeepsListsFlagsAndQuotedOptionNames(): void
     {
         $table = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TEMP TABLE t(id INTEGER) WITH ("fillfactor"=80) ON COMMIT DELETE ROWS')->tables[0];
-        self::assertTrue($table->options['temporary']);
-        self::assertSame(['DELETE', 'ROWS'], $table->options['on_commit']);
-        self::assertSame('80', $table->options['fillfactor']);
+        self::assertSame(\SqlSemantics\Schema\Table\Persistence::Temporary, $table->properties->persistence);
+        self::assertSame(\SqlSemantics\Schema\Table\CommitAction::DeleteRows, $table->properties->onCommit);
+        self::assertSame('80', $table->properties->storageParameters[0]->value->spelling());
     }
 
     public function testColumnKeepsByDefaultIdentityAndVirtualStorage(): void
     {
         $table = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER GENERATED BY DEFAULT AS IDENTITY)')->tables[0];
-        self::assertSame('by-default', $table->columns[0]->options['identity']);
+        self::assertSame('by-default', $table->columns[0]->generation->mode->value);
         $table = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, n INT GENERATED ALWAYS AS (id+1) VIRTUAL)')->tables[0];
-        self::assertSame('virtual', $table->columns[1]->options['generated_storage']);
+        self::assertSame('virtual', $table->columns[1]->generation->storage->value);
     }
 
 
     public function testReadIfNotExistsAndUniqueNullTreatment(): void
     {
         $schema = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER); CREATE INDEX IF NOT EXISTS ix ON t(id)');
-        self::assertTrue($schema->tables[0]->indexes[0]->options['if_not_exists']);
+        self::assertTrue((new Binder($schema))->bind('CREATE INDEX IF NOT EXISTS ix ON t(id)')->ifNotExists);
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, UNIQUE NULLS NOT DISTINCT(id))');
-        self::assertFalse($schema->tables[0]->indexes[0]->options['nulls_distinct']);
+        self::assertFalse($schema->tables[0]->constraints[0]->nullsDistinct);
     }
 
     public function testReadDefaultCharacterSetAndCollationAliases(): void
     {
         $table = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT) DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_bin')->tables[0];
-        self::assertSame(['character_set' => 'utf8mb4', 'collation' => 'utf8mb4_bin'], $table->options);
+        self::assertSame('utf8mb4', $table->properties->characterSet);
+        self::assertSame('utf8mb4_bin', $table->properties->collation);
     }
 
 
     public function testNameRetainsQualifiedStorageParameterNames(): void
     {
         $table = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER) WITH (toast.autovacuum_enabled=false, "toast"."autovacuum_vacuum_threshold"=20)')->tables[0];
-        self::assertSame(['toast.autovacuum_enabled' => 'false', 'toast.autovacuum_vacuum_threshold' => '20'], $table->options);
+        self::assertSame(['toast', 'autovacuum_enabled'], $table->properties->storageParameters[0]->name->parts);
+        self::assertSame(['toast', 'autovacuum_vacuum_threshold'], $table->properties->storageParameters[1]->name->parts);
+        self::assertSame('false', $table->properties->storageParameters[0]->value->spelling());
+        self::assertSame('20', $table->properties->storageParameters[1]->value->spelling());
     }
 
 }

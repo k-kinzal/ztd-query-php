@@ -1,85 +1,123 @@
 # Schema
 
-Use `SchemaBuilder` to read table definitions from SQL. It returns a `Schema`
-containing the tables, their ordered columns, indexes, options, and declared constraints. Pass that
-schema to [Binder](binder.md) when reading queries and other statements.
+`Schema` describes the state against which SQL is bound: table and column
+identities, declared types, integrity conditions, function signatures, and variable
+declarations. It contains no table rows or runtime variable values. `SchemaBuilder`
+reads definition SQL into an immutable snapshot; [Binder](binder.md) interprets an
+operation against that snapshot.
 
 ## Public interface
 
-| Entry point | Responsibility |
-|-------------|----------------|
-| `new SchemaBuilder(Dialect $dialect, ?string $defaultSchema = null, ?string $grammarVersion = null, array $functions = [])` | Select the database language and registered function signatures. |
-| `SchemaBuilder::build(string ...$sql): Schema` | Apply schema declarations in order and return a new snapshot. |
-| `Schema::withFunctions(FunctionSignature ...$functions): Schema` | Return a new snapshot with added or replaced function overloads. |
+```php
+new SchemaBuilder(
+    Dialect $dialect,
+    ?string $defaultSchema = null,
+    ?string $grammarVersion = null,
+    array $functions = [],
+);
+SchemaBuilder::build(string ...$sql): Schema;
+Schema::withFunctions(FunctionSignature ...$functions): Schema;
+Schema::withVariables(VariableDefinition ...$variables): Schema;
+```
 
-Select `Dialect::MySql`, `Dialect::PostgreSql`, or `Dialect::Sqlite`.
-`defaultSchema` is the namespace for unqualified table names; its default is an
-empty string for MySQL, `public` for PostgreSQL, and `main` for SQLite.
-`grammarVersion` selects one of the [documented releases](../README.md#support-syntax).
-
-Each `build()` call starts a new schema and applies the supplied definitions in
-order. Pass no SQL to obtain an empty schema. Existing `Schema` objects are not
-modified by later calls.
-
-## Read table and column definitions
+Select `Dialect::MySql`, `Dialect::PostgreSql`, or `Dialect::Sqlite` and a
+[grammar release](../README.md#support-syntax). The default namespace is the empty
+string for MySQL, `public` for PostgreSQL, and `main` for SQLite. Each `build()` call
+starts a new snapshot and applies its supplied definitions in order. Calling
+`Binder::bind()` does not apply the bound operation to that snapshot.
 
 `Schema` exposes `dialect`, `grammarVersion`, `defaultSchema`, ordered `tables`,
-registered `functions`, and original schema `statements`. A snapshot is immutable.
-SchemaBuilder applies definition changes in input order; Binder interprets statements
-against the snapshot it receives. This separates definition evolution from reading the
-meaning of an operation.
+registered `functions`, `variables`, and original schema `statements`. The `source`
+fields retain diagnostic provenance. Defaults, computations, predicates, and index
+expressions are semantic expression objects, with types and resolved references.
 
-The following objects describe what callers read from a schema. Each table's
-`columns` and `constraints` preserve declaration order.
+## Table and column structures
 
-| Object | What to read |
-|--------|--------------|
-| `TableDefinition` | `schema` and `name` identify the table; `columns`, `constraints`, and `indexes` contain its definitions; `options` contains named table options; `source` retains the original declaration. |
-| `ColumnDefinition` | `name`, `type`, and `nullability` describe the column. `defaultExpression` and `generatedExpression` retain declared expressions. `options` contains named column options; `attributes` retains their original syntax. |
-| `TypeDescriptor` | `name` is the database type; `modifiers` contains precision, scale, length, or other declared modifiers. `dialect` identifies the database and `affinity` records SQLite affinity. |
-| `TableConstraint` | `kind` is `PrimaryKey`, `Unique`, `ForeignKey`, or `Check`. `columns` names the local columns; `name` is an optional constraint name. Foreign keys expose `referencedTable`, `referencedColumns`, `onDelete`, `onUpdate`, `match`, and `deleteColumns`. `deferrable` and `initiallyDeferred` describe checking time; CHECK exposes `expression`. `source` retains the complete constraint syntax. |
-| `IndexDefinition` | `schema`, `name`, and `table` identify the index and its destination; `elements` preserves key order; `unique`, `method`, `include`, `predicate`, and `options` describe its behavior. An omitted index name is `null`. |
-| `IndexElement` | `column` or `expression` identifies the key; `direction`, `nulls`, `collation`, `operatorClass`, `prefixLength`, and `options` retain its modifiers. |
-| `Nullability` | `NotNull`, `MaybeNull`, `AlwaysNull`, or `Unknown`. A column's declaration-level fact is independent of NULLs introduced when that table is used in an outer join. |
+| Structure | Information returned |
+|-----------|----------------------|
+| `TableDefinition` | Resolved `schema` and `name`, ordered `columns`, `constraints`, `indexes`, and dialect-specific `properties`. |
+| `ColumnDefinition` | `name`, `TypeDescriptor type`, declaration-level `Nullability nullability`, a concrete `generation`, and typed `attributes`. |
+| `SuppliedColumn` | Optional insertion `default` and `onUpdate` expressions. An omitted default is `null`, distinct from an explicit SQL NULL literal. |
+| `ComputedColumn` | Required `expression` and `GeneratedStorage storage`. |
+| `IdentityColumn` | Required `IdentityMode mode` and `SequenceOptions sequence`, including declared start, increment, bounds, cache and cycle. |
+| `AutoIncrementColumn` | A value supplied by the MySQL table's auto-increment mechanism. |
+| `Column\Attributes` | Named properties such as `collation`, `characterSet`, `comment`, `visible`, `storage`, `format`, and `compression`; absent declarations are `null`. |
+| `MySqlProperties` | Engine, character set, collation, row format and the other named MySQL table storage properties. |
+| `PostgreSqlProperties` | Persistence, commit behavior, access method, tablespace and ordered storage parameters. |
+| `SqliteProperties` | `withoutRowId`, `strict`, and `temporary`. |
 
-Defaults, generated values, and CHECK conditions here are syntax nodes. Bind the
-CREATE TABLE SQL to obtain their typed expressions and column references through
-`BoundStatement::$definitions`; see [declaration binding](binder.md#declarations-and-nested-commands).
+Column generation alternatives have different required properties. A computed
+column cannot carry an insertion default in place of its required expression.
+The expression describes the computation; reading a declaration does not execute it.
+`Nullability` is `NotNull`, `MaybeNull`, `AlwaysNull`, or `Unknown`. Query binding
+creates separate expression facts for a column's use, including NULL extension
+introduced by an outer join.
+
+## Declared types
+
+`TypeDescriptor` exposes `dialect`, `identity`, a canonical `name`, and SQLite
+`affinity` when applicable. The concrete identity determines which parameters exist.
+Numeric parameter spellings remain strings to preserve their precision.
+
+| Identity | Required and optional information |
+|----------|-----------------------------------|
+| `BuiltinIdentity` | A finite built-in type identity, such as integer, boolean, text, or an unknown result type. |
+| `IntegerStorage` | Integer family, optional display width, and unsigned policy. |
+| `NumericStorage` | Numeric family, optional precision and scale, and unsigned policy; scale requires precision. |
+| `StringStorage` | String or binary family, optional length, character set, and binary policy. |
+| `TemporalStorage` | Temporal family, optional precision, and time-zone mode. |
+| `IntervalStorage` | Interval fields and optional precision. |
+| `Enumeration` / `LabelSet` | An ordered nonempty list of declared string labels. |
+| `ArrayStorage` | Element `TypeDescriptor` and a nonempty list of declared dimensions. |
+| `NamedIdentity` | Qualified name of a PostgreSQL type and its modifier expressions. |
+| `SqliteDeclaration` | Declared name, storage affinity, and optional size and scale. Affinity describes conversion rules, not the runtime class of a stored value. |
+
+## Integrity conditions and indexes
+
+| Structure | Information returned |
+|-----------|----------------------|
+| `PrimaryKey` / `UniqueKey` | Nonempty ordered `keys` and `CheckingTime checking`; each key has a concrete column or expression form. |
+| `ForeignKey` | Nonempty local `columns`, required qualified `referencedTable`, optional explicit `referencedColumns`, `onDelete`, `onUpdate`, `match`, `checking`, and affected `deleteColumns` for a SET action. |
+| `Check` | Required typed `predicate`, enforcement and inheritance policy. |
+| `IndexDefinition` | Index identity, target table, ordered `elements`, uniqueness, access method, included columns, typed partial-index `predicate`, and storage `properties`. |
+| `ColumnKey` | A required column reference and optional prefix length. |
+| `ExpressionKey` | A required expression. |
+| `IndexElement` | Common key ordering, NULL ordering, collation, operator class, and its declared parameters. |
+
+Constraints also carry an optional declared `name`. A foreign key with explicit
+referenced columns requires matching local and referenced widths. SQLite MATCH
+syntax does not change matching behavior, so its semantic matching mode is Simple.
 
 ## SQL and returned structures
 
-Unless a dialect is specified, these examples use `Dialect::PostgreSql` and the
-default namespace. Each row is an independent `build()` call. Multiple statements
-in a row are applied in the shown order. For MySQL, pass each statement as a
-separate argument, as shown for CREATE TABLE LIKE. Paths below are relative to the returned
-`Schema`, and show selected fields rather than a serialized object format.
+Unless labeled otherwise, examples use PostgreSQL and its default namespace.
+Paths show selected fields of the returned `Schema`; these are object properties,
+not a serialized interchange format. Multiple input statements are applied in order.
 
 | SQL passed to `build()` | Returned structure |
 |------------------------|--------------------|
-| `CREATE TABLE users (id INTEGER PRIMARY KEY, score INTEGER DEFAULT 0)` | `tables[0].name = 'users'`; `schema = 'public'`; columns are `id`, `score`; `id.type.name = 'integer'`; `id.nullability = NotNull`; `score.defaultExpression` retains `0`; a `PrimaryKey` constraint has `columns = ['id']`. |
-| `CREATE TABLE prices (amount NUMERIC(10,2) NOT NULL)` | `tables[0].columns[0].type` has `name = 'numeric'`, `modifiers = ['10', '2']`; `nullability = NotNull`. |
-| `CREATE TABLE totals (amount INTEGER, doubled INTEGER GENERATED ALWAYS AS (amount * 2) STORED, CHECK (amount >= 0))` | `columns[1].generatedExpression` retains `amount * 2`; a `Check` constraint retains the condition in `expression`. |
-| `CREATE TABLE parents (id INTEGER PRIMARY KEY); CREATE TABLE children (parent_id INTEGER REFERENCES parents(id) ON DELETE CASCADE)` | Two declarations; the child's `ForeignKey` constraint has `columns = ['parent_id']`, `referencedTable = ['parents']`, `referencedColumns = ['id']`; `onDelete = ReferentialAction::Cascade`. |
-| `CREATE TABLE source (id INTEGER); CREATE TABLE copied AS SELECT id FROM source` | `tables[1].name = 'copied'`; its ordered columns derive from the SELECT outputs, including `id` with type `integer`. |
-| `CREATE TABLE source (id INTEGER); CREATE VIEW ids AS SELECT id FROM source` | A declaration named `ids` exposes the query's ordered output columns and types; its source retains the view definition. |
-| MySQL, two arguments: `CREATE TABLE source (id INT NOT NULL)`, `CREATE TABLE copied LIKE source` | `copied` has the copied column declaration, including `id` and its `NotNull` fact. |
-| `CREATE TABLE users (id INTEGER); ALTER TABLE users ADD COLUMN score INTEGER; ALTER TABLE users RENAME TO accounts` | The final declaration is `accounts` with ordered columns `id`, `score`; `statements` retains all three schema operations. |
-| `CREATE TABLE users (id INTEGER); DROP TABLE users` | `tables = []`; `statements` retains CREATE and DROP. |
-| SQLite: `CREATE TABLE prices (amount NUMERIC(10,2))` | The column retains its declared numeric type and modifiers; `type.affinity = 'numeric'`. Affinity does not promise a runtime storage class. |
-| `CREATE TABLE users (id INTEGER); CREATE INDEX users_id ON users(id)` | `tables[0].indexes[0]` has `name = 'users_id'`, `table = ['public', 'users']`, and an element with `column = 'id'`; `statements` also retains the original declaration. |
+| `CREATE TABLE users (id INTEGER PRIMARY KEY, score INTEGER DEFAULT 0)` | `tables[0]` is `users` in `public`; ordered columns are `id` and `score`; `id` is NotNull; `score.generation` is `SuppliedColumn` with a literal `default`; the `PrimaryKey` contains the resolved `id` key. |
+| `CREATE TABLE prices (amount NUMERIC(10,2) NOT NULL)` | The column's `type.identity` is `NumericStorage`, with precision spelling `10` and scale spelling `2`; its nullability is NotNull. |
+| `CREATE TABLE totals (amount INTEGER, doubled INTEGER GENERATED ALWAYS AS (amount * 2) STORED, CHECK (amount >= 0))` | `doubled.generation` is `ComputedColumn` with a multiplication expression and Stored storage; the `Check` has a comparison predicate referring to `amount`. |
+| `CREATE TABLE children (parent_id INTEGER REFERENCES parents(id) ON DELETE CASCADE)` | The `ForeignKey` names local `parent_id`, referenced table `parents`, referenced column `id`, and `ReferentialAction::Cascade`. |
+| `CREATE TABLE users (id INTEGER GENERATED ALWAYS AS IDENTITY (START WITH 10 INCREMENT BY 2))` | `id.generation` is `IdentityColumn`, mode Always; its sequence contains literal start `10` and increment `2`. |
+| `CREATE TABLE source (id INTEGER); CREATE TABLE copied AS SELECT id FROM source` | The `copied` declaration derives its ordered columns and types from the query outputs. |
+| `CREATE TABLE source (id INTEGER); CREATE VIEW ids AS SELECT id FROM source` | The `ids` relation exposes the query's output column `id` and its type. |
+| `CREATE TABLE users (id INTEGER); ALTER TABLE users ADD COLUMN score INTEGER; ALTER TABLE users RENAME TO accounts` | The final declaration is `accounts`, with ordered columns `id` and `score`. Original schema `statements` retain the three operations. |
+| `CREATE TABLE users (id INTEGER); DROP TABLE users` | The resulting `tables` list is empty. |
+| `CREATE TABLE users (id INTEGER, score INTEGER); CREATE UNIQUE INDEX active_scores ON users(score DESC) INCLUDE(id) WHERE score > 0` | The index is unique; its first element is a descending `ColumnKey` for `score`; `include` contains `id`; `predicate` is the typed comparison `score > 0`. |
+| MySQL: `CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin, KEY names(name(10))) ENGINE=InnoDB` | `properties.engine` is InnoDB; `id.generation` is `AutoIncrementColumn`; `name.attributes` supplies the character set and collation; its index key has prefix length 10. |
+| MySQL, separate input arguments: `CREATE TABLE source (id INT NOT NULL)`, `CREATE TABLE copied LIKE source` | The copied declaration contains `id` and its NotNull fact. |
+| SQLite: `CREATE TABLE prices (amount NUMERIC(10,2))` | The identity is `SqliteDeclaration`, with numeric affinity and size/scale spellings `10` and `2`. |
+| SQLite: `CREATE TABLE users (id INTEGER PRIMARY KEY) WITHOUT ROWID, STRICT` | `properties` is `SqliteProperties`, with `withoutRowId` and `strict` both true. |
 
-| Additional SQL | Returned structure |
-|----------------|--------------------|
-| `CREATE TABLE users (id INTEGER, score INTEGER); CREATE UNIQUE INDEX active_scores ON users(score DESC) INCLUDE(id) WHERE score > 0` | `indexes[0].unique = true`; its first element has `column = 'score'`, `direction = 'DESC'`; `include = ['id']`; `predicate` retains `score > 0`. |
-| `CREATE TABLE users (id INTEGER GENERATED ALWAYS AS IDENTITY (START WITH 10 INCREMENT BY 2))` | `columns[0].options = ['identity' => 'always', 'start' => '10', 'increment' => '2']`. |
-| MySQL: `CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin, KEY names(name(10))) ENGINE=InnoDB` | `options['engine'] = 'InnoDB'`; `id.options['auto_increment'] = true`; `name.options` exposes `character_set` and `collation`; the index key has `prefixLength = 10`. |
-| SQLite: `CREATE TABLE users (id INTEGER PRIMARY KEY) WITHOUT ROWID, STRICT` | `options = ['without_rowid' => true, 'strict' => true]`. |
+## Variable declarations
 
-Unquoted option names use lowercase words separated by underscores; qualified
-storage parameters retain their dot, and quoted names retain their case. Flag values are
-booleans; other values are decoded strings or ordered string lists. Numeric
-spellings remain strings, so declaration precision is preserved. These maps
-contain explicit declarations, not values fetched from a running server.
+`VariableDefinition` contains a name, `VariableScope`, `TypeDescriptor`, and
+`Nullability`. `withVariables()` returns a new snapshot with these declarations.
+A bound variable reference identifies the declaration and its scope; it never
+contains a fetched or evaluated runtime value. Assignments describe which expression
+would be written to the variable without changing the input snapshot.
 
 ## Register function signatures
 

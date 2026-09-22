@@ -62,28 +62,10 @@ final class StatementContext implements Context
         $source = (new DialectParser($schema->dialect, $schema->grammarVersion))->parse($sql->toString());
         $tables = new TableResolver($schema, new Identifiers($schema->dialect), $schema->defaultSchema, new Diagnostics());
         if ($this->query !== null) {
-            $context = new \SqlSemantics\Binding\Query\QueryContext($tables, clone $this->query->ids, $this->query->ctes);
-            return $this->queryOnly ? $context->bind($source, self::scope($this->parent, $tables)) : (new StatementBinder($tables))->bind($source, $context)->withContext($this);
+            $context = new \SqlSemantics\Binding\Query\QueryContext($tables, clone $this->query->ids, $this->query->ctes, parameterTypes: $this->query->parameterTypes);
+            return $this->queryOnly ? $context->bind($source, self::scope($this->parent, $tables)) : (new StatementBinder($tables))->bind($source, $context, self::scope($this->parent, $tables))->withContext($this);
         }
         return (new StatementBinder($tables))->bind($source)->withContext($this);
-    }
-
-    /**
-     * @template T of BoundStatement
-     * @param T $previous
-     * @return T
-     */
-    public function clause(BoundStatement $previous, string $role, Tree $replacement): BoundStatement
-    {
-        return $this->rebind($previous, ClauseEditor::replace($previous, $role, $replacement));
-    }
-
-    /**
-     * @param list<\SqlSemantics\Model\Expression> $values
-     */
-    public function setting(\SqlSemantics\Model\Statement\ConfigurationStatement $previous, \SqlSemantics\Model\Configuration\Setting $setting, array $values): \SqlSemantics\Model\Statement\ConfigurationStatement
-    {
-        return $this->rebind($previous, ValueList::replace($previous, $setting, $values));
     }
 
     /**
@@ -94,7 +76,7 @@ final class StatementContext implements Context
         if ($scope === null) {
             return null;
         }
-        $queries = new \SqlSemantics\Binding\Query\QueryContext($tables, ctes: $scope->queries->ctes ?? []);
+        $queries = new \SqlSemantics\Binding\Query\QueryContext($tables, ctes: $scope->queries->ctes ?? [], parameterTypes: $scope->queries->parameterTypes ?? []);
         return new \SqlSemantics\Binding\Scope($scope->identifiers, $scope->relations, $scope->extensions, self::scope($scope->parent, $tables), $queries, $scope->merged);
     }
 }

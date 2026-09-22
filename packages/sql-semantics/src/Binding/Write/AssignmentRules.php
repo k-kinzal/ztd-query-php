@@ -7,7 +7,6 @@ namespace SqlSemantics\Binding\Write;
 use SqlSemantics\Binding\Scope;
 use SqlSemantics\Dialect;
 use SqlSemantics\Model\Expression;
-use SqlSemantics\Model\ExpressionKind;
 use SqlSemantics\Type\Nullability;
 
 /**
@@ -20,16 +19,32 @@ final class AssignmentRules
     /**
      * Diagnoses known type and NOT NULL violations while preserving the original value.
      */
-    public function check(Expression $target, Expression $value, Scope $scope, bool $storing = true): void
+    public function check(Expression $target, Expression|\SqlSemantics\Model\Write\DefaultSource $value, Scope $scope, bool $storing = true): void
     {
-        $column = \SqlSemantics\Model\Write\Destination::column($target);
-        if ($column->binding === null || $value->kind === ExpressionKind::DefaultValue) {
+        $this->checkPath(StoragePathBinder::bind($target), $value, $scope, $storing);
+    }
+
+    /**
+     * Checks a typed writable location without loading or evaluating values.
+     */
+    public function checkPath(\SqlSemantics\Model\Write\Storage\Path $target, Expression|\SqlSemantics\Model\Write\DefaultSource $value, Scope $scope, bool $storing = true): void
+    {
+        $column = $target->column();
+        if ($column->columnBinding() === null || $value instanceof \SqlSemantics\Model\Write\DefaultSource) {
             return;
         }
-        if ($storing && $target === $column && $column->binding->column->nullability === Nullability::NotNull && $value->nullability === Nullability::AlwaysNull) {
+        if ($storing && $target instanceof \SqlSemantics\Model\Write\Storage\ColumnPath && $column->columnBinding()->column->nullability === Nullability::NotNull && $value->nullability === Nullability::AlwaysNull) {
             $scope->diagnostics()->report('null-assignment', 'NULL cannot be stored in a NOT NULL column.', $value->source);
         }
-        $targetName = $target->type->name;
+        $this->checkType($target->type(), $value, $scope);
+    }
+
+    /**
+     * Checks declared storage compatibility without requiring a pre-existing column binding.
+     */
+    public function checkType(\SqlSemantics\Type\TypeDescriptor $target, Expression $value, Scope $scope): void
+    {
+        $targetName = $target->name;
         $sourceName = $value->type->name;
         if ($scope->identifiers->dialect !== Dialect::PostgreSql || $sourceName === 'unknown' || $targetName === 'unknown' || $targetName === $sourceName) {
             return;

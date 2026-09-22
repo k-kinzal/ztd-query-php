@@ -18,7 +18,7 @@ use SqlSemantics\Schema\TableDefinition;
  *
  * @visibility public
  */
-final class TableUse
+abstract class TableUse
 {
     /**
      * @param string $id Query-local relation identity
@@ -26,7 +26,6 @@ final class TableUse
      * @param TableDefinition $declaration Resolved table
      * @param string|null $alias Explicit alias, hiding the declaration name in this scope
      * @param Node $source Original table reference
-     * @param BoundStatement|null $query Definition of a derived relation or CTE
      * @throws InvalidStructure
      */
     public function __construct(
@@ -35,10 +34,20 @@ final class TableUse
         public readonly TableDefinition $declaration,
         public readonly ?string $alias,
         public readonly Node $source,
-        public readonly ?BoundStatement $query = null,
     ) {
         if ($id === '' || $scopeId === '') {
             throw new InvalidStructure('A relation requires occurrence and scope identities.');
         }
     }
+    /**
+     * @return list<Expression>
+     */
+    abstract public function resultExpressions(): array;
+
+    /**
+
+     * @visibility SqlSemantics
+
+     */
+    abstract public function withScope(string $scopeId): static;
 }

@@ -9,7 +9,6 @@ use SqlSemantics\Ast\Tree;
 use SqlSemantics\Binding\ExpressionBinder;
 use SqlSemantics\Binding\Scope;
 use SqlSemantics\Model\Expression;
-use SqlSemantics\Model\ExpressionKind;
 use SqlSemantics\Type\Nullability;
 use SqlSemantics\Type\TypeDescriptor;
 
@@ -54,12 +53,28 @@ final class IndirectionBinder
         $source = new Node('indirection', 0, [$base->source, $element]);
         $attribute = Tree::child($element, ['attr_name']);
         if ($attribute !== null) {
-            return new Expression(ExpressionKind::Field, new TypeDescriptor($scope->identifiers->dialect, 'unknown'), Nullability::Unknown, $source, [$base], symbol: '.' . $scope->identifiers->parts($attribute)[0]);
+            return new \SqlSemantics\Model\Scalar\Reference\FieldAccess(new \SqlSemantics\Model\Scalar\ExpressionFacts(TypeDescriptor::builtin($scope->identifiers->dialect, 'unknown'), Nullability::Unknown), $source, $base, $scope->identifiers->parts($attribute)[0]);
         }
-        $indices = array_map(static fn (Node $node): Expression => (new ExpressionBinder())->bind($node, $scope), Tree::outer($element, ['a_expr']));
-        $slice = in_array(':', array_map(Tree::text(...), $element->children), true);
-        $type = $slice ? $base->type->name : (str_ends_with($base->type->name, '[]') ? substr($base->type->name, 0, -2) : 'unknown');
-        return new Expression(ExpressionKind::Subscript, new TypeDescriptor($scope->identifiers->dialect, $type), Nullability::MaybeNull, $source, [$base, ...$indices], symbol: $slice ? '[:]' : '[]');
+        $bounds = [];
+        $position = 0;
+        $slice = false;
+        foreach ($element->children as $child) {
+            if (Tree::text($child) === ':') {
+                $position = 1;
+                $slice = true;
+            } elseif ($child instanceof Node && in_array($child->name, ['a_expr', 'opt_slice_bound'], true) && Tree::hasTokens($child)) {
+                $bounds[$position] = (new ExpressionBinder())->bind($child, $scope);
+            }
+        }
+        $type = $slice ? $base->type : ($base->type->identity instanceof \SqlSemantics\Type\Identity\ArrayStorage ? $base->type->identity->element : TypeDescriptor::builtin($scope->identifiers->dialect, 'unknown'));
+        $facts = new \SqlSemantics\Model\Scalar\ExpressionFacts($type, Nullability::MaybeNull);
+        if ($slice) {
+            return new \SqlSemantics\Model\Scalar\Reference\SliceAccess($facts, $source, $base, $bounds[0] ?? null, $bounds[1] ?? null);
+        }
+        if (!isset($bounds[0])) {
+            Tree::invalid($element, 'array index');
+        }
+        return new \SqlSemantics\Model\Scalar\Reference\ElementAccess($facts, $source, $base, $bounds[0]);
     }
 
     /**

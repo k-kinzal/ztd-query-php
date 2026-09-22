@@ -46,14 +46,16 @@ final class TableAlteration
                 $attributes = Tree::outer($statement, ['ccons']);
             }
             [$definition, $local] = (new ColumnReader($this->tables->identifiers))->read($column, $attributes);
-            $columns[] = $definition;
-            array_push($constraints, ...$local);
+            $context = new \SqlSemantics\Binding\Query\QueryContext($this->tables);
+            $scope = new \SqlSemantics\Binding\Scope($this->tables->identifiers, [new \SqlSemantics\Model\Relation\TableReference('declaration', 'declaration', $table, new \SqlSemantics\Model\Relation\QualifiedName($table->schema === '' ? [$table->name] : [$table->schema, $table->name]), null, $statement)], queries: $context);
+            $columns[] = ColumnBinder::bind($definition, $scope);
+            array_push($constraints, ...array_map(static fn ($constraint): \SqlSemantics\Schema\TableConstraint => ConstraintBinder::bind($constraint, $scope), $local));
         }
         $name = $table->name;
         foreach (Tree::outer($statement, ['alter_table_cmd', 'alter_list_item', 'RenameStmt', 'cmd']) as $action) {
             [$columns, $name] = $this->action($action, $columns, $name);
         }
-        $replacement = new TableDefinition($table->schema, $name, $columns, $constraints, $statement, indexes: $table->indexes, options: $table->options);
+        $replacement = new TableDefinition($table->schema, $name, $columns, $constraints, $statement, indexes: $table->indexes, properties: $table->properties);
         return array_map(static fn (TableDefinition $candidate): TableDefinition => $candidate === $table ? $replacement : $candidate, $this->tables->schema->tables);
     }
 
@@ -74,7 +76,7 @@ final class TableAlteration
                 return [$columns, $newName];
             }
             $oldName = $identifiers->name($tokens[$to - 1]);
-            $columns = array_map(static fn (ColumnDefinition $column): ColumnDefinition => $identifiers->equal($column->name, $oldName) ? new ColumnDefinition($newName, $column->type, $column->nullability, $column->source, $column->defaultExpression, $column->attributes, $column->generatedExpression, $column->options) : $column, $columns);
+            $columns = array_map(static fn (ColumnDefinition $column): ColumnDefinition => $identifiers->equal($column->name, $oldName) ? $column->withName($newName) : $column, $columns);
         }
         $drop = array_search('DROP', $words, true);
         if ($drop !== false && ($words[$drop + 1] ?? '') !== 'CONSTRAINT') {
@@ -116,11 +118,16 @@ final class TableAlteration
             } elseif (str_contains($text, 'NOT NULL')) {
                 $nullability = Nullability::NotNull;
             }
-            $default = str_contains($text, 'DROP DEFAULT') ? null : $column->defaultExpression;
+            $generation = $column->generation;
+            if (str_contains($text, 'DROP DEFAULT')) {
+                $generation = new \SqlSemantics\Schema\Column\SuppliedColumn();
+            }
             if (str_contains($text, 'SET DEFAULT')) {
                 $default = Tree::outer($action, ['a_expr', 'expr'])[0] ?? $action;
+                $scope = new \SqlSemantics\Binding\Scope($this->tables->identifiers, queries: new \SqlSemantics\Binding\Query\QueryContext($this->tables));
+                $generation = new \SqlSemantics\Schema\Column\SuppliedColumn((new DefinitionBinder())->expression($default, $scope));
             }
-            $result[] = new ColumnDefinition($column->name, $type, $nullability, $action, $default, [...$column->attributes, $action], $column->generatedExpression, array_replace($column->options, \SqlSemantics\Ast\Definition\OptionReader::column($action, [$action], $this->tables->identifiers)));
+            $result[] = new ColumnDefinition($column->name, $type, $nullability, $action, $generation, $column->attributes);
         }
         return $result;
     }

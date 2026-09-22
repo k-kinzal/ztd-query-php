@@ -13,7 +13,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  *     $tree = new \SqlSemantics\Model\Sql\Tree('command', [new \SqlSemantics\Model\Sql\Atom('keyword', 'BEGIN')]);
  *     $tree->toString() // => 'BEGIN'
  *
- * @visibility public
+ * @visibility SqlSemantics
  */
 final class Tree
 {

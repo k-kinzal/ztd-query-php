@@ -88,8 +88,6 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
 #[UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
-#[UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
 #[UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
@@ -117,20 +115,14 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\StatementFactory::class)]
 #[UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -150,9 +142,9 @@ final class StatementBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER)');
         $statement = (new Binder($schema))->bind('INSERT INTO t SELECT id FROM t');
-        self::assertSame('INSERT', $statement->kind);
-        self::assertSame('t', $statement->targets[0]->declaration->name);
-        self::assertSame('id', $statement->queries[0]->outputs[0]->name);
+        self::assertSame('INSERT', $statement->kind->value);
+        self::assertSame('t', $statement->affectedTables()[0]->declaration->name);
+        self::assertSame('id', $statement->query->outputs[0]->name);
     }
     #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql])]
     #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql])]
@@ -164,9 +156,10 @@ final class StatementBinderTest extends TestCase
         $tree = (new \SqlSemantics\Ast\DialectParser($dialect))->parse($sql);
         self::assertSame('UPDATE', \SqlSemantics\Binding\Statement\StatementBinder::operation($tree));
         $statement = (new Binder($schema))->bind($sql);
-        self::assertSame('UPDATE', $statement->kind);
-        self::assertSame(['x'], array_keys($statement->ctes));
-        self::assertNotNull($statement->assignments['n']->query);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $statement);
+        self::assertSame('UPDATE', $statement->kind->value);
+        self::assertSame(['x'], array_column($statement->ctes->definitions, 'name'));
+        self::assertNotNull($statement->writes[0]->value->query);
     }
 
 
@@ -182,9 +175,9 @@ final class StatementBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER,n INTEGER)');
         $statement = (new Binder($schema))->bind('EXPLAIN UPDATE t SET n=1 WHERE id=2');
-        self::assertSame('EXPLAIN', $statement->kind);
-        self::assertSame('UPDATE', $statement->statements[0]->kind);
-        self::assertSame('n', $statement->statements[0]->writes[0]->targets[0]->binding?->column->name);
-        self::assertNotSame($statement->scopeId, $statement->statements[0]->scopeId);
+        self::assertSame('EXPLAIN', $statement->kind->value);
+        self::assertSame('UPDATE', $statement->statement->kind->value);
+        self::assertSame('n', $statement->statement->writes[0]->destinations()[0]->column()->columnBinding()?->column->name);
+        self::assertNotSame($statement->scopeId, $statement->statement->scopeId);
     }
 }

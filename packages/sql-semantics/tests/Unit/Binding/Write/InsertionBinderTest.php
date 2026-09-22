@@ -73,8 +73,6 @@ use SqlSemantics\SemanticException;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\OutputColumn::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\TableUse::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Assignment::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Insertion::class)]
@@ -115,20 +113,14 @@ use SqlSemantics\SemanticException;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\StatementFactory::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -148,31 +140,35 @@ final class InsertionBinderTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER, name TEXT, optional INTEGER DEFAULT 7)'));
         $statement = $binder->bind("INSERT INTO t(name,id) VALUES('alice',DEFAULT)");
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
         self::assertNotNull($statement->insertion);
-        self::assertSame(['name', 'id'], array_map(static fn ($column) => $column->binding?->column->name, $statement->insertion->columns));
+        self::assertSame(['name', 'id'], array_map(static fn ($column) => $column->column()->columnBinding()?->column->name, $statement->insertion->columns));
         self::assertTrue($statement->insertion->explicitColumns);
-        self::assertSame('default', $statement->rows[0][1]->kind->value);
+        self::assertSame(\SqlSemantics\Model\Write\DefaultSource::Column, $statement->rows[0][1]);
         self::assertSame(['optional'], array_column($statement->insertion->omittedColumns, 'name'));
     }
     public function testBindRetainsMysqlDefaultPositions(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (a INTEGER, b INTEGER)')))->bind('INSERT INTO t(b,a) VALUES(DEFAULT,2)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
         self::assertNotNull($statement->insertion);
-        self::assertSame(['b', 'a'], array_map(static fn ($column) => $column->binding?->column->name, $statement->insertion->columns));
-        self::assertSame('default', $statement->rows[0][0]->kind->value);
-        self::assertSame('2', $statement->rows[0][1]->symbol);
+        self::assertSame(['b', 'a'], array_map(static fn ($column) => $column->column()->columnBinding()?->column->name, $statement->insertion->columns));
+        self::assertSame(\SqlSemantics\Model\Write\DefaultSource::Column, $statement->rows[0][0]);
+        self::assertSame('2', $statement->rows[0][1]->spelling());
     }
     public function testBindRetainsSqliteQueryMapping(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t (a INTEGER, b TEXT)')))->bind("INSERT INTO t(b,a) SELECT 'x',1");
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertSelectStatement::class, $statement);
         self::assertNotNull($statement->insertion);
-        self::assertSame(['b', 'a'], array_map(static fn ($column) => $column->binding?->column->name, $statement->insertion->columns));
-        self::assertCount(1, $statement->queries);
-        self::assertSame([], $statement->rows);
+        self::assertSame(['b', 'a'], array_map(static fn ($column) => $column->column()->columnBinding()?->column->name, $statement->insertion->columns));
+
+        self::assertCount(2, $statement->query->resultColumns());
     }
     public function testBindResolvesImplicitPostgresPrefix(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (a INTEGER, b INTEGER DEFAULT 2)')))->bind('INSERT INTO t VALUES(1)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
         self::assertNotNull($statement->insertion);
         self::assertFalse($statement->insertion->explicitColumns);
         self::assertCount(1, $statement->insertion->columns);
@@ -181,23 +177,25 @@ final class InsertionBinderTest extends TestCase
     public function testBindRetainsDefaultRow(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t (a INTEGER DEFAULT 2)')))->bind('INSERT INTO t DEFAULT VALUES');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertDefaultValuesStatement::class, $statement);
         self::assertNotNull($statement->insertion);
-        self::assertTrue($statement->insertion->defaultValues);
+
         self::assertSame([], $statement->insertion->columns);
         self::assertSame(['a'], array_column($statement->insertion->omittedColumns, 'name'));
     }
     public function testBindDiagnosesUnknownDestination(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER)')))->bind('INSERT INTO t(missing) VALUES(1)', strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
         self::assertNotNull($statement->insertion);
-        self::assertSame(['missing'], $statement->insertion->columns[0]->reference);
+        self::assertSame(['missing'], $statement->insertion->columns[0]->column()->referenceParts());
         self::assertSame('unknown-column', $statement->diagnostics[0]->reason);
     }
     public function testCheckRowRejectsWidthMismatch(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (a INTEGER, b INTEGER)'));
         $this->expectException(SemanticException::class);
-        $this->expectExceptionMessage('different widths');
+        $this->expectExceptionMessage('same width');
         $binder->bind('INSERT INTO t(a,b) VALUES(1)');
     }
     public function testBindRejectsRepeatedDestination(): void
@@ -211,12 +209,14 @@ final class InsertionBinderTest extends TestCase
     public function testDefaultValuesIgnoresLiteralContents(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(name TEXT)'));
-        $values = $binder->bind("INSERT INTO t VALUES ('DEFAULT VALUES')")->insertion;
-        $defaults = $binder->bind('INSERT INTO t DEFAULT VALUES')->insertion;
+        $values = $binder->bind("INSERT INTO t VALUES ('DEFAULT VALUES')");
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $values);
+        $defaults = $binder->bind('INSERT INTO t DEFAULT VALUES');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertDefaultValuesStatement::class, $defaults);
         self::assertNotNull($values);
         self::assertNotNull($defaults);
-        self::assertFalse($values->defaultValues);
-        self::assertCount(1, $values->columns);
-        self::assertTrue($defaults->defaultValues);
+
+        self::assertCount(1, $values->insertion->columns);
+
     }
 }

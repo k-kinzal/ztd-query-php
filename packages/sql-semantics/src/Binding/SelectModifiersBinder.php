@@ -20,19 +20,21 @@ use SqlSemantics\SemanticException;
 final class SelectModifiersBinder
 {
     /**
-     * @param list<OutputColumn> $outputs
+     * @param list<OutputColumn>|null $outputs
      * @return list<Ordering>
      */
-    public function ordering(Node $statement, Scope $scope, array $outputs): array
+    public function ordering(Node $statement, Scope $scope, ?array $outputs): array
     {
         $nodes = QueryNodes::local($statement, ['sortby', 'order_expr']);
         $sqlite = QueryNodes::local($statement, ['orderby_opt'])[0] ?? null;
         if ($sqlite !== null) {
-            $nodes = array_reverse($sqlite->find('sortlist'));
+            $list = Tree::child($sqlite, ['sortlist']);
+            $nodes = $list === null ? [] : Query\OrderingNodes::read($list);
         }
         if ($nodes === []) {
             $legacy = QueryNodes::local($statement, ['order_clause'])[0] ?? null;
-            $nodes = $legacy === null ? [] : array_reverse($legacy->find('order_list'));
+            $list = $legacy === null ? null : Tree::child($legacy, ['order_list']);
+            $nodes = $list === null ? [] : Query\OrderingNodes::read($list);
         }
         $result = [];
         foreach ($nodes as $node) {
@@ -50,21 +52,26 @@ final class SelectModifiersBinder
     }
 
     /**
-     * @param list<OutputColumn> $outputs
+     * @param list<OutputColumn>|null $outputs
      * @throws SemanticException
      */
-    public function sortExpression(Node $node, Scope $scope, array $outputs): Expression
+    public function sortExpression(Node $node, Scope $scope, ?array $outputs): Expression|\SqlSemantics\Model\Query\Ordering\OutputPosition|\SqlSemantics\Model\Query\Ordering\OutputAlias|\SqlSemantics\Model\Query\Ordering\UnresolvedOutputPosition
     {
+        if ($outputs === null) {
+            return (new ExpressionBinder())->bind($node, $scope);
+        }
         $tokens = $node->tokens();
         if (count($tokens) === 1 && !in_array($tokens[0]->name, ['SCONST', 'USCONST', 'TEXT_STRING', 'STRING'], true)) {
             $text = $tokens[0]->text;
             if (ctype_digit($text)) {
                 $ordinal = (int) $text - 1;
                 if (!isset($outputs[$ordinal])) {
-                    $scope->diagnostics()->report('invalid-output-position', 'ORDER BY position is outside the result.', $node);
-                    return (new ExpressionBinder())->bind($node, $scope);
+                    if ($ordinal >= 0 && array_filter($outputs, static fn (OutputColumn $output): bool => $output->expression instanceof \SqlSemantics\Model\Scalar\Reference\Wildcard) !== []) {
+                        return new \SqlSemantics\Model\Query\Ordering\UnresolvedOutputPosition(new \SqlSemantics\Type\Identity\Numeric\NumericParameter($text));
+                    }
+                    throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::OutputPosition, $node);
                 }
-                return $outputs[$ordinal]->expression;
+                return new \SqlSemantics\Model\Query\Ordering\OutputPosition($outputs[$ordinal]);
             }
             $name = $scope->identifiers->name($tokens[0]);
             $matches = array_values(array_filter($outputs, static fn (OutputColumn $output): bool => $output->name !== null && $scope->identifiers->equal($output->name, $name)));
@@ -73,7 +80,7 @@ final class SelectModifiersBinder
                 return (new ExpressionBinder())->bind($node, $scope);
             }
             if ($matches !== []) {
-                return $matches[0]->expression;
+                return new \SqlSemantics\Model\Query\Ordering\OutputAlias($matches[0]);
             }
         }
 

@@ -88,8 +88,6 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
 #[UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
-#[UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
 #[UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
@@ -117,20 +115,14 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\StatementFactory::class)]
 #[UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -149,41 +141,41 @@ final class UtilityBinderTest extends TestCase
     public function testBindRetainsTransactionAndEmbeddedQuery(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
-        self::assertSame('BEGIN', $binder->bind('BEGIN')->kind);
+        self::assertSame('BEGIN', $binder->bind('BEGIN')->kind->value);
         $statement = $binder->bind('CREATE TABLE t AS SELECT 1 AS id');
-        self::assertSame('CREATE', $statement->kind);
-        self::assertSame('id', $statement->queries[0]->outputs[0]->name);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Definition\CreateTableAsStatement::class, $statement);
+        self::assertSame('CREATE', $statement->kind->value);
+        self::assertSame('id', $statement->query->outputs[0]->name);
     }
 
     public function testCommandsRetainsCursorAndQueryBoundaries(): void
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
         $statement = (new Binder($schema))->bind('EXPLAIN DECLARE cur CURSOR FOR SELECT id FROM t');
-        self::assertSame('EXPLAIN', $statement->kind);
-        self::assertSame('DECLARE', $statement->statements[0]->kind);
-        self::assertSame('SELECT', $statement->statements[0]->statements[0]->kind);
-        self::assertSame('id', $statement->statements[0]->statements[0]->outputs[0]->name);
+        self::assertSame('EXPLAIN', $statement->kind->value);
+        self::assertSame('DECLARE', $statement->statement->kind->value);
+        self::assertSame('SELECT', $statement->statement->query->kind->value);
+        self::assertSame('id', $statement->statement->query->outputs[0]->name);
     }
 
     public function testBindSeparatesIndexDefinitionsFromExistingTableDefinitions(): void
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER DEFAULT 1)');
         $statement = (new Binder($schema))->bind('CREATE INDEX ix ON t(id)');
-        self::assertSame([], $statement->definitions);
-        self::assertSame([], $statement->declarations);
-        self::assertCount(1, $statement->indexes);
-        self::assertSame('id', $statement->indexes[0]->keys[0]->binding?->column->name);
-        self::assertSame('ix', $statement->indexes[0]->definition->name);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateIndexStatement::class, $statement);
+        self::assertSame('id', $statement->index->definition->elements[0]->value()->columnBinding()?->column->name);
+        self::assertSame('ix', $statement->index->definition->name);
+        self::assertSame($schema->tables[0], $statement->table->declaration);
     }
 
-    public function testBindRetainsCreateTableDefinitionsWithInlineIndexes(): void
+    public function testBindRetainsInlinePrimaryKeyDeclarations(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('create temporary table t(id integer default 1, constraint pk primary key(id))');
-        self::assertCount(1, $statement->definitions);
-        self::assertCount(1, $statement->declarations);
-        self::assertCount(1, $statement->indexes);
-        self::assertSame('pk', $statement->indexes[0]->definition->name);
-        self::assertSame('integer', $statement->indexes[0]->keys[0]->type->name);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $statement);
+        $primary = $statement->definition->table->constraints[0];
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\PrimaryKey::class, $primary);
+        self::assertSame('pk', $primary->name);
+        self::assertSame('integer', $primary->keys[0]->value()->type->name);
     }
 
 }

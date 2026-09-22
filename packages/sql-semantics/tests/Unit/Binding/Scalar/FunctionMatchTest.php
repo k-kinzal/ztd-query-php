@@ -95,9 +95,7 @@ use SqlSemantics\Type\TypeDescriptor;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\IndexDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ConstraintGroups::class)]
@@ -118,19 +116,13 @@ use SqlSemantics\Type\TypeDescriptor;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\StatementFactory::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -148,7 +140,7 @@ final class FunctionMatchTest extends TestCase
 {
     public function testArityHandlesOptionalAndVariadicArguments(): void
     {
-        $type = new TypeDescriptor(Dialect::PostgreSql, 'integer');
+        $type = new TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('integer'));
         $signature = new FunctionSignature('f', [$type, $type], $type, variadic: true, optionalParameters: 1);
         self::assertFalse(\SqlSemantics\Binding\Scalar\FunctionMatch::arity($signature, 0));
         self::assertTrue(\SqlSemantics\Binding\Scalar\FunctionMatch::arity($signature, 1));
@@ -158,8 +150,8 @@ final class FunctionMatchTest extends TestCase
 
     public function testParameterRepeatsOnlyTheFinalDeclaredType(): void
     {
-        $integer = new TypeDescriptor(Dialect::PostgreSql, 'integer');
-        $text = new TypeDescriptor(Dialect::PostgreSql, 'text');
+        $integer = new TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('integer'));
+        $text = new TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('text'));
         $signature = new FunctionSignature('f', [$integer, $text], $text, variadic: true);
         self::assertSame($integer, \SqlSemantics\Binding\Scalar\FunctionMatch::parameter($signature, 0));
         self::assertSame($text, \SqlSemantics\Binding\Scalar\FunctionMatch::parameter($signature, 10));
@@ -168,10 +160,12 @@ final class FunctionMatchTest extends TestCase
 
     public function testScorePrefersAnExactOverloadToWidening(): void
     {
-        $integer = new TypeDescriptor(Dialect::PostgreSql, 'integer');
-        $bigint = new TypeDescriptor(Dialect::PostgreSql, 'bigint');
+        $integer = new TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('integer'));
+        $bigint = new TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('bigint'));
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build()->withFunctions(new FunctionSignature('f', [$bigint], $bigint), new FunctionSignature('f', [$integer], $integer));
-        self::assertSame('integer', (new Binder($schema))->bind('SELECT f(1)')->outputs[0]->expression->type->name);
+        $boundQuery1 = (new Binder($schema))->bind('SELECT f(1)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery1);
+        self::assertSame('integer', $boundQuery1->outputs[0]->expression->type->name);
     }
 
     public function testCompatibleDoesNotNarrowNumericInputs(): void
@@ -186,12 +180,16 @@ final class FunctionMatchTest extends TestCase
     #[\PHPUnit\Framework\Attributes\DataProvider('providerConversions')]
     public function testScoreBindsPermittedArgumentConversions(Dialect $dialect, string $input, string $parameter): void
     {
-        $type = new TypeDescriptor($dialect, $parameter);
+        $type = new TypeDescriptor($dialect, \SqlSemantics\Type\Identity\BuiltinIdentity::from($parameter));
         $schema = (new SchemaBuilder($dialect))->build()->withFunctions(new FunctionSignature('convert_input', [$type], $type));
-        $expression = (new Binder($schema))->bind('SELECT convert_input(' . $input . ')')->outputs[0]->expression;
-        self::assertSame($parameter, $expression->operands[0]->type->name);
+        $boundQuery1 = (new Binder($schema))->bind('SELECT convert_input(' . $input . ')');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery1);
+        $expression = $boundQuery1->outputs[0]->expression;
+        self::assertSame($parameter, $expression->inputs()[0]->type->name);
         self::assertSame($parameter, $expression->type->name);
-        self::assertSame([], (new Binder($schema))->bind('SELECT convert_input(' . $input . ')')->diagnostics);
+        $boundQuery2 = (new Binder($schema))->bind('SELECT convert_input(' . $input . ')');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery2);
+        self::assertSame([], $boundQuery2->diagnostics);
     }
 
     /**
@@ -210,12 +208,16 @@ final class FunctionMatchTest extends TestCase
 
     public function testScoreDoesNotIgnoreLaterArgumentsWhenAnEarlierTypeIsUnspecified(): void
     {
-        $unknown = new TypeDescriptor(Dialect::PostgreSql, 'unknown');
-        $integer = new TypeDescriptor(Dialect::PostgreSql, 'integer');
-        $text = new TypeDescriptor(Dialect::PostgreSql, 'text');
+        $unknown = new TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('unknown'));
+        $integer = new TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('integer'));
+        $text = new TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('text'));
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build()->withFunctions(new FunctionSignature('choose', [$unknown, $integer], $integer), new FunctionSignature('choose', [$unknown, $text], $text));
-        self::assertSame('integer', (new Binder($schema))->bind('SELECT choose(NULL, 1)')->outputs[0]->expression->type->name);
-        self::assertSame('text', (new Binder($schema))->bind("SELECT choose(NULL, CAST('x' AS TEXT))")->outputs[0]->expression->type->name);
+        $boundQuery1 = (new Binder($schema))->bind('SELECT choose(NULL, 1)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery1);
+        self::assertSame('integer', $boundQuery1->outputs[0]->expression->type->name);
+        $boundQuery2 = (new Binder($schema))->bind("SELECT choose(NULL, CAST('x' AS TEXT))");
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery2);
+        self::assertSame('text', $boundQuery2->outputs[0]->expression->type->name);
     }
 
 }

@@ -6,11 +6,11 @@ namespace SqlSemantics\Ast;
 
 use Closure;
 use SqlParser\Parser\Node;
+use SqlSemantics\Ast\Declaration\ColumnDefinition;
+use SqlSemantics\Ast\Declaration\TableConstraint;
+use SqlSemantics\Ast\Declaration\TableDefinition;
 use SqlSemantics\Dialect;
-use SqlSemantics\Schema\ColumnDefinition;
 use SqlSemantics\Schema\ConstraintKind;
-use SqlSemantics\Schema\TableConstraint;
-use SqlSemantics\Schema\TableDefinition;
 use SqlSemantics\SemanticException;
 use SqlSemantics\Type\Nullability;
 

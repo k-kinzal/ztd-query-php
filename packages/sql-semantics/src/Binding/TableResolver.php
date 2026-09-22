@@ -46,4 +46,14 @@ final class TableResolver
 
         return $matches[0];
     }
+    /**
+     * Retains explicit namespaces, including a quoted empty namespace.
+     *
+     * @param list<string> $parts Source identifier parts
+     */
+    public function name(array $parts, TableDefinition $table): \SqlSemantics\Model\Relation\QualifiedName
+    {
+        return new \SqlSemantics\Model\Relation\QualifiedName(count($parts) === 2 || $table->schema !== '' ? [$table->schema, $table->name] : [$table->name]);
+    }
+
 }

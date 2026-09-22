@@ -88,8 +88,6 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
 #[UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
-#[UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
 #[UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
@@ -117,20 +115,14 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\StatementFactory::class)]
 #[UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -150,9 +142,10 @@ final class QueryNodesTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER)');
         $query = (new Binder($schema))->bind('SELECT q.id FROM (SELECT id FROM t ORDER BY id DESC LIMIT 2) q');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertNull($query->limit);
         self::assertSame([], $query->orderBy);
-        self::assertSame('2', $query->relations[0]->query?->limit?->symbol);
+        self::assertSame('2', $query->relations[0]->query?->limit?->spelling());
     }
 
     public function testBodyPreservesSetPrecedence(): void
@@ -167,12 +160,13 @@ final class QueryNodesTest extends TestCase
         $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('SELECT (SELECT 1 UNION SELECT 2)');
         self::assertNull(\SqlSemantics\Binding\Query\QueryNodes::setOperator(\SqlSemantics\Binding\Query\QueryNodes::body($tree)));
     }
-    public function testClausesRetainsLockingOptions(): void
+    public function testLocalRetainsOwnedLockingOptions(): void
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER)');
         $query = (new Binder($schema))->bind('SELECT id FROM t FOR UPDATE SKIP LOCKED');
-        self::assertArrayHasKey('for_locking_clause', $query->syntaxClauses);
-        self::assertStringContainsString('SKIP LOCKED', \SqlSemantics\Ast\Tree::text($query->syntaxClauses['for_locking_clause'][0]));
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        self::assertSame(\SqlSemantics\Model\Query\Locking\LockStrength::Update, $query->locks[0]->strength);
+        self::assertSame(\SqlSemantics\Model\Query\Locking\LockWait::SkipLocked, $query->locks[0]->wait);
     }
 
     public function testIsBodyRecognizesLegacySelectFactors(): void
@@ -189,27 +183,21 @@ final class QueryNodesTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build());
         $query = $binder->bind('SELECT 1 FROM DUAL WHERE 1 UNION ALL SELECT 2 UNION SELECT 3');
-        self::assertSame('UNION', $query->setOperator);
-        self::assertCount(2, $query->branches);
-        self::assertSame('UNION ALL', $query->branches[0]->setOperator);
-        self::assertSame('1', $query->branches[0]->branches[0]->outputs[0]->expression->symbol);
-        self::assertSame('1', $query->branches[0]->branches[0]->where?->symbol);
-        self::assertSame('2', $query->branches[0]->branches[1]->outputs[0]->expression->symbol);
-        self::assertSame('3', $query->branches[1]->outputs[0]->expression->symbol);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CompoundStatement::class, $query);
+        self::assertSame('UNION', $query->setOperator->value);
+
+        self::assertSame('UNION ALL', $query->left->setOperator->value);
+        self::assertSame('1', $query->left->left->outputs[0]->expression->spelling());
+        self::assertSame('1', $query->left->left->where?->spelling());
+        self::assertSame('2', $query->left->right->outputs[0]->expression->spelling());
+        self::assertSame('3', $query->right->outputs[0]->expression->spelling());
     }
 
-    public function testBodyRetainsInvalidLegacyUnionInputsForDiagnostics(): void
+    public function testBodyRejectsInvalidLegacyUnionWidths(): void
     {
         $schema = (new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build('CREATE TABLE a (id INTEGER)');
-        $statement = (new Binder($schema))->bind('SELECT * FROM (a UNION SELECT 1) q', strict: false);
-        self::assertContains('invalid-query-input', array_column($statement->diagnostics, 'reason'));
-        $compound = $statement->relations[0]->query;
-        self::assertNotNull($compound);
-        self::assertSame('UNION', $compound->setOperator);
-        self::assertCount(2, $compound->branches);
-        self::assertSame('a', $compound->branches[0]->relations[0]->declaration->name);
-        self::assertSame([], $compound->branches[0]->outputs);
-        self::assertSame('1', $compound->branches[1]->outputs[0]->expression->symbol);
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        (new Binder($schema))->bind('SELECT * FROM (a UNION SELECT 1) q', strict: false);
     }
 
 }

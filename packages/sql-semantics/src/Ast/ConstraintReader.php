@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace SqlSemantics\Ast;
 
 use SqlParser\Parser\Node;
+use SqlSemantics\Ast\Declaration\TableConstraint;
 use SqlSemantics\Schema\ConstraintKind;
-use SqlSemantics\Schema\TableConstraint;
 
 /**
  * Extracts integrity declarations while preserving the complete original constraint.

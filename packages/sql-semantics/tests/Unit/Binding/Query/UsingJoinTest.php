@@ -88,8 +88,6 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
 #[UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
-#[UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
 #[UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
@@ -117,20 +115,14 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\StatementFactory::class)]
 #[UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -150,23 +142,27 @@ final class UsingJoinTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE a (id INTEGER, x INTEGER)', 'CREATE TABLE b (id INTEGER, y INTEGER)');
         $query = (new Binder($schema))->bind('SELECT * FROM a FULL JOIN b USING (id)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame(['id', 'x', 'y'], array_column($query->outputs, 'name'));
         self::assertInstanceOf(\SqlSemantics\Model\Join::class, $query->from);
-        self::assertSame('=', $query->from->condition?->symbol);
+        self::assertSame(['id'], array_column($query->from->columns, 'name'));
+        self::assertSame('r0', $query->from->columns[0]->left->columnBinding()->relationId);
+        self::assertSame('r1', $query->from->columns[0]->right->columnBinding()->relationId);
         self::assertSame(\SqlSemantics\Model\ExpressionKind::Coalesce, $query->outputs[0]->expression->kind);
     }
     public function testBindPreservesRightJoinKeysAndMultipleConditions(): void
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE a (id INTEGER NOT NULL, k INTEGER, x INTEGER)', 'CREATE TABLE b (id INTEGER NOT NULL, k INTEGER, x INTEGER)');
         $query = (new Binder($schema))->bind('SELECT * FROM a RIGHT JOIN b USING (id,k)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame(['id', 'k', 'x', 'x'], array_column($query->outputs, 'name'));
-        self::assertSame('r1', $query->outputs[0]->expression->binding?->relationId);
+        self::assertSame('r1', $query->outputs[0]->expression->columnBinding()?->relationId);
         self::assertSame('not-null', $query->outputs[0]->expression->nullability->value);
         self::assertSame(['j0'], $query->outputs[2]->expression->nullExtendedBy);
         self::assertSame([], $query->outputs[3]->expression->nullExtendedBy);
         self::assertInstanceOf(\SqlSemantics\Model\Join::class, $query->from);
-        self::assertSame('AND', $query->from->condition?->symbol);
-        self::assertCount(2, $query->from->condition->operands);
+        self::assertSame(['id', 'k'], array_column($query->from->columns, 'name'));
+        self::assertSame($query->from->columns[0]->right, $query->from->columns[0]->output);
     }
 
     #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, '"'])]
@@ -179,16 +175,17 @@ final class UsingJoinTest extends TestCase
         $query = (new Binder($schema))->bind('SELECT *, ' . $column . ' FROM a NATURAL JOIN b JOIN c USING (' . $column . ')');
         self::assertSame(['1', '1'], array_column($query->outputs, 'name'));
         self::assertSame('integer', $query->outputs[0]->expression->type->name);
-        self::assertSame('1', $query->outputs[1]->expression->binding?->column->name);
+        self::assertSame('1', $query->outputs[1]->expression->columnBinding()?->column->name);
     }
 
     public function testBindCollectsTypeDiagnosticsForFullUsingJoins(): void
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE a (id INTEGER)', 'CREATE TABLE b (id BOOLEAN)');
         $statement = (new Binder($schema))->bind('SELECT * FROM a FULL JOIN b USING (id)', strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertNotSame([], $statement->diagnostics);
         self::assertSame(['id'], array_column($statement->outputs, 'name'));
-        self::assertSame('COALESCE', $statement->outputs[0]->expression->symbol);
+        self::assertSame('COALESCE', $statement->outputs[0]->expression->spelling());
     }
 
 }

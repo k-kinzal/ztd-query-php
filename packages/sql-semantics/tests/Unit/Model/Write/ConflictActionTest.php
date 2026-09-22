@@ -74,8 +74,6 @@ use SqlSemantics\SemanticException;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\OutputColumn::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\TableUse::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Assignment::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Insertion::class)]
@@ -116,20 +114,14 @@ use SqlSemantics\SemanticException;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\StatementFactory::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -145,32 +137,24 @@ use SqlSemantics\SemanticException;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Sql\Format::class)]
 final class ConflictActionTest extends TestCase
 {
-    public function testRejectsInvalidAction(): void
-    {
-        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1');
-        $this->expectException(InvalidStructure::class);
-        new \SqlSemantics\Model\Write\ConflictAction('delete', [], null, null, [], null, $statement->source);
-    }
-
-    public function testRejectsAConditionOnDoNothing(): void
-    {
-        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT TRUE');
-        $this->expectException(InvalidStructure::class);
-        new \SqlSemantics\Model\Write\ConflictAction('nothing', [], null, null, [], $statement->outputs[0]->expression, $statement->source);
-    }
-    public function testRejectsAssignmentsOnReplace(): void
-    {
-        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('UPDATE t SET id=1');
-        $this->expectException(InvalidStructure::class);
-        new \SqlSemantics\Model\Write\ConflictAction('replace', [], null, null, $statement->writes, null, $statement->source);
-    }
-    public function testRetainsValidConflictActions(): void
+    public function testRetainsDistinctConflictOperationsAndTheirTargets(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
-        self::assertSame('nothing', $binder->bind('INSERT INTO t VALUES(1) ON CONFLICT DO NOTHING')->conflicts[0]->action);
+        $nothing = $binder->bind('INSERT INTO t VALUES(1) ON CONFLICT DO NOTHING')->conflicts[0];
         $update = $binder->bind('INSERT INTO t VALUES(1) ON CONFLICT(id) DO UPDATE SET id=2 WHERE t.id=1')->conflicts[0];
-        self::assertSame('2', $update->assignments[0]->value->symbol);
-        self::assertSame('=', $update->where?->symbol);
-        self::assertSame('replace', (new \SqlSemantics\Model\Write\ConflictAction('replace', [], null, null, [], null, $update->source))->action);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\DoNothing::class, $nothing);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\AnyConflict::class, $nothing->target);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\DoUpdate::class, $update);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\IndexConflict::class, $update->target);
+        self::assertSame('2', $update->assignments[0]->value->spelling());
+        self::assertSame('=', $update->where->spelling());
+    }
+
+    public function testReplaceHasAStoragePolicyOfItsOwn(): void
+    {
+        $insert = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INTEGER)')))->bind('REPLACE INTO t VALUES(1)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $insert);
+        self::assertSame(\SqlSemantics\Model\Write\InsertMode::Replace, $insert->mode);
+        self::assertSame('1', $insert->rows[0][0]->spelling());
     }
 }

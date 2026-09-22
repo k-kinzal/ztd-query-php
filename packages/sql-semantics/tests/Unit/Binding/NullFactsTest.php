@@ -86,8 +86,6 @@ use SqlSemantics\Type\Nullability;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
@@ -116,24 +114,18 @@ use SqlSemantics\Type\Nullability;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Dialect::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\ConstraintKind::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Nullability::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\ExpressionKind::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\JoinKind::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -156,6 +148,7 @@ final class NullFactsTest extends TestCase
     {
         $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind('SELECT COALESCE(parent_id, NULL) AS a, COALESCE(NULL, NULL) AS b, COALESCE(parent_id, score) AS c FROM users');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertSame(Nullability::MaybeNull, $statement->outputs[0]->expression->nullability);
         self::assertSame(Nullability::AlwaysNull, $statement->outputs[1]->expression->nullability);
         self::assertSame(Nullability::NotNull, $statement->outputs[2]->expression->nullability);
@@ -165,6 +158,7 @@ final class NullFactsTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
         $statement = (new Binder($schema))->bind('SELECT NULL = 1 AS a, NULL OR TRUE AS b');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertSame(Nullability::AlwaysNull, $statement->outputs[0]->expression->nullability);
         self::assertSame(Nullability::MaybeNull, $statement->outputs[1]->expression->nullability);
     }
@@ -173,6 +167,7 @@ final class NullFactsTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind('SELECT a.id+b.id FROM users a FULL JOIN users b ON a.id=b.id');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertSame(['j0'], $statement->outputs[0]->expression->nullExtendedBy);
         self::assertSame(Nullability::MaybeNull, $statement->outputs[0]->expression->nullability);
     }
@@ -180,11 +175,11 @@ final class NullFactsTest extends TestCase
     #[DataProvider('providerFacts')]
     public function testStrictAndCoalesceFacts(Nullability $left, Nullability $right, Nullability $strict, Nullability $coalesce): void
     {
-        $type = new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, 'integer');
+        $type = new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('integer'));
         $source = new \SqlParser\Parser\Node('expr', 0, []);
         $operands = [
-            new \SqlSemantics\Model\Expression(\SqlSemantics\Model\ExpressionKind::Function, $type, $left, $source),
-            new \SqlSemantics\Model\Expression(\SqlSemantics\Model\ExpressionKind::Function, $type, $right, $source),
+            new \SqlSemantics\Model\Scalar\Function\FunctionCall(new \SqlSemantics\Model\Scalar\ExpressionFacts($type, $left, []), $source, new \SqlSemantics\Model\Scalar\Function\UnresolvedFunction(new \SqlSemantics\Model\Scalar\Function\FunctionName(['f'])), []),
+            new \SqlSemantics\Model\Scalar\Function\FunctionCall(new \SqlSemantics\Model\Scalar\ExpressionFacts($type, $right, []), $source, new \SqlSemantics\Model\Scalar\Function\UnresolvedFunction(new \SqlSemantics\Model\Scalar\Function\FunctionName(['f'])), []),
         ];
         self::assertSame($strict, \SqlSemantics\Binding\NullFacts::strict($operands));
         self::assertSame($coalesce, \SqlSemantics\Binding\NullFacts::coalesce($operands));
@@ -215,8 +210,12 @@ final class NullFactsTest extends TestCase
     public function testAlternativesCombinesValuesWithoutStrictPropagation(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
-        $nonnull = $binder->bind('SELECT 1')->outputs[0]->expression;
-        $nullable = $binder->bind('SELECT NULL')->outputs[0]->expression;
+        $boundQuery1 = $binder->bind('SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery1);
+        $nonnull = $boundQuery1->outputs[0]->expression;
+        $boundQuery2 = $binder->bind('SELECT NULL');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery2);
+        $nullable = $boundQuery2->outputs[0]->expression;
         self::assertSame(Nullability::NotNull, \SqlSemantics\Binding\NullFacts::alternatives([$nonnull]));
         self::assertSame(Nullability::AlwaysNull, \SqlSemantics\Binding\NullFacts::alternatives([$nullable]));
         self::assertSame(Nullability::MaybeNull, \SqlSemantics\Binding\NullFacts::alternatives([$nonnull, $nullable]));

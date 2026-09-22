@@ -73,8 +73,6 @@ use SqlSemantics\SemanticException;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\OutputColumn::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\TableUse::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Assignment::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Insertion::class)]
@@ -115,20 +113,14 @@ use SqlSemantics\SemanticException;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\StatementFactory::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -147,27 +139,29 @@ final class TransactionSettingsTest extends TestCase
     public function testBindRetainsIndependentTransactionCharacteristics(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SET TRANSACTION ISOLATION LEVEL SERIALIZABLE, READ ONLY, DEFERRABLE');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
         self::assertSame([['transaction_isolation'], ['transaction_access'], ['transaction_deferrable']], array_column($statement->settings, 'name'));
-        self::assertSame(['transaction','transaction','transaction'], array_column($statement->settings, 'scope'));
+        self::assertSame(['transaction','transaction','transaction'], array_map(static fn ($item) => $item->scope->value, $statement->settings));
     }
     public function testBindRetainsMysqlNextTransactionLifetime(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SET TRANSACTION ISOLATION LEVEL READ COMMITTED');
-        self::assertSame('next-transaction', $statement->settings[0]->scope);
-        self::assertSame('READ COMMITTED', $statement->settings[0]->values[0]->symbol);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
+        self::assertSame('next-transaction', $statement->settings[0]->scope->value);
+        self::assertSame('READ COMMITTED', $statement->settings[0]->values[0]->spelling());
     }
 
     public function testBindRetainsIsolationAccessAndDeferrability(): void
     {
         $settings = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY, NOT DEFERRABLE')->settings;
         self::assertSame(['transaction_isolation','transaction_access','transaction_deferrable'], array_map(static fn ($setting) => $setting->name[0], $settings));
-        self::assertSame(['session','session','session'], array_column($settings, 'scope'));
-        self::assertSame(['REPEATABLE READ','READ ONLY','NOT DEFERRABLE'], array_map(static fn ($setting) => $setting->values[0]->symbol, $settings));
+        self::assertSame(['session','session','session'], array_map(static fn ($item) => $item->scope->value, $settings));
+        self::assertSame(['REPEATABLE READ','READ ONLY','NOT DEFERRABLE'], array_map(static fn ($setting) => $setting->values[0]->spelling(), $settings));
     }
     public function testBindRetainsGlobalMysqlIsolation(): void
     {
         $settings = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SET GLOBAL TRANSACTION ISOLATION LEVEL READ COMMITTED, READ WRITE')->settings;
-        self::assertSame(['global','global'], array_column($settings, 'scope'));
-        self::assertSame(['READ COMMITTED','READ WRITE'], array_map(static fn ($setting) => $setting->values[0]->symbol, $settings));
+        self::assertSame(['global','global'], array_map(static fn ($item) => $item->scope->value, $settings));
+        self::assertSame(['READ COMMITTED','READ WRITE'], array_map(static fn ($setting) => $setting->values[0]->spelling(), $settings));
     }
 }

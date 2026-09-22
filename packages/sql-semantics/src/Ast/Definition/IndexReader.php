@@ -5,10 +5,10 @@ declare(strict_types=1);
 namespace SqlSemantics\Ast\Definition;
 
 use SqlParser\Parser\Node;
+use SqlSemantics\Ast\Declaration\IndexDefinition;
+use SqlSemantics\Ast\Declaration\IndexElement;
 use SqlSemantics\Ast\Identifiers;
 use SqlSemantics\Ast\Tree;
-use SqlSemantics\Schema\IndexDefinition;
-use SqlSemantics\Schema\IndexElement;
 
 /**
  * Reads standalone and table-local index declarations.
@@ -79,7 +79,7 @@ final class IndexReader
                 $constraintName = $this->identifiers->name($tokens[1]);
                 $tokens = array_slice($tokens, 2);
             }
-            if (!in_array(strtoupper($tokens[0]->text ?? ''), ['KEY', 'INDEX', 'UNIQUE', 'PRIMARY', 'FULLTEXT', 'SPATIAL'], true)) {
+            if (!in_array(strtoupper($tokens[0]->text ?? ''), ['KEY', 'INDEX', 'FULLTEXT', 'SPATIAL'], true)) {
                 continue;
             }
             $nameNode = array_values(array_filter(Tree::outer($node, ['opt_index_name_and_type', 'opt_ident', 'opt_constraint_name']), Tree::hasTokens(...)))[0] ?? null;

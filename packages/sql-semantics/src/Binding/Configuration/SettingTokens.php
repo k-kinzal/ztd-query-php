@@ -10,7 +10,6 @@ use SqlSemantics\Ast\Tree;
 use SqlSemantics\Binding\ExpressionBinder;
 use SqlSemantics\Binding\Scope;
 use SqlSemantics\Model\Expression;
-use SqlSemantics\Model\ExpressionKind;
 use SqlSemantics\Type\Nullability;
 use SqlSemantics\Type\TypeDescriptor;
 
@@ -47,6 +46,7 @@ final class SettingTokens
 
     /**
      * @param non-empty-list<Token> $tokens
+     * @throws \SqlSemantics\Binding\Statement\UnclassifiedSql
      */
     public static function value(array $tokens, Node $source, Scope $scope): Expression
     {
@@ -67,7 +67,15 @@ final class SettingTokens
             }
         }
         $node = new Node('configuration_value', 0, $tokens);
-        return new Expression(ExpressionKind::ConfigurationValue, new TypeDescriptor($scope->identifiers->dialect, 'text'), Nullability::NotNull, $node, symbol: Tree::text($node));
+        $facts = new \SqlSemantics\Model\Scalar\ExpressionFacts(TypeDescriptor::builtin($scope->identifiers->dialect, 'text'), Nullability::NotNull);
+        $keyword = \SqlSemantics\Model\Scalar\Value\SettingKeyword::tryFrom(implode(' ', self::words($tokens)));
+        if ($keyword !== null) {
+            return new \SqlSemantics\Model\Scalar\Value\ConfigurationKeyword($facts, $node, $keyword);
+        }
+        if (count($tokens) === 1) {
+            return new \SqlSemantics\Model\Scalar\Value\ConfigurationIdentifier($facts, $node, [$scope->identifiers->name($tokens[0])]);
+        }
+        throw new \SqlSemantics\Binding\Statement\UnclassifiedSql('Unclassified configuration value: ' . $node->toString());
     }
 
     /**

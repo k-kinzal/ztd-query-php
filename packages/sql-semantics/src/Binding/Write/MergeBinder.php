@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Binding\Write;
 
+use LogicException;
 use SqlParser\Parser\Node;
 use SqlSemantics\Ast\Tree;
 use SqlSemantics\Binding\FromBinder;
@@ -11,7 +12,6 @@ use SqlSemantics\Binding\ProjectionBinder;
 use SqlSemantics\Binding\Query\QueryContext;
 use SqlSemantics\Binding\Scope;
 use SqlSemantics\Binding\Statement\MutationBinder;
-use SqlSemantics\Binding\Statement\ValuesBinder;
 use SqlSemantics\Model\BoundStatement;
 use SqlSemantics\Model\TableUse;
 use SqlSemantics\Model\Write\Merge;
@@ -45,11 +45,13 @@ final class MergeBinder
         $actions = array_map(fn (Node $node): MergeAction => $this->action($node, $target, $scope, $input->scope, $destinations), \SqlSemantics\Binding\Query\QueryNodes::local($statement, ['merge_when_clause']));
         $returning = Tree::child($statement, ['returning_clause']);
         $outputs = $returning === null ? [] : (new ProjectionBinder())->bind($returning, $scope);
-        return new \SqlSemantics\Model\Statement\MergeStatement($id, $input->relation, $scope->relations, $outputs, null, false, [], null, null, $source, ctes: $context->ctes, kind: 'MERGE', targets: [$target], merge: new Merge($target, $input->relation, $condition, $actions));
+        return new \SqlSemantics\Model\Statement\MergeStatement(new \SqlSemantics\Model\Statement\Origin($id, $source, $context->tables->identifiers->dialect), new Merge($target, $input->relation, $condition, $actions), $outputs, (new \SqlSemantics\Binding\Query\CteBinder())->clause($source, $context));
     }
 
     /**
      * Applies match-specific visibility to predicates and input values, keeping targets separate.
+     * @throws LogicException
+     * @throws \SqlSemantics\Binding\Statement\UnclassifiedSql
      */
     public function action(Node $node, TableUse $target, Scope $scope, Scope $input, Scope $destinations): MergeAction
     {
@@ -70,12 +72,20 @@ final class MergeBinder
         $condition = (new ConflictBinder())->predicate(Tree::child($node, ['opt_merge_when_condition']), $scope);
         $operation = Tree::child($node, ['merge_update', 'merge_insert', 'merge_delete']);
         if ($operation === null) {
-            return new MergeAction($match, 'nothing', $condition, [], null, [], $node);
+            return new \SqlSemantics\Model\Write\Decision\MergeNothing(\SqlSemantics\Model\Write\Decision\MatchKind::from($match), $condition, $node);
         }
         $action = substr($operation->name, strlen('merge_'));
         $assignments = $action === 'update' ? (new AssignmentBinder())->bind($operation, $scope, $destinations) : [];
-        $rows = $action === 'insert' ? (new ValuesBinder())->rows($operation, $scope) : [];
+        $rows = $action === 'insert' ? WriteInputs::rows($operation, $scope) : [];
         $insertion = $action === 'insert' ? (new InsertionBinder())->bind($operation, $target, $destinations, $rows, [], [], $destinations) : null;
-        return new MergeAction($match, $action, $condition, $assignments, $insertion, $rows, $node);
+        $matched = \SqlSemantics\Model\Write\Decision\MatchKind::from($match);
+        return match ($action) {
+            'update' => new \SqlSemantics\Model\Write\Decision\MergeUpdate($matched, $condition, $node, $assignments),
+            'delete' => new \SqlSemantics\Model\Write\Decision\MergeDelete($matched, $condition, $node),
+            'insert' => $insertion === null ? throw new LogicException('A MERGE insertion requires its destination.') : ((new InsertionBinder())->defaultValues($operation)
+                ? new \SqlSemantics\Model\Write\Decision\MergeInsertDefaults($matched, $condition, $node, $insertion)
+                : new \SqlSemantics\Model\Write\Decision\MergeRowInsertion($matched, $condition, $node, $insertion, new \SqlSemantics\Model\Write\InputRow($scope->identifiers->dialect, $rows[0] ?? throw new \SqlSemantics\Binding\Statement\UnclassifiedSql('A MERGE insertion requires one row.')))),
+            default => throw new LogicException('Unclassified MERGE action: ' . $action),
+        };
     }
 }

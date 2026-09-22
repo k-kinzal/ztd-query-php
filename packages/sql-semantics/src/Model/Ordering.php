@@ -17,12 +17,12 @@ namespace SqlSemantics\Model;
 final class Ordering
 {
     /**
-     * @param Expression $expression Sort expression
+     * @param Expression|Query\Ordering\OutputPosition|Query\Ordering\OutputAlias|Query\Ordering\UnresolvedOutputPosition $key Sort value or projected output reference
      * @param bool $descending Descending order
      * @param bool|null $nullsFirst Explicit NULLS FIRST/LAST; null uses the dialect default
      */
     public function __construct(
-        public readonly Expression $expression,
+        public readonly Expression|Query\Ordering\OutputPosition|Query\Ordering\OutputAlias|Query\Ordering\UnresolvedOutputPosition $key,
         public readonly bool $descending = false,
         public readonly ?bool $nullsFirst = null,
     ) {

@@ -73,8 +73,6 @@ use SqlSemantics\SemanticException;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\OutputColumn::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\TableUse::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Assignment::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Insertion::class)]
@@ -115,20 +113,14 @@ use SqlSemantics\SemanticException;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\StatementFactory::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -161,14 +153,15 @@ final class AssignmentRulesTest extends TestCase
     public function testCheckRetainsRuntimeConversions(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INTEGER)')))->bind("UPDATE t SET id='42'");
-        self::assertSame("'42'", $statement->writes[0]->value->symbol);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $statement);
+        self::assertSame("'42'", $statement->writes[0]->value->spelling());
     }
 
     public function testCheckAllowsNullableArrayElementsInANonNullArray(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER[] NOT NULL)'));
-        self::assertSame('NULL', $binder->bind('UPDATE t SET a[1]=NULL')->writes[0]->value->symbol);
-        self::assertSame('default', $binder->bind('UPDATE t SET a=DEFAULT')->writes[0]->value->kind->value);
+        self::assertSame('NULL', $binder->bind('UPDATE t SET a[1]=NULL')->writes[0]->value->spelling());
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\DefaultAssignment::class, $binder->bind('UPDATE t SET a=DEFAULT')->writes[0]);
     }
     #[\PHPUnit\Framework\Attributes\TestWith(['SMALLINT','1'])]
     #[\PHPUnit\Framework\Attributes\TestWith(['VARCHAR(20)','1'])]
@@ -177,12 +170,13 @@ final class AssignmentRulesTest extends TestCase
     public function testCheckRetainsAssignmentCoercions(string $type, string $value): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a '.$type.')')))->bind('INSERT INTO t VALUES('.$value.')');
-        self::assertSame($value, $statement->rows[0][0]->symbol);
+        self::assertSame($value, $statement->rows[0][0]->spelling());
     }
     public function testCheckKeepsUnresolvedDestinationDiagnostics(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('UPDATE missing SET a=NULL', strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $statement);
         self::assertContains('unknown-column', array_column($statement->diagnostics, 'reason'));
-        self::assertSame('unresolved-column', $statement->writes[0]->targets[0]->kind->value);
+        self::assertSame('unresolved-column', $statement->writes[0]->target->column()->kind->value);
     }
 }

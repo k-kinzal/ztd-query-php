@@ -85,8 +85,6 @@ use SqlSemantics\SemanticException;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
@@ -115,24 +113,18 @@ use SqlSemantics\SemanticException;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Dialect::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\ConstraintKind::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Type\Nullability::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\ExpressionKind::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\JoinKind::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -176,7 +168,9 @@ final class SchemaBuilderTest extends TestCase
         $empty = $builder->build();
         self::assertCount(1, $first->tables);
         self::assertSame([], $empty->tables);
-        self::assertSame('integer', (new Binder($empty))->bind('SELECT 1')->outputs[0]->expression->type->name);
+        $boundQuery1 = (new Binder($empty))->bind('SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery1);
+        self::assertSame('integer', $boundQuery1->outputs[0]->expression->type->name);
     }
 
     public function testBuildRejectsConflictingDeclarationsAcrossSqlStrings(): void
@@ -192,7 +186,9 @@ final class SchemaBuilderTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::PostgreSql, 'app', 'pg-17.2'))->build('CREATE TABLE public.users (id INTEGER)', 'CREATE TABLE users (id INTEGER)');
         self::assertSame(['public', 'app'], array_column($schema->tables, 'schema'));
         self::assertSame('pg-17.2', $schema->grammarVersion);
-        self::assertSame($schema->tables[1], (new Binder($schema))->bind('SELECT id FROM users')->relations[0]->declaration);
+        $boundQuery1 = (new Binder($schema))->bind('SELECT id FROM users');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery1);
+        self::assertSame($schema->tables[1], $boundQuery1->relations[0]->declaration);
     }
 
     public function testBuildPropagatesInvalidDdlSyntax(): void
@@ -214,13 +210,15 @@ final class SchemaBuilderTest extends TestCase
 
     public function testBuildUsesRegisteredFunctionsForDerivedTableColumns(): void
     {
-        $type = new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, 'integer');
+        $type = new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('integer'));
         $function = new \SqlSemantics\Schema\FunctionSignature('twice', [$type], $type, \SqlSemantics\Type\Nullability::NotNull, true);
         $builder = new SchemaBuilder(Dialect::PostgreSql, functions: [$function]);
         $schema = $builder->build('CREATE TABLE t AS SELECT twice(1) AS doubled');
         self::assertSame('integer', $schema->tables[0]->columns[0]->type->name);
         self::assertSame(\SqlSemantics\Type\Nullability::NotNull, $schema->tables[0]->columns[0]->nullability);
-        self::assertSame('integer', (new Binder($schema))->bind('SELECT twice(doubled) FROM t')->outputs[0]->expression->type->name);
+        $boundQuery1 = (new Binder($schema))->bind('SELECT twice(doubled) FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery1);
+        self::assertSame('integer', $boundQuery1->outputs[0]->expression->type->name);
     }
 
 }

@@ -95,9 +95,7 @@ use SqlSemantics\Type\TypeDescriptor;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\IndexDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ConstraintGroups::class)]
@@ -118,19 +116,13 @@ use SqlSemantics\Type\TypeDescriptor;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\StatementFactory::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -148,36 +140,53 @@ final class FunctionResolverTest extends TestCase
 {
     public function testResolveQualifiedAndQuotedFunctionNames(): void
     {
-        $integer = new TypeDescriptor(Dialect::PostgreSql, 'integer');
+        $integer = new TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('integer'));
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build()->withFunctions(new FunctionSignature('Mixed', [$integer], $integer, schema: 'app'));
         $binder = new Binder($schema);
-        self::assertSame('integer', $binder->bind('SELECT app."Mixed"(1)')->outputs[0]->expression->type->name);
-        self::assertSame('unknown', $binder->bind('SELECT app.mixed(1)')->outputs[0]->expression->type->name);
-        self::assertSame('unknown', $binder->bind('SELECT other."Mixed"(1)')->outputs[0]->expression->type->name);
+        $boundQuery1 = $binder->bind('SELECT app."Mixed"(1)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery1);
+        self::assertSame('integer', $boundQuery1->outputs[0]->expression->type->name);
+        $boundQuery2 = $binder->bind('SELECT app.mixed(1)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery2);
+        self::assertSame('unknown', $boundQuery2->outputs[0]->expression->type->name);
+        $boundQuery3 = $binder->bind('SELECT other."Mixed"(1)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery3);
+        self::assertSame('unknown', $boundQuery3->outputs[0]->expression->type->name);
     }
 
     public function testOverloadChoosesExactTypesAndDiagnosesAmbiguity(): void
     {
-        $integer = new TypeDescriptor(Dialect::PostgreSql, 'integer');
-        $text = new TypeDescriptor(Dialect::PostgreSql, 'text');
+        $integer = new TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('integer'));
+        $text = new TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('text'));
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build()->withFunctions(new FunctionSignature('pick', [$integer], $integer), new FunctionSignature('pick', [$text], $text));
         $binder = new Binder($schema);
         $query = $binder->bind('SELECT pick(1), pick(CAST(1 AS TEXT))');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame(['integer', 'text'], array_map(static fn ($output): string => $output->expression->type->name, $query->outputs));
-        self::assertSame('ambiguous-function', $binder->bind('SELECT pick(NULL)', strict: false)->diagnostics[0]->reason);
-        self::assertSame('invalid-arity', $binder->bind('SELECT pick()', strict: false)->diagnostics[0]->reason);
-        self::assertSame('incompatible-arguments', $binder->bind('SELECT pick(true)', strict: false)->diagnostics[0]->reason);
+        $boundQuery1 = $binder->bind('SELECT pick(NULL)', strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery1);
+        self::assertSame('ambiguous-function', $boundQuery1->diagnostics[0]->reason);
+        $boundQuery2 = $binder->bind('SELECT pick()', strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery2);
+        self::assertSame('invalid-arity', $boundQuery2->diagnostics[0]->reason);
+        $boundQuery3 = $binder->bind('SELECT pick(true)', strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery3);
+        self::assertSame('incompatible-arguments', $boundQuery3->diagnostics[0]->reason);
         $this->expectException(\SqlSemantics\SemanticException::class);
         $binder->bind('SELECT pick(true)');
     }
 
     public function testResolveRegisteredFunctionsInNestedQueriesAndDefinitions(): void
     {
-        $type = new TypeDescriptor(Dialect::PostgreSql, 'integer');
+        $type = new TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('integer'));
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build()->withFunctions(new FunctionSignature('twice', [$type], $type, Nullability::NotNull, true));
         $binder = new Binder($schema);
-        self::assertSame('integer', $binder->bind('SELECT (SELECT twice(2))')->outputs[0]->expression->type->name);
-        self::assertSame('integer', $binder->bind('CREATE TABLE t(id INTEGER DEFAULT twice(2))')->definitions[0]->defaults['id']->type->name);
+        $boundQuery1 = $binder->bind('SELECT (SELECT twice(2))');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery1);
+        self::assertSame('integer', $boundQuery1->outputs[0]->expression->type->name);
+        $boundQuery2 = $binder->bind('CREATE TABLE t(id INTEGER DEFAULT twice(2))');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $boundQuery2);
+        self::assertSame('integer', $boundQuery2->definition->table->columns[0]->generation->default->type->name);
         $script = $binder->bindAll('SELECT twice(1); SELECT twice(2)');
         self::assertSame('integer', $script[1]->outputs[0]->expression->type->name);
     }
@@ -185,20 +194,29 @@ final class FunctionResolverTest extends TestCase
 
     public function testResolveUsesTheDefaultNamespaceAndExplicitBuiltinNamespace(): void
     {
-        $integer = new TypeDescriptor(Dialect::PostgreSql, 'integer');
+        $integer = new TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('integer'));
         $schema = (new SchemaBuilder(Dialect::PostgreSql, 'app'))->build()->withFunctions(new FunctionSignature('f', [], $integer, schema: 'app'));
         $binder = new Binder($schema);
-        self::assertSame('integer', $binder->bind('SELECT f()')->outputs[0]->expression->type->name);
-        self::assertSame('text', $binder->bind("SELECT pg_catalog.lower('X')")->outputs[0]->expression->type->name);
-        self::assertSame('unknown', $binder->bind("SELECT other.lower('X')")->outputs[0]->expression->type->name);
-        self::assertSame('unknown', $binder->bind('SELECT public.f()')->outputs[0]->expression->type->name);
+        $boundQuery1 = $binder->bind('SELECT f()');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery1);
+        self::assertSame('integer', $boundQuery1->outputs[0]->expression->type->name);
+        $boundQuery2 = $binder->bind("SELECT pg_catalog.lower('X')");
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery2);
+        self::assertSame('text', $boundQuery2->outputs[0]->expression->type->name);
+        $boundQuery3 = $binder->bind("SELECT other.lower('X')");
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery3);
+        self::assertSame('unknown', $boundQuery3->outputs[0]->expression->type->name);
+        $boundQuery4 = $binder->bind('SELECT public.f()');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery4);
+        self::assertSame('unknown', $boundQuery4->outputs[0]->expression->type->name);
     }
 
     public function testOverloadReportsTheNameAndResponsibleSource(): void
     {
-        $integer = new TypeDescriptor(Dialect::PostgreSql, 'integer');
+        $integer = new TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('integer'));
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build()->withFunctions(new FunctionSignature('takes_integer', [$integer], $integer));
         $statement = (new Binder($schema))->bind('SELECT takes_integer()', strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertSame('Cannot resolve a unique function signature for takes_integer', $statement->diagnostics[0]->message);
         self::assertSame($statement->outputs[0]->expression->source, $statement->diagnostics[0]->source);
     }

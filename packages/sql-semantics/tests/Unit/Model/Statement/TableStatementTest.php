@@ -56,8 +56,6 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\IndexEvolution::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\TableAlteration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryRelation::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryContext::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\UsingJoin::class)]
@@ -102,15 +100,11 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Assignment::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -119,9 +113,7 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\IndexDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(InvalidStructure::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Sql\Literal::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Sql\ExpressionFactory::class)]
@@ -149,21 +141,39 @@ final class TableStatementTest extends TestCase
 {
     public function testWithTableRefreshesDependentFacts(): void
     {
-        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)'));
-        $statement = $binder->bind('TABLE t');
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER); CREATE TABLE u(n TEXT)');
+        $statement = (new Binder($schema))->bind('TABLE t');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\TableStatement::class, $statement);
-        $changed = $statement->withTable(['t']);
-        self::assertSame(['id','n'], array_column($changed->outputs, 'name'));
-        self::assertSame('t', $changed->relations[0]->declaration->name);
+        $changed = $statement->withTable($schema->tables[1]);
+        self::assertSame(['n'], array_column($changed->outputs, 'name'));
+        self::assertSame('text', $changed->outputs[0]->expression->type->name);
+        self::assertSame('u', $changed->from->declaration->name);
+        self::assertSame('t', $statement->from->declaration->name);
     }
 
     public function testWithTableRejectsAnInvalidTarget(): void
     {
-        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
-        $statement = $binder->bind('TABLE t');
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
+        $statement = (new Binder($schema))->bind('TABLE t');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\TableStatement::class, $statement);
-        $this->expectException(InvalidStructure::class);
-        $this->expectExceptionMessage('A TABLE query requires a relation name.');
-        $statement->withTable([]);
+        $missing = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE missing(id INTEGER)')->tables[0];
+        $this->expectException(\SqlSemantics\SemanticException::class);
+        $statement->withTable($missing);
+    }
+
+    public function testWithTableDerivesColumnsFromTheReplacementDeclaration(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)', 'CREATE TABLE u(name TEXT, active BOOLEAN)');
+        $binder = new Binder($schema);
+        $before = $binder->bind('TABLE t');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\TableStatement::class, $before);
+        $other = $binder->bind('TABLE u');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\TableStatement::class, $other);
+
+
+        $changed = new \SqlSemantics\Model\Statement\TableStatement($before->origin, $other->from);
+        self::assertSame(['name', 'active'], array_column($changed->outputs, 'name'));
+        self::assertSame([$other->from], $changed->relations);
+        self::assertSame($changed->toString(), $before->withTable($other->from->declaration)->toString());
     }
 }

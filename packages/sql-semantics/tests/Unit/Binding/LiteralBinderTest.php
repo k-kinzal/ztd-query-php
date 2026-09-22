@@ -86,8 +86,6 @@ use SqlSemantics\Type\Nullability;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
@@ -116,24 +114,18 @@ use SqlSemantics\Type\Nullability;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Dialect::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\ConstraintKind::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Nullability::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\ExpressionKind::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\JoinKind::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -153,6 +145,7 @@ final class LiteralBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
         $statement = (new Binder($schema))->bind('SELECT 2147483647, 2147483648, 9223372036854775808');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertSame('integer', $statement->outputs[0]->expression->type->name);
         self::assertSame('bigint', $statement->outputs[1]->expression->type->name);
         self::assertSame('numeric', $statement->outputs[2]->expression->type->name);
@@ -162,6 +155,7 @@ final class LiteralBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
         $statement = (new Binder($schema))->bind('SELECT $1');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertSame(\SqlSemantics\Model\ExpressionKind::Parameter, $statement->outputs[0]->expression->kind);
         self::assertSame(Nullability::Unknown, $statement->outputs[0]->expression->nullability);
         self::assertSame('unknown', $statement->outputs[0]->expression->type->name);
@@ -197,6 +191,7 @@ final class LiteralBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::MySql))->build();
         $statement = (new Binder($schema))->bind('SELECT 2147483648, 9223372036854775808, 18446744073709551616');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertSame('bigint', $statement->outputs[0]->expression->type->name);
         self::assertSame('bigint unsigned', $statement->outputs[1]->expression->type->name);
         self::assertSame('numeric', $statement->outputs[2]->expression->type->name);
@@ -206,6 +201,7 @@ final class LiteralBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::Sqlite))->build();
         $statement = (new Binder($schema))->bind('SELECT 9223372036854775807, 9223372036854775808');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertSame('integer', $statement->outputs[0]->expression->type->name);
         self::assertSame('real', $statement->outputs[1]->expression->type->name);
     }
@@ -220,8 +216,9 @@ final class LiteralBinderTest extends TestCase
     public function testNonDecimalKeepsOriginalLiteralSpelling(): void
     {
         $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 0xff');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame('integer', $query->outputs[0]->expression->type->name);
-        self::assertSame('0xff', $query->outputs[0]->expression->symbol);
+        self::assertSame('0xff', $query->outputs[0]->expression->spelling());
     }
 
     #[TestWith(['0x7fffffff', 'integer'])]
@@ -236,14 +233,14 @@ final class LiteralBinderTest extends TestCase
     {
         $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('select ' . $literal);
         self::assertSame($type, $query->outputs[0]->expression->type->name);
-        self::assertSame($literal, $query->outputs[0]->expression->symbol);
+        self::assertSame($literal, $query->outputs[0]->expression->spelling());
     }
 
 
     public function testFallbackRecognizesOnlyUnquotedSqliteBooleanNames(): void
     {
         $binder = new \SqlSemantics\Binding\LiteralBinder(Dialect::Sqlite);
-        self::assertSame('FALSE', $binder->fallback(new \SqlParser\Lexer\Token(1, 'ID', 'FALSE', 0))?->symbol);
+        self::assertSame('FALSE', $binder->fallback(new \SqlParser\Lexer\Token(1, 'ID', 'FALSE', 0))?->spelling());
         self::assertNull($binder->fallback(new \SqlParser\Lexer\Token(1, 'ID', '"FALSE"', 0)));
         self::assertNull((new \SqlSemantics\Binding\LiteralBinder(Dialect::PostgreSql))->fallback(new \SqlParser\Lexer\Token(1, 'IDENT', 'FALSE', 0)));
     }

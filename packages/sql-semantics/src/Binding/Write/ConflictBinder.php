@@ -69,7 +69,12 @@ final class ConflictBinder
                 }
             }
         }
-        return new ConflictAction(str_contains($text, 'DO NOTHING') ? 'nothing' : 'update', $expressions, $constraint === null ? null : $scope->identifiers->parts($constraint)[0], $this->predicate($indexWhere, $scope), $assignments, $this->predicate($where, $scope), $source);
+        $target = $constraint !== null
+            ? new \SqlSemantics\Model\Write\Conflict\ConstraintConflict($scope->identifiers->parts($constraint)[0])
+            : ($expressions !== [] ? new \SqlSemantics\Model\Write\Conflict\IndexConflict($expressions, $this->predicate($indexWhere, $scope)) : new \SqlSemantics\Model\Write\Conflict\AnyConflict());
+        return str_contains($text, 'DO NOTHING')
+            ? new \SqlSemantics\Model\Write\Conflict\DoNothing($target, $source)
+            : new \SqlSemantics\Model\Write\Conflict\DoUpdate($target, $assignments, $this->predicate($where, $scope), $source);
     }
 
     /**
@@ -79,7 +84,7 @@ final class ConflictBinder
     {
         $cursor = $node === null ? null : Tree::child($node, ['cursor_name']);
         if ($cursor !== null) {
-            return new Expression(\SqlSemantics\Model\ExpressionKind::CurrentRow, new \SqlSemantics\Type\TypeDescriptor($scope->identifiers->dialect, 'boolean'), \SqlSemantics\Type\Nullability::NotNull, $node, symbol: 'CURRENT OF', reference: $scope->identifiers->parts($cursor));
+            return new \SqlSemantics\Model\Scalar\Reference\CursorPosition(new \SqlSemantics\Model\Scalar\ExpressionFacts(\SqlSemantics\Type\TypeDescriptor::builtin($scope->identifiers->dialect, 'boolean'), \SqlSemantics\Type\Nullability::NotNull, []), $node, $scope->identifiers->parts($cursor));
         }
         $expression = $node === null ? null : (Tree::outer($node, ['a_expr', 'expr'])[0] ?? null);
         if ($expression === null) {

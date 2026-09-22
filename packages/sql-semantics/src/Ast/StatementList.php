@@ -24,7 +24,7 @@ final class StatementList
         [$root, $statement] = match ($dialect) {
             Dialect::PostgreSql => ['parse_toplevel', 'stmt'],
             Dialect::MySql => ['start_entry', 'simple_statement'],
-            Dialect::Sqlite => ['input', 'cmd'],
+            Dialect::Sqlite => ['input', 'ecmd'],
         };
         if ($dialect === Dialect::MySql && $tree->name === 'query') {
             $root = 'query';
@@ -34,8 +34,13 @@ final class StatementList
             throw new SemanticException('dialect-mismatch', 'Expected a ' . $dialect->value . ' parser root.', $tree);
         }
         $statements = array_values(array_filter(Tree::outer($tree, [$statement]), static fn (Node $node): bool => Tree::hasTokens($node)));
+        if ($dialect === Dialect::Sqlite) {
+            $statements = array_map(static fn (Node $node): Node => Tree::child($node, ['explain']) === null ? (Tree::outer($node, ['cmd'])[0] ?? $node) : $node, $statements);
+        }
         if ($statements === []) {
-            $statements = Tree::outer($tree, $dialect === Dialect::PostgreSql ? ['TransactionStmtLegacy'] : ['simple_statement_or_begin']);
+            $statements = Tree::outer($tree, match ($dialect) {
+                Dialect::PostgreSql => ['TransactionStmtLegacy'], Dialect::MySql => ['simple_statement_or_begin', 'begin'], Dialect::Sqlite => ['cmd']
+            });
         }
         if ($statements === []) {
             Tree::invalid($tree, 'empty statement list');

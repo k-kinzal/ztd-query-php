@@ -84,8 +84,6 @@ use SqlSemantics\SemanticException;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
@@ -114,24 +112,18 @@ use SqlSemantics\SemanticException;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Dialect::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\ConstraintKind::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Type\Nullability::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\ExpressionKind::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\JoinKind::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -154,6 +146,7 @@ final class ProjectionBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind('SELECT a.*, b.score AS id FROM users a LEFT JOIN users b ON a.id=b.id');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertSame(['id', 'parent_id', 'score', 'id'], array_column($statement->outputs, 'name'));
         self::assertSame([0, 1, 2, 3], array_column($statement->outputs, 'ordinal'));
     }
@@ -165,9 +158,10 @@ final class ProjectionBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind('SELECT * FROM users a, users b');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertSame(['id', 'parent_id', 'score', 'id', 'parent_id', 'score'], array_column($statement->outputs, 'name'));
-        self::assertSame('r0', $statement->outputs[0]->expression->binding?->relationId);
-        self::assertSame('r1', $statement->outputs[3]->expression->binding?->relationId);
+        self::assertSame('r0', $statement->outputs[0]->expression->columnBinding()?->relationId);
+        self::assertSame('r1', $statement->outputs[3]->expression->columnBinding()?->relationId);
     }
 
     public function testStarRejectsAnUnknownQualifier(): void
@@ -181,6 +175,7 @@ final class ProjectionBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
         $statement = (new Binder($schema))->bind("SELECT NULL, 'hello'");
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertSame('text', $statement->outputs[0]->expression->type->name);
         self::assertSame('text', $statement->outputs[1]->expression->type->name);
         self::assertSame(\SqlSemantics\Type\Nullability::AlwaysNull, $statement->outputs[0]->expression->nullability);
@@ -190,16 +185,18 @@ final class ProjectionBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind("SELECT score AS 'points' FROM users ORDER BY points");
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertSame('points', $statement->outputs[0]->name);
-        self::assertSame($statement->outputs[0]->expression, $statement->orderBy[0]->expression);
+        self::assertSame($statement->outputs[0]->expression, $statement->orderBy[0]->key->output->expression);
     }
     public function testMysqlItemsPreservesLeadingStarBeforeOtherOutputs(): void
     {
         $schema = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (id INTEGER, n INTEGER)');
         $query = (new Binder($schema))->bind('SELECT *, id AS again FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame(['id', 'n', 'again'], array_column($query->outputs, 'name'));
         self::assertSame([0, 1, 2], array_column($query->outputs, 'ordinal'));
-        self::assertSame($query->outputs[0]->expression->binding?->column, $query->outputs[2]->expression->binding?->column);
+        self::assertEquals($query->outputs[0]->expression->columnBinding()?->column, $query->outputs[2]->expression->columnBinding()?->column);
     }
 
 }

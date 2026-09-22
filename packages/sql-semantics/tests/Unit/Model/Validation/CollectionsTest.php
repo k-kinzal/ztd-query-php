@@ -75,9 +75,7 @@ use stdClass;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\TableUse::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Model\Validation\Collections::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(InvalidStructure::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Assignment::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Insertion::class)]
@@ -117,20 +115,14 @@ use stdClass;
 #[\PHPUnit\Framework\Attributes\UsesClass(Binder::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Dialect::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -158,7 +150,9 @@ final class CollectionsTest extends TestCase
     }
     public function testObjectsRejectsNonSequentialPositions(): void
     {
-        $expression = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1')->outputs[0]->expression;
+        $boundQuery1 = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery1);
+        $expression = $boundQuery1->outputs[0]->expression;
         $this->expectException(InvalidStructure::class);
         \SqlSemantics\Model\Validation\Collections::objects([2 => $expression], \SqlSemantics\Model\Expression::class);
     }
@@ -178,5 +172,22 @@ final class CollectionsTest extends TestCase
     {
         $this->expectException(InvalidStructure::class);
         \SqlSemantics\Model\Validation\Collections::components(['SQL']);
+    }
+
+    public function testNonEmptyRejectsAbsentOperands(): void
+    {
+        $this->expectException(InvalidStructure::class);
+        \SqlSemantics\Model\Validation\Collections::nonEmpty([]);
+    }
+
+    public function testNonEmptyRetainsOrder(): void
+    {
+        self::assertSame(['second', 'first'], \SqlSemantics\Model\Validation\Collections::nonEmpty(['second', 'first']));
+    }
+
+    public function testAlternativesRejectsAnUnclassifiedOperand(): void
+    {
+        $this->expectException(InvalidStructure::class);
+        \SqlSemantics\Model\Validation\Collections::alternatives([new stdClass()], [\SqlSemantics\Model\Expression::class]);
     }
 }

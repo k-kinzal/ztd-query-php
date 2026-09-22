@@ -37,7 +37,7 @@ final class Format
         if ($left->kind === 'annotation' || $right->kind === 'annotation') {
             return false;
         }
-        if (in_array($right->text, [',', ';', ')', ']'], true) || in_array($left->text, ['(', '[', '@', '@@'], true)) {
+        if (in_array($right->text, [',', ';', ')', ']', '['], true) || in_array($left->text, ['(', '[', '@', '@@'], true)) {
             return true;
         }
         if ($right->text === '(') {

@@ -1,204 +1,217 @@
 # Binder
 
-`Binder` turns SQL into an immutable `BoundStatement` using an explicit [Schema](schema.md).
-It resolves names, assigns expression types and NULL facts, and describes query inputs,
-write effects, declarations, and settings. It describes operations for a consumer to
-interpret; it does not execute them or change the supplied schema.
+`Binder` describes a SQL operation against an immutable [Schema](schema.md). It
+resolves references and derives types, NULL facts, and dependencies. The result
+contains the information a consumer needs to evaluate the operation. Binding does
+not obtain runtime values, execute functions, modify rows, or apply session changes.
 
-## Bind a statement
+## Public interface
 
 ```php
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
+use SqlSemantics\Model\BoundSelect;
 use SqlSemantics\SchemaBuilder;
 
 $schema = (new SchemaBuilder(Dialect::PostgreSql))->build(
-    'CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL DEFAULT 0)',
-    'CREATE TABLE incoming (id INTEGER, score INTEGER)',
+    'CREATE TABLE users (id INTEGER PRIMARY KEY, score INTEGER NOT NULL)',
 );
 $statement = (new Binder($schema))->bind(
     'SELECT id, score + 1 AS next_score FROM users WHERE score > 0',
 );
 
-$statement->outputs[0]->expression->binding->column->name; // id
-$statement->outputs[1]->name;                              // next_score
-$statement->outputs[1]->expression->kind->value;           // operator
-$statement->outputs[1]->expression->type->name;            // integer
-$statement->outputs[1]->expression->nullability->value;   // not-null
-$statement->outputs[1]->expression->operands[0]->binding->column->name; // score
-$statement->where->symbol;                               // >
+if ($statement instanceof BoundSelect) {
+    $statement->outputs[0]->expression->lineage()[0]->column->name; // id
+    $statement->outputs[1]->name;                                 // next_score
+    $statement->outputs[1]->expression->type->name;               // integer
+    $statement->outputs[1]->expression->nullability->value;       // not-null
+    $statement->where?->inputs()[0]->lineage()[0]->column->name;   // score
+}
 ```
 
-`bind(string $sql, bool $strict = true): BoundStatement` reads exactly one statement.
-`bindAll(string $sql, bool $strict = true): array` returns statements in source order.
-The constructor takes a `Schema`. Every call, including every element of `bindAll`,
-uses that same snapshot. To interpret a sequence against changing definitions, build
-the next schema snapshot explicitly and use it for the next binder.
+`bind(string $sql, bool $strict = true): BoundStatement` reads one statement.
+`bindAll(string $sql, bool $strict = true): array` returns an ordered list. Each
+statement uses the same supplied schema snapshot. The statements do not form an
+executed script: a SET or CREATE in that list does not change the context of later
+statements. Supply a new schema snapshot to interpret changed state.
 
-Successful strict binding returns an empty `diagnostics` list. An unresolved name or
-an incompatible known type raises `SemanticException`, with a `reason` and the
-responsible `source` node or token. `strict: false` instead retains those facts and
-diagnostics in the returned statement. Lexical and syntax errors always raise the
-corresponding sql-parser exception.
+## Statement forms
 
-## Statement types and fields
+The concrete class specifies which operands exist. `kind` is a `StatementKind`
+enum derived from that class. Classes with different required inputs have different
+constructors; unrelated operands are not represented by empty or nullable fields.
+The table uses short class names. Query classes are in `Model` or
+`Model\Statement`; insertion, mutation, and configuration forms have corresponding
+subnamespaces under `Model\Statement`.
 
-All concrete types extend `BoundStatement`. Query types additionally extend
-`BoundQuery`. `BoundSelect` is in `SqlSemantics\Model`; the other concrete types below
-are in `SqlSemantics\Model\Statement`.
+| SQL | Returned type | Required structure and applicable options |
+|-----|---------------|------------------------------------------|
+| `SELECT id FROM users WHERE score > 0` | `BoundSelect` | Ordered `outputs`, optional input `from`, row predicate `where`, grouping, `having`, duplicate-elimination `quantifier`, ordering, pagination, named `windows`, and `locks`. |
+| `VALUES (1), (2)` | `ValuesStatement` | Nonempty `rows` of equal width; result columns and common types are derived from those rows. MySQL uses `VALUES ROW(1), ROW(2)`. |
+| `TABLE users` | `TableStatement` | A required table or CTE reference; result columns are derived from that declaration. |
+| `SELECT id FROM users UNION ALL SELECT id FROM incoming` | `CompoundStatement` | Required `left`, `right`, and `setOperator`; compatible result widths and common types by position. |
+| `INSERT INTO users(id,score) VALUES (1,10)` | `InsertValuesStatement` | `insertion` destination mapping and nonempty `rows`; row widths agree with known destinations. |
+| `INSERT INTO users(id,score) SELECT id,score FROM incoming` | `InsertSelectStatement` | `insertion` and a required `query`. The query supplies the input columns. |
+| `INSERT INTO users DEFAULT VALUES` | `InsertDefaultValuesStatement` | A destination whose omitted columns obtain defaults or generated values. No row or SELECT payload. |
+| MySQL: `INSERT INTO users SET id=1, score=10` | `InsertSetStatement` | `insertion` and nonempty ordered `writes`. |
+| `UPDATE users SET score=score+1 WHERE id=1` | `UpdateTableStatement` | A single `target`, nonempty `writes`, and optional row predicate. |
+| `UPDATE users SET score=incoming.score FROM incoming WHERE users.id=incoming.id` | `UpdateFromStatement` | Separate required `target` and `from` inputs; ordered writes and predicate. |
+| MySQL: `UPDATE users JOIN incoming ON users.id=incoming.id SET users.score=incoming.score` | `UpdateJoinedStatement` | Required joined `from`, affected `targets`, and ordered writes. |
+| `DELETE FROM users WHERE id=1` | `DeleteTableStatement` | One required `target` and optional predicate. |
+| `DELETE FROM users USING incoming WHERE users.id=incoming.id` | `DeleteUsingStatement` | Separate required deletion `target` and read input `using`. |
+| MySQL: `DELETE users FROM users JOIN incoming ON users.id=incoming.id` | `DeleteJoinedStatement` | Joined input and explicit deletion targets. |
+| `MERGE INTO users USING incoming ON users.id=incoming.id WHEN MATCHED THEN DELETE` | `MergeStatement` | Required target, input, match condition, and ordered, typed actions. |
+| `SET LOCAL work_mem='64MB'` | `SetStatement` | Nonempty `settings`: an `AssignedSetting` with required expressions, a `DefaultSetting` requesting the parameter default, a `CurrentSetting` copying current state, or an `AssignedUserVariable` with a required target and one expression. |
+| MySQL: `SET @x=123` | `SetStatement` | An `AssignedUserVariable` holds its `target` reference and one required `value`. A declared variable target retains its supplied `VariableDefinition`. |
+| `RESET work_mem`, `RESET ALL` | `ResetSettingStatement`, `ResetAllSettingsStatement` | A required named parameter, or all session parameters with no name payload. |
+| MySQL: `RESET PERSIST IF EXISTS max_connections`, `RESET PERSIST` | `ResetSettingStatement`, `ResetAllPersistedVariablesStatement` | A persisted variable with its existence policy, or all persisted variables. |
+| SQLite: `PRAGMA main.cache_size` | `ReadPragmaStatement` | Qualified `name`; no assigned value. |
+| SQLite: `PRAGMA main.cache_size=-2000` | `AssignPragmaStatement` | Qualified `name` and one required argument, classified as a numeric, text, or identifier argument. |
+| `CREATE TABLE t(id INTEGER DEFAULT 1)` | `CreateTableStatement` | `definition.table`: ordered columns, typed value sources, constraints, indexes, and dialect-specific properties. |
+| `CREATE TABLE t AS SELECT id FROM users` | `CreateTableAsStatement` | The target name, source query, and declaration options. |
+| `CREATE INDEX ix ON users((score+1)) WHERE score>0` | `CreateIndexStatement` | Required `table` and `index.definition`, including ordered typed keys and a partial-index predicate. |
+| MySQL: `DROP INDEX ix ON users ALGORITHM=INPLACE LOCK=NONE` | `DropTableIndexStatement` | Required index name and owning table, with algorithm and lock enums. |
+| `DROP INDEX CONCURRENTLY IF EXISTS ix` | `DropIndexConcurrentlyStatement` | Exactly one index name and existence policy. |
+| `DROP TRIGGER tr ON users CASCADE` | `DropTableTriggerStatement` | Required trigger name and owning table, with drop behavior. |
+| `PREPARE s(int) AS SELECT $1` | `PrepareQueryStatement` | Required nested statement, name and declared parameter types; the SELECT's parameter has the declared integer type. |
+| MySQL: `PREPARE s FROM @sql` | `PrepareTextStatement` | Name and a required user-variable reference or text literal that supplies SQL at execution time. |
+| `EXECUTE s(1, 2)` | `ExecuteQueryStatement` | Prepared-query name and ordered argument expressions. |
+| MySQL: `EXECUTE s USING @x, @y` | `ExecuteUsingStatement` | Prepared-statement name and ordered user-variable references. |
+| `DEALLOCATE s`, `DEALLOCATE ALL` | `DeallocateStatement`, `DeallocateAllStatement` | One required prepared-statement name, or all prepared statements. |
+| `EXPLAIN UPDATE users SET score=1` | `ExplainStatement` | Required nested `statement` and classified EXPLAIN options. |
+| `DECLARE cur CURSOR FOR SELECT id FROM users` | `DeclareCursorStatement` | Cursor name, required `query`, scrollability, sensitivity, transfer format, and lifetime. |
+| `FETCH BACKWARD ALL FROM cur` | `FetchCursorStatement` | Cursor name and `RemainingRows(Backward)` movement. |
+| `MOVE ABSOLUTE -2 FROM cur` | `MoveCursorStatement` | Cursor name and `PositionedRow(Absolute, -2)`. The position is described, not evaluated. |
+| `CLOSE cur`, `CLOSE ALL` | `CloseCursorStatement`, `CloseAllCursorsStatement` | One named cursor or all cursors, respectively. |
+| `LISTEN events`, `UNLISTEN events`, `UNLISTEN *` | `ListenStatement`, `UnlistenStatement`, `UnlistenAllStatement` | A required channel name for named operations; the all-channels operation has no name payload. |
+| `NOTIFY events, 'changed'` | `NotifyStatement` | Required `channel` and optional text-literal `payload`. |
+| `DISCARD PLANS` | `DiscardStatement` | A `DiscardResource` enum selecting plans, sequences, temporary tables, or all session resources. |
+| `SET CONSTRAINTS ALL DEFERRED` | `SetAllConstraintsStatement` | A `ConstraintTiming` enum; the selection is all deferrable constraints. |
+| `CHECKPOINT` | `CheckpointStatement` | A checkpoint request with no value operands. |
+| MySQL: `KILL CONNECTION 42`, `KILL QUERY 42` | `KillConnectionStatement`, `KillQueryStatement` | A required `connectionId` expression and a concrete operation identifying what to stop. |
+| MySQL: `INSTALL PLUGIN audit SONAME 'audit.so'` | `InstallPluginStatement` | Required plugin `name` and text-literal `library`. |
+| MySQL: `UNINSTALL PLUGIN audit` | `UninstallPluginStatement` | Required plugin `name`. |
+| MySQL: `RESTART`, `SHUTDOWN`, `UNLOCK TABLES` | `RestartServerStatement`, `ShutdownServerStatement`, `UnlockTablesStatement` | Distinct operations with no value operands. |
+| MySQL: `CLONE LOCAL DATA DIRECTORY '/tmp/clone'` | `CloneLocalStatement` | A required destination-directory text literal. |
+| MySQL: `BINLOG 'YWJj'` | `ApplyBinlogStatement` | A required text literal containing an encoded binary-log event. |
+| `REINDEX INDEX app.ix`, `REINDEX TABLE app.t`, `REINDEX SCHEMA app` | `ReindexObjectStatement` | Required object name, `ReindexObjectKind`, and PostgreSQL rebuild options. |
+| `REINDEX DATABASE`, `REINDEX SYSTEM` | `ReindexDatabaseStatement` | User-table or system-table index selection in the current database. An optional database name records an explicit name assertion. |
+| SQLite `REINDEX`, `REINDEX ix` | `ReindexAllStatement`, `ReindexNamedStatement` | Rebuild all indexes, or resolve a required SQLite index/table/collation name. |
 
-| SQL operation | Returned type | Structured information |
-|---------------|---------------|------------------------|
-| SELECT | `BoundSelect` | Ordered `outputs`; `from` relation and join tree; `where`; `groupBy`, `having`, `distinct`, `orderBy`, `limit`, `offset`, `withTies`. |
-| VALUES | `ValuesStatement` | Ordered `rows`, corresponding typed `outputs`, and query modifiers. |
-| TABLE | `TableStatement` | Referenced relation and its ordered declared output columns. |
-| UNION, INTERSECT, EXCEPT | `CompoundStatement` | Ordered `branches`, `setOperator` including ALL, and common output types by ordinal. |
-| INSERT, REPLACE | `InsertStatement` | `insertion` maps positions to destination columns; `rows` or `queries` supplies values; `conflicts` describes conflict actions; `outputs` describes RETURNING. |
-| UPDATE | `UpdateStatement` | Written `targets`, ordered `writes` with destination expressions and assigned values, input `from`, row `where`, and RETURNING `outputs`. |
-| DELETE | `DeleteStatement` | Deleted-from `targets`, input `from`, row `where`, and RETURNING `outputs`. |
-| MERGE | `MergeStatement` | `merge.target`, `input`, matching `condition`, and ordered actions with their own conditions, assignments, or insertion mapping and rows. |
-| SET, RESET, PRAGMA | `ConfigurationStatement` | Ordered `settings`: identifier-part `name`, `scope`, `action`, and expression `values`. |
-| CREATE TABLE and other table-producing declarations | `CreateTableStatement` | `declarations` contains table definitions; `definitions` associates typed defaults, generated values, and CHECK conditions with them. |
-| CREATE INDEX | `CreateIndexStatement` | `indexes` contains storage definitions, typed ordered `keys`, and partial-index `predicate`; `targets` identifies the indexed table. |
-| Other language commands | `CommandStatement` | `kind`, complete SQL `sql` structure, affected `targets`, embedded `queries`, and nested `statements`, as applicable to the operation. |
+INSERT, UPDATE, DELETE, and MERGE retain ordered RETURNING `outputs` where the
+selected language provides them. Their `affectedTables()` method identifies write
+targets. REPLACE uses an insertion form with `InsertMode::Replace`. It does not lose
+the distinction between explicit rows, a source query, and column assignments.
 
-`relations` lists each visible table occurrence; `targets` lists affected occurrences.
-`TableUse` identifies its declaration, alias, `id`, and `scopeId`. Self joins retain
-separate occurrence identities. `Join` has a kind, left and right inputs, and a match
-condition. A derived relation's `query`, a scalar expression's `query`, `ctes`, compound
-`branches`, and command `statements` retain nested stages rather than flattening them.
-Table functions and aliased joins expose their derived output metadata in a relation query.
+### Destinations and conditional writes
 
-The common `sql` field is a complete immutable SQL structure. It preserves components
-specific to the selected grammar, including options and clauses beyond the convenience
-fields above. `syntaxClauses` groups original clause nodes by grammar name. `source`
-retains the parser tree and source positions for diagnostics. See
-[statements and serialization](statements.md) for transformations and SQL generation.
+An `Insertion` maps each input position to a `Storage\Path`. `ColumnPath` requires a
+column reference. `FieldPath`, `ElementPath`, and `SlicePath` add their own required
+field or index operands. An unresolved destination remains a classified unresolved
+column reference, accompanied by diagnostics.
 
-## Output values and expression facts
+`ScalarAssignment` has one path and one expression. `DefaultAssignment` has a
+required destination and requests its declared default without an expression.
+`TupleRowAssignment` requires an `InputRow`: ordered slots containing an expression
+or `DefaultSource::Column`. `TupleQueryAssignment` requires a query with compatible
+width. Input order is retained, including repeated assignments.
 
-`outputs` is a list of `OutputColumn` objects in result order. Each has a zero-based
-`ordinal`, a `name` (explicit alias or resolved column name; otherwise `null`), and an
-`Expression`. Repeated names retain separate positions. A wildcard expands against the
-visible declarations, including the merged output columns of USING and NATURAL joins.
+`InsertValuesStatement::rows` contains the same expression-or-default slots.
+`DefaultSource` is a storage instruction, outside the expression hierarchy. It cannot
+be passed as an arithmetic operand, a projection, or a predicate. `ValuesStatement`
+is a query and accepts expression rows only.
 
-| Expression field | Meaning |
-|------------------|---------|
-| `kind` | Semantic operation, such as `Column`, `Literal`, `Operator`, `Function`, `Aggregate`, `Cast`, `Subquery`, `DefaultValue`, or `UnresolvedColumn`. |
-| `operands` | Ordered input expressions. Casts retain their input; an inferred conversion is a `Cast` with `symbol = 'implicit'`. |
-| `symbol` | Operator or function name, parameter identifier, or literal SQL spelling, according to the kind. Literal spellings retain SQL precision and quoting. |
-| `type` | `TypeDescriptor`: database `dialect`, canonical `name`, declared `modifiers`, and SQLite `affinity` when applicable. `unknown` explicitly represents unresolved type information. |
-| `nullability` | A conservative structural fact: `NotNull`, `MaybeNull`, `AlwaysNull`, or `Unknown`. |
-| `binding` | For a resolved column, its relation occurrence ID, table declaration, and column declaration. |
-| `nullExtendedBy` | Join occurrence IDs that can introduce NULL at this use of the value. |
-| `reference` | Identifier parts for an unresolved reference, wildcard qualifier, or cursor reference. |
-| `query` | The bound query for scalar, EXISTS, or membership subquery operations. |
-| `lineage()` | Unique contributing column bindings in encounter order, preserving distinct relation occurrences. |
-| `sql`, `source` | Owned SQL structure for serialization, and original syntax for diagnostics, respectively. |
+A conflict selector is `AnyConflict`, `IndexConflict` with required ordered keys,
+or `ConstraintConflict` with a required constraint name. `DoNothing` has no write
+payload. `DoUpdate` requires ordered assignments and may have its own predicate.
 
-A selected column takes its declared type and declaration-level NULL fact, adjusted for
-outer joins at that occurrence. Operators derive result types and NULL facts from their
-operands and dialect rules. Function and aggregate results use the
-[registered signatures](schema.md#register-function-signatures), including argument
-conversions and NULL propagation. Compound outputs combine corresponding branch types.
-Parameters and unresolved inputs retain unknown facts until the surrounding operation
-provides a known type. SQLite affinity describes type preference, not a computed runtime value.
+MERGE actions distinguish updates, deletes, no action, default insertion, and
+single-row insertion. `MergeRowInsertion` requires exactly one `InputRow`. Its `MatchKind` identifies the rows visible to that
+branch; insertion requires a missing target, while updates require an existing one.
 
-These facts describe expressions at their relational evaluation stage. Predicates remain
-separate expression trees in join conditions, `where`, `having`, and conditional writes.
-A consumer combines those predicates with the expression facts when performing constraint
-solving, fixture generation, or evaluation. Value lineage follows contributing values;
-row dependencies also include predicates and query inputs.
+## Relations and query stages
 
-## SQL and returned structures
+Each `TableUse` has an occurrence `id`, owning `scopeId`, declaration, and optional
+alias. Self joins retain separate identities. `BoundSelect::relations` is derived
+from its complete `from` input; callers cannot supply a contradictory relation list.
 
-The following examples use the PostgreSQL schema above unless a dialect is
-specified. Each row is an independent call. Paths describe selected properties
-on the returned `BoundStatement`.
+| Input form | Structured result |
+|------------|-------------------|
+| Named table | `TableReference` with a qualified name and declaration. |
+| Derived SELECT | `DerivedRelation` with a required query and LATERAL policy. |
+| Common table expression | `CteReference` with its required definition. A statement's `ctes` owns ordered `CommonTableExpression` definitions, column aliases, and materialization policy. |
+| `JOIN ... ON ...` | `OnJoin` with a required predicate and two inputs. |
+| `JOIN ... USING(id)` | `UsingJoin` with a nonempty set of `SharedColumn` pairs and their merged output expressions. |
+| `NATURAL JOIN` | `NaturalJoin` retaining its shared columns, including the case of no shared names. |
+| `CROSS JOIN` | `CrossJoin`, with no predicate field. |
+| Parenthesized, aliased join | `AliasedRelation` with a required inner input and its own visible output names. |
+| Table function | `FunctionRelation` with a required invocation and output declaration. |
+| `JSON_TABLE(...)` | `DocumentRelation` whose `JsonTable` retains the input document, row path, PASSING variables, and nested column declarations. Value, existence, ordinality, and nested-path columns have different types. |
+| `XMLTABLE(...)` | `DocumentRelation` whose `XmlTable` retains namespaces, document and row-path expressions, passing modes, and typed value or ordinality columns. |
 
-### Queries
+Document-table output columns derive from their declarations. A value column retains
+its own PATH, type, and default/error behavior. Nested JSON paths retain their
+parent-child structure. Those declarations are available to a consumer; binding
+does not read or expand the document.
 
-| SQL | Returned structure |
-|-----|--------------------|
-| `SELECT id, score FROM users WHERE score > 0` | `BoundSelect`; two outputs in SQL order; `outputs[0].expression.binding.column.name = 'id'`; `where.symbol = '>'` with operands bound to `score` and literal `0`. |
-| `SELECT child.id, parent.score FROM users child LEFT JOIN users parent ON child.parent_id = parent.id` | Two relation occurrences with distinct IDs; a left `Join` with its own condition; the second output is `MaybeNull` and names the join in `nullExtendedBy`, while the declared `score` remains `NotNull`. |
-| `SELECT COALESCE(parent_id, 0) AS parent FROM users` | Output `name = 'parent'`; expression kind `Coalesce`, two operands, and `nullability = NotNull`; `lineage()` includes the `parent_id` binding. |
-| `SELECT parent_id, SUM(score) AS total FROM users GROUP BY parent_id HAVING SUM(score) > 0 ORDER BY total DESC LIMIT 5` | `groupBy[0]` binds `parent_id`; `having` retains the aggregate comparison; `outputs[1]` is an aggregate expression; `orderBy[0].descending = true`; `limit.symbol = '5'`. |
-| `WITH positive AS (SELECT id FROM users WHERE score > 0) SELECT id FROM positive` | `ctes['positive']` retains its bound query and WHERE; the outer relation's `query` exposes that CTE definition and its output declaration. |
-| `SELECT id FROM users UNION ALL SELECT id FROM incoming` | `CompoundStatement`; ordered `branches` retain both SELECTs; `setOperator = 'UNION ALL'`; outer outputs represent the compound result. |
-| `SELECT id FROM users WHERE EXISTS (SELECT 1 FROM incoming WHERE incoming.id = users.id)` | The WHERE subquery expression has `symbol = 'EXISTS'` and a `query`; its inner predicate retains both the local and correlated column bindings. |
-| `SELECT score, score FROM users` | Two distinct output positions, even though their names and dependencies are the same. |
+Ordering distinguishes an input expression from an output alias or output position.
+A `NamedRowLock` requires explicit relation targets; `AllRowLock` applies to eligible
+inputs in that query. Lock strength and waiting behavior are enums. Nested queries
+own their own predicates, ordering, pagination, windows, and locks.
 
-### Writes
+## Selected values
 
-| SQL | Returned structure |
-|-----|--------------------|
-| `INSERT INTO users(score,id) VALUES(10,1)` | `insertion.target` refers to `users`; destination columns are `score`, `id` in that order; `rows[0]` contains literal `10`, `1`; `omittedColumns` includes `parent_id`. |
-| `INSERT INTO users(id,score) VALUES(1,DEFAULT) RETURNING id` | Ordered destinations `id`, `score`; the second value has kind `DefaultValue`; `outputs[0]` binds the returned `id`. |
-| `INSERT INTO users(id) SELECT id FROM incoming` | `insertion.columns[0]` binds `users.id`; `queries[0]` retains the source SELECT and its `incoming.id` output; other columns are omitted destinations. |
-| `UPDATE users SET score = score + 1 WHERE id = 1 RETURNING score` | `targets` identifies `users`; `writes[0].targets[0]` binds `score`; `writes[0].value` is the addition expression; `where` binds `id = 1`; `outputs` retains RETURNING. |
-| `UPDATE users SET score = incoming.score FROM incoming WHERE users.id = incoming.id` | Both tables occur in the input graph; only `users` is a write target. The assignment reads `incoming.score` and writes `users.score`. |
-| `DELETE FROM users USING incoming WHERE users.id = incoming.id RETURNING users.id` | `targets` contains `users`; `incoming` is read-only input; `where` retains the matching predicate; `outputs` binds the deleted table's `id`. |
-| `INSERT INTO users(id) VALUES(1) ON CONFLICT(id) DO UPDATE SET score = 2 WHERE users.score < 2` | `conflicts[0].action = 'update'`; `keys` binds `id`; the conflict assignment writes `score`; its predicate is `conflicts[0].where`, separate from statement `where`. |
-| `MERGE INTO users USING incoming ON users.id = incoming.id WHEN MATCHED THEN UPDATE SET score = incoming.score WHEN NOT MATCHED THEN INSERT(id,score) VALUES(incoming.id,incoming.score)` | `merge.target` is `users`; `input` is `incoming`; `condition` is the match predicate; ordered actions carry the matched UPDATE and unmatched INSERT with their own storage mappings. |
-| `UPDATE users SET score = 1 WHERE CURRENT OF cursor_name` | `where.kind = CurrentRow`; `reference = ['cursor_name']`; its boolean fact represents a cursor-position predicate. |
+Operations that produce results implement `ResultStatement`. Commands such as SET,
+COMMIT, and REINDEX do not expose a result-column API.
+`ResultStatement::resultColumns()` returns ordered `OutputColumn` objects. Each has
+an `ordinal`, optional output `name`, and typed `expression`. Repeated names retain
+separate positions. Wildcards expand using visible declarations. An unresolved
+wildcard records an unknown result width rather than pretending to be one known
+column.
 
-### Settings
+| Expression form | Information returned |
+|-----------------|----------------------|
+| Column | `ColumnReference` with a `ColumnBinding`: relation identity, table identity, and column symbol containing its declared type and NULL fact. |
+| Literal | `LiteralKind` and exact SQL literal `text`, preserving numeric precision and quoting. |
+| Binary or unary operation | An operator enum and required `left`/`right` or `operand`. |
+| Function | `FunctionCall` has a registered or unresolved function reference and ordered value arguments. |
+| Aggregate over values | `AggregateCall` retains value arguments, ALL/DISTINCT, optional input ordering, and FILTER. |
+| Aggregate over rows, such as `count(*)` | `AllRowsAggregate` retains the function reference and optional FILTER; it has no value-argument list. |
+| Ordered-set aggregate | `OrderedSetCall` separates `directArguments` from the required `withinGroup` row ordering and optional FILTER. Both argument groups participate in signature resolution. |
+| Window function | `WindowCall` retains the invocation and its window specification or named window reference. |
+| JSON membership | MySQL `JsonMembership` has a required searched `value` and JSON `array` input. Neither is evaluated during binding. |
+| CASE | `SimpleCase` requires a selector; `SearchedCase` requires predicates. Each retains ordered branches and its optional ELSE value. |
+| Scalar subquery | `ScalarSubquery` with a query producing one known column, or an unresolved width. |
+| Row subquery | `RowSubquery` with a row-producing query, distinct from a scalar query. |
+| EXISTS, IN, quantified comparison | Dedicated classes retain the query and each required comparison operand. |
+| Variable | `VariableReference` identifies the supplied variable definition and scope. A missing definition produces `UnresolvedVariableReference`. Neither contains the current runtime value. |
+| Context value | `ContextReference` identifies operations such as CURRENT_DATE; it does not retrieve the current date. |
 
-MySQL and SQLite rows use binders constructed with the indicated dialect and an
-empty schema. PostgreSQL settings also work with an empty schema.
+Every expression exposes `type`, `nullability`, and `nullExtendedBy`. `kind` is an
+`ExpressionKind` enum. `inputs()` visits immediate expression operands; `lineage()`
+returns contributing column bindings while preserving distinct relation occurrences.
 
-| Dialect and SQL | Returned structure |
-|-----------------|--------------------|
-| PostgreSQL: `SET LOCAL work_mem = '64MB'` | `settings[0].name = ['work_mem']`; `scope = 'local'`; `action = 'set'`; `values[0]` retains the string literal. |
-| PostgreSQL: `SET search_path TO DEFAULT` | A session setting with a `DefaultValue` expression. |
-| PostgreSQL: `RESET ALL` | `name = ['*']`; `action = 'reset'`; no assigned values. |
-| PostgreSQL: `SET TRANSACTION ISOLATION LEVEL SERIALIZABLE` | A transaction setting named `transaction_isolation` with a structured configuration value. |
-| MySQL: `SET SESSION sql_mode = 'ANSI'` | `name = ['sql_mode']`; `scope = 'session'`; `action = 'set'`; a string value is retained. |
-| MySQL: `SET @threshold = 10` | A user-variable setting with value `10` and `scope = 'user'`. |
-| SQLite: `PRAGMA main.cache_size = 100` | `name = ['main', 'cache_size']`; `action = 'set'`; `values[0].symbol = '100'`. |
-| SQLite: `PRAGMA main.cache_size` | The same qualified setting name with `action = 'read'` and an empty value list. |
+A selected column takes its declared type and NULL fact, adjusted for outer joins at
+that occurrence. Operators derive facts from their operands and dialect. Functions
+use registered signatures. A compound result combines corresponding operand types.
+`TypeDescriptor::identity` carries typed storage parameters; `unknown` denotes missing
+static type information. No expression is evaluated to infer its runtime value.
 
-### Declarations and nested commands
+Predicates remain separate expression trees in ON, WHERE, HAVING, and conditional
+writes. The consumer combines these with expression facts when evaluating SQL,
+solving constraints, or generating fixtures. Binding describes the value-producing
+operation at each stage; it does not solve predicates over possible values.
 
-| SQL | Returned structure |
-|-----|--------------------|
-| `CREATE TABLE totals (amount INTEGER DEFAULT 3, doubled INTEGER GENERATED ALWAYS AS (amount * 2) STORED, CHECK (amount >= 0))` | `declarations[0]` describes the table; `definitions[0].defaults['amount']` is literal `3`; `generated['doubled']` binds `amount * 2`; `checks` retains the bound CHECK predicate by constraint position. |
-| `CREATE INDEX positive_scores ON users((score + 1)) WHERE score > 0` | `indexes[0].definition.name = 'positive_scores'`; `keys[0]` is an integer addition with lineage to `users.score`; `predicate` is the boolean comparison; `targets[0]` identifies `users`. |
-| `EXPLAIN UPDATE users SET score = 1 WHERE id = 2` | `statements[0]` is the bound UPDATE, with its write target, assignment, and row condition; the wrapper retains EXPLAIN syntax. |
-| `PREPARE read_user AS SELECT id FROM users WHERE id = 1` | `statements[0]` retains the prepared SELECT and its filter; its bound query is also reachable in `queries`. |
+## Diagnostics and transformations
 
-Binding DDL describes the statement; it does not mutate the binder's schema.
-Build a new schema snapshot when subsequent binding must use changed declarations.
+Strict binding raises `SemanticException` for unresolved names or incompatible known
+types. `strict: false` retains classified unresolved references and `Diagnostic`
+objects, each with `reason`, `message`, and `source`. A structurally impossible request,
+such as a known INSERT width mismatch, raises `InvalidSql` with an `InputViolation`
+enum; it does not manufacture a valid Statement. Lexical and syntax errors are
+reported by sql-parser. An unclassified construct is an implementation failure and
+is not represented by a generic command or raw grammar payload.
 
-## Unresolved references
-
-Use `bind($sql, strict: false)` to read SQL with missing definitions or semantic
-errors. The returned statement contains `diagnostics` alongside its ordinary
-properties. Each `Diagnostic` has `reason`, `message`, and `source`. Known
-bindings remain available and unresolved references are marked explicitly.
-
-| SQL and schema | Returned structure and diagnostics |
-|----------------|------------------------------------|
-| Empty schema; `SELECT t.id, t.* FROM missing t` | The relation has `declaration.resolved = false`; `t.id` is `UnresolvedColumn` with `reference = ['t', 'id']`; `t.*` is `Wildcard` with qualifier `['t']`; diagnostics include `unknown-table`. |
-| The example schema; `INSERT INTO users(missing) VALUES(1)` | The insertion retains its unresolved destination and input value; diagnostics include `unknown-column`. |
-| PostgreSQL example schema; `DELETE FROM users WHERE 1` | The numeric predicate remains in `where`; diagnostics include `non-boolean-predicate`. |
-
-A wildcard whose table definition is missing has an unknown output width. It is
-not one resolved result column. Invalid SQL syntax and internal failures still
-raise exceptions. Diagnostics include problems in nested queries and commands.
-
-`bindAll($sql, strict: false)` collects diagnostics separately for each returned
-statement. They do not carry over to the next statement or a later binder call.
-With the default `strict: true`, a successful result has an empty diagnostic list.
-
-## Transform and serialize
-
-Transformations belong to the returned Statement. They return a new instance, validate
-its complete structure against the original schema snapshot, and recompute dependent
-facts. `Binder` remains the SQL-to-Statement entry point. The original statement and
-schema remain unchanged.
-
-`SimpleSerializer::serialize($statement)` and `$statement->toString()` write the same
-compact SQL layout from `sql`. See [statements and serialization](statements.md) for the
-transformation methods, construction API, and formatting contract.
+`source` retains parser positions and original text for diagnostics. Semantic
+operands determine serialization. Transformations belong to the Statement and
+return a new validated snapshot. See [statements and serialization](statements.md).

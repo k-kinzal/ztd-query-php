@@ -31,72 +31,38 @@ final class StatementBinder
      *
      * @throws SemanticException
      */
-    public function bind(Node $tree, ?QueryContext $context = null): BoundStatement
+    public function bind(Node $tree, ?QueryContext $context = null, ?\SqlSemantics\Binding\Scope $parent = null): BoundStatement
     {
         $statements = StatementList::read($tree, $this->tables->identifiers->dialect);
         if (count($statements) !== 1) {
             throw new SemanticException('statement-count', 'bind() requires one statement; use bindAll() for a script.', $tree);
         }
-        $statement = $this->node($tree, $statements[0], $context ?? new QueryContext($this->tables));
+        $statement = $this->node($tree, $statements[0], $context ?? new QueryContext($this->tables), $parent);
         if ($this->tables->diagnostics->items === []) {
             return $statement;
         }
-        return new ($statement::class)(
-            scopeId: $statement->scopeId,
-            from: $statement->from,
-            relations: $statement->relations,
-            outputs: $statement->outputs,
-            where: $statement->where,
-            distinct: $statement->distinct,
-            orderBy: $statement->orderBy,
-            limit: $statement->limit,
-            offset: $statement->offset,
-            source: $statement->source,
-            groupBy: $statement->groupBy,
-            having: $statement->having,
-            ctes: $statement->ctes,
-            branches: $statement->branches,
-            setOperator: $statement->setOperator,
-            clauses: $statement->clauses,
-            kind: $statement->kind,
-            targets: $statement->targets,
-            assignments: $statement->assignments,
-            queries: $statement->queries,
-            rows: $statement->rows,
-            withTies: $statement->withTies,
-            syntaxClauses: $statement->syntaxClauses,
-            declarations: $statement->declarations,
-            insertion: $statement->insertion,
-            writes: $statement->writes,
-            settings: $statement->settings,
-            conflicts: $statement->conflicts,
-            definitions: $statement->definitions,
-            merge: $statement->merge,
-            statements: $statement->statements,
-            diagnostics: $this->tables->diagnostics->items,
-            indexes: $statement->indexes,
-        );
+        return $statement->withDiagnostics($this->tables->diagnostics->items);
     }
 
     /**
      * Binds a nested command without reparsing or losing its shared identity allocator.
      */
-    public function node(Node $tree, Node $statement, QueryContext $context): BoundStatement
+    public function node(Node $tree, Node $statement, QueryContext $context, ?\SqlSemantics\Binding\Scope $parent = null): BoundStatement
     {
-        $snapshot = new QueryContext($context->tables, clone $context->ids, $context->ctes);
-        $validation = new \SqlSemantics\Binding\Editing\StatementContext($context->tables->schema, $snapshot);
+        $snapshot = new QueryContext($context->tables, clone $context->ids, $context->ctes, parameterTypes: $context->parameterTypes);
+        $validation = new \SqlSemantics\Binding\Editing\StatementContext($context->tables->schema, $snapshot, $parent);
         $operation = self::operation($statement);
         $select = Tree::child($statement, ['SelectStmt', 'select_stmt', 'select']);
-        if (($operation === 'WITH' && $select !== null) || in_array($operation, ['SELECT', 'VALUES', 'TABLE', '('], true)) {
-            return $context->bind($tree);
+        if (($operation === 'WITH' && ($select !== null || in_array($statement->name, ['select', 'SelectStmt', 'query_expression', 'select_stmt'], true))) || in_array($operation, ['SELECT', 'VALUES', 'TABLE', '('], true)) {
+            return $context->bind($tree, $parent);
         }
         $mutation = Tree::outer($statement, ['InsertStmt', 'UpdateStmt', 'DeleteStmt', 'MergeStmt', 'insert_stmt', 'update_stmt', 'delete_stmt', 'replace_stmt'])[0] ?? null;
         if (in_array($operation, ['INSERT', 'REPLACE', 'UPDATE', 'DELETE', 'MERGE'], true)) {
-            $context = (new \SqlSemantics\Binding\Query\QueryBinder($context))->with($tree, null);
+            $context = (new \SqlSemantics\Binding\Query\QueryBinder($context))->with($tree, $parent);
             if ($operation === 'MERGE') {
                 return (new \SqlSemantics\Binding\Write\MergeBinder())->bind($tree, $mutation ?? $statement, $context)->withContext($validation);
             }
-            return (new MutationBinder($context))->bind($tree, $mutation ?? $statement)->withContext($validation);
+            return (new MutationBinder($context, $parent))->bind($tree, $mutation ?? $statement)->withContext($validation);
         }
         return (new UtilityBinder($context))->bind($tree, $statement, $operation)->withContext($validation);
     }

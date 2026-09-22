@@ -85,8 +85,6 @@ use SqlSemantics\Type\Nullability;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
@@ -115,24 +113,18 @@ use SqlSemantics\Type\Nullability;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Dialect::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\ConstraintKind::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Nullability::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\ExpressionKind::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\JoinKind::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -157,12 +149,12 @@ final class SchemaReaderTest extends TestCase
         $table = $schema->tables[0];
         self::assertSame(['id', 'parent_id', 'score'], array_column($table->columns, 'name'));
         self::assertSame(Nullability::NotNull, $table->columns[0]->nullability);
-        self::assertNotNull($table->columns[2]->defaultExpression);
+        self::assertNotNull($table->columns[2]->generation->default);
         self::assertSame(4, count($table->constraints));
-        self::assertSame(['parent_id'], $table->constraints[2]->columns);
-        self::assertSame(['users'], $table->constraints[2]->referencedTable);
+        self::assertSame(['parent_id'], $table->constraints[2]->localColumns());
+        self::assertSame(['users'], $table->constraints[2]->referencedTable->parts);
         self::assertSame(['id'], $table->constraints[2]->referencedColumns);
-        self::assertNotNull($table->constraints[3]->expression);
+        self::assertNotNull($table->constraints[3]->predicate);
     }
 
     public function testTableRejectsDuplicateDeclarations(): void
@@ -239,12 +231,13 @@ final class SchemaReaderTest extends TestCase
     public function testReportAllowsDeclarationDiagnosticsWithoutDroppingStructure(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE t (id INTEGER, id TEXT, PRIMARY KEY (missing))', strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $statement);
         self::assertSame(['duplicate-column', 'unknown-column', 'unknown-column'], array_column($statement->diagnostics, 'reason'));
-        self::assertSame(\SqlSemantics\Model\ExpressionKind::UnresolvedColumn, $statement->indexes[0]->keys[0]->kind);
-        self::assertSame('t', $statement->declarations[0]->name);
-        self::assertSame(['id', 'id'], array_column($statement->declarations[0]->columns, 'name'));
-        self::assertSame('text', $statement->declarations[0]->columns[1]->type->name);
-        self::assertSame(['missing'], $statement->declarations[0]->constraints[0]->columns);
+        self::assertSame(\SqlSemantics\Model\ExpressionKind::UnresolvedColumn, $statement->definition->table->constraints[0]->keys[0]->value()->kind);
+        self::assertSame('t', $statement->definition->table->name);
+        self::assertSame(['id', 'id'], array_column($statement->definition->table->columns, 'name'));
+        self::assertSame('text', $statement->definition->table->columns[1]->type->name);
+        self::assertSame(['missing'], $statement->definition->table->constraints[0]->localColumns());
     }
 
 }

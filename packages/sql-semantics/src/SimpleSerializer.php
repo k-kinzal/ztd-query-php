@@ -22,6 +22,6 @@ final class SimpleSerializer implements Serializer
      */
     public function serialize(BoundStatement $statement): string
     {
-        return $statement->sql->toString();
+        return Serialization\Statements::write($statement)->toString();
     }
 }

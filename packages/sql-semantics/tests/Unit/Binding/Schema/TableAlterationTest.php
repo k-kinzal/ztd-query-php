@@ -88,8 +88,6 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
 #[UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
-#[UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
 #[UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
@@ -117,20 +115,14 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\StatementFactory::class)]
 #[UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -151,7 +143,7 @@ final class TableAlterationTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER)', 'ALTER TABLE t ADD COLUMN n INTEGER DEFAULT 2', 'ALTER TABLE t RENAME COLUMN n TO value', 'ALTER TABLE t DROP COLUMN id', 'ALTER TABLE t RENAME TO renamed');
         self::assertSame('renamed', $schema->tables[0]->name);
         self::assertSame(['value'], array_column($schema->tables[0]->columns, 'name'));
-        self::assertNotNull($schema->tables[0]->columns[0]->defaultExpression);
+        self::assertNotNull($schema->tables[0]->columns[0]->generation->default);
     }
     public function testActionKeepsUnaffectedColumns(): void
     {
@@ -163,7 +155,8 @@ final class TableAlterationTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (n INTEGER)', 'ALTER TABLE t ALTER COLUMN n TYPE NUMERIC(10,2), ALTER COLUMN n SET NOT NULL');
         self::assertSame('numeric', $schema->tables[0]->columns[0]->type->name);
-        self::assertSame(['10', '2'], $schema->tables[0]->columns[0]->type->modifiers);
+        self::assertSame('10', $schema->tables[0]->columns[0]->type->identity->precision->spelling);
+        self::assertSame('2', $schema->tables[0]->columns[0]->type->identity->scale->spelling);
         self::assertSame(\SqlSemantics\Type\Nullability::NotNull, $schema->tables[0]->columns[0]->nullability);
     }
 
@@ -171,11 +164,11 @@ final class TableAlterationTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('create table t (id integer not null default 1, value text)', 'create table u (id integer)', 'alter table t alter column id drop not null, alter column id set default 2');
         self::assertSame('maybe-null', $schema->tables[0]->columns[0]->nullability->value);
-        self::assertSame('2', \SqlSemantics\Ast\Tree::text($schema->tables[0]->columns[0]->defaultExpression ?? $schema->tables[0]->source));
+        self::assertSame('2', $schema->tables[0]->columns[0]->generation->default->spelling());
         self::assertSame('text', $schema->tables[0]->columns[1]->type->name);
         self::assertSame(['id'], array_column($schema->tables[1]->columns, 'name'));
         $withoutDefault = (new SchemaBuilder(Dialect::PostgreSql))->build('create table t (id integer default 1)', 'alter table t alter column id drop default');
-        self::assertNull($withoutDefault->tables[0]->columns[0]->defaultExpression);
+        self::assertNull($withoutDefault->tables[0]->columns[0]->generation->default);
     }
 
 
@@ -186,7 +179,7 @@ final class TableAlterationTest extends TestCase
         self::assertSame(['id','n'], array_column($schema->tables[0]->columns, 'name'));
         self::assertSame('text', $schema->tables[0]->columns[1]->type->name);
         self::assertSame('not-null', $schema->tables[0]->columns[1]->nullability->value);
-        self::assertNotNull($schema->tables[0]->columns[1]->defaultExpression);
+        self::assertNotNull($schema->tables[0]->columns[1]->generation->default);
     }
 
 }

@@ -7,45 +7,32 @@ namespace SqlSemantics\Schema;
 use SqlParser\Parser\Node;
 
 /**
- * A declared integrity condition, retaining its complete syntax for downstream consumers.
- *
- * @example Reading semantic facts
- *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, score INTEGER NOT NULL)');
- *     $schema->tables[0]->constraints[0]->columns // => ['id']
+ * A classified integrity condition; concrete forms require their own operands.
  *
  * @visibility public
  */
-final class TableConstraint
+abstract class TableConstraint
 {
     /**
-     * @param ConstraintKind $kind Integrity condition
-     * @param list<string> $columns Local columns, in declaration order
-     * @param Node $source Complete constraint syntax, including actions and deferrability
-     * @param string|null $name Explicit constraint name
-     * @param list<string> $referencedTable Qualified foreign table name
-     * @param list<string> $referencedColumns Referenced key columns; empty means the primary key
-     * @param Node|null $expression CHECK expression syntax
-     * @param ReferentialAction $onDelete Action when the referenced row is deleted
-     * @param ReferentialAction $onUpdate Action when the referenced key is updated
-     * @param string $match Foreign-key matching mode
-     * @param bool $deferrable Whether constraint checking can be deferred
-     * @param bool $initiallyDeferred Whether checking starts deferred
-     * @param list<string> $deleteColumns Explicit columns affected by an ON DELETE SET action
+     * Integrity-condition category derived from the concrete constraint type.
      */
-    public function __construct(
-        public readonly ConstraintKind $kind,
-        public readonly array $columns,
-        public readonly Node $source,
-        public readonly ?string $name = null,
-        public readonly array $referencedTable = [],
-        public readonly array $referencedColumns = [],
-        public readonly ?Node $expression = null,
-        public readonly ReferentialAction $onDelete = ReferentialAction::NoAction,
-        public readonly ReferentialAction $onUpdate = ReferentialAction::NoAction,
-        public readonly string $match = 'simple',
-        public readonly bool $deferrable = false,
-        public readonly bool $initiallyDeferred = false,
-        public readonly array $deleteColumns = [],
-    ) {
+    public readonly ConstraintKind $kind;
+
+    /**
+     * Records the declared identity and diagnostic origin.
+     */
+    public function __construct(public readonly ?string $name, public readonly Node $source)
+    {
+        $this->kind = $this->operation();
     }
+
+    /**
+     * Returns the integrity operation selected by the concrete type.
+     */
+    abstract protected function operation(): ConstraintKind;
+
+    /**
+     * @return list<string>
+     */
+    abstract public function localColumns(): array;
 }

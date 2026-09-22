@@ -55,8 +55,6 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\DefinitionBinder::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\IndexEvolution::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\TableAlteration::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryRelation::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryContext::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\UsingJoin::class)]
@@ -101,16 +99,12 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Assignment::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -119,9 +113,7 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\IndexDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(InvalidStructure::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Sql\Literal::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Sql\ExpressionFactory::class)]
@@ -162,6 +154,7 @@ final class StatementContextTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
         $statement = (new Binder($schema))->bind('SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         $this->expectException(InvalidStructure::class);
         (new \SqlSemantics\Binding\Editing\StatementContext($schema))->rebind($statement, new Sql\Tree('command', [new Sql\Atom('keyword', 'BEGIN')]));
     }
@@ -169,26 +162,28 @@ final class StatementContextTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
         $statement = (new Binder($schema))->bind('SELECT 1');
-        $changed = (new \SqlSemantics\Binding\Editing\StatementContext($schema))->clause($statement, 'where', Sql\Parts::expressions('WHERE', [Expression::literal(true, $schema->dialect)]));
-        self::assertSame('TRUE', $changed->where?->symbol);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        $changed = $statement->withWhere(Expression::literal(true, $schema->dialect));
+        self::assertSame('TRUE', $changed->where?->spelling());
     }
     public function testSettingRebindsChangedValues(): void
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
         $statement = (new Binder($schema))->bind('SET search_path=public');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\ConfigurationStatement::class, $statement);
-        $changed = (new \SqlSemantics\Binding\Editing\StatementContext($schema))->setting($statement, $statement->settings[0], [Expression::literal('private', $schema->dialect)]);
-        self::assertSame("'private'", $changed->settings[0]->values[0]->symbol);
+        $changed = $statement->withValues($statement->settings[0], [Expression::literal('private', $schema->dialect)]);
+        self::assertSame("'private'", $changed->settings[0]->values[0]->spelling());
     }
 
     public function testScopeRetainsCorrelationsWithoutSharingDiagnostics(): void
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
         $statement = (new Binder($schema))->bind('SELECT (SELECT t.id) FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         $nested = $statement->outputs[0]->expression->query;
         self::assertNotNull($nested);
         $changed = $nested->replaceExpression($nested->outputs[0]->expression, Expression::binary('+', Expression::reference(['t','id'], $schema->dialect), Expression::literal(1, $schema->dialect)));
-        self::assertSame('+', $changed->outputs[0]->expression->symbol);
+        self::assertSame('+', $changed->outputs[0]->expression->spelling());
         self::assertSame('id', $changed->outputs[0]->expression->lineage()[0]->column->name);
         self::assertSame('r0', $changed->outputs[0]->expression->lineage()[0]->relationId);
     }
@@ -197,10 +192,10 @@ final class StatementContextTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
         $wrapper = $binder->bind('EXPLAIN UPDATE t SET id=1');
-        $nested = $wrapper->statements[0];
+        $nested = $wrapper->statement;
         $changed = $nested->replaceExpression($nested->writes[0]->value, Expression::literal(2, Dialect::PostgreSql));
-        self::assertSame('2', $changed->writes[0]->value->symbol);
-        self::assertSame('1', $nested->writes[0]->value->symbol);
+        self::assertSame('2', $changed->writes[0]->value->spelling());
+        self::assertSame('1', $nested->writes[0]->value->spelling());
     }
 
     public function testRebindRejectsAChangedCommandVerbWithinTheSameClass(): void
@@ -208,11 +203,12 @@ final class StatementContextTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
         $binder = new Binder($schema);
         $this->expectException(InvalidStructure::class);
-        (new \SqlSemantics\Binding\Editing\StatementContext($schema))->rebind($binder->bind('BEGIN'), $binder->bind('COMMIT')->sql);
+        (new \SqlSemantics\Binding\Editing\StatementContext($schema))->rebind($binder->bind('BEGIN'), \SqlSemantics\Serialization\Statements::write($binder->bind('COMMIT')));
     }
     public function testRebindRepeatedNestedChangesKeepIndependentIdentities(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('SELECT (SELECT id FROM t)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         $query = $statement->outputs[0]->expression->query;
         self::assertNotNull($query);
         $first = $query->replaceExpression($query->outputs[0]->expression, Expression::reference(['id'], Dialect::PostgreSql));

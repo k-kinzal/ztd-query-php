@@ -10,67 +10,119 @@ use SqlSemantics\Type\Nullability;
 use SqlSemantics\Type\TypeDescriptor;
 
 /**
- * A typed expression with original syntax, occurrence-aware lineage, and NULL provenance.
- *
- * @example Reading semantic facts
- *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, score INTEGER NOT NULL)');
- *     $statement = (new \SqlSemantics\Binder($schema))->bind('SELECT a.id, b.score FROM users a LEFT JOIN users b ON a.id=b.id ORDER BY a.id DESC');
- *     $statement->outputs[1]->expression->nullExtendedBy // => ['j0']
- *
+ * An immutable classified expression. Concrete forms own their required operands.
  * @visibility public
  */
-final class Expression
+abstract class Expression
 {
     /**
-     * SQL expression structure, without source formatting.
+     * Expression category derived from its concrete operand shape.
      */
-    public readonly Sql\Tree $sql;
+    public readonly ExpressionKind $kind;
+    /**
+     * Statically derived result type, without a runtime value.
+     */
+    public readonly TypeDescriptor $type;
+    /**
+     * Statically derived NULL behavior at this expression occurrence.
+     */
+    public readonly Nullability $nullability;
+    /**
+     * @var list<string>
+     */
+    public readonly array $nullExtendedBy;
 
     /**
-     * @param ExpressionKind $kind Semantic operation
-     * @param TypeDescriptor $type Result type
-     * @param Nullability $nullability Conservative NULL fact at this evaluation stage
-     * @param Node|Token $source Original syntax object, never a reparsed copy
-     * @param list<Expression> $operands Ordered inputs to the operation
-     * @param ColumnBinding|null $binding Resolved declaration for a column reference
-     * @param string|null $symbol Operator, parameter name, or literal spelling
-     * @param list<string> $nullExtendedBy Join IDs that can introduce NULL into this result
-     * @param BoundQuery|null $query Bound scalar, EXISTS, or membership subquery
-     * @param list<string> $reference Unresolved name parts or wildcard qualifier
+
+     * @visibility SqlSemantics
+
      */
-    public function __construct(
-        public readonly ExpressionKind $kind,
-        public readonly TypeDescriptor $type,
-        public readonly Nullability $nullability,
-        public readonly Node|Token $source,
-        public readonly array $operands = [],
-        public readonly ?ColumnBinding $binding = null,
-        public readonly ?string $symbol = null,
-        public readonly array $nullExtendedBy = [],
-        public readonly ?BoundQuery $query = null,
-        public readonly array $reference = [],
-        ?Sql\Tree $sql = null,
-    ) {
-        $this->sql = $sql ?? Sql\Source::read($source);
-        Validation\ExpressionInvariant::check($this);
+    public function __construct(public readonly Scalar\ExpressionFacts $facts, public readonly Node|Token $source)
+    {
+        $this->kind = $this->operation();
+        $this->type = $facts->type;
+        $this->nullability = $facts->nullability;
+        $this->nullExtendedBy = $facts->nullExtendedBy;
     }
 
     /**
-     * Collects value dependencies without collapsing separate uses of the same table.
-     *
-     * @return list<ColumnBinding> Unique relation-and-column bindings in encounter order
+
+     * @visibility SqlSemantics
+
+     */
+    public function structure(): Sql\Tree
+    {
+        return \SqlSemantics\Serialization\Expressions::write($this);
+    }
+
+    abstract protected function operation(): ExpressionKind;
+
+    /**
+
+     * @return list<Expression>
+
+     */
+    abstract public function inputs(): array;
+
+    /**
+
+     * @visibility SqlSemantics
+
+     */
+    abstract public function withFacts(Scalar\ExpressionFacts $facts): static;
+
+    /**
+
+     * @visibility SqlSemantics
+
+     */
+    abstract public function spelling(): ?string;
+
+    /**
+
+     * @visibility SqlSemantics
+
+     */
+    public function columnBinding(): ?ColumnBinding
+    {
+        return null;
+    }
+
+    /**
+     * @return list<string>
+     * @visibility SqlSemantics
+     */
+    public function referenceParts(): array
+    {
+        return [];
+    }
+
+    /**
+
+     * @visibility SqlSemantics
+
+     */
+    public function subquery(): ?BoundQuery
+    {
+        return null;
+    }
+
+    /**
+
+     * @return list<ColumnBinding>
+
      */
     public function lineage(): array
     {
-        $bindings = $this->binding === null ? [] : [$this->binding];
-        foreach ($this->operands as $operand) {
+        $binding = $this->columnBinding();
+        $bindings = $binding === null ? [] : [$binding];
+        foreach ($this->inputs() as $operand) {
             array_push($bindings, ...$operand->lineage());
         }
         $unique = [];
-        foreach ($bindings as $binding) {
-            $unique[$binding->relationId . ':' . $binding->column->name] = $binding;
+        foreach ($bindings as $candidate) {
+            $unique[$candidate->relationId . ':' . $candidate->column->name] = $candidate;
         }
-
         return array_values($unique);
     }
 

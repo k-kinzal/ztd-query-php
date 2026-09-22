@@ -88,8 +88,6 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
 #[UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
-#[UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
 #[UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
@@ -117,20 +115,14 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\StatementFactory::class)]
 #[UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -150,6 +142,7 @@ final class FunctionRulesTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (n INTEGER, name TEXT)');
         $query = (new Binder($schema))->bind('SELECT count(*), sum(n), lower(name), custom_function(n) FROM t GROUP BY name, n');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame(['bigint', 'bigint', 'text', 'unknown'], array_map(static fn ($column): string => $column->expression->type->name, $query->outputs));
         self::assertSame(\SqlSemantics\Type\Nullability::NotNull, $query->outputs[0]->expression->nullability);
         self::assertSame(\SqlSemantics\Type\Nullability::MaybeNull, $query->outputs[1]->expression->nullability);
@@ -158,6 +151,7 @@ final class FunctionRulesTest extends TestCase
     public function testTypePreservesNumericAggregateRules(): void
     {
         $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT avg(1), count(*)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame('numeric', $query->outputs[0]->expression->type->name);
         self::assertSame('bigint', $query->outputs[1]->expression->type->name);
     }
@@ -165,6 +159,7 @@ final class FunctionRulesTest extends TestCase
     public function testNumericAggregatePromotesIntegerSum(): void
     {
         $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT sum(1), avg(1)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame('bigint', $query->outputs[0]->expression->type->name);
         self::assertSame('numeric', $query->outputs[1]->expression->type->name);
     }
@@ -222,8 +217,8 @@ final class FunctionRulesTest extends TestCase
         yield 'nth' => ['nth_value(1,2) over ()', 'integer', 'window', 'unknown'];
         yield 'percent rank' => ['percent_rank() over ()', 'double precision', 'window', 'unknown'];
         yield 'cume dist' => ['cume_dist() over ()', 'double precision', 'window', 'unknown'];
-        yield 'current date' => ['current_date', 'date', 'function', 'not-null'];
-        yield 'current timestamp' => ['current_timestamp', 'timestamp', 'function', 'not-null'];
+        yield 'current date' => ['current_date', 'date', 'context-value', 'not-null'];
+        yield 'current timestamp' => ['current_timestamp', 'timestamptz', 'context-value', 'not-null'];
         yield 'now' => ['now()', 'timestamp', 'function', 'unknown'];
     }
 
@@ -231,41 +226,47 @@ final class FunctionRulesTest extends TestCase
 
     public function testArgumentsInferParameterTypesFromRegisteredSignatures(): void
     {
-        $integer = new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, 'integer');
+        $integer = new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('integer'));
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build()->withFunctions(new \SqlSemantics\Schema\FunctionSignature('f', [$integer], $integer));
-        $expression = (new Binder($schema))->bind('SELECT f($1)')->outputs[0]->expression;
+        $boundQuery1 = (new Binder($schema))->bind('SELECT f($1)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery1);
+        $expression = $boundQuery1->outputs[0]->expression;
         self::assertSame('integer', $expression->type->name);
-        self::assertSame('integer', $expression->operands[0]->type->name);
-        self::assertSame('implicit', $expression->operands[0]->symbol);
-        self::assertSame('$1', $expression->operands[0]->operands[0]->symbol);
+        self::assertSame('integer', $expression->inputs()[0]->type->name);
+        self::assertSame('implicit', $expression->inputs()[0]->spelling());
+        self::assertSame('$1', $expression->inputs()[0]->inputs()[0]->spelling());
     }
 
     public function testNullabilityUsesDeclaredNullPropagationAndPreservesLineage(): void
     {
-        $integer = new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, 'integer');
+        $integer = new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('integer'));
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')->withFunctions(new \SqlSemantics\Schema\FunctionSignature('f', [$integer], $integer, \SqlSemantics\Type\Nullability::NotNull, true));
         $query = (new Binder($schema))->bind('SELECT f(1), f(NULL), f(id) FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame(['not-null', 'always-null', 'maybe-null'], array_map(static fn ($output): string => $output->expression->nullability->value, $query->outputs));
         self::assertSame('id', $query->outputs[2]->expression->lineage()[0]->column->name);
     }
 
     public function testBindSupportsCustomAggregatesAndVariadicArguments(): void
     {
-        $integer = new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, 'integer');
+        $integer = new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('integer'));
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build()->withFunctions(new \SqlSemantics\Schema\FunctionSignature('combine', [$integer], $integer, variadic: true, aggregate: true));
         $query = (new Binder($schema))->bind('SELECT combine(1,2,3), combine(1) OVER ()');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame('aggregate', $query->outputs[0]->expression->kind->value);
         self::assertSame('window', $query->outputs[1]->expression->kind->value);
-        self::assertCount(3, $query->outputs[0]->expression->operands);
+        self::assertCount(3, $query->outputs[0]->expression->inputs());
     }
 
 
     #[\PHPUnit\Framework\Attributes\DataProvider('providerNullContracts')]
     public function testNullabilityHonorsReturnFactsForEveryArgumentState(string $input, \SqlSemantics\Type\Nullability $declared, bool $strict, \SqlSemantics\Type\Nullability $expected): void
     {
-        $integer = new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, 'integer');
+        $integer = new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('integer'));
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build()->withFunctions(new \SqlSemantics\Schema\FunctionSignature('f', [$integer], $integer, $declared, $strict));
-        self::assertSame($expected, (new Binder($schema))->bind('SELECT f(' . $input . ')')->outputs[0]->expression->nullability);
+        $boundQuery1 = (new Binder($schema))->bind('SELECT f(' . $input . ')');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery1);
+        self::assertSame($expected, $boundQuery1->outputs[0]->expression->nullability);
     }
 
     /**
@@ -283,9 +284,11 @@ final class FunctionRulesTest extends TestCase
 
     public function testBindResolvesDefaultsWithoutAQueryContext(): void
     {
-        $expression = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("SELECT lower('X')")->outputs[0]->expression;
+        $boundQuery1 = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("SELECT lower('X')");
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery1);
+        $expression = $boundQuery1->outputs[0]->expression;
         self::assertInstanceOf(\SqlParser\Parser\Node::class, $expression->source);
-        $bound = (new \SqlSemantics\Binding\Scalar\FunctionRules())->bind('LOWER', $expression->operands, $expression->source, new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql)));
+        $bound = (new \SqlSemantics\Binding\Scalar\FunctionRules())->bind('LOWER', $expression->inputs(), $expression->source, new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql)));
         self::assertSame('text', $bound->type->name);
         self::assertSame(\SqlSemantics\Type\Nullability::NotNull, $bound->nullability);
     }

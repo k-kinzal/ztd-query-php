@@ -88,8 +88,6 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
 #[UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
-#[UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
 #[UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
@@ -117,20 +115,14 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\StatementFactory::class)]
 #[UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -151,7 +143,7 @@ final class SchemaEvolutionTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER PRIMARY KEY, n INTEGER GENERATED ALWAYS AS (id + 1) STORED)', 'CREATE TABLE u AS SELECT id, n FROM t', 'CREATE VIEW v AS SELECT n FROM u', 'DROP TABLE u');
         self::assertSame(['t', 'v'], array_column($schema->tables, 'name'));
         self::assertSame('n', $schema->tables[1]->columns[0]->name);
-        self::assertNotNull($schema->tables[0]->columns[1]->generatedExpression);
+        self::assertNotNull($schema->tables[0]->columns[1]->generation->expression);
         self::assertCount(4, $schema->statements);
     }
     public function testBuildAcceptsTableOptions(): void
@@ -195,8 +187,9 @@ final class SchemaEvolutionTest extends TestCase
         self::assertSame(['integer', 'integer'], array_map(static fn ($column): string => $column->type->name, $schema->tables[1]->columns));
         self::assertSame(['maybe-null', 'not-null'], array_map(static fn ($column): string => $column->nullability->value, $schema->tables[1]->columns));
         $query = (new Binder($schema))->bind('SELECT y FROM v WHERE x>0');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame('y', $query->outputs[0]->name);
-        self::assertSame('>', $query->where?->symbol);
+        self::assertSame('>', $query->where?->spelling());
     }
 
 

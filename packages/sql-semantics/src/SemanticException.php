@@ -7,6 +7,7 @@ namespace SqlSemantics;
 use RuntimeException;
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
+use Throwable;
 
 /**
  * An explicit semantic failure; callers must not treat a rejected tree as bound.
@@ -18,7 +19,7 @@ use SqlParser\Parser\Node;
  *
  * @visibility public
  */
-final class SemanticException extends RuntimeException
+class SemanticException extends RuntimeException
 {
     /**
      * @param string $reason Stable machine-readable failure code
@@ -29,7 +30,8 @@ final class SemanticException extends RuntimeException
         public readonly string $reason,
         string $message,
         public readonly Node|Token $source,
+        ?Throwable $previous = null,
     ) {
-        parent::__construct($message);
+        parent::__construct($message, 0, $previous);
     }
 }

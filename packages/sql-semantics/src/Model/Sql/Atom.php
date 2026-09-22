@@ -11,7 +11,7 @@ namespace SqlSemantics\Model\Sql;
  *     $atom = new \SqlSemantics\Model\Sql\Atom('keyword', 'SELECT');
  *     $atom->text // => 'SELECT'
  *
- * @visibility public
+ * @visibility SqlSemantics
  */
 final class Atom
 {

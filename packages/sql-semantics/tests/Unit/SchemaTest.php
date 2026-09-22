@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
+use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
@@ -83,8 +84,6 @@ use SqlSemantics\SemanticException;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
@@ -113,24 +112,18 @@ use SqlSemantics\SemanticException;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Dialect::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\ConstraintKind::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Type\Nullability::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\ExpressionKind::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\JoinKind::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -157,13 +150,19 @@ final class SchemaTest extends TestCase
     public function testWithFunctionsReturnsAnIndependentSnapshot(): void
     {
         $base = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
-        $integer = new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, 'integer');
-        $text = new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, 'text');
+        $integer = new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('integer'));
+        $text = new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('text'));
         $added = $base->withFunctions(new \SqlSemantics\Schema\FunctionSignature('f', [$integer], $text));
-        $replaced = $added->withFunctions(new \SqlSemantics\Schema\FunctionSignature('f', [new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, 'integer')], $integer));
-        self::assertSame('unknown', (new Binder($base))->bind('SELECT f(id) FROM t')->outputs[0]->expression->type->name);
-        self::assertSame('text', (new Binder($added))->bind('SELECT f(id) FROM t')->outputs[0]->expression->type->name);
-        self::assertSame('integer', (new Binder($replaced))->bind('SELECT f(id) FROM t')->outputs[0]->expression->type->name);
+        $replaced = $added->withFunctions(new \SqlSemantics\Schema\FunctionSignature('f', [new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('integer'))], $integer));
+        $boundQuery1 = (new Binder($base))->bind('SELECT f(id) FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery1);
+        self::assertSame('unknown', $boundQuery1->outputs[0]->expression->type->name);
+        $boundQuery2 = (new Binder($added))->bind('SELECT f(id) FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery2);
+        self::assertSame('text', $boundQuery2->outputs[0]->expression->type->name);
+        $boundQuery3 = (new Binder($replaced))->bind('SELECT f(id) FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery3);
+        self::assertSame('integer', $boundQuery3->outputs[0]->expression->type->name);
         self::assertSame($base->tables, $added->tables);
         self::assertCount(count($base->functions) + 1, $replaced->functions);
     }
@@ -173,8 +172,8 @@ final class SchemaTest extends TestCase
     #[\PHPUnit\Framework\Attributes\DataProvider('providerCaseInsensitiveDialects')]
     public function testWithFunctionsReplacesCaseInsensitiveNamesWithoutRemovingOtherOverloads(Dialect $dialect): void
     {
-        $integer = new \SqlSemantics\Type\TypeDescriptor($dialect, 'integer');
-        $text = new \SqlSemantics\Type\TypeDescriptor($dialect, 'text');
+        $integer = new \SqlSemantics\Type\TypeDescriptor($dialect, \SqlSemantics\Type\Identity\BuiltinIdentity::from('integer'));
+        $text = new \SqlSemantics\Type\TypeDescriptor($dialect, \SqlSemantics\Type\Identity\BuiltinIdentity::from('text'));
         $schema = (new SchemaBuilder($dialect))->build()->withFunctions(
             new \SqlSemantics\Schema\FunctionSignature('a', [], $integer),
             new \SqlSemantics\Schema\FunctionSignature('f', [], $integer),
@@ -184,9 +183,15 @@ final class SchemaTest extends TestCase
         $changed = $schema->withFunctions(new \SqlSemantics\Schema\FunctionSignature('F', [], $text));
         self::assertCount(count($schema->functions), $changed->functions);
         self::assertSame(range(0, count($changed->functions) - 1), array_keys($changed->functions));
-        self::assertSame('text', (new Binder($changed))->bind('SELECT f()')->outputs[0]->expression->type->name);
-        self::assertSame('integer', (new Binder($changed))->bind('SELECT f(1)')->outputs[0]->expression->type->name);
-        self::assertSame('integer', (new Binder($changed))->bind('SELECT a()')->outputs[0]->expression->type->name);
+        $boundQuery1 = (new Binder($changed))->bind('SELECT f()');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery1);
+        self::assertSame('text', $boundQuery1->outputs[0]->expression->type->name);
+        $boundQuery2 = (new Binder($changed))->bind('SELECT f(1)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery2);
+        self::assertSame('integer', $boundQuery2->outputs[0]->expression->type->name);
+        $boundQuery3 = (new Binder($changed))->bind('SELECT a()');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery3);
+        self::assertSame('integer', $boundQuery3->outputs[0]->expression->type->name);
     }
 
     /**
@@ -200,12 +205,32 @@ final class SchemaTest extends TestCase
 
     public function testWithFunctionsKeepsQuotedPostgresNamesDistinct(): void
     {
-        $integer = new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, 'integer');
-        $text = new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, 'text');
+        $integer = new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('integer'));
+        $text = new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('text'));
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build()->withFunctions(new \SqlSemantics\Schema\FunctionSignature('F', [], $text), new \SqlSemantics\Schema\FunctionSignature('f', [], $integer));
         $binder = new Binder($schema);
-        self::assertSame('text', $binder->bind('SELECT "F"()')->outputs[0]->expression->type->name);
-        self::assertSame('integer', $binder->bind('SELECT f()')->outputs[0]->expression->type->name);
+        $boundQuery1 = $binder->bind('SELECT "F"()');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery1);
+        self::assertSame('text', $boundQuery1->outputs[0]->expression->type->name);
+        $boundQuery2 = $binder->bind('SELECT f()');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery2);
+        self::assertSame('integer', $boundQuery2->outputs[0]->expression->type->name);
     }
 
+
+    public function testRejectsTableDeclarationsFromAnotherDialect(): void
+    {
+        $pg = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
+        $mysql = (new SchemaBuilder(Dialect::MySql))->build();
+        $this->expectException(InvalidArgumentException::class);
+        new \SqlSemantics\Schema($mysql->dialect, $pg->tables, $mysql->defaultSchema, $mysql->grammarVersion);
+    }
+
+    public function testRejectsForeignFunctionSignaturesAtInitialConstruction(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
+        $function = new \SqlSemantics\Schema\FunctionSignature('custom', [], \SqlSemantics\Type\TypeDescriptor::builtin(Dialect::MySql, 'integer'));
+        $this->expectException(InvalidArgumentException::class);
+        new \SqlSemantics\Schema($schema->dialect, [], $schema->defaultSchema, $schema->grammarVersion, functions: [$function]);
+    }
 }

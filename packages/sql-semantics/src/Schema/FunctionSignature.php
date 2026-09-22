@@ -13,7 +13,7 @@ use SqlSemantics\Type\TypeDescriptor;
  * A function overload, including argument, result, and NULL behavior.
  *
  * @example Registering a typed function
- *     $type = new \SqlSemantics\Type\TypeDescriptor(\SqlSemantics\Dialect::PostgreSql, 'integer');
+ *     $type = \SqlSemantics\Type\TypeDescriptor::builtin(\SqlSemantics\Dialect::PostgreSql, 'integer');
  *     $function = new \SqlSemantics\Schema\FunctionSignature('twice', [$type], $type);
  *     $function->name // => 'twice'
  *

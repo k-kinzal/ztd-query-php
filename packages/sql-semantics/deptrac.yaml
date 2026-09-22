@@ -7,47 +7,40 @@ deptrac:
       collectors:
         - type: classNameRegex
           value: '/^SqlSemantics\\(Binder|SchemaBuilder|StatementFactory)$/'
-    - name: Serialization
-      collectors:
-        - type: classNameRegex
-          value: '/^SqlSemantics\\(Serializer|SimpleSerializer)$/'
     - name: Foundation
       collectors:
         - type: classNameRegex
           value: '/^SqlSemantics\\(Dialect|SemanticException)$/'
     - name: Syntax
       collectors:
-        - type: directory
-          value: 'src/Ast/'
+        - type: classNameRegex
+          value: '/^SqlSemantics\\Ast\\(DialectParser|Identifiers|StatementList|TokenGroups|Tree)$/'
     - name: Binding
       collectors:
         - type: directory
           value: 'src/Binding/'
-    - name: Model
+        - type: classNameRegex
+          value: '/^SqlSemantics\\Ast\\(?!(DialectParser|Identifiers|StatementList|TokenGroups|Tree)$)/'
+    - name: Structure
       collectors:
         - type: directory
           value: 'src/Model/'
-    - name: Schema
-      collectors:
-        - type: classNameRegex
-          value: '/^SqlSemantics\\Schema$/'
         - type: directory
           value: 'src/Schema/'
-    - name: Types
-      collectors:
         - type: directory
           value: 'src/Type/'
+        - type: directory
+          value: 'src/Serialization/'
+        - type: classNameRegex
+          value: '/^SqlSemantics\\(Schema|Serializer|SimpleSerializer|InvalidSql)$/'
     - name: Parser
       collectors:
         - type: classNameRegex
           value: '/^SqlParser\\/'
   ruleset:
-    API: [Foundation, Syntax, Binding, Schema, Model, Parser]
+    API: [Foundation, Syntax, Binding, Structure, Parser]
     Foundation: [Parser]
-    Syntax: [Foundation, Schema, Types, Parser]
-    Binding: [Foundation, Syntax, Schema, Model, Types, Parser]
-    Serialization: [Model]
-    Model: [Foundation, Schema, Types, Parser]
-    Schema: [Foundation, Types, Parser]
-    Types: [Foundation]
+    Syntax: [Foundation, Parser]
+    Binding: [Foundation, Syntax, Structure, Parser]
+    Structure: [Foundation, Syntax, Parser]
     Parser: []

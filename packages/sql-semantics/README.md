@@ -53,6 +53,7 @@ composer require k-kinzal/sql-semantics
 ```php
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
+use SqlSemantics\Model\BoundSelect;
 use SqlSemantics\SchemaBuilder;
 
 $schema = (new SchemaBuilder(Dialect::PostgreSql))->build(
@@ -62,9 +63,12 @@ $schema->tables[0]->columns[0]->type->name; // integer
 
 $binder = new Binder($schema);
 $statement = $binder->bind('SELECT id, score FROM users WHERE score > 0');
-$statement->outputs[0]->expression->binding->column->name; // id
-$statement->where->symbol; // >
-$statement->toString(); // SELECT id, score FROM users WHERE score > 0
+if ($statement instanceof BoundSelect) {
+    $statement->outputs[0]->expression->lineage()[0]->column->name; // id
+    $statement->outputs[1]->expression->type->name;                // integer
+    $statement->where?->inputs()[0]->lineage()[0]->column->name;    // score
+}
+$statement->toString(); // SQL generated from the semantic operands
 ```
 
 `SchemaBuilder::build()` reads table and index definitions. Register function signatures through `Schema::withFunctions()` or the builder's `functions` argument to supply application-specific argument types, return types, and NULL behavior. `Binder::bind()` reads one statement against that schema; `bindAll()` reads a sequence of statements. Pass `strict: false` to collect semantic diagnostics on each returned statement. See [schema.md](docs/schema.md) and [binder.md](docs/binder.md) for responsibilities, result fields, and SQL-to-structure tables. Statements expose immutable transformations that validate the complete result and refresh dependent facts. `Serializer` defines SQL output; `SimpleSerializer` and `BoundStatement::toString()` provide the default compact layout. `StatementFactory` also constructs validated statements from structure without original SQL.

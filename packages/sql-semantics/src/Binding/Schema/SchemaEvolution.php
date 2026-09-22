@@ -42,7 +42,7 @@ final class SchemaEvolution
         foreach ($trees as $tree) {
             foreach (StatementList::read($tree, $schema->dialect) as $statement) {
                 $tables = $this->apply($schema, $statement);
-                $schema = new Schema($schema->dialect, $tables, $schema->defaultSchema, $schema->grammarVersion, [...$schema->statements, $statement], $schema->functions);
+                $schema = new Schema($schema->dialect, $tables, $schema->defaultSchema, $schema->grammarVersion, [...$schema->statements, $statement], $schema->functions, $schema->variables);
             }
         }
         return $schema;
@@ -100,7 +100,7 @@ final class SchemaEvolution
         $source = $schema->dialect === Dialect::Sqlite ? $statement : $create;
         $names = Tree::outer($create, ['qualified_name', 'table_ident', 'nm']);
         $queryNode = Tree::outer($source, ['SelectStmt', 'select_stmt', 'query_expression', 'select'])[0] ?? null;
-        $table = $reader->table($source);
+        $table = DeclarationBinder::bind($reader->table($source), new QueryContext($resolver));
         $namespace = $table->schema;
         $name = $table->name;
         $columns = $table->columns;
@@ -123,6 +123,6 @@ final class SchemaEvolution
             $derived = QueryRelation::declaration($query, $name, $aliases, $source);
             $columns = [...$columns, ...$derived->columns];
         }
-        return new TableDefinition($namespace, $name, $reader->primaryKeys($columns, $constraints, $source), $constraints, $source, indexes: $table->indexes, options: $table->options);
+        return new TableDefinition($namespace, $name, $columns, $constraints, $source, indexes: $table->indexes, properties: $table->properties);
     }
 }

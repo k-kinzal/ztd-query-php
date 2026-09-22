@@ -88,8 +88,6 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
 #[UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
-#[UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
 #[UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
@@ -117,20 +115,14 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\StatementFactory::class)]
 #[UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -149,15 +141,16 @@ final class BoundStatementTest extends TestCase
     public function testRetainsCommandSource(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('/* source */ BEGIN');
-        self::assertSame('BEGIN', $statement->kind);
+        self::assertSame('BEGIN', $statement->kind->value);
         self::assertSame('/* source */ BEGIN', $statement->source->toString());
-        self::assertSame([], $statement->outputs);
+        self::assertNotInstanceOf(\SqlSemantics\Model\ResultStatement::class, $statement);
     }
     public function testToStringUsesCompactLayout(): void
     {
         $sql = '/* retained */ SELECT   1 -- trailing';
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql);
-        self::assertSame(str_contains($sql, 'missing') ? 'SELECT missing' : 'SELECT 1', $statement->toString());
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertSame('SELECT 1', $statement->toString());
         self::assertSame($sql, $statement->source->toString());
     }
 
@@ -166,7 +159,8 @@ final class BoundStatementTest extends TestCase
     {
         $sql = '/* retained */ SELECT   missing -- trailing';
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql, strict: false);
-        self::assertSame(str_contains($sql, 'missing') ? 'SELECT missing' : 'SELECT 1', $statement->toString());
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertSame('SELECT "missing" AS "missing"', $statement->toString());
         self::assertSame($sql, $statement->source->toString());
         self::assertSame(['unknown-column'], array_column($statement->diagnostics, 'reason'));
         self::assertSame($statement->outputs[0]->expression->source, $statement->diagnostics[0]->source);
@@ -175,20 +169,22 @@ final class BoundStatementTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build());
         $statement = $binder->bind('SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         $changed = $statement->replaceExpression($statement->outputs[0]->expression, \SqlSemantics\Model\Expression::binary('+', \SqlSemantics\Model\Expression::literal(2, Dialect::Sqlite), \SqlSemantics\Model\Expression::literal(3, Dialect::Sqlite)));
-        self::assertSame('+', $changed->outputs[0]->expression->symbol);
-        self::assertSame('1', $statement->outputs[0]->expression->symbol);
+        self::assertSame('+', $changed->outputs[0]->expression->spelling());
+        self::assertSame('1', $statement->outputs[0]->expression->spelling());
         self::assertEquals($changed, $binder->bind($changed->toString()));
     }
     public function testReplaceExpressionValidatesAnUnresolvedStatement(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
         $statement = $binder->bind('SELECT missing FROM t', strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         $repaired = $statement->replaceExpression($statement->outputs[0]->expression, \SqlSemantics\Model\Expression::reference(['id'], Dialect::PostgreSql));
         self::assertSame([], $repaired->diagnostics);
-        self::assertSame('id', $repaired->outputs[0]->expression->binding?->column->name);
+        self::assertSame('id', $repaired->outputs[0]->expression->columnBinding()?->column->name);
         self::assertSame(['unknown-column'], array_column($statement->diagnostics, 'reason'));
-        self::assertSame('SELECT missing FROM t', $statement->toString());
+        self::assertSame('SELECT "missing" AS "missing" FROM "public"."t"', $statement->toString());
         $this->expectException(\SqlSemantics\SemanticException::class);
         $statement->replaceExpression($statement->outputs[0]->expression, \SqlSemantics\Model\Expression::reference(['still_missing'], Dialect::PostgreSql));
     }
@@ -197,24 +193,31 @@ final class BoundStatementTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
         $statement = (new Binder($schema))->bind('SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         $changed = $statement->withContext(new \SqlSemantics\Binding\Editing\StatementContext($schema));
         self::assertNotSame($statement, $changed);
         self::assertSame($statement->outputs, $changed->outputs);
-        self::assertSame($statement->sql, $changed->sql);
+        self::assertSame($statement->origin->source, $changed->origin->source);
     }
-    public function testReplaceStructureRevalidatesOwnedGrammarComponents(): void
+    public function testReplaceExpressionRevalidatesProjectionOperands(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind('SELECT 1');
-        $changed = $statement->replaceStructure($statement->sql, $binder->bind('SELECT 2')->sql);
-        self::assertSame('2', $changed->outputs[0]->expression->symbol);
-        self::assertSame('1', $statement->outputs[0]->expression->symbol);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        $boundQuery1 = $binder->bind('SELECT 2');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery1);
+        $changed = $statement->replaceExpression($statement->outputs[0]->expression, $boundQuery1->outputs[0]->expression);
+        self::assertSame('2', $changed->outputs[0]->expression->spelling());
+        self::assertSame('1', $statement->outputs[0]->expression->spelling());
     }
     public function testReplaceExpressionRejectsForeignOwnership(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind('SELECT 1');
-        $foreign = $binder->bind('SELECT 1')->outputs[0]->expression;
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        $boundQuery1 = $binder->bind('SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery1);
+        $foreign = $boundQuery1->outputs[0]->expression;
         $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
         $statement->replaceExpression($foreign, \SqlSemantics\Model\Expression::literal(2, Dialect::PostgreSql));
     }
@@ -222,62 +225,71 @@ final class BoundStatementTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER,b INTEGER)'));
         $statement = $binder->bind('/* original */ SELECT a*2 FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         $replacement = \SqlSemantics\Model\Expression::binary('+', \SqlSemantics\Model\Expression::reference(['b'], Dialect::PostgreSql), \SqlSemantics\Model\Expression::literal(1, Dialect::PostgreSql));
-        $changed = $statement->replaceExpression($statement->outputs[0]->expression->operands[0], $replacement);
-        self::assertSame('*', $changed->outputs[0]->expression->symbol);
-        self::assertSame('+', $changed->outputs[0]->expression->operands[0]->symbol);
+        $changed = $statement->replaceExpression($statement->outputs[0]->expression->inputs()[0], $replacement);
+        self::assertSame('*', $changed->outputs[0]->expression->spelling());
+        self::assertSame('+', $changed->outputs[0]->expression->inputs()[0]->spelling());
         self::assertSame('b', $changed->outputs[0]->expression->lineage()[0]->column->name);
         self::assertStringNotContainsString('original', $changed->toString());
         self::assertStringContainsString('original', $statement->source->toString());
     }
 
-    public function testWithOutputNamesRetainsTheCteTransformationContext(): void
+    public function testReplaceExpressionRetainsCteAliasOwnership(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('WITH q(n) AS (SELECT 1) SELECT n FROM q');
-        $cte = $statement->ctes['q'];
-        self::assertSame('n', $cte->outputs[0]->name);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        $cte = $statement->ctes->definitions[0]->query;
+        self::assertNull($cte->outputs[0]->name);
+        self::assertSame(['n'], $statement->ctes->definitions[0]->columns);
         $changed = $cte->replaceExpression($cte->outputs[0]->expression, \SqlSemantics\Model\Expression::literal(2, Dialect::PostgreSql));
-        self::assertSame('2', $changed->outputs[0]->expression->symbol);
-        self::assertSame('1', $cte->outputs[0]->expression->symbol);
+        self::assertSame('2', $changed->outputs[0]->expression->spelling());
+        self::assertSame('1', $cte->outputs[0]->expression->spelling());
     }
 
     public function testReplaceExpressionChangesOneExpandedStarOutput(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER,n INTEGER)')))->bind('SELECT * FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         $changed = $statement->replaceExpression($statement->outputs[0]->expression, \SqlSemantics\Model\Expression::literal(1, Dialect::PostgreSql));
-        self::assertSame('1', $changed->outputs[0]->expression->symbol);
-        self::assertSame('n', $changed->outputs[1]->expression->binding?->column->name);
+        self::assertSame('1', $changed->outputs[0]->expression->spelling());
+        self::assertSame('n', $changed->outputs[1]->expression->columnBinding()?->column->name);
         self::assertCount(2, $changed->outputs);
     }
 
     public function testReplaceExpressionKeepsOtherNestedStarOutputs(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER,n INTEGER)')))->bind('WITH q AS (SELECT * FROM t) SELECT id,n FROM q');
-        $changed = $statement->replaceExpression($statement->ctes['q']->outputs[0]->expression, \SqlSemantics\Model\Expression::literal(1, Dialect::PostgreSql));
-        self::assertCount(2, $changed->ctes['q']->outputs);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        $changed = $statement->replaceExpression($statement->ctes->definitions[0]->query->outputs[0]->expression, \SqlSemantics\Model\Expression::literal(1, Dialect::PostgreSql));
+        self::assertCount(2, $changed->ctes->definitions[0]->query->outputs);
         self::assertCount(2, $changed->outputs);
-        self::assertSame('n', $changed->ctes['q']->outputs[1]->expression->binding?->column->name);
-        self::assertSame('1', $changed->ctes['q']->outputs[0]->expression->symbol);
+        self::assertSame('n', $changed->ctes->definitions[0]->query->outputs[1]->expression->columnBinding()?->column->name);
+        self::assertSame('1', $changed->ctes->definitions[0]->query->outputs[0]->expression->spelling());
     }
 
     public function testReplaceExpressionUsesConfigurationValueGrammar(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("SET LOCAL work_mem='64MB'");
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
         $changed = $statement->replaceExpression($statement->settings[0]->values[0], \SqlSemantics\Model\Expression::literal('128MB', Dialect::PostgreSql));
-        self::assertSame("'128MB'", $changed->settings[0]->values[0]->symbol);
-        self::assertSame('local', $changed->settings[0]->scope);
+        self::assertSame("'128MB'", $changed->settings[0]->values[0]->spelling());
+        self::assertSame('local', $changed->settings[0]->scope->value);
     }
     public function testReplaceExpressionRejectsMixedDatabaseLanguages(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
         $statement->replaceExpression($statement->outputs[0]->expression, \SqlSemantics\Model\Expression::literal(2, Dialect::MySql));
     }
 
-    public function testWithOutputNamesOverridesExistingProjectionAliases(): void
+    public function testCteAliasesKeepTheQueryProjectionSeparate(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('WITH q(new_name) AS (SELECT 1 AS old_name) SELECT new_name FROM q');
-        self::assertSame('new_name', $statement->ctes['q']->outputs[0]->name);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertSame('old_name', $statement->ctes->definitions[0]->query->outputs[0]->name);
+        self::assertSame(['new_name'], $statement->ctes->definitions[0]->columns);
         self::assertSame('new_name', $statement->outputs[0]->name);
     }
 }

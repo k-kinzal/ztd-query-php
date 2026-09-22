@@ -16,7 +16,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * @example Inspecting merge matching
  *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER); CREATE TABLE s(id INTEGER)');
  *     $statement = (new \SqlSemantics\Binder($schema))->bind('MERGE INTO t USING s ON t.id=s.id WHEN MATCHED THEN DELETE');
- *     $statement->merge->condition->symbol // => '='
+ *     $statement->merge->condition->spelling() // => '='
  *
  * @visibility public
  */
@@ -40,7 +40,7 @@ final class Merge
             throw new InvalidStructure('MERGE requires at least one action.');
         }
         foreach ($actions as $action) {
-            if ($action->insertion !== null && $action->insertion->target !== $target) {
+            if (($action instanceof Decision\MergeRowInsertion || $action instanceof Decision\MergeInsertDefaults) && $action->insertion->target !== $target) {
                 throw new InvalidStructure('Every MERGE insertion must use the declared target.');
             }
         }

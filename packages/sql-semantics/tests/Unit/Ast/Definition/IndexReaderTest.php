@@ -95,9 +95,7 @@ use SqlSemantics\Type\TypeDescriptor;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\IndexDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ConstraintGroups::class)]
@@ -118,19 +116,13 @@ use SqlSemantics\Type\TypeDescriptor;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\StatementFactory::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -161,7 +153,7 @@ final class IndexReaderTest extends TestCase
     {
         $table = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, name TEXT, KEY ix (id), FULLTEXT INDEX words (name))')->tables[0];
         self::assertSame(['ix', 'words'], array_column($table->indexes, 'name'));
-        self::assertSame('fulltext', $table->indexes[1]->options['kind']);
+        self::assertSame('fulltext', $table->indexes[1]->properties->kind->value);
     }
 
     public function testDefinitionRetainsIncludesPredicateAndFlags(): void
@@ -171,10 +163,10 @@ final class IndexReaderTest extends TestCase
         self::assertSame('btree', $index->method);
         self::assertSame(['id'], $index->include);
         self::assertTrue($index->unique);
-        self::assertTrue($index->options['concurrently']);
-        self::assertFalse($index->options['nulls_distinct']);
-        self::assertTrue($index->options['if_not_exists']);
-        self::assertSame('80', $index->options['fillfactor']);
+        self::assertTrue((new Binder($schema))->bind($index->source->toString())->concurrently);
+        self::assertFalse($index->properties->nullsDistinct);
+        self::assertTrue((new Binder($schema))->bind($index->source->toString())->ifNotExists);
+        self::assertSame('80', $index->properties->storageParameters[0]->value->spelling());
         self::assertNotNull($index->predicate);
     }
 
@@ -188,8 +180,9 @@ final class IndexReaderTest extends TestCase
         self::assertSame(['app', 't'], $index->table);
         self::assertFalse($index->unique);
         self::assertSame('hash', $index->method);
-        self::assertSame(['comment' => 'key', 'visible' => true], $index->options);
-        self::assertSame('ASC', $index->elements[0]->direction);
+        self::assertSame('key', $index->properties->comment);
+        self::assertTrue($index->properties->visible);
+        self::assertSame('ASC', $index->elements[0]->direction->value);
         self::assertSame([], $index->include);
         self::assertNull($index->predicate);
     }
@@ -197,17 +190,18 @@ final class IndexReaderTest extends TestCase
     public function testTableRetainsNamedConstraintsAfterAnUnrelatedConstraint(): void
     {
         $table = (new SchemaBuilder(Dialect::PostgreSql))->build('create table t(id integer, foreign key(id) references p(id), constraint uq unique(id), constraint pk primary key(id))')->tables[0];
-        self::assertSame(['uq', 'pk'], array_column($table->indexes, 'name'));
-        self::assertSame([true, true], array_column($table->indexes, 'unique'));
-        self::assertSame(['public', 'public'], array_column($table->indexes, 'schema'));
-        self::assertSame(['id'], array_column($table->indexes[1]->elements, 'column'));
+        self::assertSame(['uq', 'pk'], [$table->constraints[1]->name, $table->constraints[2]->name]);
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\UniqueKey::class, $table->constraints[1]);
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\PrimaryKey::class, $table->constraints[2]);
+        self::assertSame('public', $table->schema);
+        self::assertSame(['id'], $table->constraints[2]->localColumns());
     }
 
     public function testReadSpatialAndFulltextKindsDoNotImplyUniqueness(): void
     {
         $table = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(g GEOMETRY, name TEXT, SPATIAL INDEX shape(g), FULLTEXT KEY words(name))')->tables[0];
-        self::assertSame('spatial', $table->indexes[0]->options['kind']);
-        self::assertSame('fulltext', $table->indexes[1]->options['kind']);
+        self::assertSame('spatial', $table->indexes[0]->properties->kind->value);
+        self::assertSame('fulltext', $table->indexes[1]->properties->kind->value);
         self::assertSame([false, false], array_column($table->indexes, 'unique'));
         self::assertSame(['shape', 'words'], array_column($table->indexes, 'name'));
     }
@@ -217,11 +211,14 @@ final class IndexReaderTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('create table app.t(id integer); create unique index concurrently if not exists ix on only app.t using btree(id) nulls distinct');
         $index = $schema->tables[0]->indexes[0];
         self::assertSame(['app', 't'], $index->table);
-        self::assertSame(['concurrently' => true, 'nulls_distinct' => true, 'if_not_exists' => true], $index->options);
+        self::assertTrue($index->properties->nullsDistinct);
+        $statement = (new Binder($schema))->bind($index->source->toString());
+        self::assertTrue($statement->concurrently);
+        self::assertTrue($statement->ifNotExists);
         $schema = (new SchemaBuilder(Dialect::Sqlite))->build('create table "aux".t(id integer); create index if not exists "aux"."i.x" on t(id)');
         self::assertSame('i.x', $schema->tables[0]->indexes[0]->name);
         self::assertSame('aux', $schema->tables[0]->indexes[0]->schema);
-        self::assertTrue($schema->tables[0]->indexes[0]->options['if_not_exists']);
+        self::assertTrue((new Binder($schema))->bind($schema->tables[0]->indexes[0]->source->toString())->ifNotExists);
     }
 
 }

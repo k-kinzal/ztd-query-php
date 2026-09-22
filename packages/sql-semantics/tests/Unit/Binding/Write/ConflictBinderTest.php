@@ -73,8 +73,6 @@ use SqlSemantics\SemanticException;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\OutputColumn::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\TableUse::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Assignment::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Insertion::class)]
@@ -115,20 +113,14 @@ use SqlSemantics\SemanticException;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\StatementFactory::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -147,18 +139,19 @@ final class ConflictBinderTest extends TestCase
     public function testBindSeparatesConditionalConflictUpdate(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER,n INTEGER)')))->bind('INSERT INTO t VALUES(1,2) ON CONFLICT(id) WHERE id>0 DO UPDATE SET n=excluded.n WHERE t.n<10 RETURNING id');
-        self::assertNull($statement->where);
-        self::assertSame('update', $statement->conflicts[0]->action);
-        self::assertSame('id', $statement->conflicts[0]->keys[0]->binding?->column->name);
-        self::assertSame('>', $statement->conflicts[0]->indexPredicate?->symbol);
-        self::assertSame('<', $statement->conflicts[0]->where?->symbol);
-        self::assertSame('n', $statement->conflicts[0]->assignments[0]->targets[0]->binding?->column->name);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
+        self::assertSame('update', $statement->conflicts[0]->action->value);
+        self::assertSame('id', $statement->conflicts[0]->target->keys[0]->columnBinding()?->column->name);
+        self::assertSame('>', $statement->conflicts[0]->target->predicate?->spelling());
+        self::assertSame('<', $statement->conflicts[0]->where?->spelling());
+        self::assertSame('n', $statement->conflicts[0]->assignments[0]->target->column()->columnBinding()?->column->name);
     }
     public function testActionRetainsDoNothing(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('INSERT INTO t VALUES(1) ON CONFLICT DO NOTHING');
-        self::assertSame('nothing', $statement->conflicts[0]->action);
-        self::assertSame([], $statement->conflicts[0]->assignments);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
+        self::assertSame('nothing', $statement->conflicts[0]->action->value);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\DoNothing::class, $statement->conflicts[0]);
     }
     public function testPredicateRejectsNonBooleanUpdateCondition(): void
     {
@@ -170,6 +163,7 @@ final class ConflictBinderTest extends TestCase
     public function testPredicateRejectsNonBooleanDeleteCondition(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('DELETE FROM t WHERE 1', strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\DeleteStatement::class, $statement);
         self::assertSame('non-boolean-predicate', $statement->diagnostics[0]->reason);
         self::assertSame('integer', $statement->where?->type->name);
     }
@@ -178,9 +172,10 @@ final class ConflictBinderTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
         $statement = $binder->bind('DELETE FROM t WHERE CURRENT OF cur');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\DeleteStatement::class, $statement);
         self::assertNotNull($statement->where);
         self::assertSame('current-row', $statement->where->kind->value);
-        self::assertSame(['cur'], $statement->where->reference);
+        self::assertSame(['cur'], $statement->where->referenceParts());
         self::assertSame('boolean', $statement->where->type->name);
     }
 
@@ -188,36 +183,36 @@ final class ConflictBinderTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER,n INTEGER)'));
         $conflict = $binder->bind('INSERT INTO t VALUES(1,2) ON CONFLICT ON CONSTRAINT t_key DO UPDATE SET n=excluded.n WHERE t.n<excluded.n')->conflicts[0];
-        self::assertSame('t_key', $conflict->constraint);
-        self::assertSame([], $conflict->keys);
-        self::assertNull($conflict->indexPredicate);
-        self::assertSame('<', $conflict->where?->symbol);
-        self::assertSame('n', $conflict->assignments[0]->targets[0]->binding?->column->name);
+        self::assertSame('t_key', $conflict->target->name);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\ConstraintConflict::class, $conflict->target);
+        self::assertSame('<', $conflict->where?->spelling());
+        self::assertSame('n', $conflict->assignments[0]->target->column()->columnBinding()?->column->name);
     }
     public function testActionSeparatesSqliteIndexAndUpdatePredicates(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER,n INTEGER)'));
         $statement = $binder->bind('INSERT INTO t VALUES(1,2) ON CONFLICT(id) WHERE id>0 DO UPDATE SET n=excluded.n WHERE n<3 ON CONFLICT DO NOTHING');
-        self::assertSame(['update','nothing'], array_column($statement->conflicts, 'action'));
-        self::assertSame('id', $statement->conflicts[0]->keys[0]->binding?->column->name);
-        self::assertSame('>', $statement->conflicts[0]->indexPredicate?->symbol);
-        self::assertSame('<', $statement->conflicts[0]->where?->symbol);
-        self::assertSame('3', $statement->conflicts[0]->where->operands[1]->symbol);
-        self::assertSame([], $statement->conflicts[1]->assignments);
-        self::assertNull($statement->conflicts[1]->where);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
+        self::assertSame(['update','nothing'], array_map(static fn ($item) => $item->action->value, $statement->conflicts));
+        self::assertSame('id', $statement->conflicts[0]->target->keys[0]->columnBinding()?->column->name);
+        self::assertSame('>', $statement->conflicts[0]->target->predicate?->spelling());
+        self::assertSame('<', $statement->conflicts[0]->where?->spelling());
+        self::assertSame('3', $statement->conflicts[0]->where->inputs()[1]->spelling());
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\DoNothing::class, $statement->conflicts[1]);
     }
     public function testBindKeepsMysqlDuplicateKeyWritesSeparate(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INTEGER,n INTEGER)')))->bind('INSERT INTO t VALUES(1,2) ON DUPLICATE KEY UPDATE n=3');
-        self::assertSame('update', $statement->conflicts[0]->action);
-        self::assertSame('3', $statement->conflicts[0]->assignments[0]->value->symbol);
-        self::assertSame([], $statement->writes);
-        self::assertNull($statement->where);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
+        self::assertSame('update', $statement->conflicts[0]->action->value);
+        self::assertSame('3', $statement->conflicts[0]->assignments[0]->value->spelling());
+        self::assertSame('1', $statement->rows[0][0]->spelling());
     }
 
     public function testBindDoesNotTurnSqliteReturningIntoAConflictAction(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER)')))->bind('INSERT INTO t VALUES(1) RETURNING id AS saved');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
         self::assertSame([], $statement->conflicts);
         self::assertSame('saved', $statement->outputs[0]->name);
     }

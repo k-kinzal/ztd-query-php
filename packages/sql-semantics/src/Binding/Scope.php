@@ -10,7 +10,6 @@ use SqlSemantics\Ast\Identifiers;
 use SqlSemantics\Binding\Query\QueryContext;
 use SqlSemantics\Model\ColumnBinding;
 use SqlSemantics\Model\Expression;
-use SqlSemantics\Model\ExpressionKind;
 use SqlSemantics\Model\TableUse;
 use SqlSemantics\SemanticException;
 use SqlSemantics\Type\Nullability;
@@ -54,6 +53,7 @@ final class Scope
         }
         $matches = [];
         $origins = [];
+        $versions = [];
         foreach ($this->relations as $relation) {
             if (!$this->matches($relation, $qualifiers)) {
                 continue;
@@ -61,8 +61,11 @@ final class Scope
             foreach ($relation->declaration->columns as $ordinal => $column) {
                 if ($this->identifiers->equal($column->name, $name)) {
                     $matches[] = new ColumnBinding($relation->id, $relation->declaration, $column);
-                    if ($relation->query !== null && isset($relation->query->outputs[$ordinal])) {
-                        $origins[] = $relation->query->outputs[$ordinal]->expression;
+                    if ($relation instanceof \SqlSemantics\Model\Relation\TriggerRow) {
+                        $versions[$relation->id] = $relation->version;
+                    }
+                    if (isset($relation->resultExpressions()[$ordinal])) {
+                        $origins[] = $relation->resultExpressions()[$ordinal];
                     }
                 }
             }
@@ -75,12 +78,15 @@ final class Scope
         }
         if (count($matches) !== 1) {
             $this->diagnostics()->report($matches === [] ? 'unknown-column' : 'ambiguous-column', 'Cannot resolve column unambiguously: ' . implode('.', $parts), $source);
-            return new Expression(ExpressionKind::UnresolvedColumn, new \SqlSemantics\Type\TypeDescriptor($this->identifiers->dialect, 'unknown'), Nullability::Unknown, $source, symbol: implode('.', $parts), reference: $parts);
+            return new \SqlSemantics\Model\Scalar\Reference\UnresolvedColumnReference(new \SqlSemantics\Model\Scalar\ExpressionFacts(\SqlSemantics\Type\TypeDescriptor::builtin($this->identifiers->dialect, 'unknown'), Nullability::Unknown, []), $source, $parts);
         }
         $binding = $matches[0];
+        if (isset($versions[$binding->relationId])) {
+            return new \SqlSemantics\Model\Scalar\Reference\TriggerColumn(new \SqlSemantics\Model\Scalar\ExpressionFacts($binding->column->type, $binding->column->nullability), $source, $binding, $versions[$binding->relationId]);
+        }
         $extensions = $this->extensions[$binding->relationId] ?? [];
 
-        return new Expression(ExpressionKind::Column, $binding->column->type, $extensions === [] ? $binding->column->nullability : Nullability::MaybeNull, $source, $origins, binding: $binding, nullExtendedBy: $extensions, sql: \SqlSemantics\Model\Sql\Build::identifier([...$qualifiers, $name], $this->identifiers->dialect));
+        return new \SqlSemantics\Model\Scalar\Reference\ColumnReference(new \SqlSemantics\Model\Scalar\ExpressionFacts($binding->column->type, $extensions === [] ? $binding->column->nullability : Nullability::MaybeNull, $extensions), $source, $binding, $origins, [...$qualifiers, $name]);
     }
 
     /**
@@ -134,7 +140,7 @@ final class Scope
             $extensions[$relation->id] = [...($extensions[$relation->id] ?? []), $joinId];
         }
 
-        $merged = array_map(static fn (Expression $value): Expression => new Expression($value->kind, $value->type, Nullability::MaybeNull, $value->source, $value->operands, $value->binding, $value->symbol, [...$value->nullExtendedBy, $joinId], $value->query, $value->reference), $this->merged);
+        $merged = array_map(static fn (Expression $value): Expression => $value->withFacts(new \SqlSemantics\Model\Scalar\ExpressionFacts($value->type, Nullability::MaybeNull, [...$value->nullExtendedBy, $joinId])), $this->merged);
         return new self($this->identifiers, $this->relations, $extensions, $this->parent, $this->queries, $merged);
     }
     /**

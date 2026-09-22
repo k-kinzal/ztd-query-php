@@ -88,8 +88,6 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
 #[UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
-#[UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
 #[UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
@@ -117,20 +115,14 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\StatementFactory::class)]
 #[UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -149,22 +141,28 @@ final class RelationFactoryTest extends TestCase
     public function testFunctionExposesTypedTableFunctionColumns(): void
     {
         $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT n FROM generate_series(1, 3) AS g(n)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame('integer', $query->outputs[0]->expression->type->name);
-        self::assertSame('GENERATE_SERIES', $query->relations[0]->query?->outputs[0]->expression->symbol);
+        self::assertSame('GENERATE_SERIES', $query->relations[0]->function->spelling());
     }
 
     public function testAliasHidesJoinInputs(): void
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER)');
         $query = (new Binder($schema))->bind('SELECT q.a, q.b FROM (t a JOIN t b ON a.id = b.id) AS q(a,b)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame(['a', 'b'], array_column($query->outputs, 'name'));
         self::assertSame('q', $query->relations[0]->alias);
-        self::assertCount(2, $query->relations[0]->query->relations ?? []);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\AliasedRelation::class, $query->relations[0]);
+        self::assertInstanceOf(\SqlSemantics\Model\Join::class, $query->relations[0]->input);
+        self::assertSame('a', $query->relations[0]->input->left->alias);
+        self::assertSame('b', $query->relations[0]->input->right->alias);
     }
 
     public function testAliasesPreservesQuotedColumnLabels(): void
     {
         $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT g."Value" FROM generate_series(1,2) AS g("Value")');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame('Value', $query->outputs[0]->name);
     }
 
@@ -177,14 +175,15 @@ final class RelationFactoryTest extends TestCase
         self::assertSame(['key','value','type','atom','id','parent','fullkey','path'], array_column($query->outputs, 'name'));
         self::assertSame(['dynamic','dynamic','text','dynamic','integer','integer','text','text'], array_map(static fn ($output): string => $output->expression->type->name, $query->outputs));
         self::assertSame('items', $query->relations[0]->alias);
-        self::assertNotNull($query->relations[0]->query);
-        self::assertSame(strtoupper($name), $query->relations[0]->query->outputs[0]->expression->symbol);
-        self::assertSame("'[1,2]'", $query->relations[0]->query->outputs[0]->expression->operands[0]->symbol);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\FunctionRelation::class, $query->relations[0]);
+        self::assertSame(strtoupper($name), $query->relations[0]->function->spelling());
+        self::assertSame("'[1,2]'", $query->relations[0]->function->inputs()[0]->spelling());
     }
 
     public function testFunctionKeepsTheImplicitFunctionName(): void
     {
         $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT * FROM generate_series(1, 2)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame(['generate_series'], array_column($query->outputs, 'name'));
         self::assertSame('integer', $query->outputs[0]->expression->type->name);
     }
@@ -193,26 +192,30 @@ final class RelationFactoryTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER)');
         $query = (new Binder($schema))->bind('SELECT q.a, q.b FROM (t a JOIN t b ON a.id=b.id) AS q(a,b)');
-        $inner = $query->relations[0]->query;
-        self::assertNotNull($inner);
-        self::assertNotSame($query->scopeId, $inner->scopeId);
-        self::assertSame([$inner->scopeId, $inner->scopeId], array_column($inner->relations, 'scopeId'));
-        self::assertInstanceOf(\SqlSemantics\Model\Join::class, $inner->from);
-        self::assertSame($inner->relations[0], $inner->from->left);
-        self::assertSame($inner->relations[1], $inner->from->right);
-        self::assertSame($inner->relations[0]->id, $inner->outputs[0]->expression->binding?->relationId);
-        self::assertSame($inner->relations[1]->id, $inner->from->condition?->operands[1]->binding?->relationId);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        $alias = $query->relations[0];
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\AliasedRelation::class, $alias);
+        $inner = $alias->input;
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\Joining\OnJoin::class, $inner);
+        self::assertInstanceOf(\SqlSemantics\Model\TableUse::class, $inner->left);
+        self::assertInstanceOf(\SqlSemantics\Model\TableUse::class, $inner->right);
+        self::assertNotSame($query->scopeId, $inner->left->scopeId);
+        self::assertSame($inner->left->scopeId, $inner->right->scopeId);
+        self::assertSame($inner->left->id, $alias->outputs[0]->expression->columnBinding()?->relationId);
+        self::assertSame($inner->right->id, $inner->condition->inputs()[1]->columnBinding()?->relationId);
     }
 
     #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, 'integer'])]
-    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'int unsigned'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'integer unsigned'])]
     public function testTableColumnsPreservesJsonTableSchemaAndInputDependencies(Dialect $dialect, string $ordinalType): void
     {
         $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE t (data JSON)');
         $query = (new Binder($schema))->bind("SELECT j.n, j.label FROM t, JSON_TABLE (t.data, '$[*]' COLUMNS (n FOR ORDINALITY, label VARCHAR(50) PATH '$.name')) AS j");
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame(['n', 'label'], array_column($query->outputs, 'name'));
         self::assertSame([$ordinalType, 'varchar'], array_map(static fn ($output): string => $output->expression->type->name, $query->outputs));
-        self::assertSame(['50'], $query->outputs[1]->expression->type->modifiers);
+        self::assertInstanceOf(\SqlSemantics\Type\Identity\StringStorage::class, $query->outputs[1]->expression->type->identity);
+        self::assertSame('50', $query->outputs[1]->expression->type->identity->length?->spelling);
         self::assertSame('not-null', $query->outputs[0]->expression->nullability->value);
         self::assertSame('maybe-null', $query->outputs[1]->expression->nullability->value);
         self::assertSame(['label', 'data'], array_map(static fn ($binding): string => $binding->column->name, $query->outputs[1]->expression->lineage()));
@@ -223,6 +226,7 @@ final class RelationFactoryTest extends TestCase
     public function testTableColumnsPreservesNestedJsonColumnsAndTheirNullableRows(Dialect $dialect): void
     {
         $query = (new Binder((new SchemaBuilder($dialect))->build()))->bind("SELECT j.* FROM JSON_TABLE ('[]', '$[*]' COLUMNS (n FOR ORDINALITY, NESTED PATH '$.children[*]' COLUMNS (child FOR ORDINALITY, value INTEGER PATH '$'))) AS j");
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame(['n', 'child', 'value'], array_column($query->outputs, 'name'));
         self::assertSame('maybe-null', $query->outputs[1]->expression->nullability->value);
         self::assertSame('integer', $query->outputs[2]->expression->type->name);
@@ -231,9 +235,12 @@ final class RelationFactoryTest extends TestCase
     public function testTableColumnsReadsXmlTableDeclarations(): void
     {
         $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("SELECT x.n, x.value FROM XMLTABLE ('/rows/row' PASSING '<rows/>' COLUMNS n FOR ORDINALITY, value INTEGER PATH '@id') AS x");
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame(['n', 'value'], array_column($query->outputs, 'name'));
         self::assertSame(['integer', 'integer'], array_map(static fn ($output): string => $output->expression->type->name, $query->outputs));
-        self::assertSame('XMLTABLE', $query->relations[0]->query?->outputs[1]->expression->symbol);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\DocumentRelation::class, $query->relations[0]);
+        self::assertInstanceOf(\SqlSemantics\Model\TableFunction\Xml\XmlTable::class, $query->relations[0]->table);
+        self::assertSame("'/rows/row'", $query->relations[0]->table->rowPath->spelling());
     }
 
 }

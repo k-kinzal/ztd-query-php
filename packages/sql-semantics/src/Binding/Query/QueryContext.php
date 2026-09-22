@@ -9,7 +9,6 @@ use SqlSemantics\Binding\IdentitySequence;
 use SqlSemantics\Binding\Scope;
 use SqlSemantics\Binding\TableResolver;
 use SqlSemantics\Model\BoundQuery;
-use SqlSemantics\Model\BoundStatement;
 
 /**
  * Shares identities and visible common table expressions across nested scopes.
@@ -19,12 +18,15 @@ use SqlSemantics\Model\BoundStatement;
 final class QueryContext
 {
     /**
-     * @param array<int|string, BoundStatement> $ctes Visible CTE declarations
+     * @param list<\SqlSemantics\Type\TypeDescriptor> $parameterTypes Declared positional parameter types
+     * @param array<int|string, \SqlSemantics\Model\Query\CommonTableExpression> $ctes Visible CTE declarations
      */
     public function __construct(
         public readonly TableResolver $tables,
         public readonly IdentitySequence $ids = new IdentitySequence(),
         public readonly array $ctes = [],
+        public readonly ?\SqlSemantics\Model\Query\WithClause $withClause = null,
+        public readonly array $parameterTypes = [],
     ) {
     }
 
@@ -33,7 +35,7 @@ final class QueryContext
      */
     public function bind(Node $node, ?Scope $parent = null): BoundQuery
     {
-        $snapshot = new self($this->tables, clone $this->ids, $this->ctes);
+        $snapshot = new self($this->tables, clone $this->ids, $this->ctes, parameterTypes: $this->parameterTypes);
         return (new QueryBinder($this))->bind($node, $parent)->withContext(new \SqlSemantics\Binding\Editing\StatementContext($this->tables->schema, $snapshot, $parent, true));
     }
 }

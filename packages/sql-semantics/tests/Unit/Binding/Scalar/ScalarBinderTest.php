@@ -88,8 +88,6 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
 #[UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
-#[UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
 #[UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
@@ -117,20 +115,14 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\StatementFactory::class)]
 #[UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -150,6 +142,7 @@ final class ScalarBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (n INTEGER)');
         $query = (new Binder($schema))->bind("SELECT CASE WHEN n > 0 THEN CAST(n AS TEXT) ELSE 'none' END FROM t");
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame(\SqlSemantics\Model\ExpressionKind::CaseExpression, $query->outputs[0]->expression->kind);
         self::assertSame('text', $query->outputs[0]->expression->type->name);
         self::assertSame('n', $query->outputs[0]->expression->lineage()[0]->column->name);
@@ -159,40 +152,46 @@ final class ScalarBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (n INTEGER)');
         $query = (new Binder($schema))->bind('SELECT EXISTS (SELECT 1 FROM t WHERE n > 0)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame('boolean', $query->outputs[0]->expression->type->name);
-        self::assertSame('>', $query->outputs[0]->expression->query?->where?->symbol);
+        self::assertSame('>', $query->outputs[0]->expression->query?->where?->spelling());
     }
     public function testBindCastSetsTheDeclaredResultType(): void
     {
         $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT CAST(1 AS NUMERIC(8,2))');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame('numeric', $query->outputs[0]->expression->type->name);
-        self::assertSame(['8', '2'], $query->outputs[0]->expression->type->modifiers);
+        self::assertSame('8', $query->outputs[0]->expression->type->identity->precision->spelling);
+        self::assertSame('2', $query->outputs[0]->expression->type->identity->scale->spelling);
     }
 
     public function testOperandsRetainsFunctionArguments(): void
     {
         $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT custom_function(1, 2)');
-        self::assertCount(2, $query->outputs[0]->expression->operands);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        self::assertCount(2, $query->outputs[0]->expression->inputs());
         self::assertSame('unknown', $query->outputs[0]->expression->type->name);
     }
 
     public function testOperatorRetainsBetweenBounds(): void
     {
         $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 2 BETWEEN 1 AND 3');
-        self::assertSame('BETWEEN', $query->outputs[0]->expression->symbol);
-        self::assertCount(3, $query->outputs[0]->expression->operands);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        self::assertSame('BETWEEN', $query->outputs[0]->expression->spelling());
+        self::assertCount(3, $query->outputs[0]->expression->inputs());
     }
 
     public function testNestedQueryDoesNotReplaceTheContainingFunction(): void
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (n INTEGER)');
         $query = (new Binder($schema))->bind('SELECT coalesce((SELECT max(n) FROM t), 0)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         $expression = $query->outputs[0]->expression;
         self::assertSame(\SqlSemantics\Model\ExpressionKind::Coalesce, $expression->kind);
         self::assertSame(\SqlSemantics\Type\Nullability::NotNull, $expression->nullability);
         self::assertSame('integer', $expression->type->name);
-        self::assertCount(2, $expression->operands);
-        self::assertNotNull($expression->operands[0]->query);
+        self::assertCount(2, $expression->inputs());
+        self::assertNotNull($expression->inputs()[0]->query);
         self::assertSame('n', $expression->lineage()[0]->column->name);
     }
 
@@ -215,13 +214,14 @@ final class ScalarBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE a (n INTEGER)', 'CREATE TABLE b (n INTEGER)');
         $query = (new Binder($schema))->bind('select n from a where n in (select n from b)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertNotNull($query->where);
-        self::assertSame('IN', $query->where->symbol);
+        self::assertSame('IN', $query->where->spelling());
         self::assertSame('boolean', $query->where->type->name);
         self::assertSame('maybe-null', $query->where->nullability->value);
         self::assertSame(['a', 'b'], array_map(static fn ($binding): string => $binding->table->name, $query->where->lineage()));
         self::assertNotNull($query->where->query);
-        self::assertCount(2, $query->where->operands);
+        self::assertCount(2, $query->where->inputs());
     }
 
 
@@ -230,21 +230,26 @@ final class ScalarBinderTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER,n INTEGER)'));
         $negative = $binder->bind('SELECT id FROM t WHERE id NOT IN (SELECT n FROM t)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $negative);
         self::assertNotNull($negative->where);
-        self::assertSame('NOT IN', $negative->where->symbol);
-        self::assertSame('id', $negative->where->operands[0]->binding?->column->name);
+        self::assertSame('NOT IN', $negative->where->spelling());
+        self::assertSame('id', $negative->where->inputs()[0]->columnBinding()?->column->name);
         $all = $binder->bind('SELECT id FROM t WHERE id = ALL (SELECT n FROM t)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $all);
         self::assertNotNull($all->where);
-        self::assertSame('= ALL', $all->where->symbol);
+        self::assertSame('= ALL', $all->where->spelling());
         self::assertSame('boolean', $all->where->type->name);
     }
     public function testSubqueryRetainsMysqlComparisonInput(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INTEGER,n INTEGER)'));
         $statement = $binder->bind('SELECT id FROM t WHERE id = ANY (SELECT n FROM t)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertNotNull($statement->where);
-        self::assertSame('= ANY', $statement->where->symbol);
-        self::assertSame('id', $statement->where->operands[0]->binding?->column->name);
-        self::assertSame('NOT IN', $binder->bind('SELECT id NOT IN (SELECT n FROM t) FROM t')->outputs[0]->expression->symbol);
+        self::assertSame('= ANY', $statement->where->spelling());
+        self::assertSame('id', $statement->where->inputs()[0]->columnBinding()?->column->name);
+        $boundQuery1 = $binder->bind('SELECT id NOT IN (SELECT n FROM t) FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery1);
+        self::assertSame('NOT IN', $boundQuery1->outputs[0]->expression->spelling());
     }
 }

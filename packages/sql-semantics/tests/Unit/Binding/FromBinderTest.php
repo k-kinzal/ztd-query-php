@@ -85,8 +85,6 @@ use SqlSemantics\Type\Nullability;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
@@ -115,24 +113,18 @@ use SqlSemantics\Type\Nullability;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Dialect::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\ConstraintKind::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Nullability::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\ExpressionKind::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\JoinKind::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -155,18 +147,20 @@ final class FromBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind('SELECT b.score FROM users a LEFT JOIN users b ON a.id=b.id WHERE b.score > 0');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Model\Join::class, $statement->from);
         self::assertNotNull($statement->from->condition);
-        self::assertSame(Nullability::NotNull, $statement->from->condition->operands[1]->nullability);
+        self::assertSame(Nullability::NotNull, $statement->from->condition->inputs()[1]->nullability);
         self::assertNotNull($statement->where);
-        self::assertSame(Nullability::MaybeNull, $statement->where->operands[0]->nullability);
-        self::assertSame(['j0'], $statement->where->operands[0]->nullExtendedBy);
+        self::assertSame(Nullability::MaybeNull, $statement->where->inputs()[0]->nullability);
+        self::assertSame(['j0'], $statement->where->inputs()[0]->nullExtendedBy);
     }
 
     public function testJoinPropagatesNestedOuterJoinProvenance(): void
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind('SELECT a.id, b.id, c.id FROM users a LEFT JOIN users b ON a.id=b.id RIGHT JOIN users c ON b.id=c.id');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertSame(['j0'], $statement->outputs[0]->expression->nullExtendedBy);
         self::assertSame(['j1', 'j0'], $statement->outputs[1]->expression->nullExtendedBy);
         self::assertSame([], $statement->outputs[2]->expression->nullExtendedBy);
@@ -176,6 +170,7 @@ final class FromBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind('SELECT a.id, b.id FROM users a FULL JOIN users b ON a.id=b.id');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertSame(['j0'], $statement->outputs[0]->expression->nullExtendedBy);
         self::assertSame(['j0'], $statement->outputs[1]->expression->nullExtendedBy);
     }
@@ -187,6 +182,7 @@ final class FromBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind('SELECT a.id FROM users a CROSS JOIN users b');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Model\Join::class, $statement->from);
         self::assertSame(\SqlSemantics\Model\JoinKind::Cross, $statement->from->kind);
         self::assertNull($statement->from->condition);
@@ -197,6 +193,7 @@ final class FromBinderTest extends TestCase
         $builder = new SchemaBuilder(Dialect::Sqlite);
         $schema = $builder->build('CREATE TABLE main.users (id INTEGER)');
         $statement = (new Binder($schema))->bind('SELECT u.id FROM main.users AS u');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertSame('main', $statement->relations[0]->declaration->schema);
     }
 
@@ -204,6 +201,7 @@ final class FromBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER, n TEXT)');
         $query = (new Binder($schema))->bind('SELECT q.key, q.value FROM t AS q(key, value)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame(['key', 'value'], array_column($query->outputs, 'name'));
         self::assertSame('text', $query->outputs[1]->expression->type->name);
     }
@@ -221,6 +219,7 @@ final class FromBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (n INTEGER)');
         $query = (new Binder($schema))->bind('SELECT q.v FROM t CROSS JOIN LATERAL (SELECT t.n + 1 AS v) q');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame('n', $query->outputs[0]->expression->lineage()[1]->column->name);
     }
 
@@ -228,10 +227,11 @@ final class FromBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t (id INTEGER)');
         $query = (new Binder($schema))->bind('SELECT a.id, q.n FROM t a JOIN (SELECT 1 AS n) q ON a.id=q.n');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertCount(2, $query->relations);
         self::assertSame(['id', 'n'], array_column($query->outputs, 'name'));
         self::assertInstanceOf(\SqlSemantics\Model\Join::class, $query->from);
-        self::assertSame('=', $query->from->condition?->symbol);
+        self::assertSame('=', $query->from->condition?->spelling());
     }
 
     #[TestWith([Dialect::PostgreSql])]
@@ -241,6 +241,7 @@ final class FromBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE t (id INTEGER)');
         $query = (new Binder($schema))->bind('SELECT q.id FROM (SELECT a.id FROM t a JOIN t b ON a.id=b.id) q');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertCount(1, $query->relations);
         self::assertNotNull($query->relations[0]->query);
         self::assertCount(2, $query->relations[0]->query->relations);
@@ -250,6 +251,7 @@ final class FromBinderTest extends TestCase
     public function testTableResolvesCaseInsensitiveSqliteCtes(): void
     {
         $query = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('WITH Mixed(Value) AS (SELECT 1) SELECT value FROM mixed');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame('Value', $query->outputs[0]->name);
         self::assertSame('integer', $query->outputs[0]->expression->type->name);
     }
@@ -259,9 +261,10 @@ final class FromBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE a (id INTEGER)', 'CREATE TABLE b (id INTEGER)');
         $query = (new Binder($schema))->bind('SELECT a.id, b.id FROM (a JOIN b ON a.id=b.id)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame(['a','b'], array_map(static fn ($relation): string => $relation->declaration->name, $query->relations));
         self::assertInstanceOf(\SqlSemantics\Model\Join::class, $query->from);
-        self::assertSame('=', $query->from->condition?->symbol);
+        self::assertSame('=', $query->from->condition?->spelling());
         self::assertSame(['id','id'], array_column($query->outputs, 'name'));
     }
 
@@ -269,15 +272,17 @@ final class FromBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER NOT NULL, name TEXT)');
         $query = (new Binder($schema))->bind('TABLE t');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\TableStatement::class, $query);
         self::assertSame(['id', 'name'], array_column($query->outputs, 'name'));
         self::assertSame($schema->tables[0], $query->relations[0]->declaration);
-        self::assertSame('id', $query->outputs[0]->expression->binding?->column->name);
+        self::assertSame('id', $query->outputs[0]->expression->columnBinding()?->column->name);
     }
 
     public function testDerivedBindsLegacySelectFactorInItsOwnScope(): void
     {
         $schema = (new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build('CREATE TABLE t (id INTEGER)');
         $query = (new Binder($schema))->bind('SELECT * FROM SELECT id FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame(['id'], array_column($query->outputs, 'name'));
         self::assertNotNull($query->relations[0]->query);
         self::assertSame('t', $query->relations[0]->query->relations[0]->declaration->name);
@@ -290,19 +295,21 @@ final class FromBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE a (id INTEGER)', 'CREATE TABLE b (n INTEGER)');
         $query = (new Binder($schema))->bind('SELECT a.id, b.n FROM (a JOIN b ON a.id=b.n)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame(['id', 'n'], array_column($query->outputs, 'name'));
         self::assertSame(['a', 'b'], array_map(static fn ($relation): string => $relation->declaration->name, $query->relations));
         self::assertInstanceOf(\SqlSemantics\Model\Join::class, $query->from);
-        self::assertSame('=', $query->from->condition?->symbol);
+        self::assertSame('=', $query->from->condition?->spelling());
         self::assertNull($query->relations[0]->query);
     }
 
     public function testTableResolvesNumericCteNames(): void
     {
         $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('WITH "123" AS (SELECT 1 AS id) SELECT id FROM "123"');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame('123', $query->relations[0]->declaration->name);
         self::assertSame(['id'], array_column($query->outputs, 'name'));
-        self::assertSame($query->ctes[123], $query->relations[0]->query);
+        self::assertSame($query->ctes->definitions[0]->query, $query->relations[0]->definition->query);
     }
 
 }

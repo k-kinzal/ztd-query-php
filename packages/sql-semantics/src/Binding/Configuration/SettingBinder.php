@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Binding\Configuration;
 
+use LogicException;
 use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
 use SqlSemantics\Ast\Tree;
@@ -25,7 +26,7 @@ final class SettingBinder
     {
         $tokens = array_values(array_filter($source->tokens(), static fn (Token $token): bool => $token->text !== '' && $token->text !== ';'));
         $verb = strtoupper($tokens[0]->text ?? '');
-        if (!in_array($verb, ['SET', 'RESET', 'PRAGMA'], true)) {
+        if (!in_array($verb, ['SET', 'PRAGMA'], true)) {
             return [];
         }
         array_shift($tokens);
@@ -63,12 +64,6 @@ final class SettingBinder
             $name = $scope->identifiers->parts(new Node('setting_name', 0, array_slice($tokens, 0, $delimiter)));
             $action = $words[$delimiter] === 'FROM' ? 'from-current' : 'set';
             return [$this->make($name, $settingScope, $action, array_slice($tokens, $delimiter + 1), $source, $scope)];
-        }
-        if ($verb === 'RESET') {
-            $ifExists = array_slice($words, 0, 2) === ['IF', 'EXISTS'];
-            $tokens = $ifExists ? array_slice($tokens, 2) : $tokens;
-            $name = $tokens === [] || ($words[0] ?? '') === 'ALL' ? ['*'] : $scope->identifiers->parts(new Node('setting_name', 0, $tokens));
-            return [new Setting($name, $settingScope, 'reset', [], $source, $ifExists)];
         }
         return (new SpecialSettings())->bind($tokens, $settingScope, $source, $scope);
     }
@@ -108,11 +103,15 @@ final class SettingBinder
     /**
      * @param list<string> $name
      * @param list<Token> $tokens
+     * @throws LogicException
      */
     public function make(array $name, string $settingScope, string $action, array $tokens, Node $source, Scope $scope): Setting
     {
         if ($name === []) {
             Tree::invalid($source, 'setting name');
+        }
+        if ($action === 'set' && count($tokens) === 1 && in_array($tokens[0]->name, ['DEFAULT', 'DEFAULT_SYM'], true)) {
+            return new \SqlSemantics\Model\Configuration\DefaultSetting($name, \SqlSemantics\Model\Configuration\SettingScope::from($settingScope), $source);
         }
         $values = [];
         if ($action === 'set') {
@@ -122,7 +121,20 @@ final class SettingBinder
                 }
             }
         }
-        return new Setting($name, $settingScope, $action, $values, $source);
+        if ($settingScope === 'user' && $action === 'set') {
+            if (count($values) !== 1) {
+                throw new \SqlSemantics\Binding\Statement\UnclassifiedSql('A user variable requires one assignment expression.');
+            }
+            return UserVariableAssignment::bind(implode('.', $name), $values[0], $source, $scope);
+        }
+        $lifetime = \SqlSemantics\Model\Configuration\SettingScope::from($settingScope);
+        return match ($action) {
+            'set' => new \SqlSemantics\Model\Configuration\AssignedSetting($name, $lifetime, $source, $values),
+            'reset' => new \SqlSemantics\Model\Configuration\ResetSetting($name, $lifetime, $source),
+            'read' => new \SqlSemantics\Model\Configuration\ReadSetting($name, $lifetime, $source),
+            'from-current' => new \SqlSemantics\Model\Configuration\CurrentSetting($name, $lifetime, $source),
+            default => throw new LogicException('Unclassified setting effect: ' . $action),
+        };
     }
 
     /**

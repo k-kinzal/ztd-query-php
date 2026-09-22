@@ -95,9 +95,7 @@ use SqlSemantics\Type\TypeDescriptor;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\IndexDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ConstraintGroups::class)]
@@ -118,19 +116,13 @@ use SqlSemantics\Type\TypeDescriptor;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\StatementFactory::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -150,9 +142,9 @@ final class ReferenceReaderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER REFERENCES parent(id) MATCH FULL ON DELETE SET NULL (id) ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED)');
         $constraint = $schema->tables[0]->constraints[0];
-        self::assertSame('full', $constraint->match);
-        self::assertTrue($constraint->deferrable);
-        self::assertTrue($constraint->initiallyDeferred);
+        self::assertSame('full', $constraint->match->value);
+        self::assertNotSame(\SqlSemantics\Schema\Constraint\CheckingTime::Immediate, $constraint->checking);
+        self::assertSame(\SqlSemantics\Schema\Constraint\CheckingTime::DeferrableDeferred, $constraint->checking);
         self::assertSame(['id'], $constraint->deleteColumns);
         self::assertSame('set-null', $constraint->onDelete->value);
         self::assertSame('cascade', $constraint->onUpdate->value);
@@ -185,29 +177,29 @@ final class ReferenceReaderTest extends TestCase
         $constraint = $schema->tables[0]->constraints[0];
         self::assertSame([], $constraint->referencedColumns);
         self::assertSame(['id'], $constraint->deleteColumns);
-        self::assertFalse($constraint->deferrable);
-        self::assertFalse($constraint->initiallyDeferred);
+        self::assertSame(\SqlSemantics\Schema\Constraint\CheckingTime::Immediate, $constraint->checking);
+        self::assertNotSame(\SqlSemantics\Schema\Constraint\CheckingTime::DeferrableDeferred, $constraint->checking);
     }
 
 
     public function testReadLowercaseAttributesKeepCheckingTime(): void
     {
         $table = (new SchemaBuilder(Dialect::PostgreSql))->build('create table t(id integer references p(id) match simple on update set default on delete no action deferrable initially deferred, other integer references p(id) not deferrable initially immediate)')->tables[0];
-        self::assertTrue($table->constraints[0]->deferrable);
-        self::assertTrue($table->constraints[0]->initiallyDeferred);
+        self::assertNotSame(\SqlSemantics\Schema\Constraint\CheckingTime::Immediate, $table->constraints[0]->checking);
+        self::assertSame(\SqlSemantics\Schema\Constraint\CheckingTime::DeferrableDeferred, $table->constraints[0]->checking);
         self::assertSame('set-default', $table->constraints[0]->onUpdate->value);
         self::assertSame('no-action', $table->constraints[0]->onDelete->value);
-        self::assertFalse($table->constraints[1]->deferrable);
-        self::assertFalse($table->constraints[1]->initiallyDeferred);
-        self::assertSame('simple', $table->constraints[0]->match);
+        self::assertSame(\SqlSemantics\Schema\Constraint\CheckingTime::Immediate, $table->constraints[1]->checking);
+        self::assertNotSame(\SqlSemantics\Schema\Constraint\CheckingTime::DeferrableDeferred, $table->constraints[1]->checking);
+        self::assertSame('simple', $table->constraints[0]->match->value);
     }
 
 
     public function testReadDeferredCheckingImpliesDeferrabilityInPostgres(): void
     {
         $constraint = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, FOREIGN KEY(id) REFERENCES parent(id) INITIALLY DEFERRED)')->tables[0]->constraints[0];
-        self::assertTrue($constraint->deferrable);
-        self::assertTrue($constraint->initiallyDeferred);
+        self::assertNotSame(\SqlSemantics\Schema\Constraint\CheckingTime::Immediate, $constraint->checking);
+        self::assertSame(\SqlSemantics\Schema\Constraint\CheckingTime::DeferrableDeferred, $constraint->checking);
     }
 
     public function testReadDefaultActionsAndCheckingTime(): void
@@ -215,9 +207,9 @@ final class ReferenceReaderTest extends TestCase
         $constraint = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER REFERENCES parent(id))')->tables[0]->constraints[0];
         self::assertSame(\SqlSemantics\Schema\ReferentialAction::NoAction, $constraint->onDelete);
         self::assertSame(\SqlSemantics\Schema\ReferentialAction::NoAction, $constraint->onUpdate);
-        self::assertFalse($constraint->deferrable);
-        self::assertFalse($constraint->initiallyDeferred);
-        self::assertSame('simple', $constraint->match);
+        self::assertSame(\SqlSemantics\Schema\Constraint\CheckingTime::Immediate, $constraint->checking);
+        self::assertNotSame(\SqlSemantics\Schema\Constraint\CheckingTime::DeferrableDeferred, $constraint->checking);
+        self::assertSame('simple', $constraint->match->value);
         self::assertSame([], $constraint->deleteColumns);
     }
 

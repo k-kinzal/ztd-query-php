@@ -74,9 +74,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\TableUse::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(InvalidStructure::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Assignment::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Insertion::class)]
@@ -116,20 +114,14 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 #[\PHPUnit\Framework\Attributes\UsesClass(Binder::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Dialect::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -148,21 +140,24 @@ final class DefinitionBinderTest extends TestCase
     public function testBindAssociatesDefaultsGeneratedValuesAndChecks(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE t(id INTEGER DEFAULT 3, n INTEGER GENERATED ALWAYS AS (id+1) STORED, CHECK(id>0))');
-        $definition = $statement->definitions[0];
-        self::assertSame('3', $definition->defaults['id']->symbol);
-        self::assertSame('+', $definition->generated['n']->symbol);
-        self::assertSame('id', $definition->generated['n']->lineage()[0]->column->name);
-        self::assertSame('>', $definition->checks[0]->symbol);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $statement);
+        $definition = $statement->definition;
+        self::assertSame('3', $definition->table->columns[0]->generation->default->spelling());
+        self::assertSame('+', $definition->table->columns[1]->generation->expression->spelling());
+        self::assertSame('id', $definition->table->columns[1]->generation->expression->lineage()[0]->column->name);
+        self::assertSame('>', $definition->table->constraints[0]->predicate->spelling());
     }
     public function testExpressionRetainsMysqlLiteralDefault(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE TABLE t(id INTEGER DEFAULT 3)');
-        self::assertSame('3', $statement->definitions[0]->defaults['id']->symbol);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $statement);
+        self::assertSame('3', $statement->definition->table->columns[0]->generation->default->spelling());
     }
     public function testBindAllowsNullDefaultUntilStorageIsAttempted(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE t(id INTEGER NOT NULL DEFAULT NULL)');
-        self::assertSame('always-null', $statement->definitions[0]->defaults['id']->nullability->value);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $statement);
+        self::assertSame('always-null', $statement->definition->table->columns[0]->generation->default->nullability->value);
     }
 
     #[\PHPUnit\Framework\Attributes\TestWith(['CREATE TABLE t(a INTEGER DEFAULT TRUE)'])]
@@ -181,9 +176,11 @@ final class DefinitionBinderTest extends TestCase
     }
     public function testBindRetainsExpressionsAfterUnadornedColumns(): void
     {
-        $definition = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE t(a INTEGER,b INTEGER NOT NULL GENERATED ALWAYS AS(NULL) STORED,c INTEGER DEFAULT (1+2))')->definitions[0];
-        self::assertSame('NULL', $definition->generated['b']->symbol);
-        self::assertSame('+', $definition->defaults['c']->symbol);
-        self::assertSame(['1','2'], array_column($definition->defaults['c']->operands, 'symbol'));
+        $boundQuery1 = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE t(a INTEGER,b INTEGER NOT NULL GENERATED ALWAYS AS(NULL) STORED,c INTEGER DEFAULT (1+2))');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $boundQuery1);
+        $definition = $boundQuery1->definition;
+        self::assertSame('NULL', $definition->table->columns[1]->generation->expression->spelling());
+        self::assertSame('+', $definition->table->columns[2]->generation->default->spelling());
+        self::assertSame(['1','2'], array_map(static fn ($value) => $value->spelling(), $definition->table->columns[2]->generation->default->inputs()));
     }
 }

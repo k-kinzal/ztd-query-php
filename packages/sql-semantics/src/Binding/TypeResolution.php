@@ -34,40 +34,22 @@ final class TypeResolution
         $types = [];
         foreach ($expressions as $expression) {
             if ($expression->type->name === 'unknown' && !in_array($expression->kind, [\SqlSemantics\Model\ExpressionKind::Literal, \SqlSemantics\Model\ExpressionKind::Parameter], true)) {
-                return new TypeDescriptor($this->dialect, 'unknown');
+                return TypeDescriptor::builtin($this->dialect, 'unknown');
             }
             if ($expression->type->name !== 'unknown') {
                 $types[] = $expression->type;
             }
         }
-        if ($types === []) {
-            return new TypeDescriptor($this->dialect, $this->dialect === Dialect::PostgreSql ? 'text' : 'unknown');
-        }
+        $type = \SqlSemantics\Type\CommonStorage::resolve($this->dialect, $types);
         $names = array_values(array_unique(array_map(static fn (TypeDescriptor $type): string => $type->name, $types)));
-        if (count($names) === 1) {
-            return new TypeDescriptor($this->dialect, $types[0]->name, affinity: $types[0]->affinity);
-        }
-        if ($this->dialect === Dialect::Sqlite) {
-            return new TypeDescriptor($this->dialect, 'dynamic');
-        }
         $numeric = ['smallint', 'integer', 'bigint', 'numeric', 'real', 'double precision'];
-        if (array_diff($names, $numeric) === []) {
-            $rank = 0;
-            foreach ($numeric as $index => $name) {
-                if (in_array($name, $names, true)) {
-                    $rank = $index;
-                }
-            }
-            return new TypeDescriptor($this->dialect, $numeric[$rank]);
+        if ($type->name !== 'unknown') {
+            return $type;
         }
-        if (array_diff($names, ['varchar', 'text', 'char']) === []) {
-            return new TypeDescriptor($this->dialect, 'text');
-        }
-
         if ($this->dialect === Dialect::PostgreSql && array_diff($names, [...$numeric, 'text', 'varchar', 'char', 'boolean']) === []) {
             $this->diagnostics->report('incompatible-types', 'Cannot establish a common type for: ' . implode(', ', $names), $source);
         }
-        return new TypeDescriptor($this->dialect, 'unknown');
+        return TypeDescriptor::builtin($this->dialect, 'unknown');
     }
 
     /**
@@ -75,6 +57,6 @@ final class TypeResolution
      */
     public function boolean(): TypeDescriptor
     {
-        return new TypeDescriptor($this->dialect, $this->dialect === Dialect::PostgreSql ? 'boolean' : 'integer');
+        return TypeDescriptor::builtin($this->dialect, $this->dialect === Dialect::PostgreSql ? 'boolean' : 'integer');
     }
 }

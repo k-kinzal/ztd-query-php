@@ -56,8 +56,6 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\IndexEvolution::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\TableAlteration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryRelation::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryContext::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\UsingJoin::class)]
@@ -102,15 +100,11 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Assignment::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -119,9 +113,7 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\IndexDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(InvalidStructure::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Sql\Literal::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Sql\ExpressionFactory::class)]
@@ -155,9 +147,9 @@ final class InsertStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(id INTEGER,n INTEGER)')))->bind('INSERT INTO t(id,n) VALUES(1,2)');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\InsertStatement::class, $statement);
         $changed = $statement->withRows([[Expression::literal(3, $dialect), Expression::literal(4, $dialect)]]);
-        self::assertSame(['3','4'], array_column($changed->rows[0], 'symbol'));
-        self::assertSame(['1','2'], array_column($statement->rows[0], 'symbol'));
-        self::assertSame(['id','n'], array_map(static fn ($column): ?string => $column->binding?->column->name, $changed->insertion->columns ?? []));
+        self::assertSame(['3','4'], array_map(static fn ($value) => $value->spelling(), $changed->rows[0]));
+        self::assertSame(['1','2'], array_map(static fn ($value) => $value->spelling(), $statement->rows[0]));
+        self::assertSame(['id','n'], array_map(static fn ($column): ?string => $column->column()->columnBinding()?->column->name, $changed->insertion->columns ?? []));
     }
 
     #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql])]
@@ -168,14 +160,14 @@ final class InsertStatementTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\InsertStatement::class, $statement);
         $changed = $statement->withReturning([new OutputColumn(0, 'saved', Expression::reference(['id'], $dialect))]);
         self::assertSame('saved', $changed->outputs[0]->name);
-        self::assertSame('id', $changed->outputs[0]->expression->binding?->column->name);
+        self::assertSame('id', $changed->outputs[0]->expression->columnBinding()?->column->name);
         self::assertSame([], $changed->withReturning([])->outputs);
     }
     public function testWithRowsRejectsDestinationWidthMismatch(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER,n INTEGER)')))->bind('INSERT INTO t(id,n) VALUES(1,2)');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\InsertStatement::class, $statement);
-        $this->expectException(\SqlSemantics\SemanticException::class);
+        $this->expectException(InvalidStructure::class);
         $statement->withRows([[Expression::literal(3, Dialect::PostgreSql)]]);
     }
 }

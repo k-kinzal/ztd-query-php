@@ -25,7 +25,8 @@ final class TableDefinition
      * @param Node $source Original CREATE TABLE syntax
      * @param bool $resolved Whether the declaration and its column set are known
      * @param list<IndexDefinition> $indexes Declared indexes in definition order
-     * @param array<string, string|bool|list<string>> $options Named table options with decoded values
+     * @param Table\Properties|null $properties Dialect-specific storage properties
+     * @throws \SqlSemantics\Model\Validation\InvalidStructure
      */
     public function __construct(
         public readonly string $schema,
@@ -35,7 +36,19 @@ final class TableDefinition
         public readonly Node $source,
         public readonly bool $resolved = true,
         public readonly array $indexes = [],
-        public readonly array $options = [],
+        public readonly ?Table\Properties $properties = null,
     ) {
+        \SqlSemantics\Model\Validation\Collections::objects($columns, ColumnDefinition::class);
+        \SqlSemantics\Model\Validation\Collections::objects($constraints, TableConstraint::class);
+        \SqlSemantics\Model\Validation\Collections::objects($indexes, IndexDefinition::class);
+        $dialect = $properties?->dialect() ?? ($columns[0]->type->dialect ?? null);
+        foreach ($columns as $column) {
+            if ($column->type->dialect !== $dialect) {
+                throw new \SqlSemantics\Model\Validation\InvalidStructure('A table declaration cannot mix SQL dialects.');
+            }
+        }
+        if (count(array_filter($constraints, static fn (TableConstraint $constraint): bool => $constraint instanceof Constraint\PrimaryKey)) > 1) {
+            throw new \SqlSemantics\Model\Validation\InvalidStructure('A table can declare only one primary key.');
+        }
     }
 }

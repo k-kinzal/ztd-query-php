@@ -23,10 +23,10 @@ final class Destination
     public static function column(Expression $value): Expression
     {
         while (in_array($value->kind, [ExpressionKind::Subscript, ExpressionKind::Field], true)) {
-            if ($value->operands === []) {
+            if ($value->inputs() === []) {
                 throw new InvalidStructure('A storage access requires a base reference.');
             }
-            $value = $value->operands[0];
+            $value = $value->inputs()[0];
         }
         if (!in_array($value->kind, [ExpressionKind::Column, ExpressionKind::UnresolvedColumn], true)) {
             throw new InvalidStructure('A storage destination must reference a column.');

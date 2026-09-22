@@ -15,9 +15,7 @@ use SqlSemantics\Binding\SelectModifiersBinder;
 use SqlSemantics\Binding\Statement\StatementBinder;
 use SqlSemantics\Binding\TypeResolution;
 use SqlSemantics\Model\BoundQuery;
-use SqlSemantics\Model\BoundStatement;
 use SqlSemantics\Model\Expression;
-use SqlSemantics\Model\ExpressionKind;
 use SqlSemantics\Model\OutputColumn;
 use SqlSemantics\SemanticException;
 use SqlSemantics\Type\Nullability;
@@ -59,21 +57,25 @@ final class QueryBinder
                 (new ExpressionRules($scope->identifiers->dialect, $scope->diagnostics()))->predicate($predicate);
             }
         }
-        $values = (new \SqlSemantics\Binding\Statement\ValuesBinder())->rows($body, $scope);
+        $values = strtoupper($body->tokens()[0]->text ?? '') === 'VALUES' ? (new \SqlSemantics\Binding\Statement\ValuesBinder())->rows($body, $scope) : [];
         $outputs = $values === [] ? (new ProjectionBinder())->bind($body, $scope) : (new \SqlSemantics\Binding\Statement\ValuesBinder())->outputs($values, $body, $scope);
-        $options = QueryNodes::local($body, ['distinct_clause', 'select_options', 'distinct']);
-        $distinct = $options !== [] && str_contains(strtoupper(Tree::text($options[0])), 'DISTINCT');
+        $projectionOptions = new ProjectionOptions();
+        $quantifier = $projectionOptions->quantifier($body, $scope);
         $tail = new SelectModifiersBinder();
         [$limit, $offset] = $tail->pagination($source, $scope);
         $groups = $this->expressions($body, ['group_clause', 'opt_group_clause', 'groupby_opt'], $scope);
-        $clauses = [];
-        foreach (['window_clause', 'opt_window_clause', 'windowdefn_list', 'distinct_clause', 'into_clause', 'locking_clause', 'for_locking_clause'] as $name) {
-            if (QueryNodes::local($body, [$name]) !== []) {
-                $clauses[$name] = $this->expressions($body, [$name], $scope);
-            }
+        $origin = new \SqlSemantics\Model\Statement\Origin($id, $source, $context->tables->identifiers->dialect);
+        $ordering = $tail->ordering($source, $scope, $outputs);
+        if ($values !== []) {
+            return new \SqlSemantics\Model\Statement\ValuesStatement($origin, $values, $ordering, $limit, $offset, ctes: (new CteBinder())->clause($source, $context));
         }
-        $class = $values !== [] ? \SqlSemantics\Model\Statement\ValuesStatement::class : (strtoupper(Tree::text($body->tokens()[0] ?? $body)) === 'TABLE' ? \SqlSemantics\Model\Statement\TableStatement::class : \SqlSemantics\Model\BoundSelect::class);
-        return new $class($id, $from?->relation, $scope->relations, $outputs, $where, $distinct, $tail->ordering($source, $scope, $outputs), $limit, $offset, $source, $groups, $having, $context->ctes, clauses: $clauses, rows: $values, withTies: str_contains(strtoupper(Tree::text(QueryNodes::local($source, ['limit_clause'])[0] ?? new Node('empty', 0, []))), 'WITH TIES'), syntaxClauses: QueryNodes::clauses($source));
+        if (strtoupper(Tree::text($body->tokens()[0] ?? $body)) === 'TABLE') {
+            if (!$from?->relation instanceof \SqlSemantics\Model\Relation\TableReference && !$from?->relation instanceof \SqlSemantics\Model\Relation\CteReference) {
+                Tree::invalid($source, 'TABLE relation');
+            }
+            return new \SqlSemantics\Model\Statement\TableStatement($origin, $from->relation, $ordering, $limit, $offset, ctes: (new CteBinder())->clause($source, $context));
+        }
+        return new \SqlSemantics\Model\BoundSelect($origin, $from?->relation, $outputs, $where, $quantifier, $ordering, $limit, $offset, $groups, $having, (new CteBinder())->clause($source, $context), withTies: str_contains(strtoupper(Tree::text(QueryNodes::local($source, ['limit_clause'])[0] ?? new Node('empty', 0, []))), 'WITH TIES'), windows: $projectionOptions->windows($body, $scope), locks: LockingBinder::bind($source, $scope), hints: $origin->dialect === \SqlSemantics\Dialect::MySql ? OptimizerHints::bind($body) : []);
     }
 
     /**
@@ -99,53 +101,46 @@ final class QueryBinder
     public function with(Node $source, ?Scope $parent): QueryContext
     {
         $ctes = $this->context->ctes;
-        $with = QueryNodes::local($source, ['with_clause', 'wqlist']);
-        if ($with === []) {
-            $with = Tree::outer($source, ['with_clause', 'wqlist', 'simple_select', 'query_specification', 'oneselect']);
-            $with = array_values(array_filter($with, static fn (Node $node): bool => in_array($node->name, ['with_clause', 'wqlist'], true)));
-        }
-        foreach ($with as $clause) {
-            foreach (Tree::outer($clause, ['common_table_expr', 'wqitem']) as $cte) {
+        $clause = CteNodes::clause($source);
+        $with = $clause === null ? [] : [$clause];
+        $definitions = [];
+        foreach ($with as $withNode) {
+            foreach (Tree::outer($withNode, ['common_table_expr', 'wqitem']) as $cte) {
                 $nameNode = Tree::child($cte, ['name', 'ident', 'withnm']);
                 $queryNode = Tree::outer($cte, ['SelectStmt', 'subquery', 'select', 'InsertStmt', 'UpdateStmt', 'DeleteStmt', 'MergeStmt'])[0] ?? null;
                 if ($nameNode === null || $queryNode === null) {
                     throw new SemanticException('invalid-cte', 'A CTE requires a name and a query.', $cte);
                 }
                 $name = $this->context->tables->identifiers->parts($nameNode)[0];
-                $context = new QueryContext($this->context->tables, $this->context->ids, $ctes);
+                foreach ($definitions as $definition) {
+                    if ($this->context->tables->identifiers->equal($name, $definition->name)) {
+                        throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::DuplicateCte, $cte);
+                    }
+                }
+                $context = new QueryContext($this->context->tables, $this->context->ids, $ctes, parameterTypes: $this->context->parameterTypes);
                 if (in_array($queryNode->name, ['InsertStmt', 'UpdateStmt', 'DeleteStmt', 'MergeStmt'], true)) {
-                    $ctes[$name] = $this->rename((new StatementBinder($context->tables))->node($queryNode, $queryNode, $context), $cte);
+                    $ctes[$name] = CteBinder::definition($cte, (new StatementBinder($context->tables))->node($queryNode, $queryNode, $context), $context);
+                    $definitions[] = $ctes[$name];
                     continue;
                 }
                 $body = QueryNodes::body($queryNode);
                 if (QueryNodes::setOperator($body) !== null) {
                     $branches = $this->branches($body);
-                    $ctes[$name] = $this->rename($context->bind($branches[0], $parent), $cte);
-                    $context = new QueryContext($context->tables, $context->ids, $ctes);
+                    $ctes[$name] = CteBinder::definition($cte, $context->bind($branches[0], $parent), $context);
+                    $context = new QueryContext($context->tables, $context->ids, $ctes, parameterTypes: $context->parameterTypes);
                 }
-                $ctes[$name] = $this->rename($context->bind($queryNode, $parent), $cte);
+                $ctes[$name] = CteBinder::definition($cte, $context->bind($queryNode, $parent), $context);
+                $definitions[] = $ctes[$name];
             }
         }
-        return new QueryContext($this->context->tables, $this->context->ids, $ctes);
+        return new QueryContext($this->context->tables, $this->context->ids, $ctes, $definitions === [] ? null : new \SqlSemantics\Model\Query\WithClause($definitions, CteBinder::recursive($source, $clause)), $this->context->parameterTypes);
     }
 
     /**
-     * Applies a CTE column alias list without changing its expression graph.
-     */
-    public function rename(BoundStatement $query, Node $cte): BoundStatement
-    {
-        $aliases = Tree::child($cte, ['opt_name_list', 'opt_derived_column_list', 'eidlist_opt']);
-        if ($aliases === null) {
-            return $query;
-        }
-        $names = array_values(array_filter($this->context->tables->identifiers->parts($aliases), static fn (string $name): bool => !in_array($name, ['(', ')', ','], true)));
-        return $query->withOutputNames($names);
-    }
-
-    /**
-     * @return non-empty-list<Node>
+     * @return array{Node, Node}
      *
-     * @throws SemanticException
+
+     * @throws \SqlSemantics\Binding\Statement\UnclassifiedSql
      */
     public function branches(Node $body): array
     {
@@ -155,8 +150,12 @@ final class QueryBinder
                 $branches[] = $child;
             }
         }
-        if ($branches === []) {
-            throw new SemanticException('invalid-set-operation', 'A compound query requires query operands.', $body);
+        if (count($branches) !== 2) {
+            throw new \SqlSemantics\Binding\Statement\UnclassifiedSql('A set operation requires exactly two query operands: ' . $body->toString());
+        }
+        if ($body->name === 'selectnowith') {
+            $right = $branches[1];
+            $branches[1] = new Node($right->name, $right->ordinal, array_values(array_filter($right->children, static fn ($child): bool => !$child instanceof Node || !in_array($child->name, ['orderby_opt', 'limit_opt'], true))));
         }
         return $branches;
     }
@@ -169,26 +168,29 @@ final class QueryBinder
     public function compound(Node $source, Node $body, QueryContext $context, string $id, string $operator, ?Scope $parent): BoundQuery
     {
         $branches = array_map(static fn (Node $node): BoundQuery => $context->bind($node, $parent), $this->branches($body));
+        $leftWidth = \SqlSemantics\Model\Validation\RowShape::width($branches[0]);
+        $rightWidth = \SqlSemantics\Model\Validation\RowShape::width($branches[1]);
+        if ($leftWidth !== null && $rightWidth !== null && $leftWidth !== $rightWidth) {
+            throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::SetWidth, $body);
+        }
         $outputs = [];
-        foreach ($branches[0]->outputs as $index => $output) {
+        foreach ($branches[0]->resultColumns() as $index => $output) {
             $operands = [];
             foreach ($branches as $branch) {
-                if (count($branch->outputs) !== count($branches[0]->outputs)) {
-                    $context->tables->diagnostics->report('set-column-count', 'Compound query operands must have the same width.', $body);
-                }
-                if (!isset($branch->outputs[$index])) {
+                if (!isset($branch->resultColumns()[$index])) {
                     continue;
                 }
-                $value = $branch->outputs[$index]->expression;
-                $operands[] = $value->kind === ExpressionKind::Cast && $value->symbol === 'implicit' && isset($value->operands[0]) && $value->operands[0]->type->name === 'unknown' ? $value->operands[0] : $value;
+                $value = $branch->resultColumns()[$index]->expression;
+                $operands[] = \SqlSemantics\Model\Query\AlternativeFacts::setInput($value);
             }
             $type = (new TypeResolution($context->tables->identifiers->dialect, $context->tables->diagnostics))->common($operands, $body);
             $nullable = array_filter($operands, static fn (Expression $value): bool => $value->nullability !== Nullability::NotNull) !== [];
-            $outputs[] = new OutputColumn($index, $output->name, new Expression(ExpressionKind::Operator, $type, $nullable ? Nullability::MaybeNull : Nullability::NotNull, $body, $operands, symbol: $operator));
+            $outputs[] = new OutputColumn($index, $output->name, new \SqlSemantics\Model\Scalar\Value\SetColumn(new \SqlSemantics\Model\Scalar\ExpressionFacts($type, $nullable ? Nullability::MaybeNull : Nullability::NotNull, []), $body, \SqlSemantics\Model\Query\SetOperator::from($operator), $operands));
         }
         $scope = new Scope($context->tables->identifiers, parent: $parent, queries: $context);
         $tail = new SelectModifiersBinder();
-        [$limit, $offset] = $tail->pagination($source, $scope);
-        return new \SqlSemantics\Model\Statement\CompoundStatement($id, null, [], $outputs, null, !str_ends_with($operator, 'ALL'), $tail->ordering($source, $scope, $outputs), $limit, $offset, $source, ctes: $context->ctes, branches: $branches, setOperator: $operator);
+        $tailSource = $body->name === 'selectnowith' ? (Tree::child($body, ['oneselect']) ?? $source) : $source;
+        [$limit, $offset] = $tail->pagination($tailSource, $scope);
+        return new \SqlSemantics\Model\Statement\CompoundStatement(new \SqlSemantics\Model\Statement\Origin($id, $source, $context->tables->identifiers->dialect), $branches[0], $branches[1], \SqlSemantics\Model\Query\SetOperator::from($operator), $tail->ordering($tailSource, $scope, $outputs), $limit, $offset, ctes: (new CteBinder())->clause($source, $context));
     }
 }

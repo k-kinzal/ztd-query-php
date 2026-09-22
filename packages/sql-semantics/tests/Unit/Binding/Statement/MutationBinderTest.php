@@ -88,8 +88,6 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
 #[UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
-#[UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
 #[UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
@@ -117,20 +115,14 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\StatementFactory::class)]
 #[UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -150,36 +142,40 @@ final class MutationBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER, n INTEGER)');
         $statement = (new Binder($schema))->bind('UPDATE t SET n=n+1 WHERE id=2 RETURNING id,n');
-        self::assertSame('UPDATE', $statement->kind);
-        self::assertSame('+', $statement->assignments['n']->symbol);
-        self::assertSame('=', $statement->where?->symbol);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $statement);
+        self::assertSame('UPDATE', $statement->kind->value);
+        self::assertSame('+', $statement->writes[0]->value->spelling());
+        self::assertSame('=', $statement->where?->spelling());
         self::assertSame(['id', 'n'], array_column($statement->outputs, 'name'));
     }
     public function testTargetsResolvesInsertTarget(): void
     {
         $schema = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t (n INTEGER)');
         $statement = (new Binder($schema))->bind('INSERT INTO t(n) VALUES(1)');
-        self::assertSame('INSERT', $statement->kind);
-        self::assertSame('t', $statement->targets[0]->declaration->name);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
+        self::assertSame('INSERT', $statement->kind->value);
+        self::assertSame('t', $statement->affectedTables()[0]->declaration->name);
     }
 
     public function testConflictScopeResolvesExcludedValues(): void
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER PRIMARY KEY, n INTEGER)');
         $query = (new Binder($schema))->bind('INSERT INTO t VALUES(1,2) ON CONFLICT(id) DO UPDATE SET n=excluded.n RETURNING id');
-        self::assertSame('n', $query->assignments['n']->binding?->column->name);
-        self::assertNotSame($query->targets[0]->id, $query->assignments['n']->binding->relationId);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $query);
+        self::assertSame('n', $query->conflicts[0]->assignments[0]->value->columnBinding()?->column->name);
+        self::assertNotSame($query->affectedTables()[0]->id, $query->conflicts[0]->assignments[0]->value->columnBinding()->relationId);
     }
 
     public function testBindUpdateFromKeepsReadAndWriteRoles(): void
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER, n INTEGER)', 'CREATE TABLE u (id INTEGER, value INTEGER)');
         $query = (new Binder($schema))->bind('UPDATE t SET n=u.value FROM u WHERE t.id=u.id RETURNING t.id');
-        self::assertSame('UPDATE', $query->kind);
-        self::assertSame('t', $query->targets[0]->declaration->name);
-        self::assertSame(['t', 'u'], array_map(static fn ($relation): string => $relation->declaration->name, $query->relations));
-        self::assertSame('u', $query->assignments['n']->binding?->table->name);
-        self::assertSame('=', $query->where?->symbol);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $query);
+        self::assertSame('UPDATE', $query->kind->value);
+        self::assertSame('t', $query->affectedTables()[0]->declaration->name);
+        self::assertSame(['t', 'u'], array_map(static fn ($relation): string => $relation->declaration->name, [$query->target, $query->from]));
+        self::assertSame('u', $query->writes[0]->value->columnBinding()?->table->name);
+        self::assertSame('=', $query->where?->spelling());
         self::assertSame('id', $query->outputs[0]->name);
     }
 
@@ -187,79 +183,96 @@ final class MutationBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)');
         $query = (new Binder($schema))->bind('WITH source AS (SELECT id,n FROM t) UPDATE t SET n=source.n FROM source WHERE t.id=source.id RETURNING t.id');
-        self::assertSame('UPDATE', $query->kind);
-        self::assertSame(['source'], array_keys($query->ctes));
-        self::assertSame(['n'], array_keys($query->assignments));
-        self::assertSame('source', $query->assignments['n']->binding?->table->name);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $query);
+        self::assertSame('UPDATE', $query->kind->value);
+        self::assertSame(['source'], array_column($query->ctes->definitions, 'name'));
+        self::assertSame(['n'], array_map(static fn ($write) => $write->destinations()[0]->column()->referenceParts()[0], $query->writes));
+        self::assertSame('source', $query->writes[0]->value->columnBinding()?->table->name);
         self::assertSame(['id'], array_column($query->outputs, 'name'));
-        self::assertSame('=', $query->where?->symbol);
+        self::assertSame('=', $query->where?->spelling());
     }
 
     public function testBindKeepsLegacyInsertQuerySeparateFromItsTarget(): void
     {
         $schema = (new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build('CREATE TABLE target (id INTEGER)', 'CREATE TABLE source (id INTEGER)');
         $query = (new Binder($schema))->bind('INSERT INTO target(id) (SELECT id FROM source)');
-        self::assertSame(['target'], array_map(static fn ($target): string => $target->declaration->name, $query->targets));
-        self::assertCount(1, $query->queries);
-        self::assertSame('source', $query->queries[0]->relations[0]->declaration->name);
-        self::assertSame(['id'], array_column($query->queries[0]->outputs, 'name'));
-        self::assertNotSame($query->scopeId, $query->queries[0]->scopeId);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertSelectStatement::class, $query);
+        self::assertSame(['target'], array_map(static fn ($target): string => $target->declaration->name, $query->affectedTables()));
+
+        self::assertSame('source', $query->query->relations[0]->declaration->name);
+        self::assertSame(['id'], array_column($query->query->outputs, 'name'));
+        self::assertNotSame($query->scopeId, $query->query->scopeId);
     }
 
-    public function testAssignmentsRetainsTheScalarCompatibilityView(): void
+    public function testAssignmentsRetainsTheScalarDestinationAndValue(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(n INTEGER)')))->bind('UPDATE t SET n=2');
-        self::assertSame($statement->writes[0]->value, $statement->assignments['n']);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $statement);
+        self::assertSame('n', $statement->writes[0]->destinations()[0]->column()->referenceParts()[0]);
+        self::assertSame('2', $statement->writes[0]->value->spelling());
     }
 
 
     public function testInputRetainsTargetAndUsingJoinForDelete(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER); CREATE TABLE s(id INTEGER)')))->bind('DELETE FROM t USING s WHERE t.id=s.id');
-        self::assertInstanceOf(\SqlSemantics\Model\Join::class, $statement->from);
-        self::assertSame('cross', $statement->from->kind->value);
-        self::assertSame($statement->targets[0], $statement->from->left);
-        self::assertSame(['t','s'], array_map(static fn ($relation) => $relation->declaration->name, $statement->relations));
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\DeleteUsingStatement::class, $statement);
+        self::assertSame('t', $statement->target->declaration->name);
+        self::assertSame('s', $statement->using->declaration->name);
+        self::assertSame([$statement->target], $statement->affectedTables());
     }
     public function testDeleteTargetsKeepsOnlyNamedMysqlAliases(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INTEGER)')))->bind('DELETE a FROM t AS a JOIN t AS b ON a.id=b.id');
-        self::assertCount(2, $statement->relations);
-        self::assertSame(['a'], array_column($statement->targets, 'alias'));
-        self::assertSame($statement->relations[0], $statement->targets[0]);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\DeleteStatement::class, $statement);
+        self::assertCount(2, [$statement->from->left, $statement->from->right]);
+        self::assertSame(['a'], array_column($statement->affectedTables(), 'alias'));
+        self::assertSame($statement->from->left, $statement->affectedTables()[0]);
         self::assertInstanceOf(\SqlSemantics\Model\Join::class, $statement->from);
-        self::assertSame('=', $statement->from->condition?->symbol);
+        self::assertSame('=', $statement->from->condition?->spelling());
     }
     public function testDeleteTargetsRetainsLegacyJoinAliases(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.6.51'))->build('CREATE TABLE t(id INTEGER)')))->bind('DELETE a FROM t AS a JOIN t AS b ON a.id=b.id');
-        self::assertSame(['a'], array_column($statement->targets, 'alias'));
-        self::assertSame(['a','b'], array_column($statement->relations, 'alias'));
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\DeleteStatement::class, $statement);
+        self::assertSame(['a'], array_column($statement->affectedTables(), 'alias'));
+        self::assertSame(['a','b'], array_column([$statement->from->left, $statement->from->right], 'alias'));
     }
 
     public function testUpdatedTargetsExcludesReadOnlyJoinInputs(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INTEGER)')))->bind('UPDATE t a JOIN t b ON a.id=b.id SET a.id=b.id');
-        self::assertSame(['a'], array_column($statement->targets, 'alias'));
-        self::assertSame(['a','b'], array_column($statement->relations, 'alias'));
-        self::assertSame($statement->relations[1]->id, $statement->writes[0]->value->binding?->relationId);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $statement);
+        self::assertSame(['a'], array_column($statement->affectedTables(), 'alias'));
+        self::assertSame(['a','b'], array_column([$statement->from->left, $statement->from->right], 'alias'));
+        self::assertSame($statement->from->right->id, $statement->writes[0]->value->columnBinding()?->relationId);
     }
     public function testUpdatedTargetsPreservesMultipleWrittenAliases(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INTEGER)')))->bind('UPDATE t a JOIN t b ON a.id=b.id SET a.id=1,b.id=2');
-        self::assertSame(['a','b'], array_column($statement->targets, 'alias'));
-        self::assertSame(['1','2'], array_map(static fn ($write) => $write->value->symbol, $statement->writes));
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $statement);
+        self::assertSame(['a','b'], array_column($statement->affectedTables(), 'alias'));
+        self::assertSame(['1','2'], array_map(static fn ($write) => $write->value->spelling(), $statement->writes));
     }
     public function testUpdatedTargetsRetainsQualifiedUnresolvedDestinations(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('UPDATE missing a JOIN missing b ON a.id=b.id SET a.id=1', strict: false);
-        self::assertSame(['a'], array_column($statement->targets, 'alias'));
-        self::assertSame(['a','id'], $statement->writes[0]->targets[0]->reference);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $statement);
+        self::assertSame(['a'], array_column($statement->affectedTables(), 'alias'));
+        self::assertSame(['a','id'], $statement->writes[0]->destinations()[0]->column()->referenceParts());
     }
     public function testUpdatedTargetsRetainsCandidatesForUnqualifiedUnknownColumns(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('UPDATE missing a JOIN missing b ON a.id=b.id SET value=1', strict: false);
-        self::assertSame(['a','b'], array_column($statement->targets, 'alias'));
-        self::assertSame(['value'], $statement->writes[0]->targets[0]->reference);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $statement);
+        self::assertSame(['a','b'], array_column($statement->affectedTables(), 'alias'));
+        self::assertSame(['value'], $statement->writes[0]->destinations()[0]->column()->referenceParts());
     }
+    public function testBindDiagnosesPaginationOnAMysqlJoinedUpdate(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INTEGER)'));
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $binder->bind('UPDATE t a JOIN t b ON a.id=b.id SET a.id=1 LIMIT 2', strict: false);
+    }
+
 }

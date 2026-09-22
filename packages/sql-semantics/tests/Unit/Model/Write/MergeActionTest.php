@@ -80,8 +80,6 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ConstraintGroups::class)]
@@ -113,20 +111,14 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\StatementFactory::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\SimpleSerializer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -142,43 +134,29 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Sql\Format::class)]
 final class MergeActionTest extends TestCase
 {
-    public function testRejectsAnInsertionWithoutDestinations(): void
-    {
-        $source = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1')->source;
-        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
-        new \SqlSemantics\Model\Write\MergeAction('not-matched-by-target', 'insert', null, [], null, [], $source);
-    }
-
-    #[\PHPUnit\Framework\Attributes\TestWith(['invalid','delete'])]
-    #[\PHPUnit\Framework\Attributes\TestWith(['matched','invalid'])]
-    public function testRejectsInvalidDecisionNames(string $match, string $action): void
-    {
-        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('MERGE INTO t USING t AS s ON t.id=s.id WHEN MATCHED THEN DELETE');
-        self::assertNotNull($statement->merge);
-        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
-        new \SqlSemantics\Model\Write\MergeAction($match, $action, null, [], null, [], $statement->source);
-    }
     public function testRetainsEachValidDecisionAndItsEffects(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('MERGE INTO t USING t AS s ON t.id=s.id WHEN MATCHED THEN UPDATE SET id=s.id WHEN NOT MATCHED BY SOURCE THEN DELETE WHEN NOT MATCHED AND s.id=0 THEN DO NOTHING WHEN NOT MATCHED THEN INSERT VALUES(s.id)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\MergeStatement::class, $statement);
         self::assertNotNull($statement->merge);
-        self::assertSame(['update','delete','nothing','insert'], array_column($statement->merge->actions, 'action'));
+        self::assertSame(['update','delete','nothing','insert'], array_map(static fn ($item) => $item->action->value, $statement->merge->actions));
         self::assertCount(1, $statement->merge->actions[0]->assignments);
-        self::assertSame('t', $statement->merge->actions[3]->rows[0][0]->binding?->table->name);
+        self::assertSame('t', $statement->merge->actions[3]->row->items[0]->columnBinding()?->table->name);
         self::assertInstanceOf(\SqlSemantics\Model\TableUse::class, $statement->merge->input);
         self::assertSame('s', $statement->merge->input->alias);
     }
-    public function testRejectsWritesAttachedToDoNothing(): void
+    public function testDeletionRequiresAnExistingTarget(): void
     {
-        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
-        $update = $binder->bind('UPDATE t SET id=1');
+        $source = new \SqlParser\Parser\Node('action', 0, []);
         $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
-        new \SqlSemantics\Model\Write\MergeAction('matched', 'nothing', null, $update->writes, null, [], $update->source);
+        new \SqlSemantics\Model\Write\Decision\MergeDelete(\SqlSemantics\Model\Write\Decision\MatchKind::MissingTarget, null, $source);
     }
-    public function testRejectsRowsAttachedToDelete(): void
+
+    public function testUpdateRequiresAnExistingTarget(): void
     {
-        $insert = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('INSERT INTO t VALUES(1)');
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('UPDATE t SET id=1');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $statement);
         $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
-        new \SqlSemantics\Model\Write\MergeAction('matched', 'delete', null, [], null, $insert->rows, $insert->source);
+        new \SqlSemantics\Model\Write\Decision\MergeUpdate(\SqlSemantics\Model\Write\Decision\MatchKind::MissingTarget, null, $statement->source, $statement->writes);
     }
 }

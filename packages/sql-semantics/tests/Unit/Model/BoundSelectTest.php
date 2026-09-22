@@ -56,8 +56,6 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\IndexEvolution::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\TableAlteration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryRelation::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\QueryContext::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Query\UsingJoin::class)]
@@ -101,16 +99,12 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Assignment::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
@@ -119,9 +113,7 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\IndexDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\ExpressionInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(InvalidStructure::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\StatementInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Sql\Literal::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Sql\ExpressionFactory::class)]
@@ -157,7 +149,7 @@ final class BoundSelectTest extends TestCase
         $changed = $statement->withOutputs([new OutputColumn(0, 'value', Expression::literal(3, $dialect))]);
         self::assertSame('value', $changed->outputs[0]->name);
         self::assertSame([], $changed->outputs[0]->expression->lineage());
-        self::assertSame('id', $statement->outputs[0]->expression->binding?->column->name);
+        self::assertSame('id', $statement->outputs[0]->expression->columnBinding()?->column->name);
     }
     #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql])]
     #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql])]
@@ -167,7 +159,7 @@ final class BoundSelectTest extends TestCase
         $statement = (new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(id INTEGER)')))->bind('SELECT id FROM t');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         $changed = $statement->withWhere(Expression::binary('>', Expression::reference(['id'], $dialect), Expression::literal(1, $dialect)));
-        self::assertSame('>', $changed->where?->symbol);
+        self::assertSame('>', $changed->where?->spelling());
         self::assertNull($statement->where);
         self::assertNull($changed->withWhere(null)->where);
     }
@@ -176,14 +168,14 @@ final class BoundSelectTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('SELECT id FROM t');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         $grouped = $statement->withGroupBy([Expression::reference(['id'], Dialect::PostgreSql)]);
-        self::assertSame('id', $grouped->groupBy[0]->binding?->column->name);
+        self::assertSame('id', $grouped->groupBy[0]->columnBinding()?->column->name);
         self::assertSame([], $grouped->withGroupBy([])->groupBy);
     }
     public function testWithHavingValidatesBooleanCondition(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
-        self::assertSame('TRUE', $statement->withHaving(Expression::literal(true, Dialect::PostgreSql))->having?->symbol);
+        self::assertSame('TRUE', $statement->withHaving(Expression::literal(true, Dialect::PostgreSql))->having?->spelling());
         $this->expectException(\SqlSemantics\SemanticException::class);
         $statement->withHaving(Expression::literal(3, Dialect::PostgreSql));
     }
@@ -194,6 +186,7 @@ final class BoundSelectTest extends TestCase
         $statement = $binder->bind('SELECT b.id FROM t a JOIN t b ON a.id=b.id');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         $replacement = $binder->bind('SELECT b.id FROM t a LEFT JOIN t b ON a.id=b.id');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $replacement);
         $changed = $statement->withFrom($replacement->from);
         self::assertSame('maybe-null', $changed->outputs[0]->expression->nullability->value);
         self::assertSame('not-null', $statement->outputs[0]->expression->nullability->value);
@@ -206,7 +199,7 @@ final class BoundSelectTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         $changed = $statement->withOutputs([new OutputColumn(0, 'n', $statement->outputs[1]->expression)]);
         self::assertCount(1, $changed->outputs);
-        self::assertSame('n', $changed->outputs[0]->expression->binding?->column->name);
+        self::assertSame('n', $changed->outputs[0]->expression->columnBinding()?->column->name);
         self::assertCount(2, $statement->outputs);
     }
 }
