@@ -14,13 +14,13 @@ entities. Requirements are optional upstream records, not a mandatory hierarchy.
 | Diverse sources | Source extension contract returning stable located units; HTML/XML CSS, JSONPath, Markdown CSS, text line ranges, RFC XML | Source adapter tests |
 | Service integrations | Register a PHP class implementing the source contract; it owns retrieval and enumeration | Custom extension test and documented example |
 | Optional upstream requirements | `kind: requirement`, specifications use `requirements: [ID]` | Graph validation and inherited evidence tests |
-| Independent specifications | Explicit `origin: original` or `undocumented` and rationale | Lint and list filters |
+| Independent specifications | Explicit `origin: original` or `undocumented` and rationale | Lint and spec filters |
 | Unsupported behavior | `status: unsupported` always needs a reason; never passes as implemented | Lint, coverage and spec tests |
 | Related requirements/specifications and design | Typed requirement links, general related links, URL/text design records and metadata | Cross-file graph validation |
 | Source integrity | Exact normalized quotation of a selected unit, optional pinned snapshot and SHA-256 | Changed/missing/ambiguous/out-of-scope evidence tests |
 | Source coverage | Union of units enumerated by each URI + scope; no inferred website-wide denominator | Union and empty-scope tests |
 | Verification | PHPUnit and Behat runner extensions; fresh JUnit results, positive test count, strict failures | Real subprocess integration tests |
-| Navigation and authoring quality | `list`, filters, `lint`, deterministic `format --check` | CLI integration tests |
+| Navigation and authoring quality | `spec --no-test`, filters, `lint`, deterministic `format --check` | CLI integration tests |
 | CI gates | Total, per-source and changed-unit thresholds; machine-readable baseline | Threshold and baseline tests |
 
 ## Coverage semantics
@@ -68,6 +68,13 @@ Each distinct runner/target executes once, even when several specifications use 
 Every linked result must pass. Missing tests, skipped tests, malformed/missing
 reports, no tests and process errors fail verification. Unsupported specifications
 are reported without execution; supported specifications without tests fail.
+
+`spec` also provides the filtered record browser. `--no-test` preserves the same
+records and their linked-target denominators while showing unknown results (`-/N`).
+Normal execution shows passed/linked targets (`N/N`), independently of how many
+cases each data provider or scenario outline expands into. Executed case counts
+remain available in JSON. Upstream requirements are visible as `not-applicable`.
+See [CLI result semantics](cli.md#specification-results).
 
 ## Extensions and reproducibility
 

@@ -3,13 +3,14 @@
 Symfony Console provides command discovery, per-command help, terminal tables,
 color detection and shell completion. Run `requirements --help` for an overview
 or `requirements coverage --help` for the coverage options. Help works without a
-configuration file. `requirements list` lists specification records.
+configuration file. `requirements spec` displays specification and requirement
+records and verifies linked tests. Add `--no-test` to browse without execution.
 
 ```console
 requirements --help
 requirements coverage --help
 requirements --config project/requirements.yaml coverage
-requirements list --label grammar
+requirements spec --no-test --label grammar
 requirements spec --json
 ```
 
@@ -26,16 +27,20 @@ completion installation.
 | --- | --- |
 | `check` | Verify full quoted units against the selected source scope |
 | `coverage` | Report global and per-source accounted/supported/unsupported/uncovered units and enforce gates |
-| `spec` | Execute linked tests and report each specification as passed, failed, unverified or unsupported |
-| `list` | List specifications/requirements, provenance, rationale, labels and references |
+| `spec` | Browse specifications/requirements, provenance, rationale and labels; verify linked tests unless `--no-test` is set |
 | `lint` | Validate documents, IDs, EARS form, extension registration and the cross-file graph without fetching sources or running tests |
 | `format` | Normalize YAML or experimental Markdown formatting; `--check` detects drift without writing |
 
 Every command accepts `--config FILE` (default `requirements.yaml`) and `--json`.
-`list` and `spec` accept `--id`, `--label`, `--category`, `--source`, `--status`,
+`spec` accepts `--id`, `--label`, `--category`, `--source`, `--status`,
 `--kind`, `--origin` and `--without-source`. Filters combine with AND and use exact
 values. `--source` selects the definition's source ID; inherited source links are
-available in the requirement graph. An empty `spec` selection fails.
+available in the requirement graph. An empty `spec` selection fails, including
+with `--no-test`. Requirements remain visible with `not-applicable` results and
+are never executed. Use `--kind specification` to display specifications only.
+
+The former record-listing command is now `spec --no-test`. Symfony's built-in
+`list` command only displays available CLI commands, like the application overview.
 
 `check` and `coverage` accept `--live` to fetch source URIs instead of snapshots.
 Default mode uses verified local snapshots where configured, otherwise the URI.
@@ -46,6 +51,56 @@ removes YAML comments; keep explanatory material in `reason`, `design` or `metad
 Exit codes: **0** success, **1** failed check, gate, verification or format check,
 **2** invalid configuration, options or an unrecoverable error. Source failures
 appear in reports and fail checks; they never count as full coverage.
+
+
+## Specification results
+
+```console
+requirements spec
+requirements spec --no-test
+requirements spec --no-test --without-source --label strictness
+requirements spec --status unsupported
+requirements spec --kind requirement --json
+```
+
+The **Tests** column counts **passed targets / linked targets for that record**.
+A target is a distinct configured runner name + test reference (`Class::method`
+or `file.feature:line`). Repeated references within one record count once. A shared
+target contributes to each linked record but executes only once per invocation.
+A target passes only when its whole selection passes and reports at least one
+executed test case. Data-provider cases and scenario-outline examples do not
+inflate the linked-target count: a method with 33 cases is one target.
+
+| Situation | Result | Tests | Exit code when selected alone |
+| --- | --- | --- | --- |
+| Three linked targets all pass | `passed` | `3/3` | 0 |
+| One of three targets fails, skips or selects no tests | `failed` | `2/3` | 1 |
+| Tests intentionally disabled with `--no-test` | `not-run` | `-/3` | 0 |
+| Supported specification has no tests | `unverified` | `0/0` | 1 |
+| No tests linked and `--no-test` | `not-run` | `-/0` | 0 |
+| Unsupported specification has three targets | `unsupported` | `-/3` | 0 |
+| Upstream requirement | `not-applicable` | `-/0` | 0 |
+
+`--no-test` loads and validates definitions but does not fetch sources or invoke
+runner execution. It does not reuse past test results; `-` means unknown, never a
+cached pass. A successful exit in this mode means the selected records were
+displayed, not that their tests passed. Unsupported records retain their reason.
+
+`--json` uses the same `specifications` map in both modes, keyed by record ID;
+requirements are included too. Each row includes statement, kind, source/origin,
+labels, category, reason, requirement/related links, design, metadata and
+`test_references`. `support` is the declared supported/unsupported disposition;
+`status` is the verification result. The numeric fields are:
+
+- `passed_targets`: successful linked targets, or `null` when not run/applicable;
+- `total_targets`: distinct linked targets, available without execution;
+- `tests`: reported case count from executed targets, including failed or skipped
+  cases; zero when nothing executed. This is not a passed count or a project total.
+
+The top-level `no_test` records the requested mode. `passed` expresses command
+success: in execution mode all selected supported specifications must verify; in
+browsing mode a nonempty valid selection succeeds. Neither field asserts that an
+upstream requirement or an unsupported decision has been implemented.
 
 
 ## CI and differential gates

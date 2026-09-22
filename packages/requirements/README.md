@@ -49,12 +49,15 @@ vendor/bin/requirements lint
 vendor/bin/requirements check
 vendor/bin/requirements coverage
 vendor/bin/requirements spec
-vendor/bin/requirements list --without-source
+vendor/bin/requirements spec --no-test --without-source
 vendor/bin/requirements format --check
 ```
 
 Commands display terminal tables and offer per-command help, for example
-`requirements coverage --help`. Add `--json` for machine-readable reports.
+`requirements coverage --help`. `spec` combines browsing and verification: its
+Tests column shows passing / linked targets (`3/3`); `--no-test` shows `-/3` without
+executing tests. Data-provider cases and outline examples are counted separately
+in `--json` reports. Add `--json` for complete traceability records.
 See [CLI and CI gates](docs/cli.md) for options, filtering and exit codes. Source
 snapshots are optional untracked caches; add `.requirements-cache/` to `.gitignore`.
 Baselines contain fingerprints rather than copies of source documents.

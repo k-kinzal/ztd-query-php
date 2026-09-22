@@ -23,19 +23,16 @@ final class Executor
             $changed = (new Formatter())->format($project->files, $options->flag('check'), $project->markdown);
             return ['passed' => !$options->flag('check') || $changed === [], 'changed' => $changed];
         }
-        if (in_array($options->command, ['list', 'spec'], true)) {
+        if ($options->command === 'spec') {
             $items = array_filter($project->items, $options->matches(...));
-            if ($options->command === 'list') {
-                return ['passed' => true, 'items' => array_values(array_map($this->describe(...), $items))];
-            }
-            $results = (new Verifier())->verify($project, $items);
+            $results = (new Verifier())->verify($project, $items, $options->flag('no-test'));
             $passed = $results !== [];
             $rows = [];
             foreach ($results as $id => $result) {
-                $passed = $passed && in_array($result->status, ['passed', 'unsupported'], true);
-                $rows[$id] = ['statement' => $items[$id]->statement, ...$result->toArray()];
+                $passed = $passed && in_array($result->status, ['passed', 'unsupported', 'not-applicable', 'not-run'], true);
+                $rows[$id] = [...$this->describe($items[$id]), ...$result->toArray()];
             }
-            return ['passed' => $passed, 'specifications' => $rows, 'errors' => $results === [] ? ['No specifications selected.'] : []];
+            return ['passed' => $passed, 'no_test' => $options->flag('no-test'), 'specifications' => $rows, 'errors' => $results === [] ? ['No specifications or requirements selected.'] : []];
         }
         if (!in_array($options->command, ['check', 'coverage'], true)) {
             throw new InvalidArgumentException('Unknown command: ' . $options->command);
@@ -61,7 +58,7 @@ final class Executor
     /** @return array<string, mixed> */
     private function describe(Item $item): array
     {
-        return ['id' => $item->id, 'kind' => $item->kind, 'statement' => $item->statement, 'status' => $item->status, 'source' => $item->source?->id, 'origin' => $item->origin, 'reason' => $item->reason, 'labels' => $item->labels, 'category' => $item->category, 'requirements' => $item->requirements, 'related' => $item->related, 'design' => $item->data['design'] ?? [], 'metadata' => $item->data['metadata'] ?? [], 'tests' => $item->data['tests'] ?? []];
+        return ['id' => $item->id, 'kind' => $item->kind, 'statement' => $item->statement, 'support' => $item->status, 'source' => $item->source?->id, 'origin' => $item->origin, 'reason' => $item->reason, 'labels' => $item->labels, 'category' => $item->category, 'requirements' => $item->requirements, 'related' => $item->related, 'design' => $item->data['design'] ?? [], 'metadata' => $item->data['metadata'] ?? [], 'test_references' => $item->data['tests'] ?? []];
     }
 
 }

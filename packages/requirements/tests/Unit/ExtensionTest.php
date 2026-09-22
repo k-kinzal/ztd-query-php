@@ -40,8 +40,31 @@ final class ExtensionTest extends TestCase
         $results = (new Verifier())->verify($project, $project->items);
         self::assertSame('passed', $results['SPEC-1']->status);
         self::assertSame('passed', $results['SPEC-2']->status);
+        self::assertSame(1, $results['SPEC-1']->passedTargets);
+        self::assertSame(1, $results['SPEC-2']->totalTargets);
         self::assertSame('unsupported', $results['SPEC-3']->status);
         self::assertSame("shared\n", file_get_contents($workspace->directory . '/executions.txt'));
+    }
+
+    public function testAZeroCaseSuccessDoesNotCountAsAPassingTarget(): void
+    {
+        $workspace = new Workspace();
+        $workspace->write('requirements.yaml', [
+            'version' => 1,
+            'definitions' => ['definition.yaml'],
+            'extensions' => ['runners' => ['custom' => CountingRunner::class]],
+            'runners' => ['example' => ['extension' => 'custom', 'command' => ['example']]],
+        ]);
+        $workspace->write('definition.yaml', ['version' => 1, 'source' => null, 'items' => [[
+            'id' => 'SPEC-1', 'statement' => 'The reader shall retain positions.', 'origin' => 'original', 'reason' => 'Support editors.',
+            'tests' => [['runner' => 'example', 'target' => 'empty']],
+        ]]]);
+        $project = (new Loader())->load($workspace->directory . '/requirements.yaml');
+        $result = (new Verifier())->verify($project, $project->items)['SPEC-1'];
+        self::assertSame('failed', $result->status);
+        self::assertSame(0, $result->passedTargets);
+        self::assertSame(1, $result->totalTargets);
+        self::assertSame(0, $result->tests);
     }
 
     public function testDocumentedExtensionsExecuteThroughTheRealCli(): void

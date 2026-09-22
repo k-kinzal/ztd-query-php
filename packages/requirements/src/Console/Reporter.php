@@ -32,29 +32,27 @@ final class Reporter
             }
             $io->table(['Scope', 'Units', 'Accounted', 'Supported', 'Unsupported', 'Uncovered', 'Coverage'], $rows);
             $io->note('Coverage applies only to the declared source scopes. Unsupported units are accounted for; tests are verified separately.');
-        } elseif ($options->command === 'list') {
-            $rows = [];
-            foreach (Fields::sequence($report['items'], 'items') as $value) {
-                $item = Fields::mapping($value, 'item');
-                $statement = self::text($item['statement']);
-                $labels = Fields::strings($item['labels'], 'labels');
-                if ($labels !== []) {
-                    $statement .= "\nLabels: " . self::text(implode(', ', $labels));
-                }
-                if ($item['reason'] !== '') {
-                    $statement .= "\nReason: " . self::text($item['reason']);
-                }
-                $rows[] = [self::text($item['id']), $statement, self::text($item['status']), self::text($item['source'] ?? $item['origin'])];
-            }
-            $this->table($output, ['ID', 'Statement', 'Status', 'Source / origin'], $rows);
-            $io->text(count($rows) . ' item(s). Use --json for the complete traceability records.');
         } elseif ($options->command === 'spec') {
             $rows = [];
             foreach (Fields::mapping($report['specifications'], 'specifications') as $id => $value) {
                 $spec = Fields::mapping($value, 'specification');
-                $rows[] = [self::text($id), self::text($spec['statement']), self::text($spec['status']), self::text($spec['tests'])];
+                $statement = self::text($spec['statement']);
+                $statement .= "\n" . self::text($spec['kind']) . ' · ' . self::text($spec['source'] ?? $spec['origin']);
+                if ($spec['category'] !== '') {
+                    $statement .= ' · ' . self::text($spec['category']);
+                }
+                $labels = Fields::strings($spec['labels'], 'labels');
+                if ($labels !== []) {
+                    $statement .= "\nLabels: " . self::text(implode(', ', $labels));
+                }
+                if ($spec['reason'] !== '') {
+                    $statement .= "\nReason: " . self::text($spec['reason']);
+                }
+                $ratio = self::text($spec['passed_targets'] ?? '-') . '/' . self::text($spec['total_targets']);
+                $rows[] = [self::text($id), $statement, self::text($spec['status']), $ratio];
             }
-            $this->table($output, ['ID', 'Specification', 'Result', 'Tests'], $rows);
+            $this->table($output, ['ID', 'Statement', 'Result', 'Tests'], $rows);
+            $io->text(count($rows) . ' item(s). Tests: passed / linked targets. Use --json for execution counts and complete traceability records.');
             foreach (Fields::mapping($report['specifications'], 'specifications') as $id => $value) {
                 $spec = Fields::mapping($value, 'specification');
                 if ($spec['message'] !== '') {
@@ -76,7 +74,7 @@ final class Reporter
                 'lint' => self::text($report['message']),
                 'check' => 'Source evidence is valid.',
                 'coverage' => 'Coverage gates passed.',
-                'spec' => 'All selected supported specifications passed.',
+                'spec' => $options->flag('no-test') ? 'Records displayed; tests were not run.' : 'Specification verification completed.',
                 'format' => $report['changed'] === [] ? 'No formatting changes.' : 'Documents formatted.',
                 default => null,
             };
@@ -94,9 +92,17 @@ final class Reporter
      */
     private function table(OutputInterface $output, array $headers, array $rows): void
     {
+        $widths = [];
+        foreach ([0 => 24, 2 => 14, 3 => 12] as $column => $maximum) {
+            $width = mb_strwidth($headers[$column]);
+            foreach ($rows as $row) {
+                $width = max($width, mb_strwidth($row[$column]));
+            }
+            $widths[$column] = min($maximum, $width);
+        }
         (new Table($output))->setHeaders($headers)->setRows($rows)
-            ->setColumnMaxWidth(0, 24)->setColumnMaxWidth(1, max(24, min(72, (new Terminal())->getWidth() - 62)))
-            ->setColumnMaxWidth(2, 13)->setColumnMaxWidth(3, 24)->render();
+            ->setColumnMaxWidth(0, $widths[0])->setColumnMaxWidth(1, max(24, min(72, (new Terminal())->getWidth() - array_sum($widths) - 13)))
+            ->setColumnMaxWidth(2, $widths[2])->setColumnMaxWidth(3, $widths[3])->render();
     }
 
     private static function text(mixed $value): string

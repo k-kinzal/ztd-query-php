@@ -125,6 +125,11 @@ turn failed or missing tests into an unsupported decision.
 
 The core executes each distinct runner-name/target pair once per `spec` invocation
 and shares that result across linked specifications. All linked results must pass.
+The CLI counts each successful target once in its passed/linked ratio, regardless
+of the adapter's executed-case count. That case count remains in the JSON `tests`
+field. For example, a successful method with 33 data-provider cases contributes
+`1/1` linked targets and `tests: 33`. `spec --no-test` displays `-/1` and never calls
+`run()`; extensions do not need to implement test discovery or result caching.
 A custom extension owns actual selection, execution and result interpretation; it
 must not report success solely because a process exited zero.
 

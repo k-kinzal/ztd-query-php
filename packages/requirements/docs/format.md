@@ -117,7 +117,7 @@ items:
 
 Use `original` for deliberate project behavior and `undocumented` for behavior
 whose source has not yet been identified. Neither may claim source evidence or
-requirement provenance. Both appear under `list --without-source`; filter an exact
+requirement provenance. Both appear under `spec --no-test --without-source`; filter an exact
 origin with `--origin`. A source-free file may instead hold sourced specifications
 with requirement links; those remain sourced and are not independent items.
 
@@ -356,7 +356,7 @@ removed. A YAML target can use `[REQ-003](other.yaml)`. External documents belon
 in `design`. Test lists use the runner name in bold followed by a colon and target.
 
 For source-free items, use `source: null`, an `original` or `undocumented` origin
-badge, and a **rationale** paragraph. They appear in `list --without-source`.
+badge, and a **rationale** paragraph. They appear in `spec --no-test --without-source`.
 
 Optional project-specific metadata uses nested bullet lists:
 

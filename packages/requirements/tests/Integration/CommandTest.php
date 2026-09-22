@@ -26,7 +26,7 @@ final class CommandTest extends TestCase
         self::assertSame(1, $spec->run());
         self::assertStringContainsString('unverified', $spec->getOutput());
         $workspace->write('definition.yaml', ['version' => 1, 'source' => null, 'items' => [['id' => 'ORIGINAL-001', 'statement' => 'The parser shall reject truncated input.', 'origin' => 'original', 'reason' => 'Avoid silent data loss.', 'labels' => ['strictness']]]]);
-        $list = new Process([PHP_BINARY, $binary, 'list', '--without-source', '--label=strictness', '--json'], $workspace->directory);
+        $list = new Process([PHP_BINARY, $binary, 'spec', '--no-test', '--without-source', '--label=strictness', '--json'], $workspace->directory);
         self::assertSame(0, $list->run());
         self::assertStringContainsString('ORIGINAL-001', $list->getOutput());
         $empty = new Process([PHP_BINARY, $binary, 'spec', '--id=MISSING'], $workspace->directory);
@@ -40,7 +40,7 @@ final class CommandTest extends TestCase
         $process = new Process([PHP_BINARY, $binary, 'coverage', '--min-coverage=not-a-number', '--json'], $workspace->directory);
         self::assertSame(2, $process->run());
         self::assertStringContainsString('percentage', $process->getOutput());
-        $process = new Process([PHP_BINARY, $binary, 'list', '--unknown'], $workspace->directory);
+        $process = new Process([PHP_BINARY, $binary, 'spec', '--unknown'], $workspace->directory);
         self::assertSame(2, $process->run());
     }
 
@@ -49,7 +49,7 @@ final class CommandTest extends TestCase
         $workspace = new Workspace();
         unlink($workspace->directory . '/requirements.yaml');
         $binary = dirname(__DIR__, 2) . '/bin/requirements';
-        foreach ([[], ['--help'], ['-h'], ['--help', '--no-ansi'], ['--config', 'missing.yaml', '--help'], ['--json', '--help'], ['help', 'coverage'], ['coverage', '--help'], ['spec', '-h']] as $arguments) {
+        foreach ([[], ['--help'], ['-h'], ['--help', '--no-ansi'], ['--config', 'missing.yaml', '--help'], ['--json', '--help'], ['help', 'coverage'], ['coverage', '--help'], ['spec', '-h'], ['list']] as $arguments) {
             $process = new Process([PHP_BINARY, $binary, ...$arguments], $workspace->directory);
             self::assertSame(0, $process->run(), $process->getErrorOutput());
             self::assertStringContainsString('Usage:', $process->getOutput());
@@ -62,6 +62,10 @@ final class CommandTest extends TestCase
         self::assertSame(0, $help->run());
         self::assertStringContainsString('--min-diff-coverage', $help->getOutput());
         self::assertStringNotContainsString('--without-source', $help->getOutput());
+        $help = new Process([PHP_BINARY, $binary, 'spec', '--help'], $workspace->directory);
+        self::assertSame(0, $help->run());
+        self::assertStringContainsString('--no-test', $help->getOutput());
+        self::assertStringContainsString('--without-source', $help->getOutput());
     }
 
     public function testGlobalOptionsBeforeCommandAndHumanReadableTables(): void
@@ -74,7 +78,7 @@ final class CommandTest extends TestCase
         self::assertStringContainsString('Uncovered', $process->getOutput());
         self::assertStringNotContainsString('passed:', $process->getOutput());
         self::assertStringNotContainsString('{  }', $process->getOutput());
-        $list = new Process([PHP_BINARY, $binary, 'list', '--no-ansi'], $workspace->directory);
+        $list = new Process([PHP_BINARY, $binary, 'spec', '--no-test', '--no-ansi'], $workspace->directory);
         self::assertSame(0, $list->run());
         self::assertStringContainsString('SPEC-001', $list->getOutput());
         self::assertStringContainsString('Statement', $list->getOutput());
@@ -84,7 +88,7 @@ final class CommandTest extends TestCase
     {
         $workspace = new Workspace();
         $binary = dirname(__DIR__, 2) . '/bin/requirements';
-        foreach ([['coverage', '--unknown'], ['list', '--live'], ['unknown'], ['--config', 'missing.yaml', 'lint']] as $arguments) {
+        foreach ([['coverage', '--unknown'], ['spec', '--live'], ['unknown'], ['--config', 'missing.yaml', 'lint']] as $arguments) {
             $process = new Process([PHP_BINARY, $binary, '--json', ...$arguments], $workspace->directory);
             self::assertSame(2, $process->run());
             $report = json_decode($process->getOutput(), true, 512, JSON_THROW_ON_ERROR);

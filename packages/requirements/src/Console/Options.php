@@ -32,7 +32,8 @@ final class Options
     public static function definitions(string $command): array
     {
         return match ($command) {
-            'list', 'spec' => [
+            'spec' => [
+                ['no-test', true, 'Display selected records and linked test counts without running tests.'],
                 ['id', false, 'Select an exact item ID.'],
                 ['label', false, 'Select items carrying this label.'],
                 ['category', false, 'Select an exact category.'],

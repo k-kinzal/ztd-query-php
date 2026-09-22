@@ -37,8 +37,7 @@ final class Application
             foreach ([
                 'check' => 'Verify quotations against the declared source scopes.',
                 'coverage' => 'Show source coverage and enforce total and differential gates.',
-                'spec' => 'Execute the tests linked to selected specifications.',
-                'list' => 'Browse specifications and requirements using filters.',
+                'spec' => 'Browse specifications and requirements, and verify linked tests unless --no-test is set.',
                 'lint' => 'Validate schemas, EARS syntax and cross-file traceability.',
                 'format' => 'Format YAML and Markdown definition documents.',
             ] as $name => $description) {
