@@ -25,6 +25,7 @@ final class ExplainBinder
 {
     /**
      * @throws \SqlSemantics\Binding\Statement\UnclassifiedSql
+     * @throws InvalidSql
      */
     public static function bind(Origin $origin, Node $source, QueryContext $context): ?BoundStatement
     {
@@ -43,6 +44,9 @@ final class ExplainBinder
             }
             $options = $origin->dialect === Dialect::PostgreSql ? PostgreSqlOptions::read($source, $context->tables->identifiers) : self::mysql($source, $context);
             if ($options instanceof Plan\MySqlPlan && strtoupper($command->tokens()[0]->text ?? '') === 'FOR') {
+                if ($options->analyze) {
+                    throw new InvalidSql(InputViolation::ExplainCombination, $source);
+                }
                 $number = Tree::child($command, ['real_ulong_num']);
                 if ($number === null) {
                     Tree::invalid($command, 'connection number');
@@ -61,7 +65,7 @@ final class ExplainBinder
     {
         $options = Tree::child($source, ['opt_explain_options', 'opt_extended_describe']);
         $format = $options === null ? null : Tree::outer($options, ['opt_explain_format', 'explain_format'])[0] ?? null;
-        $formatName = $format === null ? '' : strtoupper($context->tables->identifiers->name($format->tokens()[count($format->tokens()) - 1]));
+        $formatName = $format === null || !Tree::hasTokens($format) ? '' : strtoupper($context->tables->identifiers->name($format->tokens()[count($format->tokens()) - 1]));
         $words = $options === null ? [] : array_map(static fn ($token): string => strtoupper($token->text), $options->tokens());
         try {
             return new Plan\MySqlPlan(Plan\MySqlFormat::tryFrom($formatName) ?? throw new InvalidSql(InputViolation::ExplainSetting, $source), in_array('ANALYZE', $words, true), in_array('EXTENDED', $words, true), in_array('PARTITIONS', $words, true));

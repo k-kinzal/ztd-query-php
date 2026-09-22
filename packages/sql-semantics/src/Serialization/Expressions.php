@@ -46,6 +46,7 @@ final class Expressions
             $value instanceof Scalar\Operator\UnaryExpression,
             $value instanceof Scalar\Operator\CastExpression => \SqlSemantics\Serialization\Scalar\OperatorExpressions::write($value),
             $value instanceof Scalar\Conditional\JsonMembership,
+            $value instanceof Scalar\Conditional\Extremum,
             $value instanceof Scalar\Conditional\Coalesce,
             $value instanceof Scalar\Conditional\NullIf,
             $value instanceof Scalar\Conditional\Between,

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Binding\Scalar;
 
+use Closure;
 use SqlParser\Parser\Node;
 use SqlSemantics\Binding\ExpressionRules;
 use SqlSemantics\Binding\NullFacts;
@@ -28,7 +29,7 @@ final class FunctionRules
      */
     public function bind(string $name, array $operands, Node $source, Scope $scope): Expression
     {
-        if (in_array($name, ['COALESCE', 'NULLIF'], true)) {
+        if ($scope->identifiers->dialect === \SqlSemantics\Dialect::PostgreSql && $source->name === 'func_expr_common_subexpr' && in_array($name, ['COALESCE', 'NULLIF', 'GREATEST', 'LEAST'], true)) {
             return (new ExpressionRules($scope->identifiers->dialect, $scope->diagnostics()))->call($name, $operands, $source);
         }
         $orderedInputs = FunctionClauses::orderedInputs($source, $scope);
@@ -79,13 +80,14 @@ final class FunctionRules
      */
     public function nullability(FunctionSignature $signature, array $operands): Nullability
     {
-        if (!$signature->nullOnNull || $signature->nullability === Nullability::AlwaysNull) {
-            return $signature->nullability;
+        $result = $signature->nullability instanceof Closure ? ($signature->nullability)(array_map(static fn (Expression $operand): Nullability => $operand->nullability, $operands)) : $signature->nullability;
+        if (!$signature->nullOnNull || $result === Nullability::AlwaysNull) {
+            return $result;
         }
         $arguments = NullFacts::strict($operands);
-        if ($arguments === Nullability::AlwaysNull || $signature->nullability === Nullability::NotNull) {
+        if ($arguments === Nullability::AlwaysNull || $result === Nullability::NotNull) {
             return $arguments;
         }
-        return $arguments === Nullability::Unknown ? Nullability::Unknown : $signature->nullability;
+        return $arguments === Nullability::Unknown ? Nullability::Unknown : $result;
     }
 }

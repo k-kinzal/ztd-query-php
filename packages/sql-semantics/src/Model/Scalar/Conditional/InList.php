@@ -10,8 +10,11 @@ use SqlSemantics\Model\ExpressionKind;
 use SqlSemantics\Model\Scalar\ExpressionFacts;
 
 /**
- * InList has explicit semantic operands and a fixed expression category.
+ * Membership against ordered value expressions with the same known row width.
  * @visibility public
+ * @example Reading the candidate values
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('SELECT 1 IN (2, 3)');
+ *     count($statement->outputs[0]->expression->choices) // => 2
  */
 final class InList extends Expression
 {
@@ -28,6 +31,14 @@ final class InList extends Expression
         public readonly bool $negated,
     ) {
         \SqlSemantics\Model\Validation\Collections::objects($choices, Expression::class);
+        if ($choices === [] && $facts->type->dialect !== \SqlSemantics\Dialect::Sqlite) {
+            throw new \SqlSemantics\Model\Validation\InvalidStructure('An IN list requires a candidate outside SQLite.');
+        }
+        foreach ($choices as $choice) {
+            if (!\SqlSemantics\Model\Validation\QueryComparison::operands($value, $choice)) {
+                throw new \SqlSemantics\Model\Validation\InvalidStructure('Each IN candidate must have the compared value\'s row width.');
+            }
+        }
         parent::__construct($facts, $source);
         foreach ($this->inputs() as $input) {
             if ($input->type->dialect !== $facts->type->dialect) {

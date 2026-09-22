@@ -202,4 +202,24 @@ final class BoundSelectTest extends TestCase
         self::assertSame('n', $changed->outputs[0]->expression->columnBinding()?->column->name);
         self::assertCount(2, $statement->outputs);
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::Sqlite])]
+    public function testWithOutputsRequiresAProjectionOutsidePostgreSql(Dialect $dialect): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect))->build()))->bind('SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        $statement->withOutputs([]);
+    }
+
+    public function testWithOutputsPreservesAnEmptyPostgreSqlProjection(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('SELECT id FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        $changed = $statement->withOutputs([]);
+        self::assertSame([], $changed->resultColumns());
+        self::assertSame('SELECT FROM "public"."t"', $changed->toString());
+        self::assertCount(1, $statement->outputs);
+    }
 }

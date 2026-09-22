@@ -129,7 +129,7 @@ for binding. Construct each `FunctionSignature` with the following fields:
 | `name`, optional `schema` | Resolved function name and namespace, without SQL quoting. |
 | `parameters` | Ordered `TypeDescriptor` argument types; an empty list means no arguments, `null` means unspecified. |
 | `returnType` | A `TypeDescriptor` or deterministic closure from argument types to a result descriptor. |
-| `nullability` | Result NULL fact for non-NULL arguments; defaults to `Unknown`. |
+| `nullability` | Fixed `Nullability`, or a deterministic closure from ordered argument `Nullability` facts to a result fact; defaults to `Unknown`. |
 | `nullOnNull` | Whether NULL input propagates to the result; defaults to false. |
 | `variadic`, `optionalParameters` | Repeated final parameter and number of optional trailing positions. |
 | `aggregate` | Whether the function is an aggregate. |
@@ -144,19 +144,24 @@ unspecified. A variadic signature repeats its final parameter. `optionalParamete
 counts optional trailing positions, including the variadic position when it may
 be omitted. `returnType` can be a deterministic callback over argument types for
 polymorphic functions. It describes a type; it does not execute the SQL function.
-`nullability` describes the result for non-NULL arguments, and `nullOnNull` adds
-NULL propagation from arguments. `aggregate: true` marks an aggregate function.
+`nullability` supplies the result fact, either directly or from argument NULL facts;
+`nullOnNull` adds strict NULL propagation. These callbacks receive static facts, never
+runtime values. `aggregate: true` marks an aggregate function.
 
 Names are resolved identifiers without SQL quotes. PostgreSQL unquoted names are
 lowercase; a quoted name retains its case. `schema` qualifies a function; an
 unqualified call can use the default namespace or an unqualified signature.
 Registering the same name, namespace, and parameter types replaces that overload;
 different parameter types add overloads. Exact argument types take precedence
-over implicit conversions and unspecified signatures. Missing, incompatible, or
-ambiguous arguments to a registered function produce diagnostics, or exceptions
-in strict mode. An unregistered function remains structurally available with an
-unknown result type. COALESCE and NULLIF retain their conditional-expression
-semantics.
+over implicit conversions and unspecified signatures. Incompatible types or ambiguous
+overloads produce diagnostics, or exceptions in strict mode. An impossible argument
+count raises `InvalidSql`, including in non-strict mode. An unregistered function
+retains its explicit name and argument structure with an unknown result type.
+
+MySQL and SQLite COALESCE, IFNULL, and NULLIF use registered signatures, including
+argument-dependent NULL rules. PostgreSQL COALESCE, NULLIF, GREATEST, and LEAST are
+language operations with concrete expression classes. A qualified ordinary function
+such as `app.coalesce(...)` still resolves through the supplied signatures.
 
 ## Invalid definitions
 

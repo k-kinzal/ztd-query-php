@@ -44,6 +44,7 @@ final class Joins
             default => throw new InvalidStructure('Every join requires a classified matching operation.'),
         };
         $right = Relations::write($join->right, $dialect);
-        return new Tree('join', [Relations::write($join->left, $dialect), Build::keyword(($join instanceof NaturalJoin ? 'NATURAL ' : '') . $kind), $join->right instanceof Join ? Build::parentheses($right) : $right, ...$suffix]);
+        $left = Relations::write($join->left, $dialect);
+        return new Tree('join', [$join->left instanceof Join ? Build::parentheses($left) : $left, Build::keyword(($join instanceof NaturalJoin ? 'NATURAL ' : '') . $kind), $join->right instanceof Join ? Build::parentheses($right) : $right, ...$suffix]);
     }
 }

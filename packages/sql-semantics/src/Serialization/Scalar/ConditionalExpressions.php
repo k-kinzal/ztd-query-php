@@ -19,8 +19,11 @@ final class ConditionalExpressions
     /**
      * Writes conditional operands with their predicate and result roles intact.
      */
-    public static function write(Conditional\JsonMembership|Conditional\Coalesce|Conditional\NullIf|Conditional\Between|Conditional\InList|Conditional\PatternMatch|Conditional\SimpleCase|Conditional\SearchedCase $value): Tree
+    public static function write(Conditional\Extremum|Conditional\JsonMembership|Conditional\Coalesce|Conditional\NullIf|Conditional\Between|Conditional\InList|Conditional\PatternMatch|Conditional\SimpleCase|Conditional\SearchedCase $value): Tree
     {
+        if ($value instanceof Conditional\Extremum) {
+            return new Tree('extremum', [Build::keyword($value->selection->value), Build::parentheses(Build::separated(array_map(Expressions::write(...), $value->arguments)))]);
+        }
         if ($value instanceof Conditional\JsonMembership) {
             return Build::parentheses(new Tree('json-membership', [Expressions::write($value->value), Build::keyword('MEMBER OF'), Build::parentheses(Expressions::write($value->array))]));
         }

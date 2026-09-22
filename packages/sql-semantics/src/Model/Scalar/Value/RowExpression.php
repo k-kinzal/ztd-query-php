@@ -10,8 +10,11 @@ use SqlSemantics\Model\ExpressionKind;
 use SqlSemantics\Model\Scalar\ExpressionFacts;
 
 /**
- * RowExpression has explicit semantic operands and a fixed expression category.
+ * An ordered record of field expressions; only PostgreSQL permits fewer than two fields.
  * @visibility public
+ * @example Reading a record's fields
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('SELECT ROW(1, 2)');
+ *     count($statement->outputs[0]->expression->items) // => 2
  */
 final class RowExpression extends Expression
 {
@@ -26,6 +29,9 @@ final class RowExpression extends Expression
         public readonly array $items,
     ) {
         \SqlSemantics\Model\Validation\Collections::objects($items, Expression::class);
+        if (count($items) < 2 && $facts->type->dialect !== \SqlSemantics\Dialect::PostgreSql) {
+            throw new \SqlSemantics\Model\Validation\InvalidStructure('A row constructor requires at least two fields outside PostgreSQL.');
+        }
         if ($facts->type->identity !== \SqlSemantics\Type\Identity\BuiltinIdentity::Record) {
             throw new \SqlSemantics\Model\Validation\InvalidStructure('A row constructor has a record result type.');
         }

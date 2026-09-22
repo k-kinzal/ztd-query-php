@@ -25,6 +25,10 @@ final class CreateBinder
         $create = Tree::outer($statement, ['CreateStmt', 'create_table_stmt', 'create_table'])[0] ?? (preg_match('/^CREATE (TEMPORARY )?TABLE /i', Tree::text($statement)) === 1 ? $statement : null);
         $declarations = [];
         if ($create !== null) {
+            $copy = TableLikeBinder::bind($origin, $create, $context);
+            if ($copy !== null) {
+                return $copy;
+            }
             $reader = new \SqlSemantics\Ast\SchemaReader($tables->identifiers, $tables->defaultSchema, $tables->diagnostics->report(...));
             $declarations[] = \SqlSemantics\Binding\Schema\DeclarationBinder::bind($reader->table($tables->identifiers->dialect === \SqlSemantics\Dialect::Sqlite ? $statement : $create), $context);
         }

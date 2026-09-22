@@ -29,6 +29,7 @@ enum ExpressionKind: string
     case Parameter = 'parameter';
     case Operator = 'operator';
     case Coalesce = 'coalesce';
+    case Extremum = 'extremum';
     case NullIf = 'null-if';
     case Cast = 'cast';
     case Function = 'function';

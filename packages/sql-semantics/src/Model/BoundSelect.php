@@ -52,6 +52,9 @@ final class BoundSelect extends BoundQuery
         Validation\StatementOperands::relation($from, $origin->dialect);
         $this->relations = Relation\Joining\Inputs::tables($from);
         Validation\StatementOperands::outputs($outputs, $origin->dialect);
+        if ($outputs === [] && $origin->dialect !== \SqlSemantics\Dialect::PostgreSql) {
+            throw new Validation\InvalidStructure('A SELECT projection requires at least one output outside PostgreSQL.');
+        }
         Validation\StatementOperands::expressions([$where, $having, ...$groupBy], $origin->dialect);
         Validation\Collections::objects($orderBy, Ordering::class);
         Validation\Collections::objects($groupBy, Expression::class);

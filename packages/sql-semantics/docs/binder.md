@@ -91,6 +91,7 @@ subnamespaces under `Model\Statement`.
 | MySQL: `LOCK TABLES users AS u READ LOCAL, incoming WRITE` | `LockTablesStatement` | Nonempty `locks`; each `MySqlTableLock` owns its required table occurrence, alias, and independent `MySqlLockMode`. |
 | `CHECKPOINT` | `CheckpointStatement` | A checkpoint request with no value operands. |
 | MySQL: `KILL CONNECTION 42`, `KILL QUERY 42` | `KillConnectionStatement`, `KillQueryStatement` | A required `connectionId` expression and a concrete operation identifying what to stop. |
+| MySQL: `CREATE TEMPORARY TABLE copied LIKE original` | `CreateTableLikeStatement` | Required destination `target` and `template` table reference, plus `temporary` and `ifNotExists`. The reference exposes the supplied source definition without applying the copy to the snapshot. |
 | MySQL: `INSTALL PLUGIN audit SONAME 'audit.so'` | `InstallPluginStatement` | Required plugin `name` and text-literal `library`. |
 | MySQL: `UNINSTALL PLUGIN audit` | `UninstallPluginStatement` | Required plugin `name`. |
 | MySQL: `RESTART`, `SHUTDOWN`, `UNLOCK TABLES` | `RestartServerStatement`, `ShutdownServerStatement`, `UnlockTablesStatement` | Distinct operations with no value operands. |
@@ -172,7 +173,8 @@ COMMIT, and REINDEX do not expose a result-column API.
 an `ordinal`, optional output `name`, and typed `expression`. Repeated names retain
 separate positions. Wildcards expand using visible declarations. An unresolved
 wildcard records an unknown result width rather than pretending to be one known
-column.
+column. PostgreSQL permits a projection with zero output columns. MySQL and SQLite
+SELECT structures require at least one output.
 
 | Expression form | Information returned |
 |-----------------|----------------------|
@@ -180,12 +182,17 @@ column.
 | Literal | `LiteralKind` and exact SQL literal `text`, preserving numeric precision and quoting. |
 | Binary or unary operation | An operator enum and required `left`/`right` or `operand`. |
 | Function | `FunctionCall` has a registered or unresolved function reference and ordered value arguments. |
+| PostgreSQL COALESCE and NULLIF | `Coalesce` retains ordered alternatives; `NullIf` has required `left` and `right` comparison operands. These are language operations. |
+| PostgreSQL GREATEST and LEAST | `Extremum` has an `ExtremumKind selection` and nonempty ordered `arguments` converted to the common result type. |
+| MySQL and SQLite conditional functions | COALESCE and NULLIF are `FunctionCall` objects referencing their registered `FunctionSignature`, including application replacements. |
 | Aggregate over values | `AggregateCall` retains value arguments, ALL/DISTINCT, optional input ordering, and FILTER. |
 | Aggregate over rows, such as `count(*)` | `AllRowsAggregate` retains the function reference and optional FILTER; it has no value-argument list. |
 | Ordered-set aggregate | `OrderedSetCall` separates `directArguments` from the required `withinGroup` row ordering and optional FILTER. Both argument groups participate in signature resolution. |
 | Window function | `WindowCall` retains the invocation and its window specification or named window reference. |
 | JSON membership | MySQL `JsonMembership` has a required searched `value` and JSON `array` input. Neither is evaluated during binding. |
 | CASE | `SimpleCase` requires a selector; `SearchedCase` requires predicates. Each retains ordered branches and its optional ELSE value. |
+| Row constructor | `RowExpression` retains ordered field `items`. PostgreSQL allows zero or more fields; MySQL and SQLite require at least two. |
+| IN with value candidates | `InList` has a searched `value`, ordered `choices`, and `negated` flag. Known row widths must agree; SQLite permits an empty candidate list. |
 | Scalar subquery | `ScalarSubquery` with a query producing one known column, or an unresolved width. |
 | Row subquery | `RowSubquery` with a row-producing query, distinct from a scalar query. |
 | EXISTS, IN, quantified comparison | Dedicated classes retain the query and each required comparison operand. |
@@ -199,6 +206,9 @@ returns contributing column bindings while preserving distinct relation occurren
 A selected column takes its declared type and NULL fact, adjusted for outer joins at
 that occurrence. Operators derive facts from their operands and dialect. Functions
 use registered signatures. A compound result combines corresponding operand types.
+SQLite MIN and MAX with one argument are `AggregateCall`; with two or more arguments
+they are `FunctionCall`. PostgreSQL GREATEST and LEAST retain their non-NULL selection
+semantics independently of registered functions with similar names.
 `TypeDescriptor::identity` carries typed storage parameters; `unknown` denotes missing
 static type information. No expression is evaluated to infer its runtime value.
 

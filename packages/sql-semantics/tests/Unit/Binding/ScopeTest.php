@@ -203,7 +203,8 @@ final class ScopeTest extends TestCase
         $query = (new Binder($schema))->bind('SELECT id FROM x LEFT JOIN (a JOIN b USING(id)) ON x.k=a.id');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame('maybe-null', $query->outputs[0]->expression->nullability->value);
-        self::assertSame(['j0'], $query->outputs[0]->expression->nullExtendedBy);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\Joining\OnJoin::class, $query->from);
+        self::assertSame([$query->from->id], $query->outputs[0]->expression->nullExtendedBy);
     }
 
     public function testDiagnosticsPropagatesThroughLexicalScopes(): void

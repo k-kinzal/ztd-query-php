@@ -22,12 +22,12 @@ final class ProjectionBinder
 {
     /**
      * @return list<OutputColumn>
+     * @throws \SqlSemantics\InvalidSql
      */
     public function bind(Node $select, Scope $scope): array
     {
         if ($select->name === 'derived_table_list') {
-            $scope->diagnostics()->report('invalid-query-input', 'A query operand requires SELECT, VALUES, or TABLE.', $select);
-            return [];
+            throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::QueryOperand, $select);
         }
         $items = QueryNodes::local($select, ['target_el', 'select_item']);
         $mysqlList = QueryNodes::local($select, ['select_item_list'])[0] ?? null;

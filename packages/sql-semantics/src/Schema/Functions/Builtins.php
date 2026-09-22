@@ -34,9 +34,12 @@ final class Builtins
             'unknown' => ['RANDOM'],
             'argument' => ['GENERATE_SERIES', 'UNNEST', 'MIN', 'MAX', 'ABS', 'ROUND', 'LAG', 'LEAD', 'FIRST_VALUE', 'LAST_VALUE', 'NTH_VALUE', 'AVG', 'SUM', 'ARRAY_AGG'],
         ];
-        $result = [];
+        $result = ConditionalSignatures::forDialect($dialect);
         foreach ($groups as $type => $names) {
             foreach ($names as $name) {
+                if ($dialect === Dialect::Sqlite && in_array($name, ['MIN', 'MAX'], true)) {
+                    continue;
+                }
                 $aggregate = in_array($name, ['COUNT', 'SUM', 'AVG', 'MIN', 'MAX', 'TOTAL', 'GROUP_CONCAT', 'STRING_AGG', 'ARRAY_AGG', 'JSON_AGG', 'JSONB_AGG', 'BOOL_AND', 'BOOL_OR', 'EVERY'], true);
                 $notNull = in_array($name, ['COUNT', 'ROW_NUMBER', 'RANK', 'DENSE_RANK', 'NTILE', 'CURRENT_DATE', 'CURRENT_TIMESTAMP', 'RANDOM', 'RAND', 'TOTAL'], true);
                 $strict = in_array($name, ['LOWER', 'UPPER', 'LENGTH', 'CHAR_LENGTH', 'ABS', 'ROUND', 'TRIM', 'LTRIM', 'RTRIM'], true);

@@ -141,13 +141,17 @@ final class SettingTokensTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SET @n=COALESCE(1,2), @m=3');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
         self::assertCount(2, $statement->settings);
-        self::assertSame('coalesce', $statement->settings[0]->value->kind->value);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedUserVariable::class, $statement->settings[0]);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Function\FunctionCall::class, $statement->settings[0]->value);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Function\DeclaredFunction::class, $statement->settings[0]->value->function);
+        self::assertSame('coalesce', $statement->settings[0]->value->function->signature->name);
         self::assertCount(2, $statement->settings[0]->value->inputs());
     }
     public function testValueDoesNotResolveKeywordsAsColumns(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SET enable_seqscan TO off');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $statement->settings[0]);
         self::assertSame('configuration-value', $statement->settings[0]->values[0]->kind->value);
         self::assertSame('OFF', $statement->settings[0]->values[0]->spelling());
     }

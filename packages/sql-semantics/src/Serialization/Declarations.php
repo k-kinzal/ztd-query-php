@@ -20,6 +20,15 @@ use SqlSemantics\Schema\Table;
 final class Declarations
 {
     /**
+     * Preserves the template relation instead of expanding it into column declarations.
+     */
+    public static function like(\SqlSemantics\Model\Statement\Table\CreateTableLikeStatement $statement): Tree
+    {
+        $dialect = $statement->origin->dialect;
+        return new Tree('create-like', [Build::keyword('CREATE' . ($statement->temporary ? ' TEMPORARY' : '') . ' TABLE' . ($statement->ifNotExists ? ' IF NOT EXISTS' : '')), Build::identifier($statement->target->parts, $dialect), Build::keyword('LIKE'), Query\Relations::target($statement->template, $dialect)]);
+    }
+
+    /**
      * Writes a table and its declared columns, integrity constraints and indexes.
      */
     public static function table(CreateTableStatement $statement): Tree

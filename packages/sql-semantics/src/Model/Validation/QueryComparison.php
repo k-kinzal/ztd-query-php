@@ -18,6 +18,16 @@ use SqlSemantics\Type\Identity\BuiltinIdentity;
 final class QueryComparison
 {
     /**
+     * Compares expression widths without resolving unknown composite declarations.
+     */
+    public static function operands(Expression $left, Expression $right): bool
+    {
+        $leftWidth = self::width($left);
+        $rightWidth = self::width($right);
+        return $leftWidth === null || $rightWidth === null || $leftWidth === $rightWidth;
+    }
+
+    /**
      * Unknown relation widths remain unresolved, without inventing columns.
      */
     public static function compatible(Expression $value, BoundQuery $query): bool
@@ -36,7 +46,7 @@ final class QueryComparison
             $value instanceof RowExpression => count($value->items),
             $value instanceof ScalarSubquery => isset($value->query->resultColumns()[0]) ? self::width($value->query->resultColumns()[0]->expression) : null,
             $value instanceof RowSubquery => RowShape::width($value->query),
-            $value->type->identity === BuiltinIdentity::Record, $value->type->identity === BuiltinIdentity::Unknown => null,
+            $value->type->identity === BuiltinIdentity::Record, $value->type->identity === BuiltinIdentity::Unknown, $value->type->identity instanceof \SqlSemantics\Type\Identity\NamedIdentity => null,
             default => 1,
         };
     }

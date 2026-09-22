@@ -25,7 +25,7 @@ final class FunctionSignature
      * @param string $name Resolved function name without SQL quoting
      * @param list<TypeDescriptor>|null $parameters Argument types; null leaves argument types and arity unspecified
      * @param TypeDescriptor|Closure(list<TypeDescriptor>): TypeDescriptor $returnType Fixed or argument-dependent result type
-     * @param Nullability $nullability Result NULL fact when no argument is NULL
+     * @param Nullability|Closure(list<Nullability>): Nullability $nullability Fixed result NULL fact or a deterministic rule over argument NULL facts
      * @param bool $nullOnNull Whether a NULL argument guarantees a NULL result
      * @param bool $variadic Whether the final parameter repeats
      * @param int $optionalParameters Number of optional trailing parameters, including a variadic parameter
@@ -37,7 +37,7 @@ final class FunctionSignature
         public readonly string $name,
         public readonly ?array $parameters,
         public readonly TypeDescriptor|Closure $returnType,
-        public readonly Nullability $nullability = Nullability::Unknown,
+        public readonly Nullability|Closure $nullability = Nullability::Unknown,
         public readonly bool $nullOnNull = false,
         public readonly bool $variadic = false,
         public readonly int $optionalParameters = 0,

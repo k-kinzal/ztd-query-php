@@ -32,20 +32,22 @@ final class ExpressionRules
      */
     public function call(string $name, array $operands, Node $source): Expression
     {
-        if (!in_array($name, ['COALESCE', 'NULLIF'], true)) {
+        if (!in_array($name, ['COALESCE', 'NULLIF', 'GREATEST', 'LEAST'], true)) {
             return (new Scalar\FunctionRules())->bind($name, $operands, $source, new Scope(new \SqlSemantics\Ast\Identifiers($this->dialect)));
         }
         if ($operands === [] || ($name === 'NULLIF' && count($operands) !== 2)) {
-            $this->diagnostics->report('invalid-arity', 'Invalid argument count for ' . $name, $source);
-            return new \SqlSemantics\Model\Scalar\Function\FunctionCall(new \SqlSemantics\Model\Scalar\ExpressionFacts(TypeDescriptor::builtin($this->dialect, 'unknown'), Nullability::Unknown), $source, new \SqlSemantics\Model\Scalar\Function\UnresolvedFunction(new \SqlSemantics\Model\Scalar\Function\FunctionName([$name])), $operands);
+            throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::FunctionArity, $source);
         }
         $type = (new TypeResolution($this->dialect, $this->diagnostics))->common($operands, $source);
-        if ($name === 'COALESCE') {
+        if ($name !== 'NULLIF') {
             if ($this->dialect === Dialect::PostgreSql && $type->name !== 'unknown') {
                 $operands = array_map(fn (Expression $operand): Expression => $this->coerce($operand, $type), $operands);
             }
             $nullability = NullFacts::coalesce($operands);
-            return new \SqlSemantics\Model\Scalar\Conditional\Coalesce(new \SqlSemantics\Model\Scalar\ExpressionFacts($type, $nullability, NullFacts::extensions($operands, $nullability)), $source, $operands);
+            $facts = new \SqlSemantics\Model\Scalar\ExpressionFacts($type, $nullability, NullFacts::extensions($operands, $nullability));
+            return $name === 'COALESCE'
+                ? new \SqlSemantics\Model\Scalar\Conditional\Coalesce($facts, $source, $operands)
+                : new \SqlSemantics\Model\Scalar\Conditional\Extremum($facts, $source, \SqlSemantics\Model\Scalar\Conditional\ExtremumKind::from($name), $operands);
         }
         $type = $operands[0]->type;
         $nullability = $operands[0]->nullability === Nullability::AlwaysNull ? Nullability::AlwaysNull : Nullability::MaybeNull;
@@ -74,6 +76,9 @@ final class ExpressionRules
             'NOTNULL', 'NOT NULL' => 'IS NOT NULL',
             default => strtoupper($operator),
         };
+        if (in_array($operator, ['IN', 'NOT IN'], true)) {
+            return (new Scalar\Conditional\MembershipBinder())->bind($operator === 'NOT IN', $operands[0], array_slice($operands, 1), $source, $this);
+        }
         if (in_array($operator, ['MEMBER', 'MEMBER OF'], true) && count($operands) === 2) {
             return new \SqlSemantics\Model\Scalar\Conditional\JsonMembership(new \SqlSemantics\Model\Scalar\ExpressionFacts((new TypeResolution($this->dialect, $this->diagnostics))->boolean(), NullFacts::strict($operands)), $source, $operands[0], $operands[1]);
         }

@@ -58,7 +58,12 @@ contain an unrelated session or maintenance command.
 Operation classes carry native typed operands; enum choices and constructor checks
 prevent incompatible shapes. INSERT VALUES requires rows; INSERT SELECT requires a
 query. A write slot may instead use `DefaultSource::Column`; a scalar query slot
-requires an expression. Row and set-operation widths must agree when known. `ValuesStatement`, `TableStatement`, and `CompoundStatement` derive their result
+requires an expression. Row and set-operation widths must agree when known.
+IN candidates must match their searched value's known row width. A row constructor
+requires two or more fields outside PostgreSQL. Empty projections are PostgreSQL
+SELECT forms, and empty IN candidate lists are SQLite forms; immutable changes
+enforce these dialect-specific cardinalities.
+`ValuesStatement`, `TableStatement`, and `CompoundStatement` derive their result
 columns from their operands during construction; result columns cannot be supplied
 as an independent, contradictory argument. Supplied columns, computed
 columns, and identity columns have different value-source types. A diagnostic source

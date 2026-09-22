@@ -41,6 +41,7 @@ final class FunctionResolver
     /**
      * @param list<FunctionSignature> $candidates
      * @param list<Expression> $arguments
+     * @throws \SqlSemantics\InvalidSql
      */
     public function overload(array $candidates, array $arguments, Node $source, Scope $scope): ?FunctionSignature
     {
@@ -66,7 +67,10 @@ final class FunctionResolver
             return $best[0];
         }
         $arity = array_filter($candidates, static fn (FunctionSignature $candidate): bool => FunctionMatch::arity($candidate, count($arguments)));
-        $reason = $best !== [] ? 'ambiguous-function' : ($arity === [] ? 'invalid-arity' : 'incompatible-arguments');
+        if ($arity === []) {
+            throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::FunctionArity, $source);
+        }
+        $reason = $best !== [] ? 'ambiguous-function' : 'incompatible-arguments';
         $scope->diagnostics()->report($reason, 'Cannot resolve a unique function signature for ' . $candidates[0]->name, $source);
         return null;
     }

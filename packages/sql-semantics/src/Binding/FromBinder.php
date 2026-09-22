@@ -127,10 +127,10 @@ final class FromBinder
         if ($kindNode === null && in_array('CROSS', explode(' ', strtoupper($joinWords)), true)) {
             $kind = JoinKind::Cross;
         }
-        $id = $this->ids->join();
         $left = $this->relation($references[0]);
         $lateral = str_starts_with(strtoupper(Tree::text($references[1])), 'LATERAL') || QueryNodes::local($references[1], ['func_table', 'table_function', 'json_table', 'xmltable']) !== [];
         $right = ($lateral ? new self($this->tables, $this->ids, $this->queries, $left->scope, $this->scopeId) : $this)->relation($references[1]);
+        $id = $this->ids->join();
         if (($qualifier !== null && str_starts_with(strtoupper(Tree::text($qualifier)), 'USING')) || str_contains(strtoupper($joinWords . ' ' . ($kindNode === null ? '' : Tree::text($kindNode))), 'NATURAL')) {
             return (new Query\UsingJoin())->bind($left, $right, $kind, $node, $id, $qualifier);
         }
@@ -161,9 +161,9 @@ final class FromBinder
             Tree::invalid($prefix, 'SQLite join');
         }
         $kind = $this->kind(Tree::text($operator), $operator);
-        $id = $this->ids->join();
         $left = $this->relation($previous);
         $right = $this->sqliteInput($node);
+        $id = $this->ids->join();
         if (($qualifier !== null && str_starts_with(strtoupper(Tree::text($qualifier)), 'USING')) || str_contains(strtoupper(Tree::text($operator)), 'NATURAL')) {
             return (new Query\UsingJoin())->bind($left, $right, $kind, $node, $id, $qualifier);
         }

@@ -12,6 +12,8 @@ namespace SqlSemantics\Model\Validation;
  */
 enum InputViolation: string
 {
+    case QueryOperand = 'query-operand';
+    case FunctionArity = 'function-arity';
     case ReindexOption = 'reindex-option';
     case ConcurrentSystemReindex = 'concurrent-system-reindex';
     case OrderedSetWindow = 'ordered-set-window';
@@ -47,6 +49,8 @@ enum InputViolation: string
     public function message(): string
     {
         return [
+            'query-operand' => 'A query operand requires a SELECT, VALUES, or TABLE operation.',
+            'function-arity' => 'The function or conditional operation requires its declared number of arguments.',
             'reindex-option' => 'REINDEX requires a known option and a value in its declared domain.',
             'concurrent-system-reindex' => 'System-table indexes cannot be rebuilt concurrently.',
             'ordered-set-window' => 'An ordered-set aggregate cannot be used as a window function.',

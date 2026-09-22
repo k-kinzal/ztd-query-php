@@ -144,6 +144,9 @@ final class FunctionSignatureTest extends TestCase
         $signature = new FunctionSignature('price', [$type], $type, Nullability::NotNull, true, schema: 'shop');
         self::assertSame('shop', $signature->schema);
         self::assertInstanceOf(TypeDescriptor::class, $signature->returnType);
+        self::assertInstanceOf(\SqlSemantics\Type\Identity\Numeric\NumericStorage::class, $signature->returnType->identity);
+        self::assertNotNull($signature->returnType->identity->precision);
+        self::assertNotNull($signature->returnType->identity->scale);
         self::assertSame('10', $signature->returnType->identity->precision->spelling);
         self::assertSame('2', $signature->returnType->identity->scale->spelling);
         self::assertTrue($signature->nullOnNull);
@@ -162,4 +165,15 @@ final class FunctionSignatureTest extends TestCase
         self::assertNull($signature->schema);
     }
 
+
+    public function testRetainsNullRulesThatReceiveOnlyArgumentFacts(): void
+    {
+        $integer = new TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::Integer);
+        $signature = new FunctionSignature('identity_nulls', [$integer], $integer, static fn (array $arguments): Nullability => $arguments[0]);
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build()->withFunctions($signature);
+        $query = (new Binder($schema))->bind('SELECT identity_nulls(NULL), identity_nulls(1)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        self::assertSame(Nullability::AlwaysNull, $query->outputs[0]->expression->nullability);
+        self::assertSame(Nullability::NotNull, $query->outputs[1]->expression->nullability);
+    }
 }

@@ -24,6 +24,10 @@ final class FunctionsTest extends TestCase
      */
     #[TestWith(['SELECT "MiXeD"(1)', ['MiXeD']])]
     #[TestWith(['SELECT "App"."MiXeD"(1)', ['App', 'MiXeD']])]
+    #[TestWith(['SELECT "coalesce"(1)', ['coalesce']])]
+    #[TestWith(['SELECT "greatest"(1)', ['greatest']])]
+    #[TestWith(['SELECT "current_date"()', ['current_date']])]
+    #[TestWith(['SELECT "select"(1)', ['select']])]
     public function testWritePreservesCaseSensitiveFunctionNames(string $sql, array $parts): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());

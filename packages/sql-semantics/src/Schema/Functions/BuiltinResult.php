@@ -31,6 +31,9 @@ final class BuiltinResult
         $name = $this->name;
         $dialect = $this->dialect;
         $input = $arguments[0] ?? TypeDescriptor::builtin($dialect, 'unknown');
+        if ($name === 'COALESCE') {
+            return \SqlSemantics\Type\CommonStorage::resolve($dialect, $arguments);
+        }
         if ($name === 'ARRAY_AGG') {
             return $input->name === 'unknown' ? $input : new TypeDescriptor($dialect, new \SqlSemantics\Type\Identity\ArrayStorage($input, [new \SqlSemantics\Type\Identity\ArrayDimension()]));
         }

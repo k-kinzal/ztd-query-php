@@ -161,8 +161,10 @@ final class FromBinderTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind('SELECT a.id, b.id, c.id FROM users a LEFT JOIN users b ON a.id=b.id RIGHT JOIN users c ON b.id=c.id');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
-        self::assertSame(['j0'], $statement->outputs[0]->expression->nullExtendedBy);
-        self::assertSame(['j1', 'j0'], $statement->outputs[1]->expression->nullExtendedBy);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\Joining\OnJoin::class, $statement->from);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\Joining\OnJoin::class, $statement->from->left);
+        self::assertSame([$statement->from->id], $statement->outputs[0]->expression->nullExtendedBy);
+        self::assertSame([$statement->from->left->id, $statement->from->id], $statement->outputs[1]->expression->nullExtendedBy);
         self::assertSame([], $statement->outputs[2]->expression->nullExtendedBy);
     }
 
@@ -312,4 +314,24 @@ final class FromBinderTest extends TestCase
         self::assertSame($query->ctes->definitions[0]->query, $query->relations[0]->definition->query);
     }
 
+
+    #[TestWith(['mysql-5.6.51'])]
+    #[TestWith(['mysql-5.7.44'])]
+    #[TestWith(['mysql-8.4.7'])]
+    public function testJoinedUsesStableIdentitiesForCommaAndCrossJoinInputs(string $version): void
+    {
+        $schema = (new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t(id INTEGER)');
+        $binder = new Binder($schema);
+        $statement = $binder->bind('UPDATE LOW_PRIORITY IGNORE t a, t b, t c SET a.id=DEFAULT');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateJoinedStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\Joining\CrossJoin::class, $statement->from);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\Joining\CrossJoin::class, $statement->from->left);
+        $rebound = $binder->bind($statement->toString());
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateJoinedStatement::class, $rebound);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\Joining\CrossJoin::class, $rebound->from);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\Joining\CrossJoin::class, $rebound->from->left);
+        self::assertSame($statement->from->id, $rebound->from->id);
+        self::assertSame($statement->from->left->id, $rebound->from->left->id);
+        self::assertSame($statement->toString(), $rebound->toString());
+    }
 }

@@ -61,6 +61,7 @@ final class Statements
             $statement instanceof Statement\DeleteStatement => Mutations::write($statement),
             $statement instanceof Statement\MergeStatement => Merges::write($statement),
             $statement instanceof Statement\ConfigurationStatement => Settings::write($statement),
+            $statement instanceof Statement\Table\CreateTableLikeStatement => Declarations::like($statement),
             $statement instanceof Statement\CreateTableStatement => Declarations::table($statement),
             $statement instanceof Statement\CreateIndexStatement => Declarations::index($statement),
             default => throw new InvalidStructure('Unclassified statement serializer: ' . $statement::class),

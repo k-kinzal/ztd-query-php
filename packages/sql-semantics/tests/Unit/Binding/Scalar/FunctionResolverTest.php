@@ -166,9 +166,6 @@ final class FunctionResolverTest extends TestCase
         $boundQuery1 = $binder->bind('SELECT pick(NULL)', strict: false);
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery1);
         self::assertSame('ambiguous-function', $boundQuery1->diagnostics[0]->reason);
-        $boundQuery2 = $binder->bind('SELECT pick()', strict: false);
-        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery2);
-        self::assertSame('invalid-arity', $boundQuery2->diagnostics[0]->reason);
         $boundQuery3 = $binder->bind('SELECT pick(true)', strict: false);
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery3);
         self::assertSame('incompatible-arguments', $boundQuery3->diagnostics[0]->reason);
@@ -186,8 +183,11 @@ final class FunctionResolverTest extends TestCase
         self::assertSame('integer', $boundQuery1->outputs[0]->expression->type->name);
         $boundQuery2 = $binder->bind('CREATE TABLE t(id INTEGER DEFAULT twice(2))');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $boundQuery2);
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\SuppliedColumn::class, $boundQuery2->definition->table->columns[0]->generation);
+        self::assertNotNull($boundQuery2->definition->table->columns[0]->generation->default);
         self::assertSame('integer', $boundQuery2->definition->table->columns[0]->generation->default->type->name);
         $script = $binder->bindAll('SELECT twice(1); SELECT twice(2)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $script[1]);
         self::assertSame('integer', $script[1]->outputs[0]->expression->type->name);
     }
 
@@ -215,10 +215,19 @@ final class FunctionResolverTest extends TestCase
     {
         $integer = new TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('integer'));
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build()->withFunctions(new FunctionSignature('takes_integer', [$integer], $integer));
-        $statement = (new Binder($schema))->bind('SELECT takes_integer()', strict: false);
+        $statement = (new Binder($schema))->bind('SELECT takes_integer(TRUE)', strict: false);
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertSame('Cannot resolve a unique function signature for takes_integer', $statement->diagnostics[0]->message);
         self::assertSame($statement->outputs[0]->expression->source, $statement->diagnostics[0]->source);
+    }
+
+    public function testOverloadRejectsInvalidArityWithoutCreatingAnUnresolvedCall(): void
+    {
+        $integer = new TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::Integer);
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build()->withFunctions(new FunctionSignature('pick', [$integer], $integer));
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage('declared number of arguments');
+        (new Binder($schema))->bind('SELECT pick()', strict: false);
     }
 
 }
