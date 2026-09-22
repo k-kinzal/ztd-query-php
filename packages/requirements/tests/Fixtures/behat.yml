@@ -1,0 +1,7 @@
+default:
+  autoload:
+    '': .
+  suites:
+    default:
+      paths: [example.feature]
+      contexts: [Requirements\Tests\Fixtures\FeatureContext]

@@ -56,3 +56,7 @@ relational structure for fixture generation and SQL metadata consumers. See its
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.
+
+### Requirements
+
+[`k-kinzal/requirements`](packages/requirements/README.md) links source quotations, EARS specifications and executable tests. It reports source coverage, unsupported behavior with reasons, independent specifications and differential CI gates.

@@ -1,0 +1,7 @@
+version: 1
+definitions:
+  - grammar.yaml
+  - decisions.yaml
+coverage:
+  minimum: 60
+$schema: 'https://raw.githubusercontent.com/k-kinzal/ztd-query-php/main/packages/requirements/schemas/config.schema.json'

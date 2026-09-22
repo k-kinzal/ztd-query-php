@@ -1,0 +1,28 @@
+$schema: https://document-schema.org/draft/2026-06/schema
+frontmatter:
+  type: object
+  required: [version, source]
+  properties:
+    version:
+      const: 1
+    source:
+      type: [object, 'null']
+  additionalProperties: false
+maxDepth: 1
+additionalSections: false
+additionalBlocks: false
+sections:
+  - header:
+      pattern: '^[A-Za-z][A-Za-z0-9_.-]*$'
+    minContains: 1
+    additionalBlocks: false
+    additionalSections: false
+    blocks:
+      - type: paragraph
+        minContains: 1
+        maxContains: 1
+      - type: code
+        lang:
+          const: yaml
+        minContains: 0
+        maxContains: 1
