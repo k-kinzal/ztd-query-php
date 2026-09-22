@@ -6,29 +6,11 @@ schema to [Binder](binder.md) when reading queries and other statements.
 
 ## Public interface
 
-The following declarations show the public signatures; method bodies are omitted.
-
-```php
-namespace SqlSemantics;
-
-final class SchemaBuilder
-{
-    public readonly Dialect $dialect;
-    public readonly string $defaultSchema;
-
-    /** @var list<Schema\FunctionSignature> */
-    public readonly array $functions;
-
-    public function __construct(
-        Dialect $dialect,
-        ?string $defaultSchema = null,
-        ?string $grammarVersion = null,
-        array $functions = [],
-    ) { /* ... */ }
-
-    public function build(string ...$sql): Schema { /* ... */ }
-}
-```
+| Entry point | Responsibility |
+|-------------|----------------|
+| `new SchemaBuilder(Dialect $dialect, ?string $defaultSchema = null, ?string $grammarVersion = null, array $functions = [])` | Select the database language and registered function signatures. |
+| `SchemaBuilder::build(string ...$sql): Schema` | Apply schema declarations in order and return a new snapshot. |
+| `Schema::withFunctions(FunctionSignature ...$functions): Schema` | Return a new snapshot with added or replaced function overloads. |
 
 Select `Dialect::MySql`, `Dialect::PostgreSql`, or `Dialect::Sqlite`.
 `defaultSchema` is the namespace for unqualified table names; its default is an
@@ -41,53 +23,13 @@ modified by later calls.
 
 ## Read table and column definitions
 
-```php
-use SqlSemantics\Dialect;
-use SqlSemantics\SchemaBuilder;
+`Schema` exposes `dialect`, `grammarVersion`, `defaultSchema`, ordered `tables`,
+registered `functions`, and original schema `statements`. A snapshot is immutable.
+SchemaBuilder applies definition changes in input order; Binder interprets statements
+against the snapshot it receives. This separates definition evolution from reading the
+meaning of an operation.
 
-$schema = (new SchemaBuilder(Dialect::PostgreSql))->build(
-    'CREATE TABLE prices (amount NUMERIC(10,2) NOT NULL DEFAULT 0)',
-);
-
-$table = $schema->tables[0];
-$column = $table->columns[0];
-
-$table->name;                        // prices
-$column->name;                       // amount
-$column->type->name;                 // numeric
-$column->type->modifiers;            // ['10', '2']
-$column->nullability->value;         // not-null
-$column->defaultExpression;          // Original DEFAULT syntax
-```
-
-The result separates the schema's language settings from its table definitions:
-
-```php
-namespace SqlSemantics;
-
-use SqlParser\Parser\Node;
-use SqlSemantics\Schema\TableDefinition;
-
-final class Schema
-{
-    public readonly Dialect $dialect;
-    public readonly string $grammarVersion;
-    public readonly string $defaultSchema;
-
-    /** @var list<TableDefinition> */
-    public readonly array $tables;
-
-    /** @var list<Node> Original schema statements, in order. */
-    public readonly array $statements;
-
-    /** @var list<Schema\FunctionSignature> Registered function overloads. */
-    public readonly array $functions;
-
-    public function withFunctions(Schema\FunctionSignature ...$functions): self { /* ... */ }
-}
-```
-
-The declarations below describe what callers read from a schema. Each table's
+The following objects describe what callers read from a schema. Each table's
 `columns` and `constraints` preserve declaration order.
 
 | Object | What to read |
@@ -141,61 +83,23 @@ contain explicit declarations, not values fetched from a running server.
 
 ## Register function signatures
 
-Register application functions on the schema used for binding. The existing
-schema remains unchanged:
+Register application functions through `Schema::withFunctions()` on the schema used
+for binding. Construct each `FunctionSignature` with the following fields:
 
-```php
-use SqlSemantics\Binder;
-use SqlSemantics\Schema\FunctionSignature;
-use SqlSemantics\Type\Nullability;
-use SqlSemantics\Type\TypeDescriptor;
-
-$integer = new TypeDescriptor(Dialect::PostgreSql, 'integer');
-$signature = new FunctionSignature(
-    name: 'twice',
-    parameters: [$integer],
-    returnType: $integer,
-    nullability: Nullability::NotNull,
-    nullOnNull: true,
-);
-$schema = (new SchemaBuilder(Dialect::PostgreSql))->build()->withFunctions($signature);
-$result = (new Binder($schema))->bind('SELECT twice(1), twice(NULL)');
-$result->outputs[0]->expression->type->name;         // integer
-$result->outputs[0]->expression->nullability->value; // not-null
-$result->outputs[1]->expression->nullability->value; // always-null
-```
+| Field | Meaning |
+|-------|---------|
+| `name`, optional `schema` | Resolved function name and namespace, without SQL quoting. |
+| `parameters` | Ordered `TypeDescriptor` argument types; an empty list means no arguments, `null` means unspecified. |
+| `returnType` | A `TypeDescriptor` or deterministic closure from argument types to a result descriptor. |
+| `nullability` | Result NULL fact for non-NULL arguments; defaults to `Unknown`. |
+| `nullOnNull` | Whether NULL input propagates to the result; defaults to false. |
+| `variadic`, `optionalParameters` | Repeated final parameter and number of optional trailing positions. |
+| `aggregate` | Whether the function is an aggregate. |
 
 To use signatures while deriving tables or views from SELECTs, supply them to
 `new SchemaBuilder($dialect, functions: [$signature])`. They remain available in
 the returned schema. The default functions are registered as `FunctionSignature`
 objects through the same mechanism; `Schema::$functions` exposes the overloads.
-
-```php
-namespace SqlSemantics\Schema;
-
-use Closure;
-use SqlSemantics\Type\Nullability;
-use SqlSemantics\Type\TypeDescriptor;
-
-final class FunctionSignature
-{
-    /**
-     * @param list<TypeDescriptor>|null $parameters
-     * @param TypeDescriptor|Closure(list<TypeDescriptor>): TypeDescriptor $returnType
-     */
-    public function __construct(
-        public readonly string $name,
-        public readonly ?array $parameters,
-        public readonly TypeDescriptor|Closure $returnType,
-        public readonly Nullability $nullability = Nullability::Unknown,
-        public readonly bool $nullOnNull = false,
-        public readonly bool $variadic = false,
-        public readonly int $optionalParameters = 0,
-        public readonly bool $aggregate = false,
-        public readonly ?string $schema = null,
-    ) { /* ... */ }
-}
-```
 
 `parameters: []` declares no arguments; `null` leaves argument types and arity
 unspecified. A variadic signature repeats its final parameter. `optionalParameters`

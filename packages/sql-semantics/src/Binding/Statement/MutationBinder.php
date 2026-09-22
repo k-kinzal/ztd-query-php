@@ -46,7 +46,7 @@ final class MutationBinder
         $assignments = $this->assignments([...$writes, ...array_merge([], ...array_map(static fn ($conflict): array => $conflict->assignments, $conflicts))]);
         $whereNode = in_array($kind, ['INSERT', 'REPLACE'], true) ? null : (QueryNodes::local($statement, ['where_clause', 'opt_where_clause', 'where_or_current_clause', 'where_opt', 'where_opt_ret'])[0] ?? null);
         $where = (new \SqlSemantics\Binding\Write\ConflictBinder())->predicate($whereNode, $scope);
-        $returning = QueryNodes::local($statement, ['returning_clause', 'where_opt_ret'])[0] ?? null;
+        $returning = QueryNodes::local($statement, ['returning_clause', 'where_opt_ret', 'upsert'])[0] ?? null;
         $outputs = $returning === null || !str_contains(strtoupper(Tree::text($returning)), 'RETURNING') ? [] : (new ProjectionBinder())->bind($returning, $scope);
         $queries = [];
         foreach (Tree::outer($statement, ['SelectStmt', 'query_expression', 'select', 'select_init', 'select_paren', 'insert_query_expression', 'create_select']) as $query) {
@@ -62,7 +62,12 @@ final class MutationBinder
         }
         $modifiers = new \SqlSemantics\Binding\SelectModifiersBinder();
         [$limit, $offset] = $modifiers->pagination($statement, $scope);
-        return new BoundStatement($id, $input->relation ?? ($targets[0] ?? null), $scope->relations, $outputs, $where, false, $modifiers->ordering($statement, $scope, $outputs), $limit, $offset, $source, ctes: $this->context->ctes, kind: $kind, targets: $targets, assignments: $assignments, queries: $queries, rows: $values, insertion: $insertion, writes: $writes, conflicts: $conflicts);
+        $class = match ($kind) {
+            'UPDATE' => \SqlSemantics\Model\Statement\UpdateStatement::class,
+            'DELETE' => \SqlSemantics\Model\Statement\DeleteStatement::class,
+            default => \SqlSemantics\Model\Statement\InsertStatement::class,
+        };
+        return new $class($id, $input->relation ?? ($targets[0] ?? null), $scope->relations, $outputs, $where, false, $modifiers->ordering($statement, $scope, $outputs), $limit, $offset, $source, ctes: $this->context->ctes, kind: $kind, targets: $targets, assignments: $assignments, queries: $queries, rows: $values, insertion: $insertion, writes: $writes, conflicts: $conflicts);
     }
 
     /**

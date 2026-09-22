@@ -22,6 +22,11 @@ use SqlSemantics\Type\TypeDescriptor;
 final class Expression
 {
     /**
+     * SQL expression structure, without source formatting.
+     */
+    public readonly Sql\Tree $sql;
+
+    /**
      * @param ExpressionKind $kind Semantic operation
      * @param TypeDescriptor $type Result type
      * @param Nullability $nullability Conservative NULL fact at this evaluation stage
@@ -30,7 +35,7 @@ final class Expression
      * @param ColumnBinding|null $binding Resolved declaration for a column reference
      * @param string|null $symbol Operator, parameter name, or literal spelling
      * @param list<string> $nullExtendedBy Join IDs that can introduce NULL into this result
-     * @param BoundSelect|null $query Bound scalar, EXISTS, or membership subquery
+     * @param BoundQuery|null $query Bound scalar, EXISTS, or membership subquery
      * @param list<string> $reference Unresolved name parts or wildcard qualifier
      */
     public function __construct(
@@ -42,9 +47,11 @@ final class Expression
         public readonly ?ColumnBinding $binding = null,
         public readonly ?string $symbol = null,
         public readonly array $nullExtendedBy = [],
-        public readonly ?BoundSelect $query = null,
+        public readonly ?BoundQuery $query = null,
         public readonly array $reference = [],
+        ?Sql\Tree $sql = null,
     ) {
+        $this->sql = $sql ?? Sql\Source::read($source);
         Validation\ExpressionInvariant::check($this);
     }
 
@@ -66,4 +73,31 @@ final class Expression
 
         return array_values($unique);
     }
+
+    /**
+     * Constructs one value with safe SQL quoting and no original SQL text.
+     */
+    public static function literal(string|int|float|bool|null $value, \SqlSemantics\Dialect $dialect): self
+    {
+        return Sql\ExpressionFactory::literal($value, $dialect);
+    }
+
+    /**
+     * Constructs a name to resolve in the destination statement's scope.
+     *
+     * @param list<string> $name Identifier parts without SQL quotes
+     */
+    public static function reference(array $name, \SqlSemantics\Dialect $dialect): self
+    {
+        return Sql\ExpressionFactory::reference($name, $dialect);
+    }
+
+    /**
+     * Constructs a binary operation whose facts are bound in its destination statement.
+     */
+    public static function binary(string $operator, self $left, self $right): self
+    {
+        return Sql\ExpressionFactory::binary($operator, $left, $right);
+    }
+
 }

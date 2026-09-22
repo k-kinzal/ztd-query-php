@@ -6,7 +6,11 @@ deptrac:
     - name: API
       collectors:
         - type: classNameRegex
-          value: '/^SqlSemantics\\(Binder|SchemaBuilder)$/'
+          value: '/^SqlSemantics\\(Binder|SchemaBuilder|StatementFactory)$/'
+    - name: Serialization
+      collectors:
+        - type: classNameRegex
+          value: '/^SqlSemantics\\(Serializer|SimpleSerializer)$/'
     - name: Foundation
       collectors:
         - type: classNameRegex
@@ -42,7 +46,8 @@ deptrac:
     Foundation: [Parser]
     Syntax: [Foundation, Schema, Types, Parser]
     Binding: [Foundation, Syntax, Schema, Model, Types, Parser]
-    Model: [Schema, Types, Parser]
+    Serialization: [Model]
+    Model: [Foundation, Schema, Types, Parser]
     Schema: [Foundation, Types, Parser]
     Types: [Foundation]
     Parser: []

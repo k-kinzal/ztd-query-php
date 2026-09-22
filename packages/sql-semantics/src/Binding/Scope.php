@@ -70,6 +70,9 @@ final class Scope
         if ($matches === [] && $this->parent !== null && ($qualifiers === [] || array_filter($this->relations, fn (TableUse $relation): bool => $this->matches($relation, $qualifiers)) === [])) {
             return $this->parent->column($parts, $source);
         }
+        if ($matches === [] && ($literal = (new LiteralBinder($this->identifiers->dialect))->fallback($source)) !== null) {
+            return $literal;
+        }
         if (count($matches) !== 1) {
             $this->diagnostics()->report($matches === [] ? 'unknown-column' : 'ambiguous-column', 'Cannot resolve column unambiguously: ' . implode('.', $parts), $source);
             return new Expression(ExpressionKind::UnresolvedColumn, new \SqlSemantics\Type\TypeDescriptor($this->identifiers->dialect, 'unknown'), Nullability::Unknown, $source, symbol: implode('.', $parts), reference: $parts);
@@ -77,7 +80,7 @@ final class Scope
         $binding = $matches[0];
         $extensions = $this->extensions[$binding->relationId] ?? [];
 
-        return new Expression(ExpressionKind::Column, $binding->column->type, $extensions === [] ? $binding->column->nullability : Nullability::MaybeNull, $source, $origins, binding: $binding, nullExtendedBy: $extensions);
+        return new Expression(ExpressionKind::Column, $binding->column->type, $extensions === [] ? $binding->column->nullability : Nullability::MaybeNull, $source, $origins, binding: $binding, nullExtendedBy: $extensions, sql: \SqlSemantics\Model\Sql\Build::identifier([...$qualifiers, $name], $this->identifiers->dialect));
     }
 
     /**

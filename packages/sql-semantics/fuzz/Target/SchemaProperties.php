@@ -64,9 +64,13 @@ final class SchemaProperties
                 throw new RuntimeException('Schema oracle: a non-boolean row predicate was accepted without a diagnostic.');
             }
         }
+        $built = (new \SqlSemantics\StatementFactory($this->binder->schema))->select([new \SqlSemantics\Model\OutputColumn(0, 'value', \SqlSemantics\Model\Expression::literal($second, $this->dialect))]);
+        if ($built->outputs[0]->name !== 'value' || $built->outputs[0]->expression->symbol !== (string) $second || SemanticFacts::read($built) !== SemanticFacts::read($this->binder->bind($built->toString()))) {
+            throw new RuntimeException('Schema oracle: structure-only construction lost its value or result facts.');
+        }
         $select = $this->binder->bind('SELECT id FROM semantic_property');
-        $changed = $this->binder->replaceExpression($select, $select->outputs[0]->expression, 'n+' . $second);
-        if (($changed->outputs[0]->expression->lineage()[0]->column->name ?? null) !== 'n' || serialize($changed) !== serialize($this->binder->bind($changed->toString()))) {
+        $changed = $select->replaceExpression($select->outputs[0]->expression, \SqlSemantics\Model\Expression::binary('+', \SqlSemantics\Model\Expression::reference(['n'], $this->dialect), \SqlSemantics\Model\Expression::literal($second, $this->dialect)));
+        if (($changed->outputs[0]->expression->lineage()[0]->column->name ?? null) !== 'n' || SemanticFacts::read($changed) !== SemanticFacts::read($this->binder->bind($changed->toString())) || $select->outputs[0]->expression->binding?->column->name !== 'id') {
             throw new RuntimeException('Schema oracle: an expression edit left stale semantic or source information.');
         }
     }

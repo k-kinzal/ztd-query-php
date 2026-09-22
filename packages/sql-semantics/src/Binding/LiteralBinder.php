@@ -101,4 +101,16 @@ final class LiteralBinder
         return null;
     }
 
+
+    /**
+     * Interprets SQLite's boolean identifiers only after relation lookup found no column.
+     */
+    public function fallback(\SqlParser\Parser\Node|Token $source): ?Expression
+    {
+        $text = \SqlSemantics\Ast\Tree::text($source);
+        if ($this->dialect !== Dialect::Sqlite || !in_array(strtoupper($text), ['TRUE', 'FALSE'], true)) {
+            return null;
+        }
+        return new Expression(ExpressionKind::Literal, new TypeDescriptor($this->dialect, 'integer'), Nullability::NotNull, $source, symbol: $text);
+    }
 }

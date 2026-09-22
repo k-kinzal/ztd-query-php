@@ -8,7 +8,6 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Binding\BoundRelation;
 use SqlSemantics\Binding\ExpressionBinder;
 use SqlSemantics\Binding\Scope;
-use SqlSemantics\Model\BoundSelect;
 use SqlSemantics\Model\Expression;
 use SqlSemantics\Model\OutputColumn;
 use SqlSemantics\Model\TableUse;
@@ -45,7 +44,7 @@ final class RelationFactory
         if ($declared !== []) {
             $outputs = $declared;
         }
-        $query = new BoundSelect($context->ids->scope(), null, [], $outputs, null, false, [], null, null, $function);
+        $query = new \SqlSemantics\Model\Statement\RelationQuery($context->ids->scope(), null, [], $outputs, null, false, [], null, null, $function);
         $declaration = QueryRelation::declaration($query, $name, [], $source);
         $table = new TableUse($context->ids->relation(), $scopeId, $declaration, $name, $source, $query);
         return new BoundRelation($table, new Scope($scope->identifiers, [$table], parent: $parent, queries: $context));
@@ -88,7 +87,7 @@ final class RelationFactory
         $outputs = (new \SqlSemantics\Binding\ProjectionBinder())->star([], $relation->scope, $source, 0);
         $id = $context->ids->scope();
         $inputs = array_map(static fn (TableUse $input): TableUse => new TableUse($input->id, $id, $input->declaration, $input->alias, $input->source, $input->query), $relation->scope->relations);
-        $query = new BoundSelect($id, $this->rescope($relation->relation, array_column($inputs, null, 'id')), $inputs, $outputs, null, false, [], null, null, $source);
+        $query = new \SqlSemantics\Model\Statement\RelationQuery($id, $this->rescope($relation->relation, array_column($inputs, null, 'id')), $inputs, $outputs, null, false, [], null, null, $source);
         $name = $names[0] ?? $query->scopeId;
         $declaration = QueryRelation::declaration($query, $name, array_slice($names, 1), $source);
         $table = new TableUse($context->ids->relation(), $scopeId, $declaration, $name, $source, $query);

@@ -41,7 +41,7 @@ final class UtilityBinder
             }
         }
         $statements = array_map(fn (Node $command): BoundStatement => (new StatementBinder($this->context->tables))->node($command, $command, $this->context), $commands);
-        $queries = array_values(array_filter($statements, static fn (BoundStatement $command): bool => $command instanceof \SqlSemantics\Model\BoundSelect));
+        $queries = array_values(array_filter($statements, static fn (BoundStatement $command): bool => $command instanceof \SqlSemantics\Model\BoundQuery));
         $tables = $this->context->tables;
         $create = Tree::outer($statement, ['CreateStmt', 'create_table_stmt', 'create_table'])[0] ?? (preg_match('/^CREATE (TEMPORARY )?TABLE /i', Tree::text($statement)) === 1 ? $statement : null);
         $declarations = [];
@@ -66,7 +66,8 @@ final class UtilityBinder
                 $expressions[] = (new \SqlSemantics\Binding\ExpressionBinder())->bind($node, $scope);
             }
         }
-        return new BoundStatement($id, null, [], [], null, false, [], null, null, $source, clauses: ['arguments' => $expressions], kind: $kind, targets: $targets, queries: $queries, syntaxClauses: \SqlSemantics\Binding\Query\QueryNodes::clauses($statement), declarations: $declarations, settings: $settings, definitions: $definitions, statements: $statements, indexes: $boundIndexes);
+        $class = $declarations !== [] ? \SqlSemantics\Model\Statement\CreateTableStatement::class : ($index !== null ? \SqlSemantics\Model\Statement\CreateIndexStatement::class : (in_array($kind, ['SET', 'RESET', 'PRAGMA'], true) ? \SqlSemantics\Model\Statement\ConfigurationStatement::class : \SqlSemantics\Model\Statement\CommandStatement::class));
+        return new $class($id, null, [], [], null, false, [], null, null, $source, clauses: ['arguments' => $expressions], kind: $kind, targets: $targets, queries: $queries, syntaxClauses: \SqlSemantics\Binding\Query\QueryNodes::clauses($statement), declarations: $declarations, settings: $settings, definitions: $definitions, statements: $statements, indexes: $boundIndexes);
     }
     /**
      * Stops at each nested command boundary, including utility wrappers around queries.

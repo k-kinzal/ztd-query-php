@@ -1,0 +1,81 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Model\Sql;
+
+use SqlSemantics\Dialect;
+use SqlSemantics\Model\Expression;
+use SqlSemantics\Model\Ordering;
+use SqlSemantics\Model\OutputColumn;
+use SqlSemantics\Model\Validation\Collections;
+
+/**
+ * Builds typed statement components, preserving expression and identifier boundaries.
+ *
+ * @visibility SqlSemantics
+ */
+final class Parts
+{
+    /**
+     * @param list<OutputColumn> $outputs
+     * @throws \SqlSemantics\Model\Validation\InvalidStructure
+     */
+    public static function outputs(array $outputs, Dialect $dialect): Tree
+    {
+        Collections::objects($outputs, OutputColumn::class);
+        foreach ($outputs as $ordinal => $output) {
+            if ($output->ordinal !== $ordinal || $output->expression->type->dialect !== $dialect) {
+                throw new \SqlSemantics\Model\Validation\InvalidStructure('Projection positions and dialect must match the destination statement.');
+            }
+        }
+        return Build::separated(array_map(static fn (OutputColumn $output): Tree => new Tree('output', [$output->expression->sql, ...($output->name === null ? [] : [Build::keyword('AS'), Build::identifier([$output->name], $dialect)])]), $outputs));
+    }
+
+    /**
+     * @param list<Expression> $expressions
+     */
+    public static function expressions(string $keyword, array $expressions): Tree
+    {
+        Collections::objects($expressions, Expression::class);
+        return new Tree('clause', $expressions === [] ? [] : [Build::keyword($keyword), Build::separated(array_map(static fn (Expression $value): Tree => $value->sql, $expressions))]);
+    }
+
+    /**
+     * @param list<Ordering> $orderings
+     */
+    public static function ordering(array $orderings): Tree
+    {
+        Collections::objects($orderings, Ordering::class);
+        $items = array_map(static fn (Ordering $order): Tree => new Tree('ordering', [$order->expression->sql, Build::keyword($order->descending ? 'DESC' : 'ASC'), ...($order->nullsFirst === null ? [] : [Build::keyword($order->nullsFirst ? 'NULLS FIRST' : 'NULLS LAST')])]), $orderings);
+        return new Tree('orderBy', $items === [] ? [] : [Build::keyword('ORDER BY'), Build::separated($items)]);
+    }
+
+    /**
+     * @param list<list<Expression>> $rows
+     */
+    public static function rows(array $rows): Tree
+    {
+        foreach ($rows as $row) {
+            Collections::objects($row, Expression::class);
+        }
+        return new Tree('rows', [Build::keyword('VALUES'), Build::separated(array_map(static fn (array $row): Tree => Build::parentheses(Build::separated(array_map(static fn (Expression $value): Tree => $value->sql, $row))), $rows))]);
+    }
+
+    /**
+     * Embeds a whole query without its top-level terminator or ambiguous set precedence.
+     */
+    public static function query(\SqlSemantics\Model\BoundQuery $query, Dialect $dialect): Tree
+    {
+        $atoms = $query->sql->atoms();
+        $last = count($atoms) - 1;
+        while ($last >= 0 && ($atoms[$last]->text === '' || $atoms[$last]->kind === 'annotation')) {
+            --$last;
+        }
+        if ($last >= 0 && $atoms[$last]->text === ';') {
+            array_splice($atoms, $last, 1);
+        }
+        $group = Build::parentheses(new Tree('query', $atoms));
+        return $dialect === Dialect::Sqlite ? new Tree('query', [Build::keyword('SELECT * FROM'), $group]) : $group;
+    }
+}

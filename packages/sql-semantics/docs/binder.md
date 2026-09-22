@@ -1,52 +1,11 @@
 # Binder
 
-Use `Binder` to read the meaning of a SQL statement against a [Schema](schema.md).
-The returned object gives you selected values, referenced columns, row conditions,
-write destinations, and settings without having to interpret SQL text yourself.
+`Binder` turns SQL into an immutable `BoundStatement` using an explicit [Schema](schema.md).
+It resolves names, assigns expression types and NULL facts, and describes query inputs,
+write effects, declarations, and settings. It describes operations for a consumer to
+interpret; it does not execute them or change the supplied schema.
 
-## Public interface
-
-The following declarations show the public signatures. Method bodies are omitted.
-
-```php
-namespace SqlSemantics;
-
-use SqlSemantics\Model\BoundStatement;
-use SqlSemantics\Model\Expression;
-
-final class Binder
-{
-    public function __construct(public readonly Schema $schema) { /* ... */ }
-
-    public function bind(string $sql, bool $strict = true): BoundStatement { /* ... */ }
-
-    /** @return list<BoundStatement> */
-    public function bindAll(string $sql, bool $strict = true): array { /* ... */ }
-
-    public function replaceExpression(
-        BoundStatement $statement,
-        Expression $target,
-        string $replacement,
-    ): BoundStatement { /* ... */ }
-}
-```
-
-Use `bind()` for one statement or `bindAll()` for several statements. Both use the
-schema supplied to the constructor. A SELECT returns a `BoundSelect`, which has
-the same properties as `BoundStatement`.
-
-If a table or column cannot be resolved, or a known type rule is violated,
-`bind()` and `bindAll()` raise `SemanticException` by default. Its `reason` identifies the
-problem and `source` identifies the responsible SQL node or token. Invalid SQL
-syntax raises the parser's lexical or syntax exception.
-
-Pass `strict: false` to either method to retain semantic problems in each
-returned statement's `diagnostics` instead of raising them. The result remains a
-`BoundStatement`; see [unresolved references](#unresolved-references).
-`replaceExpression()` returns a new statement after checking and rebinding an
-expression replacement; see [editing expressions](#editing-expressions).
-
-## Read a statement
+## Bind a statement
 
 ```php
 use SqlSemantics\Binder;
@@ -57,57 +16,99 @@ $schema = (new SchemaBuilder(Dialect::PostgreSql))->build(
     'CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL DEFAULT 0)',
     'CREATE TABLE incoming (id INTEGER, score INTEGER)',
 );
-$binder = new Binder($schema);
-$statement = $binder->bind('SELECT id, score FROM users WHERE score > 0');
+$statement = (new Binder($schema))->bind(
+    'SELECT id, score + 1 AS next_score FROM users WHERE score > 0',
+);
 
 $statement->outputs[0]->expression->binding->column->name; // id
+$statement->outputs[1]->name;                              // next_score
+$statement->outputs[1]->expression->kind->value;           // operator
+$statement->outputs[1]->expression->type->name;            // integer
+$statement->outputs[1]->expression->nullability->value;   // not-null
+$statement->outputs[1]->expression->operands[0]->binding->column->name; // score
 $statement->where->symbol;                               // >
-$statement->where->operands[0]->binding->column->name;     // score
 ```
 
-Start with the fields for the operation you are reading:
+`bind(string $sql, bool $strict = true): BoundStatement` reads exactly one statement.
+`bindAll(string $sql, bool $strict = true): array` returns statements in source order.
+The constructor takes a `Schema`. Every call, including every element of `bindAll`,
+uses that same snapshot. To interpret a sequence against changing definitions, build
+the next schema snapshot explicitly and use it for the next binder.
 
-| Operation | Fields to read |
-|-----------|----------------|
-| SELECT | `outputs` for returned values; `from` for tables and joins; `where` for the row condition. `groupBy`, `having`, `orderBy`, `distinct`, `limit`, `offset`, and `withTies` describe grouping and result modifiers. |
-| INSERT | `insertion` maps each input position to a target column; `rows` or `queries` supplies the input; `conflicts` describes conflict handling; `outputs` describes RETURNING. |
-| UPDATE | `targets` identifies written tables; ordered `writes` gives destinations and values; `from` and `where` describe the inputs and row condition; `outputs` describes RETURNING. |
-| DELETE | `targets` identifies deleted-from tables; `from` and `where` describe the inputs and row condition; `outputs` describes RETURNING. |
-| MERGE | `merge` contains the target, input, matching condition, and ordered conditional actions. Each action owns its writes or inserted values. |
-| SET, RESET, PRAGMA | `settings` contains ordered effects with `name`, `scope`, `action`, and expression `values`. |
-| CREATE TABLE | `declarations` contains table definitions; `definitions` associates bound defaults, generated expressions, and CHECK conditions with those declarations. |
-| CREATE INDEX | `indexes` contains each `definition`, typed `keys`, and a typed partial-index `predicate`; `targets` identifies the indexed table. |
-| Nested statements | `ctes`, compound-query `branches`, relation or expression `query`, and nested `statements` preserve the enclosed operations and their conditions. |
+Successful strict binding returns an empty `diagnostics` list. An unresolved name or
+an incompatible known type raises `SemanticException`, with a `reason` and the
+responsible `source` node or token. `strict: false` instead retains those facts and
+diagnostics in the returned statement. Lexical and syntax errors always raise the
+corresponding sql-parser exception.
 
-## Read values and column references
+## Statement types and fields
 
-Each output is an `OutputColumn` with a zero-based `ordinal`, a `name`, and an
-`Expression`. Duplicate output names have separate positions. An expression gives
-you its operation, operands, type, NULL fact, and referenced column where known.
+All concrete types extend `BoundStatement`. Query types additionally extend
+`BoundQuery`. `BoundSelect` is in `SqlSemantics\Model`; the other concrete types below
+are in `SqlSemantics\Model\Statement`.
 
-```php
-$expression = $statement->outputs[0]->expression;
+| SQL operation | Returned type | Structured information |
+|---------------|---------------|------------------------|
+| SELECT | `BoundSelect` | Ordered `outputs`; `from` relation and join tree; `where`; `groupBy`, `having`, `distinct`, `orderBy`, `limit`, `offset`, `withTies`. |
+| VALUES | `ValuesStatement` | Ordered `rows`, corresponding typed `outputs`, and query modifiers. |
+| TABLE | `TableStatement` | Referenced relation and its ordered declared output columns. |
+| UNION, INTERSECT, EXCEPT | `CompoundStatement` | Ordered `branches`, `setOperator` including ALL, and common output types by ordinal. |
+| INSERT, REPLACE | `InsertStatement` | `insertion` maps positions to destination columns; `rows` or `queries` supplies values; `conflicts` describes conflict actions; `outputs` describes RETURNING. |
+| UPDATE | `UpdateStatement` | Written `targets`, ordered `writes` with destination expressions and assigned values, input `from`, row `where`, and RETURNING `outputs`. |
+| DELETE | `DeleteStatement` | Deleted-from `targets`, input `from`, row `where`, and RETURNING `outputs`. |
+| MERGE | `MergeStatement` | `merge.target`, `input`, matching `condition`, and ordered actions with their own conditions, assignments, or insertion mapping and rows. |
+| SET, RESET, PRAGMA | `ConfigurationStatement` | Ordered `settings`: identifier-part `name`, `scope`, `action`, and expression `values`. |
+| CREATE TABLE and other table-producing declarations | `CreateTableStatement` | `declarations` contains table definitions; `definitions` associates typed defaults, generated values, and CHECK conditions with them. |
+| CREATE INDEX | `CreateIndexStatement` | `indexes` contains storage definitions, typed ordered `keys`, and partial-index `predicate`; `targets` identifies the indexed table. |
+| Other language commands | `CommandStatement` | `kind`, complete SQL `sql` structure, affected `targets`, embedded `queries`, and nested `statements`, as applicable to the operation. |
 
-$expression->kind->value;                // column
-$expression->type->name;                 // integer
-$expression->nullability->value;         // not-null
-$expression->binding->relationId;        // r0
-$expression->binding->table->name;       // users
-$expression->binding->column->name;      // id
-$expression->lineage()[0]->column->name; // id
-```
+`relations` lists each visible table occurrence; `targets` lists affected occurrences.
+`TableUse` identifies its declaration, alias, `id`, and `scopeId`. Self joins retain
+separate occurrence identities. `Join` has a kind, left and right inputs, and a match
+condition. A derived relation's `query`, a scalar expression's `query`, `ctes`, compound
+`branches`, and command `statements` retain nested stages rather than flattening them.
+Table functions and aliased joins expose their derived output metadata in a relation query.
 
-`lineage()` returns the columns contributing values to the expression. For row
-conditions, also read joins and WHERE, including those inside nested queries.
-A self join has separate `TableUse` objects with different `id` values, even when
-both refer to the same `TableDefinition`. An outer join can make a column use
-nullable without changing its declared nullability; `nullExtendedBy` identifies
-the responsible joins.
+The common `sql` field is a complete immutable SQL structure. It preserves components
+specific to the selected grammar, including options and clauses beyond the convenience
+fields above. `syntaxClauses` groups original clause nodes by grammar name. `source`
+retains the parser tree and source positions for diagnostics. See
+[statements and serialization](statements.md) for transformations and SQL generation.
 
-Function calls use the [signatures registered on the schema](schema.md#register-function-signatures).
-Their result types, argument conversions, aggregate roles, and NULL facts are
-available through the same expression properties. An inferred parameter type is
-represented by an implicit cast around the original parameter expression.
+## Output values and expression facts
+
+`outputs` is a list of `OutputColumn` objects in result order. Each has a zero-based
+`ordinal`, a `name` (explicit alias or resolved column name; otherwise `null`), and an
+`Expression`. Repeated names retain separate positions. A wildcard expands against the
+visible declarations, including the merged output columns of USING and NATURAL joins.
+
+| Expression field | Meaning |
+|------------------|---------|
+| `kind` | Semantic operation, such as `Column`, `Literal`, `Operator`, `Function`, `Aggregate`, `Cast`, `Subquery`, `DefaultValue`, or `UnresolvedColumn`. |
+| `operands` | Ordered input expressions. Casts retain their input; an inferred conversion is a `Cast` with `symbol = 'implicit'`. |
+| `symbol` | Operator or function name, parameter identifier, or literal SQL spelling, according to the kind. Literal spellings retain SQL precision and quoting. |
+| `type` | `TypeDescriptor`: database `dialect`, canonical `name`, declared `modifiers`, and SQLite `affinity` when applicable. `unknown` explicitly represents unresolved type information. |
+| `nullability` | A conservative structural fact: `NotNull`, `MaybeNull`, `AlwaysNull`, or `Unknown`. |
+| `binding` | For a resolved column, its relation occurrence ID, table declaration, and column declaration. |
+| `nullExtendedBy` | Join occurrence IDs that can introduce NULL at this use of the value. |
+| `reference` | Identifier parts for an unresolved reference, wildcard qualifier, or cursor reference. |
+| `query` | The bound query for scalar, EXISTS, or membership subquery operations. |
+| `lineage()` | Unique contributing column bindings in encounter order, preserving distinct relation occurrences. |
+| `sql`, `source` | Owned SQL structure for serialization, and original syntax for diagnostics, respectively. |
+
+A selected column takes its declared type and declaration-level NULL fact, adjusted for
+outer joins at that occurrence. Operators derive result types and NULL facts from their
+operands and dialect rules. Function and aggregate results use the
+[registered signatures](schema.md#register-function-signatures), including argument
+conversions and NULL propagation. Compound outputs combine corresponding branch types.
+Parameters and unresolved inputs retain unknown facts until the surrounding operation
+provides a known type. SQLite affinity describes type preference, not a computed runtime value.
+
+These facts describe expressions at their relational evaluation stage. Predicates remain
+separate expression trees in join conditions, `where`, `having`, and conditional writes.
+A consumer combines those predicates with the expression facts when performing constraint
+solving, fixture generation, or evaluation. Value lineage follows contributing values;
+row dependencies also include predicates and query inputs.
 
 ## SQL and returned structures
 
@@ -124,7 +125,7 @@ on the returned `BoundStatement`.
 | `SELECT COALESCE(parent_id, 0) AS parent FROM users` | Output `name = 'parent'`; expression kind `Coalesce`, two operands, and `nullability = NotNull`; `lineage()` includes the `parent_id` binding. |
 | `SELECT parent_id, SUM(score) AS total FROM users GROUP BY parent_id HAVING SUM(score) > 0 ORDER BY total DESC LIMIT 5` | `groupBy[0]` binds `parent_id`; `having` retains the aggregate comparison; `outputs[1]` is an aggregate expression; `orderBy[0].descending = true`; `limit.symbol = '5'`. |
 | `WITH positive AS (SELECT id FROM users WHERE score > 0) SELECT id FROM positive` | `ctes['positive']` retains its bound query and WHERE; the outer relation's `query` exposes that CTE definition and its output declaration. |
-| `SELECT id FROM users UNION ALL SELECT id FROM incoming` | Ordered `branches` retain both SELECTs; `setOperator = 'UNION ALL'`; outer outputs represent the compound result. |
+| `SELECT id FROM users UNION ALL SELECT id FROM incoming` | `CompoundStatement`; ordered `branches` retain both SELECTs; `setOperator = 'UNION ALL'`; outer outputs represent the compound result. |
 | `SELECT id FROM users WHERE EXISTS (SELECT 1 FROM incoming WHERE incoming.id = users.id)` | The WHERE subquery expression has `symbol = 'EXISTS'` and a `query`; its inner predicate retains both the local and correlated column bindings. |
 | `SELECT score, score FROM users` | Two distinct output positions, even though their names and dependencies are the same. |
 
@@ -177,14 +178,6 @@ errors. The returned statement contains `diagnostics` alongside its ordinary
 properties. Each `Diagnostic` has `reason`, `message`, and `source`. Known
 bindings remain available and unresolved references are marked explicitly.
 
-```php
-$unresolved = $binder->bind('SELECT id, missing FROM users', strict: false);
-
-$unresolved->outputs[0]->expression->binding->column->name; // id
-$unresolved->outputs[1]->expression->reference;             // ['missing']
-$unresolved->diagnostics[0]->reason;                                  // unknown-column
-```
-
 | SQL and schema | Returned structure and diagnostics |
 |----------------|------------------------------------|
 | Empty schema; `SELECT t.id, t.* FROM missing t` | The relation has `declaration.resolved = false`; `t.id` is `UnresolvedColumn` with `reference = ['t', 'id']`; `t.*` is `Wildcard` with qualifier `['t']`; diagnostics include `unknown-table`. |
@@ -199,32 +192,13 @@ raise exceptions. Diagnostics include problems in nested queries and commands.
 statement. They do not carry over to the next statement or a later binder call.
 With the default `strict: true`, a successful result has an empty diagnostic list.
 
-## Editing expressions
+## Transform and serialize
 
-```php
-$original = $binder->bind('SELECT score*2 FROM users');
-$edited = $binder->replaceExpression(
-    $original,
-    $original->outputs[0]->expression->operands[0],
-    'score+1',
-);
-$edited->toString(); // "SELECT (\nscore+1\n)*2 FROM users"
-$original->toString(); // SELECT score*2 FROM users
-```
+Transformations belong to the returned Statement. They return a new instance, validate
+its complete structure against the original schema snapshot, and recompute dependent
+facts. `Binder` remains the SQL-to-Statement entry point. The original statement and
+schema remain unchanged.
 
-Parentheses preserve precedence. The target expression must belong to the
-statement being edited. The replacement must be one expression, and its names
-and types are checked against the binder's schema. The original statement is
-unchanged.
-
-## Return to SQL
-
-Call `toString()` on a bound statement to obtain its SQL:
-
-```php
-$statement->toString(); // SELECT id, score FROM users WHERE score > 0
-```
-
-`BoundStatement::toString()` preserves the original SQL's whitespace and
-comments. It is available on every result, including statements with diagnostics
-and statements returned by expression replacement.
+`SimpleSerializer::serialize($statement)` and `$statement->toString()` write the same
+compact SQL layout from `sql`. See [statements and serialization](statements.md) for the
+transformation methods, construction API, and formatting contract.

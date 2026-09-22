@@ -55,8 +55,8 @@ final class StatementInvariant
         Collections::objects($statement->assignments, \SqlSemantics\Model\Expression::class, false);
         Collections::objects($statement->statements, BoundStatement::class);
         Collections::objects($statement->ctes, BoundStatement::class, false);
-        Collections::objects($statement->queries, \SqlSemantics\Model\BoundSelect::class);
-        Collections::objects($statement->branches, \SqlSemantics\Model\BoundSelect::class);
+        Collections::objects($statement->queries, \SqlSemantics\Model\BoundQuery::class);
+        Collections::objects($statement->branches, \SqlSemantics\Model\BoundQuery::class);
         Collections::objects($statement->definitions, \SqlSemantics\Model\Definition\TableDeclaration::class);
         Collections::objects($statement->declarations, \SqlSemantics\Schema\TableDefinition::class);
         Collections::objects($statement->writes, \SqlSemantics\Model\Write\Assignment::class);

@@ -45,4 +45,21 @@ final class Collections
             }
         }
     }
+
+    /**
+     * @template TValue
+     * @param array<array-key, TValue> $values Runtime SQL components
+     * @throws InvalidStructure
+     */
+    public static function components(array $values): void
+    {
+        if (!array_is_list($values)) {
+            throw new InvalidStructure('SQL components must form an ordered list.');
+        }
+        foreach ($values as $value) {
+            if (!$value instanceof \SqlSemantics\Model\Sql\Tree && !$value instanceof \SqlSemantics\Model\Sql\Atom) {
+                throw new InvalidStructure('A SQL structure contains only productions and terminals.');
+            }
+        }
+    }
 }

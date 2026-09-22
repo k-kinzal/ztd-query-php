@@ -46,19 +46,7 @@ final class Binder
     {
         $diagnostics = new Binding\Analysis\Diagnostics(!$strict);
         $tables = new TableResolver($this->schema, new Identifiers($this->schema->dialect), $this->schema->defaultSchema, $diagnostics);
-        return (new Binding\Statement\StatementBinder($tables))->bind($this->parser->parse($sql));
-    }
-
-    /**
-     * Replaces one owned expression and returns a freshly parsed, validated semantic graph.
-     *
-     * Parentheses preserve precedence. The fragment must be one expression; additional
-     * clauses or statements are rejected. Name, type, and scope facts are rebound.
-     */
-    public function replaceExpression(BoundStatement $statement, Model\Expression $target, string $replacement): BoundStatement
-    {
-        $sql = (new Binding\Editing\ExpressionEdit())->sql($statement, $target, $replacement, $this->parser);
-        return $this->bind($sql);
+        return (new Binding\Statement\StatementBinder($tables))->bind($this->parser->parse($sql))->withContext(new Binding\Editing\StatementContext($this->schema));
     }
 
     /**
@@ -77,7 +65,7 @@ final class Binder
         return array_map(function (\SqlParser\Parser\Node $statement) use ($tree, $strict): BoundStatement {
             $diagnostics = new Binding\Analysis\Diagnostics(!$strict);
             $tables = new TableResolver($this->schema, new Identifiers($this->schema->dialect), $this->schema->defaultSchema, $diagnostics);
-            return (new Binding\Statement\StatementBinder($tables))->bind(new \SqlParser\Parser\Node($tree->name, $tree->ordinal, [$statement]));
+            return (new Binding\Statement\StatementBinder($tables))->bind(new \SqlParser\Parser\Node($tree->name, $tree->ordinal, [$statement]))->withContext(new Binding\Editing\StatementContext($this->schema));
         }, $statements);
     }
 

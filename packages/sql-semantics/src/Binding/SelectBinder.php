@@ -7,7 +7,7 @@ namespace SqlSemantics\Binding;
 use SqlParser\Parser\Node;
 use SqlSemantics\Ast\StatementList;
 use SqlSemantics\Ast\Tree;
-use SqlSemantics\Model\BoundSelect;
+use SqlSemantics\Model\BoundQuery;
 
 /**
  * Builds a logical SELECT with separate matching, filtering, and projection stages.
@@ -28,7 +28,7 @@ final class SelectBinder
      *
      * @throws \SqlSemantics\SemanticException When the statement cannot be bound
      */
-    public function bind(Node $tree): BoundSelect
+    public function bind(Node $tree): BoundQuery
     {
         $statements = StatementList::read($tree, $this->tables->identifiers->dialect);
         if (count($statements) !== 1) {

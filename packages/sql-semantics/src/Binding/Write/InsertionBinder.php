@@ -8,7 +8,7 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Ast\Tree;
 use SqlSemantics\Binding\Query\QueryNodes;
 use SqlSemantics\Binding\Scope;
-use SqlSemantics\Model\BoundSelect;
+use SqlSemantics\Model\BoundQuery;
 use SqlSemantics\Model\Expression;
 use SqlSemantics\Model\ExpressionKind;
 use SqlSemantics\Model\TableUse;
@@ -24,7 +24,7 @@ final class InsertionBinder
 {
     /**
      * @param list<list<Expression>> $rows
-     * @param list<BoundSelect> $queries
+     * @param list<BoundQuery> $queries
      * @param list<Assignment> $assignments
      */
     public function bind(Node $statement, TableUse $target, Scope $scope, array $rows, array $queries, array $assignments, ?Scope $destinations = null): Insertion
@@ -56,7 +56,7 @@ final class InsertionBinder
         }
         $omitted = array_values(array_filter($target->declaration->columns, static fn ($column): bool => !in_array($column->name, $seen, true)));
         $insertion = new Insertion($target, $columns, $explicit, $defaults, $omitted);
-        $inputs = $rows !== [] ? $rows : array_map(static fn (BoundSelect $query): array => array_map(static fn ($output): Expression => $output->expression, $query->outputs), $queries);
+        $inputs = $rows !== [] ? $rows : array_map(static fn (BoundQuery $query): array => array_map(static fn ($output): Expression => $output->expression, $query->outputs), $queries);
         if ($explicit || $target->declaration->resolved) {
             foreach ($inputs as $row) {
                 $this->checkRow($insertion, $row, $scope, $statement);

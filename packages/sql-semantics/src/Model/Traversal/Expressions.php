@@ -29,7 +29,7 @@ final class Expressions
             $value = array_pop($pending);
             if (is_array($value)) {
                 array_push($pending, ...array_values($value));
-            } elseif (is_object($value) && !$value instanceof Node && !$value instanceof Token && !isset($seen[$value])) {
+            } elseif (is_object($value) && !$value instanceof Node && !$value instanceof Token && !$value instanceof \SqlSemantics\Model\Sql\Tree && !isset($seen[$value])) {
                 $seen[$value] = true;
                 if ($value instanceof Expression) {
                     $result[] = $value;
@@ -38,5 +38,27 @@ final class Expressions
             }
         }
         return $result;
+    }
+
+    /**
+     * Finds the projection owning a materialized wildcard column, including nested scopes.
+     */
+    public static function projection(BoundStatement $statement, Expression $target): ?\SqlSemantics\Model\BoundSelect
+    {
+        $seen = new WeakMap();
+        $pending = [$statement];
+        while ($pending !== []) {
+            $value = array_pop($pending);
+            if (is_array($value)) {
+                array_push($pending, ...array_values($value));
+            } elseif (is_object($value) && !$value instanceof Node && !$value instanceof Token && !$value instanceof \SqlSemantics\Model\Sql\Tree && !isset($seen[$value])) {
+                $seen[$value] = true;
+                if ($value instanceof \SqlSemantics\Model\BoundSelect && in_array($target, array_column($value->outputs, 'expression'), true)) {
+                    return $value;
+                }
+                array_push($pending, ...array_values(get_object_vars($value)));
+            }
+        }
+        return null;
     }
 }

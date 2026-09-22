@@ -32,14 +32,19 @@ final class SemanticsTarget
         try {
             $statement = $this->binder->bind($sql, strict: false);
             $this->schemaProperties->verify($input);
-            if ($sql === '' || $statement->toString() !== $sql) {
+            if ($sql === '' || $statement->source->toString() !== $sql) {
                 throw new RuntimeException('Binding lost the original statement.');
             }
+            $serialized = (new \SqlSemantics\SimpleSerializer())->serialize($statement);
+            $roundTrip = $this->binder->bind($serialized, strict: false);
+            if (SemanticFacts::read($statement) !== SemanticFacts::read($roundTrip) || $serialized !== $roundTrip->toString()) {
+                throw new RuntimeException('Serialization changed semantic structure or is not idempotent. SQL: ' . $serialized);
+            }
             (new GraphProperties($this->binder->schema->dialect))->statement($statement);
-            if (serialize($statement) !== serialize($this->binder->bind($sql, strict: false))) {
+            if (SemanticFacts::read($statement) !== SemanticFacts::read($this->binder->bind($sql, strict: false))) {
                 throw new RuntimeException('Semantic binding is not deterministic.');
             }
-            if ($statement->diagnostics === [] && serialize($statement) !== serialize($this->binder->bind($sql))) {
+            if ($statement->diagnostics === [] && SemanticFacts::read($statement) !== SemanticFacts::read($this->binder->bind($sql))) {
                 throw new RuntimeException('Binding without diagnostics disagrees with strict binding.');
             }
         } catch (RuntimeException $error) {

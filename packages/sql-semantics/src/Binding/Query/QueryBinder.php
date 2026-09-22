@@ -14,7 +14,7 @@ use SqlSemantics\Binding\Scope;
 use SqlSemantics\Binding\SelectModifiersBinder;
 use SqlSemantics\Binding\Statement\StatementBinder;
 use SqlSemantics\Binding\TypeResolution;
-use SqlSemantics\Model\BoundSelect;
+use SqlSemantics\Model\BoundQuery;
 use SqlSemantics\Model\BoundStatement;
 use SqlSemantics\Model\Expression;
 use SqlSemantics\Model\ExpressionKind;
@@ -39,7 +39,7 @@ final class QueryBinder
     /**
      * Resolves one query scope and retains all its nested relational stages.
      */
-    public function bind(Node $source, ?Scope $parent = null): BoundSelect
+    public function bind(Node $source, ?Scope $parent = null): BoundQuery
     {
         $id = $this->context->ids->scope();
         $context = $this->with($source, $parent);
@@ -72,7 +72,8 @@ final class QueryBinder
                 $clauses[$name] = $this->expressions($body, [$name], $scope);
             }
         }
-        return new BoundSelect($id, $from?->relation, $scope->relations, $outputs, $where, $distinct, $tail->ordering($source, $scope, $outputs), $limit, $offset, $source, $groups, $having, $context->ctes, clauses: $clauses, rows: $values, withTies: str_contains(strtoupper(Tree::text(QueryNodes::local($source, ['limit_clause'])[0] ?? new Node('empty', 0, []))), 'WITH TIES'), syntaxClauses: QueryNodes::clauses($source));
+        $class = $values !== [] ? \SqlSemantics\Model\Statement\ValuesStatement::class : (strtoupper(Tree::text($body->tokens()[0] ?? $body)) === 'TABLE' ? \SqlSemantics\Model\Statement\TableStatement::class : \SqlSemantics\Model\BoundSelect::class);
+        return new $class($id, $from?->relation, $scope->relations, $outputs, $where, $distinct, $tail->ordering($source, $scope, $outputs), $limit, $offset, $source, $groups, $having, $context->ctes, clauses: $clauses, rows: $values, withTies: str_contains(strtoupper(Tree::text(QueryNodes::local($source, ['limit_clause'])[0] ?? new Node('empty', 0, []))), 'WITH TIES'), syntaxClauses: QueryNodes::clauses($source));
     }
 
     /**
@@ -138,12 +139,7 @@ final class QueryBinder
             return $query;
         }
         $names = array_values(array_filter($this->context->tables->identifiers->parts($aliases), static fn (string $name): bool => !in_array($name, ['(', ')', ','], true)));
-        $outputs = [];
-        foreach ($query->outputs as $index => $output) {
-            $outputs[] = new OutputColumn($index, $names[$index] ?? $output->name, $output->expression);
-        }
-        $class = $query::class;
-        return new $class($query->scopeId, $query->from, $query->relations, $outputs, $query->where, $query->distinct, $query->orderBy, $query->limit, $query->offset, $query->source, $query->groupBy, $query->having, $query->ctes, $query->branches, $query->setOperator, $query->clauses, kind: $query->kind, targets: $query->targets, assignments: $query->assignments, queries: $query->queries, rows: $query->rows, withTies: $query->withTies, syntaxClauses: $query->syntaxClauses, declarations: $query->declarations, insertion: $query->insertion, writes: $query->writes, settings: $query->settings, conflicts: $query->conflicts, definitions: $query->definitions, merge: $query->merge, statements: $query->statements);
+        return $query->withOutputNames($names);
     }
 
     /**
@@ -170,9 +166,9 @@ final class QueryBinder
      *
      * @throws SemanticException
      */
-    public function compound(Node $source, Node $body, QueryContext $context, string $id, string $operator, ?Scope $parent): BoundSelect
+    public function compound(Node $source, Node $body, QueryContext $context, string $id, string $operator, ?Scope $parent): BoundQuery
     {
-        $branches = array_map(static fn (Node $node): BoundSelect => $context->bind($node, $parent), $this->branches($body));
+        $branches = array_map(static fn (Node $node): BoundQuery => $context->bind($node, $parent), $this->branches($body));
         $outputs = [];
         foreach ($branches[0]->outputs as $index => $output) {
             $operands = [];
@@ -193,6 +189,6 @@ final class QueryBinder
         $scope = new Scope($context->tables->identifiers, parent: $parent, queries: $context);
         $tail = new SelectModifiersBinder();
         [$limit, $offset] = $tail->pagination($source, $scope);
-        return new BoundSelect($id, null, [], $outputs, null, !str_ends_with($operator, 'ALL'), $tail->ordering($source, $scope, $outputs), $limit, $offset, $source, ctes: $context->ctes, branches: $branches, setOperator: $operator);
+        return new \SqlSemantics\Model\Statement\CompoundStatement($id, null, [], $outputs, null, !str_ends_with($operator, 'ALL'), $tail->ordering($source, $scope, $outputs), $limit, $offset, $source, ctes: $context->ctes, branches: $branches, setOperator: $operator);
     }
 }

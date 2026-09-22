@@ -5,7 +5,7 @@
 [![PHP Version](https://img.shields.io/badge/PHP-8.1%2B-blue.svg)](https://www.php.net/)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/k-kinzal/ztd-query-php)
 
-SQL Semantics converts SQL strings into structured declarations and bound statements for MySQL, PostgreSQL, and SQLite. It uses [sql-parser](../sql-parser/) to preserve the original SQL and exposes table, column, and index definitions, referential actions, declaration options, types, nullability, query inputs, write destinations, conditions, and configuration effects. No database connection is required. See the [schema API](docs/schema.md), [binder API](docs/binder.md), and [limitations](docs/limitation.md).
+SQL Semantics converts SQL strings into structured declarations and bound statements for MySQL, PostgreSQL, and SQLite. It uses [sql-parser](../sql-parser/) to preserve the original SQL and exposes table, column, and index definitions, referential actions, declaration options, types, nullability, query inputs, write destinations, conditions, and configuration effects. No database connection is required. See the [schema API](docs/schema.md), [binder API](docs/binder.md), and [statements and serialization](docs/statements.md).
 
 ## Requirements
 
@@ -67,7 +67,7 @@ $statement->where->symbol; // >
 $statement->toString(); // SELECT id, score FROM users WHERE score > 0
 ```
 
-`SchemaBuilder::build()` reads table and index definitions. Register function signatures through `Schema::withFunctions()` or the builder's `functions` argument to supply application-specific argument types, return types, and NULL behavior. `Binder::bind()` reads one statement against that schema; `bindAll()` reads a sequence of statements. Pass `strict: false` to collect semantic diagnostics on each returned statement. See [schema.md](docs/schema.md) and [binder.md](docs/binder.md) for the public signatures, usage examples, and SQL-to-structure tables.
+`SchemaBuilder::build()` reads table and index definitions. Register function signatures through `Schema::withFunctions()` or the builder's `functions` argument to supply application-specific argument types, return types, and NULL behavior. `Binder::bind()` reads one statement against that schema; `bindAll()` reads a sequence of statements. Pass `strict: false` to collect semantic diagnostics on each returned statement. See [schema.md](docs/schema.md) and [binder.md](docs/binder.md) for responsibilities, result fields, and SQL-to-structure tables. Statements expose immutable transformations that validate the complete result and refresh dependent facts. `Serializer` defines SQL output; `SimpleSerializer` and `BoundStatement::toString()` provide the default compact layout. `StatementFactory` also constructs validated statements from structure without original SQL.
 
 Development checks are `composer lint`, `composer test`, and `composer bench:quick`. Run `XDEBUG_MODE=off composer fuzz:smoke` for a bounded run of each dialect. The [fuzz instructions](fuzz/README.md) describe the unrestricted grammar property and all-release runs.
 

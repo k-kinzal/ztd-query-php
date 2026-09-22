@@ -44,7 +44,7 @@ use SqlSemantics\Type\Nullability;
 #[CoversClass(\SqlSemantics\Model\Join::class)]
 #[CoversClass(\SqlSemantics\Model\Ordering::class)]
 #[CoversClass(\SqlSemantics\Model\OutputColumn::class)]
-#[CoversClass(\SqlSemantics\Model\BoundSelect::class)]
+#[CoversClass(\SqlSemantics\Model\BoundQuery::class)]
 #[CoversClass(\SqlSemantics\Model\TableUse::class)]
 #[CoversClass(\SqlSemantics\Schema::class)]
 #[CoversClass(\SqlSemantics\Schema\ColumnDefinition::class)]
@@ -81,7 +81,6 @@ use SqlSemantics\Type\Nullability;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Configuration\SettingBinder::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Configuration\SpecialSettings::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Configuration\SettingTokens::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ExpressionEdit::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Insertion::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Assignment::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\ConflictAction::class)]
@@ -112,6 +111,42 @@ use SqlSemantics\Type\Nullability;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\IndexDefinition::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\IndexElement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\IndexDeclaration::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Serializer::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\StatementFactory::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\SimpleSerializer::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(Dialect::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\StatementContext::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ValueList::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Editing\ClauseEditor::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\ReferentialAction::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\ConstraintKind::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(Nullability::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\ExpressionKind::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\JoinKind::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\SourceEdit::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\Context::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Transformation\TreeEdit::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CommandStatement::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\InsertStatement::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ConfigurationStatement::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\TableStatement::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\DeleteStatement::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\MergeStatement::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\RelationQuery::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\ValuesStatement::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\UpdateStatement::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CompoundStatement::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CreateIndexStatement::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Statement\CreateTableStatement::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Sql\Literal::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Sql\ExpressionFactory::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Sql\Build::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Sql\Parts::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Sql\Atom::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Sql\Tree::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Sql\Source::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Sql\Format::class)]
 final class BinderTest extends TestCase
 {
     #[TestWith([Dialect::PostgreSql])]
@@ -366,15 +401,7 @@ final class BinderTest extends TestCase
         self::assertSame($schema->tables[0], $binder->bind('SELECT id FROM dual')->relations[0]->declaration);
     }
 
-    public function testReplaceExpressionReturnsReboundIndependentSnapshot(): void
-    {
-        $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build());
-        $statement = $binder->bind('SELECT 1');
-        $changed = $binder->replaceExpression($statement, $statement->outputs[0]->expression, '2+3');
-        self::assertSame('+', $changed->outputs[0]->expression->symbol);
-        self::assertSame('1', $statement->outputs[0]->expression->symbol);
-        self::assertEquals($changed, $binder->bind($changed->toString()));
-    }
+
 
     public function testBindRetainsUnresolvedInputsAndEveryProjection(): void
     {
@@ -466,7 +493,7 @@ final class BinderTest extends TestCase
         $binder = new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(id INTEGER)'));
         $statements = $binder->bindAll('SELECT missing FROM t; SELECT id FROM t; SELECT other FROM t', strict: false);
         self::assertCount(3, $statements);
-        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statements[0]);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundQuery::class, $statements[0]);
         self::assertSame(['unknown-column'], array_column($statements[0]->diagnostics, 'reason'));
         self::assertSame([], $statements[1]->diagnostics);
         self::assertSame(['unknown-column'], array_column($statements[2]->diagnostics, 'reason'));
@@ -488,7 +515,7 @@ final class BinderTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind('SELECT missing', strict: false);
-        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundQuery::class, $statement);
         self::assertSame(['unknown-column'], array_column($statement->diagnostics, 'reason'));
         $this->expectException(SemanticException::class);
         $binder->bind('SELECT missing');
@@ -508,18 +535,7 @@ final class BinderTest extends TestCase
         $binder->bindAll('SELECT 1; SELECT FROM', strict: false);
     }
 
-    public function testReplaceExpressionValidatesAnUnresolvedStatement(): void
-    {
-        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
-        $statement = $binder->bind('SELECT missing FROM t', strict: false);
-        $repaired = $binder->replaceExpression($statement, $statement->outputs[0]->expression, 'id');
-        self::assertSame([], $repaired->diagnostics);
-        self::assertSame('id', $repaired->outputs[0]->expression->binding?->column->name);
-        self::assertSame(['unknown-column'], array_column($statement->diagnostics, 'reason'));
-        self::assertSame('SELECT missing FROM t', $statement->toString());
-        $this->expectException(SemanticException::class);
-        $binder->replaceExpression($statement, $statement->outputs[0]->expression, 'still_missing');
-    }
+
 
     public function testBindDiagnosticSelectRetainsItsRelationalStages(): void
     {
@@ -536,7 +552,7 @@ final class BinderTest extends TestCase
         self::assertTrue($statement->orderBy[0]->descending);
         self::assertSame('2', $statement->limit?->symbol);
         self::assertSame('1', $statement->offset?->symbol);
-        self::assertSame($sql, $statement->toString());
+        self::assertSame($sql, $statement->source->toString());
     }
 
     public function testBindDiagnosticInsertRetainsStorageAndConflictEffects(): void

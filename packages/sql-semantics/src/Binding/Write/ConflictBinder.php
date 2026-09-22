@@ -31,7 +31,7 @@ final class ConflictBinder
             }
             $nodes = $node->name === 'upsert' ? $node->find('upsert') : [$node];
             foreach ($nodes as $clause) {
-                if (Tree::hasTokens($clause)) {
+                if (Tree::hasTokens($clause) && !str_starts_with(strtoupper(Tree::text($clause)), 'RETURNING')) {
                     $result[] = $this->action($clause, $scope);
                 }
             }

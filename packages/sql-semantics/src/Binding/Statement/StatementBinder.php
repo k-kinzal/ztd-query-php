@@ -31,13 +31,13 @@ final class StatementBinder
      *
      * @throws SemanticException
      */
-    public function bind(Node $tree): BoundStatement
+    public function bind(Node $tree, ?QueryContext $context = null): BoundStatement
     {
         $statements = StatementList::read($tree, $this->tables->identifiers->dialect);
         if (count($statements) !== 1) {
             throw new SemanticException('statement-count', 'bind() requires one statement; use bindAll() for a script.', $tree);
         }
-        $statement = $this->node($tree, $statements[0], new QueryContext($this->tables));
+        $statement = $this->node($tree, $statements[0], $context ?? new QueryContext($this->tables));
         if ($this->tables->diagnostics->items === []) {
             return $statement;
         }
@@ -83,6 +83,8 @@ final class StatementBinder
      */
     public function node(Node $tree, Node $statement, QueryContext $context): BoundStatement
     {
+        $snapshot = new QueryContext($context->tables, clone $context->ids, $context->ctes);
+        $validation = new \SqlSemantics\Binding\Editing\StatementContext($context->tables->schema, $snapshot);
         $operation = self::operation($statement);
         $select = Tree::child($statement, ['SelectStmt', 'select_stmt', 'select']);
         if (($operation === 'WITH' && $select !== null) || in_array($operation, ['SELECT', 'VALUES', 'TABLE', '('], true)) {
@@ -92,11 +94,11 @@ final class StatementBinder
         if (in_array($operation, ['INSERT', 'REPLACE', 'UPDATE', 'DELETE', 'MERGE'], true)) {
             $context = (new \SqlSemantics\Binding\Query\QueryBinder($context))->with($tree, null);
             if ($operation === 'MERGE') {
-                return (new \SqlSemantics\Binding\Write\MergeBinder())->bind($tree, $mutation ?? $statement, $context);
+                return (new \SqlSemantics\Binding\Write\MergeBinder())->bind($tree, $mutation ?? $statement, $context)->withContext($validation);
             }
-            return (new MutationBinder($context))->bind($tree, $mutation ?? $statement);
+            return (new MutationBinder($context))->bind($tree, $mutation ?? $statement)->withContext($validation);
         }
-        return (new UtilityBinder($context))->bind($tree, $statement, $operation);
+        return (new UtilityBinder($context))->bind($tree, $statement, $operation)->withContext($validation);
     }
     /**
      * Reads the outer command verb without entering its WITH declarations.

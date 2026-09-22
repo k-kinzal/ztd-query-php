@@ -16,8 +16,10 @@ hide an implementation failure.
 
 The target checks:
 
-- Exact SQL round-tripping, deterministic binding, and agreement with strict
+- Retention of original source text, deterministic binding, and agreement with strict
   binding when there are no diagnostics.
+- Serialization of every generated statement, equivalence of semantic facts after
+  rebinding the serialized SQL, and idempotence of compact formatting.
 - Output order, relation scopes, column declaration membership, dialect-consistent
   types, and explicit unresolved references throughout nested graphs.
 - Statement-specific structure, including insertion destinations, assignments,
