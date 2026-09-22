@@ -58,7 +58,7 @@
 <span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com">     * @return list&lt;Expression&gt;</span></span>
 <span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">all</span>(<span class="tok-id">BoundStatement</span> <span class="tok-var">$statement</span>): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">all</span>(<span class="tok-id">BoundStatement</span>|<span class="tok-id">\SqlSemantics\Schema\TableDefinition</span> <span class="tok-var">$statement</span>): <span class="tok-kw">array</span></span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>    {</span>
 <span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>        <span class="tok-var">$seen</span> = <span class="tok-kw">new</span> <span class="tok-id">WeakMap</span>();</span>
 <span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>        <span class="tok-var">$pending</span> = [<span class="tok-var">$statement</span>];</span>
