@@ -7,10 +7,11 @@ namespace SqlCatalog\Reporter\Html;
 /**
  * The document every page of the report is written into.
  *
- * The navigation is sized so that it costs the same on a report of fifty
- * statements and on one of five thousand: the pages are listed as numbers, the
- * files of the page being read are listed by name, and the full index of files
- * lives on the overview rather than in the margin of every page.
+ * The navigation names the routes to a statement — by table, by namespace, by
+ * file, by finding, or through the whole listing — and nothing else, so it
+ * costs the same on a report of fifty statements and on one of five thousand.
+ * What is on the page being read is listed beside it, so a long page can be
+ * jumped through rather than scrolled.
  *
  * @visibility root
  */
@@ -46,8 +47,9 @@ final class PageShell
      *
      * @param string $page The name the page is written under, which fixes what its links are relative to
      * @param list<array{string, string|null}> $crumbs The trail to this page, as label and address pairs
+     * @param list<array{string, string}> $anchors The sections of the page, as label and identifier pairs
      */
-    public function render(ReportSite $site, string $page, string $title, array $crumbs, string $body): string
+    public function render(ReportSite $site, string $page, string $title, array $crumbs, string $body, array $anchors = []): string
     {
         $prefix = $site->prefixOf($page);
 
@@ -61,20 +63,18 @@ final class PageShell
             . $this->bootstrap() . "\n"
             . '</head>' . "\n"
             . '<body data-root="' . $this->text->escape($prefix) . '">' . "\n"
-            . '<nav class="sidebar" id="sidebar">' . $this->sidebar($site, $page) . '</nav>' . "\n"
+            . '<nav class="sidebar" id="sidebar">' . $this->sidebar($site, $page, $anchors) . '</nav>' . "\n"
             . '<div class="page">' . "\n"
             . '<header class="topbar">' . "\n"
             . '<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>' . "\n"
             . '<nav class="crumbs">' . $this->crumbs($crumbs, $prefix) . '</nav>' . "\n"
             . '<div class="topbar-tools">' . "\n"
-            . '<input type="search" id="search" placeholder="Search statements… ( / )" autocomplete="off" spellcheck="false">' . "\n"
+            . '<input type="search" id="search" placeholder="Find a statement… ( / )" title="Search by SQL text, table, function or file" autocomplete="off" spellcheck="false">' . "\n"
             . '<button id="theme-toggle" title="Toggle theme">◐</button>' . "\n"
             . '</div>' . "\n"
             . '</header>' . "\n"
             . '<div class="search-results" id="search-results" hidden></div>' . "\n"
             . '<main class="content">' . "\n" . $body . '</main>' . "\n"
-            . '<footer class="site-footer">Every statement here was read back from the call that receives it. '
-            . 'A gap marked <span class="hole">{$}</span> is a value the analysis could not pin down, not a value the program leaves empty.</footer>' . "\n"
             . '</div>' . "\n"
             . '<script src="' . $this->text->escape($prefix . self::INDEX) . '" defer></script>' . "\n"
             . '<script src="' . $this->text->escape($prefix . self::SCRIPT) . '" defer></script>' . "\n"
@@ -101,89 +101,64 @@ final class PageShell
 
     /**
      * The navigation shown beside every page.
+     *
+     * @param list<array{string, string}> $anchors
      */
-    public function sidebar(ReportSite $site, string $page): string
+    public function sidebar(ReportSite $site, string $page, array $anchors): string
     {
         $prefix = $site->prefixOf($page);
 
         return '<div class="sb-head">'
             . '<a class="sb-site" href="' . $this->text->escape($prefix . ReportSite::INDEX) . '">SQL catalog</a>'
-            . '<span class="sb-root">' . $this->text->escape($this->text->plural(count($site->files()), 'file')) . '</span>'
+            . '<span class="sb-root">' . $this->text->escape($this->text->plural($site->statistics()->statements(), 'statement')) . '</span>'
             . '</div>'
-            . $this->reportBlock($site, $page)
-            . $this->filesBlock($site, $page)
-            . $this->pagesBlock($site, $page);
+            . $this->routes($site, $page)
+            . $this->anchors($anchors);
     }
 
     /**
-     * The links to the pages that stand for the whole catalog.
+     * The routes a reader can take to a statement, with what each one holds.
      */
-    public function reportBlock(ReportSite $site, string $page): string
+    public function routes(ReportSite $site, string $page): string
     {
+        $routes = [
+            [ReportSite::INDEX, 'Overview', null],
+            [ReportSite::STATEMENTS, 'Statements', $site->statistics()->statements()],
+            [ReportSite::TABLES, 'Tables', count($site->tables())],
+            [ReportSite::NAMESPACES, 'Namespaces', count($site->index()->byNamespace())],
+            [ReportSite::FILES, 'Files', count($site->files())],
+            [ReportSite::FINDINGS, 'Findings', $site->statistics()->findings()],
+        ];
         $prefix = $site->prefixOf($page);
         $items = '';
-        foreach ([ReportSite::INDEX => 'Overview', ReportSite::TABLES => 'Tables', ReportSite::FINDINGS => 'Findings'] as $target => $label) {
-            $items .= '<li' . ($page === $target ? ' class="is-active"' : '') . '>'
-                . '<a href="' . $this->text->escape($prefix . $target) . '">' . $label . '</a></li>';
+        foreach ($routes as [$target, $label, $count]) {
+            $directory = substr($target, 0, -5) . '/';
+            $active = $page === $target || str_starts_with($page, $directory);
+            $items .= '<li' . ($active ? ' class="is-active"' : '') . '>'
+                . '<a href="' . $this->text->escape($prefix . $target) . '">' . $label . '</a>'
+                . ($count === null ? '' : '<span class="sb-count">' . $this->text->number($count) . '</span>') . '</li>';
         }
 
-        return '<div class="sb-block"><p class="sb-title">Report</p><ul class="sb-list">' . $items . '</ul></div>';
+        return '<div class="sb-block"><p class="sb-title">Browse</p><ul class="sb-list">' . $items . '</ul></div>';
     }
 
     /**
-     * The files listed on the page being read.
+     * The sections of the page being read.
+     *
+     * @param list<array{string, string}> $anchors
      */
-    public function filesBlock(ReportSite $site, string $page): string
+    public function anchors(array $anchors): string
     {
-        $number = $this->numberOf($site, $page);
-        if ($number === null) {
+        if ($anchors === []) {
             return '';
         }
         $items = '';
-        foreach ($site->pages()[$number - 1] ?? [] as $file => $entries) {
-            $items .= '<li><a href="#' . $this->text->escape($site->fileAnchor($file)) . '" title="'
-                . $this->text->escape($file) . '">' . $this->text->escape($file) . '</a>'
-                . '<span class="sb-count">' . $this->text->number(count($entries)) . '</span></li>';
+        foreach ($anchors as [$label, $id]) {
+            $items .= '<li><a href="#' . $this->text->escape($id) . '" title="' . $this->text->escape($label) . '">'
+                . $this->text->escape($label) . '</a></li>';
         }
 
-        return $items === '' ? '' : '<div class="sb-block"><p class="sb-title">On this page</p><ul class="sb-list">' . $items . '</ul></div>';
-    }
-
-    /**
-     * The links to every page of statements.
-     */
-    public function pagesBlock(ReportSite $site, string $page): string
-    {
-        if ($site->pageCount() < 2) {
-            return '';
-        }
-        $prefix = $site->prefixOf($page);
-        $current = $this->numberOf($site, $page);
-        $items = '';
-        for ($number = 1; $number <= $site->pageCount(); $number++) {
-            $items .= '<li' . ($number === $current ? ' class="is-active"' : '') . '>'
-                . '<a href="' . $this->text->escape($prefix . $site->pageName($number)) . '">Page ' . $number . '</a>'
-                . '<span class="sb-count">' . $this->text->number(array_sum(array_map(
-                    'count',
-                    $site->pages()[$number - 1] ?? [],
-                ))) . '</span></li>';
-        }
-
-        return '<div class="sb-block"><p class="sb-title">Statements</p><ul class="sb-list">' . $items . '</ul></div>';
-    }
-
-    /**
-     * Which page of statements is being read, or null when the page is not one.
-     */
-    public function numberOf(ReportSite $site, string $page): ?int
-    {
-        for ($number = 1; $number <= $site->pageCount(); $number++) {
-            if ($site->pageName($number) === $page) {
-                return $number;
-            }
-        }
-
-        return null;
+        return '<div class="sb-block"><p class="sb-title">On this page</p><ul class="sb-list sb-anchors">' . $items . '</ul></div>';
     }
 
     /**

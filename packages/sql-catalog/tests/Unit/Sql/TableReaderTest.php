@@ -53,6 +53,11 @@ final class TableReaderTest extends TestCase
             ['SELECT * FROM users, orders', ['users']],
             ['SELECT 1', []],
             ['SELECT * FROM (SELECT 1) x', []],
+            ['DROP TABLE IF EXISTS users', ['users']],
+            ['CREATE TABLE IF NOT EXISTS users (id INT)', ['users']],
+            ['SHOW TABLE STATUS', []],
+            ['INSERT INTO users (a) VALUES (1) ON DUPLICATE KEY UPDATE a = VALUES(a)', ['users']],
+            ['SELECT COUNT(*) FROM  WHERE a = 1', []],
         ];
     }
 
@@ -60,6 +65,24 @@ final class TableReaderTest extends TestCase
     {
         $pattern = TextPattern::fromText('SELECT * FROM ')
             ->concat(TextPattern::fromHole(new TextHole(Origin::Property, TypeShape::unknown())));
+        self::assertSame([], (new TableReader())->read($pattern));
+    }
+
+    public function testReadKeepsANameThatIsKnownInPart(): void
+    {
+        $pattern = TextPattern::fromText('SELECT * FROM ')
+            ->concat(TextPattern::fromHole(new TextHole(Origin::Property, TypeShape::unknown())))
+            ->concat(TextPattern::fromText('posts p JOIN `'))
+            ->concat(TextPattern::fromHole(new TextHole(Origin::Property, TypeShape::unknown())))
+            ->concat(TextPattern::fromText('users` u'));
+        self::assertSame(['{$}posts', '{$}users'], (new TableReader())->read($pattern));
+    }
+
+    public function testReadDoesNotGuessAQuotedNameThatIsAllGap(): void
+    {
+        $pattern = TextPattern::fromText('ALTER TABLE `')
+            ->concat(TextPattern::fromHole(new TextHole(Origin::Property, TypeShape::unknown())))
+            ->concat(TextPattern::fromText('` DROP INDEX x'));
         self::assertSame([], (new TableReader())->read($pattern));
     }
 
@@ -80,6 +103,8 @@ final class TableReaderTest extends TestCase
         self::assertTrue($reader->isName(new SqlToken(SqlTokenKind::Word, 'users', 0, 0)));
         self::assertFalse($reader->isName(new SqlToken(SqlTokenKind::Word, 'SELECT', 0, 0)));
         self::assertFalse($reader->isName(new SqlToken(SqlTokenKind::Word, PlaceholderScanner::HOLE_MARKER, 0, 0)));
+        self::assertFalse($reader->isName(new SqlToken(SqlTokenKind::Identifier, '`' . PlaceholderScanner::HOLE_MARKER . '`', 0, 0)));
+        self::assertFalse($reader->isName(new SqlToken(SqlTokenKind::Word, 'WHERE', 0, 0)));
         self::assertFalse($reader->isName(new SqlToken(SqlTokenKind::Symbol, '(', 0, 0)));
     }
 

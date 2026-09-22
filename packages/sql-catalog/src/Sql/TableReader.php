@@ -10,13 +10,32 @@ use SqlCatalog\Text\TextPattern;
  * Reads the tables a statement names.
  *
  * The names let a catalog be grouped and filtered by table, and are what a
- * fixture generator needs in order to build rows for the statement.
+ * fixture generator needs in order to build rows for the statement. A name
+ * the analyzer knows only part of — a prefix read from configuration and a
+ * suffix written in the source — is still a name to group by, and is
+ * reported with the unknown part marked. A name nothing is known of is not
+ * guessed at.
  *
  * @visibility root
  */
 final class TableReader
 {
+    /**
+     * The marker an unknown part of a name is reported with.
+     */
+    public const GAP = '{$}';
+
     private const INTRODUCERS = ['FROM', 'JOIN', 'INTO', 'UPDATE', 'TABLE'];
+
+    /**
+     * The words that can follow an introducer without naming a table.
+     */
+    private const SKIPPED = ['IF', 'NOT', 'EXISTS'];
+
+    /**
+     * The words that are never a table name, however they follow an introducer.
+     */
+    private const NEVER_NAMES = ['SELECT', 'ONLY', 'LATERAL', 'WHERE', 'SET', 'VALUES', 'ON', 'STATUS', 'KEY', 'DUPLICATE', 'INDEX', 'JOIN', 'IF', 'NOT', 'EXISTS'];
 
     private SqlLexer $lexer;
 
@@ -37,14 +56,16 @@ final class TableReader
     {
         $tokens = $this->lexer->tokenize($pattern->render(PlaceholderScanner::HOLE_MARKER));
         $found = [];
+        $previous = null;
         foreach ($tokens as $index => $token) {
-            if ($token->kind !== SqlTokenKind::Word || !in_array($token->keyword(), self::INTRODUCERS, true)) {
-                continue;
+            $introducer = $token->kind === SqlTokenKind::Word && in_array($token->keyword(), self::INTRODUCERS, true);
+            if ($introducer && !($token->keyword() === 'UPDATE' && $previous === 'KEY')) {
+                $name = $this->readName(array_slice($tokens, $index + 1));
+                if ($name !== null) {
+                    $found[str_replace(PlaceholderScanner::HOLE_MARKER, self::GAP, $name)] = true;
+                }
             }
-            $name = $this->readName(array_slice($tokens, $index + 1));
-            if ($name !== null) {
-                $found[$name] = true;
-            }
+            $previous = $token->kind === SqlTokenKind::Word ? $token->keyword() : null;
         }
 
         return array_keys($found);
@@ -60,6 +81,9 @@ final class TableReader
         $parts = [];
         foreach ($tokens as $token) {
             $expectsName = count($parts) % 2 === 0;
+            if ($parts === [] && $token->kind === SqlTokenKind::Word && in_array($token->keyword(), self::SKIPPED, true)) {
+                continue;
+            }
             if ($expectsName && $this->isName($token)) {
                 $parts[] = $this->unquote($token);
                 continue;
@@ -80,16 +104,19 @@ final class TableReader
 
     /**
      * Whether the token can start a table name.
+     *
+     * A gap on its own is not a name, quoted or not; a word with a gap in it
+     * is, since the rest of the word is known.
      */
     public function isName(SqlToken $token): bool
     {
         if ($token->kind === SqlTokenKind::Identifier) {
-            return true;
+            return $this->unquote($token) !== PlaceholderScanner::HOLE_MARKER;
         }
 
         return $token->kind === SqlTokenKind::Word
             && $token->text !== PlaceholderScanner::HOLE_MARKER
-            && !in_array($token->keyword(), ['SELECT', 'ONLY', 'LATERAL'], true);
+            && !in_array($token->keyword(), self::NEVER_NAMES, true);
     }
 
     /**

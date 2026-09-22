@@ -177,7 +177,7 @@ an application that annotates its own globals needs no extension at all.
 | Reporter | Writes | Purpose |
 |----------|--------|---------|
 | `json` | `catalog.json`, `catalog-schema.json` | A deterministic document with the JSON Schema that describes it; two runs of the same source produce the same bytes, so the diff of a pull request reads as the change in the SQL an application issues |
-| `html` | `index.html`, `tables.html`, `findings.html`, `statements/page-N.html`, `assets/` | A site of linked pages: an overview, the statements split across pages by the file they are written in, every table with what reads and writes it, every finding under the rule that reported it, and a search over all of them |
+| `html` | `index.html`, `statements.html`, `tables.html`, `namespaces.html`, `files.html`, `findings.html`, `tables/`, `classes/`, `files/`, `statements/`, `assets/` | A site of linked pages laid out as the routes to a statement: by the table it names, by the namespace and class that issue it, by the file it is written in, or by what the analysis reported on it. Every table, class, file and statement has a page of its own, every listing can be narrowed on the page, and a search covers all of them |
 | `text` | `catalog.txt` | One block per statement, for reading in a terminal |
 
 `html` writes a directory, so give it `--output`: printed to standard output it
