@@ -196,6 +196,6 @@ final class SourceEditTest extends TestCase
     {
         $source = new \SqlParser\Parser\Node('query', 0, []);
         $this->expectException(InvalidStructure::class);
-        \SqlSemantics\Model\Transformation\SourceEdit::replace($source, Sql\Source::read($source), new \SqlParser\Parser\Node('optional', 0, []), Expression::literal(1,Dialect::PostgreSql)->sql);
+        \SqlSemantics\Model\Transformation\SourceEdit::replace($source, Sql\Source::read($source), new \SqlParser\Parser\Node('optional', 0, []), Expression::literal(1, Dialect::PostgreSql)->sql);
     }
 }
