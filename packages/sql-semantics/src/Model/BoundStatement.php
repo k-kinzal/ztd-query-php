@@ -50,6 +50,7 @@ class BoundStatement
      * @param list<Definition\TableDeclaration> $definitions Bound declaration expressions by role
      * @param Write\Merge|null $merge Conditional write plan
      * @param list<BoundStatement> $statements Nested commands, such as an explained or prepared statement
+     * @param list<Diagnostic> $diagnostics Semantic problems from binding this statement, including nested scopes
      */
     public function __construct(
         public readonly string $scopeId,
@@ -83,6 +84,7 @@ class BoundStatement
         public readonly array $definitions = [],
         public readonly ?Write\Merge $merge = null,
         public readonly array $statements = [],
+        public readonly array $diagnostics = [],
     ) {
         Validation\StatementInvariant::check($this);
     }
@@ -90,7 +92,7 @@ class BoundStatement
     /**
      * Writes this parsed statement back as SQL, preserving its trivia.
      */
-    public function toSql(): string
+    public function toString(): string
     {
         return $this->source->toString();
     }

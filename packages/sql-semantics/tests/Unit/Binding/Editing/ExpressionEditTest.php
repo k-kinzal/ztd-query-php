@@ -62,7 +62,6 @@ use SqlSemantics\SemanticException;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Write\ConflictBinder::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Write\InsertionBinder::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Dialect::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Analysis::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\ColumnBinding::class)]
@@ -106,11 +105,11 @@ final class ExpressionEditTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER,b INTEGER)'));
         $statement = $binder->bind('/* keep */ SELECT a*2 FROM t');
         $result = $binder->replaceExpression($statement, $statement->outputs[0]->expression->operands[0], 'b+1');
-        self::assertStringStartsWith('/* keep */ SELECT ', $result->toSql());
+        self::assertStringStartsWith('/* keep */ SELECT ', $result->toString());
         self::assertSame('*', $result->outputs[0]->expression->symbol);
         self::assertSame('+', $result->outputs[0]->expression->operands[0]->symbol);
         self::assertSame('b', $result->outputs[0]->expression->lineage()[0]->column->name);
-        self::assertSame('/* keep */ SELECT a*2 FROM t', $statement->toSql());
+        self::assertSame('/* keep */ SELECT a*2 FROM t', $statement->toString());
     }
     public function testBoundaryRejectsAdditionalProjection(): void
     {
@@ -151,7 +150,7 @@ final class ExpressionEditTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bindAll('SELECT 1; /* second */ SELECT 2+3;')[1];
         $edited = $binder->replaceExpression($statement, $statement->outputs[0]->expression->operands[0], '4');
-        self::assertStringContainsString('/* second */', $edited->toSql());
+        self::assertStringContainsString('/* second */', $edited->toString());
         self::assertSame('4', $edited->outputs[0]->expression->operands[0]->symbol);
         self::assertSame('3', $edited->outputs[0]->expression->operands[1]->symbol);
     }

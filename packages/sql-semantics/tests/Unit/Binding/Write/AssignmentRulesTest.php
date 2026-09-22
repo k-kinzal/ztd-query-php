@@ -61,7 +61,6 @@ use SqlSemantics\SemanticException;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Write\ConflictBinder::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Write\InsertionBinder::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Dialect::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Analysis::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\ColumnBinding::class)]
@@ -137,8 +136,8 @@ final class AssignmentRulesTest extends TestCase
     }
     public function testCheckKeepsUnresolvedDestinationDiagnostics(): void
     {
-        $analysis = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->analyze('UPDATE missing SET a=NULL');
-        self::assertContains('unknown-column', array_column($analysis->diagnostics, 'reason'));
-        self::assertSame('unresolved-column', $analysis->statement->writes[0]->targets[0]->kind->value);
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('UPDATE missing SET a=NULL', strict: false);
+        self::assertContains('unknown-column', array_column($statement->diagnostics, 'reason'));
+        self::assertSame('unresolved-column', $statement->writes[0]->targets[0]->kind->value);
     }
 }

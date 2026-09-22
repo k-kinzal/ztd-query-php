@@ -61,7 +61,6 @@ use SqlSemantics\SemanticException;
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\Write\ConflictBinder::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Write\InsertionBinder::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Dialect::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Analysis::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\ColumnBinding::class)]
@@ -125,9 +124,9 @@ final class ConflictBinderTest extends TestCase
     }
     public function testPredicateRejectsNonBooleanDeleteCondition(): void
     {
-        $analysis = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->analyze('DELETE FROM t WHERE 1');
-        self::assertSame('non-boolean-predicate', $analysis->diagnostics[0]->reason);
-        self::assertSame('integer', $analysis->statement->where?->type->name);
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('DELETE FROM t WHERE 1', strict: false);
+        self::assertSame('non-boolean-predicate', $statement->diagnostics[0]->reason);
+        self::assertSame('integer', $statement->where?->type->name);
     }
 
     public function testPredicateRetainsCursorRowSelection(): void

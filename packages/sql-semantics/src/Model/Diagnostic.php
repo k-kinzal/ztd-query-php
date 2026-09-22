@@ -11,8 +11,8 @@ use SqlParser\Parser\Node;
  * A semantic problem tied to its original syntax, without discarding the statement graph.
  *
  * @example Reading analysis diagnostics
- *     $analysis = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->analyze('SELECT missing');
- *     $analysis->diagnostics[0]->reason // => 'unknown-column'
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('SELECT missing', strict: false);
+ *     $statement->diagnostics[0]->reason // => 'unknown-column'
  *
  * @visibility public
  */

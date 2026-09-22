@@ -73,7 +73,6 @@ use SqlSemantics\SchemaBuilder;
 #[Medium]
 #[UsesClass(\SqlSemantics\Binding\Query\RelationFactory::class)]
 #[UsesClass(\SqlSemantics\Binding\Analysis\Diagnostics::class)]
-#[UsesClass(\SqlSemantics\Model\Analysis::class)]
 #[UsesClass(\SqlSemantics\Model\Diagnostic::class)]
 #[UsesClass(\SqlSemantics\Binding\Scalar\IndirectionBinder::class)]
 #[UsesClass(\SqlSemantics\Binding\Write\ConflictBinder::class)]
@@ -141,10 +140,10 @@ final class UsingJoinTest extends TestCase
     public function testBindCollectsTypeDiagnosticsForFullUsingJoins(): void
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE a (id INTEGER)', 'CREATE TABLE b (id BOOLEAN)');
-        $analysis = (new Binder($schema))->analyze('SELECT * FROM a FULL JOIN b USING (id)');
-        self::assertNotSame([], $analysis->diagnostics);
-        self::assertSame(['id'], array_column($analysis->statement->outputs, 'name'));
-        self::assertSame('COALESCE', $analysis->statement->outputs[0]->expression->symbol);
+        $statement = (new Binder($schema))->bind('SELECT * FROM a FULL JOIN b USING (id)', strict: false);
+        self::assertNotSame([], $statement->diagnostics);
+        self::assertSame(['id'], array_column($statement->outputs, 'name'));
+        self::assertSame('COALESCE', $statement->outputs[0]->expression->symbol);
     }
 
 }

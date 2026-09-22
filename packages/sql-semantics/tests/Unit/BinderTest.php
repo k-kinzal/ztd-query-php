@@ -71,7 +71,6 @@ use SqlSemantics\Type\Nullability;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ConstraintGroups::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Analysis\Diagnostics::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Analysis::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Diagnostic::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Scalar\IndirectionBinder::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Write\ConflictBinder::class)]
@@ -333,14 +332,14 @@ final class BinderTest extends TestCase
     }
 
     #[DataProvider('providerReleases')]
-    public function testAnalyzeMatchesStrictBindingWithACompleteCatalog(Dialect $dialect, string $version): void
+    public function testBindCollectingDiagnosticsMatchesStrictBindingWithCompleteDefinitions(Dialect $dialect, string $version): void
     {
         $schema = (new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(id INTEGER NOT NULL)');
         $binder = new Binder($schema);
-        $analysis = $binder->analyze('SELECT id + 1 AS next_id FROM t');
-        self::assertSame([], $analysis->diagnostics);
-        self::assertEquals($binder->bind('SELECT id + 1 AS next_id FROM t'), $analysis->statement);
-        self::assertSame('id', $analysis->statement->outputs[0]->expression->lineage()[0]->column->name);
+        $statement = $binder->bind('SELECT id + 1 AS next_id FROM t', strict: false);
+        self::assertSame([], $statement->diagnostics);
+        self::assertEquals($binder->bind('SELECT id + 1 AS next_id FROM t'), $statement);
+        self::assertSame('id', $statement->outputs[0]->expression->lineage()[0]->column->name);
     }
 
     public function testBindEmptyPostgreSqlProjectionAndOrdinaryDualTable(): void
@@ -359,7 +358,194 @@ final class BinderTest extends TestCase
         $changed = $binder->replaceExpression($statement, $statement->outputs[0]->expression, '2+3');
         self::assertSame('+', $changed->outputs[0]->expression->symbol);
         self::assertSame('1', $statement->outputs[0]->expression->symbol);
-        self::assertEquals($changed, $binder->bind($changed->toSql()));
+        self::assertEquals($changed, $binder->bind($changed->toString()));
     }
 
+    public function testBindRetainsUnresolvedInputsAndEveryProjection(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT t.id, 1 AS n, t.* FROM missing t WHERE t.id > 0', strict: false);
+        self::assertSame(['unknown-table', 'unknown-column', 'unknown-column'], array_column($statement->diagnostics, 'reason'));
+        self::assertFalse($statement->relations[0]->declaration->resolved);
+        self::assertSame([], $statement->relations[0]->declaration->columns);
+        self::assertSame(['id', 'n', null], array_column($statement->outputs, 'name'));
+        self::assertSame('unresolved-column', $statement->outputs[0]->expression->kind->value);
+        self::assertSame(['t', 'id'], $statement->outputs[0]->expression->reference);
+        self::assertSame('unknown', $statement->outputs[0]->expression->type->name);
+        self::assertSame('unknown', $statement->outputs[0]->expression->nullability->value);
+        self::assertSame('integer', $statement->outputs[1]->expression->type->name);
+        self::assertSame('wildcard', $statement->outputs[2]->expression->kind->value);
+        self::assertSame(['t'], $statement->outputs[2]->expression->reference);
+        self::assertSame('>', $statement->where?->symbol);
+    }
+
+    public function testBindRetainsKnownBindingsAlongsideUnknownColumns(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER NOT NULL)');
+        $statement = (new Binder($schema))->bind('SELECT id, missing FROM t', strict: false);
+        self::assertSame(['unknown-column'], array_column($statement->diagnostics, 'reason'));
+        self::assertSame($schema->tables[0]->columns[0], $statement->outputs[0]->expression->binding?->column);
+        self::assertSame('not-null', $statement->outputs[0]->expression->nullability->value);
+        self::assertSame('missing', $statement->outputs[1]->name);
+    }
+
+    public function testBindRetainsAmbiguityInsteadOfSelectingAnArbitraryColumn(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
+        $statement = (new Binder($schema))->bind('SELECT id FROM t a, t b', strict: false);
+        self::assertSame(['ambiguous-column'], array_column($statement->diagnostics, 'reason'));
+        self::assertNull($statement->outputs[0]->expression->binding);
+        self::assertSame(['id'], $statement->outputs[0]->expression->reference);
+        self::assertCount(2, $statement->relations);
+    }
+
+    public function testBindRetainsOpenCteResultsAndMutationAssignments(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $query = $binder->bind('WITH q AS (TABLE absent) SELECT * FROM q', strict: false);
+        self::assertFalse($query->relations[0]->declaration->resolved);
+        self::assertSame('wildcard', $query->outputs[0]->expression->kind->value);
+        self::assertSame('absent', $query->ctes['q']->relations[0]->declaration->name);
+        $write = $binder->bind('UPDATE absent SET n=n+1 RETURNING n', strict: false);
+        self::assertSame('UPDATE', $write->kind);
+        self::assertSame(['n'], array_keys($write->assignments));
+        self::assertSame('+', $write->assignments['n']->symbol);
+        self::assertSame('unresolved-column', $write->outputs[0]->expression->kind->value);
+    }
+
+    #[DataProvider('providerInvalidSemantics')]
+    public function testBindPreservesInvalidSemanticStructure(string $sql, string $reason): void
+    {
+        $result = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql, strict: false);
+        self::assertContains($reason, array_column($result->diagnostics, 'reason'));
+        self::assertSame($sql, $result->source->toString());
+        self::assertNotSame([], $result->outputs);
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerInvalidSemantics(): iterable
+    {
+        yield 'incompatible types' => ['SELECT COALESCE(1, TRUE)', 'incompatible-types'];
+        yield 'non boolean predicate' => ['SELECT 1 WHERE 42', 'non-boolean-predicate'];
+        yield 'values width' => ['VALUES (1, 2), (3)', 'values-column-count'];
+        yield 'compound width' => ['SELECT 1, 2 UNION SELECT 3', 'set-column-count'];
+        yield 'order position' => ['SELECT 1 ORDER BY 2', 'invalid-output-position'];
+        yield 'ambiguous output' => ['SELECT 1 AS n, 2 AS n ORDER BY n', 'ambiguous-output'];
+        yield 'star without relation' => ['SELECT *', 'unknown-relation'];
+        yield 'duplicate relation' => ['SELECT 1 FROM t, t', 'duplicate-relation'];
+    }
+    public function testBindUnresolvedInputsDoNotAcquireInventedCommonTypes(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT COALESCE(missing, 1)', strict: false);
+        self::assertSame('unknown', $query->outputs[0]->expression->type->name);
+        self::assertSame('unresolved-column', $query->outputs[0]->expression->operands[0]->kind->value);
+        self::assertSame('integer', $query->outputs[0]->expression->operands[1]->type->name);
+    }
+
+
+    #[TestWith([Dialect::PostgreSql])]
+    #[TestWith([Dialect::Sqlite])]
+    public function testBindAllKeepsDiagnosticsWithEachStatement(Dialect $dialect): void
+    {
+        $binder = new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(id INTEGER)'));
+        $statements = $binder->bindAll('SELECT missing FROM t; SELECT id FROM t; SELECT other FROM t', strict: false);
+        self::assertCount(3, $statements);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statements[0]);
+        self::assertSame(['unknown-column'], array_column($statements[0]->diagnostics, 'reason'));
+        self::assertSame([], $statements[1]->diagnostics);
+        self::assertSame(['unknown-column'], array_column($statements[2]->diagnostics, 'reason'));
+        self::assertSame(['missing'], $statements[0]->outputs[0]->expression->reference);
+        self::assertSame('id', $statements[1]->outputs[0]->expression->binding?->column->name);
+        self::assertSame(['other'], $statements[2]->outputs[0]->expression->reference);
+        self::assertSame([], $binder->bind('SELECT id FROM t')->diagnostics);
+    }
+
+    public function testBindAllRaisesSemanticErrorsByDefault(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
+        $this->expectException(SemanticException::class);
+        $this->expectExceptionMessage('missing');
+        $binder->bindAll('SELECT id FROM t; SELECT missing FROM t');
+    }
+
+    public function testBindCollectingDiagnosticsDoesNotChangeLaterStrictCalls(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $statement = $binder->bind('SELECT missing', strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertSame(['unknown-column'], array_column($statement->diagnostics, 'reason'));
+        $this->expectException(SemanticException::class);
+        $binder->bind('SELECT missing');
+    }
+
+    public function testBindCollectingDiagnosticsStillRejectsInvalidSyntax(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $this->expectException(\SqlParser\Parser\SyntaxException::class);
+        $binder->bind('SELECT FROM', strict: false);
+    }
+
+    public function testBindAllCollectingDiagnosticsStillRejectsInvalidSyntax(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $this->expectException(\SqlParser\Parser\SyntaxException::class);
+        $binder->bindAll('SELECT 1; SELECT FROM', strict: false);
+    }
+
+    public function testReplaceExpressionValidatesAnUnresolvedStatement(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
+        $statement = $binder->bind('SELECT missing FROM t', strict: false);
+        $repaired = $binder->replaceExpression($statement, $statement->outputs[0]->expression, 'id');
+        self::assertSame([], $repaired->diagnostics);
+        self::assertSame('id', $repaired->outputs[0]->expression->binding?->column->name);
+        self::assertSame(['unknown-column'], array_column($statement->diagnostics, 'reason'));
+        self::assertSame('SELECT missing FROM t', $statement->toString());
+        $this->expectException(SemanticException::class);
+        $binder->replaceExpression($statement, $statement->outputs[0]->expression, 'still_missing');
+    }
+
+    public function testBindDiagnosticSelectRetainsItsRelationalStages(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
+        $sql = 'WITH q AS (SELECT id FROM t) SELECT DISTINCT q.id, missing FROM q WHERE q.id>0 GROUP BY q.id HAVING q.id>0 ORDER BY q.id DESC LIMIT 2 OFFSET 1';
+        $statement = $binder->bind($sql, strict: false);
+        self::assertSame(['unknown-column'], array_column($statement->diagnostics, 'reason'));
+        self::assertTrue($statement->distinct);
+        self::assertSame($statement->ctes['q'], $statement->relations[0]->query);
+        self::assertSame($statement->relations[0], $statement->from);
+        self::assertSame('>', $statement->where?->symbol);
+        self::assertSame('id', $statement->groupBy[0]->binding?->column->name);
+        self::assertSame('>', $statement->having?->symbol);
+        self::assertTrue($statement->orderBy[0]->descending);
+        self::assertSame('2', $statement->limit?->symbol);
+        self::assertSame('1', $statement->offset?->symbol);
+        self::assertSame($sql, $statement->toString());
+    }
+
+    public function testBindDiagnosticInsertRetainsStorageAndConflictEffects(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER PRIMARY KEY)'));
+        $statement = $binder->bind('INSERT INTO t(id) VALUES(missing) ON CONFLICT(id) DO UPDATE SET id=EXCLUDED.id WHERE t.id>0 RETURNING id', strict: false);
+        self::assertContains('unknown-column', array_column($statement->diagnostics, 'reason'));
+        self::assertSame($statement->targets[0], $statement->insertion?->target);
+        self::assertSame('id', $statement->insertion->columns[0]->binding?->column->name);
+        self::assertSame(['missing'], $statement->rows[0][0]->reference);
+        self::assertSame('update', $statement->conflicts[0]->action);
+        self::assertSame('id', $statement->conflicts[0]->assignments[0]->targets[0]->binding?->column->name);
+        self::assertSame('>', $statement->conflicts[0]->where?->symbol);
+        self::assertSame('id', $statement->outputs[0]->expression->binding?->column->name);
+    }
+
+    public function testBindKeepsNestedDiagnosticsAndCommandBoundaries(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
+        $statement = $binder->bind('EXPLAIN UPDATE t SET id=missing WHERE id=1', strict: false);
+        self::assertSame(['unknown-column'], array_column($statement->diagnostics, 'reason'));
+        self::assertSame('UPDATE', $statement->statements[0]->kind);
+        self::assertSame('id', $statement->statements[0]->writes[0]->targets[0]->binding?->column->name);
+        self::assertSame(['missing'], $statement->statements[0]->writes[0]->value->reference);
+        self::assertSame('=', $statement->statements[0]->where?->symbol);
+    }
 }

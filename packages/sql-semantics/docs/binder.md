@@ -11,7 +11,6 @@ The following declarations show the public signatures. Method bodies are omitted
 ```php
 namespace SqlSemantics;
 
-use SqlSemantics\Model\Analysis;
 use SqlSemantics\Model\BoundStatement;
 use SqlSemantics\Model\Expression;
 
@@ -19,12 +18,10 @@ final class Binder
 {
     public function __construct(public readonly Schema $schema) { /* ... */ }
 
-    public function bind(string $sql): BoundStatement { /* ... */ }
+    public function bind(string $sql, bool $strict = true): BoundStatement { /* ... */ }
 
     /** @return list<BoundStatement> */
-    public function bindAll(string $sql): array { /* ... */ }
-
-    public function analyze(string $sql): Analysis { /* ... */ }
+    public function bindAll(string $sql, bool $strict = true): array { /* ... */ }
 
     public function replaceExpression(
         BoundStatement $statement,
@@ -39,13 +36,13 @@ schema supplied to the constructor. A SELECT returns a `BoundSelect`, which has
 the same properties as `BoundStatement`.
 
 If a table or column cannot be resolved, or a known type rule is violated,
-`bind()` and `bindAll()` raise `SemanticException`. Its `reason` identifies the
+`bind()` and `bindAll()` raise `SemanticException` by default. Its `reason` identifies the
 problem and `source` identifies the responsible SQL node or token. Invalid SQL
 syntax raises the parser's lexical or syntax exception.
 
-The `analyze()` method provides a different error-handling policy for the
-same binding operation: it returns the statement together with diagnostics.
-[Unresolved references](#unresolved-references) describes that return value.
+Pass `strict: false` to either method to retain semantic problems in each
+returned statement's `diagnostics` instead of raising them. The result remains a
+`BoundStatement`; see [unresolved references](#unresolved-references).
 `replaceExpression()` returns a new statement after checking and rebinding an
 expression replacement; see [editing expressions](#editing-expressions).
 
@@ -168,28 +165,32 @@ Build a new schema snapshot when subsequent binding must use changed declaration
 
 ## Unresolved references
 
-The `analyze()` API returns an `Analysis` containing `statement` and
-`diagnostics`. It is the same binding operation as `bind()`, with semantic errors
-collected instead of thrown. Each `Diagnostic` has `reason`, `message`, and
-`source`. The statement retains known bindings and marks unresolved references
-explicitly.
+Use `bind($sql, strict: false)` to read SQL with missing definitions or semantic
+errors. The returned statement contains `diagnostics` alongside its ordinary
+properties. Each `Diagnostic` has `reason`, `message`, and `source`. Known
+bindings remain available and unresolved references are marked explicitly.
 
 ```php
-$analysis = $binder->analyze('SELECT id, missing FROM users');
+$unresolved = $binder->bind('SELECT id, missing FROM users', strict: false);
 
-$analysis->statement->outputs[0]->expression->binding->column->name; // id
-$analysis->statement->outputs[1]->expression->reference;             // ['missing']
-$analysis->diagnostics[0]->reason;                                  // unknown-column
+$unresolved->outputs[0]->expression->binding->column->name; // id
+$unresolved->outputs[1]->expression->reference;             // ['missing']
+$unresolved->diagnostics[0]->reason;                                  // unknown-column
 ```
 
 | SQL and schema | Returned structure and diagnostics |
 |----------------|------------------------------------|
 | Empty schema; `SELECT t.id, t.* FROM missing t` | The relation has `declaration.resolved = false`; `t.id` is `UnresolvedColumn` with `reference = ['t', 'id']`; `t.*` is `Wildcard` with qualifier `['t']`; diagnostics include `unknown-table`. |
 | The example schema; `INSERT INTO users(missing) VALUES(1)` | The insertion retains its unresolved destination and input value; diagnostics include `unknown-column`. |
-| PostgreSQL example schema; `DELETE FROM users WHERE 1` | The numeric predicate remains in `statement.where`; diagnostics include `non-boolean-predicate`. |
+| PostgreSQL example schema; `DELETE FROM users WHERE 1` | The numeric predicate remains in `where`; diagnostics include `non-boolean-predicate`. |
 
 A wildcard whose table definition is missing has an unknown output width. It is
-not one resolved result column. Invalid SQL syntax still raises an exception.
+not one resolved result column. Invalid SQL syntax and internal failures still
+raise exceptions. Diagnostics include problems in nested queries and commands.
+
+`bindAll($sql, strict: false)` collects diagnostics separately for each returned
+statement. They do not carry over to the next statement or a later binder call.
+With the default `strict: true`, a successful result has an empty diagnostic list.
 
 ## Editing expressions
 
@@ -200,8 +201,8 @@ $edited = $binder->replaceExpression(
     $original->outputs[0]->expression->operands[0],
     'score+1',
 );
-$edited->source->toString(); // "SELECT (\nscore+1\n)*2 FROM users"
-$original->source->toString(); // SELECT score*2 FROM users
+$edited->toString(); // "SELECT (\nscore+1\n)*2 FROM users"
+$original->toString(); // SELECT score*2 FROM users
 ```
 
 Parentheses preserve precedence. The target expression must belong to the
@@ -211,12 +212,12 @@ unchanged.
 
 ## Return to SQL
 
-The original SQL is available through the retained source node:
+Call `toString()` on a bound statement to obtain its SQL:
 
 ```php
-$statement->source->toString(); // SELECT id, score FROM users WHERE score > 0
+$statement->toString(); // SELECT id, score FROM users WHERE score > 0
 ```
 
-The source node's `toString()` preserves the SQL's whitespace and comments.
-The current `BoundStatement` class also exposes `toSql()` as a convenience method
-that delegates to `source->toString()`.
+`BoundStatement::toString()` preserves the original SQL's whitespace and
+comments. It is available on every result, including statements with diagnostics
+and statements returned by expression replacement.

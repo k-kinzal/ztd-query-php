@@ -64,10 +64,10 @@ $binder = new Binder($schema);
 $statement = $binder->bind('SELECT id, score FROM users WHERE score > 0');
 $statement->outputs[0]->expression->binding->column->name; // id
 $statement->where->symbol; // >
-$statement->source->toString(); // SELECT id, score FROM users WHERE score > 0
+$statement->toString(); // SELECT id, score FROM users WHERE score > 0
 ```
 
-`SchemaBuilder::build()` reads table definitions. `Binder::bind()` reads one statement against that schema; `bindAll()` reads a sequence of statements. See [schema.md](docs/schema.md) and [binder.md](docs/binder.md) for the public signatures, usage examples, and SQL-to-structure tables.
+`SchemaBuilder::build()` reads table definitions. `Binder::bind()` reads one statement against that schema; `bindAll()` reads a sequence of statements. Pass `strict: false` to collect semantic diagnostics on each returned statement. See [schema.md](docs/schema.md) and [binder.md](docs/binder.md) for the public signatures, usage examples, and SQL-to-structure tables.
 
 Development checks are `composer lint`, `composer test`, and `composer bench:quick`. Run `XDEBUG_MODE=off composer fuzz:smoke` for a bounded run of each dialect. The [fuzz instructions](fuzz/README.md) describe the unrestricted grammar property and all-release runs.
 

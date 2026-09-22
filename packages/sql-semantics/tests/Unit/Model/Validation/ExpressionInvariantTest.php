@@ -62,7 +62,6 @@ use SqlSemantics\SemanticException;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Write\ConflictBinder::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Write\InsertionBinder::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Dialect::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Analysis::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\ColumnBinding::class)]
@@ -116,7 +115,7 @@ final class ExpressionInvariantTest extends TestCase
 
     public function testCheckPreservesAnUnresolvedReference(): void
     {
-        $expression = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->analyze('SELECT missing')->statement->outputs[0]->expression;
+        $expression = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT missing', strict: false)->outputs[0]->expression;
         self::assertSame('unresolved-column', $expression->kind->value);
         self::assertSame(['missing'], $expression->reference);
         self::assertSame('unknown', $expression->type->name);

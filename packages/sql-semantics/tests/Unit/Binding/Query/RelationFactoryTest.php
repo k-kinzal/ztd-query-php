@@ -73,7 +73,6 @@ use SqlSemantics\SchemaBuilder;
 #[Medium]
 #[CoversClass(\SqlSemantics\Binding\Query\QueryRelation::class)]
 #[UsesClass(\SqlSemantics\Binding\Analysis\Diagnostics::class)]
-#[UsesClass(\SqlSemantics\Model\Analysis::class)]
 #[UsesClass(\SqlSemantics\Model\Diagnostic::class)]
 #[UsesClass(\SqlSemantics\Binding\Scalar\IndirectionBinder::class)]
 #[UsesClass(\SqlSemantics\Binding\Write\ConflictBinder::class)]

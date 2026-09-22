@@ -8,14 +8,14 @@ use RuntimeException;
 use SqlSemantics\Binder;
 
 /**
- * The total-analysis property for arbitrary SQL generated from the complete grammar.
+ * The total-binding property for arbitrary SQL generated from the complete grammar.
  */
 final class SemanticsTarget
 {
     private readonly SchemaProperties $schemaProperties;
 
     /**
-     * Uses the same public analyzer consumers use.
+     * Uses the same public binder consumers use.
      */
     public function __construct(public readonly Binder $binder)
     {
@@ -30,17 +30,17 @@ final class SemanticsTarget
     public function verify(string $sql, string $input): void
     {
         try {
-            $analysis = $this->binder->analyze($sql);
+            $statement = $this->binder->bind($sql, strict: false);
             $this->schemaProperties->verify($input);
-            if ($sql === '' || $analysis->statement->toSql() !== $sql) {
-                throw new RuntimeException('Analysis lost the original statement.');
+            if ($sql === '' || $statement->toString() !== $sql) {
+                throw new RuntimeException('Binding lost the original statement.');
             }
-            (new GraphProperties($this->binder->schema->dialect))->statement($analysis->statement);
-            if (serialize($analysis) !== serialize($this->binder->analyze($sql))) {
-                throw new RuntimeException('Semantic analysis is not deterministic.');
+            (new GraphProperties($this->binder->schema->dialect))->statement($statement);
+            if (serialize($statement) !== serialize($this->binder->bind($sql, strict: false))) {
+                throw new RuntimeException('Semantic binding is not deterministic.');
             }
-            if ($analysis->diagnostics === [] && serialize($analysis->statement) !== serialize($this->binder->bind($sql))) {
-                throw new RuntimeException('Diagnostic-free analysis disagrees with strict binding.');
+            if ($statement->diagnostics === [] && serialize($statement) !== serialize($this->binder->bind($sql))) {
+                throw new RuntimeException('Binding without diagnostics disagrees with strict binding.');
             }
         } catch (RuntimeException $error) {
             throw new RuntimeException('Semantic property failed for ' . $this->binder->schema->grammarVersion . "\nInput hex: " . bin2hex($input) . "\nSQL:\n" . $sql . "\n" . $error->getMessage(), 0, $error);

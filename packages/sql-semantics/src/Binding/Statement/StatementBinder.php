@@ -37,7 +37,44 @@ final class StatementBinder
         if (count($statements) !== 1) {
             throw new SemanticException('statement-count', 'bind() requires one statement; use bindAll() for a script.', $tree);
         }
-        return $this->node($tree, $statements[0], new QueryContext($this->tables));
+        $statement = $this->node($tree, $statements[0], new QueryContext($this->tables));
+        if ($this->tables->diagnostics->items === []) {
+            return $statement;
+        }
+        return new ($statement::class)(
+            scopeId: $statement->scopeId,
+            from: $statement->from,
+            relations: $statement->relations,
+            outputs: $statement->outputs,
+            where: $statement->where,
+            distinct: $statement->distinct,
+            orderBy: $statement->orderBy,
+            limit: $statement->limit,
+            offset: $statement->offset,
+            source: $statement->source,
+            groupBy: $statement->groupBy,
+            having: $statement->having,
+            ctes: $statement->ctes,
+            branches: $statement->branches,
+            setOperator: $statement->setOperator,
+            clauses: $statement->clauses,
+            kind: $statement->kind,
+            targets: $statement->targets,
+            assignments: $statement->assignments,
+            queries: $statement->queries,
+            rows: $statement->rows,
+            withTies: $statement->withTies,
+            syntaxClauses: $statement->syntaxClauses,
+            declarations: $statement->declarations,
+            insertion: $statement->insertion,
+            writes: $statement->writes,
+            settings: $statement->settings,
+            conflicts: $statement->conflicts,
+            definitions: $statement->definitions,
+            merge: $statement->merge,
+            statements: $statement->statements,
+            diagnostics: $this->tables->diagnostics->items,
+        );
     }
 
     /**

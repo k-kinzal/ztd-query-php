@@ -12,7 +12,7 @@ use SqlSemantics\SemanticException;
 use SqlSemantics\Type\TypeDescriptor;
 
 /**
- * Resolves built-in common types while preserving catalog-dependent uncertainty.
+ * Resolves built-in common types while preserving uncertainty about externally defined types.
  *
  * @visibility SqlSemantics
  */

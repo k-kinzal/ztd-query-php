@@ -61,7 +61,6 @@ use SqlSemantics\SemanticException;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Write\ConflictBinder::class)]
 #[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Binding\Write\InsertionBinder::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Dialect::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Analysis::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundSelect::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\ColumnBinding::class)]
@@ -144,10 +143,10 @@ final class InsertionBinderTest extends TestCase
     }
     public function testBindDiagnosesUnknownDestination(): void
     {
-        $analysis = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER)')))->analyze('INSERT INTO t(missing) VALUES(1)');
-        self::assertNotNull($analysis->statement->insertion);
-        self::assertSame(['missing'], $analysis->statement->insertion->columns[0]->reference);
-        self::assertSame('unknown-column', $analysis->diagnostics[0]->reason);
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER)')))->bind('INSERT INTO t(missing) VALUES(1)', strict: false);
+        self::assertNotNull($statement->insertion);
+        self::assertSame(['missing'], $statement->insertion->columns[0]->reference);
+        self::assertSame('unknown-column', $statement->diagnostics[0]->reason);
     }
     public function testCheckRowRejectsWidthMismatch(): void
     {

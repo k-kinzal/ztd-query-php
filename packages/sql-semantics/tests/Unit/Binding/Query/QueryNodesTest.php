@@ -73,7 +73,6 @@ use SqlSemantics\SchemaBuilder;
 #[Medium]
 #[UsesClass(\SqlSemantics\Binding\Query\RelationFactory::class)]
 #[UsesClass(\SqlSemantics\Binding\Analysis\Diagnostics::class)]
-#[UsesClass(\SqlSemantics\Model\Analysis::class)]
 #[UsesClass(\SqlSemantics\Model\Diagnostic::class)]
 #[UsesClass(\SqlSemantics\Binding\Scalar\IndirectionBinder::class)]
 #[UsesClass(\SqlSemantics\Binding\Write\ConflictBinder::class)]
@@ -157,9 +156,9 @@ final class QueryNodesTest extends TestCase
     public function testBodyRetainsInvalidLegacyUnionInputsForDiagnostics(): void
     {
         $schema = (new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build('CREATE TABLE a (id INTEGER)');
-        $analysis = (new Binder($schema))->analyze('SELECT * FROM (a UNION SELECT 1) q');
-        self::assertContains('invalid-query-input', array_column($analysis->diagnostics, 'reason'));
-        $compound = $analysis->statement->relations[0]->query;
+        $statement = (new Binder($schema))->bind('SELECT * FROM (a UNION SELECT 1) q', strict: false);
+        self::assertContains('invalid-query-input', array_column($statement->diagnostics, 'reason'));
+        $compound = $statement->relations[0]->query;
         self::assertNotNull($compound);
         self::assertSame('UNION', $compound->setOperator);
         self::assertCount(2, $compound->branches);

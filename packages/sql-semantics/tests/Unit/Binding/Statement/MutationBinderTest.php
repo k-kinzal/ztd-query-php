@@ -73,7 +73,6 @@ use SqlSemantics\SchemaBuilder;
 #[Medium]
 #[UsesClass(\SqlSemantics\Binding\Query\RelationFactory::class)]
 #[UsesClass(\SqlSemantics\Binding\Analysis\Diagnostics::class)]
-#[UsesClass(\SqlSemantics\Model\Analysis::class)]
 #[UsesClass(\SqlSemantics\Model\Diagnostic::class)]
 #[UsesClass(\SqlSemantics\Binding\Scalar\IndirectionBinder::class)]
 #[UsesClass(\SqlSemantics\Binding\Write\ConflictBinder::class)]
@@ -208,13 +207,13 @@ final class MutationBinderTest extends TestCase
     }
     public function testUpdatedTargetsRetainsQualifiedUnresolvedDestinations(): void
     {
-        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->analyze('UPDATE missing a JOIN missing b ON a.id=b.id SET a.id=1')->statement;
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('UPDATE missing a JOIN missing b ON a.id=b.id SET a.id=1', strict: false);
         self::assertSame(['a'], array_column($statement->targets, 'alias'));
         self::assertSame(['a','id'], $statement->writes[0]->targets[0]->reference);
     }
     public function testUpdatedTargetsRetainsCandidatesForUnqualifiedUnknownColumns(): void
     {
-        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->analyze('UPDATE missing a JOIN missing b ON a.id=b.id SET value=1')->statement;
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('UPDATE missing a JOIN missing b ON a.id=b.id SET value=1', strict: false);
         self::assertSame(['a','b'], array_column($statement->targets, 'alias'));
         self::assertSame(['value'], $statement->writes[0]->targets[0]->reference);
     }

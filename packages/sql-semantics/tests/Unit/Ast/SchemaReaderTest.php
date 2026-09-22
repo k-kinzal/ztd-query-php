@@ -70,7 +70,6 @@ use SqlSemantics\Type\Nullability;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\BoundStatement::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ConstraintGroups::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Analysis\Diagnostics::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Analysis::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Diagnostic::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Scalar\IndirectionBinder::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Write\ConflictBinder::class)]
@@ -189,12 +188,12 @@ final class SchemaReaderTest extends TestCase
 
     public function testReportAllowsDeclarationDiagnosticsWithoutDroppingStructure(): void
     {
-        $analysis = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->analyze('CREATE TABLE t (id INTEGER, id TEXT, PRIMARY KEY (missing))');
-        self::assertSame(['duplicate-column', 'unknown-column'], array_column($analysis->diagnostics, 'reason'));
-        self::assertSame('t', $analysis->statement->declarations[0]->name);
-        self::assertSame(['id', 'id'], array_column($analysis->statement->declarations[0]->columns, 'name'));
-        self::assertSame('text', $analysis->statement->declarations[0]->columns[1]->type->name);
-        self::assertSame(['missing'], $analysis->statement->declarations[0]->constraints[0]->columns);
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE t (id INTEGER, id TEXT, PRIMARY KEY (missing))', strict: false);
+        self::assertSame(['duplicate-column', 'unknown-column'], array_column($statement->diagnostics, 'reason'));
+        self::assertSame('t', $statement->declarations[0]->name);
+        self::assertSame(['id', 'id'], array_column($statement->declarations[0]->columns, 'name'));
+        self::assertSame('text', $statement->declarations[0]->columns[1]->type->name);
+        self::assertSame(['missing'], $statement->declarations[0]->constraints[0]->columns);
     }
 
 }

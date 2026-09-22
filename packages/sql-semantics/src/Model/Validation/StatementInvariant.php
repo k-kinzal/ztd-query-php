@@ -45,6 +45,7 @@ final class StatementInvariant
      */
     public static function collections(BoundStatement $statement): void
     {
+        Collections::objects($statement->diagnostics, \SqlSemantics\Model\Diagnostic::class);
         Collections::objects($statement->relations, \SqlSemantics\Model\TableUse::class);
         Collections::objects($statement->targets, \SqlSemantics\Model\TableUse::class);
         Collections::objects($statement->outputs, \SqlSemantics\Model\OutputColumn::class);

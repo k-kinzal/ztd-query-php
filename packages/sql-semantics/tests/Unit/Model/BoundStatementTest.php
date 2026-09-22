@@ -73,7 +73,6 @@ use SqlSemantics\SchemaBuilder;
 #[Medium]
 #[UsesClass(\SqlSemantics\Binding\Query\RelationFactory::class)]
 #[UsesClass(\SqlSemantics\Binding\Analysis\Diagnostics::class)]
-#[UsesClass(\SqlSemantics\Model\Analysis::class)]
 #[UsesClass(\SqlSemantics\Model\Diagnostic::class)]
 #[UsesClass(\SqlSemantics\Binding\Scalar\IndirectionBinder::class)]
 #[UsesClass(\SqlSemantics\Binding\Write\ConflictBinder::class)]
@@ -109,11 +108,20 @@ final class BoundStatementTest extends TestCase
         self::assertSame('/* source */ BEGIN', $statement->source->toString());
         self::assertSame([], $statement->outputs);
     }
-    public function testToSqlPreservesOriginalCommentsAndSpacing(): void
+    public function testToStringPreservesOriginalCommentsAndSpacing(): void
     {
         $sql = '/* retained */ SELECT   1 -- trailing';
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql);
-        self::assertSame($sql, $statement->toSql());
+        self::assertSame($sql, $statement->toString());
     }
 
+
+    public function testToStringPreservesDiagnosedSqlAndItsLocations(): void
+    {
+        $sql = '/* retained */ SELECT   missing -- trailing';
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql, strict: false);
+        self::assertSame($sql, $statement->toString());
+        self::assertSame(['unknown-column'], array_column($statement->diagnostics, 'reason'));
+        self::assertSame($statement->outputs[0]->expression->source, $statement->diagnostics[0]->source);
+    }
 }

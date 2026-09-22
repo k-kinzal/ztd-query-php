@@ -45,7 +45,7 @@ final class ExpressionEdit
             }
         }
         $base = $owned[0]->offset - strlen($owned[0]->leading);
-        $sql = $statement->toSql();
+        $sql = $statement->toString();
         $value = "(\n" . $replacement . "\n)";
         foreach ($statement->settings as $setting) {
             if (in_array($target, $setting->values, true)) {

@@ -1,7 +1,7 @@
 # Semantic property fuzzing
 
 Every statement sql-faker generates for a declared release must produce semantic
-structure through `Binder::analyze()`. Targets use the same `BytePlanCompiler`,
+structure through `Binder::bind($sql, strict: false)`. Targets use the same `BytePlanCompiler`,
 complete statement rules, default expansion settings, and 80,004-byte maximum
 input as sql-parser. They do not filter statements, productions, expressions,
 or exceptions. MySQL uses `statement` for 5.6/5.7 and
@@ -9,14 +9,14 @@ or exceptions. MySQL uses `statement` for 5.6/5.7 and
 
 ## Properties
 
-The generated statement is analyzed against an empty schema because arbitrary
+The generated statement is bound against an empty schema because arbitrary
 syntax does not come with consistent table declarations. Unknown references must
 remain structured and carry diagnostics. They must not erase the statement or
 hide an implementation failure.
 
 The target checks:
 
-- Exact SQL round-tripping, deterministic analysis, and agreement with strict
+- Exact SQL round-tripping, deterministic binding, and agreement with strict
   binding when there are no diagnostics.
 - Output order, relation scopes, column declaration membership, dialect-consistent
   types, and explicit unresolved references throughout nested graphs.

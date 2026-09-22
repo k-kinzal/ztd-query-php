@@ -22,7 +22,7 @@ final class Diagnostics
     public array $items = [];
 
     /**
-     * Enables analysis of SQL whose catalog or semantic validity is incomplete.
+     * Enables analysis of SQL whose schema definitions or semantic validity are incomplete.
      */
     public function __construct(public readonly bool $collect = false)
     {

@@ -36,29 +36,17 @@ final class Binder
      * Parses and binds one SQL statement into an immutable semantic representation.
      *
      * @param string $sql One SQL statement in the schema's dialect
+     * @param bool $strict Raise semantic errors; false retains them in the returned statement's diagnostics
      * @return BoundStatement Bound relations and expressions with types, NULL facts, and source syntax
-     * @throws SemanticException When names or types cannot be resolved
+     * @throws SemanticException When strict binding encounters a semantic error
      * @throws \SqlParser\Lexer\LexicalException When SQL contains invalid tokens
      * @throws \SqlParser\Parser\SyntaxException When SQL does not match the selected grammar
      */
-    public function bind(string $sql): BoundStatement
+    public function bind(string $sql, bool $strict = true): BoundStatement
     {
-        $tables = new TableResolver($this->schema, new Identifiers($this->schema->dialect), $this->schema->defaultSchema);
-
-        return (new Binding\Statement\StatementBinder($tables))->bind($this->parser->parse($sql));
-    }
-    /**
-     * Analyzes the entire statement even when names or types cannot be resolved.
-     *
-     * Unresolved references retain their spelling and unknown type; diagnostics never
-     * substitute for lowering an unimplemented syntax production.
-     */
-    public function analyze(string $sql): Model\Analysis
-    {
-        $diagnostics = new Binding\Analysis\Diagnostics(true);
+        $diagnostics = new Binding\Analysis\Diagnostics(!$strict);
         $tables = new TableResolver($this->schema, new Identifiers($this->schema->dialect), $this->schema->defaultSchema, $diagnostics);
-        $statement = (new Binding\Statement\StatementBinder($tables))->bind($this->parser->parse($sql));
-        return new Model\Analysis($statement, $diagnostics->items);
+        return (new Binding\Statement\StatementBinder($tables))->bind($this->parser->parse($sql));
     }
 
     /**
@@ -76,14 +64,21 @@ final class Binder
     /**
      * Binds a script while preserving statement boundaries.
      *
+     * @param bool $strict Raise semantic errors; false collects diagnostics separately on each statement
      * @return list<BoundStatement> Statements in source order
+     * @throws SemanticException When strict binding encounters a semantic error
+     * @throws \SqlParser\Lexer\LexicalException When SQL contains invalid tokens
+     * @throws \SqlParser\Parser\SyntaxException When SQL does not match the selected grammar
      */
-    public function bindAll(string $sql): array
+    public function bindAll(string $sql, bool $strict = true): array
     {
         $tree = $this->parser->parse($sql);
-        $tables = new TableResolver($this->schema, new Identifiers($this->schema->dialect), $this->schema->defaultSchema);
         $statements = Ast\StatementList::read($tree, $this->schema->dialect);
-        return array_map(fn (\SqlParser\Parser\Node $statement): BoundStatement => (new Binding\Statement\StatementBinder($tables))->bind(new \SqlParser\Parser\Node($tree->name, $tree->ordinal, [$statement])), $statements);
+        return array_map(function (\SqlParser\Parser\Node $statement) use ($tree, $strict): BoundStatement {
+            $diagnostics = new Binding\Analysis\Diagnostics(!$strict);
+            $tables = new TableResolver($this->schema, new Identifiers($this->schema->dialect), $this->schema->defaultSchema, $diagnostics);
+            return (new Binding\Statement\StatementBinder($tables))->bind(new \SqlParser\Parser\Node($tree->name, $tree->ordinal, [$statement]));
+        }, $statements);
     }
 
 }

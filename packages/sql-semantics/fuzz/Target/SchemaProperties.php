@@ -18,7 +18,7 @@ final class SchemaProperties
     private readonly Binder $binder;
 
     /**
-     * Builds a known catalog once for the same dialect and release as the grammar target.
+     * Builds known table definitions once for the same dialect and release as the grammar target.
      */
     public function __construct(public readonly Dialect $dialect, string $version)
     {
@@ -44,19 +44,19 @@ final class SchemaProperties
         if (($update->writes[0]->targets[0]->binding?->column->name ?? null) !== 'n' || ($update->writes[0]->value->symbol ?? null) !== (string) $second || ($update->where?->operands[0]->binding?->column->name ?? null) !== 'id') {
             throw new RuntimeException('Schema oracle: UPDATE lost its destination, value, or row predicate.');
         }
-        $unknown = $this->binder->analyze('INSERT INTO semantic_property (missing) VALUES (' . $first . ')');
+        $unknown = $this->binder->bind('INSERT INTO semantic_property (missing) VALUES (' . $first . ')', strict: false);
         if (!in_array('unknown-column', array_column($unknown->diagnostics, 'reason'), true)) {
             throw new RuntimeException('Schema oracle: an unknown INSERT destination was accepted without a diagnostic.');
         }
         if ($this->dialect === Dialect::PostgreSql) {
-            $invalid = $this->binder->analyze('DELETE FROM semantic_property WHERE ' . $first);
+            $invalid = $this->binder->bind('DELETE FROM semantic_property WHERE ' . $first, strict: false);
             if (!in_array('non-boolean-predicate', array_column($invalid->diagnostics, 'reason'), true)) {
                 throw new RuntimeException('Schema oracle: a non-boolean row predicate was accepted without a diagnostic.');
             }
         }
         $select = $this->binder->bind('SELECT id FROM semantic_property');
         $changed = $this->binder->replaceExpression($select, $select->outputs[0]->expression, 'n+' . $second);
-        if (($changed->outputs[0]->expression->lineage()[0]->column->name ?? null) !== 'n' || serialize($changed) !== serialize($this->binder->bind($changed->toSql()))) {
+        if (($changed->outputs[0]->expression->lineage()[0]->column->name ?? null) !== 'n' || serialize($changed) !== serialize($this->binder->bind($changed->toString()))) {
             throw new RuntimeException('Schema oracle: an expression edit left stale semantic or source information.');
         }
     }

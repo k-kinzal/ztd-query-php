@@ -16,7 +16,7 @@ use SqlSemantics\Type\Nullability;
 use SqlSemantics\Type\TypeDescriptor;
 
 /**
- * Gives built-ins their result facts and preserves unknown catalog function calls.
+ * Gives built-ins their result facts and preserves function calls with unknown signatures.
  *
  * @visibility SqlSemantics
  */
