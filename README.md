@@ -17,6 +17,7 @@ ZTD Query PHP wraps PDO/MySQLi to intercept and transform SQL queries using CTE 
 | [ztd-query-mysqli-adapter](packages/ztd-query-mysqli-adapter/) | MySQLi adapter: drop-in `ZtdMysqli` / `ZtdMysqliStatement` |
 | [sql-faker](packages/sql-faker/) | Faker provider for generating syntactically valid SQL · [Documentation](https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-faker/) |
 | [sql-fixture](packages/sql-fixture/) | Faker provider for generating test fixture data from schemas |
+| [sql-catalog](packages/sql-catalog/) | Catalogs the SQL an application issues, by static analysis |
 | [container](packages/container/) | Shared MySQL and PostgreSQL containers for integration and fuzz tests |
 | [lemon-parser](packages/lemon-parser/) | Parser for Lemon grammar files, producing a lossless syntax tree · [Documentation](https://k-kinzal.github.io/ztd-query-php/k-kinzal/lemon-parser/) |
 | [bison-parser](packages/bison-parser/) | Parser for GNU Bison grammar files, producing a lossless syntax tree · [Documentation](https://k-kinzal.github.io/ztd-query-php/k-kinzal/bison-parser/) |

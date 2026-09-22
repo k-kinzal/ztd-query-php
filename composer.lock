@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "5cde8df9cf05d26a27aa2e384b60299c",
+    "content-hash": "12e8ca96bc43afe80a1a8abe225a8fe9",
     "packages": [
         {
             "name": "fakerphp/faker",
@@ -75,17 +75,17 @@
             "dist": {
                 "type": "path",
                 "url": "packages/bison-parser",
-                "reference": "b5e145900624d075458c95cd37011a3030721258"
+                "reference": "63a2258118825bb13bcd2845f9b34a3d153a0a52"
             },
             "require": {
                 "php": "^8.1"
             },
             "require-dev": {
+                "behat/behat": "^3.14",
                 "brianium/paratest": "^7.3",
                 "deptrac/deptrac": "^3.0",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
                 "k-kinzal/php-ai-toolkit": "dev-main",
-                "nikic/php-fuzzer": "^0.0.11",
                 "phpbench/phpbench": "^1.4",
                 "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
                 "phpstan/phpstan": "^2.1",
@@ -93,9 +93,6 @@
                 "phpunit/phpunit": "^10.5",
                 "squizlabs/php_codesniffer": "^4.0.4"
             },
-            "bin": [
-                "bin/bison-parser"
-            ],
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -105,8 +102,8 @@
             "autoload-dev": {
                 "psr-4": {
                     "Tests\\": "tests/",
-                    "Fuzz\\": "fuzz/",
-                    "Bench\\": "bench/"
+                    "Bench\\": "bench/",
+                    "Spec\\": "spec/"
                 }
             },
             "scripts": {
@@ -151,24 +148,6 @@
                 "format:check": [
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
                 ],
-                "fuzz": [
-                    "@fuzz:smoke"
-                ],
-                "fuzz:parse": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/parse') || mkdir('fuzz/corpus/parse', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_parse.php fuzz/corpus/parse/"
-                ],
-                "fuzz:roundtrip": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/roundtrip') || mkdir('fuzz/corpus/roundtrip', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_roundtrip.php fuzz/corpus/roundtrip/"
-                ],
-                "fuzz:smoke": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@fuzz:parse --max-runs=100",
-                    "@fuzz:roundtrip --max-runs=100"
-                ],
                 "lint": [
                     "@autoload:check",
                     "@format:check",
@@ -183,6 +162,9 @@
                 ],
                 "phpstan": [
                     "phpstan analyse --memory-limit=1G"
+                ],
+                "spec": [
+                    "behat --strict"
                 ],
                 "test": [
                     "paratest --processes=auto"
@@ -215,17 +197,17 @@
             "dist": {
                 "type": "path",
                 "url": "packages/lemon-parser",
-                "reference": "b7e758b2272b24c724bf5e7b5fa9c00c5a11d817"
+                "reference": "236bd5dfce667cacf5965edb11213efb4682903e"
             },
             "require": {
                 "php": "^8.1"
             },
             "require-dev": {
+                "behat/behat": "^3.14",
                 "brianium/paratest": "^7.3",
                 "deptrac/deptrac": "^3.0",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
                 "k-kinzal/php-ai-toolkit": "dev-main",
-                "nikic/php-fuzzer": "^0.0.11",
                 "phpbench/phpbench": "^1.4",
                 "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
                 "phpstan/phpstan": "^2.1",
@@ -233,9 +215,6 @@
                 "phpunit/phpunit": "^10.5",
                 "squizlabs/php_codesniffer": "^4.0.4"
             },
-            "bin": [
-                "bin/lemon-parser"
-            ],
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -245,8 +224,8 @@
             "autoload-dev": {
                 "psr-4": {
                     "Tests\\": "tests/",
-                    "Fuzz\\": "fuzz/",
-                    "Bench\\": "bench/"
+                    "Bench\\": "bench/",
+                    "Spec\\": "spec/"
                 }
             },
             "scripts": {
@@ -291,24 +270,6 @@
                 "format:check": [
                     "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
                 ],
-                "fuzz": [
-                    "@fuzz:smoke"
-                ],
-                "fuzz:parse": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/parse') || mkdir('fuzz/corpus/parse', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_parse.php fuzz/corpus/parse/"
-                ],
-                "fuzz:roundtrip": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@php -r \"is_dir('fuzz/corpus/roundtrip') || mkdir('fuzz/corpus/roundtrip', 0777, true);\" --",
-                    "php-fuzzer fuzz fuzz/fuzz_roundtrip.php fuzz/corpus/roundtrip/"
-                ],
-                "fuzz:smoke": [
-                    "Composer\\Config::disableProcessTimeout",
-                    "@fuzz:parse --max-runs=100",
-                    "@fuzz:roundtrip --max-runs=100"
-                ],
                 "lint": [
                     "@autoload:check",
                     "@format:check",
@@ -323,6 +284,9 @@
                 ],
                 "phpstan": [
                     "phpstan analyse --memory-limit=1G"
+                ],
+                "spec": [
+                    "behat --strict --no-interaction --no-snippets"
                 ],
                 "test": [
                     "paratest --processes=auto"
@@ -350,12 +314,149 @@
             }
         },
         {
+            "name": "k-kinzal/sql-catalog",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "packages/sql-catalog",
+                "reference": "fb17a8f4b2b822eee7b63cc2f78654d08d6bedb2"
+            },
+            "require": {
+                "ext-json": "*",
+                "nikic/php-parser": "^5.0",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "brianium/paratest": "^7.3",
+                "deptrac/deptrac": "^3.0",
+                "ext-pdo": "*",
+                "ext-pdo_sqlite": "*",
+                "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/php-ai-toolkit": "dev-main",
+                "k-kinzal/sql-faker": "dev-main",
+                "k-kinzal/sql-fixture": "dev-main",
+                "nikic/php-fuzzer": "^0.0.11",
+                "opis/json-schema": "^2.4",
+                "phpcompatibility/php-compatibility": "^10.0.0-alpha2",
+                "phpmyadmin/sql-parser": "^5.11",
+                "phpstan/phpstan": "^2.1",
+                "phpstan/phpstan-strict-rules": "^2.0",
+                "phpunit/phpunit": "^10.5",
+                "squizlabs/php_codesniffer": "^4.0.4"
+            },
+            "bin": [
+                "bin/sql-catalog"
+            ],
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "SqlCatalog\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Tests\\": "tests/",
+                    "Fuzz\\": "fuzz/"
+                }
+            },
+            "scripts": {
+                "autoload:check": [
+                    "composer dump-autoload --optimize --strict-psr --strict-ambiguous"
+                ],
+                "compat": [
+                    "phpcs"
+                ],
+                "deptrac": [
+                    "deptrac analyse --config-file=deptrac.yaml --fail-on-uncovered --report-uncovered"
+                ],
+                "docgen": [
+                    "docgen --packages=. --title=k-kinzal/sql-catalog"
+                ],
+                "docgen:diff": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --diff=origin/main --serve"
+                ],
+                "docgen:fresh": [
+                    "@docgen --no-cache"
+                ],
+                "docgen:serve": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@docgen --serve"
+                ],
+                "doctest": [
+                    "phpunit --testsuite doctest"
+                ],
+                "format": [
+                    "php-cs-fixer fix --allow-risky=yes"
+                ],
+                "format:check": [
+                    "php-cs-fixer fix --dry-run --diff --allow-risky=yes"
+                ],
+                "fuzz": [
+                    "@fuzz:smoke"
+                ],
+                "fuzz:analyze": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php -r \"is_dir('fuzz/corpus/analyze') || mkdir('fuzz/corpus/analyze', 0777, true);\" --",
+                    "php-fuzzer fuzz fuzz/fuzz_analyze.php fuzz/corpus/analyze/"
+                ],
+                "fuzz:recover": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@php -r \"is_dir('fuzz/corpus/recover') || mkdir('fuzz/corpus/recover', 0777, true);\" --",
+                    "php-fuzzer fuzz fuzz/fuzz_recover.php fuzz/corpus/recover/"
+                ],
+                "fuzz:smoke": [
+                    "Composer\\Config::disableProcessTimeout",
+                    "@fuzz:analyze --max-runs=100",
+                    "@fuzz:recover --max-runs=100"
+                ],
+                "lint": [
+                    "@autoload:check",
+                    "@format:check",
+                    "@phpstan",
+                    "@compat",
+                    "@loc-guard",
+                    "@tree-guard",
+                    "@deptrac"
+                ],
+                "loc-guard": [
+                    "loc-guard --config=loc.yaml"
+                ],
+                "phpstan": [
+                    "phpstan analyse --memory-limit=512M"
+                ],
+                "test": [
+                    "paratest --processes=auto"
+                ],
+                "test:coverage": [
+                    "@php -d memory_limit=1G vendor/bin/paratest --processes=auto --testsuite unit --coverage-xml build/coverage-xml --log-junit build/junit.xml"
+                ],
+                "test:unit": [
+                    "phpunit --testsuite unit"
+                ],
+                "tree-guard": [
+                    "tree-guard --config=tree.yaml"
+                ]
+            },
+            "license": [
+                "MIT"
+            ],
+            "description": "Catalog the SQL statements a PHP application issues, by static analysis",
+            "support": {
+                "source": "https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-catalog",
+                "docs": "https://k-kinzal.github.io/ztd-query-php/k-kinzal/sql-catalog/"
+            },
+            "transport-options": {
+                "relative": true
+            }
+        },
+        {
             "name": "k-kinzal/sql-faker",
             "version": "dev-main",
             "dist": {
                 "type": "path",
                 "url": "packages/sql-faker",
-                "reference": "5d9d47165c4609635aa5583bce903f0e9064b030"
+                "reference": "f07c91f968774cdbdd09c796bda6604b8ea44f62"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -365,7 +466,9 @@
                 "brianium/paratest": "^7.3",
                 "deptrac/deptrac": "^3.0",
                 "friendsofphp/php-cs-fixer": "^3.95.25",
+                "k-kinzal/bison-parser": "dev-main",
                 "k-kinzal/container": "dev-main",
+                "k-kinzal/lemon-parser": "dev-main",
                 "k-kinzal/php-ai-toolkit": "dev-main",
                 "nikic/php-fuzzer": "^0.0.11",
                 "phpbench/phpbench": "^1.4",
@@ -375,6 +478,10 @@
                 "phpunit/phpunit": "^10.5",
                 "squizlabs/php_codesniffer": "^4.0.4",
                 "symfony/filesystem": "^6.4"
+            },
+            "suggest": {
+                "k-kinzal/bison-parser": "To rebuild the MySQL and PostgreSQL grammar resources with bin/build-mysql.php and bin/build-pg.php",
+                "k-kinzal/lemon-parser": "To rebuild the SQLite grammar resources with bin/build-sqlite.php"
             },
             "type": "library",
             "autoload": {
@@ -515,7 +622,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-fixture",
-                "reference": "8f452d75d5539bd9a9cbaebe97bb80859008c7a5"
+                "reference": "039d0fc7952200272302628c0ec7ba86b38e5b07"
             },
             "require": {
                 "fakerphp/faker": "^1.23",
@@ -659,7 +766,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-parser",
-                "reference": "efdd5089291f7c7f1a0401caf51b4179fb847eef"
+                "reference": "be6d12ff60d581bdc4dba01d1046b7e346acb9d4"
             },
             "require": {
                 "ext-zlib": "*",
@@ -820,7 +927,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/sql-semantics",
-                "reference": "19a1ddd3cd5b708df553566a3ae7c91e1086626e"
+                "reference": "d7c32fcf95740ec4caf77a7cbc3826e7d1e341ee"
             },
             "require": {
                 "k-kinzal/sql-parser": "dev-main",
@@ -938,7 +1045,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-core",
-                "reference": "783d107702e8d8d644aa9d578ccb4869ca14b0e8"
+                "reference": "a5226deddbc34519edff29847f716623eda4ecd2"
             },
             "require": {
                 "php": "^8.1"
@@ -1072,7 +1179,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-mysql",
-                "reference": "d2f753842fe359823a883f3fce73dc0205b6a83a"
+                "reference": "a19c4c14c26621db13f41df1f715b1c5f772646e"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -1221,7 +1328,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-mysqli-adapter",
-                "reference": "f5518d61553139639a3a496c9ad1957bee427d38"
+                "reference": "c1f64e040c94985d8fadb3a435fd43eb14baf5f1"
             },
             "require": {
                 "ext-mysqli": "*",
@@ -1391,7 +1498,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-pdo-adapter",
-                "reference": "d9d3ffd7f44baf1359169ad2aad83cbe3c6d2077"
+                "reference": "fa5171a0adc4acba12592f72b3267c010334e874"
             },
             "require": {
                 "ext-pdo": "*",
@@ -1622,7 +1729,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-postgres",
-                "reference": "6808f656ddfab036ec5547a23f196d4a34630e92"
+                "reference": "8e01f89ba5aeefa6c336180e63f5d6a5c77816dc"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -1773,7 +1880,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/ztd-query-sqlite",
-                "reference": "55c147d7a81980f3f3eefdb5fb4f7c69a94120fd"
+                "reference": "c61eaf950320b9fbab78ff7140ea3a093e2190c9"
             },
             "require": {
                 "k-kinzal/ztd-query-core": "dev-main",
@@ -1917,6 +2024,63 @@
             "transport-options": {
                 "relative": true
             }
+        },
+        {
+            "name": "nikic/php-parser",
+            "version": "v5.9.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/nikic/PHP-Parser.git",
+                "reference": "9e33da9553fe7786f0962b35f4e4ecf01be89def"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/nikic/PHP-Parser/zipball/9e33da9553fe7786f0962b35f4e4ecf01be89def",
+                "reference": "9e33da9553fe7786f0962b35f4e4ecf01be89def",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "ext-tokenizer": "*",
+                "php": ">=7.4"
+            },
+            "require-dev": {
+                "ircmaxell/php-yacc": "^0.0.7",
+                "phpunit/phpunit": "^9.0"
+            },
+            "bin": [
+                "bin/php-parse"
+            ],
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "5.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "PhpParser\\": "lib/PhpParser"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Nikita Popov"
+                }
+            ],
+            "description": "A PHP parser written in PHP",
+            "keywords": [
+                "parser",
+                "php"
+            ],
+            "support": {
+                "issues": "https://github.com/nikic/PHP-Parser/issues",
+                "source": "https://github.com/nikic/PHP-Parser/tree/v5.9.0"
+            },
+            "time": "2026-09-13T18:51:52+00:00"
         },
         {
             "name": "phpmyadmin/sql-parser",
@@ -2534,7 +2698,7 @@
             "dist": {
                 "type": "path",
                 "url": "packages/requirements",
-                "reference": "f935ea0938dce1a292fa4d5889dd91e0e7320032"
+                "reference": "1602dcec76784dc7a292d5d7127f971799fa0ad9"
             },
             "require": {
                 "ext-dom": "*",
@@ -3015,63 +3179,6 @@
                 "source": "https://github.com/nette/utils/tree/v4.0.10"
             },
             "time": "2025-12-01T17:30:42+00:00"
-        },
-        {
-            "name": "nikic/php-parser",
-            "version": "v5.9.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/nikic/PHP-Parser.git",
-                "reference": "9e33da9553fe7786f0962b35f4e4ecf01be89def"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/nikic/PHP-Parser/zipball/9e33da9553fe7786f0962b35f4e4ecf01be89def",
-                "reference": "9e33da9553fe7786f0962b35f4e4ecf01be89def",
-                "shasum": ""
-            },
-            "require": {
-                "ext-json": "*",
-                "ext-tokenizer": "*",
-                "php": ">=7.4"
-            },
-            "require-dev": {
-                "ircmaxell/php-yacc": "^0.0.7",
-                "phpunit/phpunit": "^9.0"
-            },
-            "bin": [
-                "bin/php-parse"
-            ],
-            "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-master": "5.x-dev"
-                }
-            },
-            "autoload": {
-                "psr-4": {
-                    "PhpParser\\": "lib/PhpParser"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "BSD-3-Clause"
-            ],
-            "authors": [
-                {
-                    "name": "Nikita Popov"
-                }
-            ],
-            "description": "A PHP parser written in PHP",
-            "keywords": [
-                "parser",
-                "php"
-            ],
-            "support": {
-                "issues": "https://github.com/nikic/PHP-Parser/issues",
-                "source": "https://github.com/nikic/PHP-Parser/tree/v5.9.0"
-            },
-            "time": "2026-09-13T18:51:52+00:00"
         },
         {
             "name": "opis/json-schema",
@@ -4599,6 +4706,7 @@
         "k-kinzal/lemon-parser": 20,
         "k-kinzal/php-ai-toolkit": 20,
         "k-kinzal/requirements": 20,
+        "k-kinzal/sql-catalog": 20,
         "k-kinzal/sql-faker": 20,
         "k-kinzal/sql-fixture": 20,
         "k-kinzal/sql-parser": 20,
