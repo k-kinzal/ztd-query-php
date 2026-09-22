@@ -93,6 +93,21 @@ use SqlSemantics\SemanticException;
 #[UsesClass(\SqlSemantics\Model\Write\Merge::class)]
 #[UsesClass(\SqlSemantics\Model\Write\MergeAction::class)]
 #[UsesClass(\SqlSemantics\Binding\Write\MergeBinder::class)]
+#[UsesClass(\SqlSemantics\Ast\Definition\ReferenceReader::class)]
+#[UsesClass(\SqlSemantics\Ast\Definition\OptionReader::class)]
+#[UsesClass(\SqlSemantics\Ast\Definition\IndexReader::class)]
+#[UsesClass(\SqlSemantics\Ast\Definition\IndexKeys::class)]
+#[UsesClass(\SqlSemantics\Binding\Scalar\FunctionMatch::class)]
+#[UsesClass(\SqlSemantics\Binding\Scalar\FunctionResolver::class)]
+#[UsesClass(\SqlSemantics\Binding\Schema\IndexEvolution::class)]
+#[UsesClass(\SqlSemantics\Binding\Schema\IndexBinder::class)]
+#[UsesClass(\SqlSemantics\Schema\FunctionSignature::class)]
+#[UsesClass(\SqlSemantics\Schema\Functions\Builtins::class)]
+#[UsesClass(\SqlSemantics\Schema\Functions\BuiltinResult::class)]
+#[UsesClass(\SqlSemantics\Schema\Functions\SignatureInvariant::class)]
+#[UsesClass(\SqlSemantics\Schema\IndexDefinition::class)]
+#[UsesClass(\SqlSemantics\Schema\IndexElement::class)]
+#[UsesClass(\SqlSemantics\Model\Definition\IndexDeclaration::class)]
 final class ConstraintKindTest extends TestCase
 {
     public function testDistinguishesKeysFromRowAndReferentialConditions(): void

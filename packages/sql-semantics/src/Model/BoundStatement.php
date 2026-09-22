@@ -51,6 +51,7 @@ class BoundStatement
      * @param Write\Merge|null $merge Conditional write plan
      * @param list<BoundStatement> $statements Nested commands, such as an explained or prepared statement
      * @param list<Diagnostic> $diagnostics Semantic problems from binding this statement, including nested scopes
+     * @param list<Definition\IndexDeclaration> $indexes Index definitions with bound keys and predicates
      */
     public function __construct(
         public readonly string $scopeId,
@@ -85,6 +86,7 @@ class BoundStatement
         public readonly ?Write\Merge $merge = null,
         public readonly array $statements = [],
         public readonly array $diagnostics = [],
+        public readonly array $indexes = [],
     ) {
         Validation\StatementInvariant::check($this);
     }

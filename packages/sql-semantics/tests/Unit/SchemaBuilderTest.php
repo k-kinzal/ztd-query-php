@@ -96,6 +96,21 @@ use SqlSemantics\SemanticException;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Merge::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\MergeAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Write\MergeBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\Definition\ReferenceReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\Definition\OptionReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\Definition\IndexReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\Definition\IndexKeys::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Scalar\FunctionMatch::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Scalar\FunctionResolver::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\IndexEvolution::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\IndexBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\FunctionSignature::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\Functions\Builtins::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\Functions\BuiltinResult::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\Functions\SignatureInvariant::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\IndexDefinition::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\IndexElement::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\IndexDeclaration::class)]
 final class SchemaBuilderTest extends TestCase
 {
     #[TestWith([Dialect::PostgreSql, 'public', 'pg-17.2'])]
@@ -160,6 +175,17 @@ final class SchemaBuilderTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('Unsupported');
         new SchemaBuilder($dialect, grammarVersion: 'unavailable-release');
+    }
+
+    public function testBuildUsesRegisteredFunctionsForDerivedTableColumns(): void
+    {
+        $type = new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, 'integer');
+        $function = new \SqlSemantics\Schema\FunctionSignature('twice', [$type], $type, \SqlSemantics\Type\Nullability::NotNull, true);
+        $builder = new SchemaBuilder(Dialect::PostgreSql, functions: [$function]);
+        $schema = $builder->build('CREATE TABLE t AS SELECT twice(1) AS doubled');
+        self::assertSame('integer', $schema->tables[0]->columns[0]->type->name);
+        self::assertSame(\SqlSemantics\Type\Nullability::NotNull, $schema->tables[0]->columns[0]->nullability);
+        self::assertSame('integer', (new Binder($schema))->bind('SELECT twice(doubled) FROM t')->outputs[0]->expression->type->name);
     }
 
 }

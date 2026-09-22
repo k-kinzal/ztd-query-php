@@ -62,6 +62,6 @@ final class ColumnReader
             }
         }
 
-        return [new ColumnDefinition($name, $type, $nullability, $node, $default, $attributes, $generated), $constraints];
+        return [new ColumnDefinition($name, $type, $nullability, $node, $default, $attributes, $generated, Definition\OptionReader::column($node, $attributes, $this->identifiers)), $constraints];
     }
 }

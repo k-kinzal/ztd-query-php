@@ -53,7 +53,7 @@ final class SchemaReader
         $tables = [];
         foreach ($trees as $tree) {
             foreach (StatementList::read($tree, $this->identifiers->dialect) as $statement) {
-                $create = Tree::outer($statement, ['CreateStmt', 'create_table_stmt', 'create_table'])[0] ?? null;
+                $create = Tree::outer($statement, ['CreateStmt', 'create_table_stmt', 'create_table', 'create'])[0] ?? null;
                 if ($create === null) {
                     Tree::invalid($statement, 'schema statement');
                 }
@@ -94,7 +94,7 @@ final class SchemaReader
             $columns[] = $definition;
             array_push($constraints, ...$localConstraints);
         }
-        foreach ((new ConstraintGroups())->read(Tree::outer($create, ['TableConstraint', 'table_constraint_def', 'tcons'])) as $node) {
+        foreach ((new ConstraintGroups())->read(Tree::outer($create, ['TableConstraint', 'table_constraint_def', 'key_def', 'tcons'])) as $node) {
             $constraint = (new ConstraintReader($this->identifiers))->read($node);
             if ($constraint !== null) {
                 $constraints[] = $constraint;
@@ -102,7 +102,11 @@ final class SchemaReader
         }
         $columns = $this->primaryKeys($columns, $constraints, $create);
 
-        return new TableDefinition(count($parts) === 2 ? $parts[0] : $this->defaultSchema, $parts[count($parts) - 1], $columns, $constraints, $create);
+        $namespace = count($parts) === 2 ? $parts[0] : $this->defaultSchema;
+        $name = $parts[count($parts) - 1];
+        $indexes = (new Definition\IndexReader($this->identifiers, $this->defaultSchema))->table($create, [$namespace, $name]);
+        $options = Definition\OptionReader::read($create, $this->identifiers, ['columnDef', 'column_def', 'columnlist', 'TableConstraint', 'table_constraint_def', 'key_def', 'tcons']);
+        return new TableDefinition($namespace, $name, $columns, $constraints, $create, indexes: $indexes, options: $options);
     }
 
     /**
@@ -157,7 +161,7 @@ final class SchemaReader
         $result = [];
         foreach ($columns as $column) {
             $notNull = in_array($this->identifiers->dialect === Dialect::PostgreSql ? $column->name : strtolower($column->name), $primary, true) && $this->primaryNotNull($column, $primary, $constraints) || (in_array(strtolower($column->name), $primary, true) && $this->identifiers->dialect === Dialect::Sqlite && (str_contains(strtoupper(Tree::text($source)), 'WITHOUT ROWID') || str_contains(strtoupper(Tree::text($source)), 'STRICT')));
-            $result[] = new ColumnDefinition($column->name, $column->type, $notNull ? Nullability::NotNull : $column->nullability, $column->source, $column->defaultExpression, $column->attributes, $column->generatedExpression);
+            $result[] = new ColumnDefinition($column->name, $column->type, $notNull ? Nullability::NotNull : $column->nullability, $column->source, $column->defaultExpression, $column->attributes, $column->generatedExpression, $column->options);
         }
 
         return $result;

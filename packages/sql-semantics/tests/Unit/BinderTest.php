@@ -97,6 +97,21 @@ use SqlSemantics\Type\Nullability;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Merge::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\MergeAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Write\MergeBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\Definition\ReferenceReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\Definition\OptionReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\Definition\IndexReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\Definition\IndexKeys::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Scalar\FunctionMatch::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Scalar\FunctionResolver::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\IndexEvolution::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\IndexBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\FunctionSignature::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\Functions\Builtins::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\Functions\BuiltinResult::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\Functions\SignatureInvariant::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\IndexDefinition::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\IndexElement::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\IndexDeclaration::class)]
 final class BinderTest extends TestCase
 {
     #[TestWith([Dialect::PostgreSql])]
@@ -548,4 +563,17 @@ final class BinderTest extends TestCase
         self::assertSame(['missing'], $statement->statements[0]->writes[0]->value->reference);
         self::assertSame('=', $statement->statements[0]->where?->symbol);
     }
+    #[DataProvider('providerReleases')]
+    public function testBindDefinitionFactsAcrossEveryRelease(Dialect $dialect, string $version): void
+    {
+        $builder = new SchemaBuilder($dialect, grammarVersion: $version);
+        $sql = 'CREATE TABLE t(id INTEGER, parent_id INTEGER, FOREIGN KEY (parent_id) REFERENCES p(id) ON DELETE CASCADE)';
+        $schema = $builder->build($sql, 'CREATE INDEX ix ON t(parent_id,id)');
+        self::assertSame('cascade', $schema->tables[0]->constraints[0]->onDelete->value);
+        self::assertSame(['parent_id', 'id'], array_column($schema->tables[0]->indexes[0]->elements, 'column'));
+        $binder = new Binder($schema);
+        self::assertSame('cascade', $binder->bind($sql)->declarations[0]->constraints[0]->onDelete->value);
+        self::assertSame('parent_id', $binder->bind('CREATE INDEX iy ON t(parent_id)')->indexes[0]->keys[0]->binding?->column->name);
+    }
+
 }

@@ -27,6 +27,7 @@ final class ColumnDefinition
      * @param Node|null $defaultExpression Original default syntax, evaluated on insertion
      * @param list<Node> $attributes Complete column attributes, including collation and identity
      * @param Node|null $generatedExpression Generated value expression
+     * @param array<string, string|bool|list<string>> $options Named column options with decoded values
      */
     public function __construct(
         public readonly string $name,
@@ -36,6 +37,7 @@ final class ColumnDefinition
         public readonly ?Node $defaultExpression = null,
         public readonly array $attributes = [],
         public readonly ?Node $generatedExpression = null,
+        public readonly array $options = [],
     ) {
     }
 }

@@ -99,6 +99,21 @@ use SqlSemantics\SchemaBuilder;
 #[UsesClass(\SqlSemantics\Model\Write\Merge::class)]
 #[UsesClass(\SqlSemantics\Model\Write\MergeAction::class)]
 #[UsesClass(\SqlSemantics\Binding\Write\MergeBinder::class)]
+#[UsesClass(\SqlSemantics\Ast\Definition\ReferenceReader::class)]
+#[UsesClass(\SqlSemantics\Ast\Definition\OptionReader::class)]
+#[UsesClass(\SqlSemantics\Ast\Definition\IndexReader::class)]
+#[UsesClass(\SqlSemantics\Ast\Definition\IndexKeys::class)]
+#[UsesClass(\SqlSemantics\Binding\Scalar\FunctionMatch::class)]
+#[UsesClass(\SqlSemantics\Binding\Scalar\FunctionResolver::class)]
+#[UsesClass(\SqlSemantics\Binding\Schema\IndexEvolution::class)]
+#[UsesClass(\SqlSemantics\Binding\Schema\IndexBinder::class)]
+#[UsesClass(\SqlSemantics\Schema\FunctionSignature::class)]
+#[UsesClass(\SqlSemantics\Schema\Functions\Builtins::class)]
+#[UsesClass(\SqlSemantics\Schema\Functions\BuiltinResult::class)]
+#[UsesClass(\SqlSemantics\Schema\Functions\SignatureInvariant::class)]
+#[UsesClass(\SqlSemantics\Schema\IndexDefinition::class)]
+#[UsesClass(\SqlSemantics\Schema\IndexElement::class)]
+#[UsesClass(\SqlSemantics\Model\Definition\IndexDeclaration::class)]
 final class FunctionRulesTest extends TestCase
 {
     public function testBindSeparatesAggregateAndScalarFacts(): void
@@ -182,5 +197,36 @@ final class FunctionRulesTest extends TestCase
         yield 'now' => ['now()', 'timestamp', 'function', 'unknown'];
     }
 
+
+
+    public function testArgumentsInferParameterTypesFromRegisteredSignatures(): void
+    {
+        $integer = new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, 'integer');
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build()->withFunctions(new \SqlSemantics\Schema\FunctionSignature('f', [$integer], $integer));
+        $expression = (new Binder($schema))->bind('SELECT f($1)')->outputs[0]->expression;
+        self::assertSame('integer', $expression->type->name);
+        self::assertSame('integer', $expression->operands[0]->type->name);
+        self::assertSame('implicit', $expression->operands[0]->symbol);
+        self::assertSame('$1', $expression->operands[0]->operands[0]->symbol);
+    }
+
+    public function testNullabilityUsesDeclaredNullPropagationAndPreservesLineage(): void
+    {
+        $integer = new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, 'integer');
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')->withFunctions(new \SqlSemantics\Schema\FunctionSignature('f', [$integer], $integer, \SqlSemantics\Type\Nullability::NotNull, true));
+        $query = (new Binder($schema))->bind('SELECT f(1), f(NULL), f(id) FROM t');
+        self::assertSame(['not-null', 'always-null', 'maybe-null'], array_map(static fn ($output): string => $output->expression->nullability->value, $query->outputs));
+        self::assertSame('id', $query->outputs[2]->expression->lineage()[0]->column->name);
+    }
+
+    public function testBindSupportsCustomAggregatesAndVariadicArguments(): void
+    {
+        $integer = new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, 'integer');
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build()->withFunctions(new \SqlSemantics\Schema\FunctionSignature('combine', [$integer], $integer, variadic: true, aggregate: true));
+        $query = (new Binder($schema))->bind('SELECT combine(1,2,3), combine(1) OVER ()');
+        self::assertSame('aggregate', $query->outputs[0]->expression->kind->value);
+        self::assertSame('window', $query->outputs[1]->expression->kind->value);
+        self::assertCount(3, $query->outputs[0]->expression->operands);
+    }
 
 }

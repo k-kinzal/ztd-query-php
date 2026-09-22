@@ -53,7 +53,7 @@ final class TableAlteration
         foreach (Tree::outer($statement, ['alter_table_cmd', 'alter_list_item', 'RenameStmt', 'cmd']) as $action) {
             [$columns, $name] = $this->action($action, $columns, $name);
         }
-        $replacement = new TableDefinition($table->schema, $name, $columns, $constraints, $statement);
+        $replacement = new TableDefinition($table->schema, $name, $columns, $constraints, $statement, indexes: $table->indexes, options: $table->options);
         return array_map(static fn (TableDefinition $candidate): TableDefinition => $candidate === $table ? $replacement : $candidate, $this->tables->schema->tables);
     }
 
@@ -74,7 +74,7 @@ final class TableAlteration
                 return [$columns, $newName];
             }
             $oldName = $identifiers->name($tokens[$to - 1]);
-            $columns = array_map(static fn (ColumnDefinition $column): ColumnDefinition => $identifiers->equal($column->name, $oldName) ? new ColumnDefinition($newName, $column->type, $column->nullability, $column->source, $column->defaultExpression, $column->attributes, $column->generatedExpression) : $column, $columns);
+            $columns = array_map(static fn (ColumnDefinition $column): ColumnDefinition => $identifiers->equal($column->name, $oldName) ? new ColumnDefinition($newName, $column->type, $column->nullability, $column->source, $column->defaultExpression, $column->attributes, $column->generatedExpression, $column->options) : $column, $columns);
         }
         $drop = array_search('DROP', $words, true);
         if ($drop !== false && ($words[$drop + 1] ?? '') !== 'CONSTRAINT') {
@@ -120,7 +120,7 @@ final class TableAlteration
             if (str_contains($text, 'SET DEFAULT')) {
                 $default = Tree::outer($action, ['a_expr', 'expr'])[0] ?? $action;
             }
-            $result[] = new ColumnDefinition($column->name, $type, $nullability, $action, $default, [...$column->attributes, $action], $column->generatedExpression);
+            $result[] = new ColumnDefinition($column->name, $type, $nullability, $action, $default, [...$column->attributes, $action], $column->generatedExpression, array_replace($column->options, \SqlSemantics\Ast\Definition\OptionReader::column($action, [$action], $this->tables->identifiers)));
         }
         return $result;
     }

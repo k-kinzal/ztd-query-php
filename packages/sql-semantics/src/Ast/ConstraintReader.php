@@ -52,7 +52,7 @@ final class ConstraintReader
         }
         $expression = $kind === ConstraintKind::Check ? (Tree::outer($node, ['a_expr', 'expr'])[0] ?? null) : null;
 
-        return new TableConstraint($kind, $kind === ConstraintKind::Check ? [] : $columns, $node, $name, $table, $references, $expression);
+        return new TableConstraint($kind, $kind === ConstraintKind::Check ? [] : $columns, $node, $name, $table, $references, $expression, ...Definition\ReferenceReader::read($node, $this->identifiers));
     }
 
     /**
@@ -78,7 +78,14 @@ final class ConstraintReader
                 $name[] = $this->identifiers->name($token);
             }
         }
-        $groups = TokenGroups::parentheses($remaining);
+        $referenceTokens = [];
+        foreach ($remaining as $token) {
+            if (in_array(strtoupper($token->text), ['MATCH', 'ON', 'DEFERRABLE', 'NOT', 'INITIALLY'], true)) {
+                break;
+            }
+            $referenceTokens[] = $token;
+        }
+        $groups = TokenGroups::parentheses($referenceTokens);
 
         return [$name, TokenGroups::names($groups[0] ?? [], $this->identifiers)];
     }

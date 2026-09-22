@@ -83,3 +83,7 @@ exceptions include the grammar release, generated SQL, input hex, and original
 exception. CI artifacts retain the raw crash input and corpus, including failures
 during corpus replay. Fix the implementation and add an ordinary regression test;
 do not allow the exception or restrict generation to avoid the finding.
+
+The schema-aware oracle also checks registered function result types and NULL
+propagation, and the ordered column bindings of index definitions. Index key
+expressions and partial-index predicates participate in graph validation.

@@ -42,7 +42,7 @@ final class SchemaEvolution
         foreach ($trees as $tree) {
             foreach (StatementList::read($tree, $schema->dialect) as $statement) {
                 $tables = $this->apply($schema, $statement);
-                $schema = new Schema($schema->dialect, $tables, $schema->defaultSchema, $schema->grammarVersion, [...$schema->statements, $statement]);
+                $schema = new Schema($schema->dialect, $tables, $schema->defaultSchema, $schema->grammarVersion, [...$schema->statements, $statement], $schema->functions);
             }
         }
         return $schema;
@@ -57,6 +57,9 @@ final class SchemaEvolution
         $identifiers = new Identifiers($schema->dialect);
         $resolver = new TableResolver($schema, $identifiers, $schema->defaultSchema);
         $text = strtoupper(Tree::text($statement));
+        if (preg_match('/^CREATE (UNIQUE |FULLTEXT |SPATIAL )?INDEX /', $text) === 1) {
+            return (new IndexEvolution($resolver))->apply($statement);
+        }
         $create = Tree::outer($statement, ['CreateStmt', 'CreateAsStmt', 'ViewStmt', 'create', 'create_table_stmt', 'view_tail', 'create_table'])[0] ?? null;
         if ($create !== null || preg_match('/^CREATE (TEMP |TEMPORARY )?VIEW /', $text) === 1) {
             $table = $this->create($schema, $statement, $create ?? $statement, $resolver);
@@ -83,7 +86,7 @@ final class SchemaEvolution
             $drop = array_map(static fn (Node $name): string => implode('.', $identifiers->parts($name)), $names);
             return array_values(array_filter($schema->tables, static fn (TableDefinition $table): bool => !in_array($table->name, $drop, true) && !in_array($table->schema . '.' . $table->name, $drop, true)));
         }
-        return $schema->tables;
+        return (new IndexEvolution($resolver))->apply($statement);
     }
 
     /**
@@ -120,6 +123,6 @@ final class SchemaEvolution
             $derived = QueryRelation::declaration($query, $name, $aliases, $source);
             $columns = [...$columns, ...$derived->columns];
         }
-        return new TableDefinition($namespace, $name, $reader->primaryKeys($columns, $constraints, $source), $constraints, $source);
+        return new TableDefinition($namespace, $name, $reader->primaryKeys($columns, $constraints, $source), $constraints, $source, indexes: $table->indexes, options: $table->options);
     }
 }

@@ -74,6 +74,7 @@ final class StatementBinder
             merge: $statement->merge,
             statements: $statement->statements,
             diagnostics: $this->tables->diagnostics->items,
+            indexes: $statement->indexes,
         );
     }
 

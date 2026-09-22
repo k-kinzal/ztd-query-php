@@ -76,6 +76,7 @@ Start with the fields for the operation you are reading:
 | MERGE | `merge` contains the target, input, matching condition, and ordered conditional actions. Each action owns its writes or inserted values. |
 | SET, RESET, PRAGMA | `settings` contains ordered effects with `name`, `scope`, `action`, and expression `values`. |
 | CREATE TABLE | `declarations` contains table definitions; `definitions` associates bound defaults, generated expressions, and CHECK conditions with those declarations. |
+| CREATE INDEX | `indexes` contains each `definition`, typed `keys`, and a typed partial-index `predicate`; `targets` identifies the indexed table. |
 | Nested statements | `ctes`, compound-query `branches`, relation or expression `query`, and nested `statements` preserve the enclosed operations and their conditions. |
 
 ## Read values and column references
@@ -102,6 +103,11 @@ A self join has separate `TableUse` objects with different `id` values, even whe
 both refer to the same `TableDefinition`. An outer join can make a column use
 nullable without changing its declared nullability; `nullExtendedBy` identifies
 the responsible joins.
+
+Function calls use the [signatures registered on the schema](schema.md#register-function-signatures).
+Their result types, argument conversions, aggregate roles, and NULL facts are
+available through the same expression properties. An inferred parameter type is
+represented by an implicit cast around the original parameter expression.
 
 ## SQL and returned structures
 
@@ -157,6 +163,7 @@ empty schema. PostgreSQL settings also work with an empty schema.
 | SQL | Returned structure |
 |-----|--------------------|
 | `CREATE TABLE totals (amount INTEGER DEFAULT 3, doubled INTEGER GENERATED ALWAYS AS (amount * 2) STORED, CHECK (amount >= 0))` | `declarations[0]` describes the table; `definitions[0].defaults['amount']` is literal `3`; `generated['doubled']` binds `amount * 2`; `checks` retains the bound CHECK predicate by constraint position. |
+| `CREATE INDEX positive_scores ON users((score + 1)) WHERE score > 0` | `indexes[0].definition.name = 'positive_scores'`; `keys[0]` is an integer addition with lineage to `users.score`; `predicate` is the boolean comparison; `targets[0]` identifies `users`. |
 | `EXPLAIN UPDATE users SET score = 1 WHERE id = 2` | `statements[0]` is the bound UPDATE, with its write target, assignment, and row condition; the wrapper retains EXPLAIN syntax. |
 | `PREPARE read_user AS SELECT id FROM users WHERE id = 1` | `statements[0]` retains the prepared SELECT and its filter; its bound query is also reachable in `queries`. |
 

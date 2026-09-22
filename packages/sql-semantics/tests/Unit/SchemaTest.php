@@ -94,6 +94,21 @@ use SqlSemantics\SemanticException;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Merge::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\MergeAction::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Write\MergeBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\Definition\ReferenceReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\Definition\OptionReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\Definition\IndexReader::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\Definition\IndexKeys::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Scalar\FunctionMatch::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Scalar\FunctionResolver::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\IndexEvolution::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\IndexBinder::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\FunctionSignature::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\Functions\Builtins::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\Functions\BuiltinResult::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\Functions\SignatureInvariant::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\IndexDefinition::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\IndexElement::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\IndexDeclaration::class)]
 final class SchemaTest extends TestCase
 {
     public function testRetainsTheDialectAndAllDeclarations(): void
@@ -103,4 +118,20 @@ final class SchemaTest extends TestCase
         self::assertSame(Dialect::PostgreSql, $schema->dialect);
         self::assertSame(['a', 'b'], array_column($schema->tables, 'name'));
     }
+
+    public function testWithFunctionsReturnsAnIndependentSnapshot(): void
+    {
+        $base = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
+        $integer = new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, 'integer');
+        $text = new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, 'text');
+        $added = $base->withFunctions(new \SqlSemantics\Schema\FunctionSignature('f', [$integer], $text));
+        $replaced = $added->withFunctions(new \SqlSemantics\Schema\FunctionSignature('f', [new \SqlSemantics\Type\TypeDescriptor(Dialect::PostgreSql, 'integer')], $integer));
+        self::assertSame('unknown', (new Binder($base))->bind('SELECT f(id) FROM t')->outputs[0]->expression->type->name);
+        self::assertSame('text', (new Binder($added))->bind('SELECT f(id) FROM t')->outputs[0]->expression->type->name);
+        self::assertSame('integer', (new Binder($replaced))->bind('SELECT f(id) FROM t')->outputs[0]->expression->type->name);
+        self::assertSame($base->tables, $added->tables);
+        self::assertCount(count($base->functions) + 1, $replaced->functions);
+    }
+
+
 }

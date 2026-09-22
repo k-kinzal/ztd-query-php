@@ -114,6 +114,14 @@ final class GraphProperties
                 $this->expression($value);
             }
         }
+        foreach ($statement->indexes as $index) {
+            foreach ($index->keys as $key) {
+                $this->expression($key);
+            }
+            if ($index->predicate !== null) {
+                $this->expression($index->predicate);
+            }
+        }
         foreach ($statement->definitions as $definition) {
             foreach ([...array_values($definition->defaults), ...array_values($definition->generated), ...array_values($definition->checks)] as $value) {
                 $this->expression($value);

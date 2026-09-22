@@ -31,8 +31,9 @@ final class SchemaBuilder
      * @param Dialect $dialect Language used for declarations and subsequent statement binding
      * @param string|null $defaultSchema Defaults to public, main, or an unnamed MySQL database
      * @param string|null $grammarVersion sql-parser release tag; null selects its default release
+     * @param list<Schema\FunctionSignature> $functions Application overloads added to the default function signatures
      */
-    public function __construct(public readonly Dialect $dialect, ?string $defaultSchema = null, ?string $grammarVersion = null)
+    public function __construct(public readonly Dialect $dialect, ?string $defaultSchema = null, ?string $grammarVersion = null, public readonly array $functions = [])
     {
         $this->defaultSchema = $defaultSchema ?? match ($dialect) {
             Dialect::PostgreSql => 'public',
@@ -53,7 +54,7 @@ final class SchemaBuilder
     public function build(string ...$sql): Schema
     {
         $trees = array_map(fn (string $text): Node => $this->parser->parse($text), array_values($sql));
-        $initial = new Schema($this->dialect, [], $this->defaultSchema, $this->parser->version());
+        $initial = (new Schema($this->dialect, [], $this->defaultSchema, $this->parser->version()))->withFunctions(...$this->functions);
         return (new Binding\Schema\SchemaEvolution($initial))->build($trees);
     }
 }

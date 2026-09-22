@@ -22,7 +22,9 @@ final class SchemaProperties
      */
     public function __construct(public readonly Dialect $dialect, string $version)
     {
-        $this->binder = new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE semantic_property (id INTEGER NOT NULL, n INTEGER DEFAULT 7)'));
+        $type = new \SqlSemantics\Type\TypeDescriptor($dialect, 'integer');
+        $function = new \SqlSemantics\Schema\FunctionSignature('semantic_signature', [$type], $type, \SqlSemantics\Type\Nullability::NotNull, true);
+        $this->binder = new Binder((new SchemaBuilder($dialect, grammarVersion: $version, functions: [$function]))->build('CREATE TABLE semantic_property (id INTEGER NOT NULL, n INTEGER DEFAULT 7)'));
     }
 
     /**
@@ -34,6 +36,14 @@ final class SchemaProperties
     {
         $first = ord($input[0] ?? "\0");
         $second = ord($input[1] ?? "\0");
+        $function = $this->binder->bind('SELECT semantic_signature(id), semantic_signature(NULL) FROM semantic_property');
+        if ($function->outputs[0]->expression->type->name !== 'integer' || $function->outputs[1]->expression->nullability !== \SqlSemantics\Type\Nullability::AlwaysNull) {
+            throw new RuntimeException('Schema oracle: a registered function lost its type or NULL behavior.');
+        }
+        $index = $this->binder->bind('CREATE INDEX semantic_index ON semantic_property(id,n)');
+        if (array_map(static fn ($key): ?string => $key->binding?->column->name, $index->indexes[0]->keys ?? []) !== ['id', 'n']) {
+            throw new RuntimeException('Schema oracle: an index lost its ordered column bindings.');
+        }
         $names = $first % 2 === 0 ? ['n', 'id'] : ['id', 'n'];
         $insert = $this->binder->bind('INSERT INTO semantic_property (' . implode(',', $names) . ') VALUES (' . $first . ',' . $second . ')');
         $actual = array_map(static fn ($column): ?string => $column->binding?->column->name, $insert->insertion->columns ?? []);
