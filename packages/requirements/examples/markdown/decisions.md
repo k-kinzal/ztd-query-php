@@ -6,23 +6,18 @@ $schema: 'https://raw.githubusercontent.com/k-kinzal/ztd-query-php/main/packages
 
 # READER-001
 
+![original](https://img.shields.io/badge/origin-original-blue)
+![strictness](https://img.shields.io/badge/label-strictness-blue)
+
 If input ends inside a rule, then the reader shall report an error.
 
-**origin**
-
-original
-
-**reason**
+**rationale**
 
 A partial tree would silently lose input.
 
-**labels**
-
-![strictness](<https://img.shields.io/badge/label-strictness-blue>)
-
 **related**
 
-- [SPEC-001](<grammar.md#spec-001>)
+- [SPEC-001](grammar.md#spec-001)
 
 **design**
 

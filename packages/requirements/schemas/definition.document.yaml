@@ -13,6 +13,9 @@ additionalSections: false
 additionalBlocks: false
 allBlocks:
   type: [paragraph, bullet-list, quote]
+# Each item is a readable card: badges, statement, quotations, then named links/rationale.
+# Selector comments annotate quotations and do not contribute rendered document blocks.
+# The package mapper validates badge roles, quote annotations and field contents.
 sections:
   - header:
       pattern: '^[A-Za-z][A-Za-z0-9_.-]*$'

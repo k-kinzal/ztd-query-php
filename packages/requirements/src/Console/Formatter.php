@@ -19,7 +19,7 @@ final class Formatter
         $changed = [];
         foreach ($files as $index => $file) {
             $reader = new DocumentReader();
-            $data = $reader->read($file, $index === 0 ? 'config' : 'definition', $markdown);
+            $data = $reader->read($file, $index === 0 ? 'config' : 'definition', $markdown, dirname($files[0]));
             $text = DocumentReader::isMarkdown($file) ? $reader->markdown->render($data) : DocumentReader::yaml($data);
             if ($text !== file_get_contents($file)) {
                 $changed[] = $file;

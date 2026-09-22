@@ -106,6 +106,9 @@ final class Nodes
 
     public static function destination(string $url): string
     {
+        if (preg_match('/[<>()\\s]/', $url) !== 1) {
+            return $url;
+        }
         return '<' . str_replace(['<', '>', "\n", "\r", ' '], ['%3C', '%3E', '%0A', '%0D', '%20'], $url) . '>';
     }
 

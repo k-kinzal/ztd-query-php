@@ -22,9 +22,9 @@ limited to explicitly selected source scopes and does not prove semantic equival
 | Area | Support |
 | --- | --- |
 | Configuration | YAML with JSON Schema validation |
-| Definition documents | YAML; experimental Markdown with quotations, lists, links and label badges |
+| Definition documents | YAML; experimental Markdown with attribute badges, quoted sources and navigable citations |
 | Specifications | EARS basic and complex patterns; syntax validation and source/test links |
-| Sources | HTML/XML CSS, RFC XML, Markdown CSS, JSONPath subset, text lines; custom extensions |
+| Sources | HTML CSS / exact Text Fragments; XML/RFC/Markdown CSS; JSONPath subset; text lines; custom extensions |
 | Test selection | PHPUnit `Class::method`, Behat `file.feature:line`; custom runners |
 | Coverage | Overall, per source and changed units; supported/unsupported/uncovered counts |
 
@@ -64,7 +64,7 @@ In this monorepo, run `composer install` in `packages/requirements` and use
 package, run `composer test` and `composer lint`. The suite executes real PHPUnit,
 Behat and custom extension processes. Markdown parsing and validation run entirely
 in PHP; no external Markdown tool or additional runtime is required. See the
-[Markdown example](examples/markdown/grammar.md) and
+[readable Markdown example](examples/markdown/grammar.md) and
 [extension example](examples/extensions/requirements.yaml).
 
 ## License

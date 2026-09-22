@@ -78,7 +78,12 @@ need reasons. Independent items cannot simultaneously claim sourced evidence.
 Dangling and self references fail. `related` edges can be reciprocal. Markdown
 reference links must point to the loaded definition containing the linked ID;
 if a heading fragment is present, it must match that ID. Badge alt text supplies
-the label; badge images are not downloaded during validation.
+attribute values. Roles, duplicate/conflicting attributes and static badge message
+mismatches are validated without downloading images. Quotation comments can carry
+selectors, and source citations must point to the declared resource. Element-ID
+or exact Text Fragment links can supply the evidence selector directly; textual
+fragment contents must agree with the quotation. Source selection and uniqueness
+are checked by `check`, including rejection of ambiguous text matches.
 
 `lint` does not establish source availability or quote equality; use `check`.
 It does not run tests or establish implementation coverage; use `spec`.

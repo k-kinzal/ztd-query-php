@@ -7,15 +7,21 @@ namespace Requirements\Config;
 use InvalidArgumentException;
 use League\CommonMark\Environment\Environment;
 use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
+use League\CommonMark\Extension\CommonMark\Node\Block\BlockQuote;
 use League\CommonMark\Extension\CommonMark\Node\Block\Heading;
+use League\CommonMark\Extension\CommonMark\Node\Inline\Link;
 use League\CommonMark\Node\Block\Paragraph;
 use League\CommonMark\Node\Node;
 use League\CommonMark\Parser\MarkdownParser;
+use Requirements\Markdown\Badges;
+use Requirements\Markdown\Citation;
 use Requirements\Markdown\DocumentSchema;
 use Requirements\Markdown\Fields as MarkdownFields;
 use Requirements\Markdown\Nodes;
+use Requirements\Markdown\Quotation;
 use Requirements\Markdown\Reference;
 use Requirements\Markdown\Writer;
+use Requirements\Model\Source;
 use stdClass;
 use Symfony\Component\Yaml\Yaml;
 
@@ -24,14 +30,19 @@ final class MarkdownDocument
     /** @var array<string, array<string, array<string, string>>> */
     private array $links = [];
 
-    /** @var array<string, array<string, string>> */
+    /** @var array<string, array<string, array<string, array{url: string, title: ?string}>>> */
     private array $badges = [];
+
+    /** @var array<string, list<array{url: string, label: string}|null>> */
+    private array $citations = [];
+
+    private ?Citation $source = null;
 
     /** @var list<Reference> */
     private array $references = [];
 
     /** @param array<string, mixed> $options */
-    public function read(string $file, array $options): stdClass
+    public function read(string $file, array $options, ?string $directory = null): stdClass
     {
         if (($options['experimental'] ?? false) !== true) {
             throw new InvalidArgumentException("$file: Markdown definitions require markdown.experimental: true.");
@@ -40,6 +51,8 @@ final class MarkdownDocument
         $this->links = [];
         $this->badges = [];
         $this->references = [];
+        $this->citations = [];
+        $this->source = null;
         $text = file_get_contents($file);
         if ($text === false || preg_match('/\A---\r?\n(.*?)\r?\n---\r?\n(.*)\z/s', $text, $parts) !== 1) {
             throw new InvalidArgumentException("$file: expected YAML frontmatter delimited by ---.");
@@ -49,6 +62,10 @@ final class MarkdownDocument
             throw new InvalidArgumentException("$file: frontmatter must be a mapping.");
         }
         Fields::keys(Fields::mapping(get_object_vars($data), 'frontmatter'), ['$schema', 'version', 'source'], "$file frontmatter");
+        if (isset($data->source)) {
+            $source = Fields::mapping(json_decode(json_encode($data->source, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR), 'source');
+            $this->source = new Citation(Source::from($source), $file, $directory ?? dirname($file));
+        }
         $environment = new Environment();
         $environment->addExtension(new CommonMarkCoreExtension());
         $document = (new MarkdownParser($environment))->parse($parts[2]);
@@ -86,20 +103,45 @@ final class MarkdownDocument
 
     public function render(stdClass $data): string
     {
-        return (new Writer())->render($data, $this->links, $this->badges);
+        return (new Writer())->render($data, $this->links, $this->badges, $this->citations, $this->source);
     }
 
     /** @param list<Node> $blocks */
     private function item(Heading $heading, array $blocks, string $file): stdClass
     {
         $id = Nodes::text($heading);
-        $statement = array_shift($blocks);
-        if (!$statement instanceof Paragraph || Nodes::field($statement) !== null) {
-            throw new InvalidArgumentException("$file: $id needs a statement paragraph before its fields.");
-        }
         $item = new stdClass();
         $item->id = $id;
+        $badges = new Badges();
+        while (isset($blocks[0]) && Badges::isParagraph($blocks[0])) {
+            $badge = array_shift($blocks);
+            $badges->read($badge, $item);
+        }
+        $this->badges[$id] = $badges->images;
+        $statement = array_shift($blocks);
+        if (!$statement instanceof Paragraph || Nodes::field($statement) !== null) {
+            throw new InvalidArgumentException("$file: $id needs a statement paragraph after its badges.");
+        }
         $item->statement = preg_replace('/\s*\n\s*/', ' ', Nodes::text($statement, true));
+        $evidence = [];
+        while (isset($blocks[0]) && $blocks[0] instanceof BlockQuote) {
+            $quote = $blocks[0];
+            array_shift($blocks);
+            $attribution = null;
+            if (isset($blocks[0]) && $blocks[0] instanceof Paragraph && $blocks[0]->firstChild() instanceof Link && $blocks[0]->firstChild()->next() === null) {
+                $attribution = Nodes::link(array_shift($blocks));
+            }
+            $reader = new Quotation();
+            try {
+                $evidence[] = $reader->read($quote, $this->source, $attribution);
+            } catch (InvalidArgumentException $error) {
+                throw new InvalidArgumentException("$file: $id: " . $error->getMessage(), 0, $error);
+            }
+            $this->citations[$id][] = $reader->link;
+        }
+        if ($evidence !== []) {
+            $item->evidence = $evidence;
+        }
         $name = null;
         $values = [];
         foreach ($blocks as $block) {
@@ -108,7 +150,10 @@ final class MarkdownDocument
                 if ($name !== null) {
                     $this->field($item, $name, $values, $file, $id);
                 }
-                $name = $field;
+                $name = match ($field) {
+                    'unsupport reason', 'unsupported reason', 'rationale' => 'reason',
+                    default => $field,
+                };
                 $values = [];
             } elseif ($name === null) {
                 throw new InvalidArgumentException("$file: $id expects a bold field heading after its statement.");
@@ -139,7 +184,9 @@ final class MarkdownDocument
             $this->references[] = new Reference($target, $url, $file);
         }
         if ($name === 'labels') {
-            $this->badges[$id] = $reader->badges;
+            foreach ($reader->badges as $value => $url) {
+                $this->badges[$id]['label'][$value] = ['url' => $url, 'title' => null];
+            }
         }
     }
 }

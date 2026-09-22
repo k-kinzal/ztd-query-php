@@ -7,6 +7,7 @@ namespace Requirements\Markdown;
 use InvalidArgumentException;
 use League\CommonMark\Extension\CommonMark\Node\Block\BlockQuote;
 use League\CommonMark\Extension\CommonMark\Node\Block\Heading;
+use League\CommonMark\Extension\CommonMark\Node\Block\HtmlBlock;
 use League\CommonMark\Extension\CommonMark\Node\Block\ListBlock;
 use League\CommonMark\Extension\CommonMark\Node\Block\ListItem;
 use League\CommonMark\Node\Block\Document;
@@ -71,6 +72,10 @@ final class DocumentSchema
     private function allowed(Node $node, array $schema, string $file): void
     {
         Fields::keys($schema, ['type'], 'allBlocks');
+        if ($node instanceof HtmlBlock && $node->parent() instanceof BlockQuote && $node === $node->parent()->firstChild()) {
+            Quotation::annotation($node);
+            return;
+        }
         if (!$node instanceof ListItem && !in_array($this->type($node), Fields::strings($schema['type'], 'allBlocks.type'), true)) {
             throw new InvalidArgumentException("$file: document-schema forbids " . $this->type($node) . ' blocks; use quotations, paragraphs and bullet lists.');
         }

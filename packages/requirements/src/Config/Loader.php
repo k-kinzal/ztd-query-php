@@ -94,7 +94,7 @@ final class Loader
         $references = [];
         foreach ($files as $file) {
             $reader = new DocumentReader();
-            $object = $reader->read($file, 'definition', $markdown);
+            $object = $reader->read($file, 'definition', $markdown, $directory);
             $data = Fields::mapping(json_decode(json_encode($object, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR), $file);
             array_push($references, ...$reader->markdown->references());
             Fields::keys($data, ['$schema', 'version', 'source', 'items'], $file);

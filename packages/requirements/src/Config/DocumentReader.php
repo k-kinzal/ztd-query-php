@@ -15,10 +15,10 @@ final class DocumentReader
     }
 
     /** @param array<string, mixed> $markdown */
-    public function read(string $path, string $kind, array $markdown = []): stdClass
+    public function read(string $path, string $kind, array $markdown = [], ?string $directory = null): stdClass
     {
         $data = self::isMarkdown($path)
-            ? $this->markdown->read($path, $markdown)
+            ? $this->markdown->read($path, $markdown, $directory)
             : Yaml::parseFile($path, Yaml::PARSE_EXCEPTION_ON_INVALID_TYPE | Yaml::PARSE_OBJECT_FOR_MAP);
         (new SchemaValidator())->validate($data, $kind, $path);
         if (!$data instanceof stdClass) {

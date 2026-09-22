@@ -19,6 +19,10 @@ final class DomSource implements SourceExtension
 
     public function select(Source $source, string $selector, string $directory, bool $live): array
     {
+        $text = TextFragment::isFragment($selector) ? TextFragment::text($selector) : null;
+        if ($text !== null && ($source->format !== 'html' || TextFragment::isFragment($source->selector))) {
+            throw new RuntimeException('Text Fragments select evidence in an HTML CSS scope; they cannot define the coverage scope.');
+        }
         $content = $this->loader->read($source, $directory, $live);
         $crawler = new Crawler();
         if (in_array($source->format, ['xml', 'ietf'], true)) {
@@ -44,7 +48,7 @@ final class DomSource implements SourceExtension
             $crawler->addHtmlContent($content);
         }
         $units = [];
-        foreach ($crawler->filter($selector) as $node) {
+        foreach ($crawler->filter($text === null ? $selector : $source->selector) as $node) {
             if ($node instanceof DOMElement) {
                 $location = $node->getNodePath();
                 if ($location !== null) {
@@ -59,6 +63,6 @@ final class DomSource implements SourceExtension
                 }
             }
         }
-        return $units;
+        return $text === null ? $units : array_values(array_filter($units, static fn (Unit $unit): bool => $unit->text === $text));
     }
 }

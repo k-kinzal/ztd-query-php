@@ -125,7 +125,7 @@ with requirement links; those remain sourced and are not independent items.
 
 | Format | Scope/evidence selector | Unit |
 | --- | --- | --- |
-| `html` | CSS, e.g. `main p`, `#names` | Selected element text |
+| `html` | CSS scopes; CSS or exact Text Fragment evidence | Selected element text |
 | `xml` | CSS, e.g. `section > rule` | Selected element text |
 | `ietf` | RFC XML CSS, e.g. `section[anchor="rules"] > t` | Selected RFC paragraph; use `html` or `text` for other RFC representations |
 | `markdown` | CSS over CommonMark-rendered HTML, e.g. `h2 + p`, `li` | Selected element text; raw HTML is stripped |
@@ -169,7 +169,39 @@ are useful when running it regularly.
 
 ## Experimental Markdown definitions
 
-Opt in to the Markdown profile:
+Markdown is a document for readers. Each item starts with its ID, a compact row
+of attribute badges, and the statement. Original source text appears as a quotation
+with a link back to its source. Relationships and rationale follow the quotation.
+The underlying information is the same as YAML, but the reading order and visual
+presentation are designed for prose.
+
+See the [rendered grammar example](../examples/markdown/grammar.md) and
+[independent decision](../examples/markdown/decisions.md). A typical item looks like:
+
+```markdown
+# GENERATOR-001
+
+![unsupported](https://img.shields.io/badge/status-unsupported-orange)
+
+The generator shall produce C code.
+
+> The generator produces C code.
+
+[Source](../source.html#generation)
+
+**unsupported reason**
+
+The parser reads grammars and does not generate C code.
+```
+
+Here the badge carries the status, the block quotation carries the evidence, and
+the link identifies both the source and its selected element. There are no `status`
+or `evidence` field headings to read past. Reasons use **unsupported reason** or
+**rationale**; **unsupport reason** is also accepted.
+
+### Document setup
+
+Opt in through the YAML configuration:
 
 ```yaml
 version: 1
@@ -178,45 +210,34 @@ markdown:
   experimental: true
 ```
 
-Parsing and validation run entirely in PHP using Composer dependencies. The bundled
-[document-schema profile](../schemas/definition.document.yaml) follows
-[document-schema.org draft 2026-06](https://document-schema.org/). The internal
-evaluator implements the subset needed by this profile: frontmatter JSON Schema,
-heading patterns and depth, section counts, allowed block types, and ordered block
-matching with repetition. It is not a general-purpose document-schema validator;
-custom document profiles and mappings are not supported. Unsupported profile
-keywords fail explicitly. No external executable is needed.
-
-Configuration stays YAML. A Markdown definition uses YAML frontmatter only for
-`version`, `source` and optional `$schema`. The body uses one H1 per item, a
-statement paragraph, then bold field names and native Markdown values:
+Each definition keeps document-level metadata in YAML frontmatter: `version`,
+`source` and optional `$schema`. Items use H1 headings. For example:
 
 ```markdown
 ---
-$schema: https://raw.githubusercontent.com/k-kinzal/ztd-query-php/main/packages/requirements/schemas/definition.document.yaml
 version: 1
 source:
   id: grammar-manual
   uri: https://example.org/manual.html
   format: html
   selector: main p
+$schema: https://raw.githubusercontent.com/k-kinzal/ztd-query-php/main/packages/requirements/schemas/definition.document.yaml
 ---
 
 # REQ-001
 
+![requirement](https://img.shields.io/badge/kind-requirement-blue)
+
 A name starts with a letter.
 
-**kind**
+> A name starts with a letter.
 
-requirement
-
-**evidence**
-
-- **selector:** #names
-
-  > A name starts with a letter.
+[Source](https://example.org/manual.html#names)
 
 # SPEC-001
+
+![lexical](https://img.shields.io/badge/category-lexical-blue)
+![grammar](https://img.shields.io/badge/label-grammar-blue)
 
 When a name is read, the parser shall require a leading letter.
 
@@ -227,14 +248,101 @@ When a name is read, the parser shall require a leading letter.
 **tests**
 
 - **unit:** Tests\Unit\NameTest::testLeadingLetter
+```
 
-**labels**
+### Badges
 
-![grammar](https://img.shields.io/badge/label-grammar-blue)
+Badges immediately follow the item heading. `kind`, `status`, `origin` and
+`category` each have at most one value. Labels can have several values. Omitted
+attributes keep the same defaults as YAML; ordinary supported specifications
+need no kind/status badge.
 
-**category**
+The image alt text is the value. For [Shields static badges](https://shields.io/badges/static-badge),
+the `kind-`, `status-`, `origin-`, `category-` or `label-` prefix identifies its role.
+Lint requires the static image's role and message to agree with its alt text.
+Color and style are presentation choices and survive formatting.
 
-lexical
+Custom/local images can specify the role using a Markdown image title:
+
+```markdown
+![lexical](assets/lexical.svg "category")
+![original](assets/original.svg "origin")
+![grammar](assets/grammar.svg)
+```
+
+An image with no recognized role or title is a label. Images are never downloaded
+by lint, check or format; local images work without a badge service. Duplicate
+attributes/labels and conflicting badge/field declarations fail lint.
+
+### Quotations and source navigation
+
+Place quotations immediately after the statement. Each quotation represents one
+complete source unit and has one source citation. The citation can be immediately
+below the quotation or the last paragraph inside it; the formatter places it below.
+For several evidence units, write several quotation/citation pairs.
+
+The source link must point to the resource declared in frontmatter. Local citation
+paths are relative to the Markdown file, while `source.uri` stays relative to the
+configuration. Formatting computes the correct relative link for nested documents.
+
+For HTML/XML/Markdown sources, a simple element-ID fragment such as `#names`
+supplies the CSS evidence selector. More complex selectors, JSONPath selectors,
+line selections and extension-specific selectors use a hidden comment:
+
+```markdown
+> <!-- selector: main > p:first-child -->
+> A name starts with a letter.
+
+[Source](https://example.org/manual.html#:~:text=A%20name%20starts%20with%20a%20letter.)
+```
+
+The comment is machine-readable annotation and is invisible in a rendered document.
+The spelling `<!-- **selector:** \#names -->` is also accepted. It must be the first
+line inside the quotation. Arbitrary HTML/comments are rejected. HTML entity escapes
+protect `<`, `>` and `&` inside selector comments; CSS backslash escapes are retained.
+
+An explicit selector identifies the unit for verification; the source link helps
+the reader navigate. `format` adds a missing citation, uses an element-ID anchor
+when possible, and otherwise generates an exact Text Fragment for HTML or a
+resource link for other formats. When the citation itself identifies the same
+selector, the formatter omits the redundant selector comment.
+
+HTML evidence can also use an exact [Text Fragment](https://wicg.github.io/scroll-to-text-fragment/#syntax)
+as its selector, so a quotation and its source link are sufficient:
+
+```markdown
+> A name starts with a letter.
+
+[Source](https://example.org/manual.html#:~:text=A%20name%20starts%20with%20a%20letter.)
+```
+
+This maps to the YAML evidence selector
+`#:~:text=A%20name%20starts%20with%20a%20letter.`. The source scope remains `main p`:
+coverage still enumerates that scope independently. After percent decoding and
+whitespace normalization, the directive must match a **complete, unique scoped
+unit**, case sensitively. Missing or duplicate matches fail `check` and do not
+contribute coverage. Text Fragment evidence cannot replace the coverage scope.
+
+This initial implementation supports one exact `text=` directive. Range selectors,
+prefix/suffix context and multiple directives fail explicitly. Encode literal
+commas, ampersands and dashes as `%2C`, `%26` and `%2D`. Browser scrolling/highlighting
+uses browser-specific navigation behavior across the page; the tool's scoped
+verification is stricter and does not require a browser. An optional element-ID
+fallback in the URL does not disambiguate duplicate scoped text.
+
+### Relationships, tests and supporting material
+
+Keep the remaining material after the quotations, using named sections only when
+there is something to say:
+
+```markdown
+**requirements**
+
+- [REQ-001](reference.md#req-001)
+
+**related**
+
+- [SPEC-002](other.md#spec-002)
 
 **design**
 
@@ -242,40 +350,15 @@ lexical
 - Preserve the spelling in the syntax tree.
 ```
 
-No item fields are encoded in code blocks. This example is shown as literal
-Markdown for copying; see the [rendered example](../examples/markdown/grammar.md)
-for its document presentation. Evidence uses a selector list entry followed by an
-indented block quotation. Several selector/quotation entries represent several
-pieces of evidence.
+Reference labels are item IDs. Lint checks that each local file contains the loaded
+ID, and that an optional heading fragment matches the lowercased ID with dots
+removed. A YAML target can use `[REQ-003](other.yaml)`. External documents belong
+in `design`. Test lists use the runner name in bold followed by a colon and target.
 
-| Field | Markdown representation |
-| --- | --- |
-| `id` | H1 heading (`# SPEC-001`) |
-| `statement` | First paragraph after the heading |
-| `kind`, `status`, `origin`, `category`, `reason` | Bold field name, blank line, then prose |
-| `evidence` | Bullet list of bold `selector:` values, each followed by a nested block quotation |
-| `requirements`, `related` | Bullet list of links whose visible labels are item IDs |
-| `tests` | Bullet list with the runner name in bold followed by a colon and target |
-| `labels` | Badge images whose alt text is the label, or a bullet list of plain labels |
-| `design` | Bullet list of standalone links or prose paragraphs |
-| `metadata` | Nested bullet lists with bold keys for mappings and plain values for sequences |
+For source-free items, use `source: null`, an `original` or `undocumented` origin
+badge, and a **rationale** paragraph. They appear in `list --without-source`.
 
-Reference links can target the same file (`[REQ-001](#req-001)`), another Markdown
-file (`[REQ-002](other.md#req-002)`) or a YAML definition (`[REQ-003](other.yaml)`).
-The visible ID is the graph edge; lint also checks that the local file contains
-that loaded ID. Optional fragments must use the lowercased ID with dots removed,
-matching the conventional Markdown heading anchor. Remote requirement links are
-not supported; use `design` for external documentation links.
-
-A badge's URL controls presentation only. Its alt text supplies the label used by
-filters. Local images and remote badge services both work; validation never
-fetches them. Plain lists are equally valid. Formatting preserves existing badge
-URLs and reference destinations, including cross-file paths.
-
-Metadata preserves scalar types using JSON spelling: `true`, `2`, `null`, `[]`
-and `{}` represent their corresponding values; other plain text is a string.
-Quote ambiguous strings, such as `"true"`, and write `""` for an empty string.
-Nested mappings and lists use native indentation:
+Optional project-specific metadata uses nested bullet lists:
 
 ```markdown
 **metadata**
@@ -283,39 +366,44 @@ Nested mappings and lists use native indentation:
 - **owner:** Parser team
 - **reviewed:** true
 - **priority:** 2
-- **literal:** "true"
 - **reviewers:**
   - Alice
   - Bob
-- **release:**
-  - **version:** "1"
 ```
 
-A sequence entry containing a nested mapping or list uses `- []` followed by the
-nested list. Empty list fields can be omitted or written as `None.` after their
-bold field name; empty metadata is `{}`.
+JSON scalar spelling preserves types: `true`, `2`, `null`, `[]` and `{}` are typed
+values; other text is a string. Quote ambiguous strings such as `"true"`, and use
+`""` for an empty string. A nested mapping/list inside a sequence uses `- []` as its
+parent entry. Empty list fields can be omitted or written as `None.` under their
+field name; empty metadata is `{}`.
 
-The reader maps these blocks to the same data model as YAML. Normalized documents
-pass the same JSON Schema, EARS validator and cross-file graph checks. `$schema`
-may be omitted or name the bundled document profile; a local JSON Schema instead
-adds constraints on the normalized model. Item headings must use ATX `# ID`;
-setext or nested headings, extra unlabelled paragraphs, duplicate/unknown fields,
-ordered lists, raw HTML and code blocks fail validation. Prose supports emphasis
-and inline code spans; use standalone links in reference/design fields rather
-than embedding links inside prose.
+### Validation and formatting
 
-Statements fold physical line breaks to spaces. Formatting normalizes prose and
-emphasis to text, preserves literal backticks in statements, escapes Markdown
-punctuation where needed, and removes YAML comments in frontmatter. It preserves
-the document type and is idempotent. See paired
-[YAML](../examples/decisions.yaml) and
-[Markdown](../examples/markdown/decisions.md) examples. Use the configuration in
-the Markdown directory to try it without loading duplicate IDs.
+The bundled [document-schema profile](../schemas/definition.document.yaml) follows
+[document-schema.org draft 2026-06](https://document-schema.org/). CommonMark parsing
+and profile validation run entirely in PHP. The evaluator implements the subset
+needed by this profile: frontmatter JSON Schema, heading patterns/depth, section
+counts, allowed block types and ordered block matching. Selector comments are
+non-rendered annotations validated by the package's quotation reader. Badge roles,
+citation targets and item structure are validated by the mapper. No external
+executable is needed; custom document-schema profiles/mappings are unsupported.
 
-Markdown support is experimental. YAML stays supported while authoring effort,
-readability and review diffs are evaluated; this does not decide whether one or
-both formats remain long term. Markdown **source documents**, selected through
-CSS over rendered HTML, are a separate source adapter.
+Normalized documents pass the same JSON Schema, EARS and cross-file graph checks
+as YAML. `$schema` may name the bundled document profile or a local JSON Schema
+adding constraints to the normalized data. Item headings use ATX `# ID`. Nested or
+setext headings, extra unlabelled paragraphs, unknown/duplicate fields, ordered
+lists, code blocks and arbitrary HTML fail validation.
 
-See [lint](lint.md) for EARS syntax rules, [CLI](cli.md) for commands and
-[extensions](extensions.md) for custom sources and test runners.
+`format` preserves the file type, badge image URLs/titles, source citations and
+cross-file reference destinations. It uses the reading order shown above and is
+idempotent. Prose/emphasis normalize to text, literal statement backticks survive,
+and YAML frontmatter comments are removed. The earlier field-oriented Markdown
+syntax remains readable for migration; formatting rewrites it into badges and
+quotations.
+
+Markdown remains experimental while authoring effort, readability and review diffs
+are evaluated. YAML remains supported. Markdown **source documents**, selected
+through CSS over rendered HTML, are a separate source adapter.
+
+See [lint](lint.md), [CLI](cli.md) and [extensions](extensions.md) for other rules
+and commands.

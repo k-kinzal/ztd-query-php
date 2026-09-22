@@ -81,7 +81,7 @@ MD;
         self::assertStringContainsString('reference.yaml#req-001', $formatted);
         self::assertStringContainsString('assets/grammar.svg', $formatted);
         self::assertStringNotContainsString('```', $formatted);
-        self::assertSame($item->data, (new Loader())->load($workspace->directory . '/requirements.yaml')->items['SPEC-001']->data);
+        self::assertEquals($item->data, (new Loader())->load($workspace->directory . '/requirements.yaml')->items['SPEC-001']->data);
         self::assertSame([], $formatter->format($project->files, true, $project->markdown));
     }
 
