@@ -158,4 +158,32 @@ final class CreateIndexStatementTest extends TestCase
         $this->expectExceptionMessage('The index key does not exist.');
         $statement->withKey(1, Expression::literal(1, Dialect::PostgreSql));
     }
+    public function testWithKeyPreservesNonrecursiveIndexCreation(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
+        $binder = new Binder($schema);
+        $statement = $binder->bind('CREATE INDEX IF NOT EXISTS ix ON ONLY(t)(id)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateIndexStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\OnlyTableReference::class, $statement->table);
+        self::assertSame(['public', 't'], $statement->index->definition->table);
+        $changed = $statement->withKey(0, Expression::literal(1, Dialect::PostgreSql));
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\OnlyTableReference::class, $changed->table);
+        self::assertTrue($changed->ifNotExists);
+        self::assertSame('CREATE INDEX IF NOT EXISTS "ix" ON ONLY "public"."t"((1))', $changed->toString());
+        self::assertSame('CREATE INDEX IF NOT EXISTS "ix" ON ONLY "public"."t"("id")', $statement->toString());
+    }
+
+    public function testRejectsAContradictoryOwningTable(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)', 'CREATE TABLE u(id INTEGER)');
+        $binder = new Binder($schema);
+        $statement = $binder->bind('CREATE INDEX ix ON t(id)');
+        $other = $binder->bind('TABLE u');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateIndexStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\TableStatement::class, $other);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\TableReference::class, $other->from);
+        $this->expectException(InvalidStructure::class);
+        new \SqlSemantics\Model\Statement\CreateIndexStatement($statement->origin, $statement->index, $other->from);
+    }
+
 }

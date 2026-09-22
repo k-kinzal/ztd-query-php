@@ -23,6 +23,9 @@ final class IdentityColumn implements Generation
     ) {
     }
 
+    /**
+     * Returns no generation expression: the identity sequence supplies this column.
+     */
     #[Override]
     public function expressions(): array
     {

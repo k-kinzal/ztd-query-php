@@ -44,12 +44,8 @@ final class Scope
     {
         $name = $parts[count($parts) - 1];
         $qualifiers = array_slice($parts, 0, -1);
-        if ($qualifiers === []) {
-            foreach ($this->merged as $label => $expression) {
-                if ($this->identifiers->equal((string) $label, $name)) {
-                    return $expression;
-                }
-            }
+        if ($qualifiers === [] && ($merged = $this->mergedColumn($name)) !== null) {
+            return $merged;
         }
         $matches = [];
         $origins = [];
@@ -159,4 +155,17 @@ final class Scope
         return $columns;
     }
 
+
+    /**
+     * Resolves a USING/NATURAL join's shared column under this dialect's name rules.
+     */
+    public function mergedColumn(string $name): ?Expression
+    {
+        foreach ($this->merged as $label => $expression) {
+            if ($this->identifiers->equal((string) $label, $name)) {
+                return $expression;
+            }
+        }
+        return null;
+    }
 }

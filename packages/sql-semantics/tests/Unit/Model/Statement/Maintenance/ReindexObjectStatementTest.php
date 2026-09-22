@@ -16,6 +16,9 @@ use SqlSemantics\SchemaBuilder;
 #[CoversClass(ReindexObjectStatement::class)]
 final class ReindexObjectStatementTest extends TestCase
 {
+    /**
+     * @param non-empty-list<string> $name Required qualified target
+     */
     #[TestWith(['REINDEX INDEX app.ix', ReindexObjectKind::Index, ['app', 'ix']])]
     #[TestWith(['REINDEX TABLE app.t', ReindexObjectKind::Table, ['app', 't']])]
     #[TestWith(['REINDEX SCHEMA app', ReindexObjectKind::Schema, ['app']])]

@@ -13,6 +13,9 @@ use SqlSemantics\Model\Write\Storage\Path;
 /**
  * Stores the destination's declared default, without a scalar value operand.
  * @visibility public
+  * @example Inspecting DefaultAssignment
+ *     $binder = new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER[] NOT NULL)'));
+ *     $binder->bind('UPDATE t SET a=DEFAULT')->writes[0] instanceof \SqlSemantics\Model\Write\Assignment\DefaultAssignment // => true
  */
 final class DefaultAssignment extends Assignment
 {

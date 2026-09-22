@@ -14,6 +14,10 @@ use SqlSemantics\Model\Write\Storage\Path;
  * Assigns ordered query outputs to an explicit tuple of destinations.
  *
  * @visibility public
+  * @example Inspecting TupleQueryAssignment
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('UPDATE t SET (id,n)=(SELECT n,id FROM t) RETURNING id');
+ *     $statement->writes[0] instanceof \SqlSemantics\Model\Write\Assignment\TupleQueryAssignment // => true
  */
 final class TupleQueryAssignment extends Assignment
 {

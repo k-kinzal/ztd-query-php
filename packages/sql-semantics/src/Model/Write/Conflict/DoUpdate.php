@@ -12,6 +12,11 @@ use SqlSemantics\Model\Write\Assignment;
 /**
  * A conflict UPDATE requires ordered assignments and may filter conflicting rows.
  * @visibility public
+  * @example Inspecting DoUpdate
+ *     $binder = new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
+ *     $nothing = $binder->bind('INSERT INTO t VALUES(1) ON CONFLICT DO NOTHING')->conflicts[0];
+ *     $update = $binder->bind('INSERT INTO t VALUES(1) ON CONFLICT(id) DO UPDATE SET id=2 WHERE t.id=1')->conflicts[0];
+ *     $update instanceof \SqlSemantics\Model\Write\Conflict\DoUpdate // => true
  */
 final class DoUpdate extends \SqlSemantics\Model\Write\ConflictAction
 {

@@ -11,6 +11,9 @@ namespace SqlSemantics\Model\Window;
  */
 final class Definition
 {
+    /**
+     * Associates a window name with its required window specification.
+     */
     public function __construct(public readonly string $name, public readonly WindowSpecification $specification)
     {
     }

@@ -10,6 +10,9 @@ use Override;
  * Common delete effects; each concrete form owns its mandatory table inputs.
  *
  * @visibility public
+  * @example Inspecting DeleteStatement
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('DELETE FROM t WHERE 1', strict: false);
+ *     $statement instanceof \SqlSemantics\Model\Statement\DeleteStatement // => true
  */
 abstract class DeleteStatement extends \SqlSemantics\Model\BoundStatement implements \SqlSemantics\Model\ResultStatement
 {

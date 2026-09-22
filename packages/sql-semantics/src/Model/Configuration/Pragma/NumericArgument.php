@@ -8,6 +8,10 @@ namespace SqlSemantics\Model\Configuration\Pragma;
  * A classified pragma argument.
  *
  * @visibility public
+  * @example Inspecting NumericArgument
+ *     $binder = new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build());
+ *     $statement = $binder->bind('PRAGMA main.cache_size=-2000');
+ *     $statement->value instanceof \SqlSemantics\Model\Configuration\Pragma\NumericArgument // => true
  */
 final class NumericArgument implements Argument
 {

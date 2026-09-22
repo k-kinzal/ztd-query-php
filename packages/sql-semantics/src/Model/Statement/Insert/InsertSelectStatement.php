@@ -13,6 +13,9 @@ use SqlSemantics\Model\Write\InsertMode;
 /**
  * Insertion from exactly one source query.
  * @visibility public
+  * @example Inspecting InsertSelectStatement
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build('CREATE TABLE t (a INTEGER, b TEXT)')))->bind("INSERT INTO t(b,a) SELECT 'x',1");
+ *     $statement instanceof \SqlSemantics\Model\Statement\Insert\InsertSelectStatement // => true
  */
 final class InsertSelectStatement extends InsertStatement
 {
@@ -52,6 +55,9 @@ final class InsertSelectStatement extends InsertStatement
 
 
 
+    /**
+     * Replaces the required insertion query and validates the complete write against its schema.
+     */
     public function withQuery(\SqlSemantics\Model\BoundQuery $query): self
     {
         return $this->changed(new self($this->origin, $this->insertion, $query, $this->mode, $this->outputs, $this->conflicts, $this->ctes, $this->policy));

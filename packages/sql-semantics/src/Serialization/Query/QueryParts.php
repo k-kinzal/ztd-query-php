@@ -18,6 +18,9 @@ use SqlSemantics\Serialization\Statements;
  */
 final class QueryParts
 {
+    /**
+     * Serializes CTE names, aliases, materialization policies, and their query or write operands.
+     */
     public static function with(?\SqlSemantics\Model\Query\WithClause $clause, Dialect $dialect): Tree
     {
         if ($clause === null) {
@@ -34,6 +37,9 @@ final class QueryParts
         return new Tree('with', [Build::keyword($clause->recursive ? 'WITH RECURSIVE' : 'WITH'), Build::separated($items)]);
     }
 
+    /**
+     * Writes the query's row limit, offset, and ties policy for its dialect.
+     */
     public static function pagination(?Expression $limit, ?Expression $offset, bool $withTies, Dialect $dialect): Tree
     {
         if ($withTies) {

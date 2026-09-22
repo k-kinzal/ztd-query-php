@@ -140,7 +140,6 @@ final class MergeBinderTest extends TestCase
         $statement = (new Binder($schema))->bind('MERGE INTO t USING s ON t.id=s.id WHEN MATCHED AND s.n>0 THEN UPDATE SET n=s.n WHEN NOT MATCHED THEN INSERT(id,n) VALUES(s.id,s.n) RETURNING t.id');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\MergeStatement::class, $statement);
         $merge = $statement->merge;
-        self::assertNotNull($merge);
         self::assertSame('t', $merge->target->declaration->name);
         self::assertInstanceOf(\SqlSemantics\Model\TableUse::class, $merge->input);
         self::assertSame('s', $merge->input->declaration->name);
@@ -148,8 +147,11 @@ final class MergeBinderTest extends TestCase
         self::assertSame(['update','insert'], array_map(static fn ($item) => $item->action->value, $merge->actions));
         self::assertSame(['matched','not-matched-by-target'], array_map(static fn ($item) => $item->match->value, $merge->actions));
         self::assertSame('>', $merge->actions[0]->condition?->spelling());
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Decision\MergeUpdate::class, $merge->actions[0]);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $merge->actions[0]->assignments[0]);
         self::assertSame('s', $merge->actions[0]->assignments[0]->value->columnBinding()?->table->name);
         self::assertSame(['id','n'], array_map(static fn ($column) => $column->column()->columnBinding()?->column->name, $merge->actions[1]->insertion->columns ?? []));
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Decision\MergeRowInsertion::class, $merge->actions[1]);
         self::assertSame('s', $merge->actions[1]->row->items[0]->columnBinding()?->table->name);
         self::assertSame(['id'], array_column($statement->outputs, 'name'));
     }
@@ -174,7 +176,6 @@ final class MergeBinderTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER); CREATE TABLE s(id INTEGER)');
         $statement = (new Binder($schema))->bind('MERGE INTO t USING (WITH changed AS (MERGE INTO t USING s ON t.id=s.id WHEN MATCHED THEN DELETE RETURNING t.id) SELECT id FROM changed) AS input ON t.id=input.id WHEN MATCHED THEN DO NOTHING', strict: false);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\MergeStatement::class, $statement);
-        self::assertNotNull($statement->merge);
         self::assertCount(1, $statement->merge->actions);
         self::assertSame('nothing', $statement->merge->actions[0]->action->value);
         self::assertInstanceOf(\SqlSemantics\Model\TableUse::class, $statement->merge->input);

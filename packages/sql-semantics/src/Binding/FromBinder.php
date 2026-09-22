@@ -226,7 +226,7 @@ final class FromBinder
         }
         $declaration = $definition === null ? $this->tables->resolve($parts, $source) : QueryRelation::declaration($definition->query, $definition->name, $definition->columns, $source);
         $table = $definition === null
-            ? new \SqlSemantics\Model\Relation\TableReference($this->ids->relation(), $this->scopeId, $declaration, $this->tables->name($parts, $declaration), $alias, $source)
+            ? Query\TableOccurrence::bind($this->ids->relation(), $this->scopeId, $declaration, $this->tables->name($parts, $declaration), $alias, $source)
             : new \SqlSemantics\Model\Relation\CteReference($this->ids->relation(), $this->scopeId, $declaration, $alias, $source, $definition);
 
         $relation = new BoundRelation($table, new Scope($this->tables->identifiers, [$table], parent: $this->parent, queries: $this->queries));

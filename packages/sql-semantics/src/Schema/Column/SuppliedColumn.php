@@ -10,6 +10,9 @@ use Override;
  * A supplied value, with optional insertion default and update expression.
  *
  * @visibility public
+  * @example Inspecting SuppliedColumn
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('create table t (id integer generated always as identity, value text constraint required not null, optional text collate "C")');
+ *     $schema->tables[0]->columns[2]->generation instanceof \SqlSemantics\Schema\Column\SuppliedColumn // => true
  */
 final class SuppliedColumn implements Generation
 {
@@ -23,6 +26,9 @@ final class SuppliedColumn implements Generation
     ) {
     }
 
+    /**
+     * Returns the optional declared DEFAULT expression for an ordinary stored column.
+     */
     #[Override]
     public function expressions(): array
     {

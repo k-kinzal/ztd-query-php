@@ -18,6 +18,9 @@ use SqlSemantics\Type\Nullability;
  */
 final class ContextValueBinder
 {
+    /**
+     * Classifies a session or clock request and its precision without obtaining its runtime value.
+     */
     public function bind(Node $node, Scope $scope): ?ContextReference
     {
         $tokens = $node->tokens();

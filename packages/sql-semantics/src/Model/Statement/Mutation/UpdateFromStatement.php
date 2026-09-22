@@ -29,6 +29,8 @@ final class UpdateFromStatement extends \SqlSemantics\Model\Statement\UpdateStat
         public readonly \SqlSemantics\Model\Write\Policy\ConstraintResponse $onViolation = \SqlSemantics\Model\Write\Policy\ConstraintResponse::Default,
     ) {
         parent::__construct($origin, $writes, $where, $outputs, $ctes);
+        \SqlSemantics\Model\Validation\StatementOperands::relation($target, $origin->dialect);
+        \SqlSemantics\Model\Validation\StatementOperands::relation($from, $origin->dialect);
     }
 
     /**

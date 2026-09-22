@@ -10,6 +10,11 @@ use Override;
  * A referencing key and its referential actions.
  *
  * @visibility public
+  * @example Inspecting ForeignKey
+ *     $binder = new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build());
+ *     $statement = $binder->bind("CREATE TABLE child(x INTEGER REFERENCES parent MATCH 'ignored')");
+ *     $key = $statement->definition->table->constraints[0];
+ *     $key instanceof \SqlSemantics\Schema\Constraint\ForeignKey // => true
  */
 final class ForeignKey extends \SqlSemantics\Schema\TableConstraint
 {
@@ -56,6 +61,10 @@ final class ForeignKey extends \SqlSemantics\Schema\TableConstraint
         return \SqlSemantics\Schema\ConstraintKind::ForeignKey;
     }
 
+    /**
+     * Returns the local column names constrained by this declaration.
+     * @return list<string>
+     */
     #[Override]
     public function localColumns(): array
     {

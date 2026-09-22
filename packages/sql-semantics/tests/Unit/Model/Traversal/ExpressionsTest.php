@@ -144,7 +144,6 @@ final class ExpressionsTest extends TestCase
         $setting = $binder->bind("SET work_mem='64MB'");
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $setting);
         self::assertContains($write->rows[0][0], \SqlSemantics\Model\Traversal\Expressions::all($write));
-        self::assertNotNull($write->insertion);
         self::assertContains($write->insertion->columns[0]->column(), \SqlSemantics\Model\Traversal\Expressions::all($write));
         self::assertContains($setting->settings[0]->values[0], \SqlSemantics\Model\Traversal\Expressions::all($setting));
     }

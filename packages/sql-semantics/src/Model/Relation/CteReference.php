@@ -33,12 +33,19 @@ final class CteReference extends \SqlSemantics\Model\TableUse
         $this->name = $definition->name;
     }
 
+    /**
+     * Returns the ordered value expressions exposed by this relation.
+     * @return list<\SqlSemantics\Model\Expression>
+     */
     #[Override]
     public function resultExpressions(): array
     {
         return array_map(static fn ($output): \SqlSemantics\Model\Expression => $output->expression, $this->definition->query->resultColumns());
     }
 
+    /**
+     * Returns a new relation occurrence in the supplied scope, retaining its source and operands.
+     */
     #[Override]
     public function withScope(string $scopeId): static
     {

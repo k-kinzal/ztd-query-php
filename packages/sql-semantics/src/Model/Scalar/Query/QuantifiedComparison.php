@@ -12,6 +12,12 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * QuantifiedComparison has explicit semantic operands and a fixed expression category.
  * @visibility public
+  * @example Inspecting QuantifiedComparison
+ *     $binder = new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build());
+ *     $statement = $binder->bind('SELECT 1 = ANY (SELECT 1)');
+ *     $query = $binder->bind('SELECT 1, 2');
+ *     $expression = $statement->outputs[0]->expression;
+ *     $expression instanceof \SqlSemantics\Model\Scalar\Query\QuantifiedComparison // => true
  */
 final class QuantifiedComparison extends Expression
 {
@@ -77,6 +83,9 @@ final class QuantifiedComparison extends Expression
         return new static($facts, $this->source, $this->value, $this->operator, $this->quantifier, $this->query);
     }
 
+    /**
+     * Returns the required nested query that supplies this expression.
+     */
     #[Override]
     public function subquery(): \SqlSemantics\Model\BoundQuery
     {

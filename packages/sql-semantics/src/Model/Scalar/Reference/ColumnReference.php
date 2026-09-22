@@ -12,6 +12,11 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * ColumnReference has explicit semantic operands and a fixed expression category.
  * @visibility public
+  * @example Inspecting ColumnReference
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
+ *     $query = (new \SqlSemantics\Binder($schema))->bind('SELECT t.id FROM t');
+ *     $value = $query->outputs[0]->expression;
+ *     $value instanceof \SqlSemantics\Model\Scalar\Reference\ColumnReference // => true
  */
 final class ColumnReference extends Expression
 {
@@ -90,6 +95,9 @@ final class ColumnReference extends Expression
         return new static($facts, $this->source, $this->binding, $this->origins, $this->name);
     }
 
+    /**
+     * Returns the resolved relation occurrence and declared column symbol.
+     */
     #[Override]
     public function columnBinding(): \SqlSemantics\Model\ColumnBinding
     {

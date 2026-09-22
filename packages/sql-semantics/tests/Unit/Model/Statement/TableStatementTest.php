@@ -176,4 +176,16 @@ final class TableStatementTest extends TestCase
         self::assertSame([$other->from], $changed->relations);
         self::assertSame($changed->toString(), $before->withTable($other->from->declaration)->toString());
     }
+    public function testWithTablePreservesExcludedDescendants(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)', 'CREATE TABLE u(name TEXT)');
+        $statement = (new Binder($schema))->bind('TABLE ONLY t');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\TableStatement::class, $statement);
+        $changed = $statement->withTable($schema->tables[1]);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\OnlyTableReference::class, $changed->from);
+        self::assertSame(['name'], array_column($changed->outputs, 'name'));
+        self::assertSame('TABLE ONLY "public"."u"', $changed->toString());
+        self::assertSame('TABLE ONLY "public"."t"', $statement->toString());
+    }
+
 }

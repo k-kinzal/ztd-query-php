@@ -193,7 +193,9 @@ final class StatementContextTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
         $wrapper = $binder->bind('EXPLAIN UPDATE t SET id=1');
         $nested = $wrapper->statement;
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $nested->writes[0]);
         $changed = $nested->replaceExpression($nested->writes[0]->value, Expression::literal(2, Dialect::PostgreSql));
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $changed->writes[0]);
         self::assertSame('2', $changed->writes[0]->value->spelling());
         self::assertSame('1', $nested->writes[0]->value->spelling());
     }

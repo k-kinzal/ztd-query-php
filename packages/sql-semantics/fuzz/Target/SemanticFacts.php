@@ -16,7 +16,7 @@ final class SemanticFacts
 {
     /**
      * @return mixed
-     * @throws \RuntimeException
+     * @throws RuntimeException
      */
     public static function read(mixed $value): mixed
     {

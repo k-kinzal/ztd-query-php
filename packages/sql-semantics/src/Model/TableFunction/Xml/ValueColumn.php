@@ -7,6 +7,11 @@ namespace SqlSemantics\Model\TableFunction\Xml;
 /**
  * The explicit operands of an XMLTABLE valuecolumn declaration.
  * @visibility public
+  * @example Inspecting ValueColumn
+ *     $binder = new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build());
+ *     $statement = $binder->bind("SELECT x.* FROM XMLTABLE (XMLNAMESPACES ('urn:x' AS x), '/x:rows/x:row' PASSING BY REF '<rows/>' BY VALUE COLUMNS n FOR ORDINALITY, value INTEGER PATH '@id' DEFAULT 1 NOT NULL) AS x");
+ *     $relation = $statement->from;
+ *     $relation->table->columns[1] instanceof \SqlSemantics\Model\TableFunction\Xml\ValueColumn // => true
  */
 final class ValueColumn
 {

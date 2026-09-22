@@ -142,6 +142,7 @@ final class AssignmentBinderTest extends TestCase
         $statement = (new Binder($schema))->bind('UPDATE t a JOIN u b ON a.id=b.id SET a.id=b.id WHERE b.id=1');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $statement);
         self::assertSame('t', $statement->writes[0]->destinations()[0]->column()->columnBinding()?->table->name);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $statement->writes[0]);
         self::assertSame('u', $statement->writes[0]->value->columnBinding()?->table->name);
         self::assertInstanceOf(\SqlSemantics\Model\Join::class, $statement->from);
         self::assertSame('u', $statement->writes[0]->value->columnBinding()->table->name);
@@ -160,6 +161,7 @@ final class AssignmentBinderTest extends TestCase
         $statement = (new Binder($schema))->bind('UPDATE t SET id=u.id FROM u WHERE t.id=u.id');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $statement);
         self::assertSame('t', $statement->writes[0]->destinations()[0]->column()->columnBinding()?->table->name);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $statement->writes[0]);
         self::assertSame('u', $statement->writes[0]->value->columnBinding()?->table->name);
     }
 
@@ -178,7 +180,7 @@ final class AssignmentBinderTest extends TestCase
         $statement = $binder->bind("UPDATE t SET (a,b)=(SELECT 1,'x')");
         self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $statement);
         self::assertSame(['a','b'], array_map(static fn ($target) => $target->column()->columnBinding()?->column->name, $statement->writes[0]->targets));
-        self::assertNotNull($statement->writes[0]->query);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\TupleQueryAssignment::class, $statement->writes[0]);
         self::assertSame('1', $statement->writes[0]->query->outputs[0]->expression->spelling());
         self::assertSame('implicit', $statement->writes[0]->query->outputs[1]->expression->spelling());
         self::assertSame("'x'", $statement->writes[0]->query->outputs[1]->expression->inputs()[0]->spelling());

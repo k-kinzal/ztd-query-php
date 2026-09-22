@@ -14,6 +14,10 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 /**
  * Reports the plan of one structurally bound statement without executing it here.
  * @visibility public
+  * @example Inspecting ExplainStatement
+ *     $binder = new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build());
+ *     $statement = $binder->bind('EXPLAIN SELECT 1');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Plan\ExplainStatement // => true
  */
 final class ExplainStatement extends BoundStatement
 {
@@ -34,17 +38,26 @@ final class ExplainStatement extends BoundStatement
         return StatementKind::Explain;
     }
 
+    /**
+     * Reconstructs the same operation with replacement diagnostic provenance.
+     */
     #[Override]
     public function withOrigin(Origin $origin): static
     {
         return new self($origin, $this->statement, $this->options);
     }
 
+    /**
+     * Replaces the required explained operation and rebinds the complete EXPLAIN statement.
+     */
     public function withStatement(BoundStatement $statement): self
     {
         return $this->changed(new self($this->origin, $statement, $this->options));
     }
 
+    /**
+     * Replaces the typed EXPLAIN options and revalidates their dialect and combinations.
+     */
     public function withOptions(PlanOptions $options): self
     {
         return $this->changed(new self($this->origin, $this->statement, $options));

@@ -289,7 +289,7 @@ final class BinderTest extends TestCase
         $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE sales (id INTEGER PRIMARY KEY, amount NUMERIC(10,2), adjusted NUMERIC(10,2) GENERATED ALWAYS AS (amount + 1) STORED)');
         $query = (new Binder($schema))->bind('WITH totals AS (SELECT id, sum(adjusted) AS total FROM sales GROUP BY id HAVING count(*) > 0) SELECT id, total FROM totals WHERE total > 10 ORDER BY id');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
-        self::assertNotNull($schema->tables[0]->columns[2]->generation->expression);
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\ComputedColumn::class, $schema->tables[0]->columns[2]->generation);
         self::assertSame(['id', 'total'], array_column($query->outputs, 'name'));
         self::assertSame('>', $query->where?->spelling());
         self::assertCount(1, $query->ctes->definitions[0]->query->groupBy);
@@ -329,6 +329,7 @@ final class BinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateTableStatement::class, $mutation);
         self::assertSame('UPDATE', $mutation->kind->value);
         self::assertSame('=', $mutation->where?->spelling());
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $mutation->writes[0]);
         self::assertSame('2', $mutation->writes[0]->value->spelling());
         self::assertSame($mutation->affectedTables()[0], $mutation->target);
 
@@ -378,7 +379,9 @@ final class BinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateTableStatement::class, $query);
         self::assertSame('UPDATE', $query->kind->value);
         self::assertSame(['n', 'value'], array_map(static fn ($write) => $write->destinations()[0]->column()->referenceParts()[0], $query->writes));
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $query->writes[0]);
         self::assertSame('+', $query->writes[0]->value->spelling());
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $query->writes[1]);
         self::assertSame("'updated'", $query->writes[1]->value->spelling());
         self::assertSame('=', $query->where?->spelling());
         self::assertSame('t', $query->affectedTables()[0]->declaration->name);
@@ -466,6 +469,7 @@ final class BinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $write);
         self::assertSame('UPDATE', $write->kind->value);
         self::assertSame(['n'], array_map(static fn ($write) => $write->destinations()[0]->column()->referenceParts()[0], $write->writes));
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $write->writes[0]);
         self::assertSame('+', $write->writes[0]->value->spelling());
         self::assertSame('unresolved-column', $write->outputs[0]->expression->kind->value);
     }
@@ -582,6 +586,7 @@ final class BinderTest extends TestCase
         self::assertSame('id', $statement->insertion->columns[0]->column()->columnBinding()?->column->name);
         self::assertSame(['missing'], $statement->rows[0][0]->referenceParts());
         self::assertSame('update', $statement->conflicts[0]->action->value);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\DoUpdate::class, $statement->conflicts[0]);
         self::assertSame('id', $statement->conflicts[0]->assignments[0]->destinations()[0]->column()->columnBinding()?->column->name);
         self::assertSame('>', $statement->conflicts[0]->where?->spelling());
         self::assertSame('id', $statement->outputs[0]->expression->columnBinding()?->column->name);
@@ -594,6 +599,7 @@ final class BinderTest extends TestCase
         self::assertSame(['unknown-column'], array_column($statement->diagnostics, 'reason'));
         self::assertSame('UPDATE', $statement->statement->kind->value);
         self::assertSame('id', $statement->statement->writes[0]->destinations()[0]->column()->columnBinding()?->column->name);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $statement->statement->writes[0]);
         self::assertSame(['missing'], $statement->statement->writes[0]->value->referenceParts());
         self::assertSame('=', $statement->statement->where?->spelling());
     }

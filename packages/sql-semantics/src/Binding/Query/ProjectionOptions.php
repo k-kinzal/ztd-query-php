@@ -17,6 +17,9 @@ use SqlSemantics\Model\Window;
  */
 final class ProjectionOptions
 {
+    /**
+     * Reads ALL, DISTINCT, or DISTINCT ON with its required key expressions.
+     */
     public function quantifier(Node $source, Scope $scope): Query\Quantifier
     {
         $node = QueryNodes::local($source, ['distinct_clause', 'select_options', 'distinct'])[0] ?? null;

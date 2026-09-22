@@ -11,6 +11,9 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 /**
  * XML row selection, namespace bindings, and typed per-row output declarations.
  * @visibility public
+  * @example Inspecting XmlTable
+ *     $query = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind("SELECT x.n, x.value FROM XMLTABLE ('/rows/row' PASSING '<rows/>' COLUMNS n FOR ORDINALITY, value INTEGER PATH '@id') AS x");
+ *     $query->relations[0]->table instanceof \SqlSemantics\Model\TableFunction\Xml\XmlTable // => true
  */
 final class XmlTable
 {

@@ -165,6 +165,7 @@ final class ColumnReaderTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::Sqlite))->build('create table t (id, value as (id + 1))');
         self::assertSame('', $schema->tables[0]->columns[0]->type->name);
         self::assertSame('blob', $schema->tables[0]->columns[0]->type->affinity?->value);
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\ComputedColumn::class, $schema->tables[0]->columns[1]->generation);
         self::assertSame('id + 1', $schema->tables[0]->columns[1]->generation->expression->source->toString());
     }
 
@@ -180,7 +181,6 @@ final class ColumnReaderTest extends TestCase
         $generated = $schema->tables[0]->columns[1];
         self::assertInstanceOf(\SqlSemantics\Schema\Column\SuppliedColumn::class, $base->generation);
         self::assertNotNull($base->generation->default);
-        self::assertNotNull($generated->generation->expression);
         self::assertInstanceOf(\SqlSemantics\Schema\Column\ComputedColumn::class, $generated->generation);
         self::assertSame('+', $generated->generation->expression->spelling());
         self::assertSame('n', $generated->generation->expression->lineage()[0]->column->name);

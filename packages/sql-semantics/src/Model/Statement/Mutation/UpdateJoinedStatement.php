@@ -41,6 +41,10 @@ final class UpdateJoinedStatement extends \SqlSemantics\Model\Statement\UpdateSt
             throw new \SqlSemantics\Model\Validation\InvalidStructure('A joined mutation requires named targets and the MySQL dialect.');
         }
         $this->targets = \SqlSemantics\Model\Validation\Collections::nonEmpty($targets);
+        foreach ($this->targets as $table) {
+            \SqlSemantics\Model\Validation\StatementOperands::relation($table, $origin->dialect);
+        }
+        \SqlSemantics\Model\Validation\StatementOperands::relation($from, $origin->dialect);
     }
 
     /**

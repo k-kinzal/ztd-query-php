@@ -10,6 +10,11 @@ use Override;
  * Common update effects; each concrete form owns its mandatory table inputs.
  *
  * @visibility public
+  * @example Inspecting UpdateStatement
+ *     $binder = new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build());
+ *     $query = $binder->bind('WITH q AS (TABLE absent) SELECT * FROM q', strict: false);
+ *     $write = $binder->bind('UPDATE absent SET n=n+1 RETURNING n', strict: false);
+ *     $write instanceof \SqlSemantics\Model\Statement\UpdateStatement // => true
  */
 abstract class UpdateStatement extends \SqlSemantics\Model\BoundStatement implements \SqlSemantics\Model\ResultStatement
 {

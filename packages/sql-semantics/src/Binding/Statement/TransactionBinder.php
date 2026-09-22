@@ -19,6 +19,9 @@ use SqlSemantics\Model\Transaction;
  */
 final class TransactionBinder
 {
+    /**
+     * Classifies transaction boundaries, savepoints, and prepared-transaction operations.
+     */
     public function bind(Origin $origin, Node $node, Scope $scope): ?BoundStatement
     {
         $tokens = $node->tokens();
@@ -28,16 +31,9 @@ final class TransactionBinder
             $mode = Transaction\Mode::tryFrom($words[1] ?? '');
             return new Statement\BeginTransactionStatement($origin, $mode, $this->characteristics($words));
         }
-        if ($scope->identifiers->dialect === \SqlSemantics\Dialect::PostgreSql && in_array($kind, ['PREPARE', 'COMMIT', 'ROLLBACK'], true) && in_array($words[1] ?? '', ['PREPARED', 'TRANSACTION'], true) && isset($tokens[2]) && $tokens[2]->text[0] === "'") {
-            $id = (new \SqlSemantics\Binding\LiteralBinder($scope->identifiers->dialect))->bind($tokens[2]);
-            if (!$id instanceof \SqlSemantics\Model\Scalar\Value\Literal) {
-                Tree::invalid($node, 'prepared transaction identifier');
-            }
-            return match ($kind) {
-                'PREPARE' => new Statement\PrepareTransactionStatement($origin, $id),
-                'COMMIT' => new Statement\CommitPreparedStatement($origin, $id),
-                'ROLLBACK' => new Statement\RollbackPreparedStatement($origin, $id),
-            };
+        $prepared = $this->prepared($origin, $node, $scope, $words);
+        if ($prepared !== null) {
+            return $prepared;
         }
         if (in_array($kind, ['SAVEPOINT', 'RELEASE'], true) || ($kind === 'ROLLBACK' && in_array('TO', $words, true))) {
             $last = $tokens[count($tokens) - 1];
@@ -74,5 +70,26 @@ final class TransactionBinder
         $access = str_contains($text, 'READ ONLY') ? Transaction\Access::ReadOnly : (str_contains($text, 'READ WRITE') ? Transaction\Access::ReadWrite : null);
         $deferrable = str_contains($text, 'NOT DEFERRABLE') ? false : (str_contains($text, 'DEFERRABLE') ? true : null);
         return new Transaction\Characteristics($isolation, $access, $deferrable, str_contains($text, 'WITH CONSISTENT SNAPSHOT'));
+    }
+
+    /**
+     * @param list<string> $words Command terminals in upper case
+     */
+    public function prepared(Origin $origin, Node $node, Scope $scope, array $words): ?BoundStatement
+    {
+        $tokens = $node->tokens();
+        $kind = $words[0] ?? '';
+        if ($scope->identifiers->dialect === \SqlSemantics\Dialect::PostgreSql && in_array($kind, ['PREPARE', 'COMMIT', 'ROLLBACK'], true) && in_array($words[1] ?? '', ['PREPARED', 'TRANSACTION'], true) && isset($tokens[2]) && $tokens[2]->text[0] === "'") {
+            $id = (new \SqlSemantics\Binding\LiteralBinder($scope->identifiers->dialect))->bind($tokens[2]);
+            if (!$id instanceof \SqlSemantics\Model\Scalar\Value\Literal) {
+                Tree::invalid($node, 'prepared transaction identifier');
+            }
+            return match ($kind) {
+                'PREPARE' => new Statement\PrepareTransactionStatement($origin, $id),
+                'COMMIT' => new Statement\CommitPreparedStatement($origin, $id),
+                'ROLLBACK' => new Statement\RollbackPreparedStatement($origin, $id),
+            };
+        }
+        return null;
     }
 }

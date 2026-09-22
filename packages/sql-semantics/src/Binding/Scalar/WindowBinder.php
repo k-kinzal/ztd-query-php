@@ -17,6 +17,9 @@ use SqlSemantics\Model\Window;
  */
 final class WindowBinder
 {
+    /**
+     * Reads the window reference or specification owned by this invocation.
+     */
     public function bind(Node $node, Scope $scope): Window\Window
     {
         $spec = Tree::outer($node, ['window_specification', 'window_spec_details', 'window'])[0] ?? null;
@@ -34,6 +37,9 @@ final class WindowBinder
         return new Window\WindowSpecification($base === null ? null : $scope->identifiers->parts($base)[0], $parts, (new \SqlSemantics\Binding\SelectModifiersBinder())->ordering($spec, $scope, null), $frame === null ? null : $this->frame($frame, $scope));
     }
 
+    /**
+     * Binds the frame unit, boundaries, and row exclusion policy.
+     */
     public function frame(Node $node, Scope $scope): Window\Frame
     {
         $words = array_map(static fn ($token): string => strtoupper($token->text), $node->tokens());
@@ -49,6 +55,9 @@ final class WindowBinder
         return new Window\Frame(Window\FrameUnit::from($words[0]), $this->boundary($bounds[0], $scope), isset($bounds[1]) ? $this->boundary($bounds[1], $scope) : new Window\CurrentRow(), $exclusion);
     }
 
+    /**
+     * Classifies an unbounded, current-row, or expression-offset frame boundary.
+     */
     public function boundary(Node $node, Scope $scope): Window\Boundary
     {
         $text = strtoupper(Tree::text($node));

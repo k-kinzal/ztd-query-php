@@ -36,12 +36,7 @@ final class PostgreSqlOptions
             } elseif ($key === 'serialize') {
                 $options['serialization'] = Plan\SerializationCost::tryFrom($value ?? 'TEXT') ?? throw new InvalidSql(InputViolation::ExplainSetting, $option);
             } else {
-                $property = match ($key) {
-                    'analyze', 'analyse' => 'analyze', 'verbose' => 'verbose', 'costs' => 'costs', 'settings' => 'settings',
-                    'generic_plan' => 'genericPlan', 'buffers' => 'buffers', 'wal' => 'wal', 'timing' => 'timing',
-                    'summary' => 'summary', 'memory' => 'memory',
-                    default => throw new InvalidSql(InputViolation::ExplainOption, $option),
-                };
+                $property = self::booleanOption($key, $option);
                 $options[$property] = self::boolean($value, $option);
             }
         }
@@ -73,5 +68,20 @@ final class PostgreSqlOptions
             throw new InvalidSql(InputViolation::ExplainSetting, $source);
         }
         return $true;
+    }
+
+    /**
+     * Maps a recognized SQL flag to its typed plan property.
+     * @return 'analyze'|'verbose'|'costs'|'settings'|'genericPlan'|'buffers'|'wal'|'timing'|'summary'|'memory'
+     * @throws InvalidSql
+     */
+    public static function booleanOption(string $key, Node $option): string
+    {
+        return match ($key) {
+            'analyze', 'analyse' => 'analyze', 'verbose' => 'verbose', 'costs' => 'costs', 'settings' => 'settings',
+            'generic_plan' => 'genericPlan', 'buffers' => 'buffers', 'wal' => 'wal', 'timing' => 'timing',
+            'summary' => 'summary', 'memory' => 'memory',
+            default => throw new InvalidSql(InputViolation::ExplainOption, $option),
+        };
     }
 }

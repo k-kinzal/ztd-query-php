@@ -10,6 +10,10 @@ use Override;
  * An ordered nonempty key with an explicit checking policy.
  *
  * @visibility public
+  * @example Inspecting PrimaryKey
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('create temporary table t(id integer default 1, constraint pk primary key(id))');
+ *     $primary = $statement->definition->table->constraints[0];
+ *     $primary instanceof \SqlSemantics\Schema\Constraint\PrimaryKey // => true
  */
 final class PrimaryKey extends \SqlSemantics\Schema\TableConstraint
 {
@@ -44,6 +48,10 @@ final class PrimaryKey extends \SqlSemantics\Schema\TableConstraint
         return \SqlSemantics\Schema\ConstraintKind::PrimaryKey;
     }
 
+    /**
+     * Returns the local column names constrained by this declaration.
+     * @return list<string>
+     */
     #[Override]
     public function localColumns(): array
     {

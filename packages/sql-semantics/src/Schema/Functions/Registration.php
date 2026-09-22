@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Schema\Functions;
 
-use InvalidArgumentException;
 use SqlSemantics\Dialect;
+use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\Schema\FunctionSignature;
 use SqlSemantics\Type\TypeDescriptor;
 
@@ -16,17 +16,17 @@ use SqlSemantics\Type\TypeDescriptor;
 final class Registration
 {
     /**
-     * @throws InvalidArgumentException
+     * @throws InvalidStructure
      */
     public static function check(Dialect $dialect, FunctionSignature $function): void
     {
         foreach ($function->parameters ?? [] as $parameter) {
             if ($parameter->dialect !== $dialect) {
-                throw new InvalidArgumentException('A function must use the schema dialect.');
+                throw new InvalidStructure('A function must use the schema dialect.');
             }
         }
         if ($function->returnType instanceof TypeDescriptor && $function->returnType->dialect !== $dialect) {
-            throw new InvalidArgumentException('A function must use the schema dialect.');
+            throw new InvalidStructure('A function must use the schema dialect.');
         }
     }
 }

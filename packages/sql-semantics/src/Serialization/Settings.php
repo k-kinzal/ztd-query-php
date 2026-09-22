@@ -44,6 +44,9 @@ final class Settings
         return new Tree('set', [Build::keyword('SET'), Build::separated(array_map(static fn ($setting): Tree => self::assignment($setting, $dialect), $statement->settings))]);
     }
 
+    /**
+     * Serializes an assignment value in the setting's applicable SQL form.
+     */
     public static function assignment(Configuration\DefaultSetting|Configuration\AssignedUserVariable|Configuration\AssignedSetting|Configuration\CurrentSetting $setting, Dialect $dialect): Tree
     {
         if ($setting instanceof Configuration\AssignedUserVariable) {

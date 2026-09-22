@@ -143,6 +143,7 @@ final class DefinitionBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $statement);
         $definition = $statement->definition;
         self::assertSame('3', $definition->table->columns[0]->generation->default->spelling());
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\ComputedColumn::class, $definition->table->columns[1]->generation);
         self::assertSame('+', $definition->table->columns[1]->generation->expression->spelling());
         self::assertSame('id', $definition->table->columns[1]->generation->expression->lineage()[0]->column->name);
         self::assertSame('>', $definition->table->constraints[0]->predicate->spelling());
@@ -179,6 +180,7 @@ final class DefinitionBinderTest extends TestCase
         $boundQuery1 = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE t(a INTEGER,b INTEGER NOT NULL GENERATED ALWAYS AS(NULL) STORED,c INTEGER DEFAULT (1+2))');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $boundQuery1);
         $definition = $boundQuery1->definition;
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\ComputedColumn::class, $definition->table->columns[1]->generation);
         self::assertSame('NULL', $definition->table->columns[1]->generation->expression->spelling());
         self::assertSame('+', $definition->table->columns[2]->generation->default->spelling());
         self::assertSame(['1','2'], array_map(static fn ($value) => $value->spelling(), $definition->table->columns[2]->generation->default->inputs()));

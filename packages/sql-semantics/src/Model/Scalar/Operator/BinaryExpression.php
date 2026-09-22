@@ -12,6 +12,11 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * BinaryExpression has explicit semantic operands and a fixed expression category.
  * @visibility public
+  * @example Inspecting BinaryExpression
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER NOT NULL, x INTEGER)');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('CREATE TRIGGER tr AFTER UPDATE OF id ON t BEGIN UPDATE t SET x=new.id WHERE id=old.id; END');
+ *     $step = $statement->body->steps[0];
+ *     $step->where instanceof \SqlSemantics\Model\Scalar\Operator\BinaryExpression // => true
  */
 final class BinaryExpression extends Expression
 {

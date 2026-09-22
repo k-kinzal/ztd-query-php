@@ -12,6 +12,10 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * FieldAccess has explicit semantic operands and a fixed expression category.
  * @visibility public
+  * @example Inspecting FieldAccess
+ *     $query = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('SELECT (ROW(1,2)).f1');
+ *     $value = $query->outputs[0]->expression;
+ *     $value instanceof \SqlSemantics\Model\Scalar\Reference\FieldAccess // => true
  */
 final class FieldAccess extends Expression
 {

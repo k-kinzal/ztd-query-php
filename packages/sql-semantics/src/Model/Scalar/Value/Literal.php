@@ -12,6 +12,11 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * Literal has explicit semantic operands and a fixed expression category.
  * @visibility public
+  * @example Inspecting Literal
+ *     $binder = new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER DEFAULT 7,b INTEGER)'));
+ *     $statement = $binder->bind('UPDATE t SET (a,b) = (DEFAULT,1)');
+ *     $assignment = $statement->writes[0];
+ *     $assignment->row->items[1] instanceof \SqlSemantics\Model\Scalar\Value\Literal // => true
  */
 final class Literal extends Expression
 {

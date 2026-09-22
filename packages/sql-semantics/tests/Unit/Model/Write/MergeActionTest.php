@@ -138,9 +138,10 @@ final class MergeActionTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('MERGE INTO t USING t AS s ON t.id=s.id WHEN MATCHED THEN UPDATE SET id=s.id WHEN NOT MATCHED BY SOURCE THEN DELETE WHEN NOT MATCHED AND s.id=0 THEN DO NOTHING WHEN NOT MATCHED THEN INSERT VALUES(s.id)');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\MergeStatement::class, $statement);
-        self::assertNotNull($statement->merge);
         self::assertSame(['update','delete','nothing','insert'], array_map(static fn ($item) => $item->action->value, $statement->merge->actions));
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Decision\MergeUpdate::class, $statement->merge->actions[0]);
         self::assertCount(1, $statement->merge->actions[0]->assignments);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Decision\MergeRowInsertion::class, $statement->merge->actions[3]);
         self::assertSame('t', $statement->merge->actions[3]->row->items[0]->columnBinding()?->table->name);
         self::assertInstanceOf(\SqlSemantics\Model\TableUse::class, $statement->merge->input);
         self::assertSame('s', $statement->merge->input->alias);

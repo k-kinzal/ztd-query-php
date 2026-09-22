@@ -14,6 +14,10 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 /**
  * The structured operands of a DECLARE cursor operation.
  * @visibility public
+  * @example Inspecting DeclareCursorStatement
+ *     $binder = new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build());
+ *     $statement = $binder->bind('DECLARE cur BINARY INSENSITIVE NO SCROLL CURSOR WITH HOLD FOR SELECT 1');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Cursor\DeclareCursorStatement // => true
  */
 final class DeclareCursorStatement extends BoundStatement
 {

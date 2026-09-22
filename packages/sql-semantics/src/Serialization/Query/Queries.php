@@ -69,6 +69,9 @@ final class Queries
         };
     }
 
+    /**
+     * Serializes the named window definitions owned by this SELECT scope.
+     */
     public static function windows(BoundSelect $query): Tree
     {
         $definitions = array_map(static fn (\SqlSemantics\Model\Window\Definition $definition): Tree => new Tree('window-definition', [Build::identifier([$definition->name], $query->origin->dialect), Build::keyword('AS'), Windows::write($definition->specification, $query->origin->dialect)]), $query->windows);

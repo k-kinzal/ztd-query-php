@@ -41,6 +41,9 @@ final class UsingJoin extends Join
         $this->columns = Collections::nonEmpty($columns);
     }
 
+    /**
+     * Reconstructs this join with replacement inputs while preserving its join policy.
+     */
     #[Override]
     public function withInputs(TableUse|Join $left, TableUse|Join $right): static
     {

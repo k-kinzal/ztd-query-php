@@ -83,6 +83,9 @@ final class CursorPosition extends Expression
         return new static($facts, $this->source, $this->cursor);
     }
 
+    /**
+     * Returns unquoted identifier parts that identify this reference.
+     */
     #[Override]
     public function referenceParts(): array
     {

@@ -20,6 +20,9 @@ use SqlSemantics\Model\Statement\Origin;
  */
 final class MaintenanceBinder
 {
+    /**
+     * Binds index rebuilding, database attachment, and database-maintenance requests.
+     */
     public function bind(Origin $origin, Node $node, Scope $scope): ?BoundStatement
     {
         $tokens = $node->tokens();

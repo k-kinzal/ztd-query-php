@@ -28,7 +28,6 @@ final class CrossJoinTest extends TestCase
         self::assertSame(\SqlSemantics\Model\JoinKind::Cross, $join->kind);
         $changed = $join->withInputs($join->left, $join->right);
         self::assertNotSame($join, $changed);
-        self::assertInstanceOf(CrossJoin::class, $changed);
         self::assertSame($join->left, $changed->left);
         $rebound = $binder->bind($query->withFrom($changed)->toString());
         self::assertInstanceOf(CrossJoin::class, $rebound->from);

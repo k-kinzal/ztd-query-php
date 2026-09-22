@@ -33,12 +33,19 @@ final class FunctionRelation extends \SqlSemantics\Model\TableUse
         parent::__construct($id, $scopeId, $declaration, $alias, $source);
     }
 
+    /**
+     * Returns the ordered value expressions exposed by this relation.
+     * @return list<\SqlSemantics\Model\Expression>
+     */
     #[Override]
     public function resultExpressions(): array
     {
         return array_map(static fn ($output): \SqlSemantics\Model\Expression => $output->expression, $this->outputs);
     }
 
+    /**
+     * Returns a new relation occurrence in the supplied scope, retaining its source and operands.
+     */
     #[Override]
     public function withScope(string $scopeId): static
     {

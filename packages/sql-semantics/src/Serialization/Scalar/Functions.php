@@ -17,13 +17,16 @@ use SqlSemantics\Serialization\Expressions;
  */
 final class Functions
 {
+    /**
+     * Writes invocation arguments, group ordering, filters, and windows from their concrete forms.
+     */
     public static function write(Function\FunctionCall|Function\AggregateCall|Function\AllRowsAggregate|Function\OrderedSetCall|Function\WindowCall $value): Tree
     {
         if ($value instanceof Function\WindowCall) {
             return new Tree('window-call', [self::write($value->function), Build::keyword('OVER'), Windows::write($value->window, $value->type->dialect)]);
         }
         $name = $value->function->name()->parts;
-        $function = count($name) === 1 && preg_match('/^[a-zA-Z_][a-zA-Z_0-9]*$/D', $name[0]) === 1 ? Build::keyword($name[0]) : Build::identifier($name, $value->type->dialect);
+        $function = count($name) === 1 && preg_match($value->type->dialect === \SqlSemantics\Dialect::PostgreSql ? '/^[a-z_][a-z_0-9]*$/D' : '/^[a-zA-Z_][a-zA-Z_0-9]*$/D', $name[0]) === 1 ? Build::keyword($name[0]) : Build::identifier($name, $value->type->dialect);
         if ($value instanceof Function\AllRowsAggregate) {
             $call = new Tree('all-rows', [$function, Build::parentheses(Build::keyword('*'))]);
         } elseif ($value instanceof Function\OrderedSetCall) {

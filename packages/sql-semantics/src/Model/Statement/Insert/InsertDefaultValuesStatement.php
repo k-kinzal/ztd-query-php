@@ -13,6 +13,9 @@ use SqlSemantics\Model\Write\InsertMode;
 /**
  * Insertion of one row using destination defaults.
  * @visibility public
+  * @example Inspecting InsertDefaultValuesStatement
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build('CREATE TABLE t (a INTEGER DEFAULT 2)')))->bind('INSERT INTO t DEFAULT VALUES');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Insert\InsertDefaultValuesStatement // => true
  */
 final class InsertDefaultValuesStatement extends InsertStatement
 {

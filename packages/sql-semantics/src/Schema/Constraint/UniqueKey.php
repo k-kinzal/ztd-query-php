@@ -10,6 +10,9 @@ use Override;
  * An ordered nonempty key with an explicit checking policy.
  *
  * @visibility public
+  * @example Inspecting UniqueKey
+ *     $table = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('create table t(id integer, foreign key(id) references p(id), constraint uq unique(id), constraint pk primary key(id))')->tables[0];
+ *     $table->constraints[1] instanceof \SqlSemantics\Schema\Constraint\UniqueKey // => true
  */
 final class UniqueKey extends \SqlSemantics\Schema\TableConstraint
 {
@@ -44,6 +47,10 @@ final class UniqueKey extends \SqlSemantics\Schema\TableConstraint
         return \SqlSemantics\Schema\ConstraintKind::Unique;
     }
 
+    /**
+     * Returns the local column names constrained by this declaration.
+     * @return list<string>
+     */
     #[Override]
     public function localColumns(): array
     {

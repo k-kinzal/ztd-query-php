@@ -141,7 +141,6 @@ final class InsertionBinderTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER, name TEXT, optional INTEGER DEFAULT 7)'));
         $statement = $binder->bind("INSERT INTO t(name,id) VALUES('alice',DEFAULT)");
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
-        self::assertNotNull($statement->insertion);
         self::assertSame(['name', 'id'], array_map(static fn ($column) => $column->column()->columnBinding()?->column->name, $statement->insertion->columns));
         self::assertTrue($statement->insertion->explicitColumns);
         self::assertSame(\SqlSemantics\Model\Write\DefaultSource::Column, $statement->rows[0][1]);
@@ -151,7 +150,6 @@ final class InsertionBinderTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (a INTEGER, b INTEGER)')))->bind('INSERT INTO t(b,a) VALUES(DEFAULT,2)');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
-        self::assertNotNull($statement->insertion);
         self::assertSame(['b', 'a'], array_map(static fn ($column) => $column->column()->columnBinding()?->column->name, $statement->insertion->columns));
         self::assertSame(\SqlSemantics\Model\Write\DefaultSource::Column, $statement->rows[0][0]);
         self::assertSame('2', $statement->rows[0][1]->spelling());
@@ -160,7 +158,6 @@ final class InsertionBinderTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t (a INTEGER, b TEXT)')))->bind("INSERT INTO t(b,a) SELECT 'x',1");
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertSelectStatement::class, $statement);
-        self::assertNotNull($statement->insertion);
         self::assertSame(['b', 'a'], array_map(static fn ($column) => $column->column()->columnBinding()?->column->name, $statement->insertion->columns));
 
         self::assertCount(2, $statement->query->resultColumns());
@@ -169,7 +166,6 @@ final class InsertionBinderTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (a INTEGER, b INTEGER DEFAULT 2)')))->bind('INSERT INTO t VALUES(1)');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
-        self::assertNotNull($statement->insertion);
         self::assertFalse($statement->insertion->explicitColumns);
         self::assertCount(1, $statement->insertion->columns);
         self::assertSame(['b'], array_column($statement->insertion->omittedColumns, 'name'));
@@ -178,7 +174,6 @@ final class InsertionBinderTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t (a INTEGER DEFAULT 2)')))->bind('INSERT INTO t DEFAULT VALUES');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertDefaultValuesStatement::class, $statement);
-        self::assertNotNull($statement->insertion);
 
         self::assertSame([], $statement->insertion->columns);
         self::assertSame(['a'], array_column($statement->insertion->omittedColumns, 'name'));
@@ -187,7 +182,6 @@ final class InsertionBinderTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER)')))->bind('INSERT INTO t(missing) VALUES(1)', strict: false);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
-        self::assertNotNull($statement->insertion);
         self::assertSame(['missing'], $statement->insertion->columns[0]->column()->referenceParts());
         self::assertSame('unknown-column', $statement->diagnostics[0]->reason);
     }
@@ -213,8 +207,6 @@ final class InsertionBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $values);
         $defaults = $binder->bind('INSERT INTO t DEFAULT VALUES');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertDefaultValuesStatement::class, $defaults);
-        self::assertNotNull($values);
-        self::assertNotNull($defaults);
 
         self::assertCount(1, $values->insertion->columns);
 

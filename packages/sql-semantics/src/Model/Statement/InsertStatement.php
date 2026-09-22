@@ -16,6 +16,9 @@ use SqlSemantics\Model\Write\InsertMode;
 /**
  * Common insertion destination and conflict policy; each input form has its own concrete type.
  * @visibility public
+  * @example Inspecting InsertStatement
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER,n INTEGER)')))->bind('INSERT INTO t(id,n) VALUES(1,2)');
+ *     $statement instanceof \SqlSemantics\Model\Statement\InsertStatement // => true
  */
 abstract class InsertStatement extends BoundStatement implements ResultStatement
 {

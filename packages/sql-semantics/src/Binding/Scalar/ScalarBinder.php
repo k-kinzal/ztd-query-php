@@ -45,11 +45,9 @@ final class ScalarBinder
         if ($subquery !== null && $scope->queries !== null) {
             return $this->subquery($node, $subquery, $scope, $rowSubquery);
         }
-        if ($node->name === 'func_expr' || $node->name === 'set_function_specification') {
-            $application = Tree::child($node, ['func_application']);
-            if ($application !== null) {
-                return (new FunctionRules())->bind(strtoupper(Tree::text($application->children[0])), $this->operands($application, $scope), $node, $scope);
-            }
+        $invocation = $this->functionInvocation($node, $scope);
+        if ($invocation !== null) {
+            return $invocation;
         }
         $operands = $this->operands($node, $scope);
         $cast = ConversionBinder::cast($node, $scope, $operands);
@@ -68,6 +66,20 @@ final class ScalarBinder
             return (new ExpressionRules($scope->identifiers->dialect, $scope->diagnostics()))->operator($operator, $operands, $node);
         }
         throw new \SqlSemantics\Binding\Statement\UnclassifiedSql('Unclassified expression ' . $node->name . ': ' . $node->toString());
+    }
+
+    /**
+     * Binds a function together with its FILTER, WITHIN GROUP, and OVER clauses.
+     */
+    public function functionInvocation(Node $node, Scope $scope): ?Expression
+    {
+        if ($node->name === 'func_expr' || $node->name === 'set_function_specification') {
+            $application = Tree::child($node, ['func_application']);
+            if ($application !== null) {
+                return (new FunctionRules())->bind(strtoupper(Tree::text($application->children[0])), $this->operands($application, $scope), $node, $scope);
+            }
+        }
+        return null;
     }
 
     /**

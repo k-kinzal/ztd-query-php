@@ -16,6 +16,9 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 /**
  * Creates a SQLite virtual table by invoking a named module constructor.
  * @visibility public
+  * @example Inspecting CreateVirtualTableStatement
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build()))->bind('CREATE VIRTUAL TABLE temp.docs USING fts5(title, body, tokenize="porter ascii")');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Definition\CreateVirtualTableStatement // => true
  */
 final class CreateVirtualTableStatement extends BoundStatement
 {

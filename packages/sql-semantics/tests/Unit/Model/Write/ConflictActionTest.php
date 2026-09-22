@@ -146,6 +146,7 @@ final class ConflictActionTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\AnyConflict::class, $nothing->target);
         self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\DoUpdate::class, $update);
         self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\IndexConflict::class, $update->target);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $update->assignments[0]);
         self::assertSame('2', $update->assignments[0]->value->spelling());
         self::assertSame('=', $update->where->spelling());
     }

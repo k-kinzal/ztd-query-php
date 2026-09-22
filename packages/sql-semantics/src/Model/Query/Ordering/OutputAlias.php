@@ -9,6 +9,10 @@ use SqlSemantics\Model\OutputColumn;
 /**
  * Sorts by a projected result column by its alias.
  * @visibility public
+  * @example Inspecting OutputAlias
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('SELECT random() AS draw ORDER BY draw', strict: false);
+ *     $key = $statement->orderBy[0]->key;
+ *     $key instanceof \SqlSemantics\Model\Query\Ordering\OutputAlias // => true
  */
 final class OutputAlias
 {

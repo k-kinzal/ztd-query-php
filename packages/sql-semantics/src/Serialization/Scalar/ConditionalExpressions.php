@@ -16,6 +16,9 @@ use SqlSemantics\Serialization\Expressions;
  */
 final class ConditionalExpressions
 {
+    /**
+     * Writes conditional operands with their predicate and result roles intact.
+     */
     public static function write(Conditional\JsonMembership|Conditional\Coalesce|Conditional\NullIf|Conditional\Between|Conditional\InList|Conditional\PatternMatch|Conditional\SimpleCase|Conditional\SearchedCase $value): Tree
     {
         if ($value instanceof Conditional\JsonMembership) {

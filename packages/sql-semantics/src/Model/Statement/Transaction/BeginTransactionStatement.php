@@ -9,6 +9,11 @@ use Override;
 /**
  * Typed BeginTransactionStatement operands; unrelated statement fields cannot be supplied.
  * @visibility public
+  * @example Inspecting BeginTransactionStatement
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build();
+ *     $original = (new \SqlSemantics\Binder($schema))->bind('BEGIN');
+ *     $statement = (new \SqlSemantics\StatementFactory($schema))->create($original);
+ *     $statement instanceof \SqlSemantics\Model\Statement\Transaction\BeginTransactionStatement // => true
  */
 final class BeginTransactionStatement extends \SqlSemantics\Model\BoundStatement
 {

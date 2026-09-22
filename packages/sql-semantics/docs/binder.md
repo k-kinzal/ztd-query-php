@@ -87,6 +87,8 @@ subnamespaces under `Model\Statement`.
 | `NOTIFY events, 'changed'` | `NotifyStatement` | Required `channel` and optional text-literal `payload`. |
 | `DISCARD PLANS` | `DiscardStatement` | A `DiscardResource` enum selecting plans, sequences, temporary tables, or all session resources. |
 | `SET CONSTRAINTS ALL DEFERRED` | `SetAllConstraintsStatement` | A `ConstraintTiming` enum; the selection is all deferrable constraints. |
+| PostgreSQL: `LOCK ONLY users IN SHARE MODE NOWAIT` | `LockRelationsStatement` | Nonempty ordered `tables`, one `PostgreSqlLockMode`, and a `nowait` policy. Descendant exclusion is retained on each target. |
+| MySQL: `LOCK TABLES users AS u READ LOCAL, incoming WRITE` | `LockTablesStatement` | Nonempty `locks`; each `MySqlTableLock` owns its required table occurrence, alias, and independent `MySqlLockMode`. |
 | `CHECKPOINT` | `CheckpointStatement` | A checkpoint request with no value operands. |
 | MySQL: `KILL CONNECTION 42`, `KILL QUERY 42` | `KillConnectionStatement`, `KillQueryStatement` | A required `connectionId` expression and a concrete operation identifying what to stop. |
 | MySQL: `INSTALL PLUGIN audit SONAME 'audit.so'` | `InstallPluginStatement` | Required plugin `name` and text-literal `library`. |
@@ -94,6 +96,8 @@ subnamespaces under `Model\Statement`.
 | MySQL: `RESTART`, `SHUTDOWN`, `UNLOCK TABLES` | `RestartServerStatement`, `ShutdownServerStatement`, `UnlockTablesStatement` | Distinct operations with no value operands. |
 | MySQL: `CLONE LOCAL DATA DIRECTORY '/tmp/clone'` | `CloneLocalStatement` | A required destination-directory text literal. |
 | MySQL: `BINLOG 'YWJj'` | `ApplyBinlogStatement` | A required text literal containing an encoded binary-log event. |
+| MySQL: `TRUNCATE users` | `TruncateTableStatement` | One required physical `table`; there is no predicate or query input. |
+| PostgreSQL: `TRUNCATE ONLY users, incoming RESTART IDENTITY CASCADE` | `TruncateRelationsStatement` | Nonempty explicit `tables`, an `IdentityReset` policy, and a `ReferencingTables` policy for foreign-key dependencies. Binding records these requests without removing rows, resetting sequences, or expanding runtime effects. |
 | `REINDEX INDEX app.ix`, `REINDEX TABLE app.t`, `REINDEX SCHEMA app` | `ReindexObjectStatement` | Required object name, `ReindexObjectKind`, and PostgreSQL rebuild options. |
 | `REINDEX DATABASE`, `REINDEX SYSTEM` | `ReindexDatabaseStatement` | User-table or system-table index selection in the current database. An optional database name records an explicit name assertion. |
 | SQLite `REINDEX`, `REINDEX ix` | `ReindexAllStatement`, `ReindexNamedStatement` | Rebuild all indexes, or resolve a required SQLite index/table/collation name. |
@@ -137,7 +141,8 @@ from its complete `from` input; callers cannot supply a contradictory relation l
 
 | Input form | Structured result |
 |------------|-------------------|
-| Named table | `TableReference` with a qualified name and declaration. |
+| Named table | `TableReference` with a qualified name and declaration. PostgreSQL includes descendant tables. |
+| PostgreSQL `ONLY table` | `OnlyTableReference` with the same identity information and an explicit restriction to this table's rows. This type also identifies UPDATE, DELETE, TABLE, LOCK, and CREATE INDEX targets. |
 | Derived SELECT | `DerivedRelation` with a required query and LATERAL policy. |
 | Common table expression | `CteReference` with its required definition. A statement's `ctes` owns ordered `CommonTableExpression` definitions, column aliases, and materialization policy. |
 | `JOIN ... ON ...` | `OnJoin` with a required predicate and two inputs. |

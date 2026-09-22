@@ -29,7 +29,7 @@ final class Relations
         $table = $relation->declaration;
         $name = $table->schema === '' ? [$table->name] : [$table->schema, $table->name];
         $body = match (true) {
-            $relation instanceof \SqlSemantics\Model\Relation\TableReference => Build::identifier($relation->name->parts, $dialect),
+            $relation instanceof \SqlSemantics\Model\Relation\NamedTableReference => self::target($relation, $dialect),
             $relation instanceof \SqlSemantics\Model\Relation\CteReference => Build::identifier([$relation->name], $dialect),
             $relation instanceof \SqlSemantics\Model\Relation\DerivedRelation => new Tree('derived', [...($relation->lateral ? [Build::keyword('LATERAL')] : []), Build::parentheses(Queries::write($relation->query))]),
             $relation instanceof \SqlSemantics\Model\Relation\DocumentRelation => ($relation->table instanceof \SqlSemantics\Model\TableFunction\Json\JsonTable ? \SqlSemantics\Serialization\Document\JsonTables::write($relation->table, $dialect) : \SqlSemantics\Serialization\Document\XmlTables::write($relation->table, $dialect)),
@@ -41,10 +41,13 @@ final class Relations
         return new Tree('relation', [$body, ...($relation->alias === null ? [] : [Build::keyword('AS'), Build::identifier([$relation->alias], $dialect)]), ...($columns === [] ? [] : [Build::parentheses(Build::separated(array_map(static fn (string $column): Tree => Build::identifier([$column], $dialect), $columns)))])]);
     }
 
+    /**
+     * Serializes a required relation name and its optional alias in a write-target position.
+     */
     public static function target(TableUse $table, Dialect $dialect): Tree
     {
-        if ($table instanceof \SqlSemantics\Model\Relation\TableReference) {
-            return Build::identifier($table->name->parts, $dialect);
+        if ($table instanceof \SqlSemantics\Model\Relation\NamedTableReference) {
+            return new Tree('named_table', [...($table instanceof \SqlSemantics\Model\Relation\OnlyTableReference ? [Build::keyword('ONLY')] : []), Build::identifier($table->name->parts, $dialect)]);
         }
         $declaration = $table->declaration;
         return Build::identifier($declaration->schema === '' ? [$declaration->name] : [$declaration->schema, $declaration->name], $dialect);

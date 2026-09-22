@@ -17,6 +17,9 @@ use SqlSemantics\Serialization\TypeDeclaration;
  */
 final class OperatorExpressions
 {
+    /**
+     * Writes operator operands with boundaries that preserve their precedence.
+     */
     public static function write(Operator\CollatedExpression|Operator\BinaryExpression|Operator\UnaryExpression|Operator\CastExpression $value): Tree
     {
         if ($value instanceof Operator\CollatedExpression) {

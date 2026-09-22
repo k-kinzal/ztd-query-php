@@ -33,6 +33,9 @@ final class ColumnKey extends \SqlSemantics\Schema\IndexElement
         parent::__construct($direction, $nulls, $collation, $operatorClass, $operatorParameters, $source);
     }
 
+    /**
+     * Returns the required column expression indexed by this key.
+     */
     #[Override]
     public function value(): \SqlSemantics\Model\Expression
     {

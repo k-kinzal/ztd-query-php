@@ -141,7 +141,6 @@ final class InsertionTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER,b INTEGER)')))->bind('INSERT INTO t(b,a) VALUES(1,2)');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
-        self::assertNotNull($statement->insertion);
         self::assertSame($statement->affectedTables()[0], $statement->insertion->target);
         self::assertSame('b', $statement->insertion->columns[0]->column()->columnBinding()?->column->name);
     }

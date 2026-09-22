@@ -23,7 +23,9 @@ final class ExecutionBinder
     public static function bind(Origin $origin, Node $statement, QueryContext $context): ?BoundStatement
     {
         $scope = new Scope($context->tables->identifiers, queries: $context);
-        return SessionBinder::bind($origin, $statement, $scope)
+        return Statement\Maintenance\TruncateBinder::bind($origin, $statement, $context)
+            ?? TableLockBinder::bind($origin, $statement, $context)
+            ?? SessionBinder::bind($origin, $statement, $scope)
             ?? Statement\Prepared\PreparedBinder::bind($origin, $statement, $context)
             ?? Statement\Cursor\CursorBinder::bind($origin, $statement, $context)
             ?? Statement\Plan\ExplainBinder::bind($origin, $statement, $context)

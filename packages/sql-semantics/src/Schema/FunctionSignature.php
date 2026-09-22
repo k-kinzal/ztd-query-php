@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Schema;
 
 use Closure;
-use InvalidArgumentException;
+use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\Type\Nullability;
 use SqlSemantics\Type\TypeDescriptor;
 
@@ -13,7 +13,7 @@ use SqlSemantics\Type\TypeDescriptor;
  * A function overload, including argument, result, and NULL behavior.
  *
  * @example Registering a typed function
- *     $type = \SqlSemantics\Type\TypeDescriptor::builtin(\SqlSemantics\Dialect::PostgreSql, 'integer');
+ *     $type = new \SqlSemantics\Type\TypeDescriptor(\SqlSemantics\Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::Integer);
  *     $function = new \SqlSemantics\Schema\FunctionSignature('twice', [$type], $type);
  *     $function->name // => 'twice'
  *
@@ -31,7 +31,7 @@ final class FunctionSignature
      * @param int $optionalParameters Number of optional trailing parameters, including a variadic parameter
      * @param bool $aggregate Whether the function aggregates input rows
      * @param string|null $schema Resolved namespace; null makes the overload available without qualification
-     * @throws InvalidArgumentException
+     * @throws InvalidStructure
      */
     public function __construct(
         public readonly string $name,

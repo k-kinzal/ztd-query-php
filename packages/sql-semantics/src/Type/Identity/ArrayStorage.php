@@ -34,6 +34,9 @@ final class ArrayStorage implements TypeIdentity
         $this->dimensions = Collections::nonEmpty($dimensions);
     }
 
+    /**
+     * Returns the canonical database type name represented by this identity.
+     */
     #[Override]
     public function name(): string
     {

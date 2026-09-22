@@ -47,11 +47,9 @@ final class ExpressionBinder
             return (new Scalar\IndirectionBinder())->postfix($node, $base, $scope);
         }
         $children = Tree::significant($node);
-        if (count($children) === 1) {
-            return $this->bind($children[0], $scope, $rowSubquery);
-        }
-        if (count($children) === 3 && Tree::text($children[0]) === '(' && Tree::text($children[2]) === ')') {
-            return $this->bind($children[1], $scope, $rowSubquery);
+        $grouped = $this->transparent($children);
+        if ($grouped !== null) {
+            return $this->bind($grouped, $scope, $rowSubquery);
         }
         if ($node->name === 'expr' && $this->qualified($children)) {
             return $scope->column($scope->identifiers->parts($node), $node);
@@ -151,5 +149,16 @@ final class ExpressionBinder
         }
 
         return null;
+    }
+
+    /**
+     * @param list<Node|Token> $children Significant children of a possible scalar wrapper
+     */
+    public function transparent(array $children): Node|Token|null
+    {
+        if (count($children) === 1) {
+            return $children[0];
+        }
+        return count($children) === 3 && Tree::text($children[0]) === '(' && Tree::text($children[2]) === ')' ? $children[1] : null;
     }
 }

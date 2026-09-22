@@ -28,7 +28,6 @@ final class OnJoinTest extends TestCase
         self::assertSame('=', $join->condition->spelling());
         $changed = $join->withInputs($join->left, $join->right);
         self::assertNotSame($join, $changed);
-        self::assertInstanceOf(OnJoin::class, $changed);
         self::assertSame($join->left, $changed->left);
         $rebound = $binder->bind($query->withFrom($changed)->toString());
         self::assertInstanceOf(OnJoin::class, $rebound->from);

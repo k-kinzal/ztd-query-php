@@ -38,6 +38,9 @@ final class LabelSet implements TypeIdentity
         $this->labels = Collections::nonEmpty($labels);
     }
 
+    /**
+     * Returns the canonical database type name represented by this identity.
+     */
     #[Override]
     public function name(): string
     {

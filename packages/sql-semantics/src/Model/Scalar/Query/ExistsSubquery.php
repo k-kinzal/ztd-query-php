@@ -71,6 +71,9 @@ final class ExistsSubquery extends Expression
         return new static($facts, $this->source, $this->query);
     }
 
+    /**
+     * Returns the required nested query that supplies this expression.
+     */
     #[Override]
     public function subquery(): \SqlSemantics\Model\BoundQuery
     {

@@ -23,6 +23,9 @@ final class ComputedColumn implements Generation
     ) {
     }
 
+    /**
+     * Returns the expression that defines the generated column.
+     */
     #[Override]
     public function expressions(): array
     {

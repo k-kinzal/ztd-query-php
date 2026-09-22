@@ -24,12 +24,19 @@ final class TriggerRow extends TableUse
         parent::__construct($id, $scopeId, $declaration, $version->value, $source);
     }
 
+    /**
+     * Returns the ordered value expressions exposed by this relation.
+     * @return list<\SqlSemantics\Model\Expression>
+     */
     #[Override]
     public function resultExpressions(): array
     {
         return [];
     }
 
+    /**
+     * Returns a new relation occurrence in the supplied scope, retaining its source and operands.
+     */
     #[Override]
     public function withScope(string $scopeId): static
     {

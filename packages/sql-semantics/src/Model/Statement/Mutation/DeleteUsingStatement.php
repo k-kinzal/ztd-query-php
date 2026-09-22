@@ -10,6 +10,9 @@ use Override;
  * Delete a table using mandatory additional input.
  *
  * @visibility public
+  * @example Inspecting DeleteUsingStatement
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER); CREATE TABLE s(id INTEGER)')))->bind('DELETE FROM t USING s WHERE t.id=s.id');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Mutation\DeleteUsingStatement // => true
  */
 final class DeleteUsingStatement extends \SqlSemantics\Model\Statement\DeleteStatement
 {
@@ -26,6 +29,8 @@ final class DeleteUsingStatement extends \SqlSemantics\Model\Statement\DeleteSta
         ?\SqlSemantics\Model\Query\WithClause $ctes = null,
     ) {
         parent::__construct($origin, $where, $outputs, $ctes);
+        \SqlSemantics\Model\Validation\StatementOperands::relation($target, $origin->dialect);
+        \SqlSemantics\Model\Validation\StatementOperands::relation($using, $origin->dialect);
     }
 
     /**

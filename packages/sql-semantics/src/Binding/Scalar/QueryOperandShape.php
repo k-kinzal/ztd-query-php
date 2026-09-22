@@ -28,6 +28,9 @@ final class QueryOperandShape
         }
     }
 
+    /**
+     * Returns a known scalar or row width; null denotes an unresolved query expansion.
+     */
     public static function width(Expression $value): ?int
     {
         return \SqlSemantics\Model\Validation\QueryComparison::width($value);

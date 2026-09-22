@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace SqlSemantics;
 
-use InvalidArgumentException;
 use SqlParser\Parser\Node;
+use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\Schema\TableDefinition;
 
 /**
@@ -32,7 +32,7 @@ final class Schema
      * @param list<Node> $statements Ordered original schema statements, including auxiliary objects
      * @param list<Schema\FunctionSignature>|null $functions Function overloads; null registers the defaults
      * @param list<Schema\VariableDefinition> $variables Declared variables without runtime values
-     * @throws InvalidArgumentException
+     * @throws InvalidStructure
      */
     public function __construct(
         public readonly Dialect $dialect,
@@ -47,18 +47,18 @@ final class Schema
         Model\Validation\Collections::objects($statements, Node::class);
         foreach ($tables as $table) {
             if ($table->properties !== null && $table->properties->dialect() !== $dialect) {
-                throw new InvalidArgumentException('A table must use the schema dialect.');
+                throw new InvalidStructure('A table must use the schema dialect.');
             }
             foreach ($table->columns as $column) {
                 if ($column->type->dialect !== $dialect) {
-                    throw new InvalidArgumentException('A column must use the schema dialect.');
+                    throw new InvalidStructure('A column must use the schema dialect.');
                 }
             }
         }
         Model\Validation\Collections::objects($variables, Schema\VariableDefinition::class);
         foreach ($variables as $variable) {
             if ($variable->type->dialect !== $dialect) {
-                throw new InvalidArgumentException('A variable must use the schema dialect.');
+                throw new InvalidStructure('A variable must use the schema dialect.');
             }
         }
         $this->functions = $functions ?? Schema\Functions\Builtins::forDialect($dialect);
@@ -72,7 +72,7 @@ final class Schema
      * Returns an independent snapshot with added or replaced function overloads.
      * An overload has the same identity when its name, namespace, and parameters agree.
      *
-     * @throws InvalidArgumentException
+     * @throws InvalidStructure
      */
     public function withFunctions(Schema\FunctionSignature ...$functions): self
     {

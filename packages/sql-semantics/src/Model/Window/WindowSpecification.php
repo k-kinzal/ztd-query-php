@@ -8,6 +8,11 @@ namespace SqlSemantics\Model\Window;
 
  * @visibility public
 
+  * @example Inspecting WindowSpecification
+ *     $binder = new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build());
+ *     $statement = $binder->bind('SELECT f(ALL) OVER (base PARTITION BY g(ALL) OVER named ORDER BY h(ALL) FILTER (WHERE ?1) OVER another)', strict: false);
+ *     $value = $statement->outputs[0]->expression;
+ *     $value->window instanceof \SqlSemantics\Model\Window\WindowSpecification // => true
  */
 final class WindowSpecification implements Window
 {
@@ -30,6 +35,9 @@ final class WindowSpecification implements Window
             }
         }
     }
+    /**
+     * Returns partition, ordering, and frame-offset expressions in structural order.
+     */
     public function expressions(): array
     {
         return [...$this->partitionBy, ...array_map(static fn (\SqlSemantics\Model\Ordering $order): \SqlSemantics\Model\Expression => $order->key instanceof \SqlSemantics\Model\Expression ? $order->key : throw new \SqlSemantics\Model\Validation\InvalidStructure('This ordering is evaluated before projection and requires an expression.'), $this->orderBy), ...($this->frame === null ? [] : [...$this->frame->start->expressions(), ...$this->frame->end->expressions()])];

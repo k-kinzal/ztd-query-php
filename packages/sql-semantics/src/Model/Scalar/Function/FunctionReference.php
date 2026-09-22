@@ -11,5 +11,8 @@ namespace SqlSemantics\Model\Scalar\Function;
  */
 interface FunctionReference
 {
+    /**
+     * Returns the identifier path used to resolve this invocation.
+     */
     public function name(): FunctionName;
 }

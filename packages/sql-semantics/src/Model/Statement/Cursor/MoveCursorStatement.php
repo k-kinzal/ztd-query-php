@@ -14,6 +14,10 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 /**
  * The structured operands of a MOVE cursor operation.
  * @visibility public
+  * @example Inspecting MoveCursorStatement
+ *     $binder = new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build());
+ *     $statement = $binder->bind('MOVE ABSOLUTE -2 FROM cur');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Cursor\MoveCursorStatement // => true
  */
 final class MoveCursorStatement extends BoundStatement
 {

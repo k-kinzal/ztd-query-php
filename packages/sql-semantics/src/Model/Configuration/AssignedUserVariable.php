@@ -15,6 +15,10 @@ use SqlSemantics\Schema\VariableScope;
 /**
  * Assigns one expression to one MySQL user-variable storage location.
  * @visibility public
+  * @example Inspecting AssignedUserVariable
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build()))->bind('SET @a=123');
+ *     $assignment = $statement->settings[0];
+ *     $assignment instanceof \SqlSemantics\Model\Configuration\AssignedUserVariable // => true
  */
 final class AssignedUserVariable extends Setting
 {

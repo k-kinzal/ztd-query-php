@@ -53,6 +53,6 @@ final class Declarations
         $dialect = $statement->origin->dialect;
         $name = $definition->name === null ? [] : [Build::identifier($dialect === \SqlSemantics\Dialect::Sqlite && $definition->schema !== '' ? [$definition->schema, $definition->name] : [$definition->name], $dialect)];
         $target = $dialect === \SqlSemantics\Dialect::Sqlite ? Build::identifier([$statement->table->declaration->name], $dialect) : Query\Relations::target($statement->table, $dialect);
-        return new Tree('create-index', [Build::keyword('CREATE ' . Definition\Indexes::kind($definition) . 'INDEX' . ($statement->concurrently ? ' CONCURRENTLY' : '') . ($statement->ifNotExists ? ' IF NOT EXISTS' : '')), ...$name, Build::keyword('ON' . ($statement->only ? ' ONLY' : '')), $target, ...($definition->method === null ? [] : [Build::keyword('USING'), Build::identifier([$definition->method], $dialect)]), Definition\Indexes::keys($definition, $dialect), Definition\Indexes::options($definition->properties, $dialect)]);
+        return new Tree('create-index', [Build::keyword('CREATE ' . Definition\Indexes::kind($definition) . 'INDEX' . ($statement->concurrently ? ' CONCURRENTLY' : '') . ($statement->ifNotExists ? ' IF NOT EXISTS' : '')), ...$name, Build::keyword('ON'), $target, ...($definition->method === null ? [] : [Build::keyword('USING'), Build::identifier([$definition->method], $dialect)]), Definition\Indexes::keys($definition, $dialect), Definition\Indexes::options($definition->properties, $dialect)]);
     }
 }

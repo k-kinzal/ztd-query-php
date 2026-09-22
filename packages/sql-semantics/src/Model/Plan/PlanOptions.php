@@ -10,5 +10,8 @@ namespace SqlSemantics\Model\Plan;
  */
 interface PlanOptions
 {
+    /**
+     * Returns the SQL dialect that defines these options.
+     */
     public function dialect(): \SqlSemantics\Dialect;
 }

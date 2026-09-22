@@ -10,6 +10,11 @@ use Override;
  * A column location.
  *
  * @visibility public
+  * @example Inspecting ColumnPath
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('UPDATE t SET (n,id)=ROW(2,1)');
+ *     $assignment = $statement->writes[0];
+ *     $assignment->targets[0] instanceof \SqlSemantics\Model\Write\Storage\ColumnPath // => true
  */
 final class ColumnPath implements Path
 {

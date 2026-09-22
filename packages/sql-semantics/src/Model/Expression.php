@@ -12,6 +12,10 @@ use SqlSemantics\Type\TypeDescriptor;
 /**
  * An immutable classified expression. Concrete forms own their required operands.
  * @visibility public
+  * @example Inspecting Expression
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(score INTEGER)')))->bind('SELECT app.percentile(0.5) WITHIN GROUP (ORDER BY score DESC NULLS FIRST) FILTER (WHERE score>0) FROM t');
+ *     $aggregate = $statement->outputs[0]->expression;
+ *     $aggregate->withinGroup[0]->key instanceof \SqlSemantics\Model\Expression // => true
  */
 abstract class Expression
 {

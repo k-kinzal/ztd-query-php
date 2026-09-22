@@ -52,17 +52,33 @@ final class IndexReader
                 $names[] = $this->identifiers->name($token);
             }
         }
+        $table = $this->target($node, array_slice($tokens, $on + 1));
+        $schema = count($names) > 1 ? $names[0] : (count($table) > 1 ? $table[0] : $this->defaultSchema);
+        return $this->definition($node, $schema, $names === [] ? null : $names[count($names) - 1], count($table) === 1 ? [$schema, $table[0]] : $table, IndexKeys::read($node, $this->identifiers));
+    }
+
+    /**
+     * Reads the table production before considering dialect-specific token forms.
+     * @param list<\SqlParser\Lexer\Token> $tokens Tokens following ON
+     * @return list<string>
+     */
+    public function target(Node $node, array $tokens): array
+    {
+        $relation = Tree::outer($node, ['relation_expr'])[0] ?? null;
+        $name = $relation === null ? null : (Tree::outer($relation, ['qualified_name'])[0] ?? null);
+        if ($name !== null) {
+            return $this->identifiers->parts($name);
+        }
         $table = [];
-        foreach (array_slice($tokens, $on + 1) as $token) {
+        foreach ($tokens as $token) {
             if (in_array(strtoupper($token->text), ['(', 'USING'], true)) {
                 break;
             }
-            if (!in_array(strtoupper($token->text), ['.', 'ONLY'], true)) {
+            if ($token->text !== '.') {
                 $table[] = $this->identifiers->name($token);
             }
         }
-        $schema = count($names) > 1 ? $names[0] : (count($table) > 1 ? $table[0] : $this->defaultSchema);
-        return $this->definition($node, $schema, $names === [] ? null : $names[count($names) - 1], count($table) === 1 ? [$schema, $table[0]] : $table, IndexKeys::read($node, $this->identifiers));
+        return $table;
     }
 
     /**

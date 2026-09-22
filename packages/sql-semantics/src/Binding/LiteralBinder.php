@@ -59,7 +59,7 @@ final class LiteralBinder
             $name === 'LONG_NUM' => 'bigint',
             $name === 'ULONGLONG_NUM' => 'bigint unsigned',
             $name === 'FCONST' => ctype_digit($number) ? $this->integer($number) : 'numeric',
-            $name === 'QNUMBER' => preg_match('/[.eE]/', $number) === 1 && !str_starts_with(strtolower($number), '0x') ? 'real' : $this->integer($number),
+            $name === 'QNUMBER' => $this->quotedNumber($number),
             $name === 'DECIMAL_NUM' => 'numeric',
             in_array($name, ['XCONST', 'BCONST', 'HEX_NUM', 'BIN_NUM', 'BLOB'], true) => $this->dialect === Dialect::PostgreSql ? 'bit' : 'blob',
             in_array($name, ['FLOAT_NUM', 'FLOAT'], true) => $this->dialect === Dialect::Sqlite ? 'real' : 'double precision',
@@ -112,5 +112,13 @@ final class LiteralBinder
             return null;
         }
         return new \SqlSemantics\Model\Scalar\Value\Literal(new \SqlSemantics\Model\Scalar\ExpressionFacts(TypeDescriptor::builtin($this->dialect, 'integer'), Nullability::NotNull, []), $source, \SqlSemantics\Model\Scalar\Value\LiteralClassification::of($text, $this->dialect), $text);
+    }
+
+    /**
+     * Classifies SQLite's quoted numeric token without interpreting a hexadecimal E as an exponent.
+     */
+    public function quotedNumber(string $number): string
+    {
+        return preg_match('/[.eE]/', $number) === 1 && !str_starts_with(strtolower($number), '0x') ? 'real' : $this->integer($number);
     }
 }

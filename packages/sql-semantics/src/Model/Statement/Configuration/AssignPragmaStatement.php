@@ -12,6 +12,10 @@ use SqlSemantics\Model\Statement\StatementKind;
  * AssignPragmaStatement requires the operands of this SQL operation.
  *
  * @visibility public
+  * @example Inspecting AssignPragmaStatement
+ *     $binder = new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build());
+ *     $statement = $binder->bind('PRAGMA main.cache_size=-2000');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Configuration\AssignPragmaStatement // => true
  */
 final class AssignPragmaStatement extends \SqlSemantics\Model\Statement\ConfigurationStatement
 {

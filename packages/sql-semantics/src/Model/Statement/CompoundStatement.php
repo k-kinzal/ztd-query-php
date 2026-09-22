@@ -9,6 +9,10 @@ use Override;
 /**
  * Typed CompoundStatement operands; unrelated statement fields cannot be supplied.
  * @visibility public
+  * @example Inspecting CompoundStatement
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER, n INTEGER)');
+ *     $query = (new \SqlSemantics\Binder($schema))->bind('WITH x(k, v) AS (SELECT id, n FROM t) SELECT k, sum(v) AS total FROM x GROUP BY k HAVING count(*) > 1 UNION ALL SELECT id, n FROM t');
+ *     $query instanceof \SqlSemantics\Model\Statement\CompoundStatement // => true
  */
 final class CompoundStatement extends \SqlSemantics\Model\BoundQuery
 {

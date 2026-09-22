@@ -7,8 +7,12 @@ namespace SqlSemantics\Model;
 use Override;
 
 /**
- * Typed BoundSelect operands; unrelated statement fields cannot be supplied.
+ * A SELECT projection with its input relations, predicates, grouping, and ordering.
  * @visibility public
+ * @example Reading a selected value
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('SELECT id FROM t');
+ *     $statement->outputs[0]->name // => 'id'
  */
 final class BoundSelect extends BoundQuery
 {
@@ -45,6 +49,7 @@ final class BoundSelect extends BoundQuery
         public readonly array $hints = [],
     ) {
         parent::__construct($origin, $ctes, $orderBy, $limit, $offset, $withTies);
+        Validation\StatementOperands::relation($from, $origin->dialect);
         $this->relations = Relation\Joining\Inputs::tables($from);
         Validation\StatementOperands::outputs($outputs, $origin->dialect);
         Validation\StatementOperands::expressions([$where, $having, ...$groupBy], $origin->dialect);

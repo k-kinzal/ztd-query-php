@@ -32,6 +32,7 @@ final class DeleteTableStatement extends \SqlSemantics\Model\Statement\DeleteSta
     ) {
         parent::__construct($origin, $where, $outputs, $ctes);
         \SqlSemantics\Model\Validation\Collections::objects($orderBy, \SqlSemantics\Model\Ordering::class);
+        \SqlSemantics\Model\Validation\StatementOperands::relation($target, $origin->dialect);
     }
 
     /**

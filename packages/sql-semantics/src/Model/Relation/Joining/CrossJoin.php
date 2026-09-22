@@ -17,11 +17,17 @@ use SqlSemantics\Model\TableUse;
  */
 final class CrossJoin extends Join
 {
+    /**
+     * Requires two relational inputs and fixes the operation to a Cartesian product.
+     */
     public function __construct(string $id, TableUse|Join $left, TableUse|Join $right, Node $source)
     {
         parent::__construct($id, JoinKind::Cross, $left, $right, $source);
     }
 
+    /**
+     * Reconstructs this join with replacement inputs while preserving its join policy.
+     */
     #[Override]
     public function withInputs(TableUse|Join $left, TableUse|Join $right): static
     {

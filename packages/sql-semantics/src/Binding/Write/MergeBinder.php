@@ -55,37 +55,43 @@ final class MergeBinder
      */
     public function action(Node $node, TableUse $target, Scope $scope, Scope $input, Scope $destinations): MergeAction
     {
-        $matchNode = Tree::child($node, ['merge_when_tgt_matched', 'merge_when_tgt_not_matched', 'merge_when_src_not_matched']);
-        $match = match ($matchNode?->name) {
-            'merge_when_tgt_not_matched' => 'not-matched-by-target',
-            'merge_when_src_not_matched' => 'not-matched-by-source',
-            default => 'matched',
-        };
-        if ($matchNode !== null && in_array('NOT', array_map(static fn ($token): string => strtoupper($token->text), $matchNode->tokens()), true) && $match === 'matched') {
-            $match = 'not-matched-by-source';
-        }
+        $match = $this->matchKind($node);
         $scope = match ($match) {
-            'not-matched-by-target' => $input,
-            'not-matched-by-source' => $destinations,
-            'matched' => $scope,
+            \SqlSemantics\Model\Write\Decision\MatchKind::MissingTarget => $input,
+            \SqlSemantics\Model\Write\Decision\MatchKind::MissingSource => $destinations,
+            \SqlSemantics\Model\Write\Decision\MatchKind::Matched => $scope,
         };
         $condition = (new ConflictBinder())->predicate(Tree::child($node, ['opt_merge_when_condition']), $scope);
         $operation = Tree::child($node, ['merge_update', 'merge_insert', 'merge_delete']);
         if ($operation === null) {
-            return new \SqlSemantics\Model\Write\Decision\MergeNothing(\SqlSemantics\Model\Write\Decision\MatchKind::from($match), $condition, $node);
+            return new \SqlSemantics\Model\Write\Decision\MergeNothing($match, $condition, $node);
         }
         $action = substr($operation->name, strlen('merge_'));
         $assignments = $action === 'update' ? (new AssignmentBinder())->bind($operation, $scope, $destinations) : [];
         $rows = $action === 'insert' ? WriteInputs::rows($operation, $scope) : [];
         $insertion = $action === 'insert' ? (new InsertionBinder())->bind($operation, $target, $destinations, $rows, [], [], $destinations) : null;
-        $matched = \SqlSemantics\Model\Write\Decision\MatchKind::from($match);
         return match ($action) {
-            'update' => new \SqlSemantics\Model\Write\Decision\MergeUpdate($matched, $condition, $node, $assignments),
-            'delete' => new \SqlSemantics\Model\Write\Decision\MergeDelete($matched, $condition, $node),
+            'update' => new \SqlSemantics\Model\Write\Decision\MergeUpdate($match, $condition, $node, $assignments),
+            'delete' => new \SqlSemantics\Model\Write\Decision\MergeDelete($match, $condition, $node),
             'insert' => $insertion === null ? throw new LogicException('A MERGE insertion requires its destination.') : ((new InsertionBinder())->defaultValues($operation)
-                ? new \SqlSemantics\Model\Write\Decision\MergeInsertDefaults($matched, $condition, $node, $insertion)
-                : new \SqlSemantics\Model\Write\Decision\MergeRowInsertion($matched, $condition, $node, $insertion, new \SqlSemantics\Model\Write\InputRow($scope->identifiers->dialect, $rows[0] ?? throw new \SqlSemantics\Binding\Statement\UnclassifiedSql('A MERGE insertion requires one row.')))),
+                ? new \SqlSemantics\Model\Write\Decision\MergeInsertDefaults($match, $condition, $node, $insertion)
+                : new \SqlSemantics\Model\Write\Decision\MergeRowInsertion($match, $condition, $node, $insertion, new \SqlSemantics\Model\Write\InputRow($scope->identifiers->dialect, $rows[0] ?? throw new \SqlSemantics\Binding\Statement\UnclassifiedSql('A MERGE insertion requires one row.')))),
             default => throw new LogicException('Unclassified MERGE action: ' . $action),
         };
     }
+    /**
+     * Selects the row-presence condition governing a MERGE branch's visible relations.
+     */
+    public function matchKind(Node $node): \SqlSemantics\Model\Write\Decision\MatchKind
+    {
+        $match = Tree::child($node, ['merge_when_tgt_matched', 'merge_when_tgt_not_matched', 'merge_when_src_not_matched']);
+        return match ($match?->name) {
+            'merge_when_tgt_not_matched' => \SqlSemantics\Model\Write\Decision\MatchKind::MissingTarget,
+            'merge_when_src_not_matched' => \SqlSemantics\Model\Write\Decision\MatchKind::MissingSource,
+            default => $match !== null && in_array('NOT', array_map(static fn ($token): string => strtoupper($token->text), $match->tokens()), true)
+                ? \SqlSemantics\Model\Write\Decision\MatchKind::MissingSource
+                : \SqlSemantics\Model\Write\Decision\MatchKind::Matched,
+        };
+    }
+
 }

@@ -17,6 +17,9 @@ use SqlSemantics\Serialization\Expressions;
  */
 final class ReferenceExpressions
 {
+    /**
+     * Writes resolved or unresolved access paths with explicit identifier boundaries.
+     */
     public static function write(Reference\TriggerColumn|Reference\ColumnReference|Reference\UnresolvedColumnReference|Reference\Wildcard|Reference\Parameter|Reference\CursorPosition|Reference\FieldAccess|Reference\ElementAccess|Reference\SliceAccess|Reference\VariableReference|Reference\UnresolvedVariableReference|Reference\VariableAssignment $value): Tree
     {
         $dialect = $value->type->dialect;
@@ -36,6 +39,9 @@ final class ReferenceExpressions
         };
     }
 
+    /**
+     * Writes a quoted variable name with its user, session, or global scope prefix.
+     */
     public static function variable(string $name, \SqlSemantics\Schema\VariableScope $scope, \SqlSemantics\Dialect $dialect): Tree
     {
         $prefix = $scope === \SqlSemantics\Schema\VariableScope::User ? '@' : '@@' . ($scope === \SqlSemantics\Schema\VariableScope::Global ? 'GLOBAL.' : 'SESSION.');

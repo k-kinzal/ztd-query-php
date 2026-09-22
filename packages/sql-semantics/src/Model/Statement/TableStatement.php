@@ -9,6 +9,10 @@ use Override;
 /**
  * Typed TableStatement operands; unrelated statement fields cannot be supplied.
  * @visibility public
+  * @example Inspecting TableStatement
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER NOT NULL, name TEXT)');
+ *     $query = (new \SqlSemantics\Binder($schema))->bind('TABLE t');
+ *     $query instanceof \SqlSemantics\Model\Statement\TableStatement // => true
  */
 final class TableStatement extends \SqlSemantics\Model\BoundQuery
 {
@@ -18,7 +22,7 @@ final class TableStatement extends \SqlSemantics\Model\BoundQuery
     public readonly array $outputs;
 
     /**
-     * @var array{\SqlSemantics\Model\Relation\TableReference|\SqlSemantics\Model\Relation\CteReference} The single TABLE input
+     * @var array{\SqlSemantics\Model\Relation\NamedTableReference|\SqlSemantics\Model\Relation\CteReference} The single TABLE input
      */
     public readonly array $relations;
 
@@ -28,13 +32,14 @@ final class TableStatement extends \SqlSemantics\Model\BoundQuery
      */
     public function __construct(
         Origin $origin,
-        public readonly \SqlSemantics\Model\Relation\TableReference|\SqlSemantics\Model\Relation\CteReference $from,
+        public readonly \SqlSemantics\Model\Relation\NamedTableReference|\SqlSemantics\Model\Relation\CteReference $from,
         array $orderBy = [],
         ?\SqlSemantics\Model\Expression $limit = null,
         ?\SqlSemantics\Model\Expression $offset = null,
         bool $withTies = false,
         ?\SqlSemantics\Model\Query\WithClause $ctes = null,
     ) {
+        \SqlSemantics\Model\Validation\StatementOperands::relation($from, $origin->dialect);
         $this->relations = [$from];
         $this->outputs = \SqlSemantics\Model\Query\DerivedResults::table($origin, $from);
         parent::__construct($origin, $ctes, \SqlSemantics\Model\Query\Ordering\ResultOrdering::bind($orderBy, $this->outputs), $limit, $offset, $withTies);
@@ -77,7 +82,10 @@ final class TableStatement extends \SqlSemantics\Model\BoundQuery
      */
     public function withTable(\SqlSemantics\Schema\TableDefinition $table): self
     {
-        $relation = new \SqlSemantics\Model\Relation\TableReference($this->from->id, $this->scopeId, $table, new \SqlSemantics\Model\Relation\QualifiedName($table->schema === '' ? [$table->name] : [$table->schema, $table->name]), null, $this->from->source);
+        $name = new \SqlSemantics\Model\Relation\QualifiedName($table->schema === '' ? [$table->name] : [$table->schema, $table->name]);
+        $relation = $this->from instanceof \SqlSemantics\Model\Relation\OnlyTableReference
+            ? new \SqlSemantics\Model\Relation\OnlyTableReference($this->from->id, $this->scopeId, $table, $name, null, $this->from->source)
+            : new \SqlSemantics\Model\Relation\TableReference($this->from->id, $this->scopeId, $table, $name, null, $this->from->source);
         return $this->changed(new self($this->origin, $relation, $this->orderBy, $this->limit, $this->offset, $this->withTies, $this->ctes));
     }
 

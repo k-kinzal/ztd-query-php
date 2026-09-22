@@ -26,6 +26,9 @@ final class PostgreSqlProperties implements Properties
         public readonly array $storageParameters = [],
     ) {
     }
+    /**
+     * Returns the SQL dialect that defines these options.
+     */
     #[Override]
     public function dialect(): \SqlSemantics\Dialect
     {

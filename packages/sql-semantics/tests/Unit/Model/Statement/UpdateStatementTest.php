@@ -149,6 +149,7 @@ final class UpdateStatementTest extends TestCase
         $changed = $statement->withWhere(Expression::binary('=', Expression::reference(['id'], $dialect), Expression::literal(1, $dialect)));
         self::assertSame('id', $changed->where?->inputs()[0]->columnBinding()?->column->name);
         self::assertNull($changed->withWhere(null)->where);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $changed->writes[0]);
         self::assertSame('2', $changed->writes[0]->value->spelling());
     }
 
@@ -160,6 +161,7 @@ final class UpdateStatementTest extends TestCase
         $replacement = $binder->bind('UPDATE t SET id=3')->writes;
         $changed = $statement->withAssignments([$replacement[0]]);
         self::assertSame('id', $changed->writes[0]->destinations()[0]->column()->columnBinding()?->column->name);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $changed->writes[0]);
         self::assertSame('3', $changed->writes[0]->value->spelling());
         self::assertSame('n', $statement->writes[0]->destinations()[0]->column()->columnBinding()?->column->name);
         self::assertSame('=', $changed->where?->spelling());

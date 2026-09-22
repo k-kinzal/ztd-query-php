@@ -25,6 +25,9 @@ final class NamedIdentity implements TypeIdentity
         Collections::objects($arguments, \SqlSemantics\Model\Expression::class);
     }
 
+    /**
+     * Returns the canonical database type name represented by this identity.
+     */
     #[Override]
     public function name(): string
     {

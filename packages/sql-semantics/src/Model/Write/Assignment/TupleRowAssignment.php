@@ -14,6 +14,11 @@ use SqlSemantics\Model\Write\Storage\Path;
  * Assigns ordered row expressions to an explicit tuple of destinations.
  *
  * @visibility public
+  * @example Inspecting TupleRowAssignment
+ *     $binder = new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER DEFAULT 7,b INTEGER)'));
+ *     $statement = $binder->bind('UPDATE t SET (a,b) = (DEFAULT,1)');
+ *     $assignment = $statement->writes[0];
+ *     $assignment instanceof \SqlSemantics\Model\Write\Assignment\TupleRowAssignment // => true
  */
 final class TupleRowAssignment extends Assignment
 {

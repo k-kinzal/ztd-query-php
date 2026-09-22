@@ -8,7 +8,7 @@ use SqlSemantics\Model\BoundQuery;
 use SqlSemantics\Model\ColumnBinding;
 use SqlSemantics\Model\Expression;
 use SqlSemantics\Model\OutputColumn;
-use SqlSemantics\Model\Relation\TableReference;
+use SqlSemantics\Model\Relation\NamedTableReference;
 use SqlSemantics\Model\Scalar\ExpressionFacts;
 use SqlSemantics\Model\Scalar\Reference\ColumnReference;
 use SqlSemantics\Model\Scalar\Reference\Wildcard;
@@ -42,7 +42,7 @@ final class DerivedResults
     /**
      * @return list<OutputColumn>
      */
-    public static function table(Origin $origin, TableReference|\SqlSemantics\Model\Relation\CteReference $table): array
+    public static function table(Origin $origin, NamedTableReference|\SqlSemantics\Model\Relation\CteReference $table): array
     {
         if (!$table->declaration->resolved) {
             $facts = new ExpressionFacts(TypeDescriptor::builtin($origin->dialect, 'unknown'), Nullability::Unknown, []);

@@ -9,6 +9,9 @@ use Override;
 /**
  * Typed CreateTableStatement operands; unrelated statement fields cannot be supplied.
  * @visibility public
+  * @example Inspecting CreateTableStatement
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('create temporary table t(id integer default 1, constraint pk primary key(id))');
+ *     $statement instanceof \SqlSemantics\Model\Statement\CreateTableStatement // => true
  */
 final class CreateTableStatement extends \SqlSemantics\Model\BoundStatement
 {

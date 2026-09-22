@@ -18,6 +18,9 @@ abstract class MergeAction
      */
     public readonly Decision\ActionKind $action;
 
+    /**
+     * Retains the row-match category and optional action predicate in decision order.
+     */
     public function __construct(public readonly Decision\MatchKind $match, public readonly ?Expression $condition, public readonly Node $source)
     {
         $this->action = $this->operation();

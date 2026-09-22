@@ -15,6 +15,9 @@ enum SqlitePlan: string implements PlanOptions
     case Bytecode = 'EXPLAIN';
     case QueryPlan = 'EXPLAIN QUERY PLAN';
 
+    /**
+     * Returns the SQL dialect that defines these options.
+     */
     #[Override]
     public function dialect(): \SqlSemantics\Dialect
     {

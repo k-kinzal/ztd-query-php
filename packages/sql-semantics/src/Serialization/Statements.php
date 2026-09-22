@@ -32,6 +32,8 @@ final class Statements
             $statement instanceof Statement\Definition\DropTableTriggerStatement => Definition\OwnedDrops::write($statement),
             $statement instanceof Statement\Definition\CreateVirtualTableStatement => Definition\VirtualTables::write($statement),
             $statement instanceof Statement\Definition\CreateSqliteTriggerStatement => Definition\Triggers::writeSqlite($statement),
+            $statement instanceof Statement\Maintenance\TruncateTableStatement,
+            $statement instanceof Statement\Maintenance\TruncateRelationsStatement,
             $statement instanceof Statement\Maintenance\ReindexAllStatement,
             $statement instanceof Statement\Maintenance\ReindexNamedStatement,
             $statement instanceof Statement\Maintenance\ReindexObjectStatement,

@@ -12,6 +12,11 @@ use SqlSemantics\Model\Statement\StatementKind;
  * ReadPragmaStatement requires the operands of this SQL operation.
  *
  * @visibility public
+  * @example Inspecting ReadPragmaStatement
+ *     $binder = new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build());
+ *     $statement = $binder->bind('PRAGMA main.cache_size=-2000');
+ *     $read = $binder->bind('PRAGMA cache_size');
+ *     $read instanceof \SqlSemantics\Model\Statement\Configuration\ReadPragmaStatement // => true
  */
 final class ReadPragmaStatement extends \SqlSemantics\Model\Statement\ConfigurationStatement
 {

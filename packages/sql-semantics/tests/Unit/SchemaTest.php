@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Tests\Unit;
 
-use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
+use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\SchemaBuilder;
 use SqlSemantics\SemanticException;
 
@@ -85,7 +85,7 @@ use SqlSemantics\SemanticException;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Configuration\Setting::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Traversal\Expressions::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\InvalidStructure::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(InvalidStructure::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Definition\TableDeclaration::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Binding\Schema\DefinitionBinder::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Write\Destination::class)]
@@ -222,7 +222,7 @@ final class SchemaTest extends TestCase
     {
         $pg = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
         $mysql = (new SchemaBuilder(Dialect::MySql))->build();
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidStructure::class);
         new \SqlSemantics\Schema($mysql->dialect, $pg->tables, $mysql->defaultSchema, $mysql->grammarVersion);
     }
 
@@ -230,7 +230,7 @@ final class SchemaTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
         $function = new \SqlSemantics\Schema\FunctionSignature('custom', [], \SqlSemantics\Type\TypeDescriptor::builtin(Dialect::MySql, 'integer'));
-        $this->expectException(InvalidArgumentException::class);
+        $this->expectException(InvalidStructure::class);
         new \SqlSemantics\Schema($schema->dialect, [], $schema->defaultSchema, $schema->grammarVersion, functions: [$function]);
     }
 }

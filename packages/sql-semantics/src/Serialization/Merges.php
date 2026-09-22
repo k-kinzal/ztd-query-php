@@ -19,6 +19,9 @@ use SqlSemantics\Model\Write\MergeAction;
  */
 final class Merges
 {
+    /**
+     * Writes match conditions and ordered, typed MERGE actions.
+     */
     public static function write(MergeStatement $statement): Tree
     {
         $dialect = $statement->origin->dialect;

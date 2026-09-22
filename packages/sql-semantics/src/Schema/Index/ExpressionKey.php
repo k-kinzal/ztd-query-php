@@ -10,6 +10,10 @@ use Override;
  * A computed index key with a mandatory value expression.
  *
  * @visibility public
+  * @example Inspecting ExpressionKey
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER); CREATE INDEX ix ON t((id+1))');
+ *     $key = $schema->tables[0]->indexes[0]->elements[0];
+ *     $key instanceof \SqlSemantics\Schema\Index\ExpressionKey // => true
  */
 final class ExpressionKey extends \SqlSemantics\Schema\IndexElement
 {
@@ -29,6 +33,9 @@ final class ExpressionKey extends \SqlSemantics\Schema\IndexElement
         parent::__construct($direction, $nulls, $collation, $operatorClass, $operatorParameters, $source);
     }
 
+    /**
+     * Returns the required computed expression indexed by this key.
+     */
     #[Override]
     public function value(): \SqlSemantics\Model\Expression
     {

@@ -17,6 +17,9 @@ final class Unbounded implements Boundary
         public readonly Direction $direction
     ) {
     }
+    /**
+     * Returns no offset expressions: this boundary denotes an unbounded frame edge.
+     */
     public function expressions(): array
     {
         return [];

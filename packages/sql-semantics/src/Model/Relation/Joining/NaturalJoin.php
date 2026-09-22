@@ -32,6 +32,9 @@ final class NaturalJoin extends Join
         parent::__construct($id, $kind, $left, $right, $source);
     }
 
+    /**
+     * Reconstructs this join with replacement inputs while preserving its join policy.
+     */
     #[Override]
     public function withInputs(TableUse|Join $left, TableUse|Join $right): static
     {

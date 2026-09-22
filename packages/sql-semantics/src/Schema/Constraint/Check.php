@@ -33,6 +33,10 @@ final class Check extends \SqlSemantics\Schema\TableConstraint
         return \SqlSemantics\Schema\ConstraintKind::Check;
     }
 
+    /**
+     * Returns the local column names constrained by this declaration.
+     * @return list<string>
+     */
     #[Override]
     public function localColumns(): array
     {

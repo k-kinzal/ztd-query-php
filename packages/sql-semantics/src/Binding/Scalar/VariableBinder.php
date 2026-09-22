@@ -19,6 +19,9 @@ use SqlSemantics\Type\TypeDescriptor;
  */
 final class VariableBinder
 {
+    /**
+     * Resolves a variable name and scope against declared variable symbols.
+     */
     public function bind(Node $node, Scope $scope): Reference\VariableReference|Reference\UnresolvedVariableReference
     {
         $tokens = $node->tokens();

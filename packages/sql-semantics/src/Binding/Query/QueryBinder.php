@@ -70,7 +70,7 @@ final class QueryBinder
             return new \SqlSemantics\Model\Statement\ValuesStatement($origin, $values, $ordering, $limit, $offset, ctes: (new CteBinder())->clause($source, $context));
         }
         if (strtoupper(Tree::text($body->tokens()[0] ?? $body)) === 'TABLE') {
-            if (!$from?->relation instanceof \SqlSemantics\Model\Relation\TableReference && !$from?->relation instanceof \SqlSemantics\Model\Relation\CteReference) {
+            if (!$from?->relation instanceof \SqlSemantics\Model\Relation\NamedTableReference && !$from?->relation instanceof \SqlSemantics\Model\Relation\CteReference) {
                 Tree::invalid($source, 'TABLE relation');
             }
             return new \SqlSemantics\Model\Statement\TableStatement($origin, $from->relation, $ordering, $limit, $offset, ctes: (new CteBinder())->clause($source, $context));

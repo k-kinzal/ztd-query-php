@@ -159,6 +159,7 @@ final class StatementBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $statement);
         self::assertSame('UPDATE', $statement->kind->value);
         self::assertSame(['x'], array_column($statement->ctes->definitions, 'name'));
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $statement->writes[0]);
         self::assertNotNull($statement->writes[0]->value->query);
     }
 

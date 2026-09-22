@@ -73,17 +73,7 @@ final class AssignmentBinder
                 (new AssignmentRules())->check($target, $values[$index], $scope);
             }
         }
-        $paths = array_map(StoragePathBinder::bind(...), $targets);
-        if (count($paths) === 1 && ($list === null || $scope->identifiers->dialect === \SqlSemantics\Dialect::Sqlite)) {
-            return new Assignment\ScalarAssignment($paths[0], $value, $node);
-        }
-        if ($value instanceof \SqlSemantics\Model\Scalar\Value\RowExpression) {
-            return new Assignment\TupleRowAssignment($paths, new \SqlSemantics\Model\Write\InputRow($scope->identifiers->dialect, $value->items), $node);
-        }
-        if ($value instanceof \SqlSemantics\Model\Scalar\Query\ScalarSubquery || $value instanceof \SqlSemantics\Model\Scalar\Query\RowSubquery) {
-            return new Assignment\TupleQueryAssignment($paths, $value->query, $node);
-        }
-        throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::TupleSource, $node);
+        return $this->form($node, $list !== null, $value, $paths, $scope);
     }
 
     /**
@@ -100,5 +90,23 @@ final class AssignmentBinder
             return $value;
         }
         return $scope->column($scope->identifiers->parts($base ?? $name), $name);
+    }
+
+    /**
+     * @param list<\SqlSemantics\Model\Write\Storage\Path> $paths Ordered write destinations
+     * @throws \SqlSemantics\InvalidSql
+     */
+    public function form(Node $node, bool $tuple, Expression $value, array $paths, Scope $scope): Assignment
+    {
+        if (count($paths) === 1 && (!$tuple || $scope->identifiers->dialect === \SqlSemantics\Dialect::Sqlite)) {
+            return new Assignment\ScalarAssignment($paths[0], $value, $node);
+        }
+        if ($value instanceof \SqlSemantics\Model\Scalar\Value\RowExpression) {
+            return new Assignment\TupleRowAssignment($paths, new \SqlSemantics\Model\Write\InputRow($scope->identifiers->dialect, $value->items), $node);
+        }
+        if ($value instanceof \SqlSemantics\Model\Scalar\Query\ScalarSubquery || $value instanceof \SqlSemantics\Model\Scalar\Query\RowSubquery) {
+            return new Assignment\TupleQueryAssignment($paths, $value->query, $node);
+        }
+        throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::TupleSource, $node);
     }
 }

@@ -21,6 +21,9 @@ final class IntervalStorage implements TypeIdentity
     ) {
     }
 
+    /**
+     * Returns the canonical database type name represented by this identity.
+     */
     #[Override]
     public function name(): string
     {

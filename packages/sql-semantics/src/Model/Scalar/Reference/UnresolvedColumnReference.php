@@ -12,6 +12,10 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * UnresolvedColumnReference has explicit semantic operands and a fixed expression category.
  * @visibility public
+  * @example Inspecting UnresolvedColumnReference
+ *     $boundQuery1 = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('SELECT missing', strict: false);
+ *     $expression = $boundQuery1->outputs[0]->expression;
+ *     $expression instanceof \SqlSemantics\Model\Scalar\Reference\UnresolvedColumnReference // => true
  */
 final class UnresolvedColumnReference extends Expression
 {
@@ -85,6 +89,9 @@ final class UnresolvedColumnReference extends Expression
         return new static($facts, $this->source, $this->name);
     }
 
+    /**
+     * Returns unquoted identifier parts that identify this reference.
+     */
     #[Override]
     public function referenceParts(): array
     {

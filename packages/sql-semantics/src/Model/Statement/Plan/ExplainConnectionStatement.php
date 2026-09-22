@@ -34,6 +34,9 @@ final class ExplainConnectionStatement extends BoundStatement
         return StatementKind::Explain;
     }
 
+    /**
+     * Reconstructs the same operation with replacement diagnostic provenance.
+     */
     #[Override]
     public function withOrigin(Origin $origin): static
     {

@@ -141,8 +141,10 @@ final class ConflictBinderTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER,n INTEGER)')))->bind('INSERT INTO t VALUES(1,2) ON CONFLICT(id) WHERE id>0 DO UPDATE SET n=excluded.n WHERE t.n<10 RETURNING id');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
         self::assertSame('update', $statement->conflicts[0]->action->value);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\IndexConflict::class, $statement->conflicts[0]->target);
         self::assertSame('id', $statement->conflicts[0]->target->keys[0]->columnBinding()?->column->name);
         self::assertSame('>', $statement->conflicts[0]->target->predicate?->spelling());
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\DoUpdate::class, $statement->conflicts[0]);
         self::assertSame('<', $statement->conflicts[0]->where?->spelling());
         self::assertSame('n', $statement->conflicts[0]->assignments[0]->target->column()->columnBinding()?->column->name);
     }
@@ -194,8 +196,10 @@ final class ConflictBinderTest extends TestCase
         $statement = $binder->bind('INSERT INTO t VALUES(1,2) ON CONFLICT(id) WHERE id>0 DO UPDATE SET n=excluded.n WHERE n<3 ON CONFLICT DO NOTHING');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
         self::assertSame(['update','nothing'], array_map(static fn ($item) => $item->action->value, $statement->conflicts));
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\IndexConflict::class, $statement->conflicts[0]->target);
         self::assertSame('id', $statement->conflicts[0]->target->keys[0]->columnBinding()?->column->name);
         self::assertSame('>', $statement->conflicts[0]->target->predicate?->spelling());
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\DoUpdate::class, $statement->conflicts[0]);
         self::assertSame('<', $statement->conflicts[0]->where?->spelling());
         self::assertSame('3', $statement->conflicts[0]->where->inputs()[1]->spelling());
         self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\DoNothing::class, $statement->conflicts[1]);
@@ -205,6 +209,8 @@ final class ConflictBinderTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INTEGER,n INTEGER)')))->bind('INSERT INTO t VALUES(1,2) ON DUPLICATE KEY UPDATE n=3');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
         self::assertSame('update', $statement->conflicts[0]->action->value);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\DoUpdate::class, $statement->conflicts[0]);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $statement->conflicts[0]->assignments[0]);
         self::assertSame('3', $statement->conflicts[0]->assignments[0]->value->spelling());
         self::assertSame('1', $statement->rows[0][0]->spelling());
     }

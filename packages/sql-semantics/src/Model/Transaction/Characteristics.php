@@ -11,6 +11,9 @@ namespace SqlSemantics\Model\Transaction;
  */
 final class Characteristics
 {
+    /**
+     * Records transaction settings; omitted settings refer to the current environment.
+     */
     public function __construct(public readonly ?Isolation $isolation = null, public readonly ?Access $access = null, public readonly ?bool $deferrable = null, public readonly bool $consistentSnapshot = false)
     {
     }

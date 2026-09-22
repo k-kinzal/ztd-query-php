@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Binding\Scalar;
 
-use InvalidArgumentException;
 use SqlParser\Parser\Node;
 use SqlSemantics\Binding\ExpressionRules;
 use SqlSemantics\Binding\NullFacts;
 use SqlSemantics\Binding\Scope;
 use SqlSemantics\Model\Expression;
 use SqlSemantics\Model\ExpressionKind;
+use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\Schema\FunctionSignature;
 use SqlSemantics\Type\Nullability;
 use SqlSemantics\Type\TypeDescriptor;
@@ -24,7 +24,7 @@ final class FunctionRules
 {
     /**
      * @param list<Expression> $operands
-     * @throws InvalidArgumentException
+     * @throws InvalidStructure
      */
     public function bind(string $name, array $operands, Node $source, Scope $scope): Expression
     {
@@ -43,7 +43,7 @@ final class FunctionRules
             $orderedInputs = array_slice($boundArguments, $argumentCount);
             $type = $signature->returnType instanceof TypeDescriptor ? $signature->returnType : ($signature->returnType)(array_map(static fn (Expression $argument): TypeDescriptor => $argument->type, $boundArguments));
             if ($type->dialect !== $scope->identifiers->dialect) {
-                throw new InvalidArgumentException('A function result must use the schema dialect.');
+                throw new InvalidStructure('A function result must use the schema dialect.');
             }
             $nullable = $this->nullability($signature, $operands);
         }

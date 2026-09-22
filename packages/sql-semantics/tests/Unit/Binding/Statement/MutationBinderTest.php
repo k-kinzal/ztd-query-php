@@ -144,6 +144,7 @@ final class MutationBinderTest extends TestCase
         $statement = (new Binder($schema))->bind('UPDATE t SET n=n+1 WHERE id=2 RETURNING id,n');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $statement);
         self::assertSame('UPDATE', $statement->kind->value);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $statement->writes[0]);
         self::assertSame('+', $statement->writes[0]->value->spelling());
         self::assertSame('=', $statement->where?->spelling());
         self::assertSame(['id', 'n'], array_column($statement->outputs, 'name'));
@@ -162,6 +163,8 @@ final class MutationBinderTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER PRIMARY KEY, n INTEGER)');
         $query = (new Binder($schema))->bind('INSERT INTO t VALUES(1,2) ON CONFLICT(id) DO UPDATE SET n=excluded.n RETURNING id');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $query);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\DoUpdate::class, $query->conflicts[0]);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $query->conflicts[0]->assignments[0]);
         self::assertSame('n', $query->conflicts[0]->assignments[0]->value->columnBinding()?->column->name);
         self::assertNotSame($query->affectedTables()[0]->id, $query->conflicts[0]->assignments[0]->value->columnBinding()->relationId);
     }
@@ -174,6 +177,7 @@ final class MutationBinderTest extends TestCase
         self::assertSame('UPDATE', $query->kind->value);
         self::assertSame('t', $query->affectedTables()[0]->declaration->name);
         self::assertSame(['t', 'u'], array_map(static fn ($relation): string => $relation->declaration->name, [$query->target, $query->from]));
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $query->writes[0]);
         self::assertSame('u', $query->writes[0]->value->columnBinding()?->table->name);
         self::assertSame('=', $query->where?->spelling());
         self::assertSame('id', $query->outputs[0]->name);
@@ -187,6 +191,7 @@ final class MutationBinderTest extends TestCase
         self::assertSame('UPDATE', $query->kind->value);
         self::assertSame(['source'], array_column($query->ctes->definitions, 'name'));
         self::assertSame(['n'], array_map(static fn ($write) => $write->destinations()[0]->column()->referenceParts()[0], $query->writes));
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $query->writes[0]);
         self::assertSame('source', $query->writes[0]->value->columnBinding()?->table->name);
         self::assertSame(['id'], array_column($query->outputs, 'name'));
         self::assertSame('=', $query->where?->spelling());
@@ -209,6 +214,7 @@ final class MutationBinderTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(n INTEGER)')))->bind('UPDATE t SET n=2');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $statement);
         self::assertSame('n', $statement->writes[0]->destinations()[0]->column()->referenceParts()[0]);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $statement->writes[0]);
         self::assertSame('2', $statement->writes[0]->value->spelling());
     }
 
@@ -245,6 +251,7 @@ final class MutationBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $statement);
         self::assertSame(['a'], array_column($statement->affectedTables(), 'alias'));
         self::assertSame(['a','b'], array_column([$statement->from->left, $statement->from->right], 'alias'));
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $statement->writes[0]);
         self::assertSame($statement->from->right->id, $statement->writes[0]->value->columnBinding()?->relationId);
     }
     public function testUpdatedTargetsPreservesMultipleWrittenAliases(): void

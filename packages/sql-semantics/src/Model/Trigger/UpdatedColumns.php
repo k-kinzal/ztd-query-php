@@ -11,6 +11,10 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 /**
  * An update trigger invoked only when specified columns are assigned.
  * @visibility public
+  * @example Inspecting UpdatedColumns
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER NOT NULL, x INTEGER)');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('CREATE TRIGGER tr AFTER UPDATE OF id ON t BEGIN UPDATE t SET x=new.id WHERE id=old.id; END');
+ *     $statement->event instanceof \SqlSemantics\Model\Trigger\UpdatedColumns // => true
  */
 final class UpdatedColumns implements Event
 {
@@ -32,6 +36,9 @@ final class UpdatedColumns implements Event
         $this->columns = Collections::nonEmpty($columns);
     }
 
+    /**
+     * Identifies the trigger event as a column-selected UPDATE.
+     */
     #[Override]
     public function operation(): WriteEvent
     {

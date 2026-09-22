@@ -17,6 +17,9 @@ abstract class ConflictAction
      */
     public readonly Conflict\ActionKind $action;
 
+    /**
+     * Retains the conflict inference target and derives the action from its concrete form.
+     */
     public function __construct(public readonly Conflict\Target $target, public readonly Node $source)
     {
         $this->action = $this->operation();

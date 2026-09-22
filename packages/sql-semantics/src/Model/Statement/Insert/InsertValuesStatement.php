@@ -13,6 +13,10 @@ use SqlSemantics\Model\Write\InsertMode;
 /**
  * Insertion from an explicit VALUES row list.
  * @visibility public
+  * @example Inspecting InsertValuesStatement
+ *     $binder = new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER PRIMARY KEY)'));
+ *     $statement = $binder->bind('INSERT INTO t(id) VALUES(missing) ON CONFLICT(id) DO UPDATE SET id=EXCLUDED.id WHERE t.id>0 RETURNING id', strict: false);
+ *     $statement instanceof \SqlSemantics\Model\Statement\Insert\InsertValuesStatement // => true
  */
 final class InsertValuesStatement extends InsertStatement
 {

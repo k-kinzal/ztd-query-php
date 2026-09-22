@@ -12,6 +12,10 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * UnresolvedVariableReference has explicit semantic operands and a fixed expression category.
  * @visibility public
+  * @example Inspecting UnresolvedVariableReference
+ *     $binder = new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build());
+ *     $statement = $binder->bind('PREPARE s FROM @sql', strict: false);
+ *     $statement->sql instanceof \SqlSemantics\Model\Scalar\Reference\UnresolvedVariableReference // => true
  */
 final class UnresolvedVariableReference extends Expression
 {

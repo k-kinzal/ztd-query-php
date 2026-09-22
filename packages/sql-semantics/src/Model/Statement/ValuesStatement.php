@@ -9,6 +9,9 @@ use Override;
 /**
  * Typed ValuesStatement operands; unrelated statement fields cannot be supplied.
  * @visibility public
+  * @example Inspecting ValuesStatement
+ *     $query = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('VALUES (1), (2.5), (NULL)');
+ *     $query instanceof \SqlSemantics\Model\Statement\ValuesStatement // => true
  */
 final class ValuesStatement extends \SqlSemantics\Model\BoundQuery
 {

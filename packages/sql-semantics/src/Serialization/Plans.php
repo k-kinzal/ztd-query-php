@@ -42,6 +42,9 @@ final class Plans
         return $format === Plan\MySqlFormat::Default ? [] : [Build::keyword('FORMAT'), Build::keyword('='), Build::keyword($format->value)];
     }
 
+    /**
+     * Writes PostgreSQL EXPLAIN flags, output format, and serialization-cost options.
+     */
     public static function postgres(Plan\PostgreSqlPlan $options): Tree
     {
         $flags = ['ANALYZE' => $options->analyze, 'VERBOSE' => $options->verbose, 'COSTS' => $options->costs, 'SETTINGS' => $options->settings, 'GENERIC_PLAN' => $options->genericPlan, 'BUFFERS' => $options->buffers, 'WAL' => $options->wal, 'TIMING' => $options->timing, 'SUMMARY' => $options->summary, 'MEMORY' => $options->memory];

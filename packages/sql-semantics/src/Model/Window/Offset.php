@@ -18,6 +18,9 @@ final class Offset implements Boundary
         public readonly \SqlSemantics\Model\Expression $value
     ) {
     }
+    /**
+     * Returns the required offset expression evaluated for this frame boundary.
+     */
     public function expressions(): array
     {
         return [$this->value];

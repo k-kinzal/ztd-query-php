@@ -139,7 +139,6 @@ final class MergeTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER); CREATE TABLE s(id INTEGER)')))->bind('MERGE INTO t USING s ON t.id=s.id WHEN MATCHED THEN DELETE');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\MergeStatement::class, $statement);
         $merge = $statement->merge;
-        self::assertNotNull($merge);
         $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
         new \SqlSemantics\Model\Write\Merge($merge->target, $merge->input, $merge->condition, []);
     }
@@ -151,7 +150,6 @@ final class MergeTest extends TestCase
         $insert = $binder->bind('INSERT INTO u VALUES(1)');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $insert);
         self::assertNotNull($merge);
-        self::assertNotNull($insert->insertion);
         $action = new \SqlSemantics\Model\Write\Decision\MergeRowInsertion(\SqlSemantics\Model\Write\Decision\MatchKind::MissingTarget, null, $insert->source, $insert->insertion, new \SqlSemantics\Model\Write\InputRow(Dialect::PostgreSql, $insert->rows[0]));
         $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
         new \SqlSemantics\Model\Write\Merge($merge->target, $merge->input, $merge->condition, [$action]);

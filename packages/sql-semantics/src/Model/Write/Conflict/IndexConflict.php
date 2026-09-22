@@ -9,6 +9,11 @@ use SqlSemantics\Model\Expression;
 /**
  * A conflict selected by ordered index expressions and an optional index predicate.
  * @visibility public
+  * @example Inspecting IndexConflict
+ *     $binder = new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
+ *     $nothing = $binder->bind('INSERT INTO t VALUES(1) ON CONFLICT DO NOTHING')->conflicts[0];
+ *     $update = $binder->bind('INSERT INTO t VALUES(1) ON CONFLICT(id) DO UPDATE SET id=2 WHERE t.id=1')->conflicts[0];
+ *     $update->target instanceof \SqlSemantics\Model\Write\Conflict\IndexConflict // => true
  */
 final class IndexConflict implements Target
 {

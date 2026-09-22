@@ -143,7 +143,7 @@ final class SchemaEvolutionTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER PRIMARY KEY, n INTEGER GENERATED ALWAYS AS (id + 1) STORED)', 'CREATE TABLE u AS SELECT id, n FROM t', 'CREATE VIEW v AS SELECT n FROM u', 'DROP TABLE u');
         self::assertSame(['t', 'v'], array_column($schema->tables, 'name'));
         self::assertSame('n', $schema->tables[1]->columns[0]->name);
-        self::assertNotNull($schema->tables[0]->columns[1]->generation->expression);
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\ComputedColumn::class, $schema->tables[0]->columns[1]->generation);
         self::assertCount(4, $schema->statements);
     }
     public function testBuildAcceptsTableOptions(): void

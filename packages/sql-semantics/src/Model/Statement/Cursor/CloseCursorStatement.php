@@ -14,6 +14,10 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 /**
  * The structured operands of a CLOSE cursor operation.
  * @visibility public
+  * @example Inspecting CloseCursorStatement
+ *     $binder = new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build());
+ *     $statement = $binder->bind('CLOSE cur');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Cursor\CloseCursorStatement // => true
  */
 final class CloseCursorStatement extends BoundStatement
 {

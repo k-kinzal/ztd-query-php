@@ -52,20 +52,7 @@ final class MutationBinder
         $where = (new \SqlSemantics\Binding\Write\ConflictBinder())->predicate($whereNode, $scope);
         $returning = QueryNodes::local($statement, ['returning_clause', 'returning', 'where_opt_ret', 'upsert'])[0] ?? null;
         $outputs = $returning === null || !str_contains(strtoupper(Tree::text($returning)), 'RETURNING') ? [] : (new ProjectionBinder())->bind($returning, $scope);
-        $queries = [];
-        $directRows = [];
-        $queryNames = ['SelectStmt', 'query_expression', 'select', 'select_init', 'select_paren', 'insert_query_expression', 'create_select'];
-        foreach (Tree::outer($statement, [...$queryNames, 'with_clause', 'with', 'wqlist', 'a_expr', 'expr', 'expr_or_default', 'values_list', 'opt_on_conflict', 'upsert', 'insert_update_list']) as $query) {
-            if (in_array($query->name, $queryNames, true)) {
-                $body = QueryNodes::body($query);
-                if (strtoupper($body->tokens()[0]->text ?? '') === 'VALUES' && QueryNodes::local($query, ['sort_clause', 'order_clause', 'orderby_opt', 'limit_clause', 'limit_opt', 'with_clause']) === []) {
-                    $directRows = \SqlSemantics\Binding\Write\WriteInputs::rows($body, $scope);
-                    continue;
-                }
-                $queries[] = $this->context->bind($query, $this->parent);
-            }
-        }
-        $values = $queries === [] ? ($directRows !== [] ? $directRows : \SqlSemantics\Binding\Write\WriteInputs::rows($statement, $scope)) : ($queries[0] instanceof \SqlSemantics\Model\Statement\ValuesStatement ? $queries[0]->rows : []);
+        [$values, $queries] = $this->insertionInputs($statement, $scope);
         $insertion = null;
         if (in_array($kind, ['INSERT', 'REPLACE'], true)) {
             if ($targets === []) {
@@ -124,7 +111,7 @@ final class MutationBinder
             if (count($matches) !== 1) {
                 $scope->diagnostics()->report('unknown-write-target', 'A DELETE target must identify one input relation.', $name);
                 $table = $this->context->tables->resolve($parts, $name);
-                $targets[] = new \SqlSemantics\Model\Relation\TableReference($this->context->ids->relation(), $id, $table, $this->context->tables->name($parts, $table), null, $name);
+                $targets[] = \SqlSemantics\Binding\Query\TableOccurrence::bind($this->context->ids->relation(), $id, $table, $this->context->tables->name($parts, $table), null, $name);
             } else {
                 $targets[] = $matches[0];
             }
@@ -181,7 +168,7 @@ final class MutationBinder
         }
         $declaration = $tables->resolve($tables->identifiers->parts($name), $name);
         $alias = Tree::child($node, ['ColId', 'as']);
-        return [new \SqlSemantics\Model\Relation\TableReference($this->context->ids->relation(), $id, $declaration, $tables->name($tables->identifiers->parts($name), $declaration), $alias === null ? null : $tables->identifiers->parts($alias)[0], $node)];
+        return [\SqlSemantics\Binding\Query\TableOccurrence::bind($this->context->ids->relation(), $id, $declaration, $tables->name($tables->identifiers->parts($name), $declaration), $alias === null ? null : $tables->identifiers->parts($alias)[0], $node)];
     }
     /**
      * @param list<TableUse> $targets
@@ -196,4 +183,27 @@ final class MutationBinder
         return new Scope($scope->identifiers, $scope->relations, $scope->extensions, $parent, $this->context, $scope->merged);
     }
 
+
+    /**
+     * Separates direct write rows from query inputs without binding DEFAULT as a value expression.
+     * @return array{list<list<\SqlSemantics\Model\Expression|\SqlSemantics\Model\Write\DefaultSource>>, list<\SqlSemantics\Model\BoundQuery>}
+     */
+    public function insertionInputs(Node $statement, Scope $scope): array
+    {
+        $queries = [];
+        $directRows = [];
+        $queryNames = ['SelectStmt', 'query_expression', 'select', 'select_init', 'select_paren', 'insert_query_expression', 'create_select'];
+        foreach (Tree::outer($statement, [...$queryNames, 'with_clause', 'with', 'wqlist', 'a_expr', 'expr', 'expr_or_default', 'values_list', 'opt_on_conflict', 'upsert', 'insert_update_list']) as $query) {
+            if (in_array($query->name, $queryNames, true)) {
+                $body = QueryNodes::body($query);
+                if (strtoupper($body->tokens()[0]->text ?? '') === 'VALUES' && QueryNodes::local($query, ['sort_clause', 'order_clause', 'orderby_opt', 'limit_clause', 'limit_opt', 'with_clause']) === []) {
+                    $directRows = \SqlSemantics\Binding\Write\WriteInputs::rows($body, $scope);
+                    continue;
+                }
+                $queries[] = $this->context->bind($query, $this->parent);
+            }
+        }
+        $values = $queries === [] ? ($directRows !== [] ? $directRows : \SqlSemantics\Binding\Write\WriteInputs::rows($statement, $scope)) : ($queries[0] instanceof \SqlSemantics\Model\Statement\ValuesStatement ? $queries[0]->rows : []);
+        return [$values, $queries];
+    }
 }

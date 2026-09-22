@@ -73,6 +73,9 @@ final class Wildcard extends Expression
         return new static($facts, $this->source, $this->qualifier);
     }
 
+    /**
+     * Returns unquoted identifier parts that identify this reference.
+     */
     #[Override]
     public function referenceParts(): array
     {

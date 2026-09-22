@@ -29,7 +29,6 @@ final class UsingJoinTest extends TestCase
         self::assertSame($join->columns[0]->left, $join->columns[0]->output);
         $changed = $join->withInputs($join->left, $join->right);
         self::assertNotSame($join, $changed);
-        self::assertInstanceOf(UsingJoin::class, $changed);
         self::assertSame($join->left, $changed->left);
         $rebound = $binder->bind($query->withFrom($changed)->toString());
         self::assertInstanceOf(UsingJoin::class, $rebound->from);

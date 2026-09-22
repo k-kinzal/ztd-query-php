@@ -16,6 +16,9 @@ use SqlSemantics\Schema\TableDefinition;
 /**
  * A relation produced by a declared JSON_TABLE or XMLTABLE row expansion.
  * @visibility public
+  * @example Inspecting DocumentRelation
+ *     $query = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind("SELECT x.n, x.value FROM XMLTABLE ('/rows/row' PASSING '<rows/>' COLUMNS n FOR ORDINALITY, value INTEGER PATH '@id') AS x");
+ *     $query->relations[0] instanceof \SqlSemantics\Model\Relation\DocumentRelation // => true
  */
 final class DocumentRelation extends TableUse
 {

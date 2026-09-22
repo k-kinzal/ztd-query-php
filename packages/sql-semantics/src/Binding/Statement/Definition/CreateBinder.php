@@ -28,11 +28,11 @@ final class CreateBinder
             $reader = new \SqlSemantics\Ast\SchemaReader($tables->identifiers, $tables->defaultSchema, $tables->diagnostics->report(...));
             $declarations[] = \SqlSemantics\Binding\Schema\DeclarationBinder::bind($reader->table($tables->identifiers->dialect === \SqlSemantics\Dialect::Sqlite ? $statement : $create), $context);
         }
-        $targets = array_map(fn (\SqlSemantics\Schema\TableDefinition $table): \SqlSemantics\Model\TableUse => new \SqlSemantics\Model\Relation\TableReference($context->ids->relation(), $origin->scopeId, $table, new \SqlSemantics\Model\Relation\QualifiedName($table->schema === '' ? [$table->name] : [$table->schema, $table->name]), null, $table->source), $declarations);
+        $targets = array_map(fn (\SqlSemantics\Schema\TableDefinition $table): \SqlSemantics\Model\Relation\TableReference => new \SqlSemantics\Model\Relation\TableReference($context->ids->relation(), $origin->scopeId, $table, new \SqlSemantics\Model\Relation\QualifiedName($table->schema === '' ? [$table->name] : [$table->schema, $table->name]), null, $table->source), $declarations);
         $index = (new \SqlSemantics\Ast\Definition\IndexReader($tables->identifiers, $tables->defaultSchema))->read($statement);
         if ($index !== null) {
             $target = $tables->resolve($index->table, $statement);
-            $targets[] = new \SqlSemantics\Model\Relation\TableReference($context->ids->relation(), $origin->scopeId, $target, new \SqlSemantics\Model\Relation\QualifiedName($target->schema === '' ? [$target->name] : [$target->schema, $target->name]), null, $statement);
+            $targets[] = \SqlSemantics\Binding\Query\TableOccurrence::bind($context->ids->relation(), $origin->scopeId, $target, $tables->name($index->table, $target), null, $statement);
         }
         $scope = new \SqlSemantics\Binding\Scope($tables->identifiers, $targets, queries: $context);
         $indexes = $index === null ? array_merge(...array_map(static fn ($table): array => $table->indexes, $declarations)) : [$index];
@@ -42,7 +42,7 @@ final class CreateBinder
             return new \SqlSemantics\Model\Statement\CreateTableStatement($origin, $definitions[0], $boundIndexes, str_contains(strtoupper(Tree::text($statement)), 'IF NOT EXISTS'));
         }
         if ($index !== null) {
-            return new \SqlSemantics\Model\Statement\CreateIndexStatement($origin, $boundIndexes[0], $targets[0], ($index->options['if_not_exists'] ?? false) === true, ($index->options['concurrently'] ?? false) === true, str_contains(strtoupper(Tree::text($statement)), 'ON ONLY '));
+            return new \SqlSemantics\Model\Statement\CreateIndexStatement($origin, $boundIndexes[0], $targets[0], ($index->options['if_not_exists'] ?? false) === true, ($index->options['concurrently'] ?? false) === true);
         }
         return null;
     }

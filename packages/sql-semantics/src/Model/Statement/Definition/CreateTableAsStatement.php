@@ -12,6 +12,10 @@ use SqlSemantics\Model\Statement\StatementKind;
  * CreateTableAsStatement requires the operands of this SQL operation.
  *
  * @visibility public
+  * @example Inspecting CreateTableAsStatement
+ *     $binder = new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build());
+ *     $statement = $binder->bind('CREATE TABLE t AS SELECT 1 AS id');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Definition\CreateTableAsStatement // => true
  */
 final class CreateTableAsStatement extends \SqlSemantics\Model\BoundStatement
 {

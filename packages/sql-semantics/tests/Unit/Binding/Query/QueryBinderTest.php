@@ -302,7 +302,6 @@ final class QueryBinderTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
         $statement = (new Binder($schema))->bind('WITH q(n) AS (INSERT INTO t(id) VALUES(1) RETURNING id) SELECT n FROM q');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
-        self::assertNotNull($statement->ctes->definitions[0]->query->insertion);
         self::assertSame('id', $statement->ctes->definitions[0]->query->insertion->columns[0]->column()->columnBinding()?->column->name);
         self::assertSame(['n'], $statement->ctes->definitions[0]->columns);
         self::assertSame('id', $statement->ctes->definitions[0]->query->outputs[0]->name);
@@ -315,7 +314,6 @@ final class QueryBinderTest extends TestCase
         $statement = (new Binder($schema))->bind('WITH changed(result) AS (WITH input AS (SELECT id FROM s) MERGE INTO t USING input ON t.id=input.id WHEN MATCHED THEN DELETE RETURNING t.id) SELECT result FROM changed');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertSame('MERGE', $statement->ctes->definitions[0]->query->kind->value);
-        self::assertNotNull($statement->ctes->definitions[0]->query->merge);
         self::assertSame('delete', $statement->ctes->definitions[0]->query->merge->actions[0]->action->value);
         self::assertSame(['input'], array_column($statement->ctes->definitions[0]->query->ctes->definitions, 'name'));
         self::assertSame(['result'], $statement->ctes->definitions[0]->columns);

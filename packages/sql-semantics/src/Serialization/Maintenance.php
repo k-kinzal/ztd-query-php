@@ -15,10 +15,15 @@ use SqlSemantics\Model\Statement\Maintenance as Statement;
  */
 final class Maintenance
 {
-    public static function write(Statement\ReindexAllStatement|Statement\ReindexNamedStatement|Statement\ReindexObjectStatement|Statement\ReindexDatabaseStatement|Statement\AnalyzeAllStatement|Statement\AnalyzeNamedStatement|Statement\VacuumDatabaseStatement|Statement\VacuumIntoStatement|Statement\AttachDatabaseStatement|Statement\DetachDatabaseStatement|Statement\UseDatabaseStatement $statement): Tree
+    /**
+     * Writes the explicit rebuild, maintenance, or database-attachment operands.
+     */
+    public static function write(Statement\TruncateTableStatement|Statement\TruncateRelationsStatement|Statement\ReindexAllStatement|Statement\ReindexNamedStatement|Statement\ReindexObjectStatement|Statement\ReindexDatabaseStatement|Statement\AnalyzeAllStatement|Statement\AnalyzeNamedStatement|Statement\VacuumDatabaseStatement|Statement\VacuumIntoStatement|Statement\AttachDatabaseStatement|Statement\DetachDatabaseStatement|Statement\UseDatabaseStatement $statement): Tree
     {
         $dialect = $statement->origin->dialect;
         return match (true) {
+            $statement instanceof Statement\TruncateTableStatement => new Tree('truncate_table', [Build::keyword('TRUNCATE TABLE'), Query\Relations::target($statement->table, $dialect)]),
+            $statement instanceof Statement\TruncateRelationsStatement => new Tree('truncate_relations', [Build::keyword('TRUNCATE TABLE'), Build::separated(array_map(static fn ($table): Tree => Query\Relations::target($table, $dialect), $statement->tables)), Build::keyword($statement->identities->value), Build::keyword($statement->references->value)]),
             $statement instanceof Statement\ReindexAllStatement => Build::keyword('REINDEX'),
             $statement instanceof Statement\ReindexNamedStatement => new Tree('reindex', [Build::keyword('REINDEX'), Build::identifier($statement->target->parts, $dialect)]),
             $statement instanceof Statement\ReindexObjectStatement,

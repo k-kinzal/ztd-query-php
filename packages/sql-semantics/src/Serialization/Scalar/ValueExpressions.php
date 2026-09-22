@@ -17,6 +17,9 @@ use SqlSemantics\Serialization\Expressions;
  */
 final class ValueExpressions
 {
+    /**
+     * Writes literal, context-request, and row-constructor operands.
+     */
     public static function write(Value\ContextReference|Value\Literal|Value\ConfigurationIdentifier|Value\ConfigurationKeyword|Value\RowExpression $value): Tree
     {
         return match (true) {

@@ -17,6 +17,9 @@ use SqlSemantics\Serialization\Statements;
  */
 final class Subqueries
 {
+    /**
+     * Writes scalar, row, existence, or comparison queries in their required operand positions.
+     */
     public static function write(Query\RowSubquery|Query\ScalarSubquery|Query\ExistsSubquery|Query\InSubquery|Query\QuantifiedComparison $value): Tree
     {
         $query = Build::parentheses(Statements::write($value->query));

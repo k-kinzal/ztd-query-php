@@ -17,6 +17,7 @@ enum StatementKind: string
     case Restart = 'RESTART';
     case Shutdown = 'SHUTDOWN';
     case Unlock = 'UNLOCK';
+    case Lock = 'LOCK';
     case Listen = 'LISTEN';
     case Unlisten = 'UNLISTEN';
     case Notify = 'NOTIFY';

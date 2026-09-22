@@ -10,6 +10,10 @@ use Override;
  * Update one table.
  *
  * @visibility public
+  * @example Inspecting UpdateTableStatement
+ *     $binder = new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER)'));
+ *     $statement = $binder->bind('WITH c AS (VALUES (?1 OR ?1)) UPDATE t SET id=?9');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Mutation\UpdateTableStatement // => true
  */
 final class UpdateTableStatement extends \SqlSemantics\Model\Statement\UpdateStatement
 {
@@ -34,6 +38,7 @@ final class UpdateTableStatement extends \SqlSemantics\Model\Statement\UpdateSta
     ) {
         parent::__construct($origin, $writes, $where, $outputs, $ctes);
         \SqlSemantics\Model\Validation\Collections::objects($orderBy, \SqlSemantics\Model\Ordering::class);
+        \SqlSemantics\Model\Validation\StatementOperands::relation($target, $origin->dialect);
     }
 
     /**

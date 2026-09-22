@@ -10,6 +10,9 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 /**
  * A SQLite declared type name and its optional numeric size parameters.
  * @visibility public
+  * @example Inspecting SqliteDeclaration
+ *     $table = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build('CREATE TABLE users (code VARCHAR(20))')->tables[0];
+ *     $table->columns[0]->type->identity instanceof \SqlSemantics\Type\Identity\SqliteDeclaration // => true
  */
 final class SqliteDeclaration implements TypeIdentity
 {
@@ -27,6 +30,9 @@ final class SqliteDeclaration implements TypeIdentity
         }
     }
 
+    /**
+     * Returns the canonical database type name represented by this identity.
+     */
     #[Override]
     public function name(): string
     {

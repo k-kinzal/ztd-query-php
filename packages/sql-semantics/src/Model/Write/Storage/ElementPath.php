@@ -10,6 +10,10 @@ use Override;
  * A nested storage location with a mandatory writable base.
  *
  * @visibility public
+  * @example Inspecting ElementPath
+ *     $binder = new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(xmlnamespaces INTEGER[])'));
+ *     $statement = $binder->bind('UPDATE t SET xmlnamespaces[1]=2');
+ *     $statement->writes[0]->target instanceof \SqlSemantics\Model\Write\Storage\ElementPath // => true
  */
 final class ElementPath implements Path
 {

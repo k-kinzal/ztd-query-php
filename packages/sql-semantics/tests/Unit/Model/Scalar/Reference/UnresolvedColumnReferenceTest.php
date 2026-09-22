@@ -19,6 +19,9 @@ use SqlSemantics\Type\TypeDescriptor;
 #[CoversClass(\SqlSemantics\Model\Scalar\Reference\UnresolvedColumnReference::class)]
 final class UnresolvedColumnReferenceTest extends TestCase
 {
+    /**
+     * @param list<string> $name Identifier parts tested against unresolved-reference invariants
+     */
     #[TestWith([BuiltinIdentity::Unknown, []])]
     #[TestWith([BuiltinIdentity::Integer, ['missing']])]
     public function testRequiresNamesAndUnknownType(BuiltinIdentity $identity, array $name): void

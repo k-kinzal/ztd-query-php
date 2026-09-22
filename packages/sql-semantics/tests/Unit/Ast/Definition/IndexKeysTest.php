@@ -146,7 +146,6 @@ final class IndexKeysTest extends TestCase
         self::assertSame('name', $keys[0]->column->binding->column->name);
         self::assertSame('DESC', $keys[0]->direction?->value);
         self::assertInstanceOf(\SqlSemantics\Schema\Index\ExpressionKey::class, $keys[1]);
-        self::assertNotNull($keys[1]->expression);
     }
 
     public function testElementReadsCollationOperatorClassAndPrefix(): void
@@ -176,7 +175,6 @@ final class IndexKeysTest extends TestCase
         $keys = $schema->tables[0]->indexes[0]->elements;
         self::assertSame('name', $keys[0]->column->binding->column->name);
         self::assertInstanceOf(\SqlSemantics\Schema\Index\ExpressionKey::class, $keys[1]);
-        self::assertNotNull($keys[1]->expression);
     }
 
 
@@ -190,7 +188,6 @@ final class IndexKeysTest extends TestCase
         self::assertNull($keys[0]->operatorClass);
         self::assertNull($keys[0]->prefixLength);
         self::assertInstanceOf(\SqlSemantics\Schema\Index\ExpressionKey::class, $keys[1]);
-        self::assertNotNull($keys[1]->expression);
     }
 
 }

@@ -12,6 +12,9 @@ use SqlSemantics\Model\Statement\StatementKind;
 /**
  * Typed SetStatement operation.
  * @visibility public
+  * @example Inspecting SetStatement
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind("SET LOCAL work_mem='64MB'");
+ *     $statement instanceof \SqlSemantics\Model\Statement\Configuration\SetStatement // => true
  */
 final class SetStatement extends ConfigurationStatement
 {

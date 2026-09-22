@@ -12,6 +12,12 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * VariableReference has explicit semantic operands and a fixed expression category.
  * @visibility public
+  * @example Inspecting VariableReference
+ *     $type = new \SqlSemantics\Type\TypeDescriptor(\SqlSemantics\Dialect::MySql, \SqlSemantics\Type\Identity\BuiltinIdentity::Text);
+ *     $variable = new \SqlSemantics\Schema\VariableDefinition('sql', \SqlSemantics\Schema\VariableScope::User, $type);
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build()->withVariables($variable);
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('PREPARE s FROM @sql');
+ *     $statement->sql instanceof \SqlSemantics\Model\Scalar\Reference\VariableReference // => true
  */
 final class VariableReference extends Expression
 {

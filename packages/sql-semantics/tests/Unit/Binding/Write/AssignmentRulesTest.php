@@ -154,6 +154,7 @@ final class AssignmentRulesTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INTEGER)')))->bind("UPDATE t SET id='42'");
         self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $statement->writes[0]);
         self::assertSame("'42'", $statement->writes[0]->value->spelling());
     }
 

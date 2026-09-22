@@ -12,6 +12,11 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * WindowCall has explicit semantic operands and a fixed expression category.
  * @visibility public
+  * @example Inspecting WindowCall
+ *     $binder = new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build());
+ *     $statement = $binder->bind('SELECT f(ALL) OVER (base PARTITION BY g(ALL) OVER named ORDER BY h(ALL) FILTER (WHERE ?1) OVER another)', strict: false);
+ *     $value = $statement->outputs[0]->expression;
+ *     $value instanceof \SqlSemantics\Model\Scalar\Function\WindowCall // => true
  */
 final class WindowCall extends Expression
 {

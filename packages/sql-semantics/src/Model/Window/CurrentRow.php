@@ -17,6 +17,9 @@ final class CurrentRow implements Boundary
 
     ) {
     }
+    /**
+     * Returns no offset expressions: this boundary denotes the current row.
+     */
     public function expressions(): array
     {
         return [];

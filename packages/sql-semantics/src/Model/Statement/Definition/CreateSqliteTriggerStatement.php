@@ -18,6 +18,10 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 /**
  * A SQLite row trigger with a typed event, subject table and executable structure.
  * @visibility public
+  * @example Inspecting CreateSqliteTriggerStatement
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER NOT NULL, x INTEGER)');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('CREATE TRIGGER tr AFTER UPDATE OF id ON t BEGIN UPDATE t SET x=new.id WHERE id=old.id; END');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Definition\CreateSqliteTriggerStatement // => true
  */
 final class CreateSqliteTriggerStatement extends BoundStatement
 {

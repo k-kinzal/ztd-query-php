@@ -14,6 +14,10 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 /**
  * The structured operands of a FETCH cursor operation.
  * @visibility public
+  * @example Inspecting FetchCursorStatement
+ *     $binder = new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build());
+ *     $statement = $binder->bind('FETCH BACKWARD ALL FROM cur');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Cursor\FetchCursorStatement // => true
  */
 final class FetchCursorStatement extends BoundStatement
 {

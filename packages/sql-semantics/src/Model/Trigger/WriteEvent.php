@@ -16,6 +16,9 @@ enum WriteEvent: string implements Event
     case Update = 'UPDATE';
     case Delete = 'DELETE';
 
+    /**
+     * Returns the write operation that activates this trigger event.
+     */
     #[Override]
     public function operation(): self
     {

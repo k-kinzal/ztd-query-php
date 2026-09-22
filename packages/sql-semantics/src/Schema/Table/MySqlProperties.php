@@ -46,6 +46,9 @@ final class MySqlProperties implements Properties
         public readonly ?int $statsSamplePages = null,
     ) {
     }
+    /**
+     * Returns the SQL dialect that defines these options.
+     */
     #[Override]
     public function dialect(): \SqlSemantics\Dialect
     {

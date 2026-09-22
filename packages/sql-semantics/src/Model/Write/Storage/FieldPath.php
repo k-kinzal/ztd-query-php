@@ -10,6 +10,10 @@ use Override;
  * A nested storage location with a mandatory writable base.
  *
  * @visibility public
+  * @example Inspecting FieldPath
+ *     $binder = new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER[],r custom_record)'));
+ *     $input = $binder->bind('INSERT INTO t(a[1],r.field) VALUES(1,2)')->insertion;
+ *     $input->columns[1] instanceof \SqlSemantics\Model\Write\Storage\FieldPath // => true
  */
 final class FieldPath implements Path
 {

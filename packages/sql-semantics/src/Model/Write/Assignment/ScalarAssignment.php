@@ -15,6 +15,10 @@ use SqlSemantics\Model\Write\Storage\Path;
  * Stores one expression in one writable location.
  *
  * @visibility public
+  * @example Inspecting ScalarAssignment
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, items INTEGER[])');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('UPDATE t SET items[id]=7');
+ *     $statement->writes[0] instanceof \SqlSemantics\Model\Write\Assignment\ScalarAssignment // => true
  */
 final class ScalarAssignment extends Assignment
 {

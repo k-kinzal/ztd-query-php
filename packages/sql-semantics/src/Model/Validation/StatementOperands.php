@@ -57,4 +57,29 @@ final class StatementOperands
             }
         }
     }
+    /**
+     * Checks relation declarations and nested inputs against the owning dialect.
+     * @throws InvalidStructure
+     */
+    public static function relation(\SqlSemantics\Model\TableUse|\SqlSemantics\Model\Join|null $input, Dialect $dialect): void
+    {
+        foreach (\SqlSemantics\Model\Relation\Joining\Inputs::tables($input) as $table) {
+            if ($table instanceof \SqlSemantics\Model\Relation\OnlyTableReference && $dialect !== Dialect::PostgreSql) {
+                throw new InvalidStructure('ONLY table references require PostgreSQL.');
+            }
+            if ($table->declaration->properties !== null && $table->declaration->properties->dialect() !== $dialect) {
+                throw new InvalidStructure('A relation declaration must use the statement dialect.');
+            }
+            foreach ($table->declaration->columns as $column) {
+                if ($column->type->dialect !== $dialect) {
+                    throw new InvalidStructure('A relation column must use the statement dialect.');
+                }
+            }
+            self::expressions($table->resultExpressions(), $dialect);
+            if ($table instanceof \SqlSemantics\Model\Relation\AliasedRelation) {
+                self::relation($table->input, $dialect);
+            }
+        }
+    }
+
 }

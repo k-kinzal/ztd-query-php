@@ -12,6 +12,9 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 /**
  * An ordered write row whose slots read an expression or the destination's default.
  * @visibility public
+  * @example Inspecting InputRow
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER,b TEXT)')))->bind("UPDATE t SET (a,b)=(1,'x')");
+ *     $statement->writes[0]->row instanceof \SqlSemantics\Model\Write\InputRow // => true
  */
 final class InputRow
 {

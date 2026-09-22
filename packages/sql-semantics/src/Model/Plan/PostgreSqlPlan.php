@@ -35,6 +35,9 @@ final class PostgreSqlPlan implements PlanOptions
         }
     }
 
+    /**
+     * Returns the SQL dialect that defines these options.
+     */
     #[Override]
     public function dialect(): \SqlSemantics\Dialect
     {

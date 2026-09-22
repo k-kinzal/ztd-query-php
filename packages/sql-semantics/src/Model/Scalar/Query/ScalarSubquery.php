@@ -12,6 +12,10 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * ScalarSubquery has explicit semantic operands and a fixed expression category.
  * @visibility public
+  * @example Inspecting ScalarSubquery
+ *     $binder = new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build());
+ *     $query = $binder->bind('SELECT (SELECT ROW(1,2))=ROW(1,2)');
+ *     $query->outputs[0]->expression->left instanceof \SqlSemantics\Model\Scalar\Query\ScalarSubquery // => true
  */
 final class ScalarSubquery extends Expression
 {
@@ -78,6 +82,9 @@ final class ScalarSubquery extends Expression
         return new static($facts, $this->source, $this->query);
     }
 
+    /**
+     * Returns the required nested query that supplies this expression.
+     */
     #[Override]
     public function subquery(): \SqlSemantics\Model\BoundQuery
     {
