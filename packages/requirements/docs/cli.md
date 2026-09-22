@@ -1,5 +1,25 @@
 # Command line interface
 
+Symfony Console provides command discovery, per-command help, terminal tables,
+color detection and shell completion. Run `requirements --help` for an overview
+or `requirements coverage --help` for the coverage options. Help works without a
+configuration file. `requirements list` lists specification records.
+
+```console
+requirements --help
+requirements coverage --help
+requirements --config project/requirements.yaml coverage
+requirements list --label grammar
+requirements spec --json
+```
+
+Human-readable reports use tables and concise status messages. `--json` writes the
+complete machine-readable report to stdout without styling; execution errors use
+the same JSON channel with exit code 2. Human-readable execution errors go to stderr.
+`--no-ansi`, `--ansi` and `--quiet` control terminal output. Global options can
+precede or follow the command. `requirements completion --help` explains shell
+completion installation.
+
 ## Commands
 
 | Command | Result |
@@ -73,4 +93,4 @@ unverified and fails. Commands are argument arrays, not shell strings.
 
 
 See [document formats](format.md), [lint rules](lint.md) and
-[traceability and extension contracts](traceability.md).
+[traceability](traceability.md) and [source/test extensions](extensions.md).

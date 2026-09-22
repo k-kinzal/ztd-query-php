@@ -7,6 +7,7 @@ namespace Requirements\Console;
 use InvalidArgumentException;
 use Requirements\Config\Fields;
 use Requirements\Model\Item;
+use Symfony\Component\Console\Input\InputInterface;
 
 final class Options
 {
@@ -15,45 +16,44 @@ final class Options
     {
     }
 
-    /** @param list<string> $arguments */
-    public static function parse(array $arguments): self
+    public static function fromInput(string $command, InputInterface $input): self
     {
-        $command = array_shift($arguments) ?? 'help';
         $values = [];
-        $flags = ['json', 'live', 'without-source', 'allow-removed', 'check'];
-        $strings = ['config', 'id', 'label', 'category', 'source', 'status', 'kind', 'origin', 'baseline', 'write-baseline', 'min-coverage', 'min-diff-coverage'];
-        while ($arguments !== []) {
-            $argument = array_shift($arguments);
-            $parts = explode('=', $argument, 2);
-            $key = substr($parts[0], 2);
-            if (!str_starts_with($argument, '--') || isset($values[$key])) {
-                throw new InvalidArgumentException("Invalid or duplicate option: $argument");
-            }
-            if (in_array($key, $flags, true) && count($parts) === 1) {
-                $values[$key] = true;
-            } elseif (in_array($key, $strings, true)) {
-                $value = $parts[1] ?? array_shift($arguments);
-                if ($value === null || $value === '' || str_starts_with($value, '--')) {
-                    throw new InvalidArgumentException("--$key requires a value.");
-                }
+        foreach (['config', 'json', ...array_column(self::definitions($command), 0)] as $key) {
+            $value = $input->getOption($key);
+            if (is_string($value) || is_bool($value)) {
                 $values[$key] = $value;
-            } else {
-                throw new InvalidArgumentException("Unknown option: $argument");
-            }
-        }
-        $allowed = match ($command) {
-            'list', 'spec' => ['id', 'label', 'category', 'source', 'status', 'kind', 'origin', 'without-source'],
-            'check' => ['live'],
-            'coverage' => ['live', 'baseline', 'write-baseline', 'min-coverage', 'min-diff-coverage', 'allow-removed'],
-            'format' => ['check'],
-            default => [],
-        };
-        foreach (array_keys($values) as $key) {
-            if (!in_array($key, ['config', 'json', ...$allowed], true)) {
-                throw new InvalidArgumentException("--$key is not valid for $command.");
             }
         }
         return new self($command, $values);
+    }
+
+    /** @return list<array{string, bool, string}> */
+    public static function definitions(string $command): array
+    {
+        return match ($command) {
+            'list', 'spec' => [
+                ['id', false, 'Select an exact item ID.'],
+                ['label', false, 'Select items carrying this label.'],
+                ['category', false, 'Select an exact category.'],
+                ['source', false, 'Select a definition source ID.'],
+                ['status', false, 'Select supported or unsupported items.'],
+                ['kind', false, 'Select specification or requirement items.'],
+                ['origin', false, 'Select sourced, original or undocumented items.'],
+                ['without-source', true, 'Select independent original or undocumented items.'],
+            ],
+            'check' => [['live', true, 'Fetch current source URIs instead of pinned local snapshots.']],
+            'coverage' => [
+                ['live', true, 'Fetch current source URIs instead of pinned local snapshots.'],
+                ['baseline', false, 'Compare with the fingerprint baseline from a trusted base revision.'],
+                ['write-baseline', false, 'Write the current source-unit fingerprints to this JSON file.'],
+                ['min-coverage', false, 'Override the overall coverage threshold (0–100).'],
+                ['min-diff-coverage', false, 'Override the changed-unit coverage threshold (0–100).'],
+                ['allow-removed', true, 'Accept reviewed removals from the source scope.'],
+            ],
+            'format' => [['check', true, 'Report formatting differences without writing files.']],
+            default => [],
+        };
     }
 
     public function text(string $name, ?string $default = null): ?string

@@ -43,4 +43,60 @@ final class CommandTest extends TestCase
         $process = new Process([PHP_BINARY, $binary, 'list', '--unknown'], $workspace->directory);
         self::assertSame(2, $process->run());
     }
+
+    public function testHelpWorksWithoutAProjectAndIncludesCommandSpecificOptions(): void
+    {
+        $workspace = new Workspace();
+        unlink($workspace->directory . '/requirements.yaml');
+        $binary = dirname(__DIR__, 2) . '/bin/requirements';
+        foreach ([[], ['--help'], ['-h'], ['--help', '--no-ansi'], ['--config', 'missing.yaml', '--help'], ['--json', '--help'], ['help', 'coverage'], ['coverage', '--help'], ['spec', '-h']] as $arguments) {
+            $process = new Process([PHP_BINARY, $binary, ...$arguments], $workspace->directory);
+            self::assertSame(0, $process->run(), $process->getErrorOutput());
+            self::assertStringContainsString('Usage:', $process->getOutput());
+            self::assertStringNotContainsString("\x1b", $process->getOutput());
+        }
+        $overview = new Process([PHP_BINARY, $binary, '--config', 'missing.yaml', '--help'], $workspace->directory);
+        self::assertSame(0, $overview->run());
+        self::assertStringContainsString('Available commands:', $overview->getOutput());
+        $help = new Process([PHP_BINARY, $binary, 'coverage', '--help'], $workspace->directory);
+        self::assertSame(0, $help->run());
+        self::assertStringContainsString('--min-diff-coverage', $help->getOutput());
+        self::assertStringNotContainsString('--without-source', $help->getOutput());
+    }
+
+    public function testGlobalOptionsBeforeCommandAndHumanReadableTables(): void
+    {
+        $workspace = new Workspace();
+        $binary = dirname(__DIR__, 2) . '/bin/requirements';
+        $process = new Process([PHP_BINARY, $binary, '--config', 'requirements.yaml', 'coverage', '--no-ansi'], $workspace->directory);
+        self::assertSame(0, $process->run(), $process->getErrorOutput());
+        self::assertStringContainsString('33.33%', $process->getOutput());
+        self::assertStringContainsString('Uncovered', $process->getOutput());
+        self::assertStringNotContainsString('passed:', $process->getOutput());
+        self::assertStringNotContainsString('{  }', $process->getOutput());
+        $list = new Process([PHP_BINARY, $binary, 'list', '--no-ansi'], $workspace->directory);
+        self::assertSame(0, $list->run());
+        self::assertStringContainsString('SPEC-001', $list->getOutput());
+        self::assertStringContainsString('Statement', $list->getOutput());
+    }
+
+    public function testInvalidOptionsAndMissingConfigurationKeepJsonMachineReadable(): void
+    {
+        $workspace = new Workspace();
+        $binary = dirname(__DIR__, 2) . '/bin/requirements';
+        foreach ([['coverage', '--unknown'], ['list', '--live'], ['unknown'], ['--config', 'missing.yaml', 'lint']] as $arguments) {
+            $process = new Process([PHP_BINARY, $binary, '--json', ...$arguments], $workspace->directory);
+            self::assertSame(2, $process->run());
+            $report = json_decode($process->getOutput(), true, 512, JSON_THROW_ON_ERROR);
+            self::assertIsArray($report);
+            self::assertFalse($report['passed']);
+            self::assertSame('', $process->getErrorOutput());
+        }
+        $process = new Process([PHP_BINARY, $binary, 'lint', '--config', 'missing.yaml', '--no-ansi'], $workspace->directory);
+        self::assertSame(2, $process->run());
+        self::assertSame('', $process->getOutput());
+        self::assertStringContainsString('[ERROR]', $process->getErrorOutput());
+        self::assertStringContainsString('Configuration does not exist', $process->getErrorOutput());
+    }
+
 }

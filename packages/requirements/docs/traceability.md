@@ -102,82 +102,10 @@ revision; a baseline regenerated in the same PR is not a trusted comparison.
 This measures changed traceability units, not PHP line coverage.
 
 
-## Source and test runner extensions
+## Implementing extensions
 
-The built-ins use the public interfaces in `Requirements\Source` and
-`Requirements\Test`. Add a PSR-4 class to the consuming project's autoloader,
-load that autoloader using configuration `bootstrap`, and register the class name.
-The package does not require Slack, Jira or any other service SDK.
-
-```php
-use Requirements\Model\Source;
-use Requirements\Source\SourceExtension;
-use Requirements\Source\Unit;
-
-final class IssueSource implements SourceExtension
-{
-    public function select(Source $source, string $selector, string $directory, bool $live): array
-    {
-        // Retrieve the issue described by $source->uri using your service client.
-        // Interpret $selector against a stable issue version or snapshot.
-        // Return one Unit per requirement, with its stable service field ID.
-        return [new Unit('acceptance-criterion:1', 'A name starts with a letter.')];
-    }
-}
-```
-
-The illustration uses a literal response; replace retrieval with the service API.
-A source extension owns both retrieval and selection. The same method enumerates
-the complete scope and resolves individual evidence selectors. Locations must be
-stable across calls, nonempty and unique inside the resource. Equal location IDs
-must have equal text. Selectors must not silently ignore unsupported syntax.
-The core verifies exact quote equality and scope membership; do not prefilter
-scope results based on known specification IDs. Report failed retrieval by throwing
-an exception. `Source::options` carries service-specific configuration. Use
-environment variables for credentials. `ResourceLoader` is available when plain
-HTTP(S), local resources or SHA-256 snapshots are sufficient.
-
-```php
-use Requirements\Test\RunnerConfig;
-use Requirements\Test\RunnerExtension;
-use Requirements\Test\TestResult;
-
-final class AcceptanceRunner implements RunnerExtension
-{
-    public function run(RunnerConfig $config, string $target): TestResult
-    {
-        // Select the target, execute $config->command without a shell,
-        // and check actual test outcomes before returning a passing result.
-        return new TestResult('unverified', 0, 'Implement the service runner here.');
-    }
-}
-```
-
-Return `passed` only for positive executed test counts with every selected test
-passing. Other statuses fail verification. The core deduplicates identical
-runner-name/target pairs during each `spec` command. `RunnerConfig` provides an
-argument-array command, absolute working directory and timeout. Custom extensions
-must enforce their own timeout and report protocol; built-ins use `ProcessRunner`
-and the strict `JUnit` reader.
-
-```yaml
-extensions:
-  sources:
-    issue: App\Traceability\IssueSource
-  runners:
-    acceptance: App\Traceability\AcceptanceRunner
-```
-
-Registered names can override a built-in deliberately. Registration validates the
-interface before any source selection or test execution. A built-in runner does
-not need to be registered explicitly: use `extension: phpunit` or `extension: behat`.
-
-The PHPUnit adapter uses exact escaped `Class::method` filters, including all data
-sets, and a fresh `--log-junit` report. The Behat adapter selects a scenario header
-by `file.feature:line` and uses strict JUnit output; outlines execute every example.
-See the [PHPUnit 10.5 CLI documentation](https://docs.phpunit.de/en/10.5/textui.html)
-and [Behat CLI documentation](https://docs.behat.org/en/latest/user_guide/command_line_tool.html).
-English scenario headers are supported; localized Gherkin requires a custom runner.
+See [source and test extensions](extensions.md) for their responsibilities,
+interfaces, complete implementation examples, registration and executable usage.
 
 ## Traceability of EARS validation
 

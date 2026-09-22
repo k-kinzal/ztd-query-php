@@ -10,6 +10,7 @@
         "ext-mbstring": "*",
         "league/commonmark": "^2.7",
         "opis/json-schema": "^2.6",
+        "symfony/console": "^6.4",
         "symfony/css-selector": "^6.4",
         "symfony/dom-crawler": "^6.4",
         "symfony/http-client": "^6.4",

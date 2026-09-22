@@ -12,35 +12,46 @@ $schema: 'https://raw.githubusercontent.com/k-kinzal/ztd-query-php/main/packages
 
 A name starts with a letter.
 
-```yaml
-kind: requirement
-evidence:
-  -
-    selector: '#names'
-    quote: 'A name starts with a letter.'
-```
+**kind**
+
+requirement
+
+**evidence**
+
+- **selector:** \#names
+
+  > A name starts with a letter.
 
 # SPEC-001
 
 When a name is read, the parser shall require a leading letter.
 
-```yaml
-requirements:
-  - REQ-001
-labels:
-  - grammar
-category: lexical
-```
+**requirements**
+
+- [REQ-001](<#req-001>)
+
+**labels**
+
+![grammar](<https://img.shields.io/badge/label-grammar-blue>)
+
+**category**
+
+lexical
 
 # GENERATOR-001
 
 The generator shall produce C code.
 
-```yaml
-status: unsupported
-reason: 'The parser reads grammars and does not generate C code.'
-evidence:
-  -
-    selector: '#generation'
-    quote: 'The generator produces C code.'
-```
+**status**
+
+unsupported
+
+**reason**
+
+The parser reads grammars and does not generate C code.
+
+**evidence**
+
+- **selector:** \#generation
+
+  > The generator produces C code.

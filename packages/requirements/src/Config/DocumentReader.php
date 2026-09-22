@@ -10,11 +10,15 @@ use Symfony\Component\Yaml\Yaml;
 
 final class DocumentReader
 {
+    public function __construct(public readonly MarkdownDocument $markdown = new MarkdownDocument())
+    {
+    }
+
     /** @param array<string, mixed> $markdown */
     public function read(string $path, string $kind, array $markdown = []): stdClass
     {
         $data = self::isMarkdown($path)
-            ? (new MarkdownDocument())->read($path, $markdown)
+            ? $this->markdown->read($path, $markdown)
             : Yaml::parseFile($path, Yaml::PARSE_EXCEPTION_ON_INVALID_TYPE | Yaml::PARSE_OBJECT_FOR_MAP);
         (new SchemaValidator())->validate($data, $kind, $path);
         if (!$data instanceof stdClass) {

@@ -2,7 +2,8 @@
 
 Configuration uses YAML. Definitions use YAML or the opt-in experimental
 Markdown profile below; both produce the same version 1 data model. Paths are relative to the configuration
-file's directory; definition file locations do not change that base. Definition
+file's directory; definition file locations do not change that base. Markdown
+reference links are relative to the Markdown file so they work in document viewers. Definition
 patterns use PHP `glob` syntax (`*` is not a recursive glob). Overlapping patterns
 load a file once. Every pattern must match. Unknown fields fail lint, except keys
 inside extension `options` and item `metadata`.
@@ -168,75 +169,153 @@ are useful when running it regularly.
 
 ## Experimental Markdown definitions
 
-This profile uses [document-schema.org draft 2026-06](https://document-schema.org/)
-and its [schematter reference validator](https://github.com/iwe-org/schematter).
-Install **schematter 0.2.0** on PATH (for example
-`cargo install schematter --version 0.2.0 --locked`), then opt in:
+Opt in to the Markdown profile:
 
 ```yaml
 version: 1
 definitions: [requirements/*.md]
 markdown:
   experimental: true
-  command: [schematter]
-  timeout: 30
 ```
 
-Configuration remains YAML. `command` is an argument array, defaults to
-`[schematter]`, and receives `validate FILE --schema PROFILE --format json`.
-The timeout defaults to 30 seconds. Missing tooling, invalid structure, errors and
-timeouts fail validation; the tool never silently treats Markdown as YAML.
+Parsing and validation run entirely in PHP using Composer dependencies. The bundled
+[document-schema profile](../schemas/definition.document.yaml) follows
+[document-schema.org draft 2026-06](https://document-schema.org/). The internal
+evaluator implements the subset needed by this profile: frontmatter JSON Schema,
+heading patterns and depth, section counts, allowed block types, and ordered block
+matching with repetition. It is not a general-purpose document-schema validator;
+custom document profiles and mappings are not supported. Unsupported profile
+keywords fail explicitly. No external executable is needed.
 
-A definition uses YAML frontmatter for the source and version, H1 headings for
-item IDs, one paragraph for each statement and an optional YAML fence for all
-remaining item fields:
+Configuration stays YAML. A Markdown definition uses YAML frontmatter only for
+`version`, `source` and optional `$schema`. The body uses one H1 per item, a
+statement paragraph, then bold field names and native Markdown values:
 
-````markdown
+```markdown
 ---
 $schema: https://raw.githubusercontent.com/k-kinzal/ztd-query-php/main/packages/requirements/schemas/definition.document.yaml
 version: 1
-source: null
+source:
+  id: grammar-manual
+  uri: https://example.org/manual.html
+  format: html
+  selector: main p
 ---
 
-# READER-001
+# REQ-001
 
-If input ends inside a rule, then the reader shall report an error.
+A name starts with a letter.
 
-```yaml
-origin: original
-reason: Avoid silently losing the final rule.
-labels: [strictness]
-tests:
-  - runner: behavior
-    target: spec/features/reader-decisions.feature:14
+**kind**
+
+requirement
+
+**evidence**
+
+- **selector:** #names
+
+  > A name starts with a letter.
+
+# SPEC-001
+
+When a name is read, the parser shall require a leading letter.
+
+**requirements**
+
+- [REQ-001](#req-001)
+
+**tests**
+
+- **unit:** Tests\Unit\NameTest::testLeadingLetter
+
+**labels**
+
+![grammar](https://img.shields.io/badge/label-grammar-blue)
+
+**category**
+
+lexical
+
+**design**
+
+- [Name handling](https://example.org/design/names)
+- Preserve the spelling in the syntax tree.
 ```
-````
 
-The bundled [document-schema profile](../schemas/definition.document.yaml) checks
-headings, paragraph/fence order and multiplicity. The CommonMark reader then maps
-each `# ID` to `items[].id`, the paragraph to `items[].statement`, and the YAML
-fence to the rest of that item. The normalized document also passes the exact same
-JSON Schema, EARS validator and cross-file checks as YAML. A heading must use
-`# ID` (no setext headings). Nested headings, extra paragraphs, unknown frontmatter
-fields, duplicate `id`/`statement` fields in the fence and non-YAML fences fail.
+No item fields are encoded in code blocks. This example is shown as literal
+Markdown for copying; see the [rendered example](../examples/markdown/grammar.md)
+for its document presentation. Evidence uses a selector list entry followed by an
+indented block quotation. Several selector/quotation entries represent several
+pieces of evidence.
 
-Paragraph text preserves inline Markdown spelling (including backticks) and folds
-physical lines to spaces; it does not strip markup into a different statement.
-Use simple prose and literal code spans in EARS statements. Item lists, evidence,
-test references, labels, design and metadata have the same structure as YAML.
-`$schema` may be omitted or name the bundled document profile; additional local
-JSON Schemas constrain the normalized data. No user-defined Markdown mappings are
-supported in this initial experiment.
+| Field | Markdown representation |
+| --- | --- |
+| `id` | H1 heading (`# SPEC-001`) |
+| `statement` | First paragraph after the heading |
+| `kind`, `status`, `origin`, `category`, `reason` | Bold field name, blank line, then prose |
+| `evidence` | Bullet list of bold `selector:` values, each followed by a nested block quotation |
+| `requirements`, `related` | Bullet list of links whose visible labels are item IDs |
+| `tests` | Bullet list with the runner name in bold followed by a colon and target |
+| `labels` | Badge images whose alt text is the label, or a bullet list of plain labels |
+| `design` | Bullet list of standalone links or prose paragraphs |
+| `metadata` | Nested bullet lists with bold keys for mappings and plain values for sequences |
 
-`requirements format` preserves the input document type, emits canonical headings,
-paragraphs and YAML fences, and is idempotent. It removes YAML comments and normalizes
-line wrapping. See paired [YAML](../examples/decisions.yaml) and
-[Markdown](../examples/markdown/decisions.md) examples. Use the example configuration
-in that directory to try Markdown without loading duplicate IDs.
+Reference links can target the same file (`[REQ-001](#req-001)`), another Markdown
+file (`[REQ-002](other.md#req-002)`) or a YAML definition (`[REQ-003](other.yaml)`).
+The visible ID is the graph edge; lint also checks that the local file contains
+that loaded ID. Optional fragments must use the lowercased ID with dots removed,
+matching the conventional Markdown heading anchor. Remote requirement links are
+not supported; use `design` for external documentation links.
+
+A badge's URL controls presentation only. Its alt text supplies the label used by
+filters. Local images and remote badge services both work; validation never
+fetches them. Plain lists are equally valid. Formatting preserves existing badge
+URLs and reference destinations, including cross-file paths.
+
+Metadata preserves scalar types using JSON spelling: `true`, `2`, `null`, `[]`
+and `{}` represent their corresponding values; other plain text is a string.
+Quote ambiguous strings, such as `"true"`, and write `""` for an empty string.
+Nested mappings and lists use native indentation:
+
+```markdown
+**metadata**
+
+- **owner:** Parser team
+- **reviewed:** true
+- **priority:** 2
+- **literal:** "true"
+- **reviewers:**
+  - Alice
+  - Bob
+- **release:**
+  - **version:** "1"
+```
+
+A sequence entry containing a nested mapping or list uses `- []` followed by the
+nested list. Empty list fields can be omitted or written as `None.` after their
+bold field name; empty metadata is `{}`.
+
+The reader maps these blocks to the same data model as YAML. Normalized documents
+pass the same JSON Schema, EARS validator and cross-file graph checks. `$schema`
+may be omitted or name the bundled document profile; a local JSON Schema instead
+adds constraints on the normalized model. Item headings must use ATX `# ID`;
+setext or nested headings, extra unlabelled paragraphs, duplicate/unknown fields,
+ordered lists, raw HTML and code blocks fail validation. Prose supports emphasis
+and inline code spans; use standalone links in reference/design fields rather
+than embedding links inside prose.
+
+Statements fold physical line breaks to spaces. Formatting normalizes prose and
+emphasis to text, preserves literal backticks in statements, escapes Markdown
+punctuation where needed, and removes YAML comments in frontmatter. It preserves
+the document type and is idempotent. See paired
+[YAML](../examples/decisions.yaml) and
+[Markdown](../examples/markdown/decisions.md) examples. Use the configuration in
+the Markdown directory to try it without loading duplicate IDs.
 
 Markdown support is experimental. YAML stays supported while authoring effort,
-readability and review diffs are evaluated; this does not decide whether one or both
-formats will remain long term. Markdown **source documents**, selected through CSS
-over rendered HTML, are a separate existing source adapter.
+readability and review diffs are evaluated; this does not decide whether one or
+both formats remain long term. Markdown **source documents**, selected through
+CSS over rendered HTML, are a separate source adapter.
 
-See [lint](lint.md) for the EARS syntax rules and [CLI](cli.md) for format/check flags.
+See [lint](lint.md) for EARS syntax rules, [CLI](cli.md) for commands and
+[extensions](extensions.md) for custom sources and test runners.

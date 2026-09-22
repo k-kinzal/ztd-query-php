@@ -7,31 +7,39 @@ namespace Requirements\Config;
 use InvalidArgumentException;
 use League\CommonMark\Environment\Environment;
 use League\CommonMark\Extension\CommonMark\CommonMarkCoreExtension;
-use League\CommonMark\Extension\CommonMark\Node\Block\FencedCode;
 use League\CommonMark\Extension\CommonMark\Node\Block\Heading;
 use League\CommonMark\Node\Block\Paragraph;
+use League\CommonMark\Node\Node;
 use League\CommonMark\Parser\MarkdownParser;
+use Requirements\Markdown\DocumentSchema;
+use Requirements\Markdown\Fields as MarkdownFields;
+use Requirements\Markdown\Nodes;
+use Requirements\Markdown\Reference;
+use Requirements\Markdown\Writer;
 use stdClass;
-use Symfony\Component\Process\Process;
 use Symfony\Component\Yaml\Yaml;
 
 final class MarkdownDocument
 {
+    /** @var array<string, array<string, array<string, string>>> */
+    private array $links = [];
+
+    /** @var array<string, array<string, string>> */
+    private array $badges = [];
+
+    /** @var list<Reference> */
+    private array $references = [];
+
     /** @param array<string, mixed> $options */
     public function read(string $file, array $options): stdClass
     {
         if (($options['experimental'] ?? false) !== true) {
             throw new InvalidArgumentException("$file: Markdown definitions require markdown.experimental: true.");
         }
-        $command = Fields::strings($options['command'] ?? ['schematter'], 'markdown.command', false);
-        $timeout = $options['timeout'] ?? 30;
-        if ($command === [] || (!is_int($timeout) && !is_float($timeout)) || $timeout <= 0) {
-            throw new InvalidArgumentException('Markdown requires a nonempty schematter command and positive timeout.');
-        }
-        $process = new Process([...$command, 'validate', $file, '--schema', SchemaValidator::path('definition.document.yaml'), '--format', 'json'], timeout: (float) $timeout);
-        if ($process->run() !== 0) {
-            throw new InvalidArgumentException("$file: document-schema validation failed (install schematter 0.2.0): " . $process->getOutput() . $process->getErrorOutput());
-        }
+        Fields::keys($options, ['experimental'], 'markdown');
+        $this->links = [];
+        $this->badges = [];
+        $this->references = [];
         $text = file_get_contents($file);
         if ($text === false || preg_match('/\A---\r?\n(.*?)\r?\n---\r?\n(.*)\z/s', $text, $parts) !== 1) {
             throw new InvalidArgumentException("$file: expected YAML frontmatter delimited by ---.");
@@ -40,70 +48,98 @@ final class MarkdownDocument
         if (!$data instanceof stdClass) {
             throw new InvalidArgumentException("$file: frontmatter must be a mapping.");
         }
-        foreach (array_keys(get_object_vars($data)) as $key) {
-            if (!in_array($key, ['$schema', 'version', 'source'], true)) {
-                throw new InvalidArgumentException("$file: unknown frontmatter field '$key'.");
-            }
-        }
+        Fields::keys(Fields::mapping(get_object_vars($data), 'frontmatter'), ['$schema', 'version', 'source'], "$file frontmatter");
         $environment = new Environment();
         $environment->addExtension(new CommonMarkCoreExtension());
         $document = (new MarkdownParser($environment))->parse($parts[2]);
-        $lines = explode("\n", str_replace("\r\n", "\n", $parts[2]));
+        (new DocumentSchema())->validate($document, $data, $file);
+        $lines = explode("\n", $parts[2]);
         $items = [];
-        $item = null;
+        $heading = null;
+        $blocks = [];
         foreach ($document->children() as $node) {
             if ($node instanceof Heading) {
-                $line = $lines[($node->getStartLine() ?? 1) - 1];
-                if ($node->getLevel() !== 1 || preg_match('/^# ([A-Za-z][A-Za-z0-9_.-]*)\s*$/D', $line, $match) !== 1) {
-                    throw new InvalidArgumentException("$file: item headings must use # ID.");
+                if (preg_match('/^ {0,3}#[ \t]+/', $lines[($node->getStartLine() ?? 0) - 1] ?? '') !== 1) {
+                    throw new InvalidArgumentException("$file: item headings must use ATX # ID syntax.");
                 }
-                $item = new stdClass();
-                $item->id = $match[1];
-                $items[] = $item;
-            } elseif ($item !== null && $node instanceof Paragraph && !isset($item->statement)) {
-                $start = $node->getStartLine() ?? 1;
-                $end = $node->getEndLine() ?? $start;
-                $item->statement = implode(' ', array_map(trim(...), array_slice($lines, $start - 1, $end - $start + 1)));
-            } elseif ($item !== null && isset($item->statement) && $node instanceof FencedCode && $node->getInfo() === 'yaml') {
-                $attributes = Yaml::parse($node->getLiteral(), Yaml::PARSE_OBJECT_FOR_MAP | Yaml::PARSE_EXCEPTION_ON_INVALID_TYPE);
-                if (!$attributes instanceof stdClass) {
-                    throw new InvalidArgumentException("$file: the yaml fence must contain item fields.");
+                if ($heading !== null) {
+                    $items[] = $this->item($heading, $blocks, $file);
                 }
-                foreach (get_object_vars($attributes) as $key => $value) {
-                    if (property_exists($item, $key)) {
-                        throw new InvalidArgumentException("$file: duplicate item field '$key'.");
-                    }
-                    $item->{$key} = $value;
-                }
+                $heading = $node;
+                $blocks = [];
             } else {
-                throw new InvalidArgumentException("$file: expected an item heading, statement paragraph, then optional yaml fence.");
+                $blocks[] = $node;
             }
+        }
+        if ($heading !== null) {
+            $items[] = $this->item($heading, $blocks, $file);
         }
         $data->items = $items;
         return $data;
     }
 
+    /** @return list<Reference> */
+    public function references(): array
+    {
+        return $this->references;
+    }
+
     public function render(stdClass $data): string
     {
-        $header = clone $data;
-        unset($header->items);
-        $text = "---\n" . DocumentReader::yaml($header) . "---\n";
-        foreach (Fields::sequence($data->items, 'items') as $entry) {
-            if (!$entry instanceof stdClass || !is_string($entry->id) || !is_string($entry->statement)) {
-                throw new InvalidArgumentException('Cannot format invalid Markdown item.');
-            }
-            $text .= "\n# $entry->id\n\n$entry->statement\n";
-            $attributes = clone $entry;
-            unset($attributes->id, $attributes->statement);
-            if (get_object_vars($attributes) !== []) {
-                $yaml = DocumentReader::yaml($attributes);
-                $fence = '```';
-                while (str_contains($yaml, $fence)) {
-                    $fence .= '`';
+        return (new Writer())->render($data, $this->links, $this->badges);
+    }
+
+    /** @param list<Node> $blocks */
+    private function item(Heading $heading, array $blocks, string $file): stdClass
+    {
+        $id = Nodes::text($heading);
+        $statement = array_shift($blocks);
+        if (!$statement instanceof Paragraph || Nodes::field($statement) !== null) {
+            throw new InvalidArgumentException("$file: $id needs a statement paragraph before its fields.");
+        }
+        $item = new stdClass();
+        $item->id = $id;
+        $item->statement = preg_replace('/\s*\n\s*/', ' ', Nodes::text($statement, true));
+        $name = null;
+        $values = [];
+        foreach ($blocks as $block) {
+            $field = Nodes::field($block);
+            if ($field !== null) {
+                if ($name !== null) {
+                    $this->field($item, $name, $values, $file, $id);
                 }
-                $text .= "\n{$fence}yaml\n$yaml$fence\n";
+                $name = $field;
+                $values = [];
+            } elseif ($name === null) {
+                throw new InvalidArgumentException("$file: $id expects a bold field heading after its statement.");
+            } else {
+                $values[] = $block;
             }
         }
-        return $text;
+        if ($name !== null) {
+            $this->field($item, $name, $values, $file, $id);
+        }
+        return $item;
+    }
+
+    /** @param list<Node> $nodes */
+    private function field(stdClass $item, string $name, array $nodes, string $file, string $id): void
+    {
+        if (property_exists($item, $name)) {
+            throw new InvalidArgumentException("$file: $id has duplicate field '$name'.");
+        }
+        $reader = new MarkdownFields();
+        try {
+            $item->{$name} = $reader->read($name, $nodes);
+        } catch (InvalidArgumentException $error) {
+            throw new InvalidArgumentException("$file: $id.$name: " . $error->getMessage(), 0, $error);
+        }
+        $this->links[$id][$name] = $reader->links;
+        foreach ($reader->links as $target => $url) {
+            $this->references[] = new Reference($target, $url, $file);
+        }
+        if ($name === 'labels') {
+            $this->badges[$id] = $reader->badges;
+        }
     }
 }

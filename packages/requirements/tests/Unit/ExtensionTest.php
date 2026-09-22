@@ -11,6 +11,7 @@ use Requirements\Test\Verifier;
 use Requirements\Tests\Support\CountingRunner;
 use Requirements\Tests\Support\MemorySource;
 use Requirements\Tests\Support\Workspace;
+use Symfony\Component\Process\Process;
 
 final class ExtensionTest extends TestCase
 {
@@ -42,4 +43,18 @@ final class ExtensionTest extends TestCase
         self::assertSame('unsupported', $results['SPEC-3']->status);
         self::assertSame("shared\n", file_get_contents($workspace->directory . '/executions.txt'));
     }
+
+    public function testDocumentedExtensionsExecuteThroughTheRealCli(): void
+    {
+        $package = dirname(__DIR__, 2);
+        foreach (['lint', 'check', 'coverage', 'spec'] as $command) {
+            $process = new Process([PHP_BINARY, $package . '/bin/requirements', $command, '--config', $package . '/examples/extensions/requirements.yaml', '--json']);
+            self::assertSame(0, $process->run(), $process->getOutput() . $process->getErrorOutput());
+            self::assertStringContainsString('"passed": true', $process->getOutput());
+            if ($command === 'spec') {
+                self::assertStringContainsString('"tests": 1', $process->getOutput());
+            }
+        }
+    }
+
 }

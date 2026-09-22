@@ -3,8 +3,9 @@
 `requirements lint` validates every loaded document before any source retrieval or
 test execution. All other commands run the same validation first. Failures identify
 the file and, for JSON Schema violations, the instance pointer. Exit code is 2.
-A configured bootstrap loads project code. Experimental Markdown validation runs
-an external validator, but it does not fetch the requirement sources.
+A configured bootstrap loads project code. Experimental Markdown structure is
+validated in PHP against the bundled document-schema profile, without fetching
+requirement sources or launching an external validator.
 
 ## Schemas and structure
 
@@ -74,7 +75,10 @@ After schema and EARS validation, lint checks unique source/item IDs, references
 source-free origins and reasons, requirement/specification relationships, runner
 names, thresholds and registered extension interfaces. Unsupported specifications
 need reasons. Independent items cannot simultaneously claim sourced evidence.
-Dangling and self references fail. `related` edges can be reciprocal.
+Dangling and self references fail. `related` edges can be reciprocal. Markdown
+reference links must point to the loaded definition containing the linked ID;
+if a heading fragment is present, it must match that ID. Badge alt text supplies
+the label; badge images are not downloaded during validation.
 
 `lint` does not establish source availability or quote equality; use `check`.
 It does not run tests or establish implementation coverage; use `spec`.

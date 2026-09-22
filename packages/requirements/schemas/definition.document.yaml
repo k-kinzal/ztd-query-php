@@ -11,18 +11,14 @@ frontmatter:
 maxDepth: 1
 additionalSections: false
 additionalBlocks: false
+allBlocks:
+  type: [paragraph, bullet-list, quote]
 sections:
   - header:
       pattern: '^[A-Za-z][A-Za-z0-9_.-]*$'
     minContains: 1
-    additionalBlocks: false
     additionalSections: false
+    additionalBlocks: false
     blocks:
-      - type: paragraph
+      - type: [paragraph, bullet-list, quote]
         minContains: 1
-        maxContains: 1
-      - type: code
-        lang:
-          const: yaml
-        minContains: 0
-        maxContains: 1

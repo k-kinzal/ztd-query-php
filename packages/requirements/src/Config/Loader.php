@@ -91,8 +91,12 @@ final class Loader
         }
         $items = [];
         $sources = [];
+        $references = [];
         foreach ($files as $file) {
-            $data = $this->document($file, 'definition', $markdown);
+            $reader = new DocumentReader();
+            $object = $reader->read($file, 'definition', $markdown);
+            $data = Fields::mapping(json_decode(json_encode($object, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR), $file);
+            array_push($references, ...$reader->markdown->references());
             Fields::keys($data, ['$schema', 'version', 'source', 'items'], $file);
             if (!array_key_exists('source', $data)) {
                 throw new InvalidArgumentException("$file: declare source or source: null explicitly.");
@@ -111,6 +115,9 @@ final class Loader
                 }
                 $items[$item->id] = $item;
             }
+        }
+        foreach ($references as $reference) {
+            $reference->validate($items);
         }
         return [$items, $sources, $files];
     }

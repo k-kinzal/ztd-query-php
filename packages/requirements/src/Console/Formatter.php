@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Requirements\Console;
 
 use Requirements\Config\DocumentReader;
-use Requirements\Config\MarkdownDocument;
 use RuntimeException;
 
 final class Formatter
@@ -19,8 +18,9 @@ final class Formatter
     {
         $changed = [];
         foreach ($files as $index => $file) {
-            $data = (new DocumentReader())->read($file, $index === 0 ? 'config' : 'definition', $markdown);
-            $text = DocumentReader::isMarkdown($file) ? (new MarkdownDocument())->render($data) : DocumentReader::yaml($data);
+            $reader = new DocumentReader();
+            $data = $reader->read($file, $index === 0 ? 'config' : 'definition', $markdown);
+            $text = DocumentReader::isMarkdown($file) ? $reader->markdown->render($data) : DocumentReader::yaml($data);
             if ($text !== file_get_contents($file)) {
                 $changed[] = $file;
                 if (!$check && file_put_contents($file, $text) === false) {

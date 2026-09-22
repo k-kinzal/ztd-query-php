@@ -39,13 +39,6 @@ jobs:
       - run: composer validate --strict
       - run: composer install --no-interaction --prefer-dist
       - run: composer check-platform-reqs
-      - name: Install document-schema reference validator
-        run: |
-          curl --fail --location --silent --show-error https://github.com/iwe-org/schematter/releases/download/schematter-v0.2.0/schematter-v0.2.0-x86_64-unknown-linux-gnu.tar.gz -o /tmp/schematter.tar.gz
-          echo '8e0c56ae67d670bffbcc9ec7c1b159ee108a86d2da2de420715c6cf78bba25d7  /tmp/schematter.tar.gz' | sha256sum --check
-          mkdir -p /tmp/schematter-bin
-          tar -xzf /tmp/schematter.tar.gz -C /tmp/schematter-bin
-          echo /tmp/schematter-bin >> "$GITHUB_PATH"
       - run: composer test
       - run: composer lint
         if: matrix.php == '8.3'
@@ -61,6 +54,13 @@ jobs:
           php bin/requirements format --check --config examples/markdown/requirements.yaml
           php bin/requirements check --config examples/markdown/requirements.yaml
           php bin/requirements coverage --config examples/markdown/requirements.yaml
+      - name: Check custom source and test extensions
+        run: |
+          php bin/requirements lint --config examples/extensions/requirements.yaml
+          php bin/requirements format --check --config examples/extensions/requirements.yaml
+          php bin/requirements check --config examples/extensions/requirements.yaml
+          php bin/requirements coverage --config examples/extensions/requirements.yaml
+          php bin/requirements spec --config examples/extensions/requirements.yaml
       - name: Verify EARS acceptance specifications
         run: |
           php bin/requirements lint
