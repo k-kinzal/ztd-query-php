@@ -9,7 +9,7 @@ or exceptions. MySQL uses `statement` for 5.6/5.7 and
 
 ## Properties
 
-The generated statement is analyzed against an empty catalog because arbitrary
+The generated statement is analyzed against an empty schema because arbitrary
 syntax does not come with consistent table declarations. Unknown references must
 remain structured and carry diagnostics. They must not erase the statement or
 hide an implementation failure.

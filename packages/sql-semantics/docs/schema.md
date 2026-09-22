@@ -1,46 +1,96 @@
 # Schema
 
-`SchemaBuilder` converts ordered schema SQL into an immutable `Schema` snapshot.
-Consumers such as fixture generators can inspect declared columns, types,
-defaults, generated values, and integrity constraints without connecting to a
-database. Use [Binder](binder.md) to bind expressions and statements against that
-snapshot.
+Use `SchemaBuilder` to read table definitions from SQL. It returns a `Schema`
+containing the tables, their ordered columns, and declared constraints. Pass that
+schema to [Binder](binder.md) when reading queries and other statements.
 
 ## Public interface
 
-The entry points are in the `SqlSemantics` namespace.
+The following declarations show the public signatures; method bodies are omitted.
 
-| Interface | Result and behavior |
-|-----------|---------------------|
-| `new SchemaBuilder(Dialect $dialect, ?string $defaultSchema = null, ?string $grammarVersion = null)` | Selects the language, default namespace, and parser release. The namespace defaults to `public` for PostgreSQL, `main` for SQLite, and an empty database name for MySQL. See the [release tables](../README.md#support-syntax). |
-| `SchemaBuilder::build(string ...$sql): Schema` | Parses zero or more SQL strings and applies their schema statements in order. Each call starts a new snapshot; arguments do not extend a previous call's result. No arguments returns an empty catalog. |
-| `Schema::$dialect: Dialect` | `Dialect::MySql`, `Dialect::PostgreSql`, or `Dialect::Sqlite`. |
-| `Schema::$grammarVersion: string` | Resolved release tag, including when the default was selected. The binder uses the same release. |
-| `Schema::$defaultSchema: string` | Namespace for unqualified declarations and references. |
-| `Schema::$tables: list<TableDefinition>` | Visible table and view declarations after applying the statements. |
-| `Schema::$statements: list<Node>` | Original schema statements in order, including auxiliary objects and options retained as syntax. `Node` is `SqlParser\Parser\Node`. |
+```php
+namespace SqlSemantics;
 
-Syntax and lexical errors propagate from sql-parser. Declaration conflicts and
-unresolvable declarations raise `SemanticException`, whose `reason` and `source`
-identify the failure. Schema construction has no diagnostic-collecting equivalent
-of `Binder::analyze()`.
+final class SchemaBuilder
+{
+    public readonly Dialect $dialect;
+    public readonly string $defaultSchema;
 
-## Returned declarations
+    public function __construct(
+        Dialect $dialect,
+        ?string $defaultSchema = null,
+        ?string $grammarVersion = null,
+    ) { /* ... */ }
 
-Declaration classes are in `SqlSemantics\Schema`; type classes are in
-`SqlSemantics\Type`. Collections preserve declaration order.
+    public function build(string ...$sql): Schema { /* ... */ }
+}
+```
 
-| Object | Public properties | Meaning |
-|--------|-------------------|---------|
-| `TableDefinition` | `schema`, `name`, `columns`, `constraints`, `source`, `resolved` | Qualified identity, ordered columns and integrity constraints, and original declaration syntax. `resolved` distinguishes a known declaration from an unresolved relation retained during analysis. |
-| `ColumnDefinition` | `name`, `type`, `nullability`, `source`, `defaultExpression`, `attributes`, `generatedExpression` | Declared column facts. Defaults and generated expressions are parser nodes; `attributes` retains attributes such as identity and collation. |
-| `TypeDescriptor` | `dialect`, `name`, `modifiers`, `affinity` | Canonical database type, declared modifiers such as precision/scale, and SQLite affinity where applicable. |
-| `Nullability` | `NotNull`, `MaybeNull`, `AlwaysNull`, `Unknown` | NULL facts exposed through enum cases; backed values are `not-null`, `maybe-null`, `always-null`, and `unknown`. |
-| `TableConstraint` | `kind`, `columns`, `source`, `name`, `referencedTable`, `referencedColumns`, `expression` | Primary/unique keys, foreign references, and CHECK conditions. Foreign-key actions and deferrability remain in `source`; CHECK syntax is also available as `expression`. |
-| `ConstraintKind` | `PrimaryKey`, `Unique`, `ForeignKey`, `Check` | Declared integrity category. |
+Select `Dialect::MySql`, `Dialect::PostgreSql`, or `Dialect::Sqlite`.
+`defaultSchema` is the namespace for unqualified table names; its default is an
+empty string for MySQL, `public` for PostgreSQL, and `main` for SQLite.
+`grammarVersion` selects one of the [documented releases](../README.md#support-syntax).
 
-Declaration expressions contain syntax. For typed expressions and bound column
-references, bind the CREATE TABLE statement and inspect
+Each `build()` call starts a new schema and applies the supplied definitions in
+order. Pass no SQL to obtain an empty schema. Existing `Schema` objects are not
+modified by later calls.
+
+## Read table and column definitions
+
+```php
+use SqlSemantics\Dialect;
+use SqlSemantics\SchemaBuilder;
+
+$schema = (new SchemaBuilder(Dialect::PostgreSql))->build(
+    'CREATE TABLE prices (amount NUMERIC(10,2) NOT NULL DEFAULT 0)',
+);
+
+$table = $schema->tables[0];
+$column = $table->columns[0];
+
+$table->name;                        // prices
+$column->name;                       // amount
+$column->type->name;                 // numeric
+$column->type->modifiers;            // ['10', '2']
+$column->nullability->value;         // not-null
+$column->defaultExpression;          // Original DEFAULT syntax
+```
+
+The result separates the schema's language settings from its table definitions:
+
+```php
+namespace SqlSemantics;
+
+use SqlParser\Parser\Node;
+use SqlSemantics\Schema\TableDefinition;
+
+final class Schema
+{
+    public readonly Dialect $dialect;
+    public readonly string $grammarVersion;
+    public readonly string $defaultSchema;
+
+    /** @var list<TableDefinition> */
+    public readonly array $tables;
+
+    /** @var list<Node> Original schema statements, in order. */
+    public readonly array $statements;
+}
+```
+
+The declarations below describe what callers read from a schema. Each table's
+`columns` and `constraints` preserve declaration order.
+
+| Object | What to read |
+|--------|--------------|
+| `TableDefinition` | `schema` and `name` identify the table; `columns` and `constraints` contain its definitions; `source` retains the original declaration. |
+| `ColumnDefinition` | `name`, `type`, and `nullability` describe the column. `defaultExpression`, `generatedExpression`, and `attributes` retain the declared expressions and options. |
+| `TypeDescriptor` | `name` is the database type; `modifiers` contains precision, scale, length, or other declared modifiers. `dialect` identifies the database and `affinity` records SQLite affinity. |
+| `TableConstraint` | `kind` is `PrimaryKey`, `Unique`, `ForeignKey`, or `Check`. `columns` names the local columns; `name` is an optional constraint name. Foreign keys expose `referencedTable` and `referencedColumns`; CHECK exposes `expression`. `source` retains the complete constraint syntax. |
+| `Nullability` | `NotNull`, `MaybeNull`, `AlwaysNull`, or `Unknown`. A column's declaration-level fact is independent of NULLs introduced when that table is used in an outer join. |
+
+Defaults, generated values, and CHECK conditions here are syntax nodes. Bind the
+CREATE TABLE SQL to obtain their typed expressions and column references through
 `BoundStatement::$definitions`; see [declaration binding](binder.md#declarations-and-nested-commands).
 
 ## SQL and returned structures
@@ -65,26 +115,9 @@ separate argument, as shown for CREATE TABLE LIKE. Paths below are relative to t
 | SQLite: `CREATE TABLE prices (amount NUMERIC(10,2))` | The column retains its declared numeric type and modifiers; `type.affinity = 'numeric'`. Affinity does not promise a runtime storage class. |
 | `CREATE TABLE users (id INTEGER); CREATE INDEX users_id ON users(id)` | `users` remains available in `tables`; the index statement is retained in `statements`, rather than represented as another table. |
 
-## Example
+## Invalid definitions
 
-```php
-use SqlSemantics\Dialect;
-use SqlSemantics\SchemaBuilder;
-
-$schema = (new SchemaBuilder(
-    Dialect::PostgreSql,
-    defaultSchema: 'app',
-    grammarVersion: 'pg-17.2',
-))->build('CREATE TABLE prices (amount NUMERIC(10,2) NOT NULL DEFAULT 0)');
-
-$table = $schema->tables[0];
-$column = $table->columns[0];
-$table->schema;                    // app
-$column->type->name;               // numeric
-$column->type->modifiers;          // ['10', '2']
-$column->nullability->value;       // not-null
-$column->defaultExpression;        // Original default syntax node
-```
-
-The snapshot supplies declarations, not generated fixture rows or a live server
-catalog. See [limitations](limitation.md) for inference and execution boundaries.
+Lexical and syntax errors identify SQL that cannot be read. Invalid declarations
+raise `SemanticException`; its `reason` identifies the problem and `source`
+identifies the responsible SQL node or token. For example, two columns with the
+same name cannot form a valid table definition.
