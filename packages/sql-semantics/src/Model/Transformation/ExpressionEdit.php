@@ -60,6 +60,7 @@ final class ExpressionEdit
             $before = $properties[$name];
             $arguments[$name] = $before;
         }
+        $originalArguments = $arguments;
         array_walk_recursive($arguments, static function (&$operand) use ($target, $replacement, $rebuilt): void {
             if ($operand === $target) {
                 $operand = $replacement;
@@ -67,7 +68,7 @@ final class ExpressionEdit
                 $operand = self::rebuild($operand, $target, $replacement, $rebuilt);
             }
         });
-        $changed = $arguments !== array_intersect_key($properties, $arguments);
+        $changed = $arguments !== $originalArguments;
         if (!$changed) {
             return $object;
         }

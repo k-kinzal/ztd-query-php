@@ -20,7 +20,7 @@ final class Expressions
     /**
      * @return list<Expression>
      */
-    public static function all(BoundStatement $statement): array
+    public static function all(BoundStatement|\SqlSemantics\Schema\TableDefinition $statement): array
     {
         $seen = new WeakMap();
         $pending = [$statement];

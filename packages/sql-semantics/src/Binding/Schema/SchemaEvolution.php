@@ -98,7 +98,10 @@ final class SchemaEvolution
     {
         $reader = new SchemaReader($resolver->identifiers, $schema->defaultSchema);
         $source = $schema->dialect === Dialect::Sqlite ? $statement : $create;
-        $names = Tree::outer($create, ['qualified_name', 'table_ident', 'nm']);
+        $copied = Copy\MySqlCopy::bind($source, $resolver);
+        if ($copied !== null) {
+            return $copied;
+        }
         $queryNode = Tree::outer($source, ['SelectStmt', 'select_stmt', 'query_expression', 'select'])[0] ?? null;
         $table = DeclarationBinder::bind($reader->table($source), new QueryContext($resolver));
         $namespace = $table->schema;
@@ -106,9 +109,6 @@ final class SchemaEvolution
         $columns = $table->columns;
         $constraints = $table->constraints;
         $copies = Tree::outer($source, ['TableLikeClause', 'OptInherit']);
-        if (str_contains(strtoupper(Tree::text($source)), ' LIKE ') && $copies === [] && isset($names[1])) {
-            $copies = [$names[1]];
-        }
         foreach ($copies as $copy) {
             foreach (Tree::outer($copy, ['qualified_name', 'table_ident']) as $reference) {
                 $base = $resolver->resolve($resolver->identifiers->parts($reference), $reference);
