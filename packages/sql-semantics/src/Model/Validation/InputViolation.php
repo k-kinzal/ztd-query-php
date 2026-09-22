@@ -12,6 +12,8 @@ namespace SqlSemantics\Model\Validation;
  */
 enum InputViolation: string
 {
+    case DeleteTarget = 'delete-target';
+    case ExtractionField = 'extraction-field';
     case QueryOperand = 'query-operand';
     case FunctionArity = 'function-arity';
     case ReindexOption = 'reindex-option';
@@ -49,6 +51,8 @@ enum InputViolation: string
     public function message(): string
     {
         return [
+            'delete-target' => 'A MySQL DELETE destination requires a named table reference.',
+            'extraction-field' => 'EXTRACT requires a field defined by the database language.',
             'query-operand' => 'A query operand requires a SELECT, VALUES, or TABLE operation.',
             'function-arity' => 'The function or conditional operation requires its declared number of arguments.',
             'reindex-option' => 'REINDEX requires a known option and a value in its declared domain.',

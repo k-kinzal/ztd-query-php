@@ -7,19 +7,23 @@ namespace SqlSemantics\Model\Statement\Mutation;
 use Override;
 
 /**
- * Delete named targets from a joined relation.
+ * Deletes named table destinations from a read relation that can contain joins.
+ * @example Inspecting a qualified deletion destination
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build('CREATE TABLE app.t(id INTEGER)');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('DELETE app.t FROM app.t');
+ *     $statement->targets[0]->name->parts // => ['app', 't']
  *
  * @visibility public
  */
 final class DeleteJoinedStatement extends \SqlSemantics\Model\Statement\DeleteStatement
 {
     /**
-     * @var non-empty-list<\SqlSemantics\Model\TableUse> Validated ordered operands
+     * @var non-empty-list<\SqlSemantics\Model\Relation\TableReference> Validated ordered operands
      */
     public readonly array $targets;
 
     /**
-     * @param list<\SqlSemantics\Model\TableUse> $targets
+     * @param list<\SqlSemantics\Model\Relation\TableReference> $targets
      * @param list<\SqlSemantics\Model\OutputColumn> $outputs
      * @throws \SqlSemantics\Model\Validation\InvalidStructure
      */
@@ -35,7 +39,7 @@ final class DeleteJoinedStatement extends \SqlSemantics\Model\Statement\DeleteSt
         public readonly bool $quick = false,
     ) {
         parent::__construct($origin, $where, $outputs, $ctes);
-        \SqlSemantics\Model\Validation\Collections::objects($targets, \SqlSemantics\Model\TableUse::class);
+        \SqlSemantics\Model\Validation\Collections::objects($targets, \SqlSemantics\Model\Relation\TableReference::class);
         if ($targets === [] || $origin->dialect !== \SqlSemantics\Dialect::MySql) {
             throw new \SqlSemantics\Model\Validation\InvalidStructure('A joined mutation requires named targets and the MySQL dialect.');
         }
@@ -57,7 +61,7 @@ final class DeleteJoinedStatement extends \SqlSemantics\Model\Statement\DeleteSt
     }
 
     /**
-     * @return non-empty-list<\SqlSemantics\Model\TableUse>
+     * @return non-empty-list<\SqlSemantics\Model\Relation\TableReference>
      */
     #[Override]
     public function affectedTables(): array

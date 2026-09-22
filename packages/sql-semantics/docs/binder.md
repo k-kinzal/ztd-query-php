@@ -180,7 +180,10 @@ SELECT structures require at least one output.
 |-----------------|----------------------|
 | Column | `ColumnReference` with a `ColumnBinding`: relation identity, table identity, and column symbol containing its declared type and NULL fact. |
 | Literal | `LiteralKind` and exact SQL literal `text`, preserving numeric precision and quoting. |
-| Binary or unary operation | An operator enum and required `left`/`right` or `operand`. |
+| PostgreSQL typed literal | An explicit `CastExpression` retains the literal operand and the declared type identity, including precision, interval fields, or a user-defined type name and modifiers. Binding does not parse the literal into a runtime date or other value. |
+| Date/time extraction | `Extract` has a required `PostgreSqlField` or `MySqlUnit` enum and a required temporal `value`. The field must match the operand dialect. Its result is PostgreSQL numeric or MySQL bigint; field names are normalized without evaluating the input. |
+| String position | `Position` has required `needle` and `haystack` expressions in the same dialect. Its integer result and NULL facts are derived from those operands; binding does not perform the search. |
+| Binary or unary operation | An operator enum and required `left`/`right` or `operand`. MySQL and PostgreSQL truth tests (`IS TRUE`, `IS FALSE`, `IS UNKNOWN`, and their negations) are unary enum cases with a non-NULL predicate result. |
 | Function | `FunctionCall` has a registered or unresolved function reference and ordered value arguments. |
 | PostgreSQL COALESCE and NULLIF | `Coalesce` retains ordered alternatives; `NullIf` has required `left` and `right` comparison operands. These are language operations. |
 | PostgreSQL GREATEST and LEAST | `Extremum` has an `ExtremumKind selection` and nonempty ordered `arguments` converted to the common result type. |

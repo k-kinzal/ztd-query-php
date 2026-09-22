@@ -32,6 +32,6 @@ final class OperatorExpressions
             return $value->mode === Operator\CastMode::Implicit ? Expressions::write($value->operand) : new Tree('cast', [Build::keyword('CAST'), Build::parentheses(new Tree('cast-value', [Expressions::write($value->operand), Build::keyword('AS'), TypeDeclaration::write($value->type)]))]);
         }
         $parts = [Build::keyword($value->operator->value), Expressions::write($value->operand)];
-        return Build::parentheses(new Tree('unary', in_array($value->operator, [Operator\UnaryOperator::IsNull, Operator\UnaryOperator::IsNotNull], true) ? array_reverse($parts) : $parts));
+        return Build::parentheses(new Tree('unary', $value->operator->postfix() ? array_reverse($parts) : $parts));
     }
 }

@@ -134,6 +134,10 @@ final class ExpressionBinder
         }
         if (count($children) >= 2) {
             $tail = strtoupper(implode(' ', array_map(Tree::text(...), array_slice($children, 1))));
+            $truth = \SqlSemantics\Model\Scalar\Operator\UnaryOperator::tryFrom($tail);
+            if ($scope->identifiers->dialect !== \SqlSemantics\Dialect::Sqlite && $truth?->truthTest() === true) {
+                return $rules->operator($tail, [$this->bind($children[0], $scope)], $node);
+            }
             if (in_array($tail, ['IS NULL', 'IS NOT NULL', 'ISNULL', 'NOTNULL'], true)) {
                 return $rules->operator(in_array($tail, ['IS NULL', 'ISNULL'], true) ? 'IS NULL' : 'IS NOT NULL', [$this->bind($children[0], $scope)], $node);
             }

@@ -80,7 +80,7 @@ final class MutationForms
                 if ($orderBy !== [] || $limit !== null) {
                     throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::JoinedMutationPagination, $source);
                 }
-                return new Mutation\DeleteJoinedStatement($origin, $input->relation, $targets, $where, $outputs, $with, in_array('LOW_PRIORITY', $prefix, true), in_array('IGNORE', $prefix, true), in_array('QUICK', $prefix, true));
+                return new Mutation\DeleteJoinedStatement($origin, $input->relation, \SqlSemantics\Binding\Write\DeleteTargets::tables($targets, $source), $where, $outputs, $with, in_array('LOW_PRIORITY', $prefix, true), in_array('IGNORE', $prefix, true), in_array('QUICK', $prefix, true));
             }
             return new Mutation\DeleteUsingStatement($origin, $targets[0], $input->relation->right, $where, $outputs, $with);
         }

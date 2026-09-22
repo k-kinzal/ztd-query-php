@@ -30,6 +30,8 @@ enum ExpressionKind: string
     case Operator = 'operator';
     case Coalesce = 'coalesce';
     case Extremum = 'extremum';
+    case Extract = 'extract';
+    case Position = 'position';
     case NullIf = 'null-if';
     case Cast = 'cast';
     case Function = 'function';

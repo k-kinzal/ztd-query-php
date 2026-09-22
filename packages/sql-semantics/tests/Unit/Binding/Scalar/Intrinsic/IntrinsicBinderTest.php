@@ -1,0 +1,32 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Binding\Scalar\Intrinsic;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Binder;
+use SqlSemantics\Binding\Scalar\Intrinsic\IntrinsicBinder;
+use SqlSemantics\Dialect;
+use SqlSemantics\Model\BoundSelect;
+use SqlSemantics\SchemaBuilder;
+
+#[CoversClass(IntrinsicBinder::class)]
+final class IntrinsicBinderTest extends TestCase
+{
+    public function testBindRetainsTheIntrinsicOperands(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT EXTRACT(YEAR FROM CURRENT_TIMESTAMP)');
+        self::assertInstanceOf(BoundSelect::class, $query);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Temporal\Extract::class, $query->outputs[0]->expression);
+    }
+
+    public function testBindLeavesOrdinaryFunctionsToSignatureResolution(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT "position"(1, 2), "extract"(1)');
+        self::assertInstanceOf(BoundSelect::class, $query);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Function\FunctionCall::class, $query->outputs[0]->expression);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Function\FunctionCall::class, $query->outputs[1]->expression);
+    }
+}

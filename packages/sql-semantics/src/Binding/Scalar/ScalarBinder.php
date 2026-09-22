@@ -29,12 +29,9 @@ final class ScalarBinder
      */
     public function bind(Node $node, Scope $scope, bool $rowSubquery = false): Expression
     {
-        $context = (new ContextValueBinder())->bind($node, $scope);
-        if ($context !== null) {
-            return $context;
-        }
-        if ($scope->identifiers->dialect === \SqlSemantics\Dialect::Sqlite && ($node->children[0] ?? null) instanceof Token && strtoupper($node->children[0]->text) === 'RAISE') {
-            return RaiseBinder::bind($node, $scope);
+        $intrinsic = Intrinsic\IntrinsicBinder::bind($node, $scope);
+        if ($intrinsic !== null) {
+            return $intrinsic;
         }
         $collated = ConversionBinder::collation($node, $scope);
         if ($collated !== null) {

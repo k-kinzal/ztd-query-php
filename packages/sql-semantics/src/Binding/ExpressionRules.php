@@ -88,7 +88,11 @@ final class ExpressionRules
         }
         $nullability = NullFacts::strict($operands);
         $types = new TypeResolution($this->dialect, $this->diagnostics);
-        if (in_array($operator, ['IS NULL', 'IS NOT NULL'], true)) {
+        $unary = \SqlSemantics\Model\Scalar\Operator\UnaryOperator::tryFrom($operator);
+        if ($unary?->postfix() === true) {
+            if ($unary->truthTest()) {
+                $this->predicate($operands[0]);
+            }
             $type = $types->boolean();
             $nullability = Nullability::NotNull;
         } elseif (in_array($operator, ['AND', 'OR', 'NOT'], true)) {
@@ -100,7 +104,7 @@ final class ExpressionRules
         } elseif (in_array($operator, ['=', '<>', '!=', '<', '>', '<=', '>=', 'IS', 'IS NOT', '<=>', 'LIKE', 'NOT LIKE', 'ILIKE', 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN', 'REGEXP', 'NOT REGEXP', 'GLOB', 'NOT GLOB', 'MATCH', 'NOT MATCH', 'SIMILAR TO', 'NOT SIMILAR TO', 'IS DISTINCT FROM', 'IS NOT DISTINCT FROM'], true)) {
             $types->common($operands, $source);
             $type = $types->boolean();
-            if (in_array($operator, ['IS', 'IS NOT', '<=>'], true)) {
+            if (in_array($operator, ['IS', 'IS NOT', '<=>', 'IS DISTINCT FROM', 'IS NOT DISTINCT FROM'], true)) {
                 $nullability = Nullability::NotNull;
             }
         } elseif (in_array($operator, ['+', '-', '*', '/', '%', 'DIV', 'MOD', '^', '&', '|', '<<', '>>'], true)) {
