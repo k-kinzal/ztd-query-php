@@ -156,4 +156,14 @@ final class ConfigurationStatementTest extends TestCase
         self::assertSame(["'a'", "'b'"], array_column($changed->settings[0]->values, 'symbol'));
         self::assertCount(1, $statement->settings[0]->values);
     }
+
+    public function testWithValuesRejectsAnInvalidTarget(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
+        $statement = $binder->bind('RESET ALL');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\ConfigurationStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('The target must be an owned SET value list.');
+        $statement->withValues($statement->settings[0], [Expression::literal(1, Dialect::PostgreSql)]);
+    }
 }

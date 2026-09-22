@@ -202,4 +202,23 @@ final class StatementContextTest extends TestCase
         self::assertSame('2', $changed->writes[0]->value->symbol);
         self::assertSame('1', $nested->writes[0]->value->symbol);
     }
+
+    public function testRebindRejectsAChangedCommandVerbWithinTheSameClass(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
+        $binder = new Binder($schema);
+        $this->expectException(InvalidStructure::class);
+        (new \SqlSemantics\Binding\Editing\StatementContext($schema))->rebind($binder->bind('BEGIN'), $binder->bind('COMMIT')->sql);
+    }
+    public function testRebindRepeatedNestedChangesKeepIndependentIdentities(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('SELECT (SELECT id FROM t)');
+        $query = $statement->outputs[0]->expression->query;
+        self::assertNotNull($query);
+        $first = $query->replaceExpression($query->outputs[0]->expression, Expression::reference(['id'], Dialect::PostgreSql));
+        $second = $query->replaceExpression($query->outputs[0]->expression, Expression::reference(['id'], Dialect::PostgreSql));
+        self::assertSame($query->scopeId, $first->scopeId);
+        self::assertSame($first->scopeId, $second->scopeId);
+        self::assertSame($first->relations[0]->id, $second->relations[0]->id);
+    }
 }

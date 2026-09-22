@@ -156,4 +156,14 @@ final class TableStatementTest extends TestCase
         self::assertSame(['id','n'], array_column($changed->outputs, 'name'));
         self::assertSame('t', $changed->relations[0]->declaration->name);
     }
+
+    public function testWithTableRejectsAnInvalidTarget(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
+        $statement = $binder->bind('TABLE t');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\TableStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('A TABLE query requires a relation name.');
+        $statement->withTable([]);
+    }
 }

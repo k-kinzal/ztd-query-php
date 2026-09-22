@@ -165,4 +165,19 @@ final class LiteralTest extends TestCase
         $this->expectException(InvalidStructure::class);
         Sql\Literal::encode(INF, Dialect::PostgreSql);
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith([2147483647,'integer'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([-2147483648,'integer'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([-2147483649,'bigint'])]
+    public function testEncodeKeepsPostgreSqlIntegerBoundaries(int $value, string $type): void
+    {
+        self::assertSame([(string) $value,$type], Sql\Literal::encode($value, Dialect::PostgreSql));
+        self::assertSame([(string) $value,'integer'], Sql\Literal::encode($value, Dialect::MySql));
+    }
+    public function testEncodeDistinguishesDecimalAndExponentForms(): void
+    {
+        self::assertSame(['1.0e+30','double precision'], Sql\Literal::encode(1e30, Dialect::MySql));
+        self::assertSame(['1.0e+30','numeric'], Sql\Literal::encode(1e30, Dialect::PostgreSql));
+        self::assertSame(['1.5','numeric'], Sql\Literal::encode(1.5, Dialect::MySql));
+    }
 }

@@ -157,4 +157,15 @@ final class ValueListTest extends TestCase
         self::assertSame('3', $changed->settings[0]->values[0]->symbol);
         self::assertSame('2', $changed->settings[1]->values[0]->symbol);
     }
+
+    public function testReplaceRejectsValuesOwnedByAnotherStatement(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $statement = $binder->bind('SET work_mem=1');
+        $foreign = $binder->bind('SET work_mem=1')->settings[0];
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\ConfigurationStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('The setting values do not belong to this statement.');
+        \SqlSemantics\Binding\Editing\ValueList::replace($statement, $foreign, [Expression::literal(2, Dialect::PostgreSql)]);
+    }
 }

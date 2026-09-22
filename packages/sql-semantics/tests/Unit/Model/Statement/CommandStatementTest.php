@@ -157,4 +157,15 @@ final class CommandStatementTest extends TestCase
         self::assertSame('EXPLAIN', $changed->kind);
         self::assertSame('id', $statement->statements[0]->outputs[0]->expression->binding?->column->name);
     }
+
+    public function testWithStatementRejectsAnInvalidTarget(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
+        $statement = $binder->bind('EXPLAIN SELECT 1');
+        $target = $binder->bind('SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CommandStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('The nested statement does not belong to this command.');
+        $statement->withStatement($target, $target);
+    }
 }

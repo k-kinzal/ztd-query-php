@@ -156,4 +156,14 @@ final class CreateIndexStatementTest extends TestCase
         self::assertSame('n', $changed->indexes[0]->keys[0]->lineage()[0]->column->name);
         self::assertSame('id', $statement->indexes[0]->keys[0]->lineage()[0]->column->name);
     }
+
+    public function testWithKeyRejectsAnInvalidTarget(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
+        $statement = $binder->bind('CREATE INDEX ix ON t(id)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateIndexStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('The index key does not exist.');
+        $statement->withKey(1, Expression::literal(1, Dialect::PostgreSql));
+    }
 }

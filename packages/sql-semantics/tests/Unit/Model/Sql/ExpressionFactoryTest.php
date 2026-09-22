@@ -176,4 +176,26 @@ final class ExpressionFactoryTest extends TestCase
         $this->expectException(InvalidStructure::class);
         Sql\ExpressionFactory::binary('; DROP TABLE t', Expression::literal(1, Dialect::PostgreSql), Expression::literal(2, Dialect::PostgreSql));
     }
+
+    public function testReferenceRejectsAnEmptyIdentifierPart(): void
+    {
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('A column reference requires nonempty identifier parts.');
+        Sql\ExpressionFactory::reference(['t',''], Dialect::PostgreSql);
+    }
+    #[\PHPUnit\Framework\Attributes\TestWith(['--'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['/*'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['*/'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['+; SELECT 1'])]
+    public function testBinaryRejectsCommentAndStatementBoundaries(string $operator): void
+    {
+        $this->expectException(InvalidStructure::class);
+        Sql\ExpressionFactory::binary($operator, Expression::literal(1, Dialect::PostgreSql), Expression::literal(2, Dialect::PostgreSql));
+    }
+    public function testBinaryAcceptsCaseInsensitiveWordOperators(): void
+    {
+        $expression = Sql\ExpressionFactory::binary('and', Expression::literal(true, Dialect::PostgreSql), Expression::literal(false, Dialect::PostgreSql));
+        self::assertSame('AND', $expression->symbol);
+        self::assertSame('((TRUE) AND (FALSE))', $expression->sql->toString());
+    }
 }

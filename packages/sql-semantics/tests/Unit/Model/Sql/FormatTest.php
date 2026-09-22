@@ -165,4 +165,14 @@ final class FormatTest extends TestCase
     {
         self::assertSame('SELECT /*+ hint */ 1', Sql\Format::write([new Sql\Atom('keyword', 'SELECT'), new Sql\Atom('annotation', '/*+ hint */'), new Sql\Atom('number', '1'), new Sql\Atom('EOF', '')]));
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['select','(',false])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['π','(',true])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['x1','.',true])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['.','x1',true])]
+    #[\PHPUnit\Framework\Attributes\TestWith(["'name'",'(',false])]
+    public function testAdjacentUnderstandsIdentifierBoundaries(string $left, string $right, bool $expected): void
+    {
+        self::assertSame($expected, Sql\Format::adjacent(new Sql\Atom('terminal', $left), new Sql\Atom('terminal', $right)));
+    }
 }

@@ -173,4 +173,29 @@ final class SourceEditTest extends TestCase
         self::assertNotNull($changed);
         self::assertSame('1', $changed->toString());
     }
+
+    public function testReplacePreservesTerminalsOnBothSidesAndAnnotations(): void
+    {
+        $a = new \SqlParser\Lexer\Token(1, 'number', '1', 0);
+        $b = new \SqlParser\Lexer\Token(1, 'number', '2', 2);
+        $c = new \SqlParser\Lexer\Token(1, 'number', '3', 4);
+        $d = new \SqlParser\Lexer\Token(1, 'number', '4', 6);
+        $source = new \SqlParser\Parser\Node('values', 0, [$a,$b,$c,$d], ' /*+ hint */');
+        $target = new \SqlParser\Parser\Node('synthetic', 0, [$c]);
+        $changed = \SqlSemantics\Model\Transformation\SourceEdit::replace($source, Sql\Source::read($source), $target, Expression::literal(5, Dialect::PostgreSql)->sql);
+        self::assertSame('1 2 5 4 /*+ hint */', $changed->toString());
+    }
+    public function testReplaceCanFillAnEmptyOwnedProduction(): void
+    {
+        $target = new \SqlParser\Parser\Node('optional', 0, []);
+        $source = new \SqlParser\Parser\Node('query', 0, [$target]);
+        $tree = \SqlSemantics\Model\Transformation\SourceEdit::replace($source, Sql\Source::read($source), $target, Expression::literal(1, Dialect::PostgreSql)->sql);
+        self::assertSame('1', $tree->toString());
+    }
+    public function testReplaceRejectsAnUnownedEmptyProduction(): void
+    {
+        $source = new \SqlParser\Parser\Node('query', 0, []);
+        $this->expectException(InvalidStructure::class);
+        \SqlSemantics\Model\Transformation\SourceEdit::replace($source, Sql\Source::read($source), new \SqlParser\Parser\Node('optional', 0, []), Expression::literal(1,Dialect::PostgreSql)->sql);
+    }
 }

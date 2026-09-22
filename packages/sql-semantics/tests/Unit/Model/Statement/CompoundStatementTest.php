@@ -176,4 +176,16 @@ final class CompoundStatementTest extends TestCase
         self::assertSame('1', $changed->branches[0]->outputs[0]->expression->symbol);
         self::assertCount(1, $changed->outputs);
     }
+
+    public function testWithBranchRejectsAnInvalidTarget(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
+        $statement = $binder->bind('SELECT 1 UNION SELECT 2');
+        $target = $binder->bind('SELECT 3');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundQuery::class, $target);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CompoundStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('The set operand does not exist.');
+        $statement->withBranch(2, $target);
+    }
 }

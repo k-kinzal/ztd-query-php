@@ -170,4 +170,59 @@ final class ClauseEditorTest extends TestCase
         self::assertSame('TRUE', $changed->where?->symbol);
         self::assertSame('id', $changed->outputs[0]->expression->binding?->column->name);
     }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerClauseChanges')]
+    public function testReplacePreservesSiblingClauses(Dialect $dialect, string $sql, string $role, string $replacement, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(id INTEGER,n INTEGER)'));
+        $statement = $binder->bind($sql);
+        $tree = \SqlSemantics\Binding\Editing\ClauseEditor::replace($statement, $role, new Sql\Tree('clause', [new Sql\Atom('syntax', $replacement)]));
+        self::assertSame($expected, $binder->bind($tree->toString())->toString());
+        self::assertSame($sql, $statement->source->toString());
+    }
+
+    /**
+     * @return list<array{Dialect,string,string,string,string}>
+     */
+    public static function providerClauseChanges(): array
+    {
+        return [
+            [Dialect::PostgreSql,'SELECT id FROM t','outputs','n AS next','SELECT n AS next FROM t'],
+            [Dialect::MySql,'SELECT id FROM t','outputs','n AS next','SELECT n AS next FROM t'],
+            [Dialect::Sqlite,'SELECT id FROM t','outputs','n AS next','SELECT n AS next FROM t'],
+            [Dialect::PostgreSql,'SELECT 1','from','FROM t','SELECT 1 FROM t'],
+            [Dialect::MySql,'SELECT 1','from','FROM t','SELECT 1 FROM t'],
+            [Dialect::Sqlite,'SELECT 1','from','FROM t','SELECT 1 FROM t'],
+            [Dialect::PostgreSql,'SELECT id FROM t','groupBy','GROUP BY id','SELECT id FROM t GROUP BY id'],
+            [Dialect::MySql,'SELECT id FROM t','groupBy','GROUP BY id','SELECT id FROM t GROUP BY id'],
+            [Dialect::Sqlite,'SELECT id FROM t','groupBy','GROUP BY id','SELECT id FROM t GROUP BY id'],
+            [Dialect::PostgreSql,'SELECT id FROM t GROUP BY id','having','HAVING id>1','SELECT id FROM t GROUP BY id HAVING id > 1'],
+            [Dialect::MySql,'SELECT id FROM t GROUP BY id','having','HAVING id>1','SELECT id FROM t GROUP BY id HAVING id > 1'],
+            [Dialect::Sqlite,'SELECT id FROM t GROUP BY id','having','HAVING id>1','SELECT id FROM t GROUP BY id HAVING id > 1'],
+            [Dialect::PostgreSql,'SELECT id FROM t','orderBy','ORDER BY id DESC','SELECT id FROM t ORDER BY id DESC'],
+            [Dialect::PostgreSql,'SELECT id FROM t ORDER BY id LIMIT 1','orderBy','ORDER BY n','SELECT id FROM t ORDER BY n LIMIT 1'],
+            [Dialect::MySql,'SELECT id FROM t','orderBy','ORDER BY id DESC','SELECT id FROM t ORDER BY id DESC'],
+            [Dialect::Sqlite,'SELECT id FROM t','orderBy','ORDER BY id DESC','SELECT id FROM t ORDER BY id DESC'],
+            [Dialect::PostgreSql,'TABLE t','table','t','TABLE t'],
+            [Dialect::MySql,'TABLE t','table','t','TABLE t'],
+            [Dialect::PostgreSql,'INSERT INTO t VALUES(1,2)','rows','VALUES(3,4)','INSERT INTO t VALUES (3, 4)'],
+            [Dialect::MySql,'INSERT INTO t VALUES(1,2)','rows','VALUES(3,4)','INSERT INTO t VALUES (3, 4)'],
+            [Dialect::Sqlite,'INSERT INTO t VALUES(1,2)','rows','VALUES(3,4)','INSERT INTO t VALUES (3, 4)'],
+            [Dialect::PostgreSql,'UPDATE t SET n=1 WHERE id=2','writes','id=3','UPDATE t SET id = 3 WHERE id = 2'],
+            [Dialect::MySql,'UPDATE t SET n=1 WHERE id=2','writes','id=3','UPDATE t SET id = 3 WHERE id = 2'],
+            [Dialect::Sqlite,'UPDATE t SET n=1 WHERE id=2','writes','id=3','UPDATE t SET id = 3 WHERE id = 2'],
+            [Dialect::PostgreSql,'INSERT INTO t VALUES(1,2) RETURNING id','returning','RETURNING n','INSERT INTO t VALUES (1, 2) RETURNING n'],
+            [Dialect::Sqlite,'INSERT INTO t VALUES(1,2) RETURNING id','returning','RETURNING n','INSERT INTO t VALUES (1, 2) RETURNING n'],
+            [Dialect::Sqlite,'UPDATE t SET n=1 WHERE id=2 RETURNING id','returning','RETURNING n','UPDATE t SET n = 1 WHERE id = 2 RETURNING n'],
+            [Dialect::Sqlite,'UPDATE t SET n=1 WHERE id=2','returning','RETURNING n','UPDATE t SET n = 1 WHERE id = 2 RETURNING n'],
+            [Dialect::Sqlite,'DELETE FROM t RETURNING id','where','WHERE id=2','DELETE FROM t WHERE id = 2 RETURNING id'],
+        ];
+    }
+    public function testReplaceRejectsAClauseAbsentFromTheStatementGrammar(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('BEGIN');
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('The statement has no structural position for where.');
+        \SqlSemantics\Binding\Editing\ClauseEditor::replace($statement, 'where', new Sql\Tree('where', []));
+    }
 }

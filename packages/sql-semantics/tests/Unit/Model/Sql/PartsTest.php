@@ -179,4 +179,24 @@ final class PartsTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundQuery::class, $query);
         self::assertSame("(SELECT ';')", Sql\Parts::query($query, Dialect::PostgreSql)->toString());
     }
+
+    public function testOrderingCanLeaveNullPlacementImplicit(): void
+    {
+        self::assertSame('ORDER BY 1 ASC', Sql\Parts::ordering([new \SqlSemantics\Model\Ordering(Expression::literal(1, Dialect::PostgreSql), false, null)])->toString());
+    }
+    public function testQueryKeepsTrailingHintsAndRemovesOnlyTheTerminator(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SELECT 1; /*!99999 ignored */');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundQuery::class, $query);
+        self::assertSame('(SELECT 1 /*!99999 ignored */ )', Sql\Parts::query($query, Dialect::MySql)->toString());
+    }
+    public function testQueryUsesASqliteDerivedRelationForACompoundOperand(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build());
+        $query = $binder->bind('SELECT 1 UNION SELECT 2');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundQuery::class, $query);
+        $sql = Sql\Parts::query($query, Dialect::Sqlite)->toString();
+        self::assertSame('SELECT * FROM(SELECT 1 UNION SELECT 2)', $sql);
+        self::assertCount(1, $binder->bind($sql)->outputs);
+    }
 }

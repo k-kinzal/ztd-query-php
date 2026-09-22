@@ -158,4 +158,15 @@ final class CreateTableStatementTest extends TestCase
         self::assertSame('not-null', $changed->declarations[0]->columns[0]->nullability->value);
         self::assertSame('integer', $statement->declarations[0]->columns[0]->type->name);
     }
+
+    public function testWithColumnRejectsAnInvalidTarget(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
+        $statement = $binder->bind('CREATE TABLE x(id INTEGER)');
+        $column = $binder->bind('CREATE TABLE y(id INTEGER)')->declarations[0]->columns[0];
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('The column does not belong to this table declaration.');
+        $statement->withColumn($column, $column);
+    }
 }

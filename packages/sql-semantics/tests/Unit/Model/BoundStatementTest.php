@@ -259,4 +259,25 @@ final class BoundStatementTest extends TestCase
         self::assertSame('n', $changed->ctes['q']->outputs[1]->expression->binding?->column->name);
         self::assertSame('1', $changed->ctes['q']->outputs[0]->expression->symbol);
     }
+
+    public function testReplaceExpressionUsesConfigurationValueGrammar(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("SET LOCAL work_mem='64MB'");
+        $changed = $statement->replaceExpression($statement->settings[0]->values[0], \SqlSemantics\Model\Expression::literal('128MB', Dialect::PostgreSql));
+        self::assertSame("'128MB'", $changed->settings[0]->values[0]->symbol);
+        self::assertSame('local', $changed->settings[0]->scope);
+    }
+    public function testReplaceExpressionRejectsMixedDatabaseLanguages(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1');
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        $statement->replaceExpression($statement->outputs[0]->expression, \SqlSemantics\Model\Expression::literal(2, Dialect::MySql));
+    }
+
+    public function testWithOutputNamesOverridesExistingProjectionAliases(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('WITH q(new_name) AS (SELECT 1 AS old_name) SELECT new_name FROM q');
+        self::assertSame('new_name', $statement->ctes['q']->outputs[0]->name);
+        self::assertSame('new_name', $statement->outputs[0]->name);
+    }
 }
