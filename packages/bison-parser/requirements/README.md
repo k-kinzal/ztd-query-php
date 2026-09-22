@@ -53,10 +53,12 @@ In particular, the string-token quote includes generator conventions beyond what
 the linked reader scenarios assert. A clause-by-clause audit requires more granular
 source units and specifications.
 
-CI enforces the current overall/per-source floors and 100% accounted coverage of
+The `Requirements` job in [the package CI](../../../.github/workflows/bison-parser.yml)
+enforces the current overall/per-source floors and 100% accounted coverage of
 new or changed units compared with the baseline from the PR's base branch. It also
 checks that the committed fingerprint-only baseline equals the current analysis, then runs the traced
-Behat scenarios. Existing package CI runs the complete BDD suite. Update the baseline:
+Behat scenarios. The same workflow runs on reader or requirements-tool changes;
+its test matrix also runs the complete BDD suite. Update the baseline:
 
 ```console
 php ../requirements/bin/requirements coverage --write-baseline requirements-baseline.json
