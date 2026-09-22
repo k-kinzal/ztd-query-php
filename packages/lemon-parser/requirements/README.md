@@ -41,10 +41,12 @@ symbol list and an unclosed conditional parenthesis. They use `source: null`,
 They are listed by `--without-source` and never increase source coverage. This
 preserves the distinction already documented in `reader-decisions.feature`.
 
-CI checks YAML and source evidence, fingerprint-only baseline reproducibility, the 66% total/source
+The `Requirements` job in [the package CI](../../../.github/workflows/lemon-parser.yml)
+checks YAML and source evidence, fingerprint-only baseline reproducibility, the 66% total/source
 floor and 100% accounted coverage of changed units against a baseline extracted
 from the PR's trusted base branch. It then executes the linked scenarios. The
-existing package CI continues to run all BDD scenarios. Parser code and feature
+same workflow runs on reader or requirements-tool changes, and its test matrix
+continues to run all BDD scenarios. Parser code and feature
 files are unchanged.
 
 ```console
