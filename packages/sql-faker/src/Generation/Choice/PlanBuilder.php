@@ -7,12 +7,15 @@ namespace SqlFaker\Generation\Choice;
 use Closure;
 use Faker\Generator;
 use SqlFaker\Generation\Derivation\TokenGenerator;
+use SqlFaker\Generation\Exception\GenerationException;
+use SqlFaker\Generation\Exception\LexicalException;
 use SqlFaker\Generation\Lexeme\Lexeme;
 use SqlFaker\Generation\Lexeme\LexicalGrammar;
 use SqlFaker\Generation\Plan\GenerationPlan;
 use SqlFaker\Generation\Plan\ProductionPattern;
 use SqlFaker\Generation\Token\TokenRewriter;
 use SqlFaker\Grammar\Model\Grammar;
+use SqlFaker\Grammar\Model\Production;
 
 /**
  * Compiles choices through the production generation pipeline into immutable instructions.
@@ -57,9 +60,11 @@ final class PlanBuilder
      * Freezes original production ordinals and every rewritten terminal's complete candidate.
      * @template T of bool
      * @param GenerationPlan<T> $constraints
-     * @param Closure(int): ?int $productionChoice
+     * @param Closure(int, non-empty-list<Production>): ?int $productionChoice
      * @param Closure(int): ?int $lexicalChoice
      * @return GenerationPlan<T>
+     * @throws GenerationException When the grammar cannot complete the plan within the budget
+     * @throws LexicalException When a terminal has no compatible realization
      */
     public function build(GenerationPlan $constraints, int $budget, Closure $productionChoice, Closure $lexicalChoice): GenerationPlan
     {

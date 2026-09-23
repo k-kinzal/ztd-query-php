@@ -61,6 +61,17 @@ $sql = $faker->sql(maxDepth: 6);
 $select = $faker->selectStatement(maxDepth: 6);
 ```
 
+## Grammar coverage seeds
+
+The repository ships PHP-Fuzzer corpora that make each default grammar take every production reachable from its statement rule: [seeds/](https://github.com/k-kinzal/ztd-query-php/tree/main/seeds). `bin/seeds.php` builds and checks them:
+
+```sh
+php bin/seeds.php build --output ../../seeds --tag mysql-8.4.7
+php bin/seeds.php check --input ../../seeds
+```
+
+`SqlFaker\Generation\Choice\BytePlanEncoder` is the inverse of `BytePlanCompiler`: it records the choices of one guided plan construction as the bytes the compiler decodes to the same plan. `SqlFaker\Generation\Seed\SeedCorpusBuilder` uses it to synthesize such a corpus for any provider and start rule.
+
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.

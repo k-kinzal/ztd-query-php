@@ -54,6 +54,10 @@ relational structure for fixture generation and SQL metadata consumers. See its
 [semantic design](packages/sql-semantics/docs/design.md) and
 [supported surface](packages/sql-semantics/docs/support.md).
 
+## Grammar coverage seeds
+
+[seeds/](seeds/) holds PHP-Fuzzer inputs with which sql-faker takes every production of its default MySQL, PostgreSQL and SQLite grammars. [seeds/README.md](seeds/README.md) explains how to replay them through the fuzz targets of this repository or fuzz from them.
+
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.

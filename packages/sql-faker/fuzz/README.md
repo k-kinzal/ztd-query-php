@@ -43,3 +43,9 @@ survived into the output. The targets pass a `GrammarCoverage` bound to
 `fuzz/coverage/<database>/`, and the recorder persists its cumulative snapshot itself,
 every hundred generations and at shutdown. Set `SQLFAKER_COVERAGE=0` to run without
 recording. The corpus and coverage directories are ignored by git.
+
+## Seeds
+
+The repository's `seeds/` directory holds inputs for these targets that together select every
+production of the default grammar versions. `seeds/README.md` explains how to replay them with
+`--max-runs=0` or fuzz from them, and `bin/seeds.php` rebuilds them.
