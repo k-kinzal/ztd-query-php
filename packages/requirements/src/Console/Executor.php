@@ -9,6 +9,7 @@ use Requirements\Model\Item;
 use Requirements\Model\Project;
 use Requirements\Report\Analyzer;
 use Requirements\Report\Coverage;
+use Requirements\Report\Snapshot;
 use Requirements\Test\Verifier;
 
 final class Executor
@@ -41,15 +42,15 @@ final class Executor
         if ($options->command === 'check') {
             return ['passed' => $analysis->errors === [], 'mode' => $options->flag('live') ? 'live' : 'configured', 'errors' => $analysis->errors, 'evidence' => $analysis->evidence];
         }
-        $report = (new Coverage())->report($project, $analysis, $options->text('baseline'), $options->flag('allow-removed'), $options->percentage('min-coverage'), $options->percentage('min-diff-coverage'));
+        $report = (new Coverage())->report($project, $analysis, $options->text('snapshot'), $options->flag('allow-removed'), $options->percentage('min-coverage'), $options->percentage('min-diff-coverage'));
         $report['mode'] = $options->flag('live') ? 'live' : 'configured';
-        $baseline = $options->text('write-baseline');
-        if ($baseline !== null) {
+        $snapshot = $options->text('write-snapshot');
+        if ($snapshot !== null) {
             if ($analysis->errors !== []) {
-                throw new InvalidArgumentException('Cannot write a baseline with invalid source evidence.');
+                throw new InvalidArgumentException('Cannot write a coverage snapshot with invalid source evidence.');
             }
-            if (file_put_contents($baseline, json_encode((new \Requirements\Report\Baseline())->create($analysis, $project), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n") === false) {
-                throw new InvalidArgumentException("Cannot write baseline: $baseline");
+            if (file_put_contents($snapshot, json_encode((new Snapshot())->create($analysis, $project), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR) . "\n") === false) {
+                throw new InvalidArgumentException("Cannot write coverage snapshot: $snapshot");
             }
         }
         return $report;

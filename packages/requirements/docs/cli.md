@@ -117,28 +117,35 @@ coverage:
 requirements lint
 requirements format --check
 requirements check
-requirements coverage --baseline /tmp/base-coverage.json
+requirements coverage --snapshot /tmp/base-snapshot.json
 requirements spec
 ```
 
-Generate a baseline using
-`requirements coverage --write-baseline requirements-baseline.json`. The baseline contains only unit keys and fingerprints, never source text. Commit it
-for comparison by later changes. During pull-request CI extract the baseline
-**from the trusted base revision**, not from the pull request's updated file:
+A coverage snapshot is not a list of accepted failures. It records every unit in
+the declared scope, and for each unit the semantic fingerprint of the records
+claiming it, so a later run can tell which units are new or changed. Write one with
+`requirements coverage --write-snapshot requirements-snapshot.json`. It contains
+only unit keys and fingerprints, never source text, and it does not shrink as
+coverage improves. Commit it for comparison by later changes. During
+pull-request CI extract the snapshot **from the trusted base revision**, not from
+the pull request's updated file:
 
 ```sh
-git show "origin/$GITHUB_BASE_REF:packages/example/requirements-baseline.json" > /tmp/base-coverage.json
-requirements coverage --baseline /tmp/base-coverage.json --min-diff-coverage 100
+git show "origin/$GITHUB_BASE_REF:packages/example/requirements-snapshot.json" > /tmp/base-snapshot.json
+requirements coverage --snapshot /tmp/base-snapshot.json --min-diff-coverage 100
 ```
 
-Fetch the base ref first. On the initial adoption PR no base report exists, so use
+Fetch the base ref first. On the initial adoption PR no base snapshot exists, so use
 the total gate and review the initial scope. `--min-coverage` and
 `--min-diff-coverage` override configured thresholds. A configured positive diff
-threshold requires a baseline. Unchanged units have no differential denominator
-(`percentage: null`) and pass. New/changed unit text or claiming records form the
-differential denominator. This includes changed statements, status, reason,
-requirements and test references. Removed units are listed and fail unless the
-scope reduction was reviewed and `--allow-removed` is explicitly supplied.
+threshold requires `--snapshot`. Units whose fingerprint equals the snapshot are
+outside the differential denominator; when nothing changed the `diff` summary
+reports `percentage: null` and passes. New units and units whose text or claiming
+records changed form the differential denominator. This includes changed
+statements, status, reason, requirements and test references. Units the snapshot
+lists but the current scope no longer contains are reported under `removed` and
+fail unless the scope reduction was reviewed and `--allow-removed` is explicitly
+supplied.
 
 `spec` deduplicates runner/target pairs and runs each selection in a subprocess
 with a timeout and fresh JUnit directory. Passing requires exit 0, at least one

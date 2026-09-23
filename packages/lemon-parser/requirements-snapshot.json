@@ -1,6 +1,6 @@
 {
     "version": 1,
-    "type": "requirements-coverage",
+    "type": "requirements-snapshot",
     "units": {
         "1d21160ff46e21eb63f26b95d9ebbe6ea5f869090c1cad84ea2fcfd8685ee21a": {
             "fingerprint": "dc028f1cc9365c94a142a91b89bf6545adb1b1b15fb062a9bc83379a929aa3f7"

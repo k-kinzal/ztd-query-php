@@ -65,19 +65,21 @@ reasons, with design references and related links. They are listed by
 distinction already documented in `reader-decisions.feature`.
 
 The `Requirements` job in [the package CI](../../../.github/workflows/lemon-parser.yml)
-checks YAML and source evidence, fingerprint-only baseline reproducibility, the 100% total/source
-floor and 100% accounted coverage of changed units against a baseline extracted
-from the PR's trusted base branch. It then executes the linked scenarios. The
+checks YAML and source evidence, that the committed coverage snapshot equals the
+current analysis, the 100% total/source floor and 100% accounted coverage of
+changed units against the snapshot extracted from the PR's trusted base branch.
+It then executes the linked scenarios. The
 same workflow runs on reader or requirements-tool changes, and its test matrix
 continues to run all BDD scenarios. Parser code is unchanged; the Behat context
 gained two steps that list the nonterminals and terminals a file names.
 
 ```console
-php ../requirements/bin/requirements coverage --write-baseline requirements-baseline.json
+php ../requirements/bin/requirements coverage --write-snapshot requirements-snapshot.json
 php ../requirements/bin/requirements check --live
 ```
 
 Review source, selector, statement and test changes together before updating the
-baseline. The versioned source URL makes a live check reproducible; an existing ignored cache
+snapshot. The versioned source URL makes a live check reproducible; an existing ignored cache
 allows offline checks. An empty cache requires network access, including on CI.
-Do not commit cached HTML. Baselines contain only unit keys and fingerprints.
+Do not commit cached HTML. The coverage snapshot lists every unit in scope with a
+fingerprint only, never source text; it is not a list of accepted failures.

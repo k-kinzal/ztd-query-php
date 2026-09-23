@@ -21,7 +21,7 @@ entities. Requirements are optional upstream records, not a mandatory hierarchy.
 | Source coverage | Union of units enumerated by each URI + scope; no inferred website-wide denominator | Union and empty-scope tests |
 | Verification | PHPUnit and Behat runner extensions; fresh JUnit results, positive test count, strict failures | Real subprocess integration tests |
 | Navigation and authoring quality | `spec --no-test`, filters, `lint`, deterministic `format --check` | CLI integration tests |
-| CI gates | Total, per-source and changed-unit thresholds; machine-readable baseline | Threshold and baseline tests |
+| CI gates | Total, per-source and changed-unit thresholds; machine-readable coverage snapshot | Threshold and snapshot tests |
 
 ## Coverage semantics
 
@@ -94,19 +94,23 @@ an empty cache needs network access. CI fetches upstream sources on demand.
 HTTP has bounded time and size; XML parsing disables network entities. Secrets
 belong in the extension environment, not definitions or reports.
 
-## Baselines and CI
+## Coverage snapshots and CI
 
-A versioned JSON baseline stores unit keys and semantic fingerprints only.
-It does not duplicate upstream document text; reports printed with `--json` still
-include selected unit text for review. Treat those reports as generated artifacts. The current report
-compares each unit's content and the semantic fingerprints of its claiming records
-(including statements, evidence, disposition, rationale and test references).
-Added or changed units form the differential denominator. Removed units are listed
-and rejected by default; scope removal needs an explicit `--allow-removed` decision.
-An unchanged differential denominator is reported as not applicable and passes.
-Malformed baselines are errors. The baseline must come from the trusted base
-revision; a baseline regenerated in the same PR is not a trusted comparison.
-This measures changed traceability units, not PHP line coverage.
+A versioned JSON coverage snapshot stores every unit in scope: its key and the
+semantic fingerprint of its claiming records, nothing more. It is a picture of the
+whole scope at one revision, not a list of accepted failures, so it does not shrink
+as coverage improves. It does not duplicate upstream document text; reports printed
+with `--json` still include selected unit text for review. Treat those reports as
+generated artifacts. The current report compares each unit's content and the
+semantic fingerprints of its claiming records (including statements, evidence,
+disposition, rationale and test references) with the snapshot. Units with an
+unchanged fingerprint are outside the differential denominator; added or changed
+units form it. Units the snapshot lists but the scope no longer contains are
+reported as removed and rejected by default; scope removal needs an explicit
+`--allow-removed` decision. An empty differential denominator is reported as not
+applicable and passes. Malformed snapshots are errors. The snapshot must come from
+the trusted base revision; a snapshot regenerated in the same PR is not a trusted
+comparison. This measures changed traceability units, not PHP line coverage.
 
 
 ## Implementing extensions
