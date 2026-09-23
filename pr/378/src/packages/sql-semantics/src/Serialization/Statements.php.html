@@ -60,7 +60,7 @@
 <span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">write</span>(<span class="tok-id">BoundStatement</span> <span class="tok-var">$statement</span>): <span class="tok-id">Tree</span></span>
 <span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>    {</span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>        <span class="tok-var">$execution</span> = <span class="tok-id">Execution\Statements</span>::<span class="tok-id">write</span>(<span class="tok-var">$statement</span>);</span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>        <span class="tok-var">$execution</span> = <span class="tok-id">Definition\Routines</span>::<span class="tok-id">write</span>(<span class="tok-var">$statement</span>) ?? <span class="tok-id">Execution\Statements</span>::<span class="tok-id">write</span>(<span class="tok-var">$statement</span>);</span>
 <span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>        <span class="tok-kw">if</span> (<span class="tok-var">$execution</span> !== <span class="tok-id">null</span>) {</span>
 <span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>            <span class="tok-kw">return</span> <span class="tok-var">$execution</span>;</span>
 <span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>        }</span>
