@@ -60,9 +60,9 @@ function seedsParseArguments(array $argv): array
         exit(2);
     }
     if ($options['all']) {
-        $options['tags'] = [...SqlVersion::names('mysql'), ...SqlVersion::names('pg'), ...SqlVersion::names('sqlite')];
+        $options['tags'] = [...SqlVersion::names('mysql'), ...SqlVersion::names('postgresql'), ...SqlVersion::names('sqlite')];
     } elseif ($options['tags'] === []) {
-        $options['tags'] = [SqlVersion::resolve('mysql')->name, SqlVersion::resolve('pg')->name, SqlVersion::resolve('sqlite')->name];
+        $options['tags'] = [SqlVersion::resolve('mysql')->name, SqlVersion::resolve('postgresql')->name, SqlVersion::resolve('sqlite')->name];
     }
     return $options;
 }
