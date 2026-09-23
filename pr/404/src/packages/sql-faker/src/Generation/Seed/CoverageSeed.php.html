@@ -49,33 +49,31 @@
 <span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a>{</span>
 <span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com">     * @param string $input Bytes BytePlanCompiler decodes under the corpus contract</span></span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com">     * @param string|null $rule Rule the seed was synthesized to reach, or null for a replayed input</span></span>
-<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com">     * @param int|null $ordinal Alternative of that rule</span></span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com">     * @param int $budget Expansions the decoded plan spends</span></span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com">     * @param string $sql Statement the seed generates</span></span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com">     * @param list&lt;string&gt; $reached Production IDs the derivation selected</span></span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com">     * @param list&lt;string&gt; $emitted Production IDs preserved in the output</span></span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$input</span>,</span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">string</span> <span class="tok-var">$rule</span>,</span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">int</span> <span class="tok-var">$ordinal</span>,</span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">int</span> <span class="tok-var">$budget</span>,</span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$sql</span>,</span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$reached</span>,</span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$emitted</span>,</span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>    ) {</span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    }</span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a></span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a><span class="tok-com">     * Names the seed after its target so a corpus stays readable, or after its bytes when it has none.</span></span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">name</span>(): <span class="tok-id">string</span></span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    {</span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">rule</span> === <span class="tok-id">null</span> ? <span class="tok-id">hash</span>(<span class="tok-str">&#039;sha256&#039;</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">input</span>) : <span class="tok-var">$this</span>-&gt;<span class="tok-id">rule</span> . <span class="tok-str">&#039;-&#039;</span> . (<span class="tok-var">$this</span>-&gt;<span class="tok-id">ordinal</span> ?? <span class="tok-num">0</span>);</span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    }</span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>}</span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a></span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com">     * @param string|null $target &quot;rule#ordinal&quot; of the production the seed was synthesized to reach, or null for a replayed input</span></span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com">     * @param int $budget Expansions the decoded plan spends</span></span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com">     * @param string $sql Statement the seed generates</span></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com">     * @param list&lt;string&gt; $reached Production IDs the derivation selected</span></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com">     * @param list&lt;string&gt; $emitted Production IDs preserved in the output</span></span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$input</span>,</span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">string</span> <span class="tok-var">$target</span>,</span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">int</span> <span class="tok-var">$budget</span>,</span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">string</span> <span class="tok-var">$sql</span>,</span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$reached</span>,</span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$emitted</span>,</span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>    ) {</span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>    }</span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     * Names the seed after its target so a corpus stays readable, or after its bytes when it has none.</span></span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">name</span>(): <span class="tok-id">string</span></span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>    {</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>        <span class="tok-kw">return</span> <span class="tok-var">$this</span>-&gt;<span class="tok-id">target</span> === <span class="tok-id">null</span> ? <span class="tok-id">hash</span>(<span class="tok-str">&#039;sha256&#039;</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">input</span>) : <span class="tok-id">str_replace</span>(<span class="tok-str">&#039;#&#039;</span>, <span class="tok-str">&#039;-&#039;</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">target</span>);</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    }</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>}</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a></span>
 </code></pre>
 </main>
 <footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

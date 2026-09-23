@@ -60,9 +60,9 @@
 <span class="tok-var">$sql</span> = <span class="tok-var">$faker</span>-&gt;<span class="tok-id">sql</span>(<span class="tok-id">maxDepth</span>: <span class="tok-num">6</span>);
 <span class="tok-var">$select</span> = <span class="tok-var">$faker</span>-&gt;<span class="tok-id">selectStatement</span>(<span class="tok-id">maxDepth</span>: <span class="tok-num">6</span>);</code></pre>
 </div><div class="doc-block" data-diff="added"><h3>Grammar coverage seeds</h3>
-</div><div class="doc-block" data-diff="added"><p>The repository ships PHP-Fuzzer corpora that make each default grammar take every production reachable from its statement rule: <a href="https://github.com/k-kinzal/ztd-query-php/tree/main/seeds">seeds/</a>. <code>bin/seeds.php</code> builds and checks them:</p>
-</div><div class="doc-block" data-diff="added"><pre class="code-block"><code>php bin/seeds.php build --output ../../seeds --tag mysql-8.4.7
-php bin/seeds.php check --input ../../seeds</code></pre>
+</div><div class="doc-block" data-diff="added"><p><span class="md-target" title="seeds/">seeds/</span> holds PHP-Fuzzer corpora that make each default grammar take every production reachable from its statement rule; its README explains how to replay them through a fuzz target. <code>bin/seeds.php</code> builds and checks them:</p>
+</div><div class="doc-block" data-diff="added"><pre class="code-block"><code>php bin/seeds.php build --tag mysql-8.4.7
+php bin/seeds.php check</code></pre>
 </div><div class="doc-block" data-diff="added"><p><code>SqlFaker\Generation\Choice\BytePlanEncoder</code> is the inverse of <code>BytePlanCompiler</code>: it records the choices of one guided plan construction as the bytes the compiler decodes to the same plan. <code>SqlFaker\Generation\Seed\SeedCorpusBuilder</code> uses it to synthesize such a corpus for any provider and start rule.</p>
 </div><div class="doc-block" data-diff="same"><h3>License</h3>
 </div><div class="doc-block" data-diff="same"><p>MIT License. See <span class="md-target" title="LICENSE">LICENSE</span> for details.</p>

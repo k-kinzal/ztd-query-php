@@ -253,7 +253,7 @@
 
 <span class="tok-var">$plan</span> = (<span class="tok-kw">new</span> <span class="tok-id">BytePlanCompiler</span>())-&gt;<span class="tok-id">compile</span>(<span class="tok-var">$input</span>, <span class="tok-var">$builder</span>, <span class="tok-var">$constraints</span>);
 <span class="tok-var">$sql</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$plan</span>);</code></pre>
-</div><div class="doc-block" data-diff="added"><p>The budget must lie between <code>minimumExpansions()</code> and the constraints&#039; expansion budget, 5000 without one. <code>SqlFaker\Generation\Seed\SeedCorpusBuilder</code> uses the encoder to write one such input for every production a start rule can reach; the repository&#039;s <code>seeds/</code> directory holds the results for the default grammar versions.</p>
+</div><div class="doc-block" data-diff="added"><p>The budget must lie between <code>minimumExpansions()</code> and the constraints&#039; expansion budget, 5000 without one. <code>SqlFaker\Generation\Seed\SeedCorpusBuilder</code> uses the encoder to write one such input for every production a start rule can reach; the package&#039;s <code>seeds/</code> directory holds the results for the default grammar versions.</p>
 </div><div class="doc-block" data-diff="same"><h3>MySQL</h3>
 </div><div class="doc-block" data-diff="same"><h4>Require non-empty row values</h4>
 </div><div class="doc-block" data-diff="same"><p>Use <code>withoutEmptyRows()</code> to constrain every row-value list reached during generation:</p>
