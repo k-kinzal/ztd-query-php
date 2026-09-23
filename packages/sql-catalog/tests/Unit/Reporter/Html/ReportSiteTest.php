@@ -11,124 +11,145 @@ use PHPUnit\Framework\TestCase;
 use SqlCatalog\Catalog\CallSite;
 use SqlCatalog\Catalog\Catalog;
 use SqlCatalog\Catalog\CatalogEntry;
+use SqlCatalog\Reporter\Html\CatalogIndex;
+use SqlCatalog\Reporter\Html\CatalogStatistics;
 use SqlCatalog\Reporter\Html\HtmlText;
 use SqlCatalog\Reporter\Html\ReportSite;
+use SqlCatalog\Reporter\Html\Scope;
 use SqlCatalog\Sql\StatementKind;
+use SqlCatalog\Text\LiteralText;
 use SqlCatalog\Text\TextPattern;
 
 #[CoversClass(ReportSite::class)]
 #[UsesClass(CallSite::class)]
 #[UsesClass(Catalog::class)]
 #[UsesClass(CatalogEntry::class)]
+#[UsesClass(CatalogIndex::class)]
+#[UsesClass(CatalogStatistics::class)]
 #[UsesClass(HtmlText::class)]
+#[UsesClass(Scope::class)]
+#[UsesClass(StatementKind::class)]
+#[UsesClass(LiteralText::class)]
 #[UsesClass(TextPattern::class)]
-#[UsesClass(\SqlCatalog\Text\LiteralText::class)]
 final class ReportSiteTest extends TestCase
 {
-    public function testGroupByFileKeepsAFilesStatementsTogether(): void
+    public function testCatalogIsHeldInReportingOrder(): void
     {
         $catalog = new Catalog([
-            new CatalogEntry('b1', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('b.php', 1, 'f', 'pdo.query'), []),
-            new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 2'), [], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []),
-            new CatalogEntry('a2', StatementKind::Select, TextPattern::fromText('SELECT 3'), [], [], new CallSite('a.php', 2, 'f', 'pdo.query'), []),
+            new CatalogEntry('b', StatementKind::Select, TextPattern::fromText('SELECT 2'), [], [], new CallSite('b.php', 1, 'f', 'pdo.query'), []),
+            new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []),
         ]);
 
-        self::assertSame(['a.php', 'b.php'], array_keys((new ReportSite($catalog))->groupByFile($catalog)));
+        self::assertSame(['a', 'b'], array_column((new ReportSite($catalog))->catalog()->entries(), 'id'));
     }
 
-    public function testPaginateStartsANewPageRatherThanSplittingAFile(): void
+    public function testIndexGroupsTheCatalog(): void
     {
-        $catalog = new Catalog();
-        $entry = new CatalogEntry('x', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []);
+        $catalog = new Catalog([
+            new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), ['users'], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []),
+        ]);
 
+        self::assertSame(['users'], array_keys((new ReportSite($catalog))->index()->byTable()));
+    }
+
+    public function testStatisticsCountTheCatalog(): void
+    {
+        $catalog = new Catalog([
+            new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []),
+        ]);
+
+        self::assertSame(1, (new ReportSite($catalog))->statistics()->statements());
+    }
+
+    public function testPagesForKeepsNamesApartWhenTheySlugAlike(): void
+    {
         self::assertSame(
-            [['a.php' => [$entry, $entry]], ['b.php' => [$entry, $entry]]],
-            (new ReportSite($catalog))->paginate(['a.php' => [$entry, $entry], 'b.php' => [$entry, $entry]], 2),
+            ['wp_posts' => 'tables/wp-posts.html', 'wp-posts' => 'tables/wp-posts-2.html', '' => 'tables/unnamed.html'],
+            (new ReportSite(new Catalog()))->pagesFor(['wp_posts', 'wp-posts', ''], 'tables/'),
         );
     }
 
-    public function testPaginateKeepsAFileWholeEvenWhenItIsLargerThanAPage(): void
+    public function testStatementPageIsNamedAfterTheIdentifier(): void
     {
-        $catalog = new Catalog();
-        $entry = new CatalogEntry('x', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []);
-
-        self::assertCount(1, (new ReportSite($catalog))->paginate(['a.php' => [$entry, $entry, $entry]], 2));
+        self::assertSame('statements/abc123.html', (new ReportSite(new Catalog()))->statementPage('abc123'));
     }
 
-    public function testPaginateAlwaysLeavesOnePageToRead(): void
-    {
-        self::assertSame([[]], (new ReportSite(new Catalog()))->paginate([], 2));
-    }
-
-    public function testPagesHoldTheFilesTheySplitInto(): void
+    public function testTablePageFallsBackToTheListingForAnUnknownTable(): void
     {
         $catalog = new Catalog([
-            new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []),
-            new CatalogEntry('b1', StatementKind::Select, TextPattern::fromText('SELECT 2'), [], [], new CallSite('b.php', 1, 'f', 'pdo.query'), []),
+            new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), ['app.users'], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []),
         ]);
+        $site = new ReportSite($catalog);
 
-        self::assertSame([['a.php'], ['b.php']], array_map('array_keys', (new ReportSite($catalog, 1))->pages()));
+        self::assertSame('tables/app-users.html', $site->tablePage('app.users'));
+        self::assertSame('tables.html', $site->tablePage('none'));
     }
 
-    public function testPageCountSaysHowManyPagesTheStatementsAreSplitAcross(): void
+    public function testClassPageFallsBackToTheListingForAnUnknownClass(): void
     {
         $catalog = new Catalog([
-            new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []),
-            new CatalogEntry('b1', StatementKind::Select, TextPattern::fromText('SELECT 2'), [], [], new CallSite('b.php', 1, 'f', 'pdo.query'), []),
+            new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'App\\Users::find', 'pdo.query'), []),
         ]);
+        $site = new ReportSite($catalog);
 
-        self::assertSame(2, (new ReportSite($catalog, 1))->pageCount());
-        self::assertSame(1, (new ReportSite($catalog))->pageCount());
+        self::assertSame('classes/app-users.html', $site->classPage('App\\Users'));
+        self::assertSame('namespaces.html', $site->classPage('None'));
     }
 
-    public function testPageNameIsWhereAPageOfStatementsIsWritten(): void
-    {
-        self::assertSame('statements/page-3.html', (new ReportSite(new Catalog()))->pageName(3));
-    }
-
-    public function testUrlOfAddressesAStatementOnThePageItIsOn(): void
+    public function testFilePageFallsBackToTheListingForAnUnknownFile(): void
     {
         $catalog = new Catalog([
-            new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []),
-            new CatalogEntry('b1', StatementKind::Select, TextPattern::fromText('SELECT 2'), [], [], new CallSite('b.php', 1, 'f', 'pdo.query'), []),
+            new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('src/a.php', 1, 'f', 'pdo.query'), []),
         ]);
-        $site = new ReportSite($catalog, 1);
+        $site = new ReportSite($catalog);
 
-        self::assertSame('statements/page-2.html#b1', $site->urlOf('b1'));
+        self::assertSame('files/src-a-php.html', $site->filePage('src/a.php'));
+        self::assertSame('files.html', $site->filePage('none.php'));
     }
 
-    public function testUrlOfFallsBackToTheOverviewForAStatementItDoesNotHold(): void
+    public function testFunctionAnchorIsWhatAFunctionsStatementsAreGroupedUnder(): void
     {
-        self::assertSame('index.html', (new ReportSite(new Catalog()))->urlOf('missing'));
+        self::assertSame('fn-app-users-find', (new ReportSite(new Catalog()))->functionAnchor('\\App\\Users::find'));
     }
 
-    public function testFileUrlAddressesTheFilesStatements(): void
+    public function testFunctionUrlLeadsToTheClassPageForAMethodAndTheFilePageOtherwise(): void
+    {
+        $method = new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('src/a.php', 1, 'App\\Users::find', 'pdo.query'), []);
+        $function = new CatalogEntry('b', StatementKind::Select, TextPattern::fromText('SELECT 2'), [], [], new CallSite('src/b.php', 1, 'helper', 'pdo.query'), []);
+        $site = new ReportSite(new Catalog([$method, $function]));
+
+        self::assertSame('classes/app-users.html#fn-app-users-find', $site->functionUrl($method));
+        self::assertSame('files/src-b-php.html#fn-helper', $site->functionUrl($function));
+    }
+
+    public function testTablesAreMostNamedFirst(): void
     {
         $catalog = new Catalog([
-            new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('src/a.php', 1, 'f', 'pdo.query'), []),
+            new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), ['users', 'posts'], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []),
+            new CatalogEntry('b', StatementKind::Select, TextPattern::fromText('SELECT 2'), ['posts'], [], new CallSite('a.php', 2, 'f', 'pdo.query'), []),
         ]);
 
-        self::assertSame('statements/page-1.html#file-src-a-php', (new ReportSite($catalog))->fileUrl('src/a.php'));
+        self::assertSame(['posts', 'users'], (new ReportSite($catalog))->tables());
     }
 
-    public function testFileUrlFallsBackToTheOverviewForAFileItDoesNotHold(): void
-    {
-        self::assertSame('index.html', (new ReportSite(new Catalog()))->fileUrl('none.php'));
-    }
-
-    public function testFileAnchorIsWhatTheFilesStatementsAreGroupedUnder(): void
-    {
-        self::assertSame('file-src-a-php', (new ReportSite(new Catalog()))->fileAnchor('src/a.php'));
-    }
-
-    public function testFilesSayHowManyStatementsEachOneHolds(): void
+    public function testClassesAreInNameOrder(): void
     {
         $catalog = new Catalog([
-            new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []),
-            new CatalogEntry('a2', StatementKind::Select, TextPattern::fromText('SELECT 2'), [], [], new CallSite('a.php', 2, 'f', 'pdo.query'), []),
+            new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'B::f', 'pdo.query'), []),
+            new CatalogEntry('b', StatementKind::Select, TextPattern::fromText('SELECT 2'), [], [], new CallSite('a.php', 2, 'A::f', 'pdo.query'), []),
         ]);
 
-        self::assertSame(['a.php' => 2], (new ReportSite($catalog))->files());
+        self::assertSame(['A', 'B'], (new ReportSite($catalog))->classes());
+    }
+
+    public function testFilesAreInPathOrder(): void
+    {
+        $catalog = new Catalog([
+            new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('b.php', 1, 'f', 'pdo.query'), []),
+            new CatalogEntry('b', StatementKind::Select, TextPattern::fromText('SELECT 2'), [], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []),
+        ]);
+
+        self::assertSame(['a.php', 'b.php'], (new ReportSite($catalog))->files());
     }
 
     /**
@@ -136,7 +157,7 @@ final class ReportSiteTest extends TestCase
      */
     public static function providerPrefixOf(): array
     {
-        return [['index.html', ''], ['statements/page-1.html', '../']];
+        return [['index.html', ''], ['tables/users.html', '../']];
     }
 
     #[DataProvider('providerPrefixOf')]

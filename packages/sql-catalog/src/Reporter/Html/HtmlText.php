@@ -32,6 +32,37 @@ final class HtmlText
     }
 
     /**
+     * One chip that is also a link.
+     */
+    public function chipLink(string $text, string $href, string $role = '', string $title = ''): string
+    {
+        return '<a class="chip' . ($role === '' ? '' : ' ' . $this->escape($role)) . '" href="' . $this->escape($href) . '"'
+            . ($title === '' ? '' : ' title="' . $this->escape($title) . '"')
+            . '>' . $this->escape($text) . '</a>';
+    }
+
+    /**
+     * One link.
+     */
+    public function link(string $text, string $href, string $class = ''): string
+    {
+        return '<a' . ($class === '' ? '' : ' class="' . $this->escape($class) . '"') . ' href="' . $this->escape($href) . '">'
+            . $this->escape($text) . '</a>';
+    }
+
+    /**
+     * A name with every gap in it marked, the way a gap in a statement is.
+     */
+    public function marked(string $name): string
+    {
+        return str_replace(
+            '{$}',
+            '<span class="hole hole-open" title="A part of this name the analysis could not pin down">{$}</span>',
+            $this->escape($name),
+        );
+    }
+
+    /**
      * A count written the way a reader scans it.
      */
     public function number(int $value): string
@@ -77,12 +108,28 @@ final class HtmlText
     }
 
     /**
+     * Text with every run of whitespace written as one space.
+     */
+    public function collapse(string $text): string
+    {
+        return trim((string) preg_replace('/\s+/', ' ', $text));
+    }
+
+    /**
      * Text shortened to fit, with an ellipsis where it was cut.
      */
     public function truncate(string $text, int $length): string
     {
-        $collapsed = trim((string) preg_replace('/\s+/', ' ', $text));
+        $collapsed = $this->collapse($text);
 
         return strlen($collapsed) <= $length ? $collapsed : substr($collapsed, 0, $length - 1) . '…';
+    }
+
+    /**
+     * A count beside a label, the way a heading carries one.
+     */
+    public function count(int $value, string $noun = ''): string
+    {
+        return '<span class="count">' . $this->escape($noun === '' ? $this->number($value) : $this->plural($value, $noun)) . '</span>';
     }
 }

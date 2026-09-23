@@ -43,6 +43,16 @@ final class SqlHighlighterTest extends TestCase
         );
     }
 
+    public function testInlineWritesTheStatementOnOneLine(): void
+    {
+        $parts = StatementPart::of(TextPattern::fromSegments([
+            new LiteralText("SELECT\n\t1 FROM "),
+            new TextHole(Origin::Property, TypeShape::unknown()),
+        ]));
+
+        self::assertStringStartsWith('<span class="tok-kw">SELECT</span> <span class="tok-num">1</span> <span class="tok-kw">FROM</span> <span class="hole', (new SqlHighlighter())->inline($parts));
+    }
+
     public function testRenderSaysSoWhenThereIsNothingToShow(): void
     {
         self::assertSame('<span class="none">(empty)</span>', (new SqlHighlighter())->render(StatementPart::of(TextPattern::empty())));

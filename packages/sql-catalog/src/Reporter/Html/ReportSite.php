@@ -8,30 +8,27 @@ use SqlCatalog\Catalog\Catalog;
 use SqlCatalog\Catalog\CatalogEntry;
 
 /**
- * The pages the report is split across, and where each statement sits.
+ * The pages the report is made of, and the address of everything on them.
  *
- * A catalog of a real application runs to thousands of statements, which is
- * more than one document can carry and more than a reader can scroll. The
- * statements are split across pages by the file they are written in, and a
- * file's statements are never split: a file with more statements than a page
- * holds gets a page to itself. Every page therefore reads as whole files and
- * the navigation can name them. Once the split is decided, every statement has
- * an address, which is what lets the overview, the tables and the findings link
- * to statements rather than repeat them.
+ * A reader reaches a statement by a route — the table it names, the class or
+ * file it is written in, the finding reported on it — and each route is a
+ * page of its own. Once every table, class, file and statement has an
+ * address, any page can point at any other rather than repeating it, which
+ * is what lets a statement be found from wherever the reader started.
  *
  * @visibility root
  */
 final class ReportSite
 {
     /**
-     * How many statements a page holds before the next file starts a new one.
-     */
-    public const PER_PAGE = 40;
-
-    /**
      * The page a reader opens first.
      */
     public const INDEX = 'index.html';
+
+    /**
+     * The page listing every statement, for narrowing down.
+     */
+    public const STATEMENTS = 'statements.html';
 
     /**
      * The page listing every table the catalog names.
@@ -39,158 +36,187 @@ final class ReportSite
     public const TABLES = 'tables.html';
 
     /**
+     * The page listing every namespace, with its classes and functions.
+     */
+    public const NAMESPACES = 'namespaces.html';
+
+    /**
+     * The page listing every file the statements are written in.
+     */
+    public const FILES = 'files.html';
+
+    /**
      * The page listing every finding.
      */
     public const FINDINGS = 'findings.html';
 
-    /**
-     * @var list<array<string, list<CatalogEntry>>>
-     */
-    private array $pages;
+    private Catalog $catalog;
 
-    /**
-     * @var array<string, int>
-     */
-    private array $located = [];
+    private CatalogIndex $index;
 
-    /**
-     * @var array<string, int>
-     */
-    private array $filePages = [];
+    private CatalogStatistics $statistics;
 
     private HtmlText $text;
 
     /**
-     * Splits a catalog into the pages it is read across.
-     *
-     * @param int $perPage How many statements a page holds before the next file starts a new one
+     * @var array<string, string>
      */
-    public function __construct(Catalog $catalog, int $perPage = self::PER_PAGE, ?HtmlText $text = null)
+    private array $tablePages;
+
+    /**
+     * @var array<string, string>
+     */
+    private array $classPages;
+
+    /**
+     * @var array<string, string>
+     */
+    private array $filePages;
+
+    /**
+     * Lays a catalog out as pages.
+     */
+    public function __construct(Catalog $catalog, ?HtmlText $text = null)
     {
         $this->text = $text ?? new HtmlText();
-        $this->pages = $this->paginate($this->groupByFile($catalog), max(1, $perPage));
-
-        foreach ($this->pages as $index => $page) {
-            foreach ($page as $file => $entries) {
-                $this->filePages[$file] = $index + 1;
-                foreach ($entries as $entry) {
-                    $this->located[$entry->id] = $index + 1;
-                }
-            }
-        }
+        $this->catalog = $catalog->sorted();
+        $this->index = new CatalogIndex($this->catalog);
+        $this->statistics = new CatalogStatistics($this->catalog);
+        $this->tablePages = $this->pagesFor(array_keys($this->index->byTable()), 'tables/');
+        $this->classPages = $this->pagesFor(array_keys($this->index->byClass()), 'classes/');
+        $this->filePages = $this->pagesFor(array_keys($this->index->byFile()), 'files/');
     }
 
     /**
-     * The statements of each file, in the order the report lists them.
-     *
-     * @return array<string, list<CatalogEntry>>
+     * The catalog, in reporting order.
      */
-    public function groupByFile(Catalog $catalog): array
+    public function catalog(): Catalog
     {
-        $grouped = [];
-        foreach ($catalog->sorted() as $entry) {
-            $grouped[$entry->site->file][] = $entry;
-        }
-
-        return $grouped;
+        return $this->catalog;
     }
 
     /**
-     * The file groups packed into pages.
-     *
-     * @param array<string, list<CatalogEntry>> $grouped
-     * @return list<array<string, list<CatalogEntry>>>
+     * The catalog grouped along every route.
      */
-    public function paginate(array $grouped, int $perPage): array
+    public function index(): CatalogIndex
+    {
+        return $this->index;
+    }
+
+    /**
+     * The counts the pages are read through.
+     */
+    public function statistics(): CatalogStatistics
+    {
+        return $this->statistics;
+    }
+
+    /**
+     * One page name per key, unique even when two keys slug alike.
+     *
+     * @param list<string> $keys
+     * @return array<string, string>
+     */
+    public function pagesFor(array $keys, string $directory): array
     {
         $pages = [];
-        $page = [];
-        $held = 0;
-        foreach ($grouped as $file => $entries) {
-            if ($page !== [] && $held + count($entries) > $perPage) {
-                $pages[] = $page;
-                $page = [];
-                $held = 0;
+        $taken = [];
+        foreach ($keys as $key) {
+            $slug = $this->text->slug($key);
+            $slug = $slug === '' ? 'unnamed' : $slug;
+            $candidate = $slug;
+            for ($n = 2; isset($taken[$candidate]); $n++) {
+                $candidate = $slug . '-' . $n;
             }
-            $page[$file] = $entries;
-            $held += count($entries);
-        }
-        if ($page !== []) {
-            $pages[] = $page;
+            $taken[$candidate] = true;
+            $pages[$key] = $directory . $candidate . '.html';
         }
 
-        return $pages === [] ? [[]] : $pages;
+        return $pages;
     }
 
     /**
-     * The pages, each holding the files it lists.
+     * The page one statement is written on.
+     */
+    public function statementPage(string $id): string
+    {
+        return 'statements/' . $id . '.html';
+    }
+
+    /**
+     * The page one table is written on, or the tables listing for a table the catalog does not name.
+     */
+    public function tablePage(string $table): string
+    {
+        return $this->tablePages[$table] ?? self::TABLES;
+    }
+
+    /**
+     * The page one class is written on, or the namespaces listing for a class the catalog does not know.
+     */
+    public function classPage(string $class): string
+    {
+        return $this->classPages[$class] ?? self::NAMESPACES;
+    }
+
+    /**
+     * The page one file is written on, or the files listing for a file the catalog does not hold.
+     */
+    public function filePage(string $file): string
+    {
+        return $this->filePages[$file] ?? self::FILES;
+    }
+
+    /**
+     * The identifier a function's statements are grouped under on a class or file page.
+     */
+    public function functionAnchor(string $function): string
+    {
+        return 'fn-' . $this->text->slug(Scope::of($function)->function());
+    }
+
+    /**
+     * The address of the section listing what one function issues.
      *
-     * @return list<array<string, list<CatalogEntry>>>
+     * A method is listed on its class's page; a function, and top-level code,
+     * on the page of the file it is written in.
      */
-    public function pages(): array
+    public function functionUrl(CatalogEntry $entry): string
     {
-        return $this->pages;
+        $scope = Scope::of($entry->site->function);
+        $page = $scope->class === null ? $this->filePage($entry->site->file) : $this->classPage($scope->class);
+
+        return $page . '#' . $this->functionAnchor($entry->site->function);
     }
 
     /**
-     * How many pages the statements are split across.
-     */
-    public function pageCount(): int
-    {
-        return count($this->pages);
-    }
-
-    /**
-     * The name the statements of that page are written under.
-     */
-    public function pageName(int $number): string
-    {
-        return 'statements/page-' . $number . '.html';
-    }
-
-    /**
-     * The address of one statement, relative to the root of the report.
-     */
-    public function urlOf(string $id): string
-    {
-        $page = $this->located[$id] ?? null;
-
-        return $page === null ? self::INDEX : $this->pageName($page) . '#' . $id;
-    }
-
-    /**
-     * The address of one file's statements, relative to the root of the report.
-     */
-    public function fileUrl(string $file): string
-    {
-        $page = $this->filePages[$file] ?? null;
-
-        return $page === null ? self::INDEX : $this->pageName($page) . '#' . $this->fileAnchor($file);
-    }
-
-    /**
-     * The identifier a file's statements are grouped under.
-     */
-    public function fileAnchor(string $file): string
-    {
-        return 'file-' . $this->text->slug($file);
-    }
-
-    /**
-     * Every file the report lists, with how many statements it holds.
+     * Every table that has a page, most named first.
      *
-     * @return array<string, int>
+     * @return list<string>
+     */
+    public function tables(): array
+    {
+        return array_keys($this->tablePages);
+    }
+
+    /**
+     * Every class that has a page, in name order.
+     *
+     * @return list<string>
+     */
+    public function classes(): array
+    {
+        return array_keys($this->classPages);
+    }
+
+    /**
+     * Every file that has a page, in path order.
+     *
+     * @return list<string>
      */
     public function files(): array
     {
-        $files = [];
-        foreach ($this->pages as $page) {
-            foreach ($page as $file => $entries) {
-                $files[$file] = count($entries);
-            }
-        }
-
-        return $files;
+        return array_keys($this->filePages);
     }
 
     /**

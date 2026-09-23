@@ -5,91 +5,86 @@ declare(strict_types=1);
 namespace Tests\Unit\Reporter\Html;
 
 use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use SqlCatalog\Reporter\Html\HtmlText;
 
 #[CoversClass(HtmlText::class)]
 final class HtmlTextTest extends TestCase
 {
-    public function testEscapeMakesTextSafeToPlaceInTheDocument(): void
+    public function testEscapeMakesTextSafeForTheDocument(): void
     {
-        self::assertSame('&lt;b&gt; &amp; &quot;x&quot;', (new HtmlText())->escape('<b> & "x"'));
+        self::assertSame('&lt;a href=&quot;x&quot;&gt;&#039;', (new HtmlText())->escape('<a href="x">\''));
     }
 
-    public function testChipCarriesItsLabelAndRole(): void
+    public function testChipCarriesItsRoleAndTitle(): void
     {
-        self::assertSame('<span class="chip s-ok">resolved</span>', (new HtmlText())->chip('resolved', 's-ok'));
+        self::assertSame('<span class="chip k-select" title="What it does">SELECT</span>', (new HtmlText())->chip('SELECT', 'k-select', 'What it does'));
+        self::assertSame('<span class="chip">plain</span>', (new HtmlText())->chip('plain'));
     }
 
-    public function testChipCanCarryATitle(): void
+    public function testChipLinkIsAChipThatLeadsSomewhere(): void
     {
         self::assertSame(
-            '<span class="chip" title="why">x</span>',
-            (new HtmlText())->chip('x', '', 'why'),
+            '<a class="chip chip-ghost" href="tables/posts.html" title="t">posts</a>',
+            (new HtmlText())->chipLink('posts', 'tables/posts.html', 'chip-ghost', 't'),
         );
     }
 
-    public function testChipWithoutARoleCarriesNoExtraClass(): void
+    public function testLinkEscapesItsTextAndAddress(): void
     {
-        self::assertSame('<span class="chip">x</span>', (new HtmlText())->chip('x'));
+        self::assertSame('<a class="mono" href="a.html?q=1&amp;b=2">A &amp; B</a>', (new HtmlText())->link('A & B', 'a.html?q=1&b=2', 'mono'));
+        self::assertSame('<a href="a.html">A</a>', (new HtmlText())->link('A', 'a.html'));
     }
 
-    public function testNumberSeparatesThousands(): void
+    public function testNumberIsWrittenForScanning(): void
     {
-        self::assertSame('12,345', (new HtmlText())->number(12345));
+        self::assertSame('1,234', (new HtmlText())->number(1234));
     }
 
-    /**
-     * @return list<array{int, string}>
-     */
-    public static function providerPlural(): array
+    public function testPluralAgreesWithTheCount(): void
     {
-        return [[0, '0 files'], [1, '1 file'], [2, '2 files']];
+        self::assertSame('1 table', (new HtmlText())->plural(1, 'table'));
+        self::assertSame('2 tables', (new HtmlText())->plural(2, 'table'));
     }
 
-    #[DataProvider('providerPlural')]
-    public function testPluralAgreesWithTheCount(int $value, string $expected): void
+    public function testPercentIsWholeAndSafeOnZero(): void
     {
-        self::assertSame($expected, (new HtmlText())->plural($value, 'file'));
+        self::assertSame('33%', (new HtmlText())->percent(1, 3));
+        self::assertSame('0%', (new HtmlText())->percent(1, 0));
     }
 
-    /**
-     * @return list<array{int, int, string}>
-     */
-    public static function providerPercent(): array
+    public function testBarShowsAShare(): void
     {
-        return [[1, 0, '0%'], [1, 4, '25%'], [3, 4, '75%'], [4, 4, '100%']];
+        self::assertSame('<span class="bar bar-ok"><span style="--w:50%"></span></span>', (new HtmlText())->bar(1, 2, 'bar-ok'));
     }
 
-    #[DataProvider('providerPercent')]
-    public function testPercentIsAShareOfATotal(int $value, int $total, string $expected): void
+    public function testSlugIsWritableAsAnIdentifier(): void
     {
-        self::assertSame($expected, (new HtmlText())->percent($value, $total));
+        self::assertSame('app-users-find', (new HtmlText())->slug('App\\Users::find'));
     }
 
-    public function testBarCarriesTheShareAsACustomProperty(): void
+    public function testCollapseWritesEveryRunOfWhitespaceAsOneSpace(): void
+    {
+        self::assertSame('a b c', (new HtmlText())->collapse("  a\n\t b   c "));
+    }
+
+    public function testTruncateCollapsesAndCuts(): void
+    {
+        self::assertSame('SELECT…', (new HtmlText())->truncate("SELECT   1\nFROM t", 7));
+        self::assertSame('SELECT 1', (new HtmlText())->truncate('SELECT 1', 8));
+    }
+
+    public function testMarkedMarksEveryGapInAName(): void
     {
         self::assertSame(
-            '<span class="bar bar-ok"><span style="--w:25%"></span></span>',
-            (new HtmlText())->bar(1, 4, 'bar-ok'),
+            '<span class="hole hole-open" title="A part of this name the analysis could not pin down">{$}</span>posts &amp; more',
+            (new HtmlText())->marked('{$}posts & more'),
         );
     }
 
-    public function testBarWithoutARoleCarriesNoExtraClass(): void
+    public function testCountIsWrittenBesideAHeading(): void
     {
-        self::assertSame('<span class="bar"><span style="--w:50%"></span></span>', (new HtmlText())->bar(1, 2));
-    }
-
-    public function testSlugTurnsAPathIntoSomethingWritableAsAnIdentifier(): void
-    {
-        self::assertSame('wp-includes-class-wpdb-php', (new HtmlText())->slug('wp-includes/class-wpdb.php'));
-    }
-
-    public function testTruncateShortensLongTextAndCollapsesSpace(): void
-    {
-        $text = new HtmlText();
-        self::assertSame('a b', $text->truncate("a\n  b", 10));
-        self::assertSame('abcd…', $text->truncate('abcdefgh', 5));
+        self::assertSame('<span class="count">3 tables</span>', (new HtmlText())->count(3, 'table'));
+        self::assertSame('<span class="count">3</span>', (new HtmlText())->count(3));
     }
 }

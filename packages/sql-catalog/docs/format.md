@@ -79,7 +79,7 @@ pull request read as the change in the SQL an application issues.
 | `statements[].resolution` | How far the analyzer got and why it got no further: `resolved`, `external-input`, `incomplete-model`, `incomplete` or `not-analyzed`. |
 | `statements[].searchClosed` | Whether the analyzer closed every dependency it set out to follow: the resolution is `resolved` or `external-input`, and no bound on loop passes, callers or ways in cut the search short. When false, the statements listed for this call site may not be all of them. |
 | `statements[].correlated` | Whether the alternatives listed are ones the code can reach. When false, the text was assembled from parts that vary independently, so some combinations may be unreachable. |
-| `statements[].tables` | The tables the statement names, in order and without repeats. |
+| `statements[].tables` | The tables the statement names, in order and without repeats. A name the analyzer knows only part of — a prefix read from configuration, say — is written with `{$}` in place of the unknown part; a name nothing is known of is not listed. |
 | `statements[].site` | The file and line, the enclosing function, and which database call was matched. A `sink` of `unmatched` means the call is written the way a database call is written but what it is called on could not be worked out. A call with a `not-analyzed` resolution is one nothing was read from, which is how a gap in the analysis is told apart from a statement whose text did not resolve. |
 | `statements[].through` | The calls that were followed to reach this reading, outermost first. Empty when the statement was read from the body it is written in. |
 | `statements[].placeholders[].value` | What the parameter is bound to, or `null` when no binding was found. `exhaustive` says whether `values` is all of them; when it is false, only `type` is a statement about the value. |
@@ -111,22 +111,28 @@ statement in a file that was edited above it.
 
 ## The HTML report
 
-`--reporter html` writes a site rather than a page, because a catalog of a real
-application runs to thousands of statements and neither one document nor one
-scroll holds them:
+`--reporter html` writes a site rather than a page. A reader comes to a catalog
+to find a statement and decide something about it — which queries a column
+rename will break, what a class issues before it is refactored, where SQL is
+assembled from values the program does not control — so the site is laid out
+as the routes to a statement rather than as one long listing:
 
 | File | What it is |
 |------|------------|
-| `index.html` | The overview: the counts, how far the analysis got, what the statements do, what was reported, the tables and every file |
-| `statements/page-N.html` | The statements themselves, split across pages by the file they are written in. A file's statements are never split, so a file with more of them than a page holds gets a page to itself |
-| `tables.html` | Every table the statements name, with what reads it and what writes it |
-| `findings.html` | Every finding, under the rule that reported it |
+| `index.html` | The overview: the routes to a statement, with the most used tables, classes and files on each; what needs attention, by rule and by the functions flagged most; and how far the analysis got, with every count a link to the statements it counts |
+| `statements.html` | Every statement, to narrow down on the page by kind, resolution, severity and text. Links from elsewhere in the report arrive here with the narrowing in the query string, as `?kind=delete` or `?resolution=external-input&namespace=App` |
+| `tables.html`, `tables/*.html` | Every table the statements name, grouped by schema when any is qualified; and one page per table with the functions that use it, the tables named alongside it, and its statements as writes, reads and schema changes |
+| `namespaces.html`, `classes/*.html` | Every namespace with the classes and functions declared in it; and one page per class with its statements method by method |
+| `files.html`, `files/*.html` | Every file by directory; and one page per file with its statements function by function |
+| `findings.html` | The functions flagged most, then every finding under the rule that reported it |
+| `statements/*.html` | One page per statement: the SQL laid out a clause per line, where it is issued and through what, its tables, bound values and findings, and the other statements of the same function and on the same table |
 | `assets/report.css`, `assets/report.js` | The stylesheet and the script, written once beside the pages rather than into each of them |
-| `assets/search-index.js` | Every statement and the page it is on, so one statement stays findable once it is no longer all on one screen |
+| `assets/search-index.js` | Every statement and its page, so the search box on every page finds a statement by its SQL, table, function or file |
 
 The pages are read from the file system as readily as from a server: the search
-index is a script rather than data fetched at runtime, and nothing is loaded
-over the network.
+index is a script rather than data fetched at runtime, nothing is loaded over
+the network, and every page reads without the script — the script only adds
+narrowing, sorting and search.
 
 A gap is rendered as a marked `{$}` that says, when pointed at, where the value
 filling it comes from — and a call that no statement was read from is not
