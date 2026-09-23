@@ -13,6 +13,10 @@ namespace SqlSemantics\Model\Statement;
  */
 enum StatementKind: string
 {
+    case Check = 'CHECK';
+    case Checksum = 'CHECKSUM';
+    case Repair = 'REPAIR';
+    case Optimize = 'OPTIMIZE';
     case XaStart = 'XA START';
     case XaEnd = 'XA END';
     case XaPrepare = 'XA PREPARE';

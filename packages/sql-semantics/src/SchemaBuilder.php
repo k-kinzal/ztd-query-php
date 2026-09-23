@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace SqlSemantics;
 
-use SqlParser\Parser\Node;
 use SqlSemantics\Ast\DialectParser;
 
 /**
@@ -53,7 +52,10 @@ final class SchemaBuilder
      */
     public function build(string ...$sql): Schema
     {
-        $trees = array_map(fn (string $text): Node => $this->parser->parse($text), array_values($sql));
+        $trees = [];
+        foreach ($sql as $text) {
+            array_push($trees, ...$this->parser->parseAll($text));
+        }
         $initial = (new Schema($this->dialect, [], $this->defaultSchema, $this->parser->version()))->withFunctions(...$this->functions);
         return (new Binding\Schema\SchemaEvolution($initial))->build($trees);
     }

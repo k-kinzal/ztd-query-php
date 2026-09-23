@@ -24,7 +24,7 @@ final class Statements
      */
     public static function write(BoundStatement $statement): ?Tree
     {
-        return self::transactions($statement) ?? match (true) {
+        return MySqlMaintenance::write($statement) ?? self::transactions($statement) ?? match (true) {
             $statement instanceof Statement\Locking\LockRelationsStatement,
             $statement instanceof Statement\Locking\LockTablesStatement => TableLocks::write($statement),
             $statement instanceof Statement\Server\CheckpointStatement,

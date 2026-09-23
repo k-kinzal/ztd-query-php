@@ -23,7 +23,9 @@ Schema::withVariables(VariableDefinition ...$variables): Schema;
 Select `Dialect::MySql`, `Dialect::PostgreSql`, or `Dialect::Sqlite` and a
 [grammar release](../README.md#support-syntax). The default namespace is the empty
 string for MySQL, `public` for PostgreSQL, and `main` for SQLite. Each `build()` call
-starts a new snapshot and applies its supplied definitions in order. Calling
+starts a new snapshot and applies its supplied definitions in order. Each argument
+may contain a SQL script; statement boundaries follow the selected grammar, so
+semicolons inside literals or compound bodies do not split statements. Calling
 `Binder::bind()` does not apply the bound operation to that snapshot.
 
 `Schema` exposes `dialect`, `grammarVersion`, `defaultSchema`, ordered `tables`,
@@ -107,7 +109,7 @@ not a serialized interchange format. Multiple input statements are applied in or
 | `CREATE TABLE users (id INTEGER); DROP TABLE users` | The resulting `tables` list is empty. |
 | `CREATE TABLE users (id INTEGER, score INTEGER); CREATE UNIQUE INDEX active_scores ON users(score DESC) INCLUDE(id) WHERE score > 0` | The index is unique; its first element is a descending `ColumnKey` for `score`; `include` contains `id`; `predicate` is the typed comparison `score > 0`. |
 | MySQL: `CREATE TABLE users (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin, KEY names(name(10))) ENGINE=InnoDB` | `properties.engine` is InnoDB; `id.generation` is `AutoIncrementColumn`; `name.attributes` supplies the character set and collation; its index key has prefix length 10. |
-| MySQL, separate input arguments: `CREATE TABLE source (id INT NOT NULL)`, `CREATE TABLE copied LIKE source` | The copied declaration contains `id` and its NotNull fact. Columns, generation expressions, checks, and indexes refer to the destination table; foreign keys are omitted and check names are left for the database to assign. Storage options are copied, while TEMPORARY follows the new statement and the auto-increment counter and physical directories are reset. |
+| MySQL: `CREATE TABLE source (id INT NOT NULL); CREATE TABLE copied LIKE source` | The copied declaration contains `id` and its NotNull fact. Columns, generation expressions, checks, and indexes refer to the destination table; foreign keys are omitted and check names are left for the database to assign. Storage options are copied, while TEMPORARY follows the new statement and the auto-increment counter and physical directories are reset. |
 | SQLite: `CREATE TABLE prices (amount NUMERIC(10,2))` | The identity is `SqliteDeclaration`, with numeric affinity and size/scale spellings `10` and `2`. |
 | SQLite: `CREATE TABLE users (id INTEGER PRIMARY KEY) WITHOUT ROWID, STRICT` | `properties` is `SqliteProperties`, with `withoutRowId` and `strict` both true. |
 

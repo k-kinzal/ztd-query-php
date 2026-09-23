@@ -118,6 +118,13 @@ subnamespaces under `Model\Statement`.
 | MySQL: `CLONE LOCAL DATA DIRECTORY '/tmp/clone'` | `CloneLocalStatement` | A required destination-directory text literal. |
 | MySQL: `BINLOG 'YWJj'` | `ApplyBinlogStatement` | A required text literal containing an encoded binary-log event. |
 | MySQL: `TRUNCATE users` | `TruncateTableStatement` | One required physical `table`; there is no predicate or query input. |
+| MySQL: `CHECK TABLE users QUICK FOR UPGRADE` | `CheckTablesStatement` | Nonempty physical `tables` and ordered `CheckOption` values. |
+| MySQL: `REPAIR LOCAL TABLE users QUICK USE_FRM` | `RepairTablesStatement` | Nonempty physical `tables`, ordered `RepairOption` values, and `BinlogPolicy`. |
+| MySQL: `OPTIMIZE TABLE users`, `ANALYZE TABLE users` | `OptimizeTablesStatement`, `AnalyzeTablesStatement` | Nonempty physical `tables` and `BinlogPolicy`; each class identifies its own operation. |
+| MySQL: `CHECKSUM TABLE users QUICK` | `ChecksumTablesStatement` | Nonempty physical `tables` and `ChecksumMode` selecting automatic, stored, or row-scanned checksums. |
+| MySQL: `ANALYZE TABLE users UPDATE HISTOGRAM ON score WITH 100 BUCKETS AUTO UPDATE` | `UpdateHistogramStatement` | One required `table`, nonempty bound `columns`, optional `BucketCount` from 1 to 1024, `RefreshPolicy`, and `BinlogPolicy`. |
+| MySQL: `ANALYZE TABLE users UPDATE HISTOGRAM ON score USING DATA '{}'` | `ImportHistogramStatement` | One required `table` and bound `column`, an opaque text-literal `data` operand, and `BinlogPolicy`. |
+| MySQL: `ANALYZE TABLE users DROP HISTOGRAM ON score` | `DropHistogramStatement` | One required `table`, nonempty bound `columns`, and `BinlogPolicy`; no sampling or import operands. |
 | PostgreSQL: `TRUNCATE ONLY users, incoming RESTART IDENTITY CASCADE` | `TruncateRelationsStatement` | Nonempty explicit `tables`, an `IdentityReset` policy, and a `ReferencingTables` policy for foreign-key dependencies. Binding records these requests without removing rows, resetting sequences, or expanding runtime effects. |
 | `REINDEX INDEX app.ix`, `REINDEX TABLE app.t`, `REINDEX SCHEMA app` | `ReindexObjectStatement` | Required object name, `ReindexObjectKind`, and PostgreSQL rebuild options. |
 | `REINDEX DATABASE`, `REINDEX SYSTEM` | `ReindexDatabaseStatement` | User-table or system-table index selection in the current database. An optional database name records an explicit name assertion. |
@@ -127,6 +134,21 @@ INSERT, UPDATE, DELETE, and MERGE retain ordered RETURNING `outputs` where the
 selected language provides them. Their `affectedTables()` method identifies write
 targets. REPLACE uses an insertion form with `InsertMode::Replace`. It does not lose
 the distinction between explicit rows, a source query, and column assignments.
+
+MySQL table-maintenance statements are in `Model\Statement\Maintenance\MySql`.
+Their table references expose the supplied declarations; histogram columns identify
+their target relation occurrence and column symbol. `withTarget()` changes a histogram's
+table and columns together, so a column from another table cannot be attached to it.
+`BinlogPolicy` distinguishes the default binary-log request from LOCAL or
+NO_WRITE_TO_BINLOG. These operations describe requested storage-engine work without
+performing it or consulting live statistics.
+
+CHECK, REPAIR, OPTIMIZE, ANALYZE, and histogram operations expose four result columns:
+`Table`, `Op`, `Msg_type`, and `Msg_text`. Their `StatusColumn` expressions carry a
+`StatusField` enum, producing scope identity, and non-NULL VARCHAR facts. CHECKSUM
+exposes `Table` and `Checksum`; its `ChecksumColumn` describes a non-NULL VARCHAR
+table name or a nullable unsigned BIGINT checksum. The structure supplies result
+roles and types, not status messages, computed checksums, or histogram values.
 
 MySQL role operations are in `Model\Statement\Configuration\Role`. Their
 account names preserve case and separate host qualification; an omitted host

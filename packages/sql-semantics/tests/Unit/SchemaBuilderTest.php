@@ -221,4 +221,15 @@ final class SchemaBuilderTest extends TestCase
         self::assertSame('integer', $boundQuery1->outputs[0]->expression->type->name);
     }
 
+    #[TestWith([Dialect::MySql])]
+    #[TestWith([Dialect::PostgreSql])]
+    #[TestWith([Dialect::Sqlite])]
+    public function testBuildReadsScriptBoundariesWithoutSplittingLiteralSemicolons(Dialect $dialect): void
+    {
+        $schema = (new SchemaBuilder($dialect))->build("CREATE TABLE t(v VARCHAR(50) DEFAULT 'a;b'); /* ; */ CREATE TABLE u(id INT);", 'ALTER TABLE t ADD COLUMN id INT');
+        self::assertSame(['t', 'u'], array_column($schema->tables, 'name'));
+        self::assertSame(['v', 'id'], array_column($schema->tables[0]->columns, 'name'));
+        self::assertSame(['id'], array_column($schema->tables[1]->columns, 'name'));
+    }
+
 }

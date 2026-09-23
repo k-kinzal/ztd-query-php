@@ -12,6 +12,9 @@ namespace SqlSemantics\Model\Validation;
  */
 enum InputViolation: string
 {
+    case HistogramTarget = 'histogram-target';
+    case HistogramImport = 'histogram-import';
+    case HistogramBuckets = 'histogram-buckets';
     case TemporalOperand = 'temporal-operand';
     case TableColumns = 'table-columns';
     case XaIdentifier = 'xa-identifier';
@@ -54,6 +57,9 @@ enum InputViolation: string
     public function message(): string
     {
         return [
+            'histogram-target' => 'A histogram request requires exactly one target table.',
+            'histogram-import' => 'Imported histogram data describes exactly one column.',
+            'histogram-buckets' => 'A histogram bucket limit must be an integer from 1 to 1024.',
             'temporal-operand' => 'Temporal arithmetic requires one scalar temporal input and one scalar interval quantity.',
             'table-columns' => 'A table declaration requires at least one column in this SQL dialect.',
             'xa-identifier' => 'An XA identifier requires bounded byte-string components and a nonnegative integer format identifier.',
