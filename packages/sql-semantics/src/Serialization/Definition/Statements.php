@@ -20,7 +20,8 @@ final class Statements
      */
     public static function write(BoundStatement $statement): ?Tree
     {
-        return Storage\Removals::write($statement)
+        return Routine\Alterations::write($statement)
+            ?? Storage\Removals::write($statement)
             ?? Database\MySqlDatabases::write($statement)
             ?? Foreign\ForeignServers::write($statement)
             ?? Foreign\ForeignRemovals::write($statement)

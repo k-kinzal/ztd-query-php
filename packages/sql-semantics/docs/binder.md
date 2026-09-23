@@ -123,6 +123,8 @@ subnamespaces under `Model\Statement`.
 | MySQL: `DROP ROLE IF EXISTS reader` | `DropRolesStatement` | Nonempty named `roles` and `ifExists`; each role has its own username and optional host. |
 | MySQL: `CREATE SPATIAL REFERENCE SYSTEM 4120 NAME 'Greek' DEFINITION 'coordinate-system text'` | `CreateSpatialReferenceSystemStatement` | Required nonzero unsigned 32-bit `srid`, `SpatialDefinition`, and a mutually exclusive `CreationPolicy`: require a new definition, ignore an existing one, or replace it. |
 | MySQL: `DROP SPATIAL REFERENCE SYSTEM IF EXISTS 4120` | `DropSpatialReferenceSystemStatement` | Required nonzero unsigned 32-bit `srid` and `ifExists`; no declaration metadata. |
+| MySQL: `ALTER FUNCTION app.f READS SQL DATA` | `Definition\MySql\AlterFunctionStatement` | Required routine `name` and `RoutineAlteration` containing optional language, data-access, security, and comment changes. |
+| MySQL: `ALTER PROCEDURE app.p SQL SECURITY INVOKER COMMENT 'note'` | `AlterProcedureStatement` | The same characteristic-change domain, targeting a procedure rather than a function. |
 | MySQL: `DROP FUNCTION IF EXISTS app.f`, `DROP PROCEDURE app.p` | `Definition\MySql\DropFunctionStatement`, `DropProcedureStatement` | One required `QualifiedName` and an existence policy. There is no overload signature or dependency policy. |
 | PostgreSQL: `DROP FUNCTION f, g(), h(IN integer) CASCADE` | `Definition\PostgreSql\DropFunctionsStatement` | Nonempty `targets`: `RoutineByName` leaves arguments unspecified; `RoutineBySignature` owns the ordered parameters, including an explicit empty list. `ifExists` and `DropBehavior` apply to the request. |
 | PostgreSQL: `DROP PROCEDURE p(text)`, `DROP ROUTINE r` | `DropProceduresStatement`, `DropRoutinesStatement` | The same typed overload selectors, with distinct statement types for procedure-only and general routine lookup. |
@@ -205,6 +207,16 @@ Binding does not connect to the remote server, discover columns, or create local
 tables. The supplied schema snapshot stays unchanged. Import selections and
 options can be replaced immutably, and the remote server/schema pair can be
 replaced together with `withRemote()`.
+
+A `RoutineAlteration` records each requested characteristic independently. `null`
+means that the characteristic stays unchanged. `SqlDataAccess` identifies no SQL,
+SQL without declared data access, reading data, or modifying data;
+`RoutineSecurity` selects definer or invoker privileges. `language` names the
+routine language and `comment` is a MySQL text literal. Repeated declarations use
+the last value for that characteristic, as in the database grammar. MySQL also
+accepts an ALTER with every characteristic unchanged. `withChanges()` replaces
+the complete request; binding does not execute the routine or infer whether its
+body obeys the declared characteristics.
 
 Storage removal statements retain local storage identities rather than table
 references. `engine` selects a named storage engine when supplied. Ordinary

@@ -12,6 +12,7 @@ namespace SqlSemantics\Model\Validation;
  */
 enum InputViolation: string
 {
+    case RoutineLanguage = 'routine-language';
     case StorageName = 'storage-name';
     case StorageOption = 'storage-option';
     case DatabaseName = 'database-name';
@@ -72,6 +73,7 @@ enum InputViolation: string
     case AlterLock = 'invalid-alter-lock';
     /** @var array<string, string> */
     private const MESSAGES = [
+        'routine-language' => 'A stored routine language requires a nonempty name.',
         'storage-name' => 'Storage DDL requires nonempty object and engine names.',
         'storage-option' => 'Storage DDL cannot repeat the engine option or a consecutive legacy NO_WAIT request.',
         'database-name' => 'A database operation requires a nonempty database name.',
