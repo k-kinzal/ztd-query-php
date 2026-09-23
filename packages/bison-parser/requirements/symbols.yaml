@@ -1,0 +1,189 @@
+$schema: 'https://raw.githubusercontent.com/k-kinzal/ztd-query-php/main/packages/requirements/schemas/definition.schema.json'
+version: 1
+source:
+  id: bison-symbols
+  uri: 'http://www.gnu.org/software/bison/manual/html_node/Symbols.html'
+  format: html
+  selector: '#Symbols > p, #Symbols > ul > li'
+  snapshot: .requirements-cache/symbols.html
+  sha256: 05267f3b9eafa5c537c2a790bbc93e9ddb2b43c103dca39bdf46ad477fe6fbc5
+items:
+  -
+    id: BISON-REQ-NAMES
+    kind: requirement
+    statement: 'Bison names admit letters, underscores, periods and non-initial digits and dashes.'
+    evidence:
+      -
+        selector: '#Symbols > p:nth-of-type(4)'
+        quote: 'Symbol names can contain letters, underscores, periods, and non-initial digits and dashes. Dashes in symbol names are a GNU extension, incompatible with POSIX Yacc. Periods and dashes make symbol names less convenient to use with named references, which require brackets around such names (see Named References). Terminal symbols that contain periods or dashes make little sense: since they are not valid symbols (in most programming languages) they are not exported as token names.'
+    labels:
+      - manual
+      - lexical
+  -
+    id: BISON-NAME-001
+    statement: 'When a symbol name is read, the reader shall accept letters, underscores, periods and non-initial digits and dashes.'
+    evidence: []
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/symbols.feature:18'
+    labels:
+      - manual
+      - grammar
+    category: symbols
+    requirements:
+      - BISON-REQ-NAMES
+  -
+    id: BISON-NAME-002
+    statement: 'If a symbol name begins with a dash, then the reader shall reject the name.'
+    evidence: []
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/symbols.feature:43'
+    labels:
+      - manual
+      - grammar
+    category: symbols
+    requirements:
+      - BISON-REQ-NAMES
+  -
+    id: BISON-NAME-003
+    statement: 'If a symbol name begins with a digit, then the reader shall reject the name.'
+    evidence: []
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/symbols.feature:54'
+    labels:
+      - manual
+      - grammar
+    category: symbols
+    requirements:
+      - BISON-REQ-NAMES
+  -
+    id: BISON-SYMBOL-001
+    statement: 'When a named token is declared with %token, the reader shall preserve its identifier.'
+    evidence:
+      -
+        selector: '#Symbols > ul > li:nth-child(1)'
+        quote: 'A named token kind is written with an identifier, like an identifier in C. By convention, it should be all upper case. Each such name must be defined with a Bison declaration such as %token. See Token Kind Names.'
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/symbols.feature:65'
+    labels:
+      - manual
+      - grammar
+    category: symbols
+  -
+    id: BISON-SYMBOL-002
+    statement: 'When a character token is read, the reader shall accept C character syntax and escapes without a declaration and reject null characters, multicharacter constants and backslash-newline.'
+    evidence:
+      -
+        selector: '#Symbols > ul > li:nth-child(2)'
+        quote: "A character token kind (or literal character token) is written in the grammar using the same syntax used in C for character constants; for example, '+' is a character token kind. A character token kind doesn’t need to be declared unless you need to specify its semantic value data type (see Data Types of Semantic Values), associativity, or precedence (see Operator Precedence). By convention, a character token kind is used only to represent a token that consists of that particular character. Thus, the token kind '+' is used to represent the character ‘+’ as a token. Nothing enforces this convention, but if you depart from it, your program will confuse other readers. All the usual escape sequences used in character literals in C can be used in Bison as well, but you must not use the null character as a character literal because its numeric code, zero, signifies end-of-input (see Calling Convention for yylex). Also, unlike standard C, trigraphs have no special meaning in Bison character literals, nor is backslash-newline allowed."
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/symbols.feature:84'
+      -
+        runner: behavior
+        target: 'spec/features/symbols.feature:102'
+      -
+        runner: behavior
+        target: 'spec/features/symbols.feature:126'
+      -
+        runner: behavior
+        target: 'spec/features/symbols.feature:136'
+      -
+        runner: behavior
+        target: 'spec/features/symbols.feature:146'
+    labels:
+      - manual
+      - grammar
+    category: symbols
+  -
+    id: BISON-SYMBOL-003
+    statement: 'When a string token is read, the reader shall preserve its spelling and alias, decode C escapes, treat trigraphs literally and reject null characters and backslash-newline.'
+    evidence:
+      -
+        selector: '#Symbols > ul > li:nth-child(3)'
+        quote: 'A literal string token is written like a C string constant; for example, "<=" is a literal string token. A literal string token doesn’t need to be declared unless you need to specify its semantic value data type (see Data Types of Semantic Values), associativity, or precedence (see Operator Precedence). You can associate the literal string token with a symbolic name as an alias, using the %token declaration (see Token Kind Names). If you don’t do that, the lexical analyzer has to retrieve the token code for the literal string token from the yytname table (see Calling Convention for yylex). Warning: literal string tokens do not work in Yacc. By convention, a literal string token is used only to represent a token that consists of that particular string. Thus, you should use the token kind "<=" to represent the string ‘<=’ as a token. Bison does not enforce this convention, but if you depart from it, people who read your program will be confused. All the escape sequences used in string literals in C can be used in Bison as well, except that you must not use a null character within a string literal. Also, unlike Standard C, trigraphs have no special meaning in Bison string literals, nor is backslash-newline allowed. A literal string token must contain two or more characters; for a token containing just one character, use a character token (see above).'
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/symbols.feature:157'
+      -
+        runner: behavior
+        target: 'spec/features/symbols.feature:175'
+      -
+        runner: behavior
+        target: 'spec/features/symbols.feature:193'
+      -
+        runner: behavior
+        target: 'spec/features/symbols.feature:203'
+      -
+        runner: behavior
+        target: 'spec/features/symbols.feature:219'
+      -
+        runner: behavior
+        target: 'spec/features/symbols.feature:230'
+    labels:
+      - manual
+      - grammar
+    category: symbols
+  -
+    id: BISON-SYMBOL-004
+    statement: 'When the reserved error token appears in a rule, the reader shall preserve it as a symbol.'
+    evidence:
+      -
+        selector: '#Symbols > p:nth-of-type(11)'
+        quote: 'The symbol error is a terminal symbol reserved for error recovery (see Error Recovery); you shouldn’t use it for any other purpose. In particular, yylex should never return this value. The default value of the error token is 256, unless you explicitly assigned 256 to one of your tokens with a %token declaration.'
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/symbols.feature:255'
+    labels:
+      - manual
+      - grammar
+    category: symbols
+  -
+    id: BISON-RUNTIME-001
+    statement: 'When a token is requested, the generated parser shall interpret the numeric token code returned by yylex.'
+    status: unsupported
+    reason: 'This package reads grammar files into a syntax tree; generated parsers, scanner execution and C compilation belong to GNU Bison and its consumers.'
+    evidence:
+      -
+        selector: '#Symbols > p:nth-of-type(7)'
+        quote: 'The value returned by yylex is always one of the terminal symbols, except that a zero or negative value signifies end-of-input. Whichever way you write the token kind in the grammar rules, you write it the same way in the definition of yylex. The numeric code for a character token kind is simply the positive numeric code of the character, so yylex can use the identical value to generate the requisite code, though you may need to convert it to unsigned char to avoid sign-extension on hosts where char is signed. Each named token kind becomes a C macro in the parser implementation file, so yylex can use the name to stand for the code. (This is why periods don’t make sense in terminal symbols.) See Calling Convention for yylex.'
+    labels:
+      - manual
+      - generator-runtime
+    category: generator-runtime
+  -
+    id: BISON-RUNTIME-002
+    statement: 'Where a scanner is compiled separately, the generator shall emit token definitions in a header file.'
+    status: unsupported
+    reason: 'This package reads grammar files into a syntax tree; generated parsers, scanner execution and C compilation belong to GNU Bison and its consumers.'
+    evidence:
+      -
+        selector: '#Symbols > p:nth-of-type(8)'
+        quote: 'If yylex is defined in a separate file, you need to arrange for the token-kind definitions to be available there. Use the -d option when you run Bison, so that it will write these definitions into a separate header file name.tab.h which you can include in the other source files that need it. See Invoking Bison.'
+    labels:
+      - manual
+      - generator-runtime
+    category: generator-runtime
+  -
+    id: BISON-RUNTIME-003
+    statement: 'The generated parser and scanner shall use a consistent character set.'
+    status: unsupported
+    reason: 'This package reads grammar files into a syntax tree; generated parsers, scanner execution and C compilation belong to GNU Bison and its consumers.'
+    evidence:
+      -
+        selector: '#Symbols > p:nth-of-type(10)'
+        quote: 'The yylex function and Bison must use a consistent character set and encoding for character tokens. For example, if you run Bison in an ASCII environment, but then compile and run the resulting program in an environment that uses an incompatible character set like EBCDIC, the resulting program may not work because the tables generated by Bison will assume ASCII numeric values for character tokens. It is standard practice for software distributions to contain C source files that were generated by Bison in an ASCII environment, so installers on platforms that are incompatible with ASCII must rebuild those files before compiling them.'
+    labels:
+      - manual
+      - generator-runtime
+    category: generator-runtime

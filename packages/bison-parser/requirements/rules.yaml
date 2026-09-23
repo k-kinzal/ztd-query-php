@@ -1,0 +1,135 @@
+$schema: 'https://raw.githubusercontent.com/k-kinzal/ztd-query-php/main/packages/requirements/schemas/definition.schema.json'
+version: 1
+source:
+  id: bison-rules
+  uri: 'http://www.gnu.org/software/bison/manual/html_node/Rules-Syntax.html'
+  format: html
+  selector: '#Rules-Syntax > p, #Rules-Syntax > div.example > pre'
+  snapshot: .requirements-cache/rules-syntax.html
+  sha256: a6272ac279cba48dbffb85e7da0d3468f3c4efbf3c9ed090f55fc52d0f674562
+items:
+  -
+    id: BISON-RULE-001
+    statement: 'When a grammar rule is read, the reader shall preserve its result and ordered components between a colon and semicolon.'
+    evidence:
+      -
+        selector: '#Rules-Syntax > p:nth-of-type(1)'
+        quote: 'A Bison grammar rule has the following general form:'
+      -
+        selector: '#Rules-Syntax > p:nth-of-type(2)'
+        quote: 'where result is the nonterminal symbol that this rule describes, and components are various terminal and nonterminal symbols that are put together by this rule (see Symbols, Terminal and Nonterminal).'
+      -
+        selector: '#Rules-Syntax > div.example:nth-of-type(2) > pre'
+        quote: 'result: components…;'
+      -
+        selector: '#Rules-Syntax > div.example:nth-of-type(3) > pre'
+        quote: "exp: exp '+' exp;"
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/rules.feature:17'
+    labels:
+      - manual
+      - grammar
+    category: rules
+  -
+    id: BISON-RULE-002
+    statement: 'When whitespace is inserted between rule symbols, the reader shall preserve the same syntax tree.'
+    evidence:
+      -
+        selector: '#Rules-Syntax > p:nth-of-type(5)'
+        quote: 'White space in rules is significant only to separate symbols. You can add extra white space as you wish.'
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/rules.feature:35'
+    labels:
+      - manual
+      - grammar
+    category: rules
+  -
+    id: BISON-RULE-003
+    statement: 'When actions occur among rule components, the reader shall retain their braced code in order.'
+    evidence:
+      -
+        selector: '#Rules-Syntax > p:nth-of-type(6)'
+        quote: 'Scattered among the components can be actions that determine the semantics of the rule. An action looks like this:'
+      -
+        selector: '#Rules-Syntax > div.example:nth-of-type(4) > pre'
+        quote: '{C statements}'
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/rules.feature:51'
+    labels:
+      - manual
+      - grammar
+    category: rules
+  -
+    id: BISON-RULE-004
+    statement: 'When braced code is read, the reader shall balance braces and preserve the body without validating C syntax.'
+    evidence:
+      -
+        selector: '#Rules-Syntax > p:nth-of-type(7)'
+        quote: 'This is an example of braced code, that is, C code surrounded by braces, much like a compound statement in C. Braced code can contain any sequence of C tokens, so long as its braces are balanced. Bison does not check the braced code for correctness directly; it merely copies the code to the parser implementation file, where the C compiler can check it.'
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/rules.feature:72'
+      -
+        runner: behavior
+        target: 'spec/features/rules.feature:89'
+    labels:
+      - manual
+      - grammar
+    category: rules
+  -
+    id: BISON-RULE-005
+    statement: 'When braces occur in code, the reader shall ignore braces in comments and literals, count C digraphs internally and require a closing brace at the top level.'
+    evidence:
+      -
+        selector: '#Rules-Syntax > p:nth-of-type(8)'
+        quote: 'Within braced code, the balanced-brace count is not affected by braces within comments, string literals, or character constants, but it is affected by the C digraphs ‘<%’ and ‘%>’ that represent braces. At the top level braced code must be terminated by ‘}’ and not by a digraph. Bison does not look for trigraphs, so if braced code uses trigraphs you should ensure that they do not affect the nesting of braces or the boundaries of comments, string literals, or character constants.'
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/rules.feature:106'
+      -
+        runner: behavior
+        target: 'spec/features/rules.feature:124'
+      -
+        runner: behavior
+        target: 'spec/features/rules.feature:141'
+      -
+        runner: behavior
+        target: 'spec/features/rules.feature:158'
+    labels:
+      - manual
+      - grammar
+    category: rules
+    related:
+      - BISON-RULE-004
+  -
+    id: BISON-RULE-006
+    statement: 'When alternatives share a result, the reader shall preserve alternatives written with vertical bars or separate rules.'
+    evidence:
+      -
+        selector: '#Rules-Syntax > p:nth-of-type(10)'
+        quote: 'Multiple rules for the same result can be written separately or can be joined with the vertical-bar character ‘|’ as follows:'
+      -
+        selector: '#Rules-Syntax > p:nth-of-type(11)'
+        quote: 'They are still considered distinct rules even when joined in this way.'
+      -
+        selector: '#Rules-Syntax > div.example:nth-of-type(5) > pre'
+        quote: 'result: rule1-components… | rule2-components… … ;'
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/rules.feature:169'
+      -
+        runner: behavior
+        target: 'spec/features/rules.feature:197'
+    labels:
+      - manual
+      - grammar
+    category: rules
