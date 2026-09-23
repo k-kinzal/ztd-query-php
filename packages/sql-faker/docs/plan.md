@@ -307,7 +307,7 @@ $plan = (new BytePlanCompiler())->compile($input, $builder, $constraints);
 $sql = $provider->generate($plan);
 ```
 
-The budget must lie between `minimumExpansions()` and the constraints' expansion budget, 5000 without one. `SqlFaker\Generation\Seed\SeedCorpusBuilder` uses the encoder to write one such input for every production a start rule can reach; the package's `seeds/` directory holds the results for the default grammar versions.
+The budget must lie between `minimumExpansions()` and the constraints' expansion budget, 5000 without one. `bin/seeds.php` uses the encoder to write one such input for every production a start rule can reach; the package's `seeds/` directory holds the results for the default grammar versions.
 ## MySQL
 
 ### Require non-empty row values

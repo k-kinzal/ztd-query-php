@@ -70,7 +70,7 @@ php bin/seeds.php build --tag mysql-8.4.7
 php bin/seeds.php check
 ```
 
-`SqlFaker\Generation\Choice\BytePlanEncoder` is the inverse of `BytePlanCompiler`: it records the choices of one guided plan construction as the bytes the compiler decodes to the same plan. `SqlFaker\Generation\Seed\SeedCorpusBuilder` uses it to synthesize such a corpus for any provider and start rule.
+`SqlFaker\Generation\Choice\BytePlanEncoder` is the inverse of `BytePlanCompiler`: it records the choices of one guided plan construction as the bytes the compiler decodes to the same plan, which is how the seeds are produced.
 
 ## License
 
