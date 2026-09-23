@@ -22,7 +22,7 @@ final class DialectParser
     /**
      * @param string|null $version A release tag shipped by sql-parser
      */
-    public function __construct(Dialect $dialect, ?string $version = null)
+    public function __construct(private readonly Dialect $dialect, ?string $version = null)
     {
         $this->parser = match ($dialect) {
             Dialect::PostgreSql => new PostgreSqlParser($version),
@@ -40,6 +40,22 @@ final class DialectParser
     public function parse(string $sql): Node
     {
         return $this->parser->parse($sql);
+    }
+
+    /**
+     * Parses a script using grammar statement boundaries and preserves absolute source offsets.
+     * @return list<Node>
+     * @throws \SqlParser\Lexer\LexicalException
+     * @throws \SqlParser\Parser\SyntaxException
+     * @throws \SqlSemantics\SemanticException
+     */
+    public function parseAll(string $sql): array
+    {
+        if ($this->parser instanceof MySqlParser) {
+            return $this->parser->parseAll($sql);
+        }
+        $tree = $this->parser->parse($sql);
+        return array_map(static fn (Node $statement): Node => new Node($tree->name, $tree->ordinal, [$statement]), StatementList::read($tree, $this->dialect));
     }
 
     /**

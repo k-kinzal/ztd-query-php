@@ -21,11 +21,7 @@ final class Expressions
      */
     public static function write(Expression $value): Tree
     {
-        return match (true) {
-            $value instanceof Scalar\Text\Position => \SqlSemantics\Serialization\Scalar\TextExpressions::write($value),
-            $value instanceof Scalar\Temporal\Extract => \SqlSemantics\Serialization\Scalar\TemporalExpressions::write($value),
-            $value instanceof Scalar\Control\RaiseError,
-            $value instanceof Scalar\Control\RaiseIgnore => \SqlSemantics\Serialization\Scalar\ControlExpressions::write($value),
+        return \SqlSemantics\Serialization\Scalar\IntrinsicExpressions::write($value) ?? match (true) {
             $value instanceof Scalar\Value\ContextReference,
             $value instanceof Scalar\Value\Literal,
             $value instanceof Scalar\Value\ConfigurationIdentifier,

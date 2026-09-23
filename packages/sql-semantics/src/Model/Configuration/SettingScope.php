@@ -16,7 +16,5 @@ enum SettingScope: string
     case Persist = 'persist';
     case PersistOnly = 'persist-only';
     case User = 'user';
-    case NextTransaction = 'next-transaction';
-    case Transaction = 'transaction';
     case Database = 'database';
 }

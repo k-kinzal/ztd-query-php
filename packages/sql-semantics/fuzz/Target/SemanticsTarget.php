@@ -35,6 +35,10 @@ final class SemanticsTarget
         if ($sql === '' || $statement->source->toString() !== $sql) {
             throw new RuntimeException('Binding lost the original statement.');
         }
+        $script = $this->binder->bindAll($sql, strict: false);
+        if (count($script) !== 1 || SemanticFacts::read($statement) !== SemanticFacts::read($script[0])) {
+            throw new RuntimeException('Single-statement binding disagrees with script binding.');
+        }
         $serialized = (new \SqlSemantics\SimpleSerializer())->serialize($statement);
         $roundTrip = $this->binder->bind($serialized, strict: false);
         if (SemanticFacts::read($statement) !== SemanticFacts::read($roundTrip) || $serialized !== $roundTrip->toString()) {

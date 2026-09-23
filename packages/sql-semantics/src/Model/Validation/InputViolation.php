@@ -12,6 +12,9 @@ namespace SqlSemantics\Model\Validation;
  */
 enum InputViolation: string
 {
+    case TemporalOperand = 'temporal-operand';
+    case TableColumns = 'table-columns';
+    case XaIdentifier = 'xa-identifier';
     case DeleteTarget = 'delete-target';
     case ExtractionField = 'extraction-field';
     case QueryOperand = 'query-operand';
@@ -51,6 +54,9 @@ enum InputViolation: string
     public function message(): string
     {
         return [
+            'temporal-operand' => 'Temporal arithmetic requires one scalar temporal input and one scalar interval quantity.',
+            'table-columns' => 'A table declaration requires at least one column in this SQL dialect.',
+            'xa-identifier' => 'An XA identifier requires bounded byte-string components and a nonnegative integer format identifier.',
             'delete-target' => 'A MySQL DELETE destination requires a named table reference.',
             'extraction-field' => 'EXTRACT requires a field defined by the database language.',
             'query-operand' => 'A query operand requires a SELECT, VALUES, or TABLE operation.',

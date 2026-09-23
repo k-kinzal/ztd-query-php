@@ -4,44 +4,58 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Binding\Configuration;
 
-use SqlParser\Lexer\Token;
 use SqlParser\Parser\Node;
-use SqlSemantics\Binding\Scope;
+use SqlSemantics\Ast\Tree;
+use SqlSemantics\Binding\Statement\UnclassifiedSql;
 use SqlSemantics\Dialect;
-use SqlSemantics\Model\Configuration\Setting;
+use SqlSemantics\Model\Statement\Configuration\Transaction as Statement;
+use SqlSemantics\Model\Statement\ConfigurationStatement;
+use SqlSemantics\Model\Statement\Origin;
+use SqlSemantics\Model\Transaction\Access;
+use SqlSemantics\Model\Transaction\Configuration\Deferrability;
+use SqlSemantics\Model\Transaction\Configuration\Locality;
+use SqlSemantics\Model\Transaction\Isolation;
+use SqlSemantics\Model\Validation\Collections;
 
 /**
- * Retains isolation, access, and deferrability settings with their transaction lifetime.
- *
+ * Binds transaction policy requests at their grammar boundaries, separate from variable assignments.
  * @visibility SqlSemantics
  */
 final class TransactionSettings
 {
     /**
-     * @param list<Token> $tokens
-     * @return list<Setting>
+     * Separates current, next, default, and imported-snapshot operations without applying them.
+     * @throws UnclassifiedSql
      */
-    public function bind(array $tokens, Node $source, Scope $scope): array
+    public static function bind(Origin $origin, Node $source): ?ConfigurationStatement
     {
-        $words = SettingTokens::words($tokens);
-        $index = array_search('TRANSACTION', $words, true);
-        if ($index === false) {
-            return [];
+        if ($origin->dialect === Dialect::MySql && $source->name === 'set') {
+            return Transaction\MySqlSettings::bind($origin, $source);
         }
-        $settingScope = in_array($words[0], ['SESSION', 'GLOBAL'], true) ? strtolower($words[0]) : ($scope->identifiers->dialect === Dialect::MySql ? 'next-transaction' : 'transaction');
-        $result = [];
-        foreach (SettingTokens::split(array_slice($tokens, $index + 1)) as $group) {
-            $pending = $group;
-            while ($pending !== []) {
-                $values = SettingTokens::words($pending);
-                $name = match ($values[0]) {
-                    'ISOLATION' => 'transaction_isolation', 'READ' => 'transaction_access', default => 'transaction_deferrable'
-                };
-                $length = $values[0] === 'ISOLATION' ? (in_array($values[2] ?? '', ['READ', 'REPEATABLE'], true) ? 4 : 3) : ($values[0] === 'DEFERRABLE' ? 1 : 2);
-                $result[] = (new SettingBinder())->make([$name], $settingScope, 'set', array_slice($pending, $values[0] === 'ISOLATION' ? 2 : 0, $values[0] === 'ISOLATION' ? $length - 2 : $length), $source, $scope);
-                $pending = array_slice($pending, $length);
-            }
+        if ($origin->dialect !== Dialect::PostgreSql || $source->name !== 'VariableSetStmt') {
+            return null;
         }
-        return $result;
+        $rest = Tree::child($source, ['set_rest']);
+        if ($rest === null) {
+            return null;
+        }
+        $locality = ($source->tokens()[1]->name ?? '') === 'LOCAL' ? Locality::Local : Locality::Session;
+        $list = Tree::child($rest, ['transaction_mode_list']);
+        if ($list === null) {
+            return Transaction\SnapshotBinder::bind($origin, $rest, $locality);
+        }
+        $modes = [];
+        foreach (Tree::outer($list, ['transaction_mode_item']) as $item) {
+            $isolation = Tree::child($item, ['iso_level']);
+            $text = strtoupper(Tree::text($item));
+            $modes[] = $isolation !== null ? Isolation::from(strtoupper(Tree::text($isolation))) : (Access::tryFrom($text) ?? Deferrability::from($text));
+        }
+        return ($rest->tokens()[0]->name ?? '') === 'SESSION'
+            ? new Statement\SetSessionTransactionStatement($origin, Collections::nonEmpty($modes), $locality)
+            : new Statement\SetCurrentTransactionStatement($origin, Collections::nonEmpty($modes), $locality);
     }
+
+
+
+
 }

@@ -190,4 +190,19 @@ final class IndexKeysTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Schema\Index\ExpressionKey::class, $keys[1]);
     }
 
+    public function testReadKeepsNestedAggregateOrderingInsideItsExpression(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(a INTEGER)'));
+        $statement = $binder->bind('CREATE INDEX ix ON t((sum(a ORDER BY a ASC NULLS LAST)), (sum(a ORDER BY a DESC) + 1) ASC)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateIndexStatement::class, $statement);
+        self::assertNull($statement->index->definition->elements[0]->direction);
+        self::assertNull($statement->index->definition->elements[0]->nulls);
+        self::assertSame('ASC', $statement->index->definition->elements[1]->direction?->value);
+        $rebound = $binder->bind((new \SqlSemantics\SimpleSerializer())->serialize($statement));
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateIndexStatement::class, $rebound);
+        self::assertNull($rebound->index->definition->elements[0]->direction);
+        self::assertNull($rebound->index->definition->elements[0]->nulls);
+        self::assertSame('ASC', $rebound->index->definition->elements[1]->direction?->value);
+    }
+
 }

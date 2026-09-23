@@ -24,7 +24,7 @@ final class Statements
      */
     public static function write(BoundStatement $statement): ?Tree
     {
-        return match (true) {
+        return self::transactions($statement) ?? match (true) {
             $statement instanceof Statement\Locking\LockRelationsStatement,
             $statement instanceof Statement\Locking\LockTablesStatement => TableLocks::write($statement),
             $statement instanceof Statement\Server\CheckpointStatement,
@@ -56,6 +56,21 @@ final class Statements
             $statement instanceof Statement\Cursor\CloseAllCursorsStatement => Cursors::write($statement),
             $statement instanceof Statement\Plan\ExplainStatement,
             $statement instanceof Statement\Plan\ExplainConnectionStatement => Plans::write($statement),
+            default => null,
+        };
+    }
+    /**
+     * Routes local and distributed transaction requests by their concrete operation.
+     */
+    public static function transactions(BoundStatement $statement): ?Tree
+    {
+        return match (true) {
+            $statement instanceof Statement\Transaction\Xa\XaStartStatement,
+            $statement instanceof Statement\Transaction\Xa\XaEndStatement,
+            $statement instanceof Statement\Transaction\Xa\XaPrepareStatement,
+            $statement instanceof Statement\Transaction\Xa\XaCommitStatement,
+            $statement instanceof Statement\Transaction\Xa\XaRollbackStatement,
+            $statement instanceof Statement\Transaction\Xa\XaRecoverStatement => XaTransactions::write($statement),
             $statement instanceof Statement\Transaction\BeginTransactionStatement,
             $statement instanceof Statement\Transaction\CommitTransactionStatement,
             $statement instanceof Statement\Transaction\RollbackTransactionStatement,

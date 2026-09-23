@@ -26,7 +26,8 @@ final class Functions
             return new Tree('window-call', [self::write($value->function), Build::keyword('OVER'), Windows::write($value->window, $value->type->dialect)]);
         }
         $name = $value->function->name()->parts;
-        $function = $value->type->dialect !== \SqlSemantics\Dialect::PostgreSql && count($name) === 1 && preg_match('/^[a-zA-Z_][a-zA-Z_0-9]*$/D', $name[0]) === 1 ? Build::keyword($name[0]) : Build::identifier($name, $value->type->dialect);
+        $intrinsicName = $value->type->dialect === \SqlSemantics\Dialect::MySql && in_array(strtoupper($name[0]), ['EXTRACT', 'POSITION', 'DATE_ADD', 'DATE_SUB', 'ADDDATE', 'SUBDATE'], true);
+        $function = !$intrinsicName && $value->type->dialect !== \SqlSemantics\Dialect::PostgreSql && count($name) === 1 && preg_match('/^[a-zA-Z_][a-zA-Z_0-9]*$/D', $name[0]) === 1 ? Build::keyword($name[0]) : Build::identifier($name, $value->type->dialect);
         if ($value instanceof Function\AllRowsAggregate) {
             $call = new Tree('all-rows', [$function, Build::parentheses(Build::keyword('*'))]);
         } elseif ($value instanceof Function\OrderedSetCall) {

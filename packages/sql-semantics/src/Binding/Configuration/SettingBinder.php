@@ -33,10 +33,6 @@ final class SettingBinder
         if ($verb === 'PRAGMA') {
             return [$this->pragma($tokens, $source, $scope)];
         }
-        $words = SettingTokens::words($tokens);
-        if (in_array('TRANSACTION', array_slice($words, 0, 5), true)) {
-            return (new TransactionSettings())->bind($tokens, $source, $scope);
-        }
         $groups = $scope->identifiers->dialect === Dialect::MySql ? SettingTokens::split($tokens) : [$tokens];
         $result = [];
         foreach ($groups as $group) {

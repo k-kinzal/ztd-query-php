@@ -27,6 +27,15 @@ original snapshot intact.
 | `CompoundStatement` | `withLeft(BoundQuery $left)`, `withRight(BoundQuery $right)` | Replaces one set operand and rechecks result width and types. |
 | `TableStatement` | `withTable(TableDefinition $table)` | Replaces the source declaration and derives its result columns. |
 | `MergeStatement` | `withCondition(Expression $condition)` | Replaces the required match predicate. |
+| `SetNextTransactionStatement`, `SetDefaultTransactionStatement` | `withIsolation(?Isolation $isolation)`, `withAccess(?Access $access)` | At least one characteristic must remain present. Default changes additionally own `withScope(DefaultScope $scope)`. |
+| `SetCurrentTransactionStatement`, `SetSessionTransactionStatement` | `withModes(array $modes)`, `withLocality(Locality $locality)` | Requires a nonempty ordered list of isolation, access, or deferrability enums; the target transaction scope stays fixed by the class. |
+| `SetTransactionSnapshotStatement` | `withSnapshot(Literal $snapshot)`, `withLocality(Locality $locality)` | Requires a PostgreSQL text literal identifying the requested snapshot. |
+| Password request statements | `withAccount(AccountName\|CurrentAccount $account)` | Changes the target reference while retaining the credential source form. |
+| `SetPasswordStatement`, `SetDerivedPasswordStatement` | `withPassword(Literal $password)` | Requires a MySQL text literal; hashing or authentication is not performed. |
+| `SetPasswordHashStatement` | `withHash(Literal $hash)` | Retains the distinct already-encoded credential form. |
+| `SetPasswordStatement`, `SetRandomPasswordStatement` | `withCurrentPassword(?Literal $currentPassword)`, `withRetainCurrentPassword(bool $retainCurrentPassword)` | Changes the verification operand or secondary-password request, validated against the selected release. |
+| `SetDerivedPasswordStatement` | `withDerivation(PasswordDerivation $derivation)` | Selects the MySQL 5.6 derivation request. |
+| `SetAccountOptionsStatement` | `withOperations(array $operations)` | Requires at least two ordered clauses, including a credential change; each variable clause has one assignment. |
 | `SetStatement` | `withValues(AssignedSetting $setting, array $values)` | Replaces an owned setting's nonempty value list. |
 | `CreateTableStatement` | `withColumn(ColumnDefinition $target, ColumnDefinition $replacement)` | Replaces an owned declaration and rebinds defaults, generation expressions, and constraints. |
 | `CreateIndexStatement` | `withKey(int $ordinal, Expression $expression)` | Replaces a key while retaining its index modifiers. |
@@ -89,3 +98,11 @@ selected release; inactive comments do not contribute an operation.
 
 Repeated serialization is stable. After a transformation, `source` describes the
 newly validated SQL, while the original Statement retains its original provenance.
+
+XA control statements own `withTransactionId()`. Start, end, and commit forms also
+own `withMode()` with their respective policy enums. `XaRecoverStatement` owns
+`withEncoding()`; its result columns derive from that request. These methods return
+a new validated statement and retain the original snapshot. A transaction format
+requires a branch qualifier, each identifier component must be a MySQL byte-string
+literal within its length domain, and policies cannot be assigned to unrelated XA
+operations.

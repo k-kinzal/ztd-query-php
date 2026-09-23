@@ -23,6 +23,18 @@ final class ConfigurationBinder
     public static function bind(Origin $origin, Node $statement, string $kind, Scope $scope): ?BoundStatement
     {
         if ($kind === 'SET') {
+            $transaction = TransactionSettings::bind($origin, $statement);
+            if ($transaction !== null) {
+                return $transaction;
+            }
+            $password = Password\PasswordBinder::bind($origin, $statement, $scope);
+            if ($password !== null) {
+                return $password;
+            }
+            $role = Role\RoleBinder::bind($origin, $statement, $scope->identifiers);
+            if ($role !== null) {
+                return $role;
+            }
             $settings = [];
             foreach ((new SettingBinder())->bind($statement, $scope) as $setting) {
                 if (!$setting instanceof \SqlSemantics\Model\Configuration\DefaultSetting && !$setting instanceof \SqlSemantics\Model\Configuration\AssignedUserVariable && !$setting instanceof \SqlSemantics\Model\Configuration\AssignedSetting && !$setting instanceof \SqlSemantics\Model\Configuration\CurrentSetting) {

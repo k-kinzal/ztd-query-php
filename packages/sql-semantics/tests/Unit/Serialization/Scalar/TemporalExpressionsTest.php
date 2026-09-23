@@ -21,4 +21,12 @@ final class TemporalExpressionsTest extends TestCase
         self::assertSame('SELECT EXTRACT(YEAR FROM CURRENT_TIMESTAMP)', $query->toString());
         self::assertSame('SELECT EXTRACT(YEAR FROM CURRENT_TIMESTAMP)', $binder->bind($query->toString())->toString());
     }
+
+    public function testWritePreservesTheBindingOrderOfLeadingIntervalParameters(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
+        $query = $binder->bind('SELECT INTERVAL ? DAY + ?, ? - INTERVAL ? HOUR');
+        self::assertSame('SELECT (INTERVAL ? DAY + ?), DATE_SUB(?, INTERVAL ? HOUR)', $query->toString());
+        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+    }
 }

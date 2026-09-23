@@ -63,6 +63,21 @@ subnamespaces under `Model\Statement`.
 | `MERGE INTO users USING incoming ON users.id=incoming.id WHEN MATCHED THEN DELETE` | `MergeStatement` | Required target, input, match condition, and ordered, typed actions. |
 | `SET LOCAL work_mem='64MB'` | `SetStatement` | Nonempty `settings`: an `AssignedSetting` with required expressions, a `DefaultSetting` requesting the parameter default, a `CurrentSetting` copying current state, or an `AssignedUserVariable` with a required target and one expression. |
 | MySQL: `SET @x=123` | `SetStatement` | An `AssignedUserVariable` holds its `target` reference and one required `value`. A declared variable target retains its supplied `VariableDefinition`. |
+| MySQL: `SET TRANSACTION READ ONLY` | `SetNextTransactionStatement` | Optional `isolation` and `access` enums, with at least one required; applies to the next transaction. |
+| MySQL: `SET GLOBAL TRANSACTION ISOLATION LEVEL SERIALIZABLE` | `SetDefaultTransactionStatement` | Required `DefaultScope`, plus an isolation and/or access request. SESSION, GLOBAL, PERSIST, and PERSIST_ONLY remain distinct; LOCAL denotes SESSION. |
+| PostgreSQL: `SET TRANSACTION READ ONLY, DEFERRABLE` | `SetCurrentTransactionStatement` | Nonempty ordered `modes` containing only `Isolation`, `Access`, or `Deferrability` enums, plus outer SET `Locality`. |
+| PostgreSQL: `SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY` | `SetSessionTransactionStatement` | The same typed mode roles, targeting session defaults for subsequent transactions. |
+| PostgreSQL: `SET TRANSACTION SNAPSHOT 'snapshot-id'` | `SetTransactionSnapshotStatement` | Required `snapshot` text literal and SET `Locality`; the snapshot identifier is retained without loading snapshot contents. |
+| MySQL 5.7+: `SET PASSWORD FOR 'u'@'localhost' = 'new'` | `SetPasswordStatement` | Required `account` and `password` text literal; optional `currentPassword` verification operand and `retainCurrentPassword` flag on releases with those clauses. |
+| MySQL 8+: `SET PASSWORD TO RANDOM` | `SetRandomPasswordStatement` | Required `account`, optional verification operand, and retention flag; no supplied new password. Four derived result columns describe the requested server output. |
+| MySQL 5.6: `SET PASSWORD = '*encoded'` | `SetPasswordHashStatement` | Required `account` and `hash` text literal. The encoded value is not interpreted. |
+| MySQL 5.6: `SET PASSWORD = PASSWORD('new')` | `SetDerivedPasswordStatement` | Required `account`, cleartext `password` operand, and `PasswordDerivation` (`Configured` or `Pre41`). The consumer performs the requested hashing. |
+| MySQL 5.6: `SET PASSWORD = '*one', PASSWORD FOR 'u' = '*two'` | `SetAccountOptionsStatement` | Two or more ordered, individually typed credential or variable operations. Each variable operation contains one assignment. |
+| MySQL: `SET ROLE NONE`, `SET ROLE DEFAULT`, `SET ROLE ALL` | `SetRolePolicyStatement` | A required `SessionRolePolicy` enum; no assignment or role-name payload. |
+| MySQL: `SET ROLE 'reader'@'localhost'` | `SetExplicitRolesStatement` | Nonempty `roles`, each an `AccountName` with separate `username` and optional `host`. |
+| MySQL: `SET ROLE ALL EXCEPT 'writer'` | `SetRolesExceptStatement` | Nonempty `excludedRoles`; the operation identifies the complementary selection. |
+| MySQL: `SET DEFAULT ROLE ALL TO 'alice'` | `SetDefaultRolePolicyStatement` | Required `DefaultRolePolicy` (`None` or `All`) and nonempty recipient `accounts`. |
+| MySQL: `SET DEFAULT ROLE 'reader' TO 'alice', 'bob'` | `SetDefaultRolesStatement` | Separate nonempty `roles` and recipient `accounts`. This records account defaults rather than current session activation. |
 | `RESET work_mem`, `RESET ALL` | `ResetSettingStatement`, `ResetAllSettingsStatement` | A required named parameter, or all session parameters with no name payload. |
 | MySQL: `RESET PERSIST IF EXISTS max_connections`, `RESET PERSIST` | `ResetSettingStatement`, `ResetAllPersistedVariablesStatement` | A persisted variable with its existence policy, or all persisted variables. |
 | SQLite: `PRAGMA main.cache_size` | `ReadPragmaStatement` | Qualified `name`; no assigned value. |
@@ -90,6 +105,11 @@ subnamespaces under `Model\Statement`.
 | PostgreSQL: `LOCK ONLY users IN SHARE MODE NOWAIT` | `LockRelationsStatement` | Nonempty ordered `tables`, one `PostgreSqlLockMode`, and a `nowait` policy. Descendant exclusion is retained on each target. |
 | MySQL: `LOCK TABLES users AS u READ LOCAL, incoming WRITE` | `LockTablesStatement` | Nonempty `locks`; each `MySqlTableLock` owns its required table occurrence, alias, and independent `MySqlLockMode`. |
 | `CHECKPOINT` | `CheckpointStatement` | A checkpoint request with no value operands. |
+| MySQL: `XA START 'g', 'b', 42 JOIN` | `XaStartStatement` | Required `transactionId` and `StartMode` (`NewBranch`, `Join`, or `Resume`). `XA BEGIN` produces the same start operation. |
+| MySQL: `XA END 'g' SUSPEND FOR MIGRATE` | `XaEndStatement` | Required `transactionId` and `EndMode` (`End`, `Suspend`, or `Migrate`). |
+| MySQL: `XA PREPARE 'g'`, `XA ROLLBACK 'g'` | `XaPrepareStatement`, `XaRollbackStatement` | Required `transactionId`; each class fixes its operation and has no start or commit policy. |
+| MySQL: `XA COMMIT 'g' ONE PHASE` | `XaCommitStatement` | Required `transactionId` and `CommitMode` (`Prepared` or `OnePhase`). |
+| MySQL: `XA RECOVER CONVERT XID` | `XaRecoverStatement` | `RecoveryEncoding` and four derived result columns; no input transaction identifier. |
 | MySQL: `KILL CONNECTION 42`, `KILL QUERY 42` | `KillConnectionStatement`, `KillQueryStatement` | A required `connectionId` expression and a concrete operation identifying what to stop. |
 | MySQL: `CREATE TEMPORARY TABLE copied LIKE original` | `CreateTableLikeStatement` | Required destination `target` and `template` table reference, plus `temporary` and `ifNotExists`. The reference exposes the supplied source definition without applying the copy to the snapshot. |
 | MySQL: `INSTALL PLUGIN audit SONAME 'audit.so'` | `InstallPluginStatement` | Required plugin `name` and text-literal `library`. |
@@ -107,6 +127,55 @@ INSERT, UPDATE, DELETE, and MERGE retain ordered RETURNING `outputs` where the
 selected language provides them. Their `affectedTables()` method identifies write
 targets. REPLACE uses an insertion form with `InsertMode::Replace`. It does not lose
 the distinction between explicit rows, a source query, and column assignments.
+
+MySQL role operations are in `Model\Statement\Configuration\Role`. Their
+account names preserve case and separate host qualification; an omitted host
+refers to `%`. A quoted name such as `'NONE'` is a named role, distinct from the
+`None` policy. Binding records the requested selection and recipients without
+reading grants, activating roles, or changing account defaults. These statements
+have no variable assignments. Each owns immutable replacements for its required
+policy, role list, exclusion list, or recipient list.
+
+Transaction-setting statements distinguish the current transaction, the next
+transaction, and defaults for future transactions. PostgreSQL mode requests preserve
+their order, including repeated requests. `Locality` retains the outer SET lifetime,
+separately from which transaction settings the statement targets. These operations
+describe requested changes; the supplied Schema and live transaction state are not
+changed or consulted. In particular, snapshot existence and execution-state
+requirements belong to the consumer executing the request.
+
+Account identifiers use `Model\Configuration\Account\AccountName`, with username
+and host kept separately. A password request for the authenticated principal uses
+`CurrentAccount::Authenticated`; binding does not look up its username. Credential
+literals preserve their SQL spelling. Verification, hashing, plugin selection, and
+random generation are execution operations represented by the structure. MySQL 5.7's
+deprecated `PASSWORD(...)` spelling in SET PASSWORD normalizes to the same cleartext
+request as direct assignment, following that release's behavior.
+
+`SetRandomPasswordStatement::resultColumns()` describes `user`, `host`,
+`generated password` (VARCHAR), and `auth_factor` (unsigned BIGINT). Each expression
+is a `GeneratedPasswordColumn` with the producing `scopeId`, account reference, and
+`GeneratedPasswordField` enum. These are server-produced fields with no scalar SQL
+inputs, not generated or retrieved credential values.
+
+XA statement classes are in `Model\Statement\Transaction\Xa`. Their
+`TransactionId` requires a `global` string, hexadecimal, or bit literal of at most
+64 bytes. An optional `BranchIdentifier` has its own required `qualifier` literal
+and optional `FormatIdentifier`. A format cannot be supplied without a branch.
+The format operand retains its numeric spelling, including the hexadecimal and
+numeric forms admitted by the MySQL grammar. Binding does not convert literal
+operands into runtime transaction identifiers. Omitted qualifiers and formats
+request MySQL's empty branch and format 1 defaults.
+
+`XaRecoverStatement::resultColumns()` returns `formatID`, `gtrid_length`,
+`bqual_length`, and `data` in that order. Each expression is a `RecoveryColumn`
+with a `RecoveryField` enum, the producing statement's scope identity, and the
+requested encoding. The first three columns have non-NULL bigint facts; `data`
+has a non-NULL varchar fact and represents concatenated identifier bytes or their
+hexadecimal rendering. These are server-produced fields, with no standalone scalar
+SQL expression. Binding records the recovery request without inspecting prepared
+transactions. Likewise, binding XA control records the requested operation without
+checking live transaction state or applying a transaction transition.
 
 ### Destinations and conditional writes
 
@@ -182,6 +251,7 @@ SELECT structures require at least one output.
 | Literal | `LiteralKind` and exact SQL literal `text`, preserving numeric precision and quoting. |
 | PostgreSQL typed literal | An explicit `CastExpression` retains the literal operand and the declared type identity, including precision, interval fields, or a user-defined type name and modifiers. Binding does not parse the literal into a runtime date or other value. |
 | Date/time extraction | `Extract` has a required `PostgreSqlField` or `MySqlUnit` enum and a required temporal `value`. The field must match the operand dialect. Its result is PostgreSQL numeric or MySQL bigint; field names are normalized without evaluating the input. |
+| MySQL temporal arithmetic | `DateShift` has required temporal `value`, interval `quantity`, `MySqlUnit`, and `ShiftDirection`. `IntervalOperandOrder` retains input order, including leading intervals, so anonymous parameter positions survive serialization. DATE_ADD, DATE_SUB, ADDDATE, SUBDATE, and infix interval forms bind these roles. |
 | String position | `Position` has required `needle` and `haystack` expressions in the same dialect. Its integer result and NULL facts are derived from those operands; binding does not perform the search. |
 | Binary or unary operation | An operator enum and required `left`/`right` or `operand`. MySQL and PostgreSQL truth tests (`IS TRUE`, `IS FALSE`, `IS UNKNOWN`, and their negations) are unary enum cases with a non-NULL predicate result. |
 | Function | `FunctionCall` has a registered or unresolved function reference and ordered value arguments. |
@@ -212,6 +282,13 @@ use registered signatures. A compound result combines corresponding operand type
 SQLite MIN and MAX with one argument are `AggregateCall`; with two or more arguments
 they are `FunctionCall`. PostgreSQL GREATEST and LEAST retain their non-NULL selection
 semantics independently of registered functions with similar names.
+MySQL temporal arithmetic derives its result family from the temporal input and
+interval fields: a DATE with calendar-only units remains a date, while time fields
+promote it to datetime. TIME plus calendar fields follows the selected release's
+rules. `DateArithmeticRules` retains that distinction; modern releases also infer
+dynamic parameter families from the interval's required inputs. Literal text is
+retained without parsing or evaluating its date, time, or interval value.
+
 `TypeDescriptor::identity` carries typed storage parameters; `unknown` denotes missing
 static type information. No expression is evaluated to infer its runtime value.
 

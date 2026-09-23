@@ -200,4 +200,11 @@ final class SchemaEvolutionTest extends TestCase
         (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER)', 'CREATE TABLE t (n TEXT)');
     }
 
+
+    public function testCreateDiagnosesAColumnlessMySqlTable(): void
+    {
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage('at least one column');
+        (new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-9.1.0'))->build('CREATE TABLE t');
+    }
 }

@@ -24,6 +24,13 @@ final class Settings
      */
     public static function write(ConfigurationStatement $statement): Tree
     {
+        $account = Session\AccountSettings::write($statement);
+        if ($account !== null) {
+            return $account;
+        }
+        if ($statement instanceof Statement\Transaction\SetNextTransactionStatement || $statement instanceof Statement\Transaction\SetDefaultTransactionStatement || $statement instanceof Statement\Transaction\SetCurrentTransactionStatement || $statement instanceof Statement\Transaction\SetSessionTransactionStatement || $statement instanceof Statement\Transaction\SetTransactionSnapshotStatement) {
+            return Session\TransactionSettings::write($statement);
+        }
         $dialect = $statement->origin->dialect;
         if ($statement instanceof Statement\ReadPragmaStatement || $statement instanceof Statement\AssignPragmaStatement) {
             return new Tree('pragma', [Build::keyword('PRAGMA'), Build::identifier($statement->name->parts, $dialect), ...($statement instanceof Statement\AssignPragmaStatement ? [Build::keyword('='), self::pragmaValue($statement->value, $dialect)] : [])]);

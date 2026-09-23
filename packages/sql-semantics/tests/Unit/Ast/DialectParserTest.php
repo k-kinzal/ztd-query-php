@@ -167,4 +167,17 @@ final class DialectParserTest extends TestCase
         $this->expectExceptionMessage('Unsupported');
         new DialectParser($dialect, 'unavailable-release');
     }
+
+    #[TestWith([Dialect::PostgreSql])]
+    #[TestWith([Dialect::MySql])]
+    #[TestWith([Dialect::Sqlite])]
+    public function testParseAllSeparatesOnlyTopLevelStatements(Dialect $dialect): void
+    {
+        $sql = "SELECT ';'; SELECT 2";
+        $trees = (new DialectParser($dialect))->parseAll($sql);
+        self::assertCount(2, $trees);
+        self::assertCount(1, \SqlSemantics\Ast\StatementList::read($trees[0], $dialect));
+        self::assertCount(1, \SqlSemantics\Ast\StatementList::read($trees[1], $dialect));
+        self::assertSame(12, $trees[1]->tokens()[0]->offset);
+    }
 }

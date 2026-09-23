@@ -10,10 +10,11 @@ use SqlSemantics\Dialect;
 use SqlSemantics\Model\Expression;
 use SqlSemantics\Model\OutputColumn;
 use SqlSemantics\Model\Sql;
+use SqlSemantics\Model\Statement\CreateTableStatement;
 use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\SchemaBuilder;
 
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Model\Statement\CreateTableStatement::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(CreateTableStatement::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Serializer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\SemanticException::class)]
@@ -143,9 +144,9 @@ final class CreateTableStatementTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)'));
         $statement = $binder->bind('CREATE TABLE x(id INTEGER)');
-        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $statement);
+        self::assertInstanceOf(CreateTableStatement::class, $statement);
         $boundQuery1 = $binder->bind('CREATE TABLE y(id TEXT NOT NULL)');
-        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $boundQuery1);
+        self::assertInstanceOf(CreateTableStatement::class, $boundQuery1);
         $replacement = $boundQuery1->definition->table->columns[0];
         $changed = $statement->withColumn($statement->definition->table->columns[0], $replacement);
         self::assertSame('text', $changed->definition->table->columns[0]->type->name);
@@ -157,13 +158,40 @@ final class CreateTableStatementTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
         $statement = $binder->bind('CREATE TABLE x(id INTEGER)');
-        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $statement);
+        self::assertInstanceOf(CreateTableStatement::class, $statement);
         $boundQuery1 = $binder->bind('CREATE TABLE y(id INTEGER)');
-        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $boundQuery1);
+        self::assertInstanceOf(CreateTableStatement::class, $boundQuery1);
         $column = $boundQuery1->definition->table->columns[0];
 
         $this->expectException(InvalidStructure::class);
         $this->expectExceptionMessage('The column does not belong to this table declaration.');
         $statement->withColumn($column, $column);
+    }
+
+    public function testRejectsEmptyMySqlColumnDeclarations(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE t ()');
+        self::assertInstanceOf(CreateTableStatement::class, $statement);
+        $origin = new \SqlSemantics\Model\Statement\Origin('s0', $statement->source, Dialect::MySql);
+        $this->expectException(InvalidStructure::class);
+        new CreateTableStatement($origin, $statement->definition);
+    }
+
+    public function testAcceptsEmptyPostgreSqlColumnDeclarations(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $statement = $binder->bind('CREATE TABLE t ()');
+        self::assertInstanceOf(CreateTableStatement::class, $statement);
+        self::assertSame([], $statement->definition->table->columns);
+        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+    }
+
+    public function testRejectsColumnTypesFromAnotherDialect(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE t (id INTEGER)');
+        self::assertInstanceOf(CreateTableStatement::class, $statement);
+        $origin = new \SqlSemantics\Model\Statement\Origin('s0', $statement->source, Dialect::MySql);
+        $this->expectException(InvalidStructure::class);
+        new CreateTableStatement($origin, $statement->definition);
     }
 }

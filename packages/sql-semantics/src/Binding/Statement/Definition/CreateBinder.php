@@ -18,6 +18,7 @@ final class CreateBinder
 {
     /**
      * Returns a declaration when this operation defines a table or an index.
+     * @throws \SqlSemantics\InvalidSql
      */
     public static function bind(Origin $origin, Node $statement, QueryContext $context): ?BoundStatement
     {
@@ -43,6 +44,9 @@ final class CreateBinder
         $boundIndexes = array_map(static fn ($definition): \SqlSemantics\Model\Definition\IndexDeclaration => \SqlSemantics\Binding\Schema\IndexBinder::bind($definition, $scope), $indexes);
         $definitions = array_map(static fn ($target): \SqlSemantics\Model\Definition\TableDeclaration => (new \SqlSemantics\Binding\Schema\DefinitionBinder())->bind($target, $scope), array_slice($targets, 0, count($declarations)));
         if ($definitions !== []) {
+            if ($origin->dialect !== \SqlSemantics\Dialect::PostgreSql && $definitions[0]->table->columns === []) {
+                throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::TableColumns, $statement);
+            }
             return new \SqlSemantics\Model\Statement\CreateTableStatement($origin, $definitions[0], $boundIndexes, str_contains(strtoupper(Tree::text($statement)), 'IF NOT EXISTS'));
         }
         if ($index !== null) {

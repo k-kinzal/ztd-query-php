@@ -123,6 +123,9 @@ final class SchemaEvolution
             $derived = QueryRelation::declaration($query, $name, $aliases, $source);
             $columns = [...$columns, ...$derived->columns];
         }
+        if ($schema->dialect !== Dialect::PostgreSql && $columns === [] && $queryNode === null) {
+            throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::TableColumns, $source);
+        }
         return new TableDefinition($namespace, $name, $columns, $constraints, $source, indexes: $table->indexes, properties: $table->properties);
     }
 }

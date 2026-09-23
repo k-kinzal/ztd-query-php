@@ -35,6 +35,9 @@ final class SemanticFacts
         if (is_object($value)) {
             $properties = get_object_vars($value);
             unset($properties['source'], $properties['origin']);
+            if ($value instanceof \SqlSemantics\Model\ResultStatement && !array_key_exists('outputs', $properties)) {
+                $properties['resultColumns'] = $value->resultColumns();
+            }
             return [$value::class, array_map(self::read(...), $properties)];
         }
         return $value;

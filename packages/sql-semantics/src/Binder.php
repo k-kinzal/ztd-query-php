@@ -60,12 +60,11 @@ final class Binder
      */
     public function bindAll(string $sql, bool $strict = true): array
     {
-        $tree = $this->parser->parse($sql);
-        $statements = Ast\StatementList::read($tree, $this->schema->dialect);
-        return array_map(function (\SqlParser\Parser\Node $statement) use ($tree, $strict): BoundStatement {
+        $statements = $this->parser->parseAll($sql);
+        return array_map(function (\SqlParser\Parser\Node $statement) use ($strict): BoundStatement {
             $diagnostics = new Binding\Analysis\Diagnostics(!$strict);
             $tables = new TableResolver($this->schema, new Identifiers($this->schema->dialect), $this->schema->defaultSchema, $diagnostics);
-            return (new Binding\Statement\StatementBinder($tables))->bind(new \SqlParser\Parser\Node($tree->name, $tree->ordinal, [$statement]))->withContext(new Binding\Editing\StatementContext($this->schema));
+            return (new Binding\Statement\StatementBinder($tables))->bind($statement)->withContext(new Binding\Editing\StatementContext($this->schema));
         }, $statements);
     }
 

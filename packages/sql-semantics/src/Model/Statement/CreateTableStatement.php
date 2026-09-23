@@ -18,6 +18,7 @@ final class CreateTableStatement extends \SqlSemantics\Model\BoundStatement
     /**
      * @param list<\SqlSemantics\Model\Definition\IndexDeclaration> $indexes
      * @visibility SqlSemantics
+     * @throws \SqlSemantics\Model\Validation\InvalidStructure
      */
     public function __construct(
         Origin $origin,
@@ -25,6 +26,14 @@ final class CreateTableStatement extends \SqlSemantics\Model\BoundStatement
         public readonly array $indexes = [],
         public readonly bool $ifNotExists = false,
     ) {
+        if ($origin->dialect !== \SqlSemantics\Dialect::PostgreSql && $definition->table->columns === []) {
+            throw new \SqlSemantics\Model\Validation\InvalidStructure('A table declaration requires at least one column in this SQL dialect.');
+        }
+        foreach ($definition->table->columns as $column) {
+            if ($column->type->dialect !== $origin->dialect) {
+                throw new \SqlSemantics\Model\Validation\InvalidStructure('Declared columns must use the statement dialect.');
+            }
+        }
         parent::__construct($origin);
         \SqlSemantics\Model\Validation\Collections::objects($indexes, \SqlSemantics\Model\Definition\IndexDeclaration::class);
     }

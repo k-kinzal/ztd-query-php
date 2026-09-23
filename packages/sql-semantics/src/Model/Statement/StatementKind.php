@@ -13,6 +13,12 @@ namespace SqlSemantics\Model\Statement;
  */
 enum StatementKind: string
 {
+    case XaStart = 'XA START';
+    case XaEnd = 'XA END';
+    case XaPrepare = 'XA PREPARE';
+    case XaCommit = 'XA COMMIT';
+    case XaRollback = 'XA ROLLBACK';
+    case XaRecover = 'XA RECOVER';
     case Checkpoint = 'CHECKPOINT';
     case Restart = 'RESTART';
     case Shutdown = 'SHUTDOWN';

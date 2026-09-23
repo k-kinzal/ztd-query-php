@@ -45,12 +45,13 @@ final class IndexKeys
     {
         $key = Tree::child($source, ['key_part']) ?? $source;
         [$column, $expression, $collation] = self::value($key, $identifiers);
-        $operator = array_values(array_filter(Tree::outer($key, ['opt_qualified_name']), Tree::hasTokens(...)))[0] ?? null;
-        $direction = array_values(array_filter(Tree::outer($key, ['opt_asc_desc', 'opt_ordering_direction', 'sortorder']), Tree::hasTokens(...)))[0] ?? null;
-        $nulls = array_values(array_filter(Tree::outer($key, ['opt_nulls_order', 'nulls']), Tree::hasTokens(...)))[0] ?? null;
+        $modifiers = Tree::child($key, ['index_elem_options']) ?? $key;
+        $operator = Tree::child($modifiers, ['opt_qualified_name']);
+        $direction = Tree::child($modifiers, ['opt_asc_desc', 'opt_ordering_direction', 'sortorder']);
+        $nulls = Tree::child($modifiers, ['opt_nulls_order', 'nulls']);
         $tokens = $key->tokens();
         $prefix = $column !== null && ($tokens[1]->text ?? '') === '(' && isset($tokens[2]) && ctype_digit($tokens[2]->text) ? (int) $tokens[2]->text : null;
-        return new IndexElement($column, $expression, $direction === null ? null : strtoupper(Tree::text($direction)), $nulls === null ? null : strtoupper($nulls->tokens()[count($nulls->tokens()) - 1]->text), $collation, $operator === null ? [] : $identifiers->parts($operator), $prefix, $source, OptionReader::read($key, $identifiers));
+        return new IndexElement($column, $expression, $direction === null ? null : strtoupper(Tree::text($direction)), $nulls === null ? null : strtoupper($nulls->tokens()[count($nulls->tokens()) - 1]->text), $collation, $operator === null ? [] : $identifiers->parts($operator), $prefix, $source, OptionReader::read($modifiers, $identifiers, ['a_expr', 'expr', 'func_expr_windowless']));
     }
     /**
      * @return array{?string, ?Node, list<string>}
@@ -71,7 +72,7 @@ final class IndexKeys
             $column = $identifiers->name($expression->tokens()[0]);
             $expression = null;
         }
-        $collate = array_values(array_filter(Tree::outer($key, ['opt_collate']), Tree::hasTokens(...)))[0] ?? null;
+        $collate = Tree::child(Tree::child($key, ['index_elem_options']) ?? $key, ['opt_collate']);
         if ($collate !== null) {
             $collation = array_slice($identifiers->parts($collate), 1);
         }

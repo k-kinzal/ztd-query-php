@@ -14,6 +14,8 @@ namespace SqlSemantics\Model;
  */
 enum ExpressionKind: string
 {
+    case GeneratedPassword = 'generated-password-field';
+    case XaRecovery = 'xa-recovery-field';
     case TriggerColumn = 'trigger-column';
     case Raise = 'raise';
     case Collation = 'collation';
@@ -30,6 +32,7 @@ enum ExpressionKind: string
     case Operator = 'operator';
     case Coalesce = 'coalesce';
     case Extremum = 'extremum';
+    case DateShift = 'date-shift';
     case Extract = 'extract';
     case Position = 'position';
     case NullIf = 'null-if';

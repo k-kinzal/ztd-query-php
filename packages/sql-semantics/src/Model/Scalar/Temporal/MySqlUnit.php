@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Model\Scalar\Temporal;
 
 /**
- * A named extraction unit in MySQL.
+ * A named extraction or arithmetic interval unit in MySQL.
  * @visibility public
  * @example Selecting a calendar field
  *     \SqlSemantics\Model\Scalar\Temporal\MySqlUnit::Year->value // => 'YEAR'

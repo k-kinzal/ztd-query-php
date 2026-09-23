@@ -17,9 +17,11 @@ hide an implementation failure.
 The target checks:
 
 - Retention of original source text, deterministic binding, and agreement with strict
-  binding when there are no diagnostics.
+  binding when there are no diagnostics, plus equivalence between `bind()` and
+  `bindAll()` for a generated statement.
 - Serialization of every generated statement, equivalence of semantic facts after
-  rebinding the serialized SQL, and idempotence of compact formatting.
+  rebinding the serialized SQL, including derived `resultColumns()`, and idempotence
+  of compact formatting.
 - Output order, relation scopes, column declaration membership, dialect-consistent
   types, and explicit unresolved references throughout nested graphs.
 - Statement-specific structure, including insertion destinations, assignments,

@@ -29,6 +29,7 @@ final class ExecutionBinder
             ?? Statement\Prepared\PreparedBinder::bind($origin, $statement, $context)
             ?? Statement\Cursor\CursorBinder::bind($origin, $statement, $context)
             ?? Statement\Plan\ExplainBinder::bind($origin, $statement, $context)
+            ?? Statement\Transaction\XaBinder::bind($origin, $statement)
             ?? (new Statement\TransactionBinder())->bind($origin, $statement, $scope)
             ?? (new Statement\MaintenanceBinder())->bind($origin, $statement, $scope)
             ?? Statement\ObjectBinder::bind($origin, $statement, $context);

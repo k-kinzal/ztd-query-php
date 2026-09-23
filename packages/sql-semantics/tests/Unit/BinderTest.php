@@ -625,4 +625,15 @@ final class BinderTest extends TestCase
         (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql, strict: false);
     }
 
+
+    public function testBindAllRetainsAbsoluteMySqlReferenceLocations(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (id INTEGER)'));
+        $sql = "SELECT ';';\nSELECT missing FROM t";
+        $statements = $binder->bindAll($sql, strict: false);
+        self::assertCount(2, $statements);
+        self::assertCount(1, $statements[1]->diagnostics);
+        $source = $statements[1]->diagnostics[0]->source;
+        self::assertSame(strpos($sql, 'missing'), ($source instanceof \SqlParser\Parser\Node ? $source->tokens()[0] : $source)->offset);
+    }
 }
