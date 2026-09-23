@@ -45,6 +45,7 @@ final class TypeDescriptor
         if (($identity instanceof Identity\Enumeration || $identity instanceof Identity\LabelSet) && $dialect !== Dialect::MySql) {
             throw new InvalidStructure('Label types require the MySQL dialect.');
         }
+        Modifier\ParameterInvariant::dialect($dialect, $identity);
         $this->name = $identity->name();
         $this->affinity = $identity instanceof Identity\SqliteDeclaration ? $identity->affinity : null;
     }

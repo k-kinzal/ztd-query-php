@@ -29,9 +29,10 @@ final class ColumnBinder
             (new \SqlSemantics\Binding\Write\AssignmentRules())->checkType($column->type, $expression, $scope);
         }
         $options = $column->options;
+        $ownsEncoding = $column->type->identity instanceof \SqlSemantics\Type\Identity\StringStorage || $column->type->identity instanceof \SqlSemantics\Type\Identity\Enumeration || $column->type->identity instanceof \SqlSemantics\Type\Identity\LabelSet;
         $attributes = new Column\Attributes(
             collation: OptionBinding::qualified($options, 'collation'),
-            characterSet: $column->type->identity instanceof \SqlSemantics\Type\Identity\StringStorage ? null : OptionBinding::string($options, 'character_set'),
+            characterSet: $ownsEncoding ? null : OptionBinding::string($options, 'character_set'),
             comment: OptionBinding::string($options, 'comment'),
             visible: isset($options['invisible']) ? false : (isset($options['visible']) ? true : null),
             storage: ($value = OptionBinding::string($options, 'storage')) === null ? null : Column\Storage::from(strtolower($value)),
@@ -41,7 +42,7 @@ final class ColumnBinder
             secondaryEngineAttribute: OptionBinding::string($options, 'secondary_engine_attribute'),
             spatialReferenceId: OptionBinding::integer($options, 'srid'),
             zeroFill: isset($options['zerofill']),
-            binary: !$column->type->identity instanceof \SqlSemantics\Type\Identity\StringStorage && isset($options['binary']),
+            binary: !$ownsEncoding && isset($options['binary']),
         );
         OptionBinding::classified($options, ['collation', 'character_set', 'comment', 'invisible', 'visible', 'storage', 'column_format', 'compression', 'engine_attribute', 'secondary_engine_attribute', 'srid', 'zerofill', 'binary', 'signed', 'unsigned', 'auto_increment', 'identity', 'start', 'increment', 'minvalue', 'maxvalue', 'cache', 'cycle', 'no', 'generated_storage', 'on_update']);
         return new ColumnDefinition($column->name, $column->type, $column->nullability, $column->source, $generation, $attributes);

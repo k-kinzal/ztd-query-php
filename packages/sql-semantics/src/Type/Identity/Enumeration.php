@@ -11,6 +11,9 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 /**
  * The declared labels of a MySQL enum type.
  * @visibility public
+ * @example Retaining byte-string labels
+ *     $type = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build('CREATE TABLE t(x ENUM(0x41))')->tables[0]->columns[0]->type;
+ *     $type->identity->labels[0]->literalKind->value // => 'binary'
  */
 final class Enumeration implements TypeIdentity
 {
@@ -25,11 +28,13 @@ final class Enumeration implements TypeIdentity
      */
     public function __construct(
         array $labels,
+        public readonly ?string $characterSet = null,
+        public readonly bool $binary = false,
     ) {
         Collections::objects($labels, \SqlSemantics\Model\Scalar\Value\Literal::class);
         foreach ($labels as $label) {
-            if ($label->literalKind !== \SqlSemantics\Model\Scalar\Value\LiteralKind::Text || $label->type->dialect !== \SqlSemantics\Dialect::MySql) {
-                throw new InvalidStructure('Enumeration labels require MySQL string literals.');
+            if (!in_array($label->literalKind, [\SqlSemantics\Model\Scalar\Value\LiteralKind::Text, \SqlSemantics\Model\Scalar\Value\LiteralKind::Binary, \SqlSemantics\Model\Scalar\Value\LiteralKind::BitString], true) || $label->type->dialect !== \SqlSemantics\Dialect::MySql) {
+                throw new InvalidStructure('Enumeration labels require MySQL text or byte-string literals.');
             }
         }
         if ($labels === []) {

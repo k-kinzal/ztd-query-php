@@ -26,6 +26,7 @@ final class TypedLiteralBinder
 {
     /**
      * Retains type modifiers and interval fields without converting the literal's value.
+     * @throws \SqlSemantics\InvalidSql
      */
     public static function bind(Node $source, Scope $scope): ?CastExpression
     {
@@ -37,6 +38,9 @@ final class TypedLiteralBinder
         if ($literal === null || $type === null) {
             return null;
         }
+        if (Tree::child($source, ['opt_sort_clause']) !== null) {
+            throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::TypeModifier, $source);
+        }
         $reader = new TypeReader(Dialect::PostgreSql);
         $declaration = new Node('literal_type', 0, array_values(array_filter($source->children, static fn (Node|Token $child): bool => $child !== $literal)));
         $result = $type->name === 'func_name' ? self::named($type, $source, $declaration, $scope) : $reader->read($declaration);
@@ -45,7 +49,7 @@ final class TypedLiteralBinder
     }
 
     /**
-     * Retains user-defined type names and their modifier expressions.
+     * Retains user-defined type names and their classified type-input operands.
      */
     public static function named(Node $name, Node $source, Node $declaration, Scope $scope): TypeDescriptor
     {
@@ -56,7 +60,7 @@ final class TypedLiteralBinder
             return $reader->read($declaration);
         }
         $modifiers = Tree::child($source, ['func_arg_list']);
-        $arguments = $modifiers === null ? [] : array_map(static fn (Node $node): \SqlSemantics\Model\Expression => (new ExpressionBinder())->bind($node, $scope), Tree::outer($modifiers, ['a_expr']));
+        $arguments = $modifiers === null ? [] : \SqlSemantics\Ast\Type\ModifierBinder::parameters($modifiers);
         return new TypeDescriptor(Dialect::PostgreSql, new NamedIdentity(new QualifiedName($parts), $arguments));
     }
 }

@@ -113,6 +113,39 @@ not a serialized interchange format. Multiple input statements are applied in or
 | SQLite: `CREATE TABLE prices (amount NUMERIC(10,2))` | The identity is `SqliteDeclaration`, with numeric affinity and size/scale spellings `10` and `2`. |
 | SQLite: `CREATE TABLE users (id INTEGER PRIMARY KEY) WITHOUT ROWID, STRICT` | `properties` is `SqliteProperties`, with `withoutRowId` and `strict` both true. |
 
+MySQL character declarations retain character-set selection separately from
+binary collation selection. `StringStorage::$national` records use of the national
+character set and applies only to `CHAR` and `VARCHAR`; it cannot coexist with an
+explicit `characterSet`. ASCII, UNICODE, and BYTE normalize to the `latin1`, `ucs2`,
+and `binary` character-set names. `binary` records the requested binary collation.
+`Enumeration` and `LabelSet` retain these encoding choices alongside their ordered
+text, hexadecimal-byte, or bit-string literal labels. Literal bytes are not
+decoded into generated fixture values during binding.
+
+## Type modifier operands
+
+A type identity owns its applicable modifiers. For example, `NumericStorage`
+has `precision` and `scale`, `StringStorage` has `length`, and `TemporalStorage`
+has `precision` and a `TimeZoneMode`. These fields describe the declared inputs;
+binding does not execute a database type's modifier-input function.
+
+| PostgreSQL declaration | Structured operand |
+|------------------------|--------------------|
+| `NUMERIC(12, 2)` | `NumericStorage` with `NumericParameter` precision and scale, preserving their numeric spellings. |
+| `NUMERIC('12', "2")` | `TextParameter` precision containing a text `Literal`, and `IdentifierParameter` scale containing the identifier `2`. |
+| `NUMERIC(-(-12))` | `NegatedParameter` precision whose operand is another `NegatedParameter` over a numeric literal; no numeric evaluation occurs. |
+| `TIMESTAMPTZ('3')` | `TemporalStorage` with `TimeZoneMode::With` and a `TextParameter` precision. |
+| `app.measure(currency, 'USD', 12)` | `NamedIdentity` with a qualified `reference` and ordered, classified `arguments`: identifier, text, and numeric operands. |
+
+A modifier identifier is input to the type's modifier function, not a reference
+to a row column. It creates no column dependency and requires no matching column
+in the schema. Type modifiers accept numeric constants, text literals, unqualified
+identifiers, and numeric negation; arbitrary SQL expressions cannot enter this
+operand domain. Parentheses around an operand do not change its identity.
+Serializers retain literal, identifier, and negation boundaries, and choose valid
+syntax for the selected type family. Each built-in family validates its modifier
+count; a named type retains all inputs for the consumer that resolves that type.
+
 ## Variable declarations
 
 `VariableDefinition` contains a name, `VariableScope`, `TypeDescriptor`, and

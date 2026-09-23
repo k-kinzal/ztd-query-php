@@ -164,8 +164,8 @@ final class ScalarBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame('numeric', $query->outputs[0]->expression->type->name);
         self::assertInstanceOf(\SqlSemantics\Type\Identity\Numeric\NumericStorage::class, $query->outputs[0]->expression->type->identity);
-        self::assertNotNull($query->outputs[0]->expression->type->identity->precision);
-        self::assertNotNull($query->outputs[0]->expression->type->identity->scale);
+        self::assertInstanceOf(\SqlSemantics\Type\Identity\Numeric\NumericParameter::class, $query->outputs[0]->expression->type->identity->precision);
+        self::assertInstanceOf(\SqlSemantics\Type\Identity\Numeric\NumericParameter::class, $query->outputs[0]->expression->type->identity->scale);
         self::assertSame('8', $query->outputs[0]->expression->type->identity->precision->spelling);
         self::assertSame('2', $query->outputs[0]->expression->type->identity->scale->spelling);
     }

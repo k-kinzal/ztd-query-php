@@ -157,8 +157,8 @@ final class TableAlterationTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (n INTEGER)', 'ALTER TABLE t ALTER COLUMN n TYPE NUMERIC(10,2), ALTER COLUMN n SET NOT NULL');
         self::assertSame('numeric', $schema->tables[0]->columns[0]->type->name);
         self::assertInstanceOf(\SqlSemantics\Type\Identity\Numeric\NumericStorage::class, $schema->tables[0]->columns[0]->type->identity);
-        self::assertNotNull($schema->tables[0]->columns[0]->type->identity->precision);
-        self::assertNotNull($schema->tables[0]->columns[0]->type->identity->scale);
+        self::assertInstanceOf(\SqlSemantics\Type\Identity\Numeric\NumericParameter::class, $schema->tables[0]->columns[0]->type->identity->precision);
+        self::assertInstanceOf(\SqlSemantics\Type\Identity\Numeric\NumericParameter::class, $schema->tables[0]->columns[0]->type->identity->scale);
         self::assertSame('10', $schema->tables[0]->columns[0]->type->identity->precision->spelling);
         self::assertSame('2', $schema->tables[0]->columns[0]->type->identity->scale->spelling);
         self::assertSame(\SqlSemantics\Type\Nullability::NotNull, $schema->tables[0]->columns[0]->nullability);

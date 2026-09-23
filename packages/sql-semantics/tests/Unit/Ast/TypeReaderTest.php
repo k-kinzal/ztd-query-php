@@ -147,8 +147,8 @@ final class TypeReaderTest extends TestCase
     {
         $table = (new SchemaBuilder($dialect))->build('CREATE TABLE users (amount DECIMAL(10, 2))')->tables[0];
         self::assertInstanceOf(\SqlSemantics\Type\Identity\Numeric\NumericStorage::class, $table->columns[0]->type->identity);
-        self::assertNotNull($table->columns[0]->type->identity->precision);
-        self::assertNotNull($table->columns[0]->type->identity->scale);
+        self::assertInstanceOf(\SqlSemantics\Type\Identity\Numeric\NumericParameter::class, $table->columns[0]->type->identity->precision);
+        self::assertInstanceOf(\SqlSemantics\Type\Identity\Numeric\NumericParameter::class, $table->columns[0]->type->identity->scale);
         self::assertSame('10', $table->columns[0]->type->identity->precision->spelling);
         self::assertSame('2', $table->columns[0]->type->identity->scale->spelling);
     }
@@ -301,7 +301,8 @@ final class TypeReaderTest extends TestCase
         $type = $schema->tables[0]->columns[0]->type;
         self::assertInstanceOf(\SqlSemantics\Type\Identity\StringStorage::class, $type->identity);
         self::assertSame($family, $type->name);
-        self::assertSame('12', $type->identity->length?->spelling);
+        self::assertInstanceOf(\SqlSemantics\Type\Identity\Numeric\NumericParameter::class, $type->identity->length);
+        self::assertSame('12', $type->identity->length->spelling);
         $statement = (new Binder($schema))->bind('DROP FUNCTION f(' . $declaration . ')');
         self::assertSame('DROP FUNCTION "f"(' . $family . '(12))', $statement->toString());
     }

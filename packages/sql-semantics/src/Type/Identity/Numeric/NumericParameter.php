@@ -11,6 +11,8 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 /**
  * One numeric type parameter, retaining arbitrary precision without evaluating it.
  * @visibility public
+ * @example Retaining an arbitrary-precision numeric operand
+ *     (new \SqlSemantics\Type\Identity\Numeric\NumericParameter('99999999999999999999'))->spelling // => '99999999999999999999'
  */
 final class NumericParameter
 {

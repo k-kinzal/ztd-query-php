@@ -31,7 +31,7 @@ final class TypeNames
      */
     public static function named(Identity\NamedIdentity $type, Dialect $dialect): Tree
     {
-        return new Tree('named-type', [Build::identifier($type->reference->parts, $dialect), ...($type->arguments === [] ? [] : [Build::parentheses(Build::separated(array_map(Expressions::write(...), $type->arguments)))])]);
+        return new Tree('named-type', [Build::identifier($type->reference->parts, $dialect), ...($type->arguments === [] ? [] : [Build::parentheses(Build::separated(array_map(ModifierSyntax::write(...), $type->arguments)))])]);
     }
 
     /**
@@ -52,6 +52,6 @@ final class TypeNames
     public static function labels(Identity\Enumeration|Identity\LabelSet $type, Dialect $dialect): Tree
     {
         $labels = array_map(Expressions::write(...), $type->labels);
-        return new Tree('label-type', [Build::keyword($type instanceof Identity\Enumeration ? 'ENUM' : 'SET'), Build::parentheses(Build::separated($labels))]);
+        return new Tree('label-type', [Build::keyword($type instanceof Identity\Enumeration ? 'ENUM' : 'SET'), Build::parentheses(Build::separated($labels)), ...($type->characterSet === null ? [] : [Build::keyword('CHARACTER SET'), Build::identifier([$type->characterSet], $dialect)]), ...($type->binary ? [Build::keyword('BINARY')] : [])]);
     }
 }

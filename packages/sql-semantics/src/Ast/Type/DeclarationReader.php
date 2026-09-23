@@ -35,7 +35,7 @@ final class DeclarationReader
         }
         $simple = Tree::child($source, ['SimpleTypename']);
         $bounds = Tree::child($source, ['opt_array_bounds']);
-        if ($simple !== null && ($bounds !== null || in_array('ARRAY', array_map(static fn ($token): string => strtoupper($token->text), $source->tokens()), true))) {
+        if ($simple !== null && ($bounds !== null || array_filter($source->children, static fn ($child): bool => $child instanceof \SqlParser\Lexer\Token && $child->name === 'ARRAY') !== [])) {
             $dimensions = ArrayBounds::read($source, $bounds);
             return new TypeDescriptor($this->types->dialect, new Identity\ArrayStorage($this->read($simple), $dimensions));
         }

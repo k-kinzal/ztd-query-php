@@ -22,7 +22,8 @@ final class ArrayBounds
         $dimensions = [];
         $size = '';
         $inside = false;
-        foreach (($bounds ?? $source)->tokens() as $token) {
+        $tokens = $bounds !== null ? $bounds->tokens() : array_merge(...array_map(static fn ($child): array => $child instanceof \SqlParser\Lexer\Token ? [$child] : ($child->name === 'Iconst' ? $child->tokens() : []), $source->children));
+        foreach ($tokens as $token) {
             if ($token->text === '[') {
                 $inside = true;
                 $size = '';

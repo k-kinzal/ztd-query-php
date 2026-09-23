@@ -30,7 +30,8 @@ final class ShowProcessesStatementTest extends TestCase
         self::assertInstanceOf(ProcessInfoColumn::class, $info);
         self::assertSame(ProcessQueryText::Preview, $info->detail);
         self::assertInstanceOf(StringStorage::class, $info->type->identity);
-        self::assertSame('100', $info->type->identity->length?->spelling);
+        self::assertInstanceOf(\SqlSemantics\Type\Identity\Numeric\NumericParameter::class, $info->type->identity->length);
+        self::assertSame('100', $info->type->identity->length->spelling);
     }
 
     public function testWithQueryTextRequestsCompleteTextWithoutAStalePreviewLength(): void

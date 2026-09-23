@@ -145,8 +145,8 @@ final class FunctionSignatureTest extends TestCase
         self::assertSame('shop', $signature->schema);
         self::assertInstanceOf(TypeDescriptor::class, $signature->returnType);
         self::assertInstanceOf(\SqlSemantics\Type\Identity\Numeric\NumericStorage::class, $signature->returnType->identity);
-        self::assertNotNull($signature->returnType->identity->precision);
-        self::assertNotNull($signature->returnType->identity->scale);
+        self::assertInstanceOf(\SqlSemantics\Type\Identity\Numeric\NumericParameter::class, $signature->returnType->identity->precision);
+        self::assertInstanceOf(\SqlSemantics\Type\Identity\Numeric\NumericParameter::class, $signature->returnType->identity->scale);
         self::assertSame('10', $signature->returnType->identity->precision->spelling);
         self::assertSame('2', $signature->returnType->identity->scale->spelling);
         self::assertTrue($signature->nullOnNull);

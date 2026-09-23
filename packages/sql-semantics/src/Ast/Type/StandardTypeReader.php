@@ -8,8 +8,6 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Ast\Identifiers;
 use SqlSemantics\Ast\Tree;
 use SqlSemantics\Ast\TypeReader;
-use SqlSemantics\Binding\ExpressionBinder;
-use SqlSemantics\Binding\Scope;
 use SqlSemantics\Binding\Statement\UnclassifiedSql;
 use SqlSemantics\Dialect;
 use SqlSemantics\Model\Relation\QualifiedName;
@@ -44,12 +42,12 @@ final class StandardTypeReader
                 return $this->named($generic);
             }
         }
-        $parts = TypeWords::read($source);
+        $parts = TypeWords::read($source, $this->types->dialect);
         $name = strtoupper(implode(' ', $parts->words));
         $canonical = $this->types->canonical($name) ?? strtolower($name);
         if (str_starts_with($name, 'INTERVAL')) {
             $fields = trim(substr($name, 8));
-            return new Identity\IntervalStorage(Identity\IntervalFields::from($fields), $parts->parameters[0] ?? null);
+            return new Identity\IntervalStorage(Identity\IntervalFields::from($fields), ParameterDomains::number($parts->parameters[0] ?? null, $source));
         }
         if ($this->types->dialect === Dialect::PostgreSql && ($generic = Tree::outer($source, ['GenericType'])[0] ?? null) !== null && Identity\BuiltinIdentity::tryFrom($canonical) === null) {
             return $this->named($generic);
@@ -66,7 +64,7 @@ final class StandardTypeReader
     }
 
     /**
-     * Preserves the name and typed modifier expressions of a user-defined type.
+     * Preserves the name and classified type-input operands of a user-defined type.
      */
     public function named(Node $source): Identity\NamedIdentity
     {
@@ -79,11 +77,7 @@ final class StandardTypeReader
         foreach (Tree::outer($source, ['attr_name']) as $attribute) {
             array_push($parts, ...$identifiers->parts($attribute));
         }
-        $arguments = [];
-        $scope = new Scope($identifiers);
-        foreach (Tree::outer($source, ['a_expr']) as $expression) {
-            $arguments[] = (new ExpressionBinder())->bind($expression, $scope);
-        }
+        $arguments = ModifierBinder::parameters($source);
         return new Identity\NamedIdentity(new QualifiedName($parts), $arguments);
     }
 }

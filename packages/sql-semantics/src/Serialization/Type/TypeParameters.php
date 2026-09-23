@@ -16,14 +16,14 @@ use SqlSemantics\Type\Identity;
 final class TypeParameters
 {
     /**
-     * @param list<Identity\Numeric\NumericParameter|null> $parameters
+     * @param list<Identity\Numeric\NumericParameter|\SqlSemantics\Type\Modifier\TextParameter|\SqlSemantics\Type\Modifier\IdentifierParameter|\SqlSemantics\Type\Modifier\NegatedParameter|null> $parameters
      */
     public static function numbers(array $parameters): Tree
     {
         $values = [];
         foreach ($parameters as $parameter) {
             if ($parameter !== null) {
-                $values[] = Build::keyword($parameter->spelling);
+                $values[] = ModifierSyntax::write($parameter);
             }
         }
         return $values === [] ? new Tree('type-parameters', []) : Build::parentheses(Build::separated($values));
@@ -50,7 +50,7 @@ final class TypeParameters
      */
     public static function string(Identity\StringStorage $type, Dialect $dialect): Tree
     {
-        return new Tree('string-type', [Build::keyword($type->base->value), self::numbers([$type->length]), ...($type->characterSet === null ? [] : [Build::keyword('CHARACTER SET'), Build::identifier([$type->characterSet], $dialect)]), ...($type->binary ? [Build::keyword('BINARY')] : [])]);
+        return new Tree('string-type', [Build::keyword(($type->national ? 'NATIONAL ' : '') . $type->base->value), self::numbers([$type->length]), ...($type->characterSet === null ? [] : [Build::keyword('CHARACTER SET'), Build::identifier([$type->characterSet], $dialect)]), ...($type->binary ? [Build::keyword('BINARY')] : [])]);
     }
 
     /**
@@ -58,6 +58,9 @@ final class TypeParameters
      */
     public static function temporal(Identity\TemporalStorage $type): Tree
     {
+        if ($type->precision !== null && (!$type->precision instanceof Identity\Numeric\NumericParameter || !ctype_digit(str_replace('_', '', $type->precision->spelling)))) {
+            return new Tree('temporal-type', [Build::keyword($type->name()), self::numbers([$type->precision])]);
+        }
         return new Tree('temporal-type', [Build::keyword($type->base->value), self::numbers([$type->precision]), Build::keyword($type->timeZone->value)]);
     }
 

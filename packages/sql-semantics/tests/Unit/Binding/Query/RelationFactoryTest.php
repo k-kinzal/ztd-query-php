@@ -219,7 +219,8 @@ final class RelationFactoryTest extends TestCase
         self::assertSame(['n', 'label'], array_column($query->outputs, 'name'));
         self::assertSame([$ordinalType, 'varchar'], array_map(static fn ($output): string => $output->expression->type->name, $query->outputs));
         self::assertInstanceOf(\SqlSemantics\Type\Identity\StringStorage::class, $query->outputs[1]->expression->type->identity);
-        self::assertSame('50', $query->outputs[1]->expression->type->identity->length?->spelling);
+        self::assertInstanceOf(\SqlSemantics\Type\Identity\Numeric\NumericParameter::class, $query->outputs[1]->expression->type->identity->length);
+        self::assertSame('50', $query->outputs[1]->expression->type->identity->length->spelling);
         self::assertSame('not-null', $query->outputs[0]->expression->nullability->value);
         self::assertSame('maybe-null', $query->outputs[1]->expression->nullability->value);
         self::assertSame(['label', 'data'], array_map(static fn ($binding): string => $binding->column->name, $query->outputs[1]->expression->lineage()));

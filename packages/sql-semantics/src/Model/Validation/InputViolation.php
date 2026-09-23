@@ -28,6 +28,7 @@ enum InputViolation: string
     case RelationName = 'relation-name';
     case SpatialReferenceId = 'spatial-reference-id';
     case SpatialAttribute = 'spatial-attribute';
+    case TypeParameterCount = 'type-parameter-count';
     case TypeModifier = 'type-modifier';
     case RoutineName = 'routine-name';
     case AggregateArgumentMode = 'aggregate-argument-mode';
@@ -90,6 +91,7 @@ enum InputViolation: string
         'relation-name' => 'A relation name requires at most three identifier components without subscripts or wildcards.',
         'spatial-reference-id' => 'Spatial reference system DDL requires a nonzero unsigned 32-bit SRID and unsigned 32-bit organization identifiers.',
         'spatial-attribute' => 'A spatial definition requires exactly one NAME and DEFINITION and no duplicate attributes.',
+        'type-parameter-count' => 'The built-in type does not accept this number of modifier operands.',
         'type-modifier' => 'PostgreSQL type modifiers require simple numeric or text constants or unqualified identifiers.',
         'routine-name' => 'A routine name requires identifier components without subscripts or wildcards.',
         'aggregate-argument-mode' => 'An aggregate signature accepts only input and variadic arguments.',

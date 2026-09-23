@@ -28,7 +28,7 @@ final class LabelReader
                 throw new UnclassifiedSql('A label type requires string labels.');
             }
             $value = (new \SqlSemantics\Binding\LiteralBinder(\SqlSemantics\Dialect::MySql))->bind($token);
-            if (!$value instanceof \SqlSemantics\Model\Scalar\Value\Literal || $value->literalKind !== \SqlSemantics\Model\Scalar\Value\LiteralKind::Text) {
+            if (!$value instanceof \SqlSemantics\Model\Scalar\Value\Literal || !in_array($value->literalKind, [\SqlSemantics\Model\Scalar\Value\LiteralKind::Text, \SqlSemantics\Model\Scalar\Value\LiteralKind::Binary, \SqlSemantics\Model\Scalar\Value\LiteralKind::BitString], true)) {
                 throw new UnclassifiedSql('A label type requires classified string literals.');
             }
             $labels[] = $value;
@@ -36,6 +36,7 @@ final class LabelReader
         if ($labels === []) {
             throw new UnclassifiedSql('A label type requires at least one label.');
         }
-        return $kind === 'ENUM' ? new Enumeration($labels) : new LabelSet($labels);
+        $encoding = MySql\CharacterEncoding::read($source);
+        return $kind === 'ENUM' ? new Enumeration($labels, $encoding->name, $encoding->binary) : new LabelSet($labels, $encoding->name, $encoding->binary);
     }
 }
