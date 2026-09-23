@@ -12,6 +12,7 @@ namespace SqlSemantics\Model\Validation;
  */
 enum InputViolation: string
 {
+    case OwnershipRole = 'ownership-role';
     case RoutineLanguage = 'routine-language';
     case StorageName = 'storage-name';
     case StorageOption = 'storage-option';
@@ -73,6 +74,7 @@ enum InputViolation: string
     case AlterLock = 'invalid-alter-lock';
     /** @var array<string, string> */
     private const MESSAGES = [
+        'ownership-role' => 'An ownership selector requires a concrete role or session role reference, excluding public and the reserved name none.',
         'routine-language' => 'A stored routine language requires a nonempty name.',
         'storage-name' => 'Storage DDL requires nonempty object and engine names.',
         'storage-option' => 'Storage DDL cannot repeat the engine option or a consecutive legacy NO_WAIT request.',

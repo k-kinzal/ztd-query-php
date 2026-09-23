@@ -1,0 +1,63 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Model\Statement\Definition\PostgreSql\Ownership;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Binder;
+use SqlSemantics\Dialect;
+use SqlSemantics\Model\Configuration\Role\NamedRole;
+use SqlSemantics\Model\Configuration\Role\SessionRole;
+use SqlSemantics\Model\Statement\Definition\PostgreSql\Ownership\DropOwnedStatement;
+use SqlSemantics\Model\Validation\InvalidStructure;
+use SqlSemantics\SchemaBuilder;
+
+#[CoversClass(DropOwnedStatement::class)]
+#[Medium]
+final class DropOwnedStatementTest extends TestCase
+{
+    public function testWithOwnersReplacesAndQuotesTheCompleteSelection(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('DROP OWNED BY alice CASCADE');
+        self::assertInstanceOf(DropOwnedStatement::class, $statement);
+        $owners = [SessionRole::CurrentUser, new NamedRole('x"y')];
+        $changed = $statement->withOwners($owners);
+        self::assertEquals([new NamedRole('alice')], $statement->owners);
+        self::assertEquals($owners, $changed->owners);
+        self::assertStringContainsString('BY CURRENT_USER, "x""y"', $changed->toString());
+        self::assertNotSame($statement, $changed);
+    }
+
+    public function testWithOriginRetainsTheOperationAndItsOperands(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('DROP OWNED BY alice CASCADE');
+        self::assertInstanceOf(DropOwnedStatement::class, $statement);
+        $copy = $statement->withOrigin($statement->origin);
+        self::assertNotSame($statement, $copy);
+        self::assertSame($statement->toString(), $copy->toString());
+        self::assertEquals($statement->owners, $copy->owners);
+    }
+
+    public function testWithOriginRejectsAnIncompatibleDialect(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('DROP OWNED BY alice CASCADE');
+        self::assertInstanceOf(DropOwnedStatement::class, $statement);
+        $origin = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('SELECT 1')->origin;
+        $this->expectException(InvalidStructure::class);
+        $statement->withOrigin($origin);
+    }
+
+    public function testWithBehaviorReplacesTheDependentObjectPolicy(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('DROP OWNED BY alice CASCADE');
+        self::assertInstanceOf(DropOwnedStatement::class, $statement);
+        $changed = $statement->withBehavior(\SqlSemantics\Model\Definition\DropBehavior::Restrict);
+        self::assertSame(\SqlSemantics\Model\Definition\DropBehavior::Cascade, $statement->behavior);
+        self::assertSame(\SqlSemantics\Model\Definition\DropBehavior::Restrict, $changed->behavior);
+        self::assertEquals($statement->owners, $changed->owners);
+    }
+
+}

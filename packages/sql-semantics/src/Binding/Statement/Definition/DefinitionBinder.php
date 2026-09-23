@@ -20,7 +20,8 @@ final class DefinitionBinder
      */
     public static function bind(Origin $origin, Node $statement, QueryContext $context): ?BoundStatement
     {
-        return \SqlSemantics\Binding\Statement\Routine\AlterRoutines::bind($origin, $statement, $context)
+        return Ownership\OwnershipCommands::bind($origin, $statement)
+            ?? \SqlSemantics\Binding\Statement\Routine\AlterRoutines::bind($origin, $statement, $context)
             ?? Storage\Removals::bind($origin, $statement, $context)
             ?? Database\MySqlDatabases::bind($origin, $statement, $context)
             ?? ForeignServers::bind($origin, $statement, $context)

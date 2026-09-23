@@ -89,6 +89,8 @@ subnamespaces under `Model\Statement`.
 | PostgreSQL: `ALTER FOREIGN DATA WRAPPER fdw NO HANDLER OPTIONS (ADD format 'csv', DROP path)` | `AlterForeignDataWrapperStatement` | Required wrapper `name`; each support-function change is a `QualifiedName`, `FunctionChange::Keep`, or `FunctionChange::Remove`. Ordered option changes are `AddForeignOption`, `SetForeignOption`, or `DropForeignOption`. At least one change is required. |
 | PostgreSQL: `CREATE SERVER remote TYPE 'sql' VERSION 'v1' FOREIGN DATA WRAPPER fdw` | `CreateForeignServerStatement` | Required server `name` and `wrapper`, optional `serverType` and `version` text literals, unique initial `ForeignOption` values, and `ifNotExists`. |
 | PostgreSQL: `ALTER SERVER remote VERSION NULL OPTIONS (SET host 'other')` | `AlterForeignServerStatement` | Required server `name`; `version` is a text literal, `ServerVersionChange::Keep`, or `ServerVersionChange::Remove`. Ordered `options` contain typed addition, replacement, or removal requests. At least one version or option change is required. |
+| PostgreSQL: `DROP OWNED BY alice, CURRENT_USER CASCADE` | `Definition\PostgreSql\Ownership\DropOwnedStatement` | Nonempty `owners`, each a `NamedRole` or `SessionRole`, and `DropBehavior` for dependent objects. |
+| PostgreSQL: `REASSIGN OWNED BY alice TO SESSION_USER` | `Definition\PostgreSql\Ownership\ReassignOwnedStatement` | Nonempty source `owners` and required `newOwner`, each retaining a named or session role identity. |
 | PostgreSQL: `DROP SERVER IF EXISTS remote, archive CASCADE` | `DropForeignServersStatement` | Nonempty unqualified server `names`, `ifExists`, and `DropBehavior`. |
 | PostgreSQL: `DROP FOREIGN DATA WRAPPER fdw RESTRICT` | `DropForeignDataWrappersStatement` | Nonempty wrapper `names`, `ifExists`, and `DropBehavior`; separate from server removal. |
 | PostgreSQL: `CREATE USER MAPPING IF NOT EXISTS FOR CURRENT_USER SERVER remote OPTIONS (user 'reader')` | `CreateUserMappingStatement` | Required `UserMappingIdentity`, `ifNotExists`, and initial `ForeignOption` values with unique names. |
@@ -188,6 +190,15 @@ validator identifies a function accepting `text[]` and `oid` whose return value 
 ignored. Binding records those function roles without calling them. An ALTER's
 `withChanges()` replaces function and option changes together, so removing the
 last requested operation cannot leave an empty alteration.
+
+Ownership statements describe object selection by role. `NamedRole` holds a
+case-sensitive name; `SessionRole` identifies `CURRENT_ROLE`, `CURRENT_USER`, or
+`SESSION_USER` without reading the session's username. Removal selects owned
+objects and associated privileges with a dependent-object policy. Reassignment
+requires a new owner and has no removal policy. `withOwners()` replaces the
+nonempty source selection; reassignment's `withNewOwner()` replaces its required
+destination. Binding records these requests against the supplied state without
+enumerating owned objects, applying privilege changes, or changing the session.
 
 Foreign server creation owns the wrapper name and its initial metadata. Creation's
 `withDefinition()` replaces that wrapper, type, version, and options together.
