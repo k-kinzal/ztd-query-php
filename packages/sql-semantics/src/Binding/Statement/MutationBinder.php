@@ -180,7 +180,7 @@ final class MutationBinder
         }
         $excluded = new \SqlSemantics\Model\Relation\ProposedRow($this->context->ids->relation(), $id, $targets[0]->declaration, 'excluded', $source, $targets[0]);
         $parent = new Scope($scope->identifiers, [$excluded], queries: $this->context);
-        return new Scope($scope->identifiers, $scope->relations, $scope->extensions, $parent, $this->context, $scope->merged);
+        return new Scope($scope->identifiers, $scope->relations, $scope->extensions, $parent, $this->context, $scope->merged, $scope->outputs);
     }
 
 

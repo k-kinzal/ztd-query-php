@@ -189,4 +189,26 @@ final class UsingJoinTest extends TestCase
         self::assertSame('COALESCE', $statement->outputs[0]->expression->spelling());
     }
 
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-5.6.51'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-5.7.44'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.0.44'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.1.0'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.2.0'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.3.0'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.4.7'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-9.0.1'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-9.1.0'])]
+    public function testBindUsesTheCurrentUsingListInNestedMySqlJoins(string $version): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE a(id INTEGER, x INTEGER)', 'CREATE TABLE b(id INTEGER)', 'CREATE TABLE c(id INTEGER)'));
+        $query = $binder->bind('SELECT * FROM ((a JOIN b USING(id)) JOIN c USING(id))');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        self::assertSame(['id', 'x'], array_column($query->outputs, 'name'));
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\Joining\UsingJoin::class, $query->from);
+        self::assertSame(['id'], array_column($query->from->columns, 'name'));
+        self::assertSame('r0', $query->from->columns[0]->left->columnBinding()?->relationId);
+        self::assertSame('r2', $query->from->columns[0]->right->columnBinding()?->relationId);
+        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+    }
+
 }

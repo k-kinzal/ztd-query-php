@@ -123,6 +123,9 @@ final class ProjectionBinder
      */
     public function star(array $qualifiers, Scope $scope, Node $source, int $ordinal): array
     {
+        if ($qualifiers === [] && $scope->outputs !== null) {
+            return array_map(static fn (OutputColumn $column): OutputColumn => new OutputColumn($ordinal + $column->ordinal, $column->name, $column->expression), $scope->outputs);
+        }
         $outputs = [];
         if ($qualifiers === []) {
             foreach ($scope->merged as $name => $expression) {

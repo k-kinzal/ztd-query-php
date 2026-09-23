@@ -325,10 +325,21 @@ from its complete `from` input; callers cannot supply a contradictory relation l
 | `JOIN ... USING(id)` | `UsingJoin` with a nonempty set of `SharedColumn` pairs and their merged output expressions. |
 | `NATURAL JOIN` | `NaturalJoin` retaining its shared columns, including the case of no shared names. |
 | `CROSS JOIN` | `CrossJoin`, with no predicate field. |
+
 | Parenthesized, aliased join | `AliasedRelation` with a required inner input and its own visible output names. |
 | Table function | `FunctionRelation` with a required invocation and output declaration. |
 | `JSON_TABLE(...)` | `DocumentRelation` whose `JsonTable` retains the input document, row path, PASSING variables, and nested column declarations. Value, existence, ordinality, and nested-path columns have different types. |
 | `XMLTABLE(...)` | `DocumentRelation` whose `XmlTable` retains namespaces, document and row-path expressions, passing modes, and typed value or ordinality columns. |
+
+An unqualified `*` expands the complete joined row in the selected dialect's
+column order. PostgreSQL places USING columns in list order, followed by the
+remaining left and right columns. MySQL orders shared columns by the first input
+(the right input for RIGHT JOIN), then the remaining inputs. SQLite retains the
+left input's column positions and omits matching right columns. A qualified `t.*`
+expands that table occurrence. Nested joins retain earlier shared columns and
+separate columns with duplicate names; an ambiguous unqualified reference reports
+`ambiguous-column`. Outer joins add NULL-extension facts to the nullable input,
+including expressions produced by an earlier join.
 
 Document-table output columns derive from their declarations. A value column retains
 its own PATH, type, and default/error behavior. Nested JSON paths retain their

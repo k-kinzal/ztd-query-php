@@ -25,12 +25,11 @@ final class UsingJoin
     {
         $leftColumns = $left->scope->outputColumns($source);
         $rightColumns = $right->scope->outputColumns($source);
-        $names = $using === null ? array_values(array_intersect(array_keys($leftColumns), array_keys($rightColumns))) : TokenGroups::names(TokenGroups::parentheses($using->tokens())[0] ?? [], $left->scope->identifiers);
+        $names = $using === null ? Joining\SharedOutputs::common($leftColumns, $rightColumns, $left->scope->identifiers) : TokenGroups::names($using->name === 'using_list' ? $using->tokens() : (TokenGroups::parentheses($using->tokens())[0] ?? []), $left->scope->identifiers);
         $rules = new ExpressionRules($left->scope->identifiers->dialect, $left->scope->diagnostics());
         $columns = [];
         $merged = [];
         foreach ($names as $name) {
-            $name = (string) $name;
             $a = $left->scope->column([$name], $source);
             $b = $right->scope->column([$name], $source);
             $merged[$name] = match ($kind) {
@@ -43,7 +42,7 @@ final class UsingJoin
         $leftScope = in_array($kind, [JoinKind::Right, JoinKind::Full], true) ? $left->scope->extend($id) : $left->scope;
         $rightScope = in_array($kind, [JoinKind::Left, JoinKind::Full], true) ? $right->scope->extend($id) : $right->scope;
         $scope = $leftScope->combine($rightScope, $source);
-        $scope = new Scope($scope->identifiers, $scope->relations, $scope->extensions, $scope->parent, $scope->queries, $merged);
+        $scope = new Scope($scope->identifiers, $scope->relations, $scope->extensions, $scope->parent, $scope->queries, $merged + $scope->merged, Joining\SharedOutputs::using($leftScope, $rightScope, $columns, $kind, $source));
         $relation = $using === null
             ? new \SqlSemantics\Model\Relation\Joining\NaturalJoin($id, $kind, $left->relation, $right->relation, $columns, $source)
             : new \SqlSemantics\Model\Relation\Joining\UsingJoin($id, $kind, $left->relation, $right->relation, $columns, $source);

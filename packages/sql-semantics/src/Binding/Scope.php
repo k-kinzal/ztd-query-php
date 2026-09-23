@@ -25,6 +25,7 @@ final class Scope
      * @param list<TableUse> $relations
      * @param array<string, list<string>> $extensions
      * @param array<int|string, Expression> $merged USING columns visible without a qualifier
+     * @param list<\SqlSemantics\Model\OutputColumn>|null $outputs Ordered joined row; null for a base relation scope
      */
     public function __construct(
         public readonly Identifiers $identifiers,
@@ -33,6 +34,7 @@ final class Scope
         public readonly ?self $parent = null,
         public readonly ?QueryContext $queries = null,
         public readonly array $merged = [],
+        public readonly ?array $outputs = null,
     ) {
     }
 
@@ -44,7 +46,7 @@ final class Scope
     {
         $name = $parts[count($parts) - 1];
         $qualifiers = array_slice($parts, 0, -1);
-        if ($qualifiers === [] && ($merged = $this->mergedColumn($name)) !== null) {
+        if ($qualifiers === [] && ($merged = Query\Joining\RowNamespace::resolve($this, $name, $source)) !== null) {
             return $merged;
         }
         $matches = [];
@@ -123,7 +125,7 @@ final class Scope
             }
         }
 
-        return new self($this->identifiers, [...$this->relations, ...$right->relations], $this->extensions + $right->extensions, $this->parent ?? $right->parent, $this->queries ?? $right->queries, $this->merged + $right->merged);
+        return new self($this->identifiers, [...$this->relations, ...$right->relations], $this->extensions + $right->extensions, $this->parent ?? $right->parent, $this->queries ?? $right->queries, $this->merged + $right->merged, Query\Joining\RowNamespace::combine($this, $right, $source));
     }
 
     /**
@@ -137,19 +139,17 @@ final class Scope
         }
 
         $merged = array_map(static fn (Expression $value): Expression => $value->withFacts(new \SqlSemantics\Model\Scalar\ExpressionFacts($value->type, Nullability::MaybeNull, [...$value->nullExtendedBy, $joinId])), $this->merged);
-        return new self($this->identifiers, $this->relations, $extensions, $this->parent, $this->queries, $merged);
+        return new self($this->identifiers, $this->relations, $extensions, $this->parent, $this->queries, $merged, $this->outputs === null ? null : Query\Joining\RowNamespace::extend($this->outputs, $joinId));
     }
     /**
      * @return array<int|string, Expression> Unqualified joined output columns
      */
     public function outputColumns(Node $source): array
     {
-        $columns = $this->merged;
-        foreach ($this->relations as $relation) {
-            foreach ($relation->declaration->columns as $column) {
-                if (!isset($columns[$column->name])) {
-                    $columns[$column->name] = $this->column([$relation->alias ?? $relation->declaration->name, $column->name], $source);
-                }
+        $columns = [];
+        foreach (Query\Joining\RowNamespace::read($this, $source) as $column) {
+            if ($column->name !== null) {
+                $columns[$column->name] = $column->expression;
             }
         }
         return $columns;

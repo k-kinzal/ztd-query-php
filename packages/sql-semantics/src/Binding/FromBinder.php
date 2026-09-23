@@ -136,7 +136,7 @@ final class FromBinder
         }
         $using = Tree::child($node, ['using_list']);
         if ($using !== null) {
-            return (new Query\UsingJoin())->bind($left, $right, $kind, $node, $id, $node);
+            return (new Query\UsingJoin())->bind($left, $right, $kind, $node, $id, $using);
         }
 
         return $this->join($left, $right, $kind, $condition, $node, $id);
