@@ -20,7 +20,8 @@ final class Statements
      */
     public static function write(BoundStatement $statement): ?Tree
     {
-        return Ownership\OwnershipCommands::write($statement)
+        return Trigger\EventTriggerCommands::write($statement)
+            ?? Ownership\OwnershipCommands::write($statement)
             ?? Routine\Alterations::write($statement)
             ?? Storage\Removals::write($statement)
             ?? Database\MySqlDatabases::write($statement)
