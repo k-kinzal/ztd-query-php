@@ -23,7 +23,8 @@ final class ExecutionBinder
     public static function bind(Origin $origin, Node $statement, QueryContext $context): ?BoundStatement
     {
         $scope = new Scope($context->tables->identifiers, queries: $context);
-        return Statement\Definition\SpatialDefinitions::bind($origin, $statement)
+        return Statement\Definition\ForeignImports::bind($origin, $statement, $context)
+            ?? Statement\Definition\SpatialDefinitions::bind($origin, $statement)
             ?? Statement\Definition\MySqlRemovals::bind($origin, $statement, $context)
             ?? Statement\Routine\DropRoutines::bind($origin, $statement, $context)
             ?? Statement\Maintenance\IndexCaches::bind($origin, $statement, $context)

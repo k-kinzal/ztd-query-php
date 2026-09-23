@@ -20,7 +20,9 @@ final class InputViolationTest extends TestCase
         self::assertNotSame($violation->value, $violation->message());
     }
 
-    /** @return iterable<array{InputViolation}> */
+    /**
+     * @return iterable<array{InputViolation}>
+     */
     public static function providerViolations(): iterable
     {
         return array_map(static fn (InputViolation $violation): array => [$violation], InputViolation::cases());

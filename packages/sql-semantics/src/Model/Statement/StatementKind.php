@@ -13,6 +13,7 @@ namespace SqlSemantics\Model\Statement;
  */
 enum StatementKind: string
 {
+    case Import = 'IMPORT';
     case Cache = 'CACHE';
     case Load = 'LOAD';
     case Check = 'CHECK';

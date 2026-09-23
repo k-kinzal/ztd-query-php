@@ -12,6 +12,7 @@ namespace SqlSemantics\Model\Validation;
  */
 enum InputViolation: string
 {
+    case RelationName = 'relation-name';
     case SpatialReferenceId = 'spatial-reference-id';
     case SpatialAttribute = 'spatial-attribute';
     case TypeModifier = 'type-modifier';
@@ -60,6 +61,7 @@ enum InputViolation: string
     case AlterLock = 'invalid-alter-lock';
     /** @var array<string, string> */
     private const MESSAGES = [
+        'relation-name' => 'A relation name requires at most three identifier components without subscripts or wildcards.',
         'spatial-reference-id' => 'Spatial reference system DDL requires a nonzero unsigned 32-bit SRID and unsigned 32-bit organization identifiers.',
         'spatial-attribute' => 'A spatial definition requires exactly one NAME and DEFINITION and no duplicate attributes.',
         'type-modifier' => 'PostgreSQL type modifiers require simple numeric or text constants or unqualified identifiers.',

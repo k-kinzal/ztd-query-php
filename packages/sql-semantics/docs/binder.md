@@ -84,6 +84,7 @@ subnamespaces under `Model\Statement`.
 | SQLite: `PRAGMA main.cache_size=-2000` | `AssignPragmaStatement` | Qualified `name` and one required argument, classified as a numeric, text, or identifier argument. |
 | `CREATE TABLE t(id INTEGER DEFAULT 1)` | `CreateTableStatement` | `definition.table`: ordered columns, typed value sources, constraints, indexes, and dialect-specific properties. |
 | `CREATE TABLE t AS SELECT id FROM users` | `CreateTableAsStatement` | The target name, source query, and declaration options. |
+| PostgreSQL: `IMPORT FOREIGN SCHEMA ext LIMIT TO (users) FROM SERVER remote INTO app` | `ImportForeignSchemaStatement` | Required `remoteSchema`, `server`, and `localSchema`; `selection` is `AllForeignTables`, `ImportOnlyTables`, or `ExcludeForeignTables`. Explicit selections require a nonempty list of `ForeignRelation` values. `options` is an ordered list of `ForeignOption` identifier/text-literal pairs. |
 | `CREATE INDEX ix ON users((score+1)) WHERE score>0` | `CreateIndexStatement` | Required `table` and `index.definition`, including ordered typed keys and a partial-index predicate. |
 | MySQL: `DROP INDEX ix ON users ALGORITHM=INPLACE LOCK=NONE` | `DropTableIndexStatement` | Required index name and owning table, with algorithm and lock enums. |
 | `DROP INDEX CONCURRENTLY IF EXISTS ix` | `DropIndexConcurrentlyStatement` | Exactly one index name and existence policy. |
@@ -152,6 +153,15 @@ subnamespaces under `Model\Statement`.
 | `REINDEX INDEX app.ix`, `REINDEX TABLE app.t`, `REINDEX SCHEMA app` | `ReindexObjectStatement` | Required object name, `ReindexObjectKind`, and PostgreSQL rebuild options. |
 | `REINDEX DATABASE`, `REINDEX SYSTEM` | `ReindexDatabaseStatement` | User-table or system-table index selection in the current database. An optional database name records an explicit name assertion. |
 | SQLite `REINDEX`, `REINDEX ix` | `ReindexAllStatement`, `ReindexNamedStatement` | Rebuild all indexes, or resolve a required SQLite index/table/collation name. |
+
+Foreign schema imports retain remote relation qualification and descendant scope
+for the foreign-data wrapper. These are remote selectors, so binding does not look
+them up among local table declarations. A `ForeignOption` requires a name and a
+PostgreSQL text literal; the selected wrapper defines the option's meaning.
+Binding does not connect to the remote server, discover columns, or create local
+tables. The supplied schema snapshot stays unchanged. Import selections and
+options can be replaced immutably, and the remote server/schema pair can be
+replaced together with `withRemote()`.
 
 Spatial reference declarations are available in the selected MySQL 8+ grammars.
 `SpatialDefinition` requires `name` and `definition` text literals. Optional
