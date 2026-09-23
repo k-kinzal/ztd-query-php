@@ -33,6 +33,9 @@ final class StandardTypeReader
      */
     public function read(Node $source): Identity\TypeIdentity
     {
+        if ($this->types->dialect === Dialect::PostgreSql) {
+            ModifierReader::validate($source);
+        }
         $generic = Tree::outer($source, ['GenericType'])[0] ?? null;
         if ($this->types->dialect === Dialect::PostgreSql && $generic !== null) {
             $name = Tree::child($generic, ['type_function_name']);

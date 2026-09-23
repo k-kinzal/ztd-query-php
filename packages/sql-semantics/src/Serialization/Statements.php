@@ -22,7 +22,7 @@ final class Statements
      */
     public static function write(BoundStatement $statement): Tree
     {
-        $execution = Execution\Statements::write($statement);
+        $execution = Definition\Routines::write($statement) ?? Execution\Statements::write($statement);
         if ($execution !== null) {
             return $execution;
         }

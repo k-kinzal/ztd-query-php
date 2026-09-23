@@ -12,6 +12,10 @@ namespace SqlSemantics\Model\Validation;
  */
 enum InputViolation: string
 {
+    case TypeModifier = 'type-modifier';
+    case RoutineName = 'routine-name';
+    case AggregateArgumentMode = 'aggregate-argument-mode';
+    case AggregateVariadicSignature = 'aggregate-variadic-signature';
     case DiscardedValue = 'discarded-value';
     case HistogramTarget = 'histogram-target';
     case HistogramImport = 'histogram-import';
@@ -58,6 +62,10 @@ enum InputViolation: string
     public function message(): string
     {
         return [
+            'type-modifier' => 'PostgreSQL type modifiers require simple numeric or text constants or unqualified identifiers.',
+            'routine-name' => 'A routine name requires identifier components without subscripts or wildcards.',
+            'aggregate-argument-mode' => 'An aggregate signature accepts only input and variadic arguments.',
+            'aggregate-variadic-signature' => 'A variadic direct argument requires one variadic aggregated argument of the same declared type.',
             'discarded-value' => 'DO requires scalar expressions and cannot expand table columns without a table input.',
             'histogram-target' => 'A histogram request requires exactly one target table.',
             'histogram-import' => 'Imported histogram data describes exactly one column.',

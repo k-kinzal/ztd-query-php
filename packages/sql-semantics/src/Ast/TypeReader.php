@@ -48,7 +48,20 @@ final class TypeReader
             'CHAR', 'CHARACTER' => 'char',
             'TEXT', 'DATE', 'TIME', 'TIMESTAMP', 'JSON' => strtolower($name),
             'TINYINT', 'MEDIUMINT', 'DATETIME', 'BLOB' => $this->dialect === Dialect::MySql ? strtolower($name) : null,
-            'UUID', 'BYTEA', 'JSONB', 'TIMESTAMPTZ', 'TIMETZ', 'INTERVAL' => $this->dialect === Dialect::PostgreSql ? strtolower($name) : null,
+            default => $this->dialect === Dialect::PostgreSql ? self::postgresqlAlias($name) : null,
+        };
+    }
+
+    /**
+     * Resolves PostgreSQL spelling aliases to the storage family selected by its grammar.
+     */
+    public static function postgresqlAlias(string $name): ?string
+    {
+        return match ($name) {
+            'BIT VARYING' => 'varbit',
+            'NATIONAL CHARACTER', 'NATIONAL CHAR', 'NCHAR' => 'char',
+            'NATIONAL CHARACTER VARYING', 'NATIONAL CHAR VARYING', 'NCHAR VARYING' => 'varchar',
+            'UUID', 'BYTEA', 'JSONB', 'TIMESTAMPTZ', 'TIMETZ', 'INTERVAL' => strtolower($name),
             default => null,
         };
     }

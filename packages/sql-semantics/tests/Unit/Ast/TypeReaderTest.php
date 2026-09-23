@@ -288,4 +288,28 @@ final class TypeReaderTest extends TestCase
         self::assertSame('2', $type->identity->scale->spelling);
     }
 
+    #[TestWith(['BIT VARYING(12)', 'varbit'])]
+    #[TestWith(['NATIONAL CHARACTER(12)', 'char'])]
+    #[TestWith(['NATIONAL CHAR(12)', 'char'])]
+    #[TestWith(['NCHAR(12)', 'char'])]
+    #[TestWith(['NATIONAL CHARACTER VARYING(12)', 'varchar'])]
+    #[TestWith(['NATIONAL CHAR VARYING(12)', 'varchar'])]
+    #[TestWith(['NCHAR VARYING(12)', 'varchar'])]
+    public function testReadClassifiesPostgreSqlNationalAndVaryingDeclarations(string $declaration, string $family): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(value ' . $declaration . ')');
+        $type = $schema->tables[0]->columns[0]->type;
+        self::assertInstanceOf(\SqlSemantics\Type\Identity\StringStorage::class, $type->identity);
+        self::assertSame($family, $type->name);
+        self::assertSame('12', $type->identity->length?->spelling);
+        $statement = (new Binder($schema))->bind('DROP FUNCTION f(' . $declaration . ')');
+        self::assertSame('DROP FUNCTION "f"(' . $family . '(12))', $statement->toString());
+    }
+
+    public function testPostgresqlAliasUsesDeclaredStorageFamilies(): void
+    {
+        self::assertSame('varbit', \SqlSemantics\Ast\TypeReader::postgresqlAlias('BIT VARYING'));
+        self::assertNull(\SqlSemantics\Ast\TypeReader::postgresqlAlias('MY_CUSTOM_TYPE'));
+    }
+
 }
