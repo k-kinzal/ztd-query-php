@@ -22,7 +22,7 @@ final class Statements
      */
     public static function write(BoundStatement $statement): Tree
     {
-        $execution = Definition\Routines::write($statement) ?? Execution\Statements::write($statement);
+        $execution = Definition\MySqlRemovals::write($statement) ?? Definition\Routines::write($statement) ?? Execution\Statements::write($statement);
         if ($execution !== null) {
             return $execution;
         }
