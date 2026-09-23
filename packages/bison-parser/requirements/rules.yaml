@@ -24,6 +24,12 @@ items:
       -
         selector: '#Rules-Syntax > div.example:nth-of-type(3) > pre'
         quote: "exp: exp '+' exp;"
+      -
+        selector: '#Rules-Syntax > p:nth-of-type(3)'
+        quote: 'For example,'
+      -
+        selector: '#Rules-Syntax > p:nth-of-type(4)'
+        quote: 'says that two groupings of type exp, with a ‘+’ token in between, can be combined into a larger grouping of type exp.'
     tests:
       -
         runner: behavior
@@ -65,6 +71,8 @@ items:
       - manual
       - grammar
     category: rules
+    related:
+      - BISON-RULE-007
   -
     id: BISON-RULE-004
     statement: 'When braced code is read, the reader shall balance braces and preserve the body without validating C syntax.'
@@ -133,3 +141,23 @@ items:
       - manual
       - grammar
     category: rules
+  -
+    id: BISON-RULE-007
+    statement: 'When a single action follows the components of a rule, the reader shall retain it as the last item of that alternative.'
+    evidence:
+      -
+        selector: '#Rules-Syntax > p:nth-of-type(9)'
+        quote: 'Usually there is only one action and it follows the components. See Actions.'
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/rules.feature:72'
+      -
+        runner: behavior
+        target: 'spec/features/semantics.feature:234'
+    labels:
+      - manual
+      - grammar
+    category: rules
+    related:
+      - BISON-RULE-003

@@ -4,7 +4,7 @@ source:
   id: bison-symbols
   uri: 'http://www.gnu.org/software/bison/manual/html_node/Symbols.html'
   format: html
-  selector: '#Symbols > p, #Symbols > ul > li'
+  selector: '#Symbols > p, #Symbols > ul > li, #Symbols > div.example > pre'
   snapshot: .requirements-cache/symbols.html
   sha256: 05267f3b9eafa5c537c2a790bbc93e9ddb2b43c103dca39bdf46ad477fe6fbc5
 items:
@@ -143,11 +143,118 @@ items:
     tests:
       -
         runner: behavior
+        target: 'spec/features/symbols.feature:381'
+    labels:
+      - manual
+      - grammar
+    category: symbols
+    related:
+      - BISON-SYMBOL-009
+  -
+    id: BISON-SYMBOL-005
+    statement: 'When a terminal symbol is read, the reader shall record its spelling as an identifier, a character literal or a string literal.'
+    evidence:
+      -
+        selector: '#Symbols > p:nth-of-type(5)'
+        quote: 'There are three ways of writing terminal symbols in the grammar:'
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/symbols.feature:65'
+      -
+        runner: behavior
+        target: 'spec/features/symbols.feature:84'
+      -
+        runner: behavior
+        target: 'spec/features/symbols.feature:157'
+    labels:
+      - manual
+      - grammar
+    category: symbols
+    related:
+      - BISON-SYMBOL-001
+      - BISON-SYMBOL-002
+      - BISON-SYMBOL-003
+  -
+    id: BISON-SYMBOL-006
+    statement: 'When a terminal symbol is used in a rule, the reader shall accept the symbol as a component without a numeric token code.'
+    evidence:
+      -
+        selector: '#Symbols > p:nth-of-type(2)'
+        quote: 'A terminal symbol (also known as a token kind) represents a class of syntactically equivalent tokens. You use the symbol in grammar rules to mean that a token in that class is allowed. The symbol is represented in the Bison parser by a numeric code, and the yylex function returns a token kind code to indicate what kind of token has been read. You don’t need to know what the code value is; you can use the symbol to stand for it.'
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/symbols.feature:65'
+      -
+        runner: behavior
+        target: 'spec/features/symbols.feature:84'
+    labels:
+      - manual
+      - grammar
+    category: symbols
+    related:
+      - BISON-RUNTIME-001
+  -
+    id: BISON-SYMBOL-007
+    statement: 'When a terminal symbol is written among the components of a rule, the reader shall record it as a component in the same way for each of its three spellings.'
+    evidence:
+      -
+        selector: '#Symbols > p:nth-of-type(6)'
+        quote: 'How you choose to write a terminal symbol has no effect on its grammatical meaning. That depends only on where it appears in rules and on when the parser function returns that symbol.'
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/symbols.feature:230'
+      -
+        runner: behavior
+        target: 'spec/features/rules.feature:169'
+    labels:
+      - manual
+      - grammar
+    category: symbols
+    related:
+      - BISON-SYMBOL-005
+  -
+    id: BISON-SYMBOL-008
+    statement: 'When a nonterminal symbol is named as the result of a rule or declared with %nterm, the reader shall preserve its identifier.'
+    evidence:
+      -
+        selector: '#Symbols > p:nth-of-type(3)'
+        quote: 'A nonterminal symbol stands for a class of syntactically equivalent groupings. The symbol name is used in writing grammar rules. By convention, it should be all lower case.'
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/rules.feature:17'
+      -
+        runner: behavior
+        target: 'spec/features/declarations.feature:339'
+    labels:
+      - manual
+      - grammar
+    category: symbols
+    related:
+      - BISON-RULE-001
+  -
+    id: BISON-SYMBOL-009
+    statement: 'When a character token is taken from the basic execution character set of Standard C, the reader shall accept it as a nonnull character token.'
+    evidence:
+      -
+        selector: '#Symbols > p:nth-of-type(9)'
+        quote: 'If you want to write a grammar that is portable to any Standard C host, you must use only nonnull character tokens taken from the basic execution character set of Standard C. This set consists of the ten digits, the 52 lower- and upper-case English letters, and the characters in the following C-language string:'
+      -
+        selector: '#Symbols > div.example > pre'
+        quote: '"\a\b\t\n\v\f\r !\"#%&''()*+,-./:;<=>?[\\]^_{|}~"'
+    tests:
+      -
+        runner: behavior
         target: 'spec/features/symbols.feature:255'
     labels:
       - manual
       - grammar
     category: symbols
+    related:
+      - BISON-SYMBOL-002
   -
     id: BISON-RUNTIME-001
     statement: 'When a token is requested, the generated parser shall interpret the numeric token code returned by yylex.'
