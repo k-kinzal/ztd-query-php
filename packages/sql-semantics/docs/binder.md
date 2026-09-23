@@ -125,6 +125,10 @@ subnamespaces under `Model\Statement`.
 | MySQL: `CLONE LOCAL DATA DIRECTORY '/tmp/clone'` | `CloneLocalStatement` | A required destination-directory text literal. |
 | MySQL: `BINLOG 'YWJj'` | `ApplyBinlogStatement` | A required text literal containing an encoded binary-log event. |
 | MySQL: `TRUNCATE users` | `TruncateTableStatement` | One required physical `table`; there is no predicate or query input. |
+| MySQL: `CACHE INDEX users, incoming IN hot` | `CacheTableIndexesStatement` | Nonempty `targets`, each a `TableIndexes` with one physical `table` and optional `NamedIndexes`; required `cache` is `DefaultCache` or a `CacheName`. |
+| MySQL: `CACHE INDEX users PARTITION (p0,p1) IN hot` | `CachePartitionIndexesStatement` | One `target`, required `AllPartitions` or nonempty `NamedPartitions`, and required `cache`. |
+| MySQL: `LOAD INDEX INTO CACHE users, incoming IGNORE LEAVES` | `PreloadTableIndexesStatement` | Nonempty `PreloadTarget` requests; each contains `TableIndexes` and its own `ignoreLeaves` policy. The current cache assignment supplies the destination. |
+| MySQL: `LOAD INDEX INTO CACHE users PARTITION (ALL) IGNORE LEAVES` | `PreloadPartitionIndexesStatement` | One `PreloadTarget` and a required partition selection. No explicit cache destination. |
 | MySQL: `CHECK TABLE users QUICK FOR UPGRADE` | `CheckTablesStatement` | Nonempty physical `tables` and ordered `CheckOption` values. |
 | MySQL: `REPAIR LOCAL TABLE users QUICK USE_FRM` | `RepairTablesStatement` | Nonempty physical `tables`, ordered `RepairOption` values, and `BinlogPolicy`. |
 | MySQL: `OPTIMIZE TABLE users`, `ANALYZE TABLE users` | `OptimizeTablesStatement`, `AnalyzeTablesStatement` | Nonempty physical `tables` and `BinlogPolicy`; each class identifies its own operation. |
@@ -141,6 +145,15 @@ INSERT, UPDATE, DELETE, and MERGE retain ordered RETURNING `outputs` where the
 selected language provides them. Their `affectedTables()` method identifies write
 targets. REPLACE uses an insertion form with `InsertMode::Replace`. It does not lose
 the distinction between explicit rows, a source query, and column assignments.
+
+Index-cache requests retain the explicit index selection, including `INDEX ()`,
+separately from an omitted selection. These operands describe the request; MySQL's
+storage engine currently applies cache assignment and preloading to all indexes
+of the target table ([CACHE INDEX](https://dev.mysql.com/doc/refman/8.4/en/cache-index.html),
+[LOAD INDEX INTO CACHE](https://dev.mysql.com/doc/refman/8.4/en/load-index.html)).
+`ignoreLeaves` requests nonleaf pages only. The four cache
+statement forms return the maintenance result roles `Table`, `Op`, `Msg_type`, and
+`Msg_text`. Binding neither allocates a cache nor loads pages.
 
 Server inspection statements are in `Model\Statement\Inspection`. Their
 `resultColumns()` returns the requested metadata shape, without reading the server.

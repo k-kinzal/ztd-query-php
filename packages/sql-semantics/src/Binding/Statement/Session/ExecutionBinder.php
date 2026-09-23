@@ -23,7 +23,8 @@ final class ExecutionBinder
     public static function bind(Origin $origin, Node $statement, QueryContext $context): ?BoundStatement
     {
         $scope = new Scope($context->tables->identifiers, queries: $context);
-        return Statement\Maintenance\MySqlTables::bind($origin, $statement, $context)
+        return Statement\Maintenance\IndexCaches::bind($origin, $statement, $context)
+            ?? Statement\Maintenance\MySqlTables::bind($origin, $statement, $context)
             ?? Statement\Maintenance\TruncateBinder::bind($origin, $statement, $context)
             ?? TableLockBinder::bind($origin, $statement, $context)
             ?? Statement\Inspection\ServerInspection::bind($origin, $statement)

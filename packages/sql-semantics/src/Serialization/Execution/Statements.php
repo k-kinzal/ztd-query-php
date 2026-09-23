@@ -24,7 +24,7 @@ final class Statements
      */
     public static function write(BoundStatement $statement): ?Tree
     {
-        return Inspections::write($statement) ?? MySqlMaintenance::write($statement) ?? self::transactions($statement) ?? match (true) {
+        return IndexCaches::write($statement) ?? Inspections::write($statement) ?? MySqlMaintenance::write($statement) ?? self::transactions($statement) ?? match (true) {
             $statement instanceof Statement\Execution\DoExpressionsStatement => DiscardedResults::write($statement),
             $statement instanceof Statement\Locking\LockRelationsStatement,
             $statement instanceof Statement\Locking\LockTablesStatement => TableLocks::write($statement),
