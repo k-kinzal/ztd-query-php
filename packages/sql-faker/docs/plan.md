@@ -287,6 +287,27 @@ $sameSql = $first === $second;
 
 The first four bytes choose an expansion budget within the feasible range. Remaining bytes supply production and lexical choices; omitted bytes use defaults. The input must be a grammar plan with a feasible positive expansion count and a maximum budget no greater than 1,000,000. Use direct lexical generation for lexical-value plans.
 
+
+### Encode choices as fuzzer input
+
+`BytePlanEncoder` is the inverse of `BytePlanCompiler`: it runs `planner()->build()` once with callbacks that also receive the candidate productions, and returns the bytes the compiler decodes to that very plan. Lexical choices left to `null` are made the way the compiler will make them from the padding bytes:
+
+```php
+$builder = $provider->planner();
+$constraints = GenerationPlan::fromRule('cmd')->requiringNonEmpty();
+
+$input = (new BytePlanEncoder())->encode(
+    $builder,
+    $constraints,
+    $builder->minimumExpansions($constraints),
+    static fn (int $count, array $candidates): int => $count - 1,
+);
+
+$plan = (new BytePlanCompiler())->compile($input, $builder, $constraints);
+$sql = $provider->generate($plan);
+```
+
+The budget must lie between `minimumExpansions()` and the constraints' expansion budget, 5000 without one. `bin/seeds.php` uses the encoder to write one such input for every production a start rule can reach; the package's `seeds/` directory holds the results for the default grammar versions.
 ## MySQL
 
 ### Require non-empty row values
