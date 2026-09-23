@@ -35,6 +35,10 @@ use SqlParser\Table\TableFile;
  *     $sql = "SELECT id FROM users -- everyone\n";
  *     $parser = new \SqlParser\MySql\MySqlParser();
  *     $parser->parse($sql)->toString() === $sql // => true
+ * @example Parsing consecutive statements
+ *     $trees = (new \SqlParser\MySql\MySqlParser())->parseAll("SELECT ';'; SELECT 2");
+ *     count($trees) // => 2
+ *     $trees[1]->tokens()[0]->offset // => 12
  * @example Choosing a release
  *     $parser = new \SqlParser\MySql\MySqlParser('mysql-5.7.44');
  *     $parser->version() // => 'mysql-5.7.44'
@@ -106,6 +110,19 @@ final class MySqlParser
     public function parse(string $sql): Node
     {
         return (new LrParser($this->table))->parse($this->tokenize($sql), $sql);
+    }
+
+    /**
+     * Reads consecutive statements without splitting strings or compound routine bodies.
+     *
+     * @param string $sql The complete script; client commands such as DELIMITER are not SQL
+     * @return list<Node> Ordered statement trees retaining original token offsets and trivia
+     * @throws LexicalException When the text holds something no token starts with
+     * @throws SyntaxException When a statement does not match the selected grammar
+     */
+    public function parseAll(string $sql): array
+    {
+        return (new ScriptParser(new LrParser($this->table)))->parse($this->tokenize($sql), $sql);
     }
 
     /**

@@ -79,6 +79,13 @@ MySQL's `sql_mode` flags that change tokenization, `ANSI_QUOTES`, `PIPES_AS_CONC
 
 See [docs/usage.md](docs/usage.md) for the tree API and [docs/architecture.md](docs/architecture.md) for how the tables are built.
 
+`MySqlParser::parseAll(string $sql): array` reads consecutive SQL statements into
+ordered statement trees. It uses the selected grammar to recognize complete
+statements, so strings, comments, and compound routine bodies do not introduce
+false boundaries. Token offsets remain relative to the complete input. Concatenating
+the returned trees' `toString()` results preserves the script, including trailing
+comments. Client commands such as `DELIMITER` are outside the SQL grammar.
+
 ## How the parsers are built
 
 `bin/build-mysql.php`, `bin/build-pg.php` and `bin/build-sqlite.php` download the grammar and keyword sources of each release, read them with the [bison-parser](../bison-parser/) and [lemon-parser](../lemon-parser/) packages (development dependencies of this one), build the LALR(1) automaton, resolve conflicts with the same precedence rules Bison and Lemon apply, and write the tables under `resources/`. A build refuses to write a table whose conflicts differ from what the grammar declares with `%expect`, which is how the generator is checked against Bison on every release.

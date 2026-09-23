@@ -150,4 +150,62 @@ final class MySqlParserTest extends TestCase
         self::assertCount(1, $tree->find('limit_clause'));
     }
 
+
+    public function testParseAllPreservesScriptTriviaAndAbsolutePositions(): void
+    {
+        $sql = "SELECT ';' AS `;`;\n/* between ; */ SELECT 2; -- trailing\n";
+        $trees = (new MySqlParser())->parseAll($sql);
+        self::assertCount(2, $trees);
+        self::assertSame($sql, $trees[0]->toString() . $trees[1]->toString());
+        self::assertSame(strpos($sql, 'SELECT 2'), $trees[1]->tokens()[0]->offset);
+        self::assertSame('start_entry', $trees[1]->name);
+    }
+
+    public function testParseAllRetainsCompoundRoutineBodies(): void
+    {
+        $sql = 'CREATE PROCEDURE p() BEGIN SELECT 1; IF 1 THEN SELECT 2; END IF; END; SELECT 3';
+        $trees = (new MySqlParser())->parseAll($sql);
+        self::assertCount(2, $trees);
+        self::assertSame($sql, $trees[0]->toString() . $trees[1]->toString());
+        self::assertNotEmpty($trees[0]->find('sp_proc_stmt_if'));
+        self::assertSame(' SELECT 3', $trees[1]->toString());
+    }
+
+    public function testParseAllReportsSyntaxLocationsInTheCompleteScript(): void
+    {
+        $this->expectException(SyntaxException::class);
+        $this->expectExceptionMessage("Unexpected 'FROM' at line 2, column 8");
+        (new MySqlParser())->parseAll("SELECT 1;\nSELECT FROM");
+    }
+
+    public function testParseAllRejectsAnIncompleteCompoundBody(): void
+    {
+        $this->expectException(SyntaxException::class);
+        (new MySqlParser())->parseAll('SELECT 1; CREATE PROCEDURE p() BEGIN SELECT 2;');
+    }
+
+    public function testParseAllKeepsTheSelectedLegacyGrammar(): void
+    {
+        $sql = "XA START 'g'; XA END 'g'; XA PREPARE 'g'";
+        $trees = (new MySqlParser('mysql-5.6.51'))->parseAll($sql);
+        self::assertCount(3, $trees);
+        self::assertSame('query', $trees[0]->name);
+        self::assertSame($sql, $trees[0]->toString() . $trees[1]->toString() . $trees[2]->toString());
+    }
+
+    public function testParseAllKeepsExecutableCommentsInTheOriginalText(): void
+    {
+        $sql = '/*!80000 SELECT 1 */; SELECT 2; /* tail */';
+        $trees = (new MySqlParser())->parseAll($sql);
+        self::assertCount(2, $trees);
+        self::assertSame($sql, $trees[0]->toString() . $trees[1]->toString());
+    }
+
+    public function testParseAllUsesTheConfiguredLexicalMode(): void
+    {
+        $trees = (new MySqlParser(mode: new SqlMode(ansiQuotes: true)))->parseAll('SELECT "a;b"; SELECT "c"');
+        self::assertCount(2, $trees);
+        self::assertSame('IDENT_QUOTED', $trees[0]->tokens()[1]->name);
+        self::assertSame('IDENT_QUOTED', $trees[1]->tokens()[1]->name);
+    }
 }
