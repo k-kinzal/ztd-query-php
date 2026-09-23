@@ -83,4 +83,5 @@ enum StatementKind: string
     case Attach = 'ATTACH';
     case Detach = 'DETACH';
     case Reindex = 'REINDEX';
+    case Refresh = 'REFRESH';
 }

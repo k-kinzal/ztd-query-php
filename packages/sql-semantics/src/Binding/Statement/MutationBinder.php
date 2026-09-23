@@ -192,6 +192,10 @@ final class MutationBinder
     {
         $queries = [];
         $directRows = [];
+        $legacy = QueryNodes::legacyContainer($statement);
+        if ($legacy !== null) {
+            return [[], [$this->context->bind($legacy, $this->parent)]];
+        }
         $queryNames = ['SelectStmt', 'query_expression', 'select', 'select_init', 'select_paren', 'insert_query_expression', 'create_select'];
         foreach (Tree::outer($statement, [...$queryNames, 'with_clause', 'with', 'wqlist', 'a_expr', 'expr', 'expr_or_default', 'values_list', 'opt_on_conflict', 'upsert', 'insert_update_list']) as $query) {
             if (in_array($query->name, $queryNames, true)) {

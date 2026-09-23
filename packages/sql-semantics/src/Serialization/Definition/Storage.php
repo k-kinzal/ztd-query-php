@@ -24,7 +24,7 @@ final class Storage
      */
     public static function parameters(array $parameters, Dialect $dialect): Tree
     {
-        return Build::separated(array_map(static fn ($parameter): Tree => new Tree('parameter', [Build::identifier($parameter->name->parts, $dialect), Build::keyword('='), Expressions::write($parameter->value)]), $parameters));
+        return Build::separated(array_map(static fn ($parameter): Tree => new Tree('parameter', [Build::identifier($parameter->name->parts, $dialect), ...($parameter->value instanceof \SqlSemantics\Schema\Storage\ImpliedSetting ? [] : [Build::keyword('='), Expressions::write($parameter->value)])]), $parameters));
     }
 
     /**

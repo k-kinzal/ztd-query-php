@@ -73,6 +73,7 @@ enum InputViolation: string
     case SetWidth = 'set-column-count';
     case AlterAlgorithm = 'invalid-alter-algorithm';
     case AlterLock = 'invalid-alter-lock';
+    case ConcurrentEmptyRefresh = 'concurrent-empty-refresh';
     /** @var array<string, string> */
     private const MESSAGES = [
         'ownership-role' => 'An ownership selector requires a concrete role or session role reference, excluding public and the reserved name none.',
@@ -134,6 +135,7 @@ enum InputViolation: string
         'set-column-count' => 'Set-operation operands must have the same result width.',
         'invalid-alter-algorithm' => 'The requested ALTER algorithm is not defined by this database language.',
         'invalid-alter-lock' => 'The requested ALTER lock mode is not defined by this database language.',
+        'concurrent-empty-refresh' => 'A concurrent materialized view refresh cannot leave the view without data.',
         'cte-column-count' => 'CTE aliases must match the declared query result positions.',
         'duplicate-cte' => 'A WITH clause cannot define the same relation name twice.',
     ];

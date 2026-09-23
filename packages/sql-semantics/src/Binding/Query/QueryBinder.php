@@ -62,10 +62,11 @@ final class QueryBinder
         $projectionOptions = new ProjectionOptions();
         $quantifier = $projectionOptions->quantifier($body, $scope);
         $tail = new SelectModifiersBinder();
-        [$limit, $offset] = $tail->pagination($source, $scope);
+        $tailSource = QueryNodes::modifierScope($source, $body);
+        [$limit, $offset] = $tail->pagination($tailSource, $scope);
         $groups = $this->expressions($body, ['group_clause', 'opt_group_clause', 'groupby_opt'], $scope);
         $origin = new \SqlSemantics\Model\Statement\Origin($id, $source, $context->tables->identifiers->dialect);
-        $ordering = $tail->ordering($source, $scope, $outputs);
+        $ordering = $tail->ordering($tailSource, $scope, $outputs);
         if ($values !== []) {
             return new \SqlSemantics\Model\Statement\ValuesStatement($origin, $values, $ordering, $limit, $offset, ctes: (new CteBinder())->clause($source, $context));
         }
@@ -146,7 +147,7 @@ final class QueryBinder
     {
         $branches = [];
         foreach ($body->children as $child) {
-            if ($child instanceof Node && in_array($child->name, ['select_clause', 'query_expression_body', 'query_specification', 'selectnowith', 'oneselect', 'select_part2', 'select_init', 'select_paren', 'select_derived_union', 'select_derived'], true)) {
+            if ($child instanceof Node && in_array($child->name, ['select_clause', 'query_expression_body', 'legacy_compound', 'query_specification', 'selectnowith', 'oneselect', 'select_part2', 'select_init', 'select_paren', 'select_derived_union', 'select_derived', 'create_select', 'create_view_select'], true)) {
                 $branches[] = $child;
             }
         }
@@ -189,7 +190,7 @@ final class QueryBinder
         }
         $scope = new Scope($context->tables->identifiers, parent: $parent, queries: $context);
         $tail = new SelectModifiersBinder();
-        $tailSource = $body->name === 'selectnowith' ? (Tree::child($body, ['oneselect']) ?? $source) : $source;
+        $tailSource = $body->name === 'selectnowith' ? (Tree::child($body, ['oneselect']) ?? $source) : QueryNodes::compoundTail($source, $body);
         [$limit, $offset] = $tail->pagination($tailSource, $scope);
         return new \SqlSemantics\Model\Statement\CompoundStatement(new \SqlSemantics\Model\Statement\Origin($id, $source, $context->tables->identifiers->dialect), $branches[0], $branches[1], \SqlSemantics\Model\Query\SetOperator::from($operator), $tail->ordering($tailSource, $scope, $outputs), $limit, $offset, ctes: (new CteBinder())->clause($source, $context));
     }

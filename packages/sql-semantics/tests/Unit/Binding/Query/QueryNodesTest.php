@@ -206,4 +206,116 @@ final class QueryNodesTest extends TestCase
         (new Binder($schema))->bind('SELECT * FROM (a UNION SELECT 1) q', strict: false);
     }
 
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-5.6.51'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-5.7.44'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.4.7'])]
+    public function testCompoundTailAppliesTrailingClausesToTheWholeUnion(string $version): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build());
+        $query = $binder->bind('SELECT * FROM ((SELECT 1) UNION (SELECT 2 LIMIT 5) ORDER BY 1 LIMIT 1) d');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        self::assertSame('SELECT `d`.`?column?` AS `?column?` FROM(SELECT 1 UNION (SELECT 2 LIMIT 5) ORDER BY 1 ASC LIMIT 1) AS `d`', $query->toString());
+        self::assertSame('SELECT 1 UNION SELECT 2 ORDER BY 1 ASC LIMIT 2 OFFSET 1', $binder->bind('SELECT 1 UNION SELECT 2 ORDER BY 1 LIMIT 2 OFFSET 1')->toString());
+    }
+
+    public function testCompoundTailIsEmptyWhenTheBodyIsTheWholeSource(): void
+    {
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('SELECT 1 UNION SELECT 2');
+        $body = \SqlSemantics\Binding\Query\QueryNodes::body($tree);
+        self::assertSame([], \SqlSemantics\Binding\Query\QueryNodes::compoundTail($body, $body)->children);
+        self::assertSame([], \SqlSemantics\Binding\Query\QueryNodes::compoundTail($tree, $body)->children);
+    }
+
+    public function testModifierScopeStopsAtTheParenthesizedOperand(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        self::assertSame('(SELECT 1 LIMIT 1) UNION SELECT 2 LIMIT 3', $binder->bind('(SELECT 1 LIMIT 1) UNION (SELECT 2) LIMIT 3')->toString());
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('SELECT 1 LIMIT 1');
+        $body = \SqlSemantics\Binding\Query\QueryNodes::body($tree);
+        self::assertSame('select_no_parens', \SqlSemantics\Binding\Query\QueryNodes::modifierScope($tree, $body)->name);
+        self::assertSame($body, \SqlSemantics\Binding\Query\QueryNodes::modifierScope($body, $body));
+    }
+
+    public function testContainsRecognizesTheNodeItselfAndItsDescendants(): void
+    {
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('SELECT 1');
+        $body = \SqlSemantics\Binding\Query\QueryNodes::body($tree);
+        self::assertTrue(\SqlSemantics\Binding\Query\QueryNodes::contains($tree, $body));
+        self::assertTrue(\SqlSemantics\Binding\Query\QueryNodes::contains($body, $body));
+        self::assertFalse(\SqlSemantics\Binding\Query\QueryNodes::contains($body, $tree));
+    }
+
+    public function testParentOfFindsTheProductionHoldingTheTarget(): void
+    {
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('SELECT 1');
+        $body = \SqlSemantics\Binding\Query\QueryNodes::body($tree);
+        $parent = \SqlSemantics\Binding\Query\QueryNodes::parentOf($tree, $body);
+        self::assertNotNull($parent);
+        self::assertContains($body, $parent->children);
+        self::assertNull(\SqlSemantics\Binding\Query\QueryNodes::parentOf($body, $tree));
+    }
+
+    public function testDerivedCompoundMovesTrailingModifiersOutOfTheLastOperand(): void
+    {
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql, 'mysql-5.7.44'))->parse('SELECT * FROM (SELECT 1 UNION SELECT 2 ORDER BY 1 LIMIT 1) d');
+        $union = $tree->find('select_derived_union')[0];
+        $compound = \SqlSemantics\Binding\Query\QueryNodes::derivedCompound($union);
+        self::assertSame('legacy_compound', $compound->name);
+        $tail = \SqlSemantics\Ast\Tree::child($compound, ['legacy_compound_tail']);
+        self::assertNotNull($tail);
+        self::assertSame(['order_clause', 'limit_clause'], array_map(static fn (\SqlParser\Parser\Node $node): string => $node->name, array_values(array_filter($tail->children, static fn ($child): bool => $child instanceof \SqlParser\Parser\Node))));
+        $plain = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql, 'mysql-5.7.44'))->parse('SELECT * FROM (SELECT 1 UNION SELECT 2) d')->find('select_derived_union')[0];
+        self::assertSame($plain, \SqlSemantics\Binding\Query\QueryNodes::derivedCompound($plain));
+    }
+
+    public function testTrailingModifiersAreReadAndRemovedFromLegacyOperands(): void
+    {
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql, 'mysql-5.7.44'))->parse('SELECT * FROM (SELECT 1 UNION SELECT 2 ORDER BY 1 LIMIT 1) d');
+        $operands = $tree->find('query_specification');
+        $last = $operands[count($operands) - 1];
+        $modifiers = \SqlSemantics\Binding\Query\QueryNodes::trailingModifiers($last);
+        self::assertSame(['order_clause', 'limit_clause'], array_map(static fn (\SqlParser\Parser\Node $node): string => $node->name, $modifiers));
+        $stripped = \SqlSemantics\Binding\Query\QueryNodes::withoutTrailingModifiers($last);
+        self::assertSame([], \SqlSemantics\Binding\Query\QueryNodes::trailingModifiers($stripped));
+        self::assertSame('SELECT 2', trim($stripped->toString()));
+    }
+
+    public function testWithoutTrailingModifiersLeavesOperandsWithoutClausesIntact(): void
+    {
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql, 'mysql-5.7.44'))->parse('SELECT * FROM (SELECT 1 UNION SELECT 2) d');
+        $operands = $tree->find('query_specification');
+        $last = $operands[count($operands) - 1];
+        self::assertSame($last->toString(), \SqlSemantics\Binding\Query\QueryNodes::withoutTrailingModifiers($last)->toString());
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['INSERT INTO t SELECT 1 UNION SELECT 2', 'insert_values'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['CREATE TABLE u AS SELECT 1 UNION SELECT 2', 'create3'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['CREATE VIEW v AS SELECT 1 UNION SELECT 2', 'view_select_aux'])]
+    public function testLegacyContainerFindsTheProductionHoldingTheUnionTail(string $sql, string $container): void
+    {
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql, 'mysql-5.6.51'))->parse($sql);
+        self::assertSame($container, \SqlSemantics\Binding\Query\QueryNodes::legacyContainer($tree)?->name);
+        self::assertNull(\SqlSemantics\Binding\Query\QueryNodes::legacyContainer((new \SqlSemantics\Ast\DialectParser(Dialect::MySql, 'mysql-5.6.51'))->parse('INSERT INTO t SELECT 1')));
+    }
+
+    public function testParenthesizedQueryUnwrapsLegacyDerivedTables(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build('CREATE TABLE t (a INT)'));
+        self::assertSame('SELECT `d`.`?column?` AS `?column?` FROM(SELECT 1 LIMIT 1) AS `d`', $binder->bind('SELECT * FROM ((SELECT 1 LIMIT 1)) d')->toString());
+        self::assertSame('SELECT `d`.`?column?` AS `?column?` FROM(SELECT 1 UNION SELECT 2) AS `d`', $binder->bind('SELECT * FROM ((SELECT 1) UNION (SELECT 2)) d')->toString());
+        self::assertSame('SELECT `t`.`a` AS `a` FROM `t`', $binder->bind('SELECT * FROM ((t))')->toString());
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql, 'mysql-5.7.44'))->parse('SELECT * FROM ((t))');
+        self::assertNull(\SqlSemantics\Binding\Query\QueryNodes::parenthesizedQuery($tree->find('table_factor')[0]));
+    }
+
+    public function testClausesCollectsOnlyTheOuterQueryClauses(): void
+    {
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('SELECT (SELECT 1 LIMIT 1) FROM t WHERE 1 = 1 ORDER BY 1');
+        $clauses = \SqlSemantics\Binding\Query\QueryNodes::clauses($tree);
+        self::assertArrayHasKey('from_clause', $clauses);
+        self::assertArrayHasKey('where_clause', $clauses);
+        self::assertArrayHasKey('sort_clause', $clauses);
+        self::assertArrayNotHasKey('limit_clause', $clauses);
+    }
+
 }

@@ -21,6 +21,7 @@ final class Statements
     public static function write(BoundStatement $statement): ?Tree
     {
         return Trigger\EventTriggerCommands::write($statement)
+            ?? View\Views::write($statement)
             ?? Ownership\OwnershipCommands::write($statement)
             ?? Routine\Alterations::write($statement)
             ?? Storage\Removals::write($statement)
@@ -43,7 +44,6 @@ final class Statements
                 $statement instanceof Statement\Definition\RenameColumnStatement,
                 $statement instanceof Statement\Definition\DropColumnStatement,
                 $statement instanceof Statement\Definition\AddColumnStatement,
-                $statement instanceof Statement\Definition\CreateViewStatement,
                 $statement instanceof Statement\Definition\CreateTableAsStatement => SchemaCommands::write($statement),
                 $statement instanceof Statement\Table\CreateTableLikeStatement => Declarations::like($statement),
                 $statement instanceof Statement\CreateTableStatement => Declarations::table($statement),

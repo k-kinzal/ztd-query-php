@@ -35,7 +35,8 @@ final class StorageParameters
             $tokens = $option->tokens();
             $equals = array_search('=', array_map(static fn ($token): string => $token->text, $tokens), true);
             if ($equals === false) {
-                throw new UnclassifiedSql('A storage parameter requires an explicit value.');
+                $result[] = new Parameter(new QualifiedName($scope->identifiers->parts($option)), \SqlSemantics\Schema\Storage\ImpliedSetting::Enabled);
+                continue;
             }
             $name = $scope->identifiers->parts(new Node('parameter_name', 0, array_slice($tokens, 0, $equals)));
             $valueTokens = array_slice($tokens, $equals + 1);

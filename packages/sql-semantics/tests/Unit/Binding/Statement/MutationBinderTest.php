@@ -291,4 +291,27 @@ final class MutationBinderTest extends TestCase
         $binder->bind('UPDATE t a JOIN t b ON a.id=b.id SET a.id=1 LIMIT 2', strict: false);
     }
 
+    public function testInsertionInputsKeepsDefaultRowsSeparateFromQueryInputs(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
+        $rows = $binder->bind('INSERT INTO t VALUES (1), (DEFAULT)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $rows);
+        self::assertCount(2, $rows->rows);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\DefaultSource::class, $rows->rows[1][0]);
+        $query = $binder->bind('INSERT INTO t SELECT 1 UNION SELECT 2');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertSelectStatement::class, $query);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CompoundStatement::class, $query->query);
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-5.6.51'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-5.7.44'])]
+    public function testInsertionInputsBindsLegacyUnionsAsOneQuery(string $version): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t(id INTEGER)'));
+        $statement = $binder->bind('INSERT INTO t SELECT 1 UNION SELECT 2 ORDER BY 1 LIMIT 1');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertSelectStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CompoundStatement::class, $statement->query);
+        self::assertSame('INSERT INTO `t` SELECT 1 UNION SELECT 2 ORDER BY 1 ASC LIMIT 1', $statement->toString());
+    }
+
 }

@@ -29,6 +29,10 @@ final class ObjectBinder
         if ($virtual !== null) {
             return VirtualTableBinder::bind($origin, $source, $virtual, $context);
         }
+        $view = Definition\View\MaterializedViewBinder::bind($origin, $source, $context) ?? Definition\View\ViewBinder::bind($origin, $source, $context);
+        if ($view !== null) {
+            return $view;
+        }
         $trigger = Tree::child($source, ['trigger_decl']);
         if ($trigger !== null) {
             return Trigger\SqliteTriggerBinder::bind($origin, $source, $trigger, $context);
@@ -47,15 +51,12 @@ final class ObjectBinder
         if (($words[0] ?? '') !== 'CREATE') {
             return null;
         }
-        $query = array_values(array_filter(Tree::outer($source, ['SelectStmt', 'select_stmt', 'select', 'query_expression', 'columnDef', 'column_def', 'columnlist', 'TableConstraint', 'table_constraint_def']), static fn (Node $node): bool => in_array($node->name, ['SelectStmt', 'select_stmt', 'select', 'query_expression'], true)))[0] ?? null;
+        $query = \SqlSemantics\Binding\Query\QueryNodes::legacyContainer($source) ?? array_values(array_filter(Tree::outer($source, ['SelectStmt', 'select_stmt', 'select', 'query_expression', 'create_select', 'columnDef', 'column_def', 'columnlist', 'TableConstraint', 'table_constraint_def']), static fn (Node $node): bool => in_array($node->name, ['SelectStmt', 'select_stmt', 'select', 'query_expression', 'create_select'], true)))[0] ?? null;
         if ($query === null) {
             return null;
         }
         $as = array_search('AS', $words, true);
         $prefix = array_slice($words, 0, $as === false ? count($words) : $as);
-        if (in_array('VIEW', $prefix, true)) {
-            return self::view($origin, $source, $query, $context);
-        }
         if (in_array('TABLE', $prefix, true)) {
             return self::tableAs($origin, $source, $query, $context);
         }
@@ -86,19 +87,6 @@ final class ObjectBinder
     }
 
     /**
-     * Binds a view's named outputs and mandatory query.
-     */
-    public static function view(Origin $origin, Node $source, Node $query, QueryContext $context): Statement\CreateViewStatement
-    {
-        $name = self::name($source, $context);
-        $aliases = Tree::outer($source, ['opt_column_list', 'opt_name_list', 'view_list_opt', 'eidlist_opt'])[0] ?? null;
-        $columns = $aliases === null ? [] : array_values(array_filter($context->tables->identifiers->parts($aliases), static fn (string $part): bool => !in_array($part, ['(', ')', ','], true)));
-        $text = strtoupper(Tree::text($source));
-        $check = !str_contains($text, 'CHECK OPTION') ? \SqlSemantics\Model\Definition\ViewCheck::None : (str_contains($text, 'LOCAL CHECK OPTION') ? \SqlSemantics\Model\Definition\ViewCheck::Local : \SqlSemantics\Model\Definition\ViewCheck::Cascaded);
-        return new Statement\CreateViewStatement($origin, $name, $context->bind($query), $columns, preg_match('/^CREATE (TEMP|TEMPORARY) /', $text) === 1, str_contains($text, 'OR REPLACE'), str_contains($text, 'IF NOT EXISTS'), $check);
-    }
-
-    /**
      * Binds query-derived table columns without fabricating an empty CREATE TABLE body.
      * @throws UnclassifiedSql
      */
@@ -111,7 +99,15 @@ final class ObjectBinder
         $scope = new \SqlSemantics\Binding\Scope($context->tables->identifiers, queries: $context);
         $aliases = Tree::outer($source, ['opt_column_list', 'opt_name_list'])[0] ?? null;
         $columns = $aliases === null ? [] : array_values(array_filter($context->tables->identifiers->parts($aliases), static fn (string $part): bool => !in_array($part, ['(', ')', ','], true)));
-        return new Statement\CreateTableAsStatement($origin, self::name($source, $context), $context->bind($query), $columns, \SqlSemantics\Binding\Schema\TablePropertiesBinder::bind($parsed, $scope), !str_contains(strtoupper(Tree::text($source)), 'WITH NO DATA'), ($parsed->options['if_not_exists'] ?? false) === true);
+        $header = [];
+        foreach ($source->tokens() as $token) {
+            if ($token === ($query->tokens()[0] ?? null) || strtoupper($token->text) === 'AS') {
+                break;
+            }
+            $header[] = strtoupper($token->text);
+        }
+        $ifNotExists = ($parsed->options['if_not_exists'] ?? false) === true || in_array('EXISTS', $header, true);
+        return new Statement\CreateTableAsStatement($origin, self::name($source, $context), $context->bind($query), $columns, \SqlSemantics\Binding\Schema\TablePropertiesBinder::bind($parsed, $scope), !str_contains(strtoupper(Tree::text($source)), 'WITH NO DATA'), $ifNotExists);
     }
 
     /**
