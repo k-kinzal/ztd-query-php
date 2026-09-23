@@ -109,6 +109,9 @@ subnamespaces under `Model\Statement`.
 | MySQL: `SHOW FULL PROCESSLIST` | `ShowProcessesStatement` | Eight connection-activity result fields and a `ProcessQueryText` policy; ordinary PROCESSLIST requests the first 100 characters of active SQL, while FULL requests complete text. |
 | MySQL: `DO @x := 1, @x + 2` | `DoExpressionsStatement` | Nonempty ordered scalar `expressions`, with their ordinary types, references, and dependencies. The operation requests evaluation with no returned result set; Binder does not perform it. |
 | MySQL: `DROP TEMPORARY TABLE IF EXISTS scratch` | `DropTableStatement` | Nonempty `names`, existence and dependency policies, and `TableDropScope::Temporary`. Normal DROP TABLE uses the visible table namespace. |
+| MySQL: `CREATE DATABASE IF NOT EXISTS app CHARACTER SET utf8mb4` | `Definition\MySql\CreateDatabaseStatement` | Required database `name`, `ifNotExists`, and ordered initial `options`: `DatabaseCharacterSet`, `DatabaseCollation`, or `DatabaseEncryption`. |
+| MySQL: `ALTER DATABASE app READ ONLY 1 COLLATE utf8mb4_bin` | `AlterDatabaseStatement` | Required database identity and nonempty ordered `options`, additionally allowing `DatabaseReadOnly`. Repeated READ ONLY requests must agree. |
+| MySQL 5.6/5.7: `ALTER DATABASE old UPGRADE DATA DIRECTORY NAME` | `UpgradeDatabaseDirectoryStatement` | One required database `name`; this requests a directory-name encoding upgrade and has no default-option payload. |
 | MySQL: `DROP DATABASE IF EXISTS app` | `Definition\MySql\DropDatabaseStatement` | One database `name` and `ifExists`; `DROP SCHEMA` binds to the same operation. |
 | MySQL: `DROP EVENT IF EXISTS app.daily` | `DropEventStatement` | One local or database-qualified event `name` and an existence policy. |
 | MySQL: `DROP SERVER IF EXISTS remote` | `DropServerStatement` | One foreign-server definition `name` and an existence policy. |
@@ -199,6 +202,19 @@ Binding does not connect to the remote server, discover columns, or create local
 tables. The supplied schema snapshot stays unchanged. Import selections and
 options can be replaced immutably, and the remote server/schema pair can be
 replaced together with `withRemote()`.
+
+MySQL database character defaults identify a character set or collation by name.
+The legacy 5.6/5.7 grammars also allow `ServerCharacterInheritance::Inherit`.
+`DatabaseEncryption` selects enabled or disabled encryption for subsequently
+created tables; `DatabaseReadOnly` describes the requested access policy. READ
+ONLY DEFAULT and READ ONLY 0 both bind to `Disabled`. These are creation and
+alteration requests, so binding neither creates a database nor changes its state.
+The ordered options retain dependencies between character defaults and repeated
+requests. Creation allows an empty option list; alteration requires at least one
+change. An omitted ALTER target resolves to `Schema::defaultSchema` when supplied,
+otherwise it remains `CurrentDatabase::Session` for the consumer to resolve.
+`withOptions()` replaces the option list while checking its operand domains,
+release requirements, and access-policy consistency.
 
 Spatial reference declarations are available in the selected MySQL 8+ grammars.
 `SpatialDefinition` requires `name` and `definition` text literals. Optional

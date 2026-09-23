@@ -28,6 +28,7 @@ final class MySqlRemovals
     /**
      * Distinguishes account lists, qualified event names, and global server definitions.
      * @throws UnclassifiedSql
+     * @throws \SqlSemantics\InvalidSql
      */
     public static function bind(Origin $origin, Node $source, QueryContext $context): ?BoundStatement
     {
@@ -52,6 +53,9 @@ final class MySqlRemovals
             return null;
         }
         $name = Tree::child($source, ['sp_name', 'ident', 'ident_or_text']) ?? throw new UnclassifiedSql('A named removal requires its target.');
+        if (in_array($operation, ['DATABASE', 'SCHEMA'], true) && $identifiers->name($name->tokens()[0]) === '') {
+            throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::DatabaseName, $name);
+        }
         return match ($operation) {
             'DATABASE', 'SCHEMA' => new Statement\DropDatabaseStatement($origin, $identifiers->name($name->tokens()[0]), $exists),
             'EVENT' => new Statement\DropEventStatement($origin, new QualifiedName($identifiers->parts($name)), $exists),

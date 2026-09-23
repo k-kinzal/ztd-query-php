@@ -20,7 +20,8 @@ final class DefinitionBinder
      */
     public static function bind(Origin $origin, Node $statement, QueryContext $context): ?BoundStatement
     {
-        return ForeignServers::bind($origin, $statement, $context)
+        return Database\MySqlDatabases::bind($origin, $statement, $context)
+            ?? ForeignServers::bind($origin, $statement, $context)
             ?? ForeignRemovals::bind($origin, $statement, $context)
             ?? UserMappings::bind($origin, $statement, $context)
             ?? WrapperDeclarations::bind($origin, $statement, $context)

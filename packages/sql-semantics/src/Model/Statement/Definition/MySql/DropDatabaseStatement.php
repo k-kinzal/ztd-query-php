@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlSemantics\Model\Statement\Definition\MySql;
 
 use Override;
-use SqlSemantics\Dialect;
 use SqlSemantics\Model\BoundStatement;
 use SqlSemantics\Model\Statement\Origin;
 use SqlSemantics\Model\Statement\StatementKind;
@@ -26,9 +25,7 @@ final class DropDatabaseStatement extends BoundStatement
      */
     public function __construct(Origin $origin, public readonly string $name, public readonly bool $ifExists = false)
     {
-        if ($origin->dialect !== Dialect::MySql) {
-            throw new InvalidStructure('This named removal form requires MySQL.');
-        }
+        \SqlSemantics\Model\Definition\Database\DatabaseInvariant::target($origin, $name);
         parent::__construct($origin);
     }
 

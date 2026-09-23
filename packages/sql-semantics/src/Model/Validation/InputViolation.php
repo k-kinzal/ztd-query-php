@@ -12,6 +12,10 @@ namespace SqlSemantics\Model\Validation;
  */
 enum InputViolation: string
 {
+    case DatabaseName = 'database-name';
+    case DatabaseReadOnly = 'database-read-only';
+    case DatabaseEncryption = 'database-encryption';
+    case DatabaseCharacterName = 'database-character-name';
     case ServerOption = 'server-option';
     case MappingRole = 'mapping-role';
     case MappingOption = 'mapping-option';
@@ -66,6 +70,10 @@ enum InputViolation: string
     case AlterLock = 'invalid-alter-lock';
     /** @var array<string, string> */
     private const MESSAGES = [
+        'database-name' => 'A database operation requires a nonempty database name.',
+        'database-read-only' => 'Database READ ONLY requires DEFAULT, zero, or one, and repeated requests must agree.',
+        'database-encryption' => 'Database encryption requires Y or N.',
+        'database-character-name' => 'A database character default requires a nonempty name.',
         'server-option' => 'Initial foreign server options require unique names.',
         'mapping-role' => 'A user mapping requires a nonempty role name other than the reserved name none.',
         'mapping-option' => 'Initial user mapping options require unique names.',

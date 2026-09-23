@@ -56,4 +56,11 @@ final class DropDatabaseStatementTest extends TestCase
         $statement->withOrigin($origin);
     }
 
+    public function testWithNameRejectsAnEmptyDatabaseIdentity(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('DROP DATABASE app');
+        self::assertInstanceOf(Statement\DropDatabaseStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        $statement->withName('');
+    }
 }

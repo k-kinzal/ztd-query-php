@@ -35,26 +35,6 @@ final class AccountNames
      */
     public static function part(Token $token, Identifiers $identifiers): string
     {
-        if ($token->name !== 'TEXT_STRING') {
-            return $identifiers->name($token);
-        }
-        $text = $token->text;
-        $quote = $text[0];
-        $name = '';
-        for ($i = 1; $i < strlen($text) - 1; ++$i) {
-            $character = $text[$i];
-            if ($character === '\\') {
-                $character = $text[++$i];
-                $name .= match ($character) {
-                    '0' => "\0", 'n' => "\n", 'r' => "\r", 'b' => "\x08", 't' => "\t", 'Z' => "\x1a", '%', '_' => '\\' . $character, default => $character,
-                };
-            } else {
-                $name .= $character;
-                if ($character === $quote && ($text[$i + 1] ?? '') === $quote) {
-                    ++$i;
-                }
-            }
-        }
-        return $name;
+        return \SqlSemantics\Ast\MySqlNames::read($token, $identifiers);
     }
 }
