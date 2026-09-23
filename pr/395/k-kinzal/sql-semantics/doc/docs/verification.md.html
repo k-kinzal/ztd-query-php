@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Verification — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/395/k-kinzal/sql-semantics/doc/docs/verification.md.html">
+<meta name="description" content="Verification, a document of the k-kinzal/sql-semantics package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="Verification — ZTD Query PHP">
+<meta property="og:description" content="Verification, a document of the k-kinzal/sql-semantics package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/395/k-kinzal/sql-semantics/doc/docs/verification.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/395/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../">
+<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sb-pkg"><a href="../../../../k-kinzal/sql-semantics/index.html">k-kinzal/sql-semantics</a></div><nav class="sb-block"><div class="sb-title">Package</div><ul class="sb-list"><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/all-items.html">All items</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/index.html#documents">Documents</a></li></ul></nav><nav class="sb-block"><div class="sb-title">Namespaces</div><ul class="sb-list"><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/index.html" title="SqlSemantics">SqlSemantics</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Ast/index.html" title="SqlSemantics\Ast">SqlSemantics\Ast</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Binding/index.html" title="SqlSemantics\Binding">SqlSemantics\Binding</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Model/index.html" title="SqlSemantics\Model">SqlSemantics\Model</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Schema/index.html" title="SqlSemantics\Schema">SqlSemantics\Schema</a></li><li data-diff="same"><a href="../../../../k-kinzal/sql-semantics/SqlSemantics/Type/index.html" title="SqlSemantics\Type">SqlSemantics\Type</a></li></ul></nav></nav>
+<div class="page">
+<header class="topbar">
+<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
+<nav class="crumbs"><a href="../../../../k-kinzal/sql-semantics/index.html">k-kinzal/sql-semantics</a><span class="crumb-sep">::</span><span class="crumb-current">docs/verification.md</span></nav>
+<div class="topbar-tools">
+<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing bf569d7b36 to working tree">bf569d7b36 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between bf569d7b36 and working tree." data-off="This page documents what bf569d7b36 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Verification</h1><div class="symbol-meta"><span class="src-link">docs/verification.md</span></div></div>
+<section class="readme" data-diff="same"><div class="doc-block" data-diff="same"><h2>Verification</h2>
+</div><div class="doc-block" data-diff="same"><p>The SQL-string public API is tested with PostgreSQL, MySQL, and SQLite. Tests cover schema construction and reuse, default namespaces and grammar context, binding and alias visibility, self joins, nested outer joins, NULL provenance, ON versus WHERE stages, stars and duplicate names, ordering, pagination, declaration constraints, type promotion, source identity, and explicit rejection of unsupported syntax. Each test declares its own inputs. Every source class has a paired unit test and every public API class has an executable PHPDoc example.</p>
+</div><div class="doc-block" data-diff="same"><p><code>composer lint</code> runs strict autoload checks, PHP-CS-Fixer, PHPStan at max level with all PHP-AI-Toolkit rules, PHPCompatibility for PHP 8.1+, LOC guard, directory guard, and Deptrac. Rules are not suppressed or baselined.</p>
+</div><div class="doc-block" data-diff="same"><p><code>composer test</code> runs unit tests and documentation examples with ParaTest and the AI reporter. <code>composer test:coverage</code> generates unit-test coverage for inspection.</p>
+</div><div class="doc-block" data-diff="same"><p><code>composer bench:quick</code> measures <code>Binder::bind()</code> on a self-join SQL string against an already built schema. This includes SQL parsing and semantic binding. Parser resource loading and schema construction happen before measurement.</p>
+</div><div class="doc-block" data-diff="same"><p>Infection uses the default mutator set, includes uncovered code, and requires 80% MSI and 80% covered MSI. Run it with the Infection 0.35.4 CLI (installed separately, as in the other packages) and a coverage driver:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>infection --configuration=infection.json5 --with-uncovered --threads=4 --only-covering-test-cases</code></pre>
+</div><div class="doc-block" data-diff="same"><p>The CI workflow checks PHP 8.1 through 8.5 and runs lint, mutation testing, and the benchmark smoke test. The library and these checks require no live database.</p>
+</div></section>
+</main>
+<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div>
+<script src="../../../../assets/search-index.js" defer></script>
+<script src="../../../../assets/app.js" defer></script>
+</body>
+</html>

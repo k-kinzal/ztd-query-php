@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Source traceability for the Bison reader — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/395/k-kinzal/bison-parser/doc/requirements/README.md.html">
+<meta name="description" content="Source traceability for the Bison reader, a document of the k-kinzal/bison-parser package.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="Source traceability for the Bison reader — ZTD Query PHP">
+<meta property="og:description" content="Source traceability for the Bison reader, a document of the k-kinzal/bison-parser package.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/395/k-kinzal/bison-parser/doc/requirements/README.md.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/395/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../">
+<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sb-pkg"><a href="../../../../k-kinzal/bison-parser/index.html">k-kinzal/bison-parser</a></div><nav class="sb-block"><div class="sb-title">Package</div><ul class="sb-list"><li data-diff="same"><a href="../../../../k-kinzal/bison-parser/all-items.html">All items</a></li><li data-diff="modified"><a href="../../../../k-kinzal/bison-parser/index.html#documents">Documents</a></li></ul></nav><nav class="sb-block"><div class="sb-title">Namespaces</div><ul class="sb-list"><li data-diff="same"><a href="../../../../k-kinzal/bison-parser/BisonParser/index.html" title="BisonParser">BisonParser</a></li><li data-diff="same"><a href="../../../../k-kinzal/bison-parser/BisonParser/Ast/index.html" title="BisonParser\Ast">BisonParser\Ast</a></li><li data-diff="same"><a href="../../../../k-kinzal/bison-parser/BisonParser/Ast/Declaration/index.html" title="BisonParser\Ast\Declaration">BisonParser\Ast\Declaration</a></li><li data-diff="same"><a href="../../../../k-kinzal/bison-parser/BisonParser/Ast/Declaration/Symbols/index.html" title="BisonParser\Ast\Declaration\Symbols">BisonParser\Ast\Declaration\Symbols</a></li><li data-diff="same"><a href="../../../../k-kinzal/bison-parser/BisonParser/Ast/Rule/index.html" title="BisonParser\Ast\Rule">BisonParser\Ast\Rule</a></li><li data-diff="same"><a href="../../../../k-kinzal/bison-parser/BisonParser/Printer/index.html" title="BisonParser\Printer">BisonParser\Printer</a></li><li data-diff="same"><a href="../../../../k-kinzal/bison-parser/BisonParser/Scanner/index.html" title="BisonParser\Scanner">BisonParser\Scanner</a></li><li data-diff="same"><a href="../../../../k-kinzal/bison-parser/BisonParser/Syntax/index.html" title="BisonParser\Syntax">BisonParser\Syntax</a></li></ul></nav></nav>
+<div class="page">
+<header class="topbar">
+<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
+<nav class="crumbs"><a href="../../../../k-kinzal/bison-parser/index.html">k-kinzal/bison-parser</a><span class="crumb-sep">::</span><span class="crumb-current">requirements/README.md</span></nav>
+<div class="topbar-tools">
+<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing bf569d7b36 to working tree">bf569d7b36 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between bf569d7b36 and working tree." data-off="This page documents what bf569d7b36 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Source traceability for the Bison reader</h1><div class="symbol-meta"><span class="src-link">requirements/README.md</span></div></div>
+<section class="readme" data-diff="modified"><div class="doc-block" data-diff="same"><h2>Source traceability for the Bison reader</h2>
+</div><div class="doc-block" data-diff="same"><p>This application traces the <strong>Symbols</strong> and <strong>Syntax of Grammar Rules</strong> sections of the official HTML manual to the existing Behat suite. The scope is the direct prose, list items and code examples of both sections; it is not the entire Bison manual or every feature in this package.</p>
+</div><div class="doc-block" data-diff="same"><p>The referenced HTML pages identify themselves as Bison <strong>3.8.1 (10 September 2021)</strong>. The existing BDD features use the <strong>3.8.2</strong> release&#039;s Texinfo manual and already explain that the published HTML edition is 3.8.1. These definitions explicitly cite the HTML edition; keep version differences visible when expanding the scope. Do not silently retitle the HTML edition as 3.8.2. Full upstream documents are not distributed here. The first source check downloads each public URL, verifies its SHA-256 and writes an ignored <code>.requirements-cache/</code> file. Later checks verify and reuse the cache. An empty cache requires network access, including on CI. Do not commit cached HTML. The retrieval URLs use GNU&#039;s HTTP endpoint because its HTTPS endpoint times out from local and CI runners. The SHA-256 pins were verified against the previously retrieved HTTPS bytes; every normal fetch must match those exact digests.</p>
+</div><div class="doc-block" data-diff="same"><p>From this package directory in the monorepo:</p>
+</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>composer install
+composer install --working-dir=../requirements
+php ../requirements/bin/requirements lint
+php ../requirements/bin/requirements check
+php ../requirements/bin/requirements coverage
+php ../requirements/bin/requirements spec
+php ../requirements/bin/requirements spec --no-test --status unsupported
+php ../requirements/bin/requirements coverage --json</code></pre>
+</div><div class="doc-block" data-diff="same"><p>The scope has <strong>30 units: 26 supported, 3 reasoned unsupported and 1 uncovered (96.67% accounted)</strong>. Unsupported units describe generated-parser, scanner or compilation behavior outside this grammar-file reader. They have explicit reasons and are never counted as verified implementations. The uncovered unit is the opening sentence of Symbols, &quot;Symbols in Bison grammars represent the grammatical classifications of the language.&quot; It introduces the section and states no reader behavior, so it stays visible as uncovered instead of being labeled unsupported merely to raise the percentage. Definitional units are specified by what the reader records: the terminal and nonterminal paragraphs become the spelling and placement of symbols in declarations and rules, the portability paragraph and its character string become acceptance of every character in the basic execution character set, and the sentence about a single trailing action becomes its position in the alternative.</p>
+</div><div class="doc-block" data-diff="same"><p>There are <strong>19 supported specifications</strong> linked to <strong>30 scenarios</strong>, plus three unsupported specifications. One scenario, reading every nonnull character of the basic execution character set as a character token, was added for that specification; the others already existed. Three name specifications share one optional requirement to demonstrate one-to-many derivation. Other specifications cite source units directly. <code>spec</code> shows passed/linked test targets for each record, while <code>spec --no-test</code> lists the same records with <code>-/N</code> counts without executing Behat. The optional upstream requirement is shown as <code>not-applicable</code>. Related-rule links illustrate cross-specification context. Production code is unchanged.</p>
+</div><div class="doc-block" data-diff="same"><p>The unit is a full selected paragraph, list item or code example. Some paragraphs contain both reader syntax and generator details: coverage means that this source unit has an explicit interpretation, not that every clause is implemented or semantically proven. Review the complete quote, statement and linked tests together. In particular, the string-token quote includes generator conventions beyond what the linked reader scenarios assert, and the terminal-symbol paragraph describes numeric token codes and yylex, which BISON-RUNTIME-001 keeps as unsupported generator behavior. A clause-by-clause audit requires more granular source units and specifications.</p>
+</div><div class="doc-block" data-diff="removed"><p>The <code>Requirements</code> job in <span class="md-target" title="../../../.github/workflows/bison-parser.yml">the package CI</span> enforces a 90% floor on overall accounted coverage and 100% accounted coverage of new or changed units compared with the baseline from the PR&#039;s base branch. The floor is a standard below the current 96.67%, not a copy of it, so a scope extension can lower the percentage without failing CI as long as the new units are accounted; per-source floors are not configured because the total is what matters. It also checks that the committed fingerprint-only baseline equals the current analysis, then runs the traced Behat scenarios. The same workflow runs on reader or requirements-tool changes; its test matrix also runs the complete BDD suite. Update the baseline:</p>
+</div><div class="doc-block" data-diff="removed"><pre class="code-block"><code>php ../requirements/bin/requirements coverage --write-baseline requirements-baseline.json</code></pre>
+</div><div class="doc-block" data-diff="removed"><p>Use <code>check --live</code> to compare against the public URLs. To update a source, download the resource into the ignored cache, update its SHA-256 and review quotation/scope changes before regenerating the baseline. Source changes or unavailability fail checks.</p>
+</div><div class="doc-block" data-diff="added"><p>The <code>Requirements</code> job in <span class="md-target" title="../../../.github/workflows/bison-parser.yml">the package CI</span> enforces a 90% floor on overall accounted coverage and 100% accounted coverage of new or changed units compared with the coverage snapshot from the PR&#039;s base branch. The floor is a standard below the current 96.67%, not a copy of it, so a scope extension can lower the percentage without failing CI as long as the new units are accounted; per-source floors are not configured because the total is what matters. It also checks that the committed snapshot equals the current analysis, then runs the traced Behat scenarios. The same workflow runs on reader or requirements-tool changes; its test matrix also runs the complete BDD suite. The snapshot lists every unit in scope with a fingerprint only, never source text; it is not a list of accepted failures. Update it:</p>
+</div><div class="doc-block" data-diff="added"><pre class="code-block"><code>php ../requirements/bin/requirements coverage --write-snapshot requirements-snapshot.json</code></pre>
+</div><div class="doc-block" data-diff="added"><p>Use <code>check --live</code> to compare against the public URLs. To update a source, download the resource into the ignored cache, update its SHA-256 and review quotation/scope changes before regenerating the snapshot. Source changes or unavailability fail checks.</p>
+</div></section>
+</main>
+<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div>
+<script src="../../../../assets/search-index.js" defer></script>
+<script src="../../../../assets/app.js" defer></script>
+</body>
+</html>
