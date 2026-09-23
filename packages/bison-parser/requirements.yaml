@@ -10,7 +10,4 @@ runners:
       - vendor/bin/behat
     timeout: 60
 coverage:
-  minimum: 68
-  sources:
-    bison-symbols: 57
-    bison-rules: 80
+  minimum: 90

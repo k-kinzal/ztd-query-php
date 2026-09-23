@@ -2,8 +2,8 @@
 
 This application traces the **Symbols** and **Syntax of Grammar Rules** sections
 of the official HTML manual to the existing Behat suite. The scope is the direct
-prose/list items in Symbols and direct prose/code examples in Rules Syntax; it is
-not the entire Bison manual or every feature in this package.
+prose, list items and code examples of both sections; it is not the entire Bison
+manual or every feature in this package.
 
 The referenced HTML pages identify themselves as Bison **3.8.1 (10 September 2021)**. The existing
 BDD features use the **3.8.2** release's Texinfo manual and already explain that the
@@ -30,32 +30,47 @@ php ../requirements/bin/requirements spec --no-test --status unsupported
 php ../requirements/bin/requirements coverage --json
 ```
 
-The initial scope has **29 units: 17 supported, 3 reasoned unsupported and 9
-uncovered (68.97% accounted)**. Unsupported units describe generated-parser,
-scanner or compilation behavior outside this grammar-file reader. They have
-explicit reasons and are never counted as verified implementations. Uncovered
-units remain visible instead of being labeled unsupported merely to raise the
-percentage.
+The scope has **30 units: 26 supported, 3 reasoned unsupported and 1 uncovered
+(96.67% accounted)**. Unsupported units describe generated-parser, scanner or
+compilation behavior outside this grammar-file reader. They have explicit reasons
+and are never counted as verified implementations. The uncovered unit is the
+opening sentence of Symbols, "Symbols in Bison grammars represent the grammatical
+classifications of the language." It introduces the section and states no reader
+behavior, so it stays visible as uncovered instead of being labeled unsupported
+merely to raise the percentage. Definitional units are specified by what the
+reader records: the terminal and nonterminal paragraphs become the spelling and
+placement of symbols in declarations and rules, the portability paragraph and its
+character string become acceptance of every character in the basic execution
+character set, and the sentence about a single trailing action becomes its
+position in the alternative.
 
-There are **13 supported specifications** linked to **27 existing scenarios**,
-plus three unsupported specifications. Three name specifications share one
+There are **19 supported specifications** linked to **30 scenarios**, plus three
+unsupported specifications. One scenario, reading every nonnull character of the
+basic execution character set as a character token, was added for that
+specification; the others already existed. Three name specifications share one
 optional requirement to demonstrate one-to-many derivation. Other specifications
 cite source units directly. `spec` shows passed/linked test targets for each
 record, while `spec --no-test` lists the same records with `-/N` counts without
 executing Behat. The optional upstream requirement is shown as `not-applicable`. Related-rule links illustrate cross-specification
-context. Production code and feature files are unchanged.
+context. Production code is unchanged.
 
 The unit is a full selected paragraph, list item or code example. Some paragraphs
 contain both reader syntax and generator details: coverage means that this source
 unit has an explicit interpretation, not that every clause is implemented or
 semantically proven. Review the complete quote, statement and linked tests together.
 In particular, the string-token quote includes generator conventions beyond what
-the linked reader scenarios assert. A clause-by-clause audit requires more granular
-source units and specifications.
+the linked reader scenarios assert, and the terminal-symbol paragraph describes
+numeric token codes and yylex, which BISON-RUNTIME-001 keeps as unsupported
+generator behavior. A clause-by-clause audit requires more granular source units
+and specifications.
 
 The `Requirements` job in [the package CI](../../../.github/workflows/bison-parser.yml)
-enforces the current overall/per-source floors and 100% accounted coverage of
-new or changed units compared with the baseline from the PR's base branch. It also
+enforces a 90% floor on overall accounted coverage and 100% accounted coverage
+of new or changed units compared with the baseline from the PR's base branch. The
+floor is a standard below the current 96.67%, not a copy of it, so a scope
+extension can lower the percentage without failing CI as long as the new units
+are accounted; per-source floors are not configured because the total is what
+matters. It also
 checks that the committed fingerprint-only baseline equals the current analysis, then runs the traced
 Behat scenarios. The same workflow runs on reader or requirements-tool changes;
 its test matrix also runs the complete BDD suite. Update the baseline:
