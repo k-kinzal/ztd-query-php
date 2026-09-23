@@ -10,6 +10,6 @@ runners:
       - vendor/bin/behat
     timeout: 60
 coverage:
-  minimum: 66
+  minimum: 100
   sources:
-    lemon-input-and-rules: 66
+    lemon-input-and-rules: 100
