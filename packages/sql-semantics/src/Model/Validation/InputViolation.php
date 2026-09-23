@@ -12,6 +12,8 @@ namespace SqlSemantics\Model\Validation;
  */
 enum InputViolation: string
 {
+    case MappingRole = 'mapping-role';
+    case MappingOption = 'mapping-option';
     case WrapperFunction = 'wrapper-function';
     case WrapperOption = 'wrapper-option';
     case RelationName = 'relation-name';
@@ -63,6 +65,8 @@ enum InputViolation: string
     case AlterLock = 'invalid-alter-lock';
     /** @var array<string, string> */
     private const MESSAGES = [
+        'mapping-role' => 'A user mapping requires a nonempty role name other than the reserved name none.',
+        'mapping-option' => 'Initial user mapping options require unique names.',
         'wrapper-function' => 'A foreign-data wrapper cannot specify a support function more than once.',
         'wrapper-option' => 'Initial foreign-data wrapper options require unique names.',
         'relation-name' => 'A relation name requires at most three identifier components without subscripts or wildcards.',

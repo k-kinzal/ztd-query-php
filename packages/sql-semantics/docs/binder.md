@@ -87,6 +87,9 @@ subnamespaces under `Model\Statement`.
 | PostgreSQL: `IMPORT FOREIGN SCHEMA ext LIMIT TO (users) FROM SERVER remote INTO app` | `ImportForeignSchemaStatement` | Required `remoteSchema`, `server`, and `localSchema`; `selection` is `AllForeignTables`, `ImportOnlyTables`, or `ExcludeForeignTables`. Explicit selections require a nonempty list of `ForeignRelation` values. `options` is an ordered list of `ForeignOption` identifier/text-literal pairs. |
 | PostgreSQL: `CREATE FOREIGN DATA WRAPPER fdw HANDLER app.h OPTIONS (format 'csv')` | `CreateForeignDataWrapperStatement` | Required wrapper `name`, optional `handler` and `validator` function names, and initial `ForeignOption` values with unique names. Omitted functions and explicit NO HANDLER/NO VALIDATOR both mean absence. |
 | PostgreSQL: `ALTER FOREIGN DATA WRAPPER fdw NO HANDLER OPTIONS (ADD format 'csv', DROP path)` | `AlterForeignDataWrapperStatement` | Required wrapper `name`; each support-function change is a `QualifiedName`, `FunctionChange::Keep`, or `FunctionChange::Remove`. Ordered option changes are `AddForeignOption`, `SetForeignOption`, or `DropForeignOption`. At least one change is required. |
+| PostgreSQL: `CREATE USER MAPPING IF NOT EXISTS FOR CURRENT_USER SERVER remote OPTIONS (user 'reader')` | `CreateUserMappingStatement` | Required `UserMappingIdentity`, `ifNotExists`, and initial `ForeignOption` values with unique names. |
+| PostgreSQL: `ALTER USER MAPPING FOR alice SERVER remote OPTIONS (SET user 'reader', DROP password)` | `AlterUserMappingStatement` | Required mapping `target` and nonempty ordered `options`: `AddForeignOption`, `SetForeignOption`, or `DropForeignOption`. |
+| PostgreSQL: `DROP USER MAPPING IF EXISTS FOR PUBLIC SERVER remote` | `DropUserMappingStatement` | Required mapping `target` and `ifExists`; no option payload. |
 | `CREATE INDEX ix ON users((score+1)) WHERE score>0` | `CreateIndexStatement` | Required `table` and `index.definition`, including ordered typed keys and a partial-index predicate. |
 | MySQL: `DROP INDEX ix ON users ALGORITHM=INPLACE LOCK=NONE` | `DropTableIndexStatement` | Required index name and owning table, with algorithm and lock enums. |
 | `DROP INDEX CONCURRENTLY IF EXISTS ix` | `DropIndexConcurrentlyStatement` | Exactly one index name and existence policy. |
@@ -155,6 +158,15 @@ subnamespaces under `Model\Statement`.
 | `REINDEX INDEX app.ix`, `REINDEX TABLE app.t`, `REINDEX SCHEMA app` | `ReindexObjectStatement` | Required object name, `ReindexObjectKind`, and PostgreSQL rebuild options. |
 | `REINDEX DATABASE`, `REINDEX SYSTEM` | `ReindexDatabaseStatement` | User-table or system-table index selection in the current database. An optional database name records an explicit name assertion. |
 | SQLite `REINDEX`, `REINDEX ix` | `ReindexAllStatement`, `ReindexNamedStatement` | Rebuild all indexes, or resolve a required SQLite index/table/collation name. |
+
+`UserMappingIdentity` pairs a foreign `server` name with a `NamedRole` or a
+`MappingPrincipal` enum. The enum distinguishes the current user, current role,
+session user, and public fallback mapping. `USER` denotes `CurrentUser`; the quoted
+identifier `"CURRENT_USER"` denotes a named role. Binding retains these selectors
+without reading the session's actual usernames or opening a connection. Each
+mapping statement owns `withTarget()` to replace the user/server pair together.
+Creation supplies initial options, alteration requires explicit changes, and
+removal carries only the mapping identity and its existence policy.
 
 Foreign-data wrapper creation and alteration have different operand domains.
 Creation owns initial named text options. Alteration owns ordered changes:

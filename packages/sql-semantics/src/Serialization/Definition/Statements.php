@@ -20,7 +20,8 @@ final class Statements
      */
     public static function write(BoundStatement $statement): ?Tree
     {
-        return Foreign\WrapperDeclarations::write($statement)
+        return Foreign\UserMappings::write($statement)
+            ?? Foreign\WrapperDeclarations::write($statement)
             ?? Foreign\ForeignImports::write($statement)
             ?? SpatialDefinitions::write($statement)
             ?? MySqlRemovals::write($statement)
