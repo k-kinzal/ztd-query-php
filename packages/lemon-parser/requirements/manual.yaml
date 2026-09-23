@@ -1,0 +1,193 @@
+$schema: 'https://raw.githubusercontent.com/k-kinzal/ztd-query-php/main/packages/requirements/schemas/definition.schema.json'
+version: 1
+source:
+  id: lemon-input-and-rules
+  uri: 'https://sqlite.org/src/raw/doc/lemon.html?ci=version-3.47.2'
+  format: html
+  selector: 'body > p:nth-of-type(36), body > p:nth-of-type(37), body > p:nth-of-type(38), body > p:nth-of-type(39), body > p:nth-of-type(40), body > p:nth-of-type(41), body > p:nth-of-type(42), body > p:nth-of-type(43), body > p:nth-of-type(44), body > p:nth-of-type(45), body > p:nth-of-type(46), body > p:nth-of-type(47), body > p:nth-of-type(48), body > p:nth-of-type(49), body > p:nth-of-type(50)'
+  snapshot: .requirements-cache/lemon-3.47.2.html
+  sha256: 4ba80e6311947e38b58d17467efc81412035277575cf850f41afefe261c3714f
+items:
+  -
+    id: LEMON-INPUT-001
+    statement: 'When a grammar file is read, the reader shall accept declarations anywhere and ignore separating whitespace and C or C++ comments.'
+    evidence:
+      -
+        selector: 'body > p:nth-of-type(37)'
+        quote: 'The grammar file for Lemon is, for the most part, a free format. It does not have sections or divisions like yacc or bison. Any declaration can occur at any point in the file. Lemon ignores whitespace (except where it is needed to separate tokens), and it honors the same commenting conventions as C and C++.'
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/input-file-syntax.feature:16'
+      -
+        runner: behavior
+        target: 'spec/features/input-file-syntax.feature:40'
+      -
+        runner: behavior
+        target: 'spec/features/input-file-syntax.feature:57'
+      -
+        runner: behavior
+        target: 'spec/features/input-file-syntax.feature:73'
+      -
+        runner: behavior
+        target: 'spec/features/input-file-syntax.feature:88'
+    labels:
+      - manual
+      - grammar
+    category: input-file-syntax
+  -
+    id: LEMON-INPUT-002
+    statement: 'When a symbol is read, the reader shall distinguish uppercase-initial terminals from lowercase-initial nonterminals and allow alphanumeric and underscore suffixes.'
+    evidence:
+      -
+        selector: 'body > p:nth-of-type(38)'
+        quote: 'A terminal symbol (token) is any string of alphanumeric and/or underscore characters that begins with an uppercase letter. A terminal can contain lowercase letters after the first character, but the usual convention is to make terminals all uppercase. A nonterminal, on the other hand, is any string of alphanumeric and underscore characters than begins with a lowercase letter. Again, the usual convention is to make nonterminals use all lowercase letters.'
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/input-file-syntax.feature:118'
+      -
+        runner: behavior
+        target: 'spec/features/input-file-syntax.feature:134'
+    labels:
+      - manual
+      - grammar
+    category: input-file-syntax
+  -
+    id: LEMON-INPUT-003
+    statement: 'When undeclared symbols occur in rules, the reader shall recognize their class from the initial letter.'
+    evidence:
+      -
+        selector: 'body > p:nth-of-type(39)'
+        quote: 'In Lemon, terminal and nonterminal symbols do not need to be declared or identified in a separate section of the grammar file. Lemon is able to generate a list of all terminals and nonterminals by examining the grammar rules, and it can always distinguish a terminal from a nonterminal by checking the case of the first character of the name.'
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/input-file-syntax.feature:158'
+    labels:
+      - manual
+      - grammar
+    category: input-file-syntax
+  -
+    id: LEMON-INPUT-004
+    statement: 'If a terminal is written as a single-quoted character, then the reader shall reject that terminal.'
+    evidence:
+      -
+        selector: 'body > p:nth-of-type(40)'
+        quote: "Yacc and bison allow terminal symbols to have either alphanumeric names or to be individual characters included in single quotes, like this: ')' or '$'. Lemon does not allow this alternative form for terminal symbols. With Lemon, all symbols, terminals and nonterminals, must have alphanumeric names."
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/input-file-syntax.feature:176'
+    labels:
+      - manual
+      - grammar
+    category: input-file-syntax
+  -
+    id: LEMON-RULE-001
+    statement: 'When a rule is read, the reader shall require a nonterminal, ::= and a terminating period, permit an empty right-hand side and preserve rule order.'
+    evidence:
+      -
+        selector: 'body > p:nth-of-type(41)'
+        quote: 'The main component of a Lemon grammar file is a sequence of grammar rules. Each grammar rule consists of a nonterminal symbol followed by the special symbol "::=" and then a list of terminals and/or nonterminals. The rule is terminated by a period. The list of terminals and nonterminals on the right-hand side of the rule can be empty. Rules can occur in any order, except that the left-hand side of the first rule is assumed to be the start symbol for the grammar (unless specified otherwise using the %start_symbol directive described below.) A typical sequence of grammar rules might look something like this:'
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/grammar-rules.feature:15'
+      -
+        runner: behavior
+        target: 'spec/features/grammar-rules.feature:43'
+      -
+        runner: behavior
+        target: 'spec/features/grammar-rules.feature:59'
+      -
+        runner: behavior
+        target: 'spec/features/grammar-rules.feature:78'
+      -
+        runner: behavior
+        target: 'spec/features/grammar-rules.feature:88'
+      -
+        runner: behavior
+        target: 'spec/features/input-file-syntax.feature:185'
+    labels:
+      - manual
+      - grammar
+    category: grammar-rules
+    related:
+      - LEMON-INPUT-002
+  -
+    id: LEMON-RULE-002
+    statement: 'When braced action code follows a rule, the reader shall preserve its text, comments and newlines with or without aliases.'
+    evidence:
+      -
+        selector: 'body > p:nth-of-type(43)'
+        quote: 'Like yacc and bison, Lemon allows the grammar to specify a block of C code that will be executed whenever a grammar rule is reduced by the parser. In Lemon, this action is specified by putting the C code (contained within curly braces {...}) immediately after the period that closes the rule. For example:'
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/grammar-rules.feature:97'
+      -
+        runner: behavior
+        target: 'spec/features/grammar-rules.feature:113'
+      -
+        runner: behavior
+        target: 'spec/features/grammar-rules.feature:177'
+      -
+        runner: behavior
+        target: 'spec/features/input-file-syntax.feature:103'
+    labels:
+      - manual
+      - grammar
+    category: grammar-rules
+  -
+    id: LEMON-RULE-003
+    statement: 'When parenthesized aliases follow grammar symbols, the reader shall retain each alias on the corresponding terminal or nonterminal.'
+    evidence:
+      -
+        selector: 'body > p:nth-of-type(47)'
+        quote: 'In the Lemon rule, any symbol in parentheses after a grammar rule symbol becomes a place holder for that symbol in the grammar rule. This place holder can then be used in the associated C action to stand for the value of that symbol.'
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/grammar-rules.feature:131'
+      -
+        runner: behavior
+        target: 'spec/features/grammar-rules.feature:147'
+      -
+        runner: behavior
+        target: 'spec/features/grammar-rules.feature:163'
+    labels:
+      - manual
+      - grammar
+    category: grammar-rules
+  -
+    id: LEMON-GENERATOR-001
+    statement: 'If a declared alias is unused in its action, then the generator shall report an error.'
+    status: unsupported
+    reason: 'The reader preserves action code verbatim and does not interpret C alias usage; Lemon checks usage during code generation.'
+    evidence:
+      -
+        selector: 'body > p:nth-of-type(48)'
+        quote: 'The Lemon notation for linking a grammar rule with its reduce action is superior to yacc/bison on several counts. First, as mentioned above, the Lemon method avoids the need to count grammar symbols. Secondly, if a terminal or nonterminal in a Lemon grammar rule includes a linking symbol in parentheses but that linking symbol is not actually used in the reduce action, then an error message is generated. For example, the rule'
+      -
+        selector: 'body > p:nth-of-type(49)'
+        quote: 'will generate an error because the linking symbol "C" is used in the grammar rule but not in the reduce action.'
+    labels:
+      - manual
+      - generator
+    category: code-generation
+    related:
+      - LEMON-RULE-003
+  -
+    id: LEMON-GENERATOR-002
+    statement: 'When semantic values are discarded, the generated parser shall run the configured destructors.'
+    status: unsupported
+    reason: 'The grammar-file reader records declarations and does not execute generated parser code or manage its semantic values.'
+    evidence:
+      -
+        selector: 'body > p:nth-of-type(50)'
+        quote: 'The Lemon notation for linking grammar rules to reduce actions also facilitates the use of destructors for reclaiming memory allocated by the values of terminals and nonterminals on the right-hand side of a rule.'
+    labels:
+      - manual
+      - generator-runtime
+    category: generator-runtime
