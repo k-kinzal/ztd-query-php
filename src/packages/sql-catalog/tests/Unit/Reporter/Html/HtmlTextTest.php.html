@@ -41,95 +41,90 @@
 <span class="src-line" id="L5"><a class="ln" href="#L5">5</a><span class="tok-kw">namespace</span> <span class="tok-id">Tests\Unit\Reporter\Html</span>;</span>
 <span class="src-line" id="L6"><a class="ln" href="#L6">6</a></span>
 <span class="src-line" id="L7"><a class="ln" href="#L7">7</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\Attributes\CoversClass</span>;</span>
-<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\Attributes\DataProvider</span>;</span>
-<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\TestCase</span>;</span>
-<span class="src-line" id="L10"><a class="ln" href="#L10">10</a><span class="tok-kw">use</span> <span class="tok-id">SqlCatalog\Reporter\Html\HtmlText</span>;</span>
-<span class="src-line" id="L11"><a class="ln" href="#L11">11</a></span>
-<span class="src-line" id="L12"><a class="ln" href="#L12">12</a>#[<span class="tok-id">CoversClass</span>(<span class="tok-id">HtmlText</span>::<span class="tok-kw">class</span>)]</span>
-<span class="src-line" id="L13"><a class="ln" href="#L13">13</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">HtmlTextTest</span> <span class="tok-kw">extends</span> <span class="tok-id">TestCase</span></span>
-<span class="src-line" id="L14"><a class="ln" href="#L14">14</a>{</span>
-<span class="src-line" id="L15"><a class="ln" href="#L15">15</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testEscapeMakesTextSafeToPlaceInTheDocument</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L16"><a class="ln" href="#L16">16</a>    {</span>
-<span class="src-line" id="L17"><a class="ln" href="#L17">17</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;&amp;lt;b&amp;gt; &amp;amp; &amp;quot;x&amp;quot;&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">escape</span>(<span class="tok-str">&#039;&lt;b&gt; &amp; &quot;x&quot;&#039;</span>));</span>
-<span class="src-line" id="L18"><a class="ln" href="#L18">18</a>    }</span>
-<span class="src-line" id="L19"><a class="ln" href="#L19">19</a></span>
-<span class="src-line" id="L20"><a class="ln" href="#L20">20</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testChipCarriesItsLabelAndRole</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L21"><a class="ln" href="#L21">21</a>    {</span>
-<span class="src-line" id="L22"><a class="ln" href="#L22">22</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;&lt;span class=&quot;chip s-ok&quot;&gt;resolved&lt;/span&gt;&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">chip</span>(<span class="tok-str">&#039;resolved&#039;</span>, <span class="tok-str">&#039;s-ok&#039;</span>));</span>
+<span class="src-line" id="L8"><a class="ln" href="#L8">8</a><span class="tok-kw">use</span> <span class="tok-id">PHPUnit\Framework\TestCase</span>;</span>
+<span class="src-line" id="L9"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlCatalog\Reporter\Html\HtmlText</span>;</span>
+<span class="src-line" id="L10"><a class="ln" href="#L10">10</a></span>
+<span class="src-line" id="L11"><a class="ln" href="#L11">11</a>#[<span class="tok-id">CoversClass</span>(<span class="tok-id">HtmlText</span>::<span class="tok-kw">class</span>)]</span>
+<span class="src-line" id="L12"><a class="ln" href="#L12">12</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">HtmlTextTest</span> <span class="tok-kw">extends</span> <span class="tok-id">TestCase</span></span>
+<span class="src-line" id="L13"><a class="ln" href="#L13">13</a>{</span>
+<span class="src-line" id="L14"><a class="ln" href="#L14">14</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testEscapeMakesTextSafeForTheDocument</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L15"><a class="ln" href="#L15">15</a>    {</span>
+<span class="src-line" id="L16"><a class="ln" href="#L16">16</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;&amp;lt;a href=&amp;quot;x&amp;quot;&amp;gt;&amp;#039;&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">escape</span>(<span class="tok-str">&#039;&lt;a href=&quot;x&quot;&gt;\&#039;&#039;</span>));</span>
+<span class="src-line" id="L17"><a class="ln" href="#L17">17</a>    }</span>
+<span class="src-line" id="L18"><a class="ln" href="#L18">18</a></span>
+<span class="src-line" id="L19"><a class="ln" href="#L19">19</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testChipCarriesItsRoleAndTitle</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L20"><a class="ln" href="#L20">20</a>    {</span>
+<span class="src-line" id="L21"><a class="ln" href="#L21">21</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;&lt;span class=&quot;chip k-select&quot; title=&quot;What it does&quot;&gt;SELECT&lt;/span&gt;&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">chip</span>(<span class="tok-str">&#039;SELECT&#039;</span>, <span class="tok-str">&#039;k-select&#039;</span>, <span class="tok-str">&#039;What it does&#039;</span>));</span>
+<span class="src-line" id="L22"><a class="ln" href="#L22">22</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;&lt;span class=&quot;chip&quot;&gt;plain&lt;/span&gt;&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">chip</span>(<span class="tok-str">&#039;plain&#039;</span>));</span>
 <span class="src-line" id="L23"><a class="ln" href="#L23">23</a>    }</span>
 <span class="src-line" id="L24"><a class="ln" href="#L24">24</a></span>
-<span class="src-line" id="L25"><a class="ln" href="#L25">25</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testChipCanCarryATitle</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L25"><a class="ln" href="#L25">25</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testChipLinkIsAChipThatLeadsSomewhere</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L26"><a class="ln" href="#L26">26</a>    {</span>
 <span class="src-line" id="L27"><a class="ln" href="#L27">27</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
-<span class="src-line" id="L28"><a class="ln" href="#L28">28</a>            <span class="tok-str">&#039;&lt;span class=&quot;chip&quot; title=&quot;why&quot;&gt;x&lt;/span&gt;&#039;</span>,</span>
-<span class="src-line" id="L29"><a class="ln" href="#L29">29</a>            (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">chip</span>(<span class="tok-str">&#039;x&#039;</span>, <span class="tok-str">&#039;&#039;</span>, <span class="tok-str">&#039;why&#039;</span>),</span>
+<span class="src-line" id="L28"><a class="ln" href="#L28">28</a>            <span class="tok-str">&#039;&lt;a class=&quot;chip chip-ghost&quot; href=&quot;tables/posts.html&quot; title=&quot;t&quot;&gt;posts&lt;/a&gt;&#039;</span>,</span>
+<span class="src-line" id="L29"><a class="ln" href="#L29">29</a>            (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">chipLink</span>(<span class="tok-str">&#039;posts&#039;</span>, <span class="tok-str">&#039;tables/posts.html&#039;</span>, <span class="tok-str">&#039;chip-ghost&#039;</span>, <span class="tok-str">&#039;t&#039;</span>),</span>
 <span class="src-line" id="L30"><a class="ln" href="#L30">30</a>        );</span>
 <span class="src-line" id="L31"><a class="ln" href="#L31">31</a>    }</span>
 <span class="src-line" id="L32"><a class="ln" href="#L32">32</a></span>
-<span class="src-line" id="L33"><a class="ln" href="#L33">33</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testChipWithoutARoleCarriesNoExtraClass</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L33"><a class="ln" href="#L33">33</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testLinkEscapesItsTextAndAddress</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L34"><a class="ln" href="#L34">34</a>    {</span>
-<span class="src-line" id="L35"><a class="ln" href="#L35">35</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;&lt;span class=&quot;chip&quot;&gt;x&lt;/span&gt;&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">chip</span>(<span class="tok-str">&#039;x&#039;</span>));</span>
-<span class="src-line" id="L36"><a class="ln" href="#L36">36</a>    }</span>
-<span class="src-line" id="L37"><a class="ln" href="#L37">37</a></span>
-<span class="src-line" id="L38"><a class="ln" href="#L38">38</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testNumberSeparatesThousands</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L39"><a class="ln" href="#L39">39</a>    {</span>
-<span class="src-line" id="L40"><a class="ln" href="#L40">40</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;12,345&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">number</span>(<span class="tok-num">12345</span>));</span>
-<span class="src-line" id="L41"><a class="ln" href="#L41">41</a>    }</span>
-<span class="src-line" id="L42"><a class="ln" href="#L42">42</a></span>
-<span class="src-line" id="L43"><a class="ln" href="#L43">43</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L44"><a class="ln" href="#L44">44</a><span class="tok-com">     * @return list&lt;array{int, string}&gt;</span></span>
-<span class="src-line" id="L45"><a class="ln" href="#L45">45</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L46"><a class="ln" href="#L46">46</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">providerPlural</span>(): <span class="tok-kw">array</span></span>
-<span class="src-line" id="L47"><a class="ln" href="#L47">47</a>    {</span>
-<span class="src-line" id="L48"><a class="ln" href="#L48">48</a>        <span class="tok-kw">return</span> [[<span class="tok-num">0</span>, <span class="tok-str">&#039;0 files&#039;</span>], [<span class="tok-num">1</span>, <span class="tok-str">&#039;1 file&#039;</span>], [<span class="tok-num">2</span>, <span class="tok-str">&#039;2 files&#039;</span>]];</span>
-<span class="src-line" id="L49"><a class="ln" href="#L49">49</a>    }</span>
-<span class="src-line" id="L50"><a class="ln" href="#L50">50</a></span>
-<span class="src-line" id="L51"><a class="ln" href="#L51">51</a>    #[<span class="tok-id">DataProvider</span>(<span class="tok-str">&#039;providerPlural&#039;</span>)]</span>
-<span class="src-line" id="L52"><a class="ln" href="#L52">52</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testPluralAgreesWithTheCount</span>(<span class="tok-id">int</span> <span class="tok-var">$value</span>, <span class="tok-id">string</span> <span class="tok-var">$expected</span>): <span class="tok-id">void</span></span>
-<span class="src-line" id="L53"><a class="ln" href="#L53">53</a>    {</span>
-<span class="src-line" id="L54"><a class="ln" href="#L54">54</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$expected</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">plural</span>(<span class="tok-var">$value</span>, <span class="tok-str">&#039;file&#039;</span>));</span>
-<span class="src-line" id="L55"><a class="ln" href="#L55">55</a>    }</span>
-<span class="src-line" id="L56"><a class="ln" href="#L56">56</a></span>
-<span class="src-line" id="L57"><a class="ln" href="#L57">57</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L58"><a class="ln" href="#L58">58</a><span class="tok-com">     * @return list&lt;array{int, int, string}&gt;</span></span>
-<span class="src-line" id="L59"><a class="ln" href="#L59">59</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L60"><a class="ln" href="#L60">60</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">providerPercent</span>(): <span class="tok-kw">array</span></span>
-<span class="src-line" id="L61"><a class="ln" href="#L61">61</a>    {</span>
-<span class="src-line" id="L62"><a class="ln" href="#L62">62</a>        <span class="tok-kw">return</span> [[<span class="tok-num">1</span>, <span class="tok-num">0</span>, <span class="tok-str">&#039;0%&#039;</span>], [<span class="tok-num">1</span>, <span class="tok-num">4</span>, <span class="tok-str">&#039;25%&#039;</span>], [<span class="tok-num">3</span>, <span class="tok-num">4</span>, <span class="tok-str">&#039;75%&#039;</span>], [<span class="tok-num">4</span>, <span class="tok-num">4</span>, <span class="tok-str">&#039;100%&#039;</span>]];</span>
-<span class="src-line" id="L63"><a class="ln" href="#L63">63</a>    }</span>
-<span class="src-line" id="L64"><a class="ln" href="#L64">64</a></span>
-<span class="src-line" id="L65"><a class="ln" href="#L65">65</a>    #[<span class="tok-id">DataProvider</span>(<span class="tok-str">&#039;providerPercent&#039;</span>)]</span>
-<span class="src-line" id="L66"><a class="ln" href="#L66">66</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testPercentIsAShareOfATotal</span>(<span class="tok-id">int</span> <span class="tok-var">$value</span>, <span class="tok-id">int</span> <span class="tok-var">$total</span>, <span class="tok-id">string</span> <span class="tok-var">$expected</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L35"><a class="ln" href="#L35">35</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;&lt;a class=&quot;mono&quot; href=&quot;a.html?q=1&amp;amp;b=2&quot;&gt;A &amp;amp; B&lt;/a&gt;&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">link</span>(<span class="tok-str">&#039;A &amp; B&#039;</span>, <span class="tok-str">&#039;a.html?q=1&amp;b=2&#039;</span>, <span class="tok-str">&#039;mono&#039;</span>));</span>
+<span class="src-line" id="L36"><a class="ln" href="#L36">36</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;&lt;a href=&quot;a.html&quot;&gt;A&lt;/a&gt;&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">link</span>(<span class="tok-str">&#039;A&#039;</span>, <span class="tok-str">&#039;a.html&#039;</span>));</span>
+<span class="src-line" id="L37"><a class="ln" href="#L37">37</a>    }</span>
+<span class="src-line" id="L38"><a class="ln" href="#L38">38</a></span>
+<span class="src-line" id="L39"><a class="ln" href="#L39">39</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testNumberIsWrittenForScanning</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L40"><a class="ln" href="#L40">40</a>    {</span>
+<span class="src-line" id="L41"><a class="ln" href="#L41">41</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;1,234&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">number</span>(<span class="tok-num">1234</span>));</span>
+<span class="src-line" id="L42"><a class="ln" href="#L42">42</a>    }</span>
+<span class="src-line" id="L43"><a class="ln" href="#L43">43</a></span>
+<span class="src-line" id="L44"><a class="ln" href="#L44">44</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testPluralAgreesWithTheCount</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L45"><a class="ln" href="#L45">45</a>    {</span>
+<span class="src-line" id="L46"><a class="ln" href="#L46">46</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;1 table&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">plural</span>(<span class="tok-num">1</span>, <span class="tok-str">&#039;table&#039;</span>));</span>
+<span class="src-line" id="L47"><a class="ln" href="#L47">47</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;2 tables&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">plural</span>(<span class="tok-num">2</span>, <span class="tok-str">&#039;table&#039;</span>));</span>
+<span class="src-line" id="L48"><a class="ln" href="#L48">48</a>    }</span>
+<span class="src-line" id="L49"><a class="ln" href="#L49">49</a></span>
+<span class="src-line" id="L50"><a class="ln" href="#L50">50</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testPercentIsWholeAndSafeOnZero</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L51"><a class="ln" href="#L51">51</a>    {</span>
+<span class="src-line" id="L52"><a class="ln" href="#L52">52</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;33%&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">percent</span>(<span class="tok-num">1</span>, <span class="tok-num">3</span>));</span>
+<span class="src-line" id="L53"><a class="ln" href="#L53">53</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;0%&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">percent</span>(<span class="tok-num">1</span>, <span class="tok-num">0</span>));</span>
+<span class="src-line" id="L54"><a class="ln" href="#L54">54</a>    }</span>
+<span class="src-line" id="L55"><a class="ln" href="#L55">55</a></span>
+<span class="src-line" id="L56"><a class="ln" href="#L56">56</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testBarShowsAShare</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L57"><a class="ln" href="#L57">57</a>    {</span>
+<span class="src-line" id="L58"><a class="ln" href="#L58">58</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;&lt;span class=&quot;bar bar-ok&quot;&gt;&lt;span style=&quot;--w:50%&quot;&gt;&lt;/span&gt;&lt;/span&gt;&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">bar</span>(<span class="tok-num">1</span>, <span class="tok-num">2</span>, <span class="tok-str">&#039;bar-ok&#039;</span>));</span>
+<span class="src-line" id="L59"><a class="ln" href="#L59">59</a>    }</span>
+<span class="src-line" id="L60"><a class="ln" href="#L60">60</a></span>
+<span class="src-line" id="L61"><a class="ln" href="#L61">61</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testSlugIsWritableAsAnIdentifier</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L62"><a class="ln" href="#L62">62</a>    {</span>
+<span class="src-line" id="L63"><a class="ln" href="#L63">63</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;app-users-find&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">slug</span>(<span class="tok-str">&#039;App\\Users::find&#039;</span>));</span>
+<span class="src-line" id="L64"><a class="ln" href="#L64">64</a>    }</span>
+<span class="src-line" id="L65"><a class="ln" href="#L65">65</a></span>
+<span class="src-line" id="L66"><a class="ln" href="#L66">66</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testCollapseWritesEveryRunOfWhitespaceAsOneSpace</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L67"><a class="ln" href="#L67">67</a>    {</span>
-<span class="src-line" id="L68"><a class="ln" href="#L68">68</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$expected</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">percent</span>(<span class="tok-var">$value</span>, <span class="tok-var">$total</span>));</span>
+<span class="src-line" id="L68"><a class="ln" href="#L68">68</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;a b c&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">collapse</span>(<span class="tok-str">&quot;  a\n\t b   c &quot;</span>));</span>
 <span class="src-line" id="L69"><a class="ln" href="#L69">69</a>    }</span>
 <span class="src-line" id="L70"><a class="ln" href="#L70">70</a></span>
-<span class="src-line" id="L71"><a class="ln" href="#L71">71</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testBarCarriesTheShareAsACustomProperty</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L71"><a class="ln" href="#L71">71</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testTruncateCollapsesAndCuts</span>(): <span class="tok-id">void</span></span>
 <span class="src-line" id="L72"><a class="ln" href="#L72">72</a>    {</span>
-<span class="src-line" id="L73"><a class="ln" href="#L73">73</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
-<span class="src-line" id="L74"><a class="ln" href="#L74">74</a>            <span class="tok-str">&#039;&lt;span class=&quot;bar bar-ok&quot;&gt;&lt;span style=&quot;--w:25%&quot;&gt;&lt;/span&gt;&lt;/span&gt;&#039;</span>,</span>
-<span class="src-line" id="L75"><a class="ln" href="#L75">75</a>            (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">bar</span>(<span class="tok-num">1</span>, <span class="tok-num">4</span>, <span class="tok-str">&#039;bar-ok&#039;</span>),</span>
-<span class="src-line" id="L76"><a class="ln" href="#L76">76</a>        );</span>
-<span class="src-line" id="L77"><a class="ln" href="#L77">77</a>    }</span>
-<span class="src-line" id="L78"><a class="ln" href="#L78">78</a></span>
-<span class="src-line" id="L79"><a class="ln" href="#L79">79</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testBarWithoutARoleCarriesNoExtraClass</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L80"><a class="ln" href="#L80">80</a>    {</span>
-<span class="src-line" id="L81"><a class="ln" href="#L81">81</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;&lt;span class=&quot;bar&quot;&gt;&lt;span style=&quot;--w:50%&quot;&gt;&lt;/span&gt;&lt;/span&gt;&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">bar</span>(<span class="tok-num">1</span>, <span class="tok-num">2</span>));</span>
-<span class="src-line" id="L82"><a class="ln" href="#L82">82</a>    }</span>
-<span class="src-line" id="L83"><a class="ln" href="#L83">83</a></span>
-<span class="src-line" id="L84"><a class="ln" href="#L84">84</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testSlugTurnsAPathIntoSomethingWritableAsAnIdentifier</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L85"><a class="ln" href="#L85">85</a>    {</span>
-<span class="src-line" id="L86"><a class="ln" href="#L86">86</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;wp-includes-class-wpdb-php&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">slug</span>(<span class="tok-str">&#039;wp-includes/class-wpdb.php&#039;</span>));</span>
-<span class="src-line" id="L87"><a class="ln" href="#L87">87</a>    }</span>
-<span class="src-line" id="L88"><a class="ln" href="#L88">88</a></span>
-<span class="src-line" id="L89"><a class="ln" href="#L89">89</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testTruncateShortensLongTextAndCollapsesSpace</span>(): <span class="tok-id">void</span></span>
-<span class="src-line" id="L90"><a class="ln" href="#L90">90</a>    {</span>
-<span class="src-line" id="L91"><a class="ln" href="#L91">91</a>        <span class="tok-var">$text</span> = <span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>();</span>
-<span class="src-line" id="L92"><a class="ln" href="#L92">92</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;a b&#039;</span>, <span class="tok-var">$text</span>-&gt;<span class="tok-id">truncate</span>(<span class="tok-str">&quot;a\n  b&quot;</span>, <span class="tok-num">10</span>));</span>
-<span class="src-line" id="L93"><a class="ln" href="#L93">93</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;abcd…&#039;</span>, <span class="tok-var">$text</span>-&gt;<span class="tok-id">truncate</span>(<span class="tok-str">&#039;abcdefgh&#039;</span>, <span class="tok-num">5</span>));</span>
-<span class="src-line" id="L94"><a class="ln" href="#L94">94</a>    }</span>
-<span class="src-line" id="L95"><a class="ln" href="#L95">95</a>}</span>
-<span class="src-line" id="L96"><a class="ln" href="#L96">96</a></span>
+<span class="src-line" id="L73"><a class="ln" href="#L73">73</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;SELECT…&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">truncate</span>(<span class="tok-str">&quot;SELECT   1\nFROM t&quot;</span>, <span class="tok-num">7</span>));</span>
+<span class="src-line" id="L74"><a class="ln" href="#L74">74</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;SELECT 1&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">truncate</span>(<span class="tok-str">&#039;SELECT 1&#039;</span>, <span class="tok-num">8</span>));</span>
+<span class="src-line" id="L75"><a class="ln" href="#L75">75</a>    }</span>
+<span class="src-line" id="L76"><a class="ln" href="#L76">76</a></span>
+<span class="src-line" id="L77"><a class="ln" href="#L77">77</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testMarkedMarksEveryGapInAName</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L78"><a class="ln" href="#L78">78</a>    {</span>
+<span class="src-line" id="L79"><a class="ln" href="#L79">79</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(</span>
+<span class="src-line" id="L80"><a class="ln" href="#L80">80</a>            <span class="tok-str">&#039;&lt;span class=&quot;hole hole-open&quot; title=&quot;A part of this name the analysis could not pin down&quot;&gt;{$}&lt;/span&gt;posts &amp;amp; more&#039;</span>,</span>
+<span class="src-line" id="L81"><a class="ln" href="#L81">81</a>            (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">marked</span>(<span class="tok-str">&#039;{$}posts &amp; more&#039;</span>),</span>
+<span class="src-line" id="L82"><a class="ln" href="#L82">82</a>        );</span>
+<span class="src-line" id="L83"><a class="ln" href="#L83">83</a>    }</span>
+<span class="src-line" id="L84"><a class="ln" href="#L84">84</a></span>
+<span class="src-line" id="L85"><a class="ln" href="#L85">85</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testCountIsWrittenBesideAHeading</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L86"><a class="ln" href="#L86">86</a>    {</span>
+<span class="src-line" id="L87"><a class="ln" href="#L87">87</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;&lt;span class=&quot;count&quot;&gt;3 tables&lt;/span&gt;&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">count</span>(<span class="tok-num">3</span>, <span class="tok-str">&#039;table&#039;</span>));</span>
+<span class="src-line" id="L88"><a class="ln" href="#L88">88</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;&lt;span class=&quot;count&quot;&gt;3&lt;/span&gt;&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">HtmlText</span>())-&gt;<span class="tok-id">count</span>(<span class="tok-num">3</span>));</span>
+<span class="src-line" id="L89"><a class="ln" href="#L89">89</a>    }</span>
+<span class="src-line" id="L90"><a class="ln" href="#L90">90</a>}</span>
+<span class="src-line" id="L91"><a class="ln" href="#L91">91</a></span>
 </code></pre>
 </main>
 <footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
