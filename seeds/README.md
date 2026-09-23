@@ -38,11 +38,12 @@ PHP-Fuzzer runs every file of the corpus directory before it starts mutating, so
 
 ```sh
 cd packages/sql-parser
-php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_mysql_parse.php ../../seeds/mysql/mysql-8.4.7/ --max-runs=0
+php -d memory_limit=-1 vendor/bin/php-fuzzer fuzz fuzz/fuzz_mysql_parse.php ../../seeds/mysql/mysql-8.4.7/ --max-runs=0 --timeout=60
 ```
 
 - The first seed the target rejects is reported as `CORPUS CRASH in <file>` and ends the run. PHP-Fuzzer 0.0.11 still exits with status 0, so a script has to look at the output. Nothing is written to the seeds directory in this mode.
 - PHP-Fuzzer keeps the coverage features of every corpus entry in memory; the MySQL and PostgreSQL corpora exceed PHP's default `memory_limit` of 128M, hence `-d memory_limit=-1`.
+- The first input pays for the provider's one-time grammar analysis, which can take longer than PHP-Fuzzer's default limit of three seconds per input for the PostgreSQL grammar on a busy machine; pass `--timeout=60` when the first seed is reported as a timeout.
 - Start PHP-Fuzzer as `php vendor/bin/php-fuzzer` so that environment variables such as `MYSQL_VERSION` or `DYLD_LIBRARY_PATH` reach it on macOS.
 - One seed replays with `vendor/bin/php-fuzzer run-single fuzz/<target>.php ../../seeds/mysql/mysql-8.4.7/<rule>-<ordinal>.txt`.
 - The sql-faker syntax targets prepare each statement on a database; their [README](../packages/sql-faker/fuzz/README.md) explains how to start it.
