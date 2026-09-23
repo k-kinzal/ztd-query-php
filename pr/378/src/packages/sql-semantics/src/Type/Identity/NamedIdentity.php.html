@@ -47,32 +47,37 @@
 <span class="src-line" id="L9" data-diff="added"><a class="ln" href="#L9">9</a><span class="tok-kw">use</span> <span class="tok-id">SqlSemantics\Model\Validation\InvalidStructure</span>;</span>
 <span class="src-line" id="L10" data-diff="added"><a class="ln" href="#L10">10</a></span>
 <span class="src-line" id="L11" data-diff="added"><a class="ln" href="#L11">11</a><span class="tok-com">/**</span></span>
-<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-com"> * A PostgreSQL type referenced by name, with structured modifier expressions.</span></span>
+<span class="src-line" id="L12" data-diff="added"><a class="ln" href="#L12">12</a><span class="tok-com"> * A PostgreSQL type referenced by name, with classified type-input operands.</span></span>
 <span class="src-line" id="L13" data-diff="added"><a class="ln" href="#L13">13</a><span class="tok-com"> * @visibility public</span></span>
-<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">NamedIdentity</span> <span class="tok-kw">implements</span> <span class="tok-id">TypeIdentity</span></span>
-<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a>{</span>
-<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com">     * @param list&lt;\SqlSemantics\Model\Expression&gt; $arguments</span></span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com">     * @throws InvalidStructure</span></span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">\SqlSemantics\Model\Relation\QualifiedName</span> <span class="tok-var">$reference</span>,</span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$arguments</span> = [],</span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>    ) {</span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>        <span class="tok-id">Collections</span>::<span class="tok-id">objects</span>(<span class="tok-var">$arguments</span>, <span class="tok-id">\SqlSemantics\Model\Expression</span>::<span class="tok-kw">class</span>);</span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>    }</span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a></span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com">     * Returns the canonical database type name represented by this identity.</span></span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>    #[<span class="tok-id">Override</span>]</span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">name</span>(): <span class="tok-id">string</span></span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    {</span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>        <span class="tok-kw">return</span> <span class="tok-id">implode</span>(<span class="tok-str">&#039;.&#039;</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">reference</span>-&gt;<span class="tok-id">parts</span>);</span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    }</span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>}</span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a></span>
+<span class="src-line" id="L14" data-diff="added"><a class="ln" href="#L14">14</a><span class="tok-com"> * @example Reading classified named-type inputs</span></span>
+<span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> *     $type = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))-&gt;build(&#039;CREATE TABLE t(x app.measure(currency))&#039;)-&gt;tables[0]-&gt;columns[0]-&gt;type;</span></span>
+<span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> *     $type-&gt;identity-&gt;arguments[0]-&gt;name // =&gt; &#039;currency&#039;</span></span>
+<span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> * @example Rejecting row expressions in the modifier domain</span></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> *     new \SqlSemantics\Type\Identity\NamedIdentity(new \SqlSemantics\Model\Relation\QualifiedName([&#039;measure&#039;]), [\SqlSemantics\Model\Expression::literal(1, \SqlSemantics\Dialect::PostgreSql)]); // throws \SqlSemantics\Model\Validation\InvalidStructure</span></span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">NamedIdentity</span> <span class="tok-kw">implements</span> <span class="tok-id">TypeIdentity</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>{</span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com">     * @param list&lt;Numeric\NumericParameter|\SqlSemantics\Type\Modifier\TextParameter|\SqlSemantics\Type\Modifier\IdentifierParameter|\SqlSemantics\Type\Modifier\NegatedParameter&gt; $arguments</span></span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-com">     * @throws InvalidStructure</span></span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">\SqlSemantics\Model\Relation\QualifiedName</span> <span class="tok-var">$reference</span>,</span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-kw">array</span> <span class="tok-var">$arguments</span> = [],</span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>    ) {</span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>        <span class="tok-id">Collections</span>::<span class="tok-id">alternatives</span>(<span class="tok-var">$arguments</span>, [<span class="tok-id">Numeric\NumericParameter</span>::<span class="tok-kw">class</span>, <span class="tok-id">\SqlSemantics\Type\Modifier\TextParameter</span>::<span class="tok-kw">class</span>, <span class="tok-id">\SqlSemantics\Type\Modifier\IdentifierParameter</span>::<span class="tok-kw">class</span>, <span class="tok-id">\SqlSemantics\Type\Modifier\NegatedParameter</span>::<span class="tok-kw">class</span>]);</span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>    }</span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a></span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a><span class="tok-com">     * Returns the canonical database type name represented by this identity.</span></span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    #[<span class="tok-id">Override</span>]</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">name</span>(): <span class="tok-id">string</span></span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    {</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>        <span class="tok-kw">return</span> <span class="tok-id">implode</span>(<span class="tok-str">&#039;.&#039;</span>, <span class="tok-var">$this</span>-&gt;<span class="tok-id">reference</span>-&gt;<span class="tok-id">parts</span>);</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    }</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>}</span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a></span>
 </code></pre>
 </main>
 <footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
