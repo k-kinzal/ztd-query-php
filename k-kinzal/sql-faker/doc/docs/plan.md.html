@@ -238,6 +238,21 @@
 <span class="tok-var">$second</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$bytePlan</span>);
 <span class="tok-var">$sameSql</span> = <span class="tok-var">$first</span> === <span class="tok-var">$second</span>;</code></pre>
 <p>The first four bytes choose an expansion budget within the feasible range. Remaining bytes supply production and lexical choices; omitted bytes use defaults. The input must be a grammar plan with a feasible positive expansion count and a maximum budget no greater than 1,000,000. Use direct lexical generation for lexical-value plans.</p>
+<h4>Encode choices as fuzzer input</h4>
+<p><code>BytePlanEncoder</code> is the inverse of <code>BytePlanCompiler</code>: it runs <code>planner()-&gt;build()</code> once with callbacks that also receive the candidate productions, and returns the bytes the compiler decodes to that very plan. Lexical choices left to <code>null</code> are made the way the compiler will make them from the padding bytes:</p>
+<pre class="code-block"><code><span class="tok-var">$builder</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">planner</span>();
+<span class="tok-var">$constraints</span> = <span class="tok-id">GenerationPlan</span>::<span class="tok-id">fromRule</span>(<span class="tok-str">&#039;cmd&#039;</span>)-&gt;<span class="tok-id">requiringNonEmpty</span>();
+
+<span class="tok-var">$input</span> = (<span class="tok-kw">new</span> <span class="tok-id">BytePlanEncoder</span>())-&gt;<span class="tok-id">encode</span>(
+    <span class="tok-var">$builder</span>,
+    <span class="tok-var">$constraints</span>,
+    <span class="tok-var">$builder</span>-&gt;<span class="tok-id">minimumExpansions</span>(<span class="tok-var">$constraints</span>),
+    <span class="tok-kw">static</span> <span class="tok-kw">fn</span> (<span class="tok-id">int</span> <span class="tok-var">$count</span>, <span class="tok-kw">array</span> <span class="tok-var">$candidates</span>): <span class="tok-id">int</span> =&gt; <span class="tok-var">$count</span> - <span class="tok-num">1</span>,
+);
+
+<span class="tok-var">$plan</span> = (<span class="tok-kw">new</span> <span class="tok-id">BytePlanCompiler</span>())-&gt;<span class="tok-id">compile</span>(<span class="tok-var">$input</span>, <span class="tok-var">$builder</span>, <span class="tok-var">$constraints</span>);
+<span class="tok-var">$sql</span> = <span class="tok-var">$provider</span>-&gt;<span class="tok-id">generate</span>(<span class="tok-var">$plan</span>);</code></pre>
+<p>The budget must lie between <code>minimumExpansions()</code> and the constraints&#039; expansion budget, 5000 without one. <code>bin/seeds.php</code> uses the encoder to write one such input for every production a start rule can reach; the package&#039;s <code>seeds/</code> directory holds the results for the default grammar versions.</p>
 <h3>MySQL</h3>
 <h4>Require non-empty row values</h4>
 <p>Use <code>withoutEmptyRows()</code> to constrain every row-value list reached during generation:</p>

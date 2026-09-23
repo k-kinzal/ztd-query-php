@@ -73,7 +73,7 @@
 <span class="src-line" id="L37"><a class="ln" href="#L37">37</a><span class="tok-com">     * @param Grammar $grammar Grammar being walked</span></span>
 <span class="src-line" id="L38"><a class="ln" href="#L38">38</a><span class="tok-com">     * @param FakerGenerator $faker Source of the choices the walk makes freely</span></span>
 <span class="src-line" id="L39"><a class="ln" href="#L39">39</a><span class="tok-com">     * @param TerminationAnalyzer $analyzer Answers what a production still costs to finish</span></span>
-<span class="src-line" id="L40"><a class="ln" href="#L40">40</a><span class="tok-com">     * @param (Closure(int): ?int)|null $choose Optional choice policy; null results choose the shortest completion</span></span>
+<span class="src-line" id="L40"><a class="ln" href="#L40">40</a><span class="tok-com">     * @param (Closure(int, non-empty-list&lt;Production&gt;): ?int)|null $choose Optional choice policy given the count and the candidates; null results choose the shortest completion</span></span>
 <span class="src-line" id="L41"><a class="ln" href="#L41">41</a><span class="tok-com">     */</span></span>
 <span class="src-line" id="L42"><a class="ln" href="#L42">42</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
 <span class="src-line" id="L43"><a class="ln" href="#L43">43</a>        <span class="tok-kw">private</span> <span class="tok-kw">readonly</span> <span class="tok-id">Grammar</span> <span class="tok-var">$grammar</span>,</span>
@@ -208,7 +208,7 @@
 <span class="src-line" id="L172"><a class="ln" href="#L172">172</a>        <span class="tok-kw">if</span> (<span class="tok-var">$this</span>-&gt;<span class="tok-id">steps</span> &lt; <span class="tok-var">$plan</span>-&gt;<span class="tok-id">maxDepth</span>()) {</span>
 <span class="src-line" id="L173"><a class="ln" href="#L173">173</a>            <span class="tok-var">$index</span> = <span class="tok-var">$this</span>-&gt;<span class="tok-id">choose</span> === <span class="tok-id">null</span></span>
 <span class="src-line" id="L174"><a class="ln" href="#L174">174</a>                ? <span class="tok-var">$this</span>-&gt;<span class="tok-id">faker</span>-&gt;<span class="tok-id">numberBetween</span>(<span class="tok-num">0</span>, <span class="tok-id">count</span>(<span class="tok-var">$alternatives</span>) - <span class="tok-num">1</span>)</span>
-<span class="src-line" id="L175"><a class="ln" href="#L175">175</a>                : (<span class="tok-var">$this</span>-&gt;<span class="tok-id">choose</span>)(<span class="tok-id">count</span>(<span class="tok-var">$alternatives</span>));</span>
+<span class="src-line" id="L175"><a class="ln" href="#L175">175</a>                : (<span class="tok-var">$this</span>-&gt;<span class="tok-id">choose</span>)(<span class="tok-id">count</span>(<span class="tok-var">$alternatives</span>), <span class="tok-var">$alternatives</span>);</span>
 <span class="src-line" id="L176"><a class="ln" href="#L176">176</a>            <span class="tok-kw">if</span> (<span class="tok-var">$index</span> !== <span class="tok-id">null</span>) {</span>
 <span class="src-line" id="L177"><a class="ln" href="#L177">177</a>                <span class="tok-kw">return</span> <span class="tok-var">$alternatives</span>[<span class="tok-var">$index</span>];</span>
 <span class="src-line" id="L178"><a class="ln" href="#L178">178</a>            }</span>
