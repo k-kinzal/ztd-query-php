@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Serialization\Definition;
+namespace Tests\Unit\Serialization\Definition\Foreign;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
@@ -15,14 +15,14 @@ use SqlSemantics\Model\Scalar\Value\Literal;
 use SqlSemantics\Model\Statement\Definition\PostgreSql\ImportForeignSchemaStatement;
 use SqlSemantics\SchemaBuilder;
 
-#[CoversClass(\SqlSemantics\Serialization\Definition\ForeignImports::class)]
+#[CoversClass(\SqlSemantics\Serialization\Definition\Foreign\ForeignImports::class)]
 #[Medium]
 final class ForeignImportsTest extends TestCase
 {
     public function testWriteReturnsNullForAnotherOperation(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1');
-        self::assertNull(\SqlSemantics\Serialization\Definition\ForeignImports::write($statement));
+        self::assertNull(\SqlSemantics\Serialization\Definition\Foreign\ForeignImports::write($statement));
     }
 
     public function testWriteKeepsOptionTextInsideItsLiteralBoundary(): void

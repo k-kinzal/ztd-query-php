@@ -22,16 +22,11 @@ final class Statements
      */
     public static function write(BoundStatement $statement): Tree
     {
-        $execution = Definition\ForeignImports::write($statement) ?? Definition\SpatialDefinitions::write($statement) ?? Definition\MySqlRemovals::write($statement) ?? Definition\Routines::write($statement) ?? Execution\Statements::write($statement);
+        $execution = Definition\Statements::write($statement) ?? Execution\Statements::write($statement);
         if ($execution !== null) {
             return $execution;
         }
         return match (true) {
-            $statement instanceof Statement\Definition\DropTableIndexStatement,
-            $statement instanceof Statement\Definition\DropIndexConcurrentlyStatement,
-            $statement instanceof Statement\Definition\DropTableTriggerStatement => Definition\OwnedDrops::write($statement),
-            $statement instanceof Statement\Definition\CreateVirtualTableStatement => Definition\VirtualTables::write($statement),
-            $statement instanceof Statement\Definition\CreateSqliteTriggerStatement => Definition\Triggers::writeSqlite($statement),
             $statement instanceof Statement\Maintenance\TruncateTableStatement,
             $statement instanceof Statement\Maintenance\TruncateRelationsStatement,
             $statement instanceof Statement\Maintenance\ReindexAllStatement,
@@ -45,25 +40,12 @@ final class Statements
             $statement instanceof Statement\Maintenance\AttachDatabaseStatement,
             $statement instanceof Statement\Maintenance\DetachDatabaseStatement,
             $statement instanceof Statement\Maintenance\UseDatabaseStatement => Maintenance::write($statement),
-            $statement instanceof Statement\Definition\DropTableStatement,
-            $statement instanceof Statement\Definition\DropViewStatement,
-            $statement instanceof Statement\Definition\DropIndexStatement,
-            $statement instanceof Statement\Definition\DropTriggerStatement,
-            $statement instanceof Statement\Definition\RenameTableStatement,
-            $statement instanceof Statement\Definition\RenameColumnStatement,
-            $statement instanceof Statement\Definition\DropColumnStatement,
-            $statement instanceof Statement\Definition\AddColumnStatement,
-            $statement instanceof Statement\Definition\CreateViewStatement,
-            $statement instanceof Statement\Definition\CreateTableAsStatement => Definition\SchemaCommands::write($statement),
             $statement instanceof BoundQuery => Query\Queries::write($statement),
             $statement instanceof Statement\InsertStatement => Insertions::write($statement),
             $statement instanceof Statement\UpdateStatement,
             $statement instanceof Statement\DeleteStatement => Mutations::write($statement),
             $statement instanceof Statement\MergeStatement => Merges::write($statement),
             $statement instanceof Statement\ConfigurationStatement => Settings::write($statement),
-            $statement instanceof Statement\Table\CreateTableLikeStatement => Declarations::like($statement),
-            $statement instanceof Statement\CreateTableStatement => Declarations::table($statement),
-            $statement instanceof Statement\CreateIndexStatement => Declarations::index($statement),
             default => throw new InvalidStructure('Unclassified statement serializer: ' . $statement::class),
         };
     }

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlSemantics\Serialization\Definition;
+namespace SqlSemantics\Serialization\Definition\Foreign;
 
 use SqlSemantics\Dialect;
 use SqlSemantics\Model\BoundStatement;
