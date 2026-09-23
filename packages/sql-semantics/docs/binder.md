@@ -114,6 +114,9 @@ subnamespaces under `Model\Statement`.
 | MySQL 5.6/5.7: `ALTER DATABASE old UPGRADE DATA DIRECTORY NAME` | `UpgradeDatabaseDirectoryStatement` | One required database `name`; this requests a directory-name encoding upgrade and has no default-option payload. |
 | MySQL: `DROP DATABASE IF EXISTS app` | `Definition\MySql\DropDatabaseStatement` | One database `name` and `ifExists`; `DROP SCHEMA` binds to the same operation. |
 | MySQL: `DROP EVENT IF EXISTS app.daily` | `DropEventStatement` | One local or database-qualified event `name` and an existence policy. |
+| MySQL: `DROP TABLESPACE store ENGINE NDB NO_WAIT` | `Definition\MySql\Storage\DropTablespaceStatement` | Required storage `name`, optional `engine`, and `CompletionWait` policy. |
+| MySQL: `DROP LOGFILE GROUP logs ENGINE NDB` | `DropLogfileGroupStatement` | Required logfile-group `name`, optional `engine`, and completion policy; the target is a group rather than a tablespace. |
+| MySQL 8+: `DROP UNDO TABLESPACE undo1 ENGINE InnoDB` | `DropUndoTablespaceStatement` | Required undo-tablespace `name` and optional `engine`. This form has no wait-policy operand. |
 | MySQL: `DROP SERVER IF EXISTS remote` | `DropServerStatement` | One foreign-server definition `name` and an existence policy. |
 | MySQL: `DROP RESOURCE GROUP workers FORCE` | `DropResourceGroupStatement` | One group `name` and a `force` flag requesting reassignment of affected threads to their default groups. |
 | MySQL: `DROP USER CURRENT_USER, 'reader'@'localhost'` | `DropUsersStatement` | Nonempty `accounts`: named `AccountName` values or `CurrentAccount::Authenticated`. Usernames and optional hosts remain separate. |
@@ -202,6 +205,14 @@ Binding does not connect to the remote server, discover columns, or create local
 tables. The supplied schema snapshot stays unchanged. Import selections and
 options can be replaced immutably, and the remote server/schema pair can be
 replaced together with `withRemote()`.
+
+Storage removal statements retain local storage identities rather than table
+references. `engine` selects a named storage engine when supplied. Ordinary
+tablespace and logfile-group removal default to `CompletionWait::Wait`; NO_WAIT
+selects the other policy. Each statement owns name and engine transformations,
+and the two wait-bearing forms also own `withWaiting()`. Binding checks the
+selected grammar's option rules and records the request without checking files,
+deleting storage, or executing engine-specific behavior.
 
 MySQL database character defaults identify a character set or collation by name.
 The legacy 5.6/5.7 grammars also allow `ServerCharacterInheritance::Inherit`.
