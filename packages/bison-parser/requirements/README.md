@@ -65,8 +65,12 @@ generator behavior. A clause-by-clause audit requires more granular source units
 and specifications.
 
 The `Requirements` job in [the package CI](../../../.github/workflows/bison-parser.yml)
-enforces the current overall/per-source floors and 100% accounted coverage of
-new or changed units compared with the baseline from the PR's base branch. It also
+enforces a 90% floor on overall accounted coverage and 100% accounted coverage
+of new or changed units compared with the baseline from the PR's base branch. The
+floor is a standard below the current 96.67%, not a copy of it, so a scope
+extension can lower the percentage without failing CI as long as the new units
+are accounted; per-source floors are not configured because the total is what
+matters. It also
 checks that the committed fingerprint-only baseline equals the current analysis, then runs the traced
 Behat scenarios. The same workflow runs on reader or requirements-tool changes;
 its test matrix also runs the complete BDD suite. Update the baseline:
