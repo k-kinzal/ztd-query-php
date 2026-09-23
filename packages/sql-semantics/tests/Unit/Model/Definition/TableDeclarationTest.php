@@ -142,7 +142,10 @@ final class TableDeclarationTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('CREATE TABLE t(id INTEGER DEFAULT 3 CHECK(id>0))');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $statement);
         self::assertSame($statement->definition->table, $statement->definition->table);
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\SuppliedColumn::class, $statement->definition->table->columns[0]->generation);
+        self::assertNotNull($statement->definition->table->columns[0]->generation->default);
         self::assertSame('3', $statement->definition->table->columns[0]->generation->default->spelling());
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\Check::class, $statement->definition->table->constraints[0]);
         self::assertSame('id', $statement->definition->table->constraints[0]->predicate->lineage()[0]->column->name);
     }
 }

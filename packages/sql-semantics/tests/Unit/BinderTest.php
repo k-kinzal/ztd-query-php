@@ -228,6 +228,7 @@ final class BinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind($sql);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundQuery::class, $statement);
         self::assertSame($sql, $statement->source->toString());
         self::assertNotSame([], $statement->resultColumns());
     }
@@ -253,6 +254,8 @@ final class BinderTest extends TestCase
     {
         $statements = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bindAll('SELECT 1; SELECT 2');
         self::assertCount(2, $statements);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statements[0]);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statements[1]);
         self::assertSame('1', $statements[0]->outputs[0]->expression->spelling());
         self::assertSame('2', $statements[1]->outputs[0]->expression->spelling());
     }
@@ -292,6 +295,8 @@ final class BinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Schema\Column\ComputedColumn::class, $schema->tables[0]->columns[2]->generation);
         self::assertSame(['id', 'total'], array_column($query->outputs, 'name'));
         self::assertSame('>', $query->where?->spelling());
+        self::assertNotNull($query->ctes);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query->ctes->definitions[0]->query);
         self::assertCount(1, $query->ctes->definitions[0]->query->groupBy);
         self::assertSame('adjusted', $query->outputs[1]->expression->inputs()[0]->lineage()[0]->column->name);
     }
@@ -306,9 +311,10 @@ final class BinderTest extends TestCase
     {
         $schema = (new SchemaBuilder($dialect))->build('create table a (id integer primary key, n integer)', 'create table b (id integer primary key, n integer)');
         $query = (new Binder($schema))->bind('select distinct a.id from a ' . $join);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertInstanceOf(\SqlSemantics\Model\Query\DistinctRows::class, $query->quantifier);
         self::assertSame('id', $query->outputs[0]->name);
-        self::assertInstanceOf(\SqlSemantics\Model\Join::class, $query->from);
+        self::assertTrue($query->from instanceof \SqlSemantics\Model\Relation\Joining\UsingJoin || $query->from instanceof \SqlSemantics\Model\Relation\Joining\NaturalJoin);
         self::assertNotSame([], $query->from->columns);
     }
 
@@ -346,10 +352,12 @@ final class BinderTest extends TestCase
         self::assertSame(['a', 'b'], array_column($query->relations, 'alias'));
         self::assertSame('not-null', $query->outputs[0]->expression->nullability->value);
         self::assertSame('maybe-null', $query->outputs[1]->expression->nullability->value);
-        self::assertInstanceOf(\SqlSemantics\Model\Join::class, $query->from);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\Joining\OnJoin::class, $query->from);
         self::assertSame('left', $query->from->kind->value);
-        self::assertSame('=', $query->from->condition?->spelling());
-        self::assertSame('>', $query->relations[1]->query?->where?->spelling());
+        self::assertSame('=', $query->from->condition->spelling());
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\DerivedRelation::class, $query->relations[1]);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query->relations[1]->query);
+        self::assertSame('>', $query->relations[1]->query->where?->spelling());
         self::assertCount(1, $query->orderBy);
         self::assertTrue($query->orderBy[0]->descending);
         self::assertSame('3', $query->limit?->spelling());
@@ -406,7 +414,9 @@ final class BinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE dual(id INTEGER)');
         $binder = new Binder($schema);
-        self::assertSame([], $binder->bind('SELECT')->outputs);
+        $empty = $binder->bind('SELECT');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $empty);
+        self::assertSame([], $empty->outputs);
         $boundQuery1 = $binder->bind('SELECT FROM dual');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery1);
         self::assertSame([], $boundQuery1->outputs);
@@ -464,9 +474,11 @@ final class BinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertFalse($query->relations[0]->declaration->resolved);
         self::assertSame('wildcard', $query->outputs[0]->expression->kind->value);
+        self::assertNotNull($query->ctes);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\TableStatement::class, $query->ctes->definitions[0]->query);
         self::assertSame('absent', $query->ctes->definitions[0]->query->relations[0]->declaration->name);
         $write = $binder->bind('UPDATE absent SET n=n+1 RETURNING n', strict: false);
-        self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $write);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateTableStatement::class, $write);
         self::assertSame('UPDATE', $write->kind->value);
         self::assertSame(['n'], array_map(static fn ($write) => $write->destinations()[0]->column()->referenceParts()[0], $write->writes));
         self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $write->writes[0]);
@@ -480,6 +492,7 @@ final class BinderTest extends TestCase
         $result = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql, strict: false);
         self::assertContains($reason, array_column($result->diagnostics, 'reason'));
         self::assertSame($sql, $result->source->toString());
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $result);
         self::assertNotSame([], $result->outputs);
     }
 
@@ -511,7 +524,9 @@ final class BinderTest extends TestCase
         $binder = new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(id INTEGER)'));
         $statements = $binder->bindAll('SELECT missing FROM t; SELECT id FROM t; SELECT other FROM t', strict: false);
         self::assertCount(3, $statements);
-        self::assertInstanceOf(\SqlSemantics\Model\BoundQuery::class, $statements[0]);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statements[0]);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statements[1]);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statements[2]);
         self::assertSame(['unknown-column'], array_column($statements[0]->diagnostics, 'reason'));
         self::assertSame([], $statements[1]->diagnostics);
         self::assertSame(['unknown-column'], array_column($statements[2]->diagnostics, 'reason'));
@@ -565,6 +580,8 @@ final class BinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertSame(['unknown-column'], array_column($statement->diagnostics, 'reason'));
         self::assertInstanceOf(\SqlSemantics\Model\Query\DistinctRows::class, $statement->quantifier);
+        self::assertNotNull($statement->ctes);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\CteReference::class, $statement->relations[0]);
         self::assertSame($statement->ctes->definitions[0]->query, $statement->relations[0]->definition->query);
         self::assertSame($statement->relations[0], $statement->from);
         self::assertSame('>', $statement->where?->spelling());
@@ -582,8 +599,9 @@ final class BinderTest extends TestCase
         $statement = $binder->bind('INSERT INTO t(id) VALUES(missing) ON CONFLICT(id) DO UPDATE SET id=EXCLUDED.id WHERE t.id>0 RETURNING id', strict: false);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
         self::assertContains('unknown-column', array_column($statement->diagnostics, 'reason'));
-        self::assertSame($statement->affectedTables()[0], $statement->insertion?->target);
+        self::assertSame($statement->affectedTables()[0], $statement->insertion->target);
         self::assertSame('id', $statement->insertion->columns[0]->column()->columnBinding()?->column->name);
+        self::assertInstanceOf(\SqlSemantics\Model\Expression::class, $statement->rows[0][0]);
         self::assertSame(['missing'], $statement->rows[0][0]->referenceParts());
         self::assertSame('update', $statement->conflicts[0]->action->value);
         self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\DoUpdate::class, $statement->conflicts[0]);
@@ -597,6 +615,8 @@ final class BinderTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
         $statement = $binder->bind('EXPLAIN UPDATE t SET id=missing WHERE id=1', strict: false);
         self::assertSame(['unknown-column'], array_column($statement->diagnostics, 'reason'));
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Plan\ExplainStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateTableStatement::class, $statement->statement);
         self::assertSame('UPDATE', $statement->statement->kind->value);
         self::assertSame('id', $statement->statement->writes[0]->destinations()[0]->column()->columnBinding()?->column->name);
         self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $statement->statement->writes[0]);
@@ -609,11 +629,17 @@ final class BinderTest extends TestCase
         $builder = new SchemaBuilder($dialect, grammarVersion: $version);
         $sql = 'CREATE TABLE t(id INTEGER, parent_id INTEGER, FOREIGN KEY (parent_id) REFERENCES p(id) ON DELETE CASCADE)';
         $schema = $builder->build($sql, 'CREATE INDEX ix ON t(parent_id,id)');
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\ForeignKey::class, $schema->tables[0]->constraints[0]);
         self::assertSame('cascade', $schema->tables[0]->constraints[0]->onDelete->value);
-        self::assertSame(['parent_id', 'id'], array_map(static fn ($key) => $key->column->columnBinding()->column->name, $schema->tables[0]->indexes[0]->elements));
+        self::assertSame(['parent_id', 'id'], array_map(static fn ($key) => $key->value()->columnBinding()?->column->name, $schema->tables[0]->indexes[0]->elements));
         $binder = new Binder($schema);
-        self::assertSame('cascade', $binder->bind($sql)->definition->table->constraints[0]->onDelete->value);
-        self::assertSame('parent_id', $binder->bind('CREATE INDEX iy ON t(parent_id)')->index->definition->elements[0]->value()->columnBinding()?->column->name);
+        $table = $binder->bind($sql);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $table);
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\ForeignKey::class, $table->definition->table->constraints[0]);
+        self::assertSame('cascade', $table->definition->table->constraints[0]->onDelete->value);
+        $index = $binder->bind('CREATE INDEX iy ON t(parent_id)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateIndexStatement::class, $index);
+        self::assertSame('parent_id', $index->index->definition->elements[0]->value()->columnBinding()?->column->name);
     }
 
     #[TestWith(['VALUES (1, 2), (3)'])]

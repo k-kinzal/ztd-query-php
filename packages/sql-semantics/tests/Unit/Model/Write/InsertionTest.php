@@ -144,16 +144,15 @@ final class InsertionTest extends TestCase
         self::assertSame($statement->affectedTables()[0], $statement->insertion->target);
         self::assertSame('b', $statement->insertion->columns[0]->column()->columnBinding()?->column->name);
     }
-    public function testRejectsNonColumnDestination(): void
+    public function testRejectsADestinationFromAnotherRelation(): void
     {
-        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER)'));
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER)', 'CREATE TABLE u(a INTEGER)'));
         $statement = $binder->bind('INSERT INTO t VALUES(1)');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
-        $boundQuery1 = $binder->bind('SELECT 1');
-        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery1);
-        $literal = $boundQuery1->outputs[0]->expression;
+        $foreign = $binder->bind('INSERT INTO u VALUES(2)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $foreign);
         $this->expectException(InvalidStructure::class);
-        new \SqlSemantics\Model\Write\Insertion($statement->affectedTables()[0], [$literal], true);
+        new \SqlSemantics\Model\Write\Insertion($statement->insertion->target, $foreign->insertion->columns, true);
     }
 
     public function testDerivesOmittedColumnsFromTheActualDestinationMapping(): void

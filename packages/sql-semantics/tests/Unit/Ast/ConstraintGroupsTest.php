@@ -157,6 +157,8 @@ final class ConstraintGroupsTest extends TestCase
     {
         $table = (new SchemaBuilder(Dialect::PostgreSql))->build('create table t(id integer references parent(id) ' . $attributes . ', other integer references parent(id))')->tables[0];
         self::assertCount(2, $table->constraints);
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\ForeignKey::class, $table->constraints[0]);
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\ForeignKey::class, $table->constraints[1]);
         self::assertSame($checking, $table->constraints[0]->checking);
         self::assertSame(\SqlSemantics\Schema\Constraint\CheckingTime::Immediate, $table->constraints[1]->checking);
         self::assertNotSame(\SqlSemantics\Schema\Constraint\CheckingTime::DeferrableDeferred, $table->constraints[1]->checking);

@@ -150,16 +150,18 @@ final class MergeBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Write\Decision\MergeUpdate::class, $merge->actions[0]);
         self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $merge->actions[0]->assignments[0]);
         self::assertSame('s', $merge->actions[0]->assignments[0]->value->columnBinding()?->table->name);
-        self::assertSame(['id','n'], array_map(static fn ($column) => $column->column()->columnBinding()?->column->name, $merge->actions[1]->insertion->columns ?? []));
         self::assertInstanceOf(\SqlSemantics\Model\Write\Decision\MergeRowInsertion::class, $merge->actions[1]);
+        self::assertSame(['id','n'], array_map(static fn ($column) => $column->column()->columnBinding()?->column->name, $merge->actions[1]->insertion->columns));
+        self::assertInstanceOf(\SqlSemantics\Model\Expression::class, $merge->actions[1]->row->items[0]);
         self::assertSame('s', $merge->actions[1]->row->items[0]->columnBinding()?->table->name);
         self::assertSame(['id'], array_column($statement->outputs, 'name'));
     }
     public function testActionSeparatesAbsentSourceFromAbsentTarget(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER); CREATE TABLE s(id INTEGER)'));
-        $merge = $binder->bind('MERGE INTO t USING s ON t.id=s.id WHEN NOT MATCHED BY SOURCE AND t.id>0 THEN DELETE WHEN NOT MATCHED BY TARGET THEN DO NOTHING')->merge;
-        self::assertNotNull($merge);
+        $statement = $binder->bind('MERGE INTO t USING s ON t.id=s.id WHEN NOT MATCHED BY SOURCE AND t.id>0 THEN DELETE WHEN NOT MATCHED BY TARGET THEN DO NOTHING');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\MergeStatement::class, $statement);
+        $merge = $statement->merge;
         self::assertSame(['not-matched-by-source','not-matched-by-target'], array_map(static fn ($item) => $item->match->value, $merge->actions));
         self::assertSame(['delete','nothing'], array_map(static fn ($item) => $item->action->value, $merge->actions));
         self::assertSame('t', $merge->actions[0]->condition?->inputs()[0]->columnBinding()?->table->name);
@@ -178,8 +180,10 @@ final class MergeBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\MergeStatement::class, $statement);
         self::assertCount(1, $statement->merge->actions);
         self::assertSame('nothing', $statement->merge->actions[0]->action->value);
-        self::assertInstanceOf(\SqlSemantics\Model\TableUse::class, $statement->merge->input);
-        self::assertNotNull($statement->merge->input->query);
-        self::assertSame('delete', $statement->merge->input->query->ctes->definitions[0]->query->merge?->actions[0]->action->value);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\DerivedRelation::class, $statement->merge->input);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement->merge->input->query);
+        self::assertNotNull($statement->merge->input->query->ctes);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\MergeStatement::class, $statement->merge->input->query->ctes->definitions[0]->query);
+        self::assertSame('delete', $statement->merge->input->query->ctes->definitions[0]->query->merge->actions[0]->action->value);
     }
 }

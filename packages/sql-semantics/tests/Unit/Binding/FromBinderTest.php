@@ -148,8 +148,7 @@ final class FromBinderTest extends TestCase
         $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind('SELECT b.score FROM users a LEFT JOIN users b ON a.id=b.id WHERE b.score > 0');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
-        self::assertInstanceOf(\SqlSemantics\Model\Join::class, $statement->from);
-        self::assertNotNull($statement->from->condition);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\Joining\OnJoin::class, $statement->from);
         self::assertSame(Nullability::NotNull, $statement->from->condition->inputs()[1]->nullability);
         self::assertNotNull($statement->where);
         self::assertSame(Nullability::MaybeNull, $statement->where->inputs()[0]->nullability);
@@ -185,9 +184,9 @@ final class FromBinderTest extends TestCase
         $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind('SELECT a.id FROM users a CROSS JOIN users b');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
-        self::assertInstanceOf(\SqlSemantics\Model\Join::class, $statement->from);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\Joining\CrossJoin::class, $statement->from);
         self::assertSame(\SqlSemantics\Model\JoinKind::Cross, $statement->from->kind);
-        self::assertNull($statement->from->condition);
+        self::assertFalse(property_exists($statement->from, 'condition'));
     }
 
     public function testSqliteRespectsExplicitDatabaseNames(): void
@@ -232,8 +231,8 @@ final class FromBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertCount(2, $query->relations);
         self::assertSame(['id', 'n'], array_column($query->outputs, 'name'));
-        self::assertInstanceOf(\SqlSemantics\Model\Join::class, $query->from);
-        self::assertSame('=', $query->from->condition?->spelling());
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\Joining\OnJoin::class, $query->from);
+        self::assertSame('=', $query->from->condition->spelling());
     }
 
     #[TestWith([Dialect::PostgreSql])]
@@ -245,7 +244,8 @@ final class FromBinderTest extends TestCase
         $query = (new Binder($schema))->bind('SELECT q.id FROM (SELECT a.id FROM t a JOIN t b ON a.id=b.id) q');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertCount(1, $query->relations);
-        self::assertNotNull($query->relations[0]->query);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\DerivedRelation::class, $query->relations[0]);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query->relations[0]->query);
         self::assertCount(2, $query->relations[0]->query->relations);
         self::assertSame('id', $query->outputs[0]->name);
     }
@@ -265,8 +265,8 @@ final class FromBinderTest extends TestCase
         $query = (new Binder($schema))->bind('SELECT a.id, b.id FROM (a JOIN b ON a.id=b.id)');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame(['a','b'], array_map(static fn ($relation): string => $relation->declaration->name, $query->relations));
-        self::assertInstanceOf(\SqlSemantics\Model\Join::class, $query->from);
-        self::assertSame('=', $query->from->condition?->spelling());
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\Joining\OnJoin::class, $query->from);
+        self::assertSame('=', $query->from->condition->spelling());
         self::assertSame(['id','id'], array_column($query->outputs, 'name'));
     }
 
@@ -286,7 +286,8 @@ final class FromBinderTest extends TestCase
         $query = (new Binder($schema))->bind('SELECT * FROM SELECT id FROM t');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame(['id'], array_column($query->outputs, 'name'));
-        self::assertNotNull($query->relations[0]->query);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\DerivedRelation::class, $query->relations[0]);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query->relations[0]->query);
         self::assertSame('t', $query->relations[0]->query->relations[0]->declaration->name);
         self::assertNotSame($query->scopeId, $query->relations[0]->query->scopeId);
     }
@@ -300,9 +301,9 @@ final class FromBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame(['id', 'n'], array_column($query->outputs, 'name'));
         self::assertSame(['a', 'b'], array_map(static fn ($relation): string => $relation->declaration->name, $query->relations));
-        self::assertInstanceOf(\SqlSemantics\Model\Join::class, $query->from);
-        self::assertSame('=', $query->from->condition?->spelling());
-        self::assertNull($query->relations[0]->query);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\Joining\OnJoin::class, $query->from);
+        self::assertSame('=', $query->from->condition->spelling());
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\TableReference::class, $query->relations[0]);
     }
 
     public function testTableResolvesNumericCteNames(): void
@@ -311,6 +312,8 @@ final class FromBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame('123', $query->relations[0]->declaration->name);
         self::assertSame(['id'], array_column($query->outputs, 'name'));
+        self::assertNotNull($query->ctes);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\CteReference::class, $query->relations[0]);
         self::assertSame($query->ctes->definitions[0]->query, $query->relations[0]->definition->query);
     }
 

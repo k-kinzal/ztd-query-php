@@ -145,7 +145,9 @@ final class QueryNodesTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertNull($query->limit);
         self::assertSame([], $query->orderBy);
-        self::assertSame('2', $query->relations[0]->query?->limit?->spelling());
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\DerivedRelation::class, $query->relations[0]);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query->relations[0]->query);
+        self::assertSame('2', $query->relations[0]->query->limit?->spelling());
     }
 
     public function testBodyPreservesSetPrecedence(): void
@@ -186,6 +188,10 @@ final class QueryNodesTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\CompoundStatement::class, $query);
         self::assertSame('UNION', $query->setOperator->value);
 
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CompoundStatement::class, $query->left);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query->left->left);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query->left->right);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query->right);
         self::assertSame('UNION ALL', $query->left->setOperator->value);
         self::assertSame('1', $query->left->left->outputs[0]->expression->spelling());
         self::assertSame('1', $query->left->left->where?->spelling());

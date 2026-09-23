@@ -145,6 +145,7 @@ final class UtilityBinderTest extends TestCase
         $statement = $binder->bind('CREATE TABLE t AS SELECT 1 AS id');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Definition\CreateTableAsStatement::class, $statement);
         self::assertSame('CREATE', $statement->kind->value);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement->query);
         self::assertSame('id', $statement->query->outputs[0]->name);
     }
 
@@ -152,6 +153,9 @@ final class UtilityBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
         $statement = (new Binder($schema))->bind('EXPLAIN DECLARE cur CURSOR FOR SELECT id FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Plan\ExplainStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Cursor\DeclareCursorStatement::class, $statement->statement);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement->statement->query);
         self::assertSame('EXPLAIN', $statement->kind->value);
         self::assertSame('DECLARE', $statement->statement->kind->value);
         self::assertSame('SELECT', $statement->statement->query->kind->value);

@@ -41,8 +41,12 @@ final class RowShapeTest extends TestCase
     public function testWidthDefersAnUnresolvedWildcard(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
-        self::assertNull(RowShape::width($binder->bind('SELECT * FROM missing', strict: false)));
-        self::assertSame(2, RowShape::width($binder->bind('SELECT 1, 2')));
+        $open = $binder->bind('SELECT * FROM missing', strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $open);
+        self::assertNull(RowShape::width($open));
+        $closed = $binder->bind('SELECT 1, 2');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $closed);
+        self::assertSame(2, RowShape::width($closed));
     }
 
     public function testInsertionRejectsAnExplicitPositionWithoutAnInput(): void

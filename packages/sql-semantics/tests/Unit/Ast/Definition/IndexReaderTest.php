@@ -163,9 +163,11 @@ final class IndexReaderTest extends TestCase
         self::assertSame('btree', $index->method);
         self::assertSame(['id'], $index->include);
         self::assertTrue($index->unique);
-        self::assertTrue((new Binder($schema))->bind($index->source->toString())->concurrently);
+        $statement = (new Binder($schema))->bind($index->source->toString());
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateIndexStatement::class, $statement);
+        self::assertTrue($statement->concurrently);
         self::assertFalse($index->properties->nullsDistinct);
-        self::assertTrue((new Binder($schema))->bind($index->source->toString())->ifNotExists);
+        self::assertTrue($statement->ifNotExists);
         self::assertSame('80', $index->properties->storageParameters[0]->value->spelling());
         self::assertNotNull($index->predicate);
     }
@@ -182,7 +184,7 @@ final class IndexReaderTest extends TestCase
         self::assertSame('hash', $index->method);
         self::assertSame('key', $index->properties->comment);
         self::assertTrue($index->properties->visible);
-        self::assertSame('ASC', $index->elements[0]->direction->value);
+        self::assertSame('ASC', $index->elements[0]->direction?->value);
         self::assertSame([], $index->include);
         self::assertNull($index->predicate);
     }
@@ -213,12 +215,15 @@ final class IndexReaderTest extends TestCase
         self::assertSame(['app', 't'], $index->table);
         self::assertTrue($index->properties->nullsDistinct);
         $statement = (new Binder($schema))->bind($index->source->toString());
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateIndexStatement::class, $statement);
         self::assertTrue($statement->concurrently);
         self::assertTrue($statement->ifNotExists);
         $schema = (new SchemaBuilder(Dialect::Sqlite))->build('create table "aux".t(id integer); create index if not exists "aux"."i.x" on t(id)');
         self::assertSame('i.x', $schema->tables[0]->indexes[0]->name);
         self::assertSame('aux', $schema->tables[0]->indexes[0]->schema);
-        self::assertTrue((new Binder($schema))->bind($schema->tables[0]->indexes[0]->source->toString())->ifNotExists);
+        $sqlite = (new Binder($schema))->bind($schema->tables[0]->indexes[0]->source->toString());
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateIndexStatement::class, $sqlite);
+        self::assertTrue($sqlite->ifNotExists);
     }
 
 }

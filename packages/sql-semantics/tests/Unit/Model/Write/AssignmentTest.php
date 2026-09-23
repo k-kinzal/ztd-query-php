@@ -144,13 +144,15 @@ final class AssignmentTest extends TestCase
         $write = $statement->writes[0];
         self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $write);
         self::assertSame([$write->target], $write->destinations());
-        self::assertSame('id', $write->target->column()->columnBinding()->column->name);
+        self::assertSame('id', $write->target->column()->columnBinding()?->column->name);
         self::assertSame('1', $write->value->spelling());
     }
 
     public function testRejectsMixedDialectStorageValues(): void
     {
-        $write = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('UPDATE t SET id=1')->writes[0];
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('UPDATE t SET id=1');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateTableStatement::class, $statement);
+        $write = $statement->writes[0];
         $value = \SqlSemantics\Model\Expression::literal(1, Dialect::Sqlite);
         $this->expectException(InvalidStructure::class);
         new \SqlSemantics\Model\Write\Assignment\ScalarAssignment($write->destinations()[0], $value, $write->source);

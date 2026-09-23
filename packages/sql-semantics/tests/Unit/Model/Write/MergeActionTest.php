@@ -142,6 +142,7 @@ final class MergeActionTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Write\Decision\MergeUpdate::class, $statement->merge->actions[0]);
         self::assertCount(1, $statement->merge->actions[0]->assignments);
         self::assertInstanceOf(\SqlSemantics\Model\Write\Decision\MergeRowInsertion::class, $statement->merge->actions[3]);
+        self::assertInstanceOf(\SqlSemantics\Model\Expression::class, $statement->merge->actions[3]->row->items[0]);
         self::assertSame('t', $statement->merge->actions[3]->row->items[0]->columnBinding()?->table->name);
         self::assertInstanceOf(\SqlSemantics\Model\TableUse::class, $statement->merge->input);
         self::assertSame('s', $statement->merge->input->alias);

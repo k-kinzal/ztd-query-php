@@ -146,6 +146,7 @@ final class QueryBinderTest extends TestCase
         self::assertSame('UNION ALL', $query->setOperator->value);
 
         self::assertSame(['k', 'total'], array_column($query->outputs, 'name'));
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query->left);
         self::assertCount(1, $query->left->groupBy);
         self::assertSame('>', $query->left->having?->spelling());
         self::assertSame('bigint', $query->outputs[1]->expression->type->name);
@@ -156,7 +157,9 @@ final class QueryBinderTest extends TestCase
         $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('WITH RECURSIVE nums(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM nums WHERE n < 5) SELECT n FROM nums');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame('n', $query->outputs[0]->name);
+        self::assertNotNull($query->ctes);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\CompoundStatement::class, $query->ctes->definitions[0]->query);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query->ctes->definitions[0]->query->right);
         self::assertSame('<', $query->ctes->definitions[0]->query->right->where?->spelling());
     }
     public function testBindConstant(): void
@@ -195,6 +198,7 @@ final class QueryBinderTest extends TestCase
     public function testCompoundInfersAcrossAllBranches(string $sql, string $type, string $nullable, bool $distinct): void
     {
         $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CompoundStatement::class, $query);
         self::assertSame($type, $query->outputs[0]->expression->type->name);
         self::assertSame($nullable, $query->outputs[0]->expression->nullability->value);
         self::assertSame($distinct, in_array($query->setOperator, [\SqlSemantics\Model\Query\SetOperator::Union, \SqlSemantics\Model\Query\SetOperator::Intersect, \SqlSemantics\Model\Query\SetOperator::Except], true));
@@ -253,6 +257,7 @@ final class QueryBinderTest extends TestCase
         $tree = $parser->parse('WITH a AS (SELECT 1 AS n), b AS (SELECT n FROM a) SELECT n FROM b');
         $visible = $binder->with($tree, null);
         self::assertSame(['a', 'b'], array_keys($visible->ctes));
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $visible->ctes['b']->query);
         self::assertSame('n', $visible->ctes['b']->query->outputs[0]->name);
     }
 
@@ -260,7 +265,10 @@ final class QueryBinderTest extends TestCase
     {
         $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('WITH a(renamed) AS (SELECT 1 AS original LIMIT 1) SELECT renamed FROM a');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        self::assertNotNull($query->ctes);
         $definition = $query->ctes->definitions[0];
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $definition->query);
+        self::assertNotNull($definition->query->limit);
         self::assertSame(['renamed'], $definition->columns);
         self::assertSame('original', $definition->query->outputs[0]->name);
         self::assertSame('1', $definition->query->limit->spelling());
@@ -278,6 +286,7 @@ final class QueryBinderTest extends TestCase
         $body = \SqlSemantics\Binding\Query\QueryNodes::body($tree);
         self::assertCount(2, $binder->branches($body));
         $query = $binder->compound($tree, $body, $context, 'outer', 'UNION ALL', null);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CompoundStatement::class, $query);
         self::assertSame('outer', $query->scopeId);
         self::assertSame('n', $query->outputs[0]->name);
         self::assertSame($tree, $query->source);
@@ -289,6 +298,9 @@ final class QueryBinderTest extends TestCase
         $query = (new Binder($schema))->bind('WITH moved(x) AS (DELETE FROM t WHERE n<0 RETURNING id) SELECT x FROM moved');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame('SELECT', $query->kind->value);
+        self::assertNotNull($query->ctes);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\DeleteTableStatement::class, $query->ctes->definitions[0]->query);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\CteReference::class, $query->relations[0]);
         self::assertSame('DELETE', $query->ctes->definitions[0]->query->kind->value);
         self::assertSame(['x'], array_column($query->outputs, 'name'));
         self::assertSame('t', $query->ctes->definitions[0]->query->affectedTables()[0]->declaration->name);
@@ -302,6 +314,8 @@ final class QueryBinderTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
         $statement = (new Binder($schema))->bind('WITH q(n) AS (INSERT INTO t(id) VALUES(1) RETURNING id) SELECT n FROM q');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertNotNull($statement->ctes);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement->ctes->definitions[0]->query);
         self::assertSame('id', $statement->ctes->definitions[0]->query->insertion->columns[0]->column()->columnBinding()?->column->name);
         self::assertSame(['n'], $statement->ctes->definitions[0]->columns);
         self::assertSame('id', $statement->ctes->definitions[0]->query->outputs[0]->name);
@@ -313,6 +327,9 @@ final class QueryBinderTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER); CREATE TABLE s(id INTEGER)');
         $statement = (new Binder($schema))->bind('WITH changed(result) AS (WITH input AS (SELECT id FROM s) MERGE INTO t USING input ON t.id=input.id WHEN MATCHED THEN DELETE RETURNING t.id) SELECT result FROM changed');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertNotNull($statement->ctes);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\MergeStatement::class, $statement->ctes->definitions[0]->query);
+        self::assertNotNull($statement->ctes->definitions[0]->query->ctes);
         self::assertSame('MERGE', $statement->ctes->definitions[0]->query->kind->value);
         self::assertSame('delete', $statement->ctes->definitions[0]->query->merge->actions[0]->action->value);
         self::assertSame(['input'], array_column($statement->ctes->definitions[0]->query->ctes->definitions, 'name'));

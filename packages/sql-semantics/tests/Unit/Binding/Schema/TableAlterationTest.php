@@ -143,6 +143,7 @@ final class TableAlterationTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER)', 'ALTER TABLE t ADD COLUMN n INTEGER DEFAULT 2', 'ALTER TABLE t RENAME COLUMN n TO value', 'ALTER TABLE t DROP COLUMN id', 'ALTER TABLE t RENAME TO renamed');
         self::assertSame('renamed', $schema->tables[0]->name);
         self::assertSame(['value'], array_column($schema->tables[0]->columns, 'name'));
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\SuppliedColumn::class, $schema->tables[0]->columns[0]->generation);
         self::assertNotNull($schema->tables[0]->columns[0]->generation->default);
     }
     public function testActionKeepsUnaffectedColumns(): void
@@ -155,6 +156,9 @@ final class TableAlterationTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (n INTEGER)', 'ALTER TABLE t ALTER COLUMN n TYPE NUMERIC(10,2), ALTER COLUMN n SET NOT NULL');
         self::assertSame('numeric', $schema->tables[0]->columns[0]->type->name);
+        self::assertInstanceOf(\SqlSemantics\Type\Identity\Numeric\NumericStorage::class, $schema->tables[0]->columns[0]->type->identity);
+        self::assertNotNull($schema->tables[0]->columns[0]->type->identity->precision);
+        self::assertNotNull($schema->tables[0]->columns[0]->type->identity->scale);
         self::assertSame('10', $schema->tables[0]->columns[0]->type->identity->precision->spelling);
         self::assertSame('2', $schema->tables[0]->columns[0]->type->identity->scale->spelling);
         self::assertSame(\SqlSemantics\Type\Nullability::NotNull, $schema->tables[0]->columns[0]->nullability);
@@ -164,10 +168,13 @@ final class TableAlterationTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('create table t (id integer not null default 1, value text)', 'create table u (id integer)', 'alter table t alter column id drop not null, alter column id set default 2');
         self::assertSame('maybe-null', $schema->tables[0]->columns[0]->nullability->value);
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\SuppliedColumn::class, $schema->tables[0]->columns[0]->generation);
+        self::assertNotNull($schema->tables[0]->columns[0]->generation->default);
         self::assertSame('2', $schema->tables[0]->columns[0]->generation->default->spelling());
         self::assertSame('text', $schema->tables[0]->columns[1]->type->name);
         self::assertSame(['id'], array_column($schema->tables[1]->columns, 'name'));
         $withoutDefault = (new SchemaBuilder(Dialect::PostgreSql))->build('create table t (id integer default 1)', 'alter table t alter column id drop default');
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\SuppliedColumn::class, $withoutDefault->tables[0]->columns[0]->generation);
         self::assertNull($withoutDefault->tables[0]->columns[0]->generation->default);
     }
 
@@ -179,6 +186,7 @@ final class TableAlterationTest extends TestCase
         self::assertSame(['id','n'], array_column($schema->tables[0]->columns, 'name'));
         self::assertSame('text', $schema->tables[0]->columns[1]->type->name);
         self::assertSame('not-null', $schema->tables[0]->columns[1]->nullability->value);
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\SuppliedColumn::class, $schema->tables[0]->columns[1]->generation);
         self::assertNotNull($schema->tables[0]->columns[1]->generation->default);
     }
 

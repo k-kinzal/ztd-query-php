@@ -144,7 +144,9 @@ final class ValuesBinderTest extends TestCase
         $statement = (new Binder($schema))->bind('INSERT INTO t(id,n) VALUES (1,2),(3,4)');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
         self::assertCount(2, $statement->rows);
+        self::assertInstanceOf(\SqlSemantics\Model\Expression::class, $statement->rows[1][0]);
         self::assertSame('3', $statement->rows[1][0]->spelling());
+        self::assertInstanceOf(\SqlSemantics\Model\Expression::class, $statement->rows[1][1]);
         self::assertSame('4', $statement->rows[1][1]->spelling());
     }
     public function testOutputsPromotesEveryRowByColumnPosition(): void

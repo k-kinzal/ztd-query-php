@@ -26,6 +26,8 @@ final class ExecutionBinder
         return Statement\Maintenance\MySqlTables::bind($origin, $statement, $context)
             ?? Statement\Maintenance\TruncateBinder::bind($origin, $statement, $context)
             ?? TableLockBinder::bind($origin, $statement, $context)
+            ?? Statement\Inspection\ServerInspection::bind($origin, $statement)
+            ?? DoBinder::bind($origin, $statement, $scope)
             ?? SessionBinder::bind($origin, $statement, $scope)
             ?? Statement\Prepared\PreparedBinder::bind($origin, $statement, $context)
             ?? Statement\Cursor\CursorBinder::bind($origin, $statement, $context)

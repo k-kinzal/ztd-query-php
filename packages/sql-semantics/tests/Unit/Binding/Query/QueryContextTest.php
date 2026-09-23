@@ -143,8 +143,9 @@ final class QueryContextTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER, n INTEGER)');
         $query = (new Binder($schema))->bind('SELECT a.id, (SELECT max(b.n) FROM t b WHERE b.id = a.id) AS peak FROM t a');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Query\ScalarSubquery::class, $query->outputs[1]->expression);
         $nested = $query->outputs[1]->expression->query;
-        self::assertNotNull($nested);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $nested);
         self::assertNotSame($query->scopeId, $nested->scopeId);
         self::assertSame('r0', $nested->where?->inputs()[1]->columnBinding()?->relationId);
         self::assertSame('integer', $query->outputs[1]->expression->type->name);

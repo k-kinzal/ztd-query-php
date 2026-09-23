@@ -142,6 +142,8 @@ final class StatementBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER)');
         $statement = (new Binder($schema))->bind('INSERT INTO t SELECT id FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertSelectStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement->query);
         self::assertSame('INSERT', $statement->kind->value);
         self::assertSame('t', $statement->affectedTables()[0]->declaration->name);
         self::assertSame('id', $statement->query->outputs[0]->name);
@@ -158,9 +160,10 @@ final class StatementBinderTest extends TestCase
         $statement = (new Binder($schema))->bind($sql);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $statement);
         self::assertSame('UPDATE', $statement->kind->value);
+        self::assertNotNull($statement->ctes);
         self::assertSame(['x'], array_column($statement->ctes->definitions, 'name'));
         self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $statement->writes[0]);
-        self::assertNotNull($statement->writes[0]->value->query);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Query\ScalarSubquery::class, $statement->writes[0]->value);
     }
 
 
@@ -176,6 +179,8 @@ final class StatementBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER,n INTEGER)');
         $statement = (new Binder($schema))->bind('EXPLAIN UPDATE t SET n=1 WHERE id=2');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Plan\ExplainStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateTableStatement::class, $statement->statement);
         self::assertSame('EXPLAIN', $statement->kind->value);
         self::assertSame('UPDATE', $statement->statement->kind->value);
         self::assertSame('n', $statement->statement->writes[0]->destinations()[0]->column()->columnBinding()?->column->name);

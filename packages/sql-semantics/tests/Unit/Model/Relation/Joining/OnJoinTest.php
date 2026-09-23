@@ -30,6 +30,7 @@ final class OnJoinTest extends TestCase
         self::assertNotSame($join, $changed);
         self::assertSame($join->left, $changed->left);
         $rebound = $binder->bind($query->withFrom($changed)->toString());
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $rebound);
         self::assertInstanceOf(OnJoin::class, $rebound->from);
         self::assertSame(array_column($query->outputs, 'name'), array_column($rebound->outputs, 'name'));
     }

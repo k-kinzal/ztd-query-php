@@ -143,6 +143,8 @@ final class SqliteListsTest extends TestCase
         $query = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('SELECT 1 AS a, (SELECT 2 AS nested) AS b');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame(['a', 'b'], array_column($query->outputs, 'name'));
-        self::assertSame('nested', $query->outputs[1]->expression->query?->outputs[0]->name);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Query\ScalarSubquery::class, $query->outputs[1]->expression);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query->outputs[1]->expression->query);
+        self::assertSame('nested', $query->outputs[1]->expression->query->outputs[0]->name);
     }
 }

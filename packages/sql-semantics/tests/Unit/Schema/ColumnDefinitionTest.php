@@ -143,6 +143,8 @@ final class ColumnDefinitionTest extends TestCase
     {
         $column = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (score INTEGER DEFAULT 42)')->tables[0]->columns[0];
         self::assertSame(Nullability::MaybeNull, $column->nullability);
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\SuppliedColumn::class, $column->generation);
+        self::assertNotNull($column->generation->default);
         self::assertNotNull($column->generation->default);
         self::assertSame('42', trim($column->generation->default->source->toString()));
     }

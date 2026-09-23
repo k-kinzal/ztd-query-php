@@ -142,6 +142,7 @@ final class ReferenceReaderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER REFERENCES parent(id) MATCH FULL ON DELETE SET NULL (id) ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED)');
         $constraint = $schema->tables[0]->constraints[0];
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\ForeignKey::class, $constraint);
         self::assertSame('full', $constraint->match->value);
         self::assertNotSame(\SqlSemantics\Schema\Constraint\CheckingTime::Immediate, $constraint->checking);
         self::assertSame(\SqlSemantics\Schema\Constraint\CheckingTime::DeferrableDeferred, $constraint->checking);
@@ -156,6 +157,7 @@ final class ReferenceReaderTest extends TestCase
     {
         $sql = 'CREATE TABLE t(id INTEGER, FOREIGN KEY (id) REFERENCES p(id) ON DELETE ' . strtoupper(str_replace('-', ' ', $action->value)) . ' ON UPDATE RESTRICT)';
         $constraint = (new SchemaBuilder($dialect))->build($sql)->tables[0]->constraints[0];
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\ForeignKey::class, $constraint);
         self::assertSame($action, $constraint->onDelete);
         self::assertSame(\SqlSemantics\Schema\ReferentialAction::Restrict, $constraint->onUpdate);
     }
@@ -175,6 +177,7 @@ final class ReferenceReaderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER REFERENCES p ON DELETE SET NULL (id) NOT DEFERRABLE INITIALLY IMMEDIATE)');
         $constraint = $schema->tables[0]->constraints[0];
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\ForeignKey::class, $constraint);
         self::assertSame([], $constraint->referencedColumns);
         self::assertSame(['id'], $constraint->deleteColumns);
         self::assertSame(\SqlSemantics\Schema\Constraint\CheckingTime::Immediate, $constraint->checking);
@@ -185,6 +188,8 @@ final class ReferenceReaderTest extends TestCase
     public function testReadLowercaseAttributesKeepCheckingTime(): void
     {
         $table = (new SchemaBuilder(Dialect::PostgreSql))->build('create table t(id integer references p(id) match simple on update set default on delete no action deferrable initially deferred, other integer references p(id) not deferrable initially immediate)')->tables[0];
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\ForeignKey::class, $table->constraints[0]);
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\ForeignKey::class, $table->constraints[1]);
         self::assertNotSame(\SqlSemantics\Schema\Constraint\CheckingTime::Immediate, $table->constraints[0]->checking);
         self::assertSame(\SqlSemantics\Schema\Constraint\CheckingTime::DeferrableDeferred, $table->constraints[0]->checking);
         self::assertSame('set-default', $table->constraints[0]->onUpdate->value);
@@ -198,6 +203,7 @@ final class ReferenceReaderTest extends TestCase
     public function testReadDeferredCheckingImpliesDeferrabilityInPostgres(): void
     {
         $constraint = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, FOREIGN KEY(id) REFERENCES parent(id) INITIALLY DEFERRED)')->tables[0]->constraints[0];
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\ForeignKey::class, $constraint);
         self::assertNotSame(\SqlSemantics\Schema\Constraint\CheckingTime::Immediate, $constraint->checking);
         self::assertSame(\SqlSemantics\Schema\Constraint\CheckingTime::DeferrableDeferred, $constraint->checking);
     }
@@ -205,6 +211,7 @@ final class ReferenceReaderTest extends TestCase
     public function testReadDefaultActionsAndCheckingTime(): void
     {
         $constraint = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER REFERENCES parent(id))')->tables[0]->constraints[0];
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\ForeignKey::class, $constraint);
         self::assertSame(\SqlSemantics\Schema\ReferentialAction::NoAction, $constraint->onDelete);
         self::assertSame(\SqlSemantics\Schema\ReferentialAction::NoAction, $constraint->onUpdate);
         self::assertSame(\SqlSemantics\Schema\Constraint\CheckingTime::Immediate, $constraint->checking);
@@ -216,6 +223,7 @@ final class ReferenceReaderTest extends TestCase
     public function testReadKeepsPartialDeleteColumnsSeparateFromCompositeForeignKeys(): void
     {
         $constraint = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(tenant INTEGER, id INTEGER, FOREIGN KEY(tenant,id) REFERENCES parent(tenant,key) ON DELETE SET NULL(id))')->tables[0]->constraints[0];
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\ForeignKey::class, $constraint);
         self::assertSame(['id'], $constraint->deleteColumns);
         self::assertSame(['tenant', 'id'], $constraint->columns);
         self::assertSame(['tenant', 'key'], $constraint->referencedColumns);

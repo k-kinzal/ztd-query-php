@@ -187,6 +187,7 @@ final class ProjectionBinderTest extends TestCase
         $statement = (new Binder($schema))->bind("SELECT score AS 'points' FROM users ORDER BY points");
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertSame('points', $statement->outputs[0]->name);
+        self::assertInstanceOf(\SqlSemantics\Model\Query\Ordering\OutputAlias::class, $statement->orderBy[0]->key);
         self::assertSame($statement->outputs[0]->expression, $statement->orderBy[0]->key->output->expression);
     }
     public function testMysqlItemsPreservesLeadingStarBeforeOtherOutputs(): void

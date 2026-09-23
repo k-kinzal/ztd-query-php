@@ -145,11 +145,15 @@ final class InsertStatementTest extends TestCase
     public function testWithRowsRebindsTheCompleteWrite(Dialect $dialect): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(id INTEGER,n INTEGER)')))->bind('INSERT INTO t(id,n) VALUES(1,2)');
-        self::assertInstanceOf(\SqlSemantics\Model\Statement\InsertStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
         $changed = $statement->withRows([[Expression::literal(3, $dialect), Expression::literal(4, $dialect)]]);
-        self::assertSame(['3','4'], array_map(static fn ($value) => $value->spelling(), $changed->rows[0]));
-        self::assertSame(['1','2'], array_map(static fn ($value) => $value->spelling(), $statement->rows[0]));
-        self::assertSame(['id','n'], array_map(static fn ($column): ?string => $column->column()->columnBinding()?->column->name, $changed->insertion->columns ?? []));
+        self::assertInstanceOf(Expression::class, $changed->rows[0][0]);
+        self::assertInstanceOf(Expression::class, $changed->rows[0][1]);
+        self::assertSame(['3','4'], [$changed->rows[0][0]->spelling(), $changed->rows[0][1]->spelling()]);
+        self::assertInstanceOf(Expression::class, $statement->rows[0][0]);
+        self::assertInstanceOf(Expression::class, $statement->rows[0][1]);
+        self::assertSame(['1','2'], [$statement->rows[0][0]->spelling(), $statement->rows[0][1]->spelling()]);
+        self::assertSame(['id','n'], array_map(static fn ($column): ?string => $column->column()->columnBinding()?->column->name, $changed->insertion->columns));
     }
 
     #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql])]
@@ -157,7 +161,7 @@ final class InsertStatementTest extends TestCase
     public function testWithReturningChangesReturnedValues(Dialect $dialect): void
     {
         $statement = (new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(id INTEGER)')))->bind('INSERT INTO t VALUES(1) RETURNING id');
-        self::assertInstanceOf(\SqlSemantics\Model\Statement\InsertStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
         $changed = $statement->withReturning([new OutputColumn(0, 'saved', Expression::reference(['id'], $dialect))]);
         self::assertSame('saved', $changed->outputs[0]->name);
         self::assertSame('id', $changed->outputs[0]->expression->columnBinding()?->column->name);
@@ -166,7 +170,7 @@ final class InsertStatementTest extends TestCase
     public function testWithRowsRejectsDestinationWidthMismatch(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER,n INTEGER)')))->bind('INSERT INTO t(id,n) VALUES(1,2)');
-        self::assertInstanceOf(\SqlSemantics\Model\Statement\InsertStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
         $this->expectException(InvalidStructure::class);
         $statement->withRows([[Expression::literal(3, Dialect::PostgreSql)]]);
     }

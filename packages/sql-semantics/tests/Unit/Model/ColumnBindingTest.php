@@ -143,6 +143,7 @@ final class ColumnBindingTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind('SELECT a.id FROM users a');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\ColumnReference::class, $statement->outputs[0]->expression);
         self::assertSame($statement->relations[0]->id, $statement->outputs[0]->expression->binding->relationId);
         self::assertSame(0, $statement->outputs[0]->expression->binding->column->ordinal);
         self::assertSame($schema->tables[0]->columns[0]->name, $statement->outputs[0]->expression->binding->column->name);

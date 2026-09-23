@@ -144,10 +144,10 @@ final class UsingJoinTest extends TestCase
         $query = (new Binder($schema))->bind('SELECT * FROM a FULL JOIN b USING (id)');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame(['id', 'x', 'y'], array_column($query->outputs, 'name'));
-        self::assertInstanceOf(\SqlSemantics\Model\Join::class, $query->from);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\Joining\UsingJoin::class, $query->from);
         self::assertSame(['id'], array_column($query->from->columns, 'name'));
-        self::assertSame('r0', $query->from->columns[0]->left->columnBinding()->relationId);
-        self::assertSame('r1', $query->from->columns[0]->right->columnBinding()->relationId);
+        self::assertSame('r0', $query->from->columns[0]->left->columnBinding()?->relationId);
+        self::assertSame('r1', $query->from->columns[0]->right->columnBinding()?->relationId);
         self::assertSame(\SqlSemantics\Model\ExpressionKind::Coalesce, $query->outputs[0]->expression->kind);
     }
     public function testBindPreservesRightJoinKeysAndMultipleConditions(): void
@@ -160,7 +160,7 @@ final class UsingJoinTest extends TestCase
         self::assertSame('not-null', $query->outputs[0]->expression->nullability->value);
         self::assertSame(['j0'], $query->outputs[2]->expression->nullExtendedBy);
         self::assertSame([], $query->outputs[3]->expression->nullExtendedBy);
-        self::assertInstanceOf(\SqlSemantics\Model\Join::class, $query->from);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\Joining\UsingJoin::class, $query->from);
         self::assertSame(['id', 'k'], array_column($query->from->columns, 'name'));
         self::assertSame($query->from->columns[0]->right, $query->from->columns[0]->output);
     }
@@ -173,6 +173,7 @@ final class UsingJoinTest extends TestCase
         $column = $quote . '1' . $quote;
         $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE a (' . $column . ' INTEGER)', 'CREATE TABLE b (' . $column . ' INTEGER)', 'CREATE TABLE c (' . $column . ' INTEGER)');
         $query = (new Binder($schema))->bind('SELECT *, ' . $column . ' FROM a NATURAL JOIN b JOIN c USING (' . $column . ')');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame(['1', '1'], array_column($query->outputs, 'name'));
         self::assertSame('integer', $query->outputs[0]->expression->type->name);
         self::assertSame('1', $query->outputs[1]->expression->columnBinding()?->column->name);

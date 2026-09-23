@@ -168,6 +168,7 @@ final class FunctionRulesTest extends TestCase
     public function testBindBuiltinResultTypes(string $sql, string $type, string $kind, string $nullable): void
     {
         $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('select ' . $sql);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         $value = $query->outputs[0]->expression;
         self::assertSame($type, $value->type->name);
         self::assertSame($kind, $value->kind->value);

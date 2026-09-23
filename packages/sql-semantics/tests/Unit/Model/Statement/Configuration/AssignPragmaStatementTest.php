@@ -25,7 +25,9 @@ final class AssignPragmaStatementTest extends TestCase
         self::assertInstanceOf(NumericArgument::class, $original->value);
         self::assertSame(Sign::Negative, $original->value->sign);
         self::assertSame('2000', $original->value->literal->text);
-        $replacement = new NumericArgument(Expression::literal(4000, Dialect::Sqlite), Sign::Negative);
+        $literal = Expression::literal(4000, Dialect::Sqlite);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\Literal::class, $literal);
+        $replacement = new NumericArgument($literal, Sign::Negative);
         $changed = $original->withValue($replacement);
         self::assertSame('PRAGMA "main"."cache_size" = - 2000', $original->toString());
         self::assertSame('PRAGMA "main"."cache_size" = - 4000', $changed->toString());

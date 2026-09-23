@@ -5,42 +5,37 @@ declare(strict_types=1);
 namespace SqlSemantics\Model\Statement\Definition;
 
 use Override;
+use SqlSemantics\Dialect;
+use SqlSemantics\Model\BoundStatement;
+use SqlSemantics\Model\Relation\QualifiedName;
 use SqlSemantics\Model\Statement\Origin;
 use SqlSemantics\Model\Statement\StatementKind;
+use SqlSemantics\Model\Validation\InvalidStructure;
 
 /**
- * DropTriggerStatement requires the operands of this SQL operation.
- *
+ * Drops one trigger identified without an owning-table clause in MySQL or SQLite.
  * @visibility public
+ * @example Inspecting the trigger's name
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build()))->bind('DROP TRIGGER IF EXISTS app.audit');
+ *     $statement->name->parts // => ['app', 'audit']
  */
-final class DropTriggerStatement extends \SqlSemantics\Model\BoundStatement
+final class DropTriggerStatement extends BoundStatement
 {
     /**
-     * @var non-empty-list<\SqlSemantics\Model\Relation\QualifiedName> Validated ordered operands
+     * The single target cannot carry PostgreSQL's required owner or dependency policy.
+     * @throws InvalidStructure
      */
-    public readonly array $names;
-
-    /**
-     * @param list<\SqlSemantics\Model\Relation\QualifiedName> $names
-     * @throws \SqlSemantics\Model\Validation\InvalidStructure
-     */
-    public function __construct(
-        Origin $origin,
-        array $names,
-        public readonly bool $ifExists = false,
-        public readonly \SqlSemantics\Model\Definition\DropBehavior $behavior = \SqlSemantics\Model\Definition\DropBehavior::Default,
-    ) {
-        parent::__construct($origin);
-        \SqlSemantics\Model\Validation\Collections::objects($names, \SqlSemantics\Model\Relation\QualifiedName::class);
-        if ($names === []) {
-            throw new \SqlSemantics\Model\Validation\InvalidStructure('A DROP operation requires a named target.');
+    public function __construct(Origin $origin, public readonly QualifiedName $name, public readonly bool $ifExists = false)
+    {
+        if ($origin->dialect === Dialect::PostgreSql) {
+            throw new InvalidStructure('PostgreSQL trigger deletion requires its owning table.');
         }
-        $this->names = \SqlSemantics\Model\Validation\Collections::nonEmpty($names);
+        if (count($name->parts) > 2) {
+            throw new InvalidStructure('A trigger name has at most one namespace qualifier.');
+        }
+        parent::__construct($origin);
     }
 
-    /**
-     * Returns the operation selected by this concrete type.
-     */
     #[Override]
     protected function operation(): StatementKind
     {
@@ -48,12 +43,27 @@ final class DropTriggerStatement extends \SqlSemantics\Model\BoundStatement
     }
 
     /**
-     * Retains operands while replacing diagnostic provenance.
-     * @visibility SqlSemantics
+     * Retains the target and existence policy when changing diagnostic provenance.
      */
     #[Override]
     public function withOrigin(Origin $origin): static
     {
-        return new static($origin, $this->names, $this->ifExists, $this->behavior);
+        return new self($origin, $this->name, $this->ifExists);
+    }
+
+    /**
+     * Replaces the single trigger target and validates its SQL identity.
+     */
+    public function withName(QualifiedName $name): self
+    {
+        return $this->changed(new self($this->origin, $name, $this->ifExists));
+    }
+
+    /**
+     * Replaces the behavior for a missing trigger.
+     */
+    public function withIfExists(bool $ifExists): self
+    {
+        return $this->changed(new self($this->origin, $this->name, $ifExists));
     }
 }

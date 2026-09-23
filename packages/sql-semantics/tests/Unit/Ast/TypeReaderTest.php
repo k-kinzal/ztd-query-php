@@ -146,6 +146,9 @@ final class TypeReaderTest extends TestCase
     public function testReadPreservesDecimalPrecisionAndScale(Dialect $dialect): void
     {
         $table = (new SchemaBuilder($dialect))->build('CREATE TABLE users (amount DECIMAL(10, 2))')->tables[0];
+        self::assertInstanceOf(\SqlSemantics\Type\Identity\Numeric\NumericStorage::class, $table->columns[0]->type->identity);
+        self::assertNotNull($table->columns[0]->type->identity->precision);
+        self::assertNotNull($table->columns[0]->type->identity->scale);
         self::assertSame('10', $table->columns[0]->type->identity->precision->spelling);
         self::assertSame('2', $table->columns[0]->type->identity->scale->spelling);
     }
@@ -279,6 +282,8 @@ final class TypeReaderTest extends TestCase
     {
         $type = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(amount DECIMAL(10,2))')->tables[0]->columns[0]->type;
         self::assertInstanceOf(\SqlSemantics\Type\Identity\SqliteDeclaration::class, $type->identity);
+        self::assertNotNull($type->identity->size);
+        self::assertNotNull($type->identity->scale);
         self::assertSame('10', $type->identity->size->spelling);
         self::assertSame('2', $type->identity->scale->spelling);
     }

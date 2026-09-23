@@ -51,4 +51,18 @@ final class ExplainBinderTest extends TestCase
         self::assertSame('EXPLAIN FORMAT = JSON FOR CONNECTION 123', $statement->toString());
         self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
     }
+    #[TestWith(['mysql-5.7.44'])]
+    #[TestWith(['mysql-8.0.44'])]
+    public function testBindUsesTheSelectedGrammarForLegacyExplainableCommands(string $release): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $release))->build());
+        $statement = $binder->bind('DESC FOR CONNECTION 1');
+        self::assertInstanceOf(ExplainConnectionStatement::class, $statement);
+        self::assertSame('1', $statement->connection->spelling);
+        self::assertSame('EXPLAIN FOR CONNECTION 1', $statement->toString());
+        $query = $binder->bind('EXPLAIN SELECT 1');
+        self::assertInstanceOf(ExplainStatement::class, $query);
+        self::assertSame('EXPLAIN SELECT 1', $query->toString());
+    }
+
 }

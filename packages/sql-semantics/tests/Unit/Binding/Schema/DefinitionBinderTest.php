@@ -142,22 +142,29 @@ final class DefinitionBinderTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE t(id INTEGER DEFAULT 3, n INTEGER GENERATED ALWAYS AS (id+1) STORED, CHECK(id>0))');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $statement);
         $definition = $statement->definition;
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\SuppliedColumn::class, $definition->table->columns[0]->generation);
+        self::assertNotNull($definition->table->columns[0]->generation->default);
         self::assertSame('3', $definition->table->columns[0]->generation->default->spelling());
         self::assertInstanceOf(\SqlSemantics\Schema\Column\ComputedColumn::class, $definition->table->columns[1]->generation);
         self::assertSame('+', $definition->table->columns[1]->generation->expression->spelling());
         self::assertSame('id', $definition->table->columns[1]->generation->expression->lineage()[0]->column->name);
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\Check::class, $definition->table->constraints[0]);
         self::assertSame('>', $definition->table->constraints[0]->predicate->spelling());
     }
     public function testExpressionRetainsMysqlLiteralDefault(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE TABLE t(id INTEGER DEFAULT 3)');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\SuppliedColumn::class, $statement->definition->table->columns[0]->generation);
+        self::assertNotNull($statement->definition->table->columns[0]->generation->default);
         self::assertSame('3', $statement->definition->table->columns[0]->generation->default->spelling());
     }
     public function testBindAllowsNullDefaultUntilStorageIsAttempted(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE t(id INTEGER NOT NULL DEFAULT NULL)');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\SuppliedColumn::class, $statement->definition->table->columns[0]->generation);
+        self::assertNotNull($statement->definition->table->columns[0]->generation->default);
         self::assertSame('always-null', $statement->definition->table->columns[0]->generation->default->nullability->value);
     }
 
@@ -182,6 +189,8 @@ final class DefinitionBinderTest extends TestCase
         $definition = $boundQuery1->definition;
         self::assertInstanceOf(\SqlSemantics\Schema\Column\ComputedColumn::class, $definition->table->columns[1]->generation);
         self::assertSame('NULL', $definition->table->columns[1]->generation->expression->spelling());
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\SuppliedColumn::class, $definition->table->columns[2]->generation);
+        self::assertNotNull($definition->table->columns[2]->generation->default);
         self::assertSame('+', $definition->table->columns[2]->generation->default->spelling());
         self::assertSame(['1','2'], array_map(static fn ($value) => $value->spelling(), $definition->table->columns[2]->generation->default->inputs()));
     }

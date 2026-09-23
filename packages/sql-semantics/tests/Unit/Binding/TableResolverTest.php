@@ -145,7 +145,7 @@ final class TableResolverTest extends TestCase
         $statement = (new Binder($schema))->bind('SELECT app.users.id FROM app.users');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertSame('app', $statement->relations[0]->declaration->schema);
-        self::assertSame($schema->tables[0]->schema, $statement->outputs[0]->expression->columnBinding()->table->schema);
+        self::assertSame($schema->tables[0]->schema, $statement->outputs[0]->expression->columnBinding()?->table->schema);
         self::assertSame($schema->tables[0]->name, $statement->outputs[0]->expression->columnBinding()->table->name);
     }
 

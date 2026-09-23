@@ -93,6 +93,13 @@ subnamespaces under `Model\Statement`.
 | `EXECUTE s(1, 2)` | `ExecuteQueryStatement` | Prepared-query name and ordered argument expressions. |
 | MySQL: `EXECUTE s USING @x, @y` | `ExecuteUsingStatement` | Prepared-statement name and ordered user-variable references. |
 | `DEALLOCATE s`, `DEALLOCATE ALL` | `DeallocateStatement`, `DeallocateAllStatement` | One required prepared-statement name, or all prepared statements. |
+| MySQL: `SHOW ENGINES`, `SHOW STORAGE ENGINES` | `ShowEnginesStatement` | Six result fields identify the engine, availability, description, transaction support, XA support, and savepoint support. Synonymous syntax produces the same operation. |
+| MySQL: `SHOW PLUGINS` | `ShowPluginsStatement` | Five result fields identify plugin name, status, type, library, and license. |
+| MySQL: `SHOW PRIVILEGES` | `ShowPrivilegesStatement` | Three result fields describe privilege name, applicable object context, and description. |
+| MySQL: `SHOW FULL PROCESSLIST` | `ShowProcessesStatement` | Eight connection-activity result fields and a `ProcessQueryText` policy; ordinary PROCESSLIST requests the first 100 characters of active SQL, while FULL requests complete text. |
+| MySQL: `DO @x := 1, @x + 2` | `DoExpressionsStatement` | Nonempty ordered scalar `expressions`, with their ordinary types, references, and dependencies. The operation requests evaluation with no returned result set; Binder does not perform it. |
+| MySQL: `DROP TEMPORARY TABLE IF EXISTS scratch` | `DropTableStatement` | Nonempty `names`, existence and dependency policies, and `TableDropScope::Temporary`. Normal DROP TABLE uses the visible table namespace. |
+| MySQL or SQLite: `DROP TRIGGER IF EXISTS audit` | `DropTriggerStatement` | Exactly one `name` and an existence policy. PostgreSQL uses `DropTableTriggerStatement` with a required owning table. |
 | `EXPLAIN UPDATE users SET score=1` | `ExplainStatement` | Required nested `statement` and classified EXPLAIN options. |
 | `DECLARE cur CURSOR FOR SELECT id FROM users` | `DeclareCursorStatement` | Cursor name, required `query`, scrollability, sensitivity, transfer format, and lifetime. |
 | `FETCH BACKWARD ALL FROM cur` | `FetchCursorStatement` | Cursor name and `RemainingRows(Backward)` movement. |
@@ -134,6 +141,16 @@ INSERT, UPDATE, DELETE, and MERGE retain ordered RETURNING `outputs` where the
 selected language provides them. Their `affectedTables()` method identifies write
 targets. REPLACE uses an insertion form with `InsertMode::Replace`. It does not lose
 the distinction between explicit rows, a source query, and column assignments.
+
+Server inspection statements are in `Model\Statement\Inspection`. Their
+`resultColumns()` returns the requested metadata shape, without reading the server.
+`ServerTextColumn` uses an `EngineField`, `PluginField`, or `PrivilegeField` enum and
+records the producing scope. Its VARCHAR and NULL facts follow the field's role;
+for example, a plugin's library can be NULL for a built-in plugin. Process fields
+use `ProcessColumn` for identity and activity, and `ProcessInfoColumn` for query
+text. The latter retains preview versus complete text and is nullable when no SQL
+is active. `withQueryText()` refreshes both the request and the resulting text-length
+fact in a new statement.
 
 MySQL table-maintenance statements are in `Model\Statement\Maintenance\MySql`.
 Their table references expose the supplied declarations; histogram columns identify

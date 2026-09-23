@@ -140,20 +140,23 @@ final class AssignmentBinderTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INTEGER)', 'CREATE TABLE u(id INTEGER)');
         $statement = (new Binder($schema))->bind('UPDATE t a JOIN u b ON a.id=b.id SET a.id=b.id WHERE b.id=1');
-        self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateJoinedStatement::class, $statement);
         self::assertSame('t', $statement->writes[0]->destinations()[0]->column()->columnBinding()?->table->name);
         self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $statement->writes[0]);
         self::assertSame('u', $statement->writes[0]->value->columnBinding()?->table->name);
-        self::assertInstanceOf(\SqlSemantics\Model\Join::class, $statement->from);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\Joining\OnJoin::class, $statement->from);
+        self::assertNotNull($statement->writes[0]->value->columnBinding());
         self::assertSame('u', $statement->writes[0]->value->columnBinding()->table->name);
     }
     public function testAssignmentRetainsTupleCorrespondence(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER,b TEXT)')))->bind("UPDATE t SET (a,b)=(1,'x')");
         self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\TupleRowAssignment::class, $statement->writes[0]);
         self::assertSame(['a','b'], array_map(static fn ($target) => $target->column()->columnBinding()?->column->name, $statement->writes[0]->targets));
-        self::assertInstanceOf(\SqlSemantics\Model\Write\InputRow::class, $statement->writes[0]->row);
-        self::assertSame(['1', "'x'"], array_map(static fn ($value) => $value->spelling(), $statement->writes[0]->row->items));
+        self::assertInstanceOf(\SqlSemantics\Model\Expression::class, $statement->writes[0]->row->items[0]);
+        self::assertInstanceOf(\SqlSemantics\Model\Expression::class, $statement->writes[0]->row->items[1]);
+        self::assertSame(['1', "'x'"], [$statement->writes[0]->row->items[0]->spelling(), $statement->writes[0]->row->items[1]->spelling()]);
     }
     public function testTargetResolvesOnlyMutationDestinations(): void
     {
@@ -170,6 +173,7 @@ final class AssignmentBinderTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(xmlnamespaces INTEGER[])'));
         $statement = $binder->bind('UPDATE t SET xmlnamespaces[1]=2');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $statement->writes[0]);
         self::assertInstanceOf(\SqlSemantics\Model\Write\Storage\ElementPath::class, $statement->writes[0]->target);
         self::assertSame('xmlnamespaces', $statement->writes[0]->target->column()->columnBinding()?->column->name);
         self::assertSame('1', $statement->writes[0]->target->index->spelling());
@@ -179,8 +183,9 @@ final class AssignmentBinderTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER,b TEXT)'));
         $statement = $binder->bind("UPDATE t SET (a,b)=(SELECT 1,'x')");
         self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $statement);
-        self::assertSame(['a','b'], array_map(static fn ($target) => $target->column()->columnBinding()?->column->name, $statement->writes[0]->targets));
         self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\TupleQueryAssignment::class, $statement->writes[0]);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement->writes[0]->query);
+        self::assertSame(['a','b'], array_map(static fn ($target) => $target->column()->columnBinding()?->column->name, $statement->writes[0]->targets));
         self::assertSame('1', $statement->writes[0]->query->outputs[0]->expression->spelling());
         self::assertSame('implicit', $statement->writes[0]->query->outputs[1]->expression->spelling());
         self::assertSame("'x'", $statement->writes[0]->query->outputs[1]->expression->inputs()[0]->spelling());

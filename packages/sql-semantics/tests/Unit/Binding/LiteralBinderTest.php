@@ -232,6 +232,7 @@ final class LiteralBinderTest extends TestCase
     public function testNonDecimalResolvesIntegerWidths(string $literal, string $type): void
     {
         $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('select ' . $literal);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame($type, $query->outputs[0]->expression->type->name);
         self::assertSame($literal, $query->outputs[0]->expression->spelling());
     }

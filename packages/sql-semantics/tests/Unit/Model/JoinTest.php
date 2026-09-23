@@ -143,9 +143,9 @@ final class JoinTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind('SELECT a.id FROM users a LEFT JOIN users b ON a.id=b.id');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
-        self::assertInstanceOf(\SqlSemantics\Model\Join::class, $statement->from);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\Joining\OnJoin::class, $statement->from);
         self::assertSame($statement->relations[0], $statement->from->left);
         self::assertSame($statement->relations[1], $statement->from->right);
-        self::assertSame('=', $statement->from->condition?->spelling());
+        self::assertSame('=', $statement->from->condition->spelling());
     }
 }

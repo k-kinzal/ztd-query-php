@@ -146,18 +146,21 @@ final class MergeTest extends TestCase
     public function testRejectsAnInsertionIntoAnotherTarget(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER); CREATE TABLE u(id INTEGER)'));
-        $merge = $binder->bind('MERGE INTO t USING t AS s ON t.id=s.id WHEN MATCHED THEN DELETE')->merge;
+        $statement = $binder->bind('MERGE INTO t USING t AS s ON t.id=s.id WHEN MATCHED THEN DELETE');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\MergeStatement::class, $statement);
+        $merge = $statement->merge;
         $insert = $binder->bind('INSERT INTO u VALUES(1)');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $insert);
-        self::assertNotNull($merge);
         $action = new \SqlSemantics\Model\Write\Decision\MergeRowInsertion(\SqlSemantics\Model\Write\Decision\MatchKind::MissingTarget, null, $insert->source, $insert->insertion, new \SqlSemantics\Model\Write\InputRow(Dialect::PostgreSql, $insert->rows[0]));
         $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
         new \SqlSemantics\Model\Write\Merge($merge->target, $merge->input, $merge->condition, [$action]);
     }
     public function testRetainsAValidInsertionDecision(): void
     {
-        $merge = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('MERGE INTO t USING t AS s ON t.id=s.id WHEN NOT MATCHED THEN INSERT VALUES(s.id)')->merge;
-        self::assertNotNull($merge);
-        self::assertSame($merge->target, $merge->actions[0]->insertion?->target);
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('MERGE INTO t USING t AS s ON t.id=s.id WHEN NOT MATCHED THEN INSERT VALUES(s.id)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\MergeStatement::class, $statement);
+        $merge = $statement->merge;
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Decision\MergeRowInsertion::class, $merge->actions[0]);
+        self::assertSame($merge->target, $merge->actions[0]->insertion->target);
     }
 }

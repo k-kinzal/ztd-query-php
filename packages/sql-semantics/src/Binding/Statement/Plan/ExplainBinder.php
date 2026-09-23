@@ -38,7 +38,7 @@ final class ExplainBinder
             $explain = Tree::child($source, ['explain']);
             $options = $explain !== null && count($explain->tokens()) === 3 ? Plan\SqlitePlan::QueryPlan : Plan\SqlitePlan::Bytecode;
         } else {
-            $command = Tree::child($source, ['ExplainableStmt', 'explainable_stmt', 'explanable_command']);
+            $command = Tree::child($source, ['ExplainableStmt', 'explainable_stmt', 'explanable_command', 'explainable_command']);
             if ($command === null) {
                 return null;
             }

@@ -26,10 +26,10 @@ final class SchemaCommands
     {
         $dialect = $statement->origin->dialect;
         return match (true) {
-            $statement instanceof Statement\DropTableStatement => self::drop('TABLE', $statement->names, $statement->ifExists, $statement->behavior, $dialect),
+            $statement instanceof Statement\DropTableStatement => self::drop(($statement->selection === \SqlSemantics\Model\Definition\TableDropScope::Temporary ? 'TEMPORARY ' : '') . 'TABLE', $statement->names, $statement->ifExists, $statement->behavior, $dialect),
             $statement instanceof Statement\DropViewStatement => self::drop('VIEW', $statement->names, $statement->ifExists, $statement->behavior, $dialect),
             $statement instanceof Statement\DropIndexStatement => self::drop('INDEX', $statement->names, $statement->ifExists, $statement->behavior, $dialect),
-            $statement instanceof Statement\DropTriggerStatement => self::drop('TRIGGER', $statement->names, $statement->ifExists, $statement->behavior, $dialect),
+            $statement instanceof Statement\DropTriggerStatement => self::drop('TRIGGER', [$statement->name], $statement->ifExists, \SqlSemantics\Model\Definition\DropBehavior::Default, $dialect),
             $statement instanceof Statement\RenameTableStatement => new Tree('rename-table', [Build::keyword('ALTER TABLE'), Build::identifier($statement->table->parts, $dialect), Build::keyword('RENAME TO'), Build::identifier([$statement->newName], $dialect)]),
             $statement instanceof Statement\RenameColumnStatement => new Tree('rename-column', [Build::keyword('ALTER TABLE'), Build::identifier($statement->table->parts, $dialect), Build::keyword('RENAME COLUMN'), Build::identifier([$statement->column], $dialect), Build::keyword('TO'), Build::identifier([$statement->newName], $dialect)]),
             $statement instanceof Statement\DropColumnStatement => new Tree('drop-column', [Build::keyword('ALTER TABLE'), Build::identifier($statement->table->parts, $dialect), Build::keyword('DROP COLUMN' . ($statement->ifExists ? ' IF EXISTS' : '')), Build::identifier([$statement->column], $dialect), Build::keyword($statement->behavior->value)]),

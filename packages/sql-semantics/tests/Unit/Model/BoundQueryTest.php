@@ -156,6 +156,7 @@ final class BoundQueryTest extends TestCase
         $changed = $statement->withOrderBy([new \SqlSemantics\Model\Ordering(\SqlSemantics\Model\Expression::reference(['id'], Dialect::PostgreSql), true, false)]);
         self::assertTrue($changed->orderBy[0]->descending);
         self::assertFalse($changed->orderBy[0]->nullsFirst);
+        self::assertInstanceOf(\SqlSemantics\Model\Query\Ordering\OutputAlias::class, $changed->orderBy[0]->key);
         self::assertSame('id', $changed->orderBy[0]->key->output->expression->columnBinding()?->column->name);
         self::assertSame([], $changed->withOrderBy([])->orderBy);
     }

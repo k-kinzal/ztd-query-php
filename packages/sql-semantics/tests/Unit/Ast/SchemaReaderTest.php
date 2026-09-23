@@ -149,12 +149,15 @@ final class SchemaReaderTest extends TestCase
         $table = $schema->tables[0];
         self::assertSame(['id', 'parent_id', 'score'], array_column($table->columns, 'name'));
         self::assertSame(Nullability::NotNull, $table->columns[0]->nullability);
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\SuppliedColumn::class, $table->columns[2]->generation);
         self::assertNotNull($table->columns[2]->generation->default);
         self::assertSame(4, count($table->constraints));
         self::assertSame(['parent_id'], $table->constraints[2]->localColumns());
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\ForeignKey::class, $table->constraints[2]);
         self::assertSame(['users'], $table->constraints[2]->referencedTable->parts);
         self::assertSame(['id'], $table->constraints[2]->referencedColumns);
-        self::assertNotNull($table->constraints[3]->predicate);
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\Check::class, $table->constraints[3]);
+        self::assertSame('>', $table->constraints[3]->predicate->spelling());
     }
 
     public function testTableRejectsDuplicateDeclarations(): void
@@ -233,6 +236,7 @@ final class SchemaReaderTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE t (id INTEGER, id TEXT, PRIMARY KEY (missing))', strict: false);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $statement);
         self::assertSame(['duplicate-column', 'unknown-column', 'unknown-column'], array_column($statement->diagnostics, 'reason'));
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\PrimaryKey::class, $statement->definition->table->constraints[0]);
         self::assertSame(\SqlSemantics\Model\ExpressionKind::UnresolvedColumn, $statement->definition->table->constraints[0]->keys[0]->value()->kind);
         self::assertSame('t', $statement->definition->table->name);
         self::assertSame(['id', 'id'], array_column($statement->definition->table->columns, 'name'));

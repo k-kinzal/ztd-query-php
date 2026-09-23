@@ -148,6 +148,7 @@ final class StatementContextTest extends TestCase
     {
         $context = new \SqlSemantics\Binding\Editing\StatementContext((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $context->bind(new Sql\Tree('query', [new Sql\Atom('keyword', 'SELECT'), new Sql\Atom('number', '1')]));
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertSame('integer', $statement->outputs[0]->expression->type->name);
     }
     public function testRebindRejectsAChangeOfOperation(): void
@@ -170,8 +171,10 @@ final class StatementContextTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
         $statement = (new Binder($schema))->bind('SET search_path=public');
-        self::assertInstanceOf(\SqlSemantics\Model\Statement\ConfigurationStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $statement->settings[0]);
         $changed = $statement->withValues($statement->settings[0], [Expression::literal('private', $schema->dialect)]);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $changed->settings[0]);
         self::assertSame("'private'", $changed->settings[0]->values[0]->spelling());
     }
 
@@ -180,8 +183,9 @@ final class StatementContextTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
         $statement = (new Binder($schema))->bind('SELECT (SELECT t.id) FROM t');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Query\ScalarSubquery::class, $statement->outputs[0]->expression);
         $nested = $statement->outputs[0]->expression->query;
-        self::assertNotNull($nested);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $nested);
         $changed = $nested->replaceExpression($nested->outputs[0]->expression, Expression::binary('+', Expression::reference(['t','id'], $schema->dialect), Expression::literal(1, $schema->dialect)));
         self::assertSame('+', $changed->outputs[0]->expression->spelling());
         self::assertSame('id', $changed->outputs[0]->expression->lineage()[0]->column->name);
@@ -192,7 +196,9 @@ final class StatementContextTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
         $wrapper = $binder->bind('EXPLAIN UPDATE t SET id=1');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Plan\ExplainStatement::class, $wrapper);
         $nested = $wrapper->statement;
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateTableStatement::class, $nested);
         self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $nested->writes[0]);
         $changed = $nested->replaceExpression($nested->writes[0]->value, Expression::literal(2, Dialect::PostgreSql));
         self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $changed->writes[0]);
@@ -211,8 +217,9 @@ final class StatementContextTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('SELECT (SELECT id FROM t)');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Query\ScalarSubquery::class, $statement->outputs[0]->expression);
         $query = $statement->outputs[0]->expression->query;
-        self::assertNotNull($query);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         $first = $query->replaceExpression($query->outputs[0]->expression, Expression::reference(['id'], Dialect::PostgreSql));
         $second = $query->replaceExpression($query->outputs[0]->expression, Expression::reference(['id'], Dialect::PostgreSql));
         self::assertSame($query->scopeId, $first->scopeId);

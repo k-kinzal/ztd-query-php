@@ -146,7 +146,7 @@ final class ConflictBinderTest extends TestCase
         self::assertSame('>', $statement->conflicts[0]->target->predicate?->spelling());
         self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\DoUpdate::class, $statement->conflicts[0]);
         self::assertSame('<', $statement->conflicts[0]->where?->spelling());
-        self::assertSame('n', $statement->conflicts[0]->assignments[0]->target->column()->columnBinding()?->column->name);
+        self::assertSame('n', $statement->conflicts[0]->assignments[0]->destinations()[0]->column()->columnBinding()?->column->name);
     }
     public function testActionRetainsDoNothing(): void
     {
@@ -184,11 +184,14 @@ final class ConflictBinderTest extends TestCase
     public function testActionRetainsNamedConstraintAndConditionalUpdate(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER,n INTEGER)'));
-        $conflict = $binder->bind('INSERT INTO t VALUES(1,2) ON CONFLICT ON CONSTRAINT t_key DO UPDATE SET n=excluded.n WHERE t.n<excluded.n')->conflicts[0];
-        self::assertSame('t_key', $conflict->target->name);
+        $statement = $binder->bind('INSERT INTO t VALUES(1,2) ON CONFLICT ON CONSTRAINT t_key DO UPDATE SET n=excluded.n WHERE t.n<excluded.n');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
+        $conflict = $statement->conflicts[0];
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\DoUpdate::class, $conflict);
         self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\ConstraintConflict::class, $conflict->target);
+        self::assertSame('t_key', $conflict->target->name);
         self::assertSame('<', $conflict->where?->spelling());
-        self::assertSame('n', $conflict->assignments[0]->target->column()->columnBinding()?->column->name);
+        self::assertSame('n', $conflict->assignments[0]->destinations()[0]->column()->columnBinding()?->column->name);
     }
     public function testActionSeparatesSqliteIndexAndUpdatePredicates(): void
     {
@@ -201,6 +204,7 @@ final class ConflictBinderTest extends TestCase
         self::assertSame('>', $statement->conflicts[0]->target->predicate?->spelling());
         self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\DoUpdate::class, $statement->conflicts[0]);
         self::assertSame('<', $statement->conflicts[0]->where?->spelling());
+        self::assertNotNull($statement->conflicts[0]->where);
         self::assertSame('3', $statement->conflicts[0]->where->inputs()[1]->spelling());
         self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\DoNothing::class, $statement->conflicts[1]);
     }
@@ -212,6 +216,7 @@ final class ConflictBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\DoUpdate::class, $statement->conflicts[0]);
         self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $statement->conflicts[0]->assignments[0]);
         self::assertSame('3', $statement->conflicts[0]->assignments[0]->value->spelling());
+        self::assertInstanceOf(\SqlSemantics\Model\Expression::class, $statement->rows[0][0]);
         self::assertSame('1', $statement->rows[0][0]->spelling());
     }
 

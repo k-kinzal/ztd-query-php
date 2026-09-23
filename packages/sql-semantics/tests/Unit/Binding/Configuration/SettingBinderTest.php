@@ -142,6 +142,7 @@ final class SettingBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
         self::assertSame(['work_mem'], $statement->settings[0]->name);
         self::assertSame('local', $statement->settings[0]->scope->value);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $statement->settings[0]);
         self::assertSame("'64MB'", $statement->settings[0]->values[0]->spelling());
     }
     public function testSettingPreservesMysqlAssignmentOrderAndScopes(): void
@@ -156,9 +157,14 @@ final class SettingBinderTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind('SET search_path TO public, example');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $statement->settings[0]);
         self::assertSame(['public','example'], array_map(static fn ($value) => $value->spelling(), $statement->settings[0]->values));
-        self::assertInstanceOf(\SqlSemantics\Model\Configuration\DefaultSetting::class, $binder->bind('SET work_mem TO DEFAULT')->settings[0]);
-        self::assertSame('from-current', $binder->bind('SET work_mem FROM CURRENT')->settings[0]->action->value);
+        $default = $binder->bind('SET work_mem TO DEFAULT');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $default);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\DefaultSetting::class, $default->settings[0]);
+        $current = $binder->bind('SET work_mem FROM CURRENT');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $current);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\CurrentSetting::class, $current->settings[0]);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\ResetAllSettingsStatement::class, $binder->bind('RESET ALL'));
     }
     public function testPragmaRetainsQualifiedNameAndReadMode(): void
@@ -177,8 +183,12 @@ final class SettingBinderTest extends TestCase
     public function testScopeNormalizesMysqlLocalWithoutDroppingQualifiedNames(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
-        self::assertSame('session', $binder->bind('SET LOCAL sql_mode=DEFAULT')->settings[0]->scope->value);
-        self::assertSame(['component','variable'], $binder->bind('SET @@component.variable=1')->settings[0]->name);
+        $local = $binder->bind('SET LOCAL sql_mode=DEFAULT');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $local);
+        self::assertSame('session', $local->settings[0]->scope->value);
+        $component = $binder->bind('SET @@component.variable=1');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $component);
+        self::assertSame(['component','variable'], $component->settings[0]->name);
     }
     public function testSettingResetsPersistedVariablesWithoutRequiringAName(): void
     {
@@ -186,7 +196,9 @@ final class SettingBinderTest extends TestCase
         $all = $binder->bind('RESET PERSIST');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\ResetAllPersistedVariablesStatement::class, $all);
         self::assertSame('RESET PERSIST', $all->toString());
-        $named = $binder->bind('RESET PERSIST IF EXISTS max_connections')->setting;
+        $statement = $binder->bind('RESET PERSIST IF EXISTS max_connections');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\ResetSettingStatement::class, $statement);
+        $named = $statement->setting;
         self::assertSame(['max_connections'], $named->name);
         self::assertTrue($named->ifExists);
     }
@@ -198,6 +210,7 @@ final class SettingBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
         self::assertSame(['session','user','session'], array_map(static fn ($item) => $item->scope->value, $statement->settings));
         self::assertSame([['sql_mode'],['x'],['persist_only','max_connections']], array_column($statement->settings, 'name'));
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedUserVariable::class, $statement->settings[1]);
         self::assertSame('2', $statement->settings[1]->value->spelling());
     }
     public function testPragmaRetainsParenthesizedValue(): void

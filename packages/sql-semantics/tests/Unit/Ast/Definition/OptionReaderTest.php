@@ -146,7 +146,7 @@ final class OptionReaderTest extends TestCase
         self::assertSame('utf8mb4', $table->properties->characterSet);
         self::assertSame(\SqlSemantics\Schema\Table\RowFormat::Dynamic, $table->properties->rowFormat);
         self::assertSame('table', $table->properties->comment);
-        self::assertSame(['utf8mb4_bin'], $table->columns[1]->attributes->collation->parts);
+        self::assertSame(['utf8mb4_bin'], $table->columns[1]->attributes->collation?->parts);
         self::assertSame('column', $table->columns[1]->attributes->comment);
     }
 
@@ -155,11 +155,12 @@ final class OptionReaderTest extends TestCase
         $table = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER GENERATED ALWAYS AS IDENTITY (START WITH 5 INCREMENT BY 2), name TEXT COLLATE "C")')->tables[0];
         self::assertInstanceOf(\SqlSemantics\Schema\Column\IdentityColumn::class, $table->columns[0]->generation);
         self::assertSame(\SqlSemantics\Schema\Column\IdentityMode::Always, $table->columns[0]->generation->mode);
-        self::assertSame('5', $table->columns[0]->generation->sequence->start->text);
-        self::assertSame('2', $table->columns[0]->generation->sequence->increment->text);
-        self::assertSame(['C'], $table->columns[1]->attributes->collation->parts);
+        self::assertSame('5', $table->columns[0]->generation->sequence->start?->text);
+        self::assertSame('2', $table->columns[0]->generation->sequence->increment?->text);
+        self::assertSame(['C'], $table->columns[1]->attributes->collation?->parts);
         $mysql = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(10) CHARACTER SET utf8mb4)')->tables[0];
         self::assertInstanceOf(\SqlSemantics\Schema\Column\AutoIncrementColumn::class, $mysql->columns[0]->generation);
+        self::assertInstanceOf(\SqlSemantics\Type\Identity\StringStorage::class, $mysql->columns[1]->type->identity);
         self::assertSame('utf8mb4', $mysql->columns[1]->type->identity->characterSet);
     }
 
@@ -188,6 +189,7 @@ final class OptionReaderTest extends TestCase
     public function testColumnReadsNumericAndGeneratedStorageOptions(): void
     {
         $table = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT UNSIGNED ZEROFILL, n INT GENERATED ALWAYS AS (id+1) STORED)')->tables[0];
+        self::assertInstanceOf(\SqlSemantics\Type\Identity\Numeric\IntegerStorage::class, $table->columns[0]->type->identity);
         self::assertTrue($table->columns[0]->type->identity->unsigned);
         self::assertTrue($table->columns[0]->attributes->zeroFill);
         self::assertInstanceOf(\SqlSemantics\Schema\Column\ComputedColumn::class, $table->columns[1]->generation);
@@ -218,8 +220,11 @@ final class OptionReaderTest extends TestCase
     public function testReadIfNotExistsAndUniqueNullTreatment(): void
     {
         $schema = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER); CREATE INDEX IF NOT EXISTS ix ON t(id)');
-        self::assertTrue((new Binder($schema))->bind('CREATE INDEX IF NOT EXISTS ix ON t(id)')->ifNotExists);
+        $statement = (new Binder($schema))->bind('CREATE INDEX IF NOT EXISTS ix ON t(id)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateIndexStatement::class, $statement);
+        self::assertTrue($statement->ifNotExists);
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, UNIQUE NULLS NOT DISTINCT(id))');
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\UniqueKey::class, $schema->tables[0]->constraints[0]);
         self::assertFalse($schema->tables[0]->constraints[0]->nullsDistinct);
     }
 

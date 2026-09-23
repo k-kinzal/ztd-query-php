@@ -68,18 +68,19 @@ final class ObjectBinder
     public static function drop(Origin $origin, Node $source, QueryContext $context): ?BoundStatement
     {
         $words = array_map(static fn ($token): string => strtoupper($token->text), $source->tokens());
-        $nodes = Tree::outer($source, ['any_name', 'table_ident', 'fullname']);
+        $nodes = Tree::outer($source, ['any_name', 'table_ident', 'fullname', 'sp_name']);
         $names = array_map(static fn (Node $name): QualifiedName => new QualifiedName($context->tables->identifiers->parts($name)), $nodes);
         if ($names === []) {
             return null;
         }
         $exists = in_array('IF', $words, true) && in_array('EXISTS', $words, true);
         $behavior = DropBehavior::tryFrom($words[count($words) - 1]) ?? DropBehavior::Default;
-        return match ($words[1] ?? '') {
-            'TABLE' => new Statement\DropTableStatement($origin, $names, $exists, $behavior),
+        $temporary = ($words[1] ?? '') === 'TEMPORARY';
+        return match ($words[$temporary ? 2 : 1] ?? '') {
+            'TABLE', 'TABLES' => new Statement\DropTableStatement($origin, $names, $exists, $behavior, $temporary ? \SqlSemantics\Model\Definition\TableDropScope::Temporary : \SqlSemantics\Model\Definition\TableDropScope::Visible),
             'VIEW' => new Statement\DropViewStatement($origin, $names, $exists, $behavior),
             'INDEX' => new Statement\DropIndexStatement($origin, $names, $exists, $behavior),
-            'TRIGGER' => new Statement\DropTriggerStatement($origin, $names, $exists, $behavior),
+            'TRIGGER' => new Statement\DropTriggerStatement($origin, $names[0], $exists),
             default => null,
         };
     }

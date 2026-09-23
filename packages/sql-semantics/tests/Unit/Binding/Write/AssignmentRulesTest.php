@@ -161,8 +161,13 @@ final class AssignmentRulesTest extends TestCase
     public function testCheckAllowsNullableArrayElementsInANonNullArray(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER[] NOT NULL)'));
-        self::assertSame('NULL', $binder->bind('UPDATE t SET a[1]=NULL')->writes[0]->value->spelling());
-        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\DefaultAssignment::class, $binder->bind('UPDATE t SET a=DEFAULT')->writes[0]);
+        $element = $binder->bind('UPDATE t SET a[1]=NULL');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateTableStatement::class, $element);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $element->writes[0]);
+        self::assertSame('NULL', $element->writes[0]->value->spelling());
+        $array = $binder->bind('UPDATE t SET a=DEFAULT');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateTableStatement::class, $array);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\DefaultAssignment::class, $array->writes[0]);
     }
     #[\PHPUnit\Framework\Attributes\TestWith(['SMALLINT','1'])]
     #[\PHPUnit\Framework\Attributes\TestWith(['VARCHAR(20)','1'])]
@@ -171,6 +176,8 @@ final class AssignmentRulesTest extends TestCase
     public function testCheckRetainsAssignmentCoercions(string $type, string $value): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a '.$type.')')))->bind('INSERT INTO t VALUES('.$value.')');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Expression::class, $statement->rows[0][0]);
         self::assertSame($value, $statement->rows[0][0]->spelling());
     }
     public function testCheckKeepsUnresolvedDestinationDiagnostics(): void
@@ -178,6 +185,6 @@ final class AssignmentRulesTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('UPDATE missing SET a=NULL', strict: false);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $statement);
         self::assertContains('unknown-column', array_column($statement->diagnostics, 'reason'));
-        self::assertSame('unresolved-column', $statement->writes[0]->target->column()->kind->value);
+        self::assertSame('unresolved-column', $statement->writes[0]->destinations()[0]->column()->kind->value);
     }
 }

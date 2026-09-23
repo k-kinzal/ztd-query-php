@@ -14,6 +14,7 @@ namespace SqlSemantics\Model;
  */
 enum ExpressionKind: string
 {
+    case ServerMetadata = 'server-metadata-field';
     case MaintenanceStatus = 'maintenance-status-field';
     case TableChecksum = 'table-checksum-field';
     case GeneratedPassword = 'generated-password-field';

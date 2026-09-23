@@ -147,6 +147,7 @@ final class SelectModifiersBinderTest extends TestCase
         $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind('SELECT score AS points FROM users ORDER BY points DESC LIMIT 5 OFFSET 2');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Query\Ordering\OutputAlias::class, $statement->orderBy[0]->key);
         self::assertSame($statement->outputs[0], $statement->orderBy[0]->key->output);
         self::assertTrue($statement->orderBy[0]->descending);
         self::assertSame('5', $statement->limit?->spelling());
@@ -158,6 +159,7 @@ final class SelectModifiersBinderTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind('SELECT parent_id FROM users ORDER BY 1 NULLS LAST');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Query\Ordering\OutputPosition::class, $statement->orderBy[0]->key);
         self::assertSame($statement->outputs[0], $statement->orderBy[0]->key->output);
         self::assertFalse($statement->orderBy[0]->nullsFirst);
     }
@@ -192,6 +194,7 @@ final class SelectModifiersBinderTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $statement = (new Binder($schema))->bind("SELECT score AS points FROM users ORDER BY 'points'");
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\Literal::class, $statement->orderBy[0]->key);
         self::assertSame(\SqlSemantics\Model\ExpressionKind::Literal, $statement->orderBy[0]->key->kind);
         self::assertSame("'points'", $statement->orderBy[0]->key->spelling());
     }

@@ -143,6 +143,7 @@ final class RelationFactoryTest extends TestCase
         $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT n FROM generate_series(1, 3) AS g(n)');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame('integer', $query->outputs[0]->expression->type->name);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\FunctionRelation::class, $query->relations[0]);
         self::assertSame('GENERATE_SERIES', $query->relations[0]->function->spelling());
     }
 
@@ -155,6 +156,8 @@ final class RelationFactoryTest extends TestCase
         self::assertSame('q', $query->relations[0]->alias);
         self::assertInstanceOf(\SqlSemantics\Model\Relation\AliasedRelation::class, $query->relations[0]);
         self::assertInstanceOf(\SqlSemantics\Model\Join::class, $query->relations[0]->input);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\TableReference::class, $query->relations[0]->input->left);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\TableReference::class, $query->relations[0]->input->right);
         self::assertSame('a', $query->relations[0]->input->left->alias);
         self::assertSame('b', $query->relations[0]->input->right->alias);
     }
@@ -172,6 +175,7 @@ final class RelationFactoryTest extends TestCase
     public function testFunctionBindsJsonTableColumnsAndArguments(string $name): void
     {
         $query = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('SELECT * FROM ' . $name . "('[1,2]') AS items");
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame(['key','value','type','atom','id','parent','fullkey','path'], array_column($query->outputs, 'name'));
         self::assertSame(['dynamic','dynamic','text','dynamic','integer','integer','text','text'], array_map(static fn ($output): string => $output->expression->type->name, $query->outputs));
         self::assertSame('items', $query->relations[0]->alias);

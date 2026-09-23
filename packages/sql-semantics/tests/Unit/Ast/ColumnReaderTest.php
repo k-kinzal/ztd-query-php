@@ -148,6 +148,7 @@ final class ColumnReaderTest extends TestCase
         $table = (new SchemaBuilder($dialect))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)')->tables[0];
         self::assertSame(Nullability::MaybeNull, $table->columns[1]->nullability);
         self::assertSame(Nullability::NotNull, $table->columns[2]->nullability);
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\SuppliedColumn::class, $table->columns[1]->generation);
         self::assertNull($table->columns[1]->generation->default);
     }
     public function testReadPreservesNamedNullabilityIdentityAndCollation(): void
@@ -157,7 +158,7 @@ final class ColumnReaderTest extends TestCase
         self::assertSame('not-null', $schema->tables[0]->columns[1]->nullability->value);
         self::assertSame('maybe-null', $schema->tables[0]->columns[2]->nullability->value);
         self::assertInstanceOf(\SqlSemantics\Schema\Column\SuppliedColumn::class, $schema->tables[0]->columns[2]->generation);
-        self::assertSame(['C'], $schema->tables[0]->columns[2]->attributes->collation->parts);
+        self::assertSame(['C'], $schema->tables[0]->columns[2]->attributes->collation?->parts);
     }
 
     public function testReadSqliteTypelessGeneratedColumn(): void

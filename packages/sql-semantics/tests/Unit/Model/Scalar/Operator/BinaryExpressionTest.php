@@ -29,6 +29,7 @@ final class BinaryExpressionTest extends TestCase
         $query = $binder->bind('SELECT (CASE WHEN 1 THEN 2 ELSE 3 END) + 4');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         $rebound = $binder->bind($query->toString());
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $rebound);
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Operator\BinaryExpression::class, $rebound->outputs[0]->expression);
         self::assertSame('case', $rebound->outputs[0]->expression->left->kind->value);
         self::assertSame('4', $rebound->outputs[0]->expression->right->spelling());

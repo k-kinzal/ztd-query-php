@@ -141,14 +141,22 @@ final class SpecialSettingsTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SET NAMES utf8mb4 COLLATE utf8mb4_bin');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
         self::assertSame([['names'], ['collation_connection']], array_column($statement->settings, 'name'));
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $statement->settings[0]);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $statement->settings[1]);
         self::assertSame('utf8mb4', $statement->settings[0]->values[0]->spelling());
         self::assertSame('utf8mb4_bin', $statement->settings[1]->values[0]->spelling());
     }
     public function testBindRetainsTimezoneAndRole(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
-        self::assertSame(['timezone'], $binder->bind('SET TIME ZONE DEFAULT')->settings[0]->name);
-        self::assertSame(['role'], $binder->bind('SET ROLE example')->settings[0]->name);
-        self::assertSame(['session_authorization'], $binder->bind('SET SESSION AUTHORIZATION example')->settings[0]->name);
+        $timezone = $binder->bind('SET TIME ZONE DEFAULT');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $timezone);
+        self::assertSame(['timezone'], $timezone->settings[0]->name);
+        $role = $binder->bind('SET ROLE example');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $role);
+        self::assertSame(['role'], $role->settings[0]->name);
+        $session_authorization = $binder->bind('SET SESSION AUTHORIZATION example');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $session_authorization);
+        self::assertSame(['session_authorization'], $session_authorization->settings[0]->name);
     }
 }

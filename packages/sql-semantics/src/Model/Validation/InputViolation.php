@@ -12,6 +12,7 @@ namespace SqlSemantics\Model\Validation;
  */
 enum InputViolation: string
 {
+    case DiscardedValue = 'discarded-value';
     case HistogramTarget = 'histogram-target';
     case HistogramImport = 'histogram-import';
     case HistogramBuckets = 'histogram-buckets';
@@ -57,6 +58,7 @@ enum InputViolation: string
     public function message(): string
     {
         return [
+            'discarded-value' => 'DO requires scalar expressions and cannot expand table columns without a table input.',
             'histogram-target' => 'A histogram request requires exactly one target table.',
             'histogram-import' => 'Imported histogram data describes exactly one column.',
             'histogram-buckets' => 'A histogram bucket limit must be an integer from 1 to 1024.',

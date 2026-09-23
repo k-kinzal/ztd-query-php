@@ -145,8 +145,8 @@ final class MergeStatementTest extends TestCase
         $statement = $binder->bind('MERGE INTO t USING t AS s ON t.id=s.id WHEN MATCHED THEN DELETE');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\MergeStatement::class, $statement);
         $changed = $statement->withCondition(Expression::literal(false, Dialect::PostgreSql));
-        self::assertSame('FALSE', $changed->merge?->condition->spelling());
+        self::assertSame('FALSE', $changed->merge->condition->spelling());
         self::assertSame('delete', $changed->merge->actions[0]->action->value);
-        self::assertSame('=', $statement->merge?->condition->spelling());
+        self::assertSame('=', $statement->merge->condition->spelling());
     }
 }

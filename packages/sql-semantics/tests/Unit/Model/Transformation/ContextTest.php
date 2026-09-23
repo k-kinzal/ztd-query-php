@@ -169,8 +169,10 @@ final class ContextTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
         $context = new \SqlSemantics\Binding\Editing\StatementContext($schema);
         $statement = (new Binder($schema))->bind('SET LOCAL work_mem=1');
-        self::assertInstanceOf(\SqlSemantics\Model\Statement\ConfigurationStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $statement->settings[0]);
         $changed = $statement->withValues($statement->settings[0], [Expression::literal(2, $schema->dialect)]);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $changed->settings[0]);
         self::assertSame('local', $changed->settings[0]->scope->value);
         self::assertSame('2', $changed->settings[0]->values[0]->spelling());
     }

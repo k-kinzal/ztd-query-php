@@ -158,7 +158,9 @@ final class UpdateStatementTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER,n INTEGER)'));
         $statement = $binder->bind('UPDATE t SET n=1 WHERE id=2');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $statement);
-        $replacement = $binder->bind('UPDATE t SET id=3')->writes;
+        $other = $binder->bind('UPDATE t SET id=3');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateTableStatement::class, $other);
+        $replacement = $other->writes;
         $changed = $statement->withAssignments([$replacement[0]]);
         self::assertSame('id', $changed->writes[0]->destinations()[0]->column()->columnBinding()?->column->name);
         self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $changed->writes[0]);

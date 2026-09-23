@@ -140,15 +140,19 @@ final class ConflictActionTest extends TestCase
     public function testRetainsDistinctConflictOperationsAndTheirTargets(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
-        $nothing = $binder->bind('INSERT INTO t VALUES(1) ON CONFLICT DO NOTHING')->conflicts[0];
-        $update = $binder->bind('INSERT INTO t VALUES(1) ON CONFLICT(id) DO UPDATE SET id=2 WHERE t.id=1')->conflicts[0];
+        $statement = $binder->bind('INSERT INTO t VALUES(1) ON CONFLICT DO NOTHING');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
+        $nothing = $statement->conflicts[0];
+        $statement = $binder->bind('INSERT INTO t VALUES(1) ON CONFLICT(id) DO UPDATE SET id=2 WHERE t.id=1');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
+        $update = $statement->conflicts[0];
         self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\DoNothing::class, $nothing);
         self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\AnyConflict::class, $nothing->target);
         self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\DoUpdate::class, $update);
         self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\IndexConflict::class, $update->target);
         self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $update->assignments[0]);
         self::assertSame('2', $update->assignments[0]->value->spelling());
-        self::assertSame('=', $update->where->spelling());
+        self::assertSame('=', $update->where?->spelling());
     }
 
     public function testReplaceHasAStoragePolicyOfItsOwn(): void
@@ -156,6 +160,7 @@ final class ConflictActionTest extends TestCase
         $insert = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INTEGER)')))->bind('REPLACE INTO t VALUES(1)');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $insert);
         self::assertSame(\SqlSemantics\Model\Write\InsertMode::Replace, $insert->mode);
+        self::assertInstanceOf(\SqlSemantics\Model\Expression::class, $insert->rows[0][0]);
         self::assertSame('1', $insert->rows[0][0]->spelling());
     }
 }

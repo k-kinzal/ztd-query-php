@@ -149,6 +149,7 @@ final class ConstraintReaderTest extends TestCase
     public function testReferencesPreservesCompositeForeignKeyOrder(): void
     {
         $table = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER, parent_id INTEGER, FOREIGN KEY (id, parent_id) REFERENCES other.users (parent_id, id))')->tables[0];
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\ForeignKey::class, $table->constraints[0]);
         self::assertSame(['other', 'users'], $table->constraints[0]->referencedTable->parts);
         self::assertSame(['parent_id', 'id'], $table->constraints[0]->referencedColumns);
     }
@@ -156,6 +157,7 @@ final class ConstraintReaderTest extends TestCase
     public function testReferencesSeparatesDeleteColumnsFromOmittedReferenceColumns(): void
     {
         $constraint = (new SchemaBuilder(Dialect::PostgreSql))->build('create table t(tenant integer, id integer, foreign key(tenant,id) references p on delete set null(id))')->tables[0]->constraints[0];
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\ForeignKey::class, $constraint);
         self::assertSame(['p'], $constraint->referencedTable->parts);
         self::assertSame([], $constraint->referencedColumns);
         self::assertSame(['id'], $constraint->deleteColumns);

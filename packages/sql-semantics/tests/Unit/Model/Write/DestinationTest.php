@@ -137,8 +137,9 @@ final class DestinationTest extends TestCase
     public function testColumnRetainsArrayAndRecordDestinationRoots(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER[],r custom_record)'));
-        $input = $binder->bind('INSERT INTO t(a[1],r.field) VALUES(1,2)')->insertion;
-        self::assertNotNull($input);
+        $statement = $binder->bind('INSERT INTO t(a[1],r.field) VALUES(1,2)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
+        $input = $statement->insertion;
         self::assertInstanceOf(\SqlSemantics\Model\Write\Storage\ElementPath::class, $input->columns[0]);
         self::assertInstanceOf(\SqlSemantics\Model\Write\Storage\FieldPath::class, $input->columns[1]);
         self::assertSame('a', $input->columns[0]->column()->columnBinding()?->column->name);

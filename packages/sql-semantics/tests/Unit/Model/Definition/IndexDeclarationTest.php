@@ -141,7 +141,9 @@ final class IndexDeclarationTest extends TestCase
     public function testRetainsTypedIndexExpressionsAndPredicate(): void
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
-        $index = (new Binder($schema))->bind('CREATE INDEX ix ON t((id+1)) WHERE id>0')->index;
+        $statement = (new Binder($schema))->bind('CREATE INDEX ix ON t((id+1)) WHERE id>0');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateIndexStatement::class, $statement);
+        $index = $statement->index;
         self::assertSame('integer', $index->definition->elements[0]->value()->type->name);
         self::assertSame('boolean', $index->definition->predicate?->type->name);
         self::assertSame('ix', $index->definition->name);

@@ -140,11 +140,16 @@ final class SettingTest extends TestCase
     public function testRetainsSettingActionsAndValues(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
-        $set = $binder->bind('SET work_mem TO DEFAULT')->settings[0];
-        $reset = $binder->bind('RESET work_mem')->setting;
-        $current = $binder->bind('SET work_mem FROM CURRENT')->settings[0];
+        $statement = $binder->bind('SET work_mem TO DEFAULT');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
+        $set = $statement->settings[0];
+        $statement = $binder->bind('RESET work_mem');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\ResetSettingStatement::class, $statement);
+        $reset = $statement->setting;
+        $statement = $binder->bind('SET work_mem FROM CURRENT');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
+        $current = $statement->settings[0];
         self::assertInstanceOf(\SqlSemantics\Model\Configuration\DefaultSetting::class, $set);
-        self::assertInstanceOf(\SqlSemantics\Model\Configuration\ResetSetting::class, $reset);
         self::assertInstanceOf(\SqlSemantics\Model\Configuration\CurrentSetting::class, $current);
         self::assertSame(\SqlSemantics\Model\Configuration\SettingAction::Default, $set->action);
         self::assertSame(\SqlSemantics\Model\Configuration\SettingAction::Reset, $reset->action);

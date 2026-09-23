@@ -143,7 +143,7 @@ final class IndexKeysTest extends TestCase
     {
         $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE t(id INTEGER, name TEXT)', 'CREATE INDEX ix ON t(name DESC, (id+1))');
         $keys = $schema->tables[0]->indexes[0]->elements;
-        self::assertSame('name', $keys[0]->column->binding->column->name);
+        self::assertSame('name', $keys[0]->value()->columnBinding()?->column->name);
         self::assertSame('DESC', $keys[0]->direction?->value);
         self::assertInstanceOf(\SqlSemantics\Schema\Index\ExpressionKey::class, $keys[1]);
     }
@@ -152,10 +152,11 @@ final class IndexKeysTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(name TEXT); CREATE INDEX ix ON t(name COLLATE "C" text_pattern_ops DESC NULLS LAST)');
         $key = $schema->tables[0]->indexes[0]->elements[0];
-        self::assertSame(['C'], $key->collation->parts);
-        self::assertSame(['text_pattern_ops'], $key->operatorClass->parts);
+        self::assertSame(['C'], $key->collation?->parts);
+        self::assertSame(['text_pattern_ops'], $key->operatorClass?->parts);
         self::assertSame('LAST', $key->nulls?->value);
         $schema = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(name VARCHAR(10), KEY ix(name(5) DESC))');
+        self::assertInstanceOf(\SqlSemantics\Schema\Index\ColumnKey::class, $schema->tables[0]->indexes[0]->elements[0]);
         self::assertSame(5, $schema->tables[0]->indexes[0]->elements[0]->prefixLength);
     }
 
@@ -173,7 +174,7 @@ final class IndexKeysTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::Sqlite))->build("CREATE TABLE t(name TEXT); CREATE INDEX ix ON t(name, 'name')");
         $keys = $schema->tables[0]->indexes[0]->elements;
-        self::assertSame('name', $keys[0]->column->binding->column->name);
+        self::assertSame('name', $keys[0]->value()->columnBinding()?->column->name);
         self::assertInstanceOf(\SqlSemantics\Schema\Index\ExpressionKey::class, $keys[1]);
     }
 
@@ -182,10 +183,11 @@ final class IndexKeysTest extends TestCase
     {
         $schema = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(name TEXT); CREATE INDEX ix ON t(name COLLATE nocase DESC, length(name))');
         $keys = $schema->tables[0]->indexes[0]->elements;
-        self::assertSame(['nocase'], $keys[0]->collation->parts);
-        self::assertSame('name', $keys[0]->column->binding->column->name);
+        self::assertSame(['nocase'], $keys[0]->collation?->parts);
+        self::assertSame('name', $keys[0]->value()->columnBinding()?->column->name);
         self::assertSame('DESC', $keys[0]->direction?->value);
         self::assertNull($keys[0]->operatorClass);
+        self::assertInstanceOf(\SqlSemantics\Schema\Index\ColumnKey::class, $keys[0]);
         self::assertNull($keys[0]->prefixLength);
         self::assertInstanceOf(\SqlSemantics\Schema\Index\ExpressionKey::class, $keys[1]);
     }

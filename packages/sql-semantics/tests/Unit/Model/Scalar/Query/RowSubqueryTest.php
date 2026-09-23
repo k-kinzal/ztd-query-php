@@ -24,11 +24,15 @@ final class RowSubqueryTest extends TestCase
         $binder = new Binder((new SchemaBuilder($dialect))->build());
         $query = $binder->bind('SELECT (1,2)=(SELECT 1,2)');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Operator\BinaryExpression::class, $query->outputs[0]->expression);
         $value = $query->outputs[0]->expression->right;
         self::assertInstanceOf(RowSubquery::class, $value);
         self::assertCount(2, $value->query->resultColumns());
         self::assertSame('record', $value->type->name);
-        self::assertInstanceOf(RowSubquery::class, $binder->bind($query->toString())->outputs[0]->expression->right);
+        $rebound = $binder->bind($query->toString());
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $rebound);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Operator\BinaryExpression::class, $rebound->outputs[0]->expression);
+        self::assertInstanceOf(RowSubquery::class, $rebound->outputs[0]->expression->right);
     }
 
     #[TestWith([Dialect::PostgreSql])]
@@ -51,6 +55,7 @@ final class RowSubqueryTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $query = $binder->bind('SELECT (SELECT ROW(1,2))=ROW(1,2)');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Operator\BinaryExpression::class, $query->outputs[0]->expression);
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Query\ScalarSubquery::class, $query->outputs[0]->expression->left);
         self::assertCount(1, $query->outputs[0]->expression->left->query->resultColumns());
         self::assertSame($query->toString(), $binder->bind($query->toString())->toString());

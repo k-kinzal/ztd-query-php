@@ -31,7 +31,8 @@ final class ExplainStatementTest extends TestCase
         self::assertInstanceOf(ExplainStatement::class, $statement);
         self::assertSame(StatementKind::Explain, $statement->kind);
         self::assertSame(StatementKind::Update, $statement->statement->kind);
-        self::assertSame('id', $statement->statement->writes[0]->destinations()[0]->column()->columnBinding()->column->name);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateTableStatement::class, $statement->statement);
+        self::assertSame('id', $statement->statement->writes[0]->destinations()[0]->column()->columnBinding()?->column->name);
         self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
     }
 

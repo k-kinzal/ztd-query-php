@@ -143,8 +143,10 @@ final class ConfigurationStatementTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)'));
         $statement = $binder->bind('SET search_path=public');
-        self::assertInstanceOf(\SqlSemantics\Model\Statement\ConfigurationStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $statement->settings[0]);
         $changed = $statement->withValues($statement->settings[0], [Expression::literal('a', Dialect::PostgreSql), Expression::literal('b', Dialect::PostgreSql)]);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $changed->settings[0]);
         self::assertSame(["'a'", "'b'"], array_map(static fn ($value) => $value->spelling(), $changed->settings[0]->values));
         self::assertCount(1, $statement->settings[0]->values);
     }
@@ -153,10 +155,11 @@ final class ConfigurationStatementTest extends TestCase
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
         $statement = $binder->bind('SET work_mem=1');
-        self::assertInstanceOf(\SqlSemantics\Model\Statement\ConfigurationStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
         $foreign = $binder->bind('SET work_mem=2');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $foreign);
 
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $foreign->settings[0]);
         $this->expectException(InvalidStructure::class);
         $this->expectExceptionMessage('The setting does not belong to this statement.');
         $statement->withValues($foreign->settings[0], [Expression::literal(1, Dialect::PostgreSql)]);

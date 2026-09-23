@@ -165,6 +165,8 @@ final class SimpleSerializerTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $statement = $binder->bind("SELECT 'a'\n'b'");
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
-        self::assertEquals($statement->outputs, $binder->bind($statement->toString())->outputs);
+        $rebound = $binder->bind($statement->toString());
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $rebound);
+        self::assertEquals($statement->outputs, $rebound->outputs);
     }
 }

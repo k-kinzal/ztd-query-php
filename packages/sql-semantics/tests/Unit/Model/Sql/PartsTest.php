@@ -189,6 +189,8 @@ final class PartsTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundQuery::class, $query);
         $sql = Sql\Parts::query($query, Dialect::Sqlite)->toString();
         self::assertSame('SELECT * FROM(SELECT 1 UNION SELECT 2)', $sql);
-        self::assertCount(1, $binder->bind($sql)->outputs);
+        $rebound = $binder->bind($sql);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $rebound);
+        self::assertCount(1, $rebound->outputs);
     }
 }

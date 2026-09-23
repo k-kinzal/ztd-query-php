@@ -239,7 +239,9 @@ final class BoundStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('WITH q(n) AS (SELECT 1) SELECT n FROM q');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertNotNull($statement->ctes);
         $cte = $statement->ctes->definitions[0]->query;
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $cte);
         self::assertNull($cte->outputs[0]->name);
         self::assertSame(['n'], $statement->ctes->definitions[0]->columns);
         $changed = $cte->replaceExpression($cte->outputs[0]->expression, \SqlSemantics\Model\Expression::literal(2, Dialect::PostgreSql));
@@ -261,7 +263,11 @@ final class BoundStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER,n INTEGER)')))->bind('WITH q AS (SELECT * FROM t) SELECT id,n FROM q');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertNotNull($statement->ctes);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement->ctes->definitions[0]->query);
         $changed = $statement->replaceExpression($statement->ctes->definitions[0]->query->outputs[0]->expression, \SqlSemantics\Model\Expression::literal(1, Dialect::PostgreSql));
+        self::assertNotNull($changed->ctes);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $changed->ctes->definitions[0]->query);
         self::assertCount(2, $changed->ctes->definitions[0]->query->outputs);
         self::assertCount(2, $changed->outputs);
         self::assertSame('n', $changed->ctes->definitions[0]->query->outputs[1]->expression->columnBinding()?->column->name);
@@ -272,7 +278,9 @@ final class BoundStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("SET LOCAL work_mem='64MB'");
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $statement->settings[0]);
         $changed = $statement->replaceExpression($statement->settings[0]->values[0], \SqlSemantics\Model\Expression::literal('128MB', Dialect::PostgreSql));
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $changed->settings[0]);
         self::assertSame("'128MB'", $changed->settings[0]->values[0]->spelling());
         self::assertSame('local', $changed->settings[0]->scope->value);
     }
@@ -288,6 +296,8 @@ final class BoundStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('WITH q(new_name) AS (SELECT 1 AS old_name) SELECT new_name FROM q');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertNotNull($statement->ctes);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement->ctes->definitions[0]->query);
         self::assertSame('old_name', $statement->ctes->definitions[0]->query->outputs[0]->name);
         self::assertSame(['new_name'], $statement->ctes->definitions[0]->columns);
         self::assertSame('new_name', $statement->outputs[0]->name);

@@ -154,13 +154,18 @@ final class ScalarBinderTest extends TestCase
         $query = (new Binder($schema))->bind('SELECT EXISTS (SELECT 1 FROM t WHERE n > 0)');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame('boolean', $query->outputs[0]->expression->type->name);
-        self::assertSame('>', $query->outputs[0]->expression->query?->where?->spelling());
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Query\ExistsSubquery::class, $query->outputs[0]->expression);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query->outputs[0]->expression->query);
+        self::assertSame('>', $query->outputs[0]->expression->query->where?->spelling());
     }
     public function testBindCastSetsTheDeclaredResultType(): void
     {
         $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT CAST(1 AS NUMERIC(8,2))');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame('numeric', $query->outputs[0]->expression->type->name);
+        self::assertInstanceOf(\SqlSemantics\Type\Identity\Numeric\NumericStorage::class, $query->outputs[0]->expression->type->identity);
+        self::assertNotNull($query->outputs[0]->expression->type->identity->precision);
+        self::assertNotNull($query->outputs[0]->expression->type->identity->scale);
         self::assertSame('8', $query->outputs[0]->expression->type->identity->precision->spelling);
         self::assertSame('2', $query->outputs[0]->expression->type->identity->scale->spelling);
     }
@@ -191,7 +196,7 @@ final class ScalarBinderTest extends TestCase
         self::assertSame(\SqlSemantics\Type\Nullability::NotNull, $expression->nullability);
         self::assertSame('integer', $expression->type->name);
         self::assertCount(2, $expression->inputs());
-        self::assertNotNull($expression->inputs()[0]->query);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Query\ScalarSubquery::class, $expression->inputs()[0]);
         self::assertSame('n', $expression->lineage()[0]->column->name);
     }
 
@@ -206,6 +211,7 @@ final class ScalarBinderTest extends TestCase
     public function testBindConditionalCastAndSubqueryFacts(string $sql, string $type, string $nullability): void
     {
         $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('select ' . $sql);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame($type, $query->outputs[0]->expression->type->name);
         self::assertSame($nullability, $query->outputs[0]->expression->nullability->value);
     }
@@ -220,7 +226,7 @@ final class ScalarBinderTest extends TestCase
         self::assertSame('boolean', $query->where->type->name);
         self::assertSame('maybe-null', $query->where->nullability->value);
         self::assertSame(['a', 'b'], array_map(static fn ($binding): string => $binding->table->name, $query->where->lineage()));
-        self::assertNotNull($query->where->query);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Query\InSubquery::class, $query->where);
         self::assertCount(2, $query->where->inputs());
     }
 

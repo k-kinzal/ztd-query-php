@@ -197,8 +197,8 @@ final class IndexEvolutionTest extends TestCase
     {
         $table = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)', 'CREATE INDEX first ON t(id)', 'CREATE INDEX second ON t((id + n)) INCLUDE(n)')->tables[0];
         self::assertSame(['first', 'second'], array_column($table->indexes, 'name'));
-        self::assertNull($table->indexes[1]->elements[0]->column);
-        self::assertNotNull($table->indexes[1]->elements[0]->expression);
+        self::assertInstanceOf(\SqlSemantics\Schema\Index\ExpressionKey::class, $table->indexes[1]->elements[0]);
+        self::assertSame('+', $table->indexes[1]->elements[0]->expression->spelling());
         self::assertSame(['n'], $table->indexes[1]->include);
     }
 

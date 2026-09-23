@@ -152,6 +152,7 @@ final class InsertionBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
         self::assertSame(['b', 'a'], array_map(static fn ($column) => $column->column()->columnBinding()?->column->name, $statement->insertion->columns));
         self::assertSame(\SqlSemantics\Model\Write\DefaultSource::Column, $statement->rows[0][0]);
+        self::assertInstanceOf(\SqlSemantics\Model\Expression::class, $statement->rows[0][1]);
         self::assertSame('2', $statement->rows[0][1]->spelling());
     }
     public function testBindRetainsSqliteQueryMapping(): void

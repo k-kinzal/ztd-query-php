@@ -161,6 +161,7 @@ final class SelectBinderTest extends TestCase
         $tables = new \SqlSemantics\Binding\TableResolver($schema, new \SqlSemantics\Ast\Identifiers($schema->dialect), $schema->defaultSchema);
         $tree = (new \SqlSemantics\Ast\DialectParser($schema->dialect))->parse('SELECT 1 AS value');
         $query = (new \SqlSemantics\Binding\SelectBinder($tables))->bind($tree);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
         self::assertSame('value', $query->outputs[0]->name);
         self::assertSame('1', $query->outputs[0]->expression->spelling());
     }
