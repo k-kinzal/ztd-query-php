@@ -20,7 +20,8 @@
         "k-kinzal/ztd-query-sqlite": "dev-main"
     },
     "require-dev": {
-        "k-kinzal/php-ai-toolkit": "dev-main"
+        "k-kinzal/php-ai-toolkit": "dev-main",
+        "k-kinzal/requirements": "dev-main"
     },
     "repositories": [
         {
@@ -45,7 +46,8 @@
                     "k-kinzal/ztd-query-mysqli-adapter": "dev-main",
                     "k-kinzal/ztd-query-pdo-adapter": "dev-main",
                     "k-kinzal/ztd-query-postgres": "dev-main",
-                    "k-kinzal/ztd-query-sqlite": "dev-main"
+                    "k-kinzal/ztd-query-sqlite": "dev-main",
+                    "k-kinzal/requirements": "dev-main"
                 }
             }
         }

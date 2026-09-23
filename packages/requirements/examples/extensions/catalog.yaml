@@ -1,0 +1,19 @@
+$schema: 'https://raw.githubusercontent.com/k-kinzal/ztd-query-php/main/packages/requirements/schemas/definition.schema.json'
+version: 1
+source:
+  id: converter-catalog
+  uri: catalog.json
+  format: catalog
+  selector: '*'
+items:
+  -
+    id: CONVERTER-001
+    statement: 'When text contains lowercase ASCII letters, the converter shall uppercase those letters.'
+    evidence:
+      -
+        selector: ascii-uppercase
+        quote: 'The converter uppercases lowercase ASCII letters.'
+    tests:
+      -
+        runner: acceptance
+        target: ascii-uppercase

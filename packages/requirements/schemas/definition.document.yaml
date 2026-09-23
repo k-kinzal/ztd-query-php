@@ -1,0 +1,27 @@
+$schema: https://document-schema.org/draft/2026-06/schema
+frontmatter:
+  type: object
+  required: [version, source]
+  properties:
+    version:
+      const: 1
+    source:
+      type: [object, 'null']
+  additionalProperties: false
+maxDepth: 1
+additionalSections: false
+additionalBlocks: false
+allBlocks:
+  type: [paragraph, bullet-list, quote]
+# Each item is a readable card: badges, statement, quotations, then named links/rationale.
+# Selector comments annotate quotations and do not contribute rendered document blocks.
+# The package mapper validates badge roles, quote annotations and field contents.
+sections:
+  - header:
+      pattern: '^[A-Za-z][A-Za-z0-9_.-]*$'
+    minContains: 1
+    additionalSections: false
+    additionalBlocks: false
+    blocks:
+      - type: [paragraph, bullet-list, quote]
+        minContains: 1
