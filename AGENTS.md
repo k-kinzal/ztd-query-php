@@ -68,7 +68,6 @@ Depends on ztd-query-php core and ztd-query-mysql. Integration tests use MySQL T
 Faker Provider for generating syntactically valid SQL statements for MySQL, PostgreSQL, and SQLite.
 Based on official grammar definitions, can generate any statement type (DML, DDL, TCL, etc.) and SQL fragments (expressions, clauses, subqueries, CTEs).
 Supports MySQL 5.6–9.1, PostgreSQL, and SQLite. Used for fuzz testing.
-Ships `bin/seeds.php`, which builds and checks the grammar coverage seed corpora committed under `seeds/` at the repository root.
 
 ### packages/sql-catalog
 
@@ -117,6 +116,5 @@ Loaded from each package `phpstan.neon` via `vendor/k-kinzal/phpstan-custom-rule
 - [docs/postgres-spec.md](docs/postgres-spec.md) - How ZTD handles PostgreSQL SQL statements
 - [docs/sqlite-spec.md](docs/sqlite-spec.md) - How ZTD handles SQLite SQL statements
 - [docs/sql-support-matrix.md](docs/sql-support-matrix.md) - Supported SQL statements and their status
-- [seeds/README.md](seeds/README.md) - PHP-Fuzzer seed corpora that cover every production of the default sql-faker grammars
 - [packages/sql-catalog/docs/analysis.md](packages/sql-catalog/docs/analysis.md) - How sql-catalog reconstructs the SQL a PHP application issues
 - [packages/sql-catalog/docs/verification.md](packages/sql-catalog/docs/verification.md) - How sql-catalog's accuracy is checked and what it measures

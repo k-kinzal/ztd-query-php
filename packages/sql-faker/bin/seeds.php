@@ -32,16 +32,17 @@ use SqlFaker\SqliteProvider;
  * production the generator can reach from that root.
  *
  * Usage:
- *   php bin/seeds.php build --output <dir> [--tag <version>]... [--all] [--cap <expansions>]
- *   php bin/seeds.php check --input <dir> [--tag <version>]... [--all]
+ *   php bin/seeds.php build [--output <dir>] [--tag <version>]... [--all] [--cap <expansions>]
+ *   php bin/seeds.php check [--input <dir>] [--tag <version>]... [--all]
  *
  * Seeds are written to <dir>/<database>/<version>/<rule>-<ordinal>.txt with a manifest at
- * <dir>/<database>/<version>.json. Without --tag or --all, the default release of each database is used.
+ * <dir>/<database>/<version>.json; <dir> defaults to the package's seeds directory. Without --tag or
+ * --all, the default release of each database is used.
  */
 
 function seedsParseArguments(array $argv): array
 {
-    $options = ['command' => $argv[1] ?? '', 'tags' => [], 'all' => false, 'directory' => null, 'cap' => BytePlanCompiler::MAXIMUM_BUDGET];
+    $options = ['command' => $argv[1] ?? '', 'tags' => [], 'all' => false, 'directory' => dirname(__DIR__) . '/seeds', 'cap' => BytePlanCompiler::MAXIMUM_BUDGET];
     for ($i = 2; $i < count($argv); $i++) {
         if ($argv[$i] === '--all') {
             $options['all'] = true;
@@ -56,8 +57,8 @@ function seedsParseArguments(array $argv): array
             exit(2);
         }
     }
-    if (!in_array($options['command'], ['build', 'check'], true) || $options['directory'] === null) {
-        fwrite(STDERR, "Usage:\n  php bin/seeds.php build --output <dir> [--tag <version>]... [--all] [--cap <expansions>]\n  php bin/seeds.php check --input <dir> [--tag <version>]... [--all]\n");
+    if (!in_array($options['command'], ['build', 'check'], true)) {
+        fwrite(STDERR, "Usage:\n  php bin/seeds.php build [--output <dir>] [--tag <version>]... [--all] [--cap <expansions>]\n  php bin/seeds.php check [--input <dir>] [--tag <version>]... [--all]\n");
         exit(2);
     }
     if ($options['all']) {
