@@ -4,7 +4,7 @@ source:
   id: lemon-input-and-rules
   uri: 'https://sqlite.org/src/raw/doc/lemon.html?ci=version-3.47.2'
   format: html
-  selector: 'body > p:nth-of-type(36), body > p:nth-of-type(37), body > p:nth-of-type(38), body > p:nth-of-type(39), body > p:nth-of-type(40), body > p:nth-of-type(41), body > p:nth-of-type(42), body > p:nth-of-type(43), body > p:nth-of-type(44), body > p:nth-of-type(45), body > p:nth-of-type(46), body > p:nth-of-type(47), body > p:nth-of-type(48), body > p:nth-of-type(49), body > p:nth-of-type(50)'
+  selector: 'body > p:nth-of-type(36), body > p:nth-of-type(37), body > p:nth-of-type(38), body > p:nth-of-type(39), body > p:nth-of-type(40), body > p:nth-of-type(41), body > p:nth-of-type(42), body > p:nth-of-type(43), body > p:nth-of-type(44), body > p:nth-of-type(45), body > p:nth-of-type(46), body > p:nth-of-type(47), body > p:nth-of-type(48), body > p:nth-of-type(49), body > p:nth-of-type(50), body > pre:nth-of-type(10), body > pre:nth-of-type(11), body > pre:nth-of-type(12), body > pre:nth-of-type(13), body > pre:nth-of-type(14)'
   snapshot: .requirements-cache/lemon-3.47.2.html
   sha256: 4ba80e6311947e38b58d17467efc81412035277575cf850f41afefe261c3714f
 items:
@@ -84,28 +84,51 @@ items:
       - grammar
     category: input-file-syntax
   -
+    id: LEMON-INPUT-005
+    statement: 'When a grammar file is read, the reader shall record the grammar rules that define the parser and the declarations that carry the additional information Lemon requires.'
+    evidence:
+      -
+        selector: 'body > p:nth-of-type(36)'
+        quote: 'The main purpose of the grammar specification file for Lemon is to define the grammar for the parser. But the input file also specifies additional information Lemon requires to do its job. Most of the work in using Lemon is in writing an appropriate grammar file.'
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/input-file-syntax.feature:16'
+      -
+        runner: behavior
+        target: 'spec/features/special-directives.feature:35'
+    labels:
+      - manual
+      - grammar
+    category: input-file-syntax
+    related:
+      - LEMON-INPUT-001
+  -
     id: LEMON-RULE-001
     statement: 'When a rule is read, the reader shall require a nonterminal, ::= and a terminating period, permit an empty right-hand side and preserve rule order.'
     evidence:
       -
         selector: 'body > p:nth-of-type(41)'
         quote: 'The main component of a Lemon grammar file is a sequence of grammar rules. Each grammar rule consists of a nonterminal symbol followed by the special symbol "::=" and then a list of terminals and/or nonterminals. The rule is terminated by a period. The list of terminals and nonterminals on the right-hand side of the rule can be empty. Rules can occur in any order, except that the left-hand side of the first rule is assumed to be the start symbol for the grammar (unless specified otherwise using the %start_symbol directive described below.) A typical sequence of grammar rules might look something like this:'
+      -
+        selector: 'body > pre:nth-of-type(10)'
+        quote: 'expr ::= expr PLUS expr. expr ::= expr TIMES expr. expr ::= LPAREN expr RPAREN. expr ::= VALUE.'
     tests:
       -
         runner: behavior
         target: 'spec/features/grammar-rules.feature:15'
       -
         runner: behavior
-        target: 'spec/features/grammar-rules.feature:43'
+        target: 'spec/features/grammar-rules.feature:56'
       -
         runner: behavior
-        target: 'spec/features/grammar-rules.feature:59'
+        target: 'spec/features/grammar-rules.feature:72'
       -
         runner: behavior
-        target: 'spec/features/grammar-rules.feature:78'
+        target: 'spec/features/grammar-rules.feature:91'
       -
         runner: behavior
-        target: 'spec/features/grammar-rules.feature:88'
+        target: 'spec/features/grammar-rules.feature:101'
       -
         runner: behavior
         target: 'spec/features/input-file-syntax.feature:185'
@@ -122,16 +145,19 @@ items:
       -
         selector: 'body > p:nth-of-type(43)'
         quote: 'Like yacc and bison, Lemon allows the grammar to specify a block of C code that will be executed whenever a grammar rule is reduced by the parser. In Lemon, this action is specified by putting the C code (contained within curly braces {...}) immediately after the period that closes the rule. For example:'
+      -
+        selector: 'body > pre:nth-of-type(11)'
+        quote: 'expr ::= expr PLUS expr. { printf("Doing an addition...\n"); }'
     tests:
       -
         runner: behavior
-        target: 'spec/features/grammar-rules.feature:97'
+        target: 'spec/features/grammar-rules.feature:110'
       -
         runner: behavior
-        target: 'spec/features/grammar-rules.feature:113'
+        target: 'spec/features/grammar-rules.feature:126'
       -
         runner: behavior
-        target: 'spec/features/grammar-rules.feature:177'
+        target: 'spec/features/grammar-rules.feature:215'
       -
         runner: behavior
         target: 'spec/features/input-file-syntax.feature:103'
@@ -149,17 +175,92 @@ items:
     tests:
       -
         runner: behavior
-        target: 'spec/features/grammar-rules.feature:131'
+        target: 'spec/features/grammar-rules.feature:169'
       -
         runner: behavior
-        target: 'spec/features/grammar-rules.feature:147'
+        target: 'spec/features/grammar-rules.feature:185'
       -
         runner: behavior
-        target: 'spec/features/grammar-rules.feature:163'
+        target: 'spec/features/grammar-rules.feature:201'
     labels:
       - manual
       - grammar
     category: grammar-rules
+  -
+    id: LEMON-RULE-004
+    statement: 'When the rules of a grammar file are read, the reader shall tell the nonterminals from the terminals named in them by the first letter of each symbol.'
+    evidence:
+      -
+        selector: 'body > pre:nth-of-type(10)'
+        quote: 'expr ::= expr PLUS expr. expr ::= expr TIMES expr. expr ::= LPAREN expr RPAREN. expr ::= VALUE.'
+      -
+        selector: 'body > p:nth-of-type(42)'
+        quote: 'There is one non-terminal in this example, "expr", and five terminal symbols or tokens: "PLUS", "TIMES", "LPAREN", "RPAREN" and "VALUE".'
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/grammar-rules.feature:43'
+      -
+        runner: behavior
+        target: 'spec/features/input-file-syntax.feature:158'
+    labels:
+      - manual
+      - grammar
+    category: grammar-rules
+    related:
+      - LEMON-INPUT-002
+      - LEMON-INPUT-003
+  -
+    id: LEMON-RULE-005
+    statement: 'When an action refers to the value of a symbol of its rule, the reader shall link the action to that symbol by the symbolic name written in parentheses after the symbol.'
+    evidence:
+      -
+        selector: 'body > p:nth-of-type(45)'
+        quote: 'Lemon avoids the need to count grammar symbols by assigning symbolic names to each symbol in a grammar rule and then using those symbolic names in the action. In yacc or bison, one would write this:'
+      -
+        selector: 'body > p:nth-of-type(46)'
+        quote: 'But in Lemon, the same rule becomes the following:'
+      -
+        selector: 'body > pre:nth-of-type(13)'
+        quote: 'expr(A) ::= expr(B) PLUS expr(C). { A = B+C; }'
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/grammar-rules.feature:169'
+      -
+        runner: behavior
+        target: 'spec/features/grammar-rules.feature:185'
+    labels:
+      - manual
+      - grammar
+    category: grammar-rules
+    related:
+      - LEMON-RULE-003
+      - LEMON-RULE-006
+  -
+    id: LEMON-RULE-006
+    statement: 'If a rule links its action to its symbols by yacc positional references, then the reader shall reject the yacc rule form and keep a $-numbered position inside Lemon action code as C text that stands for no symbol.'
+    evidence:
+      -
+        selector: 'body > p:nth-of-type(44)'
+        quote: 'In order to be useful, grammar actions must normally be linked to their associated grammar rules. In yacc and bison, this is accomplished by embedding a "$$" in the action to stand for the value of the left-hand side of the rule and symbols "$1", "$2", and so forth to stand for the value of the terminal or nonterminal at position 1, 2 and so forth on the right-hand side of the rule. This idea is very powerful, but it is also very error-prone. The single most common source of errors in a yacc or bison grammar is to miscount the number of symbols on the right-hand side of a grammar rule and say "$7" when you really mean "$8".'
+      -
+        selector: 'body > pre:nth-of-type(12)'
+        quote: 'expr -> expr PLUS expr { $$ = $1 + $3; };'
+    tests:
+      -
+        runner: behavior
+        target: 'spec/features/grammar-rules.feature:144'
+      -
+        runner: behavior
+        target: 'spec/features/grammar-rules.feature:153'
+    labels:
+      - manual
+      - grammar
+    category: grammar-rules
+    related:
+      - LEMON-RULE-005
+      - LEMON-INPUT-004
   -
     id: LEMON-GENERATOR-001
     statement: 'If a declared alias is unused in its action, then the generator shall report an error.'
@@ -172,6 +273,9 @@ items:
       -
         selector: 'body > p:nth-of-type(49)'
         quote: 'will generate an error because the linking symbol "C" is used in the grammar rule but not in the reduce action.'
+      -
+        selector: 'body > pre:nth-of-type(14)'
+        quote: 'expr(A) ::= expr(B) PLUS expr(C). { A = B; }'
     labels:
       - manual
       - generator
