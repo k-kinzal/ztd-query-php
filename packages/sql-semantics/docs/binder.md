@@ -87,6 +87,10 @@ subnamespaces under `Model\Statement`.
 | PostgreSQL: `IMPORT FOREIGN SCHEMA ext LIMIT TO (users) FROM SERVER remote INTO app` | `ImportForeignSchemaStatement` | Required `remoteSchema`, `server`, and `localSchema`; `selection` is `AllForeignTables`, `ImportOnlyTables`, or `ExcludeForeignTables`. Explicit selections require a nonempty list of `ForeignRelation` values. `options` is an ordered list of `ForeignOption` identifier/text-literal pairs. |
 | PostgreSQL: `CREATE FOREIGN DATA WRAPPER fdw HANDLER app.h OPTIONS (format 'csv')` | `CreateForeignDataWrapperStatement` | Required wrapper `name`, optional `handler` and `validator` function names, and initial `ForeignOption` values with unique names. Omitted functions and explicit NO HANDLER/NO VALIDATOR both mean absence. |
 | PostgreSQL: `ALTER FOREIGN DATA WRAPPER fdw NO HANDLER OPTIONS (ADD format 'csv', DROP path)` | `AlterForeignDataWrapperStatement` | Required wrapper `name`; each support-function change is a `QualifiedName`, `FunctionChange::Keep`, or `FunctionChange::Remove`. Ordered option changes are `AddForeignOption`, `SetForeignOption`, or `DropForeignOption`. At least one change is required. |
+| PostgreSQL: `CREATE SERVER remote TYPE 'sql' VERSION 'v1' FOREIGN DATA WRAPPER fdw` | `CreateForeignServerStatement` | Required server `name` and `wrapper`, optional `serverType` and `version` text literals, unique initial `ForeignOption` values, and `ifNotExists`. |
+| PostgreSQL: `ALTER SERVER remote VERSION NULL OPTIONS (SET host 'other')` | `AlterForeignServerStatement` | Required server `name`; `version` is a text literal, `ServerVersionChange::Keep`, or `ServerVersionChange::Remove`. Ordered `options` contain typed addition, replacement, or removal requests. At least one version or option change is required. |
+| PostgreSQL: `DROP SERVER IF EXISTS remote, archive CASCADE` | `DropForeignServersStatement` | Nonempty unqualified server `names`, `ifExists`, and `DropBehavior`. |
+| PostgreSQL: `DROP FOREIGN DATA WRAPPER fdw RESTRICT` | `DropForeignDataWrappersStatement` | Nonempty wrapper `names`, `ifExists`, and `DropBehavior`; separate from server removal. |
 | PostgreSQL: `CREATE USER MAPPING IF NOT EXISTS FOR CURRENT_USER SERVER remote OPTIONS (user 'reader')` | `CreateUserMappingStatement` | Required `UserMappingIdentity`, `ifNotExists`, and initial `ForeignOption` values with unique names. |
 | PostgreSQL: `ALTER USER MAPPING FOR alice SERVER remote OPTIONS (SET user 'reader', DROP password)` | `AlterUserMappingStatement` | Required mapping `target` and nonempty ordered `options`: `AddForeignOption`, `SetForeignOption`, or `DropForeignOption`. |
 | PostgreSQL: `DROP USER MAPPING IF EXISTS FOR PUBLIC SERVER remote` | `DropUserMappingStatement` | Required mapping `target` and `ifExists`; no option payload. |
@@ -176,6 +180,16 @@ validator identifies a function accepting `text[]` and `oid` whose return value 
 ignored. Binding records those function roles without calling them. An ALTER's
 `withChanges()` replaces function and option changes together, so removing the
 last requested operation cannot leave an empty alteration.
+
+Foreign server creation owns the wrapper name and its initial metadata. Creation's
+`withDefinition()` replaces that wrapper, type, version, and options together.
+Omitted versions and explicit VERSION NULL both declare an absent version. In an
+alteration, absence of the VERSION clause means keep the existing version, while
+VERSION NULL requests removal. `withChanges()` replaces version and option changes
+atomically and rejects an empty request. Text metadata and options remain literal
+operands for the wrapper; binding does not connect, validate credentials, or apply
+changes. Removal records dependent-object behavior without expanding or executing
+its effects.
 
 Foreign schema imports retain remote relation qualification and descendant scope
 for the foreign-data wrapper. These are remote selectors, so binding does not look

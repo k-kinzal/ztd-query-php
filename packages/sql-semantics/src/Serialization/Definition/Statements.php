@@ -20,7 +20,9 @@ final class Statements
      */
     public static function write(BoundStatement $statement): ?Tree
     {
-        return Foreign\UserMappings::write($statement)
+        return Foreign\ForeignServers::write($statement)
+            ?? Foreign\ForeignRemovals::write($statement)
+            ?? Foreign\UserMappings::write($statement)
             ?? Foreign\WrapperDeclarations::write($statement)
             ?? Foreign\ForeignImports::write($statement)
             ?? SpatialDefinitions::write($statement)

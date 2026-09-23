@@ -12,6 +12,7 @@ namespace SqlSemantics\Model\Validation;
  */
 enum InputViolation: string
 {
+    case ServerOption = 'server-option';
     case MappingRole = 'mapping-role';
     case MappingOption = 'mapping-option';
     case WrapperFunction = 'wrapper-function';
@@ -65,6 +66,7 @@ enum InputViolation: string
     case AlterLock = 'invalid-alter-lock';
     /** @var array<string, string> */
     private const MESSAGES = [
+        'server-option' => 'Initial foreign server options require unique names.',
         'mapping-role' => 'A user mapping requires a nonempty role name other than the reserved name none.',
         'mapping-option' => 'Initial user mapping options require unique names.',
         'wrapper-function' => 'A foreign-data wrapper cannot specify a support function more than once.',
