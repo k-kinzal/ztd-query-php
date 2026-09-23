@@ -997,12 +997,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/k-kinzal/php-ai-toolkit.git",
-                "reference": "f9d4e991389142e2119f95f5453c9cd44fc487e1"
+                "reference": "5cdbe0d5f7bd1901fe31d0f99f3f0a6ac0a4da66"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/k-kinzal/php-ai-toolkit/zipball/f9d4e991389142e2119f95f5453c9cd44fc487e1",
-                "reference": "f9d4e991389142e2119f95f5453c9cd44fc487e1",
+                "url": "https://api.github.com/repos/k-kinzal/php-ai-toolkit/zipball/5cdbe0d5f7bd1901fe31d0f99f3f0a6ac0a4da66",
+                "reference": "5cdbe0d5f7bd1901fe31d0f99f3f0a6ac0a4da66",
                 "shasum": ""
             },
             "require": {

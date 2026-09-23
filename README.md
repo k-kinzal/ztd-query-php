@@ -54,6 +54,25 @@ relational structure for fixture generation and SQL metadata consumers. See its
 [semantic design](packages/sql-semantics/docs/design.md) and
 [supported surface](packages/sql-semantics/docs/support.md).
 
+## Generated documentation
+
+Generate the API documentation for all packages from the repository root:
+
+```bash
+composer install
+composer docgen
+```
+
+The site is written to `build/docs/`. Use `composer docgen:serve` to preview it
+locally, or `composer docgen:diff` to compare the working tree with `origin/main`.
+
+DocGen is provided by `k-kinzal/php-ai-toolkit`. The committed lock files select
+its doc-ui renderer, which bundles the exact
+[document-design v1.0.0 stylesheet](https://k-kinzal.github.io/document-design/v1.0.0/document-design.css)
+as `assets/document-design-v1.0.0.css`, with its license and SHA-256 notice.
+Generated HTML uses doc-ui's `.doc` layout and components. The design stays
+fixed at v1.0.0 and works offline; no floating CDN version is loaded.
+
 ## License
 
 MIT License. See [LICENSE](LICENSE) for details.

@@ -1030,12 +1030,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/k-kinzal/php-ai-toolkit.git",
-                "reference": "ba726d79f6e802e71b8a70af22f2a02eb286141e"
+                "reference": "5cdbe0d5f7bd1901fe31d0f99f3f0a6ac0a4da66"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/k-kinzal/php-ai-toolkit/zipball/ba726d79f6e802e71b8a70af22f2a02eb286141e",
-                "reference": "ba726d79f6e802e71b8a70af22f2a02eb286141e",
+                "url": "https://api.github.com/repos/k-kinzal/php-ai-toolkit/zipball/5cdbe0d5f7bd1901fe31d0f99f3f0a6ac0a4da66",
+                "reference": "5cdbe0d5f7bd1901fe31d0f99f3f0a6ac0a4da66",
                 "shasum": ""
             },
             "require": {
@@ -1173,7 +1173,7 @@
                 "issues": "https://github.com/k-kinzal/php-ai-toolkit/issues",
                 "docs": "https://k-kinzal.github.io/php-ai-toolkit/"
             },
-            "time": "2026-09-12T19:58:56+00:00"
+            "time": "2026-09-18T00:34:27+00:00"
         },
         {
             "name": "myclabs/deep-copy",
