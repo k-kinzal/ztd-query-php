@@ -16,6 +16,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(CommonTableExpression::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class CommonTableExpressionTest extends TestCase
 {
     public function testRequiresAnInputWithAQueryOrWriteShape(): void

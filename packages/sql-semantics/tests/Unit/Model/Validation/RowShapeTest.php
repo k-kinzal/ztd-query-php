@@ -15,6 +15,7 @@ use SqlSemantics\Model\Validation\RowShape;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(RowShape::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class RowShapeTest extends TestCase
 {
     public function testRowsRejectsUnequalWidthsBeforeSerialization(): void

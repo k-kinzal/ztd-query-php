@@ -12,6 +12,7 @@ use SqlSemantics\Model\Statement\Configuration\ResetAllSettingsStatement;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(ResetAllSettingsStatement::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ResetAllSettingsStatementTest extends TestCase
 {
     public function testWithOriginPreservesRequiredOperandsAndSerialization(): void

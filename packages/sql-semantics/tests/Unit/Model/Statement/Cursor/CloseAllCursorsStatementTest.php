@@ -11,6 +11,7 @@ use SqlSemantics\Dialect;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(\SqlSemantics\Model\Statement\Cursor\CloseAllCursorsStatement::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class CloseAllCursorsStatementTest extends TestCase
 {
     public function testWithOriginRetainsTheCursorRequest(): void

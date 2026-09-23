@@ -15,6 +15,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(ExpressionEdit::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ExpressionEditTest extends TestCase
 {
     public function testRebuildPreservesUnchangedReferenceIdentities(): void

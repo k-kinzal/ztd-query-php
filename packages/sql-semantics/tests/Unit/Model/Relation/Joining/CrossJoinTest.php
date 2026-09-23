@@ -13,6 +13,7 @@ use SqlSemantics\Model\Relation\Joining\CrossJoin;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(CrossJoin::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class CrossJoinTest extends TestCase
 {
     #[TestWith([Dialect::PostgreSql])]

@@ -14,6 +14,7 @@ use SqlSemantics\SchemaBuilder;
 use SqlSemantics\Type\Nullability;
 
 #[CoversClass(AddedColumns::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class AddedColumnsTest extends TestCase
 {
     #[TestWith(['mysql-5.6.51'])]

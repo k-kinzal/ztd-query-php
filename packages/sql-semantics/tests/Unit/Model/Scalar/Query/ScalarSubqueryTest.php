@@ -12,6 +12,7 @@ use SqlSemantics\SchemaBuilder;
 use SqlSemantics\Type\Identity\BuiltinIdentity;
 
 #[CoversClass(\SqlSemantics\Model\Scalar\Query\ScalarSubquery::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ScalarSubqueryTest extends TestCase
 {
     public function testRetainsTheQueryAndItsResultTypeWithoutExecutingIt(): void

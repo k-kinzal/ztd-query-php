@@ -11,6 +11,7 @@ use SqlSemantics\Model\Definition\Routine;
 use SqlSemantics\Model\Relation\QualifiedName;
 
 #[CoversClass(Routine\OrderedSetAggregate::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class OrderedSetAggregateTest extends TestCase
 {
     public function testSignatureKeepsDirectAndOrderedArgumentsSeparate(): void

@@ -14,6 +14,7 @@ use SqlSemantics\Model\Validation\InputViolation;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(InvalidSql::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class InvalidSqlTest extends TestCase
 {
     #[TestWith(['REINDEX SYSTEM CONCURRENTLY', InputViolation::ConcurrentSystemReindex])]

@@ -18,6 +18,7 @@ use SqlSemantics\Model\Statement\Plan\ExplainStatement;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(ExplainBinder::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ExplainBinderTest extends TestCase
 {
     #[TestWith(['DESC ANALYZE FOR CONNECTION 0'])]

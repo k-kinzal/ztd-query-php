@@ -14,6 +14,7 @@ use SqlSemantics\Model\Statement\Mutation\DeleteJoinedStatement;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(DeleteTargets::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class DeleteTargetsTest extends TestCase
 {
     public function testTablesRetainsNamedDestinations(): void

@@ -17,6 +17,7 @@ use SqlSemantics\Type\Nullability;
 use SqlSemantics\Type\TypeDescriptor;
 
 #[CoversClass(\SqlSemantics\Model\Scalar\Reference\UnresolvedColumnReference::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class UnresolvedColumnReferenceTest extends TestCase
 {
     /**

@@ -18,6 +18,7 @@ use SqlSemantics\SchemaBuilder;
 use SqlSemantics\Type\TypeDescriptor;
 
 #[CoversClass(OrderedSetCall::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class OrderedSetCallTest extends TestCase
 {
     public function testSeparatesDirectArgumentsFromOrderedInputs(): void

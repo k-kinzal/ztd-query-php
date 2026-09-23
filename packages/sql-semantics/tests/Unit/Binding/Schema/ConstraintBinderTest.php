@@ -14,6 +14,7 @@ use SqlSemantics\Model\Statement\CreateTableStatement;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(\SqlSemantics\Binding\Schema\ConstraintBinder::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ConstraintBinderTest extends TestCase
 {
     #[TestWith([Dialect::MySql])]

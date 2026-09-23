@@ -14,6 +14,7 @@ use SqlSemantics\Model\Traversal\Expressions;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(DeclarationReferences::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class DeclarationReferencesTest extends TestCase
 {
     public function testRebindUpdatesEveryIndependentReference(): void

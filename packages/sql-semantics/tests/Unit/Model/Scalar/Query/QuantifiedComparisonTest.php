@@ -14,6 +14,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(QuantifiedComparison::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class QuantifiedComparisonTest extends TestCase
 {
     public function testRejectsAQueryWithTheWrongOperandWidth(): void

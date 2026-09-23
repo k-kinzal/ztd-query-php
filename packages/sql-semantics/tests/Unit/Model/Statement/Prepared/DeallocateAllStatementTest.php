@@ -12,6 +12,7 @@ use SqlSemantics\Model\Statement\Prepared\DeallocateAllStatement;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(DeallocateAllStatement::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class DeallocateAllStatementTest extends TestCase
 {
     public function testWithOriginPreservesRequiredOperandsAndSerialization(): void

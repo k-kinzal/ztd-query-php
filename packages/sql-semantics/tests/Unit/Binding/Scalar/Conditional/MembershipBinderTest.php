@@ -16,6 +16,7 @@ use SqlSemantics\SchemaBuilder;
 use SqlSemantics\Type\Nullability;
 
 #[CoversClass(MembershipBinder::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class MembershipBinderTest extends TestCase
 {
     #[TestWith([Dialect::PostgreSql, 'SELECT ROW(1,2) IN (ROW(3))'])]

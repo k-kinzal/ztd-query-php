@@ -13,6 +13,7 @@ use SqlSemantics\Model\Relation\Joining\OnJoin;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(OnJoin::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class OnJoinTest extends TestCase
 {
     #[TestWith([Dialect::PostgreSql])]

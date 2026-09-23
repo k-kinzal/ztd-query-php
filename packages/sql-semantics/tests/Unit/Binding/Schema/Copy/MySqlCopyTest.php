@@ -16,6 +16,7 @@ use SqlSemantics\SchemaBuilder;
 use SqlSemantics\Type\Nullability;
 
 #[CoversClass(MySqlCopy::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class MySqlCopyTest extends TestCase
 {
     #[TestWith(['mysql-5.6.51'])]

@@ -15,6 +15,7 @@ use SqlSemantics\Model\Write\Storage\ElementPath;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(ScalarAssignment::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ScalarAssignmentTest extends TestCase
 {
     public function testArrayElementHasAWritableBaseAndAnUnevaluatedIndex(): void

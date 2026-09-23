@@ -12,6 +12,7 @@ use SqlSemantics\Model\Query\Ordering\OutputAlias;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(OutputAlias::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class OutputAliasTest extends TestCase
 {
     public function testRefersToTheOutputWithoutRepeatingItsComputation(): void

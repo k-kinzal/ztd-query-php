@@ -14,6 +14,7 @@ use SqlSemantics\Model\Statement\Definition\CreateVirtualTableStatement;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(CreateVirtualTableStatement::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class CreateVirtualTableStatementTest extends TestCase
 {
     public function testRetainsTheModuleAndArgumentOrder(): void

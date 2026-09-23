@@ -132,6 +132,7 @@ use SqlSemantics\SchemaBuilder;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Sql\Tree::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Sql\Source::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Sql\Format::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class MergeActionTest extends TestCase
 {
     public function testRetainsEachValidDecisionAndItsEffects(): void

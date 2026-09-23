@@ -12,6 +12,7 @@ use SqlSemantics\Model\Statement\Definition\DropIndexConcurrentlyStatement;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(DropIndexConcurrentlyStatement::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class DropIndexConcurrentlyStatementTest extends TestCase
 {
     public function testWithOriginPreservesRequiredOperandsAndSerialization(): void

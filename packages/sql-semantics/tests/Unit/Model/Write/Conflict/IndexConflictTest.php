@@ -9,6 +9,7 @@ use PHPUnit\Framework\TestCase;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(\SqlSemantics\Model\Write\Conflict\IndexConflict::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class IndexConflictTest extends TestCase
 {
     public function testRejectsMissingRequiredOperands(): void

@@ -10,6 +10,7 @@ use SqlSemantics\Dialect;
 use SqlSemantics\Model\Definition\Routine;
 
 #[CoversClass(Routine\RoutineParameter::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class RoutineParameterTest extends TestCase
 {
     public function testArgumentRetainsItsDeclaredTypeAndDirection(): void

@@ -16,6 +16,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(RowExpression::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class RowExpressionTest extends TestCase
 {
     #[TestWith(['SELECT ROW()', 0])]

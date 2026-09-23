@@ -15,6 +15,7 @@ use SqlSemantics\SchemaBuilder;
 use SqlSemantics\Type\Nullability;
 
 #[CoversClass(ComparisonNullability::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ComparisonNullabilityTest extends TestCase
 {
     #[TestWith(['SELECT ROW(NULL, 1)', Nullability::NotNull, Nullability::MaybeNull])]

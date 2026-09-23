@@ -11,6 +11,7 @@ use SqlSemantics\Dialect;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(\SqlSemantics\Model\Scalar\Reference\ColumnReference::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ColumnReferenceTest extends TestCase
 {
     public function testRetainsAMandatoryBindingToTheDeclaredColumn(): void

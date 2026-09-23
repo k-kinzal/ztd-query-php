@@ -16,6 +16,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(ReindexDatabaseStatement::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ReindexDatabaseStatementTest extends TestCase
 {
     #[TestWith(['REINDEX SYSTEM', DatabaseIndexScope::SystemTables])]

@@ -11,6 +11,7 @@ use SqlSemantics\Model\Definition\Routine;
 use SqlSemantics\Model\Relation\QualifiedName;
 
 #[CoversClass(Routine\OrdinaryAggregate::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class OrdinaryAggregateTest extends TestCase
 {
     public function testSignatureRequiresAggregatedInputs(): void

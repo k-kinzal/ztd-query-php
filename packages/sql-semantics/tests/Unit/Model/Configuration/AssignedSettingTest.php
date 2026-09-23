@@ -10,6 +10,7 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(\SqlSemantics\Model\Configuration\AssignedSetting::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class AssignedSettingTest extends TestCase
 {
     public function testRejectsMissingRequiredOperands(): void

@@ -14,6 +14,7 @@ use SqlSemantics\Model\Scalar\Temporal\PostgreSqlField;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(PostgreSqlField::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class PostgreSqlFieldTest extends TestCase
 {
     #[\PHPUnit\Framework\Attributes\DataProvider('providerFields')]

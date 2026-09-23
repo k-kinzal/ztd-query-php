@@ -11,6 +11,7 @@ use SqlSemantics\Dialect;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(\SqlSemantics\Model\Scalar\Reference\FieldAccess::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class FieldAccessTest extends TestCase
 {
     public function testPreservesTheInputRowAndFieldName(): void

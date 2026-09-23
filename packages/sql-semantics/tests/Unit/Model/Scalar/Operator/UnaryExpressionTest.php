@@ -16,6 +16,7 @@ use SqlSemantics\SchemaBuilder;
 use SqlSemantics\Type\Nullability;
 
 #[CoversClass(UnaryExpression::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class UnaryExpressionTest extends TestCase
 {
     #[\PHPUnit\Framework\Attributes\DataProvider('providerTruthTests')]

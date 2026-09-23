@@ -17,6 +17,7 @@ use SqlSemantics\SchemaBuilder;
 use SqlSemantics\Type\Nullability;
 
 #[CoversClass(Position::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class PositionTest extends TestCase
 {
     #[TestWith([Dialect::PostgreSql, 'integer'])]

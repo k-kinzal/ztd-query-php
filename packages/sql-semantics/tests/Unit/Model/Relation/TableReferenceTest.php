@@ -12,6 +12,7 @@ use SqlSemantics\Model\Relation\TableReference;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(TableReference::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class TableReferenceTest extends TestCase
 {
     public function testWithScopeRetainsAnExplicitEmptyNamespace(): void

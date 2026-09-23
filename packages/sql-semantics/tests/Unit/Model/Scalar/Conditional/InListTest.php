@@ -16,6 +16,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(InList::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class InListTest extends TestCase
 {
     public function testInputsRetainsScalarCandidateOrder(): void

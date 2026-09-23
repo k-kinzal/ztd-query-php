@@ -12,6 +12,7 @@ use SqlSemantics\Model\BoundSelect;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(\SqlSemantics\Model\Statement\Cursor\DeclareCursorStatement::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class DeclareCursorStatementTest extends TestCase
 {
     public function testWithOriginRetainsTheCursorRequest(): void

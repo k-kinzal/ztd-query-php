@@ -19,6 +19,7 @@ use SqlSemantics\Model\Write\Assignment\ScalarAssignment;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(CreateSqliteTriggerStatement::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class CreateSqliteTriggerStatementTest extends TestCase
 {
     public function testBindsTheEventAndRowImages(): void

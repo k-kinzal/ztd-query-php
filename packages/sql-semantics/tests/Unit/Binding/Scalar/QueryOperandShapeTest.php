@@ -13,6 +13,7 @@ use SqlSemantics\InvalidSql;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(\SqlSemantics\Binding\Scalar\QueryOperandShape::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class QueryOperandShapeTest extends TestCase
 {
     #[TestWith(['SELECT 1 IN (SELECT 1, 2)'])]

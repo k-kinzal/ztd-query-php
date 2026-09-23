@@ -11,6 +11,7 @@ use SqlSemantics\Model\Definition\Routine;
 use SqlSemantics\Model\Relation\QualifiedName;
 
 #[CoversClass(Routine\RoutineBySignature::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class RoutineBySignatureTest extends TestCase
 {
     public function testEmptySignatureMeansZeroArguments(): void

@@ -15,6 +15,7 @@ use SqlSemantics\Model\Scalar\Operator\CastExpression;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(TypedLiteralBinder::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class TypedLiteralBinderTest extends TestCase
 {
     #[TestWith(["TIMESTAMP 'not a date'", 'timestamp', "CAST('not a date' AS timestamp)"])]

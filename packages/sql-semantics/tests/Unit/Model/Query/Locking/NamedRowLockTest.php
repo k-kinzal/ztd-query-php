@@ -13,6 +13,7 @@ use SqlSemantics\Model\BoundSelect;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(\SqlSemantics\Model\Query\Locking\NamedRowLock::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class NamedRowLockTest extends TestCase
 {
     #[TestWith([Dialect::PostgreSql])]

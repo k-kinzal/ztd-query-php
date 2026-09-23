@@ -12,6 +12,7 @@ use SqlSemantics\Model\Statement\Prepared\ExecuteQueryStatement;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(ExecuteQueryStatement::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ExecuteQueryStatementTest extends TestCase
 {
     public function testWithOriginPreservesRequiredOperandsAndSerialization(): void

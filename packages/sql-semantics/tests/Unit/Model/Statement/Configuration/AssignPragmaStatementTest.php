@@ -15,6 +15,7 @@ use SqlSemantics\Model\Statement\Configuration\AssignPragmaStatement;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(AssignPragmaStatement::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class AssignPragmaStatementTest extends TestCase
 {
     public function testWithValuePreservesTheScalarArgumentGrammar(): void

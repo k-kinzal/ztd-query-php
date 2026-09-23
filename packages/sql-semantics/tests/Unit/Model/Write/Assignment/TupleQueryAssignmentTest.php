@@ -14,6 +14,7 @@ use SqlSemantics\Model\Write\Assignment\TupleQueryAssignment;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(TupleQueryAssignment::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class TupleQueryAssignmentTest extends TestCase
 {
     public function testQueryOutputsRemainSeparateFromTheUpdateResult(): void

@@ -16,6 +16,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(InsertValuesStatement::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class InsertValuesStatementTest extends TestCase
 {
     public function testRequiresRows(): void

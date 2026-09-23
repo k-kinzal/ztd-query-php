@@ -15,6 +15,7 @@ use SqlSemantics\Model\Statement\Table\CreateTableLikeStatement;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(TableLikeBinder::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class TableLikeBinderTest extends TestCase
 {
     #[TestWith(['mysql-5.6.51'])]

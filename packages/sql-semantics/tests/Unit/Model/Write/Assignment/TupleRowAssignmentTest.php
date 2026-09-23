@@ -15,6 +15,7 @@ use SqlSemantics\Model\Write\Storage\ColumnPath;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(TupleRowAssignment::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class TupleRowAssignmentTest extends TestCase
 {
     public function testDestinationsRemainOrderedAndTheInputIsARow(): void

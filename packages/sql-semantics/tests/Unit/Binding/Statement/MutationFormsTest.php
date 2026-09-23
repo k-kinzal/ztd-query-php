@@ -11,6 +11,7 @@ use SqlSemantics\Dialect;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(\SqlSemantics\Binding\Statement\MutationForms::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class MutationFormsTest extends TestCase
 {
     public function testUpdateDoesNotReadConflictKeywordsFromCtes(): void

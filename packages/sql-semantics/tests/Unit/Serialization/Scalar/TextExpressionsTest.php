@@ -12,6 +12,7 @@ use SqlSemantics\SchemaBuilder;
 use SqlSemantics\Serialization\Scalar\TextExpressions;
 
 #[CoversClass(TextExpressions::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class TextExpressionsTest extends TestCase
 {
     public function testWritePreservesOperandRoles(): void

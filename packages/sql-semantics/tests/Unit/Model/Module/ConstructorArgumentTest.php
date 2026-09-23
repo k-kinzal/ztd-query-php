@@ -10,6 +10,7 @@ use SqlSemantics\Model\Module\ConstructorArgument;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(ConstructorArgument::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ConstructorArgumentTest extends TestCase
 {
     public function testPreservesTheModuleInputText(): void

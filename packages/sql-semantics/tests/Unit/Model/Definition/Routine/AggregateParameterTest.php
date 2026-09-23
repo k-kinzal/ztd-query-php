@@ -10,6 +10,7 @@ use SqlSemantics\Dialect;
 use SqlSemantics\Model\Definition\Routine;
 
 #[CoversClass(Routine\AggregateParameter::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class AggregateParameterTest extends TestCase
 {
     public function testArgumentRetainsItsDeclaredTypeAndDirection(): void

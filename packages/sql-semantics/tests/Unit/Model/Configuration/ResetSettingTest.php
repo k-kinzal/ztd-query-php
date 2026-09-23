@@ -10,6 +10,7 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(\SqlSemantics\Model\Configuration\ResetSetting::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ResetSettingTest extends TestCase
 {
     public function testRejectsMissingRequiredOperands(): void

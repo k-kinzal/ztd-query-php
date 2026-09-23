@@ -12,6 +12,7 @@ use SqlSemantics\Model\Statement\Configuration\ResetSettingStatement;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(ResetSettingStatement::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ResetSettingStatementTest extends TestCase
 {
     public function testWithOriginPreservesRequiredOperandsAndSerialization(): void

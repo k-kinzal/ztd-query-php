@@ -14,6 +14,7 @@ use SqlSemantics\Model\Statement\Table\CreateTableLikeStatement;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(CreateTableLikeStatement::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class CreateTableLikeStatementTest extends TestCase
 {
     #[TestWith(['mysql-5.6.51'])]

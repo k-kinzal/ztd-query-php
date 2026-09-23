@@ -18,6 +18,7 @@ use SqlSemantics\Type\Nullability;
 use SqlSemantics\Type\TypeDescriptor;
 
 #[CoversClass(AllRowsAggregate::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class AllRowsAggregateTest extends TestCase
 {
     public function testRetainsARegisteredAggregateWithNoValueArgument(): void

@@ -12,6 +12,7 @@ use SqlSemantics\Model\BoundSelect;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(\SqlSemantics\Model\Query\Locking\AllRowLock::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class AllRowLockTest extends TestCase
 {
     public function testPreservesALegacyMysqlSharedLock(): void

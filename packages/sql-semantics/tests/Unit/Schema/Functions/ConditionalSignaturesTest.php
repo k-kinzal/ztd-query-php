@@ -22,6 +22,7 @@ use SqlSemantics\Type\Nullability;
 use SqlSemantics\Type\TypeDescriptor;
 
 #[CoversClass(ConditionalSignatures::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ConditionalSignaturesTest extends TestCase
 {
     #[TestWith([Dialect::MySql])]

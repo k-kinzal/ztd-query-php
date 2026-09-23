@@ -13,6 +13,7 @@ use SqlSemantics\Model\Relation\Joining\UsingJoin;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(UsingJoin::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class UsingJoinTest extends TestCase
 {
     #[TestWith([Dialect::PostgreSql])]

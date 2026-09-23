@@ -12,6 +12,7 @@ use SqlSemantics\Model\Statement\Definition\DropTableIndexStatement;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(DropTableIndexStatement::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class DropTableIndexStatementTest extends TestCase
 {
     public function testWithOriginPreservesRequiredOperandsAndSerialization(): void

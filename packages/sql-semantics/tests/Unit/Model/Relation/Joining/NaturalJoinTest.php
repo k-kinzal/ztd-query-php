@@ -13,6 +13,7 @@ use SqlSemantics\Model\Relation\Joining\NaturalJoin;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(NaturalJoin::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class NaturalJoinTest extends TestCase
 {
     #[TestWith([Dialect::PostgreSql])]

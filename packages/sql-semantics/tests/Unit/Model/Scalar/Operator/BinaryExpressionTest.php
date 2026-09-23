@@ -13,6 +13,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(\SqlSemantics\Model\Scalar\Operator\BinaryExpression::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class BinaryExpressionTest extends TestCase
 {
     public function testRejectsOperandsFromDifferentDialects(): void

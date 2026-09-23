@@ -14,6 +14,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(InSubquery::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class InSubqueryTest extends TestCase
 {
     public function testRejectsAQueryWithTheWrongOperandWidth(): void

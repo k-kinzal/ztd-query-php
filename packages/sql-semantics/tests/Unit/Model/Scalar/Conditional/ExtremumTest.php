@@ -17,6 +17,7 @@ use SqlSemantics\SchemaBuilder;
 use SqlSemantics\Type\Nullability;
 
 #[CoversClass(Extremum::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ExtremumTest extends TestCase
 {
     #[TestWith(['SELECT GREATEST(1,2.5)', ExtremumKind::Greatest, 'SELECT GREATEST(1, 2.5)'])]

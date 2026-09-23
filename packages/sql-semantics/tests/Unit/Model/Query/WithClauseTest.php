@@ -16,6 +16,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(WithClause::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class WithClauseTest extends TestCase
 {
     public function testPreservesDeclarationOrderAndRecursivePolicy(): void

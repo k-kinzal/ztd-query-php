@@ -13,6 +13,7 @@ use SqlSemantics\Model\Statement\Insert\InsertSelectStatement;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(InsertSelectStatement::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class InsertSelectStatementTest extends TestCase
 {
     public function testKeepsTheQuerySeparateFromReturning(): void

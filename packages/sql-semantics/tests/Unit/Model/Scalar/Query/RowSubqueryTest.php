@@ -14,6 +14,7 @@ use SqlSemantics\Model\Scalar\Query\RowSubquery;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(RowSubquery::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class RowSubqueryTest extends TestCase
 {
     #[TestWith([Dialect::PostgreSql])]

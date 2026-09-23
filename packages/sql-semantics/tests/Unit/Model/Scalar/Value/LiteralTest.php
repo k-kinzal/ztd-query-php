@@ -13,6 +13,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(\SqlSemantics\Model\Scalar\Value\Literal::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class LiteralTest extends TestCase
 {
     public function testRetainsTheNewValueIndependentlyOfItsDiagnosticSource(): void

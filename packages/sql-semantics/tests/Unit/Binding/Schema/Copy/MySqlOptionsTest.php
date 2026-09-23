@@ -12,6 +12,7 @@ use SqlSemantics\Schema\Table\MySqlProperties;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(MySqlOptions::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class MySqlOptionsTest extends TestCase
 {
     public function testCopyPreservesStorageAndResetsInstanceOptions(): void

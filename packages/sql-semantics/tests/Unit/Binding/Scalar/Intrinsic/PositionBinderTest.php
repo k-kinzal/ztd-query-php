@@ -13,6 +13,7 @@ use SqlSemantics\Model\BoundSelect;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(PositionBinder::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class PositionBinderTest extends TestCase
 {
     public function testBindRetainsTheIntrinsicOperands(): void

@@ -12,6 +12,7 @@ use SqlSemantics\Model\BoundSelect;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(\SqlSemantics\Model\Query\Optimization\MaxExecutionTime::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class MaxExecutionTimeTest extends TestCase
 {
     public function testRetainsTheDeadlineWhenAProjectionChanges(): void

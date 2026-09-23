@@ -51,6 +51,7 @@ use SqlParser\Parser\SyntaxException;
 #[UsesClass(\SqlParser\Parser\AlternativeParser::class)]
 #[UsesClass(\SqlParser\Parser\ParseBranch::class)]
 #[UsesClass(\SqlParser\Table\AlternativeCodec::class)]
+#[UsesClass(\SqlParser\MySql\ScriptParser::class)]
 final class MySqlParserTest extends TestCase
 {
     public function testVersion(): void

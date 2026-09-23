@@ -14,6 +14,7 @@ use SqlSemantics\Model\Statement\CompoundStatement;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(OutputPosition::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class OutputPositionTest extends TestCase
 {
     #[TestWith([Dialect::PostgreSql])]

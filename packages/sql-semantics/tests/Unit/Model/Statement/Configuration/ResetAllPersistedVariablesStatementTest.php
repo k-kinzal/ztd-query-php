@@ -12,6 +12,7 @@ use SqlSemantics\Model\Statement\Configuration\ResetAllPersistedVariablesStateme
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(ResetAllPersistedVariablesStatement::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ResetAllPersistedVariablesStatementTest extends TestCase
 {
     public function testWithOriginPreservesRequiredOperandsAndSerialization(): void

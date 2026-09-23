@@ -10,6 +10,7 @@ use SqlParser\Parser\Node;
 use SqlSemantics\Model\Validation\InvalidStructure;
 
 #[CoversClass(\SqlSemantics\Model\Write\Conflict\DoUpdate::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class DoUpdateTest extends TestCase
 {
     public function testRejectsMissingRequiredOperands(): void

@@ -18,6 +18,7 @@ use SqlSemantics\Type\Nullability;
 use SqlSemantics\Type\TypeDescriptor;
 
 #[CoversClass(VariableReference::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class VariableReferenceTest extends TestCase
 {
     public function testRetainsTheDeclaredBindingWithoutAValue(): void

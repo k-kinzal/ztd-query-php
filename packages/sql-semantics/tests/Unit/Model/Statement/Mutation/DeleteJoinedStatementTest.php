@@ -14,6 +14,7 @@ use SqlSemantics\Model\Statement\Mutation\DeleteJoinedStatement;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(DeleteJoinedStatement::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class DeleteJoinedStatementTest extends TestCase
 {
     #[TestWith(['mysql-5.6.51'])]

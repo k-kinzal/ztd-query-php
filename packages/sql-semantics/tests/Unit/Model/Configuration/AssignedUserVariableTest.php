@@ -14,6 +14,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(AssignedUserVariable::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class AssignedUserVariableTest extends TestCase
 {
     public function testHasOneValueAndAnExplicitWritableLocation(): void

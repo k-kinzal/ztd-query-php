@@ -11,6 +11,7 @@ use SqlSemantics\Dialect;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(\SqlSemantics\Model\Statement\Cursor\FetchCursorStatement::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class FetchCursorStatementTest extends TestCase
 {
     public function testWithOriginRetainsTheCursorRequest(): void

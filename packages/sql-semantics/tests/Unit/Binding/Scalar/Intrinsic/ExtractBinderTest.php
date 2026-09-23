@@ -14,6 +14,7 @@ use SqlSemantics\Model\BoundSelect;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(ExtractBinder::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ExtractBinderTest extends TestCase
 {
     public function testBindRetainsTheIntrinsicOperands(): void

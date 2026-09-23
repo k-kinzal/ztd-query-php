@@ -19,6 +19,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(ExplainStatement::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ExplainStatementTest extends TestCase
 {
     #[TestWith([Dialect::PostgreSql, 'EXPLAIN UPDATE t SET id=2 WHERE id=1'])]

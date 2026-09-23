@@ -12,6 +12,7 @@ use SqlSemantics\SchemaBuilder;
 use SqlSemantics\Serialization\Scalar\TemporalExpressions;
 
 #[CoversClass(TemporalExpressions::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class TemporalExpressionsTest extends TestCase
 {
     public function testWritePreservesOperandRoles(): void

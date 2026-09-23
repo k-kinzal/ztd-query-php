@@ -10,6 +10,7 @@ use SqlSemantics\Model\Definition\Routine;
 use SqlSemantics\Model\Relation\QualifiedName;
 
 #[CoversClass(Routine\ZeroArgumentAggregate::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ZeroArgumentAggregateTest extends TestCase
 {
     public function testIdentityRetainsTheIdentifierPath(): void

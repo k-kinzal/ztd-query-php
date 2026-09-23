@@ -19,6 +19,7 @@ use SqlSemantics\SchemaBuilder;
 use SqlSemantics\Type\Nullability;
 
 #[CoversClass(Extract::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ExtractTest extends TestCase
 {
     #[TestWith([Dialect::PostgreSql, "SELECT EXTRACT(YEAR FROM TIMESTAMP '2020-01-01')", PostgreSqlField::Year, 'numeric'])]

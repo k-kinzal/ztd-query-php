@@ -12,6 +12,7 @@ use SqlSemantics\Model\Statement\Prepared\PrepareTextStatement;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(PrepareTextStatement::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class PrepareTextStatementTest extends TestCase
 {
     public function testWithOriginPreservesRequiredOperandsAndSerialization(): void

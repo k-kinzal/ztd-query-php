@@ -11,6 +11,7 @@ use SqlSemantics\Dialect;
 use SqlSemantics\Model\Validation\ParameterSpelling;
 
 #[CoversClass(ParameterSpelling::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ParameterSpellingTest extends TestCase
 {
     #[TestWith([Dialect::MySql, '?'])]

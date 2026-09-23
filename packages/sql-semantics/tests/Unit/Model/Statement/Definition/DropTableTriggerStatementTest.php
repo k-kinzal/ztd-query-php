@@ -12,6 +12,7 @@ use SqlSemantics\Model\Statement\Definition\DropTableTriggerStatement;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(DropTableTriggerStatement::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class DropTableTriggerStatementTest extends TestCase
 {
     public function testWithOriginPreservesRequiredOperandsAndSerialization(): void

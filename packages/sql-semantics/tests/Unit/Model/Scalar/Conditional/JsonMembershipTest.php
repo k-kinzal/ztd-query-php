@@ -15,6 +15,7 @@ use SqlSemantics\SchemaBuilder;
 use SqlSemantics\Type\Nullability;
 
 #[CoversClass(JsonMembership::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class JsonMembershipTest extends TestCase
 {
     #[TestWith(["SELECT 1 MEMBER OF ('[1,2]')"]) ]

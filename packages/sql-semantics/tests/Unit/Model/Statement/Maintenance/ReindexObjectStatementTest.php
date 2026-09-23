@@ -14,6 +14,7 @@ use SqlSemantics\Model\Statement\Maintenance\ReindexObjectStatement;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(ReindexObjectStatement::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ReindexObjectStatementTest extends TestCase
 {
     /**

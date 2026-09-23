@@ -11,6 +11,7 @@ use SqlSemantics\Model\Definition\Routine;
 use SqlSemantics\Model\Relation\QualifiedName;
 
 #[CoversClass(Routine\ArgumentTypeInvariant::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class ArgumentTypeInvariantTest extends TestCase
 {
     public function testValidateRejectsInferredTypes(): void

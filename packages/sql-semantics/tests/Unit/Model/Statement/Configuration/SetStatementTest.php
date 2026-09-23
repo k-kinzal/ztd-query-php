@@ -15,6 +15,7 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(SetStatement::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class SetStatementTest extends TestCase
 {
     public function testWithVariableValuePreservesAssignmentOrderAndTheOriginal(): void

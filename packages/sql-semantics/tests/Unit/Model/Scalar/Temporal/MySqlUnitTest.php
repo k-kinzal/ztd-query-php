@@ -14,6 +14,7 @@ use SqlSemantics\Model\Scalar\Temporal\MySqlUnit;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(MySqlUnit::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class MySqlUnitTest extends TestCase
 {
     #[\PHPUnit\Framework\Attributes\DataProvider('providerFields')]

@@ -12,6 +12,7 @@ use SqlSemantics\Model\BoundSelect;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(\SqlSemantics\Binding\Scalar\FunctionClauses::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class FunctionClausesTest extends TestCase
 {
     public function testFindKeepsNestedWindowFiltersWithTheirOwners(): void

@@ -13,6 +13,7 @@ use SqlSemantics\Model\BoundSelect;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(\SqlSemantics\Model\Relation\DocumentRelation::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class DocumentRelationTest extends TestCase
 {
     #[TestWith([Dialect::PostgreSql])]

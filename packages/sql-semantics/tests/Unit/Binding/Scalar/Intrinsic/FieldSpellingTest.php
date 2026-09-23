@@ -16,6 +16,7 @@ use SqlSemantics\Model\Scalar\Temporal\PostgreSqlField;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(FieldSpelling::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class FieldSpellingTest extends TestCase
 {
     #[TestWith(["'year'"])]

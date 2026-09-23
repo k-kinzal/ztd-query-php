@@ -13,6 +13,7 @@ use SqlSemantics\Model\Write\Policy\ConstraintResponse;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(UpdateTableStatement::class)]
+#[\PHPUnit\Framework\Attributes\Medium]
 final class UpdateTableStatementTest extends TestCase
 {
     public function testReturningDoesNotCreateAWherePredicate(): void
