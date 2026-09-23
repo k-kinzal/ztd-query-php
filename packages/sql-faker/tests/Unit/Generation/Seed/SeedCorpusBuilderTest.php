@@ -157,7 +157,7 @@ final class SeedCorpusBuilderTest extends TestCase
             (new Grammar('stmt', [
                 'stmt' => new ProductionRule('stmt', [
                     new Production([new Terminal('SELECT'), new NonTerminal('expr'), new NonTerminal('tail')]),
-                    new Production([new Terminal('DELETE')]),
+                    new Production([new Terminal('DELETE')], 9),
                 ]),
                 'expr' => new ProductionRule('expr', [new Production([new Terminal('1')]), new Production([new NonTerminal('expr'), new Terminal('+'), new NonTerminal('expr')])]),
                 'tail' => new ProductionRule('tail', [new Production([]), new Production([new Terminal('AS'), new Terminal('name')])]),
@@ -172,9 +172,9 @@ final class SeedCorpusBuilderTest extends TestCase
 
         self::assertSame([], $corpus->failures);
         self::assertSame([], $corpus->unreached());
-        self::assertSame(['stmt#0', 'stmt#1', 'expr#0', 'expr#1', 'tail#0', 'tail#1'], $corpus->reached());
+        self::assertSame(['stmt#0', 'stmt#9', 'expr#0', 'expr#1', 'tail#0', 'tail#1'], $corpus->reached());
         self::assertSame(['SELECT 1', 'DELETE', 'SELECT 1 + 1', 'SELECT 1 AS name'], array_map(static fn (CoverageSeed $seed): string => $seed->sql, $corpus->seeds));
-        self::assertSame(['stmt-0', 'stmt-1', 'expr-1', 'tail-1'], array_map(static fn (CoverageSeed $seed): string => $seed->name(), $corpus->seeds));
+        self::assertSame(['stmt-0', 'stmt-9', 'expr-1', 'tail-1'], array_map(static fn (CoverageSeed $seed): string => $seed->name(), $corpus->seeds));
         self::assertSame(5, $corpus->maximumBudget());
         self::assertSame(
             'SELECT 1 + 1',
@@ -215,7 +215,7 @@ final class SeedCorpusBuilderTest extends TestCase
         $corpus = $builder->build('stmt', 1);
 
         self::assertSame(['stmt#0', 'expr#0'], $corpus->unreached());
-        self::assertSame(['stmt#0', 'expr#0'], array_keys($corpus->failures));
+        self::assertSame(['stmt#0' => 'No walk of at most 1 expansions reached the production.', 'expr#0' => 'No walk of at most 1 expansions reached the production.'], $corpus->failures);
         self::assertSame(['DELETE'], array_map(static fn (CoverageSeed $seed): string => $seed->sql, $corpus->seeds));
     }
 
@@ -285,7 +285,7 @@ final class SeedCorpusBuilderTest extends TestCase
 
         self::assertSame('DELETE', $seed->sql);
         self::assertSame(1, $seed->budget);
-        self::assertNull($seed->rule);
+        self::assertNull($seed->target);
         self::assertSame(hash('sha256', ''), $seed->name());
         self::assertSame(['stmt#1'], (new SeedCorpus('stmt', [$seed], $builder->targets('stmt')))->reached());
         self::assertSame(['stmt#1'], (new SeedCorpus('stmt', [$seed], $builder->targets('stmt')))->emitted());
@@ -297,7 +297,7 @@ final class SeedCorpusBuilderTest extends TestCase
         $lexical = $this->createMock(LexicalGrammar::class);
         $generator = new SqlGenerator(
             (new Grammar('stmt', [
-                'stmt' => new ProductionRule('stmt', [new Production([new Terminal('SELECT'), new NonTerminal('expr')]), new Production([new Terminal('DELETE')])]),
+                'stmt' => new ProductionRule('stmt', [new Production([new Terminal('SELECT'), new NonTerminal('expr')], 7), new Production([new Terminal('DELETE')])]),
                 'expr' => new ProductionRule('expr', [new Production([new Terminal('1')]), new Production([new NonTerminal('expr'), new Terminal('+'), new NonTerminal('expr')])]),
                 'other' => new ProductionRule('other', [new Production([new Terminal('OTHER')])]),
             ]))->identified(),
@@ -307,7 +307,7 @@ final class SeedCorpusBuilderTest extends TestCase
         );
         $builder = new SeedCorpusBuilder($coverage, $generator->planner(), $generator->generate(...));
 
-        self::assertSame(['stmt#0', 'stmt#1', 'expr#0', 'expr#1'], array_values($builder->targets('stmt')));
+        self::assertSame(['stmt#7', 'stmt#1', 'expr#0', 'expr#1'], array_values($builder->targets('stmt')));
         self::assertSame(['expr#0', 'expr#1'], array_values($builder->targets('expr')));
     }
 }

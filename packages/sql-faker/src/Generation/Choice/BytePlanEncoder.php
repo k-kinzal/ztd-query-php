@@ -16,8 +16,8 @@ final class BytePlanEncoder
 {
     /**
      * Runs the builder once with the caller's choices and writes the header, production and lexical bytes the compiler reads.
-     * Lexical decisions the caller leaves open are made the way the compiler will make them from the padding bytes,
-     * so compiling the result rebuilds this very plan.
+     * Lexical choices end at the first null answer; the compiler makes the remaining ones from the padding bytes.
+     * The constraints must be ones the compiler accepts.
      *
      * @param GenerationPlan<bool>|null $constraints
      * @param Closure(int, non-empty-list<Production>): int $productionChoice Selects one candidate at every expansion
@@ -28,13 +28,13 @@ final class BytePlanEncoder
     {
         $constraints ??= GenerationPlan::all();
         $minimum = $builder->minimumExpansions($constraints);
-        $maximum = $constraints->expansionBudget() ?? 5000;
-        if ($minimum < 1 || $budget < $minimum || $budget > $maximum || $maximum > 1000000 || $constraints->lexicalTarget() !== null) {
-            throw new InvalidArgumentException('Require a derivation plan with 1 <= minimum expansions <= budget <= maximum expansions <= 1000000.');
+        $maximum = $constraints->expansionBudget() ?? BytePlanCompiler::MAXIMUM_BUDGET;
+        if ($budget < $minimum || $budget > $maximum) {
+            throw new InvalidArgumentException("Require a budget between the minimum of $minimum and the maximum of $maximum expansions.");
         }
         $structure = '';
         $lexical = '';
-        $padding = null;
+        $ended = false;
         $builder->build(
             $constraints,
             $budget,
@@ -43,14 +43,14 @@ final class BytePlanEncoder
                 $structure .= ByteChoices::encode($count, $index);
                 return $index;
             },
-            static function (int $count) use ($lexicalChoice, &$structure, &$lexical, &$padding): ?int {
-                $index = $padding === null && $lexicalChoice !== null ? $lexicalChoice($count) : null;
-                if ($index !== null) {
-                    $lexical .= ByteChoices::encode($count, $index);
-                    return $index;
+            static function (int $count) use ($lexicalChoice, &$lexical, &$ended): ?int {
+                $index = $ended || $lexicalChoice === null ? null : $lexicalChoice($count);
+                if ($index === null) {
+                    $ended = true;
+                    return null;
                 }
-                $padding ??= new ByteChoices(str_repeat("\0", max(0, strlen($structure) - 1 - strlen($lexical))));
-                return $padding->index($count);
+                $lexical .= ByteChoices::encode($count, $index);
+                return $index;
             },
         );
         return pack('V', $budget - $minimum) . self::interleave($structure, $lexical);

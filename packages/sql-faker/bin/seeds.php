@@ -11,6 +11,7 @@ foreach ([__DIR__ . '/../vendor/autoload.php', __DIR__ . '/../../../vendor/autol
 }
 
 use Faker\Factory;
+use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Coverage\GrammarCoverage;
 use SqlFaker\Generation\Exception\GenerationException;
 use SqlFaker\Generation\Exception\LexicalException;
@@ -40,7 +41,7 @@ use SqlFaker\SqliteProvider;
 
 function seedsParseArguments(array $argv): array
 {
-    $options = ['command' => $argv[1] ?? '', 'tags' => [], 'all' => false, 'directory' => null, 'cap' => SeedCorpusBuilder::MAXIMUM_BUDGET];
+    $options = ['command' => $argv[1] ?? '', 'tags' => [], 'all' => false, 'directory' => null, 'cap' => BytePlanCompiler::MAXIMUM_BUDGET];
     for ($i = 2; $i < count($argv); $i++) {
         if ($argv[$i] === '--all') {
             $options['all'] = true;
@@ -117,7 +118,7 @@ function seedsManifest(string $database, string $tag, SeedCorpus $corpus, int $m
     foreach (seedsFiles($corpus) as $name => $seed) {
         $seeds[] = [
             'file' => $name . '.txt',
-            'target' => $seed->rule . '#' . $seed->ordinal,
+            'target' => $seed->target,
             'budget' => $seed->budget,
             'sql' => $seed->sql,
         ];

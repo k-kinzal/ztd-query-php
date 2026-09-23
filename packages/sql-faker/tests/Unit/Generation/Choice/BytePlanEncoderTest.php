@@ -174,6 +174,78 @@ final class BytePlanEncoderTest extends TestCase
         self::assertTrue($plan->requiresNonEmpty());
     }
 
+    public function testEncodeStopsRecordingLexicalChoicesAtTheFirstNullAnswer(): void
+    {
+        $grammar = new Grammar(
+            'root',
+            [
+                'root' => new ProductionRule('root', [new Production([new NonTerminal('choice'), new NonTerminal('choice'), new NonTerminal('choice')])]),
+                'choice' => new ProductionRule('choice', [new Production([new Terminal('T')]), new Production([new Terminal('U')])]),
+            ],
+        );
+        $lexical = $this->createMock(LexicalGrammar::class);
+        $lexical->method('isNonOutput')->willReturn(false);
+        $literalDomain = new CharacterDomain(array_map(chr(...), range(0, 255)), 0, 255);
+        $lexemePipeline = new ReverseLexemeGenerator(
+            new ChoiceLexemeGenerator(
+                new ValueLexemeGenerator('T', $literalDomain, ['first', 'second'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('U', $literalDomain, ['first', 'second'], 'fixture', 'fixture-literal'),
+            ),
+            new CandidateResolver(new CombinedSpacingRule()),
+            'fixture',
+        );
+        $lexical->method('resolveSequence')->willReturnCallback(
+            static fn (TerminalSequence $sequence, ?GenerationPlan $plan, Closure $choose) => $lexemePipeline->generate($sequence, $plan, $choose),
+        );
+        $builder = new PlanBuilder($grammar, $lexical);
+        $answers = [1, null, 1];
+        $input = (new BytePlanEncoder())->encode(
+            $builder,
+            null,
+            4,
+            static fn (int $count, array $candidates): int => 0,
+            static function (int $count) use (&$answers): ?int {
+                return array_shift($answers);
+            },
+        );
+        $plan = (new BytePlanCompiler())->compile($input, $builder);
+        self::assertSame("\x00\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00", $input);
+        self::assertSame(['first', 'first', 'second'], [$plan->lexemeAt('T', 0), $plan->lexemeAt('T', 1), $plan->lexemeAt('T', 2)]);
+    }
+
+    public function testEncodeWritesTheHeaderRelativeToTheConstraintsMinimumAndDefaultMaximum(): void
+    {
+        $grammar = new Grammar(
+            'root',
+            [
+                'root' => new ProductionRule('root', [new Production([new NonTerminal('choice'), new NonTerminal('choice')])]),
+                'choice' => new ProductionRule('choice', [new Production([new Terminal('T')]), new Production([new Terminal('U')])]),
+            ],
+        );
+        $lexical = $this->createMock(LexicalGrammar::class);
+        $lexical->method('isNonOutput')->willReturn(false);
+        $literalDomain = new CharacterDomain(array_map(chr(...), range(0, 255)), 0, 255);
+        $lexemePipeline = new ReverseLexemeGenerator(
+            new ChoiceLexemeGenerator(
+                new ValueLexemeGenerator('T', $literalDomain, ['first'], 'fixture', 'fixture-literal'),
+                new ValueLexemeGenerator('U', $literalDomain, ['first'], 'fixture', 'fixture-literal'),
+            ),
+            new CandidateResolver(new CombinedSpacingRule()),
+            'fixture',
+        );
+        $lexical->method('resolveSequence')->willReturnCallback(
+            static fn (TerminalSequence $sequence, ?GenerationPlan $plan, Closure $choose) => $lexemePipeline->generate($sequence, $plan, $choose),
+        );
+        $builder = new PlanBuilder($grammar, $lexical);
+        $choice = GenerationPlan::fromRule('choice');
+        $largest = (new BytePlanEncoder())->encode($builder, null, BytePlanCompiler::MAXIMUM_BUDGET, static fn (int $count, array $candidates): int => 0);
+        $single = (new BytePlanEncoder())->encode($builder, $choice, 1, static fn (int $count, array $candidates): int => 1);
+        self::assertSame(pack('V', BytePlanCompiler::MAXIMUM_BUDGET - 3), substr($largest, 0, 4));
+        self::assertSame(BytePlanCompiler::MAXIMUM_BUDGET, (new BytePlanCompiler())->compile($largest, $builder)->expansionBudget());
+        self::assertSame("\x00\x00\x00\x00\x01", $single);
+        self::assertEquals(ProductionPattern::at(1), (new BytePlanCompiler())->compile($single, $builder, $choice)->patternAt('choice', 0));
+    }
+
     public function testInterleavePairsProductionBytesWithLexicalBytesAndPadsTheShorterStream(): void
     {
         self::assertSame('', BytePlanEncoder::interleave('', ''));

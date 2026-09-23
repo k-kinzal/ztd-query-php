@@ -18,7 +18,7 @@ final class SeedCorpusTest extends TestCase
     {
         $corpus = new SeedCorpus(
             'stmt',
-            [new CoverageSeed("\x01", 'tail', 1, 3, 'SELECT 1 AS name', ['c', 'a', 'other'], ['a']), new CoverageSeed("\x02", 'stmt', 1, 1, 'DELETE', ['b'], ['b'])],
+            [new CoverageSeed("\x01", 'tail#1', 3, 'SELECT 1 AS name', ['c', 'a', 'other'], ['a']), new CoverageSeed("\x02", 'stmt#1', 1, 'DELETE', ['b'], ['b'])],
             ['a' => 'stmt#0', 'b' => 'stmt#1', 'c' => 'tail#1', 'd' => 'tail#0'],
         );
 
@@ -29,7 +29,7 @@ final class SeedCorpusTest extends TestCase
     {
         $corpus = new SeedCorpus(
             'stmt',
-            [new CoverageSeed("\x01", 'tail', 1, 3, 'SELECT 1 AS name', ['c', 'a'], ['a']), new CoverageSeed("\x02", 'stmt', 1, 1, 'DELETE', ['b'], [])],
+            [new CoverageSeed("\x01", 'tail#1', 3, 'SELECT 1 AS name', ['c', 'a'], ['a']), new CoverageSeed("\x02", 'stmt#1', 1, 'DELETE', ['b'], [])],
             ['a' => 'stmt#0', 'b' => 'stmt#1', 'c' => 'tail#1', 'd' => 'tail#0'],
         );
 
@@ -40,7 +40,7 @@ final class SeedCorpusTest extends TestCase
     {
         $corpus = new SeedCorpus(
             'stmt',
-            [new CoverageSeed("\x01", 'tail', 1, 3, 'SELECT 1 AS name', ['c', 'a'], ['a'])],
+            [new CoverageSeed("\x01", 'tail#1', 3, 'SELECT 1 AS name', ['c', 'a'], ['a'])],
             ['a' => 'stmt#0', 'b' => 'stmt#1', 'c' => 'tail#1', 'd' => 'tail#0'],
             ['stmt#1' => 'No walk of at most 1 expansions reached the production.'],
         );
@@ -51,7 +51,7 @@ final class SeedCorpusTest extends TestCase
 
     public function testMaximumBudgetAnswersTheLargestBudgetOrZeroWithoutSeeds(): void
     {
-        $seeds = [new CoverageSeed("\x01", 'tail', 1, 3, 'SELECT 1 AS name', [], []), new CoverageSeed("\x02", 'stmt', 1, 12, 'DELETE', [], [])];
+        $seeds = [new CoverageSeed("\x01", 'tail#1', 3, 'SELECT 1 AS name', [], []), new CoverageSeed("\x02", 'stmt#1', 12, 'DELETE', [], [])];
 
         self::assertSame(12, (new SeedCorpus('stmt', $seeds, []))->maximumBudget());
         self::assertSame(0, (new SeedCorpus('stmt', [], []))->maximumBudget());

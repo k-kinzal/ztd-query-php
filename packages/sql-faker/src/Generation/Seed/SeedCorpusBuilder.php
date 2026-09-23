@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace SqlFaker\Generation\Seed;
 
 use Closure;
-use InvalidArgumentException;
 use LogicException;
 use SqlFaker\Generation\Choice\BytePlanCompiler;
 use SqlFaker\Generation\Choice\BytePlanEncoder;
@@ -26,11 +25,6 @@ use SqlFaker\Grammar\Model\Production;
 final class SeedCorpusBuilder
 {
     /**
-     * Largest budget the compiler decodes for a plan without an explicit expansion budget.
-     */
-    public const MAXIMUM_BUDGET = 5000;
-
-    /**
      * @param GrammarCoverage $coverage Recorder attached to the generator behind $generate
      * @param PlanBuilder $planner Planner of that same generator
      * @param Closure(GenerationPlan<bool>): string $generate Generates SQL from a compiled plan
@@ -45,15 +39,11 @@ final class SeedCorpusBuilder
     /**
      * Visits productions in grammar order and keeps a seed only when it reaches a production no earlier seed did.
      *
-     * @param int $cap Expansions a guided walk may spend before giving up on its target
+     * @param int $cap Expansions a guided walk may spend before giving up on its target, at most what the compiler decodes
      * @throws CoverageException When the coverage recorder is not attached to a generator
-     * @throws InvalidArgumentException When the cap exceeds what the compiler can decode
      */
-    public function build(string $root, int $cap = self::MAXIMUM_BUDGET): SeedCorpus
+    public function build(string $root, int $cap = BytePlanCompiler::MAXIMUM_BUDGET): SeedCorpus
     {
-        if ($cap < 1 || $cap > self::MAXIMUM_BUDGET) {
-            throw new InvalidArgumentException('A seed budget cap must lie between 1 and ' . self::MAXIMUM_BUDGET . '.');
-        }
         $inventory = $this->coverage->inventory();
         $graph = new ProductionGraph($inventory->grammar);
         $constraints = GenerationPlan::fromRule($root)->requiringNonEmpty();
@@ -68,9 +58,8 @@ final class SeedCorpusBuilder
                 if (isset($covered[$id])) {
                     continue;
                 }
-                $ordinal = $production->ordinal ?? $index;
                 try {
-                    $seed = $this->seed($constraints, $graph, $rule, $ordinal, $production, $cap);
+                    $seed = $this->seed($constraints, $graph, $rule, $production->ordinal ?? $index, $production, $cap);
                 } catch (GenerationException | LexicalException $failure) {
                     $failures[$targets[$id]] = $failure->getMessage();
                     continue;
@@ -109,7 +98,7 @@ final class SeedCorpusBuilder
             return is_int($index) ? $index : throw new LogicException('The replay must offer every production the guided walk chose.');
         };
         $input = (new BytePlanEncoder())->encode($this->planner, $constraints, count($productions), $replay);
-        return $this->replay($constraints, $input, $rule, $ordinal);
+        return $this->replay($constraints, $input, "$rule#$ordinal");
     }
 
     /**
@@ -117,13 +106,13 @@ final class SeedCorpusBuilder
      *
      * @param GenerationPlan<bool> $constraints
      */
-    public function replay(GenerationPlan $constraints, string $input, ?string $rule = null, ?int $ordinal = null): CoverageSeed
+    public function replay(GenerationPlan $constraints, string $input, ?string $target = null): CoverageSeed
     {
         $plan = (new BytePlanCompiler())->compile($input, $this->planner, $constraints);
         $this->coverage->reset();
         $sql = ($this->generate)($plan);
         $trace = $this->coverage->lastGeneration();
-        return new CoverageSeed($input, $rule, $ordinal, $plan->expansionBudget() ?? 0, $sql, $trace['reachedIds'] ?? [], $trace['emittedIds'] ?? []);
+        return new CoverageSeed($input, $target, $plan->expansionBudget() ?? 0, $sql, $trace['reachedIds'] ?? [], $trace['emittedIds'] ?? []);
     }
 
     /**

@@ -11,8 +11,7 @@ final class CoverageSeed
 {
     /**
      * @param string $input Bytes BytePlanCompiler decodes under the corpus contract
-     * @param string|null $rule Rule the seed was synthesized to reach, or null for a replayed input
-     * @param int|null $ordinal Alternative of that rule
+     * @param string|null $target "rule#ordinal" of the production the seed was synthesized to reach, or null for a replayed input
      * @param int $budget Expansions the decoded plan spends
      * @param string $sql Statement the seed generates
      * @param list<string> $reached Production IDs the derivation selected
@@ -20,8 +19,7 @@ final class CoverageSeed
      */
     public function __construct(
         public readonly string $input,
-        public readonly ?string $rule,
-        public readonly ?int $ordinal,
+        public readonly ?string $target,
         public readonly int $budget,
         public readonly string $sql,
         public readonly array $reached,
@@ -34,6 +32,6 @@ final class CoverageSeed
      */
     public function name(): string
     {
-        return $this->rule === null ? hash('sha256', $this->input) : $this->rule . '-' . ($this->ordinal ?? 0);
+        return $this->target === null ? hash('sha256', $this->input) : str_replace('#', '-', $this->target);
     }
 }

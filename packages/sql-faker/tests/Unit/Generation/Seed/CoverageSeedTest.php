@@ -13,7 +13,7 @@ final class CoverageSeedTest extends TestCase
 {
     public function testNameUsesTheTargetOrElseTheInputHash(): void
     {
-        self::assertSame('select_stmt-3', (new CoverageSeed("\x01", 'select_stmt', 3, 7, 'SELECT 1', [], []))->name());
-        self::assertSame(hash('sha256', "\x01"), (new CoverageSeed("\x01", null, null, 7, 'SELECT 1', [], []))->name());
+        self::assertSame('select_stmt-3', (new CoverageSeed("\x01", 'select_stmt#3', 7, 'SELECT 1', [], []))->name());
+        self::assertSame(hash('sha256', "\x01"), (new CoverageSeed("\x01", null, 7, 'SELECT 1', [], []))->name());
     }
 }

@@ -85,6 +85,8 @@ final class ProductionGuideTest extends TestCase
         $guide = new ProductionGuide($graph, 'stmt', 'tail', $alias);
 
         self::assertNull($guide->toward('stmt', [$delete]));
+        self::assertNull($guide->toward('tail', [$empty]));
+        self::assertFalse($guide->reached());
         self::assertSame([1, 2], $guide->toward('stmt', [$delete, $select]));
         self::assertSame([0, null], $guide->toward('tail', [$alias]));
         self::assertTrue($guide->reached());

@@ -13,6 +13,11 @@ use SqlFaker\Generation\Plan\GenerationPlan;
 final class BytePlanCompiler
 {
     /**
+     * Largest expansion budget decoded for constraints that carry none of their own.
+     */
+    public const MAXIMUM_BUDGET = 5000;
+
+    /**
      * No input bytes cross this boundary into the grammar walk or lexical value domains.
      * @param GenerationPlan<bool>|null $constraints
      * @return GenerationPlan<bool>
@@ -22,7 +27,7 @@ final class BytePlanCompiler
     {
         $constraints ??= GenerationPlan::all();
         $minimum = $builder->minimumExpansions($constraints);
-        $maximum = $constraints->expansionBudget() ?? 5000;
+        $maximum = $constraints->expansionBudget() ?? self::MAXIMUM_BUDGET;
         if ($minimum < 1 || $maximum < $minimum || $maximum > 1000000 || $constraints->lexicalTarget() !== null) {
             throw new InvalidArgumentException('Require a derivation plan with 1 <= minimum expansions <= maximum expansions <= 1000000.');
         }

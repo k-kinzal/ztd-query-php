@@ -30,9 +30,9 @@ final class ProductionGraphTest extends TestCase
     {
         $graph = new ProductionGraph(new Grammar('stmt', [
             'stmt' => new ProductionRule('stmt', [
+                new Production([new NonTerminal('loop')]),
                 new Production([new Terminal('SELECT'), new NonTerminal('expr'), new NonTerminal('tail')]),
                 new Production([new Terminal('DELETE')]),
-                new Production([new NonTerminal('loop')]),
             ]),
             'expr' => new ProductionRule('expr', [new Production([new Terminal('1')]), new Production([new NonTerminal('expr'), new Terminal('+'), new NonTerminal('expr')])]),
             'tail' => new ProductionRule('tail', [new Production([]), new Production([new Terminal('AS'), new NonTerminal('expr')])]),
@@ -53,14 +53,17 @@ final class ProductionGraphTest extends TestCase
         $sum = new Production([new NonTerminal('expr'), new Terminal('+'), new NonTerminal('expr')]);
         $alias = new Production([new Terminal('AS'), new Terminal('name')]);
         $empty = new Production([]);
+        $wrap = new Production([new NonTerminal('expr')]);
         $graph = new ProductionGraph(new Grammar('stmt', [
-            'stmt' => new ProductionRule('stmt', [$select, $delete]),
+            'stmt' => new ProductionRule('stmt', [$select, $delete, $wrap]),
             'expr' => new ProductionRule('expr', [$one, $sum]),
             'tail' => new ProductionRule('tail', [$alias, $empty]),
         ]));
 
         self::assertSame(1, $graph->cheapest([$select, $delete]));
+        self::assertSame(0, $graph->cheapest([$delete, $wrap]));
         self::assertSame(0, $graph->cheapest([$one, $sum]));
         self::assertSame(1, $graph->cheapest([$alias, $empty]));
+        self::assertSame(0, $graph->cheapest([$alias, new Production([new Terminal('AS'), new Terminal('name')])]));
     }
 }

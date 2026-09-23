@@ -16,9 +16,9 @@ use SqlFaker\Grammar\Model\Production;
 final class ProductionGuide
 {
     /**
-     * @var list<array{string|null, bool}> Pending symbols: the rule name, or null for a terminal, and whether the target lies below it
+     * @var list<array{string, bool}> Pending rules in leftmost order, each with whether the target lies below it
      */
-    private array $form;
+    private array $pending;
 
     private bool $reached = false;
 
@@ -37,32 +37,29 @@ final class ProductionGuide
      */
     public function __construct(private readonly ProductionGraph $graph, string $root, private readonly string $rule, private readonly Production $target)
     {
-        $this->form = [[$root, true]];
+        $this->pending = [[$root, true]];
         $this->distances = $graph->distances($rule);
     }
 
     /**
-     * Chooses the next expansion for the leftmost pending rule and remembers what the choice leaves pending.
+     * Chooses the next expansion for the leftmost pending rule and queues the rules the choice leaves pending.
      *
      * @param non-empty-list<Production> $candidates
-     * @throws LogicException When the derivation asks for a choice after every pending symbol was expanded
+     * @throws LogicException When the derivation asks for a choice after every pending rule was expanded
      */
     public function choose(int $count, array $candidates): int
     {
-        $position = 0;
-        while (isset($this->form[$position]) && $this->form[$position][0] === null) {
-            ++$position;
-        }
-        [$name, $onPath] = $this->form[$position] ?? throw new LogicException('The derivation expanded a symbol the guide does not have pending.');
-        $step = !$this->reached && $onPath && $name !== null ? $this->toward($name, $candidates) : null;
-        [$index, $descent] = $step ?? [$this->graph->cheapest($candidates), null];
+        [$name, $onPath] = array_shift($this->pending) ?? throw new LogicException('The derivation expanded a rule the guide does not have pending.');
+        [$index, $descent] = ($onPath ? $this->toward($name, $candidates) : null) ?? [$this->graph->cheapest($candidates), null];
         $chosen = $candidates[$index];
         $this->productions[] = $chosen;
         $pending = [];
         foreach ($chosen->symbols as $offset => $symbol) {
-            $pending[] = $symbol instanceof NonTerminal ? [$symbol->value, $offset === $descent] : [null, false];
+            if ($symbol instanceof NonTerminal) {
+                $pending[] = [$symbol->value, $offset === $descent];
+            }
         }
-        $this->form = [...$pending, ...array_slice($this->form, $position + 1)];
+        $this->pending = [...$pending, ...$this->pending];
         return $index;
     }
 
