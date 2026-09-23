@@ -14,7 +14,10 @@ use SqlCatalog\Catalog\Severity;
  * are two different things, and the report keeps them apart by hue. The kind
  * carries an identity hue because it is a property of the statement; the
  * resolution and the findings carry state hues because they are judgements
- * about the reading.
+ * about the reading. A search the analyzer left open is the common case in a
+ * real application, so it is written quietly, and the loud hues are kept for
+ * what is rare and worth a look: input from outside the program, and a
+ * finding of some severity.
  *
  * @visibility root
  */
@@ -51,7 +54,7 @@ final class Palette
         return match ($resolution) {
             Resolution::Resolved => 's-ok',
             Resolution::ExternalInput => 's-danger',
-            Resolution::IncompleteModel, Resolution::Incomplete => 's-warn',
+            Resolution::IncompleteModel, Resolution::Incomplete => 's-open',
             Resolution::NotAnalyzed => 's-neutral',
         };
     }

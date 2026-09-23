@@ -110,6 +110,29 @@ final class FilePage
     }
 
     /**
+     * What the page is best left from: its functions, and the other files of the directory.
+     *
+     * @return list<array{string, list<array{string, string, int|null, bool}>, string|null}>
+     */
+    public function context(ReportSite $site, string $file): array
+    {
+        $index = $site->index();
+        $anchors = [];
+        foreach ($this->anchors($site, $index->byFile()[$file] ?? []) as [$label, $id]) {
+            $anchors[] = [$label, '#' . $id, null, false];
+        }
+        $slash = strrpos($file, '/');
+        $directory = $slash === false ? '' : substr($file, 0, $slash);
+        $siblings = [];
+        foreach ($index->byDirectory()[$directory] ?? [] as $other) {
+            $otherSlash = strrpos($other, '/');
+            $siblings[] = [$otherSlash === false ? $other : substr($other, $otherSlash + 1), $site->filePage($other), count($index->byFile()[$other] ?? []), $other === $file];
+        }
+
+        return [['On this page', $anchors, null], ['Files in ' . ($directory === '' ? '(root)' : $directory . '/'), $siblings, ReportSite::FILES]];
+    }
+
+    /**
      * The sections of the page, for the navigation.
      *
      * @param list<CatalogEntry> $entries

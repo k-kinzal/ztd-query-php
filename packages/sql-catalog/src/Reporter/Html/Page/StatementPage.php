@@ -35,6 +35,11 @@ final class StatementPage
      */
     public const RELATED = 8;
 
+    /**
+     * How much of a statement the navigation beside the page shows of it.
+     */
+    public const LABEL = 40;
+
     private HtmlText $text;
 
     private SqlHighlighter $sql;
@@ -252,6 +257,34 @@ final class StatementPage
         }
 
         return '<h2 id="findings">Findings</h2><ul class="finding-list">' . $items . '</ul>';
+    }
+
+    /**
+     * What the page is best left from: the places the statement belongs to, and the rest of its function.
+     *
+     * @return list<array{string, list<array{string, string, int|null, bool}>, string|null}>
+     */
+    public function context(ReportSite $site, CatalogEntry $entry): array
+    {
+        $index = $site->index();
+        $scope = Scope::of($entry->site->function);
+        $places = [];
+        foreach ($entry->tables as $table) {
+            $places[] = ['Table ' . (new TableName($table))->label(), $site->tablePage($table), count($index->byTable()[$table] ?? []), false];
+        }
+        if ($scope->class !== null) {
+            $places[] = ['Class ' . ($scope->classShort() ?? $scope->class), $site->classPage($scope->class), count($index->byClass()[$scope->class] ?? []), false];
+        }
+        if (!$scope->isMain()) {
+            $places[] = [$scope->display() . '()', $site->functionUrl($entry), count($index->byFunction()[$entry->site->function] ?? []), false];
+        }
+        $places[] = ['File ' . $entry->site->file, $site->filePage($entry->site->file), count($index->byFile()[$entry->site->file] ?? []), false];
+        $siblings = [];
+        foreach ($index->byFunction()[$entry->site->function] ?? [] as $other) {
+            $siblings[] = [$this->text->truncate($other->sql(), self::LABEL), $site->statementPage($other->id), null, $other->id === $entry->id];
+        }
+
+        return [['Belongs to', $places, null], ['Statements of ' . $scope->display(), $siblings, $site->functionUrl($entry)]];
     }
 
     /**

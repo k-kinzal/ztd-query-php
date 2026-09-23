@@ -8,10 +8,11 @@ namespace SqlCatalog\Reporter\Html;
  * The document every page of the report is written into.
  *
  * The navigation names the routes to a statement — by table, by namespace, by
- * file, by finding, or through the whole listing — and nothing else, so it
- * costs the same on a report of fifty statements and on one of five thousand.
- * What is on the page being read is listed beside it, so a long page can be
- * jumped through rather than scrolled.
+ * file, by finding, or through the whole listing — and then whatever the page
+ * being read is best left from: the other tables beside a table, the other
+ * classes of a namespace beside a class, the places a statement belongs to
+ * beside the statement, and the sections of a long page. Each page says what
+ * that is; the shell only writes it.
  *
  * @visibility root
  */
@@ -32,6 +33,11 @@ final class PageShell
      */
     public const INDEX = 'assets/search-index.js';
 
+    /**
+     * How many entries a navigation block lists before pointing at the listing.
+     */
+    public const LIMIT = 40;
+
     private HtmlText $text;
 
     /**
@@ -47,9 +53,9 @@ final class PageShell
      *
      * @param string $page The name the page is written under, which fixes what its links are relative to
      * @param list<array{string, string|null}> $crumbs The trail to this page, as label and address pairs
-     * @param list<array{string, string}> $anchors The sections of the page, as label and identifier pairs
+     * @param list<array{string, list<array{string, string, int|null, bool}>, string|null}> $blocks The navigation the page is best left from: a title, its entries as label, address, count and whether it is the page being read, and where the rest of them are
      */
-    public function render(ReportSite $site, string $page, string $title, array $crumbs, string $body, array $anchors = []): string
+    public function render(ReportSite $site, string $page, string $title, array $crumbs, string $body, array $blocks = []): string
     {
         $prefix = $site->prefixOf($page);
 
@@ -58,12 +64,12 @@ final class PageShell
             . '<head>' . "\n"
             . '<meta charset="utf-8">' . "\n"
             . '<meta name="viewport" content="width=device-width, initial-scale=1">' . "\n"
-            . '<title>' . $this->text->escape($title) . ' — SQL catalog</title>' . "\n"
+            . '<title>' . $this->text->escape($title) . '</title>' . "\n"
             . '<link rel="stylesheet" href="' . $this->text->escape($prefix . self::STYLE) . '">' . "\n"
             . $this->bootstrap() . "\n"
             . '</head>' . "\n"
             . '<body data-root="' . $this->text->escape($prefix) . '">' . "\n"
-            . '<nav class="sidebar" id="sidebar">' . $this->sidebar($site, $page, $anchors) . '</nav>' . "\n"
+            . '<nav class="sidebar" id="sidebar">' . $this->sidebar($site, $page, $blocks) . '</nav>' . "\n"
             . '<div class="page">' . "\n"
             . '<header class="topbar">' . "\n"
             . '<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>' . "\n"
@@ -100,20 +106,19 @@ final class PageShell
     }
 
     /**
-     * The navigation shown beside every page.
+     * The navigation shown beside a page: the routes, then what the page itself is best left from.
      *
-     * @param list<array{string, string}> $anchors
+     * @param list<array{string, list<array{string, string, int|null, bool}>, string|null}> $blocks
      */
-    public function sidebar(ReportSite $site, string $page, array $anchors): string
+    public function sidebar(ReportSite $site, string $page, array $blocks): string
     {
         $prefix = $site->prefixOf($page);
+        $written = $this->routes($site, $page);
+        foreach ($blocks as [$title, $items, $rest]) {
+            $written .= $this->block($title, $items, $rest, $prefix);
+        }
 
-        return '<div class="sb-head">'
-            . '<a class="sb-site" href="' . $this->text->escape($prefix . ReportSite::INDEX) . '">SQL catalog</a>'
-            . '<span class="sb-root">' . $this->text->escape($this->text->plural($site->statistics()->statements(), 'statement')) . '</span>'
-            . '</div>'
-            . $this->routes($site, $page)
-            . $this->anchors($anchors);
+        return $written;
     }
 
     /**
@@ -143,22 +148,51 @@ final class PageShell
     }
 
     /**
-     * The sections of the page being read.
+     * One block of navigation: a title and the entries under it.
      *
-     * @param list<array{string, string}> $anchors
+     * An address starting with `#` is a section of the page being read and is
+     * written as it is; any other is relative to the root of the report. A
+     * block longer than the limit is cut, and says where the rest are.
+     *
+     * @param list<array{string, string, int|null, bool}> $items
+     * @param string|null $rest Where every entry is listed, for a block that had to be cut
      */
-    public function anchors(array $anchors): string
+    public function block(string $title, array $items, ?string $rest, string $prefix): string
     {
-        if ($anchors === []) {
+        if ($items === []) {
             return '';
         }
-        $items = '';
-        foreach ($anchors as [$label, $id]) {
-            $items .= '<li><a href="#' . $this->text->escape($id) . '" title="' . $this->text->escape($label) . '">'
-                . $this->text->escape($label) . '</a></li>';
+        $written = '';
+        foreach (array_slice($items, 0, self::LIMIT) as [$label, $href, $count, $active]) {
+            $written .= '<li' . ($active ? ' class="is-active"' : '') . '>'
+                . '<a href="' . $this->text->escape(str_starts_with($href, '#') ? $href : $prefix . $href) . '" title="' . $this->text->escape($label) . '">'
+                . $this->text->escape($label) . '</a>'
+                . ($count === null ? '' : '<span class="sb-count">' . $this->text->number($count) . '</span>') . '</li>';
+        }
+        if (count($items) > self::LIMIT && $rest !== null) {
+            $written .= '<li class="sb-more"><a href="' . $this->text->escape($prefix . $rest) . '">All ' . $this->text->number(count($items)) . '…</a></li>';
         }
 
-        return '<div class="sb-block"><p class="sb-title">On this page</p><ul class="sb-list sb-anchors">' . $items . '</ul></div>';
+        return '<div class="sb-block"><p class="sb-title">' . $this->text->escape($title) . '</p><ul class="sb-list sb-context">' . $written . '</ul></div>';
+    }
+
+    /**
+     * The sections of the page being read, as a block.
+     *
+     * @param list<array{string, string}> $anchors
+     * @return list<array{string, list<array{string, string, int|null, bool}>, string|null}>
+     */
+    public function onThisPage(array $anchors): array
+    {
+        if ($anchors === []) {
+            return [];
+        }
+        $items = [];
+        foreach ($anchors as [$label, $id]) {
+            $items[] = [$label, '#' . $id, null, false];
+        }
+
+        return [['On this page', $items, null]];
     }
 
     /**

@@ -108,4 +108,26 @@ final class StatementRowTest extends TestCase
             (new StatementRow())->meta($site, '', $entry, ['file', 'function', 'tables']),
         );
     }
+
+    public function testAttributesNameARuleOnceHoweverOftenItWasReported(): void
+    {
+        $entry = new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 4, 'f', 'pdo.query'), [
+            Finding::of(FindingRule::DynamicSql, 'x'),
+            Finding::of(FindingRule::DynamicSql, 'y'),
+        ]);
+
+        self::assertStringContainsString(' data-rule="dynamic-sql" ', (new StatementRow())->attributes($entry));
+    }
+
+    public function testMetaNamesTheFunctionUnlessTheListingAlreadyDoes(): void
+    {
+        $entry = new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 4, 'f', 'pdo.query'), [
+            Finding::of(FindingRule::AnalysisIncomplete, 'x'),
+        ]);
+        $site = new ReportSite(new Catalog([$entry]));
+        $row = new StatementRow();
+
+        self::assertSame('<a class="row-fn" href="files/a-php.html#fn-f">f</a>', $row->meta($site, '', $entry, ['file', 'tables']));
+        self::assertSame('', $row->meta($site, '', $entry, ['file', 'tables', 'function']));
+    }
 }

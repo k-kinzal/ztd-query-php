@@ -161,4 +161,33 @@ final class SqlFormatterTest extends TestCase
 
         self::assertSame(['SELECT ', true, ' FROM t'], [$parts[0]->text, $parts[1]->isGap, $parts[2]->text]);
     }
+
+    public function testFormatBreaksBeforeValuesAfterAGap(): void
+    {
+        $pattern = TextPattern::fromText('INSERT INTO ')
+            ->concat(TextPattern::fromHole(new TextHole(Origin::Property, TypeShape::unknown())))
+            ->concat(TextPattern::fromText(' VALUES (1)'));
+        $parts = (new SqlFormatter())->format(StatementPart::of($pattern));
+
+        self::assertSame(['INSERT INTO ', "\nVALUES (1)"], [$parts[0]->text, $parts[2]->text]);
+    }
+
+    public function testWordLeavesEndAloneOutsideACase(): void
+    {
+        $formatter = new SqlFormatter();
+
+        self::assertNull($formatter->word('END', null, null));
+        self::assertNull($formatter->word('WHEN', null, null));
+    }
+
+    public function testListIndentBreaksTheRowsOfAnInsertButNotTheColumnsOfASelect(): void
+    {
+        $insert = new SqlFormatter();
+        $insert->word('INSERT', null, null);
+        $select = new SqlFormatter();
+        $select->word('SELECT', null, null);
+
+        self::assertSame(2, $insert->listIndent());
+        self::assertNull($select->listIndent());
+    }
 }

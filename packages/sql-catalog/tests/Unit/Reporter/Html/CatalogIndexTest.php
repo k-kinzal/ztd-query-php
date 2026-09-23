@@ -199,4 +199,55 @@ final class CatalogIndexTest extends TestCase
     {
         self::assertSame(['b' => 2, 'a' => 1, 'c' => 1], (new CatalogIndex(new Catalog()))->mostFirst(['c' => 1, 'a' => 1, 'b' => 2]));
     }
+
+    public function testUsageOfTellsAReadFromAnotherStatementThatChangesNoRow(): void
+    {
+        $site = new CallSite('a.php', 1, 'f', 'pdo.query');
+        $index = new CatalogIndex(new Catalog());
+
+        self::assertSame('reads', $index->usageOf(new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], $site, [])));
+        self::assertSame('other', $index->usageOf(new CatalogEntry('b', StatementKind::Show, TextPattern::fromText('SHOW TABLES'), [], [], $site, [])));
+        self::assertSame('writes', $index->usageOf(new CatalogEntry('c', StatementKind::Insert, TextPattern::fromText('INSERT'), [], [], $site, [])));
+    }
+
+    public function testByClassAndByNamespaceOrderNamesWithoutRegardToCase(): void
+    {
+        $catalog = new Catalog([
+            new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'B\\B::f', 'pdo.query'), []),
+            new CatalogEntry('b', StatementKind::Select, TextPattern::fromText('SELECT 2'), [], [], new CallSite('a.php', 2, 'a\\a::f', 'pdo.query'), []),
+        ]);
+        $index = new CatalogIndex($catalog);
+
+        self::assertSame(['a\\a', 'B\\B'], array_keys($index->byClass()));
+        self::assertSame(['a', 'B'], array_keys($index->byNamespace()));
+    }
+
+    public function testByTableBreaksTiesByName(): void
+    {
+        $catalog = new Catalog([
+            new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), ['zeta'], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []),
+            new CatalogEntry('b', StatementKind::Select, TextPattern::fromText('SELECT 2'), ['alpha'], [], new CallSite('a.php', 2, 'f', 'pdo.query'), []),
+        ]);
+
+        self::assertSame(['alpha', 'zeta'], array_keys((new CatalogIndex($catalog))->byTable()));
+    }
+
+    public function testHotspotsKeepCountingPastAStatementNothingWasReportedOn(): void
+    {
+        $catalog = new Catalog([
+            new CatalogEntry('a', StatementKind::Select, TextPattern::fromText('SELECT 1'), [], [], new CallSite('a.php', 1, 'f', 'pdo.query'), []),
+            new CatalogEntry('b', StatementKind::Select, TextPattern::fromText('SELECT 2'), [], [], new CallSite('a.php', 2, 'g', 'pdo.query'), [Finding::of(FindingRule::DynamicSql, 'x')]),
+            new CatalogEntry('c', StatementKind::Select, TextPattern::fromText('SELECT 3'), [], [], new CallSite('a.php', 3, 'g', 'pdo.query'), [Finding::of(FindingRule::DynamicSql, 'x')]),
+            new CatalogEntry('d', StatementKind::Select, TextPattern::fromText('SELECT 4'), [], [], new CallSite('a.php', 4, 'h', 'pdo.query'), [Finding::of(FindingRule::DynamicSql, 'x')]),
+            new CatalogEntry('e', StatementKind::Select, TextPattern::fromText('SELECT 5'), [], [], new CallSite('a.php', 5, 'h', 'pdo.query'), [Finding::of(FindingRule::ExternalInput, 'x')]),
+        ]);
+
+        self::assertSame(
+            [
+                ['function' => 'h', 'file' => 'a.php', 'high' => 1, 'medium' => 1],
+                ['function' => 'g', 'file' => 'a.php', 'high' => 0, 'medium' => 2],
+            ],
+            (new CatalogIndex($catalog))->hotspots(),
+        );
+    }
 }

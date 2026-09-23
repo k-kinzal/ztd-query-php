@@ -115,6 +115,30 @@ final class ClassPage
     }
 
     /**
+     * What the page is best left from: its methods, and the other classes of the namespace.
+     *
+     * @return list<array{string, list<array{string, string, int|null, bool}>, string|null}>
+     */
+    public function context(ReportSite $site, string $class): array
+    {
+        $index = $site->index();
+        $scope = Scope::of($class . '::x');
+        $anchors = [];
+        foreach ($this->anchors($site, $index->byClass()[$class] ?? []) as [$label, $id]) {
+            $anchors[] = [$label, '#' . $id, null, false];
+        }
+        $siblings = [];
+        foreach ($index->byClass() as $other => $entries) {
+            $otherScope = Scope::of($other . '::x');
+            if ($otherScope->namespace === $scope->namespace) {
+                $siblings[] = [$otherScope->classShort() ?? $other, $site->classPage($other), count($entries), $other === $class];
+            }
+        }
+
+        return [['On this page', $anchors, null], ['Classes in ' . $scope->namespaceLabel(), $siblings, ReportSite::NAMESPACES]];
+    }
+
+    /**
      * The sections of the page, for the navigation.
      *
      * @param list<CatalogEntry> $entries

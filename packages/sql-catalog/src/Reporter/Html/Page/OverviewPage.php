@@ -48,7 +48,7 @@ final class OverviewPage
      */
     public function render(ReportSite $site): string
     {
-        return '<h1>SQL catalog</h1>'
+        return '<h1>Overview</h1>'
             . '<p class="lede">Every statement this source can issue, read back from the calls that receive it. '
             . 'Start from the table, class or file you are working on, or from what the analysis flagged.</p>'
             . $this->facts($site)

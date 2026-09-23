@@ -68,22 +68,22 @@ final class HtmlReporter implements ReporterInterface
     {
         $site = new ReportSite($catalog);
         $shell = new PageShell();
-        $home = ['SQL catalog', ReportSite::INDEX];
+        $home = ['Overview', ReportSite::INDEX];
 
         $files = (new ReportAssets())->all();
         $files[PageShell::INDEX] = (new SearchIndex())->render($site);
-        $files[ReportSite::INDEX] = $shell->render($site, ReportSite::INDEX, 'Overview', [['SQL catalog', null]], (new OverviewPage())->render($site), [
+        $files[ReportSite::INDEX] = $shell->render($site, ReportSite::INDEX, 'Overview', [['Overview', null]], (new OverviewPage())->render($site), $shell->onThisPage([
             ['Needs attention', 'attention'],
             ['How far the analysis got', 'coverage'],
-        ]);
+        ]));
         $files[ReportSite::STATEMENTS] = $shell->render($site, ReportSite::STATEMENTS, 'Statements', [$home, ['Statements', null]], (new StatementIndexPage())->render($site));
         $files[ReportSite::TABLES] = $shell->render($site, ReportSite::TABLES, 'Tables', [$home, ['Tables', null]], (new TableIndexPage())->render($site));
         $namespaces = new NamespacePage();
-        $files[ReportSite::NAMESPACES] = $shell->render($site, ReportSite::NAMESPACES, 'Namespaces', [$home, ['Namespaces', null]], $namespaces->render($site), $namespaces->anchors($site));
+        $files[ReportSite::NAMESPACES] = $shell->render($site, ReportSite::NAMESPACES, 'Namespaces', [$home, ['Namespaces', null]], $namespaces->render($site), $shell->onThisPage($namespaces->anchors($site)));
         $directories = new FileIndexPage();
-        $files[ReportSite::FILES] = $shell->render($site, ReportSite::FILES, 'Files', [$home, ['Files', null]], $directories->render($site), $directories->anchors($site));
+        $files[ReportSite::FILES] = $shell->render($site, ReportSite::FILES, 'Files', [$home, ['Files', null]], $directories->render($site), $shell->onThisPage($directories->anchors($site)));
         $findings = new FindingPage();
-        $files[ReportSite::FINDINGS] = $shell->render($site, ReportSite::FINDINGS, 'Findings', [$home, ['Findings', null]], $findings->render($site), $findings->anchors($site));
+        $files[ReportSite::FINDINGS] = $shell->render($site, ReportSite::FINDINGS, 'Findings', [$home, ['Findings', null]], $findings->render($site), $shell->onThisPage($findings->anchors($site)));
 
         return new CatalogArtifacts(
             array_merge($files, $this->tablePages($site, $shell), $this->classPages($site, $shell), $this->filePages($site, $shell), $this->statementPages($site, $shell)),
@@ -107,9 +107,9 @@ final class HtmlReporter implements ReporterInterface
                 $site,
                 $name,
                 $label,
-                [['SQL catalog', ReportSite::INDEX], ['Tables', ReportSite::TABLES], [$label, null]],
+                [['Overview', ReportSite::INDEX], ['Tables', ReportSite::TABLES], [$label, null]],
                 $page->render($site, $table),
-                $page->anchors($site->index(), $table),
+                $page->context($site, $table),
             );
         }
 
@@ -127,14 +127,13 @@ final class HtmlReporter implements ReporterInterface
         $pages = [];
         foreach ($site->classes() as $class) {
             $name = $site->classPage($class);
-            $entries = $site->index()->byClass()[$class] ?? [];
             $pages[$name] = $shell->render(
                 $site,
                 $name,
                 $class,
-                [['SQL catalog', ReportSite::INDEX], ['Namespaces', ReportSite::NAMESPACES], [Scope::of($class . '::x')->classShort() ?? $class, null]],
+                [['Overview', ReportSite::INDEX], ['Namespaces', ReportSite::NAMESPACES], [Scope::of($class . '::x')->classShort() ?? $class, null]],
                 $page->render($site, $class),
-                $page->anchors($site, $entries),
+                $page->context($site, $class),
             );
         }
 
@@ -152,14 +151,13 @@ final class HtmlReporter implements ReporterInterface
         $pages = [];
         foreach ($site->files() as $file) {
             $name = $site->filePage($file);
-            $entries = $site->index()->byFile()[$file] ?? [];
             $pages[$name] = $shell->render(
                 $site,
                 $name,
                 $file,
-                [['SQL catalog', ReportSite::INDEX], ['Files', ReportSite::FILES], [$file, null]],
+                [['Overview', ReportSite::INDEX], ['Files', ReportSite::FILES], [$file, null]],
                 $page->render($site, $file),
-                $page->anchors($site, $entries),
+                $page->context($site, $file),
             );
         }
 
@@ -181,8 +179,9 @@ final class HtmlReporter implements ReporterInterface
                 $site,
                 $name,
                 strtoupper($entry->kind->value) . ' at ' . $entry->site->display(),
-                [['SQL catalog', ReportSite::INDEX], ['Statements', ReportSite::STATEMENTS], [$entry->id, null]],
+                [['Overview', ReportSite::INDEX], ['Statements', ReportSite::STATEMENTS], [$entry->id, null]],
                 $page->render($site, $entry),
+                $page->context($site, $entry),
             );
         }
 

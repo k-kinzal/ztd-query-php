@@ -170,6 +170,25 @@ final class TablePage
     }
 
     /**
+     * What the page is best left from: the other tables, and its own sections.
+     *
+     * @return list<array{string, list<array{string, string, int|null, bool}>, string|null}>
+     */
+    public function context(ReportSite $site, string $table): array
+    {
+        $tables = [];
+        foreach ($site->index()->byTable() as $other => $entries) {
+            $tables[] = [(new TableName($other))->label(), $site->tablePage($other), count($entries), $other === $table];
+        }
+        $anchors = [];
+        foreach ($this->anchors($site->index(), $table) as [$label, $id]) {
+            $anchors[] = [$label, '#' . $id, null, false];
+        }
+
+        return [['On this page', $anchors, null], ['Tables', $tables, ReportSite::TABLES]];
+    }
+
+    /**
      * The sections of the page, for the navigation.
      *
      * @return list<array{string, string}>

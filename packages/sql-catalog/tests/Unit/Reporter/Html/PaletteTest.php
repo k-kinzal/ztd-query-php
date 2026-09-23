@@ -60,8 +60,8 @@ final class PaletteTest extends TestCase
         return [
             [Resolution::Resolved, 's-ok'],
             [Resolution::ExternalInput, 's-danger'],
-            [Resolution::IncompleteModel, 's-warn'],
-            [Resolution::Incomplete, 's-warn'],
+            [Resolution::IncompleteModel, 's-open'],
+            [Resolution::Incomplete, 's-open'],
             [Resolution::NotAnalyzed, 's-neutral'],
         ];
     }
