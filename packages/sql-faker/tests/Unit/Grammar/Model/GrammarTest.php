@@ -104,4 +104,21 @@ final class GrammarTest extends TestCase
         self::assertEquals($identified, $identified->identified());
     }
 
+
+    public function testSourceRuleSurvivesSerializationAndIdentification(): void
+    {
+        $grammar = new Grammar('@plan0', ['@plan0' => new ProductionRule('@plan0', [new Production([new Terminal('T')], 4)])], ['@plan0' => 'root']);
+        $restored = unserialize(serialize($grammar));
+        self::assertInstanceOf(Grammar::class, $restored);
+        self::assertSame('root', $restored->identified()->sourceRule('@plan0'));
+        self::assertSame('other', $restored->sourceRule('other'));
+    }
+
+    public function testSourceOrdinalUsesAdaptedIndicesUntilAGrammarIsSpecialized(): void
+    {
+        $rules = ['root' => new ProductionRule('root', [new Production([new Terminal('T')], 4)])];
+        self::assertSame(0, (new Grammar('root', $rules))->sourceOrdinal('root', 0));
+        self::assertSame(4, (new Grammar('root', $rules, ['root' => 'original']))->sourceOrdinal('root', 0));
+    }
+
 }

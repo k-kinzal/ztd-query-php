@@ -106,10 +106,12 @@ final class SqlGenerator
      */
     public function realize(string $root, GenerationPlan $plan): string
     {
-        $tokens = ($this->tokens ??= new TokenGenerator($this->grammar, $this->faker, $this->lexicalGrammar->isNonOutput(...)))->generate($root, $plan);
+        $generator = $this->tokens ??= new TokenGenerator($this->grammar, $this->faker, $this->lexicalGrammar->isNonOutput(...));
+        $tokens = $generator->generate($root, $plan);
         $this->lastSequence = $this->rewriter?->rewrite($tokens) ?? $tokens;
         $this->coverage?->recordSequence($this->lastSequence);
-        $this->lastOutput = $this->lexicalGrammar->resolveSequence($this->lastSequence, $plan, fn (int $count): int => $this->faker->numberBetween(0, $count - 1));
+        $lexicalPlan = $generator->lastScope?->lexicalPlan($this->lastSequence, $plan, fn (int $count): int => $this->faker->numberBetween(0, $count - 1)) ?? $plan;
+        $this->lastOutput = $this->lexicalGrammar->resolveSequence($this->lastSequence, $lexicalPlan, fn (int $count): int => $this->faker->numberBetween(0, $count - 1));
         $this->coverage?->recordOutput($this->lastOutput);
         return (new SqlSerializer())->serialize($this->lastOutput->pieces());
     }
