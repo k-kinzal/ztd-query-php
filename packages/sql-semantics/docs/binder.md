@@ -105,6 +105,8 @@ subnamespaces under `Model\Statement`.
 | MySQL: `DROP RESOURCE GROUP workers FORCE` | `DropResourceGroupStatement` | One group `name` and a `force` flag requesting reassignment of affected threads to their default groups. |
 | MySQL: `DROP USER CURRENT_USER, 'reader'@'localhost'` | `DropUsersStatement` | Nonempty `accounts`: named `AccountName` values or `CurrentAccount::Authenticated`. Usernames and optional hosts remain separate. |
 | MySQL: `DROP ROLE IF EXISTS reader` | `DropRolesStatement` | Nonempty named `roles` and `ifExists`; each role has its own username and optional host. |
+| MySQL: `CREATE SPATIAL REFERENCE SYSTEM 4120 NAME 'Greek' DEFINITION 'coordinate-system text'` | `CreateSpatialReferenceSystemStatement` | Required nonzero unsigned 32-bit `srid`, `SpatialDefinition`, and a mutually exclusive `CreationPolicy`: require a new definition, ignore an existing one, or replace it. |
+| MySQL: `DROP SPATIAL REFERENCE SYSTEM IF EXISTS 4120` | `DropSpatialReferenceSystemStatement` | Required nonzero unsigned 32-bit `srid` and `ifExists`; no declaration metadata. |
 | MySQL: `DROP FUNCTION IF EXISTS app.f`, `DROP PROCEDURE app.p` | `Definition\MySql\DropFunctionStatement`, `DropProcedureStatement` | One required `QualifiedName` and an existence policy. There is no overload signature or dependency policy. |
 | PostgreSQL: `DROP FUNCTION f, g(), h(IN integer) CASCADE` | `Definition\PostgreSql\DropFunctionsStatement` | Nonempty `targets`: `RoutineByName` leaves arguments unspecified; `RoutineBySignature` owns the ordered parameters, including an explicit empty list. `ifExists` and `DropBehavior` apply to the request. |
 | PostgreSQL: `DROP PROCEDURE p(text)`, `DROP ROUTINE r` | `DropProceduresStatement`, `DropRoutinesStatement` | The same typed overload selectors, with distinct statement types for procedure-only and general routine lookup. |
@@ -150,6 +152,15 @@ subnamespaces under `Model\Statement`.
 | `REINDEX INDEX app.ix`, `REINDEX TABLE app.t`, `REINDEX SCHEMA app` | `ReindexObjectStatement` | Required object name, `ReindexObjectKind`, and PostgreSQL rebuild options. |
 | `REINDEX DATABASE`, `REINDEX SYSTEM` | `ReindexDatabaseStatement` | User-table or system-table index selection in the current database. An optional database name records an explicit name assertion. |
 | SQLite `REINDEX`, `REINDEX ix` | `ReindexAllStatement`, `ReindexNamedStatement` | Rebuild all indexes, or resolve a required SQLite index/table/collation name. |
+
+Spatial reference declarations are available in the selected MySQL 8+ grammars.
+`SpatialDefinition` requires `name` and `definition` text literals. Optional
+`Organization` pairs its name literal with an unsigned 32-bit authority identifier;
+`description` is a separate optional literal. Attribute order has no semantic
+meaning and duplicate attributes are rejected. Binding describes these operands
+without interpreting the coordinate-system definition text or reading existing
+spatial systems. Replacing metadata supplies a complete `SpatialDefinition`, so
+required attributes cannot disappear during a transformation.
 
 INSERT, UPDATE, DELETE, and MERGE retain ordered RETURNING `outputs` where the
 selected language provides them. Their `affectedTables()` method identifies write

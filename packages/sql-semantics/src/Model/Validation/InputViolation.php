@@ -12,6 +12,8 @@ namespace SqlSemantics\Model\Validation;
  */
 enum InputViolation: string
 {
+    case SpatialReferenceId = 'spatial-reference-id';
+    case SpatialAttribute = 'spatial-attribute';
     case TypeModifier = 'type-modifier';
     case RoutineName = 'routine-name';
     case AggregateArgumentMode = 'aggregate-argument-mode';
@@ -56,56 +58,61 @@ enum InputViolation: string
     case SetWidth = 'set-column-count';
     case AlterAlgorithm = 'invalid-alter-algorithm';
     case AlterLock = 'invalid-alter-lock';
+    /** @var array<string, string> */
+    private const MESSAGES = [
+        'spatial-reference-id' => 'Spatial reference system DDL requires a nonzero unsigned 32-bit SRID and unsigned 32-bit organization identifiers.',
+        'spatial-attribute' => 'A spatial definition requires exactly one NAME and DEFINITION and no duplicate attributes.',
+        'type-modifier' => 'PostgreSQL type modifiers require simple numeric or text constants or unqualified identifiers.',
+        'routine-name' => 'A routine name requires identifier components without subscripts or wildcards.',
+        'aggregate-argument-mode' => 'An aggregate signature accepts only input and variadic arguments.',
+        'aggregate-variadic-signature' => 'A variadic direct argument requires one variadic aggregated argument of the same declared type.',
+        'discarded-value' => 'DO requires scalar expressions and cannot expand table columns without a table input.',
+        'histogram-target' => 'A histogram request requires exactly one target table.',
+        'histogram-import' => 'Imported histogram data describes exactly one column.',
+        'histogram-buckets' => 'A histogram bucket limit must be an integer from 1 to 1024.',
+        'temporal-operand' => 'Temporal arithmetic requires one scalar temporal input and one scalar interval quantity.',
+        'table-columns' => 'A table declaration requires at least one column in this SQL dialect.',
+        'xa-identifier' => 'An XA identifier requires bounded byte-string components and a nonnegative integer format identifier.',
+        'delete-target' => 'A MySQL DELETE destination requires a named table reference.',
+        'extraction-field' => 'EXTRACT requires a field defined by the database language.',
+        'query-operand' => 'A query operand requires a SELECT, VALUES, or TABLE operation.',
+        'function-arity' => 'The function or conditional operation requires its declared number of arguments.',
+        'reindex-option' => 'REINDEX requires a known option and a value in its declared domain.',
+        'concurrent-system-reindex' => 'System-table indexes cannot be rebuilt concurrently.',
+        'ordered-set-window' => 'An ordered-set aggregate cannot be used as a window function.',
+        'default-context' => 'DEFAULT requires a column write or a setting assignment.',
+        'foreign-key-column-count' => 'A foreign key requires matching local and referenced column counts.',
+        'invalid-concurrent-index-drop' => 'Concurrent index deletion requires one index and cannot cascade.',
+        'json-option' => 'The JSON option is outside the domain accepted by this operation.',
+        'xml-option' => 'The XML column option is unknown or specified more than once.',
+        'cursor-options' => 'A cursor cannot request both SCROLL and NO SCROLL.',
+        'scalar-query-width' => 'A scalar subquery requires exactly one result column.',
+        'comparison-width' => 'Compared row operands must have equal widths.',
+        'joined-mutation-pagination' => 'A MySQL joined mutation cannot specify ORDER BY or LIMIT.',
+        'qualified-trigger-target' => 'A SQLite trigger mutation requires an unqualified target name.',
+        'trigger-index-hint' => 'A SQLite trigger mutation cannot specify an index hint.',
+        'added-column-key' => 'SQLite ADD COLUMN cannot declare a PRIMARY KEY or UNIQUE constraint.',
+        'multiple-primary-keys' => 'A table can declare only one primary key.',
+        'invalid-output-position' => 'ORDER BY position is outside the result.',
+        'invalid-explain-option' => 'The EXPLAIN option is not defined by this database language.',
+        'invalid-explain-setting' => 'The EXPLAIN option requires a value in its declared domain.',
+        'invalid-explain-combination' => 'The EXPLAIN options have incompatible execution requirements.',
+        'assignment-column-count' => 'Assignment destinations and values must have the same width.',
+        'tuple-source' => 'A tuple assignment requires a row constructor or a row-producing query.',
+        'insert-column-count' => 'INSERT destinations and input values must have the same width.',
+        'values-column-count' => 'VALUES rows must have the same width.',
+        'set-column-count' => 'Set-operation operands must have the same result width.',
+        'invalid-alter-algorithm' => 'The requested ALTER algorithm is not defined by this database language.',
+        'invalid-alter-lock' => 'The requested ALTER lock mode is not defined by this database language.',
+        'cte-column-count' => 'CTE aliases must match the declared query result positions.',
+        'duplicate-cte' => 'A WITH clause cannot define the same relation name twice.',
+    ];
+
     /**
      * Describes the operand invariant identified by this diagnosis.
      */
     public function message(): string
     {
-        return [
-            'type-modifier' => 'PostgreSQL type modifiers require simple numeric or text constants or unqualified identifiers.',
-            'routine-name' => 'A routine name requires identifier components without subscripts or wildcards.',
-            'aggregate-argument-mode' => 'An aggregate signature accepts only input and variadic arguments.',
-            'aggregate-variadic-signature' => 'A variadic direct argument requires one variadic aggregated argument of the same declared type.',
-            'discarded-value' => 'DO requires scalar expressions and cannot expand table columns without a table input.',
-            'histogram-target' => 'A histogram request requires exactly one target table.',
-            'histogram-import' => 'Imported histogram data describes exactly one column.',
-            'histogram-buckets' => 'A histogram bucket limit must be an integer from 1 to 1024.',
-            'temporal-operand' => 'Temporal arithmetic requires one scalar temporal input and one scalar interval quantity.',
-            'table-columns' => 'A table declaration requires at least one column in this SQL dialect.',
-            'xa-identifier' => 'An XA identifier requires bounded byte-string components and a nonnegative integer format identifier.',
-            'delete-target' => 'A MySQL DELETE destination requires a named table reference.',
-            'extraction-field' => 'EXTRACT requires a field defined by the database language.',
-            'query-operand' => 'A query operand requires a SELECT, VALUES, or TABLE operation.',
-            'function-arity' => 'The function or conditional operation requires its declared number of arguments.',
-            'reindex-option' => 'REINDEX requires a known option and a value in its declared domain.',
-            'concurrent-system-reindex' => 'System-table indexes cannot be rebuilt concurrently.',
-            'ordered-set-window' => 'An ordered-set aggregate cannot be used as a window function.',
-            'default-context' => 'DEFAULT requires a column write or a setting assignment.',
-            'foreign-key-column-count' => 'A foreign key requires matching local and referenced column counts.',
-            'invalid-concurrent-index-drop' => 'Concurrent index deletion requires one index and cannot cascade.',
-            'json-option' => 'The JSON option is outside the domain accepted by this operation.',
-            'xml-option' => 'The XML column option is unknown or specified more than once.',
-            'cursor-options' => 'A cursor cannot request both SCROLL and NO SCROLL.',
-            'scalar-query-width' => 'A scalar subquery requires exactly one result column.',
-            'comparison-width' => 'Compared row operands must have equal widths.',
-            'joined-mutation-pagination' => 'A MySQL joined mutation cannot specify ORDER BY or LIMIT.',
-            'qualified-trigger-target' => 'A SQLite trigger mutation requires an unqualified target name.',
-            'trigger-index-hint' => 'A SQLite trigger mutation cannot specify an index hint.',
-            'added-column-key' => 'SQLite ADD COLUMN cannot declare a PRIMARY KEY or UNIQUE constraint.',
-            'multiple-primary-keys' => 'A table can declare only one primary key.',
-            'invalid-output-position' => 'ORDER BY position is outside the result.',
-            'invalid-explain-option' => 'The EXPLAIN option is not defined by this database language.',
-            'invalid-explain-setting' => 'The EXPLAIN option requires a value in its declared domain.',
-            'invalid-explain-combination' => 'The EXPLAIN options have incompatible execution requirements.',
-            'assignment-column-count' => 'Assignment destinations and values must have the same width.',
-            'tuple-source' => 'A tuple assignment requires a row constructor or a row-producing query.',
-            'insert-column-count' => 'INSERT destinations and input values must have the same width.',
-            'values-column-count' => 'VALUES rows must have the same width.',
-            'set-column-count' => 'Set-operation operands must have the same result width.',
-            'invalid-alter-algorithm' => 'The requested ALTER algorithm is not defined by this database language.',
-            'invalid-alter-lock' => 'The requested ALTER lock mode is not defined by this database language.',
-            'cte-column-count' => 'CTE aliases must match the declared query result positions.',
-            'duplicate-cte' => 'A WITH clause cannot define the same relation name twice.',
-        ][$this->value];
+        return self::MESSAGES[$this->value];
     }
 }
