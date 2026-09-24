@@ -40,6 +40,7 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(TypeShape::class)]
 #[UsesClass(\SqlCatalog\Php\ClassShape::class)]
 #[UsesClass(\SqlCatalog\Extension\LaravelExtension::class)]
+#[UsesClass(\SqlCatalog\Extension\Model\ModelSet::class)]
 final class SinkMatcherTest extends TestCase
 {
     public function testMatchMethodFindsTheCallOnAKnownReceiver(): void
@@ -156,9 +157,10 @@ final class SinkMatcherTest extends TestCase
         self::assertFalse($matcher->models(Domain::of(new ObjectTerm('App\\Repository'))));
     }
 
-    public function testHasBuildersDependsOnTheEnabledExtensions(): void
+    public function testClassMatchesUsesRegisteredTypeRelationsOnly(): void
     {
-        self::assertFalse((new SinkMatcher([], new ProgramIndex()))->hasBuilders());
-        self::assertTrue((new SinkMatcher((new \SqlCatalog\Extension\LaravelExtension())->sinks(), new ProgramIndex()))->hasBuilders());
+        $models = new \SqlCatalog\Extension\Model\ModelSet(classRelations: [static fn (string $class, string $expected): bool => $class === 'VendorConnection' && $expected === 'Driver']);
+        self::assertTrue((new SinkMatcher([], new ProgramIndex(), $models))->classMatches('VendorConnection', 'Driver'));
+        self::assertFalse((new SinkMatcher([], new ProgramIndex()))->classMatches('VendorConnection', 'Driver'));
     }
 }

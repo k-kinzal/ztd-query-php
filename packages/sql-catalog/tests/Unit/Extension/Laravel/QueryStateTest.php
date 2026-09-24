@@ -2,12 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Analysis\Laravel;
+namespace Tests\Unit\Extension\Laravel;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
-use SqlCatalog\Analysis\Laravel\QueryState;
 use SqlCatalog\Evaluation\ArrayEntry;
 use SqlCatalog\Evaluation\ArrayTerm;
 use SqlCatalog\Evaluation\Domain;
@@ -15,6 +14,7 @@ use SqlCatalog\Evaluation\LiteralTerm;
 use SqlCatalog\Evaluation\ObjectTerm;
 use SqlCatalog\Evaluation\OpaqueTerm;
 use SqlCatalog\Evaluation\PatternTerm;
+use SqlCatalog\Extension\Laravel\QueryState;
 use SqlCatalog\Text\LiteralText;
 use SqlCatalog\Text\TextGeneralization;
 use SqlCatalog\Text\TextHole;

@@ -12,7 +12,7 @@ use SqlCatalog\Sql\StatementKind;
  *
  * @visibility root
  */
-final class LaravelExtension implements ExtensionInterface
+final class LaravelExtension implements Model\ModelProviderInterface
 {
     private const FACADE = 'Illuminate\Support\Facades\DB';
 
@@ -70,12 +70,26 @@ final class LaravelExtension implements ExtensionInterface
 
         foreach ($this->builderMethods() as $method => $kind) {
             foreach (['query' => 'Illuminate\\Database\\Query\\Builder', 'eloquent' => 'Illuminate\\Database\\Eloquent\\Builder', 'model' => 'Illuminate\\Database\\Eloquent\\Model'] as $type => $class) {
-                $sinks[] = new SinkSpec('laravel.' . $type . '.' . $method, SinkCallKind::Method, $class, $method, SinkRole::Builder, sqlParameter: 0, valuesParameter: 1, kind: $kind);
+                $sinks[] = new SinkSpec('laravel.' . $type . '.' . $method, SinkCallKind::Method, $class, $method, SinkRole::Modelled, kind: $kind, model: 'laravel.builder');
             }
-            $sinks[] = new SinkSpec('laravel.model.static.' . $method, SinkCallKind::StaticCall, 'Illuminate\\Database\\Eloquent\\Model', $method, SinkRole::Builder, sqlParameter: 0, valuesParameter: 1, kind: $kind);
+            $sinks[] = new SinkSpec('laravel.model.static.' . $method, SinkCallKind::StaticCall, 'Illuminate\\Database\\Eloquent\\Model', $method, SinkRole::Modelled, kind: $kind, model: 'laravel.builder');
         }
 
         return $sinks;
+    }
+
+    /**
+     * Laravel semantics are contributed only when this extension is enabled.
+     */
+    public function models(Model\ModelContext $context): Model\ModelSet
+    {
+        $calls = new Laravel\CallModel($context);
+
+        return new Model\ModelSet(
+            calls: [$calls->evaluate(...)],
+            queries: ['laravel.builder' => new Laravel\BuilderQueries($context->index)],
+            classRelations: [$calls->matchesClass(...)],
+        );
     }
 
     /**

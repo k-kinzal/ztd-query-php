@@ -7,8 +7,8 @@ namespace SqlCatalog\Extension;
 /**
  * A named set of database calls the analyzer should recognise.
  *
- * Support for a framework or an ORM is a matter of naming the calls it uses to
- * reach the database; nothing else about the analysis changes.
+ * Raw APIs declare sinks and globals. Extensions implementing ModelProviderInterface
+ * additionally register source-level call transformations and statement compilers.
  *
  * @visibility root
  */

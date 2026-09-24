@@ -131,6 +131,26 @@ final class ExtensionRegistry
     }
 
     /**
+     * Optional model providers, in enabled extension order.
+     *
+     * @param list<string> $names
+     * @return list<Model\ModelProviderInterface>
+     * @throws UnknownExtensionException When one of the names is not registered
+     */
+    public function modelProvidersOf(array $names): array
+    {
+        $providers = [];
+        foreach ($names as $name) {
+            $extension = $this->get($name);
+            if ($extension instanceof Model\ModelProviderInterface) {
+                $providers[] = $extension;
+            }
+        }
+
+        return $providers;
+    }
+
+    /**
      * The registered extensions, in alphabetical order.
      *
      * @return list<ExtensionInterface>

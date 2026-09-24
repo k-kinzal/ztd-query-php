@@ -2,19 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Analysis\Laravel;
+namespace Tests\Unit\Extension\Laravel;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlCatalog\Analysis\FunctionScope;
 use SqlCatalog\Analysis\Interpreter;
-use SqlCatalog\Analysis\Laravel\BuilderCalls;
-use SqlCatalog\Analysis\Laravel\Clauses;
-use SqlCatalog\Analysis\Laravel\Grammar;
-use SqlCatalog\Analysis\Laravel\ModelMetadata;
-use SqlCatalog\Analysis\Laravel\Predicates;
-use SqlCatalog\Analysis\Laravel\QueryState;
 use SqlCatalog\Evaluation\ArrayEntry;
 use SqlCatalog\Evaluation\ArrayTerm;
 use SqlCatalog\Evaluation\Domain;
@@ -24,6 +18,12 @@ use SqlCatalog\Evaluation\ObjectMemory;
 use SqlCatalog\Evaluation\ObjectTerm;
 use SqlCatalog\Evaluation\OpaqueTerm;
 use SqlCatalog\Evaluation\PatternTerm;
+use SqlCatalog\Extension\Laravel\BuilderCalls;
+use SqlCatalog\Extension\Laravel\Clauses;
+use SqlCatalog\Extension\Laravel\Grammar;
+use SqlCatalog\Extension\Laravel\ModelMetadata;
+use SqlCatalog\Extension\Laravel\Predicates;
+use SqlCatalog\Extension\Laravel\QueryState;
 use SqlCatalog\Php\ProgramIndex;
 use SqlCatalog\Text\LiteralText;
 use SqlCatalog\Text\TextGeneralization;

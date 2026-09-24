@@ -43,18 +43,19 @@ final class FreeNames
      */
     private array $sinkArguments = [];
 
-    private bool $builders = false;
+    private bool $trackObjectEffects = false;
 
     /**
      * Builds the reader over the database calls whose arguments it reads selectively.
      *
      * @param list<SinkSpec> $sinks
      */
-    public function __construct(array $sinks = [], ?ExternalInput $external = null)
+    public function __construct(array $sinks = [], ?ExternalInput $external = null, bool $trackObjectEffects = false)
     {
         $this->external = $external ?? new ExternalInput();
+        $this->trackObjectEffects = $trackObjectEffects;
         foreach ($sinks as $sink) {
-            $this->builders = $this->builders || $sink->role === SinkRole::Builder;
+            $this->trackObjectEffects = $this->trackObjectEffects || $sink->role === SinkRole::Modelled;
             $name = strtolower(ltrim($sink->name, '\\'));
             $positions = $this->sinkArguments[$name] ?? [];
             if (($sink->role === SinkRole::Compose || $sink->role === SinkRole::Prepare) && $sink->sqlParameter !== null) {
@@ -134,7 +135,7 @@ final class FreeNames
      */
     public function sinkArgumentsOf(Expr\CallLike $call): ?array
     {
-        if ($this->builders) {
+        if ($this->trackObjectEffects) {
             return null;
         }
         $name = null;
@@ -180,7 +181,7 @@ final class FreeNames
      */
     public function targetReads(Node $target): array
     {
-        if ($this->builders && $target instanceof Expr\PropertyFetch) {
+        if ($this->trackObjectEffects && $target instanceof Expr\PropertyFetch) {
             return $this->read($target->var);
         }
         if ($target instanceof Expr\ArrayDimFetch) {

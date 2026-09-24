@@ -114,4 +114,16 @@ final class ObjectMemoryTest extends TestCase
         $right->remember($a);
         self::assertSame($left->signature(), $right->signature());
     }
+    public function testInvalidateOpensAliasedObjectsInsideArraysAndKeepsUntrackedValues(): void
+    {
+        $memory = new ObjectMemory();
+        $object = new ObjectTerm('Demo', identity: 'demo:1', state: new ArrayTerm([]));
+        $value = Domain::fromTerms([new ArrayTerm([new ArrayEntry(null, Domain::of($object))]), new ObjectTerm('Untracked')], true, true);
+        $opened = $memory->invalidate($value);
+        self::assertNull($memory->read(Domain::of($object))->soleObject()?->state);
+        self::assertTrue($opened->widened);
+        self::assertTrue($opened->combined);
+        self::assertSame('Untracked', $opened->terms[1]->type()->soleClassName());
+    }
+
 }

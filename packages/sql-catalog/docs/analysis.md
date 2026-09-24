@@ -51,9 +51,15 @@ the SQL argument is (below). That decides whether it is a database call:
 The budget is refilled for every call, so a large file does not starve the calls
 written at its end.
 
-## Framework builder state
+## Extension models and object state
 
-Laravel execution calls derive the receiver together with the terminal arguments.
+Enabled extensions register call transformations, statement compilers and type
+relations through `ModelProviderInterface`. A statement compiler lists the AST
+expressions it needs; the core derives them together and passes the resulting
+domains back for compilation. The output retains SQL fragments, bindings and
+uncertainty alongside the core's caller and branch evidence.
+
+For stateful APIs, such as Laravel, this includes the receiver and terminal arguments.
 `ObjectEffects` adds conservative alias and mutation dependencies to the same
 backward slice used for SQL strings. `ObjectMemory` keeps immutable snapshots by
 allocation identity within each run; copying a run isolates later mutations.
@@ -63,8 +69,8 @@ The Laravel model applies supported operations to those snapshots and compiles
 SQL and ordered bindings at the execution call. Those values pass through the
 ordinary statement recorder and value binder. Unsupported effects carry a gap
 through later operations, so a subsequent recognized method cannot erase it.
-See [Laravel support](laravel.md) for grammar configuration and the supported
-subset.
+The core has no framework-specific dispatch. See [extension models](extensions.md)
+for the public contract and [Laravel support](laravel.md) for its supported subset.
 
 ## Walking back
 
@@ -324,8 +330,8 @@ injected SQL. A cast to `string` does not.
 
 Each of these produces a gap with a stated reason, never a wrong answer:
 
-- SQL assembled at runtime from data the source does not contain: a query
-  builder, an ORM's generated SQL, a statement read from a file or a database.
+- SQL assembled from data the source does not contain, including unmodelled
+  builder or ORM operations and statements read from a file or a database.
 - A value a hook or a callback decides, such as WordPress's `apply_filters()`.
 - A global a called function assigns. `unset($wpdb); require_wp_db();` leaves
   `$wpdb` unknown to the walk, because the call is not read for what it does to

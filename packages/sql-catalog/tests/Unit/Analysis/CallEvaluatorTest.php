@@ -92,8 +92,8 @@ use SqlCatalog\Text\TextPattern;
 #[UsesClass(\SqlCatalog\Analysis\Derivation\Solution::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\SourceTree::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\CallerSet::class)]
-#[UsesClass(\SqlCatalog\Analysis\Laravel\BuilderCalls::class)]
-#[UsesClass(\SqlCatalog\Analysis\Laravel\QueryState::class)]
+#[UsesClass(\SqlCatalog\Extension\Laravel\BuilderCalls::class)]
+#[UsesClass(\SqlCatalog\Extension\Laravel\QueryState::class)]
 #[UsesClass(\SqlCatalog\Evaluation\ObjectMemory::class)]
 final class CallEvaluatorTest extends TestCase
 {
@@ -759,17 +759,16 @@ final class CallEvaluatorTest extends TestCase
         self::assertSame('string', $method->type()->display());
     }
 
-    public function testInvalidateEscapesLeavesAnAliasedBuilderOpen(): void
+    public function testInvalidateEscapesOpensAliasedObjectState(): void
     {
         $index = new ProgramIndex();
-        $builders = new \SqlCatalog\Analysis\Laravel\BuilderCalls($index);
-        $object = $builders->allocate(\SqlCatalog\Analysis\Laravel\BuilderCalls::QUERY, new \SqlCatalog\Analysis\Laravel\QueryState());
+        $object = new ObjectTerm('DemoObject', identity: 'demo:1', state: new \SqlCatalog\Evaluation\ArrayTerm([]));
         $env = new Environment(['q' => Domain::of($object), 'alias' => Domain::of($object)]);
-        $calls = new CallEvaluator($index, new \SqlCatalog\Analysis\SinkMatcher([], $index), new \SqlCatalog\Analysis\BuiltinCallModel(), new \SqlCatalog\Analysis\ExternalInput(), new \SqlCatalog\Php\NodeText(), builders: $builders);
+        $calls = new CallEvaluator($index, new \SqlCatalog\Analysis\SinkMatcher([], $index), new \SqlCatalog\Analysis\BuiltinCallModel(), new \SqlCatalog\Analysis\ExternalInput(), new \SqlCatalog\Php\NodeText());
         $call = new FuncCall(new Name('customize'), [new \PhpParser\Node\Arg(new \PhpParser\Node\Expr\Variable('q'))]);
         $calls->invalidateEscapes($call, $env);
         $read = $env->read('alias')->soleObject();
         self::assertNotNull($read);
-        self::assertFalse(\SqlCatalog\Analysis\Laravel\QueryState::from($read)->get('problem')->isExact());
+        self::assertNull($read->state);
     }
 }

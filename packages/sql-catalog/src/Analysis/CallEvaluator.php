@@ -7,10 +7,11 @@ namespace SqlCatalog\Analysis;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use SqlCatalog\Analysis\Derivation\CalleeReturns;
-use SqlCatalog\Analysis\Laravel\BuilderCalls;
 use SqlCatalog\Evaluation\Domain;
 use SqlCatalog\Evaluation\Environment;
 use SqlCatalog\Evaluation\ObjectTerm;
+use SqlCatalog\Extension\Model\CallContext;
+use SqlCatalog\Extension\Model\ModelSet;
 use SqlCatalog\Extension\SinkRole;
 use SqlCatalog\Extension\SinkSpec;
 use SqlCatalog\Php\FunctionShape;
@@ -55,7 +56,7 @@ final class CallEvaluator
         ExternalInput $external,
         NodeText $text,
         ?CalleeReturns $returns = null,
-        private readonly ?BuilderCalls $builders = null,
+        private readonly ?ModelSet $models = null,
     ) {
         $this->index = $index;
         $this->sinks = $sinks;
@@ -81,6 +82,10 @@ final class CallEvaluator
         $arguments = $this->arguments($node, $environment, $scope, $expressions);
 
         if ($node instanceof Expr\New_) {
+            $modelled = $this->models?->evaluate(new CallContext($node, $arguments, $environment, $scope, $expressions, className: $node->class instanceof Node\Name ? $node->class->toString() : null));
+            if ($modelled !== null) {
+                return $modelled;
+            }
             $this->invalidateEscapes($node, $environment);
             return $this->evaluateInstantiation($node, $scope);
         }
@@ -148,23 +153,18 @@ final class CallEvaluator
         $name = $node->name instanceof Node\Identifier ? $node->name->toString() : null;
         if ($name === null) {
             $this->invalidateEscapes($node, $environment);
-            $this->builders?->unsupported($receiver ?? $expressions->evaluate($node->var, $environment, $scope), $environment, 'Dynamic builder method');
+            $environment->objects()->invalidate($receiver ?? $expressions->evaluate($node->var, $environment, $scope));
             return Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node));
         }
 
         $receiver = $environment->refresh($receiver ?? $expressions->evaluate($node->var, $environment, $scope));
         $sink = $this->sinks->matchMethod($receiver, $name);
-        if ($sink?->role === SinkRole::Builder && $this->builders !== null) {
-            return $this->builders->execution($receiver, strtolower($name), $arguments, $environment);
+        $modelled = $this->models?->evaluate(new CallContext($node, $arguments, $environment, $scope, $expressions, $name, $receiver, sink: $sink));
+        if ($modelled !== null) {
+            return $modelled;
         }
         if ($sink !== null) {
             return $this->applySink($sink, $node, $arguments, $scope);
-        }
-        $modelled = $this->builders?->methodCall($receiver, $name, $arguments, $environment, $node, $scope, $expressions);
-        if ($modelled !== null) {
-            return !$this->builders->positional(array_values($node->getArgs()))
-                ? $this->builders->unsupported($modelled, $environment, 'Named or unpacked Laravel arguments are not modelled')
-                : $modelled;
         }
         if (!$this->isOwnReceiver($node) && $this->sinks->models($receiver)) {
             return Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node));
@@ -243,20 +243,13 @@ final class CallEvaluator
         }
 
         $sink = $this->sinks->matchStatic($className, $name);
-        if ($sink?->role === SinkRole::Builder && $this->builders !== null) {
-            $state = new Laravel\QueryState(['model' => Domain::literal($className)]);
-            return $this->builders->execution(Domain::of(new ObjectTerm($className, state: $state->array())), strtolower($name), $arguments, $environment ?? new Environment());
+        $environment ??= new Environment();
+        $modelled = $this->models?->evaluate(new CallContext($node, $arguments, $environment, $scope, $expressions, $name, className: $className, sink: $sink));
+        if ($modelled !== null) {
+            return $modelled;
         }
         if ($sink !== null) {
             return $this->applySink($sink, $node, $arguments, $scope);
-        }
-
-        $environment ??= new Environment();
-        $modelled = $this->builders?->staticCall($className, $name, $arguments, $environment, $node, $scope, $expressions);
-        if ($modelled !== null) {
-            return !$this->builders->positional(array_values($node->getArgs()))
-                ? $this->builders->unsupported($modelled, $environment, 'Named or unpacked Laravel arguments are not modelled')
-                : $modelled;
         }
 
         $this->invalidateEscapes($node, $environment);
@@ -288,6 +281,11 @@ final class CallEvaluator
         $name = $node->name->toString();
 
         $sink = $this->sinks->matchFunction($name);
+        $environment ??= new Environment();
+        $modelled = $this->models?->evaluate(new CallContext($node, $arguments, $environment, $scope, $expressions, $name, sink: $sink));
+        if ($modelled !== null) {
+            return $modelled;
+        }
         if ($sink !== null) {
             return $this->applySink($sink, $node, $arguments, $scope);
         }
@@ -298,9 +296,7 @@ final class CallEvaluator
             return $this->builtins->evaluate($name, $arguments);
         }
 
-        if ($environment !== null && $this->builders !== null) {
-            $this->invalidateEscapes($node, $environment);
-        }
+        $this->invalidateEscapes($node, $environment);
 
         $function = $this->index->findFunction($name);
 
@@ -316,7 +312,7 @@ final class CallEvaluator
     {
         $arguments = array_map(static fn (Node\Arg $argument): Expr => $argument->value, array_values($node->getArgs()));
         foreach ((new Derivation\FreeNames())->of($arguments) as $name => $_) {
-            $this->builders?->unsupported($environment->read($name), $environment, 'Object passed to an unmodelled call');
+            $environment->objects()->invalidate($environment->read($name));
         }
     }
 
@@ -338,7 +334,7 @@ final class CallEvaluator
                 null,
                 $this->siteKeyOf($node, $scope, $sink->id),
             )),
-            SinkRole::Query, SinkRole::Builder => Domain::opaque(TypeShape::unknown(), Origin::Call, $sink->id),
+            SinkRole::Query, SinkRole::Modelled => Domain::opaque(TypeShape::unknown(), Origin::Call, $sink->id),
             SinkRole::Execute, SinkRole::Bind => Domain::opaque(TypeShape::of(['bool']), Origin::Call, $sink->id),
         };
     }

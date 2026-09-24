@@ -17,20 +17,6 @@ use SqlCatalog\Php\ProgramIndex;
 final class SinkMatcher
 {
     /**
-     * Whether the enabled extensions contribute builder execution calls.
-     */
-    public function hasBuilders(): bool
-    {
-        foreach ($this->sinks as $sink) {
-            if ($sink->role === \SqlCatalog\Extension\SinkRole::Builder) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
      * @var list<SinkSpec>
      */
     private array $sinks;
@@ -41,7 +27,7 @@ final class SinkMatcher
      * @param list<SinkSpec> $sinks The calls the enabled extensions recognise
      * @param ProgramIndex $index The declarations of the analyzed source, for subclass checks
      */
-    public function __construct(array $sinks, ProgramIndex $index)
+    public function __construct(array $sinks, ProgramIndex $index, private readonly ?\SqlCatalog\Extension\Model\ModelSet $models = null)
     {
         $this->sinks = $sinks;
         $this->index = $index;
@@ -150,10 +136,7 @@ final class SinkMatcher
         if (strcasecmp($left, $right) === 0) {
             return true;
         }
-        if ($right === Laravel\BuilderCalls::CONNECTION && (new Laravel\BuilderCalls($this->index))->isConnection($left)) {
-            return true;
-        }
-        if ($right === Laravel\ModelMetadata::MODEL && (new Laravel\ModelMetadata($this->index))->recognizes($left)) {
+        if ($this->models?->matchesClass($left, $right) === true) {
             return true;
         }
         if ($this->index->isInstanceOf($left, $right)) {

@@ -150,8 +150,8 @@ src/Search.php:17  SELECT  742968908c6b
 ## Extensions
 
 An extension names the calls that reach a database. Raw SQL arguments use the
-shared value analysis; Laravel builder execution calls additionally derive
-the receiver state and compile it with a framework model.
+shared value analysis. Extensions can also register call transformations and
+statement compilers through a framework-neutral source model API.
 
 | Extension | Covers |
 |-----------|--------|
@@ -174,6 +174,11 @@ also says which global variables hold its handle, which is what makes the
 `global $wpdb;` idiom readable as the database calls that follow it. The
 analyzer reads an `@global` or `@var` tag documenting the declaration first, so
 an application that annotates its own globals needs no extension at all.
+
+Implement the optional `ModelProviderInterface` to register functions that turn
+PHP call ASTs and evaluated values into values, SQL fragments or complete
+statements. Laravel uses this same API. See [source models in extensions](docs/extensions.md)
+for the registration contract and an application-specific example.
 
 ## Reporters
 

@@ -20,11 +20,12 @@ use SqlCatalog\Analysis\Derivation\Slice\BackwardSlicer;
 use SqlCatalog\Analysis\Derivation\SliceExecutor;
 use SqlCatalog\Analysis\Derivation\Solution;
 use SqlCatalog\Analysis\Derivation\SourceTree;
-use SqlCatalog\Analysis\Laravel\BuilderCalls;
-use SqlCatalog\Analysis\Laravel\BuilderQueries;
-use SqlCatalog\Analysis\Laravel\CallbackModel;
+use SqlCatalog\Analysis\Model\ModelQueries;
 use SqlCatalog\Catalog\CallSite;
 use SqlCatalog\Evaluation\Domain;
+use SqlCatalog\Extension\Model\ModelContext;
+use SqlCatalog\Extension\Model\ModelProviderInterface;
+use SqlCatalog\Extension\Model\ModelSet;
 use SqlCatalog\Extension\SinkRole;
 use SqlCatalog\Extension\SinkSpec;
 use SqlCatalog\Php\DeclaredGlobals;
@@ -66,11 +67,14 @@ final class Interpreter
 
     private SinkFinder $finder;
 
+    private ?ModelSet $models = null;
+
     /**
      * @param ProgramIndex $index The declarations of the whole analyzed source tree
      * @param list<SinkSpec> $sinks The database calls the enabled extensions recognise
      * @param EvaluationBudget|null $budget How much work one call may cost
      * @param DeclaredGlobals|null $globals What the global variables the source declares are known to hold
+     * @param list<ModelProviderInterface> $modelProviders Enabled extension providers, instantiated for each derivation engine
      */
     public function __construct(
         ProgramIndex $index,
@@ -78,6 +82,7 @@ final class Interpreter
         ?EvaluationBudget $budget = null,
         ?DeclaredGlobals $globals = null,
         private readonly ?string $dialect = null,
+        private readonly array $modelProviders = [],
     ) {
         $this->index = $index;
         $this->sinks = $sinks;
@@ -96,7 +101,7 @@ final class Interpreter
     public function analyze(array $files): array
     {
         $deriver = $this->deriverFor($files);
-        $matcher = new SinkMatcher($this->sinks, $this->index);
+        $matcher = new SinkMatcher($this->sinks, $this->index, $this->models);
         $recorder = new StatementRecorder();
         $binder = new ValueBinder($recorder);
         $bindings = [];
@@ -133,26 +138,31 @@ final class Interpreter
     public function deriverFor(array $files): Deriver
     {
         $tree = new SourceTree($files);
-        $names = new FreeNames($this->sinks);
-        $builders = (new SinkMatcher($this->sinks, $this->index))->hasBuilders();
-        $modified = new ModifiedNames($names, $builders ? new ObjectEffects($files) : null);
+        $effects = $this->modelProviders !== [];
+        $names = new FreeNames($this->sinks, trackObjectEffects: $effects);
+        $modified = new ModifiedNames($names, $effects ? new ObjectEffects($files) : null);
         $slicer = new BackwardSlicer($tree, $this->budget, $names, $modified);
         $executor = new SliceExecutor($this->globals, new TypeReader(), $modified, $this->text, $this->budget);
+        $this->models = null;
+        foreach ($this->modelProviders as $provider) {
+            $models = $provider->models(new ModelContext($this->index, new CallbackEffects($slicer, $executor), $this->dialect));
+            $this->models = $this->models?->merge($models) ?? $models;
+        }
         $external = new ExternalInput();
         $expressions = new ExpressionEvaluator(
             new ReferenceEvaluator($this->index, $external, $this->text),
             new CallEvaluator(
                 $this->index,
-                new SinkMatcher($this->sinks, $this->index),
+                new SinkMatcher($this->sinks, $this->index, $this->models),
                 new BuiltinCallModel(),
                 $external,
                 $this->text,
                 new CalleeReturns($slicer, $executor, $this->budget, $names),
-                $builders ? new BuilderCalls($this->index, $this->dialect, new CallbackModel($this->index, new CallbackEffects($slicer, $executor))) : null,
+                $this->models,
             ),
             $this->budget,
             $this->text,
-            $builders,
+            $effects,
         );
 
         return new Deriver(
@@ -161,7 +171,7 @@ final class Interpreter
             $executor,
             $expressions,
             new EntryBinder(
-                new Callers(new CallerIndex($files), $this->index, new SinkMatcher($this->sinks, $this->index)),
+                new Callers(new CallerIndex($files), $this->index, new SinkMatcher($this->sinks, $this->index, $this->models)),
                 $expressions,
                 $this->budget,
                 $this->globals,
@@ -198,8 +208,8 @@ final class Interpreter
         }
         $this->budget->reset();
         $arguments = $this->argumentsOf($call);
-        if ($sink->role === SinkRole::Builder) {
-            $this->recordStatements($call, $sink, (new BuilderQueries($this->index))->solve($call, $arguments, $deriver), $scope, $recorder, $binder);
+        if ($sink->role === SinkRole::Modelled) {
+            $this->recordStatements($call, $sink, (new ModelQueries())->solve($call, $this->models->queries[$sink->model ?? ''] ?? null, $deriver), $scope, $recorder, $binder);
 
             return [];
         }
@@ -277,7 +287,7 @@ final class Interpreter
         $name = $this->finder->nameOf($call);
         $carriesText = false;
         foreach ($matcher->byName(\SqlCatalog\Extension\SinkCallKind::Method, $name ?? '') as $sink) {
-            $carriesText = $carriesText || $sink->role === SinkRole::Query || $sink->role === SinkRole::Prepare || $sink->role === SinkRole::Builder;
+            $carriesText = $carriesText || $sink->role === SinkRole::Query || $sink->role === SinkRole::Prepare || $sink->role === SinkRole::Modelled;
         }
 
         return $carriesText && $this->receiverOf($call, $deriver)->type()->classNames() === [];

@@ -122,6 +122,7 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(TypeReader::class)]
 #[UsesClass(TypeShape::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\CallerSet::class)]
+#[UsesClass(\SqlCatalog\Evaluation\ObjectMemory::class)]
 final class DeriverTest extends TestCase
 {
     /**

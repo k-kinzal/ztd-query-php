@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlCatalog\Analysis\Laravel;
+namespace SqlCatalog\Extension\Laravel;
 
 use PhpParser\Node\Expr;
 use SqlCatalog\Analysis\Derivation\Objects\CallbackEffects;

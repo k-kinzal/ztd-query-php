@@ -14,6 +14,24 @@ use SqlCatalog\Sql\StatementKind;
 
 #[CoversClass(LaravelExtension::class)]
 #[UsesClass(SinkSpec::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\FreeNames::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\ModifiedNames::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\Objects\CallbackEffects::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\SliceExecutor::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\AssignmentSteps::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\BackwardSlicer::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\LoopPasses::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\SourceTree::class)]
+#[UsesClass(\SqlCatalog\Analysis\EvaluationBudget::class)]
+#[UsesClass(\SqlCatalog\Extension\Laravel\BuilderCalls::class)]
+#[UsesClass(\SqlCatalog\Extension\Laravel\BuilderQueries::class)]
+#[UsesClass(\SqlCatalog\Extension\Laravel\CallModel::class)]
+#[UsesClass(\SqlCatalog\Extension\Laravel\CallbackModel::class)]
+#[UsesClass(\SqlCatalog\Extension\Model\ModelContext::class)]
+#[UsesClass(\SqlCatalog\Extension\Model\ModelSet::class)]
+#[UsesClass(\SqlCatalog\Php\DeclaredGlobals::class)]
+#[UsesClass(\SqlCatalog\Php\NodeText::class)]
+#[UsesClass(\SqlCatalog\Php\ProgramIndex::class)]
 final class LaravelExtensionTest extends TestCase
 {
     public function testNameIsHowTheCommandLineSelectsIt(): void
@@ -98,7 +116,7 @@ final class LaravelExtensionTest extends TestCase
         self::assertSame(StatementKind::Update, $methods['update']);
         self::assertSame(StatementKind::Delete, $methods['delete']);
         self::assertNull($methods['save']);
-        $builders = array_filter((new LaravelExtension())->sinks(), static fn (SinkSpec $sink): bool => $sink->role === \SqlCatalog\Extension\SinkRole::Builder);
+        $builders = array_filter((new LaravelExtension())->sinks(), static fn (SinkSpec $sink): bool => $sink->role === \SqlCatalog\Extension\SinkRole::Modelled);
         self::assertCount(count($methods) * 4, $builders);
     }
 
@@ -106,4 +124,18 @@ final class LaravelExtensionTest extends TestCase
     {
         self::assertSame([], (new LaravelExtension())->globals());
     }
+    public function testModelsRegistersLaravelSemanticsThroughTheOptionalContract(): void
+    {
+        $index = new \SqlCatalog\Php\ProgramIndex();
+        $budget = new \SqlCatalog\Analysis\EvaluationBudget();
+        $names = new \SqlCatalog\Analysis\Derivation\FreeNames();
+        $modified = new \SqlCatalog\Analysis\Derivation\ModifiedNames($names);
+        $callbacks = new \SqlCatalog\Analysis\Derivation\Objects\CallbackEffects(new \SqlCatalog\Analysis\Derivation\Slice\BackwardSlicer(new \SqlCatalog\Analysis\Derivation\SourceTree([]), $budget, $names, $modified), new \SqlCatalog\Analysis\Derivation\SliceExecutor(new \SqlCatalog\Php\DeclaredGlobals(), new \SqlCatalog\Php\TypeReader(), $modified, new \SqlCatalog\Php\NodeText(), $budget));
+        $context = new \SqlCatalog\Extension\Model\ModelContext($index, $callbacks, 'sqlite');
+        $models = (new LaravelExtension())->models($context);
+        self::assertCount(1, $models->calls);
+        self::assertArrayHasKey('laravel.builder', $models->queries);
+        self::assertTrue($models->matchesClass('Illuminate\\Database\\MySqlConnection', 'Illuminate\\Database\\Connection'));
+    }
+
 }

@@ -112,16 +112,16 @@ use SqlCatalog\Source\SourceScanException;
 #[CoversClass(\SqlCatalog\Analysis\Derivation\SliceExecutor::class)]
 #[CoversClass(\SqlCatalog\Analysis\ExpressionEvaluator::class)]
 #[CoversClass(\SqlCatalog\Analysis\Interpreter::class)]
-#[CoversClass(\SqlCatalog\Analysis\Laravel\BuilderCalls::class)]
-#[CoversClass(\SqlCatalog\Analysis\Laravel\BuilderQueries::class)]
-#[CoversClass(\SqlCatalog\Analysis\Laravel\CallbackModel::class)]
-#[CoversClass(\SqlCatalog\Analysis\Laravel\Clauses::class)]
-#[CoversClass(\SqlCatalog\Analysis\Laravel\Grammar::class)]
-#[CoversClass(\SqlCatalog\Analysis\Laravel\ModelMetadata::class)]
-#[CoversClass(\SqlCatalog\Analysis\Laravel\Predicates::class)]
-#[CoversClass(\SqlCatalog\Analysis\Laravel\QueryState::class)]
-#[CoversClass(\SqlCatalog\Analysis\Laravel\SelectCompiler::class)]
-#[CoversClass(\SqlCatalog\Analysis\Laravel\WriteCompiler::class)]
+#[CoversClass(\SqlCatalog\Extension\Laravel\BuilderCalls::class)]
+#[CoversClass(\SqlCatalog\Extension\Laravel\BuilderQueries::class)]
+#[CoversClass(\SqlCatalog\Extension\Laravel\CallbackModel::class)]
+#[CoversClass(\SqlCatalog\Extension\Laravel\Clauses::class)]
+#[CoversClass(\SqlCatalog\Extension\Laravel\Grammar::class)]
+#[CoversClass(\SqlCatalog\Extension\Laravel\ModelMetadata::class)]
+#[CoversClass(\SqlCatalog\Extension\Laravel\Predicates::class)]
+#[CoversClass(\SqlCatalog\Extension\Laravel\QueryState::class)]
+#[CoversClass(\SqlCatalog\Extension\Laravel\SelectCompiler::class)]
+#[CoversClass(\SqlCatalog\Extension\Laravel\WriteCompiler::class)]
 #[CoversClass(\SqlCatalog\Analysis\ReferenceEvaluator::class)]
 #[CoversClass(\SqlCatalog\Analysis\SinkFinder::class)]
 #[CoversClass(\SqlCatalog\Analysis\SinkMatcher::class)]
@@ -129,6 +129,12 @@ use SqlCatalog\Source\SourceScanException;
 #[CoversClass(\SqlCatalog\Evaluation\ObjectMemory::class)]
 #[CoversClass(\SqlCatalog\Evaluation\ObjectTerm::class)]
 #[CoversClass(\SqlCatalog\Analysis\Derivation\Objects\BranchEffects::class)]
+#[CoversClass(\SqlCatalog\Extension\Laravel\CallModel::class)]
+#[CoversClass(\SqlCatalog\Extension\Model\ModelSet::class)]
+#[CoversClass(\SqlCatalog\Analysis\Model\ModelQueries::class)]
+#[UsesClass(\SqlCatalog\Extension\Model\CallContext::class)]
+#[UsesClass(\SqlCatalog\Extension\Model\ModelContext::class)]
+#[UsesClass(\SqlCatalog\Extension\Model\QueryOutput::class)]
 final class AnalyzerTest extends TestCase
 {
     public function testIssetGuardsAConditionallyAssignedSqlFragment(): void
@@ -731,6 +737,70 @@ final class AnalyzerTest extends TestCase
         yield ['DB::table(table: "users")->get()'];
         yield ['DB::table("users")->where(column: "id", value: 7)->get()'];
         yield ['DB::table("users")->get(columns: ["id"])'];
+    }
+
+    #[DataProvider('providerCustomSqlCalls')]
+    public function testAnalyzeSourceAllowsExtensionsToModelSqlFragmentsFromAnyCallForm(string $expression): void
+    {
+        $extension = self::createStub(\SqlCatalog\Extension\Model\ModelProviderInterface::class);
+        $extension->method('name')->willReturn('example');
+        $extension->method('sinks')->willReturn([]);
+        $extension->method('globals')->willReturn([]);
+        $extension->method('models')->willReturn(new \SqlCatalog\Extension\Model\ModelSet(calls: [static fn (\SqlCatalog\Extension\Model\CallContext $call): ?\SqlCatalog\Evaluation\Domain => $call->name === 'fragment' || $call->className === 'SqlText' ? \SqlCatalog\Evaluation\Domain::literal('SELECT * FROM ')->concat($call->arguments[0]) : null]));
+        $analyzer = new Analyzer(new ExtensionRegistry([new PdoExtension(), $extension]));
+        $source = ['query.php' => '<?php $table = "items"; $pdo = new PDO("sqlite::memory:"); $pdo->query('.$expression.');'];
+        $catalog = $analyzer->analyzeSource($source, new AnalysisOptions(['pdo', 'example']));
+        self::assertSame('SELECT * FROM items', $catalog->entries()[0]->sql());
+        self::assertTrue($catalog->entries()[0]->searchClosed());
+        self::assertFalse($analyzer->analyzeSource($source, new AnalysisOptions(['pdo']))->entries()[0]->searchClosed());
+    }
+
+    /**
+     * @return iterable<array{string}>
+     */
+    public static function providerCustomSqlCalls(): iterable
+    {
+        yield ['fragment($table)'];
+        yield ['Demo::fragment($table)'];
+        yield ['(new Demo())->fragment($table)'];
+        yield ['new SqlText($table)'];
+    }
+
+    public function testAnalyzeSourceSupportsRegisteredQueryModelsWithoutLaravel(): void
+    {
+        $model = new class () implements \SqlCatalog\Extension\Model\QueryModelInterface {
+            public function inputs(\PhpParser\Node\Expr\CallLike $call): array
+            {
+                return array_map(static fn (\PhpParser\Node\Arg $argument): \PhpParser\Node\Expr => $argument->value, array_values($call->getArgs()));
+            }
+
+            public function statements(\PhpParser\Node\Expr\CallLike $call, array $values): array
+            {
+                return [new \SqlCatalog\Extension\Model\QueryOutput(\SqlCatalog\Evaluation\Domain::literal('SELECT * FROM ')->concat($values[0])->concat(\SqlCatalog\Evaluation\Domain::literal(' WHERE id = ?')), \SqlCatalog\Evaluation\Domain::of(new \SqlCatalog\Evaluation\ArrayTerm([new \SqlCatalog\Evaluation\ArrayEntry(null, $values[1])])))];
+            }
+        };
+        $extension = self::createStub(\SqlCatalog\Extension\Model\ModelProviderInterface::class);
+        $extension->method('name')->willReturn('example');
+        $extension->method('sinks')->willReturn([new \SqlCatalog\Extension\SinkSpec('example.run', \SqlCatalog\Extension\SinkCallKind::FunctionCall, null, 'run', \SqlCatalog\Extension\SinkRole::Modelled, model: 'example.query')]);
+        $extension->method('globals')->willReturn([]);
+        $extension->method('models')->willReturn(new \SqlCatalog\Extension\Model\ModelSet(queries: ['example.query' => $model]));
+        $catalog = (new Analyzer(new ExtensionRegistry([$extension])))->analyzeSource(['query.php' => '<?php function readRows(string $table, int $id) { run($table, $id); } readRows("users", 7); readRows("posts", 9);'], new AnalysisOptions(['example']));
+        self::assertCount(2, $catalog->entries());
+        self::assertSame(['SELECT * FROM posts WHERE id = ?', 'SELECT * FROM users WHERE id = ?'], array_map(static fn (CatalogEntry $entry): string => $entry->sql(), $catalog->entries()));
+        self::assertSame([[9], [7]], array_map(static fn (CatalogEntry $entry): array => $entry->placeholders[0]->value->values ?? [], $catalog->entries()));
+        self::assertTrue($catalog->entries()[0]->searchClosed());
+        self::assertTrue($catalog->entries()[1]->searchClosed());
+    }
+
+    public function testAnalyzeSourceKeepsAModelledSinkWithoutARegisteredCompilerVisible(): void
+    {
+        $extension = self::createStub(\SqlCatalog\Extension\ExtensionInterface::class);
+        $extension->method('name')->willReturn('example');
+        $extension->method('globals')->willReturn([]);
+        $extension->method('sinks')->willReturn([new \SqlCatalog\Extension\SinkSpec('example.run', \SqlCatalog\Extension\SinkCallKind::FunctionCall, null, 'run', \SqlCatalog\Extension\SinkRole::Modelled, model: 'missing')]);
+        $catalog = (new Analyzer(new ExtensionRegistry([$extension])))->analyzeSource(['query.php' => '<?php run();'], new AnalysisOptions(['example']));
+        self::assertCount(1, $catalog->entries());
+        self::assertFalse($catalog->entries()[0]->searchClosed());
     }
 
 }

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace SqlCatalog\Analysis\Laravel;
+namespace SqlCatalog\Extension\Laravel;
 
 use SqlCatalog\Evaluation\ArrayTerm;
 use SqlCatalog\Evaluation\Domain;

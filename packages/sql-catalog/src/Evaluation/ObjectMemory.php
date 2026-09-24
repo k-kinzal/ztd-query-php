@@ -122,4 +122,24 @@ final class ObjectMemory
 
         return implode(';', $parts);
     }
+    /**
+     * Opens tracked object state when an unknown call can mutate an escaped reference.
+     */
+    public function invalidate(Domain $value): Domain
+    {
+        $terms = [];
+        foreach ($value->terms as $term) {
+            if ($term instanceof ObjectTerm && $term->identity !== null) {
+                $term = new ObjectTerm($term->className, $term->enumCase, $term->statementId, $term->identity);
+            } elseif ($term instanceof ArrayTerm) {
+                $term = new ArrayTerm(array_map(fn (ArrayEntry $entry): ArrayEntry => new ArrayEntry($entry->key, $this->invalidate($entry->value)), $term->entries), $term->complete);
+            }
+            $terms[] = $term;
+        }
+        $result = Domain::fromTerms($terms, $value->widened, $value->combined);
+        $this->rememberValue($result);
+
+        return $result;
+    }
+
 }

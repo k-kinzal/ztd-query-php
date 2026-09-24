@@ -85,6 +85,7 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(\SqlCatalog\Evaluation\ArrayEntry::class)]
 #[UsesClass(\SqlCatalog\Evaluation\ArrayTerm::class)]
 #[UsesClass(\SqlCatalog\Evaluation\ObjectTerm::class)]
+#[UsesClass(\SqlCatalog\Evaluation\ObjectMemory::class)]
 final class CalleeReturnsTest extends TestCase
 {
     public function testValueOfReadsWhatTheCalleeReturns(): void

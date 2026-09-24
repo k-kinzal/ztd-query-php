@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Tests\Unit\Analysis\Laravel;
+namespace Tests\Unit\Extension\Laravel;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -17,11 +17,6 @@ use SqlCatalog\Analysis\Derivation\SourceTree;
 use SqlCatalog\Analysis\EvaluationBudget;
 use SqlCatalog\Analysis\FunctionScope;
 use SqlCatalog\Analysis\Interpreter;
-use SqlCatalog\Analysis\Laravel\BuilderCalls;
-use SqlCatalog\Analysis\Laravel\CallbackModel;
-use SqlCatalog\Analysis\Laravel\Grammar;
-use SqlCatalog\Analysis\Laravel\Predicates;
-use SqlCatalog\Analysis\Laravel\QueryState;
 use SqlCatalog\Evaluation\ArrayEntry;
 use SqlCatalog\Evaluation\ArrayTerm;
 use SqlCatalog\Evaluation\Domain;
@@ -31,6 +26,11 @@ use SqlCatalog\Evaluation\ObjectMemory;
 use SqlCatalog\Evaluation\ObjectTerm;
 use SqlCatalog\Evaluation\OpaqueTerm;
 use SqlCatalog\Evaluation\PatternTerm;
+use SqlCatalog\Extension\Laravel\BuilderCalls;
+use SqlCatalog\Extension\Laravel\CallbackModel;
+use SqlCatalog\Extension\Laravel\Grammar;
+use SqlCatalog\Extension\Laravel\Predicates;
+use SqlCatalog\Extension\Laravel\QueryState;
 use SqlCatalog\Extension\LaravelExtension;
 use SqlCatalog\Php\ParsedFile;
 use SqlCatalog\Php\ProgramIndex;
@@ -100,6 +100,11 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(\SqlCatalog\Php\MethodShape::class)]
 #[UsesClass(\SqlCatalog\Php\ParameterShape::class)]
 #[UsesClass(\SqlCatalog\Php\TypeReader::class)]
+#[UsesClass(\SqlCatalog\Extension\Laravel\BuilderQueries::class)]
+#[UsesClass(\SqlCatalog\Extension\Laravel\CallModel::class)]
+#[UsesClass(\SqlCatalog\Extension\Model\CallContext::class)]
+#[UsesClass(\SqlCatalog\Extension\Model\ModelContext::class)]
+#[UsesClass(\SqlCatalog\Extension\Model\ModelSet::class)]
 final class CallbackModelTest extends TestCase
 {
     public function testApplyRunsSourceDeclaredLocalScopes(): void
@@ -115,7 +120,7 @@ final class CallbackModelTest extends TestCase
         $model = new CallbackModel($index, $effects);
         $object = (new BuilderCalls($index))->allocate('Illuminate\Database\Eloquent\Builder', new QueryState(['model' => Domain::literal('User'), 'dialect' => Domain::literal('sqlite')]));
         $call = new \PhpParser\Node\Expr\MethodCall(new \PhpParser\Node\Expr\Variable('q'), 'active');
-        $result = $model->apply($call, $object, 'active', [], new Environment(), new FunctionScope('query.php'), (new Interpreter($index, (new LaravelExtension())->sinks()))->evaluatorFor([$file]))?->soleObject();
+        $result = $model->apply($call, $object, 'active', [], new Environment(), new FunctionScope('query.php'), (new Interpreter($index, (new LaravelExtension())->sinks(), modelProviders: [new LaravelExtension()]))->evaluatorFor([$file]))?->soleObject();
         self::assertNotNull($result);
         self::assertSame('"active" = ?', QueryState::from($result)->items('where')[0]->soleLiteral()?->value);
         self::assertNull($model->apply($call, $object, 'missing', [], new Environment(), new FunctionScope('query.php'), (new Interpreter($index, []))->evaluatorFor()));
@@ -133,7 +138,7 @@ final class CallbackModelTest extends TestCase
         $index = new ProgramIndex();
         $state = new QueryState(['dialect' => Domain::literal('sqlite'), 'limit' => Domain::literal(10), 'where' => QueryState::list([Domain::literal('active = 1')])]);
         $object = (new BuilderCalls($index))->allocate(BuilderCalls::QUERY, $state);
-        $result = (new CallbackModel($index, $effects))->nested($callback, $object, 'orwhere', new Environment(), new FunctionScope('query.php'), (new Interpreter($index, (new LaravelExtension())->sinks()))->evaluatorFor())->soleObject();
+        $result = (new CallbackModel($index, $effects))->nested($callback, $object, 'orwhere', new Environment(), new FunctionScope('query.php'), (new Interpreter($index, (new LaravelExtension())->sinks(), modelProviders: [new LaravelExtension()]))->evaluatorFor())->soleObject();
         self::assertNotNull($result);
         $after = QueryState::from($result);
         self::assertSame('or ("id" = ?)', $after->items('where')[1]->soleLiteral()?->value);

@@ -20,6 +20,10 @@ connections with different grammars separately. Include application model and
 scope declarations in the input; installing or scanning Laravel's vendor tree
 is not required.
 
+The Laravel extension registers its call transformations, query compiler and
+framework type relations through the [source model API](extensions.md). The core
+contains no Laravel-specific dispatch or SQL compilation rules.
+
 ## How builder queries are derived
 
 ```php

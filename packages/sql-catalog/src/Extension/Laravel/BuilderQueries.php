@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace SqlCatalog\Analysis\Laravel;
+namespace SqlCatalog\Extension\Laravel;
 
 use PhpParser\Node\Expr;
-use SqlCatalog\Analysis\Derivation\Deriver;
-use SqlCatalog\Analysis\Derivation\Solution;
 use SqlCatalog\Analysis\SinkFinder;
 use SqlCatalog\Evaluation\Domain;
 use SqlCatalog\Evaluation\ObjectTerm;
+use SqlCatalog\Extension\Model\QueryModelInterface;
+use SqlCatalog\Extension\Model\QueryOutput;
 use SqlCatalog\Php\ProgramIndex;
 
 /**
@@ -17,7 +17,7 @@ use SqlCatalog\Php\ProgramIndex;
  *
  * @visibility root
  */
-final class BuilderQueries
+final class BuilderQueries implements QueryModelInterface
 {
     /**
      * Configures the source metadata and SQL grammar used by this model.
@@ -27,34 +27,38 @@ final class BuilderQueries
     }
 
     /**
-     * @param list<Expr> $arguments
-     * @return list<Solution> SQL and bindings with the original derivation provenance.
+     * @return list<Expr> The receiver and arguments must be derived together.
      */
-    public function solve(Expr\CallLike $call, array $arguments, Deriver $deriver): array
+    public function inputs(Expr\CallLike $call): array
     {
         $receiver = match (true) {
             $call instanceof Expr\MethodCall, $call instanceof Expr\NullsafeMethodCall => $call->var,
             $call instanceof Expr\StaticCall => new Expr\StaticCall($call->class, 'query', [], $call->getAttributes()),
             default => null,
         };
-        if ($receiver === null) {
-            return [];
-        }
+
+        return $receiver === null ? [] : array_merge([$receiver], array_map(static fn (\PhpParser\Node\Arg $argument): Expr => $argument->value, array_values($call->getArgs())));
+    }
+
+    /**
+     * @param list<Domain> $values Values derived by the core, without losing branch correspondence.
+     * @return list<QueryOutput> The SQL compiled by this extension for each receiver alternative.
+     */
+    public function statements(Expr\CallLike $call, array $values): array
+    {
         $method = (new SinkFinder())->nameOf($call) ?? '';
-        $solutions = [];
-        foreach ($deriver->solve($call, array_merge([$receiver], $arguments)) as $solution) {
-            $values = $solution->values;
-            $target = array_shift($values) ?? Domain::unknown();
-            foreach ($target->terms as $term) {
-                $state = $term instanceof ObjectTerm ? QueryState::from($term) : (new QueryState())->reject('Laravel builder state is unavailable');
-                if (!(new BuilderCalls($this->index))->positional(array_values($call->getArgs()))) {
-                    $state = $state->reject('Named or unpacked Laravel arguments are not modelled');
-                }
-                $solutions[] = new Solution($this->compile($state, strtolower($method), $values), $solution->through, $solution->truncated || $target->widened, $solution->combined || $target->combined);
+        $target = array_shift($values) ?? Domain::unknown();
+        $outputs = [];
+        foreach ($target->terms as $term) {
+            $state = $term instanceof ObjectTerm ? QueryState::from($term) : (new QueryState())->reject('Laravel builder state is unavailable');
+            if (!(new BuilderCalls($this->index))->positional(array_values($call->getArgs()))) {
+                $state = $state->reject('Named or unpacked Laravel arguments are not modelled');
             }
+            [$sql, $bindings] = $this->compile($state, strtolower($method), $values);
+            $outputs[] = new QueryOutput($sql, $bindings, $target->widened, $target->combined);
         }
 
-        return $solutions;
+        return $outputs;
     }
 
     /**
