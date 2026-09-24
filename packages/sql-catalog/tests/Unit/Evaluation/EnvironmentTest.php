@@ -22,6 +22,9 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(TextHole::class)]
 #[UsesClass(TextPattern::class)]
 #[UsesClass(TypeShape::class)]
+#[UsesClass(\SqlCatalog\Evaluation\ArrayTerm::class)]
+#[UsesClass(\SqlCatalog\Evaluation\ObjectMemory::class)]
+#[UsesClass(\SqlCatalog\Evaluation\ObjectTerm::class)]
 final class EnvironmentTest extends TestCase
 {
     public function testReadFallsBackToAnUnresolvedValue(): void
@@ -123,4 +126,39 @@ final class EnvironmentTest extends TestCase
         self::assertFalse($left->equals(new Environment(['a' => Domain::literal(2)])));
         self::assertFalse($left->equals(new Environment()));
     }
+
+    public function testObjectsSharesSnapshotsAcrossAliasesButNotCopies(): void
+    {
+        $object = new \SqlCatalog\Evaluation\ObjectTerm('Builder', identity: 'a');
+        $env = new Environment(['q' => Domain::of($object), 'alias' => Domain::of($object)]);
+        $copy = $env->copy();
+        $changed = new \SqlCatalog\Evaluation\ObjectTerm('Builder', identity: 'a', state: new \SqlCatalog\Evaluation\ArrayTerm([]));
+        $env->objects()->remember($changed);
+        self::assertSame($changed, $env->read('alias')->soleObject());
+        self::assertSame($object, $copy->read('alias')->soleObject());
+        self::assertFalse($env->equals($copy));
+    }
+
+    public function testMergeBranchesKeepsAlternativeObjectStates(): void
+    {
+        $object = new \SqlCatalog\Evaluation\ObjectTerm('Builder', identity: 'a');
+        $env = new Environment(['q' => Domain::of($object)]);
+        $left = $env->copy();
+        $right = $env->copy();
+        $right->objects()->remember(new \SqlCatalog\Evaluation\ObjectTerm('Builder', identity: 'a', state: new \SqlCatalog\Evaluation\ArrayTerm([])));
+        $env->mergeBranches($left, $right);
+        self::assertCount(2, $env->read('q')->terms);
+        self::assertSame($object, $left->read('q')->soleObject());
+    }
+    public function testRefreshObservesLaterMutationsThroughAnAlreadyEvaluatedReference(): void
+    {
+        $object = new \SqlCatalog\Evaluation\ObjectTerm('Builder', identity: 'a');
+        $value = Domain::of($object);
+        $environment = new Environment(['q' => $value]);
+        $updated = new \SqlCatalog\Evaluation\ObjectTerm('Builder', identity: 'a', state: new \SqlCatalog\Evaluation\ArrayTerm([]));
+        $environment->objects()->remember($updated);
+        self::assertSame($updated, $environment->refresh($value)->soleObject());
+        self::assertSame($value, (new Environment())->refresh($value));
+    }
+
 }

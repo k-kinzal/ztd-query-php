@@ -9,6 +9,7 @@ use PhpParser\Node\InterpolatedStringPart;
 use PhpParser\Node\Scalar;
 use SqlCatalog\Evaluation\Domain;
 use SqlCatalog\Evaluation\Environment;
+use SqlCatalog\Evaluation\ObjectTerm;
 use SqlCatalog\Php\NodeText;
 use SqlCatalog\Text\Origin;
 use SqlCatalog\Type\TypeShape;
@@ -28,6 +29,8 @@ final class ExpressionEvaluator
 
     private NodeText $text;
 
+    private int $clones = 0;
+
     /**
      * Wires the evaluator to the parts that read references and follow calls.
      */
@@ -36,6 +39,7 @@ final class ExpressionEvaluator
         CallEvaluator $calls,
         EvaluationBudget $budget,
         NodeText $text,
+        private readonly bool $trackObjectEffects = false,
     ) {
         $this->references = $references;
         $this->calls = $calls;
@@ -125,6 +129,9 @@ final class ExpressionEvaluator
      */
     public function evaluateOperator(Expr $node, Environment $environment, FunctionScope $scope): ?Domain
     {
+        if ($node instanceof Expr\Clone_) {
+            return $this->evaluateClone($node, $environment, $scope);
+        }
         if ($node instanceof Scalar\InterpolatedString) {
             return $this->evaluateInterpolation($node, $environment, $scope);
         }
@@ -138,9 +145,11 @@ final class ExpressionEvaluator
         if ($node instanceof Expr\Isset_) {
             return $this->evaluateIsset($node, $environment, $scope);
         }
+        if ($node instanceof Expr\BinaryOp\Coalesce && !$this->trackObjectEffects) {
+            return $this->evaluate($node->left, $environment, $scope)->union($this->evaluate($node->right, $environment, $scope));
+        }
         if ($node instanceof Expr\BinaryOp\Coalesce) {
-            return $this->evaluate($node->left, $environment, $scope)
-                ->union($this->evaluate($node->right, $environment, $scope));
+            return (new Derivation\Objects\BranchEffects())->coalesce($node, $environment, $scope, $this);
         }
         if ($node instanceof Expr\Match_) {
             return $this->evaluateMatch($node, $environment, $scope);
@@ -151,11 +160,33 @@ final class ExpressionEvaluator
         if ($node instanceof Expr\Assign) {
             return $this->evaluateAssign($node, $environment, $scope);
         }
+        if ($node instanceof Expr\AssignRef) {
+            return $this->evaluateReferenceAssign($node, $environment, $scope);
+        }
         if ($node instanceof Expr\AssignOp\Concat) {
             return $this->evaluateAppend($node, $environment, $scope);
         }
 
         return $this->evaluateResult($node, $environment, $scope);
+    }
+
+    /**
+     * Clones a tracked object without sharing its allocation with the original.
+     */
+    public function evaluateClone(Expr\Clone_ $node, Environment $environment, FunctionScope $scope): Domain
+    {
+        $value = $this->evaluate($node->expr, $environment, $scope);
+        $terms = [];
+        foreach ($value->terms as $term) {
+            if ($term instanceof ObjectTerm && $term->identity !== null) {
+                $this->clones++;
+                $term = new ObjectTerm($term->className, $term->enumCase, $term->statementId, 'clone:' . $this->clones, $term->state);
+                $environment->objects()->remember($term);
+            }
+            $terms[] = $term;
+        }
+
+        return Domain::fromTerms($terms, $value->widened, $value->combined);
     }
 
     /**
@@ -213,7 +244,11 @@ final class ExpressionEvaluator
         if ($type === null) {
             return null;
         }
+        if ($this->trackObjectEffects && $node instanceof Expr\BinaryOp) {
+            return (new Derivation\Objects\BranchEffects())->shortCircuit($node, $environment, $scope, $this);
+        }
         $this->evaluateOperands($node, $environment, $scope);
+
 
         return Domain::opaque(TypeShape::of([$type]), Origin::Unresolved);
     }
@@ -271,16 +306,20 @@ final class ExpressionEvaluator
     public function evaluateTernary(Expr\Ternary $node, Environment $environment, FunctionScope $scope): Domain
     {
         $condition = $this->evaluate($node->cond, $environment, $scope);
-        $literal = $condition->soleLiteral();
-        if ($literal?->value === true) {
+        $truth = $this->trackObjectEffects ? (new Derivation\Objects\BranchEffects())->truth($condition) : $condition->soleLiteral()?->value;
+        if ($truth === true) {
             return $node->if === null ? $condition : $this->evaluate($node->if, $environment, $scope);
         }
-        if ($literal?->value === false) {
+        if ($truth === false) {
             return $this->evaluate($node->else, $environment, $scope);
         }
-        $whenTrue = $node->if === null ? $condition : $this->evaluate($node->if, $environment, $scope);
+        $left = $environment->copy();
+        $right = $environment->copy();
+        $whenTrue = $node->if === null ? $condition : $this->evaluate($node->if, $left, $scope);
+        $whenFalse = $this->evaluate($node->else, $right, $scope);
+        $environment->mergeBranches($left, $right);
 
-        return $whenTrue->union($this->evaluate($node->else, $environment, $scope));
+        return $whenTrue->union($whenFalse);
     }
 
     /**
@@ -320,12 +359,19 @@ final class ExpressionEvaluator
     {
         $this->evaluate($node->cond, $environment, $scope);
         $result = null;
+        $joined = null;
         foreach ($node->arms as $arm) {
+            $branch = $environment->copy();
             foreach ($arm->conds ?? [] as $condition) {
-                $this->evaluate($condition, $environment, $scope);
+                $this->evaluate($condition, $branch, $scope);
             }
-            $value = $this->evaluate($arm->body, $environment, $scope);
+            $value = $this->evaluate($arm->body, $branch, $scope);
+            $joined = $joined === null ? $branch : $joined->join($branch);
             $result = $result === null ? $value : $result->union($value);
+        }
+
+        if ($joined !== null) {
+            $environment->mergeBranches($joined, $joined);
         }
 
         return $result ?? Domain::unknown();
@@ -340,6 +386,21 @@ final class ExpressionEvaluator
         $this->references->assign($node->var, $value, $environment, $scope, $this);
 
         return $value;
+    }
+
+    /**
+     * Reference rebinding is not tracked, so escaping object snapshots remain open.
+     */
+    public function evaluateReferenceAssign(Expr\AssignRef $node, Environment $environment, FunctionScope $scope): Domain
+    {
+        $value = $this->evaluate($node->expr, $environment, $scope);
+        foreach ($value->terms as $term) {
+            if ($term instanceof ObjectTerm && $term->identity !== null) {
+                $environment->objects()->remember(new ObjectTerm($term->className, $term->enumCase, $term->statementId, $term->identity));
+            }
+        }
+
+        return Domain::opaque(TypeShape::unknown(), Origin::Unresolved, $this->text->render($node));
     }
 
     /**

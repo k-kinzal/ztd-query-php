@@ -49,7 +49,7 @@ vendor/bin/sql-catalog --output catalog/ src/
 vendor/bin/sql-catalog --output catalog/ --reporter html src/
 
 # Recognise a framework's own database calls
-vendor/bin/sql-catalog --output catalog/ --extension laravel src/
+vendor/bin/sql-catalog --output catalog/ --extension laravel --dialect mysql src/
 
 # Keep only the writes one namespace issues
 vendor/bin/sql-catalog --namespace 'App\Repository' --kind insert,update,delete src/
@@ -149,21 +149,24 @@ src/Search.php:17  SELECT  742968908c6b
 
 ## Extensions
 
-An extension names the calls that reach a database. Adding support for a
-framework is a matter of naming its calls; nothing else about the analysis
-changes.
+An extension names the calls that reach a database. Raw SQL arguments use the
+shared value analysis; Laravel builder execution calls additionally derive
+the receiver state and compile it with a framework model.
 
 | Extension | Covers |
 |-----------|--------|
 | `pdo` | `PDO` and `PDOStatement`, including drop-in subclasses such as `ZtdPdo` |
 | `mysqli` | `mysqli` and `mysqli_stmt`, in both object and procedural form |
 | `doctrine` | Doctrine DBAL connections and prepared statements |
-| `laravel` | Raw SQL through the `DB` facade and Illuminate connections |
+| `laravel` | Raw SQL, Query Builder and Eloquent execution calls |
 | `wordpress` | `wpdb`, including the statements `wpdb::prepare()` interpolates |
 
-`pdo` and `mysqli` are enabled by default. Query builders and Eloquent assemble
-their SQL at runtime and are out of reach of a source-level analyzer; what the
-framework extensions catalog is the raw SQL an application still writes by hand.
+`pdo` and `mysqli` are enabled by default. Enable Laravel explicitly and select
+its SQL grammar with `--extension laravel --dialect mysql` (`pgsql` and `sqlite`
+are also available). The analyzer reconstructs supported builder operations
+without booting Laravel or loading the application's classes. Unknown effects
+remain visible as incomplete statements. See [Laravel support](docs/laravel.md)
+for supported operations, configuration and limitations.
 
 Implement `SqlCatalog\Extension\ExtensionInterface` and register it on an
 `ExtensionRegistry` to recognise an API this package does not ship. An extension

@@ -63,7 +63,7 @@ final class LaravelExtensionTest extends TestCase
                 $sink->valueParameter ?? '-',
                 ($sink->kind === null ? '-' : $sink->kind->value) . '/' . ($sink->handleType ?? '-'),
             ]),
-            (new LaravelExtension())->sinks(),
+            array_values(array_filter((new LaravelExtension())->sinks(), static fn (SinkSpec $sink): bool => $sink->role === \SqlCatalog\Extension\SinkRole::Query)),
         );
 
         self::assertSame(
@@ -87,6 +87,19 @@ final class LaravelExtensionTest extends TestCase
             ],
             $described,
         );
+    }
+
+    public function testBuilderMethodsDeclareReadsWritesAndCompoundExecutions(): void
+    {
+        $methods = (new LaravelExtension())->builderMethods();
+        self::assertCount(36, $methods);
+        self::assertSame(StatementKind::Select, $methods['get']);
+        self::assertSame(StatementKind::Insert, $methods['insert']);
+        self::assertSame(StatementKind::Update, $methods['update']);
+        self::assertSame(StatementKind::Delete, $methods['delete']);
+        self::assertNull($methods['save']);
+        $builders = array_filter((new LaravelExtension())->sinks(), static fn (SinkSpec $sink): bool => $sink->role === \SqlCatalog\Extension\SinkRole::Builder);
+        self::assertCount(count($methods) * 4, $builders);
     }
 
     public function testGlobalsAreEmptyBecauseTheHandleIsNotReachedThroughOne(): void

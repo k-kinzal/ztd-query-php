@@ -51,6 +51,21 @@ the SQL argument is (below). That decides whether it is a database call:
 The budget is refilled for every call, so a large file does not starve the calls
 written at its end.
 
+## Framework builder state
+
+Laravel execution calls derive the receiver together with the terminal arguments.
+`ObjectEffects` adds conservative alias and mutation dependencies to the same
+backward slice used for SQL strings. `ObjectMemory` keeps immutable snapshots by
+allocation identity within each run; copying a run isolates later mutations.
+Closures and local scopes use the shared slicer, executor and evaluation budget.
+
+The Laravel model applies supported operations to those snapshots and compiles
+SQL and ordered bindings at the execution call. Those values pass through the
+ordinary statement recorder and value binder. Unsupported effects carry a gap
+through later operations, so a subsequent recognized method cannot erase it.
+See [Laravel support](laravel.md) for grammar configuration and the supported
+subset.
+
 ## Walking back
 
 `BackwardSlicer` starts from the names the SQL argument reads and goes back

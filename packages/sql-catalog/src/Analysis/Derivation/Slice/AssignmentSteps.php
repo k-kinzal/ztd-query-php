@@ -41,11 +41,12 @@ final class AssignmentSteps
     public function over(Expr $expression, Pending $path): Pending
     {
         foreach (array_reverse($this->within($expression)) as $assignment) {
-            $written = $this->modified->own($assignment);
+            $written = $this->modified->tracksObjects() ? $this->modified->of($assignment) : $this->modified->own($assignment);
             if (array_intersect_key($written, $path->needs) === []) {
                 continue;
             }
-            $needs = $this->replaces($assignment) ? array_diff_key($path->needs, $written) : $path->needs;
+            $replaced = $assignment instanceof Expr\Assign || $assignment instanceof Expr\AssignRef ? $this->modified->targets($assignment->var) : $written;
+            $needs = $this->replaces($assignment) ? array_diff_key($path->needs, $replaced) : $path->needs;
             $path = $path->through(new SliceStep($assignment), $needs + $this->names->read($assignment));
         }
 
@@ -73,6 +74,9 @@ final class AssignmentSteps
     {
         if ($node instanceof Expr\Closure || $node instanceof Expr\ArrowFunction) {
             return [];
+        }
+        if ($this->modified->tracksObjects() && $node instanceof Expr) {
+            return [$node];
         }
         $found = [];
         foreach (get_object_vars($node) as $sub) {

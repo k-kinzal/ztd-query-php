@@ -110,6 +110,7 @@ final class ProgramIndexBuilder
             $methods,
             $members['defaults'],
             $members['assigned'],
+            $node->attrGroups !== [],
         );
     }
 

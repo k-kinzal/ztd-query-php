@@ -203,4 +203,16 @@ final class CommandLineParserTest extends TestCase
         self::assertSame('b', $parser->last(['output' => ['a', 'b']], 'output'));
         self::assertNull($parser->last([], 'output'));
     }
+
+    public function testParseReadsTheLaravelDialectInBothOptionForms(): void
+    {
+        self::assertSame('sqlite', (new CommandLineParser())->parse(['--dialect=sqlite'])->dialect);
+        self::assertSame('mysql', (new CommandLineParser())->parse(['--dialect', 'mysql'])->dialect);
+    }
+
+    public function testParseRejectsAnUnknownDialect(): void
+    {
+        $this->expectException(InvalidCommandLineException::class);
+        (new CommandLineParser())->parse(['--dialect=unknown']);
+    }
 }

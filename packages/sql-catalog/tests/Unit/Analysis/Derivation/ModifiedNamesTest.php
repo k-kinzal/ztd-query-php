@@ -18,6 +18,7 @@ use SqlCatalog\Php\SourceParser;
 #[UsesClass(FreeNames::class)]
 #[UsesClass(\SqlCatalog\Php\ParsedFile::class)]
 #[UsesClass(SourceParser::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\Objects\ObjectEffects::class)]
 final class ModifiedNamesTest extends TestCase
 {
     /**
@@ -103,5 +104,11 @@ final class ModifiedNamesTest extends TestCase
     public function testAllNamesWhatEachTargetWrites(): void
     {
         self::assertSame(['a' => true, 'b' => true], (new ModifiedNames())->all([new Expr\Variable('a'), new Expr\Variable('b')]));
+    }
+
+    public function testTracksObjectsRequiresAnExplicitEffectModel(): void
+    {
+        self::assertFalse((new ModifiedNames())->tracksObjects());
+        self::assertTrue((new ModifiedNames(objects: new \SqlCatalog\Analysis\Derivation\Objects\ObjectEffects()))->tracksObjects());
     }
 }

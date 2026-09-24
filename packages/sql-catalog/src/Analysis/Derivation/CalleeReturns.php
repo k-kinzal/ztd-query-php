@@ -102,11 +102,32 @@ final class CalleeReturns
             $result = $result === null ? $value : $result->union($value);
         }
         $result ??= Domain::literal(null);
-        if (!$this->budget->isExhausted()) {
+        if (!$this->budget->isExhausted() && $this->cacheable($result)) {
             $this->remembered->remember($key, $result);
         }
 
         return $result;
+    }
+
+    /**
+     * Allocated objects, including those inside arrays, cannot be reused across calls.
+     */
+    public function cacheable(Domain $value): bool
+    {
+        foreach ($value->terms as $term) {
+            if ($term instanceof \SqlCatalog\Evaluation\ObjectTerm && $term->identity !== null) {
+                return false;
+            }
+            if ($term instanceof \SqlCatalog\Evaluation\ArrayTerm) {
+                foreach ($term->entries as $entry) {
+                    if (!$this->cacheable($entry->value)) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
     }
 
     /**

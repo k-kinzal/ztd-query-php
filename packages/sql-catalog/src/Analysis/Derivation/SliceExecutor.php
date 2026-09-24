@@ -189,7 +189,7 @@ final class SliceExecutor
     public function writtenBy(SliceStep $step): array
     {
         if ($step->node !== null) {
-            $names = $this->modified->own($step->node);
+            $names = $this->modified->tracksObjects() ? $this->modified->of($step->node) : $this->modified->own($step->node);
             foreach ($step->names as $name) {
                 $names[$name] = true;
             }

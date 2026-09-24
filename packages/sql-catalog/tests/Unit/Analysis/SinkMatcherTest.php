@@ -39,6 +39,7 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(TypeReader::class)]
 #[UsesClass(TypeShape::class)]
 #[UsesClass(\SqlCatalog\Php\ClassShape::class)]
+#[UsesClass(\SqlCatalog\Extension\LaravelExtension::class)]
 final class SinkMatcherTest extends TestCase
 {
     public function testMatchMethodFindsTheCallOnAKnownReceiver(): void
@@ -153,5 +154,11 @@ final class SinkMatcherTest extends TestCase
 
         self::assertTrue($matcher->models(Domain::of(new ObjectTerm('PDO'))));
         self::assertFalse($matcher->models(Domain::of(new ObjectTerm('App\\Repository'))));
+    }
+
+    public function testHasBuildersDependsOnTheEnabledExtensions(): void
+    {
+        self::assertFalse((new SinkMatcher([], new ProgramIndex()))->hasBuilders());
+        self::assertTrue((new SinkMatcher((new \SqlCatalog\Extension\LaravelExtension())->sinks(), new ProgramIndex()))->hasBuilders());
     }
 }

@@ -13,10 +13,11 @@ use SqlCatalog\Type\TypeShape;
 /**
  * An object the analyzer tracked by class.
  *
- * Two kinds of object matter to the catalog. An enum case carries the case name,
+ * An enum case carries the case name,
  * which resolves `->value` to a literal. A prepared statement carries the
  * identifier of the catalog entry it came from, which is how a later
- * `execute()` finds the query it binds values to.
+ * `execute()` finds the query it binds values to. Modelled builders also carry
+ * an allocation identity and immutable state, so aliases observe mutations.
  *
  * @visibility root
  */
@@ -26,11 +27,15 @@ final class ObjectTerm implements Term
      * @param string $className The fully qualified class name, without a leading backslash
      * @param string|null $enumCase The case name when the object is an enum case
      * @param string|null $statementId The catalog entry a prepared statement belongs to
+     * @param string|null $identity The allocation followed across aliases
+     * @param ArrayTerm|null $state The immutable properties of a modelled object
      */
     public function __construct(
         public readonly string $className,
         public readonly ?string $enumCase = null,
         public readonly ?string $statementId = null,
+        public readonly ?string $identity = null,
+        public readonly ?ArrayTerm $state = null,
     ) {
     }
 
@@ -58,6 +63,8 @@ final class ObjectTerm implements Term
     #[Override]
     public function signature(): string
     {
-        return 'object:' . $this->className . ':' . ($this->enumCase ?? '') . ':' . ($this->statementId ?? '');
+        $base = 'object:' . $this->className . ':' . ($this->enumCase ?? '') . ':' . ($this->statementId ?? '');
+
+        return $this->identity === null ? $base : $base . ':' . $this->identity . ':' . ($this->state?->signature() ?? '');
     }
 }

@@ -141,6 +141,7 @@ final class Analyzer
             $sinks,
             $options->budget(),
             new DeclaredGlobals($this->extensions->globalsOf($options->extensions)),
+            $options->dialect,
         );
 
         return $this->sortRecords($this->entries->build($interpreter->analyze($files)));

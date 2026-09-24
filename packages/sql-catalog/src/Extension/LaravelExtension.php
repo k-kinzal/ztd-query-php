@@ -8,11 +8,7 @@ use Override;
 use SqlCatalog\Sql\StatementKind;
 
 /**
- * Laravel's database facade and connection, where the statement is still written as SQL.
- *
- * The query builder and Eloquent assemble their SQL at runtime and are out of
- * reach of a source-level analyzer; what this extension catalogues is the raw
- * SQL a Laravel application still writes by hand.
+ * Laravel's raw SQL calls and Query Builder/Eloquent execution boundaries.
  *
  * @visibility root
  */
@@ -37,7 +33,7 @@ final class LaravelExtension implements ExtensionInterface
     #[Override]
     public function description(): string
     {
-        return 'Laravel raw SQL through the DB facade and Illuminate connections';
+        return 'Laravel raw SQL, Query Builder and Eloquent';
     }
 
     /**
@@ -72,7 +68,41 @@ final class LaravelExtension implements ExtensionInterface
             );
         }
 
+        foreach ($this->builderMethods() as $method => $kind) {
+            foreach (['query' => 'Illuminate\\Database\\Query\\Builder', 'eloquent' => 'Illuminate\\Database\\Eloquent\\Builder', 'model' => 'Illuminate\\Database\\Eloquent\\Model'] as $type => $class) {
+                $sinks[] = new SinkSpec('laravel.' . $type . '.' . $method, SinkCallKind::Method, $class, $method, SinkRole::Builder, sqlParameter: 0, valuesParameter: 1, kind: $kind);
+            }
+            $sinks[] = new SinkSpec('laravel.model.static.' . $method, SinkCallKind::StaticCall, 'Illuminate\\Database\\Eloquent\\Model', $method, SinkRole::Builder, sqlParameter: 0, valuesParameter: 1, kind: $kind);
+        }
+
         return $sinks;
+    }
+
+    /**
+     * Execution calls, including explicitly incomplete compound operations.
+     *
+     * @return array<string, StatementKind|null>
+     */
+    public function builderMethods(): array
+    {
+        $methods = array_fill_keys(['get', 'first', 'firstOrFail', 'find', 'findOrFail', 'all', 'pluck', 'value', 'count', 'sum', 'avg', 'min', 'max', 'exists', 'doesntExist', 'paginate', 'simplePaginate', 'cursorPaginate', 'chunk', 'each', 'cursor', 'lazy'], StatementKind::Select);
+
+        return $methods + [
+            'insert' => StatementKind::Insert,
+            'insertOrIgnore' => StatementKind::Insert,
+            'insertGetId' => StatementKind::Insert,
+            'upsert' => StatementKind::Insert,
+            'update' => StatementKind::Update,
+            'increment' => StatementKind::Update,
+            'decrement' => StatementKind::Update,
+            'delete' => StatementKind::Delete,
+            'forceDelete' => StatementKind::Delete,
+            'restore' => StatementKind::Update,
+            'create' => StatementKind::Insert,
+            'save' => null,
+            'firstOrCreate' => null,
+            'updateOrCreate' => null,
+        ];
     }
 
     /**

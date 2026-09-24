@@ -26,6 +26,7 @@ final class CommandLine
      * @param bool $help Whether the command was asked for its help
      * @param bool $listExtensions Whether the command was asked to list its extensions
      * @param bool $listReporters Whether the command was asked to list its reporters
+     * @param string|null $dialect The SQL grammar used by framework builders
      */
     public function __construct(
         public readonly array $paths = [],
@@ -39,6 +40,7 @@ final class CommandLine
         public readonly bool $help = false,
         public readonly bool $listExtensions = false,
         public readonly bool $listReporters = false,
+        public readonly ?string $dialect = null,
     ) {
     }
 

@@ -43,6 +43,8 @@ final class FreeNames
      */
     private array $sinkArguments = [];
 
+    private bool $builders = false;
+
     /**
      * Builds the reader over the database calls whose arguments it reads selectively.
      *
@@ -52,6 +54,7 @@ final class FreeNames
     {
         $this->external = $external ?? new ExternalInput();
         foreach ($sinks as $sink) {
+            $this->builders = $this->builders || $sink->role === SinkRole::Builder;
             $name = strtolower(ltrim($sink->name, '\\'));
             $positions = $this->sinkArguments[$name] ?? [];
             if (($sink->role === SinkRole::Compose || $sink->role === SinkRole::Prepare) && $sink->sqlParameter !== null) {
@@ -131,6 +134,9 @@ final class FreeNames
      */
     public function sinkArgumentsOf(Expr\CallLike $call): ?array
     {
+        if ($this->builders) {
+            return null;
+        }
         $name = null;
         if ($call instanceof Expr\MethodCall || $call instanceof Expr\NullsafeMethodCall || $call instanceof Expr\StaticCall) {
             $name = $call->name instanceof Node\Identifier ? $call->name->toString() : null;
@@ -174,6 +180,9 @@ final class FreeNames
      */
     public function targetReads(Node $target): array
     {
+        if ($this->builders && $target instanceof Expr\PropertyFetch) {
+            return $this->read($target->var);
+        }
         if ($target instanceof Expr\ArrayDimFetch) {
             return $this->read($target);
         }

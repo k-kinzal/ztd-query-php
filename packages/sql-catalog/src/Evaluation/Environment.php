@@ -19,12 +19,20 @@ final class Environment
      */
     private array $variables;
 
+    private ?ObjectMemory $objects;
+
     /**
      * @param array<string, Domain> $variables Initial bindings, keyed by variable name without the sigil
      */
-    public function __construct(array $variables = [])
+    public function __construct(array $variables = [], ?ObjectMemory $objects = null)
     {
         $this->variables = $variables;
+        $this->objects = $objects;
+        foreach ($variables as $value) {
+            if ($value->soleObject()?->identity !== null) {
+                $this->objects()->import($value);
+            }
+        }
     }
 
     /**
@@ -32,7 +40,17 @@ final class Environment
      */
     public function read(string $name): Domain
     {
-        return $this->variables[$name] ?? Domain::opaque(TypeShape::unknown(), Origin::Unresolved, '$' . $name);
+        $value = $this->variables[$name] ?? Domain::opaque(TypeShape::unknown(), Origin::Unresolved, '$' . $name);
+
+        return $this->refresh($value);
+    }
+
+    /**
+     * Resolves an already-evaluated object reference after subsequent argument effects.
+     */
+    public function refresh(Domain $value): Domain
+    {
+        return $this->objects?->read($value) ?? $value;
     }
 
     /**
@@ -41,6 +59,11 @@ final class Environment
     public function write(string $name, Domain $domain): void
     {
         $this->variables[$name] = $domain;
+        $this->objects?->import($domain);
+        $object = $domain->soleObject();
+        if ($object?->identity !== null) {
+            $this->objects()->remember($object);
+        }
     }
 
     /**
@@ -74,7 +97,7 @@ final class Environment
      */
     public function copy(): self
     {
-        return new self($this->variables);
+        return new self($this->variables, $this->objects?->copy());
     }
 
     /**
@@ -95,7 +118,19 @@ final class Environment
             }
         }
 
-        return new self($joined);
+        $objects = $this->objects === null ? $other->objects?->copy() : ($other->objects === null ? $this->objects->copy() : $this->objects->join($other->objects));
+
+        return new self($joined, $objects);
+    }
+
+    /**
+     * Replaces this run with the alternatives left by independent branches.
+     */
+    public function mergeBranches(self $left, self $right): void
+    {
+        $joined = $left->join($right);
+        $this->variables = $joined->variables;
+        $this->objects = $joined->objects;
     }
 
     /**
@@ -109,7 +144,9 @@ final class Environment
         }
         sort($parts);
 
-        return implode(';', $parts);
+        $objects = $this->objects?->signature() ?? '';
+
+        return implode(';', $parts) . ($objects === '' ? '' : ';objects:' . $objects);
     }
 
     /**
@@ -121,11 +158,19 @@ final class Environment
             return false;
         }
         foreach ($this->variables as $name => $domain) {
-            if (!$domain->equals($other->read($name))) {
+            if (!$this->read($name)->equals($other->read($name))) {
                 return false;
             }
         }
 
         return true;
+    }
+
+    /**
+     * The object snapshots shared by this run's aliases.
+     */
+    public function objects(): ObjectMemory
+    {
+        return $this->objects ??= new ObjectMemory();
     }
 }

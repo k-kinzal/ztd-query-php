@@ -37,16 +37,11 @@ use SqlCatalog\Source\SourceScanException;
 #[UsesClass(ParsedFile::class)]
 #[UsesClass(SourceFile::class)]
 #[UsesClass(SourceScanException::class)]
-#[UsesClass(\SqlCatalog\Analysis\CallEvaluator::class)]
 #[UsesClass(\SqlCatalog\Analysis\EntryFactory::class)]
 #[UsesClass(EvaluationBudget::class)]
-#[UsesClass(\SqlCatalog\Analysis\ExpressionEvaluator::class)]
 #[UsesClass(\SqlCatalog\Analysis\ExternalInput::class)]
 #[UsesClass(\SqlCatalog\Analysis\FunctionScope::class)]
-#[UsesClass(\SqlCatalog\Analysis\Interpreter::class)]
 #[UsesClass(\SqlCatalog\Analysis\QueryRecord::class)]
-#[UsesClass(\SqlCatalog\Analysis\ReferenceEvaluator::class)]
-#[UsesClass(\SqlCatalog\Analysis\SinkMatcher::class)]
 #[UsesClass(\SqlCatalog\Analysis\StatementRecorder::class)]
 #[UsesClass(\SqlCatalog\Analysis\ValueBinder::class)]
 #[UsesClass(CallSite::class)]
@@ -56,9 +51,7 @@ use SqlCatalog\Source\SourceScanException;
 #[UsesClass(\SqlCatalog\Evaluation\ArrayEntry::class)]
 #[UsesClass(\SqlCatalog\Evaluation\ArrayTerm::class)]
 #[UsesClass(\SqlCatalog\Evaluation\Domain::class)]
-#[UsesClass(\SqlCatalog\Evaluation\Environment::class)]
 #[UsesClass(\SqlCatalog\Evaluation\LiteralTerm::class)]
-#[UsesClass(\SqlCatalog\Evaluation\ObjectTerm::class)]
 #[UsesClass(\SqlCatalog\Evaluation\OpaqueTerm::class)]
 #[UsesClass(\SqlCatalog\Extension\DoctrineExtension::class)]
 #[UsesClass(\SqlCatalog\Extension\LaravelExtension::class)]
@@ -84,7 +77,6 @@ use SqlCatalog\Source\SourceScanException;
 #[UsesClass(\SqlCatalog\Type\TypeShape::class)]
 #[UsesClass(\SqlCatalog\Php\ClassShape::class)]
 #[UsesClass(\SqlCatalog\Analysis\BuiltinCallModel::class)]
-#[UsesClass(\SqlCatalog\Analysis\SinkFinder::class)]
 #[UsesClass(\SqlCatalog\Catalog\Finding::class)]
 #[UsesClass(FindingRule::class)]
 #[UsesClass(\SqlCatalog\Evaluation\CallResults::class)]
@@ -96,18 +88,12 @@ use SqlCatalog\Source\SourceScanException;
 #[UsesClass(\SqlCatalog\Php\MethodShape::class)]
 #[UsesClass(\SqlCatalog\Analysis\ConstantReader::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\Binding::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\CalleeReturns::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\CallerIndex::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\Callers::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\Deriver::class)]
+#[CoversClass(\SqlCatalog\Analysis\Derivation\Deriver::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\EntryBinder::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\FreeNames::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\ModifiedNames::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\PropertyWrites::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\SliceExecutor::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\Arrival::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\AssignmentSteps::class)]
-#[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\BackwardSlicer::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\BranchArms::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\LoopPasses::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\Pending::class)]
@@ -115,6 +101,34 @@ use SqlCatalog\Source\SourceScanException;
 #[UsesClass(\SqlCatalog\Analysis\Derivation\Solution::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\SourceTree::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\CallerSet::class)]
+#[CoversClass(\SqlCatalog\Analysis\CallEvaluator::class)]
+#[CoversClass(\SqlCatalog\Analysis\Derivation\CalleeReturns::class)]
+#[CoversClass(\SqlCatalog\Analysis\Derivation\FreeNames::class)]
+#[CoversClass(\SqlCatalog\Analysis\Derivation\ModifiedNames::class)]
+#[CoversClass(\SqlCatalog\Analysis\Derivation\Objects\CallbackEffects::class)]
+#[CoversClass(\SqlCatalog\Analysis\Derivation\Objects\ObjectEffects::class)]
+#[CoversClass(\SqlCatalog\Analysis\Derivation\Slice\AssignmentSteps::class)]
+#[CoversClass(\SqlCatalog\Analysis\Derivation\Slice\BackwardSlicer::class)]
+#[CoversClass(\SqlCatalog\Analysis\Derivation\SliceExecutor::class)]
+#[CoversClass(\SqlCatalog\Analysis\ExpressionEvaluator::class)]
+#[CoversClass(\SqlCatalog\Analysis\Interpreter::class)]
+#[CoversClass(\SqlCatalog\Analysis\Laravel\BuilderCalls::class)]
+#[CoversClass(\SqlCatalog\Analysis\Laravel\BuilderQueries::class)]
+#[CoversClass(\SqlCatalog\Analysis\Laravel\CallbackModel::class)]
+#[CoversClass(\SqlCatalog\Analysis\Laravel\Clauses::class)]
+#[CoversClass(\SqlCatalog\Analysis\Laravel\Grammar::class)]
+#[CoversClass(\SqlCatalog\Analysis\Laravel\ModelMetadata::class)]
+#[CoversClass(\SqlCatalog\Analysis\Laravel\Predicates::class)]
+#[CoversClass(\SqlCatalog\Analysis\Laravel\QueryState::class)]
+#[CoversClass(\SqlCatalog\Analysis\Laravel\SelectCompiler::class)]
+#[CoversClass(\SqlCatalog\Analysis\Laravel\WriteCompiler::class)]
+#[CoversClass(\SqlCatalog\Analysis\ReferenceEvaluator::class)]
+#[CoversClass(\SqlCatalog\Analysis\SinkFinder::class)]
+#[CoversClass(\SqlCatalog\Analysis\SinkMatcher::class)]
+#[CoversClass(\SqlCatalog\Evaluation\Environment::class)]
+#[CoversClass(\SqlCatalog\Evaluation\ObjectMemory::class)]
+#[CoversClass(\SqlCatalog\Evaluation\ObjectTerm::class)]
+#[CoversClass(\SqlCatalog\Analysis\Derivation\Objects\BranchEffects::class)]
 final class AnalyzerTest extends TestCase
 {
     public function testIssetGuardsAConditionallyAssignedSqlFragment(): void
@@ -529,4 +543,194 @@ final class AnalyzerTest extends TestCase
             $catalog->entries(),
         ));
     }
+
+    public function testAnalyzeSourceKeepsDirectBuilderArrayWritesOpen(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource(['query.php' => '<?php use Illuminate\\Support\\Facades\\DB; function f() { $q = DB::table("users"); $q->wheres[] = []; $q->get(); }'], new AnalysisOptions(['laravel'], dialect: 'sqlite'));
+
+        self::assertCount(1, $catalog->entries());
+        self::assertFalse($catalog->entries()[0]->searchClosed());
+    }
+
+    public function testAnalyzeSourceKeepsReferenceRebindingOfBuildersOpen(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource(['query.php' => '<?php use Illuminate\\Support\\Facades\\DB; function f() { $q = DB::table("users"); $alias =& $q; $alias->where("id", 1); $q->get(); }'], new AnalysisOptions(['laravel'], dialect: 'sqlite'));
+
+        self::assertCount(1, $catalog->entries());
+        self::assertFalse($catalog->entries()[0]->searchClosed());
+    }
+
+    public function testAnalyzeSourceFollowsBuilderAliasesStoredInArrays(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource(['query.php' => '<?php use Illuminate\\Support\\Facades\\DB; function f() { $q = DB::table("users"); $aliases = [$q]; $aliases[0]->where("id", 1); $q->get(); }'], new AnalysisOptions(['laravel'], dialect: 'sqlite'));
+
+        self::assertCount(1, $catalog->entries());
+        self::assertSame('select * from "users" where "id" = ?', $catalog->entries()[0]->sql());
+        self::assertTrue($catalog->entries()[0]->searchClosed());
+    }
+
+    public function testAnalyzeSourceKeepsConditionalMutationsAsAlternatives(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource(['query.php' => '<?php use Illuminate\\Support\\Facades\\DB; function f(bool $active) { $q = DB::table("users"); $active ? $q->where("a", 1) : $q->where("b", 2); $q->get(); }'], new AnalysisOptions(['laravel'], dialect: 'sqlite'));
+        $sql = array_map(static fn (CatalogEntry $entry): string => $entry->sql(), $catalog->entries());
+        sort($sql);
+        self::assertSame(['select * from "users" where "a" = ?', 'select * from "users" where "b" = ?'], $sql);
+    }
+
+    public function testAnalyzeSourceRetainsTheLimitAfterReusingAFirstQuery(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource(['query.php' => '<?php use Illuminate\\Support\\Facades\\DB; $q = DB::table("users"); $q->first(); $q->get();'], new AnalysisOptions(['laravel'], dialect: 'sqlite'));
+        self::assertCount(2, $catalog->entries());
+        self::assertSame('select * from "users" limit 1', $catalog->entries()[1]->sql());
+    }
+
+    public function testAnalyzeSourceDoesNotMistakeCollectionMethodsForDatabaseExecutions(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource(['query.php' => '<?php use Illuminate\\Support\\Facades\\DB; DB::table("users")->get()->first();'], new AnalysisOptions(['laravel'], dialect: 'sqlite'));
+        self::assertCount(1, $catalog->entries());
+        self::assertSame('select * from "users"', $catalog->entries()[0]->sql());
+    }
+
+    public function testAnalyzeSourceRecognizesAuthenticationModelsWithoutVendorFiles(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource(['query.php' => '<?php class User extends \\Illuminate\\Foundation\\Auth\\User {} User::where("id", 1)->get();'], new AnalysisOptions(['laravel'], dialect: 'sqlite'));
+        self::assertCount(1, $catalog->entries());
+        self::assertSame('select * from "users" where "id" = ?', $catalog->entries()[0]->sql());
+        self::assertTrue($catalog->entries()[0]->searchClosed());
+    }
+
+    public function testAnalyzeSourceDoesNotLoseAlternativesWhenMutatingAJoinedBuilder(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource(['query.php' => '<?php use Illuminate\\Support\\Facades\\DB; function f(bool $active) { $q = DB::table("users"); $active ? $q->where("a", 1) : $q->where("b", 2); $q->limit(3); $q->get(); }'], new AnalysisOptions(['laravel'], dialect: 'sqlite'));
+        $sql = array_map(static fn (CatalogEntry $entry): string => $entry->sql(), $catalog->entries());
+        sort($sql);
+        self::assertSame(['select * from "users" where "a" = ? limit 3', 'select * from "users" where "b" = ? limit 3'], $sql);
+    }
+
+    public function testAnalyzeSourceKeepsObjectsPassedInsideArraysToUnknownHelpersOpen(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource(['query.php' => '<?php use Illuminate\\Support\\Facades\\DB; $q = DB::table("users"); $box = [$q]; unknown($box); $q->get();'], new AnalysisOptions(['laravel'], dialect: 'sqlite'));
+        self::assertCount(1, $catalog->entries());
+        self::assertFalse($catalog->entries()[0]->searchClosed());
+    }
+
+    public function testAnalyzeSourceDoesNotAssumeCustomModelOrderingUsesTheStandardBuilder(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource(['query.php' => '<?php class User extends \\Illuminate\\Database\\Eloquent\\Model { public function orderBy($column) { return $this->newQuery()->where("tenant", 7); } } User::orderBy("id")->get();'], new AnalysisOptions(['laravel'], dialect: 'sqlite'));
+        self::assertCount(1, $catalog->entries());
+        self::assertFalse($catalog->entries()[0]->searchClosed());
+    }
+    public function testAnalyzeSourceHonorsShortCircuitConditionsOnTrackedBuilders(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource(['query.php' => '<?php use Illuminate\\Support\\Facades\\DB; $q = DB::table("users"); $q->where("a", 1) && $q->where("b", 2); false && $q->where("c", 3); $q ?? $q->where("d", 4); $q->get();'], new AnalysisOptions(['laravel'], dialect: 'sqlite'));
+        self::assertCount(1, $catalog->entries());
+        self::assertSame('select * from "users" where "a" = ? and "b" = ?', $catalog->entries()[0]->sql());
+        self::assertTrue($catalog->entries()[0]->searchClosed());
+    }
+
+
+    public function testAnalyzeSourceKeepsCapturedScalarBindingsInNestedPredicates(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource(['query.php' => '<?php use Illuminate\\Support\\Facades\\DB; $id = 7; DB::table("users")->where("active", 1)->where(function ($q) use ($id) { $q->where("id", $id)->orWhereNull("email"); })->get();'], new AnalysisOptions(['laravel'], dialect: 'sqlite'));
+        self::assertCount(1, $catalog->entries());
+        self::assertSame('select * from "users" where "active" = ? and ("id" = ? or "email" is null)', $catalog->entries()[0]->sql());
+        self::assertTrue($catalog->entries()[0]->searchClosed());
+    }
+
+    public function testAnalyzeSourcePassesArgumentsToTraditionalLocalScopes(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource(['query.php' => '<?php class User extends \\Illuminate\\Database\\Eloquent\\Model { public function scopeForTenant($q, int $tenant) { return $q->where("tenant_id", $tenant); } } User::forTenant(7)->get();'], new AnalysisOptions(['laravel'], dialect: 'sqlite'));
+        self::assertCount(1, $catalog->entries());
+        self::assertSame('select * from "users" where "tenant_id" = ?', $catalog->entries()[0]->sql());
+        self::assertTrue($catalog->entries()[0]->searchClosed());
+    }
+
+    public function testAnalyzeSourceDoesNotLoseUnknownEffectsInsideNestedPredicates(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource(['query.php' => '<?php use Illuminate\\Support\\Facades\\DB; DB::table("users")->where(fn ($q) => $q->customFilter())->get();'], new AnalysisOptions(['laravel'], dialect: 'sqlite'));
+        self::assertCount(1, $catalog->entries());
+        self::assertFalse($catalog->entries()[0]->searchClosed());
+    }
+
+    public function testAnalyzeSourceKeepsEarlyReturningScopesAndBooleanRegroupingOpen(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource(['query.php' => '<?php class User extends \\Illuminate\\Database\\Eloquent\\Model { public function scopeEarly($q) { return $q; $q->where("id", 1); } public function scopeEither($q) { return $q->where("a", 1)->orWhere("b", 2); } } User::early()->get(); User::either()->get();'], new AnalysisOptions(['laravel'], dialect: 'sqlite'));
+        self::assertCount(2, $catalog->entries());
+        self::assertFalse($catalog->entries()[0]->searchClosed());
+        self::assertFalse($catalog->entries()[1]->searchClosed());
+    }
+
+    public function testAnalyzeSourceKeepsCapturedBuilderEffectsOpen(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource(['query.php' => '<?php use Illuminate\\Support\\Facades\\DB; $other = DB::table("posts"); DB::table("users")->where(function ($q) use ($other) { $other->where("id", 7); $q->where("id", 1); })->get(); $other->get();'], new AnalysisOptions(['laravel'], dialect: 'sqlite'));
+        self::assertCount(2, $catalog->entries());
+        self::assertFalse($catalog->entries()[0]->searchClosed());
+        self::assertFalse($catalog->entries()[1]->searchClosed());
+    }
+    public function testAnalyzeSourceDoesNotLoseArgumentSideEffectsOnTheBuilderReceiver(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource(['query.php' => '<?php use Illuminate\\Support\\Facades\\DB; function customize($q) { $q->where("tenant_id", 7); return 1; } $q = DB::table("users"); $q->where("active", customize($q))->get();'], new AnalysisOptions(['laravel'], dialect: 'sqlite'));
+        self::assertCount(1, $catalog->entries());
+        self::assertFalse($catalog->entries()[0]->searchClosed());
+    }
+
+    public function testAnalyzeSourceRefreshesTerminalReceiversAfterEvaluatingArguments(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource(['query.php' => '<?php use Illuminate\\Support\\Facades\\DB; function columns($q) { $q->where("tenant_id", 7); return ["id"]; } $q = DB::table("users"); $q->get(columns($q));'], new AnalysisOptions(['laravel'], dialect: 'sqlite'));
+        self::assertCount(1, $catalog->entries());
+        self::assertFalse($catalog->entries()[0]->searchClosed());
+    }
+
+    public function testAnalyzeSourceRecognizesBothRawAndBuilderCallsOnConcreteConnections(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource(['query.php' => '<?php function run(\\Illuminate\\Database\\MySqlConnection $db) { $db->select("SELECT 1"); $db->table("users")->get(); }'], new AnalysisOptions(['laravel']));
+        self::assertCount(2, $catalog->entries());
+        self::assertSame('SELECT 1', $catalog->entries()[0]->sql());
+        self::assertSame('select * from `users`', $catalog->entries()[1]->sql());
+    }
+
+    #[DataProvider('providerUnmodelledBuilderEscapes')]
+    public function testAnalyzeSourceKeepsEachUnmodelledEscapeOfABuilderOpen(string $call): void
+    {
+        $source = '<?php use Illuminate\\Support\\Facades\\DB; function f(callable $fn, object $other, string $class, string $method) { $q = DB::table("users"); '.$call.'; $q->get(); }';
+        $catalog = (new Analyzer())->analyzeSource(['query.php' => $source], new AnalysisOptions(['laravel'], dialect: 'sqlite'));
+        self::assertCount(1, $catalog->entries());
+        self::assertFalse($catalog->entries()[0]->searchClosed());
+    }
+
+    /**
+     * @return iterable<array{string}>
+     */
+    public static function providerUnmodelledBuilderEscapes(): iterable
+    {
+        yield ['unknown($q)'];
+        yield ['$fn($q)'];
+        yield ['$other->customize($q)'];
+        yield ['$other->$method($q)'];
+        yield ['Unknown::customize($q)'];
+        yield ['$class::$method($q)'];
+        yield ['new Unknown($q)'];
+        yield ['unknown([$q])'];
+        yield ['unknown(fn () => $q->where("id", 7))'];
+        yield ['$q->$method()'];
+    }
+
+    #[DataProvider('providerNamedBuilderArguments')]
+    public function testAnalyzeSourceKeepsNamedBuilderArgumentsOpen(string $call): void
+    {
+        $catalog = (new Analyzer())->analyzeSource(['query.php' => '<?php use Illuminate\\Support\\Facades\\DB; '.$call.';'], new AnalysisOptions(['laravel'], dialect: 'sqlite'));
+        self::assertCount(1, $catalog->entries());
+        self::assertFalse($catalog->entries()[0]->searchClosed());
+    }
+
+    /**
+     * @return iterable<array{string}>
+     */
+    public static function providerNamedBuilderArguments(): iterable
+    {
+        yield ['DB::table(table: "users")->get()'];
+        yield ['DB::table("users")->where(column: "id", value: 7)->get()'];
+        yield ['DB::table("users")->get(columns: ["id"])'];
+    }
+
 }

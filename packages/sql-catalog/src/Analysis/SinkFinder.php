@@ -98,7 +98,7 @@ final class SinkFinder
     {
         $names = [];
         foreach ($sinks as $sink) {
-            if ($sink->role === SinkRole::Query || $sink->role === SinkRole::Prepare) {
+            if ($sink->role === SinkRole::Query || $sink->role === SinkRole::Prepare || $sink->role === SinkRole::Builder) {
                 $names[strtolower(ltrim($sink->name, '\\'))] = true;
             }
         }

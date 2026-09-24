@@ -7,6 +7,7 @@ namespace SqlCatalog\Analysis;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use SqlCatalog\Analysis\Derivation\CalleeReturns;
+use SqlCatalog\Analysis\Laravel\BuilderCalls;
 use SqlCatalog\Evaluation\Domain;
 use SqlCatalog\Evaluation\Environment;
 use SqlCatalog\Evaluation\ObjectTerm;
@@ -54,6 +55,7 @@ final class CallEvaluator
         ExternalInput $external,
         NodeText $text,
         ?CalleeReturns $returns = null,
+        private readonly ?BuilderCalls $builders = null,
     ) {
         $this->index = $index;
         $this->sinks = $sinks;
@@ -75,19 +77,21 @@ final class CallEvaluator
         if ($node->isFirstClassCallable()) {
             return Domain::of(new ObjectTerm('Closure'));
         }
+        $receiver = $node instanceof Expr\MethodCall || $node instanceof Expr\NullsafeMethodCall ? $expressions->evaluate($node->var, $environment, $scope) : null;
         $arguments = $this->arguments($node, $environment, $scope, $expressions);
 
         if ($node instanceof Expr\New_) {
+            $this->invalidateEscapes($node, $environment);
             return $this->evaluateInstantiation($node, $scope);
         }
         if ($node instanceof Expr\MethodCall || $node instanceof Expr\NullsafeMethodCall) {
-            return $this->evaluateMethod($node, $arguments, $environment, $scope, $expressions);
+            return $this->evaluateMethod($node, $arguments, $environment, $scope, $expressions, $receiver);
         }
         if ($node instanceof Expr\StaticCall) {
-            return $this->evaluateStatic($node, $arguments, $scope, $expressions);
+            return $this->evaluateStatic($node, $arguments, $scope, $expressions, $environment);
         }
         if ($node instanceof Expr\FuncCall) {
-            return $this->evaluateFunction($node, $arguments, $scope, $expressions);
+            return $this->evaluateFunction($node, $arguments, $scope, $expressions, $environment);
         }
 
         return Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node));
@@ -139,21 +143,34 @@ final class CallEvaluator
         Environment $environment,
         FunctionScope $scope,
         ExpressionEvaluator $expressions,
+        ?Domain $receiver = null,
     ): Domain {
         $name = $node->name instanceof Node\Identifier ? $node->name->toString() : null;
         if ($name === null) {
+            $this->invalidateEscapes($node, $environment);
+            $this->builders?->unsupported($receiver ?? $expressions->evaluate($node->var, $environment, $scope), $environment, 'Dynamic builder method');
             return Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node));
         }
 
-        $receiver = $expressions->evaluate($node->var, $environment, $scope);
+        $receiver = $environment->refresh($receiver ?? $expressions->evaluate($node->var, $environment, $scope));
         $sink = $this->sinks->matchMethod($receiver, $name);
+        if ($sink?->role === SinkRole::Builder && $this->builders !== null) {
+            return $this->builders->execution($receiver, strtolower($name), $arguments, $environment);
+        }
         if ($sink !== null) {
             return $this->applySink($sink, $node, $arguments, $scope);
+        }
+        $modelled = $this->builders?->methodCall($receiver, $name, $arguments, $environment, $node, $scope, $expressions);
+        if ($modelled !== null) {
+            return !$this->builders->positional(array_values($node->getArgs()))
+                ? $this->builders->unsupported($modelled, $environment, 'Named or unpacked Laravel arguments are not modelled')
+                : $modelled;
         }
         if (!$this->isOwnReceiver($node) && $this->sinks->models($receiver)) {
             return Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node));
         }
 
+        $this->invalidateEscapes($node, $environment);
         $className = $receiver->type()->soleClassName();
         $method = $this->index->findMethod($className, $name);
         if ($method?->node?->getStmts() === null) {
@@ -211,10 +228,14 @@ final class CallEvaluator
         array $arguments,
         FunctionScope $scope,
         ExpressionEvaluator $expressions,
+        ?Environment $environment = null,
     ): Domain {
         $name = $node->name instanceof Node\Identifier ? $node->name->toString() : null;
         $className = $node->class instanceof Node\Name ? $node->class->toString() : null;
         if ($name === null || $className === null) {
+            if ($environment !== null) {
+                $this->invalidateEscapes($node, $environment);
+            }
             return Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node));
         }
         if (in_array(strtolower($className), ['self', 'static', 'parent'], true)) {
@@ -222,10 +243,23 @@ final class CallEvaluator
         }
 
         $sink = $this->sinks->matchStatic($className, $name);
+        if ($sink?->role === SinkRole::Builder && $this->builders !== null) {
+            $state = new Laravel\QueryState(['model' => Domain::literal($className)]);
+            return $this->builders->execution(Domain::of(new ObjectTerm($className, state: $state->array())), strtolower($name), $arguments, $environment ?? new Environment());
+        }
         if ($sink !== null) {
             return $this->applySink($sink, $node, $arguments, $scope);
         }
 
+        $environment ??= new Environment();
+        $modelled = $this->builders?->staticCall($className, $name, $arguments, $environment, $node, $scope, $expressions);
+        if ($modelled !== null) {
+            return !$this->builders->positional(array_values($node->getArgs()))
+                ? $this->builders->unsupported($modelled, $environment, 'Named or unpacked Laravel arguments are not modelled')
+                : $modelled;
+        }
+
+        $this->invalidateEscapes($node, $environment);
         $method = $this->index->findMethod($className, $name);
 
         return $method === null
@@ -243,8 +277,12 @@ final class CallEvaluator
         array $arguments,
         FunctionScope $scope,
         ExpressionEvaluator $expressions,
+        ?Environment $environment = null,
     ): Domain {
         if (!$node->name instanceof Node\Name) {
+            if ($environment !== null) {
+                $this->invalidateEscapes($node, $environment);
+            }
             return Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node));
         }
         $name = $node->name->toString();
@@ -260,11 +298,26 @@ final class CallEvaluator
             return $this->builtins->evaluate($name, $arguments);
         }
 
+        if ($environment !== null && $this->builders !== null) {
+            $this->invalidateEscapes($node, $environment);
+        }
+
         $function = $this->index->findFunction($name);
 
         return $function === null
             ? Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node))
             : $this->follow($function, $arguments, $scope, $expressions);
+    }
+
+    /**
+     * Unknown calls may mutate objects passed directly or captured by callbacks.
+     */
+    public function invalidateEscapes(Expr\CallLike $node, Environment $environment): void
+    {
+        $arguments = array_map(static fn (Node\Arg $argument): Expr => $argument->value, array_values($node->getArgs()));
+        foreach ((new Derivation\FreeNames())->of($arguments) as $name => $_) {
+            $this->builders?->unsupported($environment->read($name), $environment, 'Object passed to an unmodelled call');
+        }
     }
 
     /**
@@ -285,7 +338,7 @@ final class CallEvaluator
                 null,
                 $this->siteKeyOf($node, $scope, $sink->id),
             )),
-            SinkRole::Query => Domain::opaque(TypeShape::unknown(), Origin::Call, $sink->id),
+            SinkRole::Query, SinkRole::Builder => Domain::opaque(TypeShape::unknown(), Origin::Call, $sink->id),
             SinkRole::Execute, SinkRole::Bind => Domain::opaque(TypeShape::of(['bool']), Origin::Call, $sink->id),
         };
     }

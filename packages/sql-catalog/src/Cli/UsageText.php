@@ -44,6 +44,7 @@ final class UsageText
             '',
             'What to read:',
             '  -e, --extension=NAME   Recognise the database calls of NAME; repeatable (default: pdo,mysqli)',
+            '      --dialect=NAME     Framework builder grammar: mysql, pgsql or sqlite',
             '      --exclude=PATTERN  Skip source files whose reported path matches; repeatable',
             '      --root=DIR         Report paths relative to DIR (default: the working directory)',
             '',

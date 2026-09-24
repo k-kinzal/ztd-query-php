@@ -285,6 +285,9 @@ final class BackwardSlicer
         if ($statement instanceof Stmt\Expression) {
             return [$this->steps->over($statement->expr, $path)];
         }
+        if ($statement instanceof Stmt\Return_ && $statement->expr !== null && $this->modified->tracksObjects()) {
+            return [$this->steps->over($statement->expr, $path)];
+        }
         if ($statement instanceof Stmt\Global_ || $statement instanceof Stmt\Static_ || $statement instanceof Stmt\Unset_) {
             return [$this->steps->declaration($statement, $path)];
         }

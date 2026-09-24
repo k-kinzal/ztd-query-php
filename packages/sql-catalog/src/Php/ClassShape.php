@@ -25,6 +25,7 @@ final class ClassShape
      * @param array<string, TypeShape> $propertyTypes Declared property types, keyed by property name
      * @param array<string, MethodShape> $methods Methods, keyed by lower-case name
      * @param array<string, Expr> $propertyDefaults Property default expressions, keyed by property name
+     * @param bool $hasAttributes Whether attributes may customize runtime behavior
      * @param array<string, true> $assignedProperties Properties the class assigns to somewhere in its body
      */
     public function __construct(
@@ -39,6 +40,7 @@ final class ClassShape
         public readonly array $methods,
         public readonly array $propertyDefaults = [],
         public readonly array $assignedProperties = [],
+        public readonly bool $hasAttributes = false,
     ) {
     }
 

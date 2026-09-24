@@ -82,6 +82,9 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(\SqlCatalog\Text\TextHole::class)]
 #[UsesClass(TextPattern::class)]
 #[UsesClass(TypeShape::class)]
+#[UsesClass(\SqlCatalog\Evaluation\ArrayEntry::class)]
+#[UsesClass(\SqlCatalog\Evaluation\ArrayTerm::class)]
+#[UsesClass(\SqlCatalog\Evaluation\ObjectTerm::class)]
 final class CalleeReturnsTest extends TestCase
 {
     public function testValueOfReadsWhatTheCalleeReturns(): void
@@ -477,5 +480,15 @@ final class CalleeReturnsTest extends TestCase
 
         self::assertSame(['return 4;'], array_map(static fn (Stmt\Return_ $return): string => (new Standard())->prettyPrint([$return]), $found));
         self::assertSame([], $returns->returnsIn([]));
+    }
+
+    public function testCacheableRejectsAllocationsEvenInsideArrays(): void
+    {
+        $budget = new EvaluationBudget();
+        $returns = new CalleeReturns(new BackwardSlicer(new SourceTree([]), $budget), new SliceExecutor(), $budget);
+        $object = Domain::of(new \SqlCatalog\Evaluation\ObjectTerm('Builder', identity: 'a'));
+        self::assertFalse($returns->cacheable($object));
+        self::assertFalse($returns->cacheable(Domain::of(new \SqlCatalog\Evaluation\ArrayTerm([new \SqlCatalog\Evaluation\ArrayEntry(null, $object)]))));
+        self::assertTrue($returns->cacheable(Domain::literal('sql')));
     }
 }

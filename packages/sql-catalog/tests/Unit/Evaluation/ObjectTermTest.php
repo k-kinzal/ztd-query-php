@@ -16,6 +16,7 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(TextHole::class)]
 #[UsesClass(TextPattern::class)]
 #[UsesClass(TypeShape::class)]
+#[UsesClass(\SqlCatalog\Evaluation\ArrayTerm::class)]
 final class ObjectTermTest extends TestCase
 {
     public function testToPatternLeavesAGap(): void
@@ -41,5 +42,17 @@ final class ObjectTermTest extends TestCase
         $statement = new ObjectTerm('PDOStatement', null, 'a.php:3:pdo.prepare');
         self::assertNotSame($case->signature(), (new ObjectTerm('App\\Status', 'Banned'))->signature());
         self::assertStringContainsString('a.php:3:pdo.prepare', $statement->signature());
+    }
+
+    public function testSignatureDistinguishesAllocationsAndSnapshotsWithoutLosingOtherIdentity(): void
+    {
+        $a = new ObjectTerm('Builder', 'case', 'statement', 'allocation');
+        $b = new ObjectTerm('Builder', 'case', 'statement', 'other');
+        $c = new ObjectTerm('Builder', 'case', 'statement', 'allocation', new \SqlCatalog\Evaluation\ArrayTerm([]));
+        self::assertNotSame($a->signature(), $b->signature());
+        self::assertNotSame($a->signature(), $c->signature());
+        self::assertNotSame($a->signature(), (new ObjectTerm('Builder', 'other', 'statement', 'allocation'))->signature());
+        self::assertNotSame($a->signature(), (new ObjectTerm('Builder', 'case', 'other', 'allocation'))->signature());
+        self::assertNotSame($a->signature(), (new ObjectTerm('Other', 'case', 'statement', 'allocation'))->signature());
     }
 }

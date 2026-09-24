@@ -13,11 +13,16 @@ use SqlCatalog\Analysis\Derivation\Deriver;
 use SqlCatalog\Analysis\Derivation\EntryBinder;
 use SqlCatalog\Analysis\Derivation\FreeNames;
 use SqlCatalog\Analysis\Derivation\ModifiedNames;
+use SqlCatalog\Analysis\Derivation\Objects\CallbackEffects;
+use SqlCatalog\Analysis\Derivation\Objects\ObjectEffects;
 use SqlCatalog\Analysis\Derivation\PropertyWrites;
 use SqlCatalog\Analysis\Derivation\Slice\BackwardSlicer;
 use SqlCatalog\Analysis\Derivation\SliceExecutor;
 use SqlCatalog\Analysis\Derivation\Solution;
 use SqlCatalog\Analysis\Derivation\SourceTree;
+use SqlCatalog\Analysis\Laravel\BuilderCalls;
+use SqlCatalog\Analysis\Laravel\BuilderQueries;
+use SqlCatalog\Analysis\Laravel\CallbackModel;
 use SqlCatalog\Catalog\CallSite;
 use SqlCatalog\Evaluation\Domain;
 use SqlCatalog\Extension\SinkRole;
@@ -72,6 +77,7 @@ final class Interpreter
         array $sinks,
         ?EvaluationBudget $budget = null,
         ?DeclaredGlobals $globals = null,
+        private readonly ?string $dialect = null,
     ) {
         $this->index = $index;
         $this->sinks = $sinks;
@@ -128,7 +134,8 @@ final class Interpreter
     {
         $tree = new SourceTree($files);
         $names = new FreeNames($this->sinks);
-        $modified = new ModifiedNames($names);
+        $builders = (new SinkMatcher($this->sinks, $this->index))->hasBuilders();
+        $modified = new ModifiedNames($names, $builders ? new ObjectEffects($files) : null);
         $slicer = new BackwardSlicer($tree, $this->budget, $names, $modified);
         $executor = new SliceExecutor($this->globals, new TypeReader(), $modified, $this->text, $this->budget);
         $external = new ExternalInput();
@@ -141,9 +148,11 @@ final class Interpreter
                 $external,
                 $this->text,
                 new CalleeReturns($slicer, $executor, $this->budget, $names),
+                $builders ? new BuilderCalls($this->index, $this->dialect, new CallbackModel($this->index, new CallbackEffects($slicer, $executor))) : null,
             ),
             $this->budget,
             $this->text,
+            $builders,
         );
 
         return new Deriver(
@@ -189,6 +198,11 @@ final class Interpreter
         }
         $this->budget->reset();
         $arguments = $this->argumentsOf($call);
+        if ($sink->role === SinkRole::Builder) {
+            $this->recordStatements($call, $sink, (new BuilderQueries($this->index))->solve($call, $arguments, $deriver), $scope, $recorder, $binder);
+
+            return [];
+        }
         if ($sink->role === SinkRole::Execute || $sink->role === SinkRole::Bind) {
             $receiver = $call instanceof Expr\MethodCall || $call instanceof Expr\NullsafeMethodCall ? $call->var : null;
             if ($receiver === null) {
@@ -263,7 +277,7 @@ final class Interpreter
         $name = $this->finder->nameOf($call);
         $carriesText = false;
         foreach ($matcher->byName(\SqlCatalog\Extension\SinkCallKind::Method, $name ?? '') as $sink) {
-            $carriesText = $carriesText || $sink->role === SinkRole::Query || $sink->role === SinkRole::Prepare;
+            $carriesText = $carriesText || $sink->role === SinkRole::Query || $sink->role === SinkRole::Prepare || $sink->role === SinkRole::Builder;
         }
 
         return $carriesText && $this->receiverOf($call, $deriver)->type()->classNames() === [];

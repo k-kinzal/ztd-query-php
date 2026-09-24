@@ -1,0 +1,139 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Analysis\Laravel;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
+use PHPUnit\Framework\TestCase;
+use SqlCatalog\Analysis\Laravel\Clauses;
+use SqlCatalog\Analysis\Laravel\Grammar;
+use SqlCatalog\Analysis\Laravel\Predicates;
+use SqlCatalog\Analysis\Laravel\QueryState;
+use SqlCatalog\Analysis\Laravel\SelectCompiler;
+use SqlCatalog\Evaluation\ArrayEntry;
+use SqlCatalog\Evaluation\ArrayTerm;
+use SqlCatalog\Evaluation\Domain;
+use SqlCatalog\Evaluation\LiteralTerm;
+use SqlCatalog\Evaluation\ObjectTerm;
+use SqlCatalog\Evaluation\OpaqueTerm;
+use SqlCatalog\Evaluation\PatternTerm;
+use SqlCatalog\Text\LiteralText;
+use SqlCatalog\Text\TextGeneralization;
+use SqlCatalog\Text\TextHole;
+use SqlCatalog\Text\TextPattern;
+use SqlCatalog\Type\TypeShape;
+
+#[CoversClass(SelectCompiler::class)]
+#[UsesClass(Domain::class)]
+#[UsesClass(ArrayTerm::class)]
+#[UsesClass(ArrayEntry::class)]
+#[UsesClass(ObjectTerm::class)]
+#[UsesClass(LiteralTerm::class)]
+#[UsesClass(OpaqueTerm::class)]
+#[UsesClass(PatternTerm::class)]
+#[UsesClass(TextPattern::class)]
+#[UsesClass(TextHole::class)]
+#[UsesClass(LiteralText::class)]
+#[UsesClass(TextGeneralization::class)]
+#[UsesClass(TypeShape::class)]
+#[UsesClass(QueryState::class)]
+#[UsesClass(Grammar::class)]
+#[UsesClass(Clauses::class)]
+#[UsesClass(Predicates::class)]
+final class SelectCompilerTest extends TestCase
+{
+    public function testCompileFindUsesTheQualifiedKeyAndOneRowLimit(): void
+    {
+        $state = new QueryState(['table' => Domain::literal('users'), 'key' => Domain::literal('users.id')]);
+        [$sql, $bindings] = (new SelectCompiler(new Grammar('sqlite')))->compile($state, 'find', [Domain::literal(7)]);
+        self::assertSame('select * from "users" where "users"."id" = ? limit 1', $sql->soleLiteral()?->value);
+        self::assertSame(7, $bindings->soleArray()?->positional()[0]->soleLiteral()?->value);
+    }
+
+    public function testCompilePreservesExplicitProjectionAndWrapsExists(): void
+    {
+        $compiler = new SelectCompiler(new Grammar('mysql'));
+        $state = (new Clauses(new Grammar('mysql')))->select(new QueryState(['table' => Domain::literal('users')]), [Domain::literal('id')]);
+        self::assertSame('select `id` from `users` limit 1', $compiler->compile($state, 'first', [QueryState::list([Domain::literal('name')])])[0]->soleLiteral()?->value);
+        self::assertSame('select exists(select `id` from `users`) as `exists`', $compiler->compile($state, 'exists', [])[0]->soleLiteral()?->value);
+        self::assertFalse($compiler->compile($state, 'get', [Domain::literal('a'), Domain::literal('b')])[0]->isExact());
+        self::assertFalse($compiler->compile($state, 'find', [QueryState::list([])])[0]->isExact());
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerSelectPreservesExplicitOffsetsAndComponentBindingOrder')]
+    public function testSelectPreservesExplicitOffsetsAndComponentBindingOrder(string $dialect, int $offset, string $expected): void
+    {
+        $state = new QueryState(['table' => Domain::literal('users'), 'columns' => QueryState::list([Domain::literal('? as x')]), 'selectBindings' => QueryState::list([Domain::literal(1)]), 'where' => QueryState::list([Domain::literal('id > ?')]), 'whereBindings' => QueryState::list([Domain::literal(2)]), 'offset' => Domain::literal($offset)]);
+        [$sql, $bindings] = (new SelectCompiler(new Grammar($dialect)))->select($state);
+        self::assertSame($expected, $sql->soleLiteral()?->value);
+        self::assertSame([1, 2], array_map(static fn (Domain $v): mixed => $v->soleLiteral()?->value, $bindings->soleArray()?->positional() ?? []));
+    }
+
+    /**
+     * @return iterable<array{string, int, string}>
+     */
+    public static function providerSelectPreservesExplicitOffsetsAndComponentBindingOrder(): iterable
+    {
+        foreach (['mysql' => '`users`', 'sqlite' => '"users"', 'pgsql' => '"users"'] as $dialect => $table) {
+            yield [$dialect, 0, 'select ? as x from ' . $table . ' where id > ? offset 0'];
+            yield [$dialect, 3, 'select ? as x from ' . $table . ' where id > ? offset 3'];
+        }
+    }
+
+    public function testAggregateQuotesTheResultAliasAndDiscardsProjectionBindings(): void
+    {
+        $state = new QueryState(['table' => Domain::literal('users'), 'selectBindings' => QueryState::list([Domain::literal(1)]), 'orders' => QueryState::list([Domain::literal('id desc')])]);
+        $compiler = new SelectCompiler(new Grammar('sqlite'));
+        [$sql, $bindings] = $compiler->aggregate($state, 'count', []);
+        self::assertSame('select count(*) as "aggregate" from "users"', $sql->soleLiteral()?->value);
+        self::assertSame([], $bindings->soleArray()?->entries);
+        self::assertFalse($compiler->aggregate($state->with('distinct', Domain::literal(true)), 'count', [])[0]->isExact());
+    }
+
+    /**
+     * @param list<Domain> $arguments
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerReadOperations')]
+    public function testCompileHonorsTerminalColumnsAndAggregateArguments(string $method, array $arguments, string $expected): void
+    {
+        $state = new QueryState(['table' => Domain::literal('users'), 'key' => Domain::literal('id')]);
+        [$sql, $bindings] = (new SelectCompiler(new Grammar('sqlite')))->compile($state, $method, $arguments);
+        self::assertSame($expected, $sql->soleLiteral()?->value);
+        self::assertNotNull($bindings->soleArray());
+    }
+
+    /**
+     * @return iterable<array{string, list<Domain>, string}>
+     */
+    public static function providerReadOperations(): iterable
+    {
+        yield ['get', [QueryState::list([Domain::literal('name')])], 'select "name" from "users"'];
+        yield ['first', [QueryState::list([Domain::literal('name')])], 'select "name" from "users" limit 1'];
+        yield ['firstorfail', [], 'select * from "users" limit 1'];
+        yield ['find', [Domain::literal(1), QueryState::list([Domain::literal('name')])], 'select "name" from "users" where "id" = ? limit 1'];
+        yield ['pluck', [Domain::literal('name'), Domain::literal('id')], 'select "name", "id" from "users"'];
+        yield ['doesntexist', [], 'select exists(select * from "users") as "exists"'];
+        foreach (['count', 'sum', 'avg', 'min', 'max'] as $method) {
+            yield [$method, [Domain::literal('id')], 'select '.$method.'("id") as "aggregate" from "users"'];
+        }
+    }
+
+    public function testSelectAssemblesAllComponentsAndBindingGroupsInSqlOrder(): void
+    {
+        $state = new QueryState(['table' => Domain::literal('users'), 'columns' => QueryState::list([Domain::literal('? as a')]), 'joins' => QueryState::list([Domain::literal('join teams on teams.id = users.team_id')]), 'where' => QueryState::list([Domain::literal('active = ?')]), 'groups' => QueryState::list([Domain::literal('a'), Domain::literal('b')]), 'having' => QueryState::list([Domain::literal('count(*) > ?'), Domain::literal('count(*) < ?')]), 'orders' => QueryState::list([Domain::literal('a asc'), Domain::literal('b desc')]), 'distinct' => Domain::literal(true), 'offset' => Domain::literal(0), 'selectBindings' => QueryState::list([Domain::literal(1)]), 'joinBindings' => QueryState::list([Domain::literal(2)]), 'whereBindings' => QueryState::list([Domain::literal(3)]), 'havingBindings' => QueryState::list([Domain::literal(4)]), 'orderBindings' => QueryState::list([Domain::literal(5)])]);
+        [$sql, $bindings] = (new SelectCompiler(new Grammar('sqlite')))->select($state);
+        self::assertSame('select distinct ? as a from "users" join teams on teams.id = users.team_id where active = ? group by a, b having count(*) > ? and count(*) < ? order by a asc, b desc offset 0', $sql->soleLiteral()?->value);
+        self::assertSame([1, 2, 3, 4, 5], array_map(static fn (Domain $value): mixed => $value->soleLiteral()?->value, $bindings->soleArray()?->positional() ?? []));
+    }
+
+    public function testCompileKeepsMissingFindKeysAndExcessPluckArgumentsOpen(): void
+    {
+        $compiler = new SelectCompiler(new Grammar('sqlite'));
+        $state = new QueryState(['table' => Domain::literal('users')]);
+        self::assertFalse($compiler->compile($state, 'find', [])[0]->isExact());
+        self::assertFalse($compiler->compile($state, 'pluck', array_map(Domain::literal(...), ['a', 'b', 'c']))[0]->isExact());
+        self::assertFalse($compiler->aggregate($state->with('having', QueryState::list([Domain::literal('count(*) > 1')])), 'count', [])[0]->isExact());
+    }
+}
