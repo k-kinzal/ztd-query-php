@@ -243,7 +243,7 @@ final class FilePageTest extends TestCase
         self::assertStringContainsString('in this file.</p><div class="notice tone-warn"><p>This file could not be parsed.</p>', $page);
         self::assertStringContainsString('<li>Unexpected &lt;token&gt;</li></ul></div><h2 id="tables">', $page);
         self::assertStringContainsString('</div><section><h2 id="source">Source code</h2>', $page);
-        self::assertStringContainsString('<span class="source-text">&lt;?php function {</span>', $page);
+        self::assertStringContainsString('</a>&lt;?php function {</span>', $page);
         self::assertStringEndsWith('</code></pre></section>', $page);
     }
 

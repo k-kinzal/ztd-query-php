@@ -41,11 +41,6 @@ final class PageShell
     public const DESIGN_LICENSE = 'assets/document-design-LICENSE.txt';
 
     /**
-     * The name the report's own stylesheet is written under.
-     */
-    public const STYLE = 'assets/report.css';
-
-    /**
      * The name the report's own script is written under.
      */
     public const SCRIPT = 'assets/report.js';
@@ -106,11 +101,7 @@ final class PageShell
     }
 
     /**
-     * The head of a page: its title, the two stylesheets, and the theme restored before the first paint.
-     *
-     * The document-design stylesheet comes first and the report's own after
-     * it, so what the report adds is read on top of the design and not under
-     * it.
+     * The head of a page: its title, the doc-ui stylesheet, and the theme restored before the first paint.
      */
     public function head(string $prefix, string $title): string
     {
@@ -122,7 +113,6 @@ final class PageShell
             . '<meta name="color-scheme" content="light dark">' . "\n"
             . '<title>' . $this->text->escape($title) . '</title>' . "\n"
             . '<link rel="stylesheet" href="' . $this->text->escape($prefix . self::DESIGN_STYLE) . '">' . "\n"
-            . '<link rel="stylesheet" href="' . $this->text->escape($prefix . self::STYLE) . '">' . "\n"
             . $this->bootstrap() . "\n"
             . '</head>' . "\n";
     }

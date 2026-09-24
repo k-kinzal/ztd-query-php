@@ -43,11 +43,11 @@ final class SourceCodeTest extends TestCase
         self::assertStringStartsWith(
             '<section><h2 id="source">Source code</h2><p class="muted">src/a.php:12 · '
                 . '<a href="../files/src-a-php.html#L12">View full source</a></p>'
-                . '<pre class="code source-code" tabindex="0" aria-label="PHP source code"><code>',
+                . '<pre class="code code-scroll" tabindex="0" aria-label="PHP source code"><code>',
             $html,
         );
         self::assertStringEndsWith('</code></pre></section>', $html);
-        self::assertStringContainsString('class="source-line source-call" id="L12"', $html);
+        self::assertStringContainsString('class="code-line is-target" id="L12"', $html);
         self::assertStringContainsString('id="L4"', $html);
         self::assertStringContainsString('id="L20"', $html);
         self::assertStringNotContainsString('id="L3"', $html);
@@ -91,13 +91,13 @@ final class SourceCodeTest extends TestCase
 
         self::assertStringStartsWith(
             '<section><h2 id="source">Source code</h2><p class="muted">Source captured during analysis. Highlighted lines issue database calls.</p>'
-                . '<pre class="code source-code" tabindex="0" aria-label="PHP source code"><code>',
+                . '<pre class="code code-scroll" tabindex="0" aria-label="PHP source code"><code>',
             $html,
         );
         self::assertStringEndsWith('</code></pre></section>', $html);
         self::assertStringContainsString('id="L1"', $html);
-        self::assertStringContainsString('class="source-line source-call" id="L2"', $html);
-        self::assertStringContainsString('class="source-line source-call" id="L30"', $html);
+        self::assertStringContainsString('class="code-line is-target" id="L2"', $html);
+        self::assertStringContainsString('class="code-line is-target" id="L30"', $html);
         self::assertStringContainsString('href="#L30" aria-label="Line 30"', $html);
         self::assertSame('', (new SourceCode())->file($site, 'missing.php'));
     }
@@ -107,11 +107,11 @@ final class SourceCodeTest extends TestCase
         $html = (new SourceCode())->lines(['</code></pre><script>alert("x")</script>&\'', "\t\xFF"], 7, [8], 'a"b.html');
 
         self::assertSame(
-            '<pre class="code source-code" tabindex="0" aria-label="PHP source code"><code>'
-                . '<span class="source-line" id="L7"><a class="source-number" href="a&quot;b.html#L7" aria-label="Line 7">7</a>'
-                . '<span class="source-text">&lt;/code&gt;&lt;/pre&gt;&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;&amp;&#039;</span></span>'
-                . '<span class="source-line source-call" id="L8"><a class="source-number" href="a&quot;b.html#L8" aria-label="Line 8">8</a>'
-                . '<span class="source-text">' . "\t\u{FFFD}" . '</span></span></code></pre>',
+            '<pre class="code code-scroll" tabindex="0" aria-label="PHP source code"><code>'
+                . '<span class="code-line" id="L7"><a class="ln" href="a&quot;b.html#L7" aria-label="Line 7">7</a>'
+                . '&lt;/code&gt;&lt;/pre&gt;&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt;&amp;&#039;</span>' . "\n"
+                . '<span class="code-line is-target" id="L8"><a class="ln" href="a&quot;b.html#L8" aria-label="Line 8">8</a>'
+                . "\t\u{FFFD}" . '</span></code></pre>',
             $html,
         );
     }

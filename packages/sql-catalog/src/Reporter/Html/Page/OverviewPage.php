@@ -218,7 +218,7 @@ final class OverviewPage
             . '<div class="split"><div class="table-wrap"><table><thead><tr><th scope="col">Rule</th><th scope="col" class="tight">Severity</th>'
             . '<th scope="col" class="num">Statements</th><th scope="col">What it reports</th></tr></thead><tbody>' . $rows . '</tbody></table></div>'
             . ($spots === '' ? '' : '<section class="aside"><h3>Functions issuing flagged statements</h3>'
-                . '<ul class="usage-list">' . $spots . '</ul><p class="more">'
+                . '<ul class="usage-list">' . $spots . '</ul><p class="actions">'
                 . $this->text->link('Every flagged function', ReportSite::FINDINGS . '#hotspots') . '</p></section>')
             . '</div>';
     }

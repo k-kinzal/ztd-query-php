@@ -440,7 +440,7 @@ $db-&gt;query($sql)</pre><div class="notice tone-warn"><ul><'
         $page = (new StatementPage())->render($site, $entry);
 
         self::assertStringContainsString('examined, so nothing was read from it.</li></ul></div><section><h2 id="source">Source code</h2>', $page);
-        self::assertStringContainsString('<span class="source-text">&lt;?php $db-&gt;query($sql);</span>', $page);
+        self::assertStringContainsString('</a>&lt;?php $db-&gt;query($sql);</span>', $page);
         self::assertStringContainsString('</code></pre></section><section><h2 id="facts">About this statement</h2>', $page);
         self::assertSame(['Source code', '#source', null, false], (new StatementPage())->context($site, $entry)[0][1][0]);
     }

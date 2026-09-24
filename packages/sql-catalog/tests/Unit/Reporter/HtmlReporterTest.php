@@ -121,7 +121,6 @@ final class HtmlReporterTest extends TestCase
                 'assets/document-design-LICENSE.txt',
                 'assets/document-design-v1.0.0.css',
                 'assets/document-design-v1.0.0.js',
-                'assets/report.css',
                 'assets/report.js',
                 'assets/search-index.js',
                 'classes/app-r.html',
@@ -265,7 +264,7 @@ final class HtmlReporterTest extends TestCase
         $page = (string) $artifacts->get('statements/' . $entry->id . '.html');
         self::assertStringContainsString('$sql = buildQuery();', $page);
         self::assertStringContainsString('$db-&gt;query($sql);', $page);
-        self::assertStringContainsString('class="source-line source-call" id="L3"', $page);
+        self::assertStringContainsString('class="code-line is-target" id="L3"', $page);
         self::assertStringContainsString('href="../files/src-query-php.html#L3">View full source</a>', $page);
         $file = (string) $artifacts->get('files/src-query-php.html');
         self::assertStringContainsString('href="#source" title="Source code">Source code</a>', $file);

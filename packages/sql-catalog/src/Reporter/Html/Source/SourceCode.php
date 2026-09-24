@@ -77,16 +77,16 @@ final class SourceCode
      */
     public function lines(array $lines, int $first, array $calls, string $target = ''): string
     {
-        $written = '';
+        $written = [];
         $highlighted = array_fill_keys($calls, true);
         foreach ($lines as $offset => $line) {
             $number = $first + $offset;
-            $written .= '<span class="source-line' . (isset($highlighted[$number]) ? ' source-call' : '') . '" id="L' . $number . '">'
-                . '<a class="source-number" href="' . $this->text->escape($target . '#L' . $number) . '" aria-label="Line ' . $number . '">' . $number . '</a>'
-                . '<span class="source-text">' . $this->text->escape($line) . '</span></span>';
+            $written[] = '<span class="code-line' . (isset($highlighted[$number]) ? ' is-target' : '') . '" id="L' . $number . '">'
+                . '<a class="ln" href="' . $this->text->escape($target . '#L' . $number) . '" aria-label="Line ' . $number . '">' . $number . '</a>'
+                . $this->text->escape($line) . '</span>';
         }
 
-        return '<pre class="code source-code" tabindex="0" aria-label="PHP source code"><code>' . $written . '</code></pre>';
+        return '<pre class="code code-scroll" tabindex="0" aria-label="PHP source code"><code>' . implode("\n", $written) . '</code></pre>';
     }
 
     /**

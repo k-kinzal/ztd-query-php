@@ -308,7 +308,7 @@ final class StatementPage
             $written .= '<section><h2 id="same-function">Also issued by <code>' . $this->text->escape($scope->display()) . '</code>'
                 . $this->text->count(count($siblings)) . '</h2>'
                 . $this->list->rows($site, $page, array_slice($siblings, 0, self::RELATED), ['function'])
-                . (count($siblings) > self::RELATED ? '<p class="more">' . $this->text->link('Every statement of this function', '../' . $site->functionUrl($entry)) . '</p>' : '')
+                . (count($siblings) > self::RELATED ? '<p class="actions">' . $this->text->link('Every statement of this function', '../' . $site->functionUrl($entry)) . '</p>' : '')
                 . '</section>';
         }
         foreach (array_slice($entry->tables, 0, 2) as $table) {
@@ -319,7 +319,7 @@ final class StatementPage
             $written .= '<section><h2 id="' . $this->text->escape('same-table-' . $this->text->slug($table)) . '">Also on '
                 . $this->text->chipLink((new TableName($table))->label(), '../' . $site->tablePage($table), 'chip-ghost') . $this->text->count(count($others)) . '</h2>'
                 . $this->list->rows($site, $page, array_slice($others, 0, self::RELATED))
-                . (count($others) > self::RELATED ? '<p class="more">' . $this->text->link('Every statement on this table', '../' . $site->tablePage($table)) . '</p>' : '')
+                . (count($others) > self::RELATED ? '<p class="actions">' . $this->text->link('Every statement on this table', '../' . $site->tablePage($table)) . '</p>' : '')
                 . '</section>';
         }
 
