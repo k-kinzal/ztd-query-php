@@ -180,6 +180,10 @@ final class EntryBinder
     /**
      * The ways into the body, each binding the parameters and other names the path still needs.
      *
+     * A local with no reaching definition starts unset. Its null type makes
+     * `isset` false, while its unresolved origin still flags an unguarded read.
+     * Parameters, declared globals and exhausted paths keep their open values.
+     *
      * @return list<Binding>
      */
     public function parameterBindings(Arrival $arrival, int $depth, Deriver $deriver): array
@@ -198,7 +202,7 @@ final class EntryBinder
         $outside = new Environment();
         foreach (array_diff_key($needs, $parameters) as $needed => $_) {
             if ($needed !== FreeNames::THIS && !str_starts_with($needed, FreeNames::THIS . '->')) {
-                $outside->write($needed, Domain::opaque(TypeShape::unknown(), Origin::Unresolved, '$' . $needed));
+                $outside->write($needed, Domain::opaque(TypeShape::of(['null']), Origin::Unresolved, '$' . $needed));
             }
         }
         if ($parameters === []) {

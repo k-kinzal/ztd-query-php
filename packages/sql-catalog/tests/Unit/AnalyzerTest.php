@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlCatalog\Analysis\EvaluationBudget;
@@ -116,6 +117,123 @@ use SqlCatalog\Source\SourceScanException;
 #[UsesClass(\SqlCatalog\Analysis\Derivation\CallerSet::class)]
 final class AnalyzerTest extends TestCase
 {
+    public function testIssetGuardsAConditionallyAssignedSqlFragment(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource([
+            'a.php' => <<<'PHP'
+                <?php
+                function findUsers(PDO $pdo, bool $active): void {
+                    if ($active) {
+                        $where = ' WHERE active = 1';
+                    }
+                    $pdo->prepare('SELECT * FROM users' . (isset($where) ? $where : '') . '');
+                }
+                PHP,
+        ]);
+
+        self::assertEqualsCanonicalizing(
+            ['SELECT * FROM users WHERE active = 1', 'SELECT * FROM users'],
+            array_map(static fn (CatalogEntry $entry): string => $entry->sql(), $catalog->entries()),
+        );
+        self::assertNotContains(false, array_map(
+            static fn (CatalogEntry $entry): bool => $entry->resolution() === Resolution::Resolved && $entry->searchClosed(),
+            $catalog->entries(),
+        ));
+    }
+
+    /**
+     * @param list<string> $expected
+     */
+    #[DataProvider('providerIssetSqlFragments')]
+    public function testIssetSqlFragmentsKeepTheReachableStatements(string $source, array $expected): void
+    {
+        $catalog = (new Analyzer())->analyzeSource(['a.php' => '<?php ' . $source]);
+
+        self::assertEqualsCanonicalizing($expected, array_map(static fn (CatalogEntry $entry): string => $entry->sql(), $catalog->entries()));
+        self::assertNotContains(false, array_map(
+            static fn (CatalogEntry $entry): bool => $entry->resolution() === Resolution::Resolved && $entry->searchClosed(),
+            $catalog->entries(),
+        ));
+    }
+
+    /**
+     * @return array<string, array{string, list<string>}>
+     */
+    public static function providerIssetSqlFragments(): array
+    {
+        return [
+            'method' => [
+                'class Q { public function run(PDO $pdo, bool $on): void { if ($on) { $tail = " WHERE active = 1"; }'
+                    . ' $pdo->prepare("SELECT * FROM users" . (isset($tail) ? $tail : "")); } }',
+                ['SELECT * FROM users', 'SELECT * FROM users WHERE active = 1'],
+            ],
+            'helper return' => [
+                'function tail(bool $on): string { if ($on) { $tail = " WHERE active = 1"; } return isset($tail) ? $tail : ""; }'
+                    . ' function run(PDO $pdo, bool $on): void { $pdo->prepare("SELECT * FROM users" . tail($on)); }',
+                ['SELECT * FROM users', 'SELECT * FROM users WHERE active = 1'],
+            ],
+            'null initialization' => [
+                'function run(PDO $pdo, bool $on): void { $tail = null; if ($on) { $tail = " WHERE active = 1"; }'
+                    . ' $pdo->prepare("SELECT * FROM users" . (isset($tail) ? $tail : "")); }',
+                ['SELECT * FROM users', 'SELECT * FROM users WHERE active = 1'],
+            ],
+            'unset' => [
+                'function run(PDO $pdo): void { $tail = " WHERE active = 1"; unset($tail);'
+                    . ' $pdo->prepare("SELECT * FROM users" . (isset($tail) ? $tail : "")); }',
+                ['SELECT * FROM users'],
+            ],
+            'empty and false values are set' => [
+                'function run(PDO $pdo, bool $on): void { $tail = $on ? "" : false;'
+                    . ' $pdo->prepare("SELECT * FROM users" . (isset($tail) ? $tail : " WHERE active = 1")); }',
+                ['SELECT * FROM users'],
+            ],
+            'two optional fragments' => [
+                'function run(PDO $pdo, bool $filter, bool $sort): void { if ($filter) { $where = " WHERE active = 1"; }'
+                    . ' if ($sort) { $order = " ORDER BY id"; }'
+                    . ' $pdo->prepare("SELECT * FROM users" . (isset($where) ? $where : "") . (isset($order) ? $order : "")); }',
+                ['SELECT * FROM users', 'SELECT * FROM users WHERE active = 1', 'SELECT * FROM users ORDER BY id', 'SELECT * FROM users WHERE active = 1 ORDER BY id'],
+            ],
+            'correlated variables' => [
+                'function run(PDO $pdo, bool $on): void { if ($on) { $table = "admins"; $tail = " WHERE admin = 1"; } else { $table = "users"; }'
+                    . ' $pdo->prepare("SELECT * FROM " . $table . (isset($tail) ? $tail : "")); }',
+                ['SELECT * FROM users', 'SELECT * FROM admins WHERE admin = 1'],
+            ],
+            'nullable parameter supplied by callers' => [
+                'function run(PDO $pdo, ?string $tail): void { $pdo->prepare("SELECT * FROM users" . (isset($tail) ? $tail : "")); }'
+                    . ' function callers(PDO $pdo): void { run($pdo, null); run($pdo, " WHERE active = 1"); }',
+                ['SELECT * FROM users', 'SELECT * FROM users WHERE active = 1'],
+            ],
+        ];
+    }
+
+    #[DataProvider('providerUnknownIssetSqlFragment')]
+    public function testIssetDoesNotDiscardAnUnknownSqlFragment(string $body): void
+    {
+        $catalog = (new Analyzer())->analyzeSource([
+            'a.php' => '<?php function run(PDO $pdo, $input): void { ' . $body
+                . ' $pdo->prepare("SELECT * FROM users" . (isset($tail) ? $tail : "")); }',
+        ]);
+
+        self::assertEqualsCanonicalizing(['SELECT * FROM users', 'SELECT * FROM users{$}'], array_map(
+            static fn (CatalogEntry $entry): string => $entry->sql(),
+            $catalog->entries(),
+        ));
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function providerUnknownIssetSqlFragment(): array
+    {
+        return [
+            'external input' => ['$tail = $_GET["tail"];'],
+            'unknown call' => ['$tail = unknown();'],
+            'parameter' => ['$tail = $input;'],
+            'declared global' => ['global $tail;'],
+            'unsupported expression' => ['$tail = $input + 1;'],
+        ];
+    }
+
     public function testACallSiteSurvivesFailingToResolveItsStatement(): void
     {
         $catalog = (new Analyzer())->analyzeSource([
