@@ -25,6 +25,7 @@ use SqlCatalog\Reporter\Html\Page\FilePage;
 use SqlCatalog\Reporter\Html\Palette;
 use SqlCatalog\Reporter\Html\ReportSite;
 use SqlCatalog\Reporter\Html\Scope;
+use SqlCatalog\Reporter\Html\Source\SourceCode;
 use SqlCatalog\Reporter\Html\SqlFormatter;
 use SqlCatalog\Reporter\Html\SqlHighlighter;
 use SqlCatalog\Reporter\Html\StatementList;
@@ -48,6 +49,7 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(ReportSite::class)]
 #[UsesClass(Resolution::class)]
 #[UsesClass(Scope::class)]
+#[UsesClass(SourceCode::class)]
 #[UsesClass(Severity::class)]
 #[UsesClass(SqlHighlighter::class)]
 #[UsesClass(StatementKind::class)]
@@ -216,6 +218,42 @@ final class FilePageTest extends TestCase
                 . 'span></a><p class="row-meta"><span class="chip tone-neutral" title="The call was found but never examined, so nothing was read from it.">not-analyzed<'
                 . '/span></p></li></ol></section></div>',
             (new FilePage())->render($site, 'lib/c.php'),
+        );
+    }
+
+    public function testProblemsExplainsWhyThisFileCouldNotBeParsed(): void
+    {
+        $site = new ReportSite(new Catalog([], [new AnalysisProblem('broken.php', 'Unexpected <token>'), new AnalysisProblem('other.php', 'Other problem'), new AnalysisProblem('broken.php', 'Another error')]));
+        $page = new FilePage();
+
+        self::assertSame(
+            '<div class="notice tone-warn"><p>This file could not be parsed.</p><ul><li>Unexpected &lt;token&gt;</li><li>Another error</li></ul></div>',
+            $page->problems($site, 'broken.php'),
+        );
+        self::assertStringNotContainsString('Other problem', $page->problems($site, 'broken.php'));
+        self::assertSame('', $page->problems($site, 'valid.php'));
+    }
+
+
+    public function testRenderShowsTheParseErrorBeforeTheFileContents(): void
+    {
+        $site = new ReportSite(new Catalog([], [new AnalysisProblem('src/broken.php', 'Unexpected <token>')], ['src/broken.php' => '<?php function {']));
+        $page = (new FilePage())->render($site, 'src/broken.php');
+
+        self::assertStringContainsString('in this file.</p><div class="notice tone-warn"><p>This file could not be parsed.</p>', $page);
+        self::assertStringContainsString('<li>Unexpected &lt;token&gt;</li></ul></div><h2 id="tables">', $page);
+        self::assertStringContainsString('</div><section><h2 id="source">Source code</h2>', $page);
+        self::assertStringContainsString('</a>&lt;?php function {</span>', $page);
+        self::assertStringEndsWith('</code></pre></section>', $page);
+    }
+
+    public function testContextLinksToTheSourceEvenWhenParsingFailed(): void
+    {
+        $site = new ReportSite(new Catalog([], [new AnalysisProblem('src/broken.php', 'Syntax error')], ['src/broken.php' => '<?php function {']));
+
+        self::assertSame(
+            ['On this page', [['Tables', '#tables', null, false], ['Source code', '#source', null, false]], null],
+            (new FilePage())->context($site, 'src/broken.php')[0],
         );
     }
 }

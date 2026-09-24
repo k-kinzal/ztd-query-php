@@ -25,6 +25,7 @@ use SqlCatalog\Reporter\Html\Page\StatementPage;
 use SqlCatalog\Reporter\Html\Palette;
 use SqlCatalog\Reporter\Html\ReportSite;
 use SqlCatalog\Reporter\Html\Scope;
+use SqlCatalog\Reporter\Html\Source\SourceCode;
 use SqlCatalog\Reporter\Html\SqlFormatter;
 use SqlCatalog\Reporter\Html\SqlHighlighter;
 use SqlCatalog\Reporter\Html\StatementList;
@@ -51,6 +52,7 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(ReportSite::class)]
 #[UsesClass(Resolution::class)]
 #[UsesClass(Scope::class)]
+#[UsesClass(SourceCode::class)]
 #[UsesClass(Severity::class)]
 #[UsesClass(SqlFormatter::class)]
 #[UsesClass(SqlHighlighter::class)]
@@ -429,5 +431,17 @@ $db-&gt;query($sql)</pre><div class="notice tone-warn"><ul><'
                 . '></li></ul>',
             (new StatementPage())->render($site, $entries[6]),
         );
+    }
+
+    public function testRenderShowsUnanalyzedSourceBetweenTheCaveatAndStatementFacts(): void
+    {
+        $entry = new CatalogEntry('unknown', StatementKind::Unknown, TextPattern::fromHole(new TextHole(Origin::Unreached, TypeShape::unknown(), '$db->query($sql)')), [], [], new CallSite('a.php', 1, 'f', 'unmatched'), []);
+        $site = new ReportSite(new Catalog([$entry], [], ['a.php' => '<?php $db->query($sql);']));
+        $page = (new StatementPage())->render($site, $entry);
+
+        self::assertStringContainsString('examined, so nothing was read from it.</li></ul></div><section><h2 id="source">Source code</h2>', $page);
+        self::assertStringContainsString('</a>&lt;?php $db-&gt;query($sql);</span>', $page);
+        self::assertStringContainsString('</code></pre></section><section><h2 id="facts">About this statement</h2>', $page);
+        self::assertSame(['Source code', '#source', null, false], (new StatementPage())->context($site, $entry)[0][1][0]);
     }
 }

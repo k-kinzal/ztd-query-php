@@ -454,6 +454,7 @@ final class AnalyzerTest extends TestCase
         self::assertSame('Repo.php', $catalog->entries()[0]->site->file);
         unlink($directory . '/Repo.php');
         rmdir($directory);
+        self::assertSame('<?php function f(PDO $d) { $d->query("SELECT 1"); }', $catalog->source('Repo.php'));
     }
 
     public function testAnalyzePathsSkipsWhatIsExcluded(): void
@@ -465,6 +466,7 @@ final class AnalyzerTest extends TestCase
         $catalog = (new Analyzer())->analyzePaths([$directory], null, $directory, ['Repo.php']);
 
         self::assertCount(0, $catalog);
+        self::assertNull($catalog->source('Repo.php'));
         unlink($directory . '/Repo.php');
         rmdir($directory);
     }
@@ -497,6 +499,7 @@ final class AnalyzerTest extends TestCase
         $catalog = (new Analyzer())->analyzeSource(['broken.php' => '<?php function {']);
         self::assertCount(0, $catalog);
         self::assertSame('broken.php', $catalog->problems()[0]->file);
+        self::assertSame('<?php function {', $catalog->source('broken.php'));
     }
 
     public function testAnalyzeSourceRefusesAnExtensionThatIsNotRegistered(): void

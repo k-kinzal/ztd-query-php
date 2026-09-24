@@ -296,7 +296,7 @@ final class OverviewPageTest extends TestCase
                 . 'no" href="findings.html#hotspots">K::a</a><span class="usage-kind">src/i.php · 1 medium</span></li><li><a class="mono" href="findings.html#hotspots">L'
                 . '::a</a><span class="usage-kind">src/j.php · 1 medium</span></li><li><a class="mono" href="findings.html#hotspots">M::a</a><span class="usage-kind">src'
                 . '/k.php · 1 medium</span></li><li><a class="mono" href="findings.html#hotspots">R::add</a><span class="usage-kind">src/a.php · 1 medium</span></li></ul'
-                . '><p class="more"><a href="findings.html#hotspots">Every flagged function</a></p></section></div><h2 id="coverage">How far the analysis got</h2><div cl'
+                . '><p class="actions"><a href="findings.html#hotspots">Every flagged function</a></p></section></div><h2 id="coverage">How far the analysis got</h2><div cl'
                 . 'ass="meter meter-lg"><a class="meter-part tone-ok" style="--dd-part:83%" href="statements.html?resolution=resolved" title="resolved: The statement tex'
                 . 't is fully determined."></a><a class="meter-part tone-danger" style="--dd-part:6%" href="statements.html?resolution=external-input" title="external-in'
                 . 'put: The values were followed to runtime input, so the text cannot be fixed."></a><a class="meter-part is-open" style="--dd-part:6%" href="statements.'
@@ -319,5 +319,17 @@ final class OverviewPageTest extends TestCase
                 . '/td><td>broken</td></tr></tbody></table></div>',
             (new OverviewPage())->render($site),
         );
+    }
+
+    public function testProblemsLinksAvailableSourceAndKeepsEveryParsingError(): void
+    {
+        $site = new ReportSite(new Catalog([], [
+            new AnalysisProblem('a.php', 'Unexpected <token>'),
+            new AnalysisProblem('b.php', 'Source unavailable'),
+        ], ['a.php' => '<?php function {']));
+        $html = (new OverviewPage())->problems($site);
+
+        self::assertStringContainsString('<tr><td><a class="mono" href="files/a-php.html#source">a.php</a></td><td>Unexpected &lt;token&gt;</td></tr>', $html);
+        self::assertStringContainsString('<tr><td><code>b.php</code></td><td>Source unavailable</td></tr>', $html);
     }
 }

@@ -35,13 +35,20 @@ final class Catalog implements Countable, IteratorAggregate
     private array $problems;
 
     /**
+     * @var array<string, string>
+     */
+    private array $sources;
+
+    /**
      * @param list<CatalogEntry> $entries The statements found, in reporting order
      * @param list<AnalysisProblem> $problems The files that could not be analyzed
+     * @param array<string, string> $sources Source snapshots keyed by the reported file path
      */
-    public function __construct(array $entries = [], array $problems = [])
+    public function __construct(array $entries = [], array $problems = [], array $sources = [])
     {
         $this->entries = $entries;
         $this->problems = $problems;
+        $this->sources = $sources;
     }
 
     /**
@@ -65,6 +72,14 @@ final class Catalog implements Countable, IteratorAggregate
     }
 
     /**
+     * The source as it was analyzed, or null when no snapshot was supplied.
+     */
+    public function source(string $file): ?string
+    {
+        return $this->sources[$file] ?? null;
+    }
+
+    /**
      * The statement of that identifier, or null when the catalog has none.
      */
     public function find(string $id): ?CatalogEntry
@@ -85,7 +100,7 @@ final class Catalog implements Countable, IteratorAggregate
      */
     public function filter(callable $keep): self
     {
-        return new self(array_values(array_filter($this->entries, $keep)), $this->problems);
+        return new self(array_values(array_filter($this->entries, $keep)), $this->problems, $this->sources);
     }
 
     /**
@@ -96,6 +111,7 @@ final class Catalog implements Countable, IteratorAggregate
         return new self(
             array_merge($this->entries, $other->entries),
             array_merge($this->problems, $other->problems),
+            array_replace($this->sources, $other->sources),
         );
     }
 
@@ -113,7 +129,7 @@ final class Catalog implements Countable, IteratorAggregate
         $problems = $this->problems;
         usort($problems, static fn (AnalysisProblem $left, AnalysisProblem $right): int => $left->file <=> $right->file);
 
-        return new self($entries, $problems);
+        return new self($entries, $problems, $this->sources);
     }
 
     /**

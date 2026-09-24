@@ -11,6 +11,7 @@ use SqlCatalog\Reporter\Html\HtmlText;
 use SqlCatalog\Reporter\Html\Palette;
 use SqlCatalog\Reporter\Html\ReportSite;
 use SqlCatalog\Reporter\Html\Scope;
+use SqlCatalog\Reporter\Html\Source\SourceCode;
 use SqlCatalog\Reporter\Html\SqlFormatter;
 use SqlCatalog\Reporter\Html\SqlHighlighter;
 use SqlCatalog\Reporter\Html\StatementList;
@@ -79,6 +80,7 @@ final class StatementPage
             . '<p class="lede">' . $this->where($site, $entry) . '</p>'
             . $this->body($entry)
             . $this->caveats($entry)
+            . (new SourceCode($this->text))->excerpt($site, $entry)
             . ($entry->placeholders === []
                 ? $this->facts($site, $entry)
                 : '<div class="split">' . $this->facts($site, $entry) . $this->values($entry) . '</div>')
@@ -272,6 +274,9 @@ final class StatementPage
         $index = $site->index();
         $scope = Scope::of($entry->site->function);
         $places = [];
+        if ($site->catalog()->source($entry->site->file) !== null) {
+            $places[] = ['Source code', '#source', null, false];
+        }
         foreach ($entry->tables as $table) {
             $places[] = ['Table ' . (new TableName($table))->label(), $site->tablePage($table), count($index->byTable()[$table] ?? []), false];
         }
@@ -303,7 +308,7 @@ final class StatementPage
             $written .= '<section><h2 id="same-function">Also issued by <code>' . $this->text->escape($scope->display()) . '</code>'
                 . $this->text->count(count($siblings)) . '</h2>'
                 . $this->list->rows($site, $page, array_slice($siblings, 0, self::RELATED), ['function'])
-                . (count($siblings) > self::RELATED ? '<p class="more">' . $this->text->link('Every statement of this function', '../' . $site->functionUrl($entry)) . '</p>' : '')
+                . (count($siblings) > self::RELATED ? '<p class="actions">' . $this->text->link('Every statement of this function', '../' . $site->functionUrl($entry)) . '</p>' : '')
                 . '</section>';
         }
         foreach (array_slice($entry->tables, 0, 2) as $table) {
@@ -314,7 +319,7 @@ final class StatementPage
             $written .= '<section><h2 id="' . $this->text->escape('same-table-' . $this->text->slug($table)) . '">Also on '
                 . $this->text->chipLink((new TableName($table))->label(), '../' . $site->tablePage($table), 'chip-ghost') . $this->text->count(count($others)) . '</h2>'
                 . $this->list->rows($site, $page, array_slice($others, 0, self::RELATED))
-                . (count($others) > self::RELATED ? '<p class="more">' . $this->text->link('Every statement on this table', '../' . $site->tablePage($table)) . '</p>' : '')
+                . (count($others) > self::RELATED ? '<p class="actions">' . $this->text->link('Every statement on this table', '../' . $site->tablePage($table)) . '</p>' : '')
                 . '</section>';
         }
 

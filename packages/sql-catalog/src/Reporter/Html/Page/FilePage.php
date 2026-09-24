@@ -8,6 +8,7 @@ use SqlCatalog\Catalog\CatalogEntry;
 use SqlCatalog\Reporter\Html\HtmlText;
 use SqlCatalog\Reporter\Html\ReportSite;
 use SqlCatalog\Reporter\Html\Scope;
+use SqlCatalog\Reporter\Html\Source\SourceCode;
 use SqlCatalog\Reporter\Html\StatementList;
 use SqlCatalog\Reporter\Html\TableName;
 
@@ -47,9 +48,26 @@ final class FilePage
         return '<h1><code>' . $this->text->escape($file) . '</code>' . $this->text->count(count($entries), 'statement') . '</h1>'
             . '<p class="lede">' . $this->text->escape($this->text->plural(count($entries), 'statement')) . ' issued from '
             . $this->text->escape($this->text->plural(count($functions), 'function')) . ' in this file.</p>'
+            . $this->problems($site, $file)
             . $this->tables($site, $entries)
             . '<h2 id="functions">Functions</h2>'
-            . '<div data-narrowable>' . $this->list->facets($entries) . $this->sections($site, $file, $functions) . '</div>';
+            . '<div data-narrowable>' . $this->list->facets($entries) . $this->sections($site, $file, $functions) . '</div>'
+            . (new SourceCode($this->text))->file($site, $file);
+    }
+
+    /**
+     * Why the file could not be analyzed, beside the source that caused it.
+     */
+    public function problems(ReportSite $site, string $file): string
+    {
+        $items = '';
+        foreach ($site->catalog()->problems() as $problem) {
+            if ($problem->file === $file) {
+                $items .= '<li>' . $this->text->escape($problem->message) . '</li>';
+            }
+        }
+
+        return $items === '' ? '' : '<div class="notice tone-warn"><p>This file could not be parsed.</p><ul>' . $items . '</ul></div>';
     }
 
     /**
@@ -119,6 +137,9 @@ final class FilePage
         $anchors = [];
         foreach ($this->anchors($site, $index->byFile()[$file] ?? []) as [$label, $id]) {
             $anchors[] = [$label, '#' . $id, null, false];
+        }
+        if ($site->catalog()->source($file) !== null) {
+            $anchors[] = ['Source code', '#source', null, false];
         }
         $slash = strrpos($file, '/');
         $directory = $slash === false ? '' : substr($file, 0, $slash);
