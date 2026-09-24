@@ -79,7 +79,7 @@ final class TransactionBinder
     {
         $tokens = $node->tokens();
         $kind = $words[0] ?? '';
-        if ($scope->identifiers->dialect === \SqlSemantics\Dialect::PostgreSql && in_array($kind, ['PREPARE', 'COMMIT', 'ROLLBACK'], true) && in_array($words[1] ?? '', ['PREPARED', 'TRANSACTION'], true) && isset($tokens[2]) && $tokens[2]->text[0] === "'") {
+        if ($scope->identifiers->dialect === \SqlSemantics\Dialect::PostgreSql && in_array($kind, ['PREPARE', 'COMMIT', 'ROLLBACK'], true) && in_array($words[1] ?? '', ['PREPARED', 'TRANSACTION'], true) && Tree::child($node, ['Sconst']) !== null) {
             $id = (new \SqlSemantics\Binding\LiteralBinder($scope->identifiers->dialect))->bind($tokens[2]);
             if (!$id instanceof \SqlSemantics\Model\Scalar\Value\Literal) {
                 Tree::invalid($node, 'prepared transaction identifier');

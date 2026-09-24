@@ -67,6 +67,24 @@ final class FromBinder
     }
 
     /**
+     * Rejects two FROM items with the same name, as MySQL and PostgreSQL do: an alias may not repeat another item's alias or table name, and the same table may not appear twice without an alias.
+     *
+     * @param list<\SqlSemantics\Model\TableUse> $relations
+     * @throws \SqlSemantics\InvalidSql
+     */
+    public static function unique(array $relations): void
+    {
+        foreach ($relations as $index => $relation) {
+            foreach (array_slice($relations, $index + 1) as $other) {
+                $same = ($relation->alias ?? $relation->declaration->name) === ($other->alias ?? $other->declaration->name);
+                if ($same && ($relation->alias !== null || $other->alias !== null || $relation->declaration->schema === $other->declaration->schema)) {
+                    throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::DuplicateRelation, $other->source);
+                }
+            }
+        }
+    }
+
+    /**
      * Binds one table reference or nested join.
      */
     public function relation(Node $node): BoundRelation
@@ -80,7 +98,7 @@ final class FromBinder
             $alias = Tree::child($node, ['alias_clause', 'opt_alias_clause']);
             return $alias === null ? $relation : (new RelationFactory())->alias($relation, $alias, $node, $this->queries ?? new QueryContext($this->tables, $this->ids), $this->scopeId);
         }
-        $derived = Tree::outer($node, ['select_with_parens', 'table_subquery', 'select_derived_union', 'select_derived2'])[0] ?? null;
+        $derived = self::derivedQuery($node);
         $factor = Tree::outer($node, ['table_factor'])[0] ?? null;
         if ($derived === null && $factor !== null && QueryNodes::isBody($factor)) {
             $derived = $factor;
@@ -234,7 +252,18 @@ final class FromBinder
     }
 
     /**
+     * Finds the parenthesized query of a derived table; a subquery inside a table function's operand is not a derived table.
+     */
+    public static function derivedQuery(Node $node): ?Node
+    {
+        $names = ['select_with_parens', 'table_subquery', 'select_derived_union', 'select_derived2'];
+        $found = Tree::outer($node, [...$names, 'func_table', 'table_function', 'json_table', 'xmltable', 'expr', 'a_expr'])[0] ?? null;
+        return $found !== null && in_array($found->name, $names, true) ? $found : null;
+    }
+
+    /**
      * Binds a derived table and exposes its ordered output declarations.
+     * @throws \SqlSemantics\InvalidSql
      */
     public function derived(Node $source, Node $node, ?Node $aliasNode): BoundRelation
     {
@@ -247,8 +276,14 @@ final class FromBinder
         $aliasParts = $aliasNode === null ? [] : $this->tables->identifiers->parts($aliasNode);
         $aliasParts = array_values(array_filter($aliasParts, static fn (string $name): bool => !in_array(strtoupper($name), ['AS', '(', ')', ','], true)));
         $alias = $aliasParts[0] ?? $query->scopeId;
-        $declaration = QueryRelation::declaration($query, $alias, array_slice($aliasParts, 1), $source);
-        $table = new \SqlSemantics\Model\Relation\DerivedRelation($this->ids->relation(), $this->scopeId, $declaration, $alias, $source, $query, array_slice($aliasParts, 1), str_starts_with(strtoupper(Tree::text($source)), 'LATERAL '));
+        $columnList = QueryNodes::local($source, ['opt_derived_column_list'])[0] ?? null;
+        $columns = $columnList === null || !Tree::hasTokens($columnList) ? array_slice($aliasParts, 1) : array_map(fn (Node $name): string => $this->tables->identifiers->parts($name)[0], Tree::outer($columnList, ['ident']));
+        $width = \SqlSemantics\Model\Validation\RowShape::width($query);
+        if ($width !== null && $columns !== [] && (count($columns) > $width || $query->origin->dialect !== \SqlSemantics\Dialect::PostgreSql && count($columns) !== $width)) {
+            throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::DerivedColumnCount, $source);
+        }
+        $declaration = QueryRelation::declaration($query, $alias, $columns, $source);
+        $table = new \SqlSemantics\Model\Relation\DerivedRelation($this->ids->relation(), $this->scopeId, $declaration, $alias, $source, $query, $columns, str_starts_with(strtoupper(Tree::text($source)), 'LATERAL '));
         return new BoundRelation($table, new Scope($this->tables->identifiers, [$table], parent: $this->parent, queries: $context));
     }
 

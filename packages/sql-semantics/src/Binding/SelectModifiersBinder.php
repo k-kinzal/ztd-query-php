@@ -25,8 +25,9 @@ final class SelectModifiersBinder
      */
     public function ordering(Node $statement, Scope $scope, ?array $outputs): array
     {
-        $nodes = QueryNodes::local($statement, ['sortby', 'order_expr']);
-        $sqlite = QueryNodes::local($statement, ['orderby_opt'])[0] ?? null;
+        $windowed = $this->windowed($statement);
+        $nodes = array_values(array_filter(QueryNodes::local($statement, ['sortby', 'order_expr']), static fn (Node $node): bool => !isset($windowed[spl_object_id($node)])));
+        $sqlite = array_values(array_filter(QueryNodes::local($statement, ['orderby_opt']), static fn (Node $node): bool => !isset($windowed[spl_object_id($node)])))[0] ?? null;
         if ($sqlite !== null) {
             $list = Tree::child($sqlite, ['sortlist']);
             $nodes = $list === null ? [] : Query\OrderingNodes::read($list);
@@ -48,6 +49,23 @@ final class SelectModifiersBinder
             $result[] = new Ordering($expression, $direction !== null && strtoupper(Tree::text($direction)) === 'DESC', $nulls === null ? null : str_contains(strtoupper(Tree::text($nulls)), 'FIRST'));
         }
 
+        return $result;
+    }
+
+    /**
+     * Identifies ordering nodes that belong to named window definitions rather than to the query result.
+     * @return array<int, true>
+     */
+    public function windowed(Node $statement): array
+    {
+        $result = [];
+        foreach (QueryNodes::local($statement, ['opt_window_clause', 'window_clause']) as $clause) {
+            foreach (['sortby', 'order_expr', 'orderby_opt'] as $name) {
+                foreach ($clause->find($name) as $node) {
+                    $result[spl_object_id($node)] = true;
+                }
+            }
+        }
         return $result;
     }
 
@@ -88,6 +106,16 @@ final class SelectModifiersBinder
     }
 
     /**
+     * FETCH FIRST ROW without a count asks for one row; any other clause without an expression supplies no limit.
+     * @return list<Expression>
+     */
+    public function implicitRow(?Node $limit, Scope $scope): array
+    {
+        return $limit !== null && str_starts_with(strtoupper(Tree::text($limit)), 'FETCH') ? [Expression::literal(1, $scope->identifiers->dialect)] : [];
+    }
+
+    /**
+     * Reads the row limit and offset; FETCH FIRST ROW without a count limits the result to one row.
      * @return array{?Expression, ?Expression}
      */
     public function pagination(Node $statement, Scope $scope): array
@@ -95,7 +123,7 @@ final class SelectModifiersBinder
         $limit = QueryNodes::local($statement, ['limit_clause', 'limit_opt', 'opt_simple_limit'])[0] ?? null;
         $offset = QueryNodes::local($statement, ['offset_clause'])[0] ?? null;
         $expressions = $limit === null ? [] : Tree::outer($limit, ['a_expr', 'expr', 'limit_option', 'select_fetch_first_value']);
-        $bound = array_map(static fn (Node $node): Expression => (new ExpressionBinder())->bind($node, $scope), $expressions);
+        $bound = $expressions === [] ? $this->implicitRow($limit, $scope) : array_map(static fn (Node $node): Expression => (new ExpressionBinder())->bind($node, $scope), $expressions);
         if (count($bound) > 2) {
             Tree::invalid($statement, 'pagination');
         }

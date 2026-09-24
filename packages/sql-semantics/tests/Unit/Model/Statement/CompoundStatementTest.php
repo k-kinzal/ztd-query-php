@@ -201,4 +201,35 @@ final class CompoundStatementTest extends TestCase
         self::assertSame('integer', $original->outputs[0]->expression->type->name);
         self::assertSame($changed->toString(), $original->withRight($replacement)->toString());
     }
+
+    public function testWithOriginRetainsBothOperands(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)')))->bind('SELECT id FROM t UNION SELECT n FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CompoundStatement::class, $statement);
+        $changed = $statement->withOrigin(new \SqlSemantics\Model\Statement\Origin('other', $statement->source, Dialect::PostgreSql, [], $statement->origin->context));
+        self::assertSame('other', $changed->scopeId);
+        self::assertSame($statement->left, $changed->left);
+        self::assertSame($statement->right, $changed->right);
+        self::assertSame(\SqlSemantics\Model\Query\SetOperator::Union, $changed->setOperator);
+        self::assertSame($statement->toString(), $changed->toString());
+    }
+
+    public function testResultColumnsDeriveFromTheLeftOperand(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)')))->bind('SELECT id FROM t UNION SELECT n FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CompoundStatement::class, $statement);
+        self::assertSame($statement->outputs, $statement->resultColumns());
+        self::assertSame(['id'], array_column($statement->resultColumns(), 'name'));
+    }
+
+    public function testWithOrderByAcceptsOutputPositionsAndAliases(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)')))->bind('SELECT id FROM t UNION SELECT n FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CompoundStatement::class, $statement);
+        $byPosition = $statement->withOrderBy([new \SqlSemantics\Model\Ordering(new \SqlSemantics\Model\Query\Ordering\OutputPosition($statement->outputs[0]), true)]);
+        self::assertSame('SELECT "id" AS "id" FROM "public"."t" UNION SELECT "n" AS "n" FROM "public"."t" ORDER BY 1 DESC', $byPosition->toString());
+        $byAlias = $statement->withOrderBy([new \SqlSemantics\Model\Ordering(Expression::reference(['id'], Dialect::PostgreSql))]);
+        self::assertInstanceOf(\SqlSemantics\Model\Query\Ordering\OutputAlias::class, $byAlias->orderBy[0]->key);
+        self::assertSame([], $statement->orderBy);
+    }
 }

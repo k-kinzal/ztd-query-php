@@ -244,4 +244,22 @@ final class SchemaReaderTest extends TestCase
         self::assertSame(['missing'], $statement->definition->table->constraints[0]->localColumns());
     }
 
+
+    public function testNamespacePlacesTemporaryTablesInTheTemporarySchema(): void
+    {
+        $postgres = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TEMP TABLE a(x INT)', 'CREATE TEMP TABLE pg_temp.b(x INT)', 'CREATE UNLOGGED TABLE c(x INT)');
+        self::assertSame(['pg_temp', 'pg_temp', 'public'], array_map(static fn ($table): string => $table->schema, $postgres->tables));
+        $sqlite = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TEMP TABLE a(x INT)', 'CREATE TABLE b(x INT)');
+        self::assertSame(['temp', 'main'], array_map(static fn ($table): string => $table->schema, $sqlite->tables));
+    }
+
+    #[TestWith([Dialect::PostgreSql, 'CREATE TEMP TABLE public.t(a INT)'])]
+    #[TestWith([Dialect::PostgreSql, 'CREATE LOCAL TEMPORARY TABLE s.t AS SELECT 1'])]
+    #[TestWith([Dialect::Sqlite, 'CREATE TEMP TABLE main.t(a INT)'])]
+    public function testNamespaceRejectsATemporaryTableInANamedSchema(Dialect $dialect, string $sql): void
+    {
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::TemporaryTableSchema->message());
+        (new Binder((new SchemaBuilder($dialect))->build()))->bind($sql);
+    }
 }

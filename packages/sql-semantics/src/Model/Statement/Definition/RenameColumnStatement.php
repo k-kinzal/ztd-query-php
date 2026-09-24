@@ -12,6 +12,11 @@ use SqlSemantics\Model\Statement\StatementKind;
  * RenameColumnStatement requires the operands of this SQL operation.
  *
  * @visibility public
+ * @example Renaming a column
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER, n INTEGER)');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('ALTER TABLE t RENAME COLUMN n TO m');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Definition\RenameColumnStatement // => true
+ *     $statement->newName // => 'm'
  */
 final class RenameColumnStatement extends \SqlSemantics\Model\BoundStatement
 {

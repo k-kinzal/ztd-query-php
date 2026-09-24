@@ -12,6 +12,11 @@ use SqlSemantics\Model\Statement\StatementKind;
  * DropColumnStatement requires the operands of this SQL operation.
  *
  * @visibility public
+ * @example Dropping a column
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER, n INTEGER)');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('ALTER TABLE t DROP COLUMN n');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Definition\DropColumnStatement // => true
+ *     $statement->column // => 'n'
  */
 final class DropColumnStatement extends \SqlSemantics\Model\BoundStatement
 {

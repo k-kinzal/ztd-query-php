@@ -12,6 +12,9 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * NullIf has explicit semantic operands and a fixed expression category.
  * @visibility public
+ * @example Reading the comparison operands
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('SELECT NULLIF(1, 2)');
+ *     $statement->outputs[0]->expression->right->spelling() // => '2'
  */
 final class NullIf extends Expression
 {

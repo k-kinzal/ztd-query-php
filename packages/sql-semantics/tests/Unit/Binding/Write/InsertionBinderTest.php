@@ -212,4 +212,17 @@ final class InsertionBinderTest extends TestCase
         self::assertCount(1, $values->insertion->columns);
 
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['INSERT INTO t (b) SELECT 1', 'INSERT INTO `t`(`b`) SELECT 1'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['INSERT INTO t (b) VALUES ROW(1), ROW(2)', 'INSERT INTO `t`(`b`) VALUES (1), (2)'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['REPLACE t () VALUES ROW()', 'REPLACE INTO `t` VALUES ()'])]
+    public function testColumnListFindsTheListBeforeAMySqlQuery(string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (a INTEGER DEFAULT 1, b INTEGER)'));
+        $statement = $binder->bind($sql);
+        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, $binder->bind($expected)->toString());
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql, 'mysql-8.4.7'))->parse('INSERT INTO t (b) SELECT 1');
+        self::assertSame('b', (new \SqlSemantics\Binding\Write\InsertionBinder())->columnList($tree->find('insert_stmt')[0])?->toString());
+    }
 }

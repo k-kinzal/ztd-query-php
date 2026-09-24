@@ -22,7 +22,7 @@ final class LockingBinder
      */
     public static function bind(Node $source, Scope $scope): array
     {
-        $nodes = QueryNodes::local($source, ['for_locking_item', 'locking_clause', 'select_lock_type']);
+        $nodes = QueryNodes::local($source, ['for_locking_item', 'locking_clause', 'select_lock_type', 'opt_select_lock_type']);
         $locks = [];
         foreach ($nodes as $node) {
             if (!Tree::hasTokens($node)) {
@@ -38,6 +38,76 @@ final class LockingBinder
             $locks[] = $targets === [] ? new Locking\AllRowLock($strength, $wait) : new Locking\NamedRowLock($strength, array_map(static fn (Node $target): TableUse|Locking\UnresolvedLockRelation => self::target($target, $scope), $targets), $wait);
         }
         return $locks;
+    }
+
+    /**
+     * Finds a PostgreSQL row-locking clause attached to a set operation or to one of its operands.
+     *
+     * PostgreSQL rejects FOR UPDATE/SHARE on a UNION/INTERSECT/EXCEPT and on each of its leaf SELECTs,
+     * including a parenthesized operand; subqueries inside an operand keep their own locking clauses.
+     * The search follows the nodes from the query source down to the set-operation body, then the operands.
+     */
+    public static function setOperationLock(Node $source, Node $body): ?Node
+    {
+        if ($source === $body) {
+            return self::operandLock($body);
+        }
+        $lock = self::attachedLock($source);
+        if ($lock !== null) {
+            return $lock;
+        }
+        foreach ($source->children as $child) {
+            if ($child instanceof Node && ($child === $body || self::contains($child, $body))) {
+                return self::setOperationLock($child, $body);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Finds a locking clause on a set-operation operand, looking through its parentheses and nested set operations.
+     */
+    public static function operandLock(Node $operand): ?Node
+    {
+        $lock = self::attachedLock($operand);
+        if ($lock !== null) {
+            return $lock;
+        }
+        foreach ($operand->children as $child) {
+            if ($child instanceof Node && in_array($child->name, ['select_no_parens', 'select_with_parens', 'select_clause', 'simple_select'], true)) {
+                $lock = self::operandLock($child);
+                if ($lock !== null) {
+                    return $lock;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns a written locking clause that is a direct child of the node.
+     */
+    public static function attachedLock(Node $node): ?Node
+    {
+        foreach ($node->children as $child) {
+            if ($child instanceof Node && in_array($child->name, ['for_locking_clause', 'opt_for_locking_clause'], true) && Tree::hasTokens($child)) {
+                return $child;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Reports whether the node is the target or has it among its descendants.
+     */
+    public static function contains(Node $node, Node $target): bool
+    {
+        foreach ($node->children as $child) {
+            if ($child === $target || ($child instanceof Node && self::contains($child, $target))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

@@ -9,6 +9,10 @@ use Override;
 /**
  * Typed VacuumIntoStatement operands; unrelated statement fields cannot be supplied.
  * @visibility public
+ * @example Vacuuming into a copy
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build()))->bind("VACUUM INTO 'copy.db'");
+ *     $statement instanceof \SqlSemantics\Model\Statement\Maintenance\VacuumIntoStatement // => true
+ *     $statement->destination->spelling() // => "'copy.db'"
  */
 final class VacuumIntoStatement extends \SqlSemantics\Model\BoundStatement
 {

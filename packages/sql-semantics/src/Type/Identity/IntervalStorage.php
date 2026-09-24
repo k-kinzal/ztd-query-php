@@ -9,6 +9,11 @@ use Override;
 /**
  * A PostgreSQL interval with a field range and optional fractional precision.
  * @visibility public
+ * @example Reading an interval declaration
+ *     $type = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(d INTERVAL DAY TO SECOND(3))')->tables[0]->columns[0]->type;
+ *     $type->identity instanceof \SqlSemantics\Type\Identity\IntervalStorage // => true
+ *     $type->name // => 'interval'
+ *     $type->identity->precision->spelling // => '3'
  */
 final class IntervalStorage implements TypeIdentity
 {

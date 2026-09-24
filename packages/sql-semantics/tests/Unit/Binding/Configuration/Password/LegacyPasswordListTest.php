@@ -35,6 +35,7 @@ final class LegacyPasswordListTest extends TestCase
         $statement = $binder->bind("SET GLOBAL max_connections = 10, PASSWORD = '*hash', max_allowed_packet = 20");
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\Password\SetAccountOptionsStatement::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement->operations[2]);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\Setting::class, $statement->operations[2]->settings[0]);
         self::assertSame(\SqlSemantics\Model\Configuration\SettingScope::Global, $statement->operations[2]->settings[0]->scope);
         self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
     }

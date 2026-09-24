@@ -29,6 +29,9 @@ final class ContextResult
             ContextValueKind::CurrentTimestamp => $dialect === Dialect::PostgreSql ? BuiltinIdentity::Timestamptz : BuiltinIdentity::Timestamp,
             ContextValueKind::LocalTime => BuiltinIdentity::Time,
             ContextValueKind::LocalTimestamp => BuiltinIdentity::Timestamp,
+            ContextValueKind::UtcDate => BuiltinIdentity::Date,
+            ContextValueKind::UtcTime => BuiltinIdentity::Time,
+            ContextValueKind::UtcTimestamp, ContextValueKind::StatementTime => BuiltinIdentity::Datetime,
             ContextValueKind::CurrentUser, ContextValueKind::SessionUser, ContextValueKind::SystemUser, ContextValueKind::User, ContextValueKind::CurrentRole, ContextValueKind::CurrentSchema, ContextValueKind::CurrentCatalog => BuiltinIdentity::Text,
         };
         if ($precision === null) {
@@ -38,7 +41,7 @@ final class ContextResult
         $storage = match ($base) {
             BuiltinIdentity::Timetz => BuiltinIdentity::Time,
             BuiltinIdentity::Timestamptz => BuiltinIdentity::Timestamp,
-            BuiltinIdentity::Date, BuiltinIdentity::Time, BuiltinIdentity::Timestamp, BuiltinIdentity::Text => $base,
+            BuiltinIdentity::Date, BuiltinIdentity::Time, BuiltinIdentity::Timestamp, BuiltinIdentity::Datetime, BuiltinIdentity::Text => $base,
         };
         return new TypeDescriptor($dialect, new TemporalStorage($storage, new NumericParameter((string) $precision), $withZone ? TimeZoneMode::With : TimeZoneMode::Unspecified));
     }

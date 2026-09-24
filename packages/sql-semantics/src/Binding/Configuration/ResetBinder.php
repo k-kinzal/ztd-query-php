@@ -12,7 +12,6 @@ use SqlSemantics\Dialect;
 use SqlSemantics\Model\Configuration\ResetSetting;
 use SqlSemantics\Model\Configuration\SettingScope;
 use SqlSemantics\Model\Statement\Configuration as Statement;
-use SqlSemantics\Model\Statement\ConfigurationStatement;
 use SqlSemantics\Model\Statement\Origin;
 
 /**
@@ -22,10 +21,10 @@ use SqlSemantics\Model\Statement\Origin;
 final class ResetBinder
 {
     /**
-     * Binds RESET without representing ALL as a fabricated parameter name.
+     * Binds RESET without representing ALL as a fabricated parameter name; MySQL server state resets bind as server commands.
      * @throws UnclassifiedSql
      */
-    public static function bind(Origin $origin, Node $node, Scope $scope): ConfigurationStatement
+    public static function bind(Origin $origin, Node $node, Scope $scope): \SqlSemantics\Model\BoundStatement
     {
         $tokens = $node->tokens();
         $words = SettingTokens::words($tokens);
@@ -49,6 +48,7 @@ final class ResetBinder
             $name = Tree::outer($node, ['persisted_variable_ident'])[0] ?? throw new UnclassifiedSql('RESET PERSIST requires a named variable.');
             return new Statement\ResetSettingStatement($origin, new ResetSetting($scope->identifiers->parts($name), SettingScope::Persist, $node, $ifExists));
         }
-        throw new UnclassifiedSql('Unclassified RESET operation: ' . $node->toString());
+        return \SqlSemantics\Binding\Statement\Server\Resets::bind($origin, $node, $scope)
+            ?? throw new UnclassifiedSql('Unclassified RESET operation: ' . $node->toString());
     }
 }

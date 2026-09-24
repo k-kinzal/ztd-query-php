@@ -82,7 +82,7 @@ final class JsonTables
     }
 
     /**
-     * The response kind determines whether a default expression is required.
+     * The response kind determines whether a default expression is required; a signed literal default is written bare, as MySQL's signed_literal requires.
      * @throws InvalidStructure
      */
     public static function response(Json\Response\ValueResponse $response, string $condition): Tree
@@ -90,6 +90,10 @@ final class JsonTables
         if ($response === Json\Response\ValueBehavior::Default) {
             return new Tree('default-behavior', []);
         }
-        return new Tree('json-response', [...($response instanceof Json\Response\DefaultResponse ? [Build::keyword('DEFAULT'), Expressions::write($response->expression)] : [$response instanceof Json\Response\ValueBehavior ? Build::keyword($response->value) : throw new InvalidStructure('Unclassified JSON value response.')]), Build::keyword('ON ' . $condition)]);
+        $value = $response instanceof Json\Response\DefaultResponse ? $response->expression : null;
+        if ($value instanceof \SqlSemantics\Model\Scalar\Operator\UnaryExpression && $value->operand instanceof \SqlSemantics\Model\Scalar\Value\Literal && in_array($value->operator->value, ['-', '+'], true)) {
+            return new Tree('json-response', [Build::keyword('DEFAULT'), new Tree('signed-literal', [Build::keyword($value->operator->value), Expressions::write($value->operand)]), Build::keyword('ON ' . $condition)]);
+        }
+        return new Tree('json-response', [...($value !== null ? [Build::keyword('DEFAULT'), Expressions::write($value)] : [$response instanceof Json\Response\ValueBehavior ? Build::keyword($response->value) : throw new InvalidStructure('Unclassified JSON value response.')]), Build::keyword('ON ' . $condition)]);
     }
 }

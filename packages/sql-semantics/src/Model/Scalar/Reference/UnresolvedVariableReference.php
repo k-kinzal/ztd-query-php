@@ -29,8 +29,8 @@ final class UnresolvedVariableReference extends Expression
         public readonly string $name,
         public readonly \SqlSemantics\Schema\VariableScope $scope,
     ) {
-        if ($name === '' || $facts->type->name !== 'unknown') {
-            throw new \SqlSemantics\Model\Validation\InvalidStructure('An unresolved variable requires its name and an unknown type.');
+        if (($name === '' && $scope !== \SqlSemantics\Schema\VariableScope::User) || $facts->type->name !== 'unknown') {
+            throw new \SqlSemantics\Model\Validation\InvalidStructure('An unresolved variable requires an unknown type and, unless it is a user variable, its name.');
         }
         parent::__construct($facts, $source);
         foreach ($this->inputs() as $input) {

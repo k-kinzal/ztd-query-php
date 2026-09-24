@@ -75,4 +75,32 @@ final class OrderedSetCallTest extends TestCase
         self::assertSame($aggregate->withinGroup, $copy->withinGroup);
         self::assertSame($aggregate->function, $copy->function);
     }
+
+
+    public function testInputsListDirectArgumentsThenOrderedKeysThenTheFilter(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(score INTEGER NOT NULL)');
+        $statement = (new Binder($schema))->bind('SELECT app.percentile(0.5, 2) WITHIN GROUP (ORDER BY score DESC) FILTER (WHERE score > 0) FROM t');
+        self::assertInstanceOf(BoundSelect::class, $statement);
+        $aggregate = $statement->outputs[0]->expression;
+        self::assertInstanceOf(OrderedSetCall::class, $aggregate);
+        $inputs = $aggregate->inputs();
+        self::assertCount(4, $inputs);
+        self::assertSame($aggregate->directArguments, [$inputs[0], $inputs[1]]);
+        self::assertSame($aggregate->withinGroup[0]->key, $inputs[2]);
+        self::assertSame($aggregate->filter, $inputs[3]);
+    }
+
+    public function testSpellingUppercasesTheQualifiedName(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(score INTEGER NOT NULL)');
+        $statement = (new Binder($schema))->bind('SELECT app.percentile(0.5) WITHIN GROUP (ORDER BY score), percentile_cont(0.5) WITHIN GROUP (ORDER BY score) FROM t');
+        self::assertInstanceOf(BoundSelect::class, $statement);
+        $qualified = $statement->outputs[0]->expression;
+        self::assertInstanceOf(OrderedSetCall::class, $qualified);
+        $builtin = $statement->outputs[1]->expression;
+        self::assertInstanceOf(OrderedSetCall::class, $builtin);
+        self::assertSame('APP.PERCENTILE', $qualified->spelling());
+        self::assertSame('PERCENTILE_CONT', $builtin->spelling());
+    }
 }

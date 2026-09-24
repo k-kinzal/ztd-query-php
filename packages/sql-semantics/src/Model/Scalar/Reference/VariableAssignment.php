@@ -12,6 +12,9 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * VariableAssignment has explicit semantic operands and a fixed expression category.
  * @visibility public
+ * @example Reading an assignment expression
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build()))->bind('DO @x := 1', strict: false);
+ *     $statement->expressions[0]->spelling() // => ':='
  */
 final class VariableAssignment extends Expression
 {

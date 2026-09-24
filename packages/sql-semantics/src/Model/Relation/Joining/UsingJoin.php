@@ -16,6 +16,12 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * A join with explicit shared names, their input bindings and merged outputs.
  *
  * @visibility public
+ * @example Reading the shared columns of a USING join
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER NOT NULL, n INTEGER)');
+ *     $query = (new \SqlSemantics\Binder($schema))->bind('SELECT * FROM t AS a LEFT JOIN t AS b USING (id)');
+ *     $query->from instanceof \SqlSemantics\Model\Relation\Joining\UsingJoin // => true
+ *     array_column($query->from->columns, 'name') // => ['id']
+ *     array_column($query->outputs, 'name') // => ['id', 'n', 'n']
  */
 final class UsingJoin extends Join
 {

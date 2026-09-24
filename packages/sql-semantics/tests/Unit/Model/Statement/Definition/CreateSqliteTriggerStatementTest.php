@@ -54,4 +54,32 @@ final class CreateSqliteTriggerStatementTest extends TestCase
         self::assertSame($statement->body->steps[0]->toString(), $changed->body->steps[0]->toString());
         self::assertInstanceOf(CreateSqliteTriggerStatement::class, $binder->bind($changed->toString()));
     }
+
+    public function testWithOriginKeepsTheTriggerProgram(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER NOT NULL, x INTEGER)'));
+        $statement = $binder->bind('CREATE TRIGGER tr AFTER UPDATE OF id ON t BEGIN UPDATE t SET x=new.id WHERE id=old.id; END');
+        self::assertInstanceOf(CreateSqliteTriggerStatement::class, $statement);
+        $changed = $statement->withOrigin(new \SqlSemantics\Model\Statement\Origin('other', $statement->source, Dialect::Sqlite, [], $statement->origin->context));
+        self::assertSame('other', $changed->scopeId);
+        self::assertSame($statement->body, $changed->body);
+        self::assertSame($statement->subject, $changed->subject);
+        self::assertSame($statement->toString(), $changed->toString());
+    }
+
+    public function testWithBodyReplacesTheProgramAndKeepsTheOriginal(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER NOT NULL, x INTEGER)'));
+        $statement = $binder->bind('CREATE TRIGGER tr AFTER UPDATE OF id ON t BEGIN UPDATE t SET x=new.id WHERE id=old.id; END');
+        self::assertInstanceOf(CreateSqliteTriggerStatement::class, $statement);
+        $query = $binder->bind('SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundQuery::class, $query);
+        $delete = $binder->bind('DELETE FROM t WHERE x IS NULL');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\DeleteTableStatement::class, $delete);
+        $changed = $statement->withBody(new \SqlSemantics\Model\Trigger\SqliteBody([$query, $delete]));
+        self::assertSame('CREATE TRIGGER "tr" AFTER UPDATE OF "id" ON "main"."t" FOR EACH ROW BEGIN SELECT 1; DELETE FROM "t" WHERE ("x" IS NULL); END', $changed->toString());
+        self::assertCount(2, $changed->body->steps);
+        self::assertCount(1, $statement->body->steps);
+        self::assertInstanceOf(UpdateTableStatement::class, $statement->body->steps[0]);
+    }
 }

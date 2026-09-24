@@ -148,6 +148,16 @@ final class AssignmentBinderTest extends TestCase
         self::assertNotNull($statement->writes[0]->value->columnBinding());
         self::assertSame('u', $statement->writes[0]->value->columnBinding()->table->name);
     }
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, null, 'WITH c AS MATERIALIZED (UPDATE t SET a = DEFAULT) UPDATE t SET b = DEFAULT', 'WITH "c" AS MATERIALIZED(UPDATE "public"."t" SET "a" = DEFAULT) UPDATE "public"."t" SET "b" = DEFAULT'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'mysql-8.4.7', 'WITH c AS (SELECT 1) UPDATE t SET b = DEFAULT', 'WITH `c` AS (SELECT 1) UPDATE `t` SET `b` = DEFAULT'])]
+    public function testBindKeepsTheAssignmentsOfACommonTableExpressionWithItsOwnStatement(Dialect $dialect, ?string $version, string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(a INT, b INT)'));
+        $statement = $binder->bind($sql);
+        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, $binder->bind($expected)->toString());
+    }
+
     public function testAssignmentRetainsTupleCorrespondence(): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER,b TEXT)')))->bind("UPDATE t SET (a,b)=(1,'x')");
@@ -196,5 +206,53 @@ final class AssignmentBinderTest extends TestCase
         $this->expectException(SemanticException::class);
         $this->expectExceptionMessage('Cannot assign boolean to integer');
         $binder->bind("UPDATE t SET (a,b)=(TRUE,'x')");
+    }
+
+    public function testFormBuildsScalarAssignmentsForSingleDestinations(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT, b INT)')))->bind('UPDATE t SET a = 1');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateTableStatement::class, $statement);
+        $write = $statement->writes[0];
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $write);
+        $binder = new \SqlSemantics\Binding\Write\AssignmentBinder();
+        $postgres = new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql), [$statement->target]);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $binder->form($write->source, false, $write->value, [$write->target], $postgres));
+        $sqlite = new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::Sqlite), [$statement->target]);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $binder->form($write->source, true, $write->value, [$write->target], $sqlite));
+    }
+
+    public function testFormBuildsTupleAssignmentsFromRowsAndQueries(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT, b INT)'));
+        $statement = $binder->bind('UPDATE t SET a = 1');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateTableStatement::class, $statement);
+        $write = $statement->writes[0];
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $write);
+        $values = $binder->bind('SELECT ROW(1, 2), (SELECT 1), (a, a) = (SELECT 1, 2) FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $values);
+        $scope = new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql), [$statement->target]);
+        $forms = new \SqlSemantics\Binding\Write\AssignmentBinder();
+        $row = $forms->form($write->source, true, $values->outputs[0]->expression, [$write->target, $write->target], $scope);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\TupleRowAssignment::class, $row);
+        self::assertCount(2, $row->row->items);
+        $scalar = $forms->form($write->source, true, $values->outputs[1]->expression, [$write->target], $scope);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\TupleQueryAssignment::class, $scalar);
+        $comparison = $values->outputs[2]->expression;
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Operator\BinaryExpression::class, $comparison);
+        $wide = $forms->form($write->source, true, $comparison->right, [$write->target, $write->target], $scope);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\TupleQueryAssignment::class, $wide);
+        self::assertCount(2, $wide->targets);
+    }
+
+    public function testFormRejectsATupleSourceThatIsNeitherARowNorAQuery(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT, b INT)')))->bind('UPDATE t SET a = 1');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateTableStatement::class, $statement);
+        $write = $statement->writes[0];
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Assignment\ScalarAssignment::class, $write);
+        $scope = new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql), [$statement->target]);
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::TupleSource->message());
+        (new \SqlSemantics\Binding\Write\AssignmentBinder())->form($write->source, true, $write->value, [$write->target], $scope);
     }
 }

@@ -42,7 +42,7 @@ final class ScalarBinder
         if ($subquery !== null && $scope->queries !== null) {
             return $this->subquery($node, $subquery, $scope, $rowSubquery);
         }
-        $invocation = $this->functionInvocation($node, $scope);
+        $invocation = $this->functionInvocation($node, $scope) ?? Document\XmlBinder::bind($node, $scope) ?? Operator\QualifiedOperatorBinder::bind($node, $scope);
         if ($invocation !== null) {
             return $invocation;
         }
@@ -55,7 +55,7 @@ final class ScalarBinder
             return $this->conditional($node, $scope, $operands);
         }
         $symbol = isset($children[0]) ? strtoupper(Tree::text($children[0])) : $node->name;
-        if (isset($children[1]) && Tree::text($children[1]) === '(') {
+        if (isset($children[1]) && Tree::text($children[1]) === '(' || $node->name === 'function_call_generic') {
             return (new FunctionRules())->bind($symbol, $operands, $node, $scope);
         }
         $operator = $this->operator($children);
@@ -89,7 +89,7 @@ final class ScalarBinder
             if (!$child instanceof Node || !Tree::hasTokens($child) || in_array($child->name, ['func_name', 'function_call_keyword', 'Typename', 'cast_type', 'typetoken', 'collate', 'collate_clause', 'opt_collate', 'filter_clause', 'over_clause', 'windowing_clause', 'opt_windowing_clause', 'within_group_clause', 'opt_sort_clause', 'orderby_opt', 'sortlist', 'order_clause'], true)) {
                 continue;
             }
-            if (in_array($child->name, ['a_expr', 'b_expr', 'c_expr', 'expr', 'bool_pri', 'predicate', 'bit_expr', 'simple_expr', 'func_application', 'func_expr', 'sum_expr', 'window_func_call', 'columnref', 'simple_ident', 'term'], true)) {
+            if (in_array($child->name, ['a_expr', 'b_expr', 'c_expr', 'expr', 'bool_pri', 'predicate', 'bit_expr', 'simple_expr', 'func_application', 'func_expr', 'sum_expr', 'window_func_call', 'columnref', 'simple_ident', 'term', 'stable_integer'], true)) {
                 $operands[] = (new ExpressionBinder())->bind($child, $scope);
             } else {
                 array_push($operands, ...$this->operands($child, $scope));
@@ -154,7 +154,7 @@ final class ScalarBinder
      */
     public function nestedQuery(Node $source): ?Node
     {
-        $boundaries = ['SelectStmt', 'select_with_parens', 'subquery', 'subselect', 'select', 'a_expr', 'expr', 'c_expr', 'func_arg_list', 'exprlist', 'func_application'];
+        $boundaries = ['SelectStmt', 'select_with_parens', 'subquery', 'subselect', 'select', 'a_expr', 'b_expr', 'expr', 'c_expr', 'bool_pri', 'predicate', 'bit_expr', 'simple_expr', 'func_arg_list', 'exprlist', 'func_application'];
         foreach ($source->children as $child) {
             if (!$child instanceof Node) {
                 continue;

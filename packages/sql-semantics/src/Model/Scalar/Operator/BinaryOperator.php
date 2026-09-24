@@ -7,6 +7,8 @@ namespace SqlSemantics\Model\Scalar\Operator;
 /**
  * Closed BinaryOperator alternatives.
  * @visibility public
+ * @example Classifying an operator spelling
+ *     \SqlSemantics\Model\Scalar\Operator\BinaryOperator::from('<=>')->name // => 'NullSafeEqual'
  */
 enum BinaryOperator: string
 {
@@ -40,4 +42,5 @@ enum BinaryOperator: string
     case NotDistinct = 'IS NOT DISTINCT FROM';
     case JsonExtract = '->';
     case JsonText = '->>';
+    case SoundsLike = 'SOUNDS LIKE';
 }

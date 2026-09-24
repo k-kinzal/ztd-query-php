@@ -7,6 +7,8 @@ namespace SqlSemantics\Model\Scalar\Conditional;
 /**
  * The pattern language used by a SQL pattern predicate.
  * @visibility public
+ * @example Reading the operator spelling
+ *     \SqlSemantics\Model\Scalar\Conditional\PatternOperator::SimilarTo->value // => 'SIMILAR TO'
  */
 enum PatternOperator: string
 {

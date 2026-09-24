@@ -194,4 +194,63 @@ final class CreateTableStatementTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new CreateTableStatement($origin, $statement->definition);
     }
+
+    public function testWithOriginKeepsTheDeclaration(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE IF NOT EXISTS u(id INTEGER)');
+        self::assertInstanceOf(CreateTableStatement::class, $statement);
+        $changed = $statement->withOrigin(new \SqlSemantics\Model\Statement\Origin('other', $statement->source, Dialect::PostgreSql, [], $statement->origin->context));
+        self::assertSame('other', $changed->scopeId);
+        self::assertSame($statement->definition, $changed->definition);
+        self::assertTrue($changed->ifNotExists);
+        self::assertSame('CREATE TABLE IF NOT EXISTS "public"."u"("id" integer)', $changed->toString());
+        self::assertSame('s0', $statement->scopeId);
+    }
+
+    public function testWithTemplatesReplacesTheLikeClauses(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE s(a INTEGER)'));
+        $statement = $binder->bind('CREATE TABLE t (x INTEGER, LIKE s)');
+        self::assertInstanceOf(CreateTableStatement::class, $statement);
+        $changed = $statement->withTemplates([new \SqlSemantics\Model\Definition\Table\TemplatePlacement($statement->templates[0]->template, 0)]);
+        self::assertSame(1, $statement->templates[0]->position);
+        self::assertSame('CREATE TABLE "public"."t"(LIKE "s", "x" integer)', $changed->toString());
+    }
+
+    public function testRejectsATemplateBeyondTheDeclaredColumns(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE s(a INTEGER)')))->bind('CREATE TABLE t (x INTEGER, LIKE s)');
+        self::assertInstanceOf(CreateTableStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        $statement->withTemplates([new \SqlSemantics\Model\Definition\Table\TemplatePlacement($statement->templates[0]->template, 2)]);
+    }
+
+    public function testRejectsTemplatesOutOfOrder(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE s(a INTEGER)')))->bind('CREATE TABLE t (x INTEGER, LIKE s)');
+        self::assertInstanceOf(CreateTableStatement::class, $statement);
+        $template = $statement->templates[0]->template;
+        $this->expectException(InvalidStructure::class);
+        $statement->withTemplates([new \SqlSemantics\Model\Definition\Table\TemplatePlacement($template, 1), new \SqlSemantics\Model\Definition\Table\TemplatePlacement($template, 0)]);
+    }
+
+    public function testWithExclusionsReplacesTheExcludeConstraints(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $statement = $binder->bind('CREATE TABLE t (x INTEGER, EXCLUDE (x WITH =))');
+        self::assertInstanceOf(CreateTableStatement::class, $statement);
+        $changed = $statement->withExclusions([]);
+        self::assertCount(1, $statement->exclusions);
+        self::assertSame('CREATE TABLE "public"."t"("x" integer)', $changed->toString());
+    }
+
+    public function testRejectsExclusionsOutsidePostgreSql(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE t (x INTEGER, EXCLUDE (x WITH =))');
+        self::assertInstanceOf(CreateTableStatement::class, $statement);
+        $mysql = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE TABLE t (x INT)');
+        self::assertInstanceOf(CreateTableStatement::class, $mysql);
+        $this->expectException(InvalidStructure::class);
+        new CreateTableStatement($mysql->origin, $mysql->definition, exclusions: $statement->exclusions);
+    }
 }

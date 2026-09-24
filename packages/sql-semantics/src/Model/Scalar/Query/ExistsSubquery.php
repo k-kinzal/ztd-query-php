@@ -12,6 +12,12 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * ExistsSubquery has explicit semantic operands and a fixed expression category.
  * @visibility public
+ * @example Inspecting an EXISTS predicate
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(n INTEGER)');
+ *     $exists = (new \SqlSemantics\Binder($schema))->bind('SELECT EXISTS (SELECT n FROM t)')->outputs[0]->expression;
+ *     $exists->spelling() // => 'EXISTS'
+ *     $exists->type->name // => 'boolean'
+ *     count($exists->subquery()->resultColumns()) // => 1
  */
 final class ExistsSubquery extends Expression
 {

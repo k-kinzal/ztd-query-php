@@ -10,6 +10,11 @@ use SqlParser\Parser\Node;
  * A classified integrity condition; concrete forms require their own operands.
  *
  * @visibility public
+ * @example Classifying a declared constraint
+ *     $constraint = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER, b INTEGER, CONSTRAINT pk PRIMARY KEY (a, b))')->tables[0]->constraints[0];
+ *     $constraint->kind // => \SqlSemantics\Schema\ConstraintKind::PrimaryKey
+ *     $constraint->name // => 'pk'
+ *     $constraint->localColumns() // => ['a', 'b']
  */
 abstract class TableConstraint
 {

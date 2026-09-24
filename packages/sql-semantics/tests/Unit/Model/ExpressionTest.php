@@ -161,4 +161,36 @@ final class ExpressionTest extends TestCase
         $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
         \SqlSemantics\Model\Expression::binary('+', \SqlSemantics\Model\Expression::literal(1, Dialect::PostgreSql), \SqlSemantics\Model\Expression::literal(2, Dialect::MySql));
     }
+
+    public function testStructureWritesTheBoundExpressionTree(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('SELECT t.id, id + 1 FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertSame('"t"."id"', $statement->outputs[0]->expression->structure()->toString());
+        self::assertSame('("id" + 1)', $statement->outputs[1]->expression->structure()->toString());
+    }
+
+    public function testColumnBindingIsNullWithoutAColumnOccurrence(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('SELECT 1, id FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertNull($statement->outputs[0]->expression->columnBinding());
+        self::assertSame('id', $statement->outputs[1]->expression->columnBinding()?->column->name);
+    }
+
+    public function testReferencePartsAreEmptyOutsideNameReferences(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('SELECT 1, t.id FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertSame([], $statement->outputs[0]->expression->referenceParts());
+        self::assertSame(['t', 'id'], $statement->outputs[1]->expression->referenceParts());
+    }
+
+    public function testSubqueryIsNullOutsideQueryExpressions(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('SELECT 1, EXISTS(SELECT 2) FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertNull($statement->outputs[0]->expression->subquery());
+        self::assertSame('2', $statement->outputs[1]->expression->subquery()?->resultColumns()[0]->expression->spelling());
+    }
 }

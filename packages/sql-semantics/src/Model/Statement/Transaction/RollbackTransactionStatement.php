@@ -9,6 +9,10 @@ use Override;
 /**
  * Typed RollbackTransactionStatement operands; unrelated statement fields cannot be supplied.
  * @visibility public
+ * @example Rolling back a transaction
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build()))->bind('ROLLBACK AND NO CHAIN NO RELEASE');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Transaction\RollbackTransactionStatement // => true
+ *     $statement->release // => \SqlSemantics\Model\Transaction\Release::NoRelease
  */
 final class RollbackTransactionStatement extends \SqlSemantics\Model\BoundStatement
 {

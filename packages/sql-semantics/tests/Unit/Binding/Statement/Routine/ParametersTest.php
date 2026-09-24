@@ -53,6 +53,20 @@ final class ParametersTest extends TestCase
         self::assertSame(['unknown-column'], array_column($statement->diagnostics, 'reason'));
     }
 
+    public function testTypeRecordsAnUnknownTableInNonStrictBinding(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $statement = $binder->bind('DROP FUNCTION f(absent.c%TYPE)', strict: false);
+        self::assertInstanceOf(PostgreSql\DropFunctionsStatement::class, $statement);
+        self::assertInstanceOf(Routine\RoutineBySignature::class, $statement->targets[0]);
+        $type = $statement->targets[0]->parameters[0]->type;
+        self::assertInstanceOf(Routine\ColumnTypeReference::class, $type);
+        self::assertSame([['absent', 'c'], null], [$type->name->parts, $type->binding]);
+        self::assertSame(['unknown-table'], array_column($statement->diagnostics, 'reason'));
+        self::assertSame('DROP FUNCTION "f"("absent"."c" %TYPE)', $statement->toString());
+        self::assertSame($statement->toString(), $binder->bind($statement->toString(), strict: false)->toString());
+    }
+
     public function testTypeRejectsUnresolvedReferencesInStrictBinding(): void
     {
         $this->expectException(\SqlSemantics\SemanticException::class);

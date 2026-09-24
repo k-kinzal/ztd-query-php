@@ -31,4 +31,19 @@ final class CreateBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $statement);
         self::assertSame([], $statement->definition->table->columns);
     }
+
+    public function testBindReadsPostgreSqlTemplatesAndExclusions(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE s(a INTEGER)')))->bind('CREATE TABLE t (LIKE s, x INTEGER, EXCLUDE (x WITH =))');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $statement);
+        self::assertSame(0, $statement->templates[0]->position);
+        self::assertCount(1, $statement->exclusions);
+    }
+
+    public function testBindAcceptsARepeatedTemporaryKeywordOnMySql5(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.6.51'))->build('CREATE TABLE t(id INT)')))->bind('CREATE TEMPORARY TEMPORARY TABLE u LIKE t');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Table\CreateTableLikeStatement::class, $statement);
+        self::assertTrue($statement->temporary);
+    }
 }

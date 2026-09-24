@@ -12,6 +12,9 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * ValuesColumn has explicit semantic operands and a fixed expression category.
  * @visibility public
+ * @example Counting the row alternatives
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('VALUES (1), (2)');
+ *     count($statement->outputs[0]->expression->alternatives) // => 2
  */
 final class ValuesColumn extends Expression
 {

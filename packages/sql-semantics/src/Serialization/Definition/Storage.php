@@ -37,6 +37,8 @@ final class Storage
         }
         if ($properties instanceof Table\PostgreSqlProperties) {
             return new Tree('table-properties', [
+                ...($properties->parents === [] ? [] : [Build::keyword('INHERITS'), Build::parentheses(Build::separated(array_map(static fn (\SqlSemantics\Model\Relation\QualifiedName $parent): Tree => Build::identifier($parent->parts, $dialect), $properties->parents)))]),
+                ...($properties->partitioning === null ? [] : [self::partitioning($properties->partitioning, $dialect)]),
                 ...($properties->accessMethod === null ? [] : [Build::keyword('USING'), Build::identifier([$properties->accessMethod], $dialect)]),
                 ...($properties->storageParameters === [] ? [] : [Build::keyword('WITH'), Build::parentheses(self::parameters($properties->storageParameters, $dialect))]),
                 ...($properties->onCommit === Table\CommitAction::PreserveRows ? [] : [Build::keyword($properties->onCommit === Table\CommitAction::Drop ? 'ON COMMIT DROP' : 'ON COMMIT DELETE ROWS')]),
@@ -44,6 +46,19 @@ final class Storage
             ]);
         }
         return $properties instanceof Table\MySqlProperties ? self::mysql($properties, $dialect) : new Tree('table-properties', []);
+    }
+
+    /**
+     * Writes PARTITION BY; a column key stays bare and any other key is parenthesized.
+     */
+    public static function partitioning(\SqlSemantics\Schema\Partition\PartitionScheme $scheme, Dialect $dialect): Tree
+    {
+        $keys = array_map(static fn (\SqlSemantics\Schema\Partition\PartitionKey $key): Tree => new Tree('partition-key', [
+            $key->value instanceof \SqlSemantics\Model\Scalar\Reference\ColumnReference || $key->value instanceof \SqlSemantics\Model\Scalar\Reference\UnresolvedColumnReference ? Expressions::write($key->value) : Build::parentheses(Expressions::write($key->value)),
+            ...($key->collation === null ? [] : [Build::keyword('COLLATE'), Build::identifier($key->collation->parts, $dialect)]),
+            ...($key->operatorClass === null ? [] : [Build::identifier($key->operatorClass->parts, $dialect)]),
+        ]), $scheme->keys);
+        return new Tree('partitioning', [Build::keyword('PARTITION BY ' . $scheme->strategy->value), Build::parentheses(Build::separated($keys))]);
     }
 
     /**
@@ -70,6 +85,7 @@ final class Storage
         if ($properties->rowFormat !== null) {
             $parts[] = Build::keyword('ROW_FORMAT = ' . strtoupper($properties->rowFormat->value));
         }
+        $parts[] = MySqlTable\TableOptionWriter::write($properties);
         return new Tree('table-properties', $parts);
     }
 }

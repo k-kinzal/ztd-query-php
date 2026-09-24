@@ -11,6 +11,12 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 /**
  * A PostgreSQL array with a mandatory element type and declared dimensions.
  * @visibility public
+ * @example Reading an array column type
+ *     $type = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER[3][])')->tables[0]->columns[0]->type;
+ *     $type->identity instanceof \SqlSemantics\Type\Identity\ArrayStorage // => true
+ *     $type->name // => 'integer[]'
+ *     $type->identity->element->name // => 'integer'
+ *     count($type->identity->dimensions) // => 2
  */
 final class ArrayStorage implements TypeIdentity
 {

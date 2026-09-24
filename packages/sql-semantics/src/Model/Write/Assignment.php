@@ -10,6 +10,10 @@ use SqlParser\Parser\Node;
  * An assignment whose concrete form determines the required input and destination shape.
  *
  * @visibility public
+ * @example Counting an assignment's destinations
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('UPDATE t SET id=1');
+ *     count($statement->writes[0]->destinations()) // => 1
  */
 abstract class Assignment
 {

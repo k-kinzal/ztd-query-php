@@ -12,6 +12,9 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * ConfigurationIdentifier has explicit semantic operands and a fixed expression category.
  * @visibility public
+ * @example Reading a bare setting value
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('SET search_path = public');
+ *     $statement->settings[0]->values[0]->name[0] // => 'public'
  */
 final class ConfigurationIdentifier extends Expression
 {

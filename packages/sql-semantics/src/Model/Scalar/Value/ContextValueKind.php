@@ -23,4 +23,8 @@ enum ContextValueKind: string
     case CurrentRole = 'CURRENT_ROLE';
     case CurrentSchema = 'CURRENT_SCHEMA';
     case CurrentCatalog = 'CURRENT_CATALOG';
+    case UtcDate = 'UTC_DATE';
+    case UtcTime = 'UTC_TIME';
+    case UtcTimestamp = 'UTC_TIMESTAMP';
+    case StatementTime = 'SYSDATE';
 }

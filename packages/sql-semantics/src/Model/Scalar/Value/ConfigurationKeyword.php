@@ -12,6 +12,9 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * ConfigurationKeyword has explicit semantic operands and a fixed expression category.
  * @visibility public
+ * @example Reading a keyword setting value
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('SET xmloption = DOCUMENT');
+ *     $statement->settings[0]->values[0]->keyword->value // => 'DOCUMENT'
  */
 final class ConfigurationKeyword extends Expression
 {

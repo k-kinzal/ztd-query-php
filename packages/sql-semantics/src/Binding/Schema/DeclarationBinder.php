@@ -20,10 +20,17 @@ final class DeclarationBinder
 {
     /**
      * Resolves expressions using symbols so declarations never contain reference cycles.
+     * A declaration cannot build a key on an existing index; only ALTER TABLE can.
      * @throws \SqlSemantics\InvalidSql
      */
     public static function bind(ParsedTable $table, QueryContext $context): TableDefinition
     {
+        foreach ($table->constraints as $constraint) {
+            $existing = \SqlSemantics\Ast\Tree::outer($constraint->source, ['ExistingIndex'])[0] ?? null;
+            if ($existing !== null) {
+                throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::ExistingIndexConstraint, $existing);
+            }
+        }
         $columns = array_map(static fn ($column): ColumnDefinition => new ColumnDefinition($column->name, $column->type, $column->nullability, $column->source), $table->columns);
         $skeleton = new TableDefinition($table->schema, $table->name, $columns, [], $table->source);
         $target = new TableReference('declaration', 'declaration', $skeleton, new \SqlSemantics\Model\Relation\QualifiedName($skeleton->schema === '' ? [$skeleton->name] : [$skeleton->schema, $skeleton->name]), null, $table->source);

@@ -186,4 +186,32 @@ final class CreateIndexStatementTest extends TestCase
         new \SqlSemantics\Model\Statement\CreateIndexStatement($statement->origin, $statement->index, $other->from);
     }
 
+    public function testWithOriginKeepsTheIndexAndItsTable(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('CREATE INDEX ix ON t(id)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateIndexStatement::class, $statement);
+        $changed = $statement->withOrigin(new \SqlSemantics\Model\Statement\Origin('other', $statement->source, Dialect::PostgreSql, [new \SqlSemantics\Model\Diagnostic('custom', 'message', $statement->source)], $statement->origin->context));
+        self::assertSame('other', $changed->scopeId);
+        self::assertSame(['custom'], array_column($changed->diagnostics, 'reason'));
+        self::assertSame($statement->index, $changed->index);
+        self::assertSame($statement->table, $changed->table);
+        self::assertSame('CREATE INDEX "ix" ON "public"."t"("id")', $changed->toString());
+        self::assertSame([], $statement->diagnostics);
+    }
+
+    public function testReadsMySqlRebuildPolicies(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT)')))->bind('CREATE INDEX ix ON t (id) LOCK = SHARED ALGORITHM = COPY');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateIndexStatement::class, $statement);
+        self::assertSame([\SqlSemantics\Model\Definition\IndexAlgorithm::Copy, \SqlSemantics\Model\Definition\IndexLock::Shared], [$statement->algorithm, $statement->lock]);
+        self::assertSame($statement->lock, $statement->withOrigin($statement->origin)->lock);
+    }
+
+    public function testRejectsRebuildPoliciesOutsideMySql(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('CREATE INDEX ix ON t (id)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateIndexStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        new \SqlSemantics\Model\Statement\CreateIndexStatement($statement->origin, $statement->index, $statement->table, lock: \SqlSemantics\Model\Definition\IndexLock::None);
+    }
 }

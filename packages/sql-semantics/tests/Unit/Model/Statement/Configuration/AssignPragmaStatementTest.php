@@ -34,4 +34,16 @@ final class AssignPragmaStatementTest extends TestCase
         self::assertSame('PRAGMA "main"."cache_size" = - 4000', $changed->toString());
         self::assertInstanceOf(AssignPragmaStatement::class, $binder->bind($changed->toString()));
     }
+
+    public function testWithOriginKeepsTheNameAndArgument(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('PRAGMA main.cache_size=-2000');
+        self::assertInstanceOf(AssignPragmaStatement::class, $statement);
+        $changed = $statement->withOrigin(new \SqlSemantics\Model\Statement\Origin('other', $statement->source, Dialect::Sqlite, [], $statement->origin->context));
+        self::assertSame('other', $changed->scopeId);
+        self::assertSame($statement->name, $changed->name);
+        self::assertSame($statement->value, $changed->value);
+        self::assertSame('PRAGMA "main"."cache_size" = - 2000', $changed->toString());
+        self::assertSame('s0', $statement->scopeId);
+    }
 }

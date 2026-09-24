@@ -14,6 +14,12 @@ use SqlSemantics\Model\TableFunction;
 /**
  * A value produced by one declared column of a JSON or XML row expansion.
  * @visibility public
+ * @example Reading a declared JSON_TABLE output
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build();
+ *     $query = (new \SqlSemantics\Binder($schema))->bind("SELECT j.n FROM JSON_TABLE ('[]', '$[*]' COLUMNS (n FOR ORDINALITY)) AS j");
+ *     $column = $query->from->outputs[0]->expression;
+ *     $column->spelling() // => 'n'
+ *     $column->nullability->value // => 'not-null'
  */
 final class DocumentColumn extends Expression
 {

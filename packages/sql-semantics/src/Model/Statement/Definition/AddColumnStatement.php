@@ -12,6 +12,11 @@ use SqlSemantics\Model\Statement\StatementKind;
  * AddColumnStatement requires the operands of this SQL operation.
  *
  * @visibility public
+ * @example Adding a column
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER)');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('ALTER TABLE t ADD COLUMN n INTEGER NOT NULL DEFAULT 0');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Definition\AddColumnStatement // => true
+ *     $statement->column->name // => 'n'
  */
 final class AddColumnStatement extends \SqlSemantics\Model\BoundStatement
 {

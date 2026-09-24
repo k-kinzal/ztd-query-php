@@ -67,4 +67,14 @@ final class InListTest extends TestCase
         self::assertSame($membership->value, $copy->value);
         self::assertSame('SELECT (NULL IN ())', $binder->bind($statement->toString())->toString());
     }
+
+    #[TestWith([false, 'IN', '(1 IN (2))'])]
+    #[TestWith([true, 'NOT IN', '(1 NOT IN(2))'])]
+    public function testSpellingDistinguishesNegation(bool $negated, string $spelling, string $structure): void
+    {
+        $value = Expression::literal(1, Dialect::PostgreSql);
+        $membership = new InList($value->facts, $value->source, $value, [Expression::literal(2, Dialect::PostgreSql)], $negated);
+        self::assertSame($spelling, $membership->spelling());
+        self::assertSame($structure, $membership->structure()->toString());
+    }
 }

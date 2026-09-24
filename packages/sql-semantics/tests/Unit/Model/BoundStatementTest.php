@@ -302,4 +302,16 @@ final class BoundStatementTest extends TestCase
         self::assertSame(['new_name'], $statement->ctes->definitions[0]->columns);
         self::assertSame('new_name', $statement->outputs[0]->name);
     }
+
+    public function testWithDiagnosticsReplacesProvenanceWithoutChangingTheStructure(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('SELECT id FROM t');
+        $changed = $statement->withDiagnostics([new \SqlSemantics\Model\Diagnostic('custom', 'message', $statement->source)]);
+        self::assertSame(['custom'], array_column($changed->diagnostics, 'reason'));
+        self::assertSame($statement->scopeId, $changed->scopeId);
+        self::assertSame($statement->source, $changed->source);
+        self::assertSame($statement->toString(), $changed->toString());
+        self::assertSame([], $statement->diagnostics);
+        self::assertSame([], $changed->withDiagnostics([])->diagnostics);
+    }
 }

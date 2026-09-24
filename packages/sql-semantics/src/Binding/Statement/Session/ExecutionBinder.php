@@ -23,12 +23,16 @@ final class ExecutionBinder
     public static function bind(Origin $origin, Node $statement, QueryContext $context): ?BoundStatement
     {
         $scope = new Scope($context->tables->identifiers, queries: $context);
-        return Statement\Definition\DefinitionBinder::bind($origin, $statement, $context)
+        return Statement\Utility\PostgreSqlCommands::bind($origin, $statement, $context)
+            ?? Statement\Definition\DefinitionBinder::bind($origin, $statement, $context)
             ?? Statement\Maintenance\IndexCaches::bind($origin, $statement, $context)
             ?? Statement\Maintenance\MySqlTables::bind($origin, $statement, $context)
             ?? Statement\Maintenance\TruncateBinder::bind($origin, $statement, $context)
             ?? TableLockBinder::bind($origin, $statement, $context)
+            ?? Statement\Procedural\ProceduralCommands::bind($origin, $statement, $context)
             ?? Statement\Inspection\ServerInspection::bind($origin, $statement)
+            ?? Statement\Inspection\SchemaInspection::bind($origin, $statement, $context)
+            ?? Statement\Inspection\SessionInspection::bind($origin, $statement, $context)
             ?? DoBinder::bind($origin, $statement, $scope)
             ?? SessionBinder::bind($origin, $statement, $scope)
             ?? Statement\Prepared\PreparedBinder::bind($origin, $statement, $context)
@@ -37,6 +41,7 @@ final class ExecutionBinder
             ?? Statement\Transaction\XaBinder::bind($origin, $statement)
             ?? (new Statement\TransactionBinder())->bind($origin, $statement, $scope)
             ?? (new Statement\MaintenanceBinder())->bind($origin, $statement, $scope)
+            ?? Statement\Server\ServerCommands::bind($origin, $statement, $context)
             ?? Statement\ObjectBinder::bind($origin, $statement, $context);
     }
 }

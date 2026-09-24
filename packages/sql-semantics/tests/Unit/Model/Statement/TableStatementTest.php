@@ -188,4 +188,32 @@ final class TableStatementTest extends TestCase
         self::assertSame('TABLE ONLY "public"."t"', $statement->toString());
     }
 
+    public function testWithOriginKeepsTheSourceTable(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)')))->bind('TABLE t');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\TableStatement::class, $statement);
+        $changed = $statement->withOrigin(new \SqlSemantics\Model\Statement\Origin('other', $statement->source, Dialect::PostgreSql, [], $statement->origin->context));
+        self::assertSame('other', $changed->scopeId);
+        self::assertSame($statement->from, $changed->from);
+        self::assertSame('TABLE "public"."t"', $changed->toString());
+        self::assertSame('s0', $statement->scopeId);
+    }
+
+    public function testResultColumnsAreTheDeclaredTableColumns(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)')))->bind('TABLE t');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\TableStatement::class, $statement);
+        self::assertSame($statement->outputs, $statement->resultColumns());
+        self::assertSame(['id', 'n'], array_column($statement->resultColumns(), 'name'));
+    }
+
+    public function testWithOrderBySortsTheTableOutput(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)')))->bind('TABLE t');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\TableStatement::class, $statement);
+        $changed = $statement->withOrderBy([new \SqlSemantics\Model\Ordering(Expression::reference(['n'], Dialect::PostgreSql), true)]);
+        self::assertSame('TABLE "public"."t" ORDER BY "n" DESC', $changed->toString());
+        self::assertSame('TABLE "public"."t"', $statement->toString());
+        self::assertSame([], $changed->withOrderBy([])->orderBy);
+    }
 }

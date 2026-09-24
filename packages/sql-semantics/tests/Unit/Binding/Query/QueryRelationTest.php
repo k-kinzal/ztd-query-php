@@ -147,4 +147,28 @@ final class QueryRelationTest extends TestCase
         self::assertSame('integer', $query->outputs[0]->expression->type->name);
         self::assertSame('id', $query->outputs[0]->expression->inputs()[0]->columnBinding()?->column->name);
     }
+
+    public function testColumnsAppliesAliasesByPositionAndFallsBackToOutputNames(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER, name TEXT)');
+        $query = (new Binder($schema))->bind('SELECT id, name AS label FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        $declaration = \SqlSemantics\Binding\Query\QueryRelation::columns($query->outputs, 'q', ['key'], $query->origin->source);
+        self::assertSame('', $declaration->schema);
+        self::assertSame('q', $declaration->name);
+        self::assertSame(['key', 'label'], array_column($declaration->columns, 'name'));
+        self::assertSame('integer', $declaration->columns[0]->type->name);
+        self::assertSame(\SqlSemantics\Type\Nullability::MaybeNull, $declaration->columns[0]->nullability);
+        self::assertTrue($declaration->resolved);
+    }
+
+    public function testColumnsMarksTheDeclarationUnresolvedWhenAWildcardRemains(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER)');
+        $query = (new Binder($schema))->bind('SELECT * FROM missing', strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        $declaration = \SqlSemantics\Binding\Query\QueryRelation::columns($query->outputs, 'q', [], $query->origin->source);
+        self::assertFalse($declaration->resolved);
+        self::assertSame([], $declaration->columns);
+    }
 }

@@ -140,7 +140,9 @@ final class SettingBinderTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("SET LOCAL work_mem='64MB'");
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\Setting::class, $statement->settings[0]);
         self::assertSame(['work_mem'], $statement->settings[0]->name);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\Setting::class, $statement->settings[0]);
         self::assertSame('local', $statement->settings[0]->scope->value);
         self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $statement->settings[0]);
         self::assertSame("'64MB'", $statement->settings[0]->values[0]->spelling());
@@ -150,7 +152,7 @@ final class SettingBinderTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("SET SESSION sql_mode='ANSI', @n=1, @@GLOBAL.max_connections=200");
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
         self::assertSame([['sql_mode'], ['n'], ['max_connections']], array_column($statement->settings, 'name'));
-        self::assertSame(['session', 'user', 'global'], array_map(static fn ($item) => $item->scope->value, $statement->settings));
+        self::assertSame(['session', 'user', 'global'], array_map(static fn ($item) => ($item instanceof \SqlSemantics\Model\Configuration\Setting ? $item : throw new \LogicException('setting'))->scope->value, $statement->settings));
     }
     public function testMakeKeepsValueListsAndDefault(): void
     {
@@ -185,9 +187,11 @@ final class SettingBinderTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
         $local = $binder->bind('SET LOCAL sql_mode=DEFAULT');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $local);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\Setting::class, $local->settings[0]);
         self::assertSame('session', $local->settings[0]->scope->value);
         $component = $binder->bind('SET @@component.variable=1');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $component);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\Setting::class, $component->settings[0]);
         self::assertSame(['component','variable'], $component->settings[0]->name);
     }
     public function testSettingResetsPersistedVariablesWithoutRequiringAName(): void
@@ -208,7 +212,7 @@ final class SettingBinderTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
         $statement = $binder->bind("set @@local.sql_mode='ANSI', @x:=2, persist_only.max_connections=3");
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
-        self::assertSame(['session','user','session'], array_map(static fn ($item) => $item->scope->value, $statement->settings));
+        self::assertSame(['session','user','session'], array_map(static fn ($item) => ($item instanceof \SqlSemantics\Model\Configuration\Setting ? $item : throw new \LogicException('setting'))->scope->value, $statement->settings));
         self::assertSame([['sql_mode'],['x'],['persist_only','max_connections']], array_column($statement->settings, 'name'));
         self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedUserVariable::class, $statement->settings[1]);
         self::assertSame('2', $statement->settings[1]->value->spelling());
@@ -221,5 +225,14 @@ final class SettingBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Configuration\Pragma\NumericArgument::class, $statement->value);
         self::assertSame(\SqlSemantics\Model\Configuration\Pragma\Sign::Negative, $statement->value->sign);
         self::assertSame('2000', $statement->value->literal->spelling());
+    }
+
+    public function testSettingDoesNotSplitATimeZoneIntervalAtTo(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("SET LOCAL TIME ZONE INTERVAL '1' HOUR TO MINUTE");
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $statement->settings[0]);
+        self::assertSame(['timezone'], $statement->settings[0]->name);
+        self::assertSame("SET LOCAL TIME ZONE INTERVAL '1' HOUR TO MINUTE", $statement->toString());
     }
 }

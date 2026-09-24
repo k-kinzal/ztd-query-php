@@ -12,6 +12,12 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * OrdinalityColumn has explicit semantic operands and a fixed expression category.
  * @visibility public
+ * @example Numbering the rows of a table function call
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build();
+ *     $call = (new \SqlSemantics\Binder($schema))->bind('SELECT custom_function(1, 2)')->outputs[0]->expression;
+ *     $column = new \SqlSemantics\Model\Scalar\Function\OrdinalityColumn($call->facts, $call->source, $call);
+ *     $column->spelling() // => 'ORDINALITY'
+ *     $column->inputs()[0] === $call // => true
  */
 final class OrdinalityColumn extends Expression
 {

@@ -9,6 +9,10 @@ use SqlSemantics\Type\Identity\Numeric\NumericParameter;
 /**
  * An output position whose wildcard expansion needs a missing table declaration.
  * @visibility public
+ * @example Reading an ordering position that awaits a table declaration
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build();
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('SELECT * FROM t ORDER BY 2', strict: false);
+ *     $statement->orderBy[0]->key->position->spelling // => '2'
  */
 final class UnresolvedOutputPosition
 {

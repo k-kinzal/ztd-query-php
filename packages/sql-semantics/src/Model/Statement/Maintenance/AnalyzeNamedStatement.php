@@ -9,6 +9,11 @@ use Override;
 /**
  * Typed AnalyzeNamedStatement operands; unrelated statement fields cannot be supplied.
  * @visibility public
+ * @example Analyzing one table
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER)');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('ANALYZE main.t');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Maintenance\AnalyzeNamedStatement // => true
+ *     $statement->target->parts // => ['main', 't']
  */
 final class AnalyzeNamedStatement extends \SqlSemantics\Model\BoundStatement
 {

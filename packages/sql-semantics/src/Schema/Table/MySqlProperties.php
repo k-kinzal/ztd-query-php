@@ -10,12 +10,20 @@ use Override;
  * MySQL table storage options with classified values.
  *
  * @visibility public
+ * @example Reading MySQL table options
+ *     $table = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build('CREATE TEMPORARY TABLE t(id INT) ENGINE=InnoDB ROW_FORMAT=COMPRESSED KEY_BLOCK_SIZE=8')->tables[0];
+ *     $table->properties instanceof \SqlSemantics\Schema\Table\MySqlProperties // => true
+ *     $table->properties->temporary // => true
+ *     $table->properties->engine // => 'InnoDB'
+ *     $table->properties->rowFormat // => \SqlSemantics\Schema\Table\RowFormat::Compressed
+ *     $table->properties->keyBlockSize // => 8
  */
 final class MySqlProperties implements Properties
 {
     /**
-     * Constructs a valid declaration.
-
+     * Constructs a valid declaration; UNION lists the tables of a MERGE table and AUTOEXTEND_SIZE counts bytes.
+     * @param list<\SqlSemantics\Model\Relation\QualifiedName>|null $union
+     * @throws \SqlSemantics\Model\Validation\InvalidStructure
      */
     public function __construct(
         public readonly bool $temporary = false,
@@ -44,7 +52,17 @@ final class MySqlProperties implements Properties
         public readonly ?bool $statsAutoRecalc = null,
         public readonly ?bool $statsPersistent = null,
         public readonly ?int $statsSamplePages = null,
+        public readonly ?TableStorage $storage = null,
+        public readonly ?string $secondaryEngine = null,
+        public readonly ?MergeInsertMethod $insertMethod = null,
+        public readonly ?array $union = null,
+        public readonly bool $startTransaction = false,
+        public readonly ?int $autoextendSize = null,
+        public readonly ?\SqlSemantics\Model\Definition\MySqlTable\Partition\TablePartitioning $partitioning = null,
     ) {
+        if ($union !== null) {
+            \SqlSemantics\Model\Validation\Collections::objects($union, \SqlSemantics\Model\Relation\QualifiedName::class);
+        }
     }
     /**
      * Returns the SQL dialect that defines these options.

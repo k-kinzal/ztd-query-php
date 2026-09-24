@@ -59,4 +59,16 @@ final class ExtremumTest extends TestCase
         self::assertSame($value->arguments, $copy->arguments);
         self::assertSame('LEAST', $copy->spelling());
     }
+
+    #[TestWith(['SELECT GREATEST(1,2)', 'GREATEST'])]
+    #[TestWith(['SELECT LEAST(1,2)', 'LEAST'])]
+    public function testSpellingReturnsTheSelectionKeyword(string $sql, string $spelling): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql);
+        self::assertInstanceOf(BoundSelect::class, $statement);
+        $value = $statement->outputs[0]->expression;
+        self::assertInstanceOf(Extremum::class, $value);
+        self::assertSame($spelling, $value->spelling());
+        self::assertSame($value->selection->value, $value->spelling());
+    }
 }

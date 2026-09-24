@@ -36,11 +36,12 @@ final class Transactions
 
     /**
      * Writes a transaction start with its optional isolation and access settings.
+     * MySQL uses START TRANSACTION, the spelling accepted in every statement position, including SHOW PARSE_TREE and stored programs.
      */
     public static function begin(Statement\BeginTransactionStatement $statement): Tree
     {
         $characteristics = $statement->characteristics;
         $parts = [...($characteristics->isolation === null ? [] : [Build::keyword('ISOLATION LEVEL ' . $characteristics->isolation->value)]), ...($characteristics->access === null ? [] : [Build::keyword($characteristics->access->value)]), ...($characteristics->deferrable === null ? [] : [Build::keyword($characteristics->deferrable ? 'DEFERRABLE' : 'NOT DEFERRABLE')]), ...($characteristics->consistentSnapshot ? [Build::keyword('WITH CONSISTENT SNAPSHOT')] : [])];
-        return new Tree('begin', [Build::keyword($statement->origin->dialect === \SqlSemantics\Dialect::MySql && $parts !== [] ? 'START TRANSACTION' : 'BEGIN'), ...($statement->mode === null ? [] : [Build::keyword($statement->mode->value)]), Build::separated($parts)]);
+        return new Tree('begin', [Build::keyword($statement->origin->dialect === \SqlSemantics\Dialect::MySql ? 'START TRANSACTION' : 'BEGIN'), ...($statement->mode === null ? [] : [Build::keyword($statement->mode->value)]), Build::separated($parts)]);
     }
 }

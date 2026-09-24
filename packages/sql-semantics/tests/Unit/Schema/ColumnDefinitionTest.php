@@ -148,4 +148,51 @@ final class ColumnDefinitionTest extends TestCase
         self::assertNotNull($column->generation->default);
         self::assertSame('42', trim($column->generation->default->source->toString()));
     }
+
+    public function testWithNameRenamesWithoutChangingTheOriginal(): void
+    {
+        $column = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER NOT NULL DEFAULT 3)')->tables[0]->columns[0];
+        $renamed = $column->withName('key');
+        self::assertSame('key', $renamed->name);
+        self::assertSame('id', $column->name);
+        self::assertSame($column->type, $renamed->type);
+        self::assertSame($column->generation, $renamed->generation);
+        self::assertSame('"key" integer NOT NULL DEFAULT 3', \SqlSemantics\Serialization\Definition\Columns::write($renamed, Dialect::PostgreSql)->toString());
+    }
+
+    public function testWithTypeReplacesOnlyTheDeclaredType(): void
+    {
+        $column = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER NOT NULL DEFAULT 3)')->tables[0]->columns[0];
+        $retyped = $column->withType(\SqlSemantics\Type\TypeDescriptor::builtin(Dialect::PostgreSql, 'text'));
+        self::assertSame('text', $retyped->type->name);
+        self::assertSame('integer', $column->type->name);
+        self::assertSame(Nullability::NotNull, $retyped->nullability);
+        self::assertSame($column->generation, $retyped->generation);
+        self::assertSame('"id" text NOT NULL DEFAULT 3', \SqlSemantics\Serialization\Definition\Columns::write($retyped, Dialect::PostgreSql)->toString());
+    }
+
+    public function testWithTypeRejectsATypeFromAnotherDialect(): void
+    {
+        $column = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER DEFAULT 3)')->tables[0]->columns[0];
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        $column->withType(\SqlSemantics\Type\TypeDescriptor::builtin(Dialect::MySql, 'text'));
+    }
+
+    public function testWithGenerationReplacesTheValueSource(): void
+    {
+        $column = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER NOT NULL DEFAULT 3)')->tables[0]->columns[0];
+        $computed = $column->withGeneration(new \SqlSemantics\Schema\Column\ComputedColumn(\SqlSemantics\Model\Expression::literal(2, Dialect::PostgreSql), \SqlSemantics\Schema\Column\GeneratedStorage::Stored));
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\ComputedColumn::class, $computed->generation);
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\SuppliedColumn::class, $column->generation);
+        self::assertSame('3', $column->generation->default?->spelling());
+        self::assertSame('"id" integer NOT NULL GENERATED ALWAYS AS(2) STORED', \SqlSemantics\Serialization\Definition\Columns::write($computed, Dialect::PostgreSql)->toString());
+        self::assertSame('"id" integer NOT NULL', \SqlSemantics\Serialization\Definition\Columns::write($column->withGeneration(new \SqlSemantics\Schema\Column\SuppliedColumn()), Dialect::PostgreSql)->toString());
+    }
+
+    public function testWithGenerationRejectsExpressionsFromAnotherDialect(): void
+    {
+        $column = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')->tables[0]->columns[0];
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        $column->withGeneration(new \SqlSemantics\Schema\Column\SuppliedColumn(\SqlSemantics\Model\Expression::literal(1, Dialect::MySql)));
+    }
 }

@@ -138,25 +138,36 @@ final class SpecialSettingsTest extends TestCase
 {
     public function testBindRetainsNamesAndCollation(): void
     {
-        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SET NAMES utf8mb4 COLLATE utf8mb4_bin');
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("SET NAMES 'UTF8'");
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
-        self::assertSame([['names'], ['collation_connection']], array_column($statement->settings, 'name'));
-        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $statement->settings[0]);
-        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $statement->settings[1]);
-        self::assertSame('utf8mb4', $statement->settings[0]->values[0]->spelling());
-        self::assertSame('utf8mb4_bin', $statement->settings[1]->values[0]->spelling());
+        self::assertSame([['client_encoding']], array_column($statement->settings, 'name'));
+        $default = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SET NAMES');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $default);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\DefaultSetting::class, $default->settings[0]);
+        self::assertSame('SET "client_encoding" = DEFAULT', $default->toString());
+        $mysql = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SET NAMES utf8mb4 COLLATE utf8mb4_bin');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $mysql);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\Connection\ConnectionNames::class, $mysql->settings[0]);
+        self::assertSame('utf8mb4_bin', $mysql->settings[0]->collation);
     }
     public function testBindRetainsTimezoneAndRole(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $timezone = $binder->bind('SET TIME ZONE DEFAULT');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $timezone);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\Setting::class, $timezone->settings[0]);
         self::assertSame(['timezone'], $timezone->settings[0]->name);
+        $interval = $binder->bind("SET TIME ZONE INTERVAL '+01:30' HOUR TO MINUTE");
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $interval);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $interval->settings[0]);
+        self::assertSame(['timezone'], $interval->settings[0]->name);
         $role = $binder->bind('SET ROLE example');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $role);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\Setting::class, $role->settings[0]);
         self::assertSame(['role'], $role->settings[0]->name);
         $session_authorization = $binder->bind('SET SESSION AUTHORIZATION example');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $session_authorization);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\Setting::class, $session_authorization->settings[0]);
         self::assertSame(['session_authorization'], $session_authorization->settings[0]->name);
     }
 }

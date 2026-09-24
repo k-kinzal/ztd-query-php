@@ -155,9 +155,29 @@ final class SettingTokensTest extends TestCase
         self::assertSame('configuration-value', $statement->settings[0]->values[0]->kind->value);
         self::assertSame('OFF', $statement->settings[0]->values[0]->spelling());
     }
+    public function testValueKeepsTheSignOfANumericSetting(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SET work_mem = - 5');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $statement->settings[0]);
+        self::assertSame('-5', $statement->settings[0]->values[0]->spelling());
+        self::assertSame('SET "work_mem" = -5', $statement->toString());
+    }
     public function testWordsRetainsTokenOrder(): void
     {
         $tokens = (new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('SET ROLE example')->tokens();
         self::assertSame(['SET','ROLE','EXAMPLE'], \SqlSemantics\Binding\Configuration\SettingTokens::words($tokens));
+    }
+
+    public function testValueBindsAnIntervalTimeZoneAsATypedInterval(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("ALTER DATABASE d SET TIME ZONE INTERVAL(2) '1'");
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Definition\PostgreSql\Database\AlterDatabaseSetStatement::class, $statement);
+        $setting = $statement->setting;
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $setting);
+        $value = $setting->values[0];
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Operator\CastExpression::class, $value);
+        self::assertInstanceOf(\SqlSemantics\Type\Identity\IntervalStorage::class, $value->type->identity);
+        self::assertSame("ALTER DATABASE \"d\" SET TIME ZONE INTERVAL(2) '1'", $statement->toString());
     }
 }

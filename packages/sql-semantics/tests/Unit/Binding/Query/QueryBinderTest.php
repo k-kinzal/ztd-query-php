@@ -336,4 +336,27 @@ final class QueryBinderTest extends TestCase
         self::assertSame(['result'], $statement->ctes->definitions[0]->columns);
         self::assertSame(['id'], array_column($statement->ctes->definitions[0]->query->outputs, 'name'));
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['TABLE t ORDER BY 1 FETCH FIRST 2 ROWS WITH TIES', 'TABLE "public"."t" ORDER BY 1 ASC FETCH FIRST 2 ROWS WITH TIES'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['(TABLE t ORDER BY 1 FETCH FIRST ROW WITH TIES)', 'TABLE "public"."t" ORDER BY 1 ASC FETCH FIRST 1 ROWS WITH TIES'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['VALUES (1) ORDER BY 1 FETCH FIRST ROW WITH TIES', 'VALUES (1) ORDER BY 1 ASC FETCH FIRST 1 ROWS WITH TIES'])]
+    public function testBindRetainsWithTiesForTableAndValuesQueries(string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER)'));
+        $query = $binder->bind($sql);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundQuery::class, $query);
+        self::assertTrue($query->withTies);
+        self::assertSame($expected, $query->toString());
+        self::assertSame($expected, $binder->bind($expected)->toString());
+    }
+
+    public function testLeadSkipsOpeningParenthesesOfAValuesBody(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
+        $values = $binder->bind('( ( VALUES ROW (NULL) ) )');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\ValuesStatement::class, $values);
+        self::assertSame('VALUES ROW(NULL)', $values->toString());
+        self::assertSame('VALUES', \SqlSemantics\Binding\Query\QueryBinder::lead((new \SqlSemantics\Ast\DialectParser(Dialect::MySql))->parse('((VALUES ROW(1)))')));
+        self::assertSame('', \SqlSemantics\Binding\Query\QueryBinder::lead(new \SqlParser\Parser\Node('empty', 0, [])));
+    }
 }

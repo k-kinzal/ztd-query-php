@@ -4,9 +4,10 @@ declare(strict_types=1);
 
 namespace SqlSemantics\Binding\Write;
 
+use SqlSemantics\InvalidSql;
 use SqlSemantics\Model\Expression;
 use SqlSemantics\Model\Scalar\Reference;
-use SqlSemantics\Model\Validation\InvalidStructure;
+use SqlSemantics\Model\Validation\InputViolation;
 use SqlSemantics\Model\Write\Storage;
 
 /**
@@ -17,7 +18,8 @@ use SqlSemantics\Model\Write\Storage;
 final class StoragePathBinder
 {
     /**
-     * @throws InvalidStructure
+     * Diagnoses a destination the grammar accepts but no storage can receive, such as a whole-row expansion.
+     * @throws InvalidSql
      */
     public static function bind(Expression $expression): Storage\Path
     {
@@ -27,7 +29,7 @@ final class StoragePathBinder
             $expression instanceof Reference\FieldAccess => new Storage\FieldPath(self::bind($expression->base), $expression->field),
             $expression instanceof Reference\ElementAccess => new Storage\ElementPath(self::bind($expression->base), $expression->index),
             $expression instanceof Reference\SliceAccess => new Storage\SlicePath(self::bind($expression->base), $expression->lower, $expression->upper),
-            default => throw new InvalidStructure('An assignment destination must be a column or a field or array access rooted in a column.'),
+            default => throw new InvalidSql(InputViolation::AssignmentDestination, $expression->source),
         };
     }
 }

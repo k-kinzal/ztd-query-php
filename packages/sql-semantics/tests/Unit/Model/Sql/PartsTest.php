@@ -193,4 +193,13 @@ final class PartsTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $rebound);
         self::assertCount(1, $rebound->outputs);
     }
+
+    public function testOutputsParenthesizesANamedWholeRowReference(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER)'));
+        $query = $binder->bind('SELECT (t.*) FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        self::assertSame('("t".*) AS "t"', Sql\Parts::outputs($query->outputs, Dialect::PostgreSql)->toString());
+        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+    }
 }

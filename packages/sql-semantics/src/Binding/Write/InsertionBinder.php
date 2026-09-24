@@ -29,7 +29,7 @@ final class InsertionBinder
      */
     public function bind(Node $statement, TableUse $target, Scope $scope, array $rows, array $queries, array $assignments, ?Scope $destinations = null): Insertion
     {
-        $list = QueryNodes::local($statement, ['insert_column_list', 'insert_columns', 'fields', 'idlist_opt'])[0] ?? null;
+        $list = $this->columnList($statement);
         $explicit = $list !== null && Tree::hasTokens($list);
         $names = !$explicit ? [] : Tree::outer($list, ['insert_column_item', 'insert_column', 'insert_ident', 'nm']);
         $columns = array_map(static fn (Node $name): Expression => (new AssignmentBinder())->target($name, $destinations ?? $scope), $names);
@@ -63,6 +63,14 @@ final class InsertionBinder
             }
         }
         return $insertion;
+    }
+
+    /**
+     * Finds the written destination column list, including MySQL 8's list inside `(columns) query`.
+     */
+    public function columnList(Node $statement): ?Node
+    {
+        return QueryNodes::local($statement, ['insert_column_list', 'insert_columns', 'fields', 'idlist_opt'])[0] ?? Tree::child(Tree::child($statement, ['insert_query_expression']) ?? $statement, ['insert_columns']);
     }
 
     /**

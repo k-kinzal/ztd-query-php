@@ -29,6 +29,7 @@ final class Builtins
             'boolean' => ['BOOL_AND', 'BOOL_OR', 'EVERY'],
             'json' => ['JSON_AGG'],
             'jsonb' => ['JSONB_AGG'],
+            'xml' => ['XMLAGG'],
             'date' => ['CURRENT_DATE'],
             'timestamp' => ['CURRENT_TIMESTAMP', 'NOW'],
             'unknown' => ['RANDOM'],
@@ -37,10 +38,10 @@ final class Builtins
         $result = ConditionalSignatures::forDialect($dialect);
         foreach ($groups as $type => $names) {
             foreach ($names as $name) {
-                if ($dialect === Dialect::Sqlite && in_array($name, ['MIN', 'MAX'], true)) {
+                if ($dialect === Dialect::Sqlite && in_array($name, ['MIN', 'MAX'], true) || $type === 'xml' && $dialect !== Dialect::PostgreSql) {
                     continue;
                 }
-                $aggregate = in_array($name, ['COUNT', 'SUM', 'AVG', 'MIN', 'MAX', 'TOTAL', 'GROUP_CONCAT', 'STRING_AGG', 'ARRAY_AGG', 'JSON_AGG', 'JSONB_AGG', 'BOOL_AND', 'BOOL_OR', 'EVERY'], true);
+                $aggregate = in_array($name, ['COUNT', 'SUM', 'AVG', 'MIN', 'MAX', 'TOTAL', 'GROUP_CONCAT', 'STRING_AGG', 'ARRAY_AGG', 'JSON_AGG', 'JSONB_AGG', 'XMLAGG', 'BOOL_AND', 'BOOL_OR', 'EVERY'], true);
                 $notNull = in_array($name, ['COUNT', 'ROW_NUMBER', 'RANK', 'DENSE_RANK', 'NTILE', 'CURRENT_DATE', 'CURRENT_TIMESTAMP', 'RANDOM', 'RAND', 'TOTAL'], true);
                 $strict = in_array($name, ['LOWER', 'UPPER', 'LENGTH', 'CHAR_LENGTH', 'ABS', 'ROUND', 'TRIM', 'LTRIM', 'RTRIM'], true);
                 $return = $type === 'argument' ? (new BuiltinResult($name, $dialect))->resolve(...) : TypeDescriptor::builtin($dialect, $type === 'bigint' && $dialect === Dialect::Sqlite ? 'integer' : $type);

@@ -12,6 +12,10 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * CursorPosition has explicit semantic operands and a fixed expression category.
  * @visibility public
+ * @example Reading the cursor name
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('UPDATE t SET id = 1 WHERE CURRENT OF cur');
+ *     $statement->where->cursor[0] // => 'cur'
  */
 final class CursorPosition extends Expression
 {

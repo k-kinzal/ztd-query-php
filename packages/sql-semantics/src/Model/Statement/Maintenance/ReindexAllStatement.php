@@ -9,6 +9,10 @@ use Override;
 /**
  * Typed ReindexAllStatement operands; unrelated statement fields cannot be supplied.
  * @visibility public
+ * @example Rebuilding every index
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build()))->bind('REINDEX');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Maintenance\ReindexAllStatement // => true
+ *     $statement->kind->value // => 'REINDEX'
  */
 final class ReindexAllStatement extends \SqlSemantics\Model\BoundStatement
 {

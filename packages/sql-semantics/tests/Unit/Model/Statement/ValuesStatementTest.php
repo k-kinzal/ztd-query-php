@@ -164,4 +164,33 @@ final class ValuesStatementTest extends TestCase
         self::assertSame('integer', $query->outputs[0]->expression->type->name);
         self::assertSame($changed->toString(), $query->withRows($replacement->rows)->toString());
     }
+
+    public function testWithOriginKeepsTheRows(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('VALUES (1, 2), (3, 4)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\ValuesStatement::class, $statement);
+        $changed = $statement->withOrigin(new \SqlSemantics\Model\Statement\Origin('other', $statement->source, Dialect::PostgreSql, [], $statement->origin->context));
+        self::assertSame('other', $changed->scopeId);
+        self::assertSame($statement->rows, $changed->rows);
+        self::assertSame('VALUES (1, 2), (3, 4)', $changed->toString());
+        self::assertSame('s0', $statement->scopeId);
+    }
+
+    public function testResultColumnsAreNamedByPosition(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('VALUES (1, 2), (3, 4)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\ValuesStatement::class, $statement);
+        self::assertSame($statement->outputs, $statement->resultColumns());
+        self::assertSame(['column1', 'column2'], array_column($statement->resultColumns(), 'name'));
+    }
+
+    public function testWithOrderByUsesOutputPositions(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('VALUES (1, 2), (3, 4)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\ValuesStatement::class, $statement);
+        $changed = $statement->withOrderBy([new \SqlSemantics\Model\Ordering(new \SqlSemantics\Model\Query\Ordering\OutputPosition($statement->outputs[1]), true)]);
+        self::assertSame('VALUES (1, 2), (3, 4) ORDER BY 2 DESC', $changed->toString());
+        self::assertSame([], $statement->orderBy);
+        self::assertSame('VALUES (1, 2), (3, 4)', $changed->withOrderBy([])->toString());
+    }
 }

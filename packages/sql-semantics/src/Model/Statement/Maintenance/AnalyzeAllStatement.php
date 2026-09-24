@@ -9,6 +9,10 @@ use Override;
 /**
  * Typed AnalyzeAllStatement operands; unrelated statement fields cannot be supplied.
  * @visibility public
+ * @example Analyzing every table
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build()))->bind('ANALYZE');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Maintenance\AnalyzeAllStatement // => true
+ *     $statement->toString() // => 'ANALYZE'
  */
 final class AnalyzeAllStatement extends \SqlSemantics\Model\BoundStatement
 {

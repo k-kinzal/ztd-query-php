@@ -12,6 +12,11 @@ use SqlSemantics\Type\Identity\TypeIdentity;
 /**
  * An integer storage type with its signedness and optional display width.
  * @visibility public
+ * @example Reading an unsigned integer declaration
+ *     $type = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build('CREATE TABLE t(a INT(11) UNSIGNED)')->tables[0]->columns[0]->type;
+ *     $type->identity instanceof \SqlSemantics\Type\Identity\Numeric\IntegerStorage // => true
+ *     $type->name // => 'integer unsigned'
+ *     $type->identity->displayWidth->spelling // => '11'
  */
 final class IntegerStorage implements TypeIdentity
 {

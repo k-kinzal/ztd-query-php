@@ -31,7 +31,7 @@ final class Columns
         $generation = $column->generation;
         if ($generation instanceof Column\SuppliedColumn) {
             if ($generation->default !== null) {
-                array_push($parts, Build::keyword('DEFAULT'), Expressions::write($generation->default));
+                array_push($parts, Build::keyword('DEFAULT'), self::defaultValue($generation->default, $dialect));
             }
             if ($generation->onUpdate !== null) {
                 array_push($parts, Build::keyword('ON UPDATE'), Expressions::write($generation->onUpdate));
@@ -44,5 +44,20 @@ final class Columns
             $parts[] = Build::keyword($dialect === Dialect::Sqlite ? 'PRIMARY KEY AUTOINCREMENT' : 'AUTO_INCREMENT');
         }
         return new Tree('column', $parts);
+    }
+
+    /**
+     * Writes a column default: MySQL and SQLite take literals, signed numbers and the current-time keywords bare and any other expression in parentheses.
+     */
+    public static function defaultValue(\SqlSemantics\Model\Expression $default, Dialect $dialect): Tree
+    {
+        if ($dialect === Dialect::PostgreSql) {
+            return Expressions::write($default);
+        }
+        $keywords = $dialect === Dialect::MySql ? ['CURRENT_TIMESTAMP', 'LOCALTIME', 'LOCALTIMESTAMP'] : ['CURRENT_DATE', 'CURRENT_TIME', 'CURRENT_TIMESTAMP'];
+        if ($default instanceof \SqlSemantics\Model\Scalar\Value\ContextReference && in_array($default->request->value, $keywords, true)) {
+            return Expressions::write($default);
+        }
+        return MySqlTable\ColumnChanges::default($default);
     }
 }

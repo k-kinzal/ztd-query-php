@@ -16,9 +16,9 @@ namespace SqlSemantics\Model\Scalar\Function;
 final class UnresolvedFunction implements FunctionReference
 {
     /**
-     * Retains the required function name when no registered overload can be selected.
+     * Retains the required function name when no registered overload can be selected, and how MySQL finds it.
      */
-    public function __construct(public readonly FunctionName $function)
+    public function __construct(public readonly FunctionName $function, public readonly FunctionLookup $lookup = FunctionLookup::Grammar)
     {
     }
 

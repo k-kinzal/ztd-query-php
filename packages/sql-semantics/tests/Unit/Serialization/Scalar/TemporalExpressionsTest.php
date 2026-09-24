@@ -30,4 +30,20 @@ final class TemporalExpressionsTest extends TestCase
         self::assertSame('SELECT (INTERVAL ? DAY + ?), DATE_SUB(?, INTERVAL ? HOUR)', $query->toString());
         self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
     }
+
+    public function testWriteKeepsPeriodsAndZoneConversions(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $query = $binder->bind("SELECT (1, 2) OVERLAPS (3, 4), LOCALTIMESTAMP AT TIME ZONE 'UTC', LOCALTIMESTAMP AT LOCAL");
+        self::assertSame("SELECT ((1, 2) OVERLAPS(3, 4)), (LOCALTIMESTAMP AT TIME ZONE 'UTC'), (LOCALTIMESTAMP AT LOCAL)", $query->toString());
+        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+    }
+
+    public function testWriteSpellsGetFormatWithItsKindKeyword(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
+        $query = $binder->bind("SELECT GET_FORMAT(TIMESTAMP, 'EUR')");
+        self::assertSame("SELECT GET_FORMAT(DATETIME, 'EUR')", $query->toString());
+        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+    }
 }

@@ -10,6 +10,11 @@ use Override;
  * Update a table using mandatory additional input.
  *
  * @visibility public
+ * @example Updating from another relation
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)', 'CREATE TABLE s(id INTEGER, n INTEGER)');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('UPDATE t SET n=s.n FROM s WHERE t.id=s.id');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Mutation\UpdateFromStatement // => true
+ *     $statement->target->declaration->name // => 't'
  */
 final class UpdateFromStatement extends \SqlSemantics\Model\Statement\UpdateStatement
 {

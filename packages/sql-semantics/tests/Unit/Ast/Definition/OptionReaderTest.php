@@ -175,6 +175,7 @@ final class OptionReaderTest extends TestCase
         self::assertSame('heap', $table->properties->accessMethod);
         self::assertSame('fast', $table->properties->tablespace);
         self::assertSame(['fillfactor'], $table->properties->storageParameters[0]->name->parts);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\Literal::class, $table->properties->storageParameters[0]->value);
         self::assertSame('80', $table->properties->storageParameters[0]->value->spelling());
     }
 
@@ -203,6 +204,7 @@ final class OptionReaderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Schema\Table\PostgreSqlProperties::class, $table->properties);
         self::assertSame(\SqlSemantics\Schema\Table\Persistence::Temporary, $table->properties->persistence);
         self::assertSame(\SqlSemantics\Schema\Table\CommitAction::DeleteRows, $table->properties->onCommit);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\Literal::class, $table->properties->storageParameters[0]->value);
         self::assertSame('80', $table->properties->storageParameters[0]->value->spelling());
     }
 
@@ -243,7 +245,9 @@ final class OptionReaderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Schema\Table\PostgreSqlProperties::class, $table->properties);
         self::assertSame(['toast', 'autovacuum_enabled'], $table->properties->storageParameters[0]->name->parts);
         self::assertSame(['toast', 'autovacuum_vacuum_threshold'], $table->properties->storageParameters[1]->name->parts);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\Literal::class, $table->properties->storageParameters[0]->value);
         self::assertSame('false', $table->properties->storageParameters[0]->value->spelling());
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\Literal::class, $table->properties->storageParameters[1]->value);
         self::assertSame('20', $table->properties->storageParameters[1]->value->spelling());
     }
 

@@ -60,4 +60,14 @@ final class RowExpressionTest extends TestCase
         self::assertSame($row->items, $copy->items);
         self::assertSame('ROW', $copy->spelling());
     }
+
+    public function testSpellingIsTheRowKeywordEvenWithoutIt(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SELECT (1, 2) = (2, 3)');
+        self::assertInstanceOf(BoundSelect::class, $statement);
+        $row = $statement->outputs[0]->expression->inputs()[0];
+        self::assertInstanceOf(RowExpression::class, $row);
+        self::assertSame('ROW', $row->spelling());
+        self::assertSame('SELECT ((1, 2) = (2, 3))', $statement->toString());
+    }
 }

@@ -20,7 +20,7 @@ use SqlSemantics\Model\Configuration\Setting;
 final class SettingBinder
 {
     /**
-     * @return list<Setting>
+     * @return list<Setting|\SqlSemantics\Model\Configuration\Connection\ConnectionNames|\SqlSemantics\Model\Configuration\Connection\ConnectionCharacterSet>
      */
     public function bind(Node $source, Scope $scope): array
     {
@@ -35,22 +35,31 @@ final class SettingBinder
         }
         $groups = $scope->identifiers->dialect === Dialect::MySql ? SettingTokens::split($tokens) : [$tokens];
         $result = [];
+        $carried = null;
         foreach ($groups as $group) {
-            array_push($result, ...$this->setting($group, $source, $scope, $verb));
+            $settings = $this->setting($group, $source, $scope, $verb);
+            if ($scope->identifiers->dialect === Dialect::MySql) {
+                [$settings, $carried] = SettingScopes::carry($group, $settings, $carried);
+            }
+            array_push($result, ...$settings);
         }
         return $result;
     }
 
     /**
      * @param list<Token> $tokens
-     * @return list<Setting>
+     * @return list<Setting|\SqlSemantics\Model\Configuration\Connection\ConnectionNames|\SqlSemantics\Model\Configuration\Connection\ConnectionCharacterSet>
      */
     public function setting(array $tokens, Node $source, Scope $scope, string $verb): array
     {
+        $connection = $scope->identifiers->dialect === Dialect::MySql ? ConnectionCharsets::bind($tokens, $source, $scope) : null;
+        if ($connection !== null) {
+            return [$connection];
+        }
         [$tokens, $settingScope] = $this->scope($tokens, $scope->identifiers->dialect);
         $words = SettingTokens::words($tokens);
         $delimiter = null;
-        foreach ($words as $index => $word) {
+        foreach (array_slice($words, 0, 2) === ['TIME', 'ZONE'] ? [] : $words as $index => $word) {
             if (in_array($word, ['=', ':=', 'TO', 'FROM'], true)) {
                 $delimiter = $index;
                 break;
@@ -84,8 +93,8 @@ final class SettingBinder
             if (($tokens[0]->text ?? '') === '@') {
                 array_shift($tokens);
                 $settingScope = 'session';
-                if (($tokens[1]->text ?? '') === '.' && in_array(strtoupper($tokens[0]->text), ['SESSION', 'LOCAL', 'GLOBAL'], true)) {
-                    $settingScope = strtolower($tokens[0]->text);
+                if (($tokens[1]->text ?? '') === '.' && in_array(strtoupper($tokens[0]->text), ['SESSION', 'LOCAL', 'GLOBAL', 'PERSIST', 'PERSIST_ONLY'], true)) {
+                    $settingScope = strtolower(str_replace('_', '-', $tokens[0]->text));
                     $tokens = array_slice($tokens, 2);
                 }
             }
@@ -109,11 +118,15 @@ final class SettingBinder
         if ($action === 'set' && count($tokens) === 1 && in_array($tokens[0]->name, ['DEFAULT', 'DEFAULT_SYM'], true)) {
             return new \SqlSemantics\Model\Configuration\DefaultSetting($name, \SqlSemantics\Model\Configuration\SettingScope::from($settingScope), $source);
         }
+        $system = $settingScope !== 'user' && $scope->identifiers->dialect === Dialect::MySql;
+        if ($system) {
+            SettingScopes::name($name, $source);
+        }
         $values = [];
         if ($action === 'set') {
             foreach (SettingTokens::split($tokens) as $value) {
                 if ($value !== []) {
-                    $values[] = SettingTokens::value($value, $source, $scope);
+                    $values[] = ($system ? SettingScopes::identifier($value, $source, $scope) : null) ?? SettingTokens::value($value, $source, $scope);
                 }
             }
         }

@@ -187,4 +187,25 @@ final class AssignmentRulesTest extends TestCase
         self::assertContains('unknown-column', array_column($statement->diagnostics, 'reason'));
         self::assertSame('unresolved-column', $statement->writes[0]->destinations()[0]->column()->kind->value);
     }
+
+    public function testCheckPathReportsNullStoresIntoNotNullColumnsOnly(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT NOT NULL, j INT[])'));
+        $column = $binder->bind('UPDATE t SET a = NULL', strict: false);
+        self::assertSame(['null-assignment'], array_column($column->diagnostics, 'reason'));
+        self::assertSame('NULL cannot be stored in a NOT NULL column.', $column->diagnostics[0]->message);
+        $element = $binder->bind('UPDATE t SET j[1] = NULL', strict: false);
+        self::assertSame([], $element->diagnostics);
+        $default = $binder->bind('UPDATE t SET a = DEFAULT', strict: false);
+        self::assertSame([], $default->diagnostics);
+    }
+
+    public function testCheckTypeReportsIncompatibleBuiltinsOnlyForPostgreSql(): void
+    {
+        $postgres = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(b TEXT, d DATE, n NUMERIC)')))->bind("UPDATE t SET b = 1, d = 'x', n = 1.5, d = true", strict: false);
+        self::assertSame(['incompatible-assignment'], array_column($postgres->diagnostics, 'reason'));
+        self::assertSame('Cannot assign boolean to date.', $postgres->diagnostics[0]->message);
+        $mysql = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(d DATE)')))->bind('UPDATE t SET d = true', strict: false);
+        self::assertSame([], $mysql->diagnostics);
+    }
 }

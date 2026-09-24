@@ -222,4 +222,39 @@ final class BoundSelectTest extends TestCase
         self::assertSame('SELECT FROM "public"."t"', $changed->toString());
         self::assertCount(1, $statement->outputs);
     }
+
+    public function testWithOriginKeepsOperandsAndReplacesProvenance(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('SELECT id FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        $origin = new \SqlSemantics\Model\Statement\Origin('other', $statement->source, Dialect::PostgreSql, [new \SqlSemantics\Model\Diagnostic('custom', 'message', $statement->source)], $statement->origin->context);
+        $changed = $statement->withOrigin($origin);
+        self::assertSame('other', $changed->scopeId);
+        self::assertSame(['custom'], array_column($changed->diagnostics, 'reason'));
+        self::assertSame($statement->outputs, $changed->outputs);
+        self::assertSame($statement->from, $changed->from);
+        self::assertSame('s0', $statement->scopeId);
+        self::assertSame([], $statement->diagnostics);
+    }
+
+    public function testResultColumnsAreTheProjectionOutputs(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)')))->bind('SELECT id, n + 1 AS next FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertSame($statement->outputs, $statement->resultColumns());
+        self::assertSame(['id', 'next'], array_column($statement->resultColumns(), 'name'));
+    }
+
+    public function testWithOrderByBindsSortKeysAndKeepsTheOriginal(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)')))->bind('SELECT id FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        $ordered = $statement->withOrderBy([new \SqlSemantics\Model\Ordering(Expression::reference(['n'], Dialect::PostgreSql), true, true)]);
+        self::assertSame('SELECT "id" AS "id" FROM "public"."t" ORDER BY "n" DESC NULLS FIRST', $ordered->toString());
+        $key = $ordered->orderBy[0]->key;
+        self::assertInstanceOf(Expression::class, $key);
+        self::assertSame('n', $key->columnBinding()?->column->name);
+        self::assertSame([], $statement->orderBy);
+        self::assertSame('SELECT "id" AS "id" FROM "public"."t"', $ordered->withOrderBy([])->toString());
+    }
 }

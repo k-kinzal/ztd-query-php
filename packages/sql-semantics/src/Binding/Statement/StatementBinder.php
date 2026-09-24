@@ -54,7 +54,8 @@ final class StatementBinder
         $operation = self::operation($statement);
         $select = Tree::child($statement, ['SelectStmt', 'select_stmt', 'select']);
         if (($operation === 'WITH' && ($select !== null || in_array($statement->name, ['select', 'SelectStmt', 'query_expression', 'select_stmt'], true))) || in_array($operation, ['SELECT', 'VALUES', 'TABLE', '('], true)) {
-            return $context->bind($tree, $parent);
+            $query = $context->bind($tree, $parent);
+            return Retrieval\SelectIntoBinder::bind($tree, $statement, $query, $context)?->withContext($validation) ?? $query;
         }
         $mutation = Tree::outer($statement, ['InsertStmt', 'UpdateStmt', 'DeleteStmt', 'MergeStmt', 'insert_stmt', 'update_stmt', 'delete_stmt', 'replace_stmt'])[0] ?? null;
         if (in_array($operation, ['INSERT', 'REPLACE', 'UPDATE', 'DELETE', 'MERGE'], true)) {

@@ -10,6 +10,10 @@ use Override;
  * Declared Sqlite insertion behavior; values remain unevaluated.
  *
  * @visibility public
+ * @example Reading SQLite insertion options
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER)');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('INSERT OR REPLACE INTO t VALUES(1)');
+ *     $statement->policy->onViolation // => \SqlSemantics\Model\Write\Policy\ConstraintResponse::Replace
  */
 final class SqliteInsertion implements InsertPolicy
 {

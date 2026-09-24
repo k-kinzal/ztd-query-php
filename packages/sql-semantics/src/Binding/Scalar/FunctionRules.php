@@ -6,6 +6,7 @@ namespace SqlSemantics\Binding\Scalar;
 
 use Closure;
 use SqlParser\Parser\Node;
+use SqlSemantics\Ast\Tree;
 use SqlSemantics\Binding\ExpressionRules;
 use SqlSemantics\Binding\NullFacts;
 use SqlSemantics\Binding\Scope;
@@ -50,7 +51,7 @@ final class FunctionRules
         }
         $facts = new \SqlSemantics\Model\Scalar\ExpressionFacts($type, $nullable, NullFacts::extensions($operands, $nullable));
         $reference = $signature === null
-            ? new \SqlSemantics\Model\Scalar\Function\UnresolvedFunction(new \SqlSemantics\Model\Scalar\Function\FunctionName($scope->identifiers->parts(FunctionClauses::find($source, ['func_name']) ?? new Node('function_name', 0, [$source->tokens()[0]]))))
+            ? new \SqlSemantics\Model\Scalar\Function\UnresolvedFunction(new \SqlSemantics\Model\Scalar\Function\FunctionName($scope->identifiers->parts(FunctionClauses::find($source, ['func_name']) ?? self::name($source))), $source->name === 'function_call_generic' ? \SqlSemantics\Model\Scalar\Function\FunctionLookup::Name : \SqlSemantics\Model\Scalar\Function\FunctionLookup::Grammar)
             : new \SqlSemantics\Model\Scalar\Function\DeclaredFunction($signature);
         return (new Function\InvocationBinder())->bind($source, $scope, $reference, $facts, $operands, $kind === ExpressionKind::Aggregate, $orderedInputs);
     }
@@ -89,5 +90,20 @@ final class FunctionRules
             return $arguments;
         }
         return $arguments === Nullability::Unknown ? Nullability::Unknown : $result;
+    }
+
+    /**
+     * Returns the name written before the argument list, including a MySQL schema qualifier.
+     */
+    public static function name(Node $source): Node
+    {
+        $parts = [];
+        foreach ($source->children as $child) {
+            if (Tree::text($child) === '(') {
+                break;
+            }
+            $parts[] = $child;
+        }
+        return $source->name === 'function_call_generic' && count($parts) === 3 ? new Node('function_name', 0, $parts) : new Node('function_name', 0, [$source->tokens()[0]]);
     }
 }

@@ -37,7 +37,7 @@ final class ConfigurationBinder
             }
             $settings = [];
             foreach ((new SettingBinder())->bind($statement, $scope) as $setting) {
-                if (!$setting instanceof \SqlSemantics\Model\Configuration\DefaultSetting && !$setting instanceof \SqlSemantics\Model\Configuration\AssignedUserVariable && !$setting instanceof \SqlSemantics\Model\Configuration\AssignedSetting && !$setting instanceof \SqlSemantics\Model\Configuration\CurrentSetting) {
+                if (!$setting instanceof \SqlSemantics\Model\Configuration\DefaultSetting && !$setting instanceof \SqlSemantics\Model\Configuration\AssignedUserVariable && !$setting instanceof \SqlSemantics\Model\Configuration\AssignedSetting && !$setting instanceof \SqlSemantics\Model\Configuration\CurrentSetting && !$setting instanceof \SqlSemantics\Model\Configuration\Connection\ConnectionNames && !$setting instanceof \SqlSemantics\Model\Configuration\Connection\ConnectionCharacterSet) {
                     throw new UnclassifiedSql('SET requires an assignment or a copy from the current value.');
                 }
                 $settings[] = $setting;

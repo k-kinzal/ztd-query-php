@@ -64,4 +64,15 @@ final class ExplainStatementTest extends TestCase
         $this->expectException(InvalidStructure::class);
         $statement->withOptions(SqlitePlan::QueryPlan);
     }
+
+    public function testWithOriginKeepsTheExplainedStatementAndOptions(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('EXPLAIN QUERY PLAN SELECT 1');
+        self::assertInstanceOf(ExplainStatement::class, $statement);
+        $changed = $statement->withOrigin(new \SqlSemantics\Model\Statement\Origin('other', $statement->source, Dialect::Sqlite, [], $statement->origin->context));
+        self::assertSame('other', $changed->scopeId);
+        self::assertSame($statement->statement, $changed->statement);
+        self::assertSame(SqlitePlan::QueryPlan, $changed->options);
+        self::assertSame('EXPLAIN QUERY PLAN SELECT 1', $changed->toString());
+    }
 }

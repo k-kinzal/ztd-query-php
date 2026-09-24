@@ -25,10 +25,10 @@ final class AssignmentBinder
     public function bind(Node $statement, Scope $scope, ?Scope $destinations = null): array
     {
         $nodes = [];
-        foreach (Tree::outer($statement, ['set_clause', 'update_elem', 'ident_eq_value', 'setlist', 'SelectStmt', 'select', 'query_expression', 'opt_on_conflict', 'opt_insert_update_list', 'upsert', 'insert_update_list']) as $node) {
+        foreach (Tree::outer($statement, ['set_clause', 'update_elem', 'insert_update_elem', 'ident_eq_value', 'setlist', 'SelectStmt', 'select', 'query_expression', 'opt_on_conflict', 'opt_insert_update_list', 'upsert', 'insert_update_list', 'with_clause', 'opt_with_clause', 'with']) as $node) {
             if ($node->name === 'setlist') {
                 array_push($nodes, ...array_reverse($node->find('setlist')));
-            } elseif (in_array($node->name, ['set_clause', 'update_elem', 'ident_eq_value'], true)) {
+            } elseif (in_array($node->name, ['set_clause', 'update_elem', 'insert_update_elem', 'ident_eq_value'], true)) {
                 $nodes[] = $node;
             }
         }

@@ -52,9 +52,16 @@ final class SettingTokens
     {
         $first = $tokens[0];
         $last = $tokens[count($tokens) - 1];
-        foreach (Tree::outer($source, ['expr', 'a_expr', 'signed', 'minus_num', 'plus_num']) as $expression) {
+        $interval = strtoupper($first->text) === 'INTERVAL' ? ['zone_value'] : [];
+        foreach (Tree::outer($source, ['expr', 'a_expr', 'signed', 'minus_num', 'plus_num', ...$interval]) as $expression) {
             if ($expression->span() === [$first->offset, $last->end()]) {
-                return (new ExpressionBinder())->bind($expression, $scope);
+                return (new ExpressionBinder())->bind($expression->name === 'zone_value' ? new Node('AexprConst', 0, $expression->children) : $expression, $scope);
+            }
+        }
+        if (count($tokens) === 2 && in_array($first->text, ['+', '-'], true) && in_array($last->name, ['ICONST', 'FCONST'], true)) {
+            $number = (new \SqlSemantics\Binding\LiteralBinder($scope->identifiers->dialect))->bind($last);
+            if ($number instanceof \SqlSemantics\Model\Scalar\Value\Literal) {
+                return new \SqlSemantics\Model\Scalar\Value\Literal($number->facts, new Node('signed_number', 0, $tokens), $number->literalKind, $first->text . $last->text);
             }
         }
         if (count($tokens) === 1) {

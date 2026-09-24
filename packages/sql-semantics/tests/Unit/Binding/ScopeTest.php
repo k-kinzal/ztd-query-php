@@ -160,14 +160,14 @@ final class ScopeTest extends TestCase
         (new Binder($schema))->bind('SELECT users.id FROM users AS child');
     }
 
-    #[TestWith([Dialect::PostgreSql])]
-    #[TestWith([Dialect::MySql])]
-    #[TestWith([Dialect::Sqlite])]
-    public function testCombineRejectsDuplicateAliases(Dialect $dialect): void
+    #[TestWith([Dialect::PostgreSql, 'A FROM clause cannot name two items the same'])]
+    #[TestWith([Dialect::MySql, 'A FROM clause cannot name two items the same'])]
+    #[TestWith([Dialect::Sqlite, 'Duplicate relation'])]
+    public function testCombineRejectsDuplicateAliases(Dialect $dialect, string $message): void
     {
         $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $this->expectException(SemanticException::class);
-        $this->expectExceptionMessage('Duplicate relation');
+        $this->expectExceptionMessage($message);
         (new Binder($schema))->bind('SELECT a.id FROM users a, users a');
     }
 
@@ -176,6 +176,17 @@ final class ScopeTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
         $this->expectException(SemanticException::class);
         (new Binder($schema))->bind('SELECT a.id FROM users a, users b JOIN users c ON a.id = c.id');
+    }
+
+    public function testRelationColumnIgnoresStoredProgramVariables(): void
+    {
+        $variable = new \SqlSemantics\Model\Definition\Routine\Body\Declaration\LocalVariable('n', new \SqlSemantics\Model\Definition\Routine\Stored\DeclaredDomain(\SqlSemantics\Type\TypeDescriptor::builtin(Dialect::MySql, 'integer')));
+        $tables = new \SqlSemantics\Binding\TableResolver((new SchemaBuilder(Dialect::MySql))->build(), new \SqlSemantics\Ast\Identifiers(Dialect::MySql), '', program: (new \SqlSemantics\Binding\Statement\Routine\Program\ProgramNamespace())->declare([$variable]));
+        $scope = new \SqlSemantics\Binding\Scope($tables->identifiers, queries: new \SqlSemantics\Binding\Query\QueryContext($tables));
+        $token = new \SqlParser\Lexer\Token(0, 'IDENT', 'n', 0);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\LocalVariableReference::class, $scope->column(['n'], $token));
+        $this->expectException(SemanticException::class);
+        $scope->relationColumn(['n'], $token);
     }
 
     public function testExtendDoesNotMutateTheInputScope(): void
@@ -231,5 +242,18 @@ final class ScopeTest extends TestCase
         self::assertSame('column', $boundQuery2->outputs[0]->expression->kind->value);
         $this->expectException(SemanticException::class);
         $binder->bind('SELECT "FALSE"');
+    }
+
+    public function testMergedColumnResolvesSharedJoinColumnsUnderDialectNameRules(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)', 'CREATE TABLE u(a INT)')))->bind('SELECT a FROM t JOIN u USING (a)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        $shared = $statement->outputs[0]->expression;
+        $folding = new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::MySql), merged: ['A' => $shared]);
+        self::assertSame($shared, $folding->mergedColumn('a'));
+        self::assertNull($folding->mergedColumn('zz'));
+        $exact = new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql), merged: ['A' => $shared]);
+        self::assertNull($exact->mergedColumn('a'));
+        self::assertSame($shared, $exact->mergedColumn('A'));
     }
 }

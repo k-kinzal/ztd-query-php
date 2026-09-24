@@ -43,4 +43,24 @@ final class FunctionsTest extends TestCase
         self::assertInstanceOf(FunctionCall::class, $roundTrip);
         self::assertSame($parts, $roundTrip->function->name()->parts);
     }
+
+    #[TestWith(['mysql-8.2.0', 'SELECT `name` ( ) LIKE 1', 'SELECT (`name`() LIKE 1)'])]
+    #[TestWith(['mysql-5.7.44', 'SELECT x(), LEFT(1, 2), `left`(1, 2)', 'SELECT `x`(), LEFT(1, 2), `left`(1, 2)'])]
+    public function testWriteQuotesAMySqlFunctionFoundByName(string $release, string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $release))->build());
+        self::assertSame($expected, $binder->bind($sql)->toString());
+        self::assertSame($expected, $binder->bind($expected)->toString());
+    }
+
+    #[TestWith(['SELECT f(a := 1)', 'SELECT "f"("a" => 1)'])]
+    #[TestWith(['SELECT f(VARIADIC ARRAY[1])', 'SELECT "f"(VARIADIC ARRAY[1])'])]
+    #[TestWith(['SELECT f(1, VARIADIC "Items" => ARRAY[1])', 'SELECT "f"(1, VARIADIC "Items" => ARRAY[1])'])]
+    public function testArgumentWritesNamedAndVariadicNotation(string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $statement = $binder->bind($sql);
+        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, $binder->bind($expected)->toString());
+    }
 }

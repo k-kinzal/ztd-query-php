@@ -10,6 +10,11 @@ use Override;
  * Delete one table.
  *
  * @visibility public
+ * @example Deleting from one table
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('DELETE FROM t WHERE id=1 RETURNING id');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Mutation\DeleteTableStatement // => true
+ *     $statement->affectedTables()[0]->declaration->name // => 't'
  */
 final class DeleteTableStatement extends \SqlSemantics\Model\Statement\DeleteStatement
 {

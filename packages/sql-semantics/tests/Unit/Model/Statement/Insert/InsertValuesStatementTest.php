@@ -51,4 +51,25 @@ final class InsertValuesStatementTest extends TestCase
         $this->expectException(\SqlSemantics\SemanticException::class);
         $statement->withRows([[Expression::reference(['missing'], Dialect::PostgreSql)]]);
     }
+
+    public function testWithOriginKeepsTheRowsAndDestination(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('INSERT INTO t(id) VALUES (1) RETURNING id');
+        self::assertInstanceOf(InsertValuesStatement::class, $statement);
+        $changed = $statement->withOrigin(new \SqlSemantics\Model\Statement\Origin('other', $statement->source, Dialect::PostgreSql, [], $statement->origin->context));
+        self::assertSame('other', $changed->scopeId);
+        self::assertSame($statement->rows, $changed->rows);
+        self::assertSame($statement->outputs, $changed->outputs);
+        self::assertSame('INSERT INTO "public"."t"("id") VALUES (1) RETURNING "id" AS "id"', $changed->toString());
+    }
+
+    public function testWithReturningReplacesOutputsAndKeepsTheOriginal(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)')))->bind('INSERT INTO t(id) VALUES (1) RETURNING id');
+        self::assertInstanceOf(InsertValuesStatement::class, $statement);
+        $changed = $statement->withReturning([new \SqlSemantics\Model\OutputColumn(0, 'twice', Expression::binary('*', Expression::reference(['n'], Dialect::PostgreSql), Expression::literal(2, Dialect::PostgreSql)))]);
+        self::assertSame('INSERT INTO "public"."t"("id") VALUES (1) RETURNING ("n" * 2) AS "twice"', $changed->toString());
+        self::assertSame('INSERT INTO "public"."t"("id") VALUES (1) RETURNING "id" AS "id"', $statement->toString());
+        self::assertSame('INSERT INTO "public"."t"("id") VALUES (1)', $changed->withReturning([])->toString());
+    }
 }

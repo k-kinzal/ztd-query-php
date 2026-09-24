@@ -43,4 +43,26 @@ final class InsertSelectStatementTest extends TestCase
         self::assertSame('t', $changed->insertion->target->declaration->name);
         self::assertSame('INSERT INTO "public"."t"("id") SELECT 2', $changed->toString());
     }
+
+    public function testWithOriginKeepsTheQueryAndDestination(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)')))->bind('INSERT INTO t(id) SELECT n FROM t');
+        self::assertInstanceOf(InsertSelectStatement::class, $statement);
+        $changed = $statement->withOrigin(new \SqlSemantics\Model\Statement\Origin('other', $statement->source, Dialect::PostgreSql, [], $statement->origin->context));
+        self::assertSame('other', $changed->scopeId);
+        self::assertSame($statement->query, $changed->query);
+        self::assertSame($statement->insertion, $changed->insertion);
+        self::assertSame('INSERT INTO "public"."t"("id") SELECT "n" AS "n" FROM "public"."t"', $changed->toString());
+    }
+
+    public function testWithReturningAddsOutputsToAQueryInsertion(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)')))->bind('INSERT INTO t(id) SELECT n FROM t');
+        self::assertInstanceOf(InsertSelectStatement::class, $statement);
+        $changed = $statement->withReturning([new \SqlSemantics\Model\OutputColumn(0, 'id', \SqlSemantics\Model\Expression::reference(['id'], Dialect::PostgreSql))]);
+        self::assertSame('INSERT INTO "public"."t"("id") SELECT "n" AS "n" FROM "public"."t" RETURNING "id" AS "id"', $changed->toString());
+        self::assertSame('id', $changed->outputs[0]->expression->columnBinding()?->column->name);
+        self::assertSame([], $statement->outputs);
+        self::assertSame([], $changed->withReturning([])->outputs);
+    }
 }

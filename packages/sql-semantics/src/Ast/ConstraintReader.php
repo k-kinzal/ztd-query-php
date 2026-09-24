@@ -30,8 +30,9 @@ final class ConstraintReader
         $tokens = $node->tokens();
         $name = null;
         if (strtoupper($tokens[0]->text ?? '') === 'CONSTRAINT') {
-            $name = isset($tokens[1]) ? $this->identifiers->name($tokens[1]) : null;
-            $tokens = array_slice($tokens, 2);
+            $unnamed = in_array(strtoupper($tokens[1]->text ?? ''), ['PRIMARY', 'UNIQUE', 'FOREIGN', 'CHECK'], true);
+            $name = isset($tokens[1]) && !$unnamed ? $this->identifiers->name($tokens[1]) : null;
+            $tokens = array_slice($tokens, $unnamed ? 1 : 2);
         }
         $kind = match (strtoupper($tokens[0]->text ?? '')) {
             'PRIMARY' => ConstraintKind::PrimaryKey,
@@ -44,7 +45,7 @@ final class ConstraintReader
             return null;
         }
         $groups = TokenGroups::parentheses($tokens);
-        $columns = $column === null ? TokenGroups::names($groups[0] ?? [], $this->identifiers) : [$column];
+        $columns = $column === null ? $this->columns($node, $groups[0] ?? []) : [$column];
         $table = [];
         $references = [];
         if ($kind === ConstraintKind::ForeignKey) {
@@ -53,6 +54,20 @@ final class ConstraintReader
         $expression = $kind === ConstraintKind::Check ? (Tree::outer($node, ['a_expr', 'expr'])[0] ?? null) : null;
 
         return new TableConstraint($kind, $kind === ConstraintKind::Check ? [] : $columns, $node, $name, $table, $references, $expression, ...Definition\ReferenceReader::read($node, $this->identifiers));
+    }
+
+    /**
+     * Reads the named key columns, skipping prefix lengths, directions and expression keys.
+     * @param list<\SqlParser\Lexer\Token> $tokens Tokens of the first parenthesized group
+     * @return list<string>
+     */
+    public function columns(Node $node, array $tokens): array
+    {
+        $keys = Definition\IndexKeys::read($node, $this->identifiers);
+        if ($keys === []) {
+            return TokenGroups::names($tokens, $this->identifiers);
+        }
+        return array_values(array_filter(array_map(static fn (Declaration\IndexElement $key): ?string => $key->column, $keys), is_string(...)));
     }
 
     /**

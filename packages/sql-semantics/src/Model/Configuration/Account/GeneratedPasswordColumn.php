@@ -28,7 +28,7 @@ final class GeneratedPasswordColumn extends Expression
      * Derives the field facts and retains the password-generation operation that produces it.
      * @throws InvalidStructure
      */
-    public function __construct(Node|Token $source, public readonly string $scopeId, public readonly AccountName|CurrentAccount $account, public readonly GeneratedPasswordField $field)
+    public function __construct(Node|Token $source, public readonly string $scopeId, public readonly AccountName|CurrentAccount|ClientAccount $account, public readonly GeneratedPasswordField $field)
     {
         if ($scopeId === '') {
             throw new InvalidStructure('A password-generation result field requires its producing operation identity.');

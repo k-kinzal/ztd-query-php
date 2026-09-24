@@ -25,4 +25,15 @@ final class QueryOperandShapeTest extends TestCase
         $this->expectException(InvalidSql::class);
         $binder->bind($sql, strict: false);
     }
+
+    public function testWidthCountsScalarsRowsAndQueryColumns(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind('SELECT 1, ROW(1, 2), (SELECT 1), (a, a) = (SELECT 1, 2), a IN (SELECT a FROM t) FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        $widths = array_map(static fn ($output): ?int => \SqlSemantics\Binding\Scalar\QueryOperandShape::width($output->expression), $statement->outputs);
+        self::assertSame([1, 2, 1, 1, 1], $widths);
+        $comparison = $statement->outputs[3]->expression;
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Operator\BinaryExpression::class, $comparison);
+        self::assertSame(2, \SqlSemantics\Binding\Scalar\QueryOperandShape::width($comparison->right));
+    }
 }

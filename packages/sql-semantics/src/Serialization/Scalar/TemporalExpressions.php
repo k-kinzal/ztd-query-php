@@ -17,10 +17,20 @@ use SqlSemantics\Serialization\Expressions;
 final class TemporalExpressions
 {
     /**
-     * Writes a field extraction from its classified unit and value expression.
+     * Writes a field extraction, a date shift, a period overlap test or a time zone conversion from its operands.
      */
-    public static function write(Extract|DateShift $value): Tree
+    public static function write(Extract|DateShift|\SqlSemantics\Model\Scalar\Temporal\PeriodOverlap|\SqlSemantics\Model\Scalar\Temporal\ZoneConversion|\SqlSemantics\Model\Scalar\Temporal\TemporalFormat $value): Tree
     {
+        if ($value instanceof \SqlSemantics\Model\Scalar\Temporal\TemporalFormat) {
+            return new Tree('get-format', [Build::keyword('GET_FORMAT'), Build::parentheses(Build::separated([Build::keyword($value->temporalKind->value), Expressions::write($value->standard)]))]);
+        }
+        if ($value instanceof \SqlSemantics\Model\Scalar\Temporal\ZoneConversion) {
+            return Build::parentheses(new Tree('zone', [Expressions::write($value->value), Build::keyword($value->spelling()), ...($value->zone === null ? [] : [Expressions::write($value->zone)])]));
+        }
+        if ($value instanceof \SqlSemantics\Model\Scalar\Temporal\PeriodOverlap) {
+            $row = static fn (\SqlSemantics\Model\Expression $start, \SqlSemantics\Model\Expression $end): Tree => Build::parentheses(Build::separated([Expressions::write($start), Expressions::write($end)]));
+            return Build::parentheses(new Tree('overlaps', [$row($value->leftStart, $value->leftEnd), Build::keyword('OVERLAPS'), $row($value->rightStart, $value->rightEnd)]));
+        }
         if ($value instanceof DateShift) {
             $interval = new Tree('interval', [Build::keyword('INTERVAL'), Expressions::write($value->quantity), Build::keyword($value->unit->value)]);
             if ($value->operandOrder === \SqlSemantics\Model\Scalar\Temporal\IntervalOperandOrder::IntervalFirst) {

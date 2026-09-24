@@ -27,7 +27,7 @@ final class WindowCall extends Expression
     public function __construct(
         ExpressionFacts $facts,
         \SqlParser\Parser\Node|\SqlParser\Lexer\Token $source,
-        public readonly FunctionCall|AggregateCall|AllRowsAggregate $function,
+        public readonly FunctionCall|AggregateCall|AllRowsAggregate|\SqlSemantics\Model\Scalar\Document\Construction\JsonObjectAggregate|\SqlSemantics\Model\Scalar\Document\Construction\JsonArrayAggregate $function,
         public readonly \SqlSemantics\Model\Window\Window $window,
     ) {
         parent::__construct($facts, $source);

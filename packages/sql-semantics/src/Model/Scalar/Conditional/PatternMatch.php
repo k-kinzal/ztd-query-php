@@ -12,6 +12,9 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * Like has explicit semantic operands and a fixed expression category.
  * @visibility public
+ * @example Reading a negated pattern predicate
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind("SELECT 'a' NOT ILIKE 'b'");
+ *     $statement->outputs[0]->expression->spelling() // => 'NOT ILIKE'
  */
 final class PatternMatch extends Expression
 {

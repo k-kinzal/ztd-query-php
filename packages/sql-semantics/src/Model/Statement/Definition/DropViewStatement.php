@@ -12,6 +12,11 @@ use SqlSemantics\Model\Statement\StatementKind;
  * DropViewStatement requires the operands of this SQL operation.
  *
  * @visibility public
+ * @example Dropping a view
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)', 'CREATE VIEW v AS SELECT id FROM t');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('DROP VIEW IF EXISTS v');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Definition\DropViewStatement // => true
+ *     $statement->ifExists // => true
  */
 final class DropViewStatement extends \SqlSemantics\Model\BoundStatement
 {

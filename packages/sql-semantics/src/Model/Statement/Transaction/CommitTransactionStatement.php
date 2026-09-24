@@ -9,6 +9,10 @@ use Override;
 /**
  * Typed CommitTransactionStatement operands; unrelated statement fields cannot be supplied.
  * @visibility public
+ * @example Committing with chaining
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('COMMIT AND CHAIN');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Transaction\CommitTransactionStatement // => true
+ *     $statement->chaining // => \SqlSemantics\Model\Transaction\Chaining::Chain
  */
 final class CommitTransactionStatement extends \SqlSemantics\Model\BoundStatement
 {

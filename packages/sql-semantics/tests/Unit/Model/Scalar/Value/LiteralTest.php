@@ -38,4 +38,29 @@ final class LiteralTest extends TestCase
         self::assertSame('1_024', $query->outputs[0]->expression->spelling());
         self::assertSame('SELECT 1_024', $query->toString());
     }
+
+    public function testInputsHasNoOperands(): void
+    {
+        $value = Expression::literal(1, Dialect::PostgreSql);
+        self::assertSame([], $value->inputs());
+        self::assertSame([], $value->lineage());
+    }
+
+    public function testSpellingReturnsTheEncodedText(): void
+    {
+        self::assertSame("'it''s'", Expression::literal("it's", Dialect::PostgreSql)->spelling());
+        self::assertSame('NULL', Expression::literal(null, Dialect::Sqlite)->spelling());
+    }
+
+    public function testWithFactsKeepsTheKindAndText(): void
+    {
+        $value = Expression::literal(1, Dialect::PostgreSql);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\Literal::class, $value);
+        $copy = $value->withFacts(new \SqlSemantics\Model\Scalar\ExpressionFacts($value->type, \SqlSemantics\Type\Nullability::MaybeNull));
+        self::assertNotSame($value, $copy);
+        self::assertSame(\SqlSemantics\Model\Scalar\Value\LiteralKind::Number, $copy->literalKind);
+        self::assertSame('1', $copy->text);
+        self::assertSame(\SqlSemantics\Type\Nullability::MaybeNull, $copy->nullability);
+        self::assertSame(\SqlSemantics\Type\Nullability::NotNull, $value->nullability);
+    }
 }

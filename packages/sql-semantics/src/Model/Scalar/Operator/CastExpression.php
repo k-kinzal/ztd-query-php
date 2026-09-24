@@ -12,6 +12,9 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * CastExpression has explicit semantic operands and a fixed expression category.
  * @visibility public
+ * @example Reading the conversion result type
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('SELECT CAST(1 AS TEXT)');
+ *     $statement->outputs[0]->expression->type->name // => 'text'
  */
 final class CastExpression extends Expression
 {

@@ -11,6 +11,10 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * SQLite assigns interpretation of this string to the named module.
  * @see https://www.sqlite.org/vtab.html#the_xcreate_method
  * @visibility public
+ * @example Retaining one module argument
+ *     $argument = new \SqlSemantics\Model\Module\ConstructorArgument('tokenize = "porter ascii"');
+ *     $argument->text // => 'tokenize = "porter ascii"'
+ *     new \SqlSemantics\Model\Module\ConstructorArgument('title, body') // throws \SqlSemantics\Model\Validation\InvalidStructure
  */
 final class ConstructorArgument
 {

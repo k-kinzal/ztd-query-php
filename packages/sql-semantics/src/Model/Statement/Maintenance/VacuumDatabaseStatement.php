@@ -9,6 +9,10 @@ use Override;
 /**
  * Typed VacuumDatabaseStatement operands; unrelated statement fields cannot be supplied.
  * @visibility public
+ * @example Vacuuming a schema
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build()))->bind('VACUUM main');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Maintenance\VacuumDatabaseStatement // => true
+ *     $statement->schema // => 'main'
  */
 final class VacuumDatabaseStatement extends \SqlSemantics\Model\BoundStatement
 {

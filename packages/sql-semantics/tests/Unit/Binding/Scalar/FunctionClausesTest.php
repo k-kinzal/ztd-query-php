@@ -35,4 +35,71 @@ final class FunctionClausesTest extends TestCase
         self::assertSame('?1', $inner->function->filter->spelling());
         self::assertSame($statement->toString(), $binder->bind($statement->toString(), strict: false)->toString());
     }
+
+    public function testAllRowsDetectsOnlyTheStarArgumentOfTheOwningCall(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind('SELECT COUNT(*), COUNT(a), abs(a) FROM t');
+        self::assertInstanceOf(BoundSelect::class, $statement);
+        [$star, $column, $scalar] = array_map(static fn ($output) => $output->expression->source, $statement->outputs);
+        self::assertInstanceOf(\SqlParser\Parser\Node::class, $star);
+        self::assertInstanceOf(\SqlParser\Parser\Node::class, $column);
+        self::assertInstanceOf(\SqlParser\Parser\Node::class, $scalar);
+        self::assertTrue(\SqlSemantics\Binding\Scalar\FunctionClauses::allRows($star));
+        self::assertFalse(\SqlSemantics\Binding\Scalar\FunctionClauses::allRows($column));
+        self::assertFalse(\SqlSemantics\Binding\Scalar\FunctionClauses::allRows($scalar));
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-5.6.51'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.4.7'])]
+    public function testAllRowsAcceptsTheAllQuantifierBeforeTheStar(string $release): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $release))->build());
+        $statement = $binder->bind('DO ( ( ( ( COUNT( ALL * ) ) ) ) )');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Execution\DoExpressionsStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Function\AllRowsAggregate::class, $statement->expressions[0]);
+        self::assertSame('DO count(*)', $statement->toString());
+        self::assertSame('DO count(*)', $binder->bind($statement->toString())->toString());
+    }
+
+    public function testOrderedInputsBindsEachWithinGroupKeyOrNothing(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind('SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY a + 1, a), COUNT(*) FROM t');
+        self::assertInstanceOf(BoundSelect::class, $statement);
+        $scope = new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql), [$statement->relations[0]]);
+        [$ordered, $counted] = array_map(static fn ($output) => $output->expression->source, $statement->outputs);
+        self::assertInstanceOf(\SqlParser\Parser\Node::class, $ordered);
+        self::assertInstanceOf(\SqlParser\Parser\Node::class, $counted);
+        $inputs = \SqlSemantics\Binding\Scalar\FunctionClauses::orderedInputs($ordered, $scope);
+        self::assertCount(2, $inputs);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Operator\BinaryExpression::class, $inputs[0]);
+        self::assertSame('a', $inputs[1]->columnBinding()?->column->name);
+        self::assertSame([], \SqlSemantics\Binding\Scalar\FunctionClauses::orderedInputs($counted, $scope));
+    }
+
+    public function testOrderingReturnsTheOwnedClauseOrAnEmptyPlaceholder(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind("SELECT string_agg(a::text, ',' ORDER BY a), percentile_cont(0.5) WITHIN GROUP (ORDER BY a DESC), abs(a) FROM t");
+        self::assertInstanceOf(BoundSelect::class, $statement);
+        [$sorted, $grouped, $plain] = array_map(static fn ($output) => $output->expression->source, $statement->outputs);
+        self::assertInstanceOf(\SqlParser\Parser\Node::class, $sorted);
+        self::assertInstanceOf(\SqlParser\Parser\Node::class, $grouped);
+        self::assertInstanceOf(\SqlParser\Parser\Node::class, $plain);
+        self::assertSame('opt_sort_clause', \SqlSemantics\Binding\Scalar\FunctionClauses::ordering($sorted)->name);
+        self::assertSame('within_group_clause', \SqlSemantics\Binding\Scalar\FunctionClauses::ordering($grouped)->name);
+        $none = \SqlSemantics\Binding\Scalar\FunctionClauses::ordering($plain);
+        self::assertSame('no_ordering', $none->name);
+        self::assertSame([], $none->tokens());
+    }
+
+    public function testOrderingWrapsASqliteSortListInAnOrderByNode(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(a INT)')))->bind('SELECT group_concat(a ORDER BY a) FROM t');
+        self::assertInstanceOf(BoundSelect::class, $statement);
+        $source = $statement->outputs[0]->expression->source;
+        self::assertInstanceOf(\SqlParser\Parser\Node::class, $source);
+        $ordering = \SqlSemantics\Binding\Scalar\FunctionClauses::ordering($source);
+        self::assertSame('orderby_opt', $ordering->name);
+        self::assertSame('sortlist', $ordering->children[0]->name);
+        self::assertSame('a', trim($ordering->toString()));
+    }
 }

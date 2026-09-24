@@ -1,0 +1,75 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Binding\Statement\Definition\Trigger;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Binder;
+use SqlSemantics\Binding\Statement\Definition\Trigger\Rules;
+use SqlSemantics\Dialect;
+use SqlSemantics\InvalidSql;
+use SqlSemantics\Model\BoundQuery;
+use SqlSemantics\Model\Statement\Definition\PostgreSql\Table\Rule\CreateCommandRuleStatement;
+use SqlSemantics\Model\Statement\Definition\PostgreSql\Table\Rule\CreateEmptyRuleStatement;
+use SqlSemantics\Model\Statement\InsertStatement;
+use SqlSemantics\Model\Statement\UpdateStatement;
+use SqlSemantics\Model\Validation\InputViolation;
+use SqlSemantics\SchemaBuilder;
+
+#[CoversClass(Rules::class)]
+#[Medium]
+final class RulesTest extends TestCase
+{
+    public function testBindReadsTheConditionAndActions(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT); CREATE TABLE log(a INT)'));
+        $statement = $binder->bind('CREATE OR REPLACE RULE r AS ON UPDATE TO t WHERE NEW.a > 1 DO INSTEAD (INSERT INTO log VALUES (OLD.a); ; UPDATE log SET a = NEW.a)');
+        self::assertInstanceOf(CreateCommandRuleStatement::class, $statement);
+        self::assertTrue($statement->instead);
+        self::assertTrue($statement->orReplace);
+        self::assertInstanceOf(InsertStatement::class, $statement->actions[0]);
+        self::assertInstanceOf(UpdateStatement::class, $statement->actions[1]);
+        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+    }
+
+    #[TestWith(['DO NOTHING'])]
+    #[TestWith(['DO ALSO ( ; ; )'])]
+    public function testBindTreatsEmptyActionsAsNothing(string $body): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind('CREATE RULE r AS ON DELETE TO t ' . $body);
+        self::assertInstanceOf(CreateEmptyRuleStatement::class, $statement);
+        self::assertFalse($statement->instead);
+    }
+
+    #[TestWith(['CREATE RULE r AS ON SELECT TO t DO INSTEAD NOTHING'])]
+    #[TestWith(['CREATE RULE r AS ON SELECT TO t DO INSTEAD SELECT 1'])]
+    #[TestWith(['CREATE OR REPLACE RULE "_RETURN" AS ON SELECT TO t DO ALSO SELECT 1'])]
+    #[TestWith(['CREATE OR REPLACE RULE "_RETURN" AS ON SELECT TO t DO INSTEAD DELETE FROM t'])]
+    #[TestWith(['CREATE RULE r AS ON INSERT TO t WHERE NEW.a > 0 DO NOTIFY ch'])]
+    #[TestWith(['CREATE RULE r AS ON INSERT TO t DO ALSO INSERT INTO t VALUES (1) RETURNING a'])]
+    public function testBindDiagnosesARuleThePostgreSqlServerRejects(string $sql): void
+    {
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(InputViolation::RewriteRule->message());
+        (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind($sql);
+    }
+
+    public function testActionReadsTheRowImagesOfTheEvent(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind('CREATE RULE r AS ON INSERT TO t DO INSTEAD SELECT NEW.a');
+        self::assertInstanceOf(CreateCommandRuleStatement::class, $statement);
+        self::assertInstanceOf(BoundQuery::class, $statement->actions[0]);
+        self::assertSame('CREATE RULE "r" AS ON INSERT TO "public"."t" DO INSTEAD SELECT "new"."a" AS "a"', $statement->toString());
+    }
+
+    public function testActionCannotReadAnImageTheEventLacks(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind('CREATE RULE r AS ON INSERT TO t DO ALSO SELECT OLD.a', strict: false);
+        self::assertInstanceOf(CreateCommandRuleStatement::class, $statement);
+        self::assertNotSame([], $statement->diagnostics);
+    }
+}

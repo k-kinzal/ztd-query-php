@@ -314,4 +314,15 @@ final class MutationBinderTest extends TestCase
         self::assertSame('INSERT INTO `t` SELECT 1 UNION SELECT 2 ORDER BY 1 ASC LIMIT 1', $statement->toString());
     }
 
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, 'INSERT INTO t (id) VALUES (1) UNION VALUES (1)', 'INSERT INTO "public"."t"("id") VALUES (1) UNION VALUES (1)'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'INSERT INTO t (id) VALUES ROW(1) UNION VALUES ROW(1)', 'INSERT INTO `t`(`id`) VALUES ROW(1) UNION VALUES ROW(1)'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'INSERT INTO t (id) (VALUES ROW(1)) ORDER BY 1', 'INSERT INTO `t`(`id`) VALUES ROW(1) ORDER BY 1 ASC'])]
+    public function testInsertionInputsKeepsACompoundOrOrderedValuesQuery(Dialect $dialect, string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(id INTEGER)'));
+        $statement = $binder->bind($sql);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertSelectStatement::class, $statement);
+        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, $binder->bind($expected)->toString());
+    }
 }

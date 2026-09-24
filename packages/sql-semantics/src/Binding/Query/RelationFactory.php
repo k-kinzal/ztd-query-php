@@ -24,7 +24,7 @@ final class RelationFactory
      */
     public function function(Node $source, Node $function, QueryContext $context, ?Scope $parent, string $scopeId): BoundRelation
     {
-        $document = Document\DocumentRelationBinder::bind($source, $function, $context, $parent, $scopeId);
+        $document = Document\DocumentRelationBinder::bind($source, $function, $context, $parent, $scopeId) ?? RowsFrom\RowsFromBinder::bind($source, $function, $context, $parent, $scopeId);
         if ($document !== null) {
             return $document;
         }

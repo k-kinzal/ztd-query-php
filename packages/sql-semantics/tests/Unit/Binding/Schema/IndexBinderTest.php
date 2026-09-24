@@ -183,4 +183,60 @@ final class IndexBinderTest extends TestCase
         self::assertNull($statement->index->definition->predicate);
     }
 
+    public function testDefinitionBindsEveryClauseOfAnIndex(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
+        $statement = (new Binder($schema))->bind('CREATE UNIQUE INDEX ix ON t USING btree (id DESC NULLS LAST, (id + 1) COLLATE "C") INCLUDE (id) WITH (fillfactor = 70) WHERE id > 0');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateIndexStatement::class, $statement);
+        $definition = $statement->index->definition;
+        self::assertSame('ix', $definition->name);
+        self::assertSame(['public', 't'], $definition->table);
+        self::assertTrue($definition->unique);
+        self::assertSame('btree', $definition->method);
+        self::assertSame(['id'], $definition->include);
+        self::assertSame('("id" > 0)', $definition->predicate?->structure()->toString());
+        self::assertSame(['fillfactor'], array_map(static fn (\SqlSemantics\Schema\Storage\Parameter $parameter): string => implode('.', $parameter->name->parts), $definition->properties->storageParameters));
+        self::assertSame('CREATE UNIQUE INDEX "ix" ON "public"."t" USING "btree"("id" DESC NULLS LAST, (("id" + 1)) COLLATE "C") INCLUDE("id") WHERE ("id" > 0) WITH ("fillfactor" = 70)', $statement->toString());
+    }
+
+    public function testDefinitionDiagnosesANonBooleanPredicate(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind('CREATE INDEX ix ON t (a) WHERE 42', strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateIndexStatement::class, $statement);
+        self::assertSame(['non-boolean-predicate'], array_column($statement->diagnostics, 'reason'));
+        self::assertSame('42', $statement->index->definition->predicate?->spelling());
+    }
+
+    public function testElementClassifiesColumnAndExpressionKeys(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
+        $statement = (new Binder($schema))->bind('CREATE INDEX ix ON t (id DESC NULLS LAST, (id + 1) COLLATE "C")');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateIndexStatement::class, $statement);
+        $column = $statement->index->definition->elements[0];
+        self::assertInstanceOf(\SqlSemantics\Schema\Index\ColumnKey::class, $column);
+        self::assertSame(\SqlSemantics\Schema\Index\Direction::Descending, $column->direction);
+        self::assertSame(\SqlSemantics\Schema\Index\NullOrder::Last, $column->nulls);
+        self::assertNull($column->prefixLength);
+        $computed = $statement->index->definition->elements[1];
+        self::assertInstanceOf(\SqlSemantics\Schema\Index\ExpressionKey::class, $computed);
+        self::assertSame(['C'], $computed->collation?->parts);
+        self::assertSame('("id" + 1)', $computed->expression->structure()->toString());
+        self::assertNull($computed->direction);
+    }
+
+    public function testElementReadsMySqlPrefixLengths(): void
+    {
+        $key = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(name VARCHAR(100), KEY ix (name(10) DESC))')->tables[0]->indexes[0]->elements[0];
+        self::assertInstanceOf(\SqlSemantics\Schema\Index\ColumnKey::class, $key);
+        self::assertSame(10, $key->prefixLength);
+        self::assertSame(\SqlSemantics\Schema\Index\Direction::Descending, $key->direction);
+        self::assertSame(['name'], $key->value()->referenceParts());
+    }
+
+    public function testElementDiagnosesAZeroPrefixLength(): void
+    {
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::IndexPrefix->message());
+        (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(name VARCHAR(10))')))->bind('CREATE INDEX ix ON t (name(0))');
+    }
 }

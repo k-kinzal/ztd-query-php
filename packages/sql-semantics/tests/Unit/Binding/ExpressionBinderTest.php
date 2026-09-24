@@ -190,4 +190,52 @@ final class ExpressionBinderTest extends TestCase
         self::assertSame(Nullability::NotNull, $statement->outputs[0]->expression->nullability);
         self::assertSame(\SqlSemantics\Model\ExpressionKind::Coalesce, $statement->outputs[0]->expression->inputs()[1]->kind);
     }
+
+    public function testTransparentUnwrapsASingleChildOrAParenthesizedChild(): void
+    {
+        $binder = new \SqlSemantics\Binding\ExpressionBinder();
+        $inner = new \SqlParser\Parser\Node('a_expr', 0, [new \SqlParser\Lexer\Token(0, 'ICONST', '1', 1)]);
+        self::assertSame($inner, $binder->transparent([$inner]));
+        self::assertSame($inner, $binder->transparent([new \SqlParser\Lexer\Token(0, 'LP', '(', 0), $inner, new \SqlParser\Lexer\Token(0, 'RP', ')', 2)]));
+        self::assertNull($binder->transparent([new \SqlParser\Lexer\Token(0, 'MINUS', '-', 0), $inner]));
+        self::assertNull($binder->transparent([$inner, new \SqlParser\Lexer\Token(0, 'PLUS', '+', 1), $inner]));
+    }
+
+    #[TestWith(['mysql-5.6.51'])]
+    #[TestWith(['mysql-8.4.7'])]
+    public function testOperationBindsMySqlSymbolicLogicalOperators(string $version): void
+    {
+        $schema = (new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build();
+        $statement = (new Binder($schema))->bind('SELECT ! ?, 1 || 0 && 2');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertSame('NOT', $statement->outputs[0]->expression->spelling());
+        self::assertSame('OR', $statement->outputs[1]->expression->spelling());
+        self::assertSame('AND', $statement->outputs[1]->expression->inputs()[1]->spelling());
+        self::assertSame('integer', $statement->outputs[1]->expression->type->name);
+        self::assertSame('SELECT (NOT ?), (1 OR (0 AND 2))', $statement->toString());
+    }
+
+    #[TestWith(['mysql-5.7.44', 'SELECT * LIMIT 1, ACCOUNT', 'SELECT * LIMIT `ACCOUNT` OFFSET 1'])]
+    #[TestWith(['mysql-8.4.7', 'SELECT * LIMIT ACCOUNT', 'SELECT * LIMIT `ACCOUNT`'])]
+    public function testNameReadsAKeywordIdentifierAsAName(string $version, string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build());
+        $query = $binder->bind($sql, strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        self::assertSame(\SqlSemantics\Model\ExpressionKind::UnresolvedColumn, $query->limit?->kind);
+        self::assertSame($expected, $query->toString());
+    }
+
+    public function testIndirectionAppliesSubscriptsAndFieldsToAPositionalParameter(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $query = $binder->bind('SELECT $1[1], $2.f, $3[1:2]');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\ElementAccess::class, $query->outputs[0]->expression);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\Parameter::class, $query->outputs[0]->expression->base);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\FieldAccess::class, $query->outputs[1]->expression);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\SliceAccess::class, $query->outputs[2]->expression);
+        self::assertSame('SELECT $1[1], ($2)."f", $3[1 : 2]', $query->toString());
+        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+    }
 }

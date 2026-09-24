@@ -233,4 +233,29 @@ final class SchemaTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new \SqlSemantics\Schema($schema->dialect, [], $schema->defaultSchema, $schema->grammarVersion, functions: [$function]);
     }
+
+    public function testWithVariablesReplacesByScopeAndCaseInsensitiveName(): void
+    {
+        $base = (new SchemaBuilder(Dialect::MySql))->build();
+        $integer = \SqlSemantics\Type\TypeDescriptor::builtin(Dialect::MySql, 'integer');
+        $text = \SqlSemantics\Type\TypeDescriptor::builtin(Dialect::MySql, 'text');
+        $declared = $base->withVariables(new \SqlSemantics\Schema\VariableDefinition('a', \SqlSemantics\Schema\VariableScope::User, $integer), new \SqlSemantics\Schema\VariableDefinition('b', \SqlSemantics\Schema\VariableScope::Session, $text));
+        $replaced = $declared->withVariables(new \SqlSemantics\Schema\VariableDefinition('A', \SqlSemantics\Schema\VariableScope::User, $text));
+        self::assertSame([], $base->variables);
+        self::assertSame(['a', 'b'], array_column($declared->variables, 'name'));
+        self::assertSame(['b', 'A'], array_column($replaced->variables, 'name'));
+        $boundQuery1 = (new Binder($declared))->bind('SELECT @a');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery1);
+        self::assertSame('integer', $boundQuery1->outputs[0]->expression->type->name);
+        $boundQuery2 = (new Binder($replaced))->bind('SELECT @a');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery2);
+        self::assertSame('text', $boundQuery2->outputs[0]->expression->type->name);
+    }
+
+    public function testWithVariablesRejectsAnotherDialect(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::MySql))->build();
+        $this->expectException(InvalidStructure::class);
+        $schema->withVariables(new \SqlSemantics\Schema\VariableDefinition('a', \SqlSemantics\Schema\VariableScope::User, \SqlSemantics\Type\TypeDescriptor::builtin(Dialect::PostgreSql, 'integer')));
+    }
 }

@@ -12,6 +12,9 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * ContextReference has explicit semantic operands and a fixed expression category.
  * @visibility public
+ * @example Reading a clock precision
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('SELECT CURRENT_TIME(3)');
+ *     $statement->outputs[0]->expression->precision // => 3
  */
 final class ContextReference extends Expression
 {
@@ -25,8 +28,11 @@ final class ContextReference extends Expression
         public readonly ContextValueKind $request,
         public readonly ?int $precision,
     ) {
-        if ($precision !== null && (!in_array($request, [ContextValueKind::CurrentTime, ContextValueKind::CurrentTimestamp, ContextValueKind::LocalTime, ContextValueKind::LocalTimestamp], true) || $precision < 0)) {
+        if ($precision !== null && (!in_array($request, [ContextValueKind::CurrentTime, ContextValueKind::CurrentTimestamp, ContextValueKind::LocalTime, ContextValueKind::LocalTimestamp, ContextValueKind::UtcTime, ContextValueKind::UtcTimestamp, ContextValueKind::StatementTime], true) || $precision < 0)) {
             throw new \SqlSemantics\Model\Validation\InvalidStructure('Only clock values accept a nonnegative precision.');
+        }
+        if (in_array($request, [ContextValueKind::UtcDate, ContextValueKind::UtcTime, ContextValueKind::UtcTimestamp, ContextValueKind::StatementTime], true) && $facts->type->dialect !== \SqlSemantics\Dialect::MySql) {
+            throw new \SqlSemantics\Model\Validation\InvalidStructure('UTC clock values and SYSDATE require MySQL.');
         }
         parent::__construct($facts, $source);
         foreach ($this->inputs() as $input) {

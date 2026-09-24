@@ -12,6 +12,10 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * SliceAccess has explicit semantic operands and a fixed expression category.
  * @visibility public
+ * @example Reading the slice bounds
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(tags INTEGER[])');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('SELECT tags[1:2] FROM t');
+ *     $statement->outputs[0]->expression->upper->spelling() // => '2'
  */
 final class SliceAccess extends Expression
 {

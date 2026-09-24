@@ -200,4 +200,22 @@ final class ProjectionBinderTest extends TestCase
         self::assertEquals($query->outputs[0]->expression->columnBinding()?->column, $query->outputs[2]->expression->columnBinding()?->column);
     }
 
+
+    public function testCompositeKeepsAnExpandedParameterAsOneOutput(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT $1.*, (g()).*');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        self::assertCount(2, $query->outputs);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Composite\RowExpansion::class, $query->outputs[0]->expression);
+        self::assertSame('SELECT ($1).*, ("g"()).*', $query->toString());
+    }
+
+    public function testStarredRecognizesARelationStarOnly(): void
+    {
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('SELECT t.*, $1.*');
+        $items = \SqlSemantics\Ast\Tree::outer($tree, ['target_el']);
+        $expressions = array_map(static fn ($item) => \SqlSemantics\Ast\Tree::child($item, ['a_expr']), $items);
+        self::assertSame([true, false], array_map(static fn ($expression): bool => \SqlSemantics\Binding\ProjectionBinder::starred($expression?->tokens() ?? [], $expression), $expressions));
+        self::assertSame([false, true], array_map(\SqlSemantics\Binding\ProjectionBinder::composite(...), $expressions));
+    }
 }

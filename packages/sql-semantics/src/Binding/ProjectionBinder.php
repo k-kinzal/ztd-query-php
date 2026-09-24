@@ -91,7 +91,7 @@ final class ProjectionBinder
                 array_push($tokens, ...($child instanceof Node ? $child->tokens() : [$child]));
             }
         }
-        if ($tokens !== [] && $tokens[count($tokens) - 1]->text === '*') {
+        if (self::starred($tokens, $expression)) {
             $parts = [];
             foreach (array_slice($tokens, 0, -1) as $token) {
                 if ($token->text !== '.') {
@@ -153,5 +153,23 @@ final class ProjectionBinder
         }
 
         return $outputs;
+    }
+
+    /**
+     * Whether a select item is a star over relations, not the expansion of a composite value.
+     * @param list<\SqlParser\Lexer\Token> $tokens
+     */
+    public static function starred(array $tokens, ?Node $expression): bool
+    {
+        return $tokens !== [] && $tokens[count($tokens) - 1]->text === '*' && !self::composite($expression);
+    }
+
+    /**
+     * Whether a select item is PostgreSQL `(value).*` or `$n.*`, which expands a composite value rather than a relation.
+     */
+    public static function composite(?Node $expression): bool
+    {
+        $value = $expression === null ? null : Tree::child($expression, ['c_expr']);
+        return $value !== null && Tree::child($value, ['opt_indirection']) !== null;
     }
 }

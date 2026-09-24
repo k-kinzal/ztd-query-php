@@ -24,7 +24,8 @@ final class JsonOptions
     public static function input(Node $node, Scope $scope): Json\Input
     {
         $expression = Tree::child($node, ['a_expr', 'expr']) ?? $node;
-        $format = Tree::outer($node, ['json_format_clause'])[0] ?? null;
+        $clause = Tree::child($node, ['json_format_clause_opt']);
+        $format = $clause === null ? null : Tree::child($clause, ['json_format_clause']);
         return new Json\Input((new ExpressionBinder())->bind($expression, $scope), self::format($format));
     }
 
@@ -109,6 +110,7 @@ final class JsonOptions
     }
 
     /**
+     * Classifies the JSON_TABLE ON ERROR behaviour; EMPTY and EMPTY ARRAY both return no rows.
      * @throws InvalidSql
      */
     public static function tableError(?Node $node): Json\Response\TableError
@@ -116,6 +118,7 @@ final class JsonOptions
         if ($node === null) {
             return Json\Response\TableError::Default;
         }
-        return Json\Response\TableError::tryFrom(strtoupper(Tree::text($node))) ?? throw new InvalidSql(InputViolation::JsonOption, $node);
+        $text = strtoupper(Tree::text($node));
+        return Json\Response\TableError::tryFrom($text === 'EMPTY ARRAY' ? 'EMPTY' : $text) ?? throw new InvalidSql(InputViolation::JsonOption, $node);
     }
 }

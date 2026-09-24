@@ -15,6 +15,11 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * An outer join with no ON or USING clause, as accepted by SQLite.
  *
  * @visibility public
+ * @example Binding an outer join without a predicate
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER, n INTEGER)');
+ *     $query = (new \SqlSemantics\Binder($schema))->bind('SELECT a.id FROM t a LEFT JOIN t b');
+ *     $query->from instanceof \SqlSemantics\Model\Relation\Joining\UnconditionalOuterJoin // => true
+ *     $query->from->kind // => \SqlSemantics\Model\JoinKind::Left
  */
 final class UnconditionalOuterJoin extends Join
 {

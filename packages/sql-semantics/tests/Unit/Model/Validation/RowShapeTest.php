@@ -57,4 +57,25 @@ final class RowShapeTest extends TestCase
         $this->expectException(InvalidStructure::class);
         RowShape::insertion($query->insertion, 1, Dialect::PostgreSql);
     }
+
+    public function testWritesAcceptsDefaultSlotsInRowsOfEqualWidth(): void
+    {
+        $one = Expression::literal(1, Dialect::PostgreSql);
+        RowShape::writes([[$one, \SqlSemantics\Model\Write\DefaultSource::Column], [$one, $one]], Dialect::PostgreSql);
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('Write rows must have equal widths.');
+        RowShape::writes([[$one], [$one, $one]], Dialect::PostgreSql);
+    }
+
+    public function testWritesRejectsAnEmptyRowList(): void
+    {
+        $this->expectException(InvalidStructure::class);
+        RowShape::writes([], Dialect::PostgreSql);
+    }
+
+    public function testWritesRejectsASqliteDefaultSlot(): void
+    {
+        $this->expectException(InvalidStructure::class);
+        RowShape::writes([[\SqlSemantics\Model\Write\DefaultSource::Column]], Dialect::Sqlite);
+    }
 }

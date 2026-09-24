@@ -7,6 +7,8 @@ namespace SqlSemantics\Model\Scalar\Value;
 /**
  * Closed LiteralKind alternatives.
  * @visibility public
+ * @example Reading the literal category
+ *     \SqlSemantics\Model\Scalar\Value\LiteralKind::BitString->value // => 'bit-string'
  */
 enum LiteralKind: string
 {

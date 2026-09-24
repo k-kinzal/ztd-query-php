@@ -245,4 +245,21 @@ final class LiteralBinderTest extends TestCase
         self::assertNull($binder->fallback(new \SqlParser\Lexer\Token(1, 'ID', '"FALSE"', 0)));
         self::assertNull((new \SqlSemantics\Binding\LiteralBinder(Dialect::PostgreSql))->fallback(new \SqlParser\Lexer\Token(1, 'IDENT', 'FALSE', 0)));
     }
+
+    #[TestWith(['1.5', 'real'])]
+    #[TestWith(['1e3', 'real'])]
+    #[TestWith(['1E5', 'real'])]
+    #[TestWith(['0x1E', 'integer'])]
+    #[TestWith(['12', 'integer'])]
+    #[TestWith(['9223372036854775807', 'integer'])]
+    #[TestWith(['9223372036854775808', 'real'])]
+    public function testQuotedNumberClassifiesWithoutReadingAHexadecimalEAsAnExponent(string $number, string $expected): void
+    {
+        self::assertSame($expected, (new \SqlSemantics\Binding\LiteralBinder(Dialect::Sqlite))->quotedNumber($number));
+    }
+
+    public function testTypeNameReadsAMySqlNationalStringAsText(): void
+    {
+        self::assertSame('text', (new \SqlSemantics\Binding\LiteralBinder(Dialect::MySql))->typeName(new \SqlParser\Lexer\Token(1, 'NCHAR_STRING', "N'value'", 0)));
+    }
 }

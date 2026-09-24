@@ -171,4 +171,41 @@ final class IndirectionBinderTest extends TestCase
         self::assertSame('unknown', $query->outputs[1]->expression->type->name);
         self::assertSame('r', $query->outputs[1]->expression->lineage()[0]->column->name);
     }
+
+    public function testPostfixAppliesIndirectionToAPositionalParameter(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT $1.f[2]');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        $element = $query->outputs[0]->expression;
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\ElementAccess::class, $element);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\FieldAccess::class, $element->base);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\Parameter::class, $element->base->base);
+    }
+
+    public function testRowBindsAWholeRowReferenceInsideAFunctionCall(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER)'));
+        $query = $binder->bind('SELECT f(t.*), f(u.*) FROM t', strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        $call = $query->outputs[0]->expression;
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Function\FunctionCall::class, $call);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\Wildcard::class, $call->arguments[0]);
+        self::assertSame(['t'], $call->arguments[0]->qualifier);
+        self::assertSame(['unknown-relation'], array_map(static fn ($diagnostic): string => $diagnostic->reason, $query->diagnostics));
+        self::assertSame('SELECT "f"("t".*), "f"("u".*) FROM "public"."t"', $query->toString());
+    }
+
+    public function testExpansionRecognizesOnlyTheStarElement(): void
+    {
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('SELECT $1.*, $1.a');
+        $elements = \SqlSemantics\Ast\Tree::outer($tree, ['indirection_el']);
+        self::assertSame([true, false], array_map(\SqlSemantics\Binding\Scalar\IndirectionBinder::expansion(...), $elements));
+    }
+
+    public function testExpansionLastRejectsAccessAfterTheStar(): void
+    {
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::RowExpansion->message());
+        (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT f($1.*.a)');
+    }
 }

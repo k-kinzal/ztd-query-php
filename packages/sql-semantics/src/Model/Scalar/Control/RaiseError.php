@@ -16,6 +16,12 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 /**
  * Requests a SQLite trigger error with an unevaluated message expression.
  * @visibility public
+ * @example Inspecting a trigger error and its message
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER)');
+ *     $trigger = (new \SqlSemantics\Binder($schema))->bind("CREATE TRIGGER tr BEFORE INSERT ON t BEGIN SELECT RAISE(FAIL, 'stop'); END");
+ *     $raise = $trigger->body->steps[0]->outputs[0]->expression;
+ *     $raise->spelling() // => 'RAISE FAIL'
+ *     $raise->message->spelling() // => "'stop'"
  */
 final class RaiseError extends Expression
 {

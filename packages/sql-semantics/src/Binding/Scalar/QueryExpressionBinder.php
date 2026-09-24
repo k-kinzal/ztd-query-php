@@ -50,7 +50,7 @@ final class QueryExpressionBinder
         if ($exists) {
             return new \SqlSemantics\Model\Scalar\Query\ExistsSubquery($facts, $source, $query);
         }
-        return self::comparison($query, $facts, $source, $operands, $symbol, $predicate);
+        return self::comparison($query, $facts, $source, $operands, $symbol, $predicate, Operator\QuantifiedOperator::subquery($source, $scope));
     }
 
     /**
@@ -71,17 +71,24 @@ final class QueryExpressionBinder
     }
 
     /**
+     * A PostgreSQL quantified comparison passes its classified operator; otherwise the operator is read from the symbol.
      * @param list<Expression> $operands Left comparison operand
      * @throws \SqlSemantics\InvalidSql
      * @throws \SqlSemantics\Binding\Statement\UnclassifiedSql
      */
-    public static function comparison(\SqlSemantics\Model\BoundQuery $query, \SqlSemantics\Model\Scalar\ExpressionFacts $facts, Node $source, array $operands, string $symbol, bool $predicate): Expression
+    public static function comparison(\SqlSemantics\Model\BoundQuery $query, \SqlSemantics\Model\Scalar\ExpressionFacts $facts, Node $source, array $operands, string $symbol, bool $predicate, ?Operator\QuantifiedOperator $operator = null): Expression
     {
         if (count($operands) === 1 && $predicate && !\SqlSemantics\Model\Validation\QueryComparison::compatible($operands[0], $query)) {
             throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::ComparisonWidth, $source);
         }
         if (count($operands) === 1 && in_array($symbol, ['IN', 'NOT IN'], true)) {
             return new \SqlSemantics\Model\Scalar\Query\InSubquery($facts, $source, $operands[0], $query, $symbol === 'NOT IN');
+        }
+        if (count($operands) === 1 && preg_match('/^([-+*\/%^]) (ALL|ANY|SOME)$/', $symbol) === 1) {
+            throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::QuantifiedOperator, $source);
+        }
+        if (count($operands) === 1 && $operator !== null && preg_match('/ (ALL|ANY|SOME)$/', $symbol, $parts) === 1) {
+            return new \SqlSemantics\Model\Scalar\Query\QuantifiedComparison($facts, $source, $operands[0], $operator->operator, \SqlSemantics\Model\Scalar\Query\Quantifier::from($parts[1]), $query, $operator->negated);
         }
         if (count($operands) === 1 && preg_match('/^(.*?) (ALL|ANY|SOME)$/', $symbol, $parts) === 1) {
             return new \SqlSemantics\Model\Scalar\Query\QuantifiedComparison($facts, $source, $operands[0], \SqlSemantics\Model\Scalar\Query\ComparisonOperator::tryFrom($parts[1]) ?? throw new \SqlSemantics\Binding\Statement\UnclassifiedSql('Unclassified quantified comparison: ' . $parts[1]), \SqlSemantics\Model\Scalar\Query\Quantifier::from($parts[2]), $query);

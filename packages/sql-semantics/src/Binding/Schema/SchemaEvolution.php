@@ -102,13 +102,20 @@ final class SchemaEvolution
         if ($copied !== null) {
             return $copied;
         }
+        $form = $schema->dialect === Dialect::PostgreSql ? Copy\PostgreSqlCopy::form($source, $resolver) : null;
+        if ($form !== null) {
+            return $form;
+        }
         $queryNode = Tree::outer($source, ['SelectStmt', 'select_stmt', 'query_expression', 'select'])[0] ?? null;
         $table = DeclarationBinder::bind($reader->table($source), new QueryContext($resolver));
         $namespace = $table->schema;
         $name = $table->name;
         $columns = $table->columns;
         $constraints = $table->constraints;
-        $copies = Tree::outer($source, ['TableLikeClause', 'OptInherit']);
+        $copies = $schema->dialect === Dialect::PostgreSql ? [] : Tree::outer($source, ['TableLikeClause', 'OptInherit']);
+        if ($schema->dialect === Dialect::PostgreSql && $source->name === 'CreateStmt') {
+            [$columns, $constraints] = Copy\PostgreSqlCopy::layout($source, $columns, $constraints, $resolver);
+        }
         foreach ($copies as $copy) {
             foreach (Tree::outer($copy, ['qualified_name', 'table_ident']) as $reference) {
                 $base = $resolver->resolve($resolver->identifiers->parts($reference), $reference);

@@ -199,12 +199,14 @@ final class MutationBinder
         $queryNames = ['SelectStmt', 'query_expression', 'select', 'select_init', 'select_paren', 'insert_query_expression', 'create_select'];
         foreach (Tree::outer($statement, [...$queryNames, 'with_clause', 'with', 'wqlist', 'a_expr', 'expr', 'expr_or_default', 'values_list', 'opt_on_conflict', 'upsert', 'insert_update_list']) as $query) {
             if (in_array($query->name, $queryNames, true)) {
-                $body = QueryNodes::body($query);
-                if (strtoupper($body->tokens()[0]->text ?? '') === 'VALUES' && QueryNodes::local($query, ['sort_clause', 'order_clause', 'orderby_opt', 'limit_clause', 'limit_opt', 'with_clause']) === []) {
+                $inner = $query->name === 'insert_query_expression' ? (Tree::child($query, ['query_expression_with_opt_locking_clauses']) ?? $query) : $query;
+                $body = QueryNodes::body($inner);
+                $words = array_map(static fn (\SqlParser\Lexer\Token $token): string => strtoupper($token->text), $body->tokens());
+                if (($words[0] ?? '') === 'VALUES' && array_intersect(['UNION', 'INTERSECT', 'EXCEPT'], $words) === [] && QueryNodes::local($inner, ['sort_clause', 'order_clause', 'orderby_opt', 'limit_clause', 'limit_opt', 'with_clause']) === []) {
                     $directRows = \SqlSemantics\Binding\Write\WriteInputs::rows($body, $scope);
                     continue;
                 }
-                $queries[] = $this->context->bind($query, $this->parent);
+                $queries[] = $this->context->bind($inner, $this->parent);
             }
         }
         $values = $queries === [] ? ($directRows !== [] ? $directRows : \SqlSemantics\Binding\Write\WriteInputs::rows($statement, $scope)) : ($queries[0] instanceof \SqlSemantics\Model\Statement\ValuesStatement ? $queries[0]->rows : []);

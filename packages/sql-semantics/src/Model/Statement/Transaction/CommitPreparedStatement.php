@@ -9,6 +9,10 @@ use Override;
 /**
  * Typed CommitPreparedStatement operands; unrelated statement fields cannot be supplied.
  * @visibility public
+ * @example Committing a prepared transaction
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind("COMMIT PREPARED 'tx1'");
+ *     $statement instanceof \SqlSemantics\Model\Statement\Transaction\CommitPreparedStatement // => true
+ *     $statement->transactionId->text // => "'tx1'"
  */
 final class CommitPreparedStatement extends \SqlSemantics\Model\BoundStatement
 {

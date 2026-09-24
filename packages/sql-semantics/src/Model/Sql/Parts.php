@@ -29,7 +29,7 @@ final class Parts
                 throw new \SqlSemantics\Model\Validation\InvalidStructure('Projection positions and dialect must match the destination statement.');
             }
         }
-        return Build::separated(array_map(static fn (OutputColumn $output): Tree => new Tree('output', [$output->expression->structure(), ...($output->name === null ? [] : [Build::keyword('AS'), Build::identifier([$output->name], $dialect)])]), $outputs));
+        return Build::separated(array_map(static fn (OutputColumn $output): Tree => new Tree('output', [$output->name !== null && $output->expression instanceof \SqlSemantics\Model\Scalar\Reference\Wildcard ? Build::parentheses($output->expression->structure()) : $output->expression->structure(), ...($output->name === null ? [] : [Build::keyword('AS'), Build::identifier([$output->name], $dialect)])]), $outputs));
     }
 
     /**

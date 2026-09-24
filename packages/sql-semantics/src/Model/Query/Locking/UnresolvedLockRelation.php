@@ -9,6 +9,10 @@ use SqlSemantics\Model\Relation\QualifiedName;
 /**
  * A named lock target that could not be bound in the query's relation namespace.
  * @visibility public
+ * @example Reading a lock target that does not resolve
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('SELECT id FROM t FOR UPDATE OF missing', strict: false);
+ *     $statement->locks[0]->relations[0]->name->parts // => ['missing']
  */
 final class UnresolvedLockRelation
 {

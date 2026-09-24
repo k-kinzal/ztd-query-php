@@ -9,6 +9,10 @@ use Override;
 /**
  * Typed RollbackPreparedStatement operands; unrelated statement fields cannot be supplied.
  * @visibility public
+ * @example Rolling back a prepared transaction
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind("ROLLBACK PREPARED 'tx1'");
+ *     $statement instanceof \SqlSemantics\Model\Statement\Transaction\RollbackPreparedStatement // => true
+ *     $statement->transactionId->text // => "'tx1'"
  */
 final class RollbackPreparedStatement extends \SqlSemantics\Model\BoundStatement
 {

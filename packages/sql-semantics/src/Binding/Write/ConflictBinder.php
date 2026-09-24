@@ -44,7 +44,7 @@ final class ConflictBinder
      */
     public function action(Node $node, Scope $scope): ConflictAction
     {
-        $children = array_values(array_filter($node->children, static fn ($child): bool => !$child instanceof Node || $child->name !== 'upsert'));
+        $children = $node->name === 'insert_update_list' ? $node->find('insert_update_elem') : array_values(array_filter($node->children, static fn ($child): bool => !$child instanceof Node || $child->name !== 'upsert'));
         $source = new Node('conflict_action', 0, $children);
         $text = strtoupper(Tree::text($source));
         $inference = Tree::child($source, ['opt_conf_expr']);

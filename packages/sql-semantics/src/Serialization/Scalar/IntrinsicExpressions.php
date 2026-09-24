@@ -19,10 +19,18 @@ final class IntrinsicExpressions
      */
     public static function write(Expression $value): ?Tree
     {
-        return match (true) {
-            $value instanceof Scalar\Text\Position => TextExpressions::write($value),
+        return SqlJsonExpressions::write($value) ?? \SqlSemantics\Serialization\Document\XmlExpressions::write($value) ?? match (true) {
+            $value instanceof Scalar\Text\Position,
+            $value instanceof Scalar\Text\Trim,
+            $value instanceof Scalar\Text\Normalization,
+            $value instanceof Scalar\Text\NormalizedPredicate,
+            $value instanceof Scalar\Text\FullTextSearch => TextExpressions::write($value),
+            $value instanceof Scalar\Document\JsonScalarExtraction => DocumentExpressions::write($value),
             $value instanceof Scalar\Temporal\DateShift,
-            $value instanceof Scalar\Temporal\Extract => TemporalExpressions::write($value),
+            $value instanceof Scalar\Temporal\Extract,
+            $value instanceof Scalar\Temporal\PeriodOverlap,
+            $value instanceof Scalar\Temporal\ZoneConversion,
+            $value instanceof Scalar\Temporal\TemporalFormat => TemporalExpressions::write($value),
             $value instanceof Scalar\Control\RaiseError,
             $value instanceof Scalar\Control\RaiseIgnore => ControlExpressions::write($value),
             default => null,

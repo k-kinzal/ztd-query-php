@@ -11,6 +11,10 @@ use SqlSemantics\Model\Expression;
 /**
  * Typed MergeUpdate effect.
  * @visibility public
+ * @example Counting an update decision's assignments
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER); CREATE TABLE s(id INTEGER)');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('MERGE INTO t USING s ON t.id=s.id WHEN MATCHED THEN UPDATE SET id=s.id');
+ *     count($statement->merge->actions[0]->assignments) // => 1
  */
 final class MergeUpdate extends \SqlSemantics\Model\Write\MergeAction
 {

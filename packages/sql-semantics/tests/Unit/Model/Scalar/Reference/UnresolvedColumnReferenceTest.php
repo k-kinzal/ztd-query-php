@@ -42,4 +42,47 @@ final class UnresolvedColumnReferenceTest extends TestCase
         self::assertSame(['missing'], $expression->name);
         self::assertSame(BuiltinIdentity::Unknown, $expression->type->identity);
     }
+
+    public function testInputsHasNoOperands(): void
+    {
+        $reference = \SqlSemantics\Model\Expression::reference(['a', 'b'], Dialect::PostgreSql);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\UnresolvedColumnReference::class, $reference);
+        self::assertSame([], $reference->inputs());
+        self::assertSame([], $reference->lineage());
+    }
+
+    public function testSpellingJoinsTheNameParts(): void
+    {
+        $reference = \SqlSemantics\Model\Expression::reference(['a', 'b'], Dialect::PostgreSql);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\UnresolvedColumnReference::class, $reference);
+        self::assertSame('a.b', $reference->spelling());
+        self::assertSame('"a"."b"', $reference->structure()->toString());
+    }
+
+    public function testReferencePartsReturnsTheNameParts(): void
+    {
+        $reference = \SqlSemantics\Model\Expression::reference(['a', 'b'], Dialect::PostgreSql);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\UnresolvedColumnReference::class, $reference);
+        self::assertSame(['a', 'b'], $reference->referenceParts());
+        self::assertSame($reference->name, $reference->referenceParts());
+    }
+
+    public function testWithFactsKeepsTheNameWhileTheTypeStaysUnknown(): void
+    {
+        $reference = \SqlSemantics\Model\Expression::reference(['a'], Dialect::PostgreSql);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\UnresolvedColumnReference::class, $reference);
+        $copy = $reference->withFacts(new ExpressionFacts($reference->type, Nullability::MaybeNull));
+        self::assertNotSame($reference, $copy);
+        self::assertSame(['a'], $copy->name);
+        self::assertSame(Nullability::MaybeNull, $copy->nullability);
+        self::assertSame(Nullability::Unknown, $reference->nullability);
+    }
+
+    public function testWithFactsRejectsAResolvedType(): void
+    {
+        $reference = \SqlSemantics\Model\Expression::reference(['a'], Dialect::PostgreSql);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\UnresolvedColumnReference::class, $reference);
+        $this->expectException(InvalidStructure::class);
+        $reference->withFacts(new ExpressionFacts(new TypeDescriptor(Dialect::PostgreSql, BuiltinIdentity::Integer), Nullability::NotNull));
+    }
 }

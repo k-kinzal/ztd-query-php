@@ -16,6 +16,12 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 /**
  * Abandons the current SQLite trigger action without producing a value.
  * @visibility public
+ * @example Inspecting a trigger that abandons its action
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER)');
+ *     $trigger = (new \SqlSemantics\Binder($schema))->bind('CREATE TRIGGER tr BEFORE INSERT ON t BEGIN SELECT RAISE(IGNORE); END');
+ *     $raise = $trigger->body->steps[0]->outputs[0]->expression;
+ *     $raise->spelling() // => 'RAISE IGNORE'
+ *     count($raise->inputs()) // => 0
  */
 final class RaiseIgnore extends Expression
 {

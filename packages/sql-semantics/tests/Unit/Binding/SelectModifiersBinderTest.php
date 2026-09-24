@@ -198,4 +198,31 @@ final class SelectModifiersBinderTest extends TestCase
         self::assertSame(\SqlSemantics\Model\ExpressionKind::Literal, $statement->orderBy[0]->key->kind);
         self::assertSame("'points'", $statement->orderBy[0]->key->spelling());
     }
+
+    #[TestWith([Dialect::MySql])]
+    #[TestWith([Dialect::PostgreSql])]
+    #[TestWith([Dialect::Sqlite])]
+    public function testWindowedKeepsNamedWindowOrderingOutOfTheResultOrdering(Dialect $dialect): void
+    {
+        $binder = new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t (id INTEGER, n INTEGER)'));
+        $query = $binder->bind('SELECT n FROM t WINDOW w AS (PARTITION BY id ORDER BY n)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        self::assertSame([], $query->orderBy);
+        self::assertStringEndsWith('ORDER BY ' . ($dialect === Dialect::MySql ? '`n`' : '"n"') . ' ASC)', $query->toString());
+        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+        $ordered = $binder->bind('SELECT n FROM t WINDOW w AS (ORDER BY n) ORDER BY id DESC');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $ordered);
+        self::assertCount(1, $ordered->orderBy);
+        self::assertTrue($ordered->orderBy[0]->descending);
+    }
+
+    public function testImplicitRowLimitsFetchFirstRowWithoutCountToOneRow(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER)'));
+        $query = $binder->bind('SELECT id FROM t ORDER BY id FETCH FIRST ROW ONLY');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        self::assertSame('1', $query->limit?->spelling());
+        self::assertFalse($query->withTies);
+        self::assertSame('SELECT "id" AS "id" FROM "public"."t" ORDER BY "id" ASC LIMIT 1', $query->toString());
+    }
 }

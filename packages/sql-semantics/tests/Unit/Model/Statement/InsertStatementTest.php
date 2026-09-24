@@ -174,4 +174,24 @@ final class InsertStatementTest extends TestCase
         $this->expectException(InvalidStructure::class);
         $statement->withRows([[Expression::literal(3, Dialect::PostgreSql)]]);
     }
+
+    public function testResultColumnsAreTheReturningOutputs(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER,n INTEGER)'));
+        $returning = $binder->bind('INSERT INTO t(id) VALUES(1) RETURNING id, n AS m');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\InsertStatement::class, $returning);
+        self::assertSame($returning->outputs, $returning->resultColumns());
+        self::assertSame(['id', 'm'], array_column($returning->resultColumns(), 'name'));
+        $silent = $binder->bind('INSERT INTO t(id) SELECT n FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\InsertStatement::class, $silent);
+        self::assertSame([], $silent->resultColumns());
+    }
+
+    public function testAffectedTablesIsTheInsertionTarget(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER,n INTEGER)')))->bind('INSERT INTO t(id) SELECT n FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\InsertStatement::class, $statement);
+        self::assertSame([$statement->insertion->target], $statement->affectedTables());
+        self::assertSame('t', $statement->affectedTables()[0]->declaration->name);
+    }
 }

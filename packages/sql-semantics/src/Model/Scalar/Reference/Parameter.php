@@ -12,6 +12,9 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * Parameter has explicit semantic operands and a fixed expression category.
  * @visibility public
+ * @example Reading the binding key
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('SELECT $1');
+ *     $statement->outputs[0]->expression->name // => '$1'
  */
 final class Parameter extends Expression
 {

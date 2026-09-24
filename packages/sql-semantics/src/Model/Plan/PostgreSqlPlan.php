@@ -10,6 +10,13 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 /**
  * PostgreSQL plan reporting options with their execution prerequisites.
  * @visibility public
+ * @example Reading PostgreSQL plan options
+ *     $binder = new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build());
+ *     $options = $binder->bind('EXPLAIN (ANALYZE, WAL, FORMAT JSON) SELECT 1')->options;
+ *     $options instanceof \SqlSemantics\Model\Plan\PostgreSqlPlan // => true
+ *     $options->wal // => true
+ *     $options->dialect() // => \SqlSemantics\Dialect::PostgreSql
+ *     new \SqlSemantics\Model\Plan\PostgreSqlPlan(wal: true) // throws \SqlSemantics\Model\Validation\InvalidStructure
  */
 final class PostgreSqlPlan implements PlanOptions
 {

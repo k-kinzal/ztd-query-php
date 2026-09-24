@@ -36,6 +36,7 @@ final class AggregateCall extends Expression
         public readonly ?Expression $filter,
     ) {
         \SqlSemantics\Model\Validation\Collections::objects($arguments, Expression::class);
+        Argument\ArgumentOrder::validate($arguments);
         \SqlSemantics\Model\Validation\Collections::objects($orderBy, \SqlSemantics\Model\Ordering::class);
         foreach ($orderBy as $order) {
             if (!$order->key instanceof Expression) {

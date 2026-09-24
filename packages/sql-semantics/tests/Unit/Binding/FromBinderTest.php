@@ -167,6 +167,24 @@ final class FromBinderTest extends TestCase
         self::assertSame([], $statement->outputs[2]->expression->nullExtendedBy);
     }
 
+    #[TestWith(['SELECT * FROM JSON_TABLE(1 = ALL (TABLE t), \'$\' COLUMNS(y FOR ORDINALITY)) AS n', 'SELECT `n`.`y` AS `y` FROM JSON_TABLE((1 = ALL (TABLE `t`)), \'$\' COLUMNS(`y` FOR ORDINALITY)) AS `n`'])]
+    #[TestWith(['UPDATE JSON_TABLE(1 = ALL (TABLE t), \'$\' COLUMNS(y FOR ORDINALITY)) AS n SET n.y = DEFAULT', 'UPDATE JSON_TABLE((1 = ALL (TABLE `t`)), \'$\' COLUMNS(`y` FOR ORDINALITY)) AS `n` SET `n`.`y` = DEFAULT'])]
+    public function testRelationKeepsATableFunctionWhoseOperandHasASubquery(string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.3.0'))->build('CREATE TABLE t(x INT)'));
+        self::assertSame($expected, $binder->bind($sql)->toString());
+        self::assertSame($expected, $binder->bind($expected)->toString());
+    }
+
+    #[TestWith(['SELECT 1 FROM (SELECT 1) AS d', 'select_with_parens'])]
+    #[TestWith(['SELECT 1 FROM generate_series((SELECT 1), 2) AS g', null])]
+    public function testDerivedQueryIgnoresASubqueryInsideAFunctionOperand(string $sql, ?string $expected): void
+    {
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse($sql);
+        $reference = \SqlSemantics\Ast\Tree::outer($tree, ['table_ref'])[0];
+        self::assertSame($expected, \SqlSemantics\Binding\FromBinder::derivedQuery($reference)?->name);
+    }
+
     public function testRelationFullJoinExtendsBothSides(): void
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE users (id INTEGER PRIMARY KEY, parent_id INTEGER, score INTEGER NOT NULL)');
@@ -336,5 +354,52 @@ final class FromBinderTest extends TestCase
         self::assertSame($statement->from->id, $rebound->from->id);
         self::assertSame($statement->from->left->id, $rebound->from->left->id);
         self::assertSame($statement->toString(), $rebound->toString());
+    }
+
+    #[TestWith(['mysql-8.0.44'])]
+    #[TestWith(['mysql-8.4.7'])]
+    #[TestWith(['mysql-9.1.0'])]
+    public function testDerivedAppliesTheMysqlColumnAliasList(string $version): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build());
+        $query = $binder->bind('SELECT * FROM (SELECT 1 AS a, 2) AS d (b, c)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        $relation = $query->relations[0];
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\DerivedRelation::class, $relation);
+        self::assertSame(['b', 'c'], $relation->columnAliases);
+        self::assertSame(['b', 'c'], array_map(static fn ($output): ?string => $output->name, $query->outputs));
+        self::assertSame('SELECT `d`.`b` AS `b`, `d`.`c` AS `c` FROM(SELECT 1 AS `a`, 2) AS `d`(`b`, `c`)', $query->toString());
+        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+    }
+
+    #[TestWith([Dialect::MySql, 'SELECT * FROM (SELECT 1 AS a, 2) AS d (b)'])]
+    #[TestWith([Dialect::MySql, 'SELECT * FROM (SELECT 1 AS a) AS d (b, c)'])]
+    #[TestWith([Dialect::PostgreSql, 'SELECT * FROM (SELECT 1 AS a) AS d (b, c)'])]
+    public function testDerivedRejectsAColumnAliasListWiderThanTheQuery(Dialect $dialect, string $sql): void
+    {
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::DerivedColumnCount->message());
+        (new Binder((new SchemaBuilder($dialect))->build()))->bind($sql);
+    }
+
+    #[TestWith([Dialect::MySql, 'SELECT * FROM t, t'])]
+    #[TestWith([Dialect::MySql, 'SELECT * FROM t a JOIN u a ON 1 = 1'])]
+    #[TestWith([Dialect::PostgreSql, 'SELECT * FROM t a, t a'])]
+    #[TestWith([Dialect::PostgreSql, 'SELECT * FROM t JOIN t USING (a)'])]
+    #[TestWith([Dialect::PostgreSql, 'SELECT * FROM t a, (SELECT 1) a'])]
+    public function testUniqueRejectsARepeatedFromName(Dialect $dialect, string $sql): void
+    {
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::DuplicateRelation->message());
+        (new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(a INT)', 'CREATE TABLE u(a INT)')))->bind($sql);
+    }
+
+    #[TestWith([Dialect::MySql, 'SELECT 1 FROM t, t AS x WHERE EXISTS (SELECT 1 FROM t)'])]
+    #[TestWith([Dialect::PostgreSql, 'SELECT 1 FROM t, other.t'])]
+    #[TestWith([Dialect::Sqlite, 'SELECT 1 FROM t, t'])]
+    public function testUniqueAcceptsDistinctNames(Dialect $dialect, string $sql): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(a INT)')))->bind($sql, strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
     }
 }

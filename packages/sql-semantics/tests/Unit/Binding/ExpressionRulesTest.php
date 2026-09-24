@@ -192,4 +192,18 @@ final class ExpressionRulesTest extends TestCase
         self::assertSame('integer', $statement->outputs[0]->expression->type->name);
         self::assertSame('bigint', $statement->outputs[1]->expression->type->name);
     }
+
+    #[TestWith(['mysql-5.6.51'])]
+    #[TestWith(['mysql-8.4.7'])]
+    public function testOperatorBindsSoundsLikeAsABooleanComparison(string $version): void
+    {
+        $schema = (new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t (a TEXT, b TEXT NOT NULL)');
+        $statement = (new Binder($schema))->bind('SELECT a SOUNDS LIKE b FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        $expression = $statement->outputs[0]->expression;
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Operator\BinaryExpression::class, $expression);
+        self::assertSame(\SqlSemantics\Model\Scalar\Operator\BinaryOperator::SoundsLike, $expression->operator);
+        self::assertSame(Nullability::MaybeNull, $expression->nullability);
+        self::assertSame('SELECT (`a` SOUNDS LIKE `b`) FROM `t`', $statement->toString());
+    }
 }

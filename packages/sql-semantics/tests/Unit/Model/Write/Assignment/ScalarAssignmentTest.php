@@ -8,8 +8,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
+use SqlSemantics\Model\Expression;
 use SqlSemantics\Model\Scalar\Value\Literal;
 use SqlSemantics\Model\Statement\Mutation\UpdateTableStatement;
+use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\Model\Write\Assignment\ScalarAssignment;
 use SqlSemantics\Model\Write\Storage\ElementPath;
 use SqlSemantics\SchemaBuilder;
@@ -33,5 +35,25 @@ final class ScalarAssignmentTest extends TestCase
         self::assertSame('7', $assignment->value->text);
         self::assertCount(1, $assignment->destinations());
         self::assertSame('UPDATE "public"."t" SET "items"["id"] = 7', $statement->toString());
+    }
+
+    public function testDestinationsListsTheSingleTargetOfAScalarAssignment(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)')))->bind('UPDATE t SET n=id');
+        self::assertInstanceOf(UpdateTableStatement::class, $statement);
+        $assignment = $statement->writes[0];
+        self::assertInstanceOf(ScalarAssignment::class, $assignment);
+        self::assertSame([$assignment->target], $assignment->destinations());
+        self::assertSame('n', $assignment->destinations()[0]->column()->columnBinding()?->column->name);
+    }
+
+    public function testDestinationsRejectsAValueFromAnotherDialect(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('UPDATE t SET id=1');
+        self::assertInstanceOf(UpdateTableStatement::class, $statement);
+        $assignment = $statement->writes[0];
+        self::assertInstanceOf(ScalarAssignment::class, $assignment);
+        $this->expectException(InvalidStructure::class);
+        new ScalarAssignment($assignment->target, Expression::literal(1, Dialect::MySql), $assignment->source);
     }
 }

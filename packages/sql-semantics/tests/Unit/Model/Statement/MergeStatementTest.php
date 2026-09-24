@@ -149,4 +149,37 @@ final class MergeStatementTest extends TestCase
         self::assertSame('delete', $changed->merge->actions[0]->action->value);
         self::assertSame('=', $statement->merge->condition->spelling());
     }
+
+    public function testWithOriginKeepsTheMergePlan(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER,n INTEGER); CREATE TABLE s(id INTEGER,n INTEGER)');
+        $statement = (new Binder($schema))->bind('MERGE INTO t USING s ON t.id=s.id WHEN MATCHED THEN UPDATE SET n=s.n RETURNING t.id');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\MergeStatement::class, $statement);
+        $changed = $statement->withOrigin(new \SqlSemantics\Model\Statement\Origin('other', $statement->source, Dialect::PostgreSql, [], $statement->origin->context));
+        self::assertSame('other', $changed->scopeId);
+        self::assertSame($statement->merge, $changed->merge);
+        self::assertSame($statement->outputs, $changed->outputs);
+        self::assertSame('MERGE INTO "public"."t" USING "public"."s" ON ("t"."id" = "s"."id") WHEN MATCHED THEN UPDATE SET "n" = "s"."n" RETURNING "t"."id" AS "id"', $changed->toString());
+    }
+
+    public function testResultColumnsAreTheReturningOutputs(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER,n INTEGER); CREATE TABLE s(id INTEGER,n INTEGER)'));
+        $returning = $binder->bind('MERGE INTO t USING s ON t.id=s.id WHEN MATCHED THEN UPDATE SET n=s.n RETURNING t.id');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\MergeStatement::class, $returning);
+        self::assertSame($returning->outputs, $returning->resultColumns());
+        self::assertSame(['id'], array_column($returning->resultColumns(), 'name'));
+        $silent = $binder->bind('MERGE INTO t USING s ON t.id=s.id WHEN MATCHED THEN DELETE');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\MergeStatement::class, $silent);
+        self::assertSame([], $silent->resultColumns());
+    }
+
+    public function testAffectedTablesIsTheMergeTarget(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER,n INTEGER); CREATE TABLE s(id INTEGER,n INTEGER)'));
+        $statement = $binder->bind('MERGE INTO t USING s ON t.id=s.id WHEN MATCHED THEN DELETE');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\MergeStatement::class, $statement);
+        self::assertSame([$statement->merge->target], $statement->affectedTables());
+        self::assertSame('t', $statement->affectedTables()[0]->declaration->name);
+    }
 }

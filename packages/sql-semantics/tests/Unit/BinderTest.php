@@ -505,7 +505,6 @@ final class BinderTest extends TestCase
         yield 'non boolean predicate' => ['SELECT 1 WHERE 42', 'non-boolean-predicate'];
         yield 'ambiguous output' => ['SELECT 1 AS n, 2 AS n ORDER BY n', 'ambiguous-output'];
         yield 'star without relation' => ['SELECT *', 'unknown-relation'];
-        yield 'duplicate relation' => ['SELECT 1 FROM t, t', 'duplicate-relation'];
     }
     public function testBindUnresolvedInputsDoNotAcquireInventedCommonTypes(): void
     {

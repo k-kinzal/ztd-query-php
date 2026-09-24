@@ -24,7 +24,7 @@ final class Statements
      */
     public static function write(BoundStatement $statement): ?Tree
     {
-        return IndexCaches::write($statement) ?? Inspections::write($statement) ?? MySqlMaintenance::write($statement) ?? self::transactions($statement) ?? match (true) {
+        return \SqlSemantics\Serialization\Utility\PostgreSqlCommands::write($statement) ?? \SqlSemantics\Serialization\Procedural\ProceduralCommands::write($statement) ?? IndexCaches::write($statement) ?? \SqlSemantics\Serialization\Server\ServerCommands::write($statement) ?? Inspections::write($statement) ?? \SqlSemantics\Serialization\Inspection\SchemaInspections::write($statement) ?? \SqlSemantics\Serialization\Inspection\SessionInspections::write($statement) ?? MySqlMaintenance::write($statement) ?? \SqlSemantics\Serialization\Query\Retrievals::write($statement) ?? self::transactions($statement) ?? match (true) {
             $statement instanceof Statement\Execution\DoExpressionsStatement => DiscardedResults::write($statement),
             $statement instanceof Statement\Locking\LockRelationsStatement,
             $statement instanceof Statement\Locking\LockTablesStatement => TableLocks::write($statement),
@@ -56,7 +56,8 @@ final class Statements
             $statement instanceof Statement\Cursor\CloseCursorStatement,
             $statement instanceof Statement\Cursor\CloseAllCursorsStatement => Cursors::write($statement),
             $statement instanceof Statement\Plan\ExplainStatement,
-            $statement instanceof Statement\Plan\ExplainConnectionStatement => Plans::write($statement),
+            $statement instanceof Statement\Plan\ExplainConnectionStatement,
+            $statement instanceof Statement\Plan\ExplainInDatabaseStatement => Plans::write($statement),
             default => null,
         };
     }

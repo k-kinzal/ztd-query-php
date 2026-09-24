@@ -10,6 +10,10 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 /**
  * Applies a locking clause to an explicit nonempty set of relation occurrences.
  * @visibility public
+ * @example Reading explicit lock targets
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('SELECT a.id FROM t a FOR UPDATE OF a SKIP LOCKED');
+ *     count($statement->locks[0]->relations) // => 1
  */
 final class NamedRowLock extends RowLock
 {

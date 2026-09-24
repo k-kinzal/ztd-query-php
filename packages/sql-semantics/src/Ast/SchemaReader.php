@@ -74,6 +74,7 @@ final class SchemaReader
 
     /**
      * Reads one table and promotes the nullability of primary key columns.
+     * @throws \SqlSemantics\InvalidSql
      */
     public function table(Node $create): TableDefinition
     {
@@ -102,11 +103,33 @@ final class SchemaReader
         }
         $columns = $this->primaryKeys($columns, $constraints, $create);
 
-        $namespace = count($parts) === 2 ? $parts[0] : $this->defaultSchema;
+        $namespace = $this->namespace($header, $parts);
         $name = $parts[count($parts) - 1];
         $indexes = (new Definition\IndexReader($this->identifiers, $this->defaultSchema))->table($create, [$namespace, $name]);
         $options = Definition\OptionReader::read($create, $this->identifiers, ['columnDef', 'column_def', 'columnlist', 'TableConstraint', 'table_constraint_def', 'key_def', 'tcons']);
         return new TableDefinition($namespace, $name, $columns, $constraints, $create, indexes: $indexes, options: $options);
+    }
+
+    /**
+     * Returns the schema of a declared table: a temporary table lives in PostgreSQL's pg_temp or SQLite's temp schema, and naming another schema is rejected as the server does.
+     *
+     * @param list<string> $parts Written name parts
+     * @throws \SqlSemantics\InvalidSql
+     */
+    public function namespace(Node $header, array $parts): string
+    {
+        $written = count($parts) === 2 ? $parts[0] : null;
+        $dialect = $this->identifiers->dialect;
+        $marker = Tree::child($header, $dialect === Dialect::PostgreSql ? ['OptTemp'] : ['temp']);
+        if ($dialect === Dialect::MySql || $marker === null || !str_contains(strtoupper(Tree::text($marker)), 'TEMP')) {
+            return $written ?? $this->defaultSchema;
+        }
+        $temporary = $dialect === Dialect::PostgreSql ? 'pg_temp' : 'temp';
+        $accepted = $dialect === Dialect::PostgreSql ? preg_match('/^pg_temp(_\d+)?$/D', $written ?? 'pg_temp') === 1 : strtolower($written ?? 'temp') === 'temp';
+        if (!$accepted) {
+            throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::TemporaryTableSchema, $header);
+        }
+        return $written ?? $temporary;
     }
 
     /**

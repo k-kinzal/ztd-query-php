@@ -8,6 +8,12 @@ namespace SqlSemantics\Schema\Column;
  * Declared presentation and storage properties of one column.
  *
  * @visibility public
+ * @example Reading declared column attributes
+ *     $column = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build("CREATE TABLE t(name VARCHAR(10) COMMENT 'label' INVISIBLE COLUMN_FORMAT FIXED STORAGE DISK)")->tables[0]->columns[0];
+ *     $column->attributes->comment // => 'label'
+ *     $column->attributes->visible // => false
+ *     $column->attributes->format // => \SqlSemantics\Schema\Column\Format::Fixed
+ *     $column->attributes->storage // => \SqlSemantics\Schema\Column\Storage::Disk
  */
 final class Attributes
 {

@@ -9,6 +9,10 @@ use Override;
 /**
  * Typed RollbackToSavepointStatement operands; unrelated statement fields cannot be supplied.
  * @visibility public
+ * @example Rolling back to a savepoint
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build()))->bind('ROLLBACK TO sp1');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Transaction\RollbackToSavepointStatement // => true
+ *     $statement->toString() // => 'ROLLBACK TO SAVEPOINT "sp1"'
  */
 final class RollbackToSavepointStatement extends \SqlSemantics\Model\BoundStatement
 {

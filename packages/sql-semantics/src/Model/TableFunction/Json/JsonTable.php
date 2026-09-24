@@ -11,6 +11,10 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 /**
  * A JSON row expansion with explicit paths, output declarations, and error behavior.
  * @visibility public
+ * @example Reading the row expansion options
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build();
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind("SELECT j.* FROM JSON_TABLE ('[]', '$[*]' AS root COLUMNS (n FOR ORDINALITY) ERROR ON ERROR) AS j");
+ *     [$statement->from->table->pathName, $statement->from->table->onError] // => ['root', \SqlSemantics\Model\TableFunction\Json\Response\TableError::Error]
  */
 final class JsonTable
 {

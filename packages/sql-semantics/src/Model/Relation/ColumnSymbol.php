@@ -12,6 +12,14 @@ use SqlSemantics\Type\TypeDescriptor;
  * A column's declared identity and type, without a stored or computed value.
  *
  * @visibility public
+ * @example Reading the declared column behind a reference
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER NOT NULL, n INTEGER)');
+ *     $query = (new \SqlSemantics\Binder($schema))->bind('SELECT n, id FROM t');
+ *     $column = $query->outputs[0]->expression->columnBinding()->column;
+ *     $column instanceof \SqlSemantics\Model\Relation\ColumnSymbol // => true
+ *     $column->name // => 'n'
+ *     $column->ordinal // => 1
+ *     $column->nullability // => \SqlSemantics\Type\Nullability::MaybeNull
  */
 final class ColumnSymbol
 {

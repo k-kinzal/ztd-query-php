@@ -1,0 +1,61 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Binding\Statement\Definition\MySqlTable;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Binder;
+use SqlSemantics\Binding\Statement\Definition\MySqlTable\TableAlterations;
+use SqlSemantics\Dialect;
+use SqlSemantics\InvalidSql;
+use SqlSemantics\Model\Definition\MySqlTable\Table\ConvertCharacterSet;
+use SqlSemantics\Model\Definition\MySqlTable\Table\OrderRows;
+use SqlSemantics\Model\Definition\MySqlTable\Table\RenameTable;
+use SqlSemantics\Model\Statement\Definition\MySql\Table\AlterTableStatement;
+use SqlSemantics\Model\Validation\InputViolation;
+use SqlSemantics\SchemaBuilder;
+
+#[CoversClass(TableAlterations::class)]
+#[Medium]
+final class TableAlterationsTest extends TestCase
+{
+    public function testRenameReadsTheNewName(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, n INT)')))->bind('ALTER TABLE t RENAME TO u');
+        self::assertInstanceOf(AlterTableStatement::class, $statement);
+        $alteration = $statement->alterations[0];
+        self::assertInstanceOf(RenameTable::class, $alteration);
+        self::assertSame(['u'], $alteration->newName->parts);
+    }
+
+    public function testConvertReadsBinary(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, n INT)')))->bind('ALTER TABLE t CONVERT TO CHARSET BINARY');
+        self::assertInstanceOf(AlterTableStatement::class, $statement);
+        $alteration = $statement->alterations[0];
+        self::assertInstanceOf(ConvertCharacterSet::class, $alteration);
+        self::assertSame('BINARY', $alteration->characterSet);
+        self::assertNull($alteration->collation);
+    }
+
+    public function testOrderReadsQualifiedColumns(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, n INT)')))->bind('ALTER TABLE t ORDER BY t.n');
+        self::assertInstanceOf(AlterTableStatement::class, $statement);
+        $alteration = $statement->alterations[0];
+        self::assertInstanceOf(OrderRows::class, $alteration);
+        $key = $alteration->orderings[0]->key;
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\ColumnReference::class, $key);
+        self::assertSame(['t', 'n'], $key->referenceParts());
+    }
+
+    public function testOptionsDiagnosesStartTransaction(): void
+    {
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(InputViolation::TableOption->message());
+        (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, n INT)')))->bind('ALTER TABLE t START TRANSACTION');
+    }
+}

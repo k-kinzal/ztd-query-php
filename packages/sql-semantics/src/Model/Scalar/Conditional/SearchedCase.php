@@ -12,6 +12,9 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * SearchedCase has explicit semantic operands and a fixed expression category.
  * @visibility public
+ * @example Reading the ELSE result
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('SELECT CASE WHEN 1 = 1 THEN 2 ELSE 3 END');
+ *     $statement->outputs[0]->expression->otherwise->spelling() // => '3'
  */
 final class SearchedCase extends Expression
 {

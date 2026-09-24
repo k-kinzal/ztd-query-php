@@ -10,6 +10,10 @@ use Override;
  * A nested storage location with a mandatory writable base.
  *
  * @visibility public
+ * @example Inspecting an array slice destination
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER[])');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('UPDATE t SET a[1:2]=a');
+ *     $statement->writes[0]->target instanceof \SqlSemantics\Model\Write\Storage\SlicePath // => true
  */
 final class SlicePath implements Path
 {

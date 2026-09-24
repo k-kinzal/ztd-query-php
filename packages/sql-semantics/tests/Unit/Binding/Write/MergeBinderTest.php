@@ -187,4 +187,15 @@ final class MergeBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\MergeStatement::class, $statement->merge->input->query->ctes->definitions[0]->query);
         self::assertSame('delete', $statement->merge->input->query->ctes->definitions[0]->query->merge->actions[0]->action->value);
     }
+
+    public function testMatchKindSelectsThePresenceConditionOfEachBranch(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT, b INT)', 'CREATE TABLE s(a INT, b INT)')))->bind('MERGE INTO t USING s ON t.a = s.a WHEN MATCHED THEN UPDATE SET b = s.b WHEN NOT MATCHED BY TARGET THEN INSERT VALUES (s.a, s.b) WHEN NOT MATCHED BY SOURCE THEN DELETE WHEN NOT MATCHED THEN DO NOTHING');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\MergeStatement::class, $statement);
+        $binder = new \SqlSemantics\Binding\Write\MergeBinder();
+        $kinds = array_map(static fn (\SqlParser\Parser\Node $clause) => $binder->matchKind($clause), \SqlSemantics\Ast\Tree::outer($statement->origin->source, ['merge_when_clause']));
+        self::assertSame([\SqlSemantics\Model\Write\Decision\MatchKind::Matched, \SqlSemantics\Model\Write\Decision\MatchKind::MissingTarget, \SqlSemantics\Model\Write\Decision\MatchKind::MissingSource, \SqlSemantics\Model\Write\Decision\MatchKind::MissingTarget], $kinds);
+        self::assertSame([\SqlSemantics\Model\Write\Decision\MatchKind::Matched, \SqlSemantics\Model\Write\Decision\MatchKind::MissingTarget, \SqlSemantics\Model\Write\Decision\MatchKind::MissingSource, \SqlSemantics\Model\Write\Decision\MatchKind::MissingTarget], array_column($statement->merge->actions, 'match'));
+        self::assertSame(\SqlSemantics\Model\Write\Decision\MatchKind::Matched, $binder->matchKind(new \SqlParser\Parser\Node('merge_when_clause', 0, [])));
+    }
 }

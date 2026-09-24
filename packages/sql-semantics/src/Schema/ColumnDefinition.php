@@ -13,6 +13,12 @@ use SqlSemantics\Type\TypeDescriptor;
  * A column declaration with a typed value source and declaration-level nullability.
  *
  * @visibility public
+ * @example Reading and renaming a column declaration
+ *     $column = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER NOT NULL)')->tables[0]->columns[0];
+ *     $column->name // => 'id'
+ *     $column->nullability // => \SqlSemantics\Type\Nullability::NotNull
+ *     $column->withName('key')->name // => 'key'
+ *     $column->name // => 'id'
  */
 final class ColumnDefinition
 {

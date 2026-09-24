@@ -22,7 +22,7 @@ final class IndexPropertiesBinder
     {
         $options = $index->options;
         $parameters = StorageParameters::read($index->source, $scope, ['index_params']);
-        OptionBinding::classified($options, ['kind', 'visible', 'invisible', 'key_block_size', 'comment', 'with_parser', 'tablespace', 'engine_attribute', 'secondary_engine_attribute', 'nulls_distinct', 'if_not_exists', 'concurrently', ...array_map(static fn ($parameter): string => implode('.', $parameter->name->parts), $parameters)]);
+        OptionBinding::classified($options, ['kind', 'visible', 'invisible', 'key_block_size', 'comment', 'with_parser', 'tablespace', 'engine_attribute', 'secondary_engine_attribute', 'nulls_distinct', 'if_not_exists', 'concurrently', 'using', 'type', ...array_map(static fn ($parameter): string => implode('.', $parameter->name->parts), $parameters)]);
         return new Index\Properties(
             Index\Kind::from(OptionBinding::string($options, 'kind') ?? 'ordinary'),
             isset($options['invisible']) ? false : (isset($options['visible']) ? true : null),

@@ -14,6 +14,10 @@ use SqlSemantics\Type\Identity\Numeric\NumericParameter;
 /**
  * Requests the currently executing plan of a MySQL connection.
  * @visibility public
+ * @example Explaining a running connection
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build()))->bind('EXPLAIN FORMAT=JSON FOR CONNECTION 42');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Plan\ExplainConnectionStatement // => true
+ *     $statement->connection->spelling // => '42'
  */
 final class ExplainConnectionStatement extends BoundStatement
 {

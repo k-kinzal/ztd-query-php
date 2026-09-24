@@ -182,7 +182,7 @@ final class FunctionRulesTest extends TestCase
     {
         yield 'upper' => ["upper('a')", 'text', 'function', 'not-null'];
         yield 'lower null' => ['lower(NULL)', 'text', 'function', 'always-null'];
-        yield 'trim' => ["trim(' a ')", 'text', 'function', 'not-null'];
+        yield 'trim' => ["trim(' a ')", 'text', 'trim', 'not-null'];
         yield 'ltrim' => ["ltrim(' a')", 'text', 'function', 'not-null'];
         yield 'rtrim' => ["rtrim('a ')", 'text', 'function', 'not-null'];
         yield 'concat' => ["concat('a','b')", 'text', 'function', 'unknown'];
@@ -294,4 +294,21 @@ final class FunctionRulesTest extends TestCase
         self::assertSame(\SqlSemantics\Type\Nullability::NotNull, $bound->nullability);
     }
 
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-5.6.51'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.4.7'])]
+    public function testBindKeepsTheSchemaOfAQualifiedMySqlFunction(string $version): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build());
+        $query = $binder->bind('SELECT db.fn(1), `d b`.f()', strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        self::assertSame('SELECT `db`.`fn`(1), `d b`.`f`()', $query->toString());
+        self::assertSame($query->toString(), $binder->bind($query->toString(), strict: false)->toString());
+    }
+
+    public function testNameIncludesTheSchemaQualifier(): void
+    {
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql))->parse('SELECT db.fn(1), fn(2)');
+        self::assertSame('db . fn', \SqlSemantics\Ast\Tree::text(\SqlSemantics\Binding\Scalar\FunctionRules::name($tree->find('function_call_generic')[0])));
+        self::assertSame('fn', \SqlSemantics\Ast\Tree::text(\SqlSemantics\Binding\Scalar\FunctionRules::name($tree->find('function_call_generic')[1])));
+    }
 }

@@ -10,6 +10,11 @@ use Override;
  * A column reference with an optional indexed prefix.
  *
  * @visibility public
+ * @example Reading a prefixed index key
+ *     $key = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build('CREATE TABLE t(name VARCHAR(100), KEY ix (name(10) DESC))')->tables[0]->indexes[0]->elements[0];
+ *     $key instanceof \SqlSemantics\Schema\Index\ColumnKey // => true
+ *     $key->prefixLength // => 10
+ *     $key->value()->referenceParts() // => ['name']
  */
 final class ColumnKey extends \SqlSemantics\Schema\IndexElement
 {

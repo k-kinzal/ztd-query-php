@@ -9,6 +9,10 @@ use Override;
 /**
  * Typed PrepareTransactionStatement operands; unrelated statement fields cannot be supplied.
  * @visibility public
+ * @example Preparing a transaction
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind("PREPARE TRANSACTION 'tx1'");
+ *     $statement instanceof \SqlSemantics\Model\Statement\Transaction\PrepareTransactionStatement // => true
+ *     $statement->kind->value // => 'PREPARE'
  */
 final class PrepareTransactionStatement extends \SqlSemantics\Model\BoundStatement
 {

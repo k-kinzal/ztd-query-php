@@ -34,4 +34,15 @@ final class CreateVirtualTableStatementTest extends TestCase
         self::assertSame('CREATE VIRTUAL TABLE "docs" USING "fts5"(title)', $statement->toString());
         self::assertSame('CREATE VIRTUAL TABLE "docs" USING "fts5"(body)', $changed->toString());
     }
+
+    public function testWithOriginKeepsTheModuleConstructor(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('CREATE VIRTUAL TABLE temp.docs USING fts5(title, body)');
+        self::assertInstanceOf(CreateVirtualTableStatement::class, $statement);
+        $changed = $statement->withOrigin(new \SqlSemantics\Model\Statement\Origin('other', $statement->source, Dialect::Sqlite, [], $statement->origin->context));
+        self::assertSame('other', $changed->scopeId);
+        self::assertSame($statement->constructor, $changed->constructor);
+        self::assertSame($statement->name, $changed->name);
+        self::assertSame('CREATE VIRTUAL TABLE "temp"."docs" USING "fts5"(title, body)', $changed->toString());
+    }
 }

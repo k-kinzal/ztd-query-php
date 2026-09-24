@@ -19,12 +19,12 @@ use SqlSemantics\Model\Statement\StatementKind;
 final class SetStatement extends ConfigurationStatement
 {
     /**
-     * @var non-empty-list<\SqlSemantics\Model\Configuration\DefaultSetting|\SqlSemantics\Model\Configuration\AssignedUserVariable|\SqlSemantics\Model\Configuration\AssignedSetting|\SqlSemantics\Model\Configuration\CurrentSetting> Validated ordered operands
+     * @var non-empty-list<\SqlSemantics\Model\Configuration\DefaultSetting|\SqlSemantics\Model\Configuration\AssignedUserVariable|\SqlSemantics\Model\Configuration\AssignedSetting|\SqlSemantics\Model\Configuration\CurrentSetting|\SqlSemantics\Model\Configuration\Connection\ConnectionNames|\SqlSemantics\Model\Configuration\Connection\ConnectionCharacterSet> Validated ordered operands
      */
     public readonly array $settings;
 
     /**
-     * @param list<\SqlSemantics\Model\Configuration\DefaultSetting|\SqlSemantics\Model\Configuration\AssignedUserVariable|\SqlSemantics\Model\Configuration\AssignedSetting|\SqlSemantics\Model\Configuration\CurrentSetting> $settings
+     * @param list<\SqlSemantics\Model\Configuration\DefaultSetting|\SqlSemantics\Model\Configuration\AssignedUserVariable|\SqlSemantics\Model\Configuration\AssignedSetting|\SqlSemantics\Model\Configuration\CurrentSetting|\SqlSemantics\Model\Configuration\Connection\ConnectionNames|\SqlSemantics\Model\Configuration\Connection\ConnectionCharacterSet> $settings
      * @visibility SqlSemantics
      * @throws \SqlSemantics\Model\Validation\InvalidStructure
      */
@@ -33,7 +33,12 @@ final class SetStatement extends ConfigurationStatement
         if ($settings === []) {
             throw new \SqlSemantics\Model\Validation\InvalidStructure('A SetStatement requires ordered settings.');
         }
-        \SqlSemantics\Model\Validation\Collections::alternatives($settings, [\SqlSemantics\Model\Configuration\DefaultSetting::class, \SqlSemantics\Model\Configuration\AssignedUserVariable::class, \SqlSemantics\Model\Configuration\AssignedSetting::class, \SqlSemantics\Model\Configuration\CurrentSetting::class]);
+        \SqlSemantics\Model\Validation\Collections::alternatives($settings, [\SqlSemantics\Model\Configuration\DefaultSetting::class, \SqlSemantics\Model\Configuration\AssignedUserVariable::class, \SqlSemantics\Model\Configuration\AssignedSetting::class, \SqlSemantics\Model\Configuration\CurrentSetting::class, \SqlSemantics\Model\Configuration\Connection\ConnectionNames::class, \SqlSemantics\Model\Configuration\Connection\ConnectionCharacterSet::class]);
+        foreach ($settings as $setting) {
+            if (($setting instanceof \SqlSemantics\Model\Configuration\Connection\ConnectionNames || $setting instanceof \SqlSemantics\Model\Configuration\Connection\ConnectionCharacterSet) && $origin->dialect !== \SqlSemantics\Dialect::MySql) {
+                throw new \SqlSemantics\Model\Validation\InvalidStructure('SET NAMES and SET CHARACTER SET items require MySQL.');
+            }
+        }
         parent::__construct($origin);
         $this->settings = \SqlSemantics\Model\Validation\Collections::nonEmpty($settings);
     }

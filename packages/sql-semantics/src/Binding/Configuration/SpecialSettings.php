@@ -17,6 +17,7 @@ use SqlSemantics\Model\Configuration\Setting;
 final class SpecialSettings
 {
     /**
+     * PostgreSQL's SET NAMES sets client_encoding; without an encoding it restores the default.
      * @param list<Token> $tokens
      * @return list<Setting>
      */
@@ -30,6 +31,9 @@ final class SpecialSettings
             'time zone' => 'timezone', 'schema' => 'search_path', 'names' => 'names', 'session authorization' => 'session_authorization', 'xml option' => 'xmloption', default => $name,
         };
         $values = array_slice($tokens, $length);
+        if ($name === 'names' && $scope->identifiers->dialect === \SqlSemantics\Dialect::PostgreSql) {
+            return [$values === [] ? new \SqlSemantics\Model\Configuration\DefaultSetting(['client_encoding'], \SqlSemantics\Model\Configuration\SettingScope::from($settingScope), $source) : (new SettingBinder())->make(['client_encoding'], $settingScope, 'set', $values, $source, $scope)];
+        }
         $collation = array_search('COLLATE', SettingTokens::words($values), true);
         $binder = new SettingBinder();
         $result = [$binder->make([$name], $settingScope, 'set', $collation === false ? $values : array_slice($values, 0, $collation), $source, $scope)];

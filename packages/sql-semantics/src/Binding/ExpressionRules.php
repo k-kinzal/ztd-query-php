@@ -101,7 +101,7 @@ final class ExpressionRules
             }
             $type = $types->boolean();
             $nullability = NullFacts::coalesce($operands) === Nullability::NotNull && NullFacts::strict($operands) === Nullability::NotNull ? Nullability::NotNull : Nullability::MaybeNull;
-        } elseif (in_array($operator, ['=', '<>', '!=', '<', '>', '<=', '>=', 'IS', 'IS NOT', '<=>', 'LIKE', 'NOT LIKE', 'ILIKE', 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN', 'REGEXP', 'NOT REGEXP', 'GLOB', 'NOT GLOB', 'MATCH', 'NOT MATCH', 'SIMILAR TO', 'NOT SIMILAR TO', 'IS DISTINCT FROM', 'IS NOT DISTINCT FROM'], true)) {
+        } elseif (in_array($operator, ['=', '<>', '!=', '<', '>', '<=', '>=', 'IS', 'IS NOT', '<=>', 'LIKE', 'NOT LIKE', 'ILIKE', 'IN', 'NOT IN', 'BETWEEN', 'NOT BETWEEN', 'REGEXP', 'NOT REGEXP', 'GLOB', 'NOT GLOB', 'MATCH', 'NOT MATCH', 'SIMILAR TO', 'NOT SIMILAR TO', 'IS DISTINCT FROM', 'IS NOT DISTINCT FROM', 'SOUNDS LIKE'], true)) {
             $types->common($operands, $source);
             $type = $types->boolean();
             if (in_array($operator, ['IS', 'IS NOT', '<=>', 'IS DISTINCT FROM', 'IS NOT DISTINCT FROM'], true)) {

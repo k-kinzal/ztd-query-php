@@ -164,4 +164,12 @@ final class ConfigurationStatementTest extends TestCase
         $this->expectExceptionMessage('The setting does not belong to this statement.');
         $statement->withValues($foreign->settings[0], [Expression::literal(1, Dialect::PostgreSql)]);
     }
+
+    public function testAssignmentsAreEmptyForOperationsWithoutSettingValues(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('RESET work_mem');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\ConfigurationStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\ResetSettingStatement::class, $statement);
+        self::assertSame([], $statement->assignments());
+    }
 }

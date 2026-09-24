@@ -189,6 +189,7 @@ final class BuiltinsTest extends TestCase
         yield [Dialect::PostgreSql, 'bool_and', 'boolean', Nullability::MaybeNull, false, true];
         yield [Dialect::PostgreSql, 'json_agg', 'json', Nullability::MaybeNull, false, true];
         yield [Dialect::PostgreSql, 'jsonb_agg', 'jsonb', Nullability::MaybeNull, false, true];
+        yield [Dialect::PostgreSql, 'xmlagg', 'xml', Nullability::MaybeNull, false, true];
         yield [Dialect::PostgreSql, 'current_date', 'date', Nullability::NotNull, false, false];
         yield [Dialect::PostgreSql, 'current_timestamp', 'timestamp', Nullability::NotNull, false, false];
         yield [Dialect::PostgreSql, 'random', 'unknown', Nullability::NotNull, false, false];

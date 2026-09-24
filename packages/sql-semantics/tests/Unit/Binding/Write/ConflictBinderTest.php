@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Binding\Write;
 
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
@@ -226,5 +227,20 @@ final class ConflictBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
         self::assertSame([], $statement->conflicts);
         self::assertSame('saved', $statement->outputs[0]->name);
+    }
+
+    #[TestWith(['mysql-5.6.51'])]
+    #[TestWith(['mysql-5.7.44'])]
+    #[TestWith(['mysql-8.0.44'])]
+    #[TestWith(['mysql-8.4.7'])]
+    public function testBindKeepsEveryDuplicateKeyAssignmentAndItsProposedRowReference(string $version): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t(n INTEGER, m INTEGER)'));
+        $statement = $binder->bind('INSERT INTO t (n) VALUES (1) ON DUPLICATE KEY UPDATE n = VALUES(t.n), m = VALUES(m)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\DoUpdate::class, $statement->conflicts[0]);
+        self::assertCount(2, $statement->conflicts[0]->assignments);
+        self::assertSame('INSERT INTO `t`(`n`) VALUES (1) ON DUPLICATE KEY UPDATE `n` = VALUES (`t`.`n`), `m` = VALUES (`m`)', $statement->toString());
+        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
     }
 }

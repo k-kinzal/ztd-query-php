@@ -168,6 +168,7 @@ final class IndexReaderTest extends TestCase
         self::assertTrue($statement->concurrently);
         self::assertFalse($index->properties->nullsDistinct);
         self::assertTrue($statement->ifNotExists);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\Literal::class, $index->properties->storageParameters[0]->value);
         self::assertSame('80', $index->properties->storageParameters[0]->value->spelling());
         self::assertNotNull($index->predicate);
     }
@@ -226,4 +227,29 @@ final class IndexReaderTest extends TestCase
         self::assertTrue($sqlite->ifNotExists);
     }
 
+    public function testTargetReadsTheTableFollowingOnUnderEachGrammar(): void
+    {
+        $mysql = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, n VARCHAR(10))')))->bind('CREATE INDEX ix ON t (n(5))');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateIndexStatement::class, $mysql);
+        self::assertSame(['t'], $mysql->index->definition->table);
+        self::assertSame(['t'], $mysql->table->name->parts);
+        $postgres = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE app.t(id INT)')))->bind('CREATE INDEX ix ON app.t USING btree (id)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateIndexStatement::class, $postgres);
+        self::assertSame(['app', 't'], $postgres->index->definition->table);
+        self::assertSame(['app', 't'], $postgres->table->name->parts);
+        self::assertSame('btree', $postgres->index->definition->method);
+    }
+
+    public function testReadNamesAMySqlIndexWrittenWithATypeClause(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT)')))->bind('CREATE INDEX type TYPE BTREE ON t (id)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateIndexStatement::class, $statement);
+        self::assertSame(['type', 'btree'], [$statement->index->definition->name, $statement->index->definition->method]);
+    }
+
+    public function testDefinitionReadsTheTypeOfATableIndex(): void
+    {
+        $table = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, KEY ix USING HASH (id))')->tables[0];
+        self::assertSame('hash', $table->indexes[0]->method);
+    }
 }

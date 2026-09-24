@@ -25,7 +25,7 @@ final class Indexes
      */
     public static function inline(IndexDefinition $index, Dialect $dialect): Tree
     {
-        return new Tree('index', [Build::keyword(self::kind($index) . 'INDEX'), ...($index->name === null ? [] : [Build::identifier([$index->name], $dialect)]), ...($index->method === null ? [] : [Build::keyword('USING'), Build::identifier([$index->method], $dialect)]), self::keys($index, $dialect), self::options($index->properties, $dialect)]);
+        return new Tree('index', [Build::keyword(self::kind($index) . 'INDEX'), ...($index->name === null ? [] : [Build::identifier([$index->name], $dialect)]), ...($index->method === null ? [] : [Build::keyword('USING'), $dialect === Dialect::MySql ? Build::keyword(strtoupper($index->method)) : Build::identifier([$index->method], $dialect)]), self::keys($index, $dialect), self::options($index->properties, $dialect)]);
     }
 
     /**

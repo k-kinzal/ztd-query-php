@@ -9,6 +9,10 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 /**
  * An exact signed integer spelling, including numbers outside PHP's integer range.
  * @visibility public
+ * @example Keeping the exact integer spelling
+ *     (new \SqlSemantics\Model\Cursor\IntegerOffset('-5'))->text // => '-5'
+ *     (new \SqlSemantics\Model\Cursor\IntegerOffset('99999999999999999999999'))->text // => '99999999999999999999999'
+ *     new \SqlSemantics\Model\Cursor\IntegerOffset('1.5') // throws \SqlSemantics\Model\Validation\InvalidStructure
  */
 final class IntegerOffset
 {

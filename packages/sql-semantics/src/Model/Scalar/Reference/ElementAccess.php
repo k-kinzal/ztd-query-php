@@ -12,6 +12,10 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * ElementAccess has explicit semantic operands and a fixed expression category.
  * @visibility public
+ * @example Reading the subscript
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(tags INTEGER[])');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('SELECT tags[1] FROM t');
+ *     $statement->outputs[0]->expression->index->spelling() // => '1'
  */
 final class ElementAccess extends Expression
 {

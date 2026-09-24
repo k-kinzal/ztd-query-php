@@ -13,6 +13,11 @@ use SqlSemantics\Model\Write\InsertMode;
 /**
  * Insertion from ordered column assignments.
  * @visibility public
+ * @example Inserting with column assignments
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build('CREATE TABLE t(id INT, n INT)');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('INSERT INTO t SET id=1, n=2');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Insert\InsertSetStatement // => true
+ *     count($statement->writes) // => 2
  */
 final class InsertSetStatement extends InsertStatement
 {

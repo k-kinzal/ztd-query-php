@@ -155,4 +155,26 @@ final class TableResolverTest extends TestCase
         $this->expectException(SemanticException::class);
         (new Binder($schema))->bind('SELECT id FROM absent');
     }
+
+    public function testNameKeepsTheNamespaceWhenWrittenOrDeclared(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)');
+        $resolver = new \SqlSemantics\Binding\TableResolver($schema, new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql), 'public');
+        self::assertSame(['public', 't'], $resolver->name(['t'], $schema->tables[0])->parts);
+        self::assertSame(['public', 't'], $resolver->name(['public', 't'], $schema->tables[0])->parts);
+        $bare = new \SqlSemantics\Schema\TableDefinition('', 'v', [], [], $schema->tables[0]->source);
+        self::assertSame(['v'], $resolver->name(['v'], $bare)->parts);
+        self::assertSame(['', 'v'], $resolver->name(['', 'v'], $bare)->parts);
+    }
+
+    public function testSearchedFindsATemporaryTableBeforeTheDefaultSchema(): void
+    {
+        $postgres = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(b INT)', 'CREATE TEMP TABLE t(a INT)'));
+        self::assertSame('SELECT "a" AS "a" FROM "pg_temp"."t"', $postgres->bind('SELECT a FROM t')->toString());
+        self::assertSame('SELECT "b" AS "b" FROM "public"."t"', $postgres->bind('SELECT b FROM public.t')->toString());
+        $sqlite = new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TEMP TABLE t(a INT)'));
+        self::assertSame('SELECT "a" AS "a" FROM "temp"."t"', $sqlite->bind('SELECT a FROM t')->toString());
+        $mysql = new \SqlSemantics\Binding\TableResolver((new SchemaBuilder(Dialect::MySql))->build('CREATE TEMPORARY TABLE t(a INT)'), new \SqlSemantics\Ast\Identifiers(Dialect::MySql), '');
+        self::assertSame('', $mysql->searched('t'));
+    }
 }

@@ -16,6 +16,11 @@ use SqlSemantics\Model\Validation\InvalidStructure;
  * A join whose shared names are derived from the two input schemas.
  *
  * @visibility public
+ * @example Reading the shared columns of a natural join
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER NOT NULL, n INTEGER)');
+ *     $query = (new \SqlSemantics\Binder($schema))->bind('SELECT * FROM t AS a NATURAL LEFT JOIN t AS b');
+ *     $query->from instanceof \SqlSemantics\Model\Relation\Joining\NaturalJoin // => true
+ *     array_column($query->from->columns, 'name') // => ['id', 'n']
  */
 final class NaturalJoin extends Join
 {

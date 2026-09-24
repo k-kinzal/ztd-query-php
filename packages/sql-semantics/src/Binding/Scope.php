@@ -39,10 +39,21 @@ final class Scope
     }
 
     /**
+     * Resolves a stored program variable or trigger row first, as MySQL does inside stored programs, then a relation column.
      * @param list<string> $parts
      * @throws SemanticException
      */
     public function column(array $parts, Node|Token $source): Expression
+    {
+        return Statement\Routine\Program\ProgramNamespace::lookup($this, $parts, $source) ?? $this->relationColumn($parts, $source);
+    }
+
+    /**
+     * Resolves a column of the visible relations, a USING column, or an outer scope column.
+     * @param list<string> $parts
+     * @throws SemanticException
+     */
+    public function relationColumn(array $parts, Node|Token $source): Expression
     {
         $name = $parts[count($parts) - 1];
         $qualifiers = array_slice($parts, 0, -1);
@@ -113,11 +124,16 @@ final class Scope
     }
 
     /**
+     * Joins two FROM operands; MySQL and PostgreSQL reject a repeated item name, SQLite reports it.
      * @throws SemanticException
+     * @throws \SqlSemantics\InvalidSql
      */
     public function combine(self $right, Node $source): self
     {
-        foreach ($this->relations as $leftRelation) {
+        if ($this->identifiers->dialect !== \SqlSemantics\Dialect::Sqlite) {
+            FromBinder::unique([...$this->relations, ...$right->relations]);
+        }
+        foreach ($this->identifiers->dialect === \SqlSemantics\Dialect::Sqlite ? $this->relations : [] as $leftRelation) {
             foreach ($right->relations as $rightRelation) {
                 if ($this->identifiers->relationEqual($leftRelation->alias ?? $leftRelation->declaration->name, $rightRelation->alias ?? $rightRelation->declaration->name)) {
                     $this->diagnostics()->report('duplicate-relation', 'Duplicate relation name in scope.', $source);

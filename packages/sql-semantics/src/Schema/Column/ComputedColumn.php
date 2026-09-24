@@ -10,6 +10,11 @@ use Override;
  * A generated value with a mandatory computation and storage policy.
  *
  * @visibility public
+ * @example Reading a generated column
+ *     $column = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build('CREATE TABLE t(a INT, b INT GENERATED ALWAYS AS (a * 2) STORED)')->tables[0]->columns[1];
+ *     $column->generation instanceof \SqlSemantics\Schema\Column\ComputedColumn // => true
+ *     $column->generation->storage // => \SqlSemantics\Schema\Column\GeneratedStorage::Stored
+ *     count($column->generation->expressions()) // => 1
  */
 final class ComputedColumn implements Generation
 {

@@ -12,6 +12,9 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * Between has explicit semantic operands and a fixed expression category.
  * @visibility public
+ * @example Reading the range test
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('SELECT 1 NOT BETWEEN 0 AND 2');
+ *     $statement->outputs[0]->expression->spelling() // => 'NOT BETWEEN'
  */
 final class Between extends Expression
 {

@@ -34,10 +34,11 @@ final class Relations
             $relation instanceof \SqlSemantics\Model\Relation\DerivedRelation => new Tree('derived', [...($relation->lateral ? [Build::keyword('LATERAL')] : []), Build::parentheses(Queries::write($relation->query))]),
             $relation instanceof \SqlSemantics\Model\Relation\DocumentRelation => ($relation->table instanceof \SqlSemantics\Model\TableFunction\Json\JsonTable ? \SqlSemantics\Serialization\Document\JsonTables::write($relation->table, $dialect) : \SqlSemantics\Serialization\Document\XmlTables::write($relation->table, $dialect)),
             $relation instanceof \SqlSemantics\Model\Relation\FunctionRelation => Expressions::write($relation->function),
+            $relation instanceof \SqlSemantics\Model\TableFunction\RowsFrom\RowsFromRelation => RowsFromTables::write($relation->table),
             $relation instanceof \SqlSemantics\Model\Relation\AliasedRelation => Build::parentheses(self::write($relation->input, $dialect)),
             default => throw new \SqlSemantics\Model\Validation\InvalidStructure('This relation is a scoped pseudo-row, not a FROM source.'),
         };
-        $columns = $relation instanceof \SqlSemantics\Model\Relation\DocumentRelation || $relation instanceof \SqlSemantics\Model\Relation\DerivedRelation || $relation instanceof \SqlSemantics\Model\Relation\FunctionRelation || $relation instanceof \SqlSemantics\Model\Relation\AliasedRelation ? $relation->columnAliases : [];
+        $columns = $relation instanceof \SqlSemantics\Model\Relation\DocumentRelation || $relation instanceof \SqlSemantics\Model\Relation\DerivedRelation || $relation instanceof \SqlSemantics\Model\Relation\FunctionRelation || $relation instanceof \SqlSemantics\Model\Relation\AliasedRelation || $relation instanceof \SqlSemantics\Model\TableFunction\RowsFrom\RowsFromRelation ? $relation->columnAliases : [];
         return new Tree('relation', [$body, ...($relation->alias === null ? [] : [Build::keyword('AS'), Build::identifier([$relation->alias], $dialect)]), ...($columns === [] ? [] : [Build::parentheses(Build::separated(array_map(static fn (string $column): Tree => Build::identifier([$column], $dialect), $columns)))])]);
     }
 

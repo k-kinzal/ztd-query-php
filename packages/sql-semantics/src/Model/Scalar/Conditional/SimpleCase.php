@@ -12,6 +12,9 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * SimpleCase has explicit semantic operands and a fixed expression category.
  * @visibility public
+ * @example Reading the compared value
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('SELECT CASE 1 WHEN 1 THEN 2 END');
+ *     $statement->outputs[0]->expression->value->spelling() // => '1'
  */
 final class SimpleCase extends Expression
 {

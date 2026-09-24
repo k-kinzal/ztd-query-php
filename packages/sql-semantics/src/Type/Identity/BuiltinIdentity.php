@@ -9,6 +9,10 @@ use Override;
 /**
  * Closed built-in and inferred result type identities.
  * @visibility public
+ * @example Resolving a built-in type by name
+ *     \SqlSemantics\Type\Identity\BuiltinIdentity::from('double precision')->name() // => 'double precision'
+ *     $type = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(a BOOLEAN)')->tables[0]->columns[0]->type;
+ *     $type->identity // => \SqlSemantics\Type\Identity\BuiltinIdentity::Boolean
  */
 enum BuiltinIdentity: string implements TypeIdentity
 {

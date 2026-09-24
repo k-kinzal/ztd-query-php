@@ -9,6 +9,10 @@ use SqlSemantics\Model\Validation\Collections;
 /**
  * A virtual-table constructor lookup and its ordered module arguments.
  * @visibility public
+ * @example Describing a module constructor call
+ *     $invocation = new \SqlSemantics\Model\Module\Invocation('fts5', [new \SqlSemantics\Model\Module\ConstructorArgument('title')]);
+ *     $invocation->module // => 'fts5'
+ *     $invocation->arguments[0]->text // => 'title'
  */
 final class Invocation
 {

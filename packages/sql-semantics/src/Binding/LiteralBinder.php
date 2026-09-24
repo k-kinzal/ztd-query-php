@@ -63,7 +63,7 @@ final class LiteralBinder
             $name === 'DECIMAL_NUM' => 'numeric',
             in_array($name, ['XCONST', 'BCONST', 'HEX_NUM', 'BIN_NUM', 'BLOB'], true) => $this->dialect === Dialect::PostgreSql ? 'bit' : 'blob',
             in_array($name, ['FLOAT_NUM', 'FLOAT'], true) => $this->dialect === Dialect::Sqlite ? 'real' : 'double precision',
-            in_array($name, ['SCONST', 'USCONST', 'TEXT_STRING', 'STRING'], true) => $this->dialect === Dialect::PostgreSql ? 'unknown' : 'text',
+            in_array($name, ['SCONST', 'USCONST', 'TEXT_STRING', 'NCHAR_STRING', 'STRING'], true) => $this->dialect === Dialect::PostgreSql ? 'unknown' : 'text',
             in_array($name, ['NULL_P', 'NULL_SYM', 'NULL'], true) => 'unknown',
             in_array($text, ['TRUE', 'FALSE'], true) && !in_array($name, ['IDENT', 'IDENT_QUOTED', 'ID'], true) => $this->dialect === Dialect::PostgreSql ? 'boolean' : 'integer',
             default => null,

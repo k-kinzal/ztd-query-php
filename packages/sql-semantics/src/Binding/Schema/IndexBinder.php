@@ -49,8 +49,9 @@ final class IndexBinder
     }
 
     /**
-     * Selects a simple column key or a computed expression key.
+     * Selects a simple column key or a computed expression key; a prefix length must be positive.
      * @throws UnclassifiedSql
+     * @throws \SqlSemantics\InvalidSql
      */
     public static function element(\SqlSemantics\Ast\Declaration\IndexElement $element, Scope $scope): IndexElement
     {
@@ -63,6 +64,9 @@ final class IndexBinder
             $column = $scope->column([$element->column], $element->source);
             if (!$column instanceof ColumnReference && !$column instanceof UnresolvedColumnReference) {
                 throw new UnclassifiedSql('An index column must resolve to a column reference.');
+            }
+            if ($element->prefixLength !== null && $element->prefixLength < 1) {
+                throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::IndexPrefix, $element->source);
             }
             return new Index\ColumnKey($column, $element->prefixLength, $direction, $nulls, $collation, $operatorClass, $parameters, $element->source);
         }

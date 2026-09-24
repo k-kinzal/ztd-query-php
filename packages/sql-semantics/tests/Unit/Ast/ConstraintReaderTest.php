@@ -163,4 +163,30 @@ final class ConstraintReaderTest extends TestCase
         self::assertSame(['id'], $constraint->deleteColumns);
     }
 
+    public function testColumnsSkipsPrefixLengthsAndDirectionsInPrimaryKeys(): void
+    {
+        $table = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(name VARCHAR(10), n INT, PRIMARY KEY (name(3), n DESC))')->tables[0];
+        self::assertSame(['name', 'n'], $table->constraints[0]->localColumns());
+        self::assertSame(\SqlSemantics\Type\Nullability::NotNull, $table->columns[0]->nullability);
+    }
+
+    public function testColumnsSkipsPrefixLengthsAndDirectionsInUniqueKeys(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE TABLE t(name VARCHAR(10), n INT, UNIQUE KEY (n DESC, name(3)))');
+        self::assertSame('CREATE TABLE `t`(`name` varchar(10), `n` integer, UNIQUE(`n` DESC, `name`(3)))', $statement->toString());
+    }
+
+    public function testColumnsSkipsExpressionKeys(): void
+    {
+        $table = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT, b INT, UNIQUE KEY ((a + 1)), UNIQUE KEY (b))')->tables[0];
+        self::assertSame([], $table->constraints[0]->localColumns());
+        self::assertSame(['b'], $table->constraints[1]->localColumns());
+    }
+
+    public function testReadTreatsAConstraintKeywordWithoutANameAsUnnamed(): void
+    {
+        $table = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT, CONSTRAINT PRIMARY KEY (a), CONSTRAINT CHECK (a > 0))')->tables[0];
+        self::assertSame([null, null], array_map(static fn ($constraint): ?string => $constraint->name, $table->constraints));
+        self::assertSame([], $table->indexes);
+    }
 }

@@ -16,6 +16,9 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
  * Applies a named collation to an operand without evaluating or changing its value.
  *
  * @visibility public
+ * @example Reading the collation name
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('SELECT \'a\' COLLATE "C"');
+ *     $statement->outputs[0]->expression->collation->parts[0] // => 'C'
  */
 final class CollatedExpression extends Expression
 {

@@ -7,6 +7,8 @@ namespace SqlSemantics\Model\Scalar\Operator;
 /**
  * Closed CastMode alternatives.
  * @visibility public
+ * @example Reading the conversion mode
+ *     \SqlSemantics\Model\Scalar\Operator\CastMode::Explicit->value // => 'explicit'
  */
 enum CastMode: string
 {

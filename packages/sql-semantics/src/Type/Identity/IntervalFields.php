@@ -7,6 +7,9 @@ namespace SqlSemantics\Type\Identity;
 /**
  * A PostgreSQL interval field range.
  * @visibility public
+ * @example Classifying an interval field range
+ *     $type = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(d INTERVAL DAY TO SECOND)')->tables[0]->columns[0]->type;
+ *     $type->identity->fields // => \SqlSemantics\Type\Identity\IntervalFields::DayToSecond
  */
 enum IntervalFields: string
 {

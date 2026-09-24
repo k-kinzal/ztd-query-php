@@ -146,4 +146,14 @@ final class TypeDescriptorTest extends TestCase
         self::assertSame('20', $table->columns[0]->type->identity->size?->spelling);
         self::assertSame(\SqlSemantics\Type\Identity\StorageAffinity::Text, $table->columns[0]->type->affinity);
     }
+
+    public function testBuiltinResolvesACanonicalFamilyName(): void
+    {
+        $type = \SqlSemantics\Type\TypeDescriptor::builtin(Dialect::Sqlite, 'integer');
+        self::assertSame('integer', $type->name);
+        self::assertSame(Dialect::Sqlite, $type->dialect);
+        self::assertSame(\SqlSemantics\Type\Identity\BuiltinIdentity::Integer, $type->identity);
+        self::assertNull($type->affinity);
+    }
+
 }

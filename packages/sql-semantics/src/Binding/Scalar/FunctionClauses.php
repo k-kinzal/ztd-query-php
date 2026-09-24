@@ -41,14 +41,15 @@ final class FunctionClauses
     }
 
     /**
-     * Identifies the all-rows argument of this invocation, excluding nested calls.
+     * Identifies the all-rows argument of this invocation, written `*` or `ALL *`, excluding nested calls.
      */
     public static function allRows(Node $source): bool
     {
         $tokens = $source->tokens();
         foreach ($tokens as $index => $token) {
             if ($token->text === '(') {
-                return ($tokens[$index + 1]->text ?? null) === '*' && ($tokens[$index + 2]->text ?? null) === ')';
+                $star = strtoupper($tokens[$index + 1]->text ?? '') === 'ALL' ? $index + 2 : $index + 1;
+                return ($tokens[$star]->text ?? null) === '*' && ($tokens[$star + 1]->text ?? null) === ')';
             }
         }
         return false;

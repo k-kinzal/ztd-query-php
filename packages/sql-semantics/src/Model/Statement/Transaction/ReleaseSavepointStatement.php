@@ -9,6 +9,10 @@ use Override;
 /**
  * Typed ReleaseSavepointStatement operands; unrelated statement fields cannot be supplied.
  * @visibility public
+ * @example Releasing a savepoint
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('RELEASE SAVEPOINT sp1');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Transaction\ReleaseSavepointStatement // => true
+ *     $statement->name // => 'sp1'
  */
 final class ReleaseSavepointStatement extends \SqlSemantics\Model\BoundStatement
 {

@@ -12,6 +12,9 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * SetColumn has explicit semantic operands and a fixed expression category.
  * @visibility public
+ * @example Reading the set operator
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('SELECT 1 UNION SELECT 2');
+ *     $statement->outputs[0]->expression->operator->value // => 'UNION'
  */
 final class SetColumn extends Expression
 {

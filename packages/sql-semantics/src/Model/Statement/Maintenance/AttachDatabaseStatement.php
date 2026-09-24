@@ -9,6 +9,10 @@ use Override;
 /**
  * Typed AttachDatabaseStatement operands; unrelated statement fields cannot be supplied.
  * @visibility public
+ * @example Attaching a database file
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build()))->bind("ATTACH DATABASE 'archive.db' AS archive", strict: false);
+ *     $statement instanceof \SqlSemantics\Model\Statement\Maintenance\AttachDatabaseStatement // => true
+ *     $statement->database->spelling() // => "'archive.db'"
  */
 final class AttachDatabaseStatement extends \SqlSemantics\Model\BoundStatement
 {

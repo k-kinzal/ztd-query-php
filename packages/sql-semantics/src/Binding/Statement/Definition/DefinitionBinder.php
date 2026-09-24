@@ -20,11 +20,14 @@ final class DefinitionBinder
      */
     public static function bind(Origin $origin, Node $statement, QueryContext $context): ?BoundStatement
     {
-        return Trigger\EventTriggerBinder::bind($origin, $statement, $context)
+        return Trigger\ChangeReactions::bind($origin, $statement, $context)
             ?? Ownership\OwnershipCommands::bind($origin, $statement)
-            ?? \SqlSemantics\Binding\Statement\Routine\AlterRoutines::bind($origin, $statement, $context)
+            ?? Role\RoleCommands::bind($origin, $statement, $context)
             ?? Storage\Removals::bind($origin, $statement, $context)
+            ?? MySqlObject\ObjectDefinitions::bind($origin, $statement, $context)
             ?? Database\MySqlDatabases::bind($origin, $statement, $context)
+            ?? MySqlTable\MySqlTables::bind($origin, $statement, $context)
+            ?? PostgreSqlTable\PostgreSqlTables::bind($origin, $statement, $context)
             ?? ForeignServers::bind($origin, $statement, $context)
             ?? ForeignRemovals::bind($origin, $statement, $context)
             ?? UserMappings::bind($origin, $statement, $context)
@@ -32,6 +35,10 @@ final class DefinitionBinder
             ?? ForeignImports::bind($origin, $statement, $context)
             ?? SpatialDefinitions::bind($origin, $statement)
             ?? MySqlRemovals::bind($origin, $statement, $context)
-            ?? \SqlSemantics\Binding\Statement\Routine\DropRoutines::bind($origin, $statement, $context);
+            ?? Account\AccountCommands::bind($origin, $statement, $context)
+            ?? \SqlSemantics\Binding\Statement\Routine\RoutineCommands::bind($origin, $statement, $context)
+            ?? TypeSystem\TypeSystemCommands::bind($origin, $statement, $context)
+            ?? Catalog\CatalogCommands::bind($origin, $statement, $context)
+            ?? Extensibility\ExtensibilityCommands::bind($origin, $statement, $context);
     }
 }

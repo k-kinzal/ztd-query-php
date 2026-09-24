@@ -12,6 +12,10 @@ use SqlSemantics\Model\Relation\QualifiedName;
  * An ordered index key; column prefixes and computed keys are distinct forms.
  *
  * @visibility public
+ * @example Reading the indexed value of a computed key
+ *     $key = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER); CREATE INDEX ix ON t((id + 1) ASC)')->tables[0]->indexes[0]->elements[0];
+ *     $key->value()->structure()->toString() // => '("id" + 1)'
+ *     $key->direction // => \SqlSemantics\Schema\Index\Direction::Ascending
  */
 abstract class IndexElement
 {

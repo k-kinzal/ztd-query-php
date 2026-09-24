@@ -168,4 +168,16 @@ final class UpdateStatementTest extends TestCase
         self::assertSame('n', $statement->writes[0]->destinations()[0]->column()->columnBinding()?->column->name);
         self::assertSame('=', $changed->where?->spelling());
     }
+
+    public function testResultColumnsAreTheReturningOutputs(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER,n INTEGER)'));
+        $returning = $binder->bind('UPDATE t SET n=1 RETURNING id, n AS m');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $returning);
+        self::assertSame($returning->outputs, $returning->resultColumns());
+        self::assertSame(['id', 'm'], array_column($returning->resultColumns(), 'name'));
+        $silent = $binder->bind('UPDATE t SET n=1');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $silent);
+        self::assertSame([], $silent->resultColumns());
+    }
 }

@@ -25,10 +25,7 @@ final class ExpressionBinder
         if ($node instanceof Token) {
             return $this->token($node, $scope);
         }
-        if ($node->name === 'simple_ident' || $scope->identifiers->dialect === \SqlSemantics\Dialect::Sqlite && in_array($node->name, ['nm', 'idj'], true)) {
-            return $scope->column($scope->identifiers->parts($node), $node);
-        }
-        $row = Scalar\RowBinder::bind($node, $scope);
+        $row = $this->name($node, $scope) ?? Scalar\RowBinder::bind($node, $scope);
         if ($row !== null) {
             return $row;
         }
@@ -39,12 +36,9 @@ final class ExpressionBinder
         if ($variable !== null) {
             return $variable;
         }
-        if ($node->name === 'columnref') {
-            return (new Scalar\IndirectionBinder())->column($node, $scope);
-        }
-        $base = Tree::child($node, ['a_expr']);
-        if ($base !== null && Tree::child($node, ['opt_indirection']) !== null) {
-            return (new Scalar\IndirectionBinder())->postfix($node, $base, $scope);
+        $indirection = $this->indirection($node, $scope);
+        if ($indirection !== null) {
+            return $indirection;
         }
         $children = Tree::significant($node);
         $grouped = $this->transparent($children);
@@ -57,12 +51,37 @@ final class ExpressionBinder
         if (isset($children[1]) && Tree::text($children[1]) === '(') {
             return $this->call($node, $children, $scope, $rowSubquery);
         }
-        $expression = $this->operation($node, $children, $scope);
+        $expression = Scalar\Conditional\JsonPredicateBinder::bind($node, $scope) ?? Scalar\Text\NormalizationBinder::test($node, $scope) ?? Scalar\Document\XmlBinder::document($node, $scope) ?? $this->operation($node, $children, $scope);
         if ($expression !== null) {
             return $expression;
         }
 
         return (new ScalarBinder())->bind($node, $scope, $rowSubquery);
+    }
+
+    /**
+     * Resolves a node that is only a name: a qualified identifier, a SQLite name or a MySQL identifier, including a keyword used as one.
+     */
+    public function name(Node $node, Scope $scope): ?Expression
+    {
+        $dialect = $scope->identifiers->dialect;
+        if ($node->name === 'simple_ident' || $dialect === \SqlSemantics\Dialect::Sqlite && in_array($node->name, ['nm', 'idj'], true) || $dialect === \SqlSemantics\Dialect::MySql && $node->name === 'ident') {
+            return $scope->column($scope->identifiers->parts($node), $node);
+        }
+        return null;
+    }
+
+    /**
+     * Applies subscripts and field selections to a column path, a parenthesized expression or a positional parameter.
+     */
+    public function indirection(Node $node, Scope $scope): ?Expression
+    {
+        if ($node->name === 'columnref') {
+            return (new Scalar\IndirectionBinder())->column($node, $scope);
+        }
+        $first = $node->children[0] ?? null;
+        $base = Tree::child($node, ['a_expr']) ?? ($first instanceof Token && $first->name === 'PARAM' ? $first : null);
+        return $base !== null && Tree::child($node, ['opt_indirection']) !== null ? (new Scalar\IndirectionBinder())->postfix($node, $base, $scope) : null;
     }
 
     /**
@@ -132,6 +151,9 @@ final class ExpressionBinder
         if (count($children) === 2 && in_array(strtoupper(Tree::text($children[0])), ['+', '-', 'NOT'], true)) {
             return $rules->operator(Tree::text($children[0]), [$this->bind($children[1], $scope)], $node);
         }
+        if (count($children) === 2 && $children[0] instanceof Node && $children[0]->name === 'not2') {
+            return $rules->operator('NOT', [$this->bind($children[1], $scope)], $node);
+        }
         if (count($children) >= 2) {
             $tail = strtoupper(implode(' ', array_map(Tree::text(...), array_slice($children, 1))));
             $truth = \SqlSemantics\Model\Scalar\Operator\UnaryOperator::tryFrom($tail);
@@ -141,6 +163,9 @@ final class ExpressionBinder
             if (in_array($tail, ['IS NULL', 'IS NOT NULL', 'ISNULL', 'NOTNULL'], true)) {
                 return $rules->operator(in_array($tail, ['IS NULL', 'ISNULL'], true) ? 'IS NULL' : 'IS NOT NULL', [$this->bind($children[0], $scope)], $node);
             }
+        }
+        if (count($children) === 3 && $children[1] instanceof Node && in_array($children[1]->name, ['and', 'or'], true)) {
+            return $rules->operator(strtoupper($children[1]->name), [$this->bind($children[0], $scope), $this->bind($children[2], $scope)], $node);
         }
         if (count($children) === 3 && in_array(strtoupper(Tree::text($children[1])), ['+', '-', '*', '/', '%', '||', '=', '<>', '!=', '<', '>', '<=', '>=', 'AND', 'OR', 'IS', '<=>'], true)) {
             $comparison = in_array(strtoupper(Tree::text($children[1])), ['=', '<>', '!=', '<', '>', '<=', '>=', 'IS', '<=>'], true);

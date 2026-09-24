@@ -27,6 +27,7 @@ final class InvocationBinder
      */
     public function bind(Node $source, Scope $scope, FunctionReference $reference, ExpressionFacts $facts, array $arguments, bool $aggregate, array $orderedInputs): Expression
     {
+        $arguments = ArgumentNotations::apply($source, $arguments, $scope);
         $filterNode = FunctionClauses::find($source, ['filter_clause']);
         $filterExpression = $filterNode === null ? null : (Tree::outer($filterNode, ['a_expr', 'expr'])[0] ?? null);
         $filter = $filterExpression === null ? null : (new \SqlSemantics\Binding\ExpressionBinder())->bind($filterExpression, $scope);

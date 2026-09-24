@@ -178,6 +178,17 @@ final class ScalarBinderTest extends TestCase
         self::assertSame('unknown', $query->outputs[0]->expression->type->name);
     }
 
+    #[\PHPUnit\Framework\Attributes\TestWith(['SHOW VARIABLES WHERE (NTILE(4) OVER w) = 1', 'SHOW VARIABLES WHERE (ntile(4) OVER `w` = 1)'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['SHOW VARIABLES WHERE (NTILE(?) OVER w) = 1', 'SHOW VARIABLES WHERE (ntile(?) OVER `w` = 1)'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['SELECT LAG(1, 2, 3) OVER ()', 'SELECT lag(1, 2, 3) OVER ()'])]
+    public function testOperandsRetainsTheStableIntegerOfAWindowFunction(string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.2.0'))->build());
+        $statement = $binder->bind($sql);
+        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, $binder->bind($expected)->toString());
+    }
+
     public function testOperatorRetainsBetweenBounds(): void
     {
         $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 2 BETWEEN 1 AND 3');
@@ -257,5 +268,50 @@ final class ScalarBinderTest extends TestCase
         $boundQuery1 = $binder->bind('SELECT id NOT IN (SELECT n FROM t) FROM t');
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $boundQuery1);
         self::assertSame('NOT IN', $boundQuery1->outputs[0]->expression->spelling());
+    }
+
+    public function testFunctionInvocationBindsOnlyFunctionExpressionsWithTheirClauses(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind('SELECT count(a) FILTER (WHERE a > 0), abs(a) FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        $scope = new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql), [$statement->relations[0]]);
+        $binder = new \SqlSemantics\Binding\Scalar\ScalarBinder();
+        $filteredSource = $statement->outputs[0]->expression->source;
+        self::assertInstanceOf(\SqlParser\Parser\Node::class, $filteredSource);
+        $filtered = $binder->functionInvocation($filteredSource, $scope);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Function\AggregateCall::class, $filtered);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Operator\BinaryExpression::class, $filtered->filter);
+        self::assertSame('a', $filtered->arguments[0]->columnBinding()?->column->name);
+        $plainSource = $statement->outputs[1]->expression->source;
+        self::assertInstanceOf(\SqlParser\Parser\Node::class, $plainSource);
+        self::assertNull($binder->functionInvocation($plainSource, $scope));
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['SELECT 1 DIV (SELECT 2)', 'DIV'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['SELECT 1 NOT REGEXP (SELECT 2)', 'NOT REGEXP'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['SELECT 1 | (SELECT 2)', '|'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(["SELECT 'a' SOUNDS LIKE (SELECT 'b')", 'SOUNDS LIKE'])]
+    public function testNestedQueryLeavesAMySqlOperandSubqueryToItsOperand(string $sql, string $operator): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        $expression = $statement->outputs[0]->expression;
+        self::assertSame($operator, $expression->spelling());
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Query\ScalarSubquery::class, $expression->inputs()[1]);
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['SELECT 1 DIV (TABLE t)', 'DIV'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['SELECT 1 ^ (TABLE t)', '^'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['SELECT 1 | (TABLE t)', '|'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(["SELECT 'a' NOT REGEXP (TABLE t)", 'NOT REGEXP'])]
+    public function testNestedQueryLeavesAMySqlTableQueryOperandToItsOperand(string $sql, string $operator): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (n INTEGER)'));
+        $statement = $binder->bind($sql);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        $expression = $statement->outputs[0]->expression;
+        self::assertSame($operator, $expression->spelling());
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Query\ScalarSubquery::class, $expression->inputs()[1]);
+        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
     }
 }

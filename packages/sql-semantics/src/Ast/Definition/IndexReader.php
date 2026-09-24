@@ -52,9 +52,13 @@ final class IndexReader
                 $names[] = $this->identifiers->name($token);
             }
         }
+        $single = Tree::child($node, $this->identifiers->dialect === \SqlSemantics\Dialect::MySql ? ['ident'] : ['name']);
+        if ($single !== null && Tree::hasTokens($single)) {
+            $names = [$this->identifiers->name($single->tokens()[0])];
+        }
         $table = $this->target($node, array_slice($tokens, $on + 1));
         $schema = count($names) > 1 ? $names[0] : (count($table) > 1 ? $table[0] : $this->defaultSchema);
-        return $this->definition($node, $schema, $names === [] ? null : $names[count($names) - 1], count($table) === 1 ? [$schema, $table[0]] : $table, IndexKeys::read($node, $this->identifiers));
+        return $this->definition($node, $schema, $names === [] ? null : $names[count($names) - 1], count($table) === 1 ? ($schema === '' ? $table : [$schema, $table[0]]) : $table, IndexKeys::read($node, $this->identifiers));
     }
 
     /**
@@ -92,8 +96,9 @@ final class IndexReader
             $tokens = $node->tokens();
             $constraintName = null;
             if (strtoupper($tokens[0]->text ?? '') === 'CONSTRAINT') {
-                $constraintName = $this->identifiers->name($tokens[1]);
-                $tokens = array_slice($tokens, 2);
+                $unnamed = in_array(strtoupper($tokens[1]->text ?? ''), ['PRIMARY', 'UNIQUE', 'FOREIGN', 'CHECK'], true);
+                $constraintName = $unnamed ? null : $this->identifiers->name($tokens[1]);
+                $tokens = array_slice($tokens, $unnamed ? 1 : 2);
             }
             if (!in_array(strtoupper($tokens[0]->text ?? ''), ['KEY', 'INDEX', 'FULLTEXT', 'SPATIAL'], true)) {
                 continue;
@@ -113,8 +118,8 @@ final class IndexReader
     {
         $tokens = $source->tokens();
         $words = array_map(static fn ($token): string => strtoupper($token->text), $tokens);
-        $using = array_values(array_filter(Tree::outer($source, ['access_method_clause', 'index_type_clause']), Tree::hasTokens(...)))[0] ?? null;
-        $method = $using === null ? null : strtolower($using->tokens()[count($using->tokens()) - 1]->text);
+        $using = array_values(array_filter(Tree::outer($source, ['access_method_clause', 'index_type_clause', 'key_using_alg', 'opt_index_name_and_type']), static fn (Node $node): bool => Tree::hasTokens($node) && ($node->name !== 'opt_index_name_and_type' || in_array(strtoupper($node->tokens()[count($node->tokens()) - 2]->text ?? ''), ['USING', 'TYPE'], true))))[0] ?? null;
+        $method = $using === null ? null : ($this->identifiers->dialect === \SqlSemantics\Dialect::MySql ? strtolower($using->tokens()[count($using->tokens()) - 1]->text) : $this->identifiers->name($using->tokens()[count($using->tokens()) - 1]));
         $include = array_values(array_filter(Tree::outer($source, ['opt_include', 'opt_c_include']), Tree::hasTokens(...)))[0] ?? null;
         $columns = $include === null ? [] : array_values(array_filter(array_slice($this->identifiers->parts($include), 1), static fn (string $part): bool => !in_array($part, ['(', ')', ','], true)));
         $where = array_values(array_filter(Tree::outer($source, ['where_clause', 'where_opt']), Tree::hasTokens(...)))[0] ?? null;

@@ -54,4 +54,41 @@ final class VariableReferenceTest extends TestCase
         self::assertSame($definition, $read->outputs[0]->expression->definition);
         self::assertSame([$definition], $schema->variables);
     }
+
+    public function testInputsHasNoOperands(): void
+    {
+        $definition = new VariableDefinition('x', VariableScope::User, new TypeDescriptor(Dialect::MySql, \SqlSemantics\Type\Identity\BuiltinIdentity::Integer));
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()->withVariables($definition)))->bind('SELECT @x');
+        self::assertInstanceOf(BoundSelect::class, $statement);
+        $reference = $statement->outputs[0]->expression;
+        self::assertInstanceOf(VariableReference::class, $reference);
+        self::assertSame([], $reference->inputs());
+        self::assertSame('SELECT @`x`', $statement->toString());
+    }
+
+    public function testSpellingReturnsTheDeclaredName(): void
+    {
+        $definition = new VariableDefinition('x', VariableScope::User, new TypeDescriptor(Dialect::MySql, \SqlSemantics\Type\Identity\BuiltinIdentity::Integer));
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()->withVariables($definition)))->bind('SELECT @x');
+        self::assertInstanceOf(BoundSelect::class, $statement);
+        $reference = $statement->outputs[0]->expression;
+        self::assertInstanceOf(VariableReference::class, $reference);
+        self::assertSame('x', $reference->spelling());
+    }
+
+    public function testWithFactsKeepsTheDefinitionAndRejectsAnotherType(): void
+    {
+        $definition = new VariableDefinition('x', VariableScope::User, new TypeDescriptor(Dialect::MySql, \SqlSemantics\Type\Identity\BuiltinIdentity::Integer));
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()->withVariables($definition)))->bind('SELECT @x');
+        self::assertInstanceOf(BoundSelect::class, $statement);
+        $reference = $statement->outputs[0]->expression;
+        self::assertInstanceOf(VariableReference::class, $reference);
+        $copy = $reference->withFacts(new \SqlSemantics\Model\Scalar\ExpressionFacts($reference->type, Nullability::NotNull));
+        self::assertNotSame($reference, $copy);
+        self::assertSame($definition, $copy->definition);
+        self::assertSame(Nullability::NotNull, $copy->nullability);
+        self::assertSame(Nullability::Unknown, $reference->nullability);
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        $reference->withFacts(new \SqlSemantics\Model\Scalar\ExpressionFacts(TypeDescriptor::builtin(Dialect::MySql, 'text'), Nullability::NotNull));
+    }
 }

@@ -10,6 +10,11 @@ use Override;
  * Update named targets from a joined relation.
  *
  * @visibility public
+ * @example Updating through a join
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build('CREATE TABLE t(id INT, n INT)', 'CREATE TABLE s(id INT, n INT)');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('UPDATE t JOIN s ON t.id=s.id SET t.n=s.n');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Mutation\UpdateJoinedStatement // => true
+ *     $statement->affectedTables()[0]->declaration->name // => 't'
  */
 final class UpdateJoinedStatement extends \SqlSemantics\Model\Statement\UpdateStatement
 {

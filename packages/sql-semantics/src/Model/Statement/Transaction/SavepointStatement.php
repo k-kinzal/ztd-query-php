@@ -9,6 +9,10 @@ use Override;
 /**
  * Typed SavepointStatement operands; unrelated statement fields cannot be supplied.
  * @visibility public
+ * @example Creating a savepoint
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('SAVEPOINT sp1');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Transaction\SavepointStatement // => true
+ *     $statement->name // => 'sp1'
  */
 final class SavepointStatement extends \SqlSemantics\Model\BoundStatement
 {

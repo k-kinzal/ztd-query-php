@@ -151,4 +151,16 @@ final class DeleteStatementTest extends TestCase
         self::assertNull($changed->withWhere(null)->where);
         self::assertNull($statement->where);
     }
+
+    public function testResultColumnsAreTheReturningOutputs(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER,n INTEGER)'));
+        $returning = $binder->bind('DELETE FROM t WHERE id=1 RETURNING id, n AS m');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\DeleteStatement::class, $returning);
+        self::assertSame($returning->outputs, $returning->resultColumns());
+        self::assertSame(['id', 'm'], array_column($returning->resultColumns(), 'name'));
+        $silent = $binder->bind('DELETE FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\DeleteStatement::class, $silent);
+        self::assertSame([], $silent->resultColumns());
+    }
 }

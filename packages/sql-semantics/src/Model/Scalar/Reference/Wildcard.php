@@ -12,6 +12,9 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * Wildcard has explicit semantic operands and a fixed expression category.
  * @visibility public
+ * @example Reading the qualifier of an unexpanded wildcard
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build()))->bind('SELECT m.* FROM missing m', strict: false);
+ *     $statement->outputs[0]->expression->qualifier[0] // => 'm'
  */
 final class Wildcard extends Expression
 {

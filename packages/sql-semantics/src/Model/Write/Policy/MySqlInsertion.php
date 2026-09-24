@@ -10,6 +10,10 @@ use Override;
  * Declared MySql insertion behavior; values remain unevaluated.
  *
  * @visibility public
+ * @example Reading MySQL insertion options
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build('CREATE TABLE t(id INTEGER)');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('INSERT LOW_PRIORITY IGNORE INTO t VALUES(1)');
+ *     [$statement->policy->scheduling, $statement->policy->ignore] // => [\SqlSemantics\Model\Write\Policy\Scheduling::LowPriority, true]
  */
 final class MySqlInsertion implements InsertPolicy
 {

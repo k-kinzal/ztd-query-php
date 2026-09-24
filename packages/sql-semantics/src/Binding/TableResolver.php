@@ -20,7 +20,7 @@ final class TableResolver
     /**
      * Binds the dependencies used for semantic binding.
      */
-    public function __construct(public readonly Schema $schema, public readonly Identifiers $identifiers, public readonly string $defaultSchema, public readonly Analysis\Diagnostics $diagnostics = new Analysis\Diagnostics())
+    public function __construct(public readonly Schema $schema, public readonly Identifiers $identifiers, public readonly string $defaultSchema, public readonly Analysis\Diagnostics $diagnostics = new Analysis\Diagnostics(), public readonly ?Statement\Routine\Program\ProgramNamespace $program = null)
     {
     }
 
@@ -30,7 +30,7 @@ final class TableResolver
      */
     public function resolve(array $parts, Node $source): TableDefinition
     {
-        $schema = count($parts) === 2 ? $parts[0] : $this->defaultSchema;
+        $schema = count($parts) === 2 ? $parts[0] : $this->searched($parts[count($parts) - 1]);
         $name = $parts[count($parts) - 1];
         $matches = [];
         foreach ($this->schema->tables as $table) {
@@ -46,6 +46,27 @@ final class TableResolver
 
         return $matches[0];
     }
+    /**
+     * Returns the schema an unqualified table name resolves in: a temporary table in PostgreSQL's pg_temp or SQLite's temp schema hides a table of the same name in the default schema.
+     */
+    public function searched(string $name): string
+    {
+        $temporary = match ($this->identifiers->dialect) {
+            \SqlSemantics\Dialect::PostgreSql => 'pg_temp',
+            \SqlSemantics\Dialect::Sqlite => 'temp',
+            \SqlSemantics\Dialect::MySql => null,
+        };
+        if ($temporary === null) {
+            return $this->defaultSchema;
+        }
+        foreach ($this->schema->tables as $table) {
+            if ($this->identifiers->relationEqual($table->schema, $temporary) && $this->identifiers->relationEqual($table->name, $name)) {
+                return $temporary;
+            }
+        }
+        return $this->defaultSchema;
+    }
+
     /**
      * Retains explicit namespaces, including a quoted empty namespace.
      *

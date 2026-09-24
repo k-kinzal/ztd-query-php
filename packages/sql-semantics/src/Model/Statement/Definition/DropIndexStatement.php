@@ -12,6 +12,11 @@ use SqlSemantics\Model\Statement\StatementKind;
  * DropIndexStatement requires the operands of this SQL operation.
  *
  * @visibility public
+ * @example Dropping indexes
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)', 'CREATE INDEX ix ON t(id)');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('DROP INDEX IF EXISTS ix CASCADE');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Definition\DropIndexStatement // => true
+ *     $statement->names[0]->parts // => ['ix']
  */
 final class DropIndexStatement extends \SqlSemantics\Model\BoundStatement
 {

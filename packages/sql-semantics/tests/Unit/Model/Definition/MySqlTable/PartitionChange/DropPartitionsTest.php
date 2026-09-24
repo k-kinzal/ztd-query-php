@@ -1,0 +1,35 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Tests\Unit\Model\Definition\MySqlTable\PartitionChange;
+
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\TestCase;
+use SqlSemantics\Binder;
+use SqlSemantics\Dialect;
+use SqlSemantics\Model\Definition\MySqlTable\PartitionChange\DropPartitions;
+use SqlSemantics\Model\Statement\Definition\MySql\Table\AlterTableStatement;
+use SqlSemantics\Model\Validation\InvalidStructure;
+use SqlSemantics\SchemaBuilder;
+
+#[CoversClass(DropPartitions::class)]
+#[Medium]
+final class DropPartitionsTest extends TestCase
+{
+    public function testReadsTheNames(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, n INT)')))->bind('ALTER TABLE t DROP PARTITION a, b');
+        self::assertInstanceOf(AlterTableStatement::class, $statement);
+        $alteration = $statement->alterations[0];
+        self::assertInstanceOf(DropPartitions::class, $alteration);
+        self::assertSame(['a', 'b'], $alteration->partitions);
+    }
+
+    public function testRejectsARepeatedName(): void
+    {
+        $this->expectException(InvalidStructure::class);
+        new DropPartitions(['a', 'a']);
+    }
+}

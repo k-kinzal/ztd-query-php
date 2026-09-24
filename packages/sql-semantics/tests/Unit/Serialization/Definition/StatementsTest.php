@@ -39,4 +39,13 @@ final class StatementsTest extends TestCase
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
         self::assertNull(Statements::write((new Binder($schema))->bind($sql)));
     }
+
+    #[TestWith(['DROP TABLE t', 'DROP TABLE "t"'])]
+    #[TestWith(['CREATE INDEX ix ON t (id)', 'CREATE INDEX "ix" ON "public"."t"("id")'])]
+    #[TestWith(['COMMENT ON TABLE t IS NULL', null])]
+    public function testSchemaCommandsWritesTheGenericTableAndIndexCommands(string $sql, ?string $expected): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
+        self::assertSame($expected, Statements::schemaCommands((new Binder($schema))->bind($sql))?->toString());
+    }
 }

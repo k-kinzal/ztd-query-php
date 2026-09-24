@@ -47,4 +47,19 @@ final class StorageTest extends TestCase
         self::assertSame('', Storage::mysql(new MySqlProperties(), Dialect::MySql)->toString());
     }
 
+    public function testPartitioningWritesColumnKeysBareAndExpressionKeysParenthesized(): void
+    {
+        $properties = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE p(id INTEGER, t TEXT) PARTITION BY HASH (id COLLATE "C" int4_ops, (id * 2)) TABLESPACE ts')->tables[0]->properties;
+        self::assertInstanceOf(PostgreSqlProperties::class, $properties);
+        self::assertNotNull($properties->partitioning);
+        self::assertSame('PARTITION BY HASH("id" COLLATE "C" "int4_ops", (("id" * 2)))', Storage::partitioning($properties->partitioning, Dialect::PostgreSql)->toString());
+        self::assertSame('PARTITION BY HASH("id" COLLATE "C" "int4_ops", (("id" * 2))) TABLESPACE "ts"', Storage::table($properties, Dialect::PostgreSql)->toString());
+    }
+
+    public function testTableWritesInheritsBeforeOtherProperties(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE a(x INTEGER)')))->bind('CREATE TABLE u (b INT) INHERITS (a) TABLESPACE ts');
+        self::assertInstanceOf(CreateTableStatement::class, $statement);
+        self::assertSame('INHERITS("a") TABLESPACE "ts"', Storage::table($statement->definition->table->properties, Dialect::PostgreSql)->toString());
+    }
 }

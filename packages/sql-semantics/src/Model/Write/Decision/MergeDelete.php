@@ -11,6 +11,10 @@ use SqlSemantics\Model\Expression;
 /**
  * Typed MergeDelete effect.
  * @visibility public
+ * @example Inspecting a delete decision
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER); CREATE TABLE s(id INTEGER)');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('MERGE INTO t USING s ON t.id=s.id WHEN MATCHED THEN DELETE');
+ *     $statement->merge->actions[0] instanceof \SqlSemantics\Model\Write\Decision\MergeDelete // => true
  */
 final class MergeDelete extends \SqlSemantics\Model\Write\MergeAction
 {

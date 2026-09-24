@@ -10,6 +10,10 @@ use SqlSemantics\Schema\TableDefinition;
  * A table declaration whose columns and constraints own their typed expressions.
  *
  * @visibility public
+ * @example Reading the declared table
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build();
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('CREATE TABLE t(id INTEGER DEFAULT 3)');
+ *     $statement->definition->table->name // => 't'
  */
 final class TableDeclaration
 {

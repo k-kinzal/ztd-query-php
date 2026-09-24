@@ -37,4 +37,28 @@ final class ConstraintBinderTest extends TestCase
         self::assertSame(\SqlSemantics\Schema\Constraint\MatchMode::Simple, $key->match);
         self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
     }
+
+    public function testKeysBindColumnsInDeclarationOrder(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE t(a INT, b INT, PRIMARY KEY (b, a), UNIQUE (a))');
+        self::assertInstanceOf(CreateTableStatement::class, $statement);
+        $primary = $statement->definition->table->constraints[0];
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\PrimaryKey::class, $primary);
+        self::assertSame(['b', 'a'], array_map(static fn (\SqlSemantics\Schema\IndexElement $key): ?string => $key->value()->columnBinding()?->column->name, $primary->keys));
+        self::assertContainsOnlyInstancesOf(\SqlSemantics\Schema\Index\ColumnKey::class, $primary->keys);
+        $unique = $statement->definition->table->constraints[1];
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\UniqueKey::class, $unique);
+        self::assertSame(['a'], $unique->localColumns());
+    }
+
+    public function testKeysRetainUnresolvedColumnsWithDiagnostics(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE t(a INT, PRIMARY KEY (missing))', strict: false);
+        self::assertInstanceOf(CreateTableStatement::class, $statement);
+        $primary = $statement->definition->table->constraints[0];
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\PrimaryKey::class, $primary);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\UnresolvedColumnReference::class, $primary->keys[0]->value());
+        self::assertSame(['missing'], $primary->localColumns());
+        self::assertContains('unknown-column', array_column($statement->diagnostics, 'reason'));
+    }
 }

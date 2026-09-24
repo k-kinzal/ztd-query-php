@@ -9,6 +9,10 @@ use Override;
 /**
  * Typed DetachDatabaseStatement operands; unrelated statement fields cannot be supplied.
  * @visibility public
+ * @example Detaching a database
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build()))->bind('DETACH DATABASE archive', strict: false);
+ *     $statement instanceof \SqlSemantics\Model\Statement\Maintenance\DetachDatabaseStatement // => true
+ *     $statement->schema->spelling() // => 'archive'
  */
 final class DetachDatabaseStatement extends \SqlSemantics\Model\BoundStatement
 {

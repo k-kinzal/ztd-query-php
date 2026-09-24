@@ -12,6 +12,9 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * Coalesce has explicit semantic operands and a fixed expression category.
  * @visibility public
+ * @example Counting the alternatives
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('SELECT COALESCE(NULL, 1)');
+ *     count($statement->outputs[0]->expression->arguments) // => 2
  */
 final class Coalesce extends Expression
 {

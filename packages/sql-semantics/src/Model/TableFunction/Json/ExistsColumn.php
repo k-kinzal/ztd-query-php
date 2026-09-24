@@ -10,6 +10,10 @@ use SqlSemantics\Type\TypeDescriptor;
 /**
  * A typed JSON_TABLE path existence test column.
  * @visibility public
+ * @example Reading an existence test column
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build();
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind("SELECT j.* FROM JSON_TABLE ('[]', '$[*]' COLUMNS (ok BOOLEAN EXISTS PATH '$.a' TRUE ON ERROR)) AS j");
+ *     $statement->from->table->columns[0]->onError // => \SqlSemantics\Model\TableFunction\Json\Response\ExistsResponse::True
  */
 final class ExistsColumn implements Column
 {

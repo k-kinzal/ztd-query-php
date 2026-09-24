@@ -9,6 +9,10 @@ use Override;
 /**
  * Typed UseDatabaseStatement operands; unrelated statement fields cannot be supplied.
  * @visibility public
+ * @example Selecting the default database
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build()))->bind('USE app');
+ *     $statement instanceof \SqlSemantics\Model\Statement\Maintenance\UseDatabaseStatement // => true
+ *     $statement->database->parts // => ['app']
  */
 final class UseDatabaseStatement extends \SqlSemantics\Model\BoundStatement
 {

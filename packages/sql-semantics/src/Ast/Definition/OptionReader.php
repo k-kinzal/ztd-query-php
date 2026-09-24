@@ -23,7 +23,7 @@ final class OptionReader
     public static function read(Node $source, Identifiers $identifiers, array $boundaries = []): array
     {
         $result = [];
-        $names = ['create_table_option', 'table_option', 'reloption_elem', 'def_elem', 'SeqOptElem', 'table_access_method_clause', 'OptTableSpace', 'opt_tablespace', 'OnCommitOption', 'OptTemp', 'opt_temporary', 'index_option', 'common_index_option', 'opt_nulls_distinct', 'opt_unique_null_treatment', 'ifnotexists', 'opt_concurrently', 'opt_if_not_exists', 'PartitionSpec'];
+        $names = ['create_table_option', 'table_option', 'reloption_elem', 'def_elem', 'SeqOptElem', 'table_access_method_clause', 'OptTableSpace', 'opt_tablespace', 'OnCommitOption', 'OptTemp', 'opt_temporary', 'index_option', 'common_index_option', 'all_key_opt', 'fulltext_key_opt', 'opt_nulls_distinct', 'opt_unique_null_treatment', 'ifnotexists', 'opt_concurrently', 'opt_if_not_exists', 'PartitionSpec'];
         foreach (Tree::outer($source, [...$boundaries, ...$names]) as $node) {
             if (!in_array($node->name, $boundaries, true)) {
                 $result = array_replace($result, self::option($node->tokens(), $identifiers));

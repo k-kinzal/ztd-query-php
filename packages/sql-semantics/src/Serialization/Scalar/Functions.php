@@ -18,16 +18,17 @@ use SqlSemantics\Serialization\Expressions;
 final class Functions
 {
     /**
-     * Writes invocation arguments, group ordering, filters, and windows from their concrete forms.
+     * Writes invocation arguments, group ordering, filters, and windows from their concrete forms; a MySQL function found by name is written as a quoted identifier.
      */
     public static function write(Function\FunctionCall|Function\AggregateCall|Function\AllRowsAggregate|Function\OrderedSetCall|Function\WindowCall $value): Tree
     {
         if ($value instanceof Function\WindowCall) {
-            return new Tree('window-call', [self::write($value->function), Build::keyword('OVER'), Windows::write($value->window, $value->type->dialect)]);
+            return new Tree('window-call', [Expressions::write($value->function), Build::keyword('OVER'), Windows::write($value->window, $value->type->dialect)]);
         }
         $name = $value->function->name()->parts;
         $intrinsicName = $value->type->dialect === \SqlSemantics\Dialect::MySql && in_array(strtoupper($name[0]), ['EXTRACT', 'POSITION', 'DATE_ADD', 'DATE_SUB', 'ADDDATE', 'SUBDATE'], true);
-        $function = !$intrinsicName && $value->type->dialect !== \SqlSemantics\Dialect::PostgreSql && count($name) === 1 && preg_match('/^[a-zA-Z_][a-zA-Z_0-9]*$/D', $name[0]) === 1 ? Build::keyword($name[0]) : Build::identifier($name, $value->type->dialect);
+        $byName = $value->function instanceof Function\UnresolvedFunction && $value->function->lookup === Function\FunctionLookup::Name;
+        $function = !$intrinsicName && !$byName && $value->type->dialect !== \SqlSemantics\Dialect::PostgreSql && count($name) === 1 && preg_match('/^[a-zA-Z_][a-zA-Z_0-9]*$/D', $name[0]) === 1 ? Build::keyword($name[0]) : Build::identifier($name, $value->type->dialect);
         if ($value instanceof Function\AllRowsAggregate) {
             $call = new Tree('all-rows', [$function, Build::parentheses(Build::keyword('*'))]);
         } elseif ($value instanceof Function\OrderedSetCall) {
@@ -41,5 +42,15 @@ final class Functions
         }
         $filter = $value instanceof Function\FunctionCall ? null : $value->filter;
         return new Tree('invocation', [$call, ...($filter === null ? [] : [Build::keyword('FILTER'), Build::parentheses(new Tree('filter', [Build::keyword('WHERE'), Expressions::write($filter)]))])]);
+    }
+
+    /**
+     * Writes an argument in named notation as `name => value`, or a VARIADIC argument after its keyword.
+     */
+    public static function argument(Function\Argument\NamedArgument|Function\Argument\VariadicArgument $value): Tree
+    {
+        return $value instanceof Function\Argument\NamedArgument
+            ? new Tree('named-argument', [Build::identifier([$value->name], \SqlSemantics\Dialect::PostgreSql), Build::keyword('=>'), Expressions::write($value->value)])
+            : new Tree('variadic-argument', [Build::keyword('VARIADIC'), Expressions::write($value->value)]);
     }
 }

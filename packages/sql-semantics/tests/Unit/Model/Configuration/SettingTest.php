@@ -156,6 +156,17 @@ final class SettingTest extends TestCase
         self::assertSame(\SqlSemantics\Model\Configuration\SettingAction::CopyCurrent, $current->action);
     }
 
+    public function testRetainsTheEmptyUserVariableName(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
+        $statement = $binder->bind("SET @'' = 1");
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedUserVariable::class, $statement->settings[0]);
+        self::assertSame([''], $statement->settings[0]->name);
+        self::assertSame('SET @`` = 1', $statement->toString());
+        self::assertSame('SET @`` = 1', $binder->bind($statement->toString())->toString());
+    }
+
     public function testReadPragmaHasItsOwnStatementType(): void
     {
         $read = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('PRAGMA cache_size');

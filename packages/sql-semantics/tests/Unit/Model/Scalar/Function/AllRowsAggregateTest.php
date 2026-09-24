@@ -60,4 +60,31 @@ final class AllRowsAggregateTest extends TestCase
         self::assertSame($aggregate->function, $copy->function);
         self::assertSame($aggregate->filter, $copy->filter);
     }
+
+
+    public function testInputsContainOnlyTheFilter(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(n INTEGER NOT NULL)');
+        $statement = (new Binder($schema))->bind('SELECT count(*) FILTER (WHERE n > 0), count(*) FROM t');
+        self::assertInstanceOf(BoundSelect::class, $statement);
+        $filtered = $statement->outputs[0]->expression;
+        self::assertInstanceOf(AllRowsAggregate::class, $filtered);
+        self::assertSame([$filtered->filter], $filtered->inputs());
+        $unfiltered = $statement->outputs[1]->expression;
+        self::assertInstanceOf(AllRowsAggregate::class, $unfiltered);
+        self::assertNull($unfiltered->filter);
+        self::assertSame([], $unfiltered->inputs());
+    }
+
+    public function testSpellingUppercasesTheQualifiedName(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT app.row_total(*), count(*)');
+        self::assertInstanceOf(BoundSelect::class, $statement);
+        $qualified = $statement->outputs[0]->expression;
+        self::assertInstanceOf(AllRowsAggregate::class, $qualified);
+        $builtin = $statement->outputs[1]->expression;
+        self::assertInstanceOf(AllRowsAggregate::class, $builtin);
+        self::assertSame('APP.ROW_TOTAL', $qualified->spelling());
+        self::assertSame('COUNT', $builtin->spelling());
+    }
 }

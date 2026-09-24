@@ -10,6 +10,12 @@ use Override;
  * A mandatory predicate evaluated for each affected row.
  *
  * @visibility public
+ * @example Reading a named check constraint
+ *     $constraint = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER, CONSTRAINT positive CHECK (a > 0) NO INHERIT)')->tables[0]->constraints[0];
+ *     $constraint instanceof \SqlSemantics\Schema\Constraint\Check // => true
+ *     $constraint->name // => 'positive'
+ *     $constraint->enforced // => true
+ *     $constraint->predicate->structure()->toString() // => '("a" > 0)'
  */
 final class Check extends \SqlSemantics\Schema\TableConstraint
 {

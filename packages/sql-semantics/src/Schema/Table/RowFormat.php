@@ -8,6 +8,9 @@ namespace SqlSemantics\Schema\Table;
  * RowFormat alternatives.
  *
  * @visibility public
+ * @example Classifying ROW_FORMAT
+ *     $table = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build('CREATE TABLE t(id INT) ROW_FORMAT=DYNAMIC')->tables[0];
+ *     $table->properties->rowFormat // => \SqlSemantics\Schema\Table\RowFormat::Dynamic
  */
 enum RowFormat: string
 {

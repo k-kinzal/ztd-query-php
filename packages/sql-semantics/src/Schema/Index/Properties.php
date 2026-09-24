@@ -8,6 +8,11 @@ namespace SqlSemantics\Schema\Index;
  * Index storage and access properties.
  *
  * @visibility public
+ * @example Reading MySQL index options
+ *     $index = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))->build("CREATE TABLE t(id INT); CREATE INDEX ix ON t(id) KEY_BLOCK_SIZE=8 COMMENT 'c' INVISIBLE")->tables[0]->indexes[0];
+ *     $index->properties->keyBlockSize // => 8
+ *     $index->properties->comment // => 'c'
+ *     $index->properties->visible // => false
  */
 final class Properties
 {

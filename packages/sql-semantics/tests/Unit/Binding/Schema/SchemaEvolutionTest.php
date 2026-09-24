@@ -207,4 +207,12 @@ final class SchemaEvolutionTest extends TestCase
         $this->expectExceptionMessage('at least one column');
         (new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-9.1.0'))->build('CREATE TABLE t');
     }
+
+    public function testCreateDerivesPartitionAndInheritedColumns(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE p (id INTEGER, v TEXT) PARTITION BY LIST (id)', 'CREATE TABLE c PARTITION OF p (CHECK (id > 0)) FOR VALUES IN (1)', 'CREATE TABLE h (z INTEGER) INHERITS (p)');
+        self::assertSame(['id', 'v'], array_map(static fn ($column): string => $column->name, $schema->tables[1]->columns));
+        self::assertCount(1, $schema->tables[1]->constraints);
+        self::assertSame(['id', 'v', 'z'], array_map(static fn ($column): string => $column->name, $schema->tables[2]->columns));
+    }
 }

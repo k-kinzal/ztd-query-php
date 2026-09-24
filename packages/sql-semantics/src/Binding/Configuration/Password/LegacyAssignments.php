@@ -27,7 +27,7 @@ final class LegacyAssignments
     {
         $operations = [];
         foreach ((new SettingBinder())->setting($tokens, $source, $scope, 'SET') as $setting) {
-            if (!$setting instanceof Configuration\DefaultSetting && !$setting instanceof Configuration\AssignedUserVariable && !$setting instanceof Configuration\AssignedSetting && !$setting instanceof Configuration\CurrentSetting) {
+            if (!$setting instanceof Configuration\DefaultSetting && !$setting instanceof Configuration\AssignedUserVariable && !$setting instanceof Configuration\AssignedSetting && !$setting instanceof Configuration\CurrentSetting && !$setting instanceof Configuration\Connection\ConnectionNames && !$setting instanceof Configuration\Connection\ConnectionCharacterSet) {
                 throw new UnclassifiedSql('Unclassified mixed SET effect.');
             }
             $operations[] = new SetStatement($origin, [$setting]);

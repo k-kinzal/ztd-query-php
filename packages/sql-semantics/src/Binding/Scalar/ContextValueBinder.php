@@ -28,7 +28,7 @@ final class ContextValueBinder
         if ($first === null || in_array($first->name, ['IDENT', 'IDENT_QUOTED', 'ID'], true)) {
             return null;
         }
-        $kind = ContextValueKind::tryFrom(strtoupper($first->text));
+        $kind = ContextValueKind::tryFrom(strtoupper($first->text)) ?? (count($tokens) > 1 && $scope->identifiers->dialect === \SqlSemantics\Dialect::MySql ? self::synonym(strtoupper($first->text)) : null);
         if ($kind === null) {
             return null;
         }
@@ -39,5 +39,18 @@ final class ContextValueBinder
             return null;
         }
         return new ContextReference(new ExpressionFacts(ContextResult::type($kind, $scope->identifiers->dialect, $precision), Nullability::NotNull), $node, $kind, $precision);
+    }
+
+    /**
+     * Reads MySQL's function spellings of the standard current-time requests.
+     */
+    public static function synonym(string $name): ?ContextValueKind
+    {
+        return match ($name) {
+            'NOW' => ContextValueKind::CurrentTimestamp,
+            'CURDATE' => ContextValueKind::CurrentDate,
+            'CURTIME' => ContextValueKind::CurrentTime,
+            default => null,
+        };
     }
 }

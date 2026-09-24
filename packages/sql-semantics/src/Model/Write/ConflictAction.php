@@ -9,6 +9,10 @@ use SqlParser\Parser\Node;
 /**
  * A conflict handler with a typed inference target and operation-specific operands.
  * @visibility public
+ * @example Reading the derived conflict operation
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('INSERT INTO t VALUES(1) ON CONFLICT(id) DO UPDATE SET id=2');
+ *     $statement->conflicts[0]->action->value // => 'update'
  */
 abstract class ConflictAction
 {

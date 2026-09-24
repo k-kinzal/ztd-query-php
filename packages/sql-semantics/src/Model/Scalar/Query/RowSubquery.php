@@ -12,6 +12,12 @@ use SqlSemantics\Model\Scalar\ExpressionFacts;
 /**
  * RowSubquery has explicit semantic operands and a fixed expression category.
  * @visibility public
+ * @example Comparing a row value with a multi-column subquery
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build();
+ *     $query = (new \SqlSemantics\Binder($schema))->bind('SELECT (1, 2) = (SELECT 3, 4)');
+ *     $row = $query->outputs[0]->expression->right;
+ *     $row->spelling() // => 'ROW'
+ *     $row->type->name // => 'record'
  */
 final class RowSubquery extends Expression
 {

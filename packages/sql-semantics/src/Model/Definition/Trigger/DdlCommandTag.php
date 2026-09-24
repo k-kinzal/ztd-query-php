@@ -1,0 +1,140 @@
+<?php
+
+declare(strict_types=1);
+
+namespace SqlSemantics\Model\Definition\Trigger;
+
+/**
+ * A command tag an event trigger can filter on, spelled as PostgreSQL reports it.
+ * @visibility public
+ * @example Filtering an event trigger by command tag
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind("CREATE EVENT TRIGGER guard ON ddl_command_start WHEN TAG IN ('drop table', 'ALTER TABLE') EXECUTE FUNCTION stop_ddl()");
+ *     $statement->tags // => [\SqlSemantics\Model\Definition\Trigger\DdlCommandTag::DropTable, \SqlSemantics\Model\Definition\Trigger\DdlCommandTag::AlterTable]
+ */
+enum DdlCommandTag: string
+{
+    case AlterAccessMethod = 'ALTER ACCESS METHOD';
+    case AlterAggregate = 'ALTER AGGREGATE';
+    case AlterCast = 'ALTER CAST';
+    case AlterCollation = 'ALTER COLLATION';
+    case AlterConstraint = 'ALTER CONSTRAINT';
+    case AlterConversion = 'ALTER CONVERSION';
+    case AlterDefaultPrivileges = 'ALTER DEFAULT PRIVILEGES';
+    case AlterDomain = 'ALTER DOMAIN';
+    case AlterExtension = 'ALTER EXTENSION';
+    case AlterForeignDataWrapper = 'ALTER FOREIGN DATA WRAPPER';
+    case AlterForeignTable = 'ALTER FOREIGN TABLE';
+    case AlterFunction = 'ALTER FUNCTION';
+    case AlterIndex = 'ALTER INDEX';
+    case AlterLanguage = 'ALTER LANGUAGE';
+    case AlterLargeObject = 'ALTER LARGE OBJECT';
+    case AlterMaterializedView = 'ALTER MATERIALIZED VIEW';
+    case AlterOperator = 'ALTER OPERATOR';
+    case AlterOperatorClass = 'ALTER OPERATOR CLASS';
+    case AlterOperatorFamily = 'ALTER OPERATOR FAMILY';
+    case AlterPolicy = 'ALTER POLICY';
+    case AlterProcedure = 'ALTER PROCEDURE';
+    case AlterPublication = 'ALTER PUBLICATION';
+    case AlterRoutine = 'ALTER ROUTINE';
+    case AlterRule = 'ALTER RULE';
+    case AlterSchema = 'ALTER SCHEMA';
+    case AlterSequence = 'ALTER SEQUENCE';
+    case AlterServer = 'ALTER SERVER';
+    case AlterStatistics = 'ALTER STATISTICS';
+    case AlterSubscription = 'ALTER SUBSCRIPTION';
+    case AlterTable = 'ALTER TABLE';
+    case AlterTextSearchConfiguration = 'ALTER TEXT SEARCH CONFIGURATION';
+    case AlterTextSearchDictionary = 'ALTER TEXT SEARCH DICTIONARY';
+    case AlterTextSearchParser = 'ALTER TEXT SEARCH PARSER';
+    case AlterTextSearchTemplate = 'ALTER TEXT SEARCH TEMPLATE';
+    case AlterTransform = 'ALTER TRANSFORM';
+    case AlterTrigger = 'ALTER TRIGGER';
+    case AlterType = 'ALTER TYPE';
+    case AlterUserMapping = 'ALTER USER MAPPING';
+    case AlterView = 'ALTER VIEW';
+    case Comment = 'COMMENT';
+    case CreateAccessMethod = 'CREATE ACCESS METHOD';
+    case CreateAggregate = 'CREATE AGGREGATE';
+    case CreateCast = 'CREATE CAST';
+    case CreateCollation = 'CREATE COLLATION';
+    case CreateConstraint = 'CREATE CONSTRAINT';
+    case CreateConversion = 'CREATE CONVERSION';
+    case CreateDomain = 'CREATE DOMAIN';
+    case CreateExtension = 'CREATE EXTENSION';
+    case CreateForeignDataWrapper = 'CREATE FOREIGN DATA WRAPPER';
+    case CreateForeignTable = 'CREATE FOREIGN TABLE';
+    case CreateFunction = 'CREATE FUNCTION';
+    case CreateIndex = 'CREATE INDEX';
+    case CreateLanguage = 'CREATE LANGUAGE';
+    case CreateMaterializedView = 'CREATE MATERIALIZED VIEW';
+    case CreateOperator = 'CREATE OPERATOR';
+    case CreateOperatorClass = 'CREATE OPERATOR CLASS';
+    case CreateOperatorFamily = 'CREATE OPERATOR FAMILY';
+    case CreatePolicy = 'CREATE POLICY';
+    case CreateProcedure = 'CREATE PROCEDURE';
+    case CreatePublication = 'CREATE PUBLICATION';
+    case CreateRoutine = 'CREATE ROUTINE';
+    case CreateRule = 'CREATE RULE';
+    case CreateSchema = 'CREATE SCHEMA';
+    case CreateSequence = 'CREATE SEQUENCE';
+    case CreateServer = 'CREATE SERVER';
+    case CreateStatistics = 'CREATE STATISTICS';
+    case CreateSubscription = 'CREATE SUBSCRIPTION';
+    case CreateTable = 'CREATE TABLE';
+    case CreateTableAs = 'CREATE TABLE AS';
+    case CreateTextSearchConfiguration = 'CREATE TEXT SEARCH CONFIGURATION';
+    case CreateTextSearchDictionary = 'CREATE TEXT SEARCH DICTIONARY';
+    case CreateTextSearchParser = 'CREATE TEXT SEARCH PARSER';
+    case CreateTextSearchTemplate = 'CREATE TEXT SEARCH TEMPLATE';
+    case CreateTransform = 'CREATE TRANSFORM';
+    case CreateTrigger = 'CREATE TRIGGER';
+    case CreateType = 'CREATE TYPE';
+    case CreateUserMapping = 'CREATE USER MAPPING';
+    case CreateView = 'CREATE VIEW';
+    case DropAccessMethod = 'DROP ACCESS METHOD';
+    case DropAggregate = 'DROP AGGREGATE';
+    case DropCast = 'DROP CAST';
+    case DropCollation = 'DROP COLLATION';
+    case DropConstraint = 'DROP CONSTRAINT';
+    case DropConversion = 'DROP CONVERSION';
+    case DropDomain = 'DROP DOMAIN';
+    case DropExtension = 'DROP EXTENSION';
+    case DropForeignDataWrapper = 'DROP FOREIGN DATA WRAPPER';
+    case DropForeignTable = 'DROP FOREIGN TABLE';
+    case DropFunction = 'DROP FUNCTION';
+    case DropIndex = 'DROP INDEX';
+    case DropLanguage = 'DROP LANGUAGE';
+    case DropMaterializedView = 'DROP MATERIALIZED VIEW';
+    case DropOperator = 'DROP OPERATOR';
+    case DropOperatorClass = 'DROP OPERATOR CLASS';
+    case DropOperatorFamily = 'DROP OPERATOR FAMILY';
+    case DropOwned = 'DROP OWNED';
+    case DropPolicy = 'DROP POLICY';
+    case DropProcedure = 'DROP PROCEDURE';
+    case DropPublication = 'DROP PUBLICATION';
+    case DropRoutine = 'DROP ROUTINE';
+    case DropRule = 'DROP RULE';
+    case DropSchema = 'DROP SCHEMA';
+    case DropSequence = 'DROP SEQUENCE';
+    case DropServer = 'DROP SERVER';
+    case DropStatistics = 'DROP STATISTICS';
+    case DropSubscription = 'DROP SUBSCRIPTION';
+    case DropTable = 'DROP TABLE';
+    case DropTextSearchConfiguration = 'DROP TEXT SEARCH CONFIGURATION';
+    case DropTextSearchDictionary = 'DROP TEXT SEARCH DICTIONARY';
+    case DropTextSearchParser = 'DROP TEXT SEARCH PARSER';
+    case DropTextSearchTemplate = 'DROP TEXT SEARCH TEMPLATE';
+    case DropTransform = 'DROP TRANSFORM';
+    case DropTrigger = 'DROP TRIGGER';
+    case DropType = 'DROP TYPE';
+    case DropUserMapping = 'DROP USER MAPPING';
+    case DropView = 'DROP VIEW';
+    case Grant = 'GRANT';
+    case ImportForeignSchema = 'IMPORT FOREIGN SCHEMA';
+    case Login = 'LOGIN';
+    case RefreshMaterializedView = 'REFRESH MATERIALIZED VIEW';
+    case Reindex = 'REINDEX';
+    case Revoke = 'REVOKE';
+    case SecurityLabel = 'SECURITY LABEL';
+    case SelectInto = 'SELECT INTO';
+}

@@ -15,6 +15,13 @@ use SqlSemantics\Model\Validation\InvalidStructure;
 /**
  * An ordered nonempty program of SQLite trigger query and mutation steps.
  * @visibility public
+ * @example Reading the steps of a trigger body
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER NOT NULL, x INTEGER)');
+ *     $statement = (new \SqlSemantics\Binder($schema))->bind('CREATE TRIGGER tr AFTER UPDATE OF id ON t BEGIN UPDATE t SET x=new.id WHERE id=old.id; SELECT 1; END');
+ *     $statement->body instanceof \SqlSemantics\Model\Trigger\SqliteBody // => true
+ *     count($statement->body->steps) // => 2
+ *     $statement->body->steps[1] instanceof \SqlSemantics\Model\BoundQuery // => true
+ *     new \SqlSemantics\Model\Trigger\SqliteBody([]) // throws \SqlSemantics\Model\Validation\InvalidStructure
  */
 final class SqliteBody
 {

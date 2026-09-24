@@ -7,6 +7,8 @@ namespace SqlSemantics\Model\Scalar\Value;
 /**
 
  * @visibility public
+ * @example Reading the keyword spelling
+ *     \SqlSemantics\Model\Scalar\Value\SettingKeyword::ReadCommitted->value // => 'READ COMMITTED'
 
  */
 enum SettingKeyword: string

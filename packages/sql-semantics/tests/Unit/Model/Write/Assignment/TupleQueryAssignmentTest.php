@@ -10,7 +10,9 @@ use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
 use SqlSemantics\Model\BoundSelect;
 use SqlSemantics\Model\Statement\Mutation\UpdateTableStatement;
+use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\Model\Write\Assignment\TupleQueryAssignment;
+use SqlSemantics\Model\Write\Storage\Path;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(TupleQueryAssignment::class)]
@@ -32,5 +34,38 @@ final class TupleQueryAssignmentTest extends TestCase
         $rebound = (new Binder($schema))->bind($statement->toString());
         self::assertInstanceOf(UpdateTableStatement::class, $rebound);
         self::assertInstanceOf(TupleQueryAssignment::class, $rebound->writes[0]);
+    }
+
+    public function testDestinationsReturnsTheTargetsInDeclarationOrder(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)');
+        $statement = (new Binder($schema))->bind('UPDATE t SET (n,id)=(SELECT 1,2)');
+        self::assertInstanceOf(UpdateTableStatement::class, $statement);
+        $assignment = $statement->writes[0];
+        self::assertInstanceOf(TupleQueryAssignment::class, $assignment);
+        self::assertSame($assignment->targets, $assignment->destinations());
+        self::assertSame(['n', 'id'], array_map(static fn (Path $path): ?string => $path->column()->columnBinding()?->column->name, $assignment->destinations()));
+    }
+
+    public function testDestinationsMustMatchTheQueryWidth(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)');
+        $statement = (new Binder($schema))->bind('UPDATE t SET (n,id)=(SELECT 1,2)');
+        self::assertInstanceOf(UpdateTableStatement::class, $statement);
+        $assignment = $statement->writes[0];
+        self::assertInstanceOf(TupleQueryAssignment::class, $assignment);
+        $this->expectException(InvalidStructure::class);
+        new TupleQueryAssignment([$assignment->targets[0]], $assignment->query, $assignment->source);
+    }
+
+    public function testDestinationsCannotBeEmpty(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)');
+        $statement = (new Binder($schema))->bind('UPDATE t SET (n,id)=(SELECT 1,2)');
+        self::assertInstanceOf(UpdateTableStatement::class, $statement);
+        $assignment = $statement->writes[0];
+        self::assertInstanceOf(TupleQueryAssignment::class, $assignment);
+        $this->expectException(InvalidStructure::class);
+        new TupleQueryAssignment([], $assignment->query, $assignment->source);
     }
 }

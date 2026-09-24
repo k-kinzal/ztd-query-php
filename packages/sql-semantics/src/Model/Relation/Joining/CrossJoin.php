@@ -14,6 +14,12 @@ use SqlSemantics\Model\TableUse;
  * The Cartesian product of two inputs, without a match predicate.
  *
  * @visibility public
+ * @example Binding a Cartesian product
+ *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER NOT NULL, n INTEGER)');
+ *     $query = (new \SqlSemantics\Binder($schema))->bind('SELECT * FROM t AS a CROSS JOIN t AS b');
+ *     $query->from instanceof \SqlSemantics\Model\Relation\Joining\CrossJoin // => true
+ *     $query->from->kind // => \SqlSemantics\Model\JoinKind::Cross
+ *     count($query->outputs) // => 4
  */
 final class CrossJoin extends Join
 {
