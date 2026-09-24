@@ -97,6 +97,7 @@ use WeakMap;
 #[UsesClass(LiteralText::class)]
 #[UsesClass(TextPattern::class)]
 #[UsesClass(TypeShape::class)]
+#[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
 #[UsesClass(\SqlCatalog\Analysis\Effect\WriteEffects::class)]
 #[UsesClass(\SqlCatalog\Analysis\Effect\ReferenceEffects::class)]
 final class SliceExecutorTest extends TestCase

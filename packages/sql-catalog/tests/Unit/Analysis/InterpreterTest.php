@@ -91,6 +91,7 @@ use SqlCatalog\Text\Origin;
 #[UsesClass(\SqlCatalog\Extension\MysqliExtension::class)]
 #[UsesClass(\SqlCatalog\Extension\WordPressExtension::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\CallerSet::class)]
+#[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
 #[UsesClass(\SqlCatalog\Analysis\Effect\WriteEffects::class)]
 #[UsesClass(\SqlCatalog\Analysis\Effect\ReferenceEffects::class)]
 final class InterpreterTest extends TestCase

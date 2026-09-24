@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace SqlCatalog\Cli;
 
 use SqlCatalog\Catalog\Severity;
+use SqlCatalog\Configuration;
 use SqlCatalog\Filter\CatalogFilter;
+use SqlCatalog\InvalidConfigurationException;
 use SqlCatalog\Sql\StatementKind;
 
 /**
@@ -16,6 +18,8 @@ use SqlCatalog\Sql\StatementKind;
 final class CommandLineParser
 {
     private const VALUE_OPTIONS = [
+        'config' => 'config',
+        'c' => 'config',
         'output' => 'output',
         'o' => 'output',
         'reporter' => 'reporter',
@@ -46,6 +50,7 @@ final class CommandLineParser
      *
      * @param list<string> $arguments The arguments, without the command name
      * @throws InvalidCommandLineException When an argument is not one the command takes
+     * @throws InvalidConfigurationException When the catalog configuration is invalid
      */
     public function parse(array $arguments): CommandLine
     {
@@ -63,7 +68,26 @@ final class CommandLineParser
             $index = $this->readOption($argument, $arguments, $index, $values, $flags);
         }
 
-        return $this->build($values, $flags, $paths);
+        $configuration = $flags === [] ? $this->configuration($this->last($values, 'config')) : new Configuration();
+        $defaults = $configuration->options;
+        $configuredPaths = $defaults['paths'] ?? [];
+        unset($defaults['paths']);
+
+        return $this->build(array_replace($defaults, $values), $flags, $paths === [] ? $configuredPaths : $paths, $configuration);
+    }
+
+    /**
+     * Loads an explicit catalog file or the working directory's .catalog.yaml.
+     *
+     * @throws InvalidConfigurationException When the selected file cannot be loaded
+     */
+    public function configuration(?string $path): Configuration
+    {
+        if ($path !== null) {
+            return Configuration::load($path);
+        }
+
+        return is_file('.catalog.yaml') ? Configuration::load('.catalog.yaml') : new Configuration();
     }
 
     /**
@@ -96,7 +120,7 @@ final class CommandLineParser
         if ($value === null || ($inline === null && str_starts_with($value, '-'))) {
             throw new InvalidCommandLineException(sprintf('Option "%s" needs a value.', $argument));
         }
-        foreach (explode(',', $value) as $part) {
+        foreach ($option === 'config' ? [$value] : explode(',', $value) as $part) {
             $values[$option][] = trim($part);
         }
 
@@ -111,7 +135,7 @@ final class CommandLineParser
      * @param list<string> $paths
      * @throws InvalidCommandLineException When an option was given a value it does not take
      */
-    public function build(array $values, array $flags, array $paths): CommandLine
+    public function build(array $values, array $flags, array $paths, Configuration $configuration = new Configuration()): CommandLine
     {
         $output = $this->last($values, 'output');
 
@@ -127,6 +151,8 @@ final class CommandLineParser
             $flags['help'] ?? false,
             $flags['list-extensions'] ?? false,
             $flags['list-reporters'] ?? false,
+            $this->last($values, 'config') ?? $configuration->file,
+            $configuration,
         );
     }
 

@@ -172,6 +172,102 @@ also says which global variables hold its handle, which is what makes the
 analyzer reads an `@global` or `@var` tag documenting the declaration first, so
 an application that annotates its own globals needs no extension at all.
 
+## Catalog configuration
+
+The command automatically reads `.catalog.yaml` in the working directory.
+Store the catalog's source paths, exclusions, output, extensions and function
+models there:
+
+~~~yaml
+paths: [src, app]
+exclude: [vendor, tests]
+extensions: [pdo, mysqli]
+reporter: html
+output: catalog
+~~~
+
+Then run `vendor/bin/sql-catalog`. Use `--config=other.yaml` (or `-c`) to select
+another catalog configuration. YAML is read as data; PHP configuration files
+are not executed.
+
+Paths, output directories and the reporting root in YAML are relative to the
+configuration file's directory. The reporting root defaults to that directory.
+Explicit CLI settings override the corresponding YAML settings; CLI source
+paths replace the configured paths, and CLI lists replace the configured list.
+CLI filesystem paths remain relative to the working directory.
+
+Supported keys are:
+
+| Keys | Value |
+|------|-------|
+| `paths`, `extensions`, `exclude` | Lists of strings |
+| `namespace`, `method`, `path`, `kind`, `table`, `sink` | Lists of filter values, with the same meaning as the CLI options |
+| `output`, `reporter`, `root`, `fail-on`, `severity` | Non-empty strings |
+| `function-models` | A mapping of PHP function names to model classes or callable names |
+
+An empty list clears that configured list. Unknown settings and invalid values
+are reported as configuration errors. Help and extension/reporter listings do
+not load the configuration. See [examples/catalog.yaml](examples/catalog.yaml).
+
+## Function models
+
+Every supported PHP function, including `sprintf`, `implode`, `join`,
+`str_repeat`, `count` and `array_fill`, uses the same `register()` API.
+
+The built-in `array_fill` model selects a representative singleton array when
+its third argument resolves to `'?'`. The `implode`/`join` model then produces
+one placeholder, including when values pass through intermediate variables:
+
+~~~php
+$size = count($ids);
+$items = array_fill(0, $size, '?');
+$marks = implode(',', $items);
+$db->prepare('SELECT * FROM users WHERE id IN (' . $marks . ')');
+~~~
+
+This is catalogued as `SELECT * FROM users WHERE id IN (?)` by default.
+No count is inferred or enumerated; even a known count or zero yields the same
+representative. Other `array_fill` values remain unresolved. Resolution and
+binding checks operate on the modeled SQL shape, so the representative does not
+establish the runtime number of bound parameters.
+
+To override a built-in or model an application helper, name a Composer-autoloaded
+invokable class, static method or function in `.catalog.yaml`:
+
+~~~yaml
+function-models:
+  array_fill: 'App\Catalog\ArrayFillModel'
+  'App\table_name': 'App\Catalog\TableNameModel::evaluate'
+~~~
+
+Invokable classes are constructed without arguments. Each model receives a list
+of evaluated `Domain` arguments in source order and returns `?Domain`. A model
+can supply a constant, an array or partially known text using the same domain
+types as the built-ins. Function names are case-insensitive and retain their
+namespace.
+
+From PHP, register a callable directly:
+
+~~~php
+use SqlCatalog\Analysis\FunctionModel\Registry;
+use SqlCatalog\Analyzer;
+use SqlCatalog\Evaluation\Domain;
+
+$models = Registry::withBuiltins();
+$models->register('App\\table_name', static fn (array $arguments): Domain => Domain::literal('users'));
+$catalog = (new Analyzer(functionModels: $models))->analyzePaths(['src']);
+~~~
+
+Later registrations take priority, including over built-ins. Returning `null`
+defers to the preceding model, then ordinary source analysis. Return
+`Domain::unknown()` to explicitly replace a built-in result with an unknown
+value. Models interpret calls without executing the analyzed application.
+
+`$analyzer->withConfiguration(Configuration::load('.catalog.yaml'))` returns
+another analyzer with that file's function models applied; command settings
+such as output and filtering are used by the CLI. The original analyzer and
+subsequent CLI runs keep their own registrations.
+
 ## Reporters
 
 | Reporter | Writes | Purpose |

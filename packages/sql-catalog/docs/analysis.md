@@ -378,3 +378,27 @@ code rather than in the analyzer:
 Most of the remaining gaps sit inside otherwise-resolved statements and are
 `$wpdb->posts`-style table names, which WordPress fixes at runtime from its
 configured prefix.
+
+## Configured function models
+
+Function evaluation uses `Analysis\FunctionModel\Registry`. The standard
+models are installed by `BuiltinCallModel::register()`, and applications can
+register additional models or conditional overrides through the same API.
+Models receive evaluated argument domains, so assignments and traced helper
+returns compose with them normally.
+
+The built-in `array_fill` model represents arrays filled with `'?'` as one
+placeholder, regardless of count. Together with `implode` this catalogs variable
+placeholder lists as `IN (?)` without enumerating lengths. A registered
+override takes precedence. Other unmodeled dependencies remain open.
+
+The CLI loads project settings from `.catalog.yaml`, including function model
+classes, paths, filters and output settings. Explicit command-line options
+override the corresponding file settings. See
+[Catalog configuration](../README.md#catalog-configuration) and
+[Function models](../README.md#function-models) for the configuration and
+registration contracts.
+
+Configured interpretations and built-in normalization define the cataloged SQL
+shape. Completion and binding findings describe that interpretation rather
+than discarded runtime variants.

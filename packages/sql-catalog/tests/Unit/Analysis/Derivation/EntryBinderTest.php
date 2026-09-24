@@ -117,6 +117,8 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(TextPattern::class)]
 #[UsesClass(TypeShape::class)]
 #[UsesClass(CallerSet::class)]
+#[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
+#[UsesClass(\SqlCatalog\Analysis\BuiltinCallModel::class)]
 #[UsesClass(\SqlCatalog\Analysis\Effect\WriteEffects::class)]
 #[UsesClass(\SqlCatalog\Analysis\Effect\ReferenceEffects::class)]
 final class EntryBinderTest extends TestCase

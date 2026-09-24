@@ -61,6 +61,10 @@ deptrac:
       collectors:
         - type: directory
           value: 'src/Cli/'
+    - name: Yaml
+      collectors:
+        - type: classLike
+          value: '^Symfony\\Component\\Yaml\\.*'
     - name: PhpParser
       collectors:
         - type: classLike
@@ -77,6 +81,7 @@ deptrac:
     Analysis: [Catalog, Evaluation, Extension, Php, Sql, Text, Type, PhpParser]
     Filter: [Catalog, Sql]
     Reporter: [Catalog]
-    Facade: [Analysis, Catalog, Extension, Php, Source]
+    Facade: [Analysis, Catalog, Extension, Php, Source, Yaml]
     Cli: [Catalog, Extension, Facade, Filter, Reporter, Source, Sql]
+    Yaml: []
     PhpParser: []
