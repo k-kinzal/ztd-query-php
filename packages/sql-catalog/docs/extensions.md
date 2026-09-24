@@ -70,7 +70,9 @@ $catalog = $analyzer->analyzeSource([
 The same hook handles instance methods, static calls and constructors. Models
 must inspect the AST before accepting a call and interpret named or unpacked
 arguments themselves. Known but unsupported overloads should return an opaque
-domain rather than claim an exact value.
+domain rather than claim an exact value. A model accepting a call owns its
+side effects through the context's environment and object memory; the core's
+conservative unknown-call invalidation runs only when all models decline.
 
 ## Calls executing modelled queries
 

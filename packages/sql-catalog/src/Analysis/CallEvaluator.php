@@ -83,13 +83,13 @@ final class CallEvaluator
         }
         $receiver = $node instanceof Expr\MethodCall || $node instanceof Expr\NullsafeMethodCall ? $expressions->evaluate($node->var, $environment, $scope) : null;
         $arguments = $this->arguments($node, $environment, $scope, $expressions);
-        $this->applyEffects($node, $environment);
 
         if ($node instanceof Expr\New_) {
             $modelled = $this->functions->evaluateCall(new CallContext($node, $arguments, $environment, $scope, $expressions, className: $node->class instanceof Node\Name ? $node->class->toString() : null));
             if ($modelled !== null) {
                 return $modelled;
             }
+            $this->applyEffects($node, $environment);
             $this->invalidateEscapes($node, $environment);
             return $this->evaluateInstantiation($node, $scope);
         }
@@ -185,6 +185,7 @@ final class CallEvaluator
     ): Domain {
         $name = $node->name instanceof Node\Identifier ? $node->name->toString() : null;
         if ($name === null) {
+            $this->applyEffects($node, $environment);
             $this->invalidateEscapes($node, $environment);
             $environment->objects()->invalidate($receiver ?? $expressions->evaluate($node->var, $environment, $scope));
             return Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node));
@@ -196,6 +197,7 @@ final class CallEvaluator
         if ($modelled !== null) {
             return $modelled;
         }
+        $this->applyEffects($node, $environment);
         if ($sink !== null) {
             return $this->applySink($sink, $node, $arguments, $scope);
         }
@@ -267,6 +269,7 @@ final class CallEvaluator
         $className = $node->class instanceof Node\Name ? $node->class->toString() : null;
         if ($name === null || $className === null) {
             if ($environment !== null) {
+                $this->applyEffects($node, $environment);
                 $this->invalidateEscapes($node, $environment);
             }
             return Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node));
@@ -281,6 +284,7 @@ final class CallEvaluator
         if ($modelled !== null) {
             return $modelled;
         }
+        $this->applyEffects($node, $environment);
         if ($sink !== null) {
             return $this->applySink($sink, $node, $arguments, $scope);
         }
@@ -307,6 +311,7 @@ final class CallEvaluator
     ): Domain {
         if (!$node->name instanceof Node\Name) {
             if ($environment !== null) {
+                $this->applyEffects($node, $environment);
                 $this->invalidateEscapes($node, $environment);
             }
             return Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node));
@@ -319,6 +324,7 @@ final class CallEvaluator
         if ($modelled !== null) {
             return $modelled;
         }
+        $this->applyEffects($node, $environment);
         if ($sink !== null) {
             return $this->applySink($sink, $node, $arguments, $scope);
         }

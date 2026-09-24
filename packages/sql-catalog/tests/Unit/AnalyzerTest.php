@@ -1015,5 +1015,27 @@ PHP;
         self::assertSame('select * from "accounts" where "id" = ?', $catalog->entries()[0]->sql());
         self::assertTrue($catalog->entries()[0]->searchClosed());
     }
+    public function testAnalyzeSourceRetainsBindingsReusedByModelledBuilderCalls(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource(['query.php' => '<?php use Illuminate\\Support\\Facades\\DB; $id = 7; DB::table("users")->where("a", $id)->where("b", $id)->get();'], new AnalysisOptions(['laravel'], dialect: 'sqlite'));
+        self::assertCount(1, $catalog->entries());
+        self::assertSame('select * from "users" where "a" = ? and "b" = ?', $catalog->entries()[0]->sql());
+        self::assertSame([7], $catalog->entries()[0]->placeholders[0]->value?->values);
+        self::assertSame([7], $catalog->entries()[0]->placeholders[1]->value?->values);
+        self::assertTrue($catalog->entries()[0]->searchClosed());
+    }
+
+    public function testAnalyzeSourceLetsRegisteredCallModelsOwnTheirArgumentEffects(): void
+    {
+        $extension = self::createStub(\SqlCatalog\Extension\Model\ModelProviderInterface::class);
+        $extension->method('name')->willReturn('example');
+        $extension->method('sinks')->willReturn([]);
+        $extension->method('globals')->willReturn([]);
+        $extension->method('models')->willReturn(new \SqlCatalog\Extension\Model\ModelSet(calls: [static fn (\SqlCatalog\Extension\Model\CallContext $call): ?\SqlCatalog\Evaluation\Domain => $call->name === 'fragment' ? $call->arguments[0] : null]));
+        $analyzer = new Analyzer(new ExtensionRegistry([new PdoExtension(), $extension]));
+        $catalog = $analyzer->analyzeSource(['query.php' => '<?php $table = "items"; $pdo = new PDO("sqlite::memory:"); $pdo->query("SELECT * FROM " . fragment($table) . " JOIN " . fragment($table));'], new AnalysisOptions(['pdo', 'example']));
+        self::assertSame('SELECT * FROM items JOIN items', $catalog->entries()[0]->sql());
+        self::assertTrue($catalog->entries()[0]->searchClosed());
+    }
 
 }
