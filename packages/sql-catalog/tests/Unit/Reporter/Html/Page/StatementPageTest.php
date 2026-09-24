@@ -161,7 +161,7 @@ final class StatementPageTest extends TestCase
         $facts = (new StatementPage())->facts(new ReportSite(new Catalog([$entry])), $entry);
 
         self::assertStringContainsString('<dt>Resolution</dt><dd><span class="chip chip-ghost">incomplete</span>', $facts);
-        self::assertStringContainsString('<dt>Search</dt><dd><span class="muted">left open: the listing for this call is a lower bound</span></dd>', $facts);
+        self::assertStringContainsString('<dt>Search</dt><dd><span class="muted">left open: candidates or dependencies remain unknown</span></dd>', $facts);
         self::assertStringContainsString('<dt>Tables</dt><dd><a class="chip chip-ghost" href="../tables/users.html">users</a> </dd>', $facts);
         self::assertStringContainsString('<dt>Identifier</dt><dd><code>a1</code>', $facts);
     }
@@ -333,7 +333,7 @@ final class StatementPageTest extends TestCase
                 . 'om parts that vary independently, so some of the alternatives at this call may be unreachable.</li></ul></div><div class="split"><section><h2 id="fact'
                 . 's">About this statement</h2><dl class="facts"><div><dt>Resolution</dt><dd><span class="chip tone-danger">external-input</span> <span class="muted">The'
                 . ' values were followed to runtime input, so the text cannot be fixed.</span></dd></div><div><dt>Search</dt><dd><span class="muted">closed: every depend'
-                . 'ency was followed to its end</span></dd></div><div><dt>Tables</dt><dd><a class="chip chip-ghost" href="../tables/posts.html">posts</a> </dd></div><div'
+                . 'ency was followed to its end</span></dd></div><div><dt>Reachability</dt><dd><span class="muted">not assessed: both branches are retained, including constant conditions</span></dd></div><div><dt>Tables</dt><dd><a class="chip chip-ghost" href="../tables/posts.html">posts</a> </dd></div><div'
                 . '><dt>Kind</dt><dd><span class="chip tone-blue">SELECT</span></dd></div><div><dt>Identifier</dt><dd><code>a1</code> <span class="muted">stable across r'
                 . 'uns while the statement is unchanged</span></dd></div></dl></section><section><h2 id="values">Bound values</h2><div class="table-wrap"><table><thead><'
                 . 'tr><th scope="col" class="tight">Parameter</th><th scope="col" class="tight">Type</th><th scope="col">Bound to</th></tr></thead><tbody><tr><td class="'
@@ -422,8 +422,8 @@ final class StatementPageTest extends TestCase
 $db-&gt;query($sql)</pre><div class="notice tone-warn"><ul><'
                 . 'li>The call was found but never examined, so nothing was read from it.</li></ul></div><section><h2 id="facts">About this statement</h2><dl class="fact'
                 . 's"><div><dt>Resolution</dt><dd><span class="chip tone-neutral">not-analyzed</span> <span class="muted">The call was found but never examined, so nothi'
-                . 'ng was read from it.</span></dd></div><div><dt>Search</dt><dd><span class="muted">left open: the listing for this call is a lower bound</span></dd></d'
-                . 'iv><div><dt>Tables</dt><dd><span class="none">none named</span></dd></div><div><dt>Kind</dt><dd><span class="chip tone-slate">UNKNOWN</span></dd></div'
+                . 'ng was read from it.</span></dd></div><div><dt>Search</dt><dd><span class="muted">left open: candidates or dependencies remain unknown</span></dd></d'
+                . 'iv><div><dt>Reachability</dt><dd><span class="muted">not assessed: both branches are retained, including constant conditions</span></dd></div><div><dt>Tables</dt><dd><span class="none">none named</span></dd></div><div><dt>Kind</dt><dd><span class="chip tone-slate">UNKNOWN</span></dd></div'
                 . '><div><dt>Identifier</dt><dd><code>c2</code> <span class="muted">stable across runs while the statement is unchanged</span></dd></div></dl></section><'
                 . 'h2 id="findings">Findings</h2><ul class="finding-list"><li><span class="chip tone-neutral">low</span><span><code>call-not-analyzed</code> unseen</span'
                 . '></li></ul>',

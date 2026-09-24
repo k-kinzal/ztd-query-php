@@ -73,6 +73,10 @@ final class SourceParser
             }
         }
 
+        foreach ($resolved as $statement) {
+            $statement->setAttribute('fileStatements', $resolved);
+        }
+
         return $resolved;
     }
 }

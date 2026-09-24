@@ -86,6 +86,8 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(\SqlCatalog\Analysis\Derivation\Slice\LoopPasses::class)]
 #[UsesClass(SliceStep::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\SourceTree::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\WriteEffects::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\ReferenceEffects::class)]
 final class ReferenceEvaluatorTest extends TestCase
 {
     #[DataProvider('providerEvaluate')]

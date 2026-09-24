@@ -184,4 +184,13 @@ final class QueryRecordTest extends TestCase
         self::assertFalse($fresh->combined);
         self::assertTrue((new QueryRecord($site, 'k', TextPattern::fromText('SELECT 1'), null, true))->combined);
     }
+    #[DataProvider('providerIsTruncatedAfterAbsorb')]
+    public function testAbsorbPreservesCombinationUncertaintyInEitherOrder(bool $held, bool $absorbed, bool $expected): void
+    {
+        $site = new CallSite('a.php', 1, 'f', 's');
+        $record = new QueryRecord($site, 'k', TextPattern::fromText('SELECT 1'), combined: $held);
+        $record->absorb(new QueryRecord($site, 'k', TextPattern::fromText('SELECT 1'), combined: $absorbed));
+        self::assertSame($expected, $record->combined);
+    }
+
 }

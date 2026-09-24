@@ -8,7 +8,7 @@ use SqlCatalog\Sql\StatementKind;
 use SqlCatalog\Text\TextPattern;
 
 /**
- * One statement the analyzed application can issue.
+ * One syntactic SQL candidate. Runtime reachability is not assessed.
  *
  * @visibility root
  */
@@ -22,9 +22,10 @@ final class CatalogEntry
      * @param list<Placeholder> $placeholders The bind parameters, in order
      * @param CallSite $site Where the statement is issued
      * @param list<Finding> $findings What is worth reporting about the statement
-     * @param bool $correlated Whether the alternatives at this call site are ones the code can reach
+     * @param bool $correlated Whether values kept their structural pairing, without a reachability guarantee
      * @param list<string> $through The path taken to this reading, from the body the walk started in, outermost first
      * @param bool $truncated Whether a bound — on loop passes, callers or ways in — cut the search short of every way the statement can be
+     * @param bool $siteClosed Whether every sibling candidate at this call site has closed dependencies
      */
     public function __construct(
         public readonly string $id,
@@ -37,6 +38,7 @@ final class CatalogEntry
         public readonly bool $correlated = true,
         public readonly array $through = [],
         public readonly bool $truncated = false,
+        public readonly bool $siteClosed = true,
     ) {
     }
 
@@ -54,11 +56,12 @@ final class CatalogEntry
      * A statement whose text reached runtime input is closed: the trail was
      * followed as far as it goes. One cut short by a budget, or by a limit on
      * how many loop passes or callers are followed, is not, however much of
-     * its text resolved.
+     * its text resolved. An unresolved sibling keeps the entire call site open.
+     * Closure never guarantees that a candidate is reachable at runtime.
      */
     public function searchClosed(): bool
     {
-        return $this->resolution()->isClosed() && !$this->truncated;
+        return $this->resolution()->isClosed() && !$this->truncated && $this->siteClosed;
     }
 
     /**
