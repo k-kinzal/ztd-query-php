@@ -47,4 +47,11 @@ final class SourceParserTest extends TestCase
     {
         self::assertCount(1, (new SourceParser())->resolveNames([new Nop()]));
     }
+
+    public function testResolveNamesConnectsFileScopeSiblingsForWriteAnalysis(): void
+    {
+        $file = (new SourceParser())->parse('a.php', '<?php $a =& $b; $b = 1;');
+        self::assertSame($file->statements, $file->statements[1]->getAttribute('fileStatements'));
+    }
+
 }

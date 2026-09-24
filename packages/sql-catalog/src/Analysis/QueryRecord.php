@@ -47,7 +47,7 @@ final class QueryRecord
         public readonly string $siteKey,
         public readonly TextPattern $pattern,
         public readonly ?StatementKind $kind = null,
-        public readonly bool $combined = false,
+        public bool $combined = false,
         public readonly array $through = [],
         bool $truncated = false,
     ) {
@@ -118,6 +118,7 @@ final class QueryRecord
         }
         $this->bound = $this->bound || $other->bound;
         $this->truncated = $this->truncated || $other->truncated;
+        $this->combined = $this->combined || $other->combined;
     }
 
     /**

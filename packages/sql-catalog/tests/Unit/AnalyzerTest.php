@@ -119,6 +119,8 @@ use SqlCatalog\Source\SourceScanException;
 #[UsesClass(\SqlCatalog\Configuration::class)]
 #[UsesClass(\SqlCatalog\Analysis\FunctionModel\NamedModel::class)]
 #[UsesClass(\SqlCatalog\ConfigurationSchema::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\WriteEffects::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\ReferenceEffects::class)]
 final class AnalyzerTest extends TestCase
 {
     public function testIssetGuardsAConditionallyAssignedSqlFragment(): void
@@ -149,7 +151,7 @@ final class AnalyzerTest extends TestCase
      * @param list<string> $expected
      */
     #[DataProvider('providerIssetSqlFragments')]
-    public function testIssetSqlFragmentsKeepTheReachableStatements(string $source, array $expected): void
+    public function testIssetSqlFragmentsKeepBothSyntacticBranches(string $source, array $expected): void
     {
         $catalog = (new Analyzer())->analyzeSource(['a.php' => '<?php ' . $source]);
 
@@ -189,7 +191,7 @@ final class AnalyzerTest extends TestCase
             'empty and false values are set' => [
                 'function run(PDO $pdo, bool $on): void { $tail = $on ? "" : false;'
                     . ' $pdo->prepare("SELECT * FROM users" . (isset($tail) ? $tail : " WHERE active = 1")); }',
-                ['SELECT * FROM users'],
+                ['SELECT * FROM users', 'SELECT * FROM users WHERE active = 1'],
             ],
             'two optional fragments' => [
                 'function run(PDO $pdo, bool $filter, bool $sort): void { if ($filter) { $where = " WHERE active = 1"; }'
@@ -200,7 +202,7 @@ final class AnalyzerTest extends TestCase
             'correlated variables' => [
                 'function run(PDO $pdo, bool $on): void { if ($on) { $table = "admins"; $tail = " WHERE admin = 1"; } else { $table = "users"; }'
                     . ' $pdo->prepare("SELECT * FROM " . $table . (isset($tail) ? $tail : "")); }',
-                ['SELECT * FROM users', 'SELECT * FROM admins WHERE admin = 1'],
+                ['SELECT * FROM users', 'SELECT * FROM admins', 'SELECT * FROM admins WHERE admin = 1'],
             ],
             'nullable parameter supplied by callers' => [
                 'function run(PDO $pdo, ?string $tail): void { $pdo->prepare("SELECT * FROM users" . (isset($tail) ? $tail : "")); }'
@@ -612,6 +614,106 @@ PHP;
         $source = '<?php function f(PDO $db, array $ids) { $db->prepare("SELECT * FROM users WHERE id IN (" . implode(",", array_fill(0, count($ids), "?")) . ")"); }';
         self::assertSame('SELECT * FROM users WHERE id IN (?,?)', $configured->analyzeSource(['users.php' => $source])->entries()[0]->sql());
         self::assertSame('SELECT * FROM users WHERE id IN (?)', $analyzer->analyzeSource(['users.php' => $source])->entries()[0]->sql());
+    }
+
+    #[DataProvider('providerUncertainWrites')]
+    public function testUncertainWritesRemainOpenInsteadOfBecomingEmpty(string $body): void
+    {
+        $catalog = (new Analyzer())->analyzeSource([
+            'a.php' => '<?php function mutate(&$x) { $x = "tail"; } function fragment() { ' . $body
+                . ' return "SELECT * FROM users" . (isset($tail) ? $tail : ""); }'
+                . ' function run(PDO $pdo) { $pdo->query(fragment()); }',
+        ]);
+        self::assertEqualsCanonicalizing(['SELECT * FROM users', 'SELECT * FROM users{$}'], array_map(
+            static fn (CatalogEntry $entry): string => $entry->sql(),
+            $catalog->entries(),
+        ));
+        self::assertSame([false, false], array_map(static fn (CatalogEntry $entry): bool => $entry->searchClosed(), $catalog->entries()));
+    }
+
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function providerUncertainWrites(): array
+    {
+        return [
+            'include' => ['include "fragment.php";'],
+            'require' => ['require "fragment.php";'],
+            'eval' => ['eval($code);'],
+            'dynamic assignment' => ['$$name = "tail";'],
+            'dynamic element assignment' => ['$$name[0] = "tail";'],
+            'dynamic reference argument' => ['mutate($$name);'],
+            'dynamic call' => ['$call($data);'],
+            'builtin reference output' => ['str_replace("a", "b", "c", $tail);'],
+            'extract' => ['extract($data);'],
+            'known reference call' => ['mutate($tail);'],
+            'named reference call' => ['mutate(x: $tail);'],
+            'unknown reference call' => ['unknown($tail);'],
+            'static reference call' => ['Unknown::mutate($tail);'],
+            'method reference call' => ['$object->mutate($tail);'],
+            'later alias write' => ['$alias =& $tail; $tail = "before"; $alias = "after";'],
+            'escaped closure' => ['$callback = function () use (&$tail) { $tail = "after"; }; $tail = "before"; $callback();'],
+            'global changed by call' => ['global $tail; $tail = "before"; unknown();'],
+        ];
+    }
+
+    /**
+     * @param list<string> $expected
+     */
+    #[DataProvider('providerUnconditionalCandidates')]
+    public function testUnconditionalCandidatesNormalizeOnlyWhenStringified(string $body, array $expected): void
+    {
+        $catalog = (new Analyzer())->analyzeSource([
+            'a.php' => '<?php function fragment() { ' . $body . ' } function run(PDO $pdo) { $pdo->query("SELECT " . fragment()); }',
+        ]);
+        self::assertEqualsCanonicalizing($expected, array_map(static fn (CatalogEntry $entry): string => $entry->sql(), $catalog->entries()));
+    }
+
+    /**
+     * @return array<string, array{string, list<string>}>
+     */
+    public static function providerUnconditionalCandidates(): array
+    {
+        return [
+            'true ternary' => ['return true ? "1" : "2";', ['SELECT 1', 'SELECT 2']],
+            'false ternary' => ['return false ? "1" : "2";', ['SELECT 1', 'SELECT 2']],
+            'no reaching assignment' => ['return isset($tail) ? $tail : "";', ['SELECT ']],
+            'null and empty' => ['return true ? null : "";', ['SELECT ']],
+            'literal empty and unresolved' => ['return true ? "" : unknown();', ['SELECT ', 'SELECT {$}']],
+            'definite overwrite after include' => ['include "a.php"; $tail = "1"; return $tail;', ['SELECT 1']],
+            'unset after include' => ['include "a.php"; unset($tail); return $tail;', ['SELECT ']],
+            'ternary effects' => ['$tail = "0"; true ? ($tail = "1") : ($tail = "2"); return $tail;', ['SELECT 1', 'SELECT 2']],
+            'optional ternary effect' => ['$tail = "0"; true ? ($tail = "1") : "2"; return $tail;', ['SELECT 0', 'SELECT 1']],
+            'short circuit effect' => ['$tail = "0"; true && ($tail = "1"); return $tail;', ['SELECT 0', 'SELECT 1']],
+            'match effects' => ['match (1) { 1 => $tail = "1", default => $tail = "2" }; return $tail;', ['SELECT 1', 'SELECT 2']],
+        ];
+    }
+
+    public function testMixedExternalAndUnresolvedDependenciesDoNotCloseTheSearch(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource([
+            'a.php' => '<?php function f(PDO $pdo) { $pdo->query("SELECT " . $_GET["x"] . unknown()); }',
+        ]);
+        self::assertSame(Resolution::IncompleteModel, $catalog->entries()[0]->resolution());
+        self::assertFalse($catalog->entries()[0]->searchClosed());
+    }
+
+    public function testFileScopeAliasesCannotHideLaterWrites(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource([
+            'a.php' => '<?php $alias =& $tail; $tail = "before"; $alias = "after"; $pdo = new PDO("sqlite::memory:"); $pdo->query("SELECT " . $tail);',
+        ]);
+        self::assertSame('SELECT {$}', $catalog->entries()[0]->sql());
+        self::assertFalse($catalog->entries()[0]->searchClosed());
+    }
+
+    public function testAHelperReturnCutShortByTheLoopBudgetCannotCloseTheCaller(): void
+    {
+        $catalog = (new Analyzer())->analyzeSource([
+            'a.php' => '<?php function fragment() { $tail = ""; while (unknown()) { $tail .= "x"; } return $tail; } function run(PDO $pdo) { $pdo->query("SELECT " . fragment()); }',
+        ], new AnalysisOptions(budget: new EvaluationBudget(maxLoopPasses: 1)));
+        self::assertNotEmpty($catalog->entries());
+        self::assertNotContains(true, array_map(static fn (CatalogEntry $entry): bool => $entry->searchClosed(), $catalog->entries()));
     }
 
 }

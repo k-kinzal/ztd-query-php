@@ -7,6 +7,8 @@ namespace SqlCatalog\Analysis;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use SqlCatalog\Analysis\Derivation\CalleeReturns;
+use SqlCatalog\Analysis\Effect\ReferenceEffects;
+use SqlCatalog\Analysis\Effect\WriteEffects;
 use SqlCatalog\Analysis\FunctionModel\Registry;
 use SqlCatalog\Evaluation\Domain;
 use SqlCatalog\Evaluation\Environment;
@@ -45,6 +47,8 @@ final class CallEvaluator
 
     private ?CalleeReturns $returns;
 
+    private ?ReferenceEffects $references = null;
+
     /**
      * Wires the evaluator to everything a call may need.
      */
@@ -77,6 +81,7 @@ final class CallEvaluator
             return Domain::of(new ObjectTerm('Closure'));
         }
         $arguments = $this->arguments($node, $environment, $scope, $expressions);
+        $this->applyEffects($node, $environment);
 
         if ($node instanceof Expr\New_) {
             return $this->evaluateInstantiation($node, $scope);
@@ -92,6 +97,35 @@ final class CallEvaluator
         }
 
         return Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node));
+    }
+
+    /**
+     * Opens arguments whose callees may write through references.
+     */
+    public function applyEffects(Expr\CallLike $node, Environment $environment): void
+    {
+        if ($node instanceof Expr\FuncCall && $node->name instanceof Node\Name) {
+            $name = $this->functionName($node->name);
+            if ($this->sinks->matchFunction($name) !== null) {
+                return;
+            }
+            if ($this->index->findFunction($name) === null && $this->functions->supports($name)) {
+                $count = $node->getArgs()[3] ?? null;
+                if ($this->functions->normalize($name) === 'str_replace' && $count !== null) {
+                    (new WriteEffects())->apply((new Derivation\ModifiedNames())->targets($count->value), $environment);
+                }
+                return;
+            }
+        }
+        if ($node instanceof Expr\MethodCall && $node->name instanceof Node\Identifier
+            && $node->var instanceof Expr\Variable && is_string($node->var->name)
+            && $this->sinks->matchMethod($environment->read($node->var->name), $node->name->toString()) !== null) {
+            return;
+        }
+        $effects = new WriteEffects();
+        $written = $effects->own($node, $this->index);
+        $this->references ??= new ReferenceEffects();
+        $effects->apply($written + $this->references->affected($node, $written), $environment);
     }
 
     /**

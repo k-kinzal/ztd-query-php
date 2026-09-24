@@ -126,6 +126,8 @@ use SqlCatalog\Reporter\TextReporter;
 #[UsesClass(\SqlCatalog\Analysis\BuiltinCallModel::class)]
 #[UsesClass(\SqlCatalog\Analysis\FunctionModel\NamedModel::class)]
 #[UsesClass(\SqlCatalog\ConfigurationSchema::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\WriteEffects::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\ReferenceEffects::class)]
 final class CatalogCommandTest extends TestCase
 {
     public function testRunAnswersTheHelp(): void

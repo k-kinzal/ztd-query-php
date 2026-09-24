@@ -317,7 +317,10 @@ Every statement says how far the analyzer got with it:
 
 A statement whose text resolved is still not `searchClosed` when a bound on loop
 passes or on callers cut the search short, since other statements may lie beyond
-it. When `searchClosed` is false the statements listed may not be all of them, and
+it, or when another candidate at the same call has an unresolved dependency.
+Conditions (including `isset` and literal booleans) never select branches, so even
+exact, closed and correlated candidates have no runtime reachability guarantee.
+JSON format v2 states this explicitly in `analysis`. When `searchClosed` is false the statements listed may not be all of them, and
 the `analysis-incomplete` or `call-not-analyzed` finding says what stopped the search. When `correlated`
 is false the alternatives were paired from parts that vary independently, so some
 of them may be unreachable. Stopping early is never reported as having found

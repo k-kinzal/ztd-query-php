@@ -54,6 +54,7 @@ final class TextReporter implements ReporterInterface
         foreach ($catalog->sorted()->problems() as $problem) {
             $lines[] = sprintf('! %s: %s', $problem->file, $problem->message);
         }
+        $lines[] = 'Conditions are not evaluated; runtime reachability is not assessed.';
         $lines[] = $this->summaryLine($catalog);
 
         return CatalogArtifacts::one(self::FILE, implode("\n", $lines) . "\n");

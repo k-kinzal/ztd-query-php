@@ -103,6 +103,8 @@ use SqlCatalog\Text\Origin;
 #[UsesClass(\SqlCatalog\Analysis\Derivation\SourceTree::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\CallerSet::class)]
 #[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\WriteEffects::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\ReferenceEffects::class)]
 final class ExpressionEvaluatorTest extends TestCase
 {
     #[DataProvider('providerEvaluate')]
@@ -243,7 +245,7 @@ final class ExpressionEvaluatorTest extends TestCase
      * @param array<string, \SqlCatalog\Evaluation\Domain> $bindings
      */
     #[DataProvider('providerIsset')]
-    public function testEvaluateIssetRespectsDefinednessAndNullability(string $code, array $bindings, string $function, ?bool $expected): void
+    public function testEvaluateIssetDoesNotEvaluatePredicates(string $code, array $bindings, string $function): void
     {
         $file = (new SourceParser())->parse('t.php', '<?php ' . $code . ';');
         $statement = $file->statements[0];
@@ -253,11 +255,11 @@ final class ExpressionEvaluatorTest extends TestCase
         $result = $expressions->evaluate($statement->expr, new Environment($bindings), new FunctionScope('t.php', $function));
 
         self::assertSame('bool', $result->type()->display());
-        self::assertSame($expected, $result->soleLiteral()?->value);
+        self::assertNull($result->soleLiteral());
     }
 
     /**
-     * @return array<string, array{string, array<string, \SqlCatalog\Evaluation\Domain>, string, bool|null}>
+     * @return array<string, array{string, array<string, \SqlCatalog\Evaluation\Domain>, string}>
      */
     public static function providerIsset(): array
     {
@@ -266,29 +268,29 @@ final class ExpressionEvaluatorTest extends TestCase
         $nullable = \SqlCatalog\Evaluation\Domain::opaque(\SqlCatalog\Type\TypeShape::of(['string', 'null']), Origin::Parameter);
 
         return [
-            'undefined local' => ['isset($a)', [], 'f', false],
-            'unbound file variable stays open' => ['isset($a)', [], FunctionScope::MAIN, null],
-            'null' => ['isset($a)', ['a' => $literal(null)], 'f', false],
-            'string' => ['isset($a)', ['a' => $literal(' WHERE active = 1')], 'f', true],
-            'empty string' => ['isset($a)', ['a' => $literal('')], 'f', true],
-            'false' => ['isset($a)', ['a' => $literal(false)], 'f', true],
-            'zero' => ['isset($a)', ['a' => $literal(0)], 'f', true],
-            'null and string alternatives' => ['isset($a)', ['a' => $literal(null)->union($literal('x'))], 'f', null],
-            'unknown value' => ['isset($a)', ['a' => $unknown], 'f', null],
-            'nullable parameter' => ['isset($a)', ['a' => $nullable], 'f', null],
-            'all variables set' => ['isset($a, $b)', ['a' => $literal('a'), 'b' => $literal('b')], 'f', true],
-            'second variable null' => ['isset($a, $b)', ['a' => $literal('a'), 'b' => $literal(null)], 'f', false],
-            'unknown then null' => ['isset($a, $b)', ['a' => $unknown, 'b' => $literal(null)], 'f', false],
-            'set then unknown' => ['isset($a, $b)', ['a' => $literal('a'), 'b' => $unknown], 'f', null],
-            'array element remains open' => ['isset($a["key"])', ['a' => $unknown], 'f', null],
-            'property remains open' => ['isset($a->p)', ['a' => $unknown], 'f', null],
-            'superglobal remains external' => ['isset($_GET)', [], 'f', null],
-            'this outside a class remains open' => ['isset($this)', [], 'f', null],
-            'dynamic variable remains open' => ['isset($$a)', ['a' => $literal('b')], 'f', null],
+            'undefined local' => ['isset($a)', [], 'f'],
+            'unbound file variable stays open' => ['isset($a)', [], FunctionScope::MAIN],
+            'null' => ['isset($a)', ['a' => $literal(null)], 'f'],
+            'string' => ['isset($a)', ['a' => $literal(' WHERE active = 1')], 'f'],
+            'empty string' => ['isset($a)', ['a' => $literal('')], 'f'],
+            'false' => ['isset($a)', ['a' => $literal(false)], 'f'],
+            'zero' => ['isset($a)', ['a' => $literal(0)], 'f'],
+            'null and string alternatives' => ['isset($a)', ['a' => $literal(null)->union($literal('x'))], 'f'],
+            'unknown value' => ['isset($a)', ['a' => $unknown], 'f'],
+            'nullable parameter' => ['isset($a)', ['a' => $nullable], 'f'],
+            'all variables set' => ['isset($a, $b)', ['a' => $literal('a'), 'b' => $literal('b')], 'f'],
+            'second variable null' => ['isset($a, $b)', ['a' => $literal('a'), 'b' => $literal(null)], 'f'],
+            'unknown then null' => ['isset($a, $b)', ['a' => $unknown, 'b' => $literal(null)], 'f'],
+            'set then unknown' => ['isset($a, $b)', ['a' => $literal('a'), 'b' => $unknown], 'f'],
+            'array element remains open' => ['isset($a["key"])', ['a' => $unknown], 'f'],
+            'property remains open' => ['isset($a->p)', ['a' => $unknown], 'f'],
+            'superglobal remains external' => ['isset($_GET)', [], 'f'],
+            'this outside a class remains open' => ['isset($this)', [], 'f'],
+            'dynamic variable remains open' => ['isset($$a)', ['a' => $literal('b')], 'f'],
         ];
     }
 
-    public function testEvaluateIssetStopsAfterAVariableKnownToBeNull(): void
+    public function testEvaluateIssetKeepsPossibleOperandEffects(): void
     {
         $file = (new SourceParser())->parse('t.php', '<?php isset($a, $items[$key = "later"]);');
         $statement = $file->statements[0];
@@ -298,12 +300,12 @@ final class ExpressionEvaluatorTest extends TestCase
 
         $result = $expressions->evaluate($statement->expr, $environment, new FunctionScope('t.php', 'f'));
 
-        self::assertFalse($result->soleLiteral()?->value);
-        self::assertFalse($environment->has('key'));
+        self::assertNull($result->soleLiteral());
+        self::assertCount(2, $environment->read('key')->terms);
     }
 
     #[DataProvider('providerKnownTernaryCondition')]
-    public function testEvaluateTernaryRunsOnlyTheSelectedBranch(string $code, string|bool $expected, ?string $assigned): void
+    public function testEvaluateTernaryKeepsBothBranchesEvenForKnownConditions(string $code): void
     {
         $file = (new SourceParser())->parse('t.php', '<?php ' . $code . ';');
         $statement = $file->statements[0];
@@ -313,20 +315,22 @@ final class ExpressionEvaluatorTest extends TestCase
 
         $result = $expressions->evaluate($statement->expr, $environment, new FunctionScope('t.php', 'f'));
 
-        self::assertSame($expected, $result->soleLiteral()?->value);
-        self::assertSame($assigned, $environment->read('chosen')->soleLiteral()?->value);
+        self::assertCount(2, $result->terms);
+        self::assertCount(2, $environment->read('chosen')->terms);
     }
 
     /**
-     * @return array<string, array{string, string|bool, string|null}>
+     * @return array<string, array{string}>
      */
     public static function providerKnownTernaryCondition(): array
     {
         return [
-            'set' => ['isset($a) ? ($chosen = "yes") : ($chosen = "no")', 'yes', 'yes'],
-            'unset' => ['isset($missing) ? ($chosen = "yes") : ($chosen = "no")', 'no', 'no'],
-            'short set' => ['isset($a) ?: ($chosen = "no")', true, null],
-            'short unset' => ['isset($missing) ?: ($chosen = "no")', 'no', 'no'],
+            'true' => ['true ? ($chosen = "yes") : ($chosen = "no")'],
+            'false' => ['false ? ($chosen = "yes") : ($chosen = "no")'],
+            'set' => ['isset($a) ? ($chosen = "yes") : ($chosen = "no")'],
+            'unset' => ['isset($missing) ? ($chosen = "yes") : ($chosen = "no")'],
+            'short set' => ['isset($a) ?: ($chosen = "no")'],
+            'short unset' => ['isset($missing) ?: ($chosen = "no")'],
         ];
     }
 
@@ -639,6 +643,50 @@ final class ExpressionEvaluatorTest extends TestCase
         $expressions->evaluateMatch($node, $environment, new FunctionScope('t.php'));
 
         self::assertSame('a', $environment->read('kind')->soleLiteral()?->value);
-        self::assertSame('users', $environment->read('table')->soleLiteral()?->value);
+        self::assertCount(2, $environment->read('table')->terms);
     }
+    public function testEvaluateOptionalRightKeepsTheUnwrittenAlternative(): void
+    {
+        $statement = (new SourceParser())->parse('a.php', '<?php true && ($tail = "suffix");')->statements[0];
+        self::assertInstanceOf(Stmt\Expression::class, $statement);
+        self::assertInstanceOf(\PhpParser\Node\Expr\BinaryOp::class, $statement->expr);
+        $environment = new Environment(['tail' => \SqlCatalog\Evaluation\Domain::literal('before')]);
+        $evaluator = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $evaluator->evaluateOptionalRight($statement->expr, $environment, new FunctionScope('a.php'));
+        self::assertSame('literal:string:before|literal:string:suffix', $environment->read('tail')->signature());
+    }
+
+
+    public function testEvaluateTraversesIncludeEffectsBeforeReadingAnotherOperand(): void
+    {
+        $statement = (new SourceParser())->parse('a.php', '<?php include "fragment.php";')->statements[0];
+        self::assertInstanceOf(Stmt\Expression::class, $statement);
+        $environment = new Environment(['tail' => \SqlCatalog\Evaluation\Domain::literal('old')]);
+        $environment->markAbsent('missing');
+        (new Interpreter(new ProgramIndex(), []))->evaluatorFor()->evaluate($statement->expr, $environment, new FunctionScope('a.php'));
+        self::assertSame(\SqlCatalog\Evaluation\Presence::Maybe, $environment->presence('missing'));
+        self::assertNull($environment->read('tail')->soleLiteral());
+    }
+
+    public function testEvaluateIssetKeepsIntermediateOperandWrites(): void
+    {
+        $statement = (new SourceParser())->parse('a.php', '<?php isset($items[$tail = "a"], $items[$tail = "b"]);')->statements[0];
+        self::assertInstanceOf(Stmt\Expression::class, $statement);
+        self::assertInstanceOf(\PhpParser\Node\Expr\Isset_::class, $statement->expr);
+        $environment = new Environment(['tail' => \SqlCatalog\Evaluation\Domain::literal('before')]);
+        $result = (new Interpreter(new ProgramIndex(), []))->evaluatorFor()->evaluateIsset($statement->expr, $environment, new FunctionScope('a.php'));
+        self::assertNull($result->soleLiteral());
+        self::assertSame('literal:string:a|literal:string:b|literal:string:before', $environment->read('tail')->signature());
+    }
+
+    public function testEvaluateMatchRetainsEarlierConditionEffectsForLaterArms(): void
+    {
+        $statement = (new SourceParser())->parse('a.php', '<?php match ($input) { ($tail = "changed") => "first", default => $tail };')->statements[0];
+        self::assertInstanceOf(Stmt\Expression::class, $statement);
+        self::assertInstanceOf(\PhpParser\Node\Expr\Match_::class, $statement->expr);
+        $environment = new Environment(['tail' => \SqlCatalog\Evaluation\Domain::literal('before')]);
+        $result = (new Interpreter(new ProgramIndex(), []))->evaluatorFor()->evaluateMatch($statement->expr, $environment, new FunctionScope('a.php'));
+        self::assertSame('literal:string:before|literal:string:changed|literal:string:first', $result->signature());
+    }
+
 }

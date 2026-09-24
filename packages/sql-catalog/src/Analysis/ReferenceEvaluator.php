@@ -32,6 +32,8 @@ final class ReferenceEvaluator
 
     private ConstantReader $constants;
 
+    private ?Effect\WriteEffects $effects = null;
+
     /**
      * Wires the reader to the declarations it resolves names against.
      */
@@ -303,6 +305,8 @@ final class ReferenceEvaluator
         FunctionScope $scope,
         ExpressionEvaluator $expressions,
     ): void {
+        $this->effects ??= new Effect\WriteEffects();
+        $this->effects->assignment($target, $environment);
         $name = $this->trackedName($target);
         if ($name !== null) {
             $environment->write($name, $value);

@@ -522,4 +522,27 @@ final class EntryFactoryTest extends TestCase
             (new EntryFactory())->notAnalyzedReason($record),
         );
     }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerSearchClosure')]
+    public function testBuildSharesSearchCompletionAcrossEveryCandidate(bool $truncated, TextPattern $other, bool $closed): void
+    {
+        $site = new CallSite('a.php', 1, 'f', 'pdo.query');
+        $entries = (new EntryFactory())->build([
+            new QueryRecord($site, 'k', TextPattern::fromText('SELECT 1')),
+            new QueryRecord($site, 'k', $other, truncated: $truncated),
+        ]);
+        self::assertTrue($entries[0]->isExact());
+        self::assertSame([$closed, $closed], array_map(static fn (CatalogEntry $entry): bool => $entry->searchClosed(), $entries));
+    }
+
+    /**
+     * @return list<array{bool, TextPattern, bool}>
+     */
+    public static function providerSearchClosure(): array
+    {
+        $known = TextPattern::fromText('SELECT 2');
+        $unknown = TextPattern::fromHole(new TextHole(Origin::Unresolved, TypeShape::unknown()));
+        return [[false, $known, true], [true, $known, false], [false, $unknown, false], [true, $unknown, false]];
+    }
+
 }
