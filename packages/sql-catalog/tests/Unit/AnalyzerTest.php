@@ -115,6 +115,8 @@ use SqlCatalog\Source\SourceScanException;
 #[UsesClass(\SqlCatalog\Analysis\Derivation\Solution::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\SourceTree::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\CallerSet::class)]
+#[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
+#[UsesClass(\SqlCatalog\Configuration::class)]
 final class AnalyzerTest extends TestCase
 {
     public function testIssetGuardsAConditionallyAssignedSqlFragment(): void
@@ -529,4 +531,78 @@ final class AnalyzerTest extends TestCase
             $catalog->entries(),
         ));
     }
+    public function testWithConfigurationNormalizesPlaceholderListsThroughVariables(): void
+    {
+        $source = <<<'PHP'
+<?php
+function findUsers(PDO $db, array $ids) {
+    $size = count($ids);
+    $marker = '?';
+    $items = array_fill(0, $size, $marker);
+    $marks = implode(',', $items);
+    $db->prepare('SELECT * FROM users WHERE id IN (' . $marks . ')');
+}
+PHP;
+        $analyzer = new Analyzer();
+        $configured = $analyzer->withConfiguration(__DIR__ . '/../../examples/placeholder-lists.php');
+        self::assertSame('SELECT * FROM users WHERE id IN (?)', $configured->analyzeSource(['users.php' => $source])->entries()[0]->sql());
+        self::assertSame('SELECT * FROM users WHERE id IN ({$})', $analyzer->analyzeSource(['users.php' => $source])->entries()[0]->sql());
+    }
+
+    #[DataProvider('providerConfiguredPlaceholderLists')]
+    public function testWithConfigurationHandlesPlaceholderExpressions(string $expression, string $expected): void
+    {
+        $source = '<?php function f(PDO $db, array $ids) { $db->prepare("SELECT * FROM users WHERE id IN (" . ' . $expression . ' . ")"); }';
+        $catalog = (new Analyzer())->withConfiguration(__DIR__ . '/../../examples/placeholder-lists.php')->analyzeSource(['users.php' => $source]);
+        self::assertCount(1, $catalog->entries());
+        self::assertSame('SELECT * FROM users WHERE id IN (' . $expected . ')', $catalog->entries()[0]->sql());
+    }
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function providerConfiguredPlaceholderLists(): array
+    {
+        return [
+            'inline' => ["implode(',', array_fill(0, count(\$ids), '?'))", '?'],
+            'join alias' => ["join(',', array_fill(0, count(\$ids), '?'))", '?'],
+            'known count' => ["implode(',', array_fill(0, 10, '?'))", '?'],
+            'zero count is deliberately normalized' => ["implode(',', array_fill(0, 0, '?'))", '?'],
+            'different value is not normalized' => ["implode(',', array_fill(0, count(\$ids), 'x'))", '{$}'],
+            'external value is not normalized' => ["implode(',', array_fill(0, count(\$ids), \$_GET['value']))", '{$}'],
+        ];
+    }
+
+    public function testAnalyzeSourceAppliesRegisteredFunctionsAndFallsBackToSource(): void
+    {
+        $models = \SqlCatalog\Analysis\FunctionModel\Registry::withBuiltins();
+        $models->register('App\table', static fn (array $arguments): ?\SqlCatalog\Evaluation\Domain => ($arguments[0] ?? \SqlCatalog\Evaluation\Domain::unknown())->soleLiteral()?->value === 'override' ? \SqlCatalog\Evaluation\Domain::literal('modeled') : null);
+        $source = <<<'PHP'
+<?php
+namespace App;
+function table($which) { return 'original'; }
+function run(\PDO $db) {
+    $db->query('SELECT * FROM ' . table('override'));
+    $db->query('SELECT * FROM ' . table('fallback'));
+}
+PHP;
+        $entries = (new Analyzer(functionModels: $models))->analyzeSource(['app.php' => $source])->entries();
+        self::assertSame(['SELECT * FROM modeled', 'SELECT * FROM original'], array_map(static fn ($entry): string => $entry->sql(), $entries));
+    }
+
+    public function testAnalyzeSourceDistinguishesNamespacedFunctionsAndGlobalBuiltins(): void
+    {
+        $source = <<<'PHP'
+<?php
+namespace App;
+function strtoupper($value) { return 'local'; }
+function run(\PDO $db) {
+    $db->query('SELECT ' . strtoupper('foo'));
+    $db->query('SELECT ' . \strtoupper('foo'));
+}
+PHP;
+        $entries = (new Analyzer())->analyzeSource(['app.php' => $source])->entries();
+        self::assertSame(['SELECT local', 'SELECT FOO'], array_map(static fn ($entry): string => $entry->sql(), $entries));
+    }
+
 }

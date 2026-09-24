@@ -25,6 +25,7 @@ final class CommandLine
      * @param Severity|null $failOn The severity that makes the run report a failure
      * @param bool $help Whether the command was asked for its help
      * @param bool $listExtensions Whether the command was asked to list its extensions
+     * @param string|null $config The PHP file registering function models
      * @param bool $listReporters Whether the command was asked to list its reporters
      */
     public function __construct(
@@ -39,6 +40,7 @@ final class CommandLine
         public readonly bool $help = false,
         public readonly bool $listExtensions = false,
         public readonly bool $listReporters = false,
+        public readonly ?string $config = null,
     ) {
     }
 

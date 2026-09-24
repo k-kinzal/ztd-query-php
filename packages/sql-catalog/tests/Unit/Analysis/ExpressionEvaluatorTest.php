@@ -102,6 +102,7 @@ use SqlCatalog\Text\Origin;
 #[UsesClass(\SqlCatalog\Analysis\Derivation\Solution::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\SourceTree::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\CallerSet::class)]
+#[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
 final class ExpressionEvaluatorTest extends TestCase
 {
     #[DataProvider('providerEvaluate')]

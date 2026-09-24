@@ -203,4 +203,12 @@ final class CommandLineParserTest extends TestCase
         self::assertSame('b', $parser->last(['output' => ['a', 'b']], 'output'));
         self::assertNull($parser->last([], 'output'));
     }
+    public function testParseReadsAConfigurationPathWithoutSplittingCommas(): void
+    {
+        $parser = new CommandLineParser();
+        self::assertSame('config,local.php', $parser->parse(['--config=config,local.php', 'src'])->config);
+        self::assertSame('custom.php', $parser->parse(['-c', 'custom.php', 'src'])->config);
+        self::assertNull($parser->parse(['src'])->config);
+    }
+
 }

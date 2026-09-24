@@ -34,6 +34,7 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(TextHole::class)]
 #[UsesClass(TextPattern::class)]
 #[UsesClass(TypeShape::class)]
+#[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
 final class BuiltinCallModelTest extends TestCase
 {
     /**
@@ -175,7 +176,7 @@ final class BuiltinCallModelTest extends TestCase
     {
         return [
             ['SPRINTF', 'sprintf'],
-            ['\\App\\implode', 'implode'],
+            ['\\App\\implode', 'app\\implode'],
             ['\\sprintf', 'sprintf'],
         ];
     }
@@ -430,4 +431,12 @@ final class BuiltinCallModelTest extends TestCase
         self::assertFalse((new BuiltinCallModel())->replace([Domain::literal('a'), Domain::unknown(), Domain::literal('a')])->isExact());
         self::assertFalse((new BuiltinCallModel())->replace([Domain::literal('a'), Domain::literal('b'), Domain::unknown()])->isExact());
     }
+    public function testRegisterInstallsModelsIntoAnEmptyRegistry(): void
+    {
+        $models = new \SqlCatalog\Analysis\FunctionModel\Registry();
+        (new BuiltinCallModel())->register($models);
+        self::assertTrue($models->supports('implode'));
+        self::assertSame('x', $models->evaluate('strval', [Domain::literal('x')])?->soleLiteral()?->value);
+    }
+
 }

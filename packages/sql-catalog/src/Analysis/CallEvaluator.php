@@ -7,6 +7,7 @@ namespace SqlCatalog\Analysis;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use SqlCatalog\Analysis\Derivation\CalleeReturns;
+use SqlCatalog\Analysis\FunctionModel\Registry;
 use SqlCatalog\Evaluation\Domain;
 use SqlCatalog\Evaluation\Environment;
 use SqlCatalog\Evaluation\ObjectTerm;
@@ -36,7 +37,7 @@ final class CallEvaluator
 
     private SinkMatcher $sinks;
 
-    private BuiltinCallModel $builtins;
+    private Registry $functions;
 
     private ExternalInput $external;
 
@@ -50,14 +51,14 @@ final class CallEvaluator
     public function __construct(
         ProgramIndex $index,
         SinkMatcher $sinks,
-        BuiltinCallModel $builtins,
+        Registry $functions,
         ExternalInput $external,
         NodeText $text,
         ?CalleeReturns $returns = null,
     ) {
         $this->index = $index;
         $this->sinks = $sinks;
-        $this->builtins = $builtins;
+        $this->functions = $functions;
         $this->external = $external;
         $this->text = $text;
         $this->returns = $returns;
@@ -247,17 +248,18 @@ final class CallEvaluator
         if (!$node->name instanceof Node\Name) {
             return Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node));
         }
-        $name = $node->name->toString();
+        $name = $this->functionName($node->name);
 
         $sink = $this->sinks->matchFunction($name);
         if ($sink !== null) {
             return $this->applySink($sink, $node, $arguments, $scope);
         }
+        $modeled = $this->functions->evaluate($name, $arguments);
+        if ($modeled !== null) {
+            return $modeled;
+        }
         if ($this->external->isFunction($name)) {
             return Domain::opaque(TypeShape::unknown(), Origin::External, $name . '()');
-        }
-        if ($this->builtins->supports($name)) {
-            return $this->builtins->evaluate($name, $arguments);
         }
 
         $function = $this->index->findFunction($name);
@@ -265,6 +267,21 @@ final class CallEvaluator
         return $function === null
             ? Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node))
             : $this->follow($function, $arguments, $scope, $expressions);
+    }
+
+    /**
+     * Resolves an unqualified call locally before PHP's global fallback.
+     */
+    public function functionName(Node\Name $name): string
+    {
+        $local = $name->getAttribute('namespacedName');
+        if ($local instanceof Node\Name
+            && ($this->functions->supports($local->toString()) || $this->index->findFunction($local->toString()) !== null)
+        ) {
+            return $local->toString();
+        }
+
+        return $name->toString();
     }
 
     /**

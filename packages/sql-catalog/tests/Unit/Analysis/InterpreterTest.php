@@ -91,6 +91,7 @@ use SqlCatalog\Text\Origin;
 #[UsesClass(\SqlCatalog\Extension\MysqliExtension::class)]
 #[UsesClass(\SqlCatalog\Extension\WordPressExtension::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\CallerSet::class)]
+#[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
 final class InterpreterTest extends TestCase
 {
     public function testAnalyzeReadsEveryStatementFromTheCallThatIssuesIt(): void

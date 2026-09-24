@@ -82,6 +82,7 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(\SqlCatalog\Text\TextHole::class)]
 #[UsesClass(TextPattern::class)]
 #[UsesClass(TypeShape::class)]
+#[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
 final class CalleeReturnsTest extends TestCase
 {
     public function testValueOfReadsWhatTheCalleeReturns(): void

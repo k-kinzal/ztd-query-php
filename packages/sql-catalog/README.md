@@ -172,6 +172,87 @@ also says which global variables hold its handle, which is what makes the
 analyzer reads an `@global` or `@var` tag documenting the declaration first, so
 an application that annotates its own globals needs no extension at all.
 
+## Function models
+
+A function model supplies the value the analyzer should use for a function call.
+Every supported PHP function, including `sprintf`, `implode`, `join`, `str_repeat`
+and `count`, is registered through the same `register()` API.
+
+Load project-specific models with an explicit PHP configuration:
+
+```bash
+vendor/bin/sql-catalog --config=sql-catalog.php src/
+```
+
+For example, use one representative placeholder for any `array_fill` whose
+third argument is `'?'`. Save this as `sql-catalog.php`:
+
+```php
+declare(strict_types=1);
+
+use SqlCatalog\Analysis\FunctionModel\Registry;
+use SqlCatalog\Evaluation\ArrayEntry;
+use SqlCatalog\Evaluation\ArrayTerm;
+use SqlCatalog\Evaluation\Domain;
+
+return static function (Registry $functions): void {
+    $functions->register('array_fill', static function (array $arguments): ?Domain {
+        $value = $arguments[2] ?? Domain::unknown();
+        if ($value->soleLiteral()?->value !== '?') {
+            return null;
+        }
+
+        return Domain::of(new ArrayTerm([new ArrayEntry(null, $value)]));
+    });
+};
+```
+
+`array_fill` produces an array, so this model supplies `['?']`. The existing
+`implode` model then produces `'?'`. A query such as this becomes
+`SELECT * FROM users WHERE id IN (?)`, including when the intermediate values
+are assigned to variables:
+
+```php
+$size = count($ids);
+$items = array_fill(0, $size, '?');
+$marks = implode(',', $items);
+$db->prepare('SELECT * FROM users WHERE id IN (' . $marks . ')');
+```
+
+This is an explicit normalization policy: it does not infer the count, and even
+zero or a known count produces the same representative. Returned values are
+trusted as the configured interpretation; SQL resolution and binding checks use
+that interpretation, so this policy is for cataloguing query shapes rather than
+validating the runtime number of bound parameters. Without this configuration,
+`array_fill` remains unresolved. The runnable configuration is also available in
+[examples/placeholder-lists.php](examples/placeholder-lists.php).
+
+Callbacks receive a list of evaluated `Domain` arguments in source order and
+return `?Domain`. Returning `null` tries the previous registration for the same
+function, then ordinary source analysis. Returning `Domain::unknown()` explicitly
+models an unknown result. Registrations are tried newest first, so a conditional
+override can retain a built-in model as its fallback. Function names are
+case-insensitive and retain their namespace; use `App\\helper` to model that
+specific function. Models interpret calls without executing the application.
+Configuration files themselves are executed when explicitly loaded.
+
+From PHP, inject the registry directly:
+
+```php
+use SqlCatalog\Analysis\FunctionModel\Registry;
+use SqlCatalog\Analyzer;
+use SqlCatalog\Evaluation\Domain;
+
+$models = Registry::withBuiltins();
+$models->register('App\\table_name', static fn (array $arguments): Domain => Domain::literal('users'));
+$catalog = (new Analyzer(functionModels: $models))->analyzePaths(['src']);
+```
+
+`$analyzer->withConfiguration('sql-catalog.php')` returns another analyzer with
+that configuration applied. The original analyzer and subsequent CLI runs keep
+their own registrations. This extension point models function calls; framework
+database sinks continue to be defined by `ExtensionRegistry`.
+
 ## Reporters
 
 | Reporter | Writes | Purpose |

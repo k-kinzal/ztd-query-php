@@ -57,6 +57,7 @@ use SqlCatalog\Php\SourceParser;
 #[UsesClass(\SqlCatalog\Text\TextHole::class)]
 #[UsesClass(\SqlCatalog\Text\TextPattern::class)]
 #[UsesClass(\SqlCatalog\Type\TypeShape::class)]
+#[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
 final class ConstantReaderTest extends TestCase
 {
     public function testReadRuntimeConstantOnlyTrustsThePhpConstants(): void

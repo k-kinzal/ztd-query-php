@@ -97,6 +97,7 @@ use WeakMap;
 #[UsesClass(LiteralText::class)]
 #[UsesClass(TextPattern::class)]
 #[UsesClass(TypeShape::class)]
+#[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
 final class SliceExecutorTest extends TestCase
 {
     public function testRunSplitsOnATernarySoLaterReadsAgree(): void

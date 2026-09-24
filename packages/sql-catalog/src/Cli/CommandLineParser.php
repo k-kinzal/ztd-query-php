@@ -16,6 +16,8 @@ use SqlCatalog\Sql\StatementKind;
 final class CommandLineParser
 {
     private const VALUE_OPTIONS = [
+        'config' => 'config',
+        'c' => 'config',
         'output' => 'output',
         'o' => 'output',
         'reporter' => 'reporter',
@@ -96,7 +98,7 @@ final class CommandLineParser
         if ($value === null || ($inline === null && str_starts_with($value, '-'))) {
             throw new InvalidCommandLineException(sprintf('Option "%s" needs a value.', $argument));
         }
-        foreach (explode(',', $value) as $part) {
+        foreach ($option === 'config' ? [$value] : explode(',', $value) as $part) {
             $values[$option][] = trim($part);
         }
 
@@ -127,6 +129,7 @@ final class CommandLineParser
             $flags['help'] ?? false,
             $flags['list-extensions'] ?? false,
             $flags['list-reporters'] ?? false,
+            $this->last($values, 'config'),
         );
     }
 

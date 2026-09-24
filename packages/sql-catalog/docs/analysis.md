@@ -368,3 +368,20 @@ code rather than in the analyzer:
 Most of the remaining gaps sit inside otherwise-resolved statements and are
 `$wpdb->posts`-style table names, which WordPress fixes at runtime from its
 configured prefix.
+
+## Configured function models
+
+Function evaluation uses `Analysis\FunctionModel\Registry`. The standard
+models are installed by `BuiltinCallModel::register()`, and a user can register
+additional models or conditional overrides through the same API. A model reads
+the evaluated argument domains, so local assignments and traced helper returns
+compose with it normally. It need not know a runtime value such as `count($ids)`
+to supply a representative value chosen by the configuration.
+
+The default analysis continues to leave an unmodeled dependency open. Explicit
+configuration can instead select a representative, such as a singleton array
+for a placeholder list; that result becomes the configured interpretation of
+the call, with no enumeration of possible lengths. Completion and binding
+findings then describe that interpretation, not the discarded runtime variants.
+See [Function models](../README.md#function-models) for the registration contract
+and the placeholder-list configuration.

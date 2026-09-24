@@ -120,6 +120,10 @@ use SqlCatalog\Reporter\TextReporter;
 #[UsesClass(\SqlCatalog\Analysis\Derivation\Solution::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\SourceTree::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\CallerSet::class)]
+#[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
+#[UsesClass(\SqlCatalog\Configuration::class)]
+#[UsesClass(\SqlCatalog\InvalidConfigurationException::class)]
+#[UsesClass(\SqlCatalog\Analysis\BuiltinCallModel::class)]
 final class CatalogCommandTest extends TestCase
 {
     public function testRunAnswersTheHelp(): void
@@ -224,4 +228,67 @@ final class CatalogCommandTest extends TestCase
             $command->status(new CommandLine(['src'], failOn: Severity::High), new Catalog()),
         );
     }
+    public function testConfiguredAnalyzerLoadsTheRequestedModelsWithoutLeakingThem(): void
+    {
+        $command = new CatalogCommand();
+        $configured = $command->configuredAnalyzer(__DIR__ . '/../../../examples/placeholder-lists.php');
+        $source = '<?php function f(PDO $db, array $ids) { $db->prepare("SELECT * FROM users WHERE id IN (" . implode(",", array_fill(0, count($ids), "?")) . ")"); }';
+        self::assertSame('SELECT * FROM users WHERE id IN (?)', $configured->analyzeSource(['query.php' => $source])->entries()[0]->sql());
+        self::assertSame('SELECT * FROM users WHERE id IN ({$})', $command->configuredAnalyzer(null)->analyzeSource(['query.php' => $source])->entries()[0]->sql());
+    }
+
+    public function testRunLoadsConfigurationBeforeAnalyzingSource(): void
+    {
+        $path = sys_get_temp_dir() . '/sql-catalog-query-' . bin2hex(random_bytes(6)) . '.php';
+        file_put_contents($path, '<?php function f(PDO $db, array $ids) { $db->prepare("SELECT * FROM users WHERE id IN (" . implode(",", array_fill(0, count($ids), "?")) . ")"); }');
+        try {
+            $result = (new CatalogCommand())->run(['--config', __DIR__ . '/../../../examples/placeholder-lists.php', $path]);
+            self::assertSame(ExitCode::Success, $result->exitCode);
+            self::assertStringContainsString('SELECT * FROM users WHERE id IN (?)', $result->output);
+        } finally {
+            unlink($path);
+        }
+    }
+
+    public function testRunReportsMissingConfigurationAsAnInvalidCommandLine(): void
+    {
+        $result = (new CatalogCommand())->run(['--config=/definitely/missing/config.php', 'src']);
+        self::assertSame(ExitCode::InvalidCommandLine, $result->exitCode);
+        self::assertStringContainsString('Cannot read configuration', $result->error);
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerInvalidConfiguration')]
+    public function testRunReportsConfigurationErrors(string $source, string $message): void
+    {
+        $path = sys_get_temp_dir() . '/sql-catalog-config-' . bin2hex(random_bytes(6)) . '.php';
+        file_put_contents($path, $source);
+        try {
+            $result = (new CatalogCommand())->run(['--config', $path, 'src']);
+            self::assertSame(ExitCode::InvalidCommandLine, $result->exitCode);
+            self::assertStringContainsString($path, $result->error);
+            self::assertStringContainsString($message, $result->error);
+        } finally {
+            unlink($path);
+        }
+    }
+
+    /**
+     * @return array<string, array{string, string}>
+     */
+    public static function providerInvalidConfiguration(): array
+    {
+        return [
+            'invalid return' => ['<?php return [];', 'must return a callable'],
+            'syntax error' => ['<?php return function (', 'Cannot load configuration'],
+            'callback error' => ['<?php return static function () { throw new RuntimeException("Invalid model configuration"); };', 'Invalid model configuration'],
+        ];
+    }
+
+    public function testRunDoesNotLoadConfigurationWhenPrintingHelp(): void
+    {
+        $result = (new CatalogCommand())->run(['--config=/definitely/missing/config.php', '--help']);
+        self::assertSame(ExitCode::Success, $result->exitCode);
+        self::assertStringContainsString('--config=FILE', $result->output);
+    }
+
 }

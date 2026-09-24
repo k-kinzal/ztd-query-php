@@ -18,6 +18,7 @@ use SqlCatalog\Analysis\Derivation\Slice\BackwardSlicer;
 use SqlCatalog\Analysis\Derivation\SliceExecutor;
 use SqlCatalog\Analysis\Derivation\Solution;
 use SqlCatalog\Analysis\Derivation\SourceTree;
+use SqlCatalog\Analysis\FunctionModel\Registry;
 use SqlCatalog\Catalog\CallSite;
 use SqlCatalog\Evaluation\Domain;
 use SqlCatalog\Extension\SinkRole;
@@ -46,6 +47,8 @@ use SqlCatalog\Type\TypeShape;
  */
 final class Interpreter
 {
+    private Registry $functions;
+
     private ProgramIndex $index;
 
     /**
@@ -66,13 +69,16 @@ final class Interpreter
      * @param list<SinkSpec> $sinks The database calls the enabled extensions recognise
      * @param EvaluationBudget|null $budget How much work one call may cost
      * @param DeclaredGlobals|null $globals What the global variables the source declares are known to hold
+     * @param Registry|null $functions The function interpretations shared by the derivation
      */
     public function __construct(
         ProgramIndex $index,
         array $sinks,
         ?EvaluationBudget $budget = null,
         ?DeclaredGlobals $globals = null,
+        ?Registry $functions = null,
     ) {
+        $this->functions = $functions ?? Registry::withBuiltins();
         $this->index = $index;
         $this->sinks = $sinks;
         $this->budget = $budget ?? new EvaluationBudget();
@@ -137,7 +143,7 @@ final class Interpreter
             new CallEvaluator(
                 $this->index,
                 new SinkMatcher($this->sinks, $this->index),
-                new BuiltinCallModel(),
+                $this->functions,
                 $external,
                 $this->text,
                 new CalleeReturns($slicer, $executor, $this->budget, $names),

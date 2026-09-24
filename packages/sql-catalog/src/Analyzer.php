@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlCatalog;
 
 use SqlCatalog\Analysis\EntryFactory;
+use SqlCatalog\Analysis\FunctionModel\Registry;
 use SqlCatalog\Analysis\Interpreter;
 use SqlCatalog\Catalog\AnalysisProblem;
 use SqlCatalog\Catalog\Catalog;
@@ -41,6 +42,8 @@ use SqlCatalog\Source\SourceScanner;
  */
 final class Analyzer
 {
+    private Registry $functionModels;
+
     private ExtensionRegistry $extensions;
 
     private SourceParser $parser;
@@ -51,13 +54,27 @@ final class Analyzer
 
     /**
      * @param ExtensionRegistry|null $extensions The extensions available to the run, or null for the built-in ones
+     * @param Registry|null $functionModels The function interpretations, or null for the built-in models
      */
-    public function __construct(?ExtensionRegistry $extensions = null)
+    public function __construct(?ExtensionRegistry $extensions = null, ?Registry $functionModels = null)
     {
+        $this->functionModels = $functionModels ?? Registry::withBuiltins();
         $this->extensions = $extensions ?? ExtensionRegistry::withBuiltins();
         $this->parser = new SourceParser();
         $this->indexes = new ProgramIndexBuilder();
         $this->entries = new EntryFactory();
+    }
+
+    /**
+     * An independent analyzer with the function registrations from a PHP configuration.
+     *
+     * @throws InvalidConfigurationException When the file cannot supply a configuration callback
+     */
+    public function withConfiguration(string $path): self
+    {
+        $models = (new Configuration())->load($path, $this->functionModels);
+
+        return new self($this->extensions, $models);
     }
 
     /**
@@ -141,6 +158,7 @@ final class Analyzer
             $sinks,
             $options->budget(),
             new DeclaredGlobals($this->extensions->globalsOf($options->extensions)),
+            $this->functionModels,
         );
 
         return $this->sortRecords($this->entries->build($interpreter->analyze($files)));
