@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RewriteStateCommitter — ZTD Query PHP</title>
+<link rel="canonical" href="https://k-kinzal.github.io/ztd-query-php/pr/409/k-kinzal/ztd-query-core/ZtdQuery/Rewrite/interface.RewriteStateCommitter.html">
+<meta name="description" content="Commits rewrite-time reservations only after simulated execution succeeds.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="ZTD Query PHP">
+<meta property="og:title" content="RewriteStateCommitter — ZTD Query PHP">
+<meta property="og:description" content="Commits rewrite-time reservations only after simulated execution succeeds.">
+<meta property="og:url" content="https://k-kinzal.github.io/ztd-query-php/pr/409/k-kinzal/ztd-query-core/ZtdQuery/Rewrite/interface.RewriteStateCommitter.html">
+<meta property="og:image" content="https://k-kinzal.github.io/ztd-query-php/pr/409/assets/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="ZTD Query PHP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/document-design-v1.0.0.css">
+<link rel="stylesheet" href="../../../../assets/style.css">
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+</head>
+<body data-root="../../../../">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../../k-kinzal/ztd-query-core/index.html">k-kinzal/ztd-query-core</a></div><nav class="sidebar-section"><div class="sidebar-title">On this page</div><ul class="sidebar-list"><li data-diff="same"><a href="#methods">Methods</a></li><li data-diff="same"><a href="#relations">Relations</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../../k-kinzal/ztd-query-core/all-items.html">All items</a></li><li data-diff="same"><a href="../../../../k-kinzal/ztd-query-core/index.html#documents">Documents</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title"><a href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Rewrite/index.html">In ZtdQuery\Rewrite</a></div><div class="sidebar-title" data-diff="same">Interfaces</div><ul class="sidebar-list"><li class="is-active" data-diff="same"><a class="k-interface" href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Rewrite/interface.RewriteStateCommitter.html">RewriteStateCommitter</a></li><li data-diff="same"><a class="k-interface" href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Rewrite/interface.SqlRewriter.html">SqlRewriter</a></li><li data-diff="same"><a class="k-interface" href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Rewrite/interface.SqlTransformer.html">SqlTransformer</a></li></ul><div class="sidebar-title" data-diff="same">Classes</div><ul class="sidebar-list"><li data-diff="same"><a class="k-class" href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Rewrite/class.InsertRowProjection.html">InsertRowProjection</a></li><li data-diff="same"><a class="k-class" href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Rewrite/class.InsertRowProjectionPlanner.html">InsertRowProjectionPlanner</a></li><li data-diff="same"><a class="k-class" href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Rewrite/class.InsertSelectProjection.html">InsertSelectProjection</a></li><li data-diff="same"><a class="k-class" href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Rewrite/class.InsertSelectProjectionPlanner.html">InsertSelectProjectionPlanner</a></li><li data-diff="same"><a class="k-class" href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Rewrite/class.MultiRewritePlan.html">MultiRewritePlan</a></li><li data-diff="same"><a class="k-class" href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Rewrite/class.ReturningProjection.html">ReturningProjection</a></li><li data-diff="same"><a class="k-class" href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Rewrite/class.RewritePlan.html">RewritePlan</a></li><li data-diff="same"><a class="k-class" href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Rewrite/class.ShadowIdentityAllocator.html">ShadowIdentityAllocator</a></li></ul><div class="sidebar-title" data-diff="same">Enums</div><ul class="sidebar-list"><li data-diff="same"><a class="k-enum" href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Rewrite/enum.AffectedRowsMode.html">AffectedRowsMode</a></li><li data-diff="same"><a class="k-enum" href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Rewrite/enum.QueryKind.html">QueryKind</a></li></ul></nav></aside>
+<div class="main">
+<header class="topbar">
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../k-kinzal/ztd-query-core/index.html">k-kinzal/ztd-query-core</a><span class="breadcrumb-sep">::</span><a href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Rewrite/index.html">ZtdQuery\Rewrite</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">RewriteStateCommitter</span></nav>
+<div class="topbar-tools">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 55b6c06c9b to working tree">55b6c06c9b <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
+</div>
+</header>
+<div class="search-results" id="search-results" hidden></div>
+<main class="content" id="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 55b6c06c9b and working tree." data-off="This page documents what 55b6c06c9b had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-interface">interface</span>RewriteStateCommitter</h1><div class="symbol-meta"><a class="source-link" href="../../../../src/packages/ztd-query-core/src/Rewrite/RewriteStateCommitter.php.html#L10">packages/ztd-query-core/src/Rewrite/RewriteStateCommitter.php:10</a></div></div>
+<pre class="signature" data-diff="same"><code><span class="t-key">interface</span> <span class="signature-name">RewriteStateCommitter</span></code></pre>
+<p class="lede">Commits rewrite-time reservations only after simulated execution succeeds.</p>
+<section data-diff="same"><h2 id="methods">Methods<a class="anchor" href="#methods">§</a></h2><div class="member" data-diff="same" id="method.commitRewriteState"><div class="member-head"><pre class="member-sig"><code><span class="t-key">public</span> <span class="t-key">function</span> <span class="signature-name">commitRewriteState</span>(): <span class="t-key">void</span></code></pre><div class="member-meta"><a class="source-link" href="../../../../src/packages/ztd-query-core/src/Rewrite/RewriteStateCommitter.php.html#L16">source</a><a class="anchor" href="#method.commitRewriteState">§</a></div></div><div class="member-body"><p class="lede">Commit rewrite state.</p>
+</div></div>
+</section>
+<section class="relations" data-diff="same"><h2 id="relations">Relations<a class="anchor" href="#relations">§</a></h2>
+<details class="usage-details" open><summary>Implemented by <span class="count">3</span></summary><ul class="usage-list"><li><a class="k-class" href="../../../../k-kinzal/ztd-query-mysql/ZtdQuery/Platform/MySql/Rewrite/class.MySqlRewriter.html" title="ZtdQuery\Platform\MySql\Rewrite\MySqlRewriter">MySqlRewriter</a> <a class="usage-loc" href="../../../../src/packages/ztd-query-mysql/src/Rewrite/MySqlRewriter.php.html#L33">packages/ztd-query-mysql/src/Rewrite/MySqlRewriter.php:33</a></li><li><a class="k-class" href="../../../../k-kinzal/ztd-query-postgres/ZtdQuery/Platform/Postgres/Rewrite/class.PgSqlRewriter.html" title="ZtdQuery\Platform\Postgres\Rewrite\PgSqlRewriter">PgSqlRewriter</a> <a class="usage-loc" href="../../../../src/packages/ztd-query-postgres/src/Rewrite/PgSqlRewriter.php.html#L42">packages/ztd-query-postgres/src/Rewrite/PgSqlRewriter.php:42</a></li><li><a class="k-class" href="../../../../k-kinzal/ztd-query-sqlite/ZtdQuery/Platform/Sqlite/Rewrite/class.SqliteRewriter.html" title="ZtdQuery\Platform\Sqlite\Rewrite\SqliteRewriter">SqliteRewriter</a> <a class="usage-loc" href="../../../../src/packages/ztd-query-sqlite/src/Rewrite/SqliteRewriter.php.html#L35">packages/ztd-query-sqlite/src/Rewrite/SqliteRewriter.php:35</a></li></ul></details>
+<details class="usage-details"><summary>Type checks <span class="count">1</span></summary><ul class="usage-list"><li><span class="usage-kind">instanceof</span> <a href="../../../../k-kinzal/ztd-query-core/ZtdQuery/Shadow/class.ShadowApplication.html" title="ZtdQuery\Shadow\ShadowApplication">ZtdQuery\Shadow\ShadowApplication::apply()</a> <a class="usage-loc" href="../../../../src/packages/ztd-query-core/src/Shadow/ShadowApplication.php.html#L85">packages/ztd-query-core/src/Shadow/ShadowApplication.php:85</a></li></ul></details>
+</section>
+</main>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
+<script src="../../../../assets/search-index.js" defer></script>
+<script src="../../../../assets/app.js" defer></script>
+</body>
+</html>
