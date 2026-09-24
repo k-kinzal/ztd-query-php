@@ -37,334 +37,26 @@ statements. Supply a new schema snapshot to interpret changed state.
 
 ## Statement forms
 
-The concrete class specifies which operands exist. `kind` is a `StatementKind`
-enum derived from that class. Classes with different required inputs have different
-constructors; unrelated operands are not represented by empty or nullable fields.
-The table uses short class names. Query classes are in `Model` or
-`Model\Statement`; insertion, mutation, and configuration forms have corresponding
-subnamespaces under `Model\Statement`.
+The concrete class returned by `bind()` specifies which operands exist. `kind` is a
+`StatementKind` enum derived from that class. Classes with different required inputs
+have different constructors; unrelated operands are not represented by empty or
+nullable fields. Query classes are in `Model` or `Model\Statement`; the other forms
+are in subnamespaces of `Model\Statement` named after their area.
 
-| SQL | Returned type | Required structure and applicable options |
-|-----|---------------|------------------------------------------|
-| `SELECT id FROM users WHERE score > 0` | `BoundSelect` | Ordered `outputs`, optional input `from`, row predicate `where`, grouping, `having`, duplicate-elimination `quantifier`, ordering, pagination, named `windows`, and `locks`. |
-| `VALUES (1), (2)` | `ValuesStatement` | Nonempty `rows` of equal width; result columns and common types are derived from those rows. MySQL uses `VALUES ROW(1), ROW(2)`. |
-| `TABLE users` | `TableStatement` | A required table or CTE reference; result columns are derived from that declaration. |
-| `SELECT id FROM users UNION ALL SELECT id FROM incoming` | `CompoundStatement` | Required `left`, `right`, and `setOperator`; compatible result widths and common types by position. |
-| `INSERT INTO users(id,score) VALUES (1,10)` | `InsertValuesStatement` | `insertion` destination mapping and nonempty `rows`; row widths agree with known destinations. |
-| `INSERT INTO users(id,score) SELECT id,score FROM incoming` | `InsertSelectStatement` | `insertion` and a required `query`. The query supplies the input columns. |
-| `INSERT INTO users DEFAULT VALUES` | `InsertDefaultValuesStatement` | A destination whose omitted columns obtain defaults or generated values. No row or SELECT payload. |
-| MySQL: `INSERT INTO users SET id=1, score=10` | `InsertSetStatement` | `insertion` and nonempty ordered `writes`. |
-| `UPDATE users SET score=score+1 WHERE id=1` | `UpdateTableStatement` | A single `target`, nonempty `writes`, and optional row predicate. |
-| `UPDATE users SET score=incoming.score FROM incoming WHERE users.id=incoming.id` | `UpdateFromStatement` | Separate required `target` and `from` inputs; ordered writes and predicate. |
-| MySQL: `UPDATE users JOIN incoming ON users.id=incoming.id SET users.score=incoming.score` | `UpdateJoinedStatement` | Required joined `from`, affected `targets`, and ordered writes. |
-| `DELETE FROM users WHERE id=1` | `DeleteTableStatement` | One required `target` and optional predicate. |
-| `DELETE FROM users USING incoming WHERE users.id=incoming.id` | `DeleteUsingStatement` | Separate required deletion `target` and read input `using`. |
-| MySQL: `DELETE users FROM users JOIN incoming ON users.id=incoming.id` | `DeleteJoinedStatement` | Joined input and explicit deletion targets. |
-| `MERGE INTO users USING incoming ON users.id=incoming.id WHEN MATCHED THEN DELETE` | `MergeStatement` | Required target, input, match condition, and ordered, typed actions. |
-| `SET LOCAL work_mem='64MB'` | `SetStatement` | Nonempty `settings`: an `AssignedSetting` with required expressions, a `DefaultSetting` requesting the parameter default, a `CurrentSetting` copying current state, or an `AssignedUserVariable` with a required target and one expression. |
-| MySQL: `SET @x=123` | `SetStatement` | An `AssignedUserVariable` holds its `target` reference and one required `value`. A declared variable target retains its supplied `VariableDefinition`. |
-| MySQL: `SET TRANSACTION READ ONLY` | `SetNextTransactionStatement` | Optional `isolation` and `access` enums, with at least one required; applies to the next transaction. |
-| MySQL: `SET GLOBAL TRANSACTION ISOLATION LEVEL SERIALIZABLE` | `SetDefaultTransactionStatement` | Required `DefaultScope`, plus an isolation and/or access request. SESSION, GLOBAL, PERSIST, and PERSIST_ONLY remain distinct; LOCAL denotes SESSION. |
-| PostgreSQL: `SET TRANSACTION READ ONLY, DEFERRABLE` | `SetCurrentTransactionStatement` | Nonempty ordered `modes` containing only `Isolation`, `Access`, or `Deferrability` enums, plus outer SET `Locality`. |
-| PostgreSQL: `SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY` | `SetSessionTransactionStatement` | The same typed mode roles, targeting session defaults for subsequent transactions. |
-| PostgreSQL: `SET TRANSACTION SNAPSHOT 'snapshot-id'` | `SetTransactionSnapshotStatement` | Required `snapshot` text literal and SET `Locality`; the snapshot identifier is retained without loading snapshot contents. |
-| MySQL 5.7+: `SET PASSWORD FOR 'u'@'localhost' = 'new'` | `SetPasswordStatement` | Required `account` and `password` text literal; optional `currentPassword` verification operand and `retainCurrentPassword` flag on releases with those clauses. |
-| MySQL 8+: `SET PASSWORD TO RANDOM` | `SetRandomPasswordStatement` | Required `account`, optional verification operand, and retention flag; no supplied new password. Four derived result columns describe the requested server output. |
-| MySQL 5.6: `SET PASSWORD = '*encoded'` | `SetPasswordHashStatement` | Required `account` and `hash` text literal. The encoded value is not interpreted. |
-| MySQL 5.6: `SET PASSWORD = PASSWORD('new')` | `SetDerivedPasswordStatement` | Required `account`, cleartext `password` operand, and `PasswordDerivation` (`Configured` or `Pre41`). The consumer performs the requested hashing. |
-| MySQL 5.6: `SET PASSWORD = '*one', PASSWORD FOR 'u' = '*two'` | `SetAccountOptionsStatement` | Two or more ordered, individually typed credential or variable operations. Each variable operation contains one assignment. |
-| MySQL: `SET ROLE NONE`, `SET ROLE DEFAULT`, `SET ROLE ALL` | `SetRolePolicyStatement` | A required `SessionRolePolicy` enum; no assignment or role-name payload. |
-| MySQL: `SET ROLE 'reader'@'localhost'` | `SetExplicitRolesStatement` | Nonempty `roles`, each an `AccountName` with separate `username` and optional `host`. |
-| MySQL: `SET ROLE ALL EXCEPT 'writer'` | `SetRolesExceptStatement` | Nonempty `excludedRoles`; the operation identifies the complementary selection. |
-| MySQL: `SET DEFAULT ROLE ALL TO 'alice'` | `SetDefaultRolePolicyStatement` | Required `DefaultRolePolicy` (`None` or `All`) and nonempty recipient `accounts`. |
-| MySQL: `SET DEFAULT ROLE 'reader' TO 'alice', 'bob'` | `SetDefaultRolesStatement` | Separate nonempty `roles` and recipient `accounts`. This records account defaults rather than current session activation. |
-| `RESET work_mem`, `RESET ALL` | `ResetSettingStatement`, `ResetAllSettingsStatement` | A required named parameter, or all session parameters with no name payload. |
-| MySQL: `RESET PERSIST IF EXISTS max_connections`, `RESET PERSIST` | `ResetSettingStatement`, `ResetAllPersistedVariablesStatement` | A persisted variable with its existence policy, or all persisted variables. |
-| SQLite: `PRAGMA main.cache_size` | `ReadPragmaStatement` | Qualified `name`; no assigned value. |
-| SQLite: `PRAGMA main.cache_size=-2000` | `AssignPragmaStatement` | Qualified `name` and one required argument, classified as a numeric, text, or identifier argument. |
-| `CREATE TABLE t(id INTEGER DEFAULT 1)` | `CreateTableStatement` | `definition.table`: ordered columns, typed value sources, constraints, indexes, and dialect-specific properties. |
-| `CREATE TABLE t AS SELECT id FROM users` | `CreateTableAsStatement` | The target name, source query, and declaration options. |
-| `CREATE OR REPLACE TEMPORARY VIEW v (n) AS SELECT id FROM users WITH LOCAL CHECK OPTION` | `Definition\CreateViewStatement` | Required `name` and bound `query`; declared `columns`, `temporary`, `replace`, and `ViewCheck`. `ifNotExists` is available only to SQLite views, which have no replacement or check policy. `properties` are dialect-specific and must match the statement's dialect. |
-| MySQL: `CREATE ALGORITHM=MERGE DEFINER='app'@'localhost' SQL SECURITY INVOKER VIEW v AS SELECT 1` | `CreateViewStatement` with `MySqlViewProperties` | `ViewAlgorithm` (`Undefined`, `Merge`, `TempTable`), an optional `definer` that is an `AccountName` or `CurrentAccount`, and `ViewSecurity` (`Definer`, `Invoker`). Omitted clauses take MySQL's defaults. |
-| PostgreSQL: `CREATE RECURSIVE VIEW v (n) WITH (security_barrier, check_option = local) AS SELECT 1` | `CreateViewStatement` with `PostgreSqlViewProperties` | `recursive`, which requires declared `columns`, and ordered storage-style `parameters`; an option named without a value carries `ImpliedSetting::Enabled`. |
-| PostgreSQL: `CREATE UNLOGGED MATERIALIZED VIEW IF NOT EXISTS s.m (x) USING heap WITH (fillfactor = 70) TABLESPACE ts AS SELECT 1 WITH NO DATA` | `Definition\PostgreSql\View\CreateMaterializedViewStatement` | Required `name` and `query`; declared `columns`, `unlogged`, `ifNotExists`, optional `accessMethod` and `tablespace`, ordered `storageParameters`, and `withData`. Empty storage names are rejected. |
-| PostgreSQL: `REFRESH MATERIALIZED VIEW CONCURRENTLY s.m` | `Definition\PostgreSql\View\RefreshMaterializedViewStatement` | Required `name`, `concurrently`, and `withData`; a concurrent refresh cannot request NO DATA. The operation is `StatementKind::Refresh`. |
-| PostgreSQL: `DROP MATERIALIZED VIEW IF EXISTS a, s.b CASCADE` | `Definition\PostgreSql\View\DropMaterializedViewsStatement` | Nonempty qualified `names`, `ifExists`, and `DropBehavior`; separate from ordinary view removal. |
-| PostgreSQL: `IMPORT FOREIGN SCHEMA ext LIMIT TO (users) FROM SERVER remote INTO app` | `ImportForeignSchemaStatement` | Required `remoteSchema`, `server`, and `localSchema`; `selection` is `AllForeignTables`, `ImportOnlyTables`, or `ExcludeForeignTables`. Explicit selections require a nonempty list of `ForeignRelation` values. `options` is an ordered list of `ForeignOption` identifier/text-literal pairs. |
-| PostgreSQL: `CREATE FOREIGN DATA WRAPPER fdw HANDLER app.h OPTIONS (format 'csv')` | `CreateForeignDataWrapperStatement` | Required wrapper `name`, optional `handler` and `validator` function names, and initial `ForeignOption` values with unique names. Omitted functions and explicit NO HANDLER/NO VALIDATOR both mean absence. |
-| PostgreSQL: `ALTER FOREIGN DATA WRAPPER fdw NO HANDLER OPTIONS (ADD format 'csv', DROP path)` | `AlterForeignDataWrapperStatement` | Required wrapper `name`; each support-function change is a `QualifiedName`, `FunctionChange::Keep`, or `FunctionChange::Remove`. Ordered option changes are `AddForeignOption`, `SetForeignOption`, or `DropForeignOption`. At least one change is required. |
-| PostgreSQL: `CREATE SERVER remote TYPE 'sql' VERSION 'v1' FOREIGN DATA WRAPPER fdw` | `CreateForeignServerStatement` | Required server `name` and `wrapper`, optional `serverType` and `version` text literals, unique initial `ForeignOption` values, and `ifNotExists`. |
-| PostgreSQL: `ALTER SERVER remote VERSION NULL OPTIONS (SET host 'other')` | `AlterForeignServerStatement` | Required server `name`; `version` is a text literal, `ServerVersionChange::Keep`, or `ServerVersionChange::Remove`. Ordered `options` contain typed addition, replacement, or removal requests. At least one version or option change is required. |
-| PostgreSQL: `ALTER EVENT TRIGGER audit ENABLE REPLICA` | `Definition\PostgreSql\Trigger\AlterEventTriggerFiringStatement` | Required `name` and `TriggerFiring`: `Origin`, `Replica`, `Always`, or `Disabled`. |
-| PostgreSQL: `ALTER EVENT TRIGGER audit RENAME TO audit_ddl` | `Definition\PostgreSql\Trigger\RenameEventTriggerStatement` | Required current `name` and replacement `newName`; both are unqualified identities. |
-| PostgreSQL: `ALTER EVENT TRIGGER audit OWNER TO CURRENT_USER` | `Definition\PostgreSql\Trigger\ChangeEventTriggerOwnerStatement` | Required `name` and `newOwner`, which is a `NamedRole` or `SessionRole`. |
-| PostgreSQL: `DROP EVENT TRIGGER IF EXISTS audit CASCADE` | `Definition\PostgreSql\Trigger\DropEventTriggersStatement` | Nonempty unqualified `names`, `ifExists`, and `DropBehavior`. |
-| PostgreSQL: `DROP OWNED BY alice, CURRENT_USER CASCADE` | `Definition\PostgreSql\Ownership\DropOwnedStatement` | Nonempty `owners`, each a `NamedRole` or `SessionRole`, and `DropBehavior` for dependent objects. |
-| PostgreSQL: `REASSIGN OWNED BY alice TO SESSION_USER` | `Definition\PostgreSql\Ownership\ReassignOwnedStatement` | Nonempty source `owners` and required `newOwner`, each retaining a named or session role identity. |
-| PostgreSQL: `DROP SERVER IF EXISTS remote, archive CASCADE` | `DropForeignServersStatement` | Nonempty unqualified server `names`, `ifExists`, and `DropBehavior`. |
-| PostgreSQL: `DROP FOREIGN DATA WRAPPER fdw RESTRICT` | `DropForeignDataWrappersStatement` | Nonempty wrapper `names`, `ifExists`, and `DropBehavior`; separate from server removal. |
-| PostgreSQL: `CREATE USER MAPPING IF NOT EXISTS FOR CURRENT_USER SERVER remote OPTIONS (user 'reader')` | `CreateUserMappingStatement` | Required `UserMappingIdentity`, `ifNotExists`, and initial `ForeignOption` values with unique names. |
-| PostgreSQL: `ALTER USER MAPPING FOR alice SERVER remote OPTIONS (SET user 'reader', DROP password)` | `AlterUserMappingStatement` | Required mapping `target` and nonempty ordered `options`: `AddForeignOption`, `SetForeignOption`, or `DropForeignOption`. |
-| PostgreSQL: `DROP USER MAPPING IF EXISTS FOR PUBLIC SERVER remote` | `DropUserMappingStatement` | Required mapping `target` and `ifExists`; no option payload. |
-| `CREATE INDEX ix ON users((score+1)) WHERE score>0` | `CreateIndexStatement` | Required `table` and `index.definition`, including ordered typed keys and a partial-index predicate. |
-| MySQL: `DROP INDEX ix ON users ALGORITHM=INPLACE LOCK=NONE` | `DropTableIndexStatement` | Required index name and owning table, with algorithm and lock enums. |
-| `DROP INDEX CONCURRENTLY IF EXISTS ix` | `DropIndexConcurrentlyStatement` | Exactly one index name and existence policy. |
-| `DROP TRIGGER tr ON users CASCADE` | `DropTableTriggerStatement` | Required trigger name and owning table, with drop behavior. |
-| `PREPARE s(int) AS SELECT $1` | `PrepareQueryStatement` | Required nested statement, name and declared parameter types; the SELECT's parameter has the declared integer type. |
-| MySQL: `PREPARE s FROM @sql` | `PrepareTextStatement` | Name and a required user-variable reference or text literal that supplies SQL at execution time. |
-| `EXECUTE s(1, 2)` | `ExecuteQueryStatement` | Prepared-query name and ordered argument expressions. |
-| MySQL: `EXECUTE s USING @x, @y` | `ExecuteUsingStatement` | Prepared-statement name and ordered user-variable references. |
-| `DEALLOCATE s`, `DEALLOCATE ALL` | `DeallocateStatement`, `DeallocateAllStatement` | One required prepared-statement name, or all prepared statements. |
-| MySQL: `SHOW ENGINES`, `SHOW STORAGE ENGINES` | `ShowEnginesStatement` | Six result fields identify the engine, availability, description, transaction support, XA support, and savepoint support. Synonymous syntax produces the same operation. |
-| MySQL: `SHOW PLUGINS` | `ShowPluginsStatement` | Five result fields identify plugin name, status, type, library, and license. |
-| MySQL: `SHOW PRIVILEGES` | `ShowPrivilegesStatement` | Three result fields describe privilege name, applicable object context, and description. |
-| MySQL: `SHOW FULL PROCESSLIST` | `ShowProcessesStatement` | Eight connection-activity result fields and a `ProcessQueryText` policy; ordinary PROCESSLIST requests the first 100 characters of active SQL, while FULL requests complete text. |
-| MySQL: `DO @x := 1, @x + 2` | `DoExpressionsStatement` | Nonempty ordered scalar `expressions`, with their ordinary types, references, and dependencies. The operation requests evaluation with no returned result set; Binder does not perform it. |
-| MySQL: `DROP TEMPORARY TABLE IF EXISTS scratch` | `DropTableStatement` | Nonempty `names`, existence and dependency policies, and `TableDropScope::Temporary`. Normal DROP TABLE uses the visible table namespace. |
-| MySQL: `CREATE DATABASE IF NOT EXISTS app CHARACTER SET utf8mb4` | `Definition\MySql\CreateDatabaseStatement` | Required database `name`, `ifNotExists`, and ordered initial `options`: `DatabaseCharacterSet`, `DatabaseCollation`, or `DatabaseEncryption`. |
-| MySQL: `ALTER DATABASE app READ ONLY 1 COLLATE utf8mb4_bin` | `AlterDatabaseStatement` | Required database identity and nonempty ordered `options`, additionally allowing `DatabaseReadOnly`. Repeated READ ONLY requests must agree. |
-| MySQL 5.6/5.7: `ALTER DATABASE old UPGRADE DATA DIRECTORY NAME` | `UpgradeDatabaseDirectoryStatement` | One required database `name`; this requests a directory-name encoding upgrade and has no default-option payload. |
-| MySQL: `DROP DATABASE IF EXISTS app` | `Definition\MySql\DropDatabaseStatement` | One database `name` and `ifExists`; `DROP SCHEMA` binds to the same operation. |
-| MySQL: `DROP EVENT IF EXISTS app.daily` | `DropEventStatement` | One local or database-qualified event `name` and an existence policy. |
-| MySQL: `DROP TABLESPACE store ENGINE NDB NO_WAIT` | `Definition\MySql\Storage\DropTablespaceStatement` | Required storage `name`, optional `engine`, and `CompletionWait` policy. |
-| MySQL: `DROP LOGFILE GROUP logs ENGINE NDB` | `DropLogfileGroupStatement` | Required logfile-group `name`, optional `engine`, and completion policy; the target is a group rather than a tablespace. |
-| MySQL 8+: `DROP UNDO TABLESPACE undo1 ENGINE InnoDB` | `DropUndoTablespaceStatement` | Required undo-tablespace `name` and optional `engine`. This form has no wait-policy operand. |
-| MySQL: `DROP SERVER IF EXISTS remote` | `DropServerStatement` | One foreign-server definition `name` and an existence policy. |
-| MySQL: `DROP RESOURCE GROUP workers FORCE` | `DropResourceGroupStatement` | One group `name` and a `force` flag requesting reassignment of affected threads to their default groups. |
-| MySQL: `DROP USER CURRENT_USER, 'reader'@'localhost'` | `DropUsersStatement` | Nonempty `accounts`: named `AccountName` values or `CurrentAccount::Authenticated`. Usernames and optional hosts remain separate. |
-| MySQL: `DROP ROLE IF EXISTS reader` | `DropRolesStatement` | Nonempty named `roles` and `ifExists`; each role has its own username and optional host. |
-| MySQL: `CREATE SPATIAL REFERENCE SYSTEM 4120 NAME 'Greek' DEFINITION 'coordinate-system text'` | `CreateSpatialReferenceSystemStatement` | Required nonzero unsigned 32-bit `srid`, `SpatialDefinition`, and a mutually exclusive `CreationPolicy`: require a new definition, ignore an existing one, or replace it. |
-| MySQL: `DROP SPATIAL REFERENCE SYSTEM IF EXISTS 4120` | `DropSpatialReferenceSystemStatement` | Required nonzero unsigned 32-bit `srid` and `ifExists`; no declaration metadata. |
-| MySQL: `ALTER FUNCTION app.f READS SQL DATA` | `Definition\MySql\AlterFunctionStatement` | Required routine `name` and `RoutineAlteration` containing optional language, data-access, security, and comment changes. |
-| MySQL: `ALTER PROCEDURE app.p SQL SECURITY INVOKER COMMENT 'note'` | `AlterProcedureStatement` | The same characteristic-change domain, targeting a procedure rather than a function. |
-| MySQL: `DROP FUNCTION IF EXISTS app.f`, `DROP PROCEDURE app.p` | `Definition\MySql\DropFunctionStatement`, `DropProcedureStatement` | One required `QualifiedName` and an existence policy. There is no overload signature or dependency policy. |
-| PostgreSQL: `DROP FUNCTION f, g(), h(IN integer) CASCADE` | `Definition\PostgreSql\DropFunctionsStatement` | Nonempty `targets`: `RoutineByName` leaves arguments unspecified; `RoutineBySignature` owns the ordered parameters, including an explicit empty list. `ifExists` and `DropBehavior` apply to the request. |
-| PostgreSQL: `DROP PROCEDURE p(text)`, `DROP ROUTINE r` | `DropProceduresStatement`, `DropRoutinesStatement` | The same typed overload selectors, with distinct statement types for procedure-only and general routine lookup. |
-| PostgreSQL: `DROP AGGREGATE a(*), b(integer), c(integer ORDER BY text)` | `DropAggregatesStatement` | A nonempty list of `ZeroArgumentAggregate`, `OrdinaryAggregate`, or `OrderedSetAggregate`. The ordered-set form requires aggregated parameters and separately retains direct parameters. |
-| MySQL or SQLite: `DROP TRIGGER IF EXISTS audit` | `DropTriggerStatement` | Exactly one `name` and an existence policy. PostgreSQL uses `DropTableTriggerStatement` with a required owning table. |
-| `EXPLAIN UPDATE users SET score=1` | `ExplainStatement` | Required nested `statement` and classified EXPLAIN options. |
-| `DECLARE cur CURSOR FOR SELECT id FROM users` | `DeclareCursorStatement` | Cursor name, required `query`, scrollability, sensitivity, transfer format, and lifetime. |
-| `FETCH BACKWARD ALL FROM cur` | `FetchCursorStatement` | Cursor name and `RemainingRows(Backward)` movement. |
-| `MOVE ABSOLUTE -2 FROM cur` | `MoveCursorStatement` | Cursor name and `PositionedRow(Absolute, -2)`. The position is described, not evaluated. |
-| `CLOSE cur`, `CLOSE ALL` | `CloseCursorStatement`, `CloseAllCursorsStatement` | One named cursor or all cursors, respectively. |
-| `LISTEN events`, `UNLISTEN events`, `UNLISTEN *` | `ListenStatement`, `UnlistenStatement`, `UnlistenAllStatement` | A required channel name for named operations; the all-channels operation has no name payload. |
-| `NOTIFY events, 'changed'` | `NotifyStatement` | Required `channel` and optional text-literal `payload`. |
-| `DISCARD PLANS` | `DiscardStatement` | A `DiscardResource` enum selecting plans, sequences, temporary tables, or all session resources. |
-| `SET CONSTRAINTS ALL DEFERRED` | `SetAllConstraintsStatement` | A `ConstraintTiming` enum; the selection is all deferrable constraints. |
-| PostgreSQL: `LOCK ONLY users IN SHARE MODE NOWAIT` | `LockRelationsStatement` | Nonempty ordered `tables`, one `PostgreSqlLockMode`, and a `nowait` policy. Descendant exclusion is retained on each target. |
-| MySQL: `LOCK TABLES users AS u READ LOCAL, incoming WRITE` | `LockTablesStatement` | Nonempty `locks`; each `MySqlTableLock` owns its required table occurrence, alias, and independent `MySqlLockMode`. |
-| `CHECKPOINT` | `CheckpointStatement` | A checkpoint request with no value operands. |
-| MySQL: `XA START 'g', 'b', 42 JOIN` | `XaStartStatement` | Required `transactionId` and `StartMode` (`NewBranch`, `Join`, or `Resume`). `XA BEGIN` produces the same start operation. |
-| MySQL: `XA END 'g' SUSPEND FOR MIGRATE` | `XaEndStatement` | Required `transactionId` and `EndMode` (`End`, `Suspend`, or `Migrate`). |
-| MySQL: `XA PREPARE 'g'`, `XA ROLLBACK 'g'` | `XaPrepareStatement`, `XaRollbackStatement` | Required `transactionId`; each class fixes its operation and has no start or commit policy. |
-| MySQL: `XA COMMIT 'g' ONE PHASE` | `XaCommitStatement` | Required `transactionId` and `CommitMode` (`Prepared` or `OnePhase`). |
-| MySQL: `XA RECOVER CONVERT XID` | `XaRecoverStatement` | `RecoveryEncoding` and four derived result columns; no input transaction identifier. |
-| MySQL: `KILL CONNECTION 42`, `KILL QUERY 42` | `KillConnectionStatement`, `KillQueryStatement` | A required `connectionId` expression and a concrete operation identifying what to stop. |
-| MySQL: `CREATE TEMPORARY TABLE copied LIKE original` | `CreateTableLikeStatement` | Required destination `target` and `template` table reference, plus `temporary` and `ifNotExists`. The reference exposes the supplied source definition without applying the copy to the snapshot. |
-| MySQL: `INSTALL PLUGIN audit SONAME 'audit.so'` | `InstallPluginStatement` | Required plugin `name` and text-literal `library`. |
-| MySQL: `UNINSTALL PLUGIN audit` | `UninstallPluginStatement` | Required plugin `name`. |
-| MySQL: `RESTART`, `SHUTDOWN`, `UNLOCK TABLES` | `RestartServerStatement`, `ShutdownServerStatement`, `UnlockTablesStatement` | Distinct operations with no value operands. |
-| MySQL: `CLONE LOCAL DATA DIRECTORY '/tmp/clone'` | `CloneLocalStatement` | A required destination-directory text literal. |
-| MySQL: `BINLOG 'YWJj'` | `ApplyBinlogStatement` | A required text literal containing an encoded binary-log event. |
-| MySQL: `TRUNCATE users` | `TruncateTableStatement` | One required physical `table`; there is no predicate or query input. |
-| MySQL: `CACHE INDEX users, incoming IN hot` | `CacheTableIndexesStatement` | Nonempty `targets`, each a `TableIndexes` with one physical `table` and optional `NamedIndexes`; required `cache` is `DefaultCache` or a `CacheName`. |
-| MySQL: `CACHE INDEX users PARTITION (p0,p1) IN hot` | `CachePartitionIndexesStatement` | One `target`, required `AllPartitions` or nonempty `NamedPartitions`, and required `cache`. |
-| MySQL: `LOAD INDEX INTO CACHE users, incoming IGNORE LEAVES` | `PreloadTableIndexesStatement` | Nonempty `PreloadTarget` requests; each contains `TableIndexes` and its own `ignoreLeaves` policy. The current cache assignment supplies the destination. |
-| MySQL: `LOAD INDEX INTO CACHE users PARTITION (ALL) IGNORE LEAVES` | `PreloadPartitionIndexesStatement` | One `PreloadTarget` and a required partition selection. No explicit cache destination. |
-| MySQL: `CHECK TABLE users QUICK FOR UPGRADE` | `CheckTablesStatement` | Nonempty physical `tables` and ordered `CheckOption` values. |
-| MySQL: `REPAIR LOCAL TABLE users QUICK USE_FRM` | `RepairTablesStatement` | Nonempty physical `tables`, ordered `RepairOption` values, and `BinlogPolicy`. |
-| MySQL: `OPTIMIZE TABLE users`, `ANALYZE TABLE users` | `OptimizeTablesStatement`, `AnalyzeTablesStatement` | Nonempty physical `tables` and `BinlogPolicy`; each class identifies its own operation. |
-| MySQL: `CHECKSUM TABLE users QUICK` | `ChecksumTablesStatement` | Nonempty physical `tables` and `ChecksumMode` selecting automatic, stored, or row-scanned checksums. |
-| MySQL: `ANALYZE TABLE users UPDATE HISTOGRAM ON score WITH 100 BUCKETS AUTO UPDATE` | `UpdateHistogramStatement` | One required `table`, nonempty bound `columns`, optional `BucketCount` from 1 to 1024, `RefreshPolicy`, and `BinlogPolicy`. |
-| MySQL: `ANALYZE TABLE users UPDATE HISTOGRAM ON score USING DATA '{}'` | `ImportHistogramStatement` | One required `table` and bound `column`, an opaque text-literal `data` operand, and `BinlogPolicy`. |
-| MySQL: `ANALYZE TABLE users DROP HISTOGRAM ON score` | `DropHistogramStatement` | One required `table`, nonempty bound `columns`, and `BinlogPolicy`; no sampling or import operands. |
-| PostgreSQL: `TRUNCATE ONLY users, incoming RESTART IDENTITY CASCADE` | `TruncateRelationsStatement` | Nonempty explicit `tables`, an `IdentityReset` policy, and a `ReferencingTables` policy for foreign-key dependencies. Binding records these requests without removing rows, resetting sequences, or expanding runtime effects. |
-| `REINDEX INDEX app.ix`, `REINDEX TABLE app.t`, `REINDEX SCHEMA app` | `ReindexObjectStatement` | Required object name, `ReindexObjectKind`, and PostgreSQL rebuild options. |
-| `REINDEX DATABASE`, `REINDEX SYSTEM` | `ReindexDatabaseStatement` | User-table or system-table index selection in the current database. An optional database name records an explicit name assertion. |
-| SQLite `REINDEX`, `REINDEX ix` | `ReindexAllStatement`, `ReindexNamedStatement` | Rebuild all indexes, or resolve a required SQLite index/table/collation name. |
+The [statement forms catalogue](statement-forms.md) lists every SQL form with the
+class `bind()` returns and the structure that class carries, grouped by area:
 
-`UserMappingIdentity` pairs a foreign `server` name with a `NamedRole` or a
-`MappingPrincipal` enum. The enum distinguishes the current user, current role,
-session user, and public fallback mapping. `USER` denotes `CurrentUser`; the quoted
-identifier `"CURRENT_USER"` denotes a named role. Binding retains these selectors
-without reading the session's actual usernames or opening a connection. Each
-mapping statement owns `withTarget()` to replace the user/server pair together.
-Creation supplies initial options, alteration requires explicit changes, and
-removal carries only the mapping identity and its existence policy.
-
-Foreign-data wrapper creation and alteration have different operand domains.
-Creation owns initial named text options. Alteration owns ordered changes:
-addition and replacement require a `ForeignOption`, while removal has only a name.
-The handler identifies a zero-argument function returning `fdw_handler`; the
-validator identifies a function accepting `text[]` and `oid` whose return value is
-ignored. Binding records those function roles without calling them. An ALTER's
-`withChanges()` replaces function and option changes together, so removing the
-last requested operation cannot leave an empty alteration.
-
-Event-trigger alterations describe independent changes to database-level triggers.
-`TriggerFiring::Origin` permits firing under the origin and local replication
-roles; `Replica` selects the replica role, `Always` selects every role, and
-`Disabled` prevents firing. `withFiring()` changes that policy without reading
-the current replication role. Renaming requires `newName`, ownership transfer
-requires `newOwner`, and removal owns its existence and dependency policies.
-Each statement retains its required operands through immutable transformations.
-Binding does not invoke a trigger function or apply the change.
-
-Ownership statements describe object selection by role. `NamedRole` holds a
-case-sensitive name; `SessionRole` identifies `CURRENT_ROLE`, `CURRENT_USER`, or
-`SESSION_USER` without reading the session's username. Removal selects owned
-objects and associated privileges with a dependent-object policy. Reassignment
-requires a new owner and has no removal policy. `withOwners()` replaces the
-nonempty source selection; reassignment's `withNewOwner()` replaces its required
-destination. Binding records these requests against the supplied state without
-enumerating owned objects, applying privilege changes, or changing the session.
-
-Foreign server creation owns the wrapper name and its initial metadata. Creation's
-`withDefinition()` replaces that wrapper, type, version, and options together.
-Omitted versions and explicit VERSION NULL both declare an absent version. In an
-alteration, absence of the VERSION clause means keep the existing version, while
-VERSION NULL requests removal. `withChanges()` replaces version and option changes
-atomically and rejects an empty request. Text metadata and options remain literal
-operands for the wrapper; binding does not connect, validate credentials, or apply
-changes. Removal records dependent-object behavior without expanding or executing
-its effects.
-
-Foreign schema imports retain remote relation qualification and descendant scope
-for the foreign-data wrapper. These are remote selectors, so binding does not look
-them up among local table declarations. A `ForeignOption` requires a name and a
-PostgreSQL text literal; the selected wrapper defines the option's meaning.
-Binding does not connect to the remote server, discover columns, or create local
-tables. The supplied schema snapshot stays unchanged. Import selections and
-options can be replaced immutably, and the remote server/schema pair can be
-replaced together with `withRemote()`.
-
-A `RoutineAlteration` records each requested characteristic independently. `null`
-means that the characteristic stays unchanged. `SqlDataAccess` identifies no SQL,
-SQL without declared data access, reading data, or modifying data;
-`RoutineSecurity` selects definer or invoker privileges. `language` names the
-routine language and `comment` is a MySQL text literal. Repeated declarations use
-the last value for that characteristic, as in the database grammar. MySQL also
-accepts an ALTER with every characteristic unchanged. `withChanges()` replaces
-the complete request; binding does not execute the routine or infer whether its
-body obeys the declared characteristics.
-
-Storage removal statements retain local storage identities rather than table
-references. `engine` selects a named storage engine when supplied. Ordinary
-tablespace and logfile-group removal default to `CompletionWait::Wait`; NO_WAIT
-selects the other policy. Each statement owns name and engine transformations,
-and the two wait-bearing forms also own `withWaiting()`. Binding checks the
-selected grammar's option rules and records the request without checking files,
-deleting storage, or executing engine-specific behavior.
-
-MySQL database character defaults identify a character set or collation by name.
-The legacy 5.6/5.7 grammars also allow `ServerCharacterInheritance::Inherit`.
-`DatabaseEncryption` selects enabled or disabled encryption for subsequently
-created tables; `DatabaseReadOnly` describes the requested access policy. READ
-ONLY DEFAULT and READ ONLY 0 both bind to `Disabled`. These are creation and
-alteration requests, so binding neither creates a database nor changes its state.
-The ordered options retain dependencies between character defaults and repeated
-requests. Creation allows an empty option list; alteration requires at least one
-change. An omitted ALTER target resolves to `Schema::defaultSchema` when supplied,
-otherwise it remains `CurrentDatabase::Session` for the consumer to resolve.
-`withOptions()` replaces the option list while checking its operand domains,
-release requirements, and access-policy consistency.
-
-Spatial reference declarations are available in the selected MySQL 8+ grammars.
-`SpatialDefinition` requires `name` and `definition` text literals. Optional
-`Organization` pairs its name literal with an unsigned 32-bit authority identifier;
-`description` is a separate optional literal. Attribute order has no semantic
-meaning and duplicate attributes are rejected. Binding describes these operands
-without interpreting the coordinate-system definition text or reading existing
-spatial systems. Replacing metadata supplies a complete `SpatialDefinition`, so
-required attributes cannot disappear during a transformation.
-
-INSERT, UPDATE, DELETE, and MERGE retain ordered RETURNING `outputs` where the
-selected language provides them. Their `affectedTables()` method identifies write
-targets. REPLACE uses an insertion form with `InsertMode::Replace`. It does not lose
-the distinction between explicit rows, a source query, and column assignments.
-
-Index-cache requests retain the explicit index selection, including `INDEX ()`,
-separately from an omitted selection. These operands describe the request; MySQL's
-storage engine currently applies cache assignment and preloading to all indexes
-of the target table ([CACHE INDEX](https://dev.mysql.com/doc/refman/8.4/en/cache-index.html),
-[LOAD INDEX INTO CACHE](https://dev.mysql.com/doc/refman/8.4/en/load-index.html)).
-`ignoreLeaves` requests nonleaf pages only. The four cache
-statement forms return the maintenance result roles `Table`, `Op`, `Msg_type`, and
-`Msg_text`. Binding neither allocates a cache nor loads pages.
-
-Server inspection statements are in `Model\Statement\Inspection`. Their
-`resultColumns()` returns the requested metadata shape, without reading the server.
-`ServerTextColumn` uses an `EngineField`, `PluginField`, or `PrivilegeField` enum and
-records the producing scope. Its VARCHAR and NULL facts follow the field's role;
-for example, a plugin's library can be NULL for a built-in plugin. Process fields
-use `ProcessColumn` for identity and activity, and `ProcessInfoColumn` for query
-text. The latter retains preview versus complete text and is nullable when no SQL
-is active. `withQueryText()` refreshes both the request and the resulting text-length
-fact in a new statement.
-
-MySQL table-maintenance statements are in `Model\Statement\Maintenance\MySql`.
-Their table references expose the supplied declarations; histogram columns identify
-their target relation occurrence and column symbol. `withTarget()` changes a histogram's
-table and columns together, so a column from another table cannot be attached to it.
-`BinlogPolicy` distinguishes the default binary-log request from LOCAL or
-NO_WRITE_TO_BINLOG. These operations describe requested storage-engine work without
-performing it or consulting live statistics.
-
-CHECK, REPAIR, OPTIMIZE, ANALYZE, and histogram operations expose four result columns:
-`Table`, `Op`, `Msg_type`, and `Msg_text`. Their `StatusColumn` expressions carry a
-`StatusField` enum, producing scope identity, and non-NULL VARCHAR facts. CHECKSUM
-exposes `Table` and `Checksum`; its `ChecksumColumn` describes a non-NULL VARCHAR
-table name or a nullable unsigned BIGINT checksum. The structure supplies result
-roles and types, not status messages, computed checksums, or histogram values.
-
-MySQL role operations are in `Model\Statement\Configuration\Role`. Their
-account names preserve case and separate host qualification; an omitted host
-refers to `%`. A quoted name such as `'NONE'` is a named role, distinct from the
-`None` policy. Binding records the requested selection and recipients without
-reading grants, activating roles, or changing account defaults. These statements
-have no variable assignments. Each owns immutable replacements for its required
-policy, role list, exclusion list, or recipient list.
-
-Transaction-setting statements distinguish the current transaction, the next
-transaction, and defaults for future transactions. PostgreSQL mode requests preserve
-their order, including repeated requests. `Locality` retains the outer SET lifetime,
-separately from which transaction settings the statement targets. These operations
-describe requested changes; the supplied Schema and live transaction state are not
-changed or consulted. In particular, snapshot existence and execution-state
-requirements belong to the consumer executing the request.
-
-Account identifiers use `Model\Configuration\Account\AccountName`, with username
-and host kept separately. A password request for the authenticated principal uses
-`CurrentAccount::Authenticated`; binding does not look up its username. Credential
-literals preserve their SQL spelling. Verification, hashing, plugin selection, and
-random generation are execution operations represented by the structure. MySQL 5.7's
-deprecated `PASSWORD(...)` spelling in SET PASSWORD normalizes to the same cleartext
-request as direct assignment, following that release's behavior.
-
-`SetRandomPasswordStatement::resultColumns()` describes `user`, `host`,
-`generated password` (VARCHAR), and `auth_factor` (unsigned BIGINT). Each expression
-is a `GeneratedPasswordColumn` with the producing `scopeId`, account reference, and
-`GeneratedPasswordField` enum. These are server-produced fields with no scalar SQL
-inputs, not generated or retrieved credential values.
-
-XA statement classes are in `Model\Statement\Transaction\Xa`. Their
-`TransactionId` requires a `global` string, hexadecimal, or bit literal of at most
-64 bytes. An optional `BranchIdentifier` has its own required `qualifier` literal
-and optional `FormatIdentifier`. A format cannot be supplied without a branch.
-The format operand retains its numeric spelling, including the hexadecimal and
-numeric forms admitted by the MySQL grammar. Binding does not convert literal
-operands into runtime transaction identifiers. Omitted qualifiers and formats
-request MySQL's empty branch and format 1 defaults.
-
-`XaRecoverStatement::resultColumns()` returns `formatID`, `gtrid_length`,
-`bqual_length`, and `data` in that order. Each expression is a `RecoveryColumn`
-with a `RecoveryField` enum, the producing statement's scope identity, and the
-requested encoding. The first three columns have non-NULL bigint facts; `data`
-has a non-NULL varchar fact and represents concatenated identifier bytes or their
-hexadecimal rendering. These are server-produced fields, with no standalone scalar
-SQL expression. Binding records the recovery request without inspecting prepared
-transactions. Likewise, binding XA control records the requested operation without
-checking live transaction state or applying a transaction transition.
+- [Queries](statement-forms.md#queries)
+- [Data modification](statement-forms.md#data-modification)
+- [Configuration and session](statement-forms.md#configuration-and-session)
+- [Transactions](statement-forms.md#transactions)
+- [Accounts, roles and privileges](statement-forms.md#accounts-roles-and-privileges)
+- [Schema definition — tables, indexes, views](statement-forms.md#schema-definition--tables-indexes-views)
+- [Schema definition — other objects](statement-forms.md#schema-definition--other-objects)
+- [Stored programs](statement-forms.md#stored-programs)
+- [Server inspection (SHOW)](statement-forms.md#server-inspection-show)
+- [Replication and server administration](statement-forms.md#replication-and-server-administration)
+- [Maintenance and loading](statement-forms.md#maintenance-and-loading)
 
 ### Destinations and conditional writes
 
@@ -408,7 +100,6 @@ from its complete `from` input; callers cannot supply a contradictory relation l
 | `JOIN ... USING(id)` | `UsingJoin` with a nonempty set of `SharedColumn` pairs and their merged output expressions. |
 | `NATURAL JOIN` | `NaturalJoin` retaining its shared columns, including the case of no shared names. |
 | `CROSS JOIN` | `CrossJoin`, with no predicate field. |
-
 | Parenthesized, aliased join | `AliasedRelation` with a required inner input and its own visible output names. |
 | Table function | `FunctionRelation` with a required invocation and output declaration. |
 | `JSON_TABLE(...)` | `DocumentRelation` whose `JsonTable` retains the input document, row path, PASSING variables, and nested column declarations. Value, existence, ordinality, and nested-path columns have different types. |
@@ -463,6 +154,20 @@ SELECT structures require at least one output.
 | Ordered-set aggregate | `OrderedSetCall` separates `directArguments` from the required `withinGroup` row ordering and optional FILTER. Both argument groups participate in signature resolution. |
 | Window function | `WindowCall` retains the invocation and its window specification or named window reference. |
 | JSON membership | MySQL `JsonMembership` has a required searched `value` and JSON `array` input. Neither is evaluated during binding. |
+| SQL/JSON functions | `JsonScalarExtraction` (JSON_VALUE) retains the document, path, RETURNING type and ON EMPTY/ON ERROR responses, plus PostgreSQL's document FORMAT and PASSING variables. PostgreSQL `JsonQueryExtraction` (JSON_QUERY) adds the wrapper and quotes, `JsonExistence` (JSON_EXISTS) its ON ERROR response; `JsonSerialization`, `JsonParse` and `JsonScalarConversion` retain JSON_SERIALIZE, JSON() and JSON_SCALAR. `JsonObjectConstructor`, `JsonArrayConstructor`, `JsonArrayQuery`, `JsonObjectAggregate` and `JsonArrayAggregate` retain members or elements, NULL handling, key uniqueness, ordering, FILTER and RETURNING. Result types derive from RETURNING or the function's default; options PostgreSQL rejects raise `InvalidSql`. |
+| PostgreSQL named infix operator, `a OPERATOR(schema.op) b` | `QualifiedInfixOperation` retains a `QualifiedOperator` (schema path and symbol) and required `left`/`right`. No operator catalog is consulted, so the result type is unknown. A built-in written through `pg_catalog` or without a schema, such as `OPERATOR(pg_catalog.+)` or `~~`, binds as its plain operator instead; a bare symbol the binder does not classify, such as `#`, binds as an unqualified `QualifiedOperator`. More than a database and a schema before the symbol raises `InvalidSql`. |
+| PostgreSQL named prefix operator, `OPERATOR(schema.op) a` | `QualifiedPrefixOperation` retains the `QualifiedOperator` and the required `operand`, with the same normalization of built-ins and an unknown result type. |
+| PostgreSQL quantified comparison with a named or pattern operator | `ArrayComparison` and `QuantifiedComparison` accept a `QualifiedOperator` as well as a comparison operator, and a possibly negated LIKE or ILIKE (also written `~~`, `!~~`, `~~*`, `!~~*`). The result is boolean; a built-in operator that never yields boolean, such as `OPERATOR(pg_catalog.+)`, raises `InvalidSql`. |
+| PostgreSQL `value IS [NOT] DOCUMENT` | `DocumentPredicate` retains the tested `value` and `negated`. The boolean result is NULL for a NULL value. |
+| PostgreSQL XMLEXISTS | `XmlExistence` retains the XPath `path`, the `document`, and the BY REF or BY VALUE `PassingMode` written before and after the document. |
+| PostgreSQL XMLPARSE | `XmlParse` retains the DOCUMENT or CONTENT `XmlOption`, the parsed `value`, and whether PRESERVE WHITESPACE was requested. The result is xml. |
+| PostgreSQL XMLSERIALIZE | `XmlSerialization` retains the `XmlOption`, the `value`, the `target` type, which is also the result type, and INDENT. A target that is not a character string type raises `InvalidSql`. |
+| PostgreSQL XMLROOT | `XmlRoot` retains the `value`, the `version` expression or null for VERSION NO VALUE, and the `XmlStandalone` request. |
+| PostgreSQL XMLELEMENT | `XmlElement` retains the element `name`, the XMLATTRIBUTES list as `XmlNamedArgument` items, and the content values. A repeated attribute name, or an unnamed attribute that is not a column reference, raises `InvalidSql`. |
+| PostgreSQL XMLFOREST | `XmlForest` retains a nonempty list of `XmlNamedArgument` elements, each named by its alias or by the referenced column; an unnamed expression raises `InvalidSql`. |
+| PostgreSQL XMLPI | `XmlProcessingInstruction` retains the `target` name and the optional `content`. |
+| PostgreSQL XMLCONCAT | `XmlConcatenation` retains the nonempty ordered `values`; the xml result is NULL only when every value is. |
+| PostgreSQL XMLAGG | An `AggregateCall` to the registered `xmlagg` aggregate, with an xml result, input ordering, and FILTER. |
 | CASE | `SimpleCase` requires a selector; `SearchedCase` requires predicates. Each retains ordered branches and its optional ELSE value. |
 | Row constructor | `RowExpression` retains ordered field `items`. PostgreSQL allows zero or more fields; MySQL and SQLite require at least two. |
 | IN with value candidates | `InList` has a searched `value`, ordered `choices`, and `negated` flag. Known row widths must agree; SQLite permits an empty candidate list. |
@@ -510,9 +215,3 @@ is not represented by a generic command or raw grammar payload.
 `source` retains parser positions and original text for diagnostics. Semantic
 operands determine serialization. Transformations belong to the Statement and
 return a new validated snapshot. See [statements and serialization](statements.md).
-
-Routine argument declarations expose a `TypeDescriptor` or a `ColumnTypeReference`, an optional parameter name, a direction enum, and the set-valued type flag. A column-type reference retains its qualified name and the matching `ColumnBinding` when the supplied Schema resolves it; it never reads a column value. Missing tables or columns produce binding diagnostics. Routine targets describe the requested identity; binding does not remove definitions or execute dependency checks.
-
-`ParameterMode::Implicit` remains distinct from an explicit `Input` mode because PostgreSQL procedure lookup uses that distinction. Aggregate arguments use the narrower `AggregateInputMode`, which has no output mode. An ordered-set aggregate with a variadic direct parameter requires exactly one variadic aggregated parameter with the same declared type. These rules apply to constructors and immutable statement transformations as well as SQL binding. The lookup semantics follow the PostgreSQL [DROP FUNCTION](https://www.postgresql.org/docs/17/sql-dropfunction.html), [DROP PROCEDURE](https://www.postgresql.org/docs/17/sql-dropprocedure.html), and [DROP AGGREGATE](https://www.postgresql.org/docs/17/sql-dropaggregate.html) definitions.
-
-MySQL account removal keeps `CURRENT_USER` as the authenticated-account symbol for the consumer to resolve from its execution context. It does not read the current account, change active roles, disconnect sessions, or mutate the supplied Schema. Role removal accepts named accounts; it cannot substitute a session-principal symbol for a role name. MySQL 5.6 account removal has no `IF EXISTS` option, and immutable changes preserve that release-specific rule.

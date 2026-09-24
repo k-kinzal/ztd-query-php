@@ -1,9 +1,10 @@
 # Statements and serialization
 
 A Statement is an immutable description of one SQL operation. Its concrete class
-owns the operands required by that form. Use [Binder](binder.md) to obtain it from
-SQL, or `StatementFactory` to validate constructed semantic objects against a
-[Schema](schema.md).
+owns the operands required by that form; the [statement forms](statement-forms.md)
+catalogue lists the class and structure of each SQL form. Use [Binder](binder.md) to
+obtain it from SQL, or `StatementFactory` to validate constructed semantic objects
+against a [Schema](schema.md).
 
 ## Immutable transformations
 
