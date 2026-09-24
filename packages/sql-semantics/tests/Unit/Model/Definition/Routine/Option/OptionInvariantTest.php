@@ -71,4 +71,39 @@ final class OptionInvariantTest extends TestCase
         $this->expectException(InvalidStructure::class);
         Option\OptionInvariant::rows([new Option\ResultRows($rows)], false);
     }
+
+    public function testOptionsChecksAttributesAfterASetting(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER FUNCTION f() SET a = 1');
+        self::assertInstanceOf(AlterRoutineStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        Option\OptionInvariant::options([...$statement->changes, Option\Volatility::Stable, Option\Volatility::Immutable], false);
+    }
+
+    #[TestWith([0])]
+    #[TestWith([-1])]
+    #[TestWith(['abc'])]
+    public function testEstimateRejectsNonPositiveOrNonNumericValues(int|string $value): void
+    {
+        $literal = Expression::literal($value, Dialect::PostgreSql);
+        self::assertInstanceOf(Literal::class, $literal);
+        $this->expectException(InvalidStructure::class);
+        Option\OptionInvariant::estimate($literal);
+    }
+
+    public function testEstimateRejectsAnotherDialect(): void
+    {
+        $literal = Expression::literal(5, Dialect::MySql);
+        self::assertInstanceOf(Literal::class, $literal);
+        $this->expectException(InvalidStructure::class);
+        Option\OptionInvariant::estimate($literal);
+    }
+
+    public function testEstimateAcceptsAFraction(): void
+    {
+        $literal = Expression::literal(0.5, Dialect::PostgreSql);
+        self::assertInstanceOf(Literal::class, $literal);
+        self::assertSame('0.5', $literal->text);
+        Option\OptionInvariant::estimate($literal);
+    }
 }

@@ -23,7 +23,7 @@ final class RevokeRolesStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('REVOKE r FROM u');
         self::assertInstanceOf(RevokeRolesStatement::class, $statement);
-        self::assertSame("REVOKE 's', 't' @'h' FROM 'u'", $statement->withRoles([new AccountName('s'), new AccountName('t', 'h')])->toString());
+        self::assertSame("REVOKE 's', 't'@'h' FROM 'u'", $statement->withRoles([new AccountName('s'), new AccountName('t', 'h')])->toString());
         self::assertCount(1, $statement->roles);
     }
 

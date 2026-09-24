@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Statement\Definition\Account;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -87,5 +88,30 @@ final class PrivilegeLevelsTest extends TestCase
         $this->expectException(InvalidSql::class);
         $this->expectExceptionMessage(InputViolation::DatabaseName->message());
         (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('GRANT SELECT ON ``.* TO u');
+    }
+
+    /**
+     * @param list<string> $definitions
+     */
+    #[DataProvider('providerBindReadsEveryPrivilegeLevel')]
+    public function testBindReadsEveryPrivilegeLevel(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    /**
+     * @return iterable<string, array{Dialect, ?string, list<string>, string, string}>
+     */
+    public static function providerBindReadsEveryPrivilegeLevel(): iterable
+    {
+        return [
+            'grant execute on function f to u (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT)'], 'grant execute on function f to u', 'GRANT EXECUTE ON FUNCTION `f` TO \'u\''],
+            'grant execute on procedure d.p to u (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT)'], 'grant execute on procedure d.p to u', 'GRANT EXECUTE ON PROCEDURE `d`.`p` TO \'u\''],
+            'GRANT SELECT ON t TO u (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT)'], 'GRANT SELECT ON t TO u', 'GRANT SELECT ON TABLE `t` TO \'u\''],
+            'grant select on table t to u (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT)'], 'grant select on table t to u', 'GRANT SELECT ON TABLE `t` TO \'u\''],
+            'GRANT SELECT ON *.* TO u (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT)'], 'GRANT SELECT ON *.* TO u', 'GRANT SELECT ON *.* TO \'u\''],
+            'GRANT SELECT ON d.* TO u (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT)'], 'GRANT SELECT ON d.* TO u', 'GRANT SELECT ON `d`.* TO \'u\''],
+        ];
     }
 }

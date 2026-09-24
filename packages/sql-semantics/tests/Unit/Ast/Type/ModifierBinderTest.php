@@ -73,4 +73,26 @@ final class ModifierBinderTest extends TestCase
         (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql);
     }
 
+    public function testReadUnwrapsParenthesesAroundEveryOperandForm(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        self::assertSame("SELECT CAST('a' AS \"app\".\"measure\"(- (1), - (- (2)), 'a', \"x\"))", $binder->bind("SELECT app.measure(-(1), - -2, ('a'), (x)) 'a'")->toString());
+    }
+
+    #[TestWith(["SELECT app.measure(-'1') 'a'"])]
+    #[TestWith(["SELECT app.measure(B'1') 'a'"])]
+    #[TestWith(["SELECT app.measure(-x) 'a'"])]
+    public function testReadRejectsNegatedTextBitStringsAndNegatedNames(string $sql): void
+    {
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::TypeModifier->message());
+        (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql);
+    }
+
+    public function testReadKeepsANumericTokenSpelling(): void
+    {
+        $parameter = \SqlSemantics\Ast\Type\ModifierBinder::read(new \SqlParser\Lexer\Token(0, 'ICONST', '0012', 0));
+        self::assertInstanceOf(NumericParameter::class, $parameter);
+        self::assertSame('0012', $parameter->spelling);
+    }
 }

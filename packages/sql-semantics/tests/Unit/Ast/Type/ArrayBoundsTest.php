@@ -35,4 +35,16 @@ final class ArrayBoundsTest extends TestCase
         self::assertSame($sql, \SqlSemantics\Serialization\TypeDeclaration::write($rebound)->toString());
     }
 
+    /**
+     * @param list<?string> $lengths
+     */
+    #[TestWith(['int ARRAY', [null]])]
+    #[TestWith(['int[3][]', ['3', null]])]
+    #[TestWith(['int ARRAY[2]', ['2']])]
+    public function testReadKeepsEveryDeclaredDimension(string $declaration, array $lengths): void
+    {
+        $type = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(x ' . $declaration . ')')->tables[0]->columns[0]->type;
+        self::assertInstanceOf(\SqlSemantics\Type\Identity\ArrayStorage::class, $type->identity);
+        self::assertSame($lengths, array_map(static fn (\SqlSemantics\Type\Identity\ArrayDimension $dimension): ?string => $dimension->length?->spelling, $type->identity->dimensions));
+    }
 }

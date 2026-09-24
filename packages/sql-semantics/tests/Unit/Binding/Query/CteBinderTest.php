@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Query;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
@@ -82,5 +83,29 @@ final class CteBinderTest extends TestCase
         $nested = $binder->bind('DELETE FROM t WHERE a IN (WITH c AS (SELECT 1) SELECT * FROM c)');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\DeleteTableStatement::class, $nested);
         self::assertNull($nested->ctes);
+    }
+
+    /**
+     * @return list<array{Dialect, ?string, string, mixed}>
+     */
+    public static function providerDefinitionAcceptsEachResultQueryForm(): array
+    {
+        return [
+            [Dialect::PostgreSql, null, 'WITH x AS (INSERT INTO t VALUES (1) RETURNING id) SELECT id FROM x', [\SqlSemantics\Model\BoundSelect::class, 'WITH "x" AS (INSERT INTO "public"."t" VALUES (1) RETURNING "id" AS "id") SELECT "id" AS "id" FROM "x"']],
+            [Dialect::PostgreSql, null, 'WITH x AS (UPDATE t SET id = 2 RETURNING id) SELECT id FROM x', [\SqlSemantics\Model\BoundSelect::class, 'WITH "x" AS (UPDATE "public"."t" SET "id" = 2 RETURNING "id" AS "id") SELECT "id" AS "id" FROM "x"']],
+            [Dialect::PostgreSql, null, 'WITH x AS (DELETE FROM t RETURNING id) SELECT id FROM x', [\SqlSemantics\Model\BoundSelect::class, 'WITH "x" AS (DELETE FROM "public"."t" RETURNING "id" AS "id") SELECT "id" AS "id" FROM "x"']],
+            [Dialect::PostgreSql, null, 'WITH x AS (MERGE INTO t USING t AS s ON t.id = s.id WHEN MATCHED THEN DELETE RETURNING t.id) SELECT id FROM x', [\SqlSemantics\Model\BoundSelect::class, 'WITH "x" AS (MERGE INTO "public"."t" USING "public"."t" AS "s" ON ("t"."id" = "s"."id") WHEN MATCHED THEN DELETE RETURNING "t"."id" AS "id") SELECT "id" AS "id" FROM "x"']],
+            [Dialect::PostgreSql, null, 'with recursive r(n) as materialized (select 1 union all select n + 1 from r where n < 3) select n from r', [\SqlSemantics\Model\BoundSelect::class, 'WITH RECURSIVE "r"("n") AS MATERIALIZED(SELECT 1 UNION ALL SELECT ("n" + 1) FROM "r" WHERE ("n" < 3)) SELECT "n" AS "n" FROM "r"']],
+            [Dialect::PostgreSql, null, 'INSERT INTO t WITH RECURSIVE r(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM r WHERE n < 3) SELECT n FROM r', [\SqlSemantics\Model\Statement\Insert\InsertSelectStatement::class, 'INSERT INTO "public"."t" WITH RECURSIVE "r"("n") AS (SELECT 1 UNION ALL SELECT ("n" + 1) FROM "r" WHERE ("n" < 3)) SELECT "n" AS "n" FROM "r"']],
+            [Dialect::MySql, null, 'INSERT INTO t with recursive r(n) as (select 1 union all select n + 1 from r where n < 3) select n from r', [\SqlSemantics\Model\Statement\Insert\InsertSelectStatement::class, 'INSERT INTO `t` WITH RECURSIVE `r`(`n`) AS (SELECT 1 UNION ALL SELECT (`n` + 1) FROM `r` WHERE (`n` < 3)) SELECT `n` AS `n` FROM `r`']],
+            [Dialect::PostgreSql, null, 'INSERT INTO t WITH r(n) AS (SELECT 1) SELECT n FROM r', [\SqlSemantics\Model\Statement\Insert\InsertSelectStatement::class, 'INSERT INTO "public"."t" WITH "r"("n") AS (SELECT 1) SELECT "n" AS "n" FROM "r"']],
+        ];
+    }
+
+    #[DataProvider('providerDefinitionAcceptsEachResultQueryForm')]
+    public function testDefinitionAcceptsEachResultQueryForm(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(id INT)')))->bind($sql, strict: false);
+        self::assertSame($expected, [$statement::class, $statement->toString()]);
     }
 }

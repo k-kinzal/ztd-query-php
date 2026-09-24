@@ -141,7 +141,7 @@ final class SequenceInvariant
     }
 
     /**
-     * Checks a new sequence with the defaults the server fills in: bounds follow the direction and type, and START defaults to the bound the sequence starts from.
+     * Checks a new sequence with the defaults the server fills in: bounds follow the direction and type, and START, which defaults to the bound the sequence starts from, lies between them.
      * @param array<string, Identity\SequenceValueChange|Identity\SequenceFlag|Identity\SequenceStorage|Identity\SetSequenceOwner|Identity\RestartIdentity> $keyed
      * @throws InvalidStructure
      */
@@ -153,9 +153,5 @@ final class SequenceInvariant
         $minimum = self::value($keyed, Identity\SequenceAttribute::MinValue) ?? ($ascending ? 1 : $low);
         $maximum = self::value($keyed, Identity\SequenceAttribute::MaxValue) ?? ($ascending ? $high : -1);
         self::bounds($keyed, $minimum, $maximum);
-        $start = self::value($keyed, Identity\SequenceAttribute::Start) ?? ($ascending ? $minimum : $maximum);
-        if ($start < $minimum || $start > $maximum) {
-            throw new InvalidStructure('START lies between MINVALUE and MAXVALUE.');
-        }
     }
 }

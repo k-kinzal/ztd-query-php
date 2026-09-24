@@ -59,4 +59,13 @@ final class AssignmentsTest extends TestCase
         self::assertInstanceOf(CreateProcedureStatement::class, $statement);
         self::assertInstanceOf(EmbeddedStatement::class, $statement->body);
     }
+
+    #[TestWith(['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET NEW.n = 1', 'CREATE TRIGGER `tr` BEFORE INSERT ON `t` FOR EACH ROW SET `new`.`n` = 1'])]
+    #[TestWith(['CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW SET new.n = 1, @x = 2', 'CREATE TRIGGER `tr` BEFORE UPDATE ON `t` FOR EACH ROW SET `new`.`n` = 1, @`x` = 2'])]
+    #[TestWith(['CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW SET x.n = 1', 'CREATE TRIGGER `tr` BEFORE INSERT ON `t` FOR EACH ROW SET `x`.`n` = 1'])]
+    #[TestWith(['CREATE PROCEDURE p() SET NEW.n = 1', 'CREATE PROCEDURE `p`() SET `NEW`.`n` = 1'])]
+    public function testTargetAssignsTheNewRowBeforeTheEvent(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (n INT)')))->bind($sql)->toString());
+    }
 }

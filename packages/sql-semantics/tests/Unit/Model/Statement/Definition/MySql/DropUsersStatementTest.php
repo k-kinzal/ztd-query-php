@@ -26,7 +26,7 @@ final class DropUsersStatementTest extends TestCase
         $changed = $statement->withAccounts([new AccountName('writer', '%')]);
         self::assertInstanceOf(AccountName::class, $statement->accounts[0]);
         self::assertSame('reader', $statement->accounts[0]->username);
-        self::assertSame("DROP USER 'writer' @'%'", $changed->toString());
+        self::assertSame("DROP USER 'writer'@'%'", $changed->toString());
     }
 
     public function testWithIfExistsKeepsTheAccountIdentities(): void
@@ -35,7 +35,7 @@ final class DropUsersStatementTest extends TestCase
         self::assertInstanceOf(Statement\DropUsersStatement::class, $statement);
         $changed = $statement->withIfExists(true);
         self::assertFalse($statement->ifExists);
-        self::assertSame("DROP USER IF EXISTS 'reader' @'localhost'", $changed->toString());
+        self::assertSame("DROP USER IF EXISTS 'reader'@'localhost'", $changed->toString());
     }
 
     public function testWithOriginRetainsTheCompleteRequest(): void

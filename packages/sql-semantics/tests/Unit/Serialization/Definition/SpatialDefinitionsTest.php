@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Serialization\Definition;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
@@ -38,4 +39,28 @@ final class SpatialDefinitionsTest extends TestCase
         self::assertSame($name->text, $roundTrip->definition->name->text);
     }
 
+    /**
+     * @param list<string> $definitions
+     */
+    #[DataProvider('providerWriteSpellsEverySpatialReferenceSystemForm')]
+    public function testWriteSpellsEverySpatialReferenceSystemForm(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
+        self::assertSame($expected, \SqlSemantics\Serialization\Definition\SpatialDefinitions::write($statement)?->toString());
+    }
+
+    /**
+     * @return iterable<string, array{Dialect, ?string, list<string>, string, string}>
+     */
+    public static function providerWriteSpellsEverySpatialReferenceSystemForm(): iterable
+    {
+        return [
+            'DROP SPATIAL REFERENCE SYSTEM 4000 (MySql)' => [Dialect::MySql, null, [], 'DROP SPATIAL REFERENCE SYSTEM 4000', 'DROP SPATIAL REFERENCE SYSTEM 4000'],
+            'DROP SPATIAL REFERENCE SYSTEM IF EXISTS 4000 (MySql)' => [Dialect::MySql, null, [], 'DROP SPATIAL REFERENCE SYSTEM IF EXISTS 4000', 'DROP SPATIAL REFERENCE SYSTEM IF EXISTS 4000'],
+            'CREATE SPATIAL REFERENCE SYSTEM 4000 NAME \'n\' DEFINITION \'d\' (MySql)' => [Dialect::MySql, null, [], 'CREATE SPATIAL REFERENCE SYSTEM 4000 NAME \'n\' DEFINITION \'d\'', 'CREATE SPATIAL REFERENCE SYSTEM 4000 NAME \'n\' DEFINITION \'d\''],
+            'CREATE OR REPLACE SPATIAL REFERENCE SYSTEM 4000 NAME \'n\' DEFINITION \'d\' ORGANIZATION \'o\' IDENTIFIED ... 3' => [Dialect::MySql, null, [], 'CREATE OR REPLACE SPATIAL REFERENCE SYSTEM 4000 NAME \'n\' DEFINITION \'d\' ORGANIZATION \'o\' IDENTIFIED BY 7 DESCRIPTION \'x\'', 'CREATE OR REPLACE SPATIAL REFERENCE SYSTEM 4000 NAME \'n\' DEFINITION \'d\' ORGANIZATION \'o\' IDENTIFIED BY 7 DESCRIPTION \'x\''],
+            'CREATE SPATIAL REFERENCE SYSTEM IF NOT EXISTS 4000 NAME \'n\' DEFINITION \'d\' DESCRIPTION \'x\' (MySql)' => [Dialect::MySql, null, [], 'CREATE SPATIAL REFERENCE SYSTEM IF NOT EXISTS 4000 NAME \'n\' DEFINITION \'d\' DESCRIPTION \'x\'', 'CREATE SPATIAL REFERENCE SYSTEM IF NOT EXISTS 4000 NAME \'n\' DEFINITION \'d\' DESCRIPTION \'x\''],
+            'CREATE SPATIAL REFERENCE SYSTEM 4000 ORGANIZATION \'o\' IDENTIFIED BY 7 NAME \'n\' DEFINITION \'d\' (MySql)' => [Dialect::MySql, null, [], 'CREATE SPATIAL REFERENCE SYSTEM 4000 ORGANIZATION \'o\' IDENTIFIED BY 7 NAME \'n\' DEFINITION \'d\'', 'CREATE SPATIAL REFERENCE SYSTEM 4000 NAME \'n\' DEFINITION \'d\' ORGANIZATION \'o\' IDENTIFIED BY 7'],
+        ];
+    }
 }

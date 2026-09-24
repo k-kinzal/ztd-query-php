@@ -36,10 +36,17 @@ final class QualifiedOperatorTest extends TestCase
     #[TestWith([['geo'], ''])]
     #[TestWith([['geo'], 'distance'])]
     #[TestWith([['geo'], '+--'])]
+    #[TestWith([['geo'], "+\n"])]
     #[TestWith([['geo'], '/*'])]
+    #[TestWith([['geo'], '++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++'])]
     public function testSpellingIsUnavailableForAnImpossibleName(array $qualifier, string $symbol): void
     {
         $this->expectException(InvalidStructure::class);
         new QualifiedOperator($qualifier, $symbol);
+    }
+
+    public function testAcceptsASixtyThreeCharacterSymbol(): void
+    {
+        self::assertSame(str_repeat('+', 63), (new QualifiedOperator(['geo'], str_repeat('+', 63)))->symbol);
     }
 }

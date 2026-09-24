@@ -66,4 +66,24 @@ final class FlushesTest extends TestCase
         self::assertFalse($statement->tables[0]->declaration->resolved);
         self::assertSame('unknown-table', $statement->diagnostics[0]->reason);
     }
+
+    #[TestWith(['flush tables t, u with read lock', 'FLUSH TABLES `t`, `u` WITH READ LOCK'])]
+    #[TestWith(['flush local logs, status', 'FLUSH NO_WRITE_TO_BINLOG LOGS, STATUS'])]
+    #[TestWith(['flush tables t for export', 'FLUSH TABLES `t` FOR EXPORT'])]
+    #[TestWith(['flush binary logs, engine logs', 'FLUSH BINARY LOGS, ENGINE LOGS'])]
+    public function testBindReadsLowerCaseForms(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (a INT)', 'CREATE TABLE u (a INT)')))->bind($sql)->toString());
+    }
+
+    public function testTargetAndTablesReadParsedNodes(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (a INT)', 'CREATE TABLE u (a INT)');
+        $context = new \SqlSemantics\Binding\Query\QueryContext(new \SqlSemantics\Binding\TableResolver($schema, new \SqlSemantics\Ast\Identifiers(Dialect::MySql), ''));
+        $parser = new \SqlSemantics\Ast\DialectParser(Dialect::MySql, 'mysql-8.4.7');
+        self::assertSame(ServerFlush::Status, Flushes::target($parser->parse('flush status')->find('flush_option')[0], $context));
+        $node = $parser->parse('FLUSH TABLES t, u');
+        $tables = Flushes::tables(new \SqlSemantics\Model\Statement\Origin('s0', $node, Dialect::MySql), $node, $context);
+        self::assertSame(['t', 'u'], array_map(static fn ($table): string => $table->declaration->name, $tables));
+    }
 }

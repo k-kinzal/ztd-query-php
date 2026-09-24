@@ -7,6 +7,8 @@ namespace Tests\Unit\Binding\Scalar\Intrinsic;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
+use SqlParser\Lexer\Token;
+use SqlSemantics\Ast\Identifiers;
 use SqlSemantics\Binder;
 use SqlSemantics\Binding\Scalar\Intrinsic\FieldSpelling;
 use SqlSemantics\Dialect;
@@ -44,5 +46,24 @@ final class FieldSpellingTest extends TestCase
     public function testQuotedJoinsContinuationPieces(): void
     {
         self::assertSame('year', FieldSpelling::quoted("'ye'\n'ar'", false));
+    }
+
+    #[TestWith(['IDENT', 'Foo', 'foo'])]
+    #[TestWith(['UIDENT', 'u&"d\\0061t"', 'dat'])]
+    #[TestWith(['SCONST', "e'a\\tb'", "a\tb"])]
+    #[TestWith(['SCONST', "e'a\\'b'", "a'b"])]
+    #[TestWith(['SCONST', "\$\$a\nb\$\$", "a\nb"])]
+    #[TestWith(['SCONST', "U&'d!0061t' uescape '!'", 'dat'])]
+    #[TestWith(['SCONST', "U&'\\+000061\\\\'", 'a\\'])]
+    #[TestWith(['SCONST', "'it''s'", "it's"])]
+    #[TestWith(['SCONST', "'a' 'b' 'c'", 'abc'])]
+    public function testReadDecodesEachSpellingDirectly(string $name, string $text, string $expected): void
+    {
+        self::assertSame($expected, FieldSpelling::read(new Token(0, $name, $text, 0), new Identifiers(Dialect::PostgreSql)));
+    }
+
+    public function testQuotedUndoublesQuotesOfEveryPiece(): void
+    {
+        self::assertSame('"a"b', FieldSpelling::quoted('"""a""" "b"', false, '"'));
     }
 }

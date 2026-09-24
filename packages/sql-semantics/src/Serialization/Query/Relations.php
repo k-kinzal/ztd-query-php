@@ -26,8 +26,6 @@ final class Relations
         if ($relation instanceof Join) {
             return Joins::write($relation, $dialect);
         }
-        $table = $relation->declaration;
-        $name = $table->schema === '' ? [$table->name] : [$table->schema, $table->name];
         $body = match (true) {
             $relation instanceof \SqlSemantics\Model\Relation\NamedTableReference => self::target($relation, $dialect),
             $relation instanceof \SqlSemantics\Model\Relation\CteReference => Build::identifier([$relation->name], $dialect),
@@ -39,7 +37,19 @@ final class Relations
             default => throw new \SqlSemantics\Model\Validation\InvalidStructure('This relation is a scoped pseudo-row, not a FROM source.'),
         };
         $columns = $relation instanceof \SqlSemantics\Model\Relation\DocumentRelation || $relation instanceof \SqlSemantics\Model\Relation\DerivedRelation || $relation instanceof \SqlSemantics\Model\Relation\FunctionRelation || $relation instanceof \SqlSemantics\Model\Relation\AliasedRelation || $relation instanceof \SqlSemantics\Model\TableFunction\RowsFrom\RowsFromRelation ? $relation->columnAliases : [];
-        return new Tree('relation', [$body, ...($relation->alias === null ? [] : [Build::keyword('AS'), Build::identifier([$relation->alias], $dialect)]), ...($columns === [] ? [] : [Build::parentheses(Build::separated(array_map(static fn (string $column): Tree => Build::identifier([$column], $dialect), $columns)))])]);
+        return new Tree('relation', [$body, ...($relation->alias === null ? [] : [Build::keyword('AS'), Build::identifier([$relation->alias], $dialect)]), ...($columns === [] ? [] : [Build::parentheses(Build::separated(array_map(static fn (string $column): Tree => Build::identifier([$column], $dialect), $columns)))]), ...self::indexHints($relation, $dialect)]);
+    }
+
+    /**
+     * Writes the MySQL index hints of a table occurrence after its alias, each with its FOR clause and index list.
+     * @return list<Tree>
+     */
+    public static function indexHints(TableUse $relation, Dialect $dialect): array
+    {
+        if (!$relation instanceof \SqlSemantics\Model\Relation\TableReference) {
+            return [];
+        }
+        return array_map(static fn (\SqlSemantics\Model\Query\Optimization\IndexHint $hint): Tree => new Tree('index-hint', [Build::keyword($hint->action->value . ' INDEX' . ($hint->scope === null ? '' : ' FOR ' . $hint->scope->value)), Build::parentheses(Build::separated(array_map(static fn (string $index): Tree => Build::identifier([$index], $dialect), $hint->indexes)))]), $relation->indexHints);
     }
 
     /**

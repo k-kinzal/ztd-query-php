@@ -62,4 +62,22 @@ final class CreateTableLikeStatementTest extends TestCase
         self::assertSame('label', $changed->template->declaration->columns[0]->name);
         self::assertSame('CREATE TABLE `copied` LIKE `replacement`', $changed->toString());
     }
+
+    public function testDefaultsToAPermanentUnguardedTable(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE original(id INTEGER)')))->bind('CREATE TABLE copied LIKE original');
+        self::assertInstanceOf(CreateTableLikeStatement::class, $statement);
+        $copy = new CreateTableLikeStatement($statement->origin, $statement->target, $statement->template);
+        self::assertFalse($copy->temporary);
+        self::assertFalse($copy->ifNotExists);
+        self::assertSame('CREATE TABLE `copied` LIKE `original`', $copy->toString());
+    }
+
+    public function testRejectsAThreePartTarget(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE original(id INTEGER)')))->bind('CREATE TABLE copied LIKE original');
+        self::assertInstanceOf(CreateTableLikeStatement::class, $statement);
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        new CreateTableLikeStatement($statement->origin, new QualifiedName(['a', 'b', 'c']), $statement->template);
+    }
 }

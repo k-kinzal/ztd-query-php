@@ -121,7 +121,7 @@ final class FromBinder
 
         $alias = Tree::outer($node, ['opt_alias_clause', 'opt_table_alias'])[0] ?? null;
 
-        return $this->table($node, $this->tables->identifiers->parts($name), $alias);
+        return $this->table($node, $this->tables->identifiers->parts($name), $alias, Query\TableOccurrence::hints($base, $this->tables->identifiers));
     }
 
     /**
@@ -152,12 +152,13 @@ final class FromBinder
         if (($qualifier !== null && str_starts_with(strtoupper(Tree::text($qualifier)), 'USING')) || str_contains(strtoupper($joinWords . ' ' . ($kindNode === null ? '' : Tree::text($kindNode))), 'NATURAL')) {
             return (new Query\UsingJoin())->bind($left, $right, $kind, $node, $id, $qualifier);
         }
+        $straight = str_contains(strtoupper($joinWords . ' ' . ($kindNode === null ? '' : Tree::text($kindNode))), 'STRAIGHT_JOIN');
         $using = Tree::child($node, ['using_list']);
         if ($using !== null) {
-            return (new Query\UsingJoin())->bind($left, $right, $kind, $node, $id, $using);
+            return (new Query\UsingJoin())->bind($left, $right, $kind, $node, $id, $using, $straight);
         }
 
-        return $this->join($left, $right, $kind, $condition, $node, $id);
+        return $this->join($left, $right, $kind, $condition, $node, $id, $straight);
     }
 
     /**
@@ -192,7 +193,8 @@ final class FromBinder
 
 
     /**
-     * Binds a SQLite input independently of the preceding join-list production.
+     * Binds a SQLite input independently of the preceding join-list production; a table-valued function reads its
+     * alias from its own production, never from the join before it.
      */
     public function sqliteInput(Node $node): BoundRelation
     {
@@ -209,8 +211,9 @@ final class FromBinder
             Tree::invalid($node, 'SQLite relation');
         }
         if (Tree::child($node, ['exprlist']) !== null) {
-            $children = array_values(array_filter($node->children, static fn ($child): bool => !$child instanceof Node || !in_array($child->name, ['stl_prefix', 'as', 'on_using'], true)));
-            return (new RelationFactory())->function($node, new Node('table_function', 0, $children), $this->queries ?? new QueryContext($this->tables, $this->ids), $this->parent, $this->scopeId);
+            $own = array_values(array_filter($node->children, static fn ($child): bool => !$child instanceof Node || !in_array($child->name, ['stl_prefix', 'on_using'], true)));
+            $children = array_values(array_filter($own, static fn ($child): bool => !$child instanceof Node || $child->name !== 'as'));
+            return (new RelationFactory())->function(new Node($node->name, $node->ordinal, $own), new Node('table_function', 0, $children), $this->queries ?? new QueryContext($this->tables, $this->ids), $this->parent, $this->scopeId);
         }
         $parts = $this->tables->identifiers->parts($name);
         $db = Tree::child($node, ['dbnm']);
@@ -222,8 +225,9 @@ final class FromBinder
 
     /**
      * @param list<string> $parts
+     * @param list<\SqlSemantics\Model\Query\Optimization\IndexHint> $indexHints MySQL index hints written after the table
      */
-    public function table(Node $source, array $parts, ?Node $aliasNode): BoundRelation
+    public function table(Node $source, array $parts, ?Node $aliasNode, array $indexHints = []): BoundRelation
     {
         $alias = null;
         if ($aliasNode !== null && Tree::hasTokens($aliasNode)) {
@@ -244,7 +248,7 @@ final class FromBinder
         }
         $declaration = $definition === null ? $this->tables->resolve($parts, $source) : QueryRelation::declaration($definition->query, $definition->name, $definition->columns, $source);
         $table = $definition === null
-            ? Query\TableOccurrence::bind($this->ids->relation(), $this->scopeId, $declaration, $this->tables->name($parts, $declaration), $alias, $source)
+            ? Query\TableOccurrence::bind($this->ids->relation(), $this->scopeId, $declaration, $this->tables->name($parts, $declaration), $alias, $source, $indexHints)
             : new \SqlSemantics\Model\Relation\CteReference($this->ids->relation(), $this->scopeId, $declaration, $alias, $source, $definition);
 
         $relation = new BoundRelation($table, new Scope($this->tables->identifiers, [$table], parent: $this->parent, queries: $this->queries));
@@ -272,7 +276,7 @@ final class FromBinder
             return $group;
         }
         $context = $this->queries ?? new QueryContext($this->tables, $this->ids);
-        $query = $context->bind($node, $this->parent);
+        $query = Query\QueryBlockOptions::nested($context->bind($node, $this->parent), $node, $context);
         $aliasParts = $aliasNode === null ? [] : $this->tables->identifiers->parts($aliasNode);
         $aliasParts = array_values(array_filter($aliasParts, static fn (string $name): bool => !in_array(strtoupper($name), ['AS', '(', ')', ','], true)));
         $alias = $aliasParts[0] ?? $query->scopeId;
@@ -328,8 +332,9 @@ final class FromBinder
 
     /**
      * Binds the match predicate before extending the nullable inputs.
+     * @param bool $straight Whether MySQL STRAIGHT_JOIN fixes the left input to be read first
      */
-    public function join(BoundRelation $left, BoundRelation $right, JoinKind $kind, ?Node $condition, Node $source, string $id): BoundRelation
+    public function join(BoundRelation $left, BoundRelation $right, JoinKind $kind, ?Node $condition, Node $source, string $id, bool $straight = false): BoundRelation
     {
         $scope = $left->scope->combine($right->scope, $source);
         $expression = $condition === null ? null : (new ExpressionBinder())->bind($condition, $scope);
@@ -340,9 +345,9 @@ final class FromBinder
         $rightScope = in_array($kind, [JoinKind::Left, JoinKind::Full], true) ? $right->scope->extend($id) : $right->scope;
 
         $relation = match (true) {
-            $expression !== null => new \SqlSemantics\Model\Relation\Joining\OnJoin($id, $kind, $left->relation, $right->relation, $expression, $source),
+            $expression !== null => new \SqlSemantics\Model\Relation\Joining\OnJoin($id, $kind, $left->relation, $right->relation, $expression, $source, $straight),
             in_array($kind, [JoinKind::Left, JoinKind::Right, JoinKind::Full], true) => new \SqlSemantics\Model\Relation\Joining\UnconditionalOuterJoin($id, $kind, $left->relation, $right->relation, $source),
-            default => new \SqlSemantics\Model\Relation\Joining\CrossJoin($id, $left->relation, $right->relation, $source),
+            default => new \SqlSemantics\Model\Relation\Joining\CrossJoin($id, $left->relation, $right->relation, $source, $straight),
         };
         return new BoundRelation($relation, $leftScope->combine($rightScope, $source));
     }

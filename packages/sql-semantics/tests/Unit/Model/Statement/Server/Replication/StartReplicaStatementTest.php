@@ -75,4 +75,26 @@ final class StartReplicaStatementTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new StartReplicaStatement($statement->origin, [], null, array_reverse($statement->credentials));
     }
+
+    public function testRejectsARepeatedCredential(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("START REPLICA USER = 'u'");
+        self::assertInstanceOf(StartReplicaStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        new StartReplicaStatement($statement->origin, [], null, [$statement->credentials[0], $statement->credentials[0]]);
+    }
+
+    public function testRejectsAnotherDatabaseLanguage(): void
+    {
+        $origin = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1')->origin;
+        $this->expectExceptionObject(new InvalidStructure('START REPLICA requires MySQL.'));
+        new StartReplicaStatement($origin);
+    }
+
+    public function testRejectsAChannelWithALineFeed(): void
+    {
+        $origin = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SELECT 1')->origin;
+        $this->expectException(InvalidStructure::class);
+        new StartReplicaStatement($origin, channel: "a\nb");
+    }
 }

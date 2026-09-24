@@ -33,7 +33,7 @@ final class ShowGrantsStatementTest extends TestCase
         self::assertSame(['app', 'localhost'], [$statement->account->username, $statement->account->host]);
         self::assertSame([], $statement->roles);
         self::assertSame(['Grants for app@localhost'], array_column($statement->resultColumns(), 'name'));
-        self::assertSame("SHOW GRANTS FOR 'app' @'localhost'", $statement->toString());
+        self::assertSame("SHOW GRANTS FOR 'app'@'localhost'", $statement->toString());
         self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
     }
 
@@ -67,7 +67,7 @@ final class ShowGrantsStatementTest extends TestCase
         $changed = $statement->withRoles([new AccountName('reader', 'h'), CurrentAccount::Authenticated]);
         self::assertNotSame($statement, $changed);
         self::assertSame([], $statement->roles);
-        self::assertSame("SHOW GRANTS FOR CURRENT_USER USING 'reader' @'h', CURRENT_USER", $changed->toString());
+        self::assertSame("SHOW GRANTS FOR CURRENT_USER USING 'reader'@'h', CURRENT_USER", $changed->toString());
         self::assertSame('SHOW GRANTS', $changed->withRoles([])->toString());
     }
 

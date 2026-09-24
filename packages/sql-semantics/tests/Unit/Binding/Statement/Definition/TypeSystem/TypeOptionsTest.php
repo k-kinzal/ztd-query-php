@@ -51,6 +51,7 @@ final class TypeOptionsTest extends TestCase
     #[TestWith(['CREATE TYPE t (input = i, output = o, storage = compressed)', 'definition-argument'])]
     #[TestWith(["CREATE TYPE t (input = i, output = o, category = '')", 'definition-requirement'])]
     #[TestWith(['CREATE TYPE r AS RANGE (subtype = int, foo = 1)', 'definition-attribute'])]
+    #[TestWith(['CREATE TYPE r AS RANGE ("SUBTYPE" = int4)', 'definition-attribute'])]
     #[TestWith(['CREATE TYPE r AS RANGE (subtype = int, subtype = text)', 'definition-attribute'])]
     #[TestWith(['CREATE TYPE r AS RANGE (canonical = c)', 'definition-requirement'])]
     #[TestWith(['CREATE TYPE r AS RANGE (subtype = int, canonical)', 'definition-argument'])]
@@ -68,5 +69,10 @@ final class TypeOptionsTest extends TestCase
     {
         self::assertSame(BaseTypeAttribute::TypmodOut, TypeOptions::attribute('typmod_out'));
         self::assertNull(TypeOptions::attribute('Storage'));
+    }
+
+    public function testBaseSkipsAnUnknownLeadingAttribute(): void
+    {
+        self::assertSame('CREATE TYPE "t"(INPUT = "i", OUTPUT = "o")', (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TYPE t (foo = 1, input = i, output = o)')->toString());
     }
 }

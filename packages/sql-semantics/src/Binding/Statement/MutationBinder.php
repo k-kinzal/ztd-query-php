@@ -51,7 +51,10 @@ final class MutationBinder
         }
         $where = (new \SqlSemantics\Binding\Write\ConflictBinder())->predicate($whereNode, $scope);
         $returning = QueryNodes::local($statement, ['returning_clause', 'returning', 'where_opt_ret', 'upsert'])[0] ?? null;
-        $outputs = $returning === null || !str_contains(strtoupper(Tree::text($returning)), 'RETURNING') ? [] : (new ProjectionBinder())->bind($returning, $scope);
+        if ($returning?->name === 'upsert') {
+            $returning = array_values(array_filter([...$returning->find('upsert'), ...$returning->find('returning')], static fn (Node $clause): bool => strtoupper($clause->tokens()[0]->text ?? '') === 'RETURNING'))[0] ?? null;
+        }
+        $outputs = $returning === null || !in_array('RETURNING', Tree::keywords($returning), true) ? [] : (new ProjectionBinder())->bind($returning, $scope);
         [$values, $queries] = $this->insertionInputs($statement, $scope);
         $insertion = null;
         if (in_array($kind, ['INSERT', 'REPLACE'], true)) {
@@ -161,21 +164,23 @@ final class MutationBinder
             return [];
         }
         $name = Tree::outer($node, ['qualified_name', 'table_ident'])[0] ?? $node;
+        $alias = Tree::child($node, ['ColId', 'as']);
+        $aliasName = $alias === null ? null : $tables->identifiers->parts($alias)[0];
         if ($node->name === 'xfullname') {
             $tokens = $node->tokens();
             $aliasPosition = array_search('AS', array_map(static fn ($token): string => strtoupper($token->text), $tokens), true);
             $name = new Node('relation_name', 0, $aliasPosition === false ? $tokens : array_slice($tokens, 0, $aliasPosition));
+            $aliasName = $aliasPosition === false || !isset($tokens[$aliasPosition + 1]) ? null : $tables->identifiers->name($tokens[$aliasPosition + 1]);
         }
         $declaration = $tables->resolve($tables->identifiers->parts($name), $name);
-        $alias = Tree::child($node, ['ColId', 'as']);
-        return [\SqlSemantics\Binding\Query\TableOccurrence::bind($this->context->ids->relation(), $id, $declaration, $tables->name($tables->identifiers->parts($name), $declaration), $alias === null ? null : $tables->identifiers->parts($alias)[0], $node)];
+        return [\SqlSemantics\Binding\Query\TableOccurrence::bind($this->context->ids->relation(), $id, $declaration, $tables->name($tables->identifiers->parts($name), $declaration), $aliasName, $node)];
     }
     /**
      * @param list<TableUse> $targets
      */
     public function conflictScope(Scope $scope, array $targets, Node $source, string $id): Scope
     {
-        if ($targets === [] || !str_contains(strtoupper(Tree::text($source)), 'ON CONFLICT')) {
+        if ($targets === [] || array_filter(QueryNodes::local($source, ['opt_on_conflict', 'upsert']), Tree::hasTokens(...)) === []) {
             return $scope;
         }
         $excluded = new \SqlSemantics\Model\Relation\ProposedRow($this->context->ids->relation(), $id, $targets[0]->declaration, 'excluded', $source, $targets[0]);

@@ -66,4 +66,37 @@ final class CastBinderTest extends TestCase
         self::assertSame($type, $descriptor->name);
         self::assertSame($unsigned, $descriptor->identity instanceof \SqlSemantics\Type\Identity\Numeric\IntegerStorage && $descriptor->identity->unsigned);
     }
+
+    #[TestWith(["SELECT CONVERT('a' USING utf8mb4)", 'utf8mb4'])]
+    #[TestWith(["SELECT convert('a' USING 'Latin1')", 'latin1'])]
+    #[TestWith(["SELECT CONVERT('a' USING `UTF8MB4`)", 'utf8mb4'])]
+    public function testBindReadsTheCharacterSetOfAConversion(string $sql, string $characterSet): void
+    {
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql, 'mysql-8.4.7'))->parse($sql);
+        $conversion = CastBinder::bind($tree->find('simple_expr')[0], new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::MySql)));
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Operator\CharacterSetConversion::class, $conversion);
+        self::assertSame($characterSet, $conversion->characterSet);
+    }
+
+    #[TestWith(["SELECT CAST(NOW() AT TIME ZONE 'UTC' AS DATETIME(3))", false, 3, "'UTC'"])]
+    #[TestWith(["SELECT CAST(NOW() AT TIME ZONE INTERVAL '+00:00' AS DATETIME)", true, null, "'+00:00'"])]
+    #[TestWith(["SELECT CAST(NOW() AT TIME ZONE 'UTC' AS DATETIME)", false, null, "'UTC'"])]
+    public function testBindReadsATimeZoneCast(string $sql, bool $interval, ?int $precision, string $zone): void
+    {
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql, 'mysql-8.4.7'))->parse($sql);
+        $cast = CastBinder::bind($tree->find('simple_expr')[0], new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::MySql)));
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Operator\TimeZoneCast::class, $cast);
+        self::assertSame([$interval, $precision, $zone], [$cast->interval, $cast->precision, $cast->zone->text]);
+    }
+
+    #[TestWith(["SELECT CAST('[1]' AS UNSIGNED ARRAY)", \SqlSemantics\Model\Scalar\Operator\ArrayCast::class, 'bigint unsigned'])]
+    #[TestWith(['SELECT cast(1 as signed)', CastExpression::class, 'bigint'])]
+    #[TestWith(['SELECT CONVERT(1, unsigned)', CastExpression::class, 'bigint unsigned'])]
+    public function testBindDistinguishesArrayCasts(string $sql, string $class, string $type): void
+    {
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql, 'mysql-8.4.7'))->parse($sql);
+        $cast = CastBinder::bind($tree->find('simple_expr')[0], new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::MySql)));
+        self::assertInstanceOf(\SqlSemantics\Model\Expression::class, $cast);
+        self::assertSame([$class, $type], [$cast::class, $cast->type->name]);
+    }
 }

@@ -73,6 +73,8 @@ enum InputViolation: string
     case TriggerIndexHint = 'trigger-index-hint';
     case AddedColumnKey = 'added-column-key';
     case MultiplePrimaryKeys = 'multiple-primary-keys';
+    case AutoIncrementKey = 'autoincrement-key';
+    case QueryBlockOption = 'query-block-option';
     case OutputPosition = 'invalid-output-position';
     case ExplainOption = 'invalid-explain-option';
     case ExplainSetting = 'invalid-explain-setting';

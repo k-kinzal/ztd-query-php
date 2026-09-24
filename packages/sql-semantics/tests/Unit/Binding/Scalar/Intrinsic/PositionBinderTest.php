@@ -30,4 +30,11 @@ final class PositionBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Function\FunctionCall::class, $query->outputs[0]->expression);
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Function\FunctionCall::class, $query->outputs[1]->expression);
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql])]
+    public function testBindReadsALowercasePositionWithItsOperandsInOrder(Dialect $dialect): void
+    {
+        self::assertSame("SELECT POSITION('a' IN 'bc')", (new Binder((new SchemaBuilder($dialect))->build()))->bind("SELECT position('a' in 'bc')")->toString());
+    }
 }

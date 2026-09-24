@@ -35,4 +35,13 @@ final class PasswordsTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\Password\SetRandomPasswordStatement::class, $statement);
         self::assertSame("PASSWORD FOR 'u' TO RANDOM REPLACE 'old' RETAIN CURRENT PASSWORD", Passwords::clause($statement)->toString());
     }
+
+
+    public function testWriteSpellsTheSessionScopeAfterAScopedItem(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.6.51'))->build());
+        $statement = $binder->bind("SET GLOBAL sql_mode = 1, @@wait_timeout = 2, PASSWORD = '*x'");
+        self::assertSame("SET GLOBAL `sql_mode` = 1, SESSION `wait_timeout` = 2, PASSWORD = '*x'", $statement->toString());
+        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+    }
 }

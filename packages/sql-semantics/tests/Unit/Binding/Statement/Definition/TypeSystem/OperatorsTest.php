@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Statement\Definition\TypeSystem;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -81,5 +82,50 @@ final class OperatorsTest extends TestCase
         $this->expectException(InvalidSql::class);
         $this->expectExceptionMessage(InputViolation::OperatorSignature->message());
         (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('DROP OPERATOR + (integer)');
+    }
+
+    /**
+     * @param list<string> $definitions
+     */
+    #[DataProvider('providerBindReadsEveryOperatorDefinition')]
+    public function testBindReadsEveryOperatorDefinition(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    /**
+     * @return iterable<string, array{Dialect, ?string, list<string>, string, string}>
+     */
+    public static function providerBindReadsEveryOperatorDefinition(): iterable
+    {
+        return [
+            'CREATE OPERATOR s.=== (FUNCTION = f, LEFTARG = int, RIGHTARG = int) (PostgreSql)' => [Dialect::PostgreSql, null, [], 'CREATE OPERATOR s.=== (FUNCTION = f, LEFTARG = int, RIGHTARG = int)', 'CREATE OPERATOR "s".=== (FUNCTION = "f", LEFTARG = integer, RIGHTARG = integer)'],
+            'ALTER OPERATOR === (int, int) SET (RESTRICT = r, JOIN = j) (PostgreSql)' => [Dialect::PostgreSql, null, [], 'ALTER OPERATOR === (int, int) SET (RESTRICT = r, JOIN = j)', 'ALTER OPERATOR === (integer, integer) SET (RESTRICT = "r", JOIN = "j")'],
+            'ALTER OPERATOR === (int, int) SET (RESTRICT = r, RESTRICT = s) (PostgreSql)' => [Dialect::PostgreSql, null, [], 'ALTER OPERATOR === (int, int) SET (RESTRICT = r, RESTRICT = s)', 'ALTER OPERATOR === (integer, integer) SET (RESTRICT = "s")'],
+            'DROP OPERATOR IF EXISTS === (int, int), !== (int, NONE) CASCADE (PostgreSql)' => [Dialect::PostgreSql, null, [], 'DROP OPERATOR IF EXISTS === (int, int), !== (int, NONE) CASCADE', 'DROP OPERATOR IF EXISTS === (integer, integer), !== (integer, NONE) CASCADE'],
+            'CREATE OPERATOR === (PROCEDURE = f, LEFTARG = int, RIGHTARG = int, sort1 = <) (PostgreSql)' => [Dialect::PostgreSql, null, [], 'CREATE OPERATOR === (PROCEDURE = f, LEFTARG = int, RIGHTARG = int, sort1 = <)', 'CREATE OPERATOR === (FUNCTION = "f", LEFTARG = integer, RIGHTARG = integer, MERGES = TRUE)'],
+            'CREATE OPERATOR === (FUNCTION = f, LEFTARG = int, RIGHTARG = int, merges, hashes) (PostgreSql)' => [Dialect::PostgreSql, null, [], 'CREATE OPERATOR === (FUNCTION = f, LEFTARG = int, RIGHTARG = int, merges, hashes)', 'CREATE OPERATOR === (FUNCTION = "f", LEFTARG = integer, RIGHTARG = integer, MERGES = TRUE, HASHES = TRUE)'],
+            'CREATE OPERATOR === (FUNCTION = f, LEFTARG = int, RIGHTARG = int, merges = false) (PostgreSql)' => [Dialect::PostgreSql, null, [], 'CREATE OPERATOR === (FUNCTION = f, LEFTARG = int, RIGHTARG = int, merges = false)', 'CREATE OPERATOR === (FUNCTION = "f", LEFTARG = integer, RIGHTARG = integer, MERGES = FALSE)'],
+            'CREATE OPERATOR === (FUNCTION = f, LEFTARG = int, RIGHTARG = int, unknownattr = 1) (PostgreSql)' => [Dialect::PostgreSql, null, [], 'CREATE OPERATOR === (FUNCTION = f, LEFTARG = int, RIGHTARG = int, unknownattr = 1)', 'CREATE OPERATOR === (FUNCTION = "f", LEFTARG = integer, RIGHTARG = integer)'],
+            'CREATE OPERATOR === (FUNCTION = f, LEFTARG = int, RIGHTARG = int, FUNCTION = g) (PostgreSql)' => [Dialect::PostgreSql, null, [], 'CREATE OPERATOR === (FUNCTION = f, LEFTARG = int, RIGHTARG = int, FUNCTION = g)', 'CREATE OPERATOR === (LEFTARG = integer, RIGHTARG = integer, FUNCTION = "g")'],
+            'CREATE OPERATOR === (FUNCTION = f, RIGHTARG = int, "Function" = g) (PostgreSql)' => [Dialect::PostgreSql, null, [], 'CREATE OPERATOR === (FUNCTION = f, RIGHTARG = int, "Function" = g)', 'CREATE OPERATOR === (FUNCTION = "f", RIGHTARG = integer)'],
+            'CREATE OPERATOR === (FUNCTION = f, RIGHTARG = int, ltcmp = <, gtcmp = >) (PostgreSql)' => [Dialect::PostgreSql, null, [], 'CREATE OPERATOR === (FUNCTION = f, RIGHTARG = int, ltcmp = <, gtcmp = >)', 'CREATE OPERATOR === (FUNCTION = "f", RIGHTARG = integer, MERGES = TRUE)'],
+        ];
+    }
+
+    #[TestWith(['CREATE OPERATOR === (FUNCTION = f, LEFTARG = setof int)'])]
+    #[TestWith(['CREATE OPERATOR === (FUNCTION = f, RIGHTARG = setof int)'])]
+    #[TestWith(['CREATE OPERATOR === (FUNCTION = f, LEFTARG)'])]
+    #[TestWith(['CREATE OPERATOR a.b.=== (FUNCTION = f, LEFTARG = int)'])]
+    #[TestWith(['CREATE OPERATOR === (LEFTARG = int)'])]
+    #[TestWith(['ALTER OPERATOR === (int, int) SET (sort1 = <)'])]
+    #[TestWith(['ALTER OPERATOR === (int, int) SET (LEFTARG = int)'])]
+    #[TestWith(['ALTER OPERATOR === (int, int) SET (bogus = int)'])]
+    public function testBindRejectsUnsupportedOperatorAttributes(string $sql): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $this->expectException(InvalidSql::class);
+        $binder->bind($sql, strict: false);
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -205,5 +206,117 @@ final class ExpressionRulesTest extends TestCase
         self::assertSame(\SqlSemantics\Model\Scalar\Operator\BinaryOperator::SoundsLike, $expression->operator);
         self::assertSame(Nullability::MaybeNull, $expression->nullability);
         self::assertSame('SELECT (`a` SOUNDS LIKE `b`) FROM `t`', $statement->toString());
+    }
+
+    /**
+     * @param list<string> $definitions
+     */
+    #[DataProvider('providerOperatorAndCallAssignTypesAndNullFacts')]
+    public function testOperatorAndCallAssignTypesAndNullFacts(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertSame($expected, $statement->outputs[0]->expression::class . ' ' . $statement->outputs[0]->expression->type->name . ' ' . $statement->outputs[0]->expression->nullability->name);
+    }
+
+    /**
+     * @return iterable<string, array{Dialect, ?string, list<string>, string, string}>
+     */
+    public static function providerOperatorAndCallAssignTypesAndNullFacts(): iterable
+    {
+        return [
+            'SELECT NULLIF(NULL, 1) FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT NULLIF(NULL, 1) FROM t', 'SqlSemantics\\Model\\Scalar\\Conditional\\NullIf unknown AlwaysNull'],
+            'SELECT NULLIF(i, n) FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT NULLIF(i, n) FROM t', 'SqlSemantics\\Model\\Scalar\\Conditional\\NullIf integer MaybeNull'],
+            'SELECT NULLIF(s, \'x\') FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT NULLIF(s, \'x\') FROM t', 'SqlSemantics\\Model\\Scalar\\Conditional\\NullIf text MaybeNull'],
+            'SELECT NULLIF(NULL, 1) FROM t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT NULLIF(NULL, 1) FROM t', 'SqlSemantics\\Model\\Scalar\\Function\\FunctionCall unknown AlwaysNull'],
+            'SELECT NULLIF(s, i) FROM t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT NULLIF(s, i) FROM t', 'SqlSemantics\\Model\\Scalar\\Function\\FunctionCall text MaybeNull'],
+            'SELECT NULLIF(NULL, s) FROM t (Sqlite)' => [Dialect::Sqlite, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT NULLIF(NULL, s) FROM t', 'SqlSemantics\\Model\\Scalar\\Function\\FunctionCall unknown AlwaysNull'],
+            'SELECT 1 MEMBER OF (\'[1]\') FROM t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT 1 MEMBER OF (\'[1]\') FROM t', 'SqlSemantics\\Model\\Scalar\\Conditional\\JsonMembership integer NotNull'],
+            'SELECT i IN (1, 2) FROM t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT i IN (1, 2) FROM t', 'SqlSemantics\\Model\\Scalar\\Conditional\\InList integer NotNull'],
+            'SELECT s LIKE \'a\' ESCAPE \'!\' FROM t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT s LIKE \'a\' ESCAPE \'!\' FROM t', 'SqlSemantics\\Model\\Scalar\\Conditional\\PatternMatch integer NotNull'],
+            'SELECT s NOT LIKE \'a\' FROM t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT s NOT LIKE \'a\' FROM t', 'SqlSemantics\\Model\\Scalar\\Conditional\\PatternMatch integer NotNull'],
+            'SELECT s RLIKE \'a\' FROM t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT s RLIKE \'a\' FROM t', 'SqlSemantics\\Model\\Scalar\\Conditional\\PatternMatch integer NotNull'],
+            'SELECT s REGEXP \'a\' FROM t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT s REGEXP \'a\' FROM t', 'SqlSemantics\\Model\\Scalar\\Conditional\\PatternMatch integer NotNull'],
+            'SELECT s GLOB \'a\' FROM t (Sqlite)' => [Dialect::Sqlite, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT s GLOB \'a\' FROM t', 'SqlSemantics\\Model\\Scalar\\Conditional\\PatternMatch integer NotNull'],
+            'SELECT s LIKE \'a\' ESCAPE \'!\' FROM t (Sqlite)' => [Dialect::Sqlite, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT s LIKE \'a\' ESCAPE \'!\' FROM t', 'SqlSemantics\\Model\\Scalar\\Conditional\\PatternMatch integer NotNull'],
+            'SELECT s NOT GLOB \'a\' FROM t (Sqlite)' => [Dialect::Sqlite, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT s NOT GLOB \'a\' FROM t', 'SqlSemantics\\Model\\Scalar\\Conditional\\PatternMatch integer NotNull'],
+            'SELECT s MATCH \'a\' FROM t (Sqlite)' => [Dialect::Sqlite, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT s MATCH \'a\' FROM t', 'SqlSemantics\\Model\\Scalar\\Conditional\\PatternMatch integer NotNull'],
+            'SELECT s SIMILAR TO \'a\' FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT s SIMILAR TO \'a\' FROM t', 'SqlSemantics\\Model\\Scalar\\Conditional\\PatternMatch boolean NotNull'],
+            'SELECT s NOT SIMILAR TO \'a\' ESCAPE \'!\' FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT s NOT SIMILAR TO \'a\' ESCAPE \'!\' FROM t', 'SqlSemantics\\Model\\Scalar\\Conditional\\PatternMatch boolean NotNull'],
+            'SELECT s ILIKE \'a\' FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT s ILIKE \'a\' FROM t', 'SqlSemantics\\Model\\Scalar\\Conditional\\PatternMatch boolean NotNull'],
+            'SELECT b AND b FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT b AND b FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\BinaryExpression boolean NotNull'],
+            'SELECT b AND (n > 1) FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT b AND (n > 1) FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\BinaryExpression boolean MaybeNull'],
+            'SELECT i AND b FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT i AND b FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\BinaryExpression boolean NotNull'],
+            'SELECT b OR i FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT b OR i FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\BinaryExpression boolean NotNull'],
+            'SELECT NOT i FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT NOT i FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\UnaryExpression boolean NotNull'],
+            'SELECT i IS TRUE FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT i IS TRUE FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\UnaryExpression boolean NotNull'],
+            'SELECT b IS TRUE FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT b IS TRUE FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\UnaryExpression boolean NotNull'],
+            'SELECT (i > 1) AND (i < 3) FROM t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT (i > 1) AND (i < 3) FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\BinaryExpression integer NotNull'],
+            'SELECT (i > 1) AND (n < 3) FROM t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT (i > 1) AND (n < 3) FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\BinaryExpression integer MaybeNull'],
+            'SELECT (i > 1) OR (i < 3) FROM t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT (i > 1) OR (i < 3) FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\BinaryExpression integer NotNull'],
+            'SELECT i IS NULL FROM t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT i IS NULL FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\UnaryExpression integer NotNull'],
+            'SELECT i ISNULL FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT i ISNULL FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\UnaryExpression boolean NotNull'],
+            'SELECT i NOTNULL FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT i NOTNULL FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\UnaryExpression boolean NotNull'],
+            'SELECT i = s FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT i = s FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\BinaryExpression boolean NotNull'],
+            'SELECT i = 1 FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT i = 1 FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\BinaryExpression boolean NotNull'],
+            'SELECT i IS DISTINCT FROM n FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT i IS DISTINCT FROM n FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\BinaryExpression boolean NotNull'],
+            'SELECT i <=> n FROM t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT i <=> n FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\BinaryExpression integer NotNull'],
+            'SELECT i IS n FROM t (Sqlite)' => [Dialect::Sqlite, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT i IS n FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\BinaryExpression integer NotNull'],
+            'SELECT i IS NOT n FROM t (Sqlite)' => [Dialect::Sqlite, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT i IS NOT n FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\BinaryExpression integer NotNull'],
+            'SELECT s || s FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT s || s FROM t', 'SqlSemantics\Model\Scalar\Operator\BinaryExpression text Unknown'],
+            'SELECT s || s FROM t (Sqlite)' => [Dialect::Sqlite, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT s || s FROM t', 'SqlSemantics\Model\Scalar\Operator\BinaryExpression text Unknown'],
+            'SELECT i + i FROM t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT i + i FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\BinaryExpression bigint NotNull'],
+            'SELECT i / i FROM t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT i / i FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\BinaryExpression numeric NotNull'],
+            'SELECT r + i FROM t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT r + i FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\BinaryExpression double precision MaybeNull'],
+            'SELECT d + i FROM t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT d + i FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\BinaryExpression numeric MaybeNull'],
+            'SELECT d * 2 FROM t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT d * 2 FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\BinaryExpression numeric MaybeNull'],
+            'SELECT i DIV 2 FROM t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT i DIV 2 FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\BinaryExpression bigint NotNull'],
+            'SELECT i MOD 2 FROM t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT i MOD 2 FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\BinaryExpression bigint NotNull'],
+            'SELECT i % 2 FROM t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT i % 2 FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\BinaryExpression bigint NotNull'],
+            'SELECT i & 2 FROM t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT i & 2 FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\BinaryExpression bigint NotNull'],
+            'SELECT i << 2 FROM t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT i << 2 FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\BinaryExpression bigint NotNull'],
+            'SELECT i + i FROM t (Sqlite)' => [Dialect::Sqlite, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT i + i FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\BinaryExpression dynamic NotNull'],
+            'SELECT r * i FROM t (Sqlite)' => [Dialect::Sqlite, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT r * i FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\BinaryExpression dynamic MaybeNull'],
+            'SELECT i + i FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT i + i FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\BinaryExpression integer NotNull'],
+            'SELECT -2147483648 FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT -2147483648 FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\UnaryExpression integer NotNull'],
+            'SELECT -2147483647 FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT -2147483647 FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\UnaryExpression integer NotNull'],
+            'SELECT -9223372036854775808 FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT -9223372036854775808 FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\UnaryExpression bigint NotNull'],
+            'SELECT +2147483648 FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT +2147483648 FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\UnaryExpression bigint NotNull'],
+            'SELECT 0 - 2147483648 FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT 0 - 2147483648 FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\BinaryExpression bigint NotNull'],
+            'SELECT -(2147483648) FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT -(2147483648) FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\UnaryExpression integer NotNull'],
+            'SELECT -2_147_483_648 FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT -2_147_483_648 FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\UnaryExpression integer NotNull'],
+            'SELECT -i FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT -i FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\UnaryExpression integer NotNull'],
+            'SELECT i ^ 2 FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT i ^ 2 FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\BinaryExpression integer NotNull'],
+            'SELECT r * i FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT r * i FROM t', 'SqlSemantics\\Model\\Scalar\\Operator\\BinaryExpression real MaybeNull'],
+            'SELECT GREATEST(i, n) FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT GREATEST(i, n) FROM t', 'SqlSemantics\\Model\\Scalar\\Conditional\\Extremum integer NotNull'],
+            'SELECT LEAST(i, 2) FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT LEAST(i, 2) FROM t', 'SqlSemantics\\Model\\Scalar\\Conditional\\Extremum integer NotNull'],
+            'SELECT COALESCE(i, 1.5) FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT COALESCE(i, 1.5) FROM t', 'SqlSemantics\\Model\\Scalar\\Conditional\\Coalesce numeric NotNull'],
+            'SELECT COALESCE(n, i) FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT COALESCE(n, i) FROM t', 'SqlSemantics\\Model\\Scalar\\Conditional\\Coalesce integer NotNull'],
+            'SELECT COALESCE(NULL, NULL) FROM t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT COALESCE(NULL, NULL) FROM t', 'SqlSemantics\\Model\\Scalar\\Conditional\\Coalesce text AlwaysNull'],
+            'SELECT GREATEST(i, n) FROM t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (i INTEGER NOT NULL, n INTEGER, s TEXT NOT NULL, r REAL, d DECIMAL(5,2), b BOOLEAN NOT NULL)'], 'SELECT GREATEST(i, n) FROM t', 'SqlSemantics\\Model\\Scalar\\Function\\FunctionCall integer MaybeNull'],
+        ];
+    }
+
+    #[TestWith(['SELECT b AND i FROM t', 'A PostgreSQL predicate must have boolean type.'])]
+    #[TestWith(['SELECT b OR i FROM t', 'A PostgreSQL predicate must have boolean type.'])]
+    #[TestWith(['SELECT NOT i FROM t', 'A PostgreSQL predicate must have boolean type.'])]
+    #[TestWith(['SELECT i IS TRUE FROM t', 'A PostgreSQL predicate must have boolean type.'])]
+    #[TestWith(['SELECT i = s FROM t', 'Cannot establish a common type for: integer, text'])]
+    #[TestWith(['SELECT i < true FROM t', 'Cannot establish a common type for: integer, boolean'])]
+    public function testOperatorRejectsIncompatiblePostgresOperands(string $sql, string $message): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (i INTEGER NOT NULL, s TEXT NOT NULL, b BOOLEAN NOT NULL)');
+        $this->expectException(SemanticException::class);
+        $this->expectExceptionMessage($message);
+        (new Binder($schema))->bind($sql);
+    }
+
+    #[TestWith(['SELECT NULLIF(1, 2, 3)'])]
+    #[TestWith(['SELECT NULLIF(1)'])]
+    #[TestWith(['SELECT COALESCE()'])]
+    public function testCallRejectsConditionalArity(string $sql): void
+    {
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind($sql);
     }
 }

@@ -20,10 +20,12 @@ final class OrdinaryAggregate
 {
     /**
      * @param non-empty-list<AggregateParameter> $parameters
-     * Retains only operands that participate in the target's identity.
+     * Retains only operands that participate in the target's identity; the name has at most catalog, schema and aggregate.
+     * @throws \SqlSemantics\Model\Validation\InvalidStructure
      */
     public function __construct(public readonly QualifiedName $name, public readonly array $parameters)
     {
+        \SqlSemantics\Model\Definition\Catalog\CatalogInvariant::name($name, 3);
         Collections::objects(Collections::nonEmpty($parameters), AggregateParameter::class);
     }
 }

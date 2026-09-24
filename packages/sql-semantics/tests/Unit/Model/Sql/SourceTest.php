@@ -157,4 +157,21 @@ final class SourceTest extends TestCase
         self::assertNull(Sql\Source::commentEnd('/*!80000 ', 0));
         self::assertSame([], Sql\Source::annotations('/*!80000 '));
     }
+
+    public function testReadKeepsAHintBeforeAToken(): void
+    {
+        $tree = Sql\Source::read(new \SqlParser\Lexer\Token(1, 'SELECT', 'SELECT', 0, '/*+ BKA(t) */ '));
+        self::assertSame(['/*+ BKA(t) */', 'SELECT'], array_column($tree->children, 'text'));
+    }
+
+    public function testAnnotationsReadsFromTheFirstCharacter(): void
+    {
+        self::assertSame(['/*+ a */'], array_column(Sql\Source::annotations('/*+ a */ #'), 'text'));
+    }
+
+    public function testCommentEndSearchesAfterTheOpeningMarker(): void
+    {
+        self::assertSame(4, Sql\Source::commentEnd('/**/', 0));
+        self::assertSame(8, Sql\Source::commentEnd('/*/ x */', 0));
+    }
 }

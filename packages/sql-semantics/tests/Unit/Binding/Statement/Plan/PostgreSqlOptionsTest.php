@@ -89,4 +89,12 @@ final class PostgreSqlOptionsTest extends TestCase
         $this->expectException(InvalidSql::class);
         PostgreSqlOptions::booleanOption('format', $node);
     }
+
+    #[TestWith(['EXPLAIN (VERBOSE, SETTINGS, SUMMARY, MEMORY) SELECT 1', 'EXPLAIN(ANALYZE FALSE, VERBOSE TRUE, COSTS TRUE, SETTINGS TRUE, GENERIC_PLAN FALSE, BUFFERS FALSE, WAL FALSE, SUMMARY TRUE, MEMORY TRUE, SERIALIZE NONE, FORMAT TEXT) SELECT 1'])]
+    #[TestWith(['EXPLAIN (ANALYZE, TIMING false, WAL, BUFFERS) SELECT 1', 'EXPLAIN(ANALYZE TRUE, VERBOSE FALSE, COSTS TRUE, SETTINGS FALSE, GENERIC_PLAN FALSE, BUFFERS TRUE, WAL TRUE, TIMING FALSE, MEMORY FALSE, SERIALIZE NONE, FORMAT TEXT) SELECT 1'])]
+    #[TestWith(['EXPLAIN (GENERIC_PLAN) SELECT $1', 'EXPLAIN(ANALYZE FALSE, VERBOSE FALSE, COSTS TRUE, SETTINGS FALSE, GENERIC_PLAN TRUE, BUFFERS FALSE, WAL FALSE, MEMORY FALSE, SERIALIZE NONE, FORMAT TEXT) SELECT $1'])]
+    public function testBindReadsEveryFlagOption(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+    }
 }

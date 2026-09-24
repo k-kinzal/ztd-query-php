@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Statement\Definition\Role;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -195,5 +196,35 @@ final class RoleCommandsTest extends TestCase
         $this->expectException(InvalidSql::class);
         $this->expectExceptionMessage(InputViolation::RoleName->message());
         $binder->bind($sql);
+    }
+
+    /**
+     * @param list<string> $definitions
+     */
+    #[DataProvider('providerBindReadsLowercaseRoleCommands')]
+    public function testBindReadsLowercaseRoleCommands(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
+        self::assertSame($expected, $statement::class . ' => ' . $statement->toString());
+    }
+
+    /**
+     * @return iterable<string, array{Dialect, ?string, list<string>, string, string}>
+     */
+    public static function providerBindReadsLowercaseRoleCommands(): iterable
+    {
+        return [
+            'create user u (PostgreSql)' => [Dialect::PostgreSql, null, [], 'create user u', 'SqlSemantics\\Model\\Statement\\Definition\\PostgreSql\\Role\\CreateRoleStatement => CREATE USER "u"'],
+            'create role r login (PostgreSql)' => [Dialect::PostgreSql, null, [], 'create role r login', 'SqlSemantics\\Model\\Statement\\Definition\\PostgreSql\\Role\\CreateRoleStatement => CREATE ROLE "r" LOGIN'],
+            'create group g (PostgreSql)' => [Dialect::PostgreSql, null, [], 'create group g', 'SqlSemantics\\Model\\Statement\\Definition\\PostgreSql\\Role\\CreateRoleStatement => CREATE GROUP "g"'],
+            'alter group g add user a, b (PostgreSql)' => [Dialect::PostgreSql, null, [], 'alter group g add user a, b', 'SqlSemantics\\Model\\Statement\\Definition\\PostgreSql\\Role\\AddGroupMembersStatement => ALTER GROUP "g" ADD USER "a", "b"'],
+            'alter group g drop user a (PostgreSql)' => [Dialect::PostgreSql, null, [], 'alter group g drop user a', 'SqlSemantics\\Model\\Statement\\Definition\\PostgreSql\\Role\\DropGroupMembersStatement => ALTER GROUP "g" DROP USER "a"'],
+            'alter role r rename to s (PostgreSql)' => [Dialect::PostgreSql, null, [], 'alter role r rename to s', 'SqlSemantics\\Model\\Statement\\Definition\\PostgreSql\\Role\\RenameRoleStatement => ALTER ROLE "r" RENAME TO "s"'],
+            'alter user r rename to s (PostgreSql)' => [Dialect::PostgreSql, null, [], 'alter user r rename to s', 'SqlSemantics\\Model\\Statement\\Definition\\PostgreSql\\Role\\RenameRoleStatement => ALTER ROLE "r" RENAME TO "s"'],
+            'alter group r rename to s (PostgreSql)' => [Dialect::PostgreSql, null, [], 'alter group r rename to s', 'SqlSemantics\\Model\\Statement\\Definition\\PostgreSql\\Role\\RenameRoleStatement => ALTER ROLE "r" RENAME TO "s"'],
+            'ALTER SCHEMA a RENAME TO b (PostgreSql)' => [Dialect::PostgreSql, null, [], 'ALTER SCHEMA a RENAME TO b', 'SqlSemantics\\Model\\Statement\\Definition\\PostgreSql\\Catalog\\RenameObjectStatement => ALTER SCHEMA "a" RENAME TO "b"'],
+            'drop role if exists a, b (PostgreSql)' => [Dialect::PostgreSql, null, [], 'drop role if exists a, b', 'SqlSemantics\\Model\\Statement\\Definition\\PostgreSql\\Role\\DropRolesStatement => DROP ROLE IF EXISTS "a", "b"'],
+            'drop user a (PostgreSql)' => [Dialect::PostgreSql, null, [], 'drop user a', 'SqlSemantics\\Model\\Statement\\Definition\\PostgreSql\\Role\\DropRolesStatement => DROP ROLE "a"'],
+        ];
     }
 }

@@ -25,7 +25,7 @@ final class DropRolesStatementTest extends TestCase
         self::assertInstanceOf(Statement\DropRolesStatement::class, $statement);
         $changed = $statement->withRoles([new AccountName('writer', '%')]);
         self::assertSame('reader', $statement->roles[0]->username);
-        self::assertSame("DROP ROLE 'writer' @'%'", $changed->toString());
+        self::assertSame("DROP ROLE 'writer'@'%'", $changed->toString());
     }
 
     public function testWithIfExistsKeepsTheAccountIdentities(): void
@@ -34,7 +34,7 @@ final class DropRolesStatementTest extends TestCase
         self::assertInstanceOf(Statement\DropRolesStatement::class, $statement);
         $changed = $statement->withIfExists(true);
         self::assertFalse($statement->ifExists);
-        self::assertSame("DROP ROLE IF EXISTS 'reader' @'localhost'", $changed->toString());
+        self::assertSame("DROP ROLE IF EXISTS 'reader'@'localhost'", $changed->toString());
     }
 
     public function testWithOriginRetainsTheCompleteRequest(): void

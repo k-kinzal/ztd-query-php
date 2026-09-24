@@ -25,7 +25,7 @@ final class ConstraintsTest extends TestCase
     #[TestWith([Dialect::PostgreSql, 'a INT, PRIMARY KEY (a) DEFERRABLE INITIALLY IMMEDIATE', 'PRIMARY KEY("a") DEFERRABLE INITIALLY IMMEDIATE'])]
     #[TestWith([Dialect::PostgreSql, 'b INT, UNIQUE (b) DEFERRABLE INITIALLY DEFERRED', 'UNIQUE("b") DEFERRABLE INITIALLY DEFERRED'])]
     #[TestWith([Dialect::PostgreSql, 'a INT, b INT, FOREIGN KEY (a, b) REFERENCES u (x, y) MATCH PARTIAL ON DELETE SET NULL (a, b)', 'FOREIGN KEY("a", "b") REFERENCES "u"("x", "y") MATCH PARTIAL ON DELETE SET NULL("a", "b") ON UPDATE NO ACTION'])]
-    #[TestWith([Dialect::MySql, 'a INT, b INT, CONSTRAINT chk CHECK (a > b) NOT ENFORCED', 'CONSTRAINT `chk` CHECK ((`a` > `b`))'])]
+    #[TestWith([Dialect::MySql, 'a INT, b INT, CONSTRAINT chk CHECK (a > b) NOT ENFORCED', 'CONSTRAINT `chk` CHECK ((`a` > `b`)) NOT ENFORCED'])]
     #[TestWith([Dialect::MySql, 'a INT, FOREIGN KEY (a) REFERENCES u (x) ON DELETE NO ACTION ON UPDATE SET NULL', 'FOREIGN KEY(`a`) REFERENCES `u`(`x`) ON DELETE NO ACTION ON UPDATE SET NULL'])]
     #[TestWith([Dialect::Sqlite, 'a INT, b INT, CONSTRAINT fk FOREIGN KEY (a) REFERENCES u (x) ON DELETE CASCADE ON UPDATE NO ACTION DEFERRABLE INITIALLY DEFERRED', 'CONSTRAINT "fk" FOREIGN KEY("a") REFERENCES "u"("x") ON DELETE CASCADE ON UPDATE NO ACTION DEFERRABLE INITIALLY DEFERRED'])]
     #[TestWith([Dialect::Sqlite, 'a INT, b INT, CHECK (a > b)', 'CHECK (("a" > "b"))'])]
@@ -79,5 +79,41 @@ final class ConstraintsTest extends TestCase
         self::assertSame('', Constraints::checking(CheckingTime::Immediate)->toString());
         self::assertSame('DEFERRABLE INITIALLY IMMEDIATE', Constraints::checking(CheckingTime::DeferrableImmediate)->toString());
         self::assertSame('DEFERRABLE INITIALLY DEFERRED', Constraints::checking(CheckingTime::DeferrableDeferred)->toString());
+    }
+
+    public function testWriteSpellsANotEnforcedCheck(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SELECT 1 > 0');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        $check = new \SqlSemantics\Schema\Constraint\Check($statement->outputs[0]->expression, false, false, 'c');
+        self::assertSame('CONSTRAINT `c` CHECK ((1 > 0)) NOT ENFORCED', Constraints::write($check, Dialect::MySql)->toString());
+    }
+
+    public function testWriteSpellsANonInheritedCheck(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1 > 0');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        $check = new \SqlSemantics\Schema\Constraint\Check($statement->outputs[0]->expression, true, true);
+        self::assertSame('CHECK ((1 > 0)) NO INHERIT', Constraints::write($check, Dialect::PostgreSql)->toString());
+    }
+
+    public function testDirectionWritesOnlyASqlitePrimaryKeyDirection(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('CREATE TABLE t (a INT UNIQUE, b TEXT, PRIMARY KEY (b DESC))');
+        self::assertInstanceOf(CreateTableStatement::class, $statement);
+        $constraints = $statement->definition->table->constraints;
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\UniqueKey::class, $constraints[0]);
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\PrimaryKey::class, $constraints[1]);
+        self::assertSame([], Constraints::direction($constraints[0], Dialect::Sqlite));
+        self::assertSame('PRIMARY KEY DESC', Constraints::column($constraints[1], Dialect::Sqlite)->toString());
+        self::assertSame([], Constraints::direction($constraints[1], Dialect::PostgreSql));
+    }
+
+    public function testColumnWritesUniqueAndPrimaryKeys(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE t (a INT UNIQUE, b INT PRIMARY KEY)');
+        self::assertInstanceOf(CreateTableStatement::class, $statement);
+        $constraints = $statement->definition->table->constraints;
+        self::assertSame(['UNIQUE', 'PRIMARY KEY'], [Constraints::column($constraints[0], Dialect::PostgreSql)->toString(), Constraints::column($constraints[1], Dialect::PostgreSql)->toString()]);
     }
 }

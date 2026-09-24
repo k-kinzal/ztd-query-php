@@ -35,4 +35,12 @@ final class ChangeReactionsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)'));
         self::assertSame(\SqlSemantics\Model\Statement\Definition\DropTableTriggerStatement::class, $binder->bind('DROP TRIGGER x ON t')::class);
     }
+
+    #[TestWith(['create publication p for table t', 'CREATE PUBLICATION "p" FOR TABLE "public"."t"'])]
+    #[TestWith(['alter subscription s disable', 'ALTER SUBSCRIPTION "s" DISABLE'])]
+    #[TestWith(['create event trigger e on ddl_command_start execute function f()', 'CREATE EVENT TRIGGER "e" ON "ddl_command_start" EXECUTE FUNCTION "f"()'])]
+    public function testBindRoutesPublicationsSubscriptionsAndEventTriggers(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a int)')))->bind($sql)->toString());
+    }
 }

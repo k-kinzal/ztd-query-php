@@ -36,4 +36,14 @@ final class MySqlUnitTest extends TestCase
     {
         return array_map(static fn (MySqlUnit $field): array => [$field], MySqlUnit::cases());
     }
+
+
+    public function testSpelledReadsTheOdbcSpellings(): void
+    {
+        self::assertSame(MySqlUnit::Day, MySqlUnit::spelled('SQL_TSI_DAY'));
+        self::assertSame(MySqlUnit::Quarter, MySqlUnit::spelled('quarter'));
+        self::assertNull(MySqlUnit::spelled('SQL_TSI_FORTNIGHT'));
+        $query = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(d DATETIME)')))->bind('SELECT DATE_ADD(d, INTERVAL 1 SQL_TSI_DAY) FROM t');
+        self::assertSame('SELECT DATE_ADD(`d`, INTERVAL 1 DAY) FROM `t`', $query->toString());
+    }
 }

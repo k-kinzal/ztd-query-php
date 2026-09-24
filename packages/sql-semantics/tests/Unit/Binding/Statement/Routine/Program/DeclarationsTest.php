@@ -37,4 +37,20 @@ final class DeclarationsTest extends TestCase
         self::assertInstanceOf(HandlerDeclaration::class, $handler);
         self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
     }
+
+    public function testBindReadsLowerCaseDeclarations(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (a INT)')))->bind("create procedure p() begin declare x, y int default 1; declare e condition for sqlstate '45000'; declare c cursor for select a from t; declare continue handler for e set x = 2; end");
+        self::assertSame("CREATE PROCEDURE `p`() BEGIN DECLARE `x`, `y` integer DEFAULT 1; DECLARE `e` CONDITION FOR SQLSTATE '45000'; DECLARE `c` CURSOR FOR SELECT `a` AS `a` FROM `t`; DECLARE CONTINUE HANDLER FOR `e` SET `x` = 2; END", $statement->toString());
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['create procedure p() begin declare x, X int; end'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['create procedure p() begin declare x, x int; end'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['create procedure p() begin declare c cursor for select a into @v from t; end'])]
+    public function testBindRejectsRepeatedNamesAndCursorsWithInto(string $sql): void
+    {
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::ProgramDeclaration->message());
+        (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (a INT)')))->bind($sql);
+    }
 }

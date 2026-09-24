@@ -68,4 +68,17 @@ final class PreparedBinderTest extends TestCase
         self::assertSame('EXECUTE `s` USING @`a`, @`b`', $using->toString());
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Prepared\DeallocateStatement::class, $mysql->bind('DROP PREPARE s'));
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['PREPARE p AS VALUES (1)', 'PREPARE "p" AS VALUES (1)'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['PREPARE p AS TABLE t', 'PREPARE "p" AS TABLE "public"."t"'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['PREPARE p AS SELECT 1 UNION SELECT 2', 'PREPARE "p" AS SELECT 1 UNION SELECT 2'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['PREPARE p AS UPDATE t SET a = 1', 'PREPARE "p" AS UPDATE "public"."t" SET "a" = 1'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['PREPARE p AS DELETE FROM t', 'PREPARE "p" AS DELETE FROM "public"."t"'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['PREPARE p AS MERGE INTO t USING t AS s ON true WHEN MATCHED THEN DELETE', 'PREPARE "p" AS MERGE INTO "public"."t" USING "public"."t" AS "s" ON true WHEN MATCHED THEN DELETE'])]
+    public function testQueryAcceptsEveryPreparableStatement(string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind($sql);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Prepared\PrepareQueryStatement::class, $statement);
+        self::assertSame($expected, $statement->toString());
+    }
 }

@@ -118,4 +118,26 @@ final class DomainsTest extends TestCase
     {
         self::assertSame($behavior, Domains::behavior(Tree::outer((new DialectParser(Dialect::PostgreSql))->parse($sql), ['AlterDomainStmt'])[0]));
     }
+
+    #[TestWith(['CREATE DOMAIN s.d AS int', 'CREATE DOMAIN "s"."d" AS integer'])]
+    #[TestWith(['CREATE DOMAIN d AS text COLLATE s.c', 'CREATE DOMAIN "d" AS text COLLATE "s"."c"'])]
+    #[TestWith(['CREATE DOMAIN d AS int NOT NULL CHECK (VALUE > 0)', 'CREATE DOMAIN "d" AS integer NOT NULL CHECK (("value" > 0))'])]
+    #[TestWith(['ALTER DOMAIN s.d SET NOT NULL', 'ALTER DOMAIN "s"."d" SET NOT NULL'])]
+    #[TestWith(['ALTER DOMAIN d DROP NOT NULL', 'ALTER DOMAIN "d" DROP NOT NULL'])]
+    #[TestWith(['ALTER DOMAIN d DROP CONSTRAINT IF EXISTS k CASCADE', 'ALTER DOMAIN "d" DROP CONSTRAINT IF EXISTS "k" CASCADE'])]
+    #[TestWith(['ALTER DOMAIN d DROP CONSTRAINT k', 'ALTER DOMAIN "d" DROP CONSTRAINT "k"'])]
+    public function testBindSpellsEachDomainForm(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+    }
+
+    #[TestWith(['CREATE DOMAIN c.s.d AS int'])]
+    #[TestWith(['CREATE DOMAIN d AS text COLLATE c.s.x'])]
+    #[TestWith(['ALTER DOMAIN c.s.d SET NOT NULL'])]
+    public function testBindRejectsAnOverQualifiedName(string $sql): void
+    {
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(InputViolation::CatalogObjectName->message());
+        (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql);
+    }
 }

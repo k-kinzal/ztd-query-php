@@ -63,4 +63,18 @@ final class FunctionsTest extends TestCase
         self::assertSame($expected, $statement->toString());
         self::assertSame($expected, $binder->bind($expected)->toString());
     }
+
+    #[TestWith([Dialect::Sqlite, 'SELECT abs(a), extract(a), "1abc"(1), "abc-"(1), "my fn"(1) FROM t', 'SELECT abs("a"), extract("a"), "1abc"(1), "abc-"(1), "my fn"(1) FROM "main"."t"'])]
+    #[TestWith([Dialect::Sqlite, 'SELECT count(*) FILTER (WHERE a > 1), sum(a) OVER (PARTITION BY b) FROM t', 'SELECT count(*) FILTER (WHERE ("a" > 1)), sum("a") OVER (PARTITION BY "b") FROM "main"."t"'])]
+    #[TestWith([Dialect::Sqlite, 'SELECT myagg(a) FILTER (WHERE a > 1), myagg() FILTER (WHERE a > 1), count(DISTINCT a) FROM t', 'SELECT myagg(ALL "a") FILTER (WHERE ("a" > 1)), myagg(ALL) FILTER (WHERE ("a" > 1)), count(DISTINCT "a") FROM "main"."t"'])]
+    #[TestWith([Dialect::PostgreSql, 'SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY a) FROM t', 'SELECT "percentile_cont"(0.5) WITHIN GROUP(ORDER BY "a" ASC) FROM "public"."t"'])]
+    #[TestWith([Dialect::PostgreSql, 'SELECT myagg(a ORDER BY a), myagg(*), count(DISTINCT a) FROM t', 'SELECT "myagg"(ALL "a" ORDER BY "a" ASC), "myagg"(*), "count"(DISTINCT "a") FROM "public"."t"'])]
+    #[TestWith([Dialect::PostgreSql, 'SELECT string_agg(b, b ORDER BY a) FILTER (WHERE a > 1) FROM t', 'SELECT "string_agg"("b", "b" ORDER BY "a" ASC) FILTER (WHERE ("a" > 1)) FROM "public"."t"'])]
+    #[TestWith([Dialect::MySql, 'SELECT myagg(a), abs(a), sum(a) OVER w FROM t WINDOW w AS ()', 'SELECT `myagg`(`a`), abs(`a`), sum(`a`) OVER `w` FROM `t` WINDOW `w` AS ()'])]
+    public function testWriteSpellsEachInvocationForm(Dialect $dialect, string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(a INTEGER, b TEXT)'));
+        self::assertSame($expected, $binder->bind($sql, strict: false)->toString());
+        self::assertSame($expected, $binder->bind($expected, strict: false)->toString());
+    }
 }

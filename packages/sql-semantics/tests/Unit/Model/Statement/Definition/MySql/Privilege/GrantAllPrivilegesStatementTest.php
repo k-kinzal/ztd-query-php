@@ -76,7 +76,7 @@ final class GrantAllPrivilegesStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('GRANT ALL ON *.* TO u');
         self::assertInstanceOf(GrantAllPrivilegesStatement::class, $statement);
         $changed = $statement->withGrantor(new Grantor(new AccountName('g', 'h'), new RoleSelection([new AccountName('r')])));
-        self::assertSame("GRANT ALL PRIVILEGES ON *.* TO 'u' AS 'g' @'h' WITH ROLE 'r'", $changed->toString());
+        self::assertSame("GRANT ALL PRIVILEGES ON *.* TO 'u' AS 'g'@'h' WITH ROLE 'r'", $changed->toString());
         self::assertNull($statement->grantor);
     }
 

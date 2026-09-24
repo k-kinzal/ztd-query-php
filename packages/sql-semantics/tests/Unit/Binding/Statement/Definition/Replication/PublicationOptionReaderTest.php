@@ -53,10 +53,27 @@ final class PublicationOptionReaderTest extends TestCase
     #[TestWith(["'\"UPDATE\"'"])]
     #[TestWith(["'insert,,delete'"])]
     #[TestWith(["'merge'"])]
+    #[TestWith(["'x\"update\"'"])]
+    #[TestWith(["'\"update\"x'"])]
     public function testOperationsRejectAnUnknownOperation(string $value): void
     {
         $this->expectException(InvalidSql::class);
         $this->expectExceptionMessage(InputViolation::DefinitionArgument->message());
         (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT, b INT)')))->bind('CREATE PUBLICATION p WITH (publish = ' . $value . ')');
+    }
+
+    public function testReadWithoutADefinitionSetsNothing(): void
+    {
+        $context = new \SqlSemantics\Binding\Query\QueryContext(new \SqlSemantics\Binding\TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql), 'public'));
+        $options = \SqlSemantics\Binding\Statement\Definition\Replication\PublicationOptionReader::read(null, $context);
+        self::assertNull($options->publish);
+        self::assertNull($options->viaPartitionRoot);
+    }
+
+    public function testOperationsReadABlankListAsNoOperation(): void
+    {
+        $context = new \SqlSemantics\Binding\Query\QueryContext(new \SqlSemantics\Binding\TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql), 'public'));
+        $elements = \SqlSemantics\Binding\Statement\Definition\TypeSystem\DefinitionElement::list((new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse("CREATE PUBLICATION p WITH (publish = ' ')"), $context);
+        self::assertSame([], \SqlSemantics\Binding\Statement\Definition\Replication\PublicationOptionReader::operations($elements[0], $context));
     }
 }

@@ -6,6 +6,7 @@ namespace Tests\Unit\Model\Configuration\Replication;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
@@ -53,5 +54,36 @@ final class ReplicationReleaseTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("PURGE BINARY LOGS TO 'a'");
         $this->expectException(InvalidStructure::class);
         ReplicationRelease::require(new Origin('s0', $statement->source, Dialect::PostgreSql), 'form');
+    }
+
+    #[TestWith(['xmysql-5.6.51'])]
+    #[TestWith(['mysql-5.6.51x'])]
+    #[TestWith(['postgresql'])]
+    public function testNumberTreatsAnotherTagAsNewest(string $tag): void
+    {
+        self::assertSame(PHP_INT_MAX, ReplicationRelease::number($tag));
+    }
+
+    public function testRequireAcceptsBothBoundsThemselves(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build()))->bind("PURGE MASTER LOGS TO 'a'");
+        ReplicationRelease::require($statement->origin, 'form', 50744, 50744);
+        self::assertSame(50744, ReplicationRelease::of($statement->origin));
+    }
+
+    public function testRequireNamesTheFormOutsideTheBounds(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build()))->bind("PURGE MASTER LOGS TO 'a'");
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('RESET form is not available in this MySQL release.');
+        ReplicationRelease::require($statement->origin, 'RESET form', 0, 50743);
+    }
+
+    public function testRequireNamesTheFormOfAnotherDialect(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("PURGE BINARY LOGS TO 'a'");
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('RESET form requires MySQL.');
+        ReplicationRelease::require(new Origin('s0', $statement->source, Dialect::PostgreSql), 'RESET form');
     }
 }

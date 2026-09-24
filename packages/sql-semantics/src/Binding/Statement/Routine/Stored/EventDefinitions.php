@@ -96,7 +96,7 @@ final class EventDefinitions
             return new OneTimeSchedule($time);
         }
         $interval = Tree::child($node, ['interval']) ?? throw new UnclassifiedSql('A recurring event requires its interval unit.');
-        $unit = MySqlUnit::from(strtoupper(implode('', array_map(static fn ($token): string => $token->text, $interval->tokens()))));
+        $unit = MySqlUnit::spelled(implode('', array_map(static fn ($token): string => $token->text, $interval->tokens()))) ?? throw new UnclassifiedSql('Unclassified interval unit.');
         if (str_contains($unit->value, 'MICROSECOND')) {
             throw new InvalidSql(InputViolation::ProgramDefinition, $interval);
         }

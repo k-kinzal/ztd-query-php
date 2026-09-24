@@ -52,6 +52,7 @@ final class PostgreSqlPlanTest extends TestCase
         self::assertNull($options->summary);
         self::assertSame(SerializationCost::None, $options->serialization);
         self::assertSame(PostgreSqlFormat::Text, $options->format);
+        self::assertSame([false, false, false, false, false, false], [$options->verbose, $options->settings, $options->genericPlan, $options->buffers, $options->wal, $options->memory]);
     }
 
     public function testAcceptsDisabledTimingWithoutAnalyze(): void

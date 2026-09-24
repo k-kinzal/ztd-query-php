@@ -402,4 +402,94 @@ final class FromBinderTest extends TestCase
         $statement = (new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(a INT)')))->bind($sql, strict: false);
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
     }
+
+    #[TestWith([Dialect::MySql, 'mysql-8.4.7', 'select 1 from dual', 'SELECT 1'])]
+    #[TestWith([Dialect::PostgreSql, null, 'table t', 'TABLE "public"."t"'])]
+    #[TestWith([Dialect::MySql, 'mysql-8.4.7', 'table t', 'TABLE `t`'])]
+    #[TestWith([Dialect::PostgreSql, null, 'select * from t cross join u', 'SELECT "t"."id" AS "id", "t"."a" AS "a", "u"."id" AS "id", "u"."b" AS "b" FROM "public"."t" CROSS JOIN "public"."u"'])]
+    #[TestWith([Dialect::MySql, 'mysql-8.4.7', 'select * from t cross join u', 'SELECT `t`.`id` AS `id`, `t`.`a` AS `a`, `u`.`id` AS `id`, `u`.`b` AS `b` FROM `t` CROSS JOIN `u`'])]
+    #[TestWith([Dialect::PostgreSql, null, 'select * from t natural join u', 'SELECT "id" AS "id", "t"."a" AS "a", "u"."b" AS "b" FROM "public"."t" NATURAL JOIN "public"."u"'])]
+    #[TestWith([Dialect::PostgreSql, null, 'select * from t join u using (id)', 'SELECT "id" AS "id", "t"."a" AS "a", "u"."b" AS "b" FROM "public"."t" INNER JOIN "public"."u" USING("id")'])]
+    #[TestWith([Dialect::PostgreSql, null, 'select * from t left join u on true', 'SELECT "t"."id" AS "id", "t"."a" AS "a", "u"."id" AS "id", "u"."b" AS "b" FROM "public"."t" LEFT JOIN "public"."u" ON true'])]
+    #[TestWith([Dialect::Sqlite, null, 'select * from t natural join u', 'SELECT "id" AS "id", "t"."a" AS "a", "u"."b" AS "b" FROM "main"."t" NATURAL JOIN "main"."u"'])]
+    #[TestWith([Dialect::Sqlite, null, 'select * from t join u using (id)', 'SELECT "id" AS "id", "t"."a" AS "a", "u"."b" AS "b" FROM "main"."t" INNER JOIN "main"."u" USING("id")'])]
+    #[TestWith([Dialect::Sqlite, null, 'select * from t left join u on t.id = u.id', 'SELECT "t"."id" AS "id", "t"."a" AS "a", "u"."id" AS "id", "u"."b" AS "b" FROM "main"."t" LEFT JOIN "main"."u" ON ("t"."id" = "u"."id")'])]
+    #[TestWith([Dialect::Sqlite, null, 'select * from t cross join u', 'SELECT "t"."id" AS "id", "t"."a" AS "a", "u"."id" AS "id", "u"."b" AS "b" FROM "main"."t" CROSS JOIN "main"."u"'])]
+    #[TestWith([Dialect::Sqlite, null, 'select * from t, u', 'SELECT "t"."id" AS "id", "t"."a" AS "a", "u"."id" AS "id", "u"."b" AS "b" FROM "main"."t" CROSS JOIN "main"."u"'])]
+    #[TestWith([Dialect::Sqlite, null, 'select * from t as x join u as y on x.id = y.id', 'SELECT "x"."id" AS "id", "x"."a" AS "a", "y"."id" AS "id", "y"."b" AS "b" FROM "main"."t" AS "x" INNER JOIN "main"."u" AS "y" ON ("x"."id" = "y"."id")'])]
+    #[TestWith([Dialect::Sqlite, null, 'select * from json_each(\'[1]\') as j', 'SELECT "j"."key" AS "key", "j"."value" AS "value", "j"."type" AS "type", "j"."atom" AS "atom", "j"."id" AS "id", "j"."parent" AS "parent", "j"."fullkey" AS "fullkey", "j"."path" AS "path" FROM json_each(\'[1]\') AS "j"'])]
+    #[TestWith([Dialect::Sqlite, null, 'select * from t, json_each(\'[1]\')', 'SELECT "t"."id" AS "id", "t"."a" AS "a", "json_each"."key" AS "key", "json_each"."value" AS "value", "json_each"."type" AS "type", "json_each"."atom" AS "atom", "json_each"."id" AS "id", "json_each"."parent" AS "parent", "json_each"."fullkey" AS "fullkey", "json_each"."path" AS "path" FROM "main"."t" CROSS JOIN json_each(\'[1]\') AS "json_each"'])]
+    #[TestWith([Dialect::Sqlite, null, 'select * from main.t', 'SELECT "t"."id" AS "id", "t"."a" AS "a" FROM "main"."t"'])]
+    #[TestWith([Dialect::PostgreSql, null, 'select * from t, lateral (select t.a) s', 'SELECT "t"."id" AS "id", "t"."a" AS "a", "s"."a" AS "a" FROM "public"."t" CROSS JOIN LATERAL(SELECT "t"."a" AS "a") AS "s"'])]
+    #[TestWith([Dialect::PostgreSql, null, 'select * from t, lateral generate_series(1, t.a) g', 'SELECT "t"."id" AS "id", "t"."a" AS "a", "g"."g" AS "g" FROM "public"."t" CROSS JOIN "generate_series"(1, "t"."a") AS "g"'])]
+    #[TestWith([Dialect::PostgreSql, null, 'select * from t join lateral (select t.a) s on true', 'SELECT "t"."id" AS "id", "t"."a" AS "a", "s"."a" AS "a" FROM "public"."t" INNER JOIN LATERAL(SELECT "t"."a" AS "a") AS "s" ON true'])]
+    #[TestWith([Dialect::PostgreSql, null, 'select * from t cross join lateral (select t.a) s', 'SELECT "t"."id" AS "id", "t"."a" AS "a", "s"."a" AS "a" FROM "public"."t" CROSS JOIN LATERAL(SELECT "t"."a" AS "a") AS "s"'])]
+    #[TestWith([Dialect::MySql, 'mysql-8.4.7', 'select * from t, lateral (select t.a) s', 'SELECT `t`.`id` AS `id`, `t`.`a` AS `a`, `s`.`a` AS `a` FROM `t` CROSS JOIN LATERAL(SELECT `t`.`a` AS `a`) AS `s`'])]
+    #[TestWith([Dialect::MySql, 'mysql-8.4.7', 'select * from (t join u on t.id = u.id)', 'SELECT `t`.`id` AS `id`, `t`.`a` AS `a`, `u`.`id` AS `id`, `u`.`b` AS `b` FROM `t` INNER JOIN `u` ON (`t`.`id` = `u`.`id`)'])]
+    #[TestWith([Dialect::MySql, 'mysql-8.4.7', 'select * from t x', 'SELECT `x`.`id` AS `id`, `x`.`a` AS `a` FROM `t` AS `x`'])]
+    #[TestWith([Dialect::PostgreSql, null, 'select * from t as x (p, q)', 'SELECT "x"."p" AS "p", "x"."q" AS "q" FROM("public"."t" AS "x") AS "x"("p", "q")'])]
+    #[TestWith([Dialect::MySql, 'mysql-8.4.7', 'select * from (select 1 as a) as d (b)', 'SELECT `d`.`b` AS `b` FROM(SELECT 1 AS `a`) AS `d`(`b`)'])]
+    #[TestWith([Dialect::PostgreSql, null, 'select * from t natural left join u', 'SELECT "id" AS "id", "t"."a" AS "a", "u"."b" AS "b" FROM "public"."t" NATURAL LEFT JOIN "public"."u"'])]
+    #[TestWith([Dialect::PostgreSql, null, 'select * from t right join u using (id)', 'SELECT "id" AS "id", "t"."a" AS "a", "u"."b" AS "b" FROM "public"."t" RIGHT JOIN "public"."u" USING("id")'])]
+    #[TestWith([Dialect::PostgreSql, null, 'select * from t full join u on t.id = u.id', 'SELECT "t"."id" AS "id", "t"."a" AS "a", "u"."id" AS "id", "u"."b" AS "b" FROM "public"."t" FULL JOIN "public"."u" ON ("t"."id" = "u"."id")'])]
+    #[TestWith([Dialect::MySql, 'mysql-8.4.7', 'select * from t natural right join u', 'SELECT `id` AS `id`, `u`.`b` AS `b`, `t`.`a` AS `a` FROM `t` NATURAL RIGHT JOIN `u`'])]
+    #[TestWith([Dialect::MySql, 'mysql-8.4.7', 'select * from t, (select 1 as c) d', 'SELECT `t`.`id` AS `id`, `t`.`a` AS `a`, `d`.`c` AS `c` FROM `t` CROSS JOIN(SELECT 1 AS `c`) AS `d`'])]
+    #[TestWith([Dialect::Sqlite, null, 'select * from t natural left join u', 'SELECT "id" AS "id", "t"."a" AS "a", "u"."b" AS "b" FROM "main"."t" NATURAL LEFT JOIN "main"."u"'])]
+    #[TestWith([Dialect::Sqlite, null, 'select * from t left join u using (id)', 'SELECT "id" AS "id", "t"."a" AS "a", "u"."b" AS "b" FROM "main"."t" LEFT JOIN "main"."u" USING("id")'])]
+    #[TestWith([Dialect::Sqlite, null, 'select * from (t join u on t.id = u.id)', 'SELECT "t"."id" AS "id", "t"."a" AS "a", "u"."id" AS "id", "u"."b" AS "b" FROM "main"."t" INNER JOIN "main"."u" ON ("t"."id" = "u"."id")'])]
+    #[TestWith([Dialect::Sqlite, null, 'select * from t join (select 1 as c) d on 1', 'SELECT "t"."id" AS "id", "t"."a" AS "a", "d"."c" AS "c" FROM "main"."t" INNER JOIN(SELECT 1 AS "c") AS "d" ON 1'])]
+    #[TestWith([Dialect::Sqlite, null, 'select * from main.t as x', 'SELECT "x"."id" AS "id", "x"."a" AS "a" FROM "main"."t" AS "x"'])]
+    public function testBindWritesEveryRelationFormBack(Dialect $dialect, ?string $version, string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t (id INT, a INT)', 'CREATE TABLE u (id INT, b INT)')))->bind($sql);
+        self::assertSame([], $statement->diagnostics);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    public function testRelationAndJoinedBindParsedMySqlNodesDirectly(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (id INT, a INT)', 'CREATE TABLE u (id INT, b INT)');
+        $binder = new \SqlSemantics\Binding\FromBinder(new \SqlSemantics\Binding\TableResolver($schema, new \SqlSemantics\Ast\Identifiers(Dialect::MySql), ''), new \SqlSemantics\Binding\IdentitySequence());
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql, 'mysql-8.4.7'))->parse('SELECT * FROM t JOIN u ON t.id = u.id');
+        self::assertInstanceOf(\SqlSemantics\Model\Join::class, $binder->relation($tree->find('table_reference')[0])->relation);
+        $joined = $binder->joined($tree->find('joined_table')[0]);
+        self::assertInstanceOf(\SqlSemantics\Model\Join::class, $joined->relation);
+        $single = $binder->table($tree->find('single_table')[0], ['t'], null);
+        $other = $binder->table($tree->find('single_table')[1], ['u'], null);
+        self::assertInstanceOf(\SqlSemantics\Model\TableUse::class, $single->relation);
+        self::assertSame('t', $single->relation->declaration->name);
+        self::assertInstanceOf(\SqlSemantics\Model\Join::class, $binder->join($single, $other, \SqlSemantics\Model\JoinKind::Cross, null, $tree, 'j9')->relation);
+    }
+
+    public function testSqliteInputReadsTheAliasOfAJoinedTableFunctionFromItsOwnProduction(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build());
+        $statement = $binder->bind("SELECT j.key, k.key AS kk FROM json_each('[1]') AS j JOIN json_tree('[1]') AS k ON j.id = k.id");
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertSame(['j', 'k'], array_column($statement->relations, 'alias'));
+        self::assertSame('SELECT "j"."key" AS "key", "k"."key" AS "kk" FROM json_each(\'[1]\') AS "j" INNER JOIN json_tree(\'[1]\') AS "k" ON ("j"."id" = "k"."id")', $statement->toString());
+    }
+
+    public function testSqliteAndSqliteInputBindParsedNodesDirectly(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t (id INT, a INT)', 'CREATE TABLE u (id INT, b INT)');
+        $binder = new \SqlSemantics\Binding\FromBinder(new \SqlSemantics\Binding\TableResolver($schema, new \SqlSemantics\Ast\Identifiers(Dialect::Sqlite), 'main'), new \SqlSemantics\Binding\IdentitySequence());
+        $list = (new \SqlSemantics\Ast\DialectParser(Dialect::Sqlite))->parse('SELECT * FROM t JOIN u ON t.id = u.id')->find('seltablist')[0];
+        self::assertInstanceOf(\SqlSemantics\Model\Join::class, $binder->sqlite($list)->relation);
+        $input = $binder->sqliteInput($list)->relation;
+        self::assertInstanceOf(\SqlSemantics\Model\TableUse::class, $input);
+        self::assertSame('u', $input->declaration->name);
+    }
+
+    public function testDerivedAndGroupedBindParsedPostgreSqlNodesDirectly(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
+        $binder = new \SqlSemantics\Binding\FromBinder(new \SqlSemantics\Binding\TableResolver($schema, new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql), 'public'), new \SqlSemantics\Binding\IdentitySequence());
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('SELECT * FROM (SELECT 1 AS c) AS d');
+        $query = $tree->find('select_with_parens')[0];
+        self::assertNull($binder->grouped($tree->find('table_ref')[0], $query, null));
+        $derived = $binder->derived($tree->find('table_ref')[0], $query, $tree->find('alias_clause')[0])->relation;
+        self::assertInstanceOf(\SqlSemantics\Model\TableUse::class, $derived);
+        self::assertSame('d', $derived->declaration->name);
+    }
 }

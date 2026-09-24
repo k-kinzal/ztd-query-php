@@ -7,11 +7,17 @@ namespace Tests\Unit\Binding\Scalar\Intrinsic;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
+use SqlParser\Parser\Node;
+use SqlSemantics\Ast\DialectParser;
+use SqlSemantics\Ast\Identifiers;
 use SqlSemantics\Binder;
 use SqlSemantics\Binding\Scalar\Intrinsic\TypedLiteralBinder;
+use SqlSemantics\Binding\Scope;
 use SqlSemantics\Dialect;
+use SqlSemantics\InvalidSql;
 use SqlSemantics\Model\BoundSelect;
 use SqlSemantics\Model\Scalar\Operator\CastExpression;
+use SqlSemantics\Model\Validation\InputViolation;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(TypedLiteralBinder::class)]
@@ -50,5 +56,42 @@ final class TypedLiteralBinderTest extends TestCase
         self::assertSame($type, $cast->type->name);
         self::assertCount($modifiers, $cast->type->identity->arguments);
         self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+    }
+
+    #[TestWith(["int4 '1'", "CAST('1' AS integer)"])]
+    #[TestWith(["Int4 '1'", "CAST('1' AS integer)"])]
+    #[TestWith(["float8 '1.5'", "CAST('1.5' AS double precision)"])]
+    #[TestWith(["uuid 'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11'", "CAST('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11' AS uuid)"])]
+    #[TestWith(["jsonb '{}'", "CAST('{}' AS jsonb)"])]
+    #[TestWith(["\"int4\" '1'", "CAST('1' AS \"int4\")"])]
+    #[TestWith(["pg_catalog.int4 '1'", "CAST('1' AS \"pg_catalog\".\"int4\")"])]
+    #[TestWith(["regclass 'x'", "CAST('x' AS \"regclass\")"])]
+    public function testNamedSeparatesBuiltinSpellingsFromTypeReferences(string $input, string $serialized): void
+    {
+        self::assertSame('SELECT ' . $serialized, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT ' . $input)->toString());
+    }
+
+    public function testNamedReadsABuiltinDeclarationDirectly(): void
+    {
+        $source = (new DialectParser(Dialect::PostgreSql))->parse("SELECT int4 '1'")->find('AexprConst')[0];
+        $name = $source->find('func_name')[0];
+        $declaration = new Node('literal_type', 0, [$name]);
+        self::assertSame('integer', TypedLiteralBinder::named($name, $source, $declaration, new Scope(new Identifiers(Dialect::PostgreSql)))->name);
+    }
+
+    public function testBindRejectsAnOrderedTypeModifierList(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(InputViolation::TypeModifier->message());
+        $binder->bind("SELECT app.t(1 ORDER BY 1) 'x'");
+    }
+
+    #[TestWith([Dialect::PostgreSql, "SELECT 'x'", 'AexprConst'])]
+    #[TestWith([Dialect::MySql, "SELECT DATE '2020-01-01'", 'temporal_literal'])]
+    public function testBindReturnsNullWithoutAPostgreSqlTypedConstant(Dialect $dialect, string $sql, string $rule): void
+    {
+        $source = (new DialectParser($dialect))->parse($sql)->find($rule)[0];
+        self::assertNull(TypedLiteralBinder::bind($source, new Scope(new Identifiers($dialect))));
     }
 }

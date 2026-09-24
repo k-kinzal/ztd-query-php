@@ -7,6 +7,7 @@ namespace Tests\Unit\Model\Transaction\Xa;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Model\Transaction\Xa\FormatIdentifier;
 
@@ -53,5 +54,34 @@ final class FormatIdentifierTest extends TestCase
         yield 'string' => ["'1'"];
         yield 'empty' => [''];
         yield 'variable' => ['@format'];
+    }
+
+    #[TestWith(['0009223372036854775807'])]
+    #[TestWith(['9223372036854775807.0'])]
+    #[TestWith(['9223372036854775807e0'])]
+    #[TestWith(["X'00007fffffffffffffff'"])]
+    #[TestWith(['0x00007fffffffffffffff'])]
+    #[TestWith(["x''"])]
+    #[TestWith(['0XAB'])]
+    public function testPreservesBoundaryNumericOperands(string $spelling): void
+    {
+        self::assertSame($spelling, (new FormatIdentifier($spelling))->spelling);
+    }
+
+    #[TestWith(["X'8000000000000000'"])]
+    #[TestWith(['0x8000000000000000'])]
+    #[TestWith(['0x10000000000000000'])]
+    #[TestWith(['9223372036854775808'])]
+    #[TestWith(['9223372036854775808.0'])]
+    #[TestWith(['a0x1f'])]
+    #[TestWith(['0x1fz'])]
+    #[TestWith(["0x1f\n"])]
+    #[TestWith(["12\n"])]
+    #[TestWith(['a12'])]
+    #[TestWith(['12a'])]
+    public function testRejectsBoundaryAndMalformedOperands(string $spelling): void
+    {
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        new FormatIdentifier($spelling);
     }
 }

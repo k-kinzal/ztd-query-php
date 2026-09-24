@@ -66,4 +66,13 @@ final class SequenceOptionsTest extends TestCase
         self::assertNull($options->owner?->column);
         self::assertNull($options->restart?->value);
     }
+
+    public function testRejectsAFractionalStart(): void
+    {
+        $start = Expression::literal(1.5, Dialect::PostgreSql);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\Literal::class, $start);
+        self::assertSame('1.5', $start->text);
+        $this->expectExceptionObject(new InvalidStructure('A sequence attribute must be an integer literal.'));
+        new SequenceOptions($start);
+    }
 }

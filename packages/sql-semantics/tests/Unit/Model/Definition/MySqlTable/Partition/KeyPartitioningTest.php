@@ -6,6 +6,7 @@ namespace Tests\Unit\Model\Definition\MySqlTable\Partition;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
@@ -35,5 +36,22 @@ final class KeyPartitioningTest extends TestCase
     {
         $this->expectException(InvalidStructure::class);
         new KeyPartitioning(['a', 'a']);
+    }
+
+    #[TestWith([1])]
+    #[TestWith([2])]
+    public function testAcceptsBothKeyAlgorithms(int $algorithm): void
+    {
+        $partitioning = new KeyPartitioning(['a'], algorithm: $algorithm);
+        self::assertSame($algorithm, $partitioning->algorithm);
+        self::assertFalse($partitioning->linear);
+    }
+
+    #[TestWith([0])]
+    #[TestWith([3])]
+    public function testRejectsAnotherKeyAlgorithm(int $algorithm): void
+    {
+        $this->expectExceptionObject(new InvalidStructure('KEY partitioning ALGORITHM is 1 or 2.'));
+        new KeyPartitioning(['a'], true, $algorithm);
     }
 }

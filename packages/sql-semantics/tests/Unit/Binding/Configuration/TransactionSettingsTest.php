@@ -7,6 +7,7 @@ namespace Tests\Unit\Binding\Configuration;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Binding\Configuration\TransactionSettings;
@@ -98,5 +99,23 @@ final class TransactionSettingsTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("SET @transaction = 'READ ONLY'", strict: false);
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedUserVariable::class, $statement->settings[0]);
+    }
+
+    #[TestWith(['set transaction isolation level read committed, read only', Statement\SetNextTransactionStatement::class, 'SET TRANSACTION ISOLATION LEVEL READ COMMITTED, READ ONLY'])]
+    #[TestWith(['set session transaction read write', Statement\SetDefaultTransactionStatement::class, 'SET SESSION TRANSACTION READ WRITE'])]
+    #[TestWith(['SET @a = 1', \SqlSemantics\Model\Statement\Configuration\SetStatement::class, 'SET @`a` = 1'])]
+    public function testBindReadsLowercaseMySqlModes(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql, strict: false);
+        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+    }
+
+    #[TestWith(['set transaction isolation level serializable, read only, deferrable', Statement\SetCurrentTransactionStatement::class, 'SET TRANSACTION ISOLATION LEVEL SERIALIZABLE, READ ONLY, DEFERRABLE'])]
+    #[TestWith(['SET SESSION CHARACTERISTICS AS TRANSACTION read write', Statement\SetSessionTransactionStatement::class, 'SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE'])]
+    #[TestWith(['SET work_mem = \'1MB\'', \SqlSemantics\Model\Statement\Configuration\SetStatement::class, 'SET "work_mem" = \'1MB\''])]
+    public function testBindReadsLowercasePostgreSqlModes(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql, strict: false);
+        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
     }
 }

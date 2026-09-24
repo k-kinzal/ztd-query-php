@@ -255,4 +255,33 @@ final class AssignmentBinderTest extends TestCase
         $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::TupleSource->message());
         (new \SqlSemantics\Binding\Write\AssignmentBinder())->form($write->source, true, $write->value, [$write->target], $scope);
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, 'UPDATE t SET (a, b) = (1, 2)', 'UPDATE "public"."t" SET ("a", "b") = ROW(1, 2)'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, 'UPDATE t SET (a, b) = (SELECT 1, 2)', 'UPDATE "public"."t" SET ("a", "b") = (SELECT 1, 2)'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, 'UPDATE t SET (a, b) = ROW(1, 2)', 'UPDATE "public"."t" SET ("a", "b") = ROW(1, 2)'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, 'UPDATE t SET (a, b) = (SELECT a, b FROM t)', 'UPDATE "public"."t" SET ("a", "b") = (SELECT "a" AS "a", "b" AS "b" FROM "public"."t")'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, 'UPDATE t SET c[1] = 2', 'UPDATE "public"."t" SET "c"[1] = 2'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, 'UPDATE t SET a = DEFAULT, b = 2', 'UPDATE "public"."t" SET "a" = DEFAULT, "b" = 2'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::Sqlite, 'UPDATE t SET a = 1, b = 2, c = 3', 'UPDATE "main"."t" SET "a" = 1, "b" = 2, "c" = 3'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::Sqlite, 'UPDATE t SET (a) = (1)', 'UPDATE "main"."t" SET "a" = 1'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::Sqlite, 'UPDATE t SET (a, b) = (SELECT 1, 2)', 'UPDATE "main"."t" SET ("a", "b") = (SELECT 1, 2)'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'UPDATE t SET a = DEFAULT, b = 1', 'UPDATE `t` SET `a` = DEFAULT, `b` = 1'])]
+    public function testBindSpellsEveryAssignmentForm(Dialect $dialect, string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(a INT, b INT, c ' . ($dialect === Dialect::PostgreSql ? 'INT[]' : 'INT') . ')')))->bind($sql);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, 'UPDATE t SET (a, b) = (1, 2, 3)'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, 'UPDATE t SET (a, b) = (SELECT 1)'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, 'UPDATE t SET (a, b) = (SELECT 1, 2, 3)'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, 'UPDATE t SET (a, b) = (SELECT *, a FROM t)'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::Sqlite, 'UPDATE t SET (a, b) = (1, 2, 3)'])]
+    public function testBindRejectsAssignmentsOfAnotherWidth(Dialect $dialect, string $sql): void
+    {
+        $binder = new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(a INT, b INT)'));
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage('Assignment destinations and values must have the same width.');
+        $binder->bind($sql);
+    }
 }

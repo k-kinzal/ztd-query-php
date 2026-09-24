@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Query\RowsFrom;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -80,5 +81,36 @@ final class RowsFromBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Model\TableFunction\RowsFrom\RowsFromRelation::class, $statement->from);
         self::assertSame([0, 1], array_map(static fn (\SqlSemantics\Model\TableFunction\RowsFrom\RowsFromFunction $function): int => count($function->columns), $statement->from->table->functions));
+    }
+
+    /**
+     * @param list<string> $definitions
+     */
+    #[DataProvider('providerBindExpandsOnlyUnqualifiedPositionalUnnest')]
+    public function testBindExpandsOnlyUnqualifiedPositionalUnnest(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    /**
+     * @return iterable<string, array{Dialect, ?string, list<string>, string, string}>
+     */
+    public static function providerBindExpandsOnlyUnqualifiedPositionalUnnest(): iterable
+    {
+        return [
+            'SELECT * FROM UNNEST(ARRAY[1], ARRAY[2]) (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (a int[], b text[])'], 'SELECT * FROM UNNEST(ARRAY[1], ARRAY[2])', 'SELECT "unnest"."unnest" AS "unnest", "unnest"."unnest" AS "unnest" FROM ROWS FROM("unnest"(ARRAY[1]), "unnest"(ARRAY[2]))'],
+            'SELECT * FROM public.unnest(ARRAY[1], ARRAY[2]) (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (a int[], b text[])'], 'SELECT * FROM public.unnest(ARRAY[1], ARRAY[2])', 'SELECT "public.unnest"."public.unnest" AS "public.unnest" FROM "public"."unnest"(ARRAY[1], ARRAY[2]) AS "public.unnest"'],
+            'SELECT * FROM unnest(ARRAY[1]) (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (a int[], b text[])'], 'SELECT * FROM unnest(ARRAY[1])', 'SELECT "unnest"."unnest" AS "unnest" FROM "unnest"(ARRAY[1]) AS "unnest"'],
+            'SELECT * FROM generate_series(1, 2) (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (a int[], b text[])'], 'SELECT * FROM generate_series(1, 2)', 'SELECT "generate_series"."generate_series" AS "generate_series" FROM "generate_series"(1, 2) AS "generate_series"'],
+            'SELECT * FROM generate_series(1, 2) AS g (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (a int[], b text[])'], 'SELECT * FROM generate_series(1, 2) AS g', 'SELECT "g"."g" AS "g" FROM "generate_series"(1, 2) AS "g"'],
+            'SELECT * FROM unnest(ARRAY[1], VARIADIC ARRAY[2]) (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (a int[], b text[])'], 'SELECT * FROM unnest(ARRAY[1], VARIADIC ARRAY[2])', 'SELECT "unnest"."unnest" AS "unnest" FROM "unnest"(ARRAY[1], VARIADIC ARRAY[2]) AS "unnest"'],
+            'SELECT * FROM unnest(ARRAY[1], x => ARRAY[2]) (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (a int[], b text[])'], 'SELECT * FROM unnest(ARRAY[1], x => ARRAY[2])', 'SELECT "unnest"."unnest" AS "unnest" FROM "unnest"(ARRAY[1], "x" => ARRAY[2]) AS "unnest"'],
+            'SELECT * FROM t, unnest(t.a, t.b) AS u(x, y) (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (a int[], b text[])'], 'SELECT * FROM t, unnest(t.a, t.b) AS u(x, y)', 'SELECT "t"."a" AS "a", "t"."b" AS "b", "u"."x" AS "x", "u"."y" AS "y" FROM "public"."t" CROSS JOIN ROWS FROM("unnest"("t"."a"), "unnest"("t"."b")) AS "u"("x", "y")'],
+            'SELECT * FROM t, UnNest(t.a, t.b) (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (a int[], b text[])'], 'SELECT * FROM t, UnNest(t.a, t.b)', 'SELECT "t"."a" AS "a", "t"."b" AS "b", "unnest"."unnest" AS "unnest", "unnest"."unnest" AS "unnest" FROM "public"."t" CROSS JOIN ROWS FROM("unnest"("t"."a"), "unnest"("t"."b"))'],
+            'SELECT * FROM unnest(ARRAY[1], ARRAY[\'a\'], ARRAY[true]) (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (a int[], b text[])'], 'SELECT * FROM unnest(ARRAY[1], ARRAY[\'a\'], ARRAY[true])', 'SELECT "unnest"."unnest" AS "unnest", "unnest"."unnest" AS "unnest", "unnest"."unnest" AS "unnest" FROM ROWS FROM("unnest"(ARRAY[1]), "unnest"(ARRAY[\'a\']), "unnest"(ARRAY[true]))'],
+            'SELECT * FROM lower(\'a\') (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (a int[], b text[])'], 'SELECT * FROM lower(\'a\')', 'SELECT "lower"."lower" AS "lower" FROM "lower"(\'a\') AS "lower"'],
+            'SELECT * FROM lower(\'a\') WITH ORDINALITY (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (a int[], b text[])'], 'SELECT * FROM lower(\'a\') WITH ORDINALITY', 'SELECT "lower"."lower" AS "lower", "lower"."ordinality" AS "ordinality" FROM ROWS FROM("lower"(\'a\')) WITH ORDINALITY'],
+        ];
     }
 }

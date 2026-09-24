@@ -108,4 +108,15 @@ final class CreateViewStatementTest extends TestCase
         new CreateViewStatement($statement->origin, $statement->name, $statement->query, check: ViewCheck::Cascaded);
     }
 
+    public function testDefaultsToAPlainPermanentView(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (a INT)')))->bind('CREATE VIEW v AS SELECT a FROM t');
+        self::assertInstanceOf(CreateViewStatement::class, $statement);
+        $rebuilt = new CreateViewStatement($statement->origin, new QualifiedName(['v']), $statement->query);
+        self::assertFalse($rebuilt->temporary);
+        self::assertFalse($rebuilt->replace);
+        self::assertFalse($rebuilt->ifNotExists);
+        self::assertSame([], $rebuilt->columns);
+        self::assertSame('CREATE VIEW "v" AS SELECT "a" AS "a" FROM "public"."t"', $rebuilt->toString());
+    }
 }

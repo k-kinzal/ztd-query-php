@@ -35,4 +35,12 @@ final class OperatorSetMembersTest extends TestCase
     {
         self::assertSame([], OperatorSetMembers::types(null, null));
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['ALTER OPERATOR FAMILY f USING btree ADD OPERATOR 1 < (int, int), FUNCTION 1 (int, int) btint4cmp(int, int)', 'ALTER OPERATOR FAMILY "f" USING "btree" ADD OPERATOR 1 < (integer, integer), FUNCTION 1(integer, integer) "btint4cmp"(integer, integer)'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['ALTER OPERATOR FAMILY f USING btree DROP OPERATOR 1 (int, int), FUNCTION 1 (int, int)', 'ALTER OPERATOR FAMILY "f" USING "btree" DROP OPERATOR 1(integer, integer), FUNCTION 1(integer, integer)'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['CREATE OPERATOR CLASS c FOR TYPE int USING btree AS OPERATOR 1 <, FUNCTION 1 btint4cmp(int, int), STORAGE int', 'CREATE OPERATOR CLASS "c" FOR TYPE integer USING "btree" AS OPERATOR 1 <, FUNCTION 1 "btint4cmp"(integer, integer), STORAGE integer'])]
+    public function testMemberAndRemovalWriteEveryOperand(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+    }
 }

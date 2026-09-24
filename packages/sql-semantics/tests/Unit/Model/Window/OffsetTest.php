@@ -46,4 +46,11 @@ final class OffsetTest extends TestCase
         self::assertSame($value, $offset->value);
         self::assertSame([$value], $offset->expressions());
     }
+
+
+    public function testRejectsAnIntervalUnitOutsideMySql(): void
+    {
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        new Offset(Direction::Preceding, Expression::literal(1, Dialect::PostgreSql), \SqlSemantics\Model\Scalar\Temporal\MySqlUnit::Day);
+    }
 }

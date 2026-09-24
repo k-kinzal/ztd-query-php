@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Statement\Inspection;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -77,5 +78,34 @@ final class ListingsTest extends TestCase
         self::assertInstanceOf(ShowColumnsStatement::class, $statement);
         self::assertCount(1, $statement->diagnostics);
         self::assertSame('SHOW COLUMNS FROM `missing`', $statement->toString());
+    }
+
+    /**
+     * @return list<array{Dialect, ?string, string, mixed}>
+     */
+    public static function providerBindListsEachCatalogForm(): array
+    {
+        return [
+            [Dialect::MySql, null, 'SHOW DATABASES', [ShowDatabasesStatement::class, 'SHOW DATABASES']],
+            [Dialect::MySql, null, 'SHOW SCHEMAS LIKE \'a%\'', [ShowDatabasesStatement::class, 'SHOW DATABASES LIKE \'a%\'']],
+            [Dialect::MySql, null, 'SHOW TABLE STATUS FROM d', [\SqlSemantics\Model\Statement\Inspection\Schema\ShowTableStatusStatement::class, 'SHOW TABLE STATUS FROM `d`']],
+            [Dialect::MySql, null, 'SHOW OPEN TABLES FROM d', [\SqlSemantics\Model\Statement\Inspection\Schema\ShowOpenTablesStatement::class, 'SHOW OPEN TABLES FROM `d`']],
+            [Dialect::MySql, null, 'SHOW TRIGGERS', [\SqlSemantics\Model\Statement\Inspection\Schema\ShowTriggersStatement::class, 'SHOW TRIGGERS']],
+            [Dialect::MySql, null, 'SHOW EVENTS FROM d', [\SqlSemantics\Model\Statement\Inspection\Schema\ShowEventsStatement::class, 'SHOW EVENTS FROM `d`']],
+            [Dialect::MySql, null, 'SHOW CHARSET', [\SqlSemantics\Model\Statement\Inspection\Schema\ShowCharacterSetsStatement::class, 'SHOW CHARACTER SET']],
+            [Dialect::MySql, null, 'SHOW CHARACTER SET', [\SqlSemantics\Model\Statement\Inspection\Schema\ShowCharacterSetsStatement::class, 'SHOW CHARACTER SET']],
+            [Dialect::MySql, null, 'SHOW CHAR SET', [\SqlSemantics\Model\Statement\Inspection\Schema\ShowCharacterSetsStatement::class, 'SHOW CHARACTER SET']],
+            [Dialect::MySql, null, 'SHOW COLLATION WHERE Charset = \'utf8mb4\'', [\SqlSemantics\Model\Statement\Inspection\Schema\ShowCollationsStatement::class, 'SHOW COLLATION WHERE (`Charset` = \'utf8mb4\')']],
+            [Dialect::MySql, null, 'SHOW COLUMNS FROM t', [ShowColumnsStatement::class, 'SHOW COLUMNS FROM `t`']],
+            [Dialect::MySql, null, 'SHOW INDEX FROM t', [ShowIndexesStatement::class, 'SHOW INDEX FROM `t`']],
+            [Dialect::MySql, null, 'SHOW TABLES', [ShowTablesStatement::class, 'SHOW TABLES']],
+        ];
+    }
+
+    #[DataProvider('providerBindListsEachCatalogForm')]
+    public function testBindListsEachCatalogForm(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(a INT)')))->bind($sql, strict: false);
+        self::assertSame($expected, [$statement::class, $statement->toString()]);
     }
 }

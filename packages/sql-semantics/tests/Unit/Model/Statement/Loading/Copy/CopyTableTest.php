@@ -53,4 +53,24 @@ final class CopyTableTest extends TestCase
         $this->expectException(InvalidStructure::class);
         CopyTable::validate(new Origin($statement->origin->scopeId, $statement->origin->source, Dialect::MySql), $statement->table, [], new CopyOptions());
     }
+
+    public function testValidateRejectsAnAliasedTable(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind('COPY t TO STDOUT');
+        self::assertInstanceOf(CopyToStatement::class, $statement);
+        $table = $statement->table;
+        $aliased = new \SqlSemantics\Model\Relation\TableReference($table->id, $table->scopeId, $table->declaration, $table->name, 'x', $table->source);
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('A COPY table cannot use a query alias.');
+        CopyTable::validate($statement->origin, $aliased, [], new CopyOptions());
+    }
+
+    public function testValidateNamesTheRequiredDialect(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind('COPY t TO STDOUT');
+        self::assertInstanceOf(CopyToStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('COPY requires PostgreSQL.');
+        CopyTable::validate(new Origin($statement->origin->scopeId, $statement->origin->source, Dialect::MySql), $statement->table, [], new CopyOptions());
+    }
 }

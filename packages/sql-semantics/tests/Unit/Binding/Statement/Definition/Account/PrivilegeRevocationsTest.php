@@ -28,7 +28,7 @@ final class PrivilegeRevocationsTest extends TestCase
     #[TestWith(['mysql-5.6.51', 'REVOKE EXECUTE ON PROCEDURE p FROM u', Privilege\RevokePrivilegesStatement::class, "REVOKE EXECUTE ON PROCEDURE `p` FROM 'u'"])]
     #[TestWith(['mysql-5.7.44', 'REVOKE PROXY ON p FROM u, v', Privilege\RevokeProxyStatement::class, "REVOKE PROXY ON 'p' FROM 'u', 'v'"])]
     #[TestWith(['mysql-8.0.44', 'REVOKE IF EXISTS ALL ON *.* FROM u IGNORE UNKNOWN USER', Privilege\RevokeAllPrivilegesStatement::class, "REVOKE IF EXISTS ALL PRIVILEGES ON *.* FROM 'u' IGNORE UNKNOWN USER"])]
-    #[TestWith(['mysql-8.4.7', 'REVOKE IF EXISTS r, s@h FROM u', Privilege\RevokeRolesStatement::class, "REVOKE IF EXISTS 'r', 's' @'h' FROM 'u'"])]
+    #[TestWith(['mysql-8.4.7', 'REVOKE IF EXISTS r, s@h FROM u', Privilege\RevokeRolesStatement::class, "REVOKE IF EXISTS 'r', 's'@'h' FROM 'u'"])]
     #[TestWith(['mysql-9.1.0', 'REVOKE SELECT (a), DELETE ON t FROM CURRENT_USER', Privilege\RevokePrivilegesStatement::class, 'REVOKE SELECT (`a`), DELETE ON TABLE `t` FROM CURRENT_USER'])]
     public function testBindWritesEveryRevocationFormBackAsAFixedPoint(string $version, string $sql, string $class, string $expected): void
     {

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Binding\Configuration;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
@@ -179,5 +180,56 @@ final class SettingTokensTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Operator\CastExpression::class, $value);
         self::assertInstanceOf(\SqlSemantics\Type\Identity\IntervalStorage::class, $value->type->identity);
         self::assertSame("ALTER DATABASE \"d\" SET TIME ZONE INTERVAL(2) '1'", $statement->toString());
+    }
+
+    /**
+     * @param list<string> $definitions
+     */
+    #[DataProvider('providerValueSpellsEverySettingForm')]
+    public function testValueSpellsEverySettingForm(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    /**
+     * @return iterable<string, array{Dialect, ?string, list<string>, string, string}>
+     */
+    public static function providerValueSpellsEverySettingForm(): iterable
+    {
+        return [
+            'SET @n = COALESCE(1, 2), @m = 3 (MySql)' => [Dialect::MySql, null, [], 'SET @n = COALESCE(1, 2), @m = 3', 'SET @`n` = coalesce(1, 2), @`m` = 3'],
+            'SET @n = JSON_ARRAY(1, JSON_ARRAY(2, 3)), @m = (1), @k = 4 (MySql)' => [Dialect::MySql, null, [], 'SET @n = JSON_ARRAY(1, JSON_ARRAY(2, 3)), @m = (1), @k = 4', 'SET @`n` = `JSON_ARRAY`(1, `JSON_ARRAY`(2, 3)), @`m` = 1, @`k` = 4'],
+            'SET @a = 1, @b = f(1, (2)), @c = 3 (MySql)' => [Dialect::MySql, null, [], 'SET @a = 1, @b = f(1, (2)), @c = 3', 'SET @`a` = 1, @`b` = `f`(1, 2), @`c` = 3'],
+            'SET search_path = a, b (PostgreSql)' => [Dialect::PostgreSql, null, [], 'SET search_path = a, b', 'SET "search_path" = "a", "b"'],
+            'SET search_path TO "A", \'b\', c (PostgreSql)' => [Dialect::PostgreSql, null, [], 'SET search_path TO "A", \'b\', c', 'SET "search_path" = "A", \'b\', "c"'],
+            'SET work_mem = -5 (PostgreSql)' => [Dialect::PostgreSql, null, [], 'SET work_mem = -5', 'SET "work_mem" = -5'],
+            'SET work_mem = +5 (PostgreSql)' => [Dialect::PostgreSql, null, [], 'SET work_mem = +5', 'SET "work_mem" = +5'],
+            'SET x = - 1.5 (PostgreSql)' => [Dialect::PostgreSql, null, [], 'SET x = - 1.5', 'SET "x" = -1.5'],
+            'SET x = 7 (PostgreSql)' => [Dialect::PostgreSql, null, [], 'SET x = 7', 'SET "x" = 7'],
+            'SET x = \'abc\' (PostgreSql)' => [Dialect::PostgreSql, null, [], 'SET x = \'abc\'', 'SET "x" = \'abc\''],
+            'SET x TO DEFAULT (PostgreSql)' => [Dialect::PostgreSql, null, [], 'SET x TO DEFAULT', 'SET "x" = DEFAULT'],
+            'SET x = default (PostgreSql)' => [Dialect::PostgreSql, null, [], 'SET x = default', 'SET "x" = DEFAULT'],
+            'SET x = on (PostgreSql)' => [Dialect::PostgreSql, null, [], 'SET x = on', 'SET "x" = ON'],
+            'SET x = true (PostgreSql)' => [Dialect::PostgreSql, null, [], 'SET x = true', 'SET "x" = true'],
+            'SET x = local (PostgreSql)' => [Dialect::PostgreSql, null, [], 'SET x = local', 'SET "x" = LOCAL'],
+            'SET x = foo (PostgreSql)' => [Dialect::PostgreSql, null, [], 'SET x = foo', 'SET "x" = "foo"'],
+            'SET x = "Foo" (PostgreSql)' => [Dialect::PostgreSql, null, [], 'SET x = "Foo"', 'SET "x" = "Foo"'],
+            'SET TIME ZONE LOCAL (PostgreSql)' => [Dialect::PostgreSql, null, [], 'SET TIME ZONE LOCAL', 'SET "timezone" = LOCAL'],
+            'set time zone interval \'1\' hour (PostgreSql)' => [Dialect::PostgreSql, null, [], 'set time zone interval \'1\' hour', 'SET TIME ZONE INTERVAL \'1\' HOUR'],
+            'SET TIME ZONE \'UTC\' (PostgreSql)' => [Dialect::PostgreSql, null, [], 'SET TIME ZONE \'UTC\'', 'SET "timezone" = \'UTC\''],
+            'SET TIME ZONE -7 (PostgreSql)' => [Dialect::PostgreSql, null, [], 'SET TIME ZONE -7', 'SET "timezone" = -7'],
+            'ALTER SYSTEM SET x = a, b (PostgreSql)' => [Dialect::PostgreSql, null, [], 'ALTER SYSTEM SET x = a, b', 'ALTER SYSTEM SET "x" = "a", "b"'],
+            'ALTER ROLE r SET x = 1, 2 (PostgreSql)' => [Dialect::PostgreSql, null, [], 'ALTER ROLE r SET x = 1, 2', 'ALTER ROLE "r" SET "x" = 1, 2'],
+            'ALTER DATABASE d SET x FROM CURRENT (PostgreSql)' => [Dialect::PostgreSql, null, [], 'ALTER DATABASE d SET x FROM CURRENT', 'ALTER DATABASE "d" SET "x" FROM CURRENT'],
+            'ALTER FUNCTION f() SET x = \'a\', \'b\' (PostgreSql)' => [Dialect::PostgreSql, null, [], 'ALTER FUNCTION f() SET x = \'a\', \'b\'', 'ALTER FUNCTION "f"() SET "x" = \'a\', \'b\''],
+            'SET SESSION sql_mode = \'ANSI\', @x = 1 (MySql)' => [Dialect::MySql, null, [], 'SET SESSION sql_mode = \'ANSI\', @x = 1', 'SET `sql_mode` = \'ANSI\', @`x` = 1'],
+            'SET GLOBAL max_connections = DEFAULT (MySql)' => [Dialect::MySql, null, [], 'SET GLOBAL max_connections = DEFAULT', 'SET GLOBAL `max_connections` = DEFAULT'],
+            'SET sql_mode = default (MySql)' => [Dialect::MySql, null, [], 'SET sql_mode = default', 'SET `sql_mode` = DEFAULT'],
+            'SET sql_mode = on (MySql)' => [Dialect::MySql, null, [], 'SET sql_mode = on', 'SET `sql_mode` = ON'],
+            'SET sql_mode = ansi (MySql)' => [Dialect::MySql, null, [], 'SET sql_mode = ansi', 'SET `sql_mode` = `ansi`'],
+            'SET autocommit = -1 (MySql)' => [Dialect::MySql, null, [], 'SET autocommit = -1', 'SET `autocommit` = (- 1)'],
+            'SET autocommit = + 1 (MySql)' => [Dialect::MySql, null, [], 'SET autocommit = + 1', 'SET `autocommit` = (+ 1)'],
+        ];
     }
 }

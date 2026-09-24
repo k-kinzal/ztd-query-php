@@ -73,4 +73,16 @@ final class SessionReportsTest extends TestCase
         self::assertInstanceOf(ShowGrantsStatement::class, $statement);
         self::assertSame(str_contains($sql, '`'), $statement->account instanceof AccountName);
     }
+
+    #[TestWith(['show errors', ShowDiagnosticsStatement::class, 'SHOW ERRORS'])]
+    #[TestWith(['SHOW WARNINGS LIMIT 2', ShowDiagnosticsStatement::class, 'SHOW WARNINGS LIMIT 2'])]
+    #[TestWith(['show session variables', ShowVariablesStatement::class, 'SHOW VARIABLES'])]
+    #[TestWith(['show global variables like "x%"', ShowVariablesStatement::class, 'SHOW GLOBAL VARIABLES LIKE "x%"'])]
+    #[TestWith(['SHOW GRANTS', ShowGrantsStatement::class, 'SHOW GRANTS'])]
+    #[TestWith(['SHOW GRANTS FOR \'u\'@\'h\'', ShowGrantsStatement::class, 'SHOW GRANTS FOR \'u\'@\'h\''])]
+    public function testBindRoutesEverySessionReport(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql, strict: false);
+        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+    }
 }

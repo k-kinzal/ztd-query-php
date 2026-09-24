@@ -70,7 +70,7 @@ final class SchemaInspectionTest extends TestCase
                 yield $version . ': ' . $sql => [$version, $sql, $expected];
             }
         }
-        yield 'mysql-5.7.44: SHOW CREATE USER' => ['mysql-5.7.44', "SHOW CREATE USER 'app'@'localhost'", "SHOW CREATE USER 'app' @'localhost'"];
+        yield 'mysql-5.7.44: SHOW CREATE USER' => ['mysql-5.7.44', "SHOW CREATE USER 'app'@'localhost'", "SHOW CREATE USER 'app'@'localhost'"];
         yield 'mysql-8.4.7: SHOW CREATE USER' => ['mysql-8.4.7', 'SHOW CREATE USER CURRENT_USER()', 'SHOW CREATE USER CURRENT_USER'];
         yield 'mysql-8.4.7: SHOW EXTENDED' => ['mysql-8.4.7', 'SHOW EXTENDED FULL COLUMNS FROM users', 'SHOW EXTENDED FULL COLUMNS FROM `users`'];
         yield 'mysql-8.4.7: SHOW PARSE_TREE' => ['mysql-8.4.7', 'SHOW PARSE_TREE SHOW CHARSET', 'SHOW PARSE_TREE SHOW CHARACTER SET'];

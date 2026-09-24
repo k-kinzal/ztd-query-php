@@ -17,10 +17,13 @@ use SqlSemantics\Serialization\Expressions;
 final class TemporalExpressions
 {
     /**
-     * Writes a field extraction, a date shift, a period overlap test or a time zone conversion from its operands.
+     * Writes a field extraction, a date shift, TIMESTAMPADD or TIMESTAMPDIFF, a period overlap test or a time zone conversion from its operands.
      */
-    public static function write(Extract|DateShift|\SqlSemantics\Model\Scalar\Temporal\PeriodOverlap|\SqlSemantics\Model\Scalar\Temporal\ZoneConversion|\SqlSemantics\Model\Scalar\Temporal\TemporalFormat $value): Tree
+    public static function write(Extract|DateShift|\SqlSemantics\Model\Scalar\Temporal\PeriodOverlap|\SqlSemantics\Model\Scalar\Temporal\ZoneConversion|\SqlSemantics\Model\Scalar\Temporal\TemporalFormat|\SqlSemantics\Model\Scalar\Temporal\TimestampAdd|\SqlSemantics\Model\Scalar\Temporal\TimestampDiff $value): Tree
     {
+        if ($value instanceof \SqlSemantics\Model\Scalar\Temporal\TimestampAdd || $value instanceof \SqlSemantics\Model\Scalar\Temporal\TimestampDiff) {
+            return new Tree('timestamp-arithmetic', [Build::keyword($value->spelling()), Build::parentheses(Build::separated([Build::keyword($value->unit->value), ...array_map(Expressions::write(...), $value->inputs())]))]);
+        }
         if ($value instanceof \SqlSemantics\Model\Scalar\Temporal\TemporalFormat) {
             return new Tree('get-format', [Build::keyword('GET_FORMAT'), Build::parentheses(Build::separated([Build::keyword($value->temporalKind->value), Expressions::write($value->standard)]))]);
         }

@@ -49,4 +49,25 @@ final class IndexFieldTest extends TestCase
         self::assertSame(['Table', 'Non_unique', 'Key_name', 'Seq_in_index', 'Column_name', 'Collation', 'Cardinality', 'Sub_part', 'Packed', 'Null', 'Index_type', 'Comment', 'Index_comment'], array_column(IndexField::listing(true), 'value'));
         self::assertSame(IndexField::cases(), IndexField::listing(false));
     }
+
+    #[TestWith([IndexField::Table, 'varchar', Nullability::NotNull])]
+    #[TestWith([IndexField::NonUnique, 'bigint', Nullability::NotNull])]
+    #[TestWith([IndexField::KeyName, 'varchar', Nullability::NotNull])]
+    #[TestWith([IndexField::SequenceInIndex, 'bigint', Nullability::NotNull])]
+    #[TestWith([IndexField::ColumnName, 'varchar', Nullability::MaybeNull])]
+    #[TestWith([IndexField::Collation, 'varchar', Nullability::MaybeNull])]
+    #[TestWith([IndexField::Cardinality, 'bigint', Nullability::MaybeNull])]
+    #[TestWith([IndexField::SubPart, 'bigint', Nullability::MaybeNull])]
+    #[TestWith([IndexField::Packed, 'varchar', Nullability::MaybeNull])]
+    #[TestWith([IndexField::Null, 'varchar', Nullability::NotNull])]
+    #[TestWith([IndexField::IndexType, 'varchar', Nullability::NotNull])]
+    #[TestWith([IndexField::Comment, 'varchar', Nullability::NotNull])]
+    #[TestWith([IndexField::IndexComment, 'varchar', Nullability::NotNull])]
+    #[TestWith([IndexField::Visible, 'varchar', Nullability::NotNull])]
+    #[TestWith([IndexField::Expression, 'varchar', Nullability::MaybeNull])]
+    public function testTypeAndNullabilityCoverEveryField(IndexField $field, string $type, Nullability $nullability): void
+    {
+        self::assertSame($type, $field->type());
+        self::assertSame($nullability, $field->nullability());
+    }
 }

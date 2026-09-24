@@ -68,4 +68,36 @@ final class TruncateRelationsStatementTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new TruncateRelationsStatement($statement->origin, []);
     }
+
+    public function testRejectsAnAliasedTarget(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (a INT)'));
+        $statement = $binder->bind('TRUNCATE t');
+        $query = $binder->bind('SELECT a FROM t AS x');
+        self::assertInstanceOf(TruncateRelationsStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        self::assertInstanceOf(TableReference::class, $query->from);
+        $this->expectExceptionObject(new InvalidStructure('A truncation target cannot have an alias.'));
+        new TruncateRelationsStatement($statement->origin, [...$statement->tables, $query->from]);
+    }
+
+    public function testRejectsATargetOfAnotherDialect(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (a INT)')))->bind('TRUNCATE t');
+        $other = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (a INT)')))->bind('SELECT a FROM t');
+        self::assertInstanceOf(TruncateRelationsStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $other);
+        self::assertInstanceOf(TableReference::class, $other->from);
+        $this->expectException(InvalidStructure::class);
+        new TruncateRelationsStatement($statement->origin, [$other->from]);
+    }
+
+    public function testRejectsAnotherDatabaseLanguage(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (a INT)')))->bind('TRUNCATE t');
+        $origin = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SELECT 1')->origin;
+        self::assertInstanceOf(TruncateRelationsStatement::class, $statement);
+        $this->expectExceptionObject(new InvalidStructure('Multi-relation truncation requires PostgreSQL.'));
+        new TruncateRelationsStatement($origin, $statement->tables);
+    }
 }

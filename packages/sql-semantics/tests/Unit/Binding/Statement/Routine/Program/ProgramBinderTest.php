@@ -61,4 +61,13 @@ final class ProgramBinderTest extends TestCase
         $this->expectExceptionMessage(InputViolation::ProgramStatement->message());
         (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (n INT)')))->bind('CREATE TRIGGER tr BEFORE INSERT ON t FOR EACH ROW RETURN 1', strict: false);
     }
+
+    public function testBindReadsEveryFlowControlAndCursorStatement(): void
+    {
+        $sql = 'CREATE PROCEDURE p(x INT) b: BEGIN DECLARE v INT; DECLARE c CURSOR FOR SELECT a FROM t; OPEN c; FETCH c INTO v; CLOSE c; CASE x WHEN 1 THEN SET v = 1; ELSE SET v = 2; END CASE; l: LOOP ITERATE l; END LOOP l; WHILE x DO LEAVE b; END WHILE; REPEAT SET v = 3; UNTIL x END REPEAT; END b';
+        $expected = 'CREATE PROCEDURE `p`(IN `x` integer) `b` : BEGIN DECLARE `v` integer; DECLARE `c` CURSOR FOR SELECT `a` AS `a` FROM `t`; OPEN `c`; FETCH `c` INTO `v`; CLOSE `c`; CASE `x` WHEN 1 THEN SET `v` = 1; ELSE SET `v` = 2; END CASE; `l` : LOOP ITERATE `l`; END LOOP `l`; WHILE `x` DO LEAVE `b`; END WHILE; REPEAT SET `v` = 3; UNTIL `x` END REPEAT; END `b`';
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)'));
+        self::assertSame($expected, $binder->bind($sql)->toString());
+        self::assertSame($expected, $binder->bind($expected)->toString());
+    }
 }

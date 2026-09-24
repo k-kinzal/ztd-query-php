@@ -6,6 +6,7 @@ namespace Tests\Unit\Model\Statement\Server\Administration;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
@@ -42,5 +43,12 @@ final class UninstallComponentStatementTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("UNINSTALL COMPONENT 'a'");
         $this->expectException(InvalidStructure::class);
         new UninstallComponentStatement($statement->origin, []);
+    }
+
+    #[TestWith(['UNINSTALL COMPONENT \'file://a\', \'file://b\'', UninstallComponentStatement::class, 'UNINSTALL COMPONENT \'file://a\', \'file://b\''])]
+    public function testComponentsSpellEveryUrn(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql, strict: false);
+        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
     }
 }

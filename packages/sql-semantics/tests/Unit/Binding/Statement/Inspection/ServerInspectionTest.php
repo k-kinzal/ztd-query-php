@@ -38,4 +38,12 @@ final class ServerInspectionTest extends TestCase
         self::assertSame(array_column($statement->resultColumns(), 'name'), array_column($copy->resultColumns(), 'name'));
     }
 
+    #[TestWith(['show plugins', 'SHOW PLUGINS'])]
+    #[TestWith(['show privileges', 'SHOW PRIVILEGES'])]
+    #[TestWith(['show processlist', 'SHOW PROCESSLIST'])]
+    #[TestWith(['show full processlist', 'SHOW FULL PROCESSLIST'])]
+    public function testBindReadsEachServerListing(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build()))->bind($sql)->toString());
+    }
 }

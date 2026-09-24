@@ -93,4 +93,22 @@ final class LoadsTest extends TestCase
         self::assertInstanceOf(LoadFileStatement::class, $statement);
         self::assertCount(2, $statement->assignments);
     }
+
+    #[TestWith(["load xml infile '/f' into table t rows identified by '<r>'", "LOAD XML INFILE '/f' INTO TABLE `t` ROWS IDENTIFIED BY '<r>'"])]
+    #[TestWith(["load data infile '/f' into table t (a, @v) set b = @v", "LOAD DATA INFILE '/f' INTO TABLE `t`(`a`, @`v`) SET `b` = @`v`"])]
+    #[TestWith(["load data local infile '/f' into table t", "LOAD DATA LOCAL INFILE '/f' INTO TABLE `t`"])]
+    public function testBindReadsLowerCaseLoads(string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT, b INT)')))->bind($sql, strict: false);
+        self::assertInstanceOf(LoadFileStatement::class, $statement);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    public function testTargetsAndAssignmentsReadNothingWithoutLists(): void
+    {
+        $node = \SqlSemantics\Ast\Tree::outer((new DialectParser(Dialect::MySql))->parse("LOAD DATA INFILE '/f' INTO TABLE t"), ['load_stmt'])[0];
+        $scope = new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::MySql));
+        self::assertSame([], Loads::targets($node, $scope));
+        self::assertSame([], Loads::assignments($node, $scope));
+    }
 }

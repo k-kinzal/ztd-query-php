@@ -190,4 +190,39 @@ final class TreeTest extends TestCase
         self::assertSame('1', \SqlSemantics\Ast\Tree::text($node));
     }
 
+    public function testInvalidNamesTheContextAndTheText(): void
+    {
+        $node = new \SqlParser\Parser\Node('expr', 0, [new \SqlParser\Lexer\Token(1, 'ICONST', '1', 0), new \SqlParser\Lexer\Token(1, 'IDENT', 'x', 2)]);
+        $this->expectException(SemanticException::class);
+        $this->expectExceptionMessage('Cannot bind custom operation: 1 x');
+        \SqlSemantics\Ast\Tree::invalid($node, 'custom operation');
+    }
+
+    public function testAssertChildrenAcceptsListedClausesInAnyCase(): void
+    {
+        $this->expectNotToPerformAssertions();
+        \SqlSemantics\Ast\Tree::assertChildren(new \SqlParser\Parser\Node('clause', 0, [new \SqlParser\Lexer\Token(1, 'SELECT', 'select', 0), new \SqlParser\Parser\Node('target', 0, [new \SqlParser\Lexer\Token(1, 'IDENT', 'id', 7)])]), ['target'], ['SELECT']);
+    }
+
+    public function testAssertChildrenRejectsAnUnlistedTerminal(): void
+    {
+        $this->expectException(SemanticException::class);
+        $this->expectExceptionMessage('Cannot bind clause terminal: where');
+        \SqlSemantics\Ast\Tree::assertChildren(new \SqlParser\Parser\Node('clause', 0, [new \SqlParser\Parser\Node('target', 0, [new \SqlParser\Lexer\Token(1, 'IDENT', 'id', 0)]), new \SqlParser\Lexer\Token(1, 'WHERE', 'where', 3)]), ['target'], ['SELECT']);
+    }
+
+    public function testAssertChildrenRejectsAnUnlistedClause(): void
+    {
+        $this->expectException(SemanticException::class);
+        $this->expectExceptionMessage('Cannot bind clause: id');
+        \SqlSemantics\Ast\Tree::assertChildren(new \SqlParser\Parser\Node('clause', 0, [new \SqlParser\Lexer\Token(1, 'SELECT', 'SELECT', 0), new \SqlParser\Parser\Node('target', 0, [new \SqlParser\Lexer\Token(1, 'IDENT', 'id', 7)])]), [], ['SELECT']);
+    }
+
+
+    public function testKeywordsSkipsTheWordsOfNestedExpressions(): void
+    {
+        $tree = (new \SqlSemantics\Ast\DialectParser(\SqlSemantics\Dialect::PostgreSql))->parse('CREATE TABLE t (identity int, a int CHECK (identity > 0) NOT NULL)');
+        $check = \SqlSemantics\Ast\Tree::outer($tree, ['ColConstraint'])[0];
+        self::assertSame(['CHECK', '(', ')'], \SqlSemantics\Ast\Tree::keywords($check));
+    }
 }

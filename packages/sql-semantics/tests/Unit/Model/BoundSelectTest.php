@@ -257,4 +257,107 @@ final class BoundSelectTest extends TestCase
         self::assertSame([], $statement->orderBy);
         self::assertSame('SELECT "id" AS "id" FROM "public"."t"', $ordered->withOrderBy([])->toString());
     }
+
+    public function testWithTiesIsOffByDefault(): void
+    {
+        $bound = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $bound);
+        $select = new \SqlSemantics\Model\BoundSelect($bound->origin, null, $bound->outputs, null, $bound->quantifier, [], null, null);
+        self::assertFalse($select->withTies);
+        self::assertSame('SELECT 1', $select->toString());
+    }
+
+    public function testFromMustUseTheStatementDialect(): void
+    {
+        $mysql = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT)')))->bind('SELECT id FROM t WHERE id = 1');
+        $postgres = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INT)')))->bind('SELECT id FROM t WHERE id = 1');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $mysql);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $postgres);
+        $this->expectException(InvalidStructure::class);
+        new \SqlSemantics\Model\BoundSelect($mysql->origin, $postgres->from, $mysql->outputs, $mysql->where, $mysql->quantifier, [], null, null);
+    }
+
+    public function testOutputsMustUseTheStatementDialect(): void
+    {
+        $mysql = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SELECT 1');
+        $postgres = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $mysql);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $postgres);
+        $this->expectException(InvalidStructure::class);
+        new \SqlSemantics\Model\BoundSelect($mysql->origin, null, $postgres->outputs, null, $mysql->quantifier, [], null, null);
+    }
+
+    public function testWhereMustUseTheStatementDialect(): void
+    {
+        $mysql = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SELECT 1');
+        $postgres = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1 WHERE TRUE');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $mysql);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $postgres);
+        $this->expectException(InvalidStructure::class);
+        new \SqlSemantics\Model\BoundSelect($mysql->origin, null, $mysql->outputs, $postgres->where, $mysql->quantifier, [], null, null);
+    }
+
+    public function testLocksAreRejectedInSqlite(): void
+    {
+        $sqlite = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('SELECT 1');
+        $postgres = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1 FOR UPDATE');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $sqlite);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $postgres);
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('SQLite SELECT does not have locking clauses.');
+        new \SqlSemantics\Model\BoundSelect($sqlite->origin, null, $sqlite->outputs, null, $sqlite->quantifier, [], null, null, locks: $postgres->locks);
+    }
+
+    public function testLocksRejectAPostgreSqlStrengthInMySql(): void
+    {
+        $mysql = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SELECT 1');
+        $postgres = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1 FOR KEY SHARE');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $mysql);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $postgres);
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('This lock strength is specific to PostgreSQL.');
+        new \SqlSemantics\Model\BoundSelect($mysql->origin, null, $mysql->outputs, null, $mysql->quantifier, [], null, null, locks: $postgres->locks);
+    }
+
+    public function testLocksRejectANamedTargetOutsideTheInput(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INT)'));
+        $locked = $binder->bind('SELECT id FROM t AS a FOR UPDATE OF a');
+        $other = $binder->bind('SELECT id FROM t AS a');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $locked);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $other);
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('A named lock target must belong to this query input.');
+        new \SqlSemantics\Model\BoundSelect($other->origin, $other->from, $other->outputs, null, $other->quantifier, [], null, null, locks: $locked->locks);
+    }
+
+    public function testLocksAcceptNamedTargetsOfTheInput(): void
+    {
+        $postgres = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INT)')))->bind('SELECT id FROM t AS a FOR NO KEY UPDATE OF a');
+        $mysql = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT)')))->bind('SELECT id FROM t AS a FOR UPDATE OF a');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $postgres);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $mysql);
+        self::assertCount(1, $postgres->locks);
+        self::assertSame('SELECT "id" AS "id" FROM "public"."t" AS "a" FOR NO KEY UPDATE OF "a"', $postgres->toString());
+        self::assertSame('SELECT `id` AS `id` FROM `t` AS `a` FOR UPDATE OF `a`', $mysql->toString());
+    }
+
+    public function testWithWhereKeepsTheQueryBlockOptions(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (a INT)')))->bind('SELECT HIGH_PRIORITY SQL_SMALL_RESULT a FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        $changed = $statement->withWhere(null)->withOrigin($statement->origin);
+        self::assertSame([\SqlSemantics\Model\Query\Optimization\SelectOption::HighPriority, \SqlSemantics\Model\Query\Optimization\SelectOption::SmallResult], $changed->options);
+        self::assertSame('SELECT HIGH_PRIORITY SQL_SMALL_RESULT `a` AS `a` FROM `t`', $changed->toString());
+    }
+
+    public function testOptionsRequireMySql(): void
+    {
+        $mysql = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SELECT HIGH_PRIORITY 1');
+        $postgres = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $mysql);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $postgres);
+        $this->expectException(InvalidStructure::class);
+        new \SqlSemantics\Model\BoundSelect($postgres->origin, null, $postgres->outputs, null, $postgres->quantifier, [], null, null, options: $mysql->options);
+    }
 }

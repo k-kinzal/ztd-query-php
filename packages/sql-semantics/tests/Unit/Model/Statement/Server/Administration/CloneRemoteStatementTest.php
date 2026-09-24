@@ -27,7 +27,7 @@ final class CloneRemoteStatementTest extends TestCase
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
         self::assertSame(CloneEncryption::Refused, $copy->encryption);
-        self::assertSame("CLONE INSTANCE FROM 'u' @'h' : 3306 IDENTIFIED BY 'p' DATA DIRECTORY = '/d' REQUIRE NO SSL", $copy->toString());
+        self::assertSame("CLONE INSTANCE FROM 'u'@'h':3306 IDENTIFIED BY 'p' DATA DIRECTORY = '/d' REQUIRE NO SSL", $copy->toString());
     }
 
     public function testWithDonorReplacesAccountAndPort(): void

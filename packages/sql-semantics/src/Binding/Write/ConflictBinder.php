@@ -46,7 +46,7 @@ final class ConflictBinder
     {
         $children = $node->name === 'insert_update_list' ? $node->find('insert_update_elem') : array_values(array_filter($node->children, static fn ($child): bool => !$child instanceof Node || $child->name !== 'upsert'));
         $source = new Node('conflict_action', 0, $children);
-        $text = strtoupper(Tree::text($source));
+        $words = array_map(static fn ($child): string => strtoupper($child->text), array_values(array_filter($children, static fn ($child): bool => !$child instanceof Node)));
         $inference = Tree::child($source, ['opt_conf_expr']);
         $keys = $inference === null ? [] : Tree::outer($inference, ['index_elem']);
         $sqlite = Tree::child($source, ['sortlist']);
@@ -55,26 +55,35 @@ final class ConflictBinder
         $constraint = $inference === null ? null : Tree::child($inference, ['name']);
         $assignments = (new AssignmentBinder())->bind($source, $scope);
         $where = Tree::child($source, ['where_clause', 'where_opt']);
-        $indexWhere = $inference === null ? Tree::child($source, ['where_opt']) : Tree::child($inference, ['where_clause']);
-        $sqlitePredicates = array_values(array_filter($children, static fn ($child): bool => $child instanceof Node && $child->name === 'where_opt' && Tree::hasTokens($child)));
-        if (count($sqlitePredicates) > 1) {
-            $where = $sqlitePredicates[1];
-        } elseif ($sqlite !== null) {
-            $doSeen = false;
-            $where = null;
-            foreach ($children as $child) {
-                $doSeen = $doSeen || (!$child instanceof Node && strtoupper($child->text) === 'DO');
-                if ($doSeen && $child instanceof Node && $child->name === 'where_opt' && Tree::hasTokens($child)) {
-                    $where = $child;
-                }
-            }
+        $indexWhere = $inference === null ? null : Tree::child($inference, ['where_clause']);
+        if ($sqlite !== null) {
+            [$indexWhere, $where] = self::upsertPredicates($children);
         }
         $target = $constraint !== null
             ? new \SqlSemantics\Model\Write\Conflict\ConstraintConflict($scope->identifiers->parts($constraint)[0])
             : ($expressions !== [] ? new \SqlSemantics\Model\Write\Conflict\IndexConflict($expressions, $this->predicate($indexWhere, $scope)) : new \SqlSemantics\Model\Write\Conflict\AnyConflict());
-        return str_contains($text, 'DO NOTHING')
+        return in_array('NOTHING', $words, true)
             ? new \SqlSemantics\Model\Write\Conflict\DoNothing($target, $source)
             : new \SqlSemantics\Model\Write\Conflict\DoUpdate($target, $assignments, $this->predicate($where, $scope), $source);
+    }
+
+    /**
+     * Splits the SQLite upsert predicates at DO: the conflict-target WHERE precedes it and the DO UPDATE WHERE follows it.
+     * @param list<Node|\SqlParser\Lexer\Token> $children
+     * @return array{Node|null, Node|null}
+     */
+    public static function upsertPredicates(array $children): array
+    {
+        $predicates = [null, null];
+        $after = 0;
+        foreach ($children as $child) {
+            if (!$child instanceof Node) {
+                $after = strtoupper($child->text) === 'DO' ? 1 : $after;
+            } elseif ($child->name === 'where_opt' && Tree::hasTokens($child)) {
+                $predicates[$after] = $child;
+            }
+        }
+        return $predicates;
     }
 
     /**

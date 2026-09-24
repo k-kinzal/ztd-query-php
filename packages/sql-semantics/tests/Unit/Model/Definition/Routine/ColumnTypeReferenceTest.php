@@ -39,4 +39,33 @@ final class ColumnTypeReferenceTest extends TestCase
         new Routine\ColumnTypeReference(new QualifiedName(['id']), null);
     }
 
+    public function testTypeReferenceAcceptsATableQualifiedColumn(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
+        $binding = new \SqlSemantics\Model\ColumnBinding('r0', $schema->tables[0], $schema->tables[0]->columns[0]);
+        self::assertSame(['t', 'id'], (new Routine\ColumnTypeReference(new QualifiedName(['t', 'id']), $binding))->name->parts);
+        self::assertNull((new Routine\ColumnTypeReference(new QualifiedName(['t', 'id']), null))->binding);
+    }
+
+    /**
+     * @param list<string> $parts
+     */
+    #[\PHPUnit\Framework\Attributes\TestWith([['u', 'id']])]
+    #[\PHPUnit\Framework\Attributes\TestWith([['other', 't', 'id']])]
+    #[\PHPUnit\Framework\Attributes\TestWith([['db', 'public', 't', 'id']])]
+    public function testTypeReferenceRejectsANameOfAnotherDeclaration(array $parts): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
+        $binding = new \SqlSemantics\Model\ColumnBinding('r0', $schema->tables[0], $schema->tables[0]->columns[0]);
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        new Routine\ColumnTypeReference(new QualifiedName($parts), $binding);
+    }
+
+    public function testTypeReferenceRejectsAColumnOfAnotherDialect(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INTEGER)');
+        $binding = new \SqlSemantics\Model\ColumnBinding('r0', $schema->tables[0], $schema->tables[0]->columns[0]);
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        new Routine\ColumnTypeReference(new QualifiedName(['t', 'id']), $binding);
+    }
 }

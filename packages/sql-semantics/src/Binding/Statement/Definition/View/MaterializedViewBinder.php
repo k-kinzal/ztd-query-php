@@ -37,7 +37,7 @@ final class MaterializedViewBinder
             return null;
         }
         $words = array_map(static fn ($token): string => strtoupper($token->text), $source->tokens());
-        if (!in_array('MATERIALIZED', array_slice($words, 0, 3), true)) {
+        if (!self::declares($words)) {
             return null;
         }
         return match ($words[0]) {
@@ -60,6 +60,9 @@ final class MaterializedViewBinder
         $name = Tree::child($target, ['qualified_name']) ?? throw new UnclassifiedSql('A materialized view declaration requires its name.');
         $method = Tree::child($target, ['table_access_method_clause']);
         $tablespace = Tree::child($target, ['OptTableSpace']);
+        $start = $target->tokens()[0]->offset ?? 0;
+        $words = array_values(array_filter(array_map(static fn ($token): string => $token->offset < $start ? strtoupper($token->text) : '', $source->tokens()), static fn (string $word): bool => $word !== ''));
+        $data = Tree::child($source, ['opt_with_data']);
         return new Statement\CreateMaterializedViewStatement(
             $origin,
             new QualifiedName($identifiers->parts($name)),
@@ -70,7 +73,7 @@ final class MaterializedViewBinder
             $method === null ? null : $identifiers->name($method->tokens()[1]),
             StorageParameters::read($target, new Scope($identifiers, queries: $context)),
             $tablespace === null ? null : $identifiers->name($tablespace->tokens()[1]),
-            !str_contains(strtoupper(Tree::text($source)), 'WITH NO DATA'),
+            $data === null || !str_contains(strtoupper(Tree::text($data)), 'NO DATA'),
         );
     }
 
@@ -100,5 +103,19 @@ final class MaterializedViewBinder
             throw new UnclassifiedSql('A materialized view removal requires its names.');
         }
         return new Statement\DropMaterializedViewsStatement($origin, $names, in_array('IF', $words, true), DropBehavior::tryFrom($words[count($words) - 1]) ?? DropBehavior::Default);
+    }
+
+    /**
+     * Whether the leading words name the MATERIALIZED VIEW object class, not an object called materialized.
+     * @param list<string> $words Uppercase statement words
+     */
+    public static function declares(array $words): bool
+    {
+        foreach ([1, 2] as $position) {
+            if (($words[$position] ?? '') === 'MATERIALIZED' && ($words[$position + 1] ?? '') === 'VIEW') {
+                return true;
+            }
+        }
+        return false;
     }
 }

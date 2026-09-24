@@ -45,4 +45,14 @@ final class TableReferenceTest extends TestCase
         self::assertSame(['', 'text'], $rebound->insertion->target->name->parts);
     }
 
+    public function testWithScopeKeepsTheIndexHints(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (a INT, KEY k (a))')))->bind('SELECT a FROM t FORCE INDEX (k)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertInstanceOf(TableReference::class, $statement->from);
+        $moved = $statement->from->withScope('inner');
+        self::assertSame('inner', $moved->scopeId);
+        self::assertSame($statement->from->indexHints, $moved->indexHints);
+        self::assertSame(['k'], $moved->indexHints[0]->indexes);
+    }
 }

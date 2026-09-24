@@ -27,7 +27,7 @@ final class RenameUsersStatementTest extends TestCase
         self::assertInstanceOf(RenameUsersStatement::class, $statement);
         $changed = $statement->withRenames([new AccountRename(CurrentAccount::Authenticated, new AccountName('c', '%'))]);
         self::assertCount(1, $statement->renames);
-        self::assertSame("RENAME USER CURRENT_USER TO 'c' @'%'", $changed->toString());
+        self::assertSame("RENAME USER CURRENT_USER TO 'c'@'%'", $changed->toString());
         self::assertSame(StatementKind::Rename, $changed->kind);
     }
 

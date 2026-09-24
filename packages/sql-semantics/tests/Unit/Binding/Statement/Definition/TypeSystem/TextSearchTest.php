@@ -119,4 +119,81 @@ final class TextSearchTest extends TestCase
         self::assertSame('7', TextSearch::option($elements[0], $context)->value);
         self::assertSame('on', TextSearch::option($elements[1], $context)->value);
     }
+
+    #[TestWith(['CREATE TEXT SEARCH TEMPLATE s.t (lexize = a, lexize = b, init = i)', 'CREATE TEXT SEARCH TEMPLATE "s"."t"(INIT = "i", LEXIZE = "b")'])]
+    #[TestWith(['CREATE TEXT SEARCH CONFIGURATION c (parser = a, parser = b)', 'CREATE TEXT SEARCH CONFIGURATION "c"(PARSER = "b")'])]
+    #[TestWith(['CREATE TEXT SEARCH PARSER b.c (start = s, gettoken = g, end = e, lextypes = l, headline = h)', 'CREATE TEXT SEARCH PARSER "b"."c"(START = "s", GETTOKEN = "g", END = "e", LEXTYPES = "l", HEADLINE = "h")'])]
+    #[TestWith(['ALTER TEXT SEARCH DICTIONARY b.c (x = 1, y)', 'ALTER TEXT SEARCH DICTIONARY "b"."c"("x" = \'1\', "y")'])]
+    #[TestWith(['ALTER TEXT SEARCH CONFIGURATION b.c ALTER MAPPING FOR word REPLACE d1 WITH d2', 'ALTER TEXT SEARCH CONFIGURATION "b"."c" ALTER MAPPING FOR "word" REPLACE "d1" WITH "d2"'])]
+    public function testCreateAndAlterKeepSchemaQualifiedNamesAndTheLastArgument(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+    }
+
+    #[TestWith(['CREATE TEXT SEARCH PARSER a.b.c (start = s, gettoken = g, end = e, lextypes = l)'])]
+    #[TestWith(['ALTER TEXT SEARCH DICTIONARY a.b.c (x = 1)'])]
+    #[TestWith(['ALTER TEXT SEARCH CONFIGURATION a.b.c DROP MAPPING FOR word'])]
+    public function testCreateAndAlterRejectOverQualifiedNames(string $sql): void
+    {
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(InputViolation::CatalogObjectName->message());
+        (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql);
+    }
+
+    public function testParserBuildsTheStatementFromNamedElements(): void
+    {
+        $context = new QueryContext(new TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new Identifiers(Dialect::PostgreSql), 'public'));
+        $source = (new DialectParser(Dialect::PostgreSql))->parse('CREATE TEXT SEARCH PARSER p (start = a, gettoken = g, end = e, lextypes = l)');
+        $origin = new \SqlSemantics\Model\Statement\Origin('s0', $source, Dialect::PostgreSql);
+        $elements = DefinitionElement::named(DefinitionElement::list($source, $context), ['start', 'gettoken', 'end', 'lextypes', 'headline'], true);
+        $statement = TextSearch::parser($origin, new \SqlSemantics\Model\Relation\QualifiedName(['p']), $elements, $source, $context);
+        self::assertSame(['g'], $statement->gettoken->parts);
+        self::assertNull($statement->headline);
+    }
+
+    public function testTemplateBuildsTheStatementFromNamedElements(): void
+    {
+        $context = new QueryContext(new TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new Identifiers(Dialect::PostgreSql), 'public'));
+        $source = (new DialectParser(Dialect::PostgreSql))->parse('CREATE TEXT SEARCH TEMPLATE t (lexize = l)');
+        $origin = new \SqlSemantics\Model\Statement\Origin('s0', $source, Dialect::PostgreSql);
+        $statement = TextSearch::template($origin, new \SqlSemantics\Model\Relation\QualifiedName(['t']), DefinitionElement::named(DefinitionElement::list($source, $context), ['init', 'lexize'], true), $source, $context);
+        self::assertSame(['l'], $statement->lexize->parts);
+        self::assertNull($statement->init);
+    }
+
+    public function testDictionaryBuildsTheStatementFromElements(): void
+    {
+        $context = new QueryContext(new TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new Identifiers(Dialect::PostgreSql), 'public'));
+        $source = (new DialectParser(Dialect::PostgreSql))->parse('CREATE TEXT SEARCH DICTIONARY d (template = simple, stopwords = english)');
+        $origin = new \SqlSemantics\Model\Statement\Origin('s0', $source, Dialect::PostgreSql);
+        $statement = TextSearch::dictionary($origin, new \SqlSemantics\Model\Relation\QualifiedName(['d']), DefinitionElement::list($source, $context), $source, $context);
+        self::assertSame(['simple'], $statement->template->parts);
+        self::assertSame('stopwords', $statement->options[0]->name);
+    }
+
+    public function testConfigurationCopiesAConfiguration(): void
+    {
+        $context = new QueryContext(new TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new Identifiers(Dialect::PostgreSql), 'public'));
+        $source = (new DialectParser(Dialect::PostgreSql))->parse('CREATE TEXT SEARCH CONFIGURATION c (copy = s.o)');
+        $origin = new \SqlSemantics\Model\Statement\Origin('s0', $source, Dialect::PostgreSql);
+        $statement = TextSearch::configuration($origin, new \SqlSemantics\Model\Relation\QualifiedName(['c']), DefinitionElement::named(DefinitionElement::list($source, $context), ['parser', 'copy'], true), $source, $context);
+        self::assertInstanceOf(Statement\CopyTextSearchConfigurationStatement::class, $statement);
+    }
+
+    public function testConfigurationRequiresAParserOrACopy(): void
+    {
+        $context = new QueryContext(new TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new Identifiers(Dialect::PostgreSql), 'public'));
+        $source = (new DialectParser(Dialect::PostgreSql))->parse('CREATE TEXT SEARCH CONFIGURATION c (copy = s.o)');
+        $origin = new \SqlSemantics\Model\Statement\Origin('s0', $source, Dialect::PostgreSql);
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(InputViolation::DefinitionRequirement->message());
+        TextSearch::configuration($origin, new \SqlSemantics\Model\Relation\QualifiedName(['c']), [], $source, $context);
+    }
+
+    public function testFunctionReadsTheNamedFunction(): void
+    {
+        $context = new QueryContext(new TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new Identifiers(Dialect::PostgreSql), 'public'));
+        $elements = DefinitionElement::list((new DialectParser(Dialect::PostgreSql))->parse('CREATE TEXT SEARCH TEMPLATE t (lexize = s.l)'), $context);
+        self::assertSame(['s', 'l'], TextSearch::function($elements[0], $context)->parts);
+    }
 }

@@ -42,4 +42,10 @@ final class EventFieldTest extends TestCase
     {
         self::assertSame($expected, $field->nullability());
     }
+
+    public function testTypeAndNullabilityDescribeEveryField(): void
+    {
+        self::assertSame(['varchar', 'varchar', 'varchar', 'varchar', 'varchar', 'datetime', 'varchar', 'varchar', 'datetime', 'datetime', 'varchar', 'bigint', 'varchar', 'varchar', 'varchar'], array_map(static fn (EventField $field): string => $field->type(), EventField::cases()));
+        self::assertSame(['NotNull', 'NotNull', 'NotNull', 'NotNull', 'NotNull', 'MaybeNull', 'MaybeNull', 'MaybeNull', 'MaybeNull', 'MaybeNull', 'NotNull', 'NotNull', 'NotNull', 'NotNull', 'NotNull'], array_map(static fn (EventField $field): string => $field->nullability()->name, EventField::cases()));
+    }
 }

@@ -44,4 +44,23 @@ final class UniqueKeyTest extends TestCase
         self::assertFalse($key->nullsDistinct);
         self::assertSame(['a'], $key->localColumns());
     }
+
+    public function testDefaultsToImmediateDistinctNullsAndAnEmptySource(): void
+    {
+        $column = Expression::reference(['a'], Dialect::MySql);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\UnresolvedColumnReference::class, $column);
+        $key = new UniqueKey([new ColumnKey($column)]);
+        self::assertTrue($key->nullsDistinct);
+        self::assertSame(\SqlSemantics\Schema\Constraint\CheckingTime::Immediate, $key->checking);
+        self::assertSame('constraint', $key->source->name);
+        self::assertSame(0, $key->source->ordinal);
+        self::assertSame([], $key->source->children);
+    }
+
+    public function testLocalColumnsSkipExpressionKeys(): void
+    {
+        $key = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT, b INT, UNIQUE KEY k (b, (a + 1), a))')->tables[0]->constraints[0];
+        self::assertInstanceOf(UniqueKey::class, $key);
+        self::assertSame(['b', 'a'], $key->localColumns());
+    }
 }

@@ -57,4 +57,32 @@ final class LoadTargetsTest extends TestCase
         $this->expectException(InvalidStructure::class);
         LoadTargets::assignments($update->writes);
     }
+
+    public function testFieldsAndAssignmentsAcceptColumnsAndUserVariables(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT, b INT)')))->bind("load data infile '/f' into table t (a, @v, nope) set b = @v, a = DEFAULT", strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Loading\LoadFileStatement::class, $statement);
+        self::assertCount(3, $statement->targets);
+        self::assertCount(2, $statement->assignments);
+        LoadTargets::fields($statement->targets);
+        LoadTargets::assignments($statement->assignments);
+    }
+
+    public function testSourceRequiresMySql(): void
+    {
+        $origin = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1')->origin;
+        $name = Expression::literal('f', Dialect::MySql);
+        self::assertInstanceOf(Literal::class, $name);
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('LOAD DATA and LOAD XML requires MySQL.');
+        LoadTargets::source($origin, LoadSource::File, $name);
+    }
+
+    public function testSourceAcceptsS3FromMySql82(): void
+    {
+        $origin = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.2.0'))->build()))->bind('DO 1')->origin;
+        $name = Expression::literal('s3://bucket/f', Dialect::MySql);
+        self::assertInstanceOf(Literal::class, $name);
+        LoadTargets::source($origin, LoadSource::S3, $name);
+    }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Query;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
@@ -33,5 +34,27 @@ final class OptimizerHintsTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $plain);
         self::assertSame([], $plain->hints);
         self::assertSame([], OptimizerHints::bind($binder->bind('SELECT a FROM t')->origin->source));
+    }
+
+    /**
+     * @param list<string> $definitions
+     */
+    #[DataProvider('providerBindReadsEveryExecutionTimeHint')]
+    public function testBindReadsEveryExecutionTimeHint(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    /**
+     * @return iterable<string, array{Dialect, ?string, list<string>, string, string}>
+     */
+    public static function providerBindReadsEveryExecutionTimeHint(): iterable
+    {
+        return [
+            'select /*+ max_execution_time(10) */ a from t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT)'], 'select /*+ max_execution_time(10) */ a from t', 'SELECT /*+ MAX_EXECUTION_TIME(10) */ `a` AS `a` FROM `t`'],
+            'SELECT /*+ MAX_EXECUTION_TIME ( 5 ) MAX_EXECUTION_TIME(6) */ a FROM t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT)'], 'SELECT /*+ MAX_EXECUTION_TIME ( 5 ) MAX_EXECUTION_TIME(6) */ a FROM t', 'SELECT /*+ MAX_EXECUTION_TIME(5) MAX_EXECUTION_TIME(6) */ `a` AS `a` FROM `t`'],
+            'SELECT /*+ MAX_EXECUTION_TIME(5) */ /*+ MAX_EXECUTION_TIME(7) */ 1 (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT)'], 'SELECT /*+ MAX_EXECUTION_TIME(5) */ /*+ MAX_EXECUTION_TIME(7) */ 1', 'SELECT /*+ MAX_EXECUTION_TIME(5) MAX_EXECUTION_TIME(7) */ 1'],
+        ];
     }
 }

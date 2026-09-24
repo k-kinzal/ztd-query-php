@@ -6,6 +6,7 @@ namespace Tests\Unit\Binding\Statement\Definition\PostgreSqlTable;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Ast\DialectParser;
 use SqlSemantics\Ast\Tree;
@@ -49,5 +50,12 @@ final class ExclusionsTest extends TestCase
         $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
         $this->expectException(InvalidSql::class);
         $binder->bind('CREATE TABLE t (a INTEGER, EXCLUDE (a WITH =) NOT DEFERRABLE INITIALLY DEFERRED)');
+    }
+
+    #[TestWith(['CREATE TABLE t(a INT, EXCLUDE USING gist (a WITH =) deferrable initially deferred)', CreateTableStatement::class, 'CREATE TABLE "public"."t"("a" integer, EXCLUDE USING "gist"("a" WITH =) DEFERRABLE INITIALLY DEFERRED)'])]
+    public function testBindReadsLowercaseAttributes(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql, strict: false);
+        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
     }
 }

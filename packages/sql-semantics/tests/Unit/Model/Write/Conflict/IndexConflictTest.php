@@ -17,4 +17,12 @@ final class IndexConflictTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new \SqlSemantics\Model\Write\Conflict\IndexConflict([]);
     }
+
+    public function testKeepsItsKeysAndPredicate(): void
+    {
+        $key = \SqlSemantics\Model\Expression::literal(1, \SqlSemantics\Dialect::Sqlite);
+        $conflict = new \SqlSemantics\Model\Write\Conflict\IndexConflict([$key]);
+        self::assertSame([$key], $conflict->keys);
+        self::assertNull($conflict->predicate);
+    }
 }

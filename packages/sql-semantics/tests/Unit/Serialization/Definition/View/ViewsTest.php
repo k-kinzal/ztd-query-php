@@ -59,7 +59,7 @@ final class ViewsTest extends TestCase
     {
         self::assertSame([], Views::mysql(new MySqlViewProperties(), Dialect::MySql));
         $written = Views::mysql(new MySqlViewProperties(ViewAlgorithm::TempTable, new AccountName('u', 'h'), ViewSecurity::Invoker), Dialect::MySql);
-        self::assertSame('ALGORITHM = TEMPTABLE DEFINER = \'u\' @\'h\' SQL SECURITY INVOKER', implode(' ', array_map(static fn ($part): string => $part->toString(), $written)));
+        self::assertSame('ALGORITHM = TEMPTABLE DEFINER = \'u\'@\'h\' SQL SECURITY INVOKER', implode(' ', array_map(static fn ($part): string => $part->toString(), $written)));
         $current = Views::mysql(new MySqlViewProperties(definer: CurrentAccount::Authenticated), Dialect::MySql);
         self::assertStringContainsString('CURRENT_USER', implode(' ', array_map(static fn ($part): string => $part->toString(), $current)));
     }

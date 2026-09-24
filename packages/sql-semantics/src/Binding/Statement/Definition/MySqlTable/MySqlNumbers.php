@@ -27,7 +27,7 @@ final class MySqlNumbers
             $digits = ltrim(substr($text, 2), '0');
             return self::bounded($digits === '' ? '0' : (string) hexdec($digits), strlen($digits) > 15, $source, $violation);
         }
-        if (preg_match('/^[0-9]+$/', $text) !== 1 && ($integerOnly || preg_match('/^[0-9]*[.e]/', $text) !== 1)) {
+        if (preg_match('/^[0-9]+$/D', $text) !== 1 && ($integerOnly || preg_match('/^[0-9]*[.e]/', $text) !== 1)) {
             throw new InvalidSql($violation, $source);
         }
         preg_match('/^[0-9]*/', $text, $match);

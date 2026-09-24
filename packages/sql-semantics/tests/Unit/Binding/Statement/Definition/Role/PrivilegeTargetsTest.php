@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Statement\Definition\Role;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -246,5 +247,37 @@ final class PrivilegeTargetsTest extends TestCase
         $this->expectException(InvalidSql::class);
         $this->expectExceptionMessage(InputViolation::LargeObjectId->message());
         $binder->bind('GRANT SELECT ON LARGE OBJECT ' . $ids . ' TO a');
+    }
+
+    /**
+     * @return list<array{Dialect, ?string, string, mixed}>
+     */
+    public static function providerReadWritesEachLowercaseTarget(): array
+    {
+        return [
+            [Dialect::PostgreSql, null, 'grant select on table t to a', [GrantPrivilegesStatement::class, 'GRANT SELECT ON TABLE "public"."t" TO "a"']],
+            [Dialect::PostgreSql, null, 'grant usage on foreign data wrapper w to a', [GrantPrivilegesStatement::class, 'GRANT USAGE ON FOREIGN DATA WRAPPER "w" TO "a"']],
+            [Dialect::PostgreSql, null, 'grant usage on foreign server s to a', [GrantPrivilegesStatement::class, 'GRANT USAGE ON FOREIGN SERVER "s" TO "a"']],
+            [Dialect::PostgreSql, null, 'GRANT SELECT ON LARGE OBJECT 000000000001 TO a', [GrantPrivilegesStatement::class, 'GRANT SELECT ON LARGE OBJECT 1 TO "a"']],
+            [Dialect::PostgreSql, null, 'grant select on all tables in schema public to a', [GrantPrivilegesStatement::class, 'GRANT SELECT ON ALL TABLES IN SCHEMA "public" TO "a"']],
+            [Dialect::PostgreSql, null, 'grant execute on all functions in schema public to a', [GrantPrivilegesStatement::class, 'GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA "public" TO "a"']],
+        ];
+    }
+
+    #[DataProvider('providerReadWritesEachLowercaseTarget')]
+    public function testReadWritesEachLowercaseTarget(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(a INT)')))->bind($sql, strict: false);
+        self::assertSame($expected, [$statement::class, $statement->toString()]);
+    }
+
+    #[TestWith(['GRANT SELECT ON LARGE OBJECT 4294967296 TO a'])]
+    #[TestWith(['GRANT SELECT ON a.b.c.d TO a'])]
+    #[TestWith(['GRANT SELECT ON t[1] TO a'])]
+    public function testRelationRejectsAnImpossibleTargetName(string $sql): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)'));
+        $this->expectException(InvalidSql::class);
+        $binder->bind($sql, strict: false);
     }
 }

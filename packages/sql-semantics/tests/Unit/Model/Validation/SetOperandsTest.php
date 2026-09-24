@@ -6,6 +6,7 @@ namespace Tests\Unit\Model\Validation;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
@@ -80,5 +81,42 @@ final class SetOperandsTest extends TestCase
         $this->expectException(InvalidStructure::class);
         $this->expectExceptionMessage('SQLite set operands cannot own WITH, ORDER BY or pagination clauses.');
         SetOperands::check(Dialect::Sqlite, $left, $ordered);
+    }
+
+    public function testCheckRejectsARightOperandOfAnotherDialect(): void
+    {
+        $left = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1');
+        $right = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('SELECT 1');
+        self::assertInstanceOf(BoundQuery::class, $left);
+        self::assertInstanceOf(BoundQuery::class, $right);
+        $this->expectExceptionObject(new InvalidStructure('Set operands must use the statement dialect.'));
+        SetOperands::check(Dialect::PostgreSql, $left, $right);
+    }
+
+    public function testCheckAcceptsAnOperandOfUnknownWidth(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $known = $binder->bind('SELECT 1, 2');
+        $unknown = $binder->bind('SELECT * FROM missing', strict: false);
+        self::assertInstanceOf(BoundQuery::class, $known);
+        self::assertInstanceOf(BoundQuery::class, $unknown);
+        SetOperands::check(Dialect::PostgreSql, $known, $unknown);
+        SetOperands::check(Dialect::PostgreSql, $unknown, $known);
+        $this->addToAssertionCount(1);
+    }
+
+    #[TestWith(['SELECT 2 ORDER BY 1', 'SELECT 1'])]
+    #[TestWith(['SELECT 1', 'SELECT 2 LIMIT 1'])]
+    #[TestWith(['SELECT 1', 'SELECT 2 LIMIT 1 OFFSET 1'])]
+    #[TestWith(['SELECT 1', 'WITH c AS (SELECT 1) SELECT 2'])]
+    public function testCheckRejectsEitherSqliteOperandOwningAClause(string $leftSql, string $rightSql): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build());
+        $left = $binder->bind($leftSql);
+        $right = $binder->bind($rightSql);
+        self::assertInstanceOf(BoundQuery::class, $left);
+        self::assertInstanceOf(BoundQuery::class, $right);
+        $this->expectExceptionObject(new InvalidStructure('SQLite set operands cannot own WITH, ORDER BY or pagination clauses.'));
+        SetOperands::check(Dialect::Sqlite, $left, $right);
     }
 }

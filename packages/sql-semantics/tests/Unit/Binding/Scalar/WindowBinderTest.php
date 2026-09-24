@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Scalar;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
@@ -82,5 +83,46 @@ final class WindowBinderTest extends TestCase
         self::assertSame('2', $frame->end->value->text);
         self::assertSame(\SqlSemantics\Model\Window\FrameExclusion::Ties, $frame->exclusion);
         self::assertSame('SELECT sum("a") OVER (PARTITION BY "b" ORDER BY "a" ASC RANGE BETWEEN 1 PRECEDING AND 2 FOLLOWING EXCLUDE TIES) FROM "main"."t"', $statement->toString());
+    }
+
+    /**
+     * @param list<string> $definitions
+     */
+    #[DataProvider('providerBindReadsLowercaseFrames')]
+    public function testBindReadsLowercaseFrames(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    /**
+     * @return iterable<string, array{Dialect, ?string, list<string>, string, string}>
+     */
+    public static function providerBindReadsLowercaseFrames(): iterable
+    {
+        return [
+            'select sum(a) over (order by a rows between unbounded preceding and current row) from t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (a INT, b INT)'], 'select sum(a) over (order by a rows between unbounded preceding and current row) from t', 'SELECT "sum"("a") OVER (ORDER BY "a" ASC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) FROM "public"."t"'],
+            'select sum(a) over (order by a range between 1 preceding and 2 following exclude ties) from t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (a INT, b INT)'], 'select sum(a) over (order by a range between 1 preceding and 2 following exclude ties) from t', 'SELECT "sum"("a") OVER (ORDER BY "a" ASC RANGE BETWEEN 1 PRECEDING AND 2 FOLLOWING EXCLUDE TIES) FROM "public"."t"'],
+            'select sum(a) over (order by a groups between current row and unbounded following) from t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (a INT, b INT)'], 'select sum(a) over (order by a groups between current row and unbounded following) from t', 'SELECT "sum"("a") OVER (ORDER BY "a" ASC GROUPS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING) FROM "public"."t"'],
+            'select sum(a) over (order by a rows 3 preceding) from t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (a INT, b INT)'], 'select sum(a) over (order by a rows 3 preceding) from t', 'SELECT "sum"("a") OVER (ORDER BY "a" ASC ROWS BETWEEN 3 PRECEDING AND CURRENT ROW) FROM "public"."t"'],
+            'select sum(a) over w from t window w as (partition by b) (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (a INT, b INT)'], 'select sum(a) over w from t window w as (partition by b)', 'SELECT "sum"("a") OVER "w" FROM "public"."t" WINDOW "w" AS (PARTITION BY "b")'],
+            'select sum(a) over (w order by a) from t window w as (partition by b) (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (a INT, b INT)'], 'select sum(a) over (w order by a) from t window w as (partition by b)', 'SELECT "sum"("a") OVER ("w" ORDER BY "a" ASC) FROM "public"."t" WINDOW "w" AS (PARTITION BY "b")'],
+            'select sum(a) over (order by a rows between 1 preceding and 1 following) from t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT, b INT)'], 'select sum(a) over (order by a rows between 1 preceding and 1 following) from t', 'SELECT sum(`a`) OVER (ORDER BY `a` ASC ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) FROM `t`'],
+            'select sum(a) over (w order by a) from t window w as (partition by b) (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT, b INT)'], 'select sum(a) over (w order by a) from t window w as (partition by b)', 'SELECT sum(`a`) OVER (`w` ORDER BY `a` ASC) FROM `t` WINDOW `w` AS (PARTITION BY `b`)'],
+        ];
+    }
+
+
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::Sqlite, null, 'SELECT sum(a) OVER (ORDER BY a) FROM t', 'SELECT sum("a") OVER (ORDER BY "a" ASC) FROM "main"."t"'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::Sqlite, null, 'SELECT sum(a) OVER (ORDER BY a ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) FROM t', 'SELECT sum("a") OVER (ORDER BY "a" ASC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) FROM "main"."t"'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::Sqlite, null, 'SELECT sum(a) OVER (w ROWS UNBOUNDED PRECEDING) FROM t WINDOW w AS (ORDER BY a)', 'SELECT sum("a") OVER ("w" ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) FROM "main"."t" WINDOW "w" AS (ORDER BY "a" ASC)'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, null, 'SELECT sum(a) OVER (w ROWS UNBOUNDED PRECEDING) FROM t WINDOW w AS (ORDER BY a)', 'SELECT "sum"("a") OVER ("w" ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) FROM "public"."t" WINDOW "w" AS (ORDER BY "a" ASC)'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'mysql-8.4.7', 'SELECT sum(b) OVER (ORDER BY a RANGE BETWEEN INTERVAL 1 DAY PRECEDING AND UNBOUNDED FOLLOWING) FROM t', 'SELECT sum(`b`) OVER (ORDER BY `a` ASC RANGE BETWEEN INTERVAL 1 DAY PRECEDING AND UNBOUNDED FOLLOWING) FROM `t`'])]
+    public function testBindKeepsTheOrderingAndBothFrameBoundaries(Dialect $dialect, ?string $version, string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(a DATE, b INT)'));
+        $query = $binder->bind($sql);
+        self::assertSame($expected, $query->toString());
+        self::assertSame($expected, $binder->bind($query->toString())->toString());
     }
 }

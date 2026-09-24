@@ -6,6 +6,7 @@ namespace Tests\Unit\Ast\Type;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Ast\DialectParser;
 use SqlSemantics\Ast\Tree;
@@ -30,4 +31,24 @@ final class TypeTokensTest extends TestCase
         self::assertSame(['12', '2'], array_map(static fn (NumericParameter $parameter): string => $parameter->spelling, \SqlSemantics\Ast\Type\TypeTokens::numbers($type)));
     }
 
+    public function testOuterSkipsEveryNestedParameterGroup(): void
+    {
+        $tokens = array_map(static fn (string $text): \SqlParser\Lexer\Token => new \SqlParser\Lexer\Token(0, 'IDENT', $text, 0), ['a', '(', '(', 'b', ')', 'c', ')', 'd']);
+        self::assertSame(['a', 'd'], array_map(static fn ($token): string => $token->text, \SqlSemantics\Ast\Type\TypeTokens::outer(new \SqlParser\Parser\Node('type', 0, $tokens))));
+    }
+
+    /**
+     * @param list<string> $texts
+     * @param list<string> $expected
+     */
+    #[TestWith([['enum', '(', "'a'", ')'], []])]
+    #[TestWith([['decimal', '(', '(', '1', ')', ')'], ['1']])]
+    #[TestWith([['decimal', '(', ')'], []])]
+    #[TestWith([['a', '(', '1', ')', ',', '2'], ['1']])]
+    #[TestWith([['x', '(', '-', '5', ',', '2', ')'], ['-5', '2']])]
+    public function testNumbersReadsOnlyTheFirstLevelOperands(array $texts, array $expected): void
+    {
+        $tokens = array_map(static fn (string $text): \SqlParser\Lexer\Token => new \SqlParser\Lexer\Token(0, 'IDENT', $text, 0), $texts);
+        self::assertSame($expected, array_map(static fn (NumericParameter $parameter): string => $parameter->spelling, \SqlSemantics\Ast\Type\TypeTokens::numbers(new \SqlParser\Parser\Node('type', 0, $tokens))));
+    }
 }

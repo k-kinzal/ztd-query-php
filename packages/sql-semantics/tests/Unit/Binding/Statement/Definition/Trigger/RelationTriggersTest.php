@@ -146,4 +146,13 @@ final class RelationTriggersTest extends TestCase
         self::assertInstanceOf(CreateTriggerStatement::class, $statement);
         self::assertNotSame([], $statement->diagnostics);
     }
+
+    #[TestWith(["create constraint trigger tr after insert or update of id on t from t deferrable initially deferred for each row when (true) execute function f(0o17, 0B101, 0x1F, 'a', 12)", 'CREATE CONSTRAINT TRIGGER "tr" AFTER INSERT OR UPDATE OF "id" ON "public"."t" FROM "public"."t" DEFERRABLE INITIALLY DEFERRED FOR EACH ROW WHEN (true) EXECUTE FUNCTION "f"(\'15\', \'5\', \'31\', \'a\', \'12\')'])]
+    #[TestWith(['create trigger tr after update on t referencing old table as o new table as n for each statement execute procedure f()', 'CREATE TRIGGER "tr" AFTER UPDATE ON "public"."t" REFERENCING OLD TABLE AS "o" NEW TABLE AS "n" FOR EACH STATEMENT EXECUTE FUNCTION "f"()'])]
+    #[TestWith(['create trigger tr instead of update on t for each row execute function f(0O7)', 'CREATE TRIGGER "tr" INSTEAD OF UPDATE ON "public"."t" FOR EACH ROW EXECUTE FUNCTION "f"(\'7\')'])]
+    #[TestWith(['create trigger tr before truncate on t execute function f(0b11, 0x0a)', 'CREATE TRIGGER "tr" BEFORE TRUNCATE ON "public"."t" FOR EACH STATEMENT EXECUTE FUNCTION "f"(\'3\', \'10\')'])]
+    public function testBindReadsLowercaseKeywordsAndIntegerBases(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind($sql)->toString());
+    }
 }

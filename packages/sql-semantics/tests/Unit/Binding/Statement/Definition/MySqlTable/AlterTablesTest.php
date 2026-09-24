@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Statement\Definition\MySqlTable;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -72,5 +73,30 @@ final class AlterTablesTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, n INT)')))->bind('ALTER TABLE t ADD c INT, ADD CHECK (c > 0)');
         self::assertInstanceOf(AlterTableStatement::class, $statement);
         self::assertSame([], $statement->diagnostics);
+    }
+
+    /**
+     * @return list<array{Dialect, ?string, string, mixed}>
+     */
+    public static function providerBindKeepsEachTableCommand(): array
+    {
+        return [
+            [Dialect::MySql, null, 'ALTER TABLE t EXCHANGE PARTITION p0 WITH TABLE u without validation', [AlterTableStatement::class, 'ALTER TABLE `t` WITHOUT VALIDATION, EXCHANGE PARTITION `p0` WITH TABLE `u`']],
+            [Dialect::MySql, null, 'ALTER TABLE t with validation, EXCHANGE PARTITION p0 WITH TABLE u', [AlterTableStatement::class, 'ALTER TABLE `t` WITH VALIDATION, EXCHANGE PARTITION `p0` WITH TABLE `u`']],
+            [Dialect::MySql, null, 'ALTER TABLE t WITH VALIDATION, EXCHANGE PARTITION p0 WITH TABLE u WITHOUT VALIDATION', [AlterTableStatement::class, 'ALTER TABLE `t` WITHOUT VALIDATION, EXCHANGE PARTITION `p0` WITH TABLE `u`']],
+            [Dialect::MySql, null, 'ALTER TABLE t PARTITION BY HASH(a) PARTITIONS 2', [AlterTableStatement::class, 'ALTER TABLE `t` PARTITION BY HASH(`a`) PARTITIONS 2']],
+            [Dialect::MySql, null, 'ALTER TABLE t REMOVE PARTITIONING', [AlterTableStatement::class, 'ALTER TABLE `t` REMOVE PARTITIONING']],
+            [Dialect::MySql, null, 'ALTER TABLE t TRUNCATE PARTITION p0', [AlterTableStatement::class, 'ALTER TABLE `t` TRUNCATE PARTITION `p0`']],
+            [Dialect::MySql, null, 'ALTER TABLE t ALGORITHM = INSTANT, ADD COLUMN b INT', [AlterTableStatement::class, 'ALTER TABLE `t` ALGORITHM = INSTANT, ADD COLUMN `b` integer']],
+            [Dialect::MySql, 'mysql-5.6.51', 'ALTER TABLE t DROP PARTITION p0', [AlterTableStatement::class, 'ALTER TABLE `t` DROP PARTITION `p0`']],
+            [Dialect::MySql, 'mysql-5.6.51', 'ALTER IGNORE TABLE t ADD COLUMN b INT', [AlterTableStatement::class, 'ALTER IGNORE TABLE `t` ADD COLUMN `b` integer']],
+        ];
+    }
+
+    #[DataProvider('providerBindKeepsEachTableCommand')]
+    public function testBindKeepsEachTableCommand(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(a INT); CREATE TABLE u(a INT)')))->bind($sql, strict: false);
+        self::assertSame($expected, [$statement::class, $statement->toString()]);
     }
 }

@@ -50,4 +50,18 @@ final class AttributesTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("CREATE TABLE t(name VARCHAR(10) COMMENT 'label' INVISIBLE COLUMN_FORMAT FIXED STORAGE DISK)");
         self::assertSame("CREATE TABLE `t`(`name` varchar(10) COMMENT 'label' STORAGE DISK COLUMN_FORMAT FIXED INVISIBLE)", $statement->toString());
     }
+
+
+    public function testReadsThePostgreSqlStorageStrategy(): void
+    {
+        $column = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(c text STORAGE MAIN)')->tables[0]->columns[0];
+        self::assertSame(\SqlSemantics\Model\Definition\Relation\Column\ColumnStorageMode::Main, $column->attributes->storageStrategy);
+        self::assertNull($column->attributes->storage);
+    }
+
+    public function testRejectsBothStorageForms(): void
+    {
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        new Attributes(storage: Storage::Disk, storageStrategy: \SqlSemantics\Model\Definition\Relation\Column\ColumnStorageMode::Plain);
+    }
 }

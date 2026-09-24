@@ -61,4 +61,66 @@ final class ConstraintBinderTest extends TestCase
         self::assertSame(['missing'], $primary->localColumns());
         self::assertContains('unknown-column', array_column($statement->diagnostics, 'reason'));
     }
+
+    public function testBindBindsACheckPredicate(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE t(a INT, CONSTRAINT positive CHECK (a > 0))');
+        self::assertInstanceOf(CreateTableStatement::class, $statement);
+        $check = $statement->definition->table->constraints[0];
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\Check::class, $check);
+        self::assertSame('>', $check->predicate->spelling());
+        self::assertSame('positive', $check->name);
+        self::assertSame('a', $check->predicate->inputs()[0]->columnBinding()?->column->name);
+    }
+
+    public function testBindRejectsANonBooleanCheck(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $this->expectException(\SqlSemantics\SemanticException::class);
+        $this->expectExceptionMessage('A PostgreSQL predicate must have boolean type.');
+        $binder->bind('CREATE TABLE t(a INT, CHECK (a))');
+    }
+
+    public function testBindReadsCheckingTimeAndNullsDistinct(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE t(a INT, UNIQUE (a) DEFERRABLE INITIALLY DEFERRED, UNIQUE (a) DEFERRABLE, UNIQUE NULLS NOT DISTINCT (a), UNIQUE (a))');
+        self::assertInstanceOf(CreateTableStatement::class, $statement);
+        $constraints = $statement->definition->table->constraints;
+        self::assertContainsOnlyInstancesOf(\SqlSemantics\Schema\Constraint\UniqueKey::class, $constraints);
+        self::assertSame([\SqlSemantics\Schema\Constraint\CheckingTime::DeferrableDeferred, \SqlSemantics\Schema\Constraint\CheckingTime::DeferrableImmediate, \SqlSemantics\Schema\Constraint\CheckingTime::Immediate, \SqlSemantics\Schema\Constraint\CheckingTime::Immediate], array_column($constraints, 'checking'));
+        self::assertSame([true, true, false, true], array_column($constraints, 'nullsDistinct'));
+    }
+
+    public function testKeysBindColumnLevelKeys(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE t(a INT PRIMARY KEY, b INT UNIQUE)');
+        self::assertInstanceOf(CreateTableStatement::class, $statement);
+        $primary = $statement->definition->table->constraints[0];
+        $unique = $statement->definition->table->constraints[1];
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\PrimaryKey::class, $primary);
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\UniqueKey::class, $unique);
+        self::assertContainsOnlyInstancesOf(\SqlSemantics\Schema\Index\ColumnKey::class, $primary->keys);
+        self::assertSame(['a'], $primary->localColumns());
+        self::assertSame(['b'], $unique->localColumns());
+    }
+
+    public function testKeysKeepTheDirectionOfASqliteColumnLevelKey(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('CREATE TABLE t(a INTEGER CONSTRAINT pk PRIMARY KEY DESC, b INT UNIQUE)');
+        self::assertInstanceOf(CreateTableStatement::class, $statement);
+        $primary = $statement->definition->table->constraints[0];
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\PrimaryKey::class, $primary);
+        self::assertSame('pk', $primary->name);
+        self::assertSame(\SqlSemantics\Schema\Index\Direction::Descending, $primary->keys[0]->direction);
+    }
+
+    public function testKeysBindAnExpressionKey(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE TABLE t(a INT, UNIQUE KEY ((a+1)))');
+        self::assertInstanceOf(CreateTableStatement::class, $statement);
+        $unique = $statement->definition->table->constraints[0];
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\UniqueKey::class, $unique);
+        self::assertInstanceOf(\SqlSemantics\Schema\Index\ExpressionKey::class, $unique->keys[0]);
+        self::assertSame('+', $unique->keys[0]->value()->spelling());
+    }
 }

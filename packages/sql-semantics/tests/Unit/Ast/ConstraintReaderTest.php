@@ -189,4 +189,64 @@ final class ConstraintReaderTest extends TestCase
         self::assertSame([null, null], array_map(static fn ($constraint): ?string => $constraint->name, $table->constraints));
         self::assertSame([], $table->indexes);
     }
+
+    public function testReadTreatsALowercaseConstraintKeywordWithoutANameAsUnnamed(): void
+    {
+        $table = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT, constraint primary key (a), constraint check (a > 0))')->tables[0];
+        self::assertSame([null, null], array_map(static fn ($constraint): ?string => $constraint->name, $table->constraints));
+    }
+
+    public function testColumnsKeepsAColumnAfterAnExpressionKey(): void
+    {
+        $table = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT, b INT, UNIQUE KEY ((a + 1), b))')->tables[0];
+        self::assertSame(['b'], $table->constraints[0]->localColumns());
+    }
+
+    public function testReadNamesAColumnReference(): void
+    {
+        $tables = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE p(id INT PRIMARY KEY); CREATE TABLE t(id INT CONSTRAINT c REFERENCES p(id))')->tables;
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\ForeignKey::class, $tables[1]->constraints[0]);
+        self::assertSame('c', $tables[1]->constraints[0]->name);
+    }
+
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.0.44', 'CREATE TABLE t (a INT CHECK (a > 0) NOT ENFORCED, CONSTRAINT c CHECK (a < 9) NOT ENFORCED, CHECK (a <> 5) ENFORCED)', 'CREATE TABLE `t`(`a` integer, CHECK ((`a` > 0)) NOT ENFORCED, CONSTRAINT `c` CHECK ((`a` < 9)) NOT ENFORCED, CHECK ((`a` <> 5)))'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-9.1.0', 'CREATE TABLE t (a INT, CONSTRAINT c CHECK (a > 0) NOT ENFORCED)', 'CREATE TABLE `t`(`a` integer, CONSTRAINT `c` CHECK ((`a` > 0)) NOT ENFORCED)'])]
+    public function testReadKeepsTheEnforcementOfAMySqlCheck(string $version, string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build());
+        $statement = $binder->bind($sql);
+        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, $binder->bind($statement->toString())->toString());
+    }
+
+    public function testReadKeepsTheEnforcementOfAnAddedMySqlCheck(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (a INT)'));
+        self::assertSame('ALTER TABLE `t` ADD CONSTRAINT `c` CHECK ((`a` > 0)) NOT ENFORCED', $binder->bind('ALTER TABLE t ADD CONSTRAINT c CHECK (a > 0) NOT ENFORCED')->toString());
+        self::assertSame('ALTER TABLE `t` ADD COLUMN `b` integer CHECK ((`b` > 0)) NOT ENFORCED', $binder->bind('ALTER TABLE t ADD COLUMN b INT CHECK (b > 0) NOT ENFORCED')->toString());
+    }
+
+    public function testReadKeepsNoInheritOfAPostgreSqlCheck(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $statement = $binder->bind('CREATE TABLE t (a int CHECK (a > 0) NO INHERIT, b int CHECK (b > 0), CONSTRAINT c CHECK (a < 9) NO INHERIT)');
+        self::assertSame('CREATE TABLE "public"."t"("a" integer, "b" integer, CHECK (("a" > 0)) NO INHERIT, CHECK (("b" > 0)), CONSTRAINT "c" CHECK (("a" < 9)) NO INHERIT)', $statement->toString());
+        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+    }
+
+    public function testReadRejectsNoInheritOnAKey(): void
+    {
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE t (a int, CONSTRAINT k PRIMARY KEY (a) NO INHERIT)');
+    }
+
+
+    public function testCheckAttributesReadsEnforcementAndInheritance(): void
+    {
+        $mysql = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql, 'mysql-8.4.7'))->parse('CREATE TABLE t (a INT, CONSTRAINT c CHECK (a > 0) NOT ENFORCED)');
+        $postgres = (new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('CREATE TABLE t (a int, CONSTRAINT c CHECK (a > 0) NO INHERIT)');
+        self::assertSame([false, false], \SqlSemantics\Ast\ConstraintReader::checkAttributes(\SqlSemantics\Ast\Tree::outer($mysql, ['table_constraint_def'])[0]));
+        self::assertSame([true, true], \SqlSemantics\Ast\ConstraintReader::checkAttributes(\SqlSemantics\Ast\Tree::outer($postgres, ['TableConstraint'])[0]));
+    }
 }

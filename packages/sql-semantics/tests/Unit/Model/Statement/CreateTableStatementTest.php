@@ -253,4 +253,24 @@ final class CreateTableStatementTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new CreateTableStatement($mysql->origin, $mysql->definition, exclusions: $statement->exclusions);
     }
+
+
+    public function testWithCatalogWritesTheCatalogQualifier(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE c.s.t (a int)');
+        self::assertInstanceOf(CreateTableStatement::class, $statement);
+        $plain = $statement->withCatalog(null);
+        self::assertSame('c', $statement->catalog);
+        self::assertNull($plain->catalog);
+        self::assertSame('CREATE TABLE "s"."t"("a" integer)', $plain->toString());
+        self::assertSame('CREATE TABLE "d"."s"."t"("a" integer)', $statement->withCatalog('d')->toString());
+    }
+
+    public function testRejectsACatalogOutsidePostgreSql(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE TABLE t (a INT)');
+        self::assertInstanceOf(CreateTableStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        new CreateTableStatement($statement->origin, $statement->definition, catalog: 'c');
+    }
 }

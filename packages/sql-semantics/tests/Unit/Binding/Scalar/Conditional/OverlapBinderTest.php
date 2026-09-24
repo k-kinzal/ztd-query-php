@@ -35,10 +35,27 @@ final class OverlapBinderTest extends TestCase
     #[TestWith(['SELECT (1, 2, 3) OVERLAPS (3, 4)', InputViolation::OverlapsWidth])]
     #[TestWith(['SELECT ROW(1) OVERLAPS ROW(3, 4)', InputViolation::OverlapsWidth])]
     #[TestWith(['SELECT UNIQUE (SELECT 1)', InputViolation::UniquePredicate])]
+    #[TestWith(['select unique (select 1)', InputViolation::UniquePredicate])]
     public function testBindDiagnosesRequestsPostgreSqlRejects(string $sql, InputViolation $violation): void
     {
         $this->expectException(InvalidSql::class);
         $this->expectExceptionMessage($violation->message());
         (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql);
+    }
+
+    #[TestWith([Dialect::PostgreSql, 'SELECT EXISTS (SELECT 1)', 'SELECT EXISTS(SELECT 1)'])]
+    #[TestWith([Dialect::PostgreSql, 'SELECT (1, 2) = (3, 4)', 'SELECT (ROW(1, 2) = ROW(3, 4))'])]
+    #[TestWith([Dialect::PostgreSql, 'SELECT ARRAY(SELECT 1)', 'SELECT ARRAY(SELECT 1)'])]
+    #[TestWith([Dialect::PostgreSql, 'SELECT (1, 2) overlaps (3, 4) AND true', 'SELECT (((1, 2) OVERLAPS(3, 4)) AND true)'])]
+    #[TestWith([Dialect::MySql, 'SELECT (1, 2) = (3, 4)', 'SELECT ((1, 2) = (3, 4))'])]
+    public function testBindLeavesOtherRowsAndSubqueries(Dialect $dialect, string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder($dialect))->build()))->bind($sql)->toString());
+    }
+
+    public function testBindIgnoresOtherDialects(): void
+    {
+        $source = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql))->parse('SELECT 1');
+        self::assertNull(OverlapBinder::bind($source, new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::MySql))));
     }
 }

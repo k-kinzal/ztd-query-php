@@ -42,4 +42,19 @@ final class WildTableFilterTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new WildTableFilter(FilterRule::IgnoreDatabase, []);
     }
+
+    public function testRejectsADatabaseRuleByName(): void
+    {
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage(FilterRule::IgnoreDatabase->value . ' does not list table patterns.');
+        new WildTableFilter(FilterRule::IgnoreDatabase, []);
+    }
+
+    public function testRejectsAPatternThatIsNoString(): void
+    {
+        $literal = (new \SqlSemantics\Binding\LiteralBinder(Dialect::MySql))->bind((new \SqlSemantics\Ast\DialectParser(Dialect::MySql))->parse('SELECT 1')->tokens()[1]);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\Literal::class, $literal);
+        $this->expectException(InvalidStructure::class);
+        new WildTableFilter(FilterRule::WildDoTable, [$literal]);
+    }
 }

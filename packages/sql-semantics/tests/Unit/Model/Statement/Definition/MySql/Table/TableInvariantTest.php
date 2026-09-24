@@ -83,4 +83,52 @@ final class TableInvariantTest extends TestCase
         $this->expectException(InvalidStructure::class);
         TableInvariant::only($statement->origin, ['mysql-5.6.51'], 'ALTER IGNORE TABLE');
     }
+
+    public function testModernNamesTheFormAndTheRelease(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build()))->bind('SELECT 1');
+        $this->expectExceptionMessage('SECONDARY_LOAD requires MySQL 8.0 or later.');
+        TableInvariant::modern($statement->origin, 'SECONDARY_LOAD');
+    }
+
+    public function testSince57NamesTheFormAndTheRelease(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.6.51'))->build()))->bind('SELECT 1');
+        $this->expectExceptionMessage('RENAME INDEX requires MySQL 5.7 or later.');
+        TableInvariant::since57($statement->origin, 'RENAME INDEX');
+    }
+
+    public function testOnlyNamesTheFormAndTheRelease(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build()))->bind('SELECT 1');
+        $this->expectExceptionMessage('ALTER IGNORE TABLE is not defined by grammar release mysql-8.4.7.');
+        TableInvariant::only($statement->origin, ['mysql-5.6.51'], 'ALTER IGNORE TABLE');
+    }
+
+    public function testOnlyAcceptsAListedOrUnnamedRelease(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build()))->bind('SELECT 1');
+        TableInvariant::only($statement->origin, ['mysql-8.4.7'], 'ALTER IGNORE TABLE');
+        $detached = new \SqlSemantics\Model\Statement\Origin('s1', $statement->origin->source, Dialect::MySql);
+        TableInvariant::only($detached, ['mysql-5.6.51'], 'ALTER IGNORE TABLE');
+        self::assertNull(TableInvariant::release($detached));
+    }
+
+    public function testTableAcceptsADatabaseQualifiedTable(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT)')))->bind('SELECT * FROM app.t', strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertInstanceOf(TableReference::class, $statement->from);
+        TableInvariant::table($statement->origin, $statement->from);
+        self::assertSame(['app', 't'], $statement->from->name->parts);
+    }
+
+    public function testTableRejectsAnotherDialect(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(id INT)')))->bind('SELECT * FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertInstanceOf(TableReference::class, $statement->from);
+        $this->expectException(InvalidStructure::class);
+        TableInvariant::table($statement->origin, $statement->from);
+    }
 }

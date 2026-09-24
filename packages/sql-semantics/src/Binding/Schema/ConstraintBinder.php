@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlSemantics\Binding\Schema;
 
 use SqlSemantics\Ast\Declaration\TableConstraint as ParsedConstraint;
+use SqlSemantics\Ast\Tree;
 use SqlSemantics\Binding\ExpressionBinder;
 use SqlSemantics\Binding\ExpressionRules;
 use SqlSemantics\Binding\Scope;
@@ -31,11 +32,14 @@ final class ConstraintBinder
         if ($constraint->kind === ConstraintKind::ForeignKey && $constraint->referencedColumns !== [] && count($constraint->columns) !== count($constraint->referencedColumns)) {
             throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::ForeignKeyWidth, $constraint->source);
         }
+        if ($constraint->noInherit && $constraint->kind !== ConstraintKind::Check) {
+            throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::ConstraintAttribute, $constraint->source);
+        }
         $checking = !$constraint->deferrable ? Constraint\CheckingTime::Immediate : ($constraint->initiallyDeferred ? Constraint\CheckingTime::DeferrableDeferred : Constraint\CheckingTime::DeferrableImmediate);
         if ($constraint->kind === ConstraintKind::Check) {
             $predicate = (new ExpressionBinder())->bind($constraint->expression ?? throw new UnclassifiedSql('A CHECK requires a predicate.'), $scope);
             (new ExpressionRules($scope->identifiers->dialect, $scope->diagnostics()))->predicate($predicate);
-            return new Constraint\Check($predicate, name: $constraint->name, source: $constraint->source);
+            return new Constraint\Check($predicate, $constraint->enforced, $constraint->noInherit, name: $constraint->name, source: $constraint->source);
         }
         return match ($constraint->kind) {
             ConstraintKind::PrimaryKey => new Constraint\PrimaryKey(self::keys($constraint, $scope), $checking, name: $constraint->name, source: $constraint->source),
@@ -44,6 +48,7 @@ final class ConstraintBinder
         };
     }
     /**
+     * Returns the key elements; a SQLite column-level PRIMARY KEY keeps its written direction.
      * @return non-empty-list<\SqlSemantics\Schema\IndexElement>
      * @throws UnclassifiedSql
      */
@@ -59,7 +64,8 @@ final class ConstraintBinder
             if (!$column instanceof \SqlSemantics\Model\Scalar\Reference\ColumnReference && !$column instanceof \SqlSemantics\Model\Scalar\Reference\UnresolvedColumnReference) {
                 throw new UnclassifiedSql('A key requires a column reference.');
             }
-            $result[] = new \SqlSemantics\Schema\Index\ColumnKey($column, source: $constraint->source);
+            $order = strtoupper(trim(Tree::text(Tree::outer($constraint->source, ['sortorder'])[0] ?? new \SqlParser\Parser\Node('sortorder', 0, []))));
+            $result[] = new \SqlSemantics\Schema\Index\ColumnKey($column, direction: $order === '' ? null : \SqlSemantics\Schema\Index\Direction::from($order), source: $constraint->source);
         }
         if ($result === []) {
             throw new UnclassifiedSql('A key requires at least one column.');

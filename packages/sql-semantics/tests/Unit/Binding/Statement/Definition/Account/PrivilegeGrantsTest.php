@@ -30,8 +30,8 @@ final class PrivilegeGrantsTest extends TestCase
 {
     #[TestWith(['mysql-5.6.51', "GRANT SELECT, INSERT (a) ON TABLE t TO u IDENTIFIED BY 'x' REQUIRE SSL WITH GRANT OPTION MAX_USER_CONNECTIONS 1", Privilege\GrantPrivilegesStatement::class, "GRANT SELECT, INSERT(`a`) ON TABLE `t` TO 'u' IDENTIFIED BY 'x' REQUIRE SSL WITH GRANT OPTION MAX_USER_CONNECTIONS 1"])]
     #[TestWith(['mysql-5.7.44', 'GRANT ALL ON FUNCTION app.f TO u', Privilege\GrantAllPrivilegesStatement::class, "GRANT ALL PRIVILEGES ON FUNCTION `app`.`f` TO 'u'"])]
-    #[TestWith(['mysql-5.7.44', "GRANT PROXY ON 'p'@'h' TO u WITH GRANT OPTION", Privilege\GrantProxyStatement::class, "GRANT PROXY ON 'p' @'h' TO 'u' WITH GRANT OPTION"])]
-    #[TestWith(['mysql-8.0.44', 'GRANT r, s@h TO u, CURRENT_USER WITH ADMIN OPTION', Privilege\GrantRolesStatement::class, "GRANT 'r', 's' @'h' TO 'u', CURRENT_USER WITH ADMIN OPTION"])]
+    #[TestWith(['mysql-5.7.44', "GRANT PROXY ON 'p'@'h' TO u WITH GRANT OPTION", Privilege\GrantProxyStatement::class, "GRANT PROXY ON 'p'@'h' TO 'u' WITH GRANT OPTION"])]
+    #[TestWith(['mysql-8.0.44', 'GRANT r, s@h TO u, CURRENT_USER WITH ADMIN OPTION', Privilege\GrantRolesStatement::class, "GRANT 'r', 's'@'h' TO 'u', CURRENT_USER WITH ADMIN OPTION"])]
     #[TestWith(['mysql-8.4.7', 'GRANT BACKUP_ADMIN, RELOAD ON *.* TO u WITH GRANT OPTION AS g WITH ROLE ALL EXCEPT r', Privilege\GrantPrivilegesStatement::class, "GRANT `BACKUP_ADMIN`, RELOAD ON *.* TO 'u' WITH GRANT OPTION AS 'g' WITH ROLE ALL EXCEPT 'r'"])]
     #[TestWith(['mysql-9.1.0', 'GRANT ALL PRIVILEGES ON app.* TO u', Privilege\GrantAllPrivilegesStatement::class, "GRANT ALL PRIVILEGES ON `app`.* TO 'u'"])]
     public function testBindWritesEveryGrantFormBackAsAFixedPoint(string $version, string $sql, string $class, string $expected): void
@@ -77,5 +77,16 @@ final class PrivilegeGrantsTest extends TestCase
         self::assertSame(SessionRolePolicy::All, PrivilegeGrants::grantor($parser->parse('GRANT SELECT ON *.* TO a AS g WITH ROLE ALL')->find('grant')[0], new Identifiers(Dialect::MySql))?->roles);
         self::assertEquals(new RoleSelection([new AccountName('r')]), PrivilegeGrants::grantor($parser->parse('GRANT SELECT ON *.* TO a AS g WITH ROLE r')->find('grant')[0], new Identifiers(Dialect::MySql))?->roles);
         self::assertEquals(new RoleExclusion([new AccountName('r')]), PrivilegeGrants::grantor($parser->parse('GRANT SELECT ON *.* TO a AS g WITH ROLE ALL EXCEPT r')->find('grant')[0], new Identifiers(Dialect::MySql))?->roles);
+    }
+
+    #[TestWith(['grant select on t to u as g', "GRANT SELECT ON TABLE `t` TO 'u' AS 'g'"])]
+    #[TestWith(['grant select on t to u as g with role none', "GRANT SELECT ON TABLE `t` TO 'u' AS 'g' WITH ROLE NONE"])]
+    #[TestWith(['grant select on t to u as g with role default', "GRANT SELECT ON TABLE `t` TO 'u' AS 'g' WITH ROLE DEFAULT"])]
+    #[TestWith(['grant select on t to u as g with role all except r', "GRANT SELECT ON TABLE `t` TO 'u' AS 'g' WITH ROLE ALL EXCEPT 'r'"])]
+    #[TestWith(['grant select on t to u as g with role r, s', "GRANT SELECT ON TABLE `t` TO 'u' AS 'g' WITH ROLE 'r', 's'"])]
+    public function testBindReadsTheGrantorContextInAnyCase(string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)'));
+        self::assertSame($expected, $binder->bind($sql)->toString());
     }
 }

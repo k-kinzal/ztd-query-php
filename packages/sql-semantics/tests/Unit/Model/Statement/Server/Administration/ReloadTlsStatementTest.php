@@ -51,4 +51,12 @@ final class ReloadTlsStatementTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new ReloadTlsStatement($statement->origin);
     }
+
+    public function testDefaultsToTheMainChannelWithRollback(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.0.44'))->build()))->bind('ALTER INSTANCE RELOAD TLS');
+        $default = new ReloadTlsStatement($statement->origin);
+        self::assertSame(TlsChannel::Main, $default->channel);
+        self::assertTrue($default->rollbackOnError);
+    }
 }

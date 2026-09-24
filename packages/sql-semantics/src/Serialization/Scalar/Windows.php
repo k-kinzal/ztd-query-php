@@ -42,7 +42,7 @@ final class Windows
         return match (true) {
             $bound instanceof Window\CurrentRow => Build::keyword('CURRENT ROW'),
             $bound instanceof Window\Unbounded => Build::keyword('UNBOUNDED ' . $bound->direction->value),
-            $bound instanceof Window\Offset => new Tree('offset', [Expressions::write($bound->value), Build::keyword($bound->direction->value)]),
+            $bound instanceof Window\Offset => new Tree('offset', [...($bound->unit === null ? [Expressions::write($bound->value)] : [Build::keyword('INTERVAL'), Expressions::write($bound->value), Build::keyword($bound->unit->value)]), Build::keyword($bound->direction->value)]),
             default => throw new InvalidStructure('Unclassified window boundary: ' . $bound::class),
         };
     }

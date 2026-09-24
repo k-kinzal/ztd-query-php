@@ -31,4 +31,12 @@ final class SystemSettingsTest extends TestCase
         self::assertSame($expected, $statement->toString());
         self::assertSame($expected, $binder->bind($expected)->toString());
     }
+
+    #[TestWith(['alter system set work_mem = \'4MB\'', 'ALTER SYSTEM SET "work_mem" = \'4MB\''])]
+    #[TestWith(['alter system reset work_mem', 'ALTER SYSTEM RESET "work_mem"'])]
+    #[TestWith(['alter system reset all', 'ALTER SYSTEM RESET ALL'])]
+    public function testBindReadsEverySystemSettingForm(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+    }
 }

@@ -68,4 +68,38 @@ final class CopyCommandsTest extends TestCase
         $this->expectExceptionMessage(InputViolation::CopyOption->message());
         $binder->bind($sql);
     }
+
+    /**
+     * @param class-string<object> $class
+     */
+    #[TestWith(['COPY (SELECT 1) TO STDOUT', Copy\CopyQueryStatement::class, 'COPY(SELECT 1) TO STDOUT'])]
+    #[TestWith(['COPY (INSERT INTO t VALUES (1) RETURNING n) TO STDOUT', Copy\CopyQueryStatement::class, 'COPY(INSERT INTO "public"."t" VALUES (1) RETURNING "n" AS "n") TO STDOUT'])]
+    #[TestWith(['COPY t FROM \'/f\'', Copy\CopyFromStatement::class, 'COPY "public"."t" FROM \'/f\''])]
+    #[TestWith(['copy t to program \'cat\'', Copy\CopyToStatement::class, 'COPY "public"."t" TO PROGRAM \'cat\''])]
+    public function testBindWritesEachCopyForm(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(n INT)')))->bind($sql);
+        self::assertInstanceOf($class, $statement);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    #[TestWith(['COPY (SELECT 1 INTO x) TO STDOUT'])]
+    #[TestWith(['COPY (INSERT INTO t VALUES (1)) TO STDOUT'])]
+    public function testQueryRejectsAQueryWithoutRows(string $sql): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(n INT)'));
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(InputViolation::CopyOption->message());
+        $binder->bind($sql);
+    }
+
+    public function testEndpointAndQueryReadParsedOperands(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(n INT)');
+        $source = \SqlSemantics\Ast\Tree::outer((new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse("COPY (SELECT n FROM t) TO PROGRAM 'cat'"), ['CopyStmt'])[0];
+        self::assertInstanceOf(Copy\Endpoint\CopyProgram::class, CopyCommands::endpoint($source));
+        $query = \SqlSemantics\Ast\Tree::outer($source, ['PreparableStmt'])[0];
+        $context = new \SqlSemantics\Binding\Query\QueryContext(new \SqlSemantics\Binding\TableResolver($schema, new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql), 'public'));
+        self::assertSame(['n'], array_column(CopyCommands::query($query, $context)->resultColumns(), 'name'));
+    }
 }

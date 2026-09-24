@@ -20,8 +20,9 @@ final class UsingJoin
 {
     /**
      * Resolves shared names in SQL output order before applying NULL extension.
+     * @param bool $straight Whether MySQL STRAIGHT_JOIN fixes the left input to be read first
      */
-    public function bind(BoundRelation $left, BoundRelation $right, JoinKind $kind, Node $source, string $id, ?Node $using): BoundRelation
+    public function bind(BoundRelation $left, BoundRelation $right, JoinKind $kind, Node $source, string $id, ?Node $using, bool $straight = false): BoundRelation
     {
         $leftColumns = $left->scope->outputColumns($source);
         $rightColumns = $right->scope->outputColumns($source);
@@ -45,7 +46,7 @@ final class UsingJoin
         $scope = new Scope($scope->identifiers, $scope->relations, $scope->extensions, $scope->parent, $scope->queries, $merged + $scope->merged, Joining\SharedOutputs::using($leftScope, $rightScope, $columns, $kind, $source));
         $relation = $using === null
             ? new \SqlSemantics\Model\Relation\Joining\NaturalJoin($id, $kind, $left->relation, $right->relation, $columns, $source)
-            : new \SqlSemantics\Model\Relation\Joining\UsingJoin($id, $kind, $left->relation, $right->relation, $columns, $source);
+            : new \SqlSemantics\Model\Relation\Joining\UsingJoin($id, $kind, $left->relation, $right->relation, $columns, $source, $straight);
         return new BoundRelation($relation, $scope);
     }
 }

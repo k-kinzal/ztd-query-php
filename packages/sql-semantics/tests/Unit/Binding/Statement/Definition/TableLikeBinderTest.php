@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Statement\Definition;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
@@ -39,5 +40,38 @@ final class TableLikeBinderTest extends TestCase
         self::assertInstanceOf(CreateTableStatement::class, $statement);
         self::assertCount(2, $statement->definition->table->columns);
         self::assertCount(2, $statement->definition->table->constraints);
+    }
+
+    /**
+     * @param list<string> $definitions
+     */
+    #[DataProvider('providerBindReadsEveryCopyForm')]
+    public function testBindReadsEveryCopyForm(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    /**
+     * @return iterable<string, array{Dialect, ?string, list<string>, string, string}>
+     */
+    public static function providerBindReadsEveryCopyForm(): iterable
+    {
+        return [
+            'create table u like t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT)'], 'create table u like t', 'CREATE TABLE `u` LIKE `t`'],
+            'CREATE TABLE u (LIKE t) (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT)'], 'CREATE TABLE u (LIKE t)', 'CREATE TABLE `u` LIKE `t`'],
+            'create temporary table if not exists u like t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT)'], 'create temporary table if not exists u like t', 'CREATE TEMPORARY TABLE IF NOT EXISTS `u` LIKE `t`'],
+            'CREATE TABLE d.u LIKE t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT)'], 'CREATE TABLE d.u LIKE t', 'CREATE TABLE `d`.`u` LIKE `t`'],
+            'CREATE TABLE u LIKE d.t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT)'], 'CREATE TABLE u LIKE d.t', 'CREATE TABLE `u` LIKE `d`.`t`'],
+        ];
+    }
+
+    #[TestWith(['create table u like t', 'CREATE TABLE `app`.`u` LIKE `app`.`t`'])]
+    #[TestWith(['CREATE TABLE d.u LIKE t', 'CREATE TABLE `d`.`u` LIKE `app`.`t`'])]
+    #[TestWith(['CREATE TABLE u LIKE d.t', 'CREATE TABLE `app`.`u` LIKE `d`.`t`'])]
+    public function testBindQualifiesAnUnqualifiedTargetWithTheDefaultDatabase(string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, defaultSchema: 'app'))->build('CREATE TABLE t (a INT)'));
+        self::assertSame($expected, $binder->bind($sql, strict: false)->toString());
     }
 }

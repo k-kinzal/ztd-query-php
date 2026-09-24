@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Statement\Routine\Stored;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -71,5 +72,34 @@ final class RoutineDefinitionsTest extends TestCase
         $tree = (new DialectParser(Dialect::MySql, 'mysql-9.1.0'))->parse('CREATE FUNCTION f() RETURNS INT LANGUAGE JAVASCRIPT AS $$return "\'"$$');
         $string = Tree::outer($tree, ['routine_string'])[0];
         self::assertSame('return "\'"', RoutineDefinitions::code($string->tokens()[0], new Identifiers(Dialect::MySql)));
+    }
+
+    /**
+     * @return list<array{Dialect, ?string, string, mixed}>
+     */
+    public static function providerBindWritesEachStoredRoutine(): array
+    {
+        return [
+            [Dialect::MySql, null, 'CREATE FUNCTION IF NOT EXISTS f(a INT) RETURNS INT DETERMINISTIC RETURN a + 1', [\SqlSemantics\Model\Statement\Definition\MySql\Program\CreateFunctionStatement::class, 'CREATE FUNCTION IF NOT EXISTS `f`(`a` integer) RETURNS integer DETERMINISTIC RETURN(`a` + 1)']],
+            [Dialect::MySql, null, 'CREATE FUNCTION f(a INT, b INT) RETURNS INT DETERMINISTIC RETURN a + b', [\SqlSemantics\Model\Statement\Definition\MySql\Program\CreateFunctionStatement::class, 'CREATE FUNCTION `f`(`a` integer, `b` integer) RETURNS integer DETERMINISTIC RETURN(`a` + `b`)']],
+            [Dialect::MySql, null, 'CREATE PROCEDURE IF NOT EXISTS p(inout x INT, out y INT) SET x = 1', [CreateProcedureStatement::class, 'CREATE PROCEDURE IF NOT EXISTS `p`(INOUT `x` integer, OUT `y` integer) SET `x` = 1']],
+            [Dialect::MySql, null, 'CREATE PROCEDURE p(x INT) SET @a = x', [CreateProcedureStatement::class, 'CREATE PROCEDURE `p`(IN `x` integer) SET @`a` = `x`']],
+        ];
+    }
+
+    #[DataProvider('providerBindWritesEachStoredRoutine')]
+    public function testBindWritesEachStoredRoutine(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build()))->bind($sql, strict: false);
+        self::assertSame($expected, [$statement::class, $statement->toString()]);
+    }
+
+    #[TestWith(['CREATE PROCEDURE p() LEAVE x'])]
+    #[TestWith(['CREATE PROCEDURE p() ITERATE x'])]
+    public function testBodyRejectsAJumpToAMissingLabel(string $sql): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
+        $this->expectException(InvalidSql::class);
+        $binder->bind($sql, strict: false);
     }
 }

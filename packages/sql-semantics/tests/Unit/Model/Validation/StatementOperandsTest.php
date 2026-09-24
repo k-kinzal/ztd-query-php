@@ -102,4 +102,13 @@ final class StatementOperandsTest extends TestCase
         $this->expectException(InvalidStructure::class);
         StatementOperands::relation($statement->from, Dialect::MySql);
     }
+
+    public function testRelationRejectsIndexHintsOutsideMySql(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INTEGER, KEY k (id))')))->bind('SELECT id FROM t USE INDEX (k)');
+        self::assertInstanceOf(BoundSelect::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('Index hints require MySQL.');
+        StatementOperands::relation($statement->from, Dialect::Sqlite);
+    }
 }

@@ -6,6 +6,7 @@ namespace Tests\Unit\Serialization\Definition\Account;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlParser\Lexer\Token;
 use SqlSemantics\Binder;
@@ -64,5 +65,13 @@ final class PrivilegeLevelsTest extends TestCase
         self::assertSame("AS 'g'", (new Tree('grantor', PrivilegeLevels::grantor(new Grantor(new AccountName('g')))))->toString());
         self::assertSame('AS CURRENT_USER WITH ROLE NONE', (new Tree('grantor', PrivilegeLevels::grantor(new Grantor(CurrentAccount::Authenticated, SessionRolePolicy::None))))->toString());
         self::assertSame("AS 'g' WITH ROLE ALL EXCEPT 'r'", (new Tree('grantor', PrivilegeLevels::grantor(new Grantor(new AccountName('g'), new RoleExclusion([new AccountName('r')])))))->toString());
+    }
+
+    #[TestWith(['GRANT SELECT ON *.* TO u AS r WITH ROLE a, b', GrantPrivilegesStatement::class, 'GRANT SELECT ON *.* TO \'u\' AS \'r\' WITH ROLE \'a\', \'b\''])]
+    #[TestWith(['GRANT SELECT ON *.* TO u AS r WITH ROLE NONE', GrantPrivilegesStatement::class, 'GRANT SELECT ON *.* TO \'u\' AS \'r\' WITH ROLE NONE'])]
+    public function testGrantorSpellsTheRoleSelection(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql, strict: false);
+        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
     }
 }

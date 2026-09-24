@@ -30,9 +30,9 @@ use SqlSemantics\SchemaBuilder;
 #[Medium]
 final class UserDefinitionsTest extends TestCase
 {
-    #[TestWith(['mysql-5.6.51', "CREATE USER 'a'@'h' IDENTIFIED BY PASSWORD '*h', b", "CREATE USER 'a' @'h' IDENTIFIED BY PASSWORD '*h', 'b'"])]
+    #[TestWith(['mysql-5.6.51', "CREATE USER 'a'@'h' IDENTIFIED BY PASSWORD '*h', b", "CREATE USER 'a'@'h' IDENTIFIED BY PASSWORD '*h', 'b'"])]
     #[TestWith(['mysql-5.7.44', "CREATE USER IF NOT EXISTS a IDENTIFIED WITH p BY 'x' REQUIRE SSL WITH MAX_USER_CONNECTIONS 1 PASSWORD EXPIRE NEVER ACCOUNT LOCK", "CREATE USER IF NOT EXISTS 'a' IDENTIFIED WITH `p` BY 'x' REQUIRE SSL WITH MAX_USER_CONNECTIONS 1 PASSWORD EXPIRE NEVER ACCOUNT LOCK"])]
-    #[TestWith(['mysql-8.0.44', "CREATE USER a IDENTIFIED BY RANDOM PASSWORD DEFAULT ROLE r, s@h PASSWORD REQUIRE CURRENT COMMENT 'c'", "CREATE USER 'a' IDENTIFIED BY RANDOM PASSWORD DEFAULT ROLE 'r', 's' @'h' PASSWORD REQUIRE CURRENT COMMENT 'c'"])]
+    #[TestWith(['mysql-8.0.44', "CREATE USER a IDENTIFIED BY RANDOM PASSWORD DEFAULT ROLE r, s@h PASSWORD REQUIRE CURRENT COMMENT 'c'", "CREATE USER 'a' IDENTIFIED BY RANDOM PASSWORD DEFAULT ROLE 'r', 's'@'h' PASSWORD REQUIRE CURRENT COMMENT 'c'"])]
     #[TestWith(['mysql-8.4.7', "CREATE USER a IDENTIFIED WITH p AND IDENTIFIED BY 'x' AND IDENTIFIED WITH q AS 'h'", "CREATE USER 'a' IDENTIFIED WITH `p` AND IDENTIFIED BY 'x' AND IDENTIFIED WITH `q` AS 'h'"])]
     #[TestWith(['mysql-9.1.0', "CREATE USER a IDENTIFIED WITH f INITIAL AUTHENTICATION IDENTIFIED WITH p AS 'h'", "CREATE USER 'a' IDENTIFIED WITH `f` INITIAL AUTHENTICATION IDENTIFIED WITH `p` AS 'h'"])]
     public function testBindWritesEveryReleaseFormBackAsAFixedPoint(string $version, string $sql, string $expected): void
@@ -95,6 +95,6 @@ final class UserDefinitionsTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build()))->bind("CREATE ROLE IF NOT EXISTS r, 's'@'h'");
         self::assertInstanceOf(CreateRolesStatement::class, $statement);
         self::assertEquals([new AccountName('r'), new AccountName('s', 'h')], $statement->roles);
-        self::assertSame("CREATE ROLE IF NOT EXISTS 'r', 's' @'h'", $statement->toString());
+        self::assertSame("CREATE ROLE IF NOT EXISTS 'r', 's'@'h'", $statement->toString());
     }
 }

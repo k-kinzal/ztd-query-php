@@ -41,7 +41,7 @@ final class TableAlteration
         $columns = $table->columns;
         $constraints = $table->constraints;
         foreach (Alter\AddedColumns::read($statement) as $column) {
-            $attributes = Tree::outer($column, ['ColConstraint', 'column_attribute', 'attribute']);
+            $attributes = Tree::outer($column, ['ColConstraint', 'column_attribute', 'attribute', 'gcol_attribute']);
             if ($column->name === 'columnname') {
                 $attributes = Tree::outer($statement, ['ccons']);
             }
@@ -104,7 +104,7 @@ final class TableAlteration
         }
         $name = $this->tables->identifiers->parts($nameNode)[0];
         $typeNode = Tree::outer($action, ['Typename', 'type'])[0] ?? null;
-        $text = strtoupper(Tree::text($action));
+        $text = implode(' ', Tree::keywords($action));
         $result = [];
         foreach ($columns as $column) {
             if (!$this->tables->identifiers->equal($name, $column->name)) {

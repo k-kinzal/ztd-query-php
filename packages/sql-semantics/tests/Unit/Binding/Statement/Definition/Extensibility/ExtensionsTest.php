@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Statement\Definition\Extensibility;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -127,5 +128,49 @@ final class ExtensionsTest extends TestCase
     {
         $context = new QueryContext(new TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new Identifiers(Dialect::PostgreSql), 'public'));
         self::assertSame(["it's", 'v1'], [Extensions::word(new Token(0, 'SCONST', "'it''s'", 0), $context), Extensions::word(new Token(0, 'IDENT', 'V1', 0), $context)]);
+    }
+
+    /**
+     * @param list<string> $definitions
+     */
+    #[DataProvider('providerBindReadsEveryExtensionForm')]
+    public function testBindReadsEveryExtensionForm(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
+        self::assertSame($expected, $statement::class . ' => ' . $statement->toString());
+    }
+
+    /**
+     * @return iterable<string, array{Dialect, ?string, list<string>, string, string}>
+     */
+    public static function providerBindReadsEveryExtensionForm(): iterable
+    {
+        return [
+            'create extension if not exists hstore with schema s version \'1.1\' cascade (PostgreSql)' => [Dialect::PostgreSql, null, [], 'create extension if not exists hstore with schema s version \'1.1\' cascade', 'SqlSemantics\\Model\\Statement\\Definition\\Extension\\CreateExtensionStatement => CREATE EXTENSION IF NOT EXISTS "hstore" SCHEMA "s" VERSION \'1.1\' CASCADE'],
+            'create extension hstore schema s (PostgreSql)' => [Dialect::PostgreSql, null, [], 'create extension hstore schema s', 'SqlSemantics\\Model\\Statement\\Definition\\Extension\\CreateExtensionStatement => CREATE EXTENSION "hstore" SCHEMA "s"'],
+            'CREATE EXTENSION hstore VERSION v1 (PostgreSql)' => [Dialect::PostgreSql, null, [], 'CREATE EXTENSION hstore VERSION v1', 'SqlSemantics\\Model\\Statement\\Definition\\Extension\\CreateExtensionStatement => CREATE EXTENSION "hstore" VERSION \'v1\''],
+            'alter extension hstore update to \'2.0\' (PostgreSql)' => [Dialect::PostgreSql, null, [], 'alter extension hstore update to \'2.0\'', 'SqlSemantics\\Model\\Statement\\Definition\\Extension\\UpdateExtensionStatement => ALTER EXTENSION "hstore" UPDATE TO \'2.0\''],
+            'ALTER EXTENSION hstore UPDATE (PostgreSql)' => [Dialect::PostgreSql, null, [], 'ALTER EXTENSION hstore UPDATE', 'SqlSemantics\\Model\\Statement\\Definition\\Extension\\UpdateExtensionStatement => ALTER EXTENSION "hstore" UPDATE'],
+            'alter extension hstore add function f(int) (PostgreSql)' => [Dialect::PostgreSql, null, [], 'alter extension hstore add function f(int)', 'SqlSemantics\\Model\\Statement\\Definition\\Extension\\AddExtensionMemberStatement => ALTER EXTENSION "hstore" ADD FUNCTION "f"(integer)'],
+            'alter extension hstore drop table t (PostgreSql)' => [Dialect::PostgreSql, null, [], 'alter extension hstore drop table t', 'SqlSemantics\\Model\\Statement\\Definition\\Extension\\DropExtensionMemberStatement => ALTER EXTENSION "hstore" DROP TABLE "t"'],
+            'create trusted language plx handler h inline i validator v (PostgreSql)' => [Dialect::PostgreSql, null, [], 'create trusted language plx handler h inline i validator v', 'SqlSemantics\\Model\\Statement\\Definition\\Extension\\CreateLanguageStatement => CREATE TRUSTED LANGUAGE "plx" HANDLER "h" INLINE "i" VALIDATOR "v"'],
+            'CREATE OR REPLACE LANGUAGE plx HANDLER a.b.h NO VALIDATOR (PostgreSql)' => [Dialect::PostgreSql, null, [], 'CREATE OR REPLACE LANGUAGE plx HANDLER a.b.h NO VALIDATOR', 'SqlSemantics\\Model\\Statement\\Definition\\Extension\\CreateLanguageStatement => CREATE OR REPLACE LANGUAGE "plx" HANDLER "a"."b"."h"'],
+            'CREATE LANGUAGE plx (PostgreSql)' => [Dialect::PostgreSql, null, [], 'CREATE LANGUAGE plx', 'SqlSemantics\\Model\\Statement\\Definition\\Extension\\CreateExtensionStatement => CREATE EXTENSION "plx"'],
+            'CREATE OR REPLACE PROCEDURAL LANGUAGE plx (PostgreSql)' => [Dialect::PostgreSql, null, [], 'CREATE OR REPLACE PROCEDURAL LANGUAGE plx', 'SqlSemantics\\Model\\Statement\\Definition\\Extension\\CreateExtensionStatement => CREATE EXTENSION IF NOT EXISTS "plx"'],
+            'create access method m type table handler h (PostgreSql)' => [Dialect::PostgreSql, null, [], 'create access method m type table handler h', 'SqlSemantics\\Model\\Statement\\Definition\\Extension\\CreateAccessMethodStatement => CREATE ACCESS METHOD "m" TYPE TABLE HANDLER "h"'],
+            'create access method m type index handler s.h (PostgreSql)' => [Dialect::PostgreSql, null, [], 'create access method m type index handler s.h', 'SqlSemantics\\Model\\Statement\\Definition\\Extension\\CreateAccessMethodStatement => CREATE ACCESS METHOD "m" TYPE INDEX HANDLER "s"."h"'],
+        ];
+    }
+
+    #[TestWith(['create extension hstore from \'1.0\''])]
+    #[TestWith(['create extension hstore schema a schema b'])]
+    #[TestWith(['ALTER EXTENSION hstore UPDATE TO \'1\' TO \'2\''])]
+    #[TestWith(['CREATE LANGUAGE plx HANDLER a.b.c.h'])]
+    #[TestWith(['CREATE ACCESS METHOD m TYPE INDEX HANDLER a.b.c.h'])]
+    public function testBindRejectsRepeatedOptionsAndLongHandlerNames(string $sql): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $this->expectException(InvalidSql::class);
+        $binder->bind($sql, strict: false);
     }
 }

@@ -42,4 +42,12 @@ final class ConstraintTimingsTest extends TestCase
         $this->expectExceptionMessage(InputViolation::RelationName->message());
         $binder->bind($sql);
     }
+
+    #[TestWith(['set constraints all deferred', SetAllConstraintsStatement::class, 'SET CONSTRAINTS ALL DEFERRED'])]
+    #[TestWith(['set constraints a, b immediate', SetNamedConstraintsStatement::class, 'SET CONSTRAINTS "a", "b" IMMEDIATE'])]
+    public function testBindReadsLowercaseTimings(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql, strict: false);
+        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+    }
 }

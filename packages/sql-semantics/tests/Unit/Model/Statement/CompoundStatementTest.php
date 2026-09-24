@@ -232,4 +232,13 @@ final class CompoundStatementTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Query\Ordering\OutputAlias::class, $byAlias->orderBy[0]->key);
         self::assertSame([], $statement->orderBy);
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['SELECT a FROM t INTERSECT ALL SELECT a FROM t', \SqlSemantics\Model\Statement\StatementKind::Intersect])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['SELECT a FROM t INTERSECT SELECT a FROM t', \SqlSemantics\Model\Statement\StatementKind::Intersect])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['SELECT a FROM t EXCEPT ALL SELECT a FROM t', \SqlSemantics\Model\Statement\StatementKind::Except])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['SELECT a FROM t EXCEPT SELECT a FROM t', \SqlSemantics\Model\Statement\StatementKind::Except])]
+    public function testKindFollowsTheSetOperator(string $sql, \SqlSemantics\Model\Statement\StatementKind $kind): void
+    {
+        self::assertSame($kind, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a int)')))->bind($sql)->kind);
+    }
 }

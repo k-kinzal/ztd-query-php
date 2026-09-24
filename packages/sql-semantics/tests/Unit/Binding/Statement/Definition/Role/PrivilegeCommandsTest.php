@@ -288,4 +288,12 @@ final class PrivilegeCommandsTest extends TestCase
         self::assertSame(['s'], $defaults->schemas);
         self::assertCount(1, $defaults->grantees);
     }
+
+    #[TestWith(['alter default privileges in schema s grant select on tables to r', 'ALTER DEFAULT PRIVILEGES IN SCHEMA "s" GRANT SELECT ON TABLES TO "r"'])]
+    #[TestWith(['alter default privileges for role a revoke grant option for execute on routines from r cascade', 'ALTER DEFAULT PRIVILEGES FOR ROLE "a" REVOKE GRANT OPTION FOR EXECUTE ON FUNCTIONS FROM "r" CASCADE'])]
+    #[TestWith(['alter default privileges revoke usage on types from r restrict', 'ALTER DEFAULT PRIVILEGES REVOKE USAGE ON TYPES FROM "r" RESTRICT'])]
+    public function testDefaultsReadLowercaseKeywords(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+    }
 }

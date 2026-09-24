@@ -53,4 +53,28 @@ final class DefinitionOptionsTest extends TestCase
         self::assertTrue(DefinitionOptions::value([new DefinitionOption(OperatorAttribute::Merges, true)], OperatorAttribute::Merges));
         self::assertNull(DefinitionOptions::value([], OperatorAttribute::Merges));
     }
+
+    public function testValidateNamesTheRepeatedAttribute(): void
+    {
+        $this->expectExceptionObject(new InvalidStructure('A definition names each allowed attribute at most once: HASHES'));
+        DefinitionOptions::validate([new DefinitionOption(OperatorAttribute::Merges, true), new DefinitionOption(OperatorAttribute::Hashes, true), new DefinitionOption(OperatorAttribute::Hashes, false)], OperatorAttribute::cases());
+    }
+
+    public function testValidateAcceptsDistinctAllowedAttributes(): void
+    {
+        $this->expectNotToPerformAssertions();
+        DefinitionOptions::validate([new DefinitionOption(OperatorAttribute::Merges, true), new DefinitionOption(OperatorAttribute::Hashes, true)], [OperatorAttribute::Hashes, OperatorAttribute::Merges]);
+    }
+
+    public function testRequireNamesTheMissingAttribute(): void
+    {
+        $this->expectExceptionObject(new InvalidStructure('The definition requires the FUNCTION attribute.'));
+        DefinitionOptions::require([new DefinitionOption(OperatorAttribute::Hashes, true)], [OperatorAttribute::Hashes, OperatorAttribute::Function]);
+    }
+
+    public function testPresentNamesTheAttributeWithoutAnArgument(): void
+    {
+        $this->expectExceptionObject(new InvalidStructure('The JOIN attribute requires an argument.'));
+        DefinitionOptions::present([new DefinitionOption(OperatorAttribute::Merges, true), new DefinitionOption(OperatorAttribute::Join, null)]);
+    }
 }

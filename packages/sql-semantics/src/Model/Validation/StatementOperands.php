@@ -63,9 +63,13 @@ final class StatementOperands
      */
     public static function relation(\SqlSemantics\Model\TableUse|\SqlSemantics\Model\Join|null $input, Dialect $dialect): void
     {
+        JoinOrder::straight($input, $dialect);
         foreach (\SqlSemantics\Model\Relation\Joining\Inputs::tables($input) as $table) {
             if ($table instanceof \SqlSemantics\Model\Relation\OnlyTableReference && $dialect !== Dialect::PostgreSql) {
                 throw new InvalidStructure('ONLY table references require PostgreSQL.');
+            }
+            if ($table instanceof \SqlSemantics\Model\Relation\TableReference && $table->indexHints !== [] && $dialect !== Dialect::MySql) {
+                throw new InvalidStructure('Index hints require MySQL.');
             }
             if ($table->declaration->properties !== null && $table->declaration->properties->dialect() !== $dialect) {
                 throw new InvalidStructure('A relation declaration must use the statement dialect.');

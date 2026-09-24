@@ -12,7 +12,6 @@ use SqlSemantics\Model\Sql\Build;
 use SqlSemantics\Model\Sql\Tree;
 use SqlSemantics\Model\Statement\Server\Administration;
 use SqlSemantics\Serialization\Expressions;
-use SqlSemantics\Serialization\Session\Roles;
 use SqlSemantics\Serialization\Settings;
 
 /**
@@ -53,16 +52,23 @@ final class AdministrationCommands
     }
 
     /**
+     * Writes the donor address as one unspaced `user@host:port` terminal sequence, the spelling the MySQL manual gives.
+     */
+    public static function donor(Administration\CloneRemoteStatement $statement): Tree
+    {
+        $donor = $statement->donor;
+        $account = $donor instanceof CurrentAccount ? 'CURRENT_USER' : \SqlSemantics\Model\Sql\Literal::encode($donor->username, Dialect::MySql)[0] . ($donor->host === null ? '' : '@' . \SqlSemantics\Model\Sql\Literal::encode($donor->host, Dialect::MySql)[0]);
+        return new Tree('clone-donor', [new \SqlSemantics\Model\Sql\Atom('address', $account . ':' . Expressions::write($statement->port)->toString())]);
+    }
+
+    /**
      * Writes CLONE INSTANCE FROM with the donor, credentials, destination and encryption requirement.
      */
     public static function clone(Administration\CloneRemoteStatement $statement): Tree
     {
-        $donor = $statement->donor instanceof CurrentAccount ? Build::keyword('CURRENT_USER') : Roles::accounts([$statement->donor]);
         return new Tree('clone-instance', [
             Build::keyword('CLONE INSTANCE FROM'),
-            $donor,
-            Build::keyword(':'),
-            Expressions::write($statement->port),
+            self::donor($statement),
             Build::keyword('IDENTIFIED BY'),
             Expressions::write($statement->password),
             ...($statement->directory === null ? [] : [Build::keyword('DATA DIRECTORY ='), Expressions::write($statement->directory)]),

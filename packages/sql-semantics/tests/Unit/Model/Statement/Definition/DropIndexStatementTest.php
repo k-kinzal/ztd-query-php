@@ -66,4 +66,11 @@ final class DropIndexStatementTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new DropIndexStatement($statement->origin, []);
     }
+
+    public function testIfExistsDefaultsToOff(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)', 'CREATE INDEX ix ON t(id)')))->bind('DROP INDEX ix');
+        self::assertInstanceOf(DropIndexStatement::class, $statement);
+        self::assertFalse((new DropIndexStatement($statement->origin, $statement->names))->ifExists);
+    }
 }

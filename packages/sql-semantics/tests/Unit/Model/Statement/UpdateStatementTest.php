@@ -180,4 +180,24 @@ final class UpdateStatementTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\UpdateStatement::class, $silent);
         self::assertSame([], $silent->resultColumns());
     }
+
+    public function testWithWhereRejectsAPredicateOfAnotherDialect(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER,n INTEGER)')))->bind('UPDATE t SET n=2');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateTableStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        new \SqlSemantics\Model\Statement\Mutation\UpdateTableStatement($statement->origin, $statement->target, $statement->writes, Expression::literal(true, Dialect::MySql), $statement->outputs, $statement->ctes);
+    }
+
+    public function testResultColumnsAreRejectedForMySql(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INTEGER,n INTEGER)'));
+        $statement = $binder->bind('UPDATE t SET n=2');
+        $query = $binder->bind('SELECT n FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateTableStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('MySQL mutations do not have a RETURNING projection.');
+        new \SqlSemantics\Model\Statement\Mutation\UpdateTableStatement($statement->origin, $statement->target, $statement->writes, null, $query->outputs, $statement->ctes);
+    }
 }

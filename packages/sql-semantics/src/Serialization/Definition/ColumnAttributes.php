@@ -19,15 +19,21 @@ use SqlSemantics\Schema\Column\Attributes;
 final class ColumnAttributes
 {
     /**
-     * Writes only explicitly declared attributes.
+     * Writes only explicitly declared attributes; PostgreSQL takes STORAGE and COMPRESSION before the column constraints.
      */
     public static function write(Attributes $attributes, Dialect $dialect): Tree
     {
         $parts = [];
+        if ($attributes->storageStrategy !== null) {
+            $parts[] = Build::keyword('STORAGE ' . $attributes->storageStrategy->value);
+        }
+        if ($dialect === Dialect::PostgreSql && $attributes->compression !== null) {
+            array_push($parts, Build::keyword('COMPRESSION'), Build::identifier([$attributes->compression], $dialect));
+        }
         if ($attributes->collation !== null) {
             array_push($parts, Build::keyword('COLLATE'), Build::identifier($attributes->collation->parts, $dialect));
         }
-        foreach (['CHARACTER SET' => $attributes->characterSet, 'COMPRESSION' => $attributes->compression] as $keyword => $name) {
+        foreach (['CHARACTER SET' => $attributes->characterSet, 'COMPRESSION' => $dialect === Dialect::PostgreSql ? null : $attributes->compression] as $keyword => $name) {
             if ($name !== null) {
                 array_push($parts, Build::keyword($keyword), Build::identifier([$name], $dialect));
             }

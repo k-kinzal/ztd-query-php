@@ -57,4 +57,15 @@ final class ResetsTest extends TestCase
         $this->expectExceptionObject(new InvalidSql(InputViolation::BinaryLogIndex, new \SqlParser\Parser\Node('reset_option', 0, [])));
         (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('RESET BINARY LOGS AND GTIDS TO 0');
     }
+
+    #[TestWith(['mysql-5.7.44', 'reset query cache', 'RESET QUERY CACHE'])]
+    #[TestWith(['mysql-5.7.44', 'reset slave all', 'RESET SLAVE ALL'])]
+    #[TestWith(['mysql-5.7.44', 'RESET SLAVE', 'RESET SLAVE'])]
+    #[TestWith(['mysql-5.7.44', 'reset master', 'RESET MASTER'])]
+    #[TestWith(['mysql-8.4.7', 'reset replica all for channel "c"', "RESET REPLICA ALL FOR CHANNEL 'c'"])]
+    #[TestWith(['mysql-8.4.7', 'reset binary logs and gtids to 3', 'RESET BINARY LOGS AND GTIDS TO 3'])]
+    public function testTargetReadsLowercaseOptions(string $version, string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build()))->bind($sql)->toString());
+    }
 }

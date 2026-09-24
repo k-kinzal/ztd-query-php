@@ -61,4 +61,14 @@ final class TextSearchTest extends TestCase
     {
         self::assertSame('"word", "url"', TextSearch::tokens(['word', 'url'])->toString());
     }
+
+    #[TestWith(['CREATE TEXT SEARCH PARSER "p"(START = "s", GETTOKEN = "g", END = "e", LEXTYPES = "l", HEADLINE = "h")'])]
+    #[TestWith(['CREATE TEXT SEARCH TEMPLATE "t"(INIT = "i", LEXIZE = "l")'])]
+    #[TestWith(['CREATE TEXT SEARCH CONFIGURATION "c"(PARSER = "p")'])]
+    #[TestWith(['CREATE TEXT SEARCH DICTIONARY "d"(TEMPLATE = "t", "a" = \'1\', "b" = \'x\')'])]
+    #[TestWith(['ALTER TEXT SEARCH CONFIGURATION "c" ADD MAPPING FOR "word" WITH "simple"'])]
+    public function testWriteWritesEveryDefinitionSetting(string $sql): void
+    {
+        self::assertSame($sql, TextSearch::write((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql))?->toString());
+    }
 }

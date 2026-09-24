@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Scalar\Document;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -127,5 +128,32 @@ final class XmlBinderTest extends TestCase
         self::assertSame('xml', $facts->type->name);
         self::assertSame(Nullability::MaybeNull, $facts->nullability);
         self::assertSame([], $facts->nullExtendedBy);
+    }
+
+    /**
+     * @return list<array{string, string}>
+     */
+    public static function providerLowerCaseForms(): array
+    {
+        return [
+            ['select xmlparse(document s.x preserve whitespace) from t left join s on true', 'SELECT XMLPARSE(DOCUMENT "s"."x" PRESERVE WHITESPACE) FROM "public"."t" LEFT JOIN "public"."s" ON true'],
+            ['select xmlserialize(content s.x as text indent) from t left join s on true', 'SELECT XMLSERIALIZE(CONTENT "s"."x" AS text INDENT) FROM "public"."t" LEFT JOIN "public"."s" ON true'],
+            ['select xmlroot(s.x, version \'1.0\', standalone yes) from t left join s on true', 'SELECT XMLROOT("s"."x", VERSION \'1.0\', STANDALONE YES) FROM "public"."t" LEFT JOIN "public"."s" ON true'],
+            ['select s.x is document from t left join s on true', 'SELECT ("s"."x" IS DOCUMENT) FROM "public"."t" LEFT JOIN "public"."s" ON true'],
+            ['select s.x is not document from t left join s on true', 'SELECT ("s"."x" IS NOT DOCUMENT) FROM "public"."t" LEFT JOIN "public"."s" ON true'],
+            ['select xmlexists(\'//a\' passing by value s.x) from t left join s on true', 'SELECT XMLEXISTS(\'//a\' PASSING BY VALUE "s"."x") FROM "public"."t" LEFT JOIN "public"."s" ON true'],
+            ['select xmlexists(\'//a\' passing s.x by ref) from t left join s on true', 'SELECT XMLEXISTS(\'//a\' PASSING "s"."x" BY REF) FROM "public"."t" LEFT JOIN "public"."s" ON true'],
+            ['select xmlroot(s.x, version no value, standalone no value) from t left join s on true', 'SELECT XMLROOT("s"."x", VERSION NO VALUE, STANDALONE NO VALUE) FROM "public"."t" LEFT JOIN "public"."s" ON true'],
+        ];
+    }
+
+    #[DataProvider('providerLowerCaseForms')]
+    public function testBindReadsLowerCaseFormsOverANullExtendedDocument(string $sql, string $expected): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INT)', 'CREATE TABLE s(x xml)')))->bind($sql);
+        self::assertInstanceOf(BoundSelect::class, $query);
+        self::assertSame($expected, $query->toString());
+        self::assertSame('maybe-null', $query->outputs[0]->expression->nullability->value);
+        self::assertCount(1, $query->outputs[0]->expression->nullExtendedBy);
     }
 }

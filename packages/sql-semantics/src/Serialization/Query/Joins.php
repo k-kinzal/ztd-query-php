@@ -26,12 +26,14 @@ use SqlSemantics\Serialization\Expressions;
 final class Joins
 {
     /**
-     * Writes a join; an inner NATURAL join is written without INNER, which MySQL 5.x rejects after NATURAL.
+     * Writes a join; an inner NATURAL join is written without INNER, which MySQL 5.x rejects after NATURAL, and a
+     * MySQL join with a fixed input order as STRAIGHT_JOIN.
      * @throws InvalidStructure
      */
     public static function write(Join $join, Dialect $dialect): Tree
     {
-        $kind = match ($join->kind) {
+        $straight = ($join instanceof OnJoin || $join instanceof UsingJoin || $join instanceof CrossJoin) && $join->straight;
+        $kind = $straight ? 'STRAIGHT_JOIN' : match ($join->kind) {
             JoinKind::Inner => $join instanceof NaturalJoin ? 'JOIN' : 'INNER JOIN',
             JoinKind::Cross => 'CROSS JOIN',
             JoinKind::Left => 'LEFT JOIN',

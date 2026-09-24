@@ -79,7 +79,8 @@ final class TablespaceCommands
     }
 
     /**
-     * Reads assigned parameters, diagnosing unknown names and values that are not constants.
+     * Reads assigned parameters, diagnosing unknown or repeated names, values that are not constants, and values
+     * outside the parameter's domain.
      * @return list<Parameter>
      * @throws InvalidSql
      * @throws UnclassifiedSql
@@ -87,16 +88,23 @@ final class TablespaceCommands
     public static function parameters(Node $source, Scope $scope): array
     {
         $result = [];
+        $names = [];
         foreach (Tree::outer($source, ['reloption_elem']) as $element) {
             $tokens = $element->tokens();
             $value = array_slice($tokens, 2);
             $numeric = in_array($value[count($value) - 1]->name ?? '', ['ICONST', 'FCONST'], true);
-            if (count($tokens) < 3 || $tokens[1]->text !== '=' || !in_array($scope->identifiers->name($tokens[0]), TablespaceInvariant::PARAMETERS, true)
-                || !((count($value) === 1 && in_array($value[0]->name, ['ICONST', 'FCONST', 'SCONST'], true)) || (count($value) === 2 && $numeric && $value[0]->text === '+'))) {
+            $name = count($tokens) < 3 ? '' : $scope->identifiers->name($tokens[0]);
+            if (count($tokens) < 3 || $tokens[1]->text !== '=' || !in_array($name, TablespaceInvariant::PARAMETERS, true) || in_array($name, $names, true)
+                || !((count($value) === 1 && in_array($value[0]->name, ['ICONST', 'FCONST', 'SCONST'], true)) || (count($value) === 2 && $numeric && in_array($value[0]->text, ['+', '-'], true)))) {
+                throw new InvalidSql(InputViolation::TablespaceOption, $element);
+            }
+            $written = $value[0]->name === 'SCONST' ? FieldSpelling::read($value[0], $scope->identifiers) : implode('', array_map(static fn ($token): string => $token->text, $value));
+            if (!TablespaceInvariant::accepts($name, $written)) {
                 throw new InvalidSql(InputViolation::TablespaceOption, $element);
             }
             $literal = SettingTokens::value($value, $element, $scope);
-            $result[] = new Parameter(new QualifiedName([$scope->identifiers->name($tokens[0])]), $literal instanceof Literal ? $literal : throw new InvalidSql(InputViolation::TablespaceOption, $element));
+            $result[] = new Parameter(new QualifiedName([$name]), $literal instanceof Literal ? $literal : throw new InvalidSql(InputViolation::TablespaceOption, $element));
+            $names[] = $name;
         }
         return $result;
     }

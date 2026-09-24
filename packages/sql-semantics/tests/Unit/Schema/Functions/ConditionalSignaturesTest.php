@@ -101,4 +101,48 @@ final class ConditionalSignaturesTest extends TestCase
     {
         self::assertSame($expected, ConditionalSignatures::nullIf([$left,Nullability::NotNull]));
     }
+
+    public function testForDialectLeavesPostgresConditionalsToTheLanguage(): void
+    {
+        self::assertSame([], ConditionalSignatures::forDialect(Dialect::PostgreSql));
+    }
+
+    public function testForDialectDeclaresTheMySqlShapes(): void
+    {
+        $signatures = ConditionalSignatures::forDialect(Dialect::MySql);
+        self::assertSame(['coalesce', 'ifnull', 'nullif', 'greatest', 'least'], array_map(static fn (FunctionSignature $signature): string => $signature->name, $signatures));
+        self::assertSame([true, false, false, true, true], array_map(static fn (FunctionSignature $signature): bool => $signature->variadic, $signatures));
+        self::assertSame([1, 0, 0, 0, 0], array_map(static fn (FunctionSignature $signature): int => $signature->optionalParameters, $signatures));
+        self::assertSame([false, false, false, true, true], array_map(static fn (FunctionSignature $signature): bool => $signature->nullOnNull, $signatures));
+        self::assertSame([2, 2, 2, 2, 2], array_map(static fn (FunctionSignature $signature): int => count($signature->parameters ?? []), $signatures));
+    }
+
+    public function testForDialectDeclaresTheSqliteShapes(): void
+    {
+        $signatures = ConditionalSignatures::forDialect(Dialect::Sqlite);
+        self::assertSame(['coalesce', 'ifnull', 'nullif', 'min', 'max', 'min', 'max'], array_map(static fn (FunctionSignature $signature): string => $signature->name, $signatures));
+        self::assertSame([true, false, false, false, false, true, true], array_map(static fn (FunctionSignature $signature): bool => $signature->variadic, $signatures));
+        self::assertSame([0, 0, 0, 0, 0, 0, 0], array_map(static fn (FunctionSignature $signature): int => $signature->optionalParameters, $signatures));
+        self::assertSame([false, false, false, false, false, true, true], array_map(static fn (FunctionSignature $signature): bool => $signature->nullOnNull, $signatures));
+        self::assertSame([false, false, false, true, true, false, false], array_map(static fn (FunctionSignature $signature): bool => $signature->aggregate, $signatures));
+    }
+
+    public function testForDialectTypesNullIfByItsFirstArgument(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("SELECT NULLIF(1, 'a')");
+        self::assertInstanceOf(BoundSelect::class, $statement);
+        self::assertSame('integer', $statement->outputs[0]->expression->type->name);
+    }
+
+    /**
+     * @param list<Nullability> $arguments
+     */
+    #[TestWith([[Nullability::Unknown, Nullability::MaybeNull], Nullability::Unknown])]
+    #[TestWith([[Nullability::MaybeNull, Nullability::AlwaysNull], Nullability::MaybeNull])]
+    #[TestWith([[Nullability::AlwaysNull, Nullability::AlwaysNull], Nullability::AlwaysNull])]
+    #[TestWith([[Nullability::AlwaysNull, Nullability::Unknown], Nullability::Unknown])]
+    public function testCoalesceCombinesArgumentsWithoutANonNullOne(array $arguments, Nullability $expected): void
+    {
+        self::assertSame($expected, ConditionalSignatures::coalesce($arguments));
+    }
 }

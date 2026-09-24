@@ -62,8 +62,28 @@ final class SourceDefinitionsTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("CHANGE REPLICATION SOURCE TO PRIVILEGE_CHECKS_USER = 'a'@'h'");
         self::assertInstanceOf(ChangeReplicationSourceStatement::class, $statement);
         self::assertEquals(new \SqlSemantics\Model\Configuration\Replication\Source\PrivilegeChecks(new AccountName('a', 'h')), $statement->settings[0]);
-        self::assertSame("CHANGE REPLICATION SOURCE TO PRIVILEGE_CHECKS_USER = 'a' @'h'", $statement->toString());
+        self::assertSame("CHANGE REPLICATION SOURCE TO PRIVILEGE_CHECKS_USER = 'a'@'h'", $statement->toString());
         $null = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CHANGE REPLICATION SOURCE TO PRIVILEGE_CHECKS_USER = NULL');
         self::assertSame('CHANGE REPLICATION SOURCE TO PRIVILEGE_CHECKS_USER = NULL', $null->toString());
+    }
+
+    #[TestWith(['IGNORE_SERVER_IDS = (1, 2)', 'IGNORE_SERVER_IDS = (1, 2)'])]
+    #[TestWith(['REQUIRE_TABLE_PRIMARY_KEY_CHECK = on', 'REQUIRE_TABLE_PRIMARY_KEY_CHECK = ON'])]
+    #[TestWith(['ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS = local', 'ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS = LOCAL'])]
+    #[TestWith(["ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'", "ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'"])]
+    #[TestWith(['PRIVILEGE_CHECKS_USER = null', 'PRIVILEGE_CHECKS_USER = NULL'])]
+    #[TestWith(["PRIVILEGE_CHECKS_USER = 'a'", "PRIVILEGE_CHECKS_USER = 'a'"])]
+    #[TestWith(['GTID_ONLY = 0X1', 'GTID_ONLY = 1'])]
+    #[TestWith(["GTID_ONLY = X'01'", 'GTID_ONLY = 1'])]
+    #[TestWith(['GTID_ONLY = 0x0', 'GTID_ONLY = 0'])]
+    public function testReadSpellsEachOptionValue(string $option, string $expected): void
+    {
+        self::assertSame('CHANGE REPLICATION SOURCE TO ' . $expected, (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CHANGE REPLICATION SOURCE TO ' . $option)->toString());
+    }
+
+    public function testFlagNamesTheOptionThatAcceptsOnlyZeroOrOne(): void
+    {
+        $this->expectException(InvalidSql::class);
+        (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CHANGE REPLICATION SOURCE TO GTID_ONLY = 2');
     }
 }

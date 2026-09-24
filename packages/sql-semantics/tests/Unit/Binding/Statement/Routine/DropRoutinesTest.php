@@ -110,4 +110,19 @@ final class DropRoutinesTest extends TestCase
         self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
     }
 
+    /**
+     * @param class-string<object> $class
+     */
+    #[TestWith([Dialect::PostgreSql, 'drop aggregate a(int), b(*) cascade', PostgreSql\DropAggregatesStatement::class, 'DROP AGGREGATE "a"(integer), "b"(*) CASCADE'])]
+    #[TestWith([Dialect::PostgreSql, 'DROP AGGREGATE IF EXISTS a(int)', PostgreSql\DropAggregatesStatement::class, 'DROP AGGREGATE IF EXISTS "a"(integer)'])]
+    #[TestWith([Dialect::PostgreSql, 'drop function f(int) restrict', PostgreSql\DropFunctionsStatement::class, 'DROP FUNCTION "f"(integer) RESTRICT'])]
+    #[TestWith([Dialect::PostgreSql, 'drop procedure p', PostgreSql\DropProceduresStatement::class, 'DROP PROCEDURE "p"'])]
+    #[TestWith([Dialect::PostgreSql, 'drop routine r', PostgreSql\DropRoutinesStatement::class, 'DROP ROUTINE "r"'])]
+    #[TestWith([Dialect::MySql, 'drop function f', MySql\DropFunctionStatement::class, 'DROP FUNCTION `f`'])]
+    public function testBindReadsLowerCaseRemovals(Dialect $dialect, string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect))->build()))->bind($sql);
+        self::assertInstanceOf($class, $statement);
+        self::assertSame($expected, $statement->toString());
+    }
 }

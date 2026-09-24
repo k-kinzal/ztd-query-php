@@ -35,4 +35,35 @@ final class ParameterInvariantTest extends TestCase
         self::assertSame('numeric', (new TypeDescriptor(Dialect::MySql, $identity))->name);
     }
 
+    public function testDialectRejectsNationalCharacterSetsOutsideMySql(): void
+    {
+        $identity = new \SqlSemantics\Type\Identity\StringStorage(BuiltinIdentity::Varchar, new NumericParameter('3'), national: true);
+        \SqlSemantics\Type\Modifier\ParameterInvariant::dialect(Dialect::MySql, $identity);
+        \SqlSemantics\Type\Modifier\ParameterInvariant::dialect(Dialect::PostgreSql, new \SqlSemantics\Type\Identity\StringStorage(BuiltinIdentity::Varchar, new NumericParameter('3')));
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('National character-set selection requires MySQL.');
+        \SqlSemantics\Type\Modifier\ParameterInvariant::dialect(Dialect::PostgreSql, $identity);
+    }
+
+    public function testDialectAcceptsIdentifierInputsInPostgreSql(): void
+    {
+        $identity = new NumericStorage(BuiltinIdentity::Numeric, new IdentifierParameter('precision'));
+        \SqlSemantics\Type\Modifier\ParameterInvariant::dialect(Dialect::PostgreSql, $identity);
+        \SqlSemantics\Type\Modifier\ParameterInvariant::dialect(Dialect::MySql, BuiltinIdentity::Integer);
+        self::assertSame('numeric', (new TypeDescriptor(Dialect::PostgreSql, $identity))->name);
+    }
+
+    public function testDialectRejectsAnIdentifierLengthOutsidePostgreSql(): void
+    {
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('This type-modifier operand requires PostgreSQL.');
+        \SqlSemantics\Type\Modifier\ParameterInvariant::dialect(Dialect::MySql, new \SqlSemantics\Type\Identity\StringStorage(BuiltinIdentity::Bit, new IdentifierParameter('n')));
+    }
+
+    public function testDialectRejectsAnIdentifierPrecisionOutsidePostgreSql(): void
+    {
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('This type-modifier operand requires PostgreSQL.');
+        \SqlSemantics\Type\Modifier\ParameterInvariant::dialect(Dialect::Sqlite, new \SqlSemantics\Type\Identity\TemporalStorage(BuiltinIdentity::Timestamp, new IdentifierParameter('p'), \SqlSemantics\Type\Identity\TimeZoneMode::With));
+    }
 }

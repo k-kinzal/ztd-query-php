@@ -92,4 +92,14 @@ final class StorageDefinitionsTest extends TestCase
     {
         self::assertSame("'a''b\\\\c'", StorageDefinitions::text("a'b\\c")->toString());
     }
+
+    #[TestWith(['mysql-8.4.7', "CREATE TABLESPACE ts ADD DATAFILE 'a.ibd' USE LOGFILE GROUP g FILE_BLOCK_SIZE = 8192 ENGINE = InnoDB", "CREATE TABLESPACE `ts` ADD DATAFILE 'a.ibd' USE LOGFILE GROUP `g` FILE_BLOCK_SIZE = 8192 ENGINE = `InnoDB` WAIT"])]
+    #[TestWith(['mysql-8.4.7', "ALTER TABLESPACE ts DROP DATAFILE 'a.ibd' INITIAL_SIZE 1M ENGINE ndb", "ALTER TABLESPACE `ts` DROP DATAFILE 'a.ibd' INITIAL_SIZE = 1048576 ENGINE = `ndb` WAIT"])]
+    #[TestWith(['mysql-5.7.44', "ALTER TABLESPACE ts CHANGE DATAFILE 'a.ibd' INITIAL_SIZE 1M AUTOEXTEND_SIZE 4M MAX_SIZE 9M", "ALTER TABLESPACE `ts` CHANGE DATAFILE 'a.ibd' INITIAL_SIZE = 1048576 AUTOEXTEND_SIZE = 4194304 MAX_SIZE = 9437184"])]
+    #[TestWith(['mysql-8.4.7', "CREATE LOGFILE GROUP g ADD UNDOFILE 'u' INITIAL_SIZE 1M UNDO_BUFFER_SIZE 2M REDO_BUFFER_SIZE 3M NODEGROUP 1 WAIT ENGINE ndb", "CREATE LOGFILE GROUP `g` ADD UNDOFILE 'u' INITIAL_SIZE = 1048576 UNDO_BUFFER_SIZE = 2097152 REDO_BUFFER_SIZE = 3145728 NODEGROUP = 1 ENGINE = `ndb` WAIT"])]
+    #[TestWith(['mysql-8.4.7', "ALTER TABLESPACE ts ENGINE_ATTRIBUTE '{}' ENCRYPTION 'Y'", "ALTER TABLESPACE `ts` ENGINE_ATTRIBUTE = '{}' ENCRYPTION = 'Y' WAIT"])]
+    public function testWriteSpellsEveryStorageClause(string $version, string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build()))->bind($sql)->toString());
+    }
 }

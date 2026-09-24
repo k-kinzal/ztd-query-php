@@ -43,4 +43,12 @@ final class InputsTest extends TestCase
     {
         self::assertSame([], Inputs::tables(null));
     }
+
+    public function testTablesListsEveryOccurrenceOfANestedRightInput(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
+        $query = (new Binder($schema))->bind('SELECT a.id FROM t a JOIN (t b JOIN t c ON b.id = c.id) ON a.id = b.id');
+        self::assertInstanceOf(BoundSelect::class, $query);
+        self::assertSame(['a', 'b', 'c'], array_column(Inputs::tables($query->from), 'alias'));
+    }
 }

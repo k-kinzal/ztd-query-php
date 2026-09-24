@@ -6,6 +6,7 @@ namespace Tests\Unit\Binding\Configuration;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Binding\Configuration\ConfigurationBinder;
@@ -60,5 +61,22 @@ final class ConfigurationBinderTest extends TestCase
         $named = $binder->bind('RESET my.setting');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\ResetSettingStatement::class, $named);
         self::assertSame(['my', 'setting'], $named->setting->name);
+    }
+
+    #[TestWith(['SET @a = 1, sort_buffer_size = DEFAULT', \SqlSemantics\Model\Statement\Configuration\SetStatement::class, 'SET @`a` = 1, `sort_buffer_size` = DEFAULT'])]
+    #[TestWith(['SET NAMES utf8mb4', \SqlSemantics\Model\Statement\Configuration\SetStatement::class, 'SET NAMES `utf8mb4`'])]
+    public function testBindKeepsEveryMySqlSettingForm(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql, strict: false);
+        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+    }
+
+    #[TestWith(['SET work_mem FROM CURRENT', \SqlSemantics\Model\Statement\Configuration\SetStatement::class, 'SET "work_mem" FROM CURRENT'])]
+    #[TestWith(['SET work_mem TO DEFAULT', \SqlSemantics\Model\Statement\Configuration\SetStatement::class, 'SET "work_mem" = DEFAULT'])]
+    #[TestWith(['SET work_mem = \'1MB\'', \SqlSemantics\Model\Statement\Configuration\SetStatement::class, 'SET "work_mem" = \'1MB\''])]
+    public function testBindKeepsEveryPostgreSqlSettingForm(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql, strict: false);
+        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
     }
 }

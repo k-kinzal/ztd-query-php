@@ -27,7 +27,7 @@ final class ShowCreateUserStatementTest extends TestCase
         self::assertInstanceOf(AccountName::class, $statement->account);
         self::assertSame(['app', 'localhost'], [$statement->account->username, $statement->account->host]);
         self::assertSame(['CREATE USER for app@localhost'], array_column($statement->resultColumns(), 'name'));
-        self::assertSame("SHOW CREATE USER 'app' @'localhost'", $statement->toString());
+        self::assertSame("SHOW CREATE USER 'app'@'localhost'", $statement->toString());
     }
 
     public function testResultColumnsReadAnOmittedHostAsThePercentHost(): void
@@ -47,7 +47,7 @@ final class ShowCreateUserStatementTest extends TestCase
         $changed = $statement->withAccount(new AccountName('reader', 'localhost'));
         self::assertNotSame($statement, $changed);
         self::assertSame(CurrentAccount::Authenticated, $statement->account);
-        self::assertSame("SHOW CREATE USER 'reader' @'localhost'", $changed->toString());
+        self::assertSame("SHOW CREATE USER 'reader'@'localhost'", $changed->toString());
         self::assertSame('SHOW CREATE USER CURRENT_USER', $statement->toString());
     }
 

@@ -187,4 +187,38 @@ final class ColumnReaderTest extends TestCase
         self::assertSame('n', $generated->generation->expression->lineage()[0]->column->name);
     }
 
+
+    public function testReadIgnoresKeywordsSpelledInsideExpressionsAndLiterals(): void
+    {
+        $postgres = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (identity int, a int CHECK (identity > 0))')->tables[0];
+        $mysql = (new SchemaBuilder(Dialect::MySql))->build("CREATE TABLE t (b INT COMMENT 'IDENTITY')")->tables[0];
+        self::assertSame(Nullability::MaybeNull, $postgres->columns[1]->nullability);
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\SuppliedColumn::class, $postgres->columns[1]->generation);
+        self::assertSame(Nullability::MaybeNull, $mysql->columns[0]->nullability);
+    }
+
+    public function testReadsAMySql57GeneratedColumn(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build());
+        $statement = $binder->bind("CREATE TABLE t (a INT, d INT GENERATED ALWAYS AS (a) STORED NOT NULL COMMENT 'x')");
+        self::assertSame("CREATE TABLE `t`(`a` integer, `d` integer GENERATED ALWAYS AS(`a`) STORED COMMENT 'x' NOT NULL)", $statement->toString());
+        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+    }
+
+
+    #[TestWith(['mysql-5.7.44'])]
+    #[TestWith(['mysql-8.4.7'])]
+    public function testGeneratedExpressionFindsTheExpressionAfterTheType(string $version): void
+    {
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql, $version))->parse('CREATE TABLE t (a INT, b INT AS (a + 1) STORED)');
+        $columns = \SqlSemantics\Ast\Tree::outer($tree, ['column_def']);
+        self::assertNull(\SqlSemantics\Ast\ColumnReader::generatedExpression($columns[0]));
+        self::assertSame('a + 1', \SqlSemantics\Ast\Tree::text(\SqlSemantics\Ast\ColumnReader::generatedExpression($columns[1]) ?? $columns[1]));
+    }
+
+    public function testAttributeWordsDropsTheConstraintNameAndExpressions(): void
+    {
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('CREATE TABLE t (a int CONSTRAINT identity CHECK (a > 0))');
+        self::assertSame(['CHECK', '(', ')'], \SqlSemantics\Ast\ColumnReader::attributeWords(\SqlSemantics\Ast\Tree::outer($tree, ['ColConstraint'])[0]));
+    }
 }

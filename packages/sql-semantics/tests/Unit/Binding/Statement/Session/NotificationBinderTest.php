@@ -6,10 +6,17 @@ namespace Tests\Unit\Binding\Statement\Session;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Ast\DialectParser;
+use SqlSemantics\Ast\Identifiers;
 use SqlSemantics\Binder;
+use SqlSemantics\Binding\Scope;
 use SqlSemantics\Binding\Statement\Session\NotificationBinder;
 use SqlSemantics\Dialect;
+use SqlSemantics\Model\Configuration\ConstraintTiming;
+use SqlSemantics\Model\Statement\Configuration\SetAllConstraintsStatement;
+use SqlSemantics\Model\Statement\Origin;
 use SqlSemantics\SchemaBuilder;
 
 #[CoversClass(NotificationBinder::class)]
@@ -53,7 +60,33 @@ final class NotificationBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\DiscardStatement::class, $sequences);
         self::assertSame(\SqlSemantics\Model\Configuration\DiscardResource::Sequences, $sequences->resource);
         $constraints = $binder->bind('SET CONSTRAINTS ALL DEFERRED');
-        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetAllConstraintsStatement::class, $constraints);
-        self::assertSame(\SqlSemantics\Model\Configuration\ConstraintTiming::Deferred, $constraints->timing);
+        self::assertInstanceOf(SetAllConstraintsStatement::class, $constraints);
+        self::assertSame(ConstraintTiming::Deferred, $constraints->timing);
+    }
+
+    #[TestWith(['listen ch', 'LISTEN "ch"'])]
+    #[TestWith(['discard temp', 'DISCARD TEMPORARY'])]
+    #[TestWith(['discard all', 'DISCARD ALL'])]
+    public function testBindReadsLowercaseCommands(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+    }
+
+    #[TestWith(['SET CONSTRAINTS ALL DEFERRED', ConstraintTiming::Deferred])]
+    #[TestWith(['set constraints all immediate', ConstraintTiming::Immediate])]
+    public function testBindReadsTheTimingOfAllConstraints(string $sql, ConstraintTiming $timing): void
+    {
+        $node = (new DialectParser(Dialect::PostgreSql))->parse($sql)->find('ConstraintsSetStmt')[0];
+        $statement = NotificationBinder::bind(new Origin('s0', $node, Dialect::PostgreSql), $node, new Scope(new Identifiers(Dialect::PostgreSql)));
+        self::assertInstanceOf(SetAllConstraintsStatement::class, $statement);
+        self::assertSame($timing, $statement->timing);
+    }
+
+    #[TestWith(['SET CONSTRAINTS c DEFERRED'])]
+    #[TestWith(['SET TIME ZONE LOCAL'])]
+    public function testBindReturnsNullForOtherStatements(string $sql): void
+    {
+        $node = (new DialectParser(Dialect::PostgreSql))->parse($sql)->find('stmt')[0];
+        self::assertNull(NotificationBinder::bind(new Origin('s0', $node, Dialect::PostgreSql), $node, new Scope(new Identifiers(Dialect::PostgreSql))));
     }
 }

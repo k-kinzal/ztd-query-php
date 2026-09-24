@@ -39,4 +39,11 @@ final class AccountLimitTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new AccountLimit($kind, $value);
     }
+
+    public function testRejectionNamesTheKind(): void
+    {
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('The account policy value is outside the range MySQL accepts for ' . AccountLimitKind::PasswordExpiryDays->value . '.');
+        new AccountLimit(AccountLimitKind::PasswordExpiryDays, 0);
+    }
 }

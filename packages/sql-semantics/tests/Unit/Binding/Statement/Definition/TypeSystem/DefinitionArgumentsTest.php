@@ -17,7 +17,11 @@ use SqlSemantics\Binding\Statement\Definition\TypeSystem\DefinitionElement;
 use SqlSemantics\Binding\TableResolver;
 use SqlSemantics\Dialect;
 use SqlSemantics\InvalidSql;
+use SqlSemantics\Model\Definition\TypeSystem\Definition\AggregateAttribute;
+use SqlSemantics\Model\Definition\TypeSystem\Definition\BaseTypeAttribute;
+use SqlSemantics\Model\Definition\TypeSystem\Definition\DefinitionAttribute;
 use SqlSemantics\Model\Definition\TypeSystem\Definition\OperatorAttribute;
+use SqlSemantics\Model\Relation\QualifiedName;
 use SqlSemantics\Model\Validation\InputViolation;
 use SqlSemantics\SchemaBuilder;
 use SqlSemantics\Type\TypeDescriptor;
@@ -141,5 +145,168 @@ final class DefinitionArgumentsTest extends TestCase
         $context = new QueryContext(new TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new Identifiers(Dialect::PostgreSql), 'public'));
         $node = Tree::outer((new DialectParser(Dialect::PostgreSql))->parse('CREATE OPERATOR === (x = varchar(3))'), ['def_arg'])[0];
         self::assertNull(DefinitionArguments::words($node, $context));
+    }
+
+    public function testOptionConvertsEachArgumentKind(): void
+    {
+        $context = new QueryContext(new TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new Identifiers(Dialect::PostgreSql), 'public'));
+        $elements = DefinitionElement::list((new DialectParser(Dialect::PostgreSql))->parse("CREATE TYPE t (a = s.f, b = OPERATOR(s.+), c = integer, d = true, e = 8, f = 'Variable', g = -1, h = 16, i = 'U', j = PLAIN)"), $context);
+        $name = DefinitionArguments::option($elements[0], BaseTypeAttribute::Input, $context)->value;
+        self::assertInstanceOf(QualifiedName::class, $name);
+        self::assertSame(['s', 'f'], $name->parts);
+        $operator = DefinitionArguments::option($elements[1], OperatorAttribute::Commutator, $context)->value;
+        self::assertInstanceOf(QualifiedName::class, $operator);
+        self::assertSame(['s', '+'], $operator->parts);
+        $type = DefinitionArguments::option($elements[2], OperatorAttribute::LeftArg, $context)->value;
+        self::assertInstanceOf(TypeDescriptor::class, $type);
+        self::assertSame('integer', $type->name);
+        self::assertTrue(DefinitionArguments::option($elements[3], BaseTypeAttribute::Preferred, $context)->value);
+        self::assertSame(8, DefinitionArguments::option($elements[4], AggregateAttribute::Sspace, $context)->value);
+        self::assertSame(-1, DefinitionArguments::option($elements[5], BaseTypeAttribute::InternalLength, $context)->value);
+        self::assertSame(-1, DefinitionArguments::option($elements[6], BaseTypeAttribute::InternalLength, $context)->value);
+        self::assertSame(16, DefinitionArguments::option($elements[7], BaseTypeAttribute::InternalLength, $context)->value);
+        self::assertSame('U', DefinitionArguments::option($elements[8], BaseTypeAttribute::Category, $context)->value);
+        self::assertSame('plain', DefinitionArguments::option($elements[9], BaseTypeAttribute::Storage, $context)->value);
+    }
+
+    #[TestWith(['abc', OperatorAttribute::Commutator])]
+    #[TestWith(['40000', BaseTypeAttribute::InternalLength])]
+    #[TestWith(['bogus', BaseTypeAttribute::Storage])]
+    public function testOptionRejectsAValueOfAnotherForm(string $argument, DefinitionAttribute $attribute): void
+    {
+        $context = new QueryContext(new TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new Identifiers(Dialect::PostgreSql), 'public'));
+        $elements = DefinitionElement::list((new DialectParser(Dialect::PostgreSql))->parse('CREATE TYPE t (a = ' . $argument . ')'), $context);
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(InputViolation::DefinitionArgument->message());
+        DefinitionArguments::option($elements[0], $attribute, $context);
+    }
+
+    public function testPresentReturnsASpelledArgument(): void
+    {
+        $context = new QueryContext(new TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new Identifiers(Dialect::PostgreSql), 'public'));
+        $elements = DefinitionElement::list((new DialectParser(Dialect::PostgreSql))->parse("CREATE TYPE t (category = 'U')"), $context);
+        self::assertSame('U', DefinitionArguments::present($elements[0], BaseTypeAttribute::Category, $context)->value);
+    }
+
+    public function testObjectNameReadsASchemaQualifiedName(): void
+    {
+        $context = new QueryContext(new TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new Identifiers(Dialect::PostgreSql), 'public'));
+        $elements = DefinitionElement::list((new DialectParser(Dialect::PostgreSql))->parse('CREATE TYPE t (a = s.f)'), $context);
+        self::assertSame(['s', 'f'], DefinitionArguments::objectName($elements[0], $context)->parts);
+    }
+
+    public function testObjectNameRejectsAMissingArgument(): void
+    {
+        $context = new QueryContext(new TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new Identifiers(Dialect::PostgreSql), 'public'));
+        $elements = DefinitionElement::list((new DialectParser(Dialect::PostgreSql))->parse('ALTER OPERATOR = (integer, integer) SET (restrict)'), $context);
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(InputViolation::DefinitionArgument->message());
+        DefinitionArguments::objectName($elements[0], $context);
+    }
+
+    public function testOperatorRejectsAnOverQualifiedSymbol(): void
+    {
+        $context = new QueryContext(new TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new Identifiers(Dialect::PostgreSql), 'public'));
+        $node = Tree::outer((new DialectParser(Dialect::PostgreSql))->parse('CREATE OPERATOR === (x = OPERATOR(a.b.+))'), ['def_arg'])[0];
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(InputViolation::CatalogObjectName->message());
+        DefinitionArguments::operator($node, $context);
+    }
+
+    public function testOperatorRejectsANumber(): void
+    {
+        $context = new QueryContext(new TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new Identifiers(Dialect::PostgreSql), 'public'));
+        $node = Tree::outer((new DialectParser(Dialect::PostgreSql))->parse('CREATE OPERATOR === (x = 1)'), ['def_arg'])[0];
+        $this->expectException(InvalidSql::class);
+        DefinitionArguments::operator($node, $context);
+    }
+
+    #[TestWith(['+'])]
+    #[TestWith(['1'])]
+    public function testTypeRejectsOperatorsAndNumbers(string $argument): void
+    {
+        $context = new QueryContext(new TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new Identifiers(Dialect::PostgreSql), 'public'));
+        $node = Tree::outer((new DialectParser(Dialect::PostgreSql))->parse('CREATE OPERATOR === (x = ' . $argument . ')'), ['def_arg'])[0];
+        $this->expectException(InvalidSql::class);
+        DefinitionArguments::type($node, $context);
+    }
+
+    #[TestWith(['false', false])]
+    #[TestWith(['1', true])]
+    public function testBooleanReadsFalseAndOne(string $argument, bool $expected): void
+    {
+        $context = new QueryContext(new TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new Identifiers(Dialect::PostgreSql), 'public'));
+        $node = Tree::outer((new DialectParser(Dialect::PostgreSql))->parse('CREATE OPERATOR === (x = ' . $argument . ')'), ['def_arg'])[0];
+        self::assertSame($expected, DefinitionArguments::boolean($node, $context));
+    }
+
+    public function testBooleanRejectsOtherWords(): void
+    {
+        $context = new QueryContext(new TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new Identifiers(Dialect::PostgreSql), 'public'));
+        $node = Tree::outer((new DialectParser(Dialect::PostgreSql))->parse('CREATE OPERATOR === (x = maybe)'), ['def_arg'])[0];
+        $this->expectException(InvalidSql::class);
+        DefinitionArguments::boolean($node, $context);
+    }
+
+    #[TestWith(['- 5', -5])]
+    #[TestWith(['1_000', 1000])]
+    #[TestWith(['2147483647', 2147483647])]
+    public function testIntegerReadsSignedConstants(string $argument, int $expected): void
+    {
+        $node = Tree::outer((new DialectParser(Dialect::PostgreSql))->parse('CREATE OPERATOR === (x = ' . $argument . ')'), ['def_arg'])[0];
+        self::assertSame($expected, DefinitionArguments::integer($node));
+    }
+
+    public function testIntegerRejectsAnOverflow(): void
+    {
+        $node = Tree::outer((new DialectParser(Dialect::PostgreSql))->parse('CREATE OPERATOR === (x = 2147483648)'), ['def_arg'])[0];
+        $this->expectException(InvalidSql::class);
+        DefinitionArguments::integer($node);
+    }
+
+    #[TestWith(['02147483647', '2147483647'])]
+    #[TestWith(['+', '+'])]
+    #[TestWith(['OPERATOR(s.+)', 's.+'])]
+    #[TestWith(['integer', 'pg_catalog.int4'])]
+    public function testTextReadsNumbersOperatorsAndKeywordTypes(string $argument, string $expected): void
+    {
+        $context = new QueryContext(new TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new Identifiers(Dialect::PostgreSql), 'public'));
+        $node = Tree::outer((new DialectParser(Dialect::PostgreSql))->parse('CREATE OPERATOR === (x = ' . $argument . ')'), ['def_arg'])[0];
+        self::assertSame($expected, DefinitionArguments::text($node, $context));
+    }
+
+    public function testTextRejectsAnArrayType(): void
+    {
+        $context = new QueryContext(new TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new Identifiers(Dialect::PostgreSql), 'public'));
+        $node = Tree::outer((new DialectParser(Dialect::PostgreSql))->parse('CREATE OPERATOR === (x = integer[])'), ['def_arg'])[0];
+        $this->expectException(InvalidSql::class);
+        DefinitionArguments::text($node, $context);
+    }
+
+    /**
+     * @param list<string>|null $expected
+     */
+    #[TestWith(['SETOF integer', null])]
+    #[TestWith(['integer', ['pg_catalog', 'int4']])]
+    #[TestWith(['text', null])]
+    #[TestWith(['int4[]', null])]
+    public function testSystemSkipsSetsArraysAndGenericTypes(string $argument, ?array $expected): void
+    {
+        $node = Tree::outer((new DialectParser(Dialect::PostgreSql))->parse('CREATE OPERATOR === (x = ' . $argument . ')'), ['def_arg'])[0];
+        self::assertSame($expected, DefinitionArguments::system($node));
+    }
+
+    /**
+     * @param list<string>|null $expected
+     */
+    #[TestWith(['s.t', ['s', 't']])]
+    #[TestWith(['s.t[]', null])]
+    #[TestWith(['mytype(3)', null])]
+    #[TestWith(['integer', null])]
+    public function testWordsReadsOnlyPlainNames(string $argument, ?array $expected): void
+    {
+        $context = new QueryContext(new TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new Identifiers(Dialect::PostgreSql), 'public'));
+        $node = Tree::outer((new DialectParser(Dialect::PostgreSql))->parse('CREATE OPERATOR === (x = ' . $argument . ')'), ['def_arg'])[0];
+        self::assertSame($expected, DefinitionArguments::words($node, $context));
     }
 }

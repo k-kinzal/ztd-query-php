@@ -359,4 +359,106 @@ final class QueryBinderTest extends TestCase
         self::assertSame('VALUES', \SqlSemantics\Binding\Query\QueryBinder::lead((new \SqlSemantics\Ast\DialectParser(Dialect::MySql))->parse('((VALUES ROW(1)))')));
         self::assertSame('', \SqlSemantics\Binding\Query\QueryBinder::lead(new \SqlParser\Parser\Node('empty', 0, [])));
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['SELECT 1 AS k UNION SELECT 2 AS j ORDER BY k', 'integer', 'not-null'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['SELECT 1 AS k UNION ALL SELECT NULL AS j ORDER BY k', 'integer', 'maybe-null'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['SELECT NULL AS k UNION ALL SELECT 1 AS j ORDER BY k', 'integer', 'maybe-null'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['SELECT 1 AS k UNION ALL SELECT 1.5 AS j ORDER BY k', 'numeric', 'not-null'])]
+    public function testCompoundOrdersByTheCombinedLeftOutput(string $sql, string $type, string $nullability): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CompoundStatement::class, $query);
+        $key = $query->orderBy[0]->key;
+        self::assertInstanceOf(\SqlSemantics\Model\Query\Ordering\OutputAlias::class, $key);
+        self::assertSame('k', $key->output->name);
+        self::assertSame($type, $key->output->expression->type->name);
+        self::assertSame($nullability, $key->output->expression->nullability->value);
+        self::assertCount(2, $key->output->expression->inputs());
+    }
+
+    public function testCompoundAcceptsAnOperandOfUnknownWidth(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT * FROM nope UNION SELECT 1', strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CompoundStatement::class, $query);
+        self::assertSame('SELECT "nope".* FROM "public"."nope" UNION SELECT 1', $query->toString());
+    }
+
+    public function testCompoundRejectsALockedPostgreSqlOperand(): void
+    {
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage('PostgreSQL does not allow FOR UPDATE');
+        (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1 UNION SELECT 2 FOR UPDATE');
+    }
+
+    public function testCompoundAllowsALockedMySqlOperand(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, n INT)')))->bind('(SELECT id FROM t) UNION (SELECT n FROM t FOR UPDATE)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CompoundStatement::class, $query);
+        self::assertSame('SELECT `id` AS `id` FROM `t` UNION (SELECT `n` AS `n` FROM `t` FOR UPDATE)', $query->toString());
+    }
+
+    public function testCompoundKeepsTheSqliteTailOnTheCompound(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('SELECT 1 AS k UNION SELECT 2 ORDER BY k LIMIT 1');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CompoundStatement::class, $query);
+        self::assertSame('SELECT 1 AS "k" UNION SELECT 2 ORDER BY "k" ASC LIMIT 1', $query->toString());
+        self::assertCount(1, $query->orderBy);
+        self::assertSame('1', $query->limit?->spelling());
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query->right);
+        self::assertSame([], $query->right->orderBy);
+        self::assertNull($query->right->limit);
+        self::assertSame('SELECT 2', $query->right->toString());
+    }
+
+    public function testWithRejectsADuplicateCteName(): void
+    {
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage('A WITH clause cannot define the same relation name twice.');
+        (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('WITH a AS (SELECT 1), a AS (SELECT 2) SELECT 1');
+    }
+
+    public function testWithBindsEveryDataModifyingCte(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)')))->bind('WITH a AS (DELETE FROM t RETURNING id), b AS (DELETE FROM t RETURNING n) SELECT * FROM a, b');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        self::assertNotNull($query->ctes);
+        self::assertSame(['a', 'b'], array_column($query->ctes->definitions, 'name'));
+        self::assertSame(['id', 'n'], array_column($query->outputs, 'name'));
+    }
+
+    public function testBindReadsATableQueryOverACte(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('with c as (select 1 as x) table c');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\TableStatement::class, $query);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\CteReference::class, $query->from);
+        self::assertSame('WITH "c" AS (SELECT 1 AS "x") TABLE "c"', $query->toString());
+    }
+
+    public function testBindReadsLowerCaseValuesWithTies(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('values (1) order by 1 fetch first row with ties');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\ValuesStatement::class, $query);
+        self::assertTrue($query->withTies);
+        self::assertSame('VALUES (1) ORDER BY 1 ASC FETCH FIRST 1 ROWS WITH TIES', $query->toString());
+    }
+
+    public function testBindKeepsOptimizerHintsOnlyForMySql(): void
+    {
+        $mysql = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SELECT /*+ MAX_EXECUTION_TIME(1000) */ 1');
+        $postgres = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT /*+ MAX_EXECUTION_TIME(1000) */ 1');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $mysql);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $postgres);
+        self::assertCount(1, $mysql->hints);
+        self::assertSame([], $postgres->hints);
+        self::assertSame('SELECT /*+ MAX_EXECUTION_TIME(1000) */ 1', $mysql->toString());
+    }
+
+
+    public function testBindReadsWithTiesFromTheFetchKeywords(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a int)'));
+        $ties = $binder->bind('SELECT a FROM t ORDER BY a FETCH FIRST 2 ROWS WITH TIES');
+        self::assertSame('SELECT "a" AS "a" FROM "public"."t" ORDER BY "a" ASC FETCH FIRST 2 ROWS WITH TIES', $ties->toString());
+        self::assertSame($ties->toString(), $binder->bind($ties->toString())->toString());
+    }
 }

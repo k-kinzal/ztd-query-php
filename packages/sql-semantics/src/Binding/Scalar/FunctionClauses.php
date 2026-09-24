@@ -72,7 +72,7 @@ final class FunctionClauses
      */
     public static function ordering(Node $source): Node
     {
-        $order = self::find($source, ['opt_sort_clause', 'orderby_opt', 'order_clause', 'within_group_clause', 'sortlist']);
+        $order = self::find($source, ['opt_sort_clause', 'orderby_opt', 'order_clause', 'within_group_clause', 'sortlist', 'opt_gorder_clause']);
         if ($order?->name === 'sortlist') {
             return new Node('orderby_opt', 0, [$order]);
         }

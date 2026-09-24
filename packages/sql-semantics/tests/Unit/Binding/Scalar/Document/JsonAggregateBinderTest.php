@@ -59,4 +59,18 @@ final class JsonAggregateBinderTest extends TestCase
         self::assertSame('SELECT JSON_ARRAYAGG("k" FORMAT JSON ORDER BY "v" ASC, "k" DESC) FROM "public"."t"', $query->toString());
         self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['SELECT json_objectagg(a : b) FROM t', 'SELECT JSON_OBJECTAGG("a" : "b") FROM "public"."t"'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['SELECT json_arrayagg(b) FROM t', 'SELECT JSON_ARRAYAGG("b") FROM "public"."t"'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['SELECT json_objectagg(a VALUE b) FILTER (WHERE b > 0) FROM t', 'SELECT JSON_OBJECTAGG("a" : "b") FILTER (WHERE ("b" > 0)) FROM "public"."t"'])]
+    public function testBindReadsLowercaseAggregates(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a text, b int)')))->bind($sql)->toString());
+    }
+
+    public function testBindRejectsANonBooleanFilter(): void
+    {
+        $this->expectException(\SqlSemantics\SemanticException::class);
+        (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a text, b int)')))->bind('SELECT json_objectagg(a : b) FILTER (WHERE b) FROM t');
+    }
 }

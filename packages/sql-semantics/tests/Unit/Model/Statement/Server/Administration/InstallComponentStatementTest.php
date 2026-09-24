@@ -71,4 +71,37 @@ final class InstallComponentStatementTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new InstallComponentStatement(new Origin('s0', $statement->source, Dialect::PostgreSql), $statement->components);
     }
+
+    public function testRejectsAComponentThatIsNotText(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("INSTALL COMPONENT 'a'");
+        $number = \SqlSemantics\Model\Expression::literal(1, Dialect::MySql);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\Literal::class, $number);
+        $this->expectException(InvalidStructure::class);
+        new InstallComponentStatement($statement->origin, [$number]);
+    }
+
+    public function testRejectsASessionAssignment(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
+        $statement = $binder->bind("INSTALL COMPONENT 'a'");
+        $set = $binder->bind('SET SESSION v = 2');
+        self::assertInstanceOf(InstallComponentStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $set);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $set->settings[0]);
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('A component variable assignment is GLOBAL or PERSIST, names at most two parts and has one value.');
+        $statement->withSettings([$set->settings[0]]);
+    }
+
+    public function testAcceptsAGlobalAssignment(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
+        $statement = $binder->bind("INSTALL COMPONENT 'a'");
+        $set = $binder->bind('SET GLOBAL k.v = 2');
+        self::assertInstanceOf(InstallComponentStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $set);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $set->settings[0]);
+        self::assertSame("INSTALL COMPONENT 'a' SET GLOBAL `k`.`v` = 2", $statement->withSettings([$set->settings[0]])->toString());
+    }
 }

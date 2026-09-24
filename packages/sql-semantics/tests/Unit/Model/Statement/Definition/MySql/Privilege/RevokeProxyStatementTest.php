@@ -23,7 +23,7 @@ final class RevokeProxyStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('REVOKE PROXY ON p FROM u');
         self::assertInstanceOf(RevokeProxyStatement::class, $statement);
-        self::assertSame("REVOKE PROXY ON 'q' @'h' FROM 'u'", $statement->withProxied(new AccountName('q', 'h'))->toString());
+        self::assertSame("REVOKE PROXY ON 'q'@'h' FROM 'u'", $statement->withProxied(new AccountName('q', 'h'))->toString());
         self::assertEquals(new AccountName('p'), $statement->proxied);
     }
 
@@ -67,5 +67,14 @@ final class RevokeProxyStatementTest extends TestCase
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
         self::assertSame($statement->toString(), $copy->toString());
+    }
+
+    public function testDefaultsToAnUnconditionalRevocationOnMySql57(): void
+    {
+        $origin = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build()))->bind('SELECT 1')->origin;
+        $statement = new RevokeProxyStatement($origin, new AccountName('p'), [new AccountName('u'), CurrentAccount::Authenticated]);
+        self::assertFalse($statement->ifExists);
+        self::assertFalse($statement->ignoreUnknownUser);
+        self::assertSame("REVOKE PROXY ON 'p' FROM 'u', CURRENT_USER", $statement->toString());
     }
 }

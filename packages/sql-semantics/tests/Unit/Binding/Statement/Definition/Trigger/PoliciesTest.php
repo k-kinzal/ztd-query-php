@@ -81,4 +81,12 @@ final class PoliciesTest extends TestCase
         self::assertInstanceOf(CreatePolicyStatement::class, $statement);
         self::assertNotSame([], $statement->diagnostics);
     }
+
+    #[TestWith(['create policy p on t as restrictive for select to public using (a > 0)', CreatePolicyStatement::class, 'CREATE POLICY "p" ON "public"."t" AS RESTRICTIVE FOR SELECT TO PUBLIC USING(("a" > 0))'])]
+    #[TestWith(['CREATE POLICY p ON t', CreatePolicyStatement::class, 'CREATE POLICY "p" ON "public"."t" AS PERMISSIVE FOR ALL TO PUBLIC'])]
+    public function testBindSpellsLowercasePolicies(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind($sql, strict: false);
+        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+    }
 }

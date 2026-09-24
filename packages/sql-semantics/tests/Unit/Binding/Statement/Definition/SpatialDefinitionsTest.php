@@ -83,4 +83,13 @@ final class SpatialDefinitionsTest extends TestCase
         (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('DROP SPATIAL REFERENCE SYSTEM ' . $input);
     }
 
+    #[TestWith(['create or replace spatial reference system 4326 name \'x\' definition \'y\'', CreateSpatialReferenceSystemStatement::class, 'CREATE OR REPLACE SPATIAL REFERENCE SYSTEM 4326 NAME \'x\' DEFINITION \'y\''])]
+    #[TestWith(['CREATE SPATIAL REFERENCE SYSTEM IF NOT EXISTS 0X10F4 NAME \'x\' DEFINITION \'y\'', CreateSpatialReferenceSystemStatement::class, 'CREATE SPATIAL REFERENCE SYSTEM IF NOT EXISTS 4340 NAME \'x\' DEFINITION \'y\''])]
+    #[TestWith(['CREATE SPATIAL REFERENCE SYSTEM 004326 NAME \'x\' DEFINITION \'y\'', CreateSpatialReferenceSystemStatement::class, 'CREATE SPATIAL REFERENCE SYSTEM 4326 NAME \'x\' DEFINITION \'y\''])]
+    #[TestWith(['CREATE SPATIAL REFERENCE SYSTEM 4326 NAME \'x\' DEFINITION \'y\'', CreateSpatialReferenceSystemStatement::class, 'CREATE SPATIAL REFERENCE SYSTEM 4326 NAME \'x\' DEFINITION \'y\''])]
+    public function testBindReadsEveryCreationPolicyAndIdentifierSpelling(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql, strict: false);
+        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+    }
 }

@@ -61,4 +61,15 @@ final class SettingScopesTest extends TestCase
         self::assertSame($written, $statement->toString());
         self::assertSame($written, $binder->bind($written)->toString());
     }
+
+    #[TestWith(['SET GLOBAL a = DEFAULT, b = DEFAULT', 'SET GLOBAL `a` = DEFAULT, GLOBAL `b` = DEFAULT'])]
+    #[TestWith(['SET GLOBAL a = 1, @u = 2, b = 3', 'SET GLOBAL `a` = 1, @`u` = 2, GLOBAL `b` = 3'])]
+    #[TestWith(['SET global a = 1, b = 2', 'SET GLOBAL `a` = 1, GLOBAL `b` = 2'])]
+    #[TestWith(['SET PERSIST a = 1, b = 2', 'SET PERSIST `a` = 1, PERSIST `b` = 2'])]
+    #[TestWith(['SET GLOBAL a = 1, @@b = 2', 'SET GLOBAL `a` = 1, SESSION `b` = 2'])]
+    public function testCarryAppliesTheScopeToLaterDefaultsAndAssignments(string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
+        self::assertSame($expected, $binder->bind($sql)->toString());
+    }
 }

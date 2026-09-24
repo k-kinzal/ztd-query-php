@@ -65,4 +65,29 @@ final class DateShiftBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\Literal::class, $shift->quantity);
         self::assertSame("'1 02'", $shift->quantity->text);
     }
+
+    /**
+     * @return list<array{Dialect, ?string, string, mixed}>
+     */
+    public static function providerBindReadsTheShiftOperandsUnitAndRules(): array
+    {
+        return [
+            [Dialect::MySql, null, 'select date_add(\'2020-01-01\', interval 1 day)', ['\'2020-01-01\'', '1', \SqlSemantics\Model\Scalar\Temporal\MySqlUnit::Day, \SqlSemantics\Model\Scalar\Temporal\ShiftDirection::Add, \SqlSemantics\Model\Scalar\Temporal\DateArithmeticRules::Current, \SqlSemantics\Model\Scalar\Temporal\IntervalOperandOrder::TemporalFirst]],
+            [Dialect::MySql, null, 'select subdate(\'2020-01-01\', 5)', ['\'2020-01-01\'', '5', \SqlSemantics\Model\Scalar\Temporal\MySqlUnit::Day, \SqlSemantics\Model\Scalar\Temporal\ShiftDirection::Subtract, \SqlSemantics\Model\Scalar\Temporal\DateArithmeticRules::Current, \SqlSemantics\Model\Scalar\Temporal\IntervalOperandOrder::TemporalFirst]],
+            [Dialect::MySql, null, 'select adddate(\'2020-01-01\', 5)', ['\'2020-01-01\'', '5', \SqlSemantics\Model\Scalar\Temporal\MySqlUnit::Day, \SqlSemantics\Model\Scalar\Temporal\ShiftDirection::Add, \SqlSemantics\Model\Scalar\Temporal\DateArithmeticRules::Current, \SqlSemantics\Model\Scalar\Temporal\IntervalOperandOrder::TemporalFirst]],
+            [Dialect::MySql, null, 'select \'2020-01-01\' - interval 3 hour', ['\'2020-01-01\'', '3', \SqlSemantics\Model\Scalar\Temporal\MySqlUnit::Hour, \SqlSemantics\Model\Scalar\Temporal\ShiftDirection::Subtract, \SqlSemantics\Model\Scalar\Temporal\DateArithmeticRules::Current, \SqlSemantics\Model\Scalar\Temporal\IntervalOperandOrder::TemporalFirst]],
+            [Dialect::MySql, null, 'select interval 4 minute + \'2020-01-01\'', ['\'2020-01-01\'', '4', \SqlSemantics\Model\Scalar\Temporal\MySqlUnit::Minute, \SqlSemantics\Model\Scalar\Temporal\ShiftDirection::Add, \SqlSemantics\Model\Scalar\Temporal\DateArithmeticRules::Current, \SqlSemantics\Model\Scalar\Temporal\IntervalOperandOrder::IntervalFirst]],
+            [Dialect::MySql, 'mysql-5.7.44', 'select date_sub(\'2020-01-01\', interval 1 day)', ['\'2020-01-01\'', '1', \SqlSemantics\Model\Scalar\Temporal\MySqlUnit::Day, \SqlSemantics\Model\Scalar\Temporal\ShiftDirection::Subtract, \SqlSemantics\Model\Scalar\Temporal\DateArithmeticRules::Legacy, \SqlSemantics\Model\Scalar\Temporal\IntervalOperandOrder::TemporalFirst]],
+        ];
+    }
+
+    #[DataProvider('providerBindReadsTheShiftOperandsUnitAndRules')]
+    public function testBindReadsTheShiftOperandsUnitAndRules(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build()))->bind($sql, strict: false);
+        self::assertInstanceOf(BoundSelect::class, $statement);
+        $shift = $statement->outputs[0]->expression;
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Temporal\DateShift::class, $shift);
+        self::assertSame($expected, [$shift->value->spelling(), $shift->quantity->spelling(), $shift->unit, $shift->direction, $shift->rules, $shift->operandOrder]);
+    }
 }

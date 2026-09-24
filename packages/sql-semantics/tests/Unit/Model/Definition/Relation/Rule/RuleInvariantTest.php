@@ -80,4 +80,89 @@ final class RuleInvariantTest extends TestCase
     {
         self::assertSame($images, RuleInvariant::images($event));
     }
+
+    public function testIdentityAcceptsANamedPostgresRule(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT true');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        RuleInvariant::identity($query->origin, 'r', $query->outputs[0]->expression);
+    }
+
+    public function testIdentityRejectsAConditionOfAnotherLanguage(): void
+    {
+        $postgres = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1');
+        $sqlite = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $sqlite);
+        $this->expectException(InvalidStructure::class);
+        RuleInvariant::identity($postgres->origin, 'r', $sqlite->outputs[0]->expression);
+    }
+
+    public function testActionsRejectAnActionOfAnotherLanguage(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundQuery::class, $query);
+        $this->expectException(InvalidStructure::class);
+        RuleInvariant::actions('r', RuleEvent::Insert, [$query], false, null, false);
+    }
+
+    public function testActionsRejectAConditionalNotify(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $notify = $binder->bind('NOTIFY c');
+        $condition = $binder->bind('SELECT true');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Notification\NotifyStatement::class, $notify);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $condition);
+        $this->expectException(InvalidStructure::class);
+        RuleInvariant::actions('r', RuleEvent::Insert, [$notify], false, $condition->outputs[0]->expression, false);
+    }
+
+    public function testActionsAcceptAnUnconditionalNotify(): void
+    {
+        $notify = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('NOTIFY c');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Notification\NotifyStatement::class, $notify);
+        self::assertSame([$notify], RuleInvariant::actions('r', RuleEvent::Insert, [$notify], false, null, false));
+    }
+
+    public function testActionsAcceptOneReturningActionOfAnUnconditionalInsteadRule(): void
+    {
+        $rule = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind('CREATE RULE r AS ON INSERT TO t DO INSTEAD INSERT INTO t VALUES (NEW.a) RETURNING a');
+        self::assertInstanceOf(CreateCommandRuleStatement::class, $rule);
+        self::assertSame($rule->actions, RuleInvariant::actions('r', RuleEvent::Insert, $rule->actions, true, null, false));
+    }
+
+    public function testActionsRejectTwoReturningActions(): void
+    {
+        $rule = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind('CREATE RULE r AS ON INSERT TO t DO INSTEAD INSERT INTO t VALUES (NEW.a) RETURNING a');
+        self::assertInstanceOf(CreateCommandRuleStatement::class, $rule);
+        $this->expectException(InvalidStructure::class);
+        RuleInvariant::actions('r', RuleEvent::Insert, [...$rule->actions, ...$rule->actions], true, null, false);
+    }
+
+    public function testActionsRejectAConditionalReturningAction(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)'));
+        $rule = $binder->bind('CREATE RULE r AS ON INSERT TO t DO INSTEAD INSERT INTO t VALUES (NEW.a) RETURNING a');
+        $condition = $binder->bind('SELECT true');
+        self::assertInstanceOf(CreateCommandRuleStatement::class, $rule);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $condition);
+        $this->expectException(InvalidStructure::class);
+        RuleInvariant::actions('r', RuleEvent::Insert, $rule->actions, true, $condition->outputs[0]->expression, false);
+    }
+
+    public function testActionsRejectAConditionalSelectRule(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $query = $binder->bind('SELECT true');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        $this->expectException(InvalidStructure::class);
+        RuleInvariant::actions('_RETURN', RuleEvent::Select, [$query], true, $query->outputs[0]->expression, true);
+    }
+
+    public function testActionsRejectASelectRuleWithTwoQueries(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundQuery::class, $query);
+        $this->expectException(InvalidStructure::class);
+        RuleInvariant::actions('_RETURN', RuleEvent::Select, [$query, $query], true, null, true);
+    }
 }

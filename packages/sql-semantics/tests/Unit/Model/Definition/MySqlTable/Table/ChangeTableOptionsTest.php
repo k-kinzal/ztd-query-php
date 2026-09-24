@@ -41,4 +41,35 @@ final class ChangeTableOptionsTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new ChangeTableOptions(new MySqlProperties(temporary: true));
     }
+
+    public function testAcceptsOnlyResets(): void
+    {
+        $change = new ChangeTableOptions(new MySqlProperties(), [TableOptionReset::PackKeys, TableOptionReset::StatsPersistent]);
+        self::assertSame([TableOptionReset::PackKeys, TableOptionReset::StatsPersistent], $change->resets);
+    }
+
+    public function testAcceptsOnlySetOptions(): void
+    {
+        $change = new ChangeTableOptions(new MySqlProperties(packKeys: true));
+        self::assertTrue($change->options->packKeys);
+        self::assertSame([], $change->resets);
+    }
+
+    public function testRejectsAnEmptyChange(): void
+    {
+        $this->expectExceptionObject(new InvalidStructure('A table option change requires at least one option.'));
+        new ChangeTableOptions(new MySqlProperties());
+    }
+
+    public function testRejectsStartTransaction(): void
+    {
+        $this->expectException(InvalidStructure::class);
+        new ChangeTableOptions(new MySqlProperties(packKeys: true, startTransaction: true));
+    }
+
+    public function testRejectsARepeatedReset(): void
+    {
+        $this->expectExceptionObject(new InvalidStructure('A table option is reset at most once.'));
+        new ChangeTableOptions(new MySqlProperties(), [TableOptionReset::PackKeys, TableOptionReset::PackKeys]);
+    }
 }

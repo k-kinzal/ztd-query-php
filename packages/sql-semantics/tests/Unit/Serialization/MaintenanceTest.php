@@ -76,4 +76,23 @@ final class MaintenanceTest extends TestCase
         self::assertInstanceOf(ReindexDatabaseStatement::class, $database);
         self::assertSame('REINDEX DATABASE "app"', Maintenance::reindex($database)->toString());
     }
+
+    #[TestWith(['REINDEX (CONCURRENTLY, VERBOSE, TABLESPACE x) TABLE t', ReindexObjectStatement::class, 'REINDEX(CONCURRENTLY, VERBOSE, TABLESPACE "x") TABLE "t"'])]
+    #[TestWith(['REINDEX (VERBOSE) TABLE t', ReindexObjectStatement::class, 'REINDEX(VERBOSE) TABLE "t"'])]
+    #[TestWith(['REINDEX TABLE t', ReindexObjectStatement::class, 'REINDEX TABLE "t"'])]
+    #[TestWith(['REINDEX (TABLESPACE x) INDEX i', ReindexObjectStatement::class, 'REINDEX(TABLESPACE "x") INDEX "i"'])]
+    public function testWriteSpellsReindexOptions(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind($sql, strict: false);
+        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+    }
+
+    #[TestWith(['VACUUM main INTO \'f\'', \SqlSemantics\Model\Statement\Maintenance\VacuumIntoStatement::class, 'VACUUM "main" INTO \'f\''])]
+    #[TestWith(['VACUUM INTO \'f\'', \SqlSemantics\Model\Statement\Maintenance\VacuumIntoStatement::class, 'VACUUM INTO \'f\''])]
+    #[TestWith(['VACUUM', \SqlSemantics\Model\Statement\Maintenance\VacuumDatabaseStatement::class, 'VACUUM'])]
+    public function testWriteSpellsSqliteVacuumTargets(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(a INT)')))->bind($sql, strict: false);
+        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+    }
 }

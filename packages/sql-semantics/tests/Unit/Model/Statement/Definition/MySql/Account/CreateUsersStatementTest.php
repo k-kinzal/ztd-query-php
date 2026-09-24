@@ -49,7 +49,7 @@ final class CreateUsersStatementTest extends TestCase
         self::assertInstanceOf(CreateUsersStatement::class, $statement);
         $changed = $statement->withAccounts([new AccountDefinition(new AccountName('b', 'h'), new PluginIdentification('auth_socket'), [RandomPassword::Generated])]);
         self::assertCount(1, $statement->accounts);
-        self::assertSame("CREATE USER 'b' @'h' IDENTIFIED WITH `auth_socket` AND IDENTIFIED BY RANDOM PASSWORD ACCOUNT LOCK", $changed->toString());
+        self::assertSame("CREATE USER 'b'@'h' IDENTIFIED WITH `auth_socket` AND IDENTIFIED BY RANDOM PASSWORD ACCOUNT LOCK", $changed->toString());
     }
 
     public function testWithIfNotExistsReplacesTheExistencePolicy(): void
@@ -72,7 +72,7 @@ final class CreateUsersStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE USER a');
         self::assertInstanceOf(CreateUsersStatement::class, $statement);
-        self::assertSame("CREATE USER 'a' DEFAULT ROLE 'r' @'%'", $statement->withDefaultRoles([new AccountName('r', '%')])->toString());
+        self::assertSame("CREATE USER 'a' DEFAULT ROLE 'r'@'%'", $statement->withDefaultRoles([new AccountName('r', '%')])->toString());
         self::assertSame([], $statement->defaultRoles);
     }
 

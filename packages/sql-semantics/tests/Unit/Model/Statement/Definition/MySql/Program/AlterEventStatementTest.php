@@ -34,7 +34,7 @@ final class AlterEventStatementTest extends TestCase
         self::assertInstanceOf(AlterEventStatement::class, $statement);
         self::assertSame(StatementKind::Alter, $statement->kind);
         self::assertSame(['archive', 'e'], $statement->changes->newName?->parts);
-        self::assertSame("ALTER DEFINER = 'ops' @'%' EVENT `e` ON SCHEDULE EVERY 2 WEEK ON COMPLETION NOT PRESERVE RENAME TO `archive`.`e` ENABLE COMMENT 'weekly' DO BEGIN DECLARE `x` integer; SET `x` = 1; END", $statement->toString());
+        self::assertSame("ALTER DEFINER = 'ops'@'%' EVENT `e` ON SCHEDULE EVERY 2 WEEK ON COMPLETION NOT PRESERVE RENAME TO `archive`.`e` ENABLE COMMENT 'weekly' DO BEGIN DECLARE `x` integer; SET `x` = 1; END", $statement->toString());
         self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
     }
 

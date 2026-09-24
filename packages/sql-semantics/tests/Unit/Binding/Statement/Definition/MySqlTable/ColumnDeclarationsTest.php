@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Statement\Definition\MySqlTable;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -67,5 +68,39 @@ final class ColumnDeclarationsTest extends TestCase
         [$parsed, $constraints] = ColumnDeclarations::parse($column, new Scope(new Identifiers(Dialect::MySql)));
         self::assertSame('c', $parsed->name);
         self::assertCount(1, $constraints);
+    }
+
+    /**
+     * @param list<string> $definitions
+     */
+    #[DataProvider('providerBindReadsEveryColumnDeclaration')]
+    public function testBindReadsEveryColumnDeclaration(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    /**
+     * @return iterable<string, array{Dialect, ?string, list<string>, string, string}>
+     */
+    public static function providerBindReadsEveryColumnDeclaration(): iterable
+    {
+        return [
+            'ALTER TABLE t ADD COLUMN c INT FIRST (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT, b INT)'], 'ALTER TABLE t ADD COLUMN c INT FIRST', 'ALTER TABLE `t` ADD COLUMN `c` integer FIRST'],
+            'ALTER TABLE t ADD c INT AFTER a (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT, b INT)'], 'ALTER TABLE t ADD c INT AFTER a', 'ALTER TABLE `t` ADD COLUMN `c` integer AFTER `a`'],
+            'ALTER TABLE t ADD COLUMN (c INT, d TEXT) (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT, b INT)'], 'ALTER TABLE t ADD COLUMN (c INT, d TEXT)', 'ALTER TABLE `t` ADD COLUMN(`c` integer, `d` text)'],
+            'ALTER TABLE t CHANGE COLUMN a z BIGINT NOT NULL AFTER b (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT, b INT)'], 'ALTER TABLE t CHANGE COLUMN a z BIGINT NOT NULL AFTER b', 'ALTER TABLE `t` CHANGE COLUMN `a` `z` bigint NOT NULL AFTER `b`'],
+            'ALTER TABLE t CHANGE a A INT FIRST (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT, b INT)'], 'ALTER TABLE t CHANGE a A INT FIRST', 'ALTER TABLE `t` CHANGE COLUMN `a` `A` integer FIRST'],
+            'ALTER TABLE t MODIFY COLUMN a TEXT FIRST (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT, b INT)'], 'ALTER TABLE t MODIFY COLUMN a TEXT FIRST', 'ALTER TABLE `t` MODIFY COLUMN `a` text FIRST'],
+            'ALTER TABLE t MODIFY a INT DEFAULT 1 AFTER b (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT, b INT)'], 'ALTER TABLE t MODIFY a INT DEFAULT 1 AFTER b', 'ALTER TABLE `t` MODIFY COLUMN `a` integer DEFAULT 1 AFTER `b`'],
+            'ALTER TABLE t ADD COLUMN c INT, ADD INDEX (c) (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT, b INT)'], 'ALTER TABLE t ADD COLUMN c INT, ADD INDEX (c)', 'ALTER TABLE `t` ADD COLUMN `c` integer, ADD INDEX(`c`)'],
+            'ALTER TABLE t ADD COLUMN C INT, ADD INDEX (c) (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT, b INT)'], 'ALTER TABLE t ADD COLUMN C INT, ADD INDEX (c)', 'ALTER TABLE `t` ADD COLUMN `C` integer, ADD INDEX(`C`)'],
+            'ALTER TABLE t CHANGE a A BIGINT, ADD INDEX (a) (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT, b INT)'], 'ALTER TABLE t CHANGE a A BIGINT, ADD INDEX (a)', 'ALTER TABLE `t` CHANGE COLUMN `a` `A` bigint, ADD INDEX(`A`)'],
+            'ALTER TABLE t ADD COLUMN c INT, DROP COLUMN c (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT, b INT)'], 'ALTER TABLE t ADD COLUMN c INT, DROP COLUMN c', 'ALTER TABLE `t` ADD COLUMN `c` integer, DROP COLUMN `c`'],
+            'ALTER TABLE t ADD COLUMN t.c INT (MySql mysql-5.7.44)' => [Dialect::MySql, 'mysql-5.7.44', ['CREATE TABLE t (a INT, b INT)'], 'ALTER TABLE t ADD COLUMN t.c INT', 'ALTER TABLE `t` ADD COLUMN `c` integer'],
+            'ALTER TABLE t CHANGE a test.t.z INT FIRST (MySql mysql-5.7.44)' => [Dialect::MySql, 'mysql-5.7.44', ['CREATE TABLE t (a INT, b INT)'], 'ALTER TABLE t CHANGE a test.t.z INT FIRST', 'ALTER TABLE `t` CHANGE COLUMN `a` `z` integer FIRST'],
+            'ALTER TABLE t ADD .c INT AFTER a (MySql mysql-5.6.51)' => [Dialect::MySql, 'mysql-5.6.51', ['CREATE TABLE t (a INT, b INT)'], 'ALTER TABLE t ADD .c INT AFTER a', 'ALTER TABLE `t` ADD COLUMN `c` integer AFTER `a`'],
+            'ALTER TABLE t MODIFY t.a BIGINT (MySql mysql-5.7.44)' => [Dialect::MySql, 'mysql-5.7.44', ['CREATE TABLE t (a INT, b INT)'], 'ALTER TABLE t MODIFY t.a BIGINT', 'ALTER TABLE `t` MODIFY COLUMN `a` bigint'],
+        ];
     }
 }

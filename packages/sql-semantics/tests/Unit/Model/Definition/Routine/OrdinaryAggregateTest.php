@@ -21,4 +21,9 @@ final class OrdinaryAggregateTest extends TestCase
         self::assertSame([$argument], $target->parameters);
     }
 
+    public function testSignatureRejectsMoreThanCatalogSchemaAndAggregate(): void
+    {
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        new Routine\OrdinaryAggregate(new QualifiedName(['x', 'a', 'b', 'f']), [new Routine\AggregateParameter(\SqlSemantics\Type\TypeDescriptor::builtin(Dialect::PostgreSql, 'integer'))]);
+    }
 }

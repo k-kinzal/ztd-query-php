@@ -50,4 +50,22 @@ final class TableChangesTest extends TestCase
     {
         self::assertSame('`a`, `b`', TableChanges::selection(new NamedPartitions(['a', 'b']))->toString());
     }
+
+    #[TestWith(['ALTER TABLE t DISCARD TABLESPACE', 'DISCARD TABLESPACE'])]
+    #[TestWith(['ALTER TABLE t PARTITION BY HASH(id) PARTITIONS 2', 'PARTITION BY HASH(`id`) PARTITIONS 2'])]
+    #[TestWith(['ALTER TABLE t ENGINE = InnoDB', 'ENGINE `InnoDB`'])]
+    #[TestWith(['ALTER TABLE t DROP PARTITION p, q', 'DROP PARTITION `p`, `q`'])]
+    #[TestWith(['ALTER TABLE t OPTIMIZE PARTITION p', 'OPTIMIZE PARTITION `p`'])]
+    #[TestWith(['ALTER TABLE t TRUNCATE PARTITION p', 'TRUNCATE PARTITION `p`'])]
+    #[TestWith(['ALTER TABLE t REORGANIZE PARTITION p INTO (PARTITION q)', 'REORGANIZE PARTITION `p` INTO(PARTITION `q`)'])]
+    #[TestWith(['ALTER TABLE t REORGANIZE PARTITION', 'REORGANIZE PARTITION'])]
+    #[TestWith(['ALTER TABLE t CHECK PARTITION ALL QUICK FAST', 'CHECK PARTITION ALL QUICK FAST'])]
+    #[TestWith(['ALTER TABLE t REPAIR PARTITION p QUICK EXTENDED', 'REPAIR PARTITION `p` QUICK EXTENDED'])]
+    #[TestWith(['ALTER TABLE t ADD PARTITION (PARTITION p3)', 'ADD PARTITION(PARTITION `p3`)'])]
+    public function testWriteWritesEveryTableAndPartitionChange(string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT) PARTITION BY HASH(id) PARTITIONS 2')))->bind($sql);
+        self::assertInstanceOf(AlterTableStatement::class, $statement);
+        self::assertSame($expected, TableChanges::write($statement->alterations[0])?->toString());
+    }
 }

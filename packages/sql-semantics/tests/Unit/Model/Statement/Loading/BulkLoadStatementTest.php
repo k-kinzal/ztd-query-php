@@ -6,6 +6,7 @@ namespace Tests\Unit\Model\Statement\Loading;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
@@ -125,5 +126,83 @@ final class BulkLoadStatementTest extends TestCase
         self::assertSame("LOAD DATA INFILE 'f' INTO TABLE `t` MEMORY = 10 ALGORITHM = BULK", $statement->withMemory('10')->toString());
         $this->expectException(InvalidStructure::class);
         $statement->withMemory('010');
+    }
+
+    public function testKeyOrderedIsOffByDefault(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind("LOAD DATA INFILE 'f' INTO TABLE t FIELDS TERMINATED BY ',' ALGORITHM = BULK");
+        self::assertInstanceOf(BulkLoadStatement::class, $statement);
+        $copy = new BulkLoadStatement($statement->origin, $statement->location, $statement->file, $statement->table);
+        self::assertFalse($copy->keyOrdered);
+        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE `t` ALGORITHM = BULK", $copy->toString());
+        self::assertSame("LOAD DATA INFILE 'f' INTO TABLE `t` FIELDS TERMINATED BY ',' ALGORITHM = BULK", $statement->toString());
+    }
+
+    public function testOriginRequiresMySql80(): void
+    {
+        $bulk = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind("LOAD DATA INFILE 'f' INTO TABLE t ALGORITHM = BULK");
+        $legacy = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build('CREATE TABLE t(a INT)')))->bind("LOAD DATA INFILE 'f' INTO TABLE t");
+        self::assertInstanceOf(BulkLoadStatement::class, $bulk);
+        $this->expectException(InvalidStructure::class);
+        new BulkLoadStatement($legacy->origin, $bulk->location, $bulk->file, $bulk->table);
+    }
+
+    public function testWithFileRequiresATextLiteral(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind("LOAD DATA INFILE 'f' INTO TABLE t ALGORITHM = BULK");
+        $number = Expression::literal(1, Dialect::MySql);
+        self::assertInstanceOf(BulkLoadStatement::class, $statement);
+        self::assertInstanceOf(Literal::class, $number);
+        $this->expectException(InvalidStructure::class);
+        $statement->withFile($number);
+    }
+
+    #[TestWith(['mysql-8.2.0', 2, null, "LOAD DATA INFILE 'f' INTO TABLE `t` PARALLEL = 2 ALGORITHM = BULK"])]
+    #[TestWith(['mysql-8.2.0', 0, '0', "LOAD DATA INFILE 'f' INTO TABLE `t` PARALLEL = 0 MEMORY = 0 ALGORITHM = BULK"])]
+    public function testWithParallelAndMemoryAcceptTheirRelease(string $version, int $parallel, ?string $memory, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t(a INT)')))->bind("LOAD DATA INFILE 'f' INTO TABLE t ALGORITHM = BULK");
+        self::assertInstanceOf(BulkLoadStatement::class, $statement);
+        self::assertSame($expected, $statement->withParallel($parallel)->withMemory($memory)->toString());
+    }
+
+    #[TestWith(['mysql-8.1.0', 2, null])]
+    #[TestWith(['mysql-8.2.0', -1, null])]
+    #[TestWith(['mysql-8.2.0', null, '01'])]
+    #[TestWith(['mysql-8.2.0', null, "1\n"])]
+    public function testWithParallelAndMemoryRejectInvalidRequests(string $version, ?int $parallel, ?string $memory): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t(a INT)')))->bind("LOAD DATA INFILE 'f' INTO TABLE t ALGORITHM = BULK");
+        self::assertInstanceOf(BulkLoadStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        $statement->withParallel($parallel)->withMemory($memory);
+    }
+
+    public function testWithFileCountAcceptsOneFile(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind("LOAD DATA INFILE 'f' INTO TABLE t ALGORITHM = BULK");
+        self::assertInstanceOf(BulkLoadStatement::class, $statement);
+        self::assertSame(1, $statement->withFileCount(1)->fileCount);
+    }
+
+    public function testWithCompressionRequiresMySql84AndATextLiteral(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.3.0'))->build('CREATE TABLE t(a INT)')))->bind("LOAD DATA INFILE 'f' INTO TABLE t ALGORITHM = BULK");
+        $name = Expression::literal('zstd', Dialect::MySql);
+        self::assertInstanceOf(BulkLoadStatement::class, $statement);
+        self::assertInstanceOf(Literal::class, $name);
+        $this->expectException(InvalidStructure::class);
+        $statement->withCompression($name);
+    }
+
+    public function testWithCompressionRejectsANumber(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind("LOAD DATA INFILE 'f' INTO TABLE t ALGORITHM = BULK");
+        $number = Expression::literal(1, Dialect::MySql);
+        self::assertInstanceOf(BulkLoadStatement::class, $statement);
+        self::assertInstanceOf(Literal::class, $number);
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('A compression algorithm is named by a text literal.');
+        $statement->withCompression($number);
     }
 }

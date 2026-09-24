@@ -170,4 +170,13 @@ final class SpecialSettingsTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Configuration\Setting::class, $session_authorization->settings[0]);
         self::assertSame(['session_authorization'], $session_authorization->settings[0]->name);
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(["SET SCHEMA 'a'", 'SET "search_path" = \'a\''])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['SET XML OPTION DOCUMENT', 'SET "xmloption" = DOCUMENT'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['SET SESSION AUTHORIZATION DEFAULT', 'SET "session_authorization" = DEFAULT'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(["set time zone 'UTC'", 'SET "timezone" = \'UTC\''])]
+    public function testBindNamesEachSpecialPostgreSqlSetting(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+    }
 }

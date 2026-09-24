@@ -96,4 +96,84 @@ final class CreateAggregateStatementTest extends TestCase
         self::assertInstanceOf(CreateAggregateStatement::class, $statement);
         self::assertSame('CREATE OR REPLACE AGGREGATE "a"(integer)(SFUNC = "f", STYPE = integer)', $statement->withOrReplace(true)->toString());
     }
+
+    public function testOrReplaceDefaultsToAPlainCreate(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE AGGREGATE a(integer) (sfunc = f, stype = integer)');
+        self::assertInstanceOf(CreateAggregateStatement::class, $statement);
+        self::assertFalse((new CreateAggregateStatement($statement->origin, $statement->aggregate, $statement->options))->orReplace);
+    }
+
+    public function testRejectsAnotherDialect(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE AGGREGATE a(integer) (sfunc = f, stype = integer)');
+        self::assertInstanceOf(CreateAggregateStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        new CreateAggregateStatement(new \SqlSemantics\Model\Statement\Origin('s0', $statement->source, Dialect::MySql), $statement->aggregate, $statement->options);
+    }
+
+    public function testRejectsASetArgumentAmongDirectArguments(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE AGGREGATE a(integer ORDER BY integer) (sfunc = f, stype = integer)');
+        self::assertInstanceOf(CreateAggregateStatement::class, $statement);
+        $plain = new AggregateParameter(TypeDescriptor::builtin(Dialect::PostgreSql, 'integer'), AggregateInputMode::Implicit, null, false);
+        $set = new AggregateParameter(TypeDescriptor::builtin(Dialect::PostgreSql, 'integer'), AggregateInputMode::Implicit, null, true);
+        $this->expectException(InvalidStructure::class);
+        $statement->withAggregate(new \SqlSemantics\Model\Definition\Routine\OrderedSetAggregate(new QualifiedName(['a']), [$set, $plain], [$plain]));
+    }
+
+    public function testRejectsASetArgumentAmongOrderedArguments(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE AGGREGATE a(integer ORDER BY integer) (sfunc = f, stype = integer)');
+        self::assertInstanceOf(CreateAggregateStatement::class, $statement);
+        $plain = new AggregateParameter(TypeDescriptor::builtin(Dialect::PostgreSql, 'integer'), AggregateInputMode::Implicit, null, false);
+        $set = new AggregateParameter(TypeDescriptor::builtin(Dialect::PostgreSql, 'integer'), AggregateInputMode::Implicit, null, true);
+        $this->expectException(InvalidStructure::class);
+        $statement->withAggregate(new \SqlSemantics\Model\Definition\Routine\OrderedSetAggregate(new QualifiedName(['a']), [$plain], [$plain, $set]));
+    }
+
+    /**
+     * @param non-empty-list<DefinitionOption> $options
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerInvalidOptions')]
+    public function testRejectsAnIncompleteOrForeignOptionList(array $options): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE AGGREGATE a(integer) (sfunc = f, stype = integer)');
+        self::assertInstanceOf(CreateAggregateStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        $statement->withOptions($options);
+    }
+
+    /**
+     * @return iterable<string, array{non-empty-list<DefinitionOption>}>
+     */
+    public static function providerInvalidOptions(): iterable
+    {
+        $sfunc = new DefinitionOption(AggregateAttribute::Sfunc, new QualifiedName(['f']));
+        $stype = new DefinitionOption(AggregateAttribute::Stype, TypeDescriptor::builtin(Dialect::PostgreSql, 'integer'));
+        yield 'foreign attribute' => [[$sfunc, $stype, new DefinitionOption(\SqlSemantics\Model\Definition\TypeSystem\Definition\BaseTypeAttribute::Category, 'U')]];
+        yield 'absent value' => [[$sfunc, $stype, new DefinitionOption(AggregateAttribute::Finalfunc, null)]];
+        yield 'missing state function' => [[$stype]];
+        yield 'missing state type' => [[$sfunc]];
+        yield 'moving attribute without mstype' => [[$sfunc, $stype, new DefinitionOption(AggregateAttribute::Msspace, 4)]];
+    }
+
+    public function testMovingRequiresTheForwardFunctionWithMstype(): void
+    {
+        $this->expectException(InvalidStructure::class);
+        CreateAggregateStatement::moving([new DefinitionOption(AggregateAttribute::Mstype, TypeDescriptor::builtin(Dialect::PostgreSql, 'integer')), new DefinitionOption(AggregateAttribute::Minvfunc, new QualifiedName(['f']))]);
+    }
+
+    public function testMovingNamesTheAttributeThatRequiresMstype(): void
+    {
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('The MSSPACE attribute requires MSTYPE.');
+        CreateAggregateStatement::moving([new DefinitionOption(AggregateAttribute::Msspace, 4)]);
+    }
+
+    public function testMovingAcceptsEveryMovingAttributeWithMstype(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE AGGREGATE a(integer) (sfunc = f, stype = integer, mstype = integer, msfunc = g, minvfunc = h, msspace = 4)');
+        self::assertSame('CREATE AGGREGATE "a"(integer)(SFUNC = "f", STYPE = integer, MSTYPE = integer, MSFUNC = "g", MINVFUNC = "h", MSSPACE = 4)', $statement->toString());
+    }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Statement\Definition\View;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
@@ -76,4 +77,65 @@ final class MaterializedViewBinderTest extends TestCase
         self::assertSame(DropBehavior::Restrict, $statement->behavior);
     }
 
+    /**
+     * @return list<array{Dialect, ?string, string, mixed}>
+     */
+    public static function providerBindReadsEachLowercaseForm(): array
+    {
+        return [
+            [Dialect::PostgreSql, null, 'create materialized view mv2 as select 1 as a with no data', [CreateMaterializedViewStatement::class, 'CREATE MATERIALIZED VIEW "mv2" AS SELECT 1 AS "a" WITH NO DATA']],
+            [Dialect::PostgreSql, null, 'refresh materialized view mv with no data', [RefreshMaterializedViewStatement::class, 'REFRESH MATERIALIZED VIEW "mv" WITH NO DATA']],
+            [Dialect::PostgreSql, null, 'refresh materialized view concurrently mv', [RefreshMaterializedViewStatement::class, 'REFRESH MATERIALIZED VIEW CONCURRENTLY "mv"']],
+            [Dialect::PostgreSql, null, 'drop materialized view if exists mv, mv2 cascade', [DropMaterializedViewsStatement::class, 'DROP MATERIALIZED VIEW IF EXISTS "mv", "mv2" CASCADE']],
+        ];
+    }
+
+    #[DataProvider('providerBindReadsEachLowercaseForm')]
+    public function testBindReadsEachLowercaseForm(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE MATERIALIZED VIEW mv AS SELECT 1 AS a')))->bind($sql, strict: false);
+        self::assertSame($expected, [$statement::class, $statement->toString()]);
+    }
+
+    public function testRefreshRejectsAConcurrentRefreshWithoutData(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE MATERIALIZED VIEW mv AS SELECT 1 AS a'));
+        $this->expectException(InvalidSql::class);
+        $binder->bind('refresh materialized view concurrently mv with no data', strict: false);
+    }
+
+
+    public function testCreateReadsItsModifiersOutsideTheQuery(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $plain = $binder->bind("CREATE MATERIALIZED VIEW m AS SELECT 1 AS if, 2 AS unlogged, 'WITH NO DATA' AS x");
+        $modified = $binder->bind('CREATE UNLOGGED MATERIALIZED VIEW IF NOT EXISTS m AS SELECT 1 WITH NO DATA');
+        self::assertInstanceOf(CreateMaterializedViewStatement::class, $plain);
+        self::assertInstanceOf(CreateMaterializedViewStatement::class, $modified);
+        self::assertSame([false, false, true], [$plain->unlogged, $plain->ifNotExists, $plain->withData]);
+        self::assertSame([true, true, false], [$modified->unlogged, $modified->ifNotExists, $modified->withData]);
+    }
+
+    /**
+     * @param list<string> $words
+     */
+    #[\PHPUnit\Framework\Attributes\TestWith([['CREATE', 'MATERIALIZED', 'VIEW', 'M'], true])]
+    #[\PHPUnit\Framework\Attributes\TestWith([['CREATE', 'UNLOGGED', 'MATERIALIZED', 'VIEW', 'M'], true])]
+    #[\PHPUnit\Framework\Attributes\TestWith([['CREATE', 'VIEW', 'MATERIALIZED', 'AS'], false])]
+    #[\PHPUnit\Framework\Attributes\TestWith([['DROP', 'VIEW', 'MATERIALIZED'], false])]
+    public function testDeclaresRecognizesTheObjectClassNotAnObjectName(array $words, bool $expected): void
+    {
+        self::assertSame($expected, \SqlSemantics\Binding\Statement\Definition\View\MaterializedViewBinder::declares($words));
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['CREATE RECURSIVE VIEW materialized (a) AS TABLE x', 'CREATE RECURSIVE VIEW "materialized"("a") AS TABLE "public"."x"'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['CREATE VIEW materialized AS TABLE x', 'CREATE VIEW "materialized" AS TABLE "public"."x"'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['DROP VIEW materialized', 'DROP VIEW "materialized"'])]
+    public function testBindLeavesAViewNamedMaterializedToOrdinaryViews(string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE x (a int)'));
+        $statement = $binder->bind($sql);
+        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, $binder->bind($expected)->toString());
+    }
 }

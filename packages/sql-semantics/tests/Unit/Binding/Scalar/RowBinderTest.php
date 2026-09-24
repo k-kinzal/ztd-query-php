@@ -49,4 +49,16 @@ final class RowBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\ColumnReference::class, $statement->outputs[0]->expression);
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, 'SELECT row(1, 2)', 'SELECT ROW(1, 2)'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, 'SELECT (a, b) FROM t', 'SELECT ROW("a", "b") FROM "public"."t"'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, 'SELECT ROW(a) FROM t', 'SELECT ROW("a") FROM "public"."t"'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, 'SELECT ROW() FROM t', 'SELECT ROW() FROM "public"."t"'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'SELECT row(1, 2) = row(a, b) FROM t', 'SELECT ((1, 2) = (`a`, `b`)) FROM `t`'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'SELECT (a, b) IN ((1, 2)) FROM t', 'SELECT ((`a`, `b`) IN ((1, 2))) FROM `t`'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::Sqlite, 'SELECT (a, b) = (1, 2) FROM t', 'SELECT (("a", "b") = (1, 2)) FROM "main"."t"'])]
+    public function testBindWritesEveryRowConstructorBack(Dialect $dialect, string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(a INT, b INT)')))->bind($sql)->toString());
+    }
 }

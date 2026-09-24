@@ -107,4 +107,23 @@ final class AlterRelationStatementTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new AlterRelationStatement((new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1')->origin, Kind\RelationKind::Index, new QualifiedName(['ix']), [new \SqlSemantics\Model\Definition\Relation\Storage\SetTablespace('fast')], only: true);
     }
+
+    public function testAcceptsAnIndexPartitionOnAnIndex(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER INDEX i ATTACH PARTITION p');
+        self::assertInstanceOf(AlterRelationStatement::class, $statement);
+        self::assertSame(Kind\RelationKind::Index, $statement->relationKind);
+        $copy = new AlterRelationStatement($statement->origin, Kind\RelationKind::Index, $statement->name, $statement->actions);
+        self::assertFalse($copy->ifExists);
+        self::assertFalse($copy->only);
+        self::assertSame('ALTER INDEX "i" ATTACH PARTITION "p"', $copy->toString());
+    }
+
+    public function testRejectsATablePartitionOnAView(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER TABLE t DETACH PARTITION p', strict: false);
+        self::assertInstanceOf(AlterRelationStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        new AlterRelationStatement($statement->origin, Kind\RelationKind::View, $statement->name, $statement->actions);
+    }
 }

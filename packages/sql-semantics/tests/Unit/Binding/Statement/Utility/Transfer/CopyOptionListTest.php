@@ -6,6 +6,7 @@ namespace Tests\Unit\Binding\Statement\Utility\Transfer;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Ast\DialectParser;
 use SqlSemantics\Ast\Identifiers;
@@ -52,5 +53,17 @@ final class CopyOptionListTest extends TestCase
     {
         $source = Tree::outer((new DialectParser(Dialect::PostgreSql))->parse('COPY t (a, "B") TO STDOUT'), ['columnList'])[0];
         self::assertSame(['a', 'B'], CopyOptionList::names($source, new Identifiers(Dialect::PostgreSql)));
+    }
+
+    /**
+     * @param list<array{string, mixed}> $expected
+     */
+    #[TestWith(["COPY t FROM STDIN binary csv header delimiter ',' null 'x' escape 'e' encoding 'utf8' force not null a force quote * force null b freeze", [['format', 'binary'], ['format', 'csv'], ['header', null], ['delimiter', ','], ['null', 'x'], ['escape', 'e'], ['encoding', 'utf8'], ['force_not_null', ['a']], ['force_quote', true], ['force_null', ['b']], ['freeze', null]]])]
+    #[TestWith(['COPY t TO STDOUT', []])]
+    #[TestWith(['COPY t TO STDOUT (format csv)', [['format', 'csv']]])]
+    public function testReadReadsEveryLegacyKeyword(string $sql, array $expected): void
+    {
+        $source = Tree::outer((new DialectParser(Dialect::PostgreSql))->parse($sql), ['CopyStmt'])[0];
+        self::assertSame($expected, array_map(static fn (array $option): array => [$option[0], $option[1]], CopyOptionList::read($source, new Identifiers(Dialect::PostgreSql))));
     }
 }

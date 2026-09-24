@@ -38,4 +38,14 @@ final class SequencesTest extends TestCase
         self::assertSame('RESTART', Sequences::option(new Identity\RestartIdentity(null))->toString());
         self::assertSame('AS smallint', Sequences::option(new Identity\SequenceStorage(\SqlSemantics\Type\TypeDescriptor::builtin(Dialect::PostgreSql, 'smallint')))->toString());
     }
+
+    #[TestWith(['CREATE TEMP SEQUENCE IF NOT EXISTS s', \SqlSemantics\Model\Statement\Definition\Sequence\CreateSequenceStatement::class, 'CREATE TEMPORARY SEQUENCE IF NOT EXISTS "s"'])]
+    #[TestWith(['CREATE SEQUENCE s', \SqlSemantics\Model\Statement\Definition\Sequence\CreateSequenceStatement::class, 'CREATE SEQUENCE "s"'])]
+    #[TestWith(['ALTER SEQUENCE IF EXISTS s INCREMENT 2', \SqlSemantics\Model\Statement\Definition\Sequence\AlterSequenceStatement::class, 'ALTER SEQUENCE IF EXISTS "s" INCREMENT BY 2'])]
+    #[TestWith(['ALTER SEQUENCE s INCREMENT 2', \SqlSemantics\Model\Statement\Definition\Sequence\AlterSequenceStatement::class, 'ALTER SEQUENCE "s" INCREMENT BY 2'])]
+    public function testWriteSpellsSequenceHeads(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql, strict: false);
+        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+    }
 }

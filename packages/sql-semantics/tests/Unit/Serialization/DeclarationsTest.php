@@ -50,6 +50,32 @@ final class DeclarationsTest extends TestCase
         self::assertSame($expected, $rebound->toString());
     }
 
+    #[TestWith(['CREATE TABLE t (id INTEGER CONSTRAINT pk PRIMARY KEY DESC, n TEXT)', 'CREATE TABLE "main"."t"("id" "integer" CONSTRAINT "pk" PRIMARY KEY DESC, "n" "text")', 'maybe-null'])]
+    #[TestWith(['CREATE TABLE t (id INTEGER, n TEXT, PRIMARY KEY (id DESC))', 'CREATE TABLE "main"."t"("id" "integer" NOT NULL, "n" "text", PRIMARY KEY("id" DESC))', 'not-null'])]
+    #[TestWith(['CREATE TABLE t (id TEXT PRIMARY KEY DESC, n TEXT)', 'CREATE TABLE "main"."t"("id" "text", "n" "text", PRIMARY KEY("id" DESC))', 'maybe-null'])]
+    public function testColumnKeyKeepsADescendingSqliteIntegerKeyOnItsColumn(string $sql, string $expected, string $nullability): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build());
+        $statement = $binder->bind($sql);
+        self::assertInstanceOf(CreateTableStatement::class, $statement);
+        $key = $statement->definition->table->constraints[0];
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\PrimaryKey::class, $key);
+        self::assertSame(\SqlSemantics\Schema\Index\Direction::Descending, $key->keys[0]->direction);
+        self::assertSame($nullability, $statement->definition->table->columns[0]->nullability->value);
+        self::assertSame($expected, $statement->toString());
+        $rebound = $binder->bind($expected);
+        self::assertInstanceOf(CreateTableStatement::class, $rebound);
+        self::assertSame($nullability, $rebound->definition->table->columns[0]->nullability->value);
+        self::assertSame($expected, $rebound->toString());
+    }
+
+    public function testColumnKeyLeavesOtherDialectsToTableConstraints(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE t (id INTEGER PRIMARY KEY)');
+        self::assertInstanceOf(CreateTableStatement::class, $statement);
+        self::assertNull(Declarations::columnKey($statement->definition->table, Dialect::PostgreSql));
+    }
+
     public function testTableFoldsTheSqliteAutoincrementPrimaryKeyIntoItsColumn(): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build());

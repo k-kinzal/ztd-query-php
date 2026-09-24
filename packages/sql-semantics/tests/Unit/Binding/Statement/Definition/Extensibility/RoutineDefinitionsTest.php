@@ -8,8 +8,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Ast\DialectParser;
+use SqlSemantics\Ast\Identifiers;
+use SqlSemantics\Ast\Tree;
 use SqlSemantics\Binder;
+use SqlSemantics\Binding\Query\QueryContext;
 use SqlSemantics\Binding\Statement\Definition\Extensibility\RoutineDefinitions;
+use SqlSemantics\Binding\TableResolver;
 use SqlSemantics\Dialect;
 use SqlSemantics\InvalidSql;
 use SqlSemantics\Model\Definition\Routine\ColumnTypeReference;
@@ -101,5 +106,31 @@ final class RoutineDefinitionsTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("CREATE FUNCTION db.app.f() RETURNS integer LANGUAGE sql AS 'SELECT 1'");
         self::assertInstanceOf(Statement\CreateFunctionStatement::class, $statement);
         self::assertSame(['db', 'app', 'f'], $statement->name->parts);
+    }
+
+    /**
+     * @param class-string<object> $class
+     */
+    #[TestWith(["create or replace procedure p(a integer, b text default 'x') language sql as 'SELECT 1'", Statement\CreateProcedureStatement::class, 'CREATE OR REPLACE PROCEDURE "p"("a" integer, "b" text DEFAULT \'x\') LANGUAGE "sql" AS \'SELECT 1\''])]
+    #[TestWith(["CREATE FUNCTION f(a integer, b integer) RETURNS SETOF integer LANGUAGE sql AS 'SELECT 1'", Statement\CreateFunctionStatement::class, 'CREATE FUNCTION "f"("a" integer, "b" integer) RETURNS SETOF integer LANGUAGE "sql" AS \'SELECT 1\''])]
+    #[TestWith(["CREATE FUNCTION f(a integer) RETURNS TABLE (x integer, y text) LANGUAGE sql AS 'SELECT 1, 2'", Statement\CreateTableFunctionStatement::class, 'CREATE FUNCTION "f"("a" integer) RETURNS TABLE("x" integer, "y" text) LANGUAGE "sql" AS \'SELECT 1, 2\''])]
+    public function testCreateKeepsEveryParameterAndColumn(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql);
+        self::assertInstanceOf($class, $statement);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    public function testHelpersReadParsedDeclarations(): void
+    {
+        $context = new QueryContext(new TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new Identifiers(Dialect::PostgreSql), 'public'));
+        $source = Tree::outer((new DialectParser(Dialect::PostgreSql))->parse("CREATE FUNCTION f(a integer, b text) RETURNS TABLE (x integer, y text) LANGUAGE sql AS 'SELECT 1, 2'"), ['CreateFunctionStmt'])[0];
+        $parameters = RoutineDefinitions::parameters($source, false, $context);
+        self::assertCount(2, $parameters);
+        self::assertSame(['x', 'y'], array_column(RoutineDefinitions::columns($source, $parameters, $context), 'name'));
+        $setOf = Tree::outer((new DialectParser(Dialect::PostgreSql))->parse("CREATE FUNCTION f() RETURNS SETOF integer LANGUAGE sql AS 'SELECT 1'"), ['func_type'])[0];
+        self::assertTrue(RoutineDefinitions::setOf($setOf));
+        self::assertTrue(RoutineDefinitions::result($setOf, $context)->setOf);
+        self::assertSame(['f'], RoutineDefinitions::name(new \SqlSemantics\Model\Relation\QualifiedName(['f']), $source)->parts);
     }
 }

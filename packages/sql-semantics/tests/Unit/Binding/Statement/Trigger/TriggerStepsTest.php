@@ -48,4 +48,27 @@ final class TriggerStepsTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\TriggerColumn::class, $delete->where->right);
         self::assertSame(\SqlSemantics\Model\Trigger\RowVersion::Old, $delete->where->right->version);
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['create trigger tr after insert on t begin insert into u values (new.a); update u set a = 1 where a = new.a; delete from u where a = 0; select 1; end', 'CREATE TRIGGER "tr" AFTER INSERT ON "main"."t" FOR EACH ROW BEGIN INSERT INTO "u" VALUES ("new"."a"); UPDATE "u" SET "a" = 1 WHERE ("a" = "new"."a"); DELETE FROM "u" WHERE ("a" = 0); SELECT 1; END'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['create trigger tr after insert on t begin insert into u select a from t; update u set a = t.a from t; end', 'CREATE TRIGGER "tr" AFTER INSERT ON "main"."t" FOR EACH ROW BEGIN INSERT INTO "u" SELECT "a" AS "a" FROM "main"."t"; UPDATE "u" SET "a" = "t"."a" FROM "main"."t"; END'])]
+    public function testBindKeepsEveryStepForm(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t (a INT)', 'CREATE TABLE u (a INT)')))->bind($sql)->toString());
+    }
+
+    public function testStepRejectsAnIndexHint(): void
+    {
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::TriggerIndexHint->message());
+        (new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t (a INT)', 'CREATE TABLE u (a INT)')))->bind('create trigger tr after insert on t begin update u indexed by i set a = 1; end');
+    }
+
+    public function testStepBindsOneParsedStep(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t (a INT)', 'CREATE TABLE u (a INT)');
+        $context = new \SqlSemantics\Binding\Query\QueryContext(new \SqlSemantics\Binding\TableResolver($schema, new \SqlSemantics\Ast\Identifiers(Dialect::Sqlite), 'main'));
+        $step = (new \SqlSemantics\Ast\DialectParser(Dialect::Sqlite))->parse('create trigger tr after insert on t begin delete from u where a = 0; end')->find('trigger_cmd')[0];
+        $bound = TriggerSteps::step($step, $context, new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::Sqlite), queries: $context));
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\DeleteTableStatement::class, $bound);
+    }
 }

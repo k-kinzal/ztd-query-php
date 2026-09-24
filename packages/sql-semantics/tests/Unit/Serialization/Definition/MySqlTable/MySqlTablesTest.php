@@ -47,4 +47,19 @@ final class MySqlTablesTest extends TestCase
     {
         self::assertSame('FORCE', MySqlTables::alteration(\SqlSemantics\Model\Definition\MySqlTable\Table\TableCommand::Force)->toString());
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.4.7', 'ALTER TABLE t WITHOUT VALIDATION, ADD m INT', 'ALTER TABLE `t` WITHOUT VALIDATION, ADD COLUMN `m` integer'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.4.7', 'ALTER TABLE t ALGORITHM = COPY', 'ALTER TABLE `t` ALGORITHM = COPY'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.4.7', 'ALTER TABLE t LOCK = SHARED', 'ALTER TABLE `t` LOCK = SHARED'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.4.7', 'ALTER TABLE t REMOVE PARTITIONING', 'ALTER TABLE `t` REMOVE PARTITIONING'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.4.7', 'ALTER TABLE t ADD m INT, ADD o INT', 'ALTER TABLE `t` ADD COLUMN `m` integer, ADD COLUMN `o` integer'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.4.7', 'ALTER TABLE t', 'ALTER TABLE `t`'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-5.6.51', 'ALTER IGNORE TABLE t ADD m INT', 'ALTER IGNORE TABLE `t` ADD COLUMN `m` integer'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-5.6.51', 'PARTITION BY KEY (id) PARTITIONS 2', 'PARTITION BY KEY(`id`) PARTITIONS 2'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-5.7.44', 'PARSE_GCOL_EXPR (1 + 2)', 'PARSE_GCOL_EXPR((1 + 2))'])]
+    public function testWriteSpellsEachTableForm(string $version, string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t(id INT, n INT)')))->bind($sql);
+        self::assertSame($expected, MySqlTables::write($statement)?->toString());
+    }
 }

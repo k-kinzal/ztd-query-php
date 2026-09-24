@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Statement\Routine\Program;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
@@ -46,5 +47,25 @@ final class CursorsTest extends TestCase
         $this->expectException(InvalidSql::class);
         $this->expectExceptionMessage(InputViolation::ProgramObject->message());
         (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE PROCEDURE p() BEGIN DECLARE c CURSOR FOR SELECT 1; FETCH c INTO v; END', strict: false);
+    }
+
+    /**
+     * @param list<string> $definitions
+     */
+    #[DataProvider('providerBindMatchesCursorNamesCaseInsensitively')]
+    public function testBindMatchesCursorNamesCaseInsensitively(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    /**
+     * @return iterable<string, array{Dialect, ?string, list<string>, string, string}>
+     */
+    public static function providerBindMatchesCursorNamesCaseInsensitively(): iterable
+    {
+        return [
+            'CREATE PROCEDURE p() BEGIN DECLARE a INT; DECLARE Cur CURSOR FOR SELECT 1; OPEN cur; FETCH CUR INTO ... 0' => [Dialect::MySql, null, [], 'CREATE PROCEDURE p() BEGIN DECLARE a INT; DECLARE Cur CURSOR FOR SELECT 1; OPEN cur; FETCH CUR INTO a; CLOSE cUr; END', 'CREATE PROCEDURE `p`() BEGIN DECLARE `a` integer; DECLARE `Cur` CURSOR FOR SELECT 1; OPEN `cur`; FETCH `CUR` INTO `a`; CLOSE `cUr`; END'],
+        ];
     }
 }

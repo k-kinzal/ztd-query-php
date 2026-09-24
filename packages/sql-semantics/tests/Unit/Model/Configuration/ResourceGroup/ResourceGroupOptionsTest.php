@@ -41,4 +41,20 @@ final class ResourceGroupOptionsTest extends TestCase
         $this->expectException(InvalidStructure::class);
         ResourceGroupOptions::validate(new Origin('s0', $origin->source, Dialect::PostgreSql), 'g');
     }
+
+    public function testValidateAcceptsSixtyFourMultibyteCharactersAndTheLowestPriority(): void
+    {
+        $origin = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SET RESOURCE GROUP g')->origin;
+        $this->expectNotToPerformAssertions();
+        ResourceGroupOptions::validate($origin, str_repeat('é', 64), [], 19);
+        ResourceGroupOptions::validate($origin, 'g', [], 0, ThreadCategory::System);
+    }
+
+    public function testValidateRejectsAUserPriorityForASystemGroup(): void
+    {
+        $origin = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SET RESOURCE GROUP g')->origin;
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('The thread priority is outside the range the resource group type allows.');
+        ResourceGroupOptions::validate($origin, 'g', [], 5, ThreadCategory::System);
+    }
 }

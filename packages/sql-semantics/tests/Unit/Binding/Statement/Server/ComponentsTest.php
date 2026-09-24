@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Statement\Server;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -54,5 +55,28 @@ final class ComponentsTest extends TestCase
         self::assertInstanceOf(InstallComponentStatement::class, $statement);
         self::assertSame(['v'], $statement->settings[0]->name);
         self::assertSame("'text'", $statement->settings[0]->values[0]->spelling());
+    }
+
+    /**
+     * @param list<string> $definitions
+     */
+    #[DataProvider('providerBindReadsLowercaseComponentCommands')]
+    public function testBindReadsLowercaseComponentCommands(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
+        self::assertSame($expected, $statement::class . ' => ' . $statement->toString());
+    }
+
+    /**
+     * @return iterable<string, array{Dialect, ?string, list<string>, string, string}>
+     */
+    public static function providerBindReadsLowercaseComponentCommands(): iterable
+    {
+        return [
+            'install component \'file://a\', \'file://b\' (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT)'], 'install component \'file://a\', \'file://b\'', 'SqlSemantics\\Model\\Statement\\Server\\Administration\\InstallComponentStatement => INSTALL COMPONENT \'file://a\', \'file://b\''],
+            'uninstall component \'file://a\' (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT)'], 'uninstall component \'file://a\'', 'SqlSemantics\\Model\\Statement\\Server\\Administration\\UninstallComponentStatement => UNINSTALL COMPONENT \'file://a\''],
+            'INSTALL COMPONENT \'file://a\' SET persist a.b = 1, global c.d = \'x\', e.f = on (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT)'], 'INSTALL COMPONENT \'file://a\' SET persist a.b = 1, global c.d = \'x\', e.f = on', 'SqlSemantics\\Model\\Statement\\Server\\Administration\\InstallComponentStatement => INSTALL COMPONENT \'file://a\' SET PERSIST `a`.`b` = 1, GLOBAL `c`.`d` = \'x\', GLOBAL `e`.`f` = ON'],
+            'INSTALL PLUGIN component SONAME \'x.so\' (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT)'], 'INSTALL PLUGIN component SONAME \'x.so\'', 'SqlSemantics\\Model\\Statement\\Server\\InstallPluginStatement => INSTALL PLUGIN `component` SONAME \'x.so\''],
+        ];
     }
 }

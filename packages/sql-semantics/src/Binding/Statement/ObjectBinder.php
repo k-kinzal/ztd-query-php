@@ -64,13 +64,14 @@ final class ObjectBinder
     }
 
     /**
-     * Binds table, view, index and trigger deletion targets.
+     * Binds table, view, index and trigger deletion targets; a PostgreSQL name has at most catalog, schema and object.
+     * @throws \SqlSemantics\InvalidSql
      */
     public static function drop(Origin $origin, Node $source, QueryContext $context): ?BoundStatement
     {
         $words = array_map(static fn ($token): string => strtoupper($token->text), $source->tokens());
         $nodes = Tree::outer($source, ['any_name', 'table_ident', 'fullname', 'sp_name']);
-        $names = array_map(static fn (Node $name): QualifiedName => new QualifiedName($context->tables->identifiers->parts($name)), $nodes);
+        $names = array_map(static fn (Node $name): QualifiedName => $origin->dialect === \SqlSemantics\Dialect::PostgreSql ? Utility\QualifiedNames::read($name, $context->tables->identifiers) : new QualifiedName($context->tables->identifiers->parts($name)), $nodes);
         if ($names === []) {
             return null;
         }

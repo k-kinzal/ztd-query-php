@@ -21,6 +21,7 @@ final class ColumnBinder
 {
     /**
      * Binds the declaration against its complete column namespace.
+     * @throws \SqlSemantics\InvalidSql
      */
     public static function bind(ParsedColumn $column, Scope $scope): ColumnDefinition
     {
@@ -30,12 +31,13 @@ final class ColumnBinder
         }
         $options = $column->options;
         $ownsEncoding = $column->type->identity instanceof \SqlSemantics\Type\Identity\StringStorage || $column->type->identity instanceof \SqlSemantics\Type\Identity\Enumeration || $column->type->identity instanceof \SqlSemantics\Type\Identity\LabelSet;
+        $postgreSql = $scope->identifiers->dialect === \SqlSemantics\Dialect::PostgreSql;
         $attributes = new Column\Attributes(
             collation: OptionBinding::qualified($options, 'collation'),
             characterSet: $ownsEncoding ? null : OptionBinding::string($options, 'character_set'),
             comment: OptionBinding::string($options, 'comment'),
             visible: isset($options['invisible']) ? false : (isset($options['visible']) ? true : null),
-            storage: ($value = OptionBinding::string($options, 'storage')) === null ? null : Column\Storage::from(strtolower($value)),
+            storage: ($value = OptionBinding::string($options, 'storage')) === null || $postgreSql ? null : Column\Storage::from(strtolower($value)),
             format: ($value = OptionBinding::string($options, 'column_format')) === null ? null : Column\Format::from(strtolower($value)),
             compression: OptionBinding::string($options, 'compression'),
             engineAttribute: OptionBinding::string($options, 'engine_attribute'),
@@ -43,18 +45,24 @@ final class ColumnBinder
             spatialReferenceId: OptionBinding::integer($options, 'srid'),
             zeroFill: isset($options['zerofill']),
             binary: !$ownsEncoding && isset($options['binary']),
+            storageStrategy: ($value = OptionBinding::string($options, 'storage')) === null || !$postgreSql ? null : (\SqlSemantics\Model\Definition\Relation\Column\ColumnStorageMode::tryFrom(strtoupper($value)) ?? throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::ColumnStorage, $column->source)),
         );
         OptionBinding::classified($options, ['collation', 'character_set', 'comment', 'invisible', 'visible', 'storage', 'column_format', 'compression', 'engine_attribute', 'secondary_engine_attribute', 'srid', 'zerofill', 'binary', 'signed', 'unsigned', 'auto_increment', 'identity', 'start', 'increment', 'minvalue', 'maxvalue', 'cache', 'cycle', 'no', 'as', 'sequence', 'restart', 'owned', 'logged', 'unlogged', 'generated_storage', 'on_update']);
         return new ColumnDefinition($column->name, $column->type, $column->nullability, $column->source, $generation, $attributes);
     }
 
     /**
-     * Selects one value-generation form without evaluating the expression.
+     * Selects one value-generation form without evaluating the expression; SQLite takes AUTOINCREMENT only on an
+     * INTEGER PRIMARY KEY that aliases the rowid, which a column-level DESC key does not.
      * @throws UnclassifiedSql
+     * @throws \SqlSemantics\InvalidSql
      */
     public static function generation(ParsedColumn $column, Scope $scope): Column\Generation
     {
         if (isset($column->options['auto_increment'])) {
+            if ($scope->identifiers->dialect === \SqlSemantics\Dialect::Sqlite && ($column->type->name !== 'integer' || array_filter($column->attributes, static fn (\SqlParser\Parser\Node $attribute): bool => strtoupper(trim(Tree::text(Tree::outer($attribute, ['sortorder'])[0] ?? new \SqlParser\Parser\Node('sortorder', 0, [])))) === 'DESC') !== [])) {
+                throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::AutoIncrementKey, $column->source);
+            }
             return new Column\AutoIncrementColumn();
         }
         if (isset($column->options['identity'])) {

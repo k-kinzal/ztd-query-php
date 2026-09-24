@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Statement\Procedural;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -54,5 +55,28 @@ final class DiagnosticsTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('GET DIAGNOSTICS @r = row_count');
         self::assertInstanceOf(GetDiagnosticsStatement::class, $statement);
         self::assertSame('ROW_COUNT', Diagnostics::item(\SqlSemantics\Ast\Tree::outer($statement->source, ['statement_information_item'])[0]));
+    }
+
+    /**
+     * @param list<string> $definitions
+     */
+    #[DataProvider('providerBindReadsLowercaseDiagnosticsAreas')]
+    public function testBindReadsLowercaseDiagnosticsAreas(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    /**
+     * @return iterable<string, array{Dialect, ?string, list<string>, string, string}>
+     */
+    public static function providerBindReadsLowercaseDiagnosticsAreas(): iterable
+    {
+        return [
+            'get diagnostics @a = number (MySql)' => [Dialect::MySql, null, [], 'get diagnostics @a = number', 'GET CURRENT DIAGNOSTICS @`a` = NUMBER'],
+            'get current diagnostics @a = row_count (MySql)' => [Dialect::MySql, null, [], 'get current diagnostics @a = row_count', 'GET CURRENT DIAGNOSTICS @`a` = ROW_COUNT'],
+            'get stacked diagnostics condition 1 @a = message_text (MySql)' => [Dialect::MySql, null, [], 'get stacked diagnostics condition 1 @a = message_text', 'GET STACKED DIAGNOSTICS CONDITION 1 @`a` = MESSAGE_TEXT'],
+            'GET DIAGNOSTICS CONDITION 1 @a = RETURNED_SQLSTATE, @b = MYSQL_ERRNO (MySql)' => [Dialect::MySql, null, [], 'GET DIAGNOSTICS CONDITION 1 @a = RETURNED_SQLSTATE, @b = MYSQL_ERRNO', 'GET CURRENT DIAGNOSTICS CONDITION 1 @`a` = RETURNED_SQLSTATE, @`b` = MYSQL_ERRNO'],
+        ];
     }
 }

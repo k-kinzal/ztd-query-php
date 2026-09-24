@@ -52,8 +52,20 @@ final class ConstraintReader
             [$table, $references] = $this->references($node);
         }
         $expression = $kind === ConstraintKind::Check ? (Tree::outer($node, ['a_expr', 'expr'])[0] ?? null) : null;
+        [$enforced, $noInherit] = self::checkAttributes($node);
 
-        return new TableConstraint($kind, $kind === ConstraintKind::Check ? [] : $columns, $node, $name, $table, $references, $expression, ...Definition\ReferenceReader::read($node, $this->identifiers));
+        return new TableConstraint($kind, $kind === ConstraintKind::Check ? [] : $columns, $node, $name, $table, $references, $expression, ...Definition\ReferenceReader::read($node, $this->identifiers), enforced: $enforced, noInherit: $noInherit);
+    }
+
+    /**
+     * Reads whether a check is enforced (MySQL [NOT] ENFORCED) and whether it is local to its table (PostgreSQL NO INHERIT).
+     * @return array{bool, bool}
+     */
+    public static function checkAttributes(Node $node): array
+    {
+        $enforcement = Tree::outer($node, ['constraint_enforcement'])[0] ?? null;
+        $attributes = array_map(static fn (Node $element): string => strtoupper(Tree::text($element)), Tree::outer($node, ['ConstraintAttributeElem']));
+        return [$enforcement === null || !str_starts_with(strtoupper(Tree::text($enforcement)), 'NOT'), array_filter(Tree::outer($node, ['opt_no_inherit']), Tree::hasTokens(...)) !== [] || in_array('NO INHERIT', $attributes, true)];
     }
 
     /**

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Configuration;
 
 use LogicException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
@@ -235,5 +236,91 @@ final class SettingBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $statement->settings[0]);
         self::assertSame(['timezone'], $statement->settings[0]->name);
         self::assertSame("SET LOCAL TIME ZONE INTERVAL '1' HOUR TO MINUTE", $statement->toString());
+    }
+
+    public function testSettingRejectsAScopePrefixedSystemVariable(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $binder->bind('SET GLOBAL.b = 1');
+    }
+
+    public function testMakeBindsASystemVariableValueAsAnIdentifier(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SET sql_mode = ANSI');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $statement->settings[0]);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\ConfigurationIdentifier::class, $statement->settings[0]->values[0]);
+    }
+
+    /**
+     * @return list<array{Dialect, ?string, string, mixed}>
+     */
+    public static function providerBindWritesEachSettingForm(): array
+    {
+        return [
+            [Dialect::MySql, null, 'SET @x = 1;', ['SET @`x` = 1', [\SqlSemantics\Model\Configuration\AssignedUserVariable::class]]],
+            [Dialect::MySql, null, 'SET GLOBAL a = 1, b = 2', ['SET GLOBAL `a` = 1, GLOBAL `b` = 2', [\SqlSemantics\Model\Configuration\AssignedSetting::class, \SqlSemantics\Model\Configuration\AssignedSetting::class]]],
+            [Dialect::MySql, null, 'SET NAMES utf8mb4', ['SET NAMES `utf8mb4`', [\SqlSemantics\Model\Configuration\Connection\ConnectionNames::class]]],
+            [Dialect::MySql, null, 'SET @a = 1 = 1', ['SET @`a` = (1 = 1)', [\SqlSemantics\Model\Configuration\AssignedUserVariable::class]]],
+            [Dialect::MySql, null, 'SET PERSIST_ONLY max_connections = 1', ['SET PERSIST_ONLY `max_connections` = 1', [\SqlSemantics\Model\Configuration\AssignedSetting::class]]],
+            [Dialect::MySql, null, 'SET @@PERSIST_ONLY.max_connections = 1', ['SET PERSIST_ONLY `max_connections` = 1', [\SqlSemantics\Model\Configuration\AssignedSetting::class]]],
+            [Dialect::MySql, null, 'SET @@GLOBAL.max_connections = 1', ['SET GLOBAL `max_connections` = 1', [\SqlSemantics\Model\Configuration\AssignedSetting::class]]],
+            [Dialect::MySql, null, 'SET sql_mode = ANSI', ['SET `sql_mode` = `ANSI`', [\SqlSemantics\Model\Configuration\AssignedSetting::class]]],
+            [Dialect::PostgreSql, null, 'SET a.b.c = 1', ['SET "a"."b"."c" = 1', [\SqlSemantics\Model\Configuration\AssignedSetting::class]]],
+            [Dialect::PostgreSql, null, 'SET work_mem = 1;', ['SET "work_mem" = 1', [\SqlSemantics\Model\Configuration\AssignedSetting::class]]],
+            [Dialect::PostgreSql, null, 'SET search_path = a', ['SET "search_path" = "a"', [\SqlSemantics\Model\Configuration\AssignedSetting::class]]],
+            [Dialect::MySql, null, 'set persist_only max_connections = 1', ['SET PERSIST_ONLY `max_connections` = 1', [\SqlSemantics\Model\Configuration\AssignedSetting::class]]],
+        ];
+    }
+
+    #[DataProvider('providerBindWritesEachSettingForm')]
+    public function testBindWritesEachSettingForm(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build()))->bind($sql, strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
+        self::assertSame($expected, [$statement->toString(), array_map(static fn (object $setting): string => $setting::class, $statement->settings)]);
+    }
+
+    public function testPragmaBindsADatabaseSettingFromEachSpelling(): void
+    {
+        $binder = new \SqlSemantics\Binding\Configuration\SettingBinder();
+        $scope = new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::Sqlite));
+        $parser = new \SqlSemantics\Ast\DialectParser(Dialect::Sqlite);
+        $assigned = $binder->bind($parser->parse('PRAGMA main.cache_size(5);'), $scope)[0];
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $assigned);
+        self::assertSame(['main', 'cache_size'], $assigned->name);
+        self::assertSame('database', $assigned->scope->value);
+        self::assertSame(['5'], array_map(static fn ($value): ?string => $value->spelling(), $assigned->values));
+        $equals = $binder->bind($parser->parse('PRAGMA cache_size = 7'), $scope)[0];
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $equals);
+        self::assertSame(['cache_size'], $equals->name);
+        self::assertSame(['7'], array_map(static fn ($value): ?string => $value->spelling(), $equals->values));
+        $read = $binder->pragma(array_slice($parser->parse('PRAGMA cache_size')->tokens(), 1, 1), $parser->parse('PRAGMA cache_size'), $scope);
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\ReadSetting::class, $read);
+        self::assertSame(['cache_size'], $read->name);
+        self::assertSame([], $binder->bind($parser->parse('SELECT 1'), $scope));
+    }
+
+    public function testScopeSeparatesTheVariableScopeFromTheName(): void
+    {
+        $binder = new \SqlSemantics\Binding\Configuration\SettingBinder();
+        $tokens = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql))->parse('SET @@GLOBAL.max_connections = 1')->tokens();
+        [$rest, $scope] = $binder->scope(array_slice($tokens, 1), Dialect::MySql);
+        self::assertSame('global', $scope);
+        self::assertSame(['max_connections', '=', '1', ''], array_map(static fn ($token): string => $token->text, $rest));
+    }
+
+    public function testSettingSplitsTheNameAtTheAssignment(): void
+    {
+        $binder = new \SqlSemantics\Binding\Configuration\SettingBinder();
+        $source = (new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('SET work_mem = 1;');
+        $settings = $binder->setting(array_slice($source->tokens(), 1, 3), $source, new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql)), 'SET');
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $settings[0]);
+        self::assertSame(['work_mem'], $settings[0]->name);
+        self::assertSame(['1'], array_map(static fn ($value): ?string => $value->spelling(), $settings[0]->values));
+        $bound = $binder->bind($source, new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql)));
+        self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedSetting::class, $bound[0]);
+        self::assertSame(['1'], array_map(static fn ($value): ?string => $value->spelling(), $bound[0]->values));
     }
 }

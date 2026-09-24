@@ -36,4 +36,24 @@ final class UsingJoinTest extends TestCase
         self::assertInstanceOf(UsingJoin::class, $rebound->from);
         self::assertSame(array_column($query->outputs, 'name'), array_column($rebound->outputs, 'name'));
     }
+
+    public function testWithInputsKeepsAStraightJoinOrder(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (a INT)', 'CREATE TABLE u (a INT)')))->bind('SELECT 1 FROM t STRAIGHT_JOIN u USING (a)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        $join = $query->from;
+        self::assertInstanceOf(UsingJoin::class, $join);
+        self::assertTrue($join->straight);
+        self::assertTrue($join->withInputs($join->left, $join->right)->straight);
+    }
+
+    public function testStraightJoinRequiresAnInnerJoin(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (a INT)', 'CREATE TABLE u (a INT)')))->bind('SELECT 1 FROM t STRAIGHT_JOIN u USING (a)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        $join = $query->from;
+        self::assertInstanceOf(UsingJoin::class, $join);
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        new UsingJoin($join->id, \SqlSemantics\Model\JoinKind::Left, $join->left, $join->right, $join->columns, $join->source, true);
+    }
 }

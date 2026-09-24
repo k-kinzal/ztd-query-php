@@ -7,6 +7,7 @@ namespace Tests\Unit\Serialization\Session;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
@@ -46,5 +47,12 @@ final class TransactionSettingsTest extends TestCase
         yield 'session defaults' => [Dialect::PostgreSql, 'SET SESSION CHARACTERISTICS AS TRANSACTION DEFERRABLE', Statement\SetSessionTransactionStatement::class];
         yield 'temporary defaults' => [Dialect::PostgreSql, 'SET LOCAL SESSION CHARACTERISTICS AS TRANSACTION READ WRITE', Statement\SetSessionTransactionStatement::class];
         yield 'snapshot' => [Dialect::PostgreSql, "SET TRANSACTION SNAPSHOT 'snapshot-id'", Statement\SetTransactionSnapshotStatement::class];
+    }
+
+    #[TestWith(['SET TRANSACTION ISOLATION LEVEL SERIALIZABLE, READ ONLY', Statement\SetNextTransactionStatement::class, 'SET TRANSACTION ISOLATION LEVEL SERIALIZABLE, READ ONLY'])]
+    public function testWriteSpellsIsolationLevels(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql, strict: false);
+        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
     }
 }

@@ -66,4 +66,12 @@ final class ArgumentNotationsTest extends TestCase
         self::assertSame(['1', 'a => 2', 'ARRAY [ 3 ]'], array_map(static fn (array $argument): string => Tree::text($argument[0]), $written));
         self::assertSame([false, false, true], array_column($written, 1));
     }
+
+    #[TestWith(['SELECT f(1, variadic ARRAY[2])', 'SELECT "f"(1, VARIADIC ARRAY[2])'])]
+    #[TestWith(['SELECT f(1, 2)', 'SELECT "f"(1, 2)'])]
+    #[TestWith(['SELECT f(1, x => 2)', 'SELECT "f"(1, "x" => 2)'])]
+    public function testApplySpellsTheWrittenNotation(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+    }
 }

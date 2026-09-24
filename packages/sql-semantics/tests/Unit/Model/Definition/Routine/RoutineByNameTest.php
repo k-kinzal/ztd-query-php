@@ -20,4 +20,9 @@ final class RoutineByNameTest extends TestCase
         self::assertSame($name, $target->name);
     }
 
+    public function testIdentityRejectsMoreThanCatalogSchemaAndRoutine(): void
+    {
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        new Routine\RoutineByName(new QualifiedName(['x', 'a', 'b', 'f']));
+    }
 }

@@ -45,4 +45,20 @@ final class RetrievedQueryTest extends TestCase
         self::assertSame(2, RetrievedQuery::width($resolved));
         self::assertNull(RetrievedQuery::width($unresolved));
     }
+
+    public function testCheckRejectsAQueryOfAnotherDialect(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SELECT 1');
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1');
+        self::assertInstanceOf(BoundSelect::class, $query);
+        $this->expectException(InvalidStructure::class);
+        RetrievedQuery::check($statement->origin, $query, Dialect::MySql);
+    }
+
+    public function testWidthLeavesAnEmptyProjectionUnknown(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT');
+        self::assertInstanceOf(BoundSelect::class, $query);
+        self::assertNull(RetrievedQuery::width($query));
+    }
 }

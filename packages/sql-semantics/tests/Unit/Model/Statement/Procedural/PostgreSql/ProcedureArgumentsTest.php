@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Tests\Unit\Model\Statement\Procedural\PostgreSql;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
@@ -58,5 +60,39 @@ final class ProcedureArgumentsTest extends TestCase
         $value = $select->resultColumns()[0]->expression;
         $this->expectException(InvalidStructure::class);
         ProcedureArguments::validate([new ProcedureArgument($value)]);
+    }
+
+    /**
+     * @param list<string> $definitions
+     */
+    #[DataProvider('providerValidateAcceptsOrderedArguments')]
+    public function testValidateAcceptsOrderedArguments(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    /**
+     * @return iterable<string, array{Dialect, ?string, list<string>, string, string}>
+     */
+    public static function providerValidateAcceptsOrderedArguments(): iterable
+    {
+        return [
+            'CALL p(1, 2) (PostgreSql)' => [Dialect::PostgreSql, null, [], 'CALL p(1, 2)', 'CALL "p"(1, 2)'],
+            'CALL p(1, b => 2) (PostgreSql)' => [Dialect::PostgreSql, null, [], 'CALL p(1, b => 2)', 'CALL "p"(1, "b" => 2)'],
+            'CALL p(a => 1, b => 2) (PostgreSql)' => [Dialect::PostgreSql, null, [], 'CALL p(a => 1, b => 2)', 'CALL "p"("a" => 1, "b" => 2)'],
+            'CALL p(VARIADIC ARRAY[1]) (PostgreSql)' => [Dialect::PostgreSql, null, [], 'CALL p(VARIADIC ARRAY[1])', 'CALL "p"(VARIADIC ARRAY[1])'],
+            'CALL p(1, VARIADIC ARRAY[1]) (PostgreSql)' => [Dialect::PostgreSql, null, [], 'CALL p(1, VARIADIC ARRAY[1])', 'CALL "p"(1, VARIADIC ARRAY[1])'],
+            'CALL p() (PostgreSql)' => [Dialect::PostgreSql, null, [], 'CALL p()', 'CALL "p"()'],
+        ];
+    }
+
+    #[TestWith(['CALL p(a => 1, 2)'])]
+    #[TestWith(['CALL p(a => 1, a => 2)'])]
+    public function testValidateRejectsMisplacedOrRepeatedNames(string $sql): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $binder->bind($sql, strict: false);
     }
 }

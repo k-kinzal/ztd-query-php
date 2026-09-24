@@ -33,4 +33,13 @@ final class ForeignRemovalsTest extends TestCase
         self::assertSame($first->toString(), $second->toString());
         self::assertSame($first->kind, $second->kind);
     }
+
+    #[TestWith(['DROP SERVER IF EXISTS s CASCADE', 'DROP SERVER IF EXISTS "s" CASCADE'])]
+    #[TestWith(['DROP SERVER s', 'DROP SERVER "s"'])]
+    #[TestWith(['DROP FOREIGN DATA WRAPPER w, v RESTRICT', 'DROP FOREIGN DATA WRAPPER "w", "v" RESTRICT'])]
+    public function testWriteSpellsExistenceAndBehavior(string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql);
+        self::assertSame($expected, \SqlSemantics\Serialization\Definition\Foreign\ForeignRemovals::write($statement)?->toString());
+    }
 }

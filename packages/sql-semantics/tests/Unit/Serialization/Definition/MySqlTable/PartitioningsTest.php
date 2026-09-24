@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Serialization\Definition\MySqlTable;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
@@ -66,5 +67,27 @@ final class PartitioningsTest extends TestCase
     public function testColumnsQuotesNames(): void
     {
         self::assertSame('(`a`, `b`)', Partitionings::columns(['a', 'b'])->toString());
+    }
+
+    /**
+     * @return list<array{Dialect, ?string, string, mixed}>
+     */
+    public static function providerWriteSpellsEachPartitioningForm(): array
+    {
+        return [
+            [Dialect::MySql, null, 'CREATE TABLE p (a INT, b INT) PARTITION BY LINEAR HASH(a) PARTITIONS 4', [\SqlSemantics\Model\Statement\CreateTableStatement::class, 'CREATE TABLE `p`(`a` integer, `b` integer) PARTITION BY LINEAR HASH(`a`) PARTITIONS 4']],
+            [Dialect::MySql, null, 'CREATE TABLE p (a INT, b INT) PARTITION BY HASH(a)', [\SqlSemantics\Model\Statement\CreateTableStatement::class, 'CREATE TABLE `p`(`a` integer, `b` integer) PARTITION BY HASH(`a`)']],
+            [Dialect::MySql, null, 'CREATE TABLE p (a INT, b INT) PARTITION BY RANGE (a) SUBPARTITION BY HASH (b) SUBPARTITIONS 2 (PARTITION p0 VALUES LESS THAN (10), PARTITION p1 VALUES LESS THAN MAXVALUE)', [\SqlSemantics\Model\Statement\CreateTableStatement::class, 'CREATE TABLE `p`(`a` integer, `b` integer) PARTITION BY RANGE(`a`) SUBPARTITION BY HASH(`b`) SUBPARTITIONS 2(PARTITION `p0` VALUES LESS THAN(10), PARTITION `p1` VALUES LESS THAN MAXVALUE)']],
+            [Dialect::MySql, null, 'CREATE TABLE p (a INT, b INT) PARTITION BY LIST (a) (PARTITION p0 VALUES IN (1, 2), PARTITION p1 VALUES IN (3))', [\SqlSemantics\Model\Statement\CreateTableStatement::class, 'CREATE TABLE `p`(`a` integer, `b` integer) PARTITION BY LIST(`a`)(PARTITION `p0` VALUES IN(1, 2), PARTITION `p1` VALUES IN(3))']],
+            [Dialect::MySql, null, 'CREATE TABLE p (a INT, b INT) PARTITION BY LIST COLUMNS (a, b) (PARTITION p0 VALUES IN ((1, 2), (3, 4)))', [\SqlSemantics\Model\Statement\CreateTableStatement::class, 'CREATE TABLE `p`(`a` integer, `b` integer) PARTITION BY LIST COLUMNS(`a`, `b`)(PARTITION `p0` VALUES IN((1, 2), (3, 4)))']],
+            [Dialect::MySql, null, 'CREATE TABLE p (a INT, b INT) PARTITION BY KEY (a) PARTITIONS 3', [\SqlSemantics\Model\Statement\CreateTableStatement::class, 'CREATE TABLE `p`(`a` integer, `b` integer) PARTITION BY KEY(`a`) PARTITIONS 3']],
+        ];
+    }
+
+    #[DataProvider('providerWriteSpellsEachPartitioningForm')]
+    public function testWriteSpellsEachPartitioningForm(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build()))->bind($sql, strict: false);
+        self::assertSame($expected, [$statement::class, $statement->toString()]);
     }
 }

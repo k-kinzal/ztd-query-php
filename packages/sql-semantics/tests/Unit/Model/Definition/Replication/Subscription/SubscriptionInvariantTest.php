@@ -64,4 +64,23 @@ final class SubscriptionInvariantTest extends TestCase
         $this->expectException(InvalidStructure::class);
         Operand\SubscriptionInvariant::creation(new Operand\SubscriptionOptions($connect, $enabled, $createSlot, $noSlot === true ? Operand\NoSlot::None : null, $copyData));
     }
+
+    public function testIdentityAcceptsANamedPostgreSqlSubscription(): void
+    {
+        $origin = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1')->origin;
+        $this->expectNotToPerformAssertions();
+        Operand\SubscriptionInvariant::identity($origin, 's');
+    }
+
+    public function testPublicationsReturnDistinctNames(): void
+    {
+        self::assertSame(['a', 'b'], Operand\SubscriptionInvariant::publications(['a', 'b']));
+    }
+
+    public function testOptionsNameTheRejectedOption(): void
+    {
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('This subscription command does not accept the binary option.');
+        Operand\SubscriptionInvariant::options(new Operand\SubscriptionOptions(binary: true), [Operand\SubscriptionParameter::Refresh]);
+    }
 }

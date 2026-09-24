@@ -36,7 +36,7 @@ final class Functions
         } else {
             $arguments = [Build::separated(array_map(Expressions::write(...), $value->arguments))];
             if ($value instanceof Function\AggregateCall) {
-                $arguments = [...($value->mode === Function\ArgumentMode::Distinct || ($value->function instanceof Function\UnresolvedFunction && ($value->arguments !== [] || $value->type->dialect === \SqlSemantics\Dialect::Sqlite)) ? [Build::keyword($value->mode->value)] : []), ...$arguments, Parts::ordering($value->orderBy)];
+                $arguments = [...($value->mode === Function\ArgumentMode::Distinct || ($value->function instanceof Function\UnresolvedFunction && ($value->arguments !== [] || $value->type->dialect === \SqlSemantics\Dialect::Sqlite)) ? [Build::keyword($value->mode->value)] : []), ...$arguments, Parts::ordering($value->orderBy), ...($value->separator === null ? [] : [Build::keyword('SEPARATOR'), Expressions::write($value->separator)])];
             }
             $call = new Tree('call', [$function, Build::parentheses(new Tree('arguments', $arguments))]);
         }

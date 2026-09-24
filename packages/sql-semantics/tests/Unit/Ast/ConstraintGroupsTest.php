@@ -175,4 +175,12 @@ final class ConstraintGroupsTest extends TestCase
         yield ['initially deferred', \SqlSemantics\Schema\Constraint\CheckingTime::DeferrableDeferred];
     }
 
+
+    public function testReadAttachesAColumnEnforcementToItsCheck(): void
+    {
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql, 'mysql-8.4.7'))->parse('CREATE TABLE t (a INT CHECK (a > 0) NOT ENFORCED)');
+        $groups = (new \SqlSemantics\Ast\ConstraintGroups())->read(\SqlSemantics\Ast\Tree::outer($tree, ['column_attribute']));
+        self::assertCount(1, $groups);
+        self::assertSame('CHECK ( a > 0 ) NOT ENFORCED', \SqlSemantics\Ast\Tree::text($groups[0]));
+    }
 }

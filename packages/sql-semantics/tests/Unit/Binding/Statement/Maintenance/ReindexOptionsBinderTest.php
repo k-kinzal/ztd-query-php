@@ -55,4 +55,13 @@ final class ReindexOptionsBinderTest extends TestCase
         $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::ReindexOption->message());
         (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind($sql);
     }
+
+    #[TestWith(['reindex (verbose true, concurrently 1) table t', 'REINDEX(CONCURRENTLY, VERBOSE) TABLE "t"'])]
+    #[TestWith(['REINDEX (VERBOSE FALSE, CONCURRENTLY 0) TABLE t', 'REINDEX TABLE "t"'])]
+    #[TestWith(['REINDEX (VERBOSE on, CONCURRENTLY off) TABLE t', 'REINDEX(VERBOSE) TABLE "t"'])]
+    #[TestWith(['REINDEX (tablespace x, verbose) TABLE t', 'REINDEX(VERBOSE, TABLESPACE "x") TABLE "t"'])]
+    public function testBindReadsEveryBooleanSpelling(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind($sql)->toString());
+    }
 }

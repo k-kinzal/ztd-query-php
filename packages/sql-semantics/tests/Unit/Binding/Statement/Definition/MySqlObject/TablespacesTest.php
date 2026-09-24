@@ -93,4 +93,21 @@ final class TablespacesTest extends TestCase
         self::assertSame('a\\b', Tablespaces::datafile($binder->bind("CREATE TABLESPACE ts ADD DATAFILE 'a\\\\b'")->source, new Identifiers(Dialect::MySql)));
         self::assertNull(Tablespaces::datafile($binder->bind('CREATE TABLESPACE ts')->source, new Identifiers(Dialect::MySql)));
     }
+
+    #[TestWith(['mysql-8.4.7', 'alter undo tablespace u set inactive', 'ALTER UNDO TABLESPACE `u` SET INACTIVE'])]
+    #[TestWith(['mysql-5.6.51', 'alter tablespace ts read_only', 'ALTER TABLESPACE `ts` READ_ONLY'])]
+    #[TestWith(['mysql-5.7.44', 'alter tablespace ts not accessible', 'ALTER TABLESPACE `ts` NOT ACCESSIBLE'])]
+    public function testBindReadsLowerCaseStates(string $version, string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build()))->bind($sql)->toString());
+    }
+
+    public function testAlterAndNameReadParsedNodes(): void
+    {
+        $source = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql, 'mysql-8.4.7'))->parse("ALTER TABLESPACE ts ADD DATAFILE 'b.ibd'");
+        $identifiers = new Identifiers(Dialect::MySql);
+        $origin = new \SqlSemantics\Model\Statement\Origin('s0', $source, Dialect::MySql);
+        self::assertInstanceOf(Statement\AddTablespaceDatafileStatement::class, Tablespaces::alter($origin, $source, ['ALTER', 'TABLESPACE', 'TS', 'ADD'], 'ts', $identifiers));
+        self::assertSame('ts', Tablespaces::name($source->find('ident')[0], $identifiers));
+    }
 }

@@ -42,4 +42,11 @@ final class OwnershipCommandsTest extends TestCase
         self::assertSame(\SqlSemantics\Model\Statement\StatementKind::Drop, $statement->kind);
     }
 
+    public function testBindReadsALowerCaseDropBehavior(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('drop owned by r cascade');
+        self::assertInstanceOf(DropOwnedStatement::class, $statement);
+        self::assertSame(DropBehavior::Cascade, $statement->behavior);
+        self::assertSame('DROP OWNED BY "r" CASCADE', $statement->toString());
+    }
 }

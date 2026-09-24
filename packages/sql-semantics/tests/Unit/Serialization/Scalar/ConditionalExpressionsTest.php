@@ -84,4 +84,12 @@ final class ConditionalExpressionsTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Conditional\JsonPredicate::class, $predicate);
         self::assertSame("('[]' IS NOT JSON ARRAY WITH UNIQUE KEYS)", ConditionalExpressions::json($predicate)->toString());
     }
+
+    #[TestWith(['SELECT a IS JSON OBJECT WITH UNIQUE KEYS FROM t', BoundSelect::class, 'SELECT ("a" IS JSON OBJECT WITH UNIQUE KEYS) FROM "public"."t"'])]
+    #[TestWith(['SELECT a IS NOT JSON FROM t', BoundSelect::class, 'SELECT ("a" IS NOT JSON VALUE) FROM "public"."t"'])]
+    public function testWriteSpellsJsonPredicates(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a TEXT)')))->bind($sql, strict: false);
+        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+    }
 }

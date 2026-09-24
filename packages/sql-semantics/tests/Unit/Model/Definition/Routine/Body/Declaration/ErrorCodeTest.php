@@ -26,6 +26,9 @@ final class ErrorCodeTest extends TestCase
     #[TestWith(['0x0'])]
     #[TestWith(['0.5'])]
     #[TestWith(['abc'])]
+    #[TestWith(['x12'])]
+    #[TestWith(['12x'])]
+    #[TestWith(["12\n"])]
     public function testRejectsZeroAndNonNumbers(string $spelling): void
     {
         $this->expectException(InvalidStructure::class);

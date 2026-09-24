@@ -39,4 +39,16 @@ final class TableFilterTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new TableFilter(FilterRule::DoDatabase, []);
     }
+
+    public function testRejectsAWildRuleByName(): void
+    {
+        $this->expectExceptionObject(new InvalidStructure('REPLICATE_WILD_DO_TABLE does not list tables.'));
+        new TableFilter(FilterRule::WildDoTable, []);
+    }
+
+    public function testAcceptsAnEmptyListForBothTableRules(): void
+    {
+        self::assertSame([], (new TableFilter(FilterRule::DoTable, []))->tables);
+        self::assertSame(FilterRule::IgnoreTable, (new TableFilter(FilterRule::IgnoreTable, []))->rule());
+    }
 }

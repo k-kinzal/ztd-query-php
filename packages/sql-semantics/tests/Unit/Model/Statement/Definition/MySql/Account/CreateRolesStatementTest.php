@@ -24,7 +24,7 @@ final class CreateRolesStatementTest extends TestCase
         self::assertInstanceOf(CreateRolesStatement::class, $statement);
         $changed = $statement->withRoles([new AccountName('writer', 'h')]);
         self::assertSame('reader', $statement->roles[0]->username);
-        self::assertSame("CREATE ROLE 'writer' @'h'", $changed->toString());
+        self::assertSame("CREATE ROLE 'writer'@'h'", $changed->toString());
     }
 
     public function testWithIfNotExistsKeepsTheRoles(): void

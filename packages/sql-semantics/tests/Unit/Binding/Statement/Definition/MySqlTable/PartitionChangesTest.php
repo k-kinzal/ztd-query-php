@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Statement\Definition\MySqlTable;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -82,5 +83,50 @@ final class PartitionChangesTest extends TestCase
     public function testNamesSkipsTheExchangedTable(): void
     {
         self::assertSame(['p'], PartitionChanges::names((new DialectParser(Dialect::MySql, 'mysql-8.4.7'))->parse('ALTER TABLE t EXCHANGE PARTITION p WITH TABLE u')->find('standalone_alter_commands')[0], new Scope(new Identifiers(Dialect::MySql))));
+    }
+
+    /**
+     * @return iterable<string, array{string, string}>
+     */
+    public static function providerBindSpellsEveryStandaloneCommand(): iterable
+    {
+        yield 'discard tablespace' => ['alter table t discard tablespace', 'ALTER TABLE `t` DISCARD TABLESPACE'];
+        yield 'import tablespace' => ['alter table t import tablespace', 'ALTER TABLE `t` IMPORT TABLESPACE'];
+        yield 'discard partition' => ['alter table t discard partition p tablespace', 'ALTER TABLE `t` DISCARD PARTITION `p` TABLESPACE'];
+        yield 'import partition' => ['alter table t import partition all tablespace', 'ALTER TABLE `t` IMPORT PARTITION ALL TABLESPACE'];
+        yield 'drop partition' => ['alter table t drop partition p, q', 'ALTER TABLE `t` DROP PARTITION `p`, `q`'];
+        yield 'optimize partition' => ['alter table t optimize partition no_write_to_binlog p', 'ALTER TABLE `t` OPTIMIZE PARTITION NO_WRITE_TO_BINLOG `p`'];
+        yield 'analyze partition' => ['alter table t analyze partition all', 'ALTER TABLE `t` ANALYZE PARTITION ALL'];
+        yield 'check partition' => ['alter table t check partition p quick changed', 'ALTER TABLE `t` CHECK PARTITION `p` QUICK CHANGED'];
+        yield 'repair partition' => ['alter table t repair partition p quick extended use_frm', 'ALTER TABLE `t` REPAIR PARTITION `p` QUICK EXTENDED USE_FRM'];
+        yield 'coalesce partition' => ['alter table t coalesce partition local 2', 'ALTER TABLE `t` COALESCE PARTITION NO_WRITE_TO_BINLOG 2'];
+        yield 'truncate partition' => ['alter table t truncate partition p', 'ALTER TABLE `t` TRUNCATE PARTITION `p`'];
+        yield 'add partition count' => ['alter table t add partition no_write_to_binlog partitions 3', 'ALTER TABLE `t` ADD PARTITION NO_WRITE_TO_BINLOG PARTITIONS 3'];
+        yield 'add partition definitions' => ['alter table t add partition (partition p3 values less than (10))', 'ALTER TABLE `t` ADD PARTITION(PARTITION `p3` VALUES LESS THAN(10))'];
+        yield 'exchange partition' => ['alter table t exchange partition p with table u', 'ALTER TABLE `t` EXCHANGE PARTITION `p` WITH TABLE `u`'];
+        yield 'secondary unload' => ['alter table t secondary_unload partition (p)', 'ALTER TABLE `t` SECONDARY_UNLOAD PARTITION(`p`)'];
+    }
+
+    #[DataProvider('providerBindSpellsEveryStandaloneCommand')]
+    public function testBindSpellsEveryStandaloneCommand(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, n INT); CREATE TABLE u(id INT, n INT)')))->bind($sql)->toString());
+    }
+
+    public function testAddRejectsAZeroPartitionCount(): void
+    {
+        $this->expectException(InvalidSql::class);
+        (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, n INT)')))->bind('ALTER TABLE t ADD PARTITION PARTITIONS 0');
+    }
+
+    public function testBindRejectsAZeroCoalesceCount(): void
+    {
+        $this->expectException(InvalidSql::class);
+        (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, n INT)')))->bind('ALTER TABLE t COALESCE PARTITION 0');
+    }
+
+    public function testSelectionReadsALowercaseAll(): void
+    {
+        self::assertSame(AllPartitions::All, PartitionChanges::selection((new DialectParser(Dialect::MySql, 'mysql-8.4.7'))->parse('ALTER TABLE t TRUNCATE PARTITION all')->find('standalone_alter_commands')[0], new Scope(new Identifiers(Dialect::MySql))));
     }
 }

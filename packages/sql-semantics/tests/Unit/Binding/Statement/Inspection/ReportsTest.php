@@ -102,4 +102,51 @@ final class ReportsTest extends TestCase
         self::assertSame('DELETE', $statement->statement->kind->value);
         self::assertSame('SHOW PARSE_TREE DELETE FROM `users` WHERE (`id` = 1)', $statement->toString());
     }
+
+    public function testEngineAndProfileReadLowercaseKeywords(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
+        self::assertSame('SHOW ENGINE `innodb` STATUS', $binder->bind('show engine innodb status')->toString());
+        self::assertSame('SHOW PROFILE CPU, BLOCK IO', $binder->bind('show profile cpu, block io')->toString());
+    }
+
+    public function testLimitReadsASingleCount(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SHOW PROFILE LIMIT 5');
+        self::assertInstanceOf(ShowProfileStatement::class, $statement);
+        self::assertSame('SHOW PROFILE LIMIT 5', $statement->toString());
+    }
+
+    public function testProfileReadsTheQueryAndWindowFromTheForm(): void
+    {
+        $bound = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SHOW PROFILES');
+        $context = new \SqlSemantics\Binding\Query\QueryContext(new \SqlSemantics\Binding\TableResolver((new SchemaBuilder(Dialect::MySql))->build(), new \SqlSemantics\Ast\Identifiers(Dialect::MySql), ''));
+        $form = \SqlSemantics\Ast\Tree::outer((new \SqlSemantics\Ast\DialectParser(Dialect::MySql))->parse('SHOW PROFILE CPU FOR QUERY 3 LIMIT 2, 5'), ['show_profile_stmt'])[0];
+        $profile = Reports::profile($bound->origin, $form, $context);
+        self::assertSame('SHOW PROFILE CPU FOR QUERY 3 LIMIT 5 OFFSET 2', $profile->toString());
+        $limit = Reports::limit($form, $context);
+        self::assertNotNull($limit);
+        self::assertSame('5', $limit->count->spelling());
+        self::assertSame('2', $limit->offset?->spelling());
+        $option = \SqlSemantics\Ast\Tree::outer($form, ['limit_option'])[1];
+        self::assertSame('5', Reports::option($option, new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::MySql)))->spelling());
+    }
+
+    public function testEngineReadsTheNameBeforeTheReport(): void
+    {
+        $bound = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SHOW PROFILES');
+        $context = new \SqlSemantics\Binding\Query\QueryContext(new \SqlSemantics\Binding\TableResolver((new SchemaBuilder(Dialect::MySql))->build(), new \SqlSemantics\Ast\Identifiers(Dialect::MySql), ''));
+        $form = \SqlSemantics\Ast\Tree::outer((new \SqlSemantics\Ast\DialectParser(Dialect::MySql))->parse('SHOW ENGINE innodb MUTEX'), ['simple_statement'])[0];
+        self::assertSame('SHOW ENGINE `innodb` MUTEX', Reports::engine($bound->origin, $form, $context)->toString());
+    }
+
+    public function testParseTreeBindsTheInnerStatementOfTheForm(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE users(id INT)');
+        $bound = (new Binder($schema))->bind('SHOW PROFILES');
+        $context = new \SqlSemantics\Binding\Query\QueryContext(new \SqlSemantics\Binding\TableResolver($schema, new \SqlSemantics\Ast\Identifiers(Dialect::MySql), ''));
+        $root = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql, 'mysql-8.4.7'))->parse('SHOW PARSE_TREE SELECT id FROM users');
+        $form = \SqlSemantics\Ast\Tree::outer($root, ['show_parse_tree_stmt'])[0];
+        self::assertSame('SHOW PARSE_TREE SELECT `id` AS `id` FROM `users`', Reports::parseTree($bound->origin, $form, $context)->toString());
+    }
 }

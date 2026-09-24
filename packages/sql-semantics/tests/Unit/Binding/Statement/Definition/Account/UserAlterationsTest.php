@@ -107,4 +107,21 @@ final class UserAlterationsTest extends TestCase
         self::assertInstanceOf(PluginChange::class, UserAlterations::classify(new AccountName('a'), new PluginIdentification('p'), null, false));
         self::assertInstanceOf(AuthenticationChange::class, UserAlterations::classify(new AccountName('a'), new PluginHashIdentification('p', $hash), null, true));
     }
+
+    /**
+     * @param class-string<object> $class
+     */
+    #[TestWith(['mysql-8.4.7', 'alter user a default role all', \SqlSemantics\Model\Statement\Definition\MySql\Account\AlterDefaultRolePolicyStatement::class, 'ALTER USER \'a\' DEFAULT ROLE ALL'])]
+    #[TestWith(['mysql-8.4.7', 'ALTER USER a DEFAULT ROLE NONE', \SqlSemantics\Model\Statement\Definition\MySql\Account\AlterDefaultRolePolicyStatement::class, 'ALTER USER \'a\' DEFAULT ROLE NONE'])]
+    #[TestWith(['mysql-8.4.7', 'alter user a default role r1, r2', AlterDefaultRolesStatement::class, 'ALTER USER \'a\' DEFAULT ROLE \'r1\', \'r2\''])]
+    #[TestWith(['mysql-8.4.7', 'ALTER USER a 2 FACTOR INITIATE REGISTRATION', \SqlSemantics\Model\Statement\Definition\MySql\Account\InitiateRegistrationStatement::class, 'ALTER USER \'a\' 2 FACTOR INITIATE REGISTRATION'])]
+    #[TestWith(['mysql-8.4.7', 'alter user user() discard old password', AlterUsersStatement::class, 'ALTER USER USER() DISCARD OLD PASSWORD'])]
+    #[TestWith(['mysql-9.1.0', 'alter user a add 2 factor identified with p', AlterUsersStatement::class, 'ALTER USER \'a\' ADD 2 FACTOR IDENTIFIED WITH `p`'])]
+    #[TestWith(['mysql-9.1.0', 'alter user a drop 2 factor', AlterUsersStatement::class, 'ALTER USER \'a\' DROP 2 FACTOR'])]
+    public function testBindReadsLowerCaseRoleRegistrationAndFactorForms(string $version, string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build()))->bind($sql);
+        self::assertInstanceOf($class, $statement);
+        self::assertSame($expected, $statement->toString());
+    }
 }

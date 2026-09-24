@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Serialization\Procedural;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
@@ -54,5 +55,31 @@ final class LoadsTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind("LOAD DATA INFILE 'f' INTO TABLE t PARALLEL = 3 MEMORY = 1K ALGORITHM = BULK");
         self::assertInstanceOf(BulkLoadStatement::class, $statement);
         self::assertSame('PARALLEL = 3 MEMORY = 1024 ALGORITHM = BULK', (new Tree('bulk', Loads::bulk($statement)))->toString());
+    }
+
+    /**
+     * @return list<array{Dialect, ?string, string, mixed}>
+     */
+    public static function providerWriteSpellsEachLoadForm(): array
+    {
+        return [
+            [Dialect::MySql, null, 'LOAD DATA LOW_PRIORITY LOCAL INFILE \'f\' INTO TABLE t', 'LOAD DATA LOW_PRIORITY LOCAL INFILE \'f\' INTO TABLE `t`'],
+            [Dialect::MySql, null, 'LOAD XML CONCURRENT INFILE \'f\' INTO TABLE t ROWS IDENTIFIED BY \'<r>\'', 'LOAD XML CONCURRENT INFILE \'f\' INTO TABLE `t` ROWS IDENTIFIED BY \'<r>\''],
+            [Dialect::MySql, null, 'LOAD DATA FROM S3 \'f\' INTO TABLE t', 'LOAD DATA S3 \'f\' INTO TABLE `t`'],
+            [Dialect::MySql, null, 'LOAD DATA INFILE \'f\' INTO TABLE t PARTITION (p0, p1)', 'LOAD DATA INFILE \'f\' INTO TABLE `t` PARTITION(`p0`, `p1`)'],
+            [Dialect::MySql, null, 'LOAD DATA INFILE \'f\' INTO TABLE t LINES STARTING BY \'x\' TERMINATED BY \'y\'', 'LOAD DATA INFILE \'f\' INTO TABLE `t` LINES STARTING BY \'x\' TERMINATED BY \'y\''],
+            [Dialect::MySql, null, 'LOAD DATA FROM URL \'f\' INTO TABLE t ALGORITHM = BULK', 'LOAD DATA FROM URL \'f\' INTO TABLE `t` ALGORITHM = BULK'],
+            [Dialect::MySql, null, 'LOAD DATA INFILE \'f\' INTO TABLE t (a, @b) SET a = @b', 'LOAD DATA INFILE \'f\' INTO TABLE `t`(`a`, @`b`) SET `a` = @`b`'],
+            [Dialect::MySql, null, 'LOAD DATA FROM S3 \'f\' COUNT 3 INTO TABLE t ALGORITHM = BULK', 'LOAD DATA FROM S3 \'f\' COUNT 3 INTO TABLE `t` ALGORITHM = BULK'],
+            [Dialect::MySql, null, 'LOAD DATA FROM S3 \'f\' INTO TABLE t COMPRESSION = \'ZSTD\' ALGORITHM = BULK', 'LOAD DATA FROM S3 \'f\' INTO TABLE `t` COMPRESSION = \'ZSTD\' ALGORITHM = BULK'],
+        ];
+    }
+
+    #[DataProvider('providerWriteSpellsEachLoadForm')]
+    public function testWriteSpellsEachLoadForm(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(a INT)')))->bind($sql, strict: false);
+        self::assertTrue($statement instanceof LoadFileStatement || $statement instanceof BulkLoadStatement);
+        self::assertSame($expected, Loads::write($statement)->toString());
     }
 }

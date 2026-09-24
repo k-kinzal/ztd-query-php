@@ -20,4 +20,9 @@ final class ZeroArgumentAggregateTest extends TestCase
         self::assertSame($name, $target->name);
     }
 
+    public function testIdentityRejectsMoreThanCatalogSchemaAndAggregate(): void
+    {
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        new Routine\ZeroArgumentAggregate(new QualifiedName(['x', 'a', 'b', 'f']));
+    }
 }

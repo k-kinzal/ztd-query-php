@@ -66,7 +66,7 @@ final class GrantPrivilegesStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('GRANT SELECT ON *.* TO u');
         self::assertInstanceOf(GrantPrivilegesStatement::class, $statement);
-        self::assertSame("GRANT SELECT ON *.* TO CURRENT_USER, 'v' @'h'", $statement->withGrantees([CurrentAccount::Authenticated, new AccountName('v', 'h')])->toString());
+        self::assertSame("GRANT SELECT ON *.* TO CURRENT_USER, 'v'@'h'", $statement->withGrantees([CurrentAccount::Authenticated, new AccountName('v', 'h')])->toString());
         self::assertEquals([new AccountName('u')], $statement->grantees);
     }
 

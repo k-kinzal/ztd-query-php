@@ -65,7 +65,7 @@ final class ColumnDeclarations
      */
     public static function parse(Node $column, Scope $scope): array
     {
-        return (new ColumnReader($scope->identifiers))->read($column, Tree::outer($column, ['ColConstraint', 'column_attribute', 'attribute']));
+        return (new ColumnReader($scope->identifiers))->read($column, Tree::outer($column, ['ColConstraint', 'column_attribute', 'attribute', 'gcol_attribute']));
     }
 
     /**

@@ -69,9 +69,19 @@ final class Constraints
             return new Tree('column-reference', [...($constraint->name === null ? [] : [Build::keyword('CONSTRAINT'), Build::identifier([$constraint->name], $dialect)]), ...array_slice($body->children, 2)]);
         }
         if ($constraint instanceof Constraint\PrimaryKey || $constraint instanceof Constraint\UniqueKey) {
-            return new Tree('column-key', [...($constraint->name === null ? [] : [Build::keyword('CONSTRAINT'), Build::identifier([$constraint->name], $dialect)]), Build::keyword($constraint instanceof Constraint\PrimaryKey ? 'PRIMARY KEY' : 'UNIQUE'), self::checking($constraint->checking)]);
+            return new Tree('column-key', [...($constraint->name === null ? [] : [Build::keyword('CONSTRAINT'), Build::identifier([$constraint->name], $dialect)]), Build::keyword($constraint instanceof Constraint\PrimaryKey ? 'PRIMARY KEY' : 'UNIQUE'), ...self::direction($constraint, $dialect), self::checking($constraint->checking)]);
         }
         throw new InvalidStructure('Unclassified column constraint.');
+    }
+
+    /**
+     * Writes the direction of a SQLite column-level key, the only dialect whose column constraint takes one.
+     * @return list<Tree>
+     */
+    public static function direction(Constraint\PrimaryKey|Constraint\UniqueKey $constraint, Dialect $dialect): array
+    {
+        $direction = $constraint->keys[0]->direction;
+        return $dialect === Dialect::Sqlite && $constraint instanceof Constraint\PrimaryKey && $direction !== null ? [Build::keyword($direction->value)] : [];
     }
 
     /**

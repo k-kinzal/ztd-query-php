@@ -6,6 +6,7 @@ namespace Tests\Unit\Serialization\Definition\Foreign;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
@@ -48,4 +49,12 @@ final class WrapperOptionsTest extends TestCase
         self::assertSame('ALTER FOREIGN DATA WRAPPER "fdw" OPTIONS(ADD "format" \'csv\', SET "path" \'input\', DROP "old")', $statement->toString());
     }
 
+    #[TestWith(['CREATE FOREIGN DATA WRAPPER w HANDLER h NO VALIDATOR', CreateForeignDataWrapperStatement::class, 'CREATE FOREIGN DATA WRAPPER "w" HANDLER "h" NO VALIDATOR'])]
+    #[TestWith(['CREATE FOREIGN DATA WRAPPER w NO HANDLER VALIDATOR v', CreateForeignDataWrapperStatement::class, 'CREATE FOREIGN DATA WRAPPER "w" NO HANDLER VALIDATOR "v"'])]
+    #[TestWith(['CREATE FOREIGN DATA WRAPPER w', CreateForeignDataWrapperStatement::class, 'CREATE FOREIGN DATA WRAPPER "w" NO HANDLER NO VALIDATOR'])]
+    public function testWriteSpellsHandlerAndValidatorChoices(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql, strict: false);
+        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+    }
 }

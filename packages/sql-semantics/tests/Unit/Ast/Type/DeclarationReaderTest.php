@@ -37,4 +37,37 @@ final class DeclarationReaderTest extends TestCase
         self::assertSame('2', $type->identity->scale->spelling);
     }
 
+    #[TestWith(['int[]', 1])]
+    #[TestWith(['int ARRAY', 1])]
+    #[TestWith(['int ARRAY[3]', 1])]
+    #[TestWith(['int[2][3]', 2])]
+    public function testReadWrapsArrayDeclarationsAroundTheirElement(string $declaration, int $dimensions): void
+    {
+        $type = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(x ' . $declaration . ')')->tables[0]->columns[0]->type;
+        self::assertInstanceOf(\SqlSemantics\Type\Identity\ArrayStorage::class, $type->identity);
+        self::assertInstanceOf(\SqlSemantics\Type\Identity\Numeric\IntegerStorage::class, $type->identity->element->identity);
+        self::assertCount($dimensions, $type->identity->dimensions);
+        self::assertSame('integer[]', $type->name);
+    }
+
+    public function testReadKeepsAScalarDeclarationUnwrapped(): void
+    {
+        $type = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(x text)')->tables[0]->columns[0]->type;
+        self::assertInstanceOf(\SqlSemantics\Type\Identity\StringStorage::class, $type->identity);
+        self::assertSame('text', $type->name);
+    }
+
+    #[TestWith(['int generated always as (1)', 'int', 'Integer'])]
+    #[TestWith(['text generated always', 'text', 'Text'])]
+    #[TestWith(['Big Int', 'big int', 'Integer'])]
+    #[TestWith(['"My Type"', 'my type', 'Numeric'])]
+    #[TestWith(['generated always', '', 'Blob'])]
+    #[TestWith(['always', 'always', 'Numeric'])]
+    public function testSqliteReadsTheDeclaredNameAndItsAffinity(string $declaration, string $name, string $affinity): void
+    {
+        $type = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(x ' . $declaration . ')')->tables[0]->columns[0]->type;
+        self::assertInstanceOf(\SqlSemantics\Type\Identity\SqliteDeclaration::class, $type->identity);
+        self::assertSame($name, $type->name);
+        self::assertSame($affinity, $type->identity->affinity->name);
+    }
 }

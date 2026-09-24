@@ -100,4 +100,11 @@ final class DropNamedObjectsStatementTest extends TestCase
         $this->expectException(InvalidStructure::class);
         $statement->withObjectKind(Kind\NamedObjectKind::Server);
     }
+
+    public function testIfExistsDefaultsToOff(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('DROP SCHEMA IF EXISTS s', strict: false);
+        self::assertInstanceOf(DropNamedObjectsStatement::class, $statement);
+        self::assertFalse((new DropNamedObjectsStatement($statement->origin, $statement->objectKind, $statement->names))->ifExists);
+    }
 }

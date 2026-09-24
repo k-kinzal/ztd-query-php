@@ -66,4 +66,18 @@ final class ColumnsTest extends TestCase
         self::assertSame($expected, $statement->toString());
         self::assertSame($expected, $binder->bind($expected)->toString());
     }
+
+    public function testDefaultValueWritesTheExpression(): void
+    {
+        self::assertSame('1', Columns::defaultValue(\SqlSemantics\Model\Expression::literal(1, Dialect::PostgreSql), Dialect::PostgreSql)->toString());
+    }
+
+
+    public function testWriteKeepsAMySqlGeneratedExpressionBeforeTheAttributes(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
+        $statement = $binder->bind('CREATE TABLE t (a INT, d INT GENERATED ALWAYS AS (a) STORED NOT NULL)');
+        self::assertSame('CREATE TABLE `t`(`a` integer, `d` integer GENERATED ALWAYS AS(`a`) STORED NOT NULL)', $statement->toString());
+        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+    }
 }

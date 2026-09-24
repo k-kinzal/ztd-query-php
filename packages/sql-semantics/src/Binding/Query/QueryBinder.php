@@ -64,7 +64,7 @@ final class QueryBinder
         $tail = new SelectModifiersBinder();
         $tailSource = QueryNodes::modifierScope($source, $body);
         [$limit, $offset] = $tail->pagination($tailSource, $scope);
-        $withTies = str_contains(strtoupper(Tree::text(QueryNodes::local($tailSource, ['limit_clause'])[0] ?? new Node('empty', 0, []))), 'WITH TIES');
+        $withTies = in_array('TIES', Tree::keywords(QueryNodes::local($tailSource, ['limit_clause'])[0] ?? new Node('empty', 0, [])), true);
         $groups = $this->expressions($body, ['group_clause', 'opt_group_clause', 'groupby_opt'], $scope);
         $origin = new \SqlSemantics\Model\Statement\Origin($id, $source, $context->tables->identifiers->dialect);
         $ordering = $tail->ordering($tailSource, $scope, $outputs);
@@ -77,7 +77,7 @@ final class QueryBinder
             }
             return new \SqlSemantics\Model\Statement\TableStatement($origin, $from->relation, $ordering, $limit, $offset, $withTies, (new CteBinder())->clause($source, $context));
         }
-        return new \SqlSemantics\Model\BoundSelect($origin, $from?->relation, $outputs, $where, $quantifier, $ordering, $limit, $offset, $groups, $having, (new CteBinder())->clause($source, $context), withTies: $withTies, windows: $projectionOptions->windows($body, $scope), locks: LockingBinder::bind($source, $scope), hints: $origin->dialect === \SqlSemantics\Dialect::MySql ? OptimizerHints::bind($body) : []);
+        return new \SqlSemantics\Model\BoundSelect($origin, $from?->relation, $outputs, $where, $quantifier, $ordering, $limit, $offset, $groups, $having, (new CteBinder())->clause($source, $context), withTies: $withTies, windows: $projectionOptions->windows($body, $scope), locks: LockingBinder::bind($source, $scope), hints: $origin->dialect === \SqlSemantics\Dialect::MySql ? OptimizerHints::bind($body) : [], options: QueryBlockOptions::bind($body, $context));
     }
 
     /**
@@ -141,10 +141,10 @@ final class QueryBinder
                 $body = QueryNodes::body($queryNode);
                 if (QueryNodes::setOperator($body) !== null) {
                     $branches = $this->branches($body);
-                    $ctes[$name] = CteBinder::definition($cte, $context->bind($branches[0], $parent), $context);
+                    $ctes[$name] = CteBinder::definition($cte, QueryBlockOptions::nested($context->bind($branches[0], $parent), $cte, $context), $context);
                     $context = new QueryContext($context->tables, $context->ids, $ctes, parameterTypes: $context->parameterTypes);
                 }
-                $ctes[$name] = CteBinder::definition($cte, $context->bind($queryNode, $parent), $context);
+                $ctes[$name] = CteBinder::definition($cte, QueryBlockOptions::nested($context->bind($queryNode, $parent), $cte, $context), $context);
                 $definitions[] = $ctes[$name];
             }
         }
@@ -187,6 +187,7 @@ final class QueryBinder
             throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::SetOperationLock, $lock);
         }
         $branches = array_map(static fn (Node $node): BoundQuery => $context->bind($node, $parent), $this->branches($body));
+        QueryBlockOptions::nested($branches[1], $body, $context);
         $leftWidth = \SqlSemantics\Model\Validation\RowShape::width($branches[0]);
         $rightWidth = \SqlSemantics\Model\Validation\RowShape::width($branches[1]);
         if ($leftWidth !== null && $rightWidth !== null && $leftWidth !== $rightWidth) {

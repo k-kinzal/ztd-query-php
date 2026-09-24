@@ -72,4 +72,66 @@ final class CreateBaseTypeStatementTest extends TestCase
         self::assertInstanceOf(CreateBaseTypeStatement::class, $statement);
         self::assertSame("CREATE TYPE \"t\"(INPUT = \"i\", OUTPUT = \"o\", STORAGE = 'plain')", $statement->withOptions([...$statement->options, new DefinitionOption(BaseTypeAttribute::Storage, 'plain')])->toString());
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith([' '])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['~'])]
+    public function testAcceptsTheEdgesOfPrintableAscii(string $category): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TYPE t (input = i, output = o)');
+        self::assertInstanceOf(CreateBaseTypeStatement::class, $statement);
+        self::assertCount(3, $statement->withOptions([...$statement->options, new DefinitionOption(BaseTypeAttribute::Category, $category)])->options);
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith([''])]
+    #[\PHPUnit\Framework\Attributes\TestWith(["\x1f"])]
+    #[\PHPUnit\Framework\Attributes\TestWith(["\x7f"])]
+    public function testRejectsACategoryOutsidePrintableAscii(string $category): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TYPE t (input = i, output = o)');
+        self::assertInstanceOf(CreateBaseTypeStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('A type category is one printable ASCII character.');
+        $statement->withOptions([...$statement->options, new DefinitionOption(BaseTypeAttribute::Category, $category)]);
+    }
+
+    public function testRejectsAnotherDialect(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TYPE t (input = i, output = o)');
+        self::assertInstanceOf(CreateBaseTypeStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        new CreateBaseTypeStatement(new \SqlSemantics\Model\Statement\Origin('s0', $statement->source, Dialect::MySql), $statement->name, $statement->options);
+    }
+
+    public function testRejectsAnOverQualifiedName(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TYPE t (input = i, output = o)');
+        self::assertInstanceOf(CreateBaseTypeStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        $statement->withName(new QualifiedName(['a', 'b', 'c', 'd']));
+    }
+
+    /**
+     * @param non-empty-list<DefinitionOption> $options
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerInvalidOptions')]
+    public function testRejectsAnIncompleteOrForeignOptionList(array $options): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TYPE t (input = i, output = o)');
+        self::assertInstanceOf(CreateBaseTypeStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        $statement->withOptions($options);
+    }
+
+    /**
+     * @return iterable<string, array{non-empty-list<DefinitionOption>}>
+     */
+    public static function providerInvalidOptions(): iterable
+    {
+        $input = new DefinitionOption(BaseTypeAttribute::Input, new QualifiedName(['i']));
+        $output = new DefinitionOption(BaseTypeAttribute::Output, new QualifiedName(['o']));
+        yield 'foreign attribute' => [[$input, $output, new DefinitionOption(\SqlSemantics\Model\Definition\TypeSystem\Definition\AggregateAttribute::Sspace, 4)]];
+        yield 'absent value' => [[$input, $output, new DefinitionOption(BaseTypeAttribute::Receive, null)]];
+        yield 'missing input' => [[$output]];
+        yield 'missing output' => [[$input]];
+    }
 }

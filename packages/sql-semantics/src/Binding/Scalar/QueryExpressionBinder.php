@@ -22,6 +22,7 @@ final class QueryExpressionBinder
 {
     /**
      * @throws LogicException
+     * @throws \SqlSemantics\InvalidSql
      */
     public function bind(Node $source, Node $node, Scope $scope, bool $rowSubquery = false): Expression
     {
@@ -29,11 +30,11 @@ final class QueryExpressionBinder
         if ($context === null) {
             throw new LogicException('Subquery binding requires a query context.');
         }
-        $query = $context->bind($node, $scope);
+        $query = \SqlSemantics\Binding\Query\QueryBlockOptions::nested($context->bind($node, $scope), $node, $context);
         $operator = $source === $node ? '' : (new ScalarBinder())->operator(Tree::significant($source));
         $symbol = $operator === '' ? 'SCALAR' : $operator;
         $exists = $symbol === 'EXISTS';
-        $predicate = $exists || in_array($symbol, ['IN', 'NOT IN'], true) || preg_match('/ (ALL|ANY|SOME)$/', $symbol) === 1;
+        $predicate = $exists || in_array($symbol, ['IN', 'NOT IN'], true) || preg_match('/ (ALL|ANY|SOME)$/D', $symbol) === 1;
         $type = $predicate ? (new TypeResolution($scope->identifiers->dialect, $scope->diagnostics()))->boolean() : ($query->resultColumns()[0]->expression->type ?? TypeDescriptor::builtin($scope->identifiers->dialect, 'unknown'));
         $operands = [];
         if ($source !== $node) {
@@ -84,13 +85,13 @@ final class QueryExpressionBinder
         if (count($operands) === 1 && in_array($symbol, ['IN', 'NOT IN'], true)) {
             return new \SqlSemantics\Model\Scalar\Query\InSubquery($facts, $source, $operands[0], $query, $symbol === 'NOT IN');
         }
-        if (count($operands) === 1 && preg_match('/^([-+*\/%^]) (ALL|ANY|SOME)$/', $symbol) === 1) {
+        if (count($operands) === 1 && preg_match('/^([-+*\/%^]) (ALL|ANY|SOME)$/D', $symbol) === 1) {
             throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::QuantifiedOperator, $source);
         }
-        if (count($operands) === 1 && $operator !== null && preg_match('/ (ALL|ANY|SOME)$/', $symbol, $parts) === 1) {
+        if (count($operands) === 1 && $operator !== null && preg_match('/ (ALL|ANY|SOME)$/D', $symbol, $parts) === 1) {
             return new \SqlSemantics\Model\Scalar\Query\QuantifiedComparison($facts, $source, $operands[0], $operator->operator, \SqlSemantics\Model\Scalar\Query\Quantifier::from($parts[1]), $query, $operator->negated);
         }
-        if (count($operands) === 1 && preg_match('/^(.*?) (ALL|ANY|SOME)$/', $symbol, $parts) === 1) {
+        if (count($operands) === 1 && preg_match('/^(.*?) (ALL|ANY|SOME)$/D', $symbol, $parts) === 1) {
             return new \SqlSemantics\Model\Scalar\Query\QuantifiedComparison($facts, $source, $operands[0], \SqlSemantics\Model\Scalar\Query\ComparisonOperator::tryFrom($parts[1]) ?? throw new \SqlSemantics\Binding\Statement\UnclassifiedSql('Unclassified quantified comparison: ' . $parts[1]), \SqlSemantics\Model\Scalar\Query\Quantifier::from($parts[2]), $query);
         }
         throw new \SqlSemantics\Binding\Statement\UnclassifiedSql('Unclassified subquery operation: ' . $symbol);

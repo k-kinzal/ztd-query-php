@@ -83,7 +83,7 @@ final class SchemaReader
         if ($nameNode === null) {
             Tree::invalid($create, 'table name');
         }
-        $parts = $this->identifiers->parts($nameNode);
+        $parts = $this->identifiers->dialect === Dialect::PostgreSql ? \SqlSemantics\Binding\Statement\Utility\QualifiedNames::read($nameNode, $this->identifiers)->parts : $this->identifiers->parts($nameNode);
         $sqliteDb = Tree::child($header, ['dbnm']);
         if ($sqliteDb !== null) {
             $parts = [$parts[0], ...$this->identifiers->parts($sqliteDb)];
@@ -107,7 +107,17 @@ final class SchemaReader
         $name = $parts[count($parts) - 1];
         $indexes = (new Definition\IndexReader($this->identifiers, $this->defaultSchema))->table($create, [$namespace, $name]);
         $options = Definition\OptionReader::read($create, $this->identifiers, ['columnDef', 'column_def', 'columnlist', 'TableConstraint', 'table_constraint_def', 'key_def', 'tcons']);
-        return new TableDefinition($namespace, $name, $columns, $constraints, $create, indexes: $indexes, options: $options);
+        return new TableDefinition($namespace, $name, $columns, $constraints, $create, indexes: $indexes, options: $options, catalog: count($parts) === 3 ? $parts[0] : null, ifNotExists: $this->ifNotExists($create, $nameNode));
+    }
+
+    /**
+     * Reports whether IF NOT EXISTS is written among the words before the table name, never inside the declared elements.
+     */
+    public function ifNotExists(Node $create, Node $name): bool
+    {
+        $start = $name->tokens()[0]->offset ?? 0;
+        $words = array_map(static fn (\SqlParser\Lexer\Token $token): string => strtoupper($token->text), array_values(array_filter($create->tokens(), static fn (\SqlParser\Lexer\Token $token): bool => $token->offset < $start)));
+        return str_contains(' ' . implode(' ', $words) . ' ', ' IF NOT EXISTS ');
     }
 
     /**
@@ -118,7 +128,7 @@ final class SchemaReader
      */
     public function namespace(Node $header, array $parts): string
     {
-        $written = count($parts) === 2 ? $parts[0] : null;
+        $written = count($parts) >= 2 ? $parts[count($parts) - 2] : null;
         $dialect = $this->identifiers->dialect;
         $marker = Tree::child($header, $dialect === Dialect::PostgreSql ? ['OptTemp'] : ['temp']);
         if ($dialect === Dialect::MySql || $marker === null || !str_contains(strtoupper(Tree::text($marker)), 'TEMP')) {
@@ -149,7 +159,7 @@ final class SchemaReader
             return array_reverse($columns);
         }
         foreach (Tree::outer($create, ['columnDef', 'column_def']) as $column) {
-            $columns[] = [$column, Tree::outer($column, ['ColConstraint', 'column_attribute', 'attribute'])];
+            $columns[] = [$column, Tree::outer($column, ['ColConstraint', 'column_attribute', 'attribute', 'gcol_attribute'])];
         }
 
         return $columns;
@@ -183,7 +193,7 @@ final class SchemaReader
         }
         $result = [];
         foreach ($columns as $column) {
-            $notNull = in_array($this->identifiers->dialect === Dialect::PostgreSql ? $column->name : strtolower($column->name), $primary, true) && $this->primaryNotNull($column, $primary, $constraints) || (in_array(strtolower($column->name), $primary, true) && $this->identifiers->dialect === Dialect::Sqlite && (str_contains(strtoupper(Tree::text($source)), 'WITHOUT ROWID') || str_contains(strtoupper(Tree::text($source)), 'STRICT')));
+            $notNull = in_array($this->identifiers->dialect === Dialect::PostgreSql ? $column->name : strtolower($column->name), $primary, true) && $this->primaryNotNull($column, $primary, $constraints) || (in_array(strtolower($column->name), $primary, true) && $this->identifiers->dialect === Dialect::Sqlite && array_intersect(['WITHOUT ROWID', 'STRICT'], array_map(static fn (Node $option): string => strtoupper(Tree::text($option)), Tree::outer($source, ['table_option']))) !== []);
             $result[] = new ColumnDefinition($column->name, $column->type, $notNull ? Nullability::NotNull : $column->nullability, $column->source, $column->defaultExpression, $column->attributes, $column->generatedExpression, $column->options);
         }
 
@@ -203,7 +213,8 @@ final class SchemaReader
             return false;
         }
         foreach ($constraints as $constraint) {
-            if ($constraint->kind === ConstraintKind::PrimaryKey && str_contains(strtoupper(Tree::text($constraint->source)), 'DESC')) {
+            $words = Tree::keywords($constraint->source);
+            if ($constraint->kind === ConstraintKind::PrimaryKey && $constraint->source->name === 'ccons' && in_array('DESC', ($words[0] ?? '') === 'CONSTRAINT' ? array_slice($words, 2) : $words, true)) {
                 return false;
             }
         }

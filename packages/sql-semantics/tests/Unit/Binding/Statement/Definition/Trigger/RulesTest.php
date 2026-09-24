@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Statement\Definition\Trigger;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -71,5 +72,25 @@ final class RulesTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind('CREATE RULE r AS ON INSERT TO t DO ALSO SELECT OLD.a', strict: false);
         self::assertInstanceOf(CreateCommandRuleStatement::class, $statement);
         self::assertNotSame([], $statement->diagnostics);
+    }
+
+    /**
+     * @return list<array{Dialect, ?string, string, mixed}>
+     */
+    public static function providerBindReadsEachLowercaseRule(): array
+    {
+        return [
+            [Dialect::PostgreSql, null, 'create or replace rule r as on insert to t where new.a > 0 do instead nothing', [CreateEmptyRuleStatement::class, 'CREATE OR REPLACE RULE "r" AS ON INSERT TO "public"."t" WHERE ("new"."a" > 0) DO INSTEAD NOTHING']],
+            [Dialect::PostgreSql, null, 'create rule r as on update to t do also nothing', [CreateEmptyRuleStatement::class, 'CREATE RULE "r" AS ON UPDATE TO "public"."t" DO ALSO NOTHING']],
+            [Dialect::PostgreSql, null, 'create rule r as on delete to t do also notify ch', [CreateCommandRuleStatement::class, 'CREATE RULE "r" AS ON DELETE TO "public"."t" DO ALSO NOTIFY "ch"']],
+            [Dialect::PostgreSql, null, 'create or replace rule r as on insert to t do instead (insert into u values (new.a); select 1)', [CreateCommandRuleStatement::class, 'CREATE OR REPLACE RULE "r" AS ON INSERT TO "public"."t" DO INSTEAD(INSERT INTO "public"."u" VALUES ("new"."a"); SELECT 1)']],
+        ];
+    }
+
+    #[DataProvider('providerBindReadsEachLowercaseRule')]
+    public function testBindReadsEachLowercaseRule(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(a INT); CREATE TABLE u(a INT)')))->bind($sql, strict: false);
+        self::assertSame($expected, [$statement::class, $statement->toString()]);
     }
 }

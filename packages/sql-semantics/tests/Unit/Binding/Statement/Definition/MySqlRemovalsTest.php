@@ -96,4 +96,35 @@ final class MySqlRemovalsTest extends TestCase
         self::assertSame($group->toString(), $binder->bind($group->toString())->toString());
     }
 
+    /**
+     * @param class-string<object> $class
+     */
+    #[TestWith([Dialect::MySql, 'drop resource group g', Statement\DropResourceGroupStatement::class, 'DROP RESOURCE GROUP `g`'])]
+    #[TestWith([Dialect::MySql, 'drop database d', Statement\DropDatabaseStatement::class, 'DROP DATABASE `d`'])]
+    #[TestWith([Dialect::MySql, 'drop user u@h, current_user', Statement\DropUsersStatement::class, 'DROP USER \'u\'@\'h\', CURRENT_USER'])]
+    #[TestWith([Dialect::MySql, 'drop role r', Statement\DropRolesStatement::class, 'DROP ROLE \'r\''])]
+    #[TestWith([Dialect::MySql, 'drop server ``', Statement\DropServerStatement::class, 'DROP SERVER ``'])]
+    #[TestWith([Dialect::MySql, 'drop event e', Statement\DropEventStatement::class, 'DROP EVENT `e`'])]
+    #[TestWith([Dialect::MySql, 'create role r', Statement\Account\CreateRolesStatement::class, 'CREATE ROLE \'r\''])]
+    #[TestWith([Dialect::PostgreSql, 'drop role r', \SqlSemantics\Model\Statement\Definition\PostgreSql\Role\DropRolesStatement::class, 'DROP ROLE "r"'])]
+    public function testBindReadsOnlyMySqlRemovalsInAnyCase(Dialect $dialect, string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect))->build()))->bind($sql);
+        self::assertInstanceOf($class, $statement);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    public function testBindRejectsAnEmptyDatabaseName(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage('A database operation requires a nonempty database name.');
+        $binder->bind('drop database ``');
+    }
+
+    public function testAccountsReadsParsedAccounts(): void
+    {
+        $source = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql))->parse("DROP USER 'u'@'h', CURRENT_USER");
+        self::assertEquals([new AccountName('u', 'h'), CurrentAccount::Authenticated], \SqlSemantics\Binding\Statement\Definition\MySqlRemovals::accounts($source, new \SqlSemantics\Ast\Identifiers(Dialect::MySql)));
+    }
 }

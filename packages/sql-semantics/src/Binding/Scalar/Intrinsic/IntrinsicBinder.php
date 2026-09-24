@@ -26,6 +26,14 @@ final class IntrinsicBinder
         if ($scope->identifiers->dialect === \SqlSemantics\Dialect::Sqlite && ($source->children[0] ?? null) instanceof \SqlParser\Lexer\Token && strtoupper($source->children[0]->text) === 'RAISE') {
             return \SqlSemantics\Binding\Scalar\RaiseBinder::bind($source, $scope);
         }
-        return DateShiftBinder::bind($source, $scope) ?? ExtractBinder::bind($source, $scope) ?? \SqlSemantics\Binding\Scalar\Text\TextOperations::bind($source, $scope) ?? TemporalFormatBinder::bind($source, $scope) ?? CastBinder::bind($source, $scope) ?? JsonPathBinder::bind($source, $scope) ?? \SqlSemantics\Binding\Scalar\Document\SqlJsonBinder::bind($source, $scope) ?? TextLiteralBinder::bind($source, $scope) ?? TemporalLiteralBinder::bind($source, $scope) ?? ProposedColumnBinder::bind($source, $scope) ?? \SqlSemantics\Binding\Scalar\Collection\ArrayBinder::bind($source, $scope) ?? \SqlSemantics\Binding\Scalar\Collection\ArrayBinder::comparison($source, $scope) ?? \SqlSemantics\Binding\Scalar\Conditional\OverlapBinder::bind($source, $scope) ?? \SqlSemantics\Binding\Scalar\Temporal\ZoneBinder::bind($source, $scope) ?? TypedLiteralBinder::bind($source, $scope);
+        return self::temporal($source, $scope) ?? \SqlSemantics\Binding\Scalar\Text\TextOperations::bind($source, $scope) ?? CastBinder::bind($source, $scope) ?? JsonPathBinder::bind($source, $scope) ?? \SqlSemantics\Binding\Scalar\Document\SqlJsonBinder::bind($source, $scope) ?? TextLiteralBinder::bind($source, $scope) ?? TemporalLiteralBinder::bind($source, $scope) ?? ProposedColumnBinder::bind($source, $scope) ?? \SqlSemantics\Binding\Scalar\Collection\ArrayBinder::bind($source, $scope) ?? \SqlSemantics\Binding\Scalar\Collection\ArrayBinder::comparison($source, $scope) ?? \SqlSemantics\Binding\Scalar\Conditional\OverlapBinder::bind($source, $scope) ?? TypedLiteralBinder::bind($source, $scope);
+    }
+
+    /**
+     * Resolves the temporal forms: interval arithmetic, TIMESTAMPADD and TIMESTAMPDIFF, EXTRACT, GET_FORMAT and time zone conversion.
+     */
+    public static function temporal(Node $source, Scope $scope): ?Expression
+    {
+        return DateShiftBinder::bind($source, $scope) ?? \SqlSemantics\Binding\Scalar\Temporal\TimestampBinder::bind($source, $scope) ?? ExtractBinder::bind($source, $scope) ?? TemporalFormatBinder::bind($source, $scope) ?? \SqlSemantics\Binding\Scalar\Temporal\ZoneBinder::bind($source, $scope);
     }
 }

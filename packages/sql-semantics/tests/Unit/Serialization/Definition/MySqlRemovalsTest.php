@@ -6,6 +6,7 @@ namespace Tests\Unit\Serialization\Definition;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
@@ -36,4 +37,21 @@ final class MySqlRemovalsTest extends TestCase
         self::assertSame(CurrentAccount::Authenticated, $statement->accounts[1]);
     }
 
+    #[TestWith(['DROP USER IF EXISTS \'u\', CURRENT_USER'])]
+    #[TestWith(['DROP USER \'u\''])]
+    #[TestWith(['DROP ROLE IF EXISTS \'r\''])]
+    #[TestWith(['DROP ROLE \'r1\', \'r2\''])]
+    #[TestWith(['DROP RESOURCE GROUP `g` FORCE'])]
+    #[TestWith(['DROP RESOURCE GROUP `g`'])]
+    #[TestWith(['DROP DATABASE IF EXISTS `d`'])]
+    #[TestWith(['DROP DATABASE `d`'])]
+    #[TestWith(['DROP EVENT IF EXISTS `s`.`e`'])]
+    #[TestWith(['DROP EVENT `e`'])]
+    #[TestWith(['DROP SERVER IF EXISTS `sv`'])]
+    #[TestWith(['DROP SERVER `sv`'])]
+    public function testWriteSpellsEachNamedRemoval(string $sql): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql);
+        self::assertSame($sql, \SqlSemantics\Serialization\Definition\MySqlRemovals::write($statement)?->toString());
+    }
 }

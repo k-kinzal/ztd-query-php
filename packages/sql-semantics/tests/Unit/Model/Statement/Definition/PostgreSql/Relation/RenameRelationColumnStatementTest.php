@@ -6,6 +6,7 @@ namespace Tests\Unit\Model\Statement\Definition\PostgreSql\Relation;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
@@ -119,5 +120,38 @@ final class RenameRelationColumnStatementTest extends TestCase
         self::assertInstanceOf(RenameRelationColumnStatement::class, $statement);
         $this->expectException(InvalidStructure::class);
         $statement->withRelationKind(Kind\RelationKind::Sequence);
+    }
+
+    public function testDefaultsToAPlainRenameOfAView(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER VIEW v RENAME COLUMN a TO b', strict: false);
+        self::assertInstanceOf(RenameRelationColumnStatement::class, $statement);
+        $rebuilt = new RenameRelationColumnStatement($statement->origin, Kind\RelationKind::View, new QualifiedName(['v']), 'a', 'b');
+        self::assertFalse($rebuilt->ifExists);
+        self::assertFalse($rebuilt->only);
+        self::assertSame('ALTER VIEW "v" RENAME COLUMN "a" TO "b"', $rebuilt->toString());
+    }
+
+    public function testRejectsOnlyOnAView(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER VIEW v RENAME COLUMN a TO b', strict: false);
+        $this->expectExceptionObject(new InvalidStructure('ONLY applies to tables and foreign tables.'));
+        new RenameRelationColumnStatement($statement->origin, Kind\RelationKind::View, new QualifiedName(['v']), 'a', 'b', only: true);
+    }
+
+    public function testRejectsAnOverlongName(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER VIEW v RENAME COLUMN a TO b', strict: false);
+        $this->expectException(InvalidStructure::class);
+        new RenameRelationColumnStatement($statement->origin, Kind\RelationKind::View, new QualifiedName(['a', 'b', 'c', 'd']), 'a', 'b');
+    }
+
+    #[TestWith(['', 'b'])]
+    #[TestWith(['a', ''])]
+    public function testRejectsAnEmptyColumnName(string $column, string $newName): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER VIEW v RENAME COLUMN a TO b', strict: false);
+        $this->expectExceptionObject(new InvalidStructure('A catalog object identifier cannot be empty.'));
+        new RenameRelationColumnStatement($statement->origin, Kind\RelationKind::View, new QualifiedName(['v']), $column, $newName);
     }
 }

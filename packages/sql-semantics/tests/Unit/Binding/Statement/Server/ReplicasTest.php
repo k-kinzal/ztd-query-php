@@ -82,4 +82,16 @@ final class ReplicasTest extends TestCase
         self::assertInstanceOf(StartGroupReplicationStatement::class, $statement);
         self::assertSame([CredentialOption::DefaultAuth, CredentialOption::User], array_column($statement->credentials, 'option'));
     }
+
+    #[TestWith(['mysql-8.0.44', 'start replica io_thread, sql_thread password=\'p\' default_auth=\'d\' plugin_dir=\'x\'', StartReplicaStatement::class, 'START REPLICA IO_THREAD, SQL_THREAD PASSWORD = \'p\' DEFAULT_AUTH = \'d\' PLUGIN_DIR = \'x\''])]
+    #[TestWith(['mysql-8.0.44', 'start replica user=\'u\' password=\'p\'', StartReplicaStatement::class, 'START REPLICA USER = \'u\' PASSWORD = \'p\''])]
+    #[TestWith(['mysql-8.0.44', 'stop replica sql_thread', StopReplicaStatement::class, 'STOP REPLICA SQL_THREAD'])]
+    #[TestWith(['mysql-8.0.44', 'stop group_replication', StopGroupReplicationStatement::class, 'STOP GROUP_REPLICATION'])]
+    #[TestWith(['mysql-8.0.44', 'start group_replication user=\'u\', password=\'p\'', StartGroupReplicationStatement::class, 'START GROUP_REPLICATION USER = \'u\', PASSWORD = \'p\''])]
+    #[TestWith(['mysql-8.0.44', 'START SLAVE SQL_THREAD UNTIL SQL_AFTER_MTS_GAPS', StartReplicaStatement::class, 'START REPLICA SQL_THREAD UNTIL SQL_AFTER_MTS_GAPS'])]
+    public function testBindSpellsEveryReplicaRequest(string $version, string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build()))->bind($sql, strict: false);
+        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+    }
 }

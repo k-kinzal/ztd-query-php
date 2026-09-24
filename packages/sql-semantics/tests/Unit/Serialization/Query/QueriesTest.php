@@ -150,4 +150,12 @@ final class QueriesTest extends TestCase
         self::assertSame('SELECT 1 LIMIT 2', Queries::write($query)->toString());
         self::assertSame('SELECT 1 FROM DUAL LIMIT 2', Queries::write($query, true)->toString());
     }
+
+    public function testWriteKeepsTheQueryBlockOptionsAfterTheQuantifier(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (a INT)'));
+        $statement = $binder->bind('SELECT /*+ MAX_EXECUTION_TIME(5) */ SQL_BIG_RESULT DISTINCT STRAIGHT_JOIN a FROM t');
+        self::assertInstanceOf(BoundSelect::class, $statement);
+        self::assertSame('SELECT /*+ MAX_EXECUTION_TIME(5) */ DISTINCT SQL_BIG_RESULT STRAIGHT_JOIN `a` AS `a` FROM `t`', Queries::write($statement)->toString());
+    }
 }

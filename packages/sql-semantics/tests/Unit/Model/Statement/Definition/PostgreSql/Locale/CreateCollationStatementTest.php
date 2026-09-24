@@ -117,4 +117,35 @@ final class CreateCollationStatementTest extends TestCase
         self::assertInstanceOf(CreateCollationStatement::class, $statement);
         self::assertSame("CREATE COLLATION IF NOT EXISTS \"c\"(LOCALE = 'C')", $statement->withIfNotExists(true)->toString());
     }
+
+    public function testDefaultsToADeterministicUnconditionalCreation(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind("CREATE COLLATION c (locale = 'C')");
+        self::assertInstanceOf(CreateCollationStatement::class, $statement);
+        $rebuilt = new CreateCollationStatement($statement->origin, new QualifiedName(['c']), CollationProvider::Libc, 'C');
+        self::assertTrue($rebuilt->deterministic);
+        self::assertFalse($rebuilt->ifNotExists);
+        self::assertSame($statement->toString(), $rebuilt->toString());
+    }
+
+    public function testRejectsAnotherDatabaseLanguage(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SELECT 1');
+        $this->expectException(InvalidStructure::class);
+        new CreateCollationStatement($statement->origin, new QualifiedName(['c']), CollationProvider::Libc, 'C');
+    }
+
+    public function testRejectsAnOverlongName(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1');
+        $this->expectException(InvalidStructure::class);
+        new CreateCollationStatement($statement->origin, new QualifiedName(['a', 'b', 'c', 'd']), CollationProvider::Libc, 'C');
+    }
+
+    public function testRejectsAMissingLocale(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1');
+        $this->expectException(InvalidStructure::class);
+        new CreateCollationStatement($statement->origin, new QualifiedName(['c']), CollationProvider::Libc, null);
+    }
 }

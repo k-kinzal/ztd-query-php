@@ -42,4 +42,9 @@ final class AggregateAttributeTest extends TestCase
         self::assertFalse(AggregateAttribute::Mstype->moving());
         self::assertFalse(AggregateAttribute::Sfunc->moving());
     }
+
+    public function testKindCoversEveryAttribute(): void
+    {
+        self::assertSame(['Name', 'Type', 'Integer', 'Name', 'Boolean', 'Choice', 'Name', 'Name', 'Name', 'Text', 'Name', 'Name', 'Type', 'Integer', 'Name', 'Boolean', 'Choice', 'Text', 'Operator', 'Choice', 'Boolean'], array_map(static fn (AggregateAttribute $attribute): string => $attribute->kind()->name, AggregateAttribute::cases()));
+    }
 }

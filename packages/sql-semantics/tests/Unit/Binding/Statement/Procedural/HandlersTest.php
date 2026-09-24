@@ -58,4 +58,31 @@ final class HandlersTest extends TestCase
         $this->expectExceptionMessage(InputViolation::DefaultContext->message());
         (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT, KEY k(a))')))->bind('HANDLER t READ k = (DEFAULT)');
     }
+
+    #[TestWith(['handler t open', 'HANDLER `t` OPEN'])]
+    #[TestWith(['handler t read first where a > 1', 'HANDLER `t` READ FIRST WHERE (`a` > 1)'])]
+    #[TestWith(['handler t read k next where a > 1 limit 3', 'HANDLER `t` READ `k` NEXT WHERE (`a` > 1) LIMIT 3'])]
+    #[TestWith(['handler t read k = (1, 2) where b < 5', 'HANDLER `t` READ `k` = (1, 2) WHERE (`b` < 5)'])]
+    #[TestWith(['handler t read k prev', 'HANDLER `t` READ `k` PREV'])]
+    #[TestWith(['handler t close', 'HANDLER `t` CLOSE'])]
+    public function testBindReadsLowerCaseHandlerForms(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (a INT, b INT, KEY k (a, b))')))->bind($sql)->toString());
+    }
+
+    public function testKeyBindsEveryKeyValue(): void
+    {
+        $node = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql, 'mysql-8.4.7'))->parse('HANDLER t READ k = (1, 2)');
+        $key = Handlers::key($node, new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::MySql)));
+        self::assertSame(['1', '2'], array_map(static fn ($value): ?string => $value->spelling(), $key));
+    }
+
+    public function testReadBindsTheConditionAgainstTheHandlerTable(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (a INT, b INT, KEY k (a, b))')))->bind('HANDLER t READ FIRST WHERE a > 1');
+        self::assertInstanceOf(Statement\ReadHandlerStatement::class, $statement);
+        $context = new \SqlSemantics\Binding\Query\QueryContext(new \SqlSemantics\Binding\TableResolver((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (a INT, b INT, KEY k (a, b))'), new \SqlSemantics\Ast\Identifiers(Dialect::MySql), ''));
+        $read = Handlers::read($statement->origin, $statement->source, $statement->handler, 3, $context);
+        self::assertSame('HANDLER `t` READ FIRST WHERE (`a` > 1)', $read->toString());
+    }
 }

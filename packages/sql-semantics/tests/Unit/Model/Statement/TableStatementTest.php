@@ -216,4 +216,19 @@ final class TableStatementTest extends TestCase
         self::assertSame('TABLE "public"."t"', $statement->toString());
         self::assertSame([], $changed->withOrderBy([])->orderBy);
     }
+
+    /**
+     * @param list<string> $parts
+     */
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, ['u']])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, ['public', 'u']])]
+    public function testWithTableNamesTheReplacementWithItsSchema(Dialect $dialect, array $parts): void
+    {
+        $schema = (new SchemaBuilder($dialect))->build('CREATE TABLE t(a INT)', 'CREATE TABLE u(b INT)');
+        $statement = (new Binder($schema))->bind('TABLE t');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\TableStatement::class, $statement);
+        $name = $statement->withTable($schema->tables[1])->from->name;
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\QualifiedName::class, $name);
+        self::assertSame($parts, $name->parts);
+    }
 }

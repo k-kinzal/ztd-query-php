@@ -58,4 +58,14 @@ final class SessionInspectionsTest extends TestCase
         self::assertSame('SHOW GRANTS', SessionInspections::grants($plain)->toString());
         self::assertSame("SHOW GRANTS FOR CURRENT_USER USING 'r'", SessionInspections::grants($roles)->toString());
     }
+
+    #[TestWith(["SHOW GLOBAL STATUS LIKE 'a%'", "SHOW GLOBAL STATUS LIKE 'a%'"])]
+    #[TestWith(['show warnings limit 2, 3', 'SHOW WARNINGS LIMIT 3 OFFSET 2'])]
+    #[TestWith(['SHOW ERRORS', 'SHOW ERRORS'])]
+    #[TestWith(['SHOW GRANTS FOR u@h USING r', "SHOW GRANTS FOR 'u'@'h' USING 'r'"])]
+    public function testWriteWritesStatusDiagnosticsAndGrants(string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql);
+        self::assertSame($expected, SessionInspections::write($statement)?->toString());
+    }
 }

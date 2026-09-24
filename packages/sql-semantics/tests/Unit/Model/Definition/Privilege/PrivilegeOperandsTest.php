@@ -134,4 +134,53 @@ final class PrivilegeOperandsTest extends TestCase
         $this->expectException(InvalidStructure::class);
         PrivilegeOperands::clauses($origin, null, [], new Grantor(new AccountName('g')));
     }
+
+    public function testPrivilegesNameThePrivilegeAndTheLevelItIsMissingFrom(): void
+    {
+        $origin = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SELECT 1')->origin;
+        $this->expectExceptionMessage('SELECT is not defined at the routine privilege level.');
+        PrivilegeOperands::privileges($origin, [StaticPrivilege::Select], new RoutineTarget(new QualifiedName(['p']), RoutineKind::Procedure));
+    }
+
+    public function testPrivilegesRejectAnotherDialect(): void
+    {
+        $origin = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('SELECT 1')->origin;
+        $this->expectException(InvalidStructure::class);
+        PrivilegeOperands::privileges($origin, [StaticPrivilege::Select], PrivilegeScope::Global);
+    }
+
+    public function testRevocationRejectsAnotherDialect(): void
+    {
+        $origin = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('SELECT 1')->origin;
+        $this->expectException(InvalidStructure::class);
+        PrivilegeOperands::revocation($origin, false, false);
+    }
+
+    public function testRevocationAcceptsAPlainRevocationOnMySql57(): void
+    {
+        $origin = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build()))->bind('SELECT 1')->origin;
+        PrivilegeOperands::revocation($origin, false, false);
+        self::assertSame('mysql-5.7.44', $origin->context?->schema()->grammarVersion);
+    }
+
+    public function testRevocationRejectsIfExistsOnMySql57(): void
+    {
+        $origin = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build()))->bind('SELECT 1')->origin;
+        $this->expectException(InvalidStructure::class);
+        PrivilegeOperands::revocation($origin, true, false);
+    }
+
+    public function testGranteesCheckEveryGranteeAfterAPlainAccount(): void
+    {
+        $origin = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build()))->bind('SELECT 1')->origin;
+        $this->expectException(InvalidStructure::class);
+        PrivilegeOperands::grantees($origin, [CurrentAccount::Authenticated, new AccountDefinition(new AccountName('u'))], true);
+    }
+
+    public function testGranteesRejectAnIdentificationTheLegacyReleaseLacks(): void
+    {
+        $origin = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build()))->bind('SELECT 1')->origin;
+        $this->expectException(InvalidStructure::class);
+        PrivilegeOperands::grantees($origin, [new AccountDefinition(new AccountName('u'), RandomPassword::Generated)], true);
+    }
 }

@@ -47,4 +47,31 @@ final class DatabaseParameterTest extends TestCase
     {
         self::assertSame($expected, $parameter->accepts($value));
     }
+
+    #[TestWith([DatabaseParameter::AllowConnections, false, true])]
+    #[TestWith([DatabaseParameter::AllowConnections, 1, false])]
+    #[TestWith([DatabaseParameter::ConnectionLimit, 2147483647, true])]
+    #[TestWith([DatabaseParameter::ConnectionLimit, 2147483648, false])]
+    #[TestWith([DatabaseParameter::Oid, 4294967295, true])]
+    #[TestWith([DatabaseParameter::Oid, 4294967296, false])]
+    #[TestWith([DatabaseParameter::Encoding, 'UTF8', true])]
+    #[TestWith([DatabaseParameter::Encoding, '', false])]
+    #[TestWith([DatabaseParameter::Encoding, true, false])]
+    #[TestWith([DatabaseParameter::LocaleProvider, 'ICU', true])]
+    #[TestWith([DatabaseParameter::Owner, 'alice', true])]
+    #[TestWith([DatabaseParameter::Owner, 1, false])]
+    #[TestWith([DatabaseParameter::Template, 'template0', true])]
+    #[TestWith([DatabaseParameter::Tablespace, 'fast', true])]
+    #[TestWith([DatabaseParameter::LcCollate, 'C', true])]
+    #[TestWith([DatabaseParameter::LcCtype, 'C', true])]
+    #[TestWith([DatabaseParameter::IcuLocale, 'und', true])]
+    #[TestWith([DatabaseParameter::IcuRules, '&a < b', true])]
+    #[TestWith([DatabaseParameter::BuiltinLocale, 'C.UTF-8', true])]
+    #[TestWith([DatabaseParameter::CollationVersion, '1', true])]
+    #[TestWith([DatabaseParameter::Location, '/data', true])]
+    #[TestWith([DatabaseParameter::Location, 1, false])]
+    public function testAcceptsChecksEveryParameterDomain(DatabaseParameter $parameter, string|int|bool|null $value, bool $expected): void
+    {
+        self::assertSame($expected, $parameter->accepts($value));
+    }
 }

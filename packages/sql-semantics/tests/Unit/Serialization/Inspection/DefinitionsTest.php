@@ -25,7 +25,7 @@ final class DefinitionsTest extends TestCase
     #[TestWith(['SHOW CREATE TRIGGER audit', 'SHOW CREATE TRIGGER `audit`'])]
     #[TestWith(['SHOW CREATE TABLE users', 'SHOW CREATE TABLE `users`'])]
     #[TestWith(['SHOW CREATE VIEW users', 'SHOW CREATE VIEW `users`'])]
-    #[TestWith(["SHOW CREATE USER 'app'@'localhost'", "SHOW CREATE USER 'app' @'localhost'"])]
+    #[TestWith(["SHOW CREATE USER 'app'@'localhost'", "SHOW CREATE USER 'app'@'localhost'"])]
     #[TestWith(['SHOW CREATE USER CURRENT_USER()', 'SHOW CREATE USER CURRENT_USER'])]
     #[TestWith(["SHOW FUNCTION STATUS LIKE 'c%'", "SHOW FUNCTION STATUS LIKE 'c%'"])]
     #[TestWith(["SHOW PROCEDURE STATUS WHERE Db = 'app'", "SHOW PROCEDURE STATUS WHERE (`Db` = 'app')"])]

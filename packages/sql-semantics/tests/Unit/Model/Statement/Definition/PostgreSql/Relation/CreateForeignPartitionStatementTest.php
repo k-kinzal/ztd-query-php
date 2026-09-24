@@ -125,4 +125,35 @@ final class CreateForeignPartitionStatementTest extends TestCase
         $this->expectException(InvalidStructure::class);
         $statement->withServer('');
     }
+
+    public function testWithNameAndParentAcceptCatalogQualifiedNames(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE p(a INT) PARTITION BY LIST (a)')))->bind('CREATE FOREIGN TABLE d.s.c PARTITION OF d.public.p FOR VALUES IN (1) SERVER s', strict: false);
+        self::assertInstanceOf(CreateForeignPartitionStatement::class, $statement);
+        self::assertSame('CREATE FOREIGN TABLE "d"."s"."c" PARTITION OF "d"."public"."p" FOR VALUES IN(1) SERVER "s"', $statement->toString());
+    }
+
+    public function testWithNameRejectsFourComponents(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE p(a INT) PARTITION BY LIST (a)')))->bind('CREATE FOREIGN TABLE c PARTITION OF p FOR VALUES IN (1) SERVER s');
+        self::assertInstanceOf(CreateForeignPartitionStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        $statement->withName(new QualifiedName(['a', 'd', 's', 'c']));
+    }
+
+    public function testWithParentRejectsFourComponents(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE p(a INT) PARTITION BY LIST (a)')))->bind('CREATE FOREIGN TABLE c PARTITION OF p FOR VALUES IN (1) SERVER s');
+        self::assertInstanceOf(CreateForeignPartitionStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        $statement->withParent(new QualifiedName(['a', 'd', 's', 'p']));
+    }
+
+    public function testWithIfNotExistsDefaultsToFalseWhenOmitted(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE p(a INT) PARTITION BY LIST (a)')))->bind('CREATE FOREIGN TABLE c PARTITION OF p FOR VALUES IN (1) SERVER s');
+        self::assertInstanceOf(CreateForeignPartitionStatement::class, $statement);
+        $rebuilt = new CreateForeignPartitionStatement($statement->origin, $statement->name, $statement->parent, $statement->bound, $statement->server);
+        self::assertFalse($rebuilt->ifNotExists);
+    }
 }

@@ -6,6 +6,7 @@ namespace Tests\Unit\Model\Definition\MySqlTable\Partition;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
@@ -34,5 +35,12 @@ final class PartitionPropertiesTest extends TestCase
     {
         $this->expectException(InvalidStructure::class);
         new PartitionProperties(nodeGroup: -1);
+    }
+
+    #[TestWith(['CREATE TABLE t(a INT) PARTITION BY HASH(a) (PARTITION p0 MAX_ROWS = 0 MIN_ROWS = 0)', \SqlSemantics\Model\Statement\CreateTableStatement::class, 'CREATE TABLE `t`(`a` integer) PARTITION BY HASH(`a`)(PARTITION `p0` MAX_ROWS = 0 MIN_ROWS = 0)'])]
+    public function testNumbersAcceptZero(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql, strict: false);
+        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
     }
 }

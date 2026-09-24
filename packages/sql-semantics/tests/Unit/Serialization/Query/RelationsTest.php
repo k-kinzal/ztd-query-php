@@ -74,4 +74,25 @@ final class RelationsTest extends TestCase
         self::assertSame('"c"', Relations::target($cte->from, Dialect::PostgreSql)->toString());
         self::assertSame('"c" AS "d"', Relations::write($cte->from, Dialect::PostgreSql)->toString());
     }
+
+    public function testWriteSerializesRowsFromWithColumnAliases(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT * FROM ROWS FROM (generate_series(1,2), generate_series(1,3)) AS r(a, b)');
+        self::assertInstanceOf(BoundSelect::class, $statement);
+        self::assertNotNull($statement->from);
+        self::assertSame('ROWS FROM("generate_series"(1, 2), "generate_series"(1, 3)) AS "r"("a", "b")', Relations::write($statement->from, Dialect::PostgreSql)->toString());
+    }
+
+    public function testIndexHintsWritesEachHintAfterTheAlias(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (a INT, KEY k (a))')))->bind('SELECT a FROM t x IGNORE KEY FOR JOIN (k) USE INDEX ()');
+        self::assertInstanceOf(BoundSelect::class, $statement);
+        self::assertInstanceOf(TableReference::class, $statement->from);
+        self::assertSame(['IGNORE INDEX FOR JOIN(`k`)', 'USE INDEX()'], array_map(static fn ($tree): string => $tree->toString(), Relations::indexHints($statement->from, Dialect::MySql)));
+        self::assertSame('`t` AS `x` IGNORE INDEX FOR JOIN(`k`) USE INDEX()', Relations::write($statement->from, Dialect::MySql)->toString());
+        $derived = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SELECT * FROM (SELECT 1) AS d');
+        self::assertInstanceOf(BoundSelect::class, $derived);
+        self::assertInstanceOf(DerivedRelation::class, $derived->from);
+        self::assertSame([], Relations::indexHints($derived->from, Dialect::MySql));
+    }
 }

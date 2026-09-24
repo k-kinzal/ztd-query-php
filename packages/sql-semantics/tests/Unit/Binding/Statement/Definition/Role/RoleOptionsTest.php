@@ -8,7 +8,10 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Ast\DialectParser;
+use SqlSemantics\Ast\Identifiers;
 use SqlSemantics\Binder;
+use SqlSemantics\Binding\Statement\Definition\Role\RoleOptions;
 use SqlSemantics\Dialect;
 use SqlSemantics\InvalidSql;
 use SqlSemantics\Model\Configuration\Role\NamedRole;
@@ -28,7 +31,7 @@ use SqlSemantics\Model\Statement\Definition\PostgreSql\Role\CreateRoleStatement;
 use SqlSemantics\Model\Validation\InputViolation;
 use SqlSemantics\SchemaBuilder;
 
-#[CoversClass(\SqlSemantics\Binding\Statement\Definition\Role\RoleOptions::class)]
+#[CoversClass(RoleOptions::class)]
 #[Medium]
 final class RoleOptionsTest extends TestCase
 {
@@ -237,5 +240,78 @@ final class RoleOptionsTest extends TestCase
         $definition = $binder->bind('CREATE ROLE r ROLE a, b');
         self::assertInstanceOf(CreateRoleStatement::class, $definition);
         self::assertEquals([new RoleMembers([new NamedRole('a'), new NamedRole('b')])], $definition->options);
+    }
+
+    public function testDistinctRejectsAContradictedListDirectly(): void
+    {
+        $list = (new DialectParser(Dialect::PostgreSql))->parse('ALTER ROLE r LOGIN NOLOGIN')->find('AlterOptRoleList')[0];
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(InputViolation::RoleOption->message());
+        RoleOptions::distinct([new RoleAttribute(RoleCapability::Login, true), new RoleAttribute(RoleCapability::Login, false)], $list);
+    }
+
+    public function testDistinctAcceptsDifferentOptionsDirectly(): void
+    {
+        $list = (new DialectParser(Dialect::PostgreSql))->parse('ALTER ROLE r LOGIN CREATEDB')->find('AlterOptRoleList')[0];
+        RoleOptions::distinct([new RoleAttribute(RoleCapability::Login, true), new RoleAttribute(RoleCapability::CreateDb, true)], $list);
+        self::assertSame(['LOGIN', 'CREATEDB'], array_map(static fn ($token): string => $token->text, $list->tokens()));
+    }
+
+    public function testMembershipReadsADefinitionElementDirectly(): void
+    {
+        $element = (new DialectParser(Dialect::PostgreSql))->parse('CREATE ROLE r SYSID 7')->find('CreateOptRoleElem')[0];
+        self::assertEquals(new RoleSystemId(7), RoleOptions::membership($element, new Identifiers(Dialect::PostgreSql)));
+    }
+
+    public function testOptionReadsAnAlterationElementDirectly(): void
+    {
+        $element = (new DialectParser(Dialect::PostgreSql))->parse('ALTER ROLE r CONNECTION LIMIT 3')->find('AlterOptRoleElem')[0];
+        self::assertEquals(new ConnectionLimit(3), RoleOptions::option($element, new Identifiers(Dialect::PostgreSql)));
+    }
+
+    public function testAttributeReadsAnIdentifierTokenDirectly(): void
+    {
+        $element = (new DialectParser(Dialect::PostgreSql))->parse('ALTER ROLE r nologin')->find('AlterOptRoleElem')[0];
+        self::assertEquals(new RoleAttribute(RoleCapability::Login, false), RoleOptions::attribute($element->tokens()[0], new Identifiers(Dialect::PostgreSql), $element));
+    }
+
+    #[TestWith(['00000000001', 1])]
+    #[TestWith(['- 4', -4])]
+    public function testIntegerReadsANumberNodeDirectly(string $number, int $expected): void
+    {
+        $node = (new DialectParser(Dialect::PostgreSql))->parse('ALTER ROLE r CONNECTION LIMIT ' . $number)->find('SignedIconst')[0];
+        self::assertSame($expected, RoleOptions::integer($node, -10));
+    }
+
+    #[TestWith(['2147483648'])]
+    #[TestWith(['99999999999'])]
+    public function testIntegerRejectsValuesBeyondTheServerRangeDirectly(string $number): void
+    {
+        $node = (new DialectParser(Dialect::PostgreSql))->parse('SELECT ' . $number)->find('AexprConst')[0];
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(InputViolation::RoleNumericOption->message());
+        RoleOptions::integer($node, -1);
+    }
+
+    public function testIntegerRejectsANodeThatIsNoNumber(): void
+    {
+        $node = (new DialectParser(Dialect::PostgreSql))->parse('ALTER ROLE r CONNECTION LIMIT 3')->find('RoleSpec')[0];
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(InputViolation::RoleNumericOption->message());
+        RoleOptions::integer($node, -1);
+    }
+
+    public function testTextReadsTheConstantOfAnElementDirectly(): void
+    {
+        $element = (new DialectParser(Dialect::PostgreSql))->parse("ALTER ROLE r VALID UNTIL 'infinity'")->find('AlterOptRoleElem')[0];
+        self::assertSame("'infinity'", RoleOptions::text($element, new Identifiers(Dialect::PostgreSql))->text);
+    }
+
+    public function testRolesReturnsTheRoleListOfAnElement(): void
+    {
+        $element = (new DialectParser(Dialect::PostgreSql))->parse('ALTER ROLE r USER a, b')->find('AlterOptRoleElem')[0];
+        $roles = RoleOptions::roles($element);
+        self::assertSame('role_list', $roles->name);
+        self::assertCount(2, $roles->find('RoleSpec'));
     }
 }

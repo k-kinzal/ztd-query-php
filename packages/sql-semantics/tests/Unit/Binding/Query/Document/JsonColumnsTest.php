@@ -72,4 +72,34 @@ final class JsonColumnsTest extends TestCase
         self::assertSame(\SqlSemantics\Model\TableFunction\Json\Response\ValueBehavior::Null, $quoted->onEmpty);
         self::assertSame(\SqlSemantics\Model\TableFunction\Json\Response\ValueBehavior::EmptyArray, $quoted->onError);
     }
+
+    public function testColumnReadsTheCollationAndLowerCaseExists(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build()))->bind("SELECT * FROM JSON_TABLE('[]', '$[*]' COLUMNS (a varchar(9) collate utf8mb4_bin path '$.a', b int exists path '$.b'))");
+        self::assertSame("SELECT `json_table`.`a` AS `a`, `json_table`.`b` AS `b` FROM JSON_TABLE('[]', '$[*]' COLUMNS(`a` varchar(9) COLLATE `utf8mb4_bin` PATH '$.a', `b` integer EXISTS PATH '$.b'))", $statement->toString());
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        $relation = $statement->relations[0];
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\DocumentRelation::class, $relation);
+        self::assertInstanceOf(\SqlSemantics\Model\TableFunction\Json\JsonTable::class, $relation->table);
+        [$value, $exists] = $relation->table->columns;
+        self::assertInstanceOf(\SqlSemantics\Model\TableFunction\Json\ValueColumn::class, $value);
+        self::assertSame(['utf8mb4_bin'], $value->collation?->parts);
+        self::assertInstanceOf(\SqlSemantics\Model\TableFunction\Json\ExistsColumn::class, $exists);
+        self::assertNull($exists->collation);
+    }
+
+    public function testColumnRejectsAnEmptyResponseOnAnExistsColumn(): void
+    {
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::JsonOption->message());
+        (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build()))->bind("SELECT * FROM JSON_TABLE('[]', '$[*]' COLUMNS (b int exists path '$.b' null on empty))");
+    }
+
+    public function testColumnBindsOneColumnDefinitionDirectly(): void
+    {
+        $source = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql, 'mysql-8.4.7'))->parse("SELECT * FROM JSON_TABLE('[]', '$[*]' COLUMNS (n FOR ORDINALITY))")->find('jt_column')[0];
+        $column = JsonColumns::column($source, new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::MySql)));
+        self::assertInstanceOf(\SqlSemantics\Model\TableFunction\Json\Ordinality::class, $column);
+        self::assertSame('n', $column->name);
+    }
 }

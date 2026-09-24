@@ -43,4 +43,37 @@ final class TableOccurrenceTest extends TestCase
         self::assertSame($schema->tables[0], $statement->locks[0]->table->declaration);
     }
 
+    #[TestWith(['mysql-5.6.51'])]
+    #[TestWith(['mysql-5.7.44'])]
+    #[TestWith(['mysql-8.0.44'])]
+    #[TestWith(['mysql-8.4.7'])]
+    #[TestWith(['mysql-9.1.0'])]
+    public function testHintsReadEveryIndexHintOfATable(string $release): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $release))->build('CREATE TABLE t (a INT, KEY k (a))'));
+        $statement = $binder->bind('SELECT a FROM t AS x USE INDEX FOR JOIN (k, PRIMARY) USE KEY () FORCE KEY FOR GROUP BY (k) IGNORE INDEX FOR ORDER BY (`k`)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\TableReference::class, $statement->from);
+        $hints = $statement->from->indexHints;
+        self::assertSame([\SqlSemantics\Model\Query\Optimization\IndexHintAction::Use, \SqlSemantics\Model\Query\Optimization\IndexHintAction::Use, \SqlSemantics\Model\Query\Optimization\IndexHintAction::Force, \SqlSemantics\Model\Query\Optimization\IndexHintAction::Ignore], array_column($hints, 'action'));
+        self::assertSame([\SqlSemantics\Model\Query\Optimization\IndexHintScope::Join, null, \SqlSemantics\Model\Query\Optimization\IndexHintScope::GroupBy, \SqlSemantics\Model\Query\Optimization\IndexHintScope::OrderBy], array_column($hints, 'scope'));
+        self::assertSame([['k', 'PRIMARY'], [], ['k'], ['k']], array_column($hints, 'indexes'));
+        $expected = 'SELECT `a` AS `a` FROM `t` AS `x` USE INDEX FOR JOIN(`k`, `PRIMARY`) USE INDEX() FORCE INDEX FOR GROUP BY(`k`) IGNORE INDEX FOR ORDER BY(`k`)';
+        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, $binder->bind($expected)->toString());
+    }
+
+    public function testHintsLeaveOtherDialectsWithoutHints(): void
+    {
+        $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('SELECT 1 FROM t');
+        self::assertSame([], TableOccurrence::hints($tree, new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql)));
+    }
+
+    public function testBindKeepsTheHintsOfAnUpdatedTable(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (a INT, KEY k (a))'));
+        $statement = $binder->bind('UPDATE t USE INDEX (k) SET a = 1');
+        self::assertInstanceOf(UpdateStatement::class, $statement);
+        self::assertSame('UPDATE `t` USE INDEX(`k`) SET `a` = 1', $statement->toString());
+    }
 }

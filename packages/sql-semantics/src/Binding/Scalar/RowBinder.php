@@ -28,7 +28,7 @@ final class RowBinder
     {
         $children = Tree::significant($source);
         $first = $children[0] ?? null;
-        $explicit = $first instanceof Token && strtoupper($first->text) === 'ROW';
+        $explicit = $first instanceof Token && strtoupper($first->text) === 'ROW' && count($children) > 1;
         $comma = array_filter($children, static fn (Node|Token $child): bool => $child instanceof Token && $child->text === ',') !== [];
         $implicit = $first instanceof Token && $first->text === '(' && $comma;
         if (!$explicit && !$implicit && !in_array($source->name, ['implicit_row', 'explicit_row'], true)) {

@@ -70,4 +70,24 @@ final class AccountsTest extends TestCase
         $this->expectExceptionMessage(InputViolation::AccountLimit->message());
         Accounts::count(new Token(0, 'NUM', $text, 0), $tree);
     }
+
+    #[TestWith(['10x1F'])]
+    #[TestWith(['0x1Fz'])]
+    #[TestWith(["x'1F'z"])]
+    #[TestWith(["zx'1F'"])]
+    public function testCountRejectsHexadecimalSpellingsWithinOtherText(string $text): void
+    {
+        $context = (new DialectParser(Dialect::MySql))->parse('SELECT 1');
+        $this->expectException(InvalidSql::class);
+        Accounts::count(new Token(0, 'NUM', $text, 0), $context);
+    }
+
+    #[TestWith(['0x1F', 31])]
+    #[TestWith(["X'1f'", 31])]
+    #[TestWith(['0010', 10])]
+    public function testCountReadsDecimalAndHexadecimalCounts(string $text, int $expected): void
+    {
+        $context = (new DialectParser(Dialect::MySql))->parse('SELECT 1');
+        self::assertSame($expected, Accounts::count(new Token(0, 'NUM', $text, 0), $context));
+    }
 }

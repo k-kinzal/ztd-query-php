@@ -103,4 +103,13 @@ final class OrderedSetCallTest extends TestCase
         self::assertSame('APP.PERCENTILE', $qualified->spelling());
         self::assertSame('PERCENTILE_CONT', $builtin->spelling());
     }
+
+    public function testInputsSpreadEveryDirectArgumentAndOrderedKey(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT, b INT)')))->bind('SELECT rank(1, 2) WITHIN GROUP (ORDER BY a, b) FILTER (WHERE a > 0) FROM t');
+        self::assertInstanceOf(BoundSelect::class, $statement);
+        $aggregate = $statement->outputs[0]->expression;
+        self::assertInstanceOf(OrderedSetCall::class, $aggregate);
+        self::assertSame(['1', '2', 'a', 'b', 'a > 0'], array_map(static fn (Expression $input): string => trim($input->source->toString()), $aggregate->inputs()));
+    }
 }

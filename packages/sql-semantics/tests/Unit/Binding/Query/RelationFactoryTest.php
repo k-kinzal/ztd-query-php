@@ -162,6 +162,24 @@ final class RelationFactoryTest extends TestCase
         self::assertSame('b', $query->relations[0]->input->right->alias);
     }
 
+    public function testAliasReportsAColumnBothJoinInputsExposeAsAmbiguous(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER, a INTEGER)', 'CREATE TABLE u (id INTEGER, b INTEGER)'));
+        $this->expectException(\SqlSemantics\SemanticException::class);
+        $this->expectExceptionMessage('Cannot resolve column unambiguously: x.id');
+        $binder->bind('SELECT x.id FROM (t JOIN u ON t.id = u.id) AS x');
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['SELECT x.id FROM (t JOIN u USING (id)) AS x', 'SELECT "x"."id" AS "id" FROM("public"."t" INNER JOIN "public"."u" USING("id")) AS "x"'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['SELECT x.id FROM (t NATURAL JOIN u) AS x', 'SELECT "x"."id" AS "id" FROM("public"."t" NATURAL JOIN "public"."u") AS "x"'])]
+    public function testAliasExposesAMergedJoinColumnOnce(string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER, a INTEGER)', 'CREATE TABLE u (id INTEGER, b INTEGER)'));
+        $query = $binder->bind($sql);
+        self::assertSame($expected, $query->toString());
+        self::assertSame($expected, $binder->bind($expected)->toString());
+    }
+
     public function testAliasesPreservesQuotedColumnLabels(): void
     {
         $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT g."Value" FROM generate_series(1,2) AS g("Value")');
@@ -182,6 +200,22 @@ final class RelationFactoryTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Relation\FunctionRelation::class, $query->relations[0]);
         self::assertSame(strtoupper($name), $query->relations[0]->function->spelling());
         self::assertSame("'[1,2]'", $query->relations[0]->function->inputs()[0]->spelling());
+    }
+
+    /**
+     * @param non-empty-string $from
+     */
+    #[\PHPUnit\Framework\Attributes\TestWith(["SELECT * FROM json_each('[1]') AS j", 'FROM json_each(\'[1]\') AS "j"'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(["SELECT * FROM pragma_table_info('t') p", 'FROM pragma_table_info(\'t\') AS "p"'])]
+    public function testFunctionKeepsImplicitSqliteColumnsOutOfTheColumnAliases(string $sql, string $from): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t (a INT)'));
+        $query = $binder->bind($sql);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\FunctionRelation::class, $query->relations[0]);
+        self::assertSame([], $query->relations[0]->columnAliases);
+        self::assertStringEndsWith($from, $query->toString());
+        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
     }
 
     public function testFunctionKeepsTheImplicitFunctionName(): void

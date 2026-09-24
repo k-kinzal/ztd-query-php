@@ -34,7 +34,7 @@ final class SelectModifiersBinder
         }
         if ($nodes === []) {
             $legacy = QueryNodes::local($statement, ['order_clause'])[0] ?? null;
-            $list = $legacy === null ? null : Tree::child($legacy, ['order_list']);
+            $list = $legacy === null ? Tree::child($statement, ['gorder_list']) : Tree::child($legacy, ['order_list']);
             $nodes = $list === null ? [] : Query\OrderingNodes::read($list);
         }
         $result = [];

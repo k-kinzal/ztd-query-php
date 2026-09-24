@@ -82,4 +82,20 @@ final class MySqlDatabasesTest extends TestCase
         $this->expectException(\SqlSemantics\InvalidSql::class);
         (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql);
     }
+
+    #[TestWith(['create database d', CreateDatabaseStatement::class, 'CREATE DATABASE `d`'])]
+    #[TestWith(['alter database d read only = 1', AlterDatabaseStatement::class, 'ALTER DATABASE `d` READ ONLY 1'])]
+    #[TestWith(['DROP DATABASE d', \SqlSemantics\Model\Statement\Definition\MySql\DropDatabaseStatement::class, 'DROP DATABASE `d`'])]
+    public function testBindRoutesOnlyMySqlCreationAndAlteration(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql, strict: false);
+        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+    }
+
+    #[TestWith(['CREATE DATABASE d', \SqlSemantics\Model\Statement\Definition\PostgreSql\Database\CreateDatabaseStatement::class, 'CREATE DATABASE "d"'])]
+    public function testBindLeavesPostgreSqlDatabasesAlone(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql, strict: false);
+        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+    }
 }

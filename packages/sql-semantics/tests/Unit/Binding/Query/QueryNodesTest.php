@@ -318,4 +318,12 @@ final class QueryNodesTest extends TestCase
         self::assertArrayNotHasKey('limit_clause', $clauses);
     }
 
+
+    public function testLocalDoesNotEnterAFunctionArgumentOrdering(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $query = $binder->bind('SELECT * FROM unnest(ARRAY[1], ARRAY[2] ORDER BY 1)');
+        self::assertSame('SELECT "unnest"."unnest" AS "unnest" FROM "unnest"(ARRAY[1], ARRAY[2] ORDER BY 1 ASC) AS "unnest"', $query->toString());
+        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+    }
 }

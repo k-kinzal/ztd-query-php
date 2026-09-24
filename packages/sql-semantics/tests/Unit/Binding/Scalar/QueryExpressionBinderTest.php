@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Scalar;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Binding\Scalar\QueryExpressionBinder;
@@ -79,5 +81,63 @@ final class QueryExpressionBinderTest extends TestCase
         $statement = $binder->bind("SELECT 'a' NOT LIKE ALL (SELECT 'b'), 1 OPERATOR(geo.<->) SOME (SELECT 2)");
         self::assertSame("SELECT ('a' NOT LIKE ALL (SELECT 'b')), (1 OPERATOR(\"geo\".<->) SOME(SELECT 2))", $statement->toString());
         self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+    }
+
+    /**
+     * @return list<array{Dialect, ?string, string, mixed}>
+     */
+    public static function providerBindClassifiesEachSubqueryOperation(): array
+    {
+        return [
+            [Dialect::PostgreSql, null, 'SELECT (1, 2) = (SELECT 1, 2)', [\SqlSemantics\Model\Scalar\Operator\BinaryExpression::class, 'SELECT (ROW(1, 2) = (SELECT 1, 2))']],
+            [Dialect::PostgreSql, null, 'SELECT 1 = ANY (SELECT 1)', [\SqlSemantics\Model\Scalar\Query\QuantifiedComparison::class, 'SELECT (1 = ANY(SELECT 1))']],
+            [Dialect::MySql, null, 'SELECT 1 = ANY (SELECT 1)', [\SqlSemantics\Model\Scalar\Query\QuantifiedComparison::class, 'SELECT (1 = ANY(SELECT 1))']],
+            [Dialect::MySql, null, 'SELECT 1 < ALL (SELECT 1)', [\SqlSemantics\Model\Scalar\Query\QuantifiedComparison::class, 'SELECT (1 < ALL (SELECT 1))']],
+            [Dialect::MySql, null, 'SELECT 1 <> SOME (SELECT 1)', [\SqlSemantics\Model\Scalar\Query\QuantifiedComparison::class, 'SELECT (1 <> SOME(SELECT 1))']],
+            [Dialect::MySql, null, 'SELECT ROW(1, 2) IN (SELECT 1, 2)', [\SqlSemantics\Model\Scalar\Query\InSubquery::class, 'SELECT ((1, 2) IN (SELECT 1, 2))']],
+        ];
+    }
+
+    #[DataProvider('providerBindClassifiesEachSubqueryOperation')]
+    public function testBindClassifiesEachSubqueryOperation(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build()))->bind($sql, strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertSame($expected, [$statement->outputs[0]->expression::class, $statement->toString()]);
+    }
+
+    #[TestWith([Dialect::PostgreSql, 'SELECT 1 + ANY (SELECT 1)'])]
+    #[TestWith([Dialect::PostgreSql, 'SELECT (SELECT 1, 2)'])]
+    #[TestWith([Dialect::MySql, 'SELECT 1 IN (SELECT 1, 2)'])]
+    public function testScalarRejectsMismatchedSubqueryShapes(Dialect $dialect, string $sql): void
+    {
+        $binder = new Binder((new SchemaBuilder($dialect))->build());
+        $this->expectException(InvalidSql::class);
+        $binder->bind($sql, strict: false);
+    }
+
+    public function testComparisonReadsTheOperatorFromTheSymbol(): void
+    {
+        $select = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SELECT 1 = ANY (SELECT 1)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $select);
+        $bound = $select->outputs[0]->expression;
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Query\QuantifiedComparison::class, $bound);
+        self::assertInstanceOf(\SqlParser\Parser\Node::class, $bound->source);
+        $comparison = QueryExpressionBinder::comparison($bound->query, $bound->facts, $bound->source, [$bound->value], '< SOME', true);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Query\QuantifiedComparison::class, $comparison);
+        self::assertSame([\SqlSemantics\Model\Scalar\Query\ComparisonOperator::Less, \SqlSemantics\Model\Scalar\Query\Quantifier::Some], [$comparison->operator, $comparison->quantifier]);
+        $this->expectException(InvalidSql::class);
+        QueryExpressionBinder::comparison($bound->query, $bound->facts, $bound->source, [$bound->value], '+ ANY', true);
+    }
+
+    public function testScalarKeepsASingleColumnRowSubqueryScalar(): void
+    {
+        $select = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SELECT 1 = ANY (SELECT 1)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $select);
+        $bound = $select->outputs[0]->expression;
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Query\QuantifiedComparison::class, $bound);
+        self::assertInstanceOf(\SqlParser\Parser\Node::class, $bound->source);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Query\ScalarSubquery::class, QueryExpressionBinder::scalar($bound->query, $bound->facts, $bound->source, true, Dialect::MySql));
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Query\ScalarSubquery::class, QueryExpressionBinder::scalar($bound->query, $bound->facts, $bound->source, false, Dialect::MySql));
     }
 }

@@ -36,4 +36,14 @@ final class OperatorAttributeTest extends TestCase
         self::assertFalse(OperatorAttribute::LeftArg->alterable());
         self::assertTrue(OperatorAttribute::Restrict->alterable());
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith([OperatorAttribute::Function, DefinitionKind::Name])]
+    #[\PHPUnit\Framework\Attributes\TestWith([OperatorAttribute::Restrict, DefinitionKind::Name])]
+    #[\PHPUnit\Framework\Attributes\TestWith([OperatorAttribute::LeftArg, DefinitionKind::Type])]
+    #[\PHPUnit\Framework\Attributes\TestWith([OperatorAttribute::Negator, DefinitionKind::Operator])]
+    #[\PHPUnit\Framework\Attributes\TestWith([OperatorAttribute::Hashes, DefinitionKind::Boolean])]
+    public function testKindTypesEveryRemainingAttribute(OperatorAttribute $attribute, DefinitionKind $kind): void
+    {
+        self::assertSame($kind, $attribute->kind());
+    }
 }

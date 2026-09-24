@@ -54,4 +54,11 @@ final class ReplicaStatusFieldTest extends TestCase
         self::assertSame($last, $fields[count($fields) - 1]->value);
         self::assertSame(ReplicaStatusField::IoState, $fields[0]);
     }
+
+    public function testTypeDeclaresEveryCounterAsBigint(): void
+    {
+        $counters = [ReplicaStatusField::SourcePort, ReplicaStatusField::ConnectRetry, ReplicaStatusField::ReadSourceLogPosition, ReplicaStatusField::RelayLogPosition, ReplicaStatusField::LastErrorNumber, ReplicaStatusField::SkipCounter, ReplicaStatusField::ExecSourceLogPosition, ReplicaStatusField::RelayLogSpace, ReplicaStatusField::UntilLogPosition, ReplicaStatusField::SecondsBehindSource, ReplicaStatusField::LastIoErrorNumber, ReplicaStatusField::LastSqlErrorNumber, ReplicaStatusField::SourceServerId, ReplicaStatusField::SqlDelay, ReplicaStatusField::SqlRemainingDelay, ReplicaStatusField::SourceRetryCount, ReplicaStatusField::AutoPosition, ReplicaStatusField::GetSourcePublicKey];
+        self::assertSame(array_fill(0, count($counters), 'bigint'), array_map(static fn (ReplicaStatusField $field): string => $field->type(), $counters));
+        self::assertSame(['varchar'], array_values(array_unique(array_map(static fn (ReplicaStatusField $field): string => $field->type(), array_values(array_filter(ReplicaStatusField::cases(), static fn (ReplicaStatusField $field): bool => !in_array($field, $counters, true)))))));
+    }
 }

@@ -167,4 +167,18 @@ final class FormatTest extends TestCase
     {
         self::assertSame($expected, Sql\Format::adjacent(new Sql\Atom('terminal', $left), new Sql\Atom('terminal', $right)));
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['annotation', '/* c */', 'terminal', ',', false])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['terminal', '(', 'annotation', '/* c */', false])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['terminal', '1)2', 'terminal', '(', false])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['terminal', 'א', 'terminal', '(', true])]
+    public function testAdjacentSeparatesAnnotationsAndReadsUnicodeNames(string $leftKind, string $left, string $rightKind, string $right, bool $expected): void
+    {
+        self::assertSame($expected, Sql\Format::adjacent(new Sql\Atom($leftKind, $left), new Sql\Atom($rightKind, $right)));
+    }
+
+    public function testWriteSkipsEmptyAtomsBetweenOthers(): void
+    {
+        self::assertSame('SELECT 1', Sql\Format::write([new Sql\Atom('keyword', 'SELECT'), new Sql\Atom('EOF', ''), new Sql\Atom('number', '1')]));
+    }
 }

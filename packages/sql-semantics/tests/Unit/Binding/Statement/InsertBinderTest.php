@@ -41,4 +41,13 @@ final class InsertBinderTest extends TestCase
         self::assertCount(1, $statement->query->orderBy);
         self::assertSame('INSERT INTO "public"."t" VALUES (1) ORDER BY 1 ASC', $statement->toString());
     }
+
+    public function testStatementKeepsALimitedValuesInputAsAQuery(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind('INSERT INTO t VALUES (1) LIMIT 1');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertSelectStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\ValuesStatement::class, $statement->query);
+        self::assertSame('1', $statement->query->limit?->spelling());
+        self::assertSame('INSERT INTO "public"."t" VALUES (1) LIMIT 1', $statement->toString());
+    }
 }

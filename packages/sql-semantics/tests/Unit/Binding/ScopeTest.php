@@ -256,4 +256,56 @@ final class ScopeTest extends TestCase
         self::assertNull($exact->mergedColumn('a'));
         self::assertSame($shared, $exact->mergedColumn('A'));
     }
+
+    public function testMatchesASchemaQualifiedColumn(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE SCHEMA s; CREATE TABLE s.t(a int)')))->bind('SELECT s.t.a FROM s.t');
+        self::assertSame('SELECT "s"."t"."a" AS "a" FROM "s"."t"', $statement->toString());
+    }
+
+    #[TestWith(['SELECT x.t.a FROM s.t'])]
+    #[TestWith(['SELECT s.t.a FROM s.t AS z'])]
+    public function testMatchesRejectsAnotherSchemaOrAnAliasedTable(string $sql): void
+    {
+        $this->expectException(SemanticException::class);
+        (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE SCHEMA s; CREATE TABLE s.t(a int)')))->bind($sql);
+    }
+
+    public function testColumnReportsTheUnresolvedName(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a int)')))->bind('SELECT missing FROM t', strict: false);
+        self::assertSame(['unknown-column', 'Cannot resolve column unambiguously: missing'], [$statement->diagnostics[0]->reason, $statement->diagnostics[0]->message]);
+    }
+
+    #[TestWith(['SELECT 1 FROM s.t JOIN u ON true JOIN u ON true'])]
+    #[TestWith(['SELECT 1 FROM u JOIN (s.t JOIN u ON true) ON true'])]
+    public function testCombineRejectsARepeatedNameBehindAnotherRelation(string $sql): void
+    {
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE SCHEMA s; CREATE TABLE s.t(a int); CREATE TABLE u(b int)')))->bind($sql);
+    }
+
+
+    public function testRelationColumnLeavesADetachedNameUnresolvedWithoutADiagnostic(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::MySql))->build();
+        $context = new \SqlSemantics\Binding\Query\QueryContext(new \SqlSemantics\Binding\TableResolver($schema, new \SqlSemantics\Ast\Identifiers(Dialect::MySql), ''));
+        $scope = new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::MySql), queries: $context, detached: true);
+        $column = $scope->relationColumn(['id'], new \SqlParser\Parser\Node('expr', 0, []));
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\UnresolvedColumnReference::class, $column);
+        self::assertSame(['id'], $column->referenceParts());
+    }
+
+
+    public function testUnmatchedDiagnosesAnUnknownNameUnlessTheScopeIsDetached(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::MySql))->build();
+        $identifiers = new \SqlSemantics\Ast\Identifiers(Dialect::MySql);
+        $context = new \SqlSemantics\Binding\Query\QueryContext(new \SqlSemantics\Binding\TableResolver($schema, $identifiers, ''));
+        $source = new \SqlParser\Parser\Node('expr', 0, []);
+        $detached = new \SqlSemantics\Binding\Scope($identifiers, queries: $context, detached: true);
+        self::assertSame(['a'], $detached->unmatched(['a'], false, $source)->referenceParts());
+        $this->expectException(SemanticException::class);
+        (new \SqlSemantics\Binding\Scope($identifiers, queries: $context))->unmatched(['a'], false, $source);
+    }
 }

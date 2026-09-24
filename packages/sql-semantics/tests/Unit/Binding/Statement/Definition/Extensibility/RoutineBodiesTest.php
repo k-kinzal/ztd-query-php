@@ -8,13 +8,19 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Ast\DialectParser;
+use SqlSemantics\Ast\Identifiers;
 use SqlSemantics\Binder;
+use SqlSemantics\Binding\Query\QueryContext;
+use SqlSemantics\Binding\Scope;
 use SqlSemantics\Binding\Statement\Definition\Extensibility\RoutineBodies;
+use SqlSemantics\Binding\TableResolver;
 use SqlSemantics\Dialect;
 use SqlSemantics\InvalidSql;
 use SqlSemantics\Model\Definition\Routine\Declaration;
 use SqlSemantics\Model\Scalar\Reference\ColumnReference;
 use SqlSemantics\Model\Scalar\Reference\Parameter;
+use SqlSemantics\Model\Scalar\Value\Literal;
 use SqlSemantics\Model\Statement\Definition\Routine as Statement;
 use SqlSemantics\Model\Validation\InputViolation;
 use SqlSemantics\SchemaBuilder;
@@ -112,8 +118,47 @@ final class RoutineBodiesTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE FUNCTION app.f(a integer, OUT b integer) RETURN 1');
         self::assertInstanceOf(Statement\CreateOutputFunctionStatement::class, $statement);
-        $relation = RoutineBodies::relation($statement->origin, $statement->source, $statement->name, $statement->parameters, new \SqlSemantics\Binding\Query\QueryContext(new \SqlSemantics\Binding\TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql), 'public')));
+        $relation = RoutineBodies::relation($statement->origin, $statement->source, $statement->name, $statement->parameters, new QueryContext(new TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new Identifiers(Dialect::PostgreSql), 'public')));
         self::assertSame(['f'], $relation->name->parts);
         self::assertSame(['a'], array_map(static fn ($column): string => $column->name, $relation->declaration->columns));
+    }
+
+    #[TestWith(["create function f() returns integer language sql as 'select 1'", "CREATE FUNCTION \"f\"() RETURNS integer LANGUAGE \"sql\" AS 'select 1'"])]
+    #[TestWith(["CREATE FUNCTION f(a text DEFAULT 'x') RETURNS text LANGUAGE sql AS 'SELECT a'", "CREATE FUNCTION \"f\"(\"a\" text DEFAULT 'x') RETURNS text LANGUAGE \"sql\" AS 'SELECT a'"])]
+    #[TestWith(["CREATE FUNCTION f() RETURNS integer LANGUAGE sql SET search_path = a SET work_mem = '1MB' AS 'SELECT 1'", "CREATE FUNCTION \"f\"() RETURNS integer LANGUAGE \"sql\" SET \"search_path\" = \"a\" SET \"work_mem\" = '1MB' AS 'SELECT 1'"])]
+    public function testImplementationWritesBackASingleDefinition(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+    }
+
+    public function testDefinitionReadsOneStringAsTheBody(): void
+    {
+        $item = (new DialectParser(Dialect::PostgreSql))->parse("CREATE FUNCTION f() RETURNS integer LANGUAGE sql AS 'SELECT 1'")->find('func_as')[0];
+        $body = RoutineBodies::definition($item);
+        self::assertInstanceOf(Declaration\DefinitionBody::class, $body);
+        self::assertSame("'SELECT 1'", $body->definition->text);
+    }
+
+    public function testTypesSkipsOutputParametersAndKeepsEveryInput(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE FUNCTION f(OUT o text, a integer, b text) RETURN $1');
+        self::assertInstanceOf(Statement\CreateOutputFunctionStatement::class, $statement);
+        self::assertSame(['integer', 'text'], array_map(static fn ($type): string => $type->name, RoutineBodies::types($statement->parameters)));
+    }
+
+    public function testInlineReturnedAndStatementBindTheBodyDirectly(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
+        $context = new QueryContext(new TableResolver($schema, new Identifiers(Dialect::PostgreSql), 'public'));
+        $statement = (new Binder($schema))->bind('CREATE FUNCTION f(n integer) RETURNS integer BEGIN ATOMIC SELECT n; RETURN n; END');
+        self::assertInstanceOf(Statement\CreateFunctionStatement::class, $statement);
+        $body = RoutineBodies::inline($statement->origin, $statement->source->find('opt_routine_body')[0], $statement->name, $statement->parameters, $context);
+        self::assertInstanceOf(Declaration\AtomicBody::class, $body);
+        self::assertCount(2, $body->statements);
+        $scope = new Scope(new Identifiers(Dialect::PostgreSql), queries: $context);
+        $value = RoutineBodies::returned((new DialectParser(Dialect::PostgreSql))->parse('CREATE FUNCTION g() RETURNS integer RETURN 1')->find('ReturnStmt')[0], $scope)->value;
+        self::assertInstanceOf(Literal::class, $value);
+        self::assertSame('1', $value->text);
+        self::assertSame('SELECT 2', RoutineBodies::statement((new DialectParser(Dialect::PostgreSql))->parse('CREATE FUNCTION g() RETURNS integer BEGIN ATOMIC SELECT 2; END')->find('routine_body_stmt')[0]->find('stmt')[0], $scope, $context)->toString());
     }
 }

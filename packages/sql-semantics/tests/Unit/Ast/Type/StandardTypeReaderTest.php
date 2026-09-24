@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Ast\Type;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Ast\Type\StandardTypeReader;
@@ -63,5 +64,41 @@ final class StandardTypeReaderTest extends TestCase
         self::assertInstanceOf(Identity\NamedIdentity::class, $identity);
         self::assertSame(['App', 'Measure'], $identity->reference->parts);
         self::assertSame('App.Measure', $column->type->name);
+    }
+
+    /**
+     * @return iterable<string, array{string, class-string<Identity\TypeIdentity>, string}>
+     */
+    public static function providerReadClassifiesPostgresSpellings(): iterable
+    {
+        yield 'integer alias' => ['int4', Identity\Numeric\IntegerStorage::class, 'integer'];
+        yield 'mixed case alias' => ['Int8', Identity\Numeric\IntegerStorage::class, 'bigint'];
+        yield 'double alias' => ['float8', Identity\Numeric\NumericStorage::class, 'double precision'];
+        yield 'zoned timestamp alias' => ['timestamptz', Identity\TemporalStorage::class, 'timestamptz'];
+        yield 'zoned timestamp words' => ['timestamp(3) with time zone', Identity\TemporalStorage::class, 'timestamptz'];
+        yield 'builtin without alias' => ['jsonb', Identity\BuiltinIdentity::class, 'jsonb'];
+        yield 'user type' => ['mytype', Identity\NamedIdentity::class, 'mytype'];
+        yield 'user type with operands' => ['mytype(5)', Identity\NamedIdentity::class, 'mytype'];
+        yield 'qualified builtin name' => ['public.text', Identity\NamedIdentity::class, 'public.text'];
+        yield 'quoted builtin name' => ['"integer"', Identity\NamedIdentity::class, 'integer'];
+        yield 'unclassified catalog type' => ['money', Identity\NamedIdentity::class, 'money'];
+        yield 'unclassified catalog type with operands' => ['bpchar(3)', Identity\NamedIdentity::class, 'bpchar'];
+    }
+
+    /**
+     * @param class-string<Identity\TypeIdentity> $class
+     */
+    #[DataProvider('providerReadClassifiesPostgresSpellings')]
+    public function testReadClassifiesPostgresSpellings(string $type, string $class, string $name): void
+    {
+        $column = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a ' . $type . ')')->tables[0]->columns[0];
+        self::assertInstanceOf($class, $column->type->identity);
+        self::assertSame($name, $column->type->name);
+    }
+
+    public function testReadRejectsModifiersABuiltinDoesNotTake(): void
+    {
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a int4(5))');
     }
 }

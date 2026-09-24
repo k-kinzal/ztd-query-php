@@ -78,4 +78,22 @@ final class XmlTableBinderTest extends TestCase
         $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::XmlOption->message());
         (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(x XML)')))->bind("SELECT * FROM t, XMLTABLE('/r' PASSING t.x COLUMNS a INT PATH 'a' PATH 'b') AS c");
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(["SELECT * FROM t, XMLTABLE(XMLNAMESPACES('http://x' AS x, DEFAULT 'http://d'), '/r' PASSING d COLUMNS n FOR ORDINALITY, v text path 'v' default 'd' not null, w int null) AS x", 'SELECT "t"."a" AS "a", "t"."d" AS "d", "x"."n" AS "n", "x"."v" AS "v", "x"."w" AS "w" FROM "public"."t" CROSS JOIN XMLTABLE(XMLNAMESPACES(\'http://x\' AS "x", DEFAULT \'http://d\'), \'/r\' PASSING "d" COLUMNS "n" FOR ORDINALITY, "v" text PATH \'v\' DEFAULT \'d\' NOT NULL, "w" integer) AS "x"'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(["select * from t, xmltable('/r' passing by ref d by value columns v text path 'v') as x", 'SELECT "t"."a" AS "a", "t"."d" AS "d", "x"."v" AS "v" FROM "public"."t" CROSS JOIN XMLTABLE(\'/r\' PASSING BY REF "d" BY VALUE COLUMNS "v" text PATH \'v\') AS "x"'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(["SELECT * FROM t, XMLTABLE('/r' PASSING d COLUMNS v text NOT NULL DEFAULT 'x') AS x", 'SELECT "t"."a" AS "a", "t"."d" AS "d", "x"."v" AS "v" FROM "public"."t" CROSS JOIN XMLTABLE(\'/r\' PASSING "d" COLUMNS "v" text DEFAULT \'x\' NOT NULL) AS "x"'])]
+    public function testBindSpellsNamespacesModesAndColumnOptions(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT, d XML)')))->bind($sql)->toString());
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(["SELECT * FROM t, XMLTABLE('/r' PASSING d COLUMNS v text NULL NOT NULL) AS x"])]
+    #[\PHPUnit\Framework\Attributes\TestWith(["SELECT * FROM t, XMLTABLE('/r' PASSING d COLUMNS v text PATH 'a' PATH 'b') AS x"])]
+    public function testColumnRejectsRepeatedOptions(string $sql): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT, d XML)'));
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage('The XML column option is unknown or specified more than once.');
+        $binder->bind($sql);
+    }
 }

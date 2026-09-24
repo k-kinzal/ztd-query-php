@@ -31,4 +31,32 @@ final class DeclareCursorStatementTest extends TestCase
         self::assertSame($statement->toString(), $changed->toString());
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Cursor\DeclareCursorStatement::class, $binder->bind($changed->toString()));
     }
+
+    public function testBinaryAndHoldDefaultToOff(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('DECLARE cur CURSOR FOR SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Cursor\DeclareCursorStatement::class, $statement);
+        $rebuilt = new \SqlSemantics\Model\Statement\Cursor\DeclareCursorStatement($statement->origin, $statement->name, $statement->query);
+        self::assertSame([false, false], [$rebuilt->binary, $rebuilt->hold]);
+    }
+
+    public function testQueryMustUseThePostgreSqlStatementDialect(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('DECLARE cur CURSOR FOR SELECT 1');
+        $query = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SELECT 1');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Cursor\DeclareCursorStatement::class, $statement);
+        self::assertInstanceOf(BoundSelect::class, $query);
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        $this->expectExceptionMessage('A cursor query must use the statement dialect.');
+        new \SqlSemantics\Model\Statement\Cursor\DeclareCursorStatement($statement->origin, 'cur', $query);
+    }
+
+    public function testOriginMustBePostgreSql(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SELECT 1');
+        self::assertInstanceOf(BoundSelect::class, $query);
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        $this->expectExceptionMessage('This cursor command requires PostgreSQL.');
+        new \SqlSemantics\Model\Statement\Cursor\DeclareCursorStatement($query->origin, 'cur', $query);
+    }
 }

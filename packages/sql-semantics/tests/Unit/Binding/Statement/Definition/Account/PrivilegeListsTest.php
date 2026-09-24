@@ -116,4 +116,22 @@ final class PrivilegeListsTest extends TestCase
         $tree = (new DialectParser(Dialect::MySql, $version))->parse($sql);
         self::assertSame($all, PrivilegeLists::all($tree->find($rule)[0]));
     }
+
+    #[TestWith(['grant xa_recover_admin, select on *.* to u', "GRANT `xa_recover_admin`, SELECT ON *.* TO 'u'"])]
+    #[TestWith(['grant select(a), insert (a, b) on t to u', "GRANT SELECT (`a`), INSERT(`a`, `b`) ON TABLE `t` TO 'u'"])]
+    #[TestWith(['grant show schemas on *.* to u', "GRANT SHOW DATABASES ON *.* TO 'u'"])]
+    #[TestWith(['grant all on t to u', "GRANT ALL PRIVILEGES ON TABLE `t` TO 'u'"])]
+    #[TestWith(['revoke all privileges on t from u', "REVOKE ALL PRIVILEGES ON TABLE `t` FROM 'u'"])]
+    #[TestWith(['grant r1@h, r2 to u', "GRANT 'r1'@'h', 'r2' TO 'u'"])]
+    public function testPrivilegesAndRolesReadLowerCaseLists(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (a INT, b INT)')))->bind($sql)->toString());
+    }
+
+    public function testRolesRejectARoleWithColumns(): void
+    {
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(InputViolation::RoleGrant->message());
+        (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build()))->bind('grant r1(a) to u');
+    }
 }

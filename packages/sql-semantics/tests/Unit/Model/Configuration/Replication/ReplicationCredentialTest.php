@@ -36,4 +36,12 @@ final class ReplicationCredentialTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new ReplicationCredential(CredentialOption::Password, $statement->until->position);
     }
+
+    public function testNamesTheOptionOfAnUnquotedCredential(): void
+    {
+        $value = \SqlSemantics\Model\Expression::literal(5, Dialect::MySql);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\Literal::class, $value);
+        $this->expectExceptionObject(new InvalidStructure('A replication PASSWORD credential requires a quoted MySQL string literal.'));
+        new ReplicationCredential(CredentialOption::Password, $value);
+    }
 }

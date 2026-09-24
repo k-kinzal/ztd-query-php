@@ -82,7 +82,7 @@ final class ExpressionRules
         if (in_array($operator, ['MEMBER', 'MEMBER OF'], true) && count($operands) === 2) {
             return new \SqlSemantics\Model\Scalar\Conditional\JsonMembership(new \SqlSemantics\Model\Scalar\ExpressionFacts((new TypeResolution($this->dialect, $this->diagnostics))->boolean(), NullFacts::strict($operands)), $source, $operands[0], $operands[1]);
         }
-        $pattern = preg_replace('/^(?:NOT )?(LIKE|ILIKE|GLOB|REGEXP|RLIKE|MATCH|SIMILAR TO)(?: ESCAPE)?$/', '$1', $operator);
+        $pattern = preg_replace('/^(?:NOT )?(LIKE|ILIKE|GLOB|REGEXP|RLIKE|MATCH|SIMILAR TO)(?: ESCAPE)?$/D', '$1', $operator);
         if ($pattern !== null && \SqlSemantics\Model\Scalar\Conditional\PatternOperator::tryFrom($pattern === 'RLIKE' ? 'REGEXP' : $pattern) !== null) {
             return \SqlSemantics\Model\Scalar\Operator\Operations::make(new \SqlSemantics\Model\Scalar\ExpressionFacts((new TypeResolution($this->dialect, $this->diagnostics))->boolean(), NullFacts::strict($operands)), $source, $operator, $operands);
         }

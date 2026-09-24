@@ -72,4 +72,31 @@ final class DefinitionsTest extends TestCase
         self::assertSame('a`b', $statement->database);
         self::assertSame('SHOW CREATE DATABASE `a``b`', $statement->toString());
     }
+
+    #[TestWith(['show create event e', \SqlSemantics\Model\Statement\Inspection\Definition\ShowCreateEventStatement::class, 'SHOW CREATE EVENT `e`'])]
+    #[TestWith(['show create function d.f', \SqlSemantics\Model\Statement\Inspection\Definition\ShowCreateFunctionStatement::class, 'SHOW CREATE FUNCTION `d`.`f`'])]
+    #[TestWith(['show create procedure p', ShowCreateProcedureStatement::class, 'SHOW CREATE PROCEDURE `p`'])]
+    #[TestWith(['show create trigger tr', \SqlSemantics\Model\Statement\Inspection\Definition\ShowCreateTriggerStatement::class, 'SHOW CREATE TRIGGER `tr`'])]
+    #[TestWith(['show create table t', \SqlSemantics\Model\Statement\Inspection\Definition\ShowCreateTableStatement::class, 'SHOW CREATE TABLE `t`'])]
+    #[TestWith(['show create view v', \SqlSemantics\Model\Statement\Inspection\Definition\ShowCreateViewStatement::class, 'SHOW CREATE VIEW `v`'])]
+    #[TestWith(['show create database d', ShowCreateDatabaseStatement::class, 'SHOW CREATE DATABASE `d`'])]
+    #[TestWith(['SHOW CREATE SCHEMA IF NOT EXISTS d', ShowCreateDatabaseStatement::class, 'SHOW CREATE DATABASE IF NOT EXISTS `d`'])]
+    #[TestWith(['SHOW CREATE USER u', ShowCreateUserStatement::class, 'SHOW CREATE USER \'u\''])]
+    #[TestWith(['SHOW FUNCTION CODE f', ShowRoutineCodeStatement::class, 'SHOW FUNCTION CODE `f`'])]
+    #[TestWith(['SHOW PROCEDURE STATUS', ShowRoutineStatusStatement::class, 'SHOW PROCEDURE STATUS'])]
+    #[TestWith(['SHOW FUNCTION STATUS LIKE \'x\'', ShowRoutineStatusStatement::class, 'SHOW FUNCTION STATUS LIKE \'x\''])]
+    public function testCreateRoutesEveryDescribedObject(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)', 'CREATE VIEW v AS SELECT 1')))->bind($sql, strict: false);
+        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+    }
+
+    public function testRoutineNameAndDatabaseNameReadTheirIdentifiers(): void
+    {
+        $identifiers = new \SqlSemantics\Ast\Identifiers(Dialect::MySql);
+        $parser = new \SqlSemantics\Ast\DialectParser(Dialect::MySql);
+        $routine = \SqlSemantics\Ast\Tree::outer($parser->parse('SHOW CREATE FUNCTION d.f'), ['show_create_function_stmt'])[0];
+        $database = \SqlSemantics\Ast\Tree::outer($parser->parse('SHOW CREATE DATABASE d'), ['show_create_database_stmt'])[0];
+        self::assertSame([['d', 'f'], 'd'], [Definitions::routineName($routine, $identifiers)->parts, Definitions::databaseName($database, $identifiers)]);
+    }
 }

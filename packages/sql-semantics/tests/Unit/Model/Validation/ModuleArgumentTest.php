@@ -53,4 +53,12 @@ final class ModuleArgumentTest extends TestCase
         $arguments = Tree::outer($source, ['vtabarg']);
         self::assertSame(['title', 'tokenize = "porter"'], array_map(ModuleArgument::text(...), $arguments));
     }
+
+    public function testCheckWrapsALexicalErrorWithoutACode(): void
+    {
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('A module argument must remain within its SQL argument boundary.');
+        $this->expectExceptionCode(0);
+        ModuleArgument::check("'title");
+    }
 }

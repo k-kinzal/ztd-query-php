@@ -64,4 +64,34 @@ final class PostgreSqlCopyTest extends TestCase
         self::assertSame(['x', 'y', 'z'], array_map(static fn (ColumnDefinition $column): string => $column->name, $merged));
         self::assertSame('integer', $merged[1]->type->name);
     }
+
+    public function testFormPlacesPartitionsInTheirSchemaWithInheritedConstraintsAndOverrides(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build(
+            'CREATE TABLE p(a int, b int, CHECK (a > 0)) PARTITION BY RANGE (a)',
+            'CREATE TABLE app.c PARTITION OF p (b NOT NULL DEFAULT 5) FOR VALUES FROM (1) TO (2)',
+            'CREATE TABLE d PARTITION OF p (CHECK (b > 1)) FOR VALUES FROM (2) TO (3)',
+            'CREATE TABLE db.app2.e PARTITION OF p FOR VALUES FROM (3) TO (4)',
+        );
+        self::assertSame(['public.p', 'app.c', 'public.d', 'app2.e'], array_map(static fn (\SqlSemantics\Schema\TableDefinition $table): string => $table->schema . '.' . $table->name, $schema->tables));
+        self::assertSame([1, 1, 2, 1], array_map(static fn (\SqlSemantics\Schema\TableDefinition $table): int => count($table->constraints), $schema->tables));
+        $overridden = $schema->tables[1]->columns[1];
+        self::assertSame(Nullability::NotNull, $overridden->nullability);
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\SuppliedColumn::class, $overridden->generation);
+        self::assertNotNull($overridden->generation->default);
+        self::assertSame(Nullability::MaybeNull, $schema->tables[1]->columns[0]->nullability);
+    }
+
+    public function testLayoutReceivesConstraintsFromParentsAndTemplates(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build(
+            'CREATE TABLE p(a int, b int, CHECK (a > 0))',
+            'CREATE TABLE i (x int) INHERITS (p)',
+            'CREATE TABLE l (LIKE p INCLUDING CONSTRAINTS, y int)',
+        );
+        self::assertSame(['a', 'b', 'x'], array_map(static fn (ColumnDefinition $column): string => $column->name, $schema->tables[1]->columns));
+        self::assertSame(['a', 'b', 'y'], array_map(static fn (ColumnDefinition $column): string => $column->name, $schema->tables[2]->columns));
+        self::assertCount(1, $schema->tables[1]->constraints);
+        self::assertCount(1, $schema->tables[2]->constraints);
+    }
 }

@@ -97,4 +97,59 @@ final class RelationTriggerInvariantTest extends TestCase
     {
         self::assertSame($images, RelationTriggerInvariant::images(new TriggerEvents($events), $level));
     }
+
+    public function testIdentityAcceptsAPostgreSqlCondition(): void
+    {
+        $origin = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1')->origin;
+        $this->expectNotToPerformAssertions();
+        RelationTriggerInvariant::identity($origin, 'audit', \SqlSemantics\Model\Expression::literal(true, Dialect::PostgreSql));
+    }
+
+    public function testIdentityRejectsAMySqlCondition(): void
+    {
+        $origin = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1')->origin;
+        $this->expectException(InvalidStructure::class);
+        RelationTriggerInvariant::identity($origin, 'audit', \SqlSemantics\Model\Expression::literal(true, Dialect::MySql));
+    }
+
+    #[TestWith([Timing::InsteadOf, TriggerEvent::Insert, TriggerLevel::Row])]
+    #[TestWith([Timing::Before, TriggerEvent::Insert, TriggerLevel::Statement])]
+    #[TestWith([Timing::Before, TriggerEvent::Insert, TriggerLevel::Row])]
+    #[TestWith([Timing::After, TriggerEvent::Truncate, TriggerLevel::Statement])]
+    public function testFiringAcceptsSupportedGranularity(Timing $timing, TriggerEvent $event, TriggerLevel $level): void
+    {
+        $this->expectNotToPerformAssertions();
+        RelationTriggerInvariant::firing($timing, new TriggerEvents([$event]), $level, null);
+    }
+
+    public function testFiringRejectsAConditionOnAnInsteadOfTrigger(): void
+    {
+        $this->expectException(InvalidStructure::class);
+        RelationTriggerInvariant::firing(Timing::InsteadOf, new TriggerEvents([TriggerEvent::Insert]), TriggerLevel::Row, \SqlSemantics\Model\Expression::literal(true, Dialect::PostgreSql));
+    }
+
+    public function testTransitionsAcceptNoTablesOnAnyTrigger(): void
+    {
+        $this->expectNotToPerformAssertions();
+        RelationTriggerInvariant::transitions(Timing::Before, new TriggerEvents([TriggerEvent::Truncate]), []);
+    }
+
+    public function testTransitionsAcceptBothVersionsOfAnUpdate(): void
+    {
+        $this->expectNotToPerformAssertions();
+        RelationTriggerInvariant::transitions(Timing::After, new TriggerEvents([TriggerEvent::Update]), [new TransitionTable(RowVersion::Old, 'before_rows'), new TransitionTable(RowVersion::New, 'after_rows')]);
+    }
+
+    public function testTransitionsRejectAColumnList(): void
+    {
+        $this->expectException(InvalidStructure::class);
+        RelationTriggerInvariant::transitions(Timing::After, new TriggerEvents([TriggerEvent::Update], ['a']), [new TransitionTable(RowVersion::New, 'rows')]);
+    }
+
+    public function testTransitionsRejectARepeatedVersion(): void
+    {
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('OLD TABLE and NEW TABLE are each named at most once and under different names.');
+        RelationTriggerInvariant::transitions(Timing::After, new TriggerEvents([TriggerEvent::Update]), [new TransitionTable(RowVersion::Old, 'a'), new TransitionTable(RowVersion::Old, 'b')]);
+    }
 }

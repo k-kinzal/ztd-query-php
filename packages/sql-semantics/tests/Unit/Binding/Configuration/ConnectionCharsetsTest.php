@@ -65,4 +65,42 @@ final class ConnectionCharsetsTest extends TestCase
     {
         self::assertSame([1, 2, 2, 0], [ConnectionCharsets::keyword(['NAMES']), ConnectionCharsets::keyword(['CHAR', 'SET']), ConnectionCharsets::keyword(['CHARACTER', 'SET', 'X']), ConnectionCharsets::keyword(['CHARACTER'])]);
     }
+
+    /**
+     * @param list<string> $texts
+     */
+    #[TestWith([['NAMES']])]
+    #[TestWith([['NAMES', '=', 'x']])]
+    #[TestWith([['NAMES', 'a', 'b']])]
+    #[TestWith([['CHARSET', 'a', 'COLLATE', 'b']])]
+    #[TestWith([['NAMES', 'a', 'b', 'COLLATE']])]
+    public function testBindRejectsAMalformedItem(array $texts): void
+    {
+        $tokens = array_map(static fn (string $text): \SqlParser\Lexer\Token => new \SqlParser\Lexer\Token(0, 'IDENT', $text, 0), $texts);
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(InputViolation::SessionSetting->message());
+        ConnectionCharsets::bind($tokens, new \SqlParser\Parser\Node('option_value', 0, []), new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::MySql)));
+    }
+
+    public function testBindReadsNamesWithACollation(): void
+    {
+        $tokens = array_map(static fn (string $text): \SqlParser\Lexer\Token => new \SqlParser\Lexer\Token(0, 'IDENT', $text, 0), ['names', 'a', 'collate', 'b']);
+        $setting = ConnectionCharsets::bind($tokens, new \SqlParser\Parser\Node('option_value', 0, []), new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::MySql)));
+        self::assertInstanceOf(ConnectionNames::class, $setting);
+        self::assertSame(['a', 'b'], [$setting->characterSet, $setting->collation]);
+    }
+
+    public function testBindReadsACharacterSet(): void
+    {
+        $tokens = array_map(static fn (string $text): \SqlParser\Lexer\Token => new \SqlParser\Lexer\Token(0, 'IDENT', $text, 0), ['CHAR', 'SET', 'a']);
+        $setting = ConnectionCharsets::bind($tokens, new \SqlParser\Parser\Node('option_value', 0, []), new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::MySql)));
+        self::assertInstanceOf(ConnectionCharacterSet::class, $setting);
+        self::assertSame('a', $setting->characterSet);
+    }
+
+    public function testNameReadsTheBinaryTokenInAnyCase(): void
+    {
+        self::assertSame('binary', ConnectionCharsets::name(new \SqlParser\Lexer\Token(0, 'BINARY_SYM', 'BINARY', 0), new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::MySql))));
+        self::assertNull(ConnectionCharsets::name(new \SqlParser\Lexer\Token(0, 'DEFAULT_SYM', 'DEFAULT', 0), new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::MySql))));
+    }
 }

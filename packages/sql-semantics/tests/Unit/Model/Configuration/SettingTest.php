@@ -173,4 +173,22 @@ final class SettingTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\ReadPragmaStatement::class, $read);
         self::assertSame(['cache_size'], $read->name->parts);
     }
+
+    /**
+     * @param list<string> $name
+     */
+    #[\PHPUnit\Framework\Attributes\TestWith([[''], \SqlSemantics\Model\Configuration\SettingScope::Session])]
+    #[\PHPUnit\Framework\Attributes\TestWith([['a', ''], \SqlSemantics\Model\Configuration\SettingScope::User])]
+    #[\PHPUnit\Framework\Attributes\TestWith([[], \SqlSemantics\Model\Configuration\SettingScope::User])]
+    public function testRejectsAnEmptyNamePartOutsideAUserVariable(array $name, \SqlSemantics\Model\Configuration\SettingScope $scope): void
+    {
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('An identifier requires nonempty name parts; only a user variable may be named by the empty string.');
+        new \SqlSemantics\Model\Configuration\CurrentSetting($name, $scope, new \SqlParser\Parser\Node('setting', 0, []));
+    }
+
+    public function testAcceptsTheEmptyUserVariableName(): void
+    {
+        self::assertSame([''], (new \SqlSemantics\Model\Configuration\CurrentSetting([''], \SqlSemantics\Model\Configuration\SettingScope::User, new \SqlParser\Parser\Node('setting', 0, [])))->name);
+    }
 }

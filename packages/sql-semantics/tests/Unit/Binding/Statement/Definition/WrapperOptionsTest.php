@@ -66,4 +66,17 @@ final class WrapperOptionsTest extends TestCase
         self::assertSame('x', $statement->options[1]->option->name);
     }
 
+    #[TestWith(['create foreign data wrapper w handler a.b.c no validator', 'CREATE FOREIGN DATA WRAPPER "w" HANDLER "a"."b"."c" NO VALIDATOR'])]
+    #[TestWith(["alter foreign data wrapper w options (add a '1', set b '2', drop c)", 'ALTER FOREIGN DATA WRAPPER "w" OPTIONS(ADD "a" \'1\', SET "b" \'2\', DROP "c")'])]
+    public function testFunctionsAndChangeReadLowerCaseKeywords(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+    }
+
+    public function testFunctionsDiagnosesARemovedFunctionThatWasSupplied(): void
+    {
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::WrapperFunction->message());
+        (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('create foreign data wrapper w handler h no handler');
+    }
 }

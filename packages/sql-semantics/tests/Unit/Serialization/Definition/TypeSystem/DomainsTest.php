@@ -32,6 +32,10 @@ final class DomainsTest extends TestCase
     #[TestWith(['ALTER DOMAIN "d" ADD NOT NULL'])]
     #[TestWith(['ALTER DOMAIN "d" DROP CONSTRAINT "c"'])]
     #[TestWith(['ALTER DOMAIN "d" VALIDATE CONSTRAINT "c"'])]
+    #[TestWith(['ALTER DOMAIN "d" ADD CONSTRAINT "c" CHECK (("value" > 0)) NOT VALID'])]
+    #[TestWith(['ALTER DOMAIN "d" ADD CHECK (("value" > 0))'])]
+    #[TestWith(['ALTER DOMAIN "d" DROP CONSTRAINT IF EXISTS "c" CASCADE'])]
+    #[TestWith(['CREATE DOMAIN "d" AS integer CONSTRAINT "c" CHECK (("value" > 0))'])]
     public function testWriteProducesTheStatementText(string $sql): void
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql);

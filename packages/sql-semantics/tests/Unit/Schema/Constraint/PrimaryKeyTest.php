@@ -47,4 +47,12 @@ final class PrimaryKeyTest extends TestCase
         self::assertSame(CheckingTime::DeferrableImmediate, $key->checking);
         self::assertSame('pk', $key->name);
     }
+
+    public function testLocalColumnsRenumbersAfterAnExpressionKey(): void
+    {
+        $reference = Expression::reference(['name'], Dialect::MySql);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\UnresolvedColumnReference::class, $reference);
+        $key = new PrimaryKey([new ExpressionKey(Expression::literal(1, Dialect::MySql)), new ColumnKey($reference)]);
+        self::assertSame(['name'], $key->localColumns());
+    }
 }

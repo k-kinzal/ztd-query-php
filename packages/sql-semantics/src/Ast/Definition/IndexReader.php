@@ -94,18 +94,12 @@ final class IndexReader
         $indexes = [];
         foreach ((new \SqlSemantics\Ast\ConstraintGroups())->read(Tree::outer($source, ['table_constraint_def', 'key_def', 'TableConstraint', 'tcons'])) as $node) {
             $tokens = $node->tokens();
-            $constraintName = null;
-            if (strtoupper($tokens[0]->text ?? '') === 'CONSTRAINT') {
-                $unnamed = in_array(strtoupper($tokens[1]->text ?? ''), ['PRIMARY', 'UNIQUE', 'FOREIGN', 'CHECK'], true);
-                $constraintName = $unnamed ? null : $this->identifiers->name($tokens[1]);
-                $tokens = array_slice($tokens, $unnamed ? 1 : 2);
-            }
             if (!in_array(strtoupper($tokens[0]->text ?? ''), ['KEY', 'INDEX', 'FULLTEXT', 'SPATIAL'], true)) {
                 continue;
             }
             $nameNode = array_values(array_filter(Tree::outer($node, ['opt_index_name_and_type', 'opt_ident', 'opt_constraint_name']), Tree::hasTokens(...)))[0] ?? null;
             $name = $nameNode === null ? null : (array_values(array_filter(Tree::outer($nameNode, ['ident']), Tree::hasTokens(...)))[0] ?? null);
-            $indexes[] = $this->definition($node, $table[0], $name === null ? $constraintName : $this->identifiers->parts($name)[0], $table, IndexKeys::read($node, $this->identifiers));
+            $indexes[] = $this->definition($node, $table[0], $name === null ? null : $this->identifiers->parts($name)[0], $table, IndexKeys::read($node, $this->identifiers));
         }
         return $indexes;
     }

@@ -46,7 +46,7 @@ final class IndexKeys
         $key = Tree::child($source, ['key_part']) ?? $source;
         [$column, $expression, $collation] = self::value($key, $identifiers);
         $modifiers = Tree::child($key, ['index_elem_options']) ?? $key;
-        $operator = Tree::child($modifiers, ['opt_qualified_name']);
+        $operator = Tree::child($modifiers, ['opt_qualified_name', 'any_name']);
         $direction = Tree::child($modifiers, ['opt_asc_desc', 'opt_ordering_direction', 'sortorder']);
         $nulls = Tree::child($modifiers, ['opt_nulls_order', 'nulls']);
         $tokens = $key->tokens();

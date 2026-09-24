@@ -99,4 +99,27 @@ final class RenamePolicyStatementTest extends TestCase
         $this->expectException(InvalidStructure::class);
         $statement->withNewName('');
     }
+
+    public function testWithTableAcceptsACatalogQualifiedTable(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER POLICY p ON t RENAME TO q', strict: false);
+        self::assertInstanceOf(RenamePolicyStatement::class, $statement);
+        self::assertSame(['a', 'b', 't'], $statement->withTable(new QualifiedName(['a', 'b', 't']))->table->parts);
+    }
+
+    public function testWithTableRejectsAFourPartTable(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER POLICY p ON t RENAME TO q', strict: false);
+        self::assertInstanceOf(RenamePolicyStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        $statement->withTable(new QualifiedName(['x', 'a', 'b', 't']));
+    }
+
+    public function testWithNameRejectsAnEmptyName(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER POLICY p ON t RENAME TO q', strict: false);
+        self::assertInstanceOf(RenamePolicyStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        $statement->withName('');
+    }
 }

@@ -50,4 +50,19 @@ final class RotateMasterKeyStatementTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new RotateMasterKeyStatement(new Origin('s0', $statement->source, Dialect::Sqlite), MasterKeyScope::InnoDb);
     }
+
+    public function testNamesTheUnavailableKeyInTheViolation(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build()))->bind('ALTER INSTANCE ROTATE INNODB MASTER KEY');
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('ALTER INSTANCE ROTATE BINLOG MASTER KEY is not available in this MySQL release.');
+        new RotateMasterKeyStatement($statement->origin, MasterKeyScope::BinaryLog);
+    }
+
+    public function testAcceptsBinaryLogKeysFromMySql8(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.0.44'))->build()))->bind('ALTER INSTANCE ROTATE BINLOG MASTER KEY');
+        self::assertInstanceOf(RotateMasterKeyStatement::class, $statement);
+        self::assertSame(MasterKeyScope::BinaryLog, $statement->scope);
+    }
 }

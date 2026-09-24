@@ -36,13 +36,13 @@ final class Roles
     }
 
     /**
+     * Writes each account as one token, `'user'@'host'`: MySQL reads `@'host'` after a space as a user variable.
      * @param non-empty-list<AccountName> $accounts
      */
     public static function accounts(array $accounts): Tree
     {
         return Build::separated(array_map(static fn (AccountName $name): Tree => new Tree('account-name', [
-            new Atom('literal', Literal::encode($name->username, Dialect::MySql)[0]),
-            ...($name->host === null ? [] : [new Atom('punctuation', '@'), new Atom('literal', Literal::encode($name->host, Dialect::MySql)[0])]),
+            new Atom('literal', Literal::encode($name->username, Dialect::MySql)[0] . ($name->host === null ? '' : '@' . Literal::encode($name->host, Dialect::MySql)[0])),
         ]), $accounts));
     }
 }

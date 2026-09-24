@@ -81,4 +81,27 @@ final class CursorBinderTest extends TestCase
         self::assertSame('c', $fetch->name);
         self::assertSame('FETCH RELATIVE 2 FROM "c"', $fetch->toString());
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['declare c binary insensitive no scroll cursor with hold for select 1', 'DECLARE "c" BINARY INSENSITIVE NO SCROLL CURSOR WITH HOLD FOR SELECT 1'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['declare c cursor without hold for select 1', 'DECLARE "c" CURSOR FOR SELECT 1'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['fetch prior c', 'FETCH PRIOR FROM "c"'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['move forward 3 in c', 'MOVE FORWARD 3 FROM "c"'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['fetch backward all c', 'FETCH BACKWARD ALL FROM "c"'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['fetch 5 c', 'FETCH FORWARD 5 FROM "c"'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['fetch all c', 'FETCH FORWARD ALL FROM "c"'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['fetch last c', 'FETCH LAST FROM "c"'])]
+    public function testBindReadsLowerCaseSpellings(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+    }
+
+    public function testNameAndMovementReadTheFetchOperands(): void
+    {
+        $source = (new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('FETCH backward 2 FROM "Cur"')->find('FetchStmt')[0];
+        $context = new \SqlSemantics\Binding\Query\QueryContext(new \SqlSemantics\Binding\TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql), 'public'));
+        self::assertSame('Cur', CursorBinder::name($source->find('fetch_args')[0], $context));
+        $movement = CursorBinder::movement($source->find('fetch_args')[0]);
+        self::assertInstanceOf(\SqlSemantics\Model\Cursor\CountedRows::class, $movement);
+        self::assertSame(\SqlSemantics\Model\Cursor\ScanDirection::Backward, $movement->direction);
+    }
 }

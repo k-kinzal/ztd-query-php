@@ -32,4 +32,11 @@ final class SourceFlagTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new SourceFlag(SourceOption::Port, true);
     }
+
+    public function testRejectsAnOptionWithAValueByName(): void
+    {
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage(SourceOption::Port->value . ' is not switched on or off.');
+        new SourceFlag(SourceOption::Port, true);
+    }
 }

@@ -20,26 +20,35 @@ final class Statements
      */
     public static function write(BoundStatement $statement): ?Tree
     {
-        return Trigger\ChangeReactions::write($statement)
-            ?? View\Views::write($statement)
-            ?? Ownership\OwnershipCommands::write($statement)
-            ?? Role\RoleCommands::write($statement)
-            ?? Routine\Alterations::write($statement)
-            ?? Program\StoredPrograms::write($statement)
-            ?? Storage\Removals::write($statement)
-            ?? MySqlObject\ObjectDefinitions::write($statement)
-            ?? Database\MySqlDatabases::write($statement)
-            ?? MySqlTable\MySqlTables::write($statement)
-            ?? Table\PostgreSqlTables::write($statement)
-            ?? Foreign\Statements::write($statement)
-            ?? SpatialDefinitions::write($statement)
-            ?? MySqlRemovals::write($statement)
-            ?? Account\AccountCommands::write($statement)
-            ?? Routines::write($statement)
-            ?? Catalog\CatalogStatements::write($statement)
-            ?? TypeSystem\TypeSystemStatements::write($statement)
-            ?? Extensibility\ExtensibilityStatements::write($statement)
-            ?? self::schemaCommands($statement);
+        $writers = [
+            Trigger\ChangeReactions::write(...),
+            View\Views::write(...),
+            Ownership\OwnershipCommands::write(...),
+            Role\RoleCommands::write(...),
+            Routine\Alterations::write(...),
+            Program\StoredPrograms::write(...),
+            Storage\Removals::write(...),
+            MySqlObject\ObjectDefinitions::write(...),
+            Database\MySqlDatabases::write(...),
+            MySqlTable\MySqlTables::write(...),
+            Table\PostgreSqlTables::write(...),
+            Foreign\Statements::write(...),
+            SpatialDefinitions::write(...),
+            MySqlRemovals::write(...),
+            Account\AccountCommands::write(...),
+            Routines::write(...),
+            Catalog\CatalogStatements::write(...),
+            TypeSystem\TypeSystemStatements::write(...),
+            Extensibility\ExtensibilityStatements::write(...),
+            self::schemaCommands(...),
+        ];
+        foreach ($writers as $writer) {
+            $tree = $writer($statement);
+            if ($tree !== null) {
+                return $tree;
+            }
+        }
+        return null;
     }
 
     /**

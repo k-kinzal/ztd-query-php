@@ -58,4 +58,82 @@ final class MutationFormsTest extends TestCase
         $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::JoinedMutationPagination->message());
         (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)', 'CREATE TABLE u(a INT)')))->bind($sql);
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['update low_priority ignore t set a = 1', true, true, 'UPDATE LOW_PRIORITY IGNORE `t` SET `a` = 1'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['UPDATE t SET t.ignore = 1', false, false, 'UPDATE `t` SET `t`.`ignore` = 1'])]
+    public function testUpdateReadsMySqlModifiersBeforeSet(string $sql, bool $lowPriority, bool $ignore, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT, `ignore` INT)')))->bind($sql);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateTableStatement::class, $statement);
+        self::assertSame([$lowPriority, $ignore], [$statement->lowPriority, $statement->ignore]);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['update or ignore t set a = 1', \SqlSemantics\Model\Write\Policy\ConstraintResponse::Ignore, 'UPDATE OR IGNORE "main"."t" SET "a" = 1'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['update or replace t set a = 1', \SqlSemantics\Model\Write\Policy\ConstraintResponse::Replace, 'UPDATE OR REPLACE "main"."t" SET "a" = 1'])]
+    public function testUpdateReadsTheSqliteConflictResolution(string $sql, \SqlSemantics\Model\Write\Policy\ConstraintResponse $response, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(a INT)')))->bind($sql);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateTableStatement::class, $statement);
+        self::assertSame($response, $statement->onViolation);
+        self::assertFalse($statement->ignore);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    public function testUpdateSeparatesJoinedAndFromForms(): void
+    {
+        $joined = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind('UPDATE t JOIN t AS u ON t.a = u.a SET t.a = 1');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateJoinedStatement::class, $joined);
+        self::assertSame('UPDATE `t` INNER JOIN `t` AS `u` ON (`t`.`a` = `u`.`a`) SET `t`.`a` = 1', $joined->toString());
+        $from = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind('UPDATE t SET a = u.a FROM t AS u WHERE t.a = u.a');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateFromStatement::class, $from);
+        self::assertSame('UPDATE "public"."t" SET "a" = "u"."a" FROM "public"."t" AS "u" WHERE ("t"."a" = "u"."a")', $from->toString());
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['delete low_priority quick ignore from t', true, true, true, 'DELETE LOW_PRIORITY QUICK IGNORE FROM `t`'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['DELETE FROM t WHERE quick = 1', false, false, false, 'DELETE FROM `t` WHERE (`quick` = 1)'])]
+    public function testDeleteReadsMySqlModifiersBeforeFrom(string $sql, bool $lowPriority, bool $quick, bool $ignore, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT, quick INT)')))->bind($sql);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\DeleteTableStatement::class, $statement);
+        self::assertSame([$lowPriority, $quick, $ignore], [$statement->lowPriority, $statement->quick, $statement->ignore]);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    public function testDeleteTreatsAMySqlTableListAsAJoinedDelete(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind('DELETE t FROM t WHERE a = 1');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\DeleteJoinedStatement::class, $statement);
+        self::assertSame('DELETE `t` FROM `t` WHERE (`a` = 1)', $statement->toString());
+    }
+
+    /**
+     * @param list<string> $words
+     * @param list<string> $expected
+     */
+    #[\PHPUnit\Framework\Attributes\TestWith([['UPDATE', 'LOW_PRIORITY', 'IGNORE', 'T', 'SET'], 'UPDATE', ['LOW_PRIORITY', 'IGNORE']])]
+    #[\PHPUnit\Framework\Attributes\TestWith([['UPDATE', 'T', 'IGNORE', 'INDEX', '(', 'K', ')', 'SET'], 'UPDATE', []])]
+    #[\PHPUnit\Framework\Attributes\TestWith([['DELETE', 'QUICK', 'T', 'FROM', 'T', 'IGNORE', 'INDEX'], 'DELETE', ['QUICK']])]
+    public function testModifiersReadOnlyTheWordsRightAfterTheVerb(array $words, string $verb, array $expected): void
+    {
+        self::assertSame($expected, \SqlSemantics\Binding\Statement\MutationForms::modifiers($words, $verb));
+    }
+
+    public function testUpdateDoesNotReadAnIgnoreIndexHintAsTheIgnoreModifier(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT, KEY k (a))'));
+        $statement = $binder->bind('UPDATE t IGNORE INDEX FOR ORDER BY (k) JOIN t AS u ON t.a = u.a SET t.a = 1');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\UpdateJoinedStatement::class, $statement);
+        self::assertFalse($statement->ignore);
+        self::assertSame('UPDATE `t` IGNORE INDEX FOR ORDER BY(`k`) INNER JOIN `t` AS `u` ON (`t`.`a` = `u`.`a`) SET `t`.`a` = 1', $statement->toString());
+    }
+
+    public function testDeleteDoesNotReadAnIgnoreIndexHintAsTheIgnoreModifier(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT, KEY k (a))'));
+        $statement = $binder->bind('DELETE t FROM t IGNORE INDEX (k) JOIN t AS u ON t.a = u.a');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Mutation\DeleteJoinedStatement::class, $statement);
+        self::assertFalse($statement->ignore);
+        self::assertSame('DELETE `t` FROM `t` IGNORE INDEX(`k`) INNER JOIN `t` AS `u` ON (`t`.`a` = `u`.`a`)', $statement->toString());
+    }
 }

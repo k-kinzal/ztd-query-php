@@ -160,4 +160,16 @@ final class TypeResolutionTest extends TestCase
         self::assertSame('integer', (new \SqlSemantics\Binding\TypeResolution(Dialect::MySql))->boolean()->name);
         self::assertSame('integer', (new \SqlSemantics\Binding\TypeResolution(Dialect::Sqlite))->boolean()->name);
     }
+
+    public function testCommonNamesEachIncompatibleType(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT 1::smallint UNION SELECT true', strict: false);
+        self::assertSame(['Cannot establish a common type for: smallint, boolean'], array_map(static fn ($diagnostic): string => $diagnostic->message, $statement->diagnostics));
+    }
+
+    public function testCommonLeavesOtherUnresolvedTypesUnreported(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SELECT 1 UNION SELECT POINT(1, 2)', strict: false);
+        self::assertSame([], $statement->diagnostics);
+    }
 }

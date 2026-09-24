@@ -41,4 +41,18 @@ final class RelationCommandsTest extends TestCase
     {
         self::assertSame($expected, RelationCommands::target($kind, new QualifiedName(['f']), $ifExists, $only)->toString());
     }
+
+    #[TestWith(['ALTER TABLE t RENAME TO u', 'ALTER TABLE "t" RENAME TO "u"'])]
+    #[TestWith(['ALTER TABLE ONLY t SET LOGGED', 'ALTER TABLE ONLY "t" SET LOGGED'])]
+    #[TestWith(['ALTER VIEW v RENAME COLUMN a TO b', 'ALTER VIEW "v" RENAME COLUMN "a" TO "b"'])]
+    #[TestWith(['ALTER TABLE t RENAME CONSTRAINT a TO b', 'ALTER TABLE "t" RENAME CONSTRAINT "a" TO "b"'])]
+    #[TestWith(['ALTER SEQUENCE IF EXISTS s SET SCHEMA x', 'ALTER SEQUENCE IF EXISTS "s" SET SCHEMA "x"'])]
+    #[TestWith(['ALTER INDEX ALL IN TABLESPACE a SET TABLESPACE b NOWAIT', 'ALTER INDEX ALL IN TABLESPACE "a" SET TABLESPACE "b" NOWAIT'])]
+    #[TestWith(['ALTER TABLE ALL IN TABLESPACE a OWNED BY r1, r2 SET TABLESPACE b', 'ALTER TABLE ALL IN TABLESPACE "a" OWNED BY "r1", "r2" SET TABLESPACE "b"'])]
+    #[TestWith(['ALTER TABLE t ADD COLUMN c INT, DROP COLUMN n', 'ALTER TABLE "t" ADD COLUMN "c" integer, DROP COLUMN "n"'])]
+    public function testWriteSpellsEachRelationCommand(string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)')))->bind($sql, strict: false);
+        self::assertSame($expected, RelationCommands::write($statement)?->toString());
+    }
 }

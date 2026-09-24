@@ -50,7 +50,7 @@ final class ExpressionFactory
     public static function binary(string $operator, Expression $left, Expression $right): Expression
     {
         $operator = strtoupper($operator);
-        if (!in_array($operator, ['MEMBER', 'MEMBER OF', 'AND', 'OR', 'IS', 'IS NOT', 'IS DISTINCT FROM', 'IS NOT DISTINCT FROM', 'LIKE', 'NOT LIKE', 'ILIKE', 'NOT ILIKE', 'GLOB', 'MATCH', 'REGEXP', 'DIV', 'MOD'], true) && (preg_match('~^[+*/<>=!@#%^&|?\x7e-]+$~', $operator) !== 1 || str_contains($operator, '--') || str_contains($operator, '/*') || str_contains($operator, '*/'))) {
+        if (!in_array($operator, ['MEMBER', 'MEMBER OF', 'AND', 'OR', 'IS', 'IS NOT', 'IS DISTINCT FROM', 'IS NOT DISTINCT FROM', 'LIKE', 'NOT LIKE', 'ILIKE', 'NOT ILIKE', 'GLOB', 'MATCH', 'REGEXP', 'DIV', 'MOD'], true) && (preg_match('~^[+*/<>=!@#%^&|?\x7e-]+$~D', $operator) !== 1 || str_contains($operator, '--') || str_contains($operator, '/*') || str_contains($operator, '*/'))) {
             throw new InvalidStructure('A binary operator must be one SQL operator.');
         }
         return \SqlSemantics\Model\Scalar\Operator\Operations::make(new \SqlSemantics\Model\Scalar\ExpressionFacts(TypeDescriptor::builtin($left->type->dialect, 'unknown'), Nullability::Unknown, []), new Node('expression', 0, []), $operator, [$left, $right]);

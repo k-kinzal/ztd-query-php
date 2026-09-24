@@ -6,6 +6,7 @@ namespace Tests\Unit\Serialization\Execution;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
@@ -35,5 +36,19 @@ final class MySqlMaintenanceTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SELECT 1');
         self::assertNull(MySqlMaintenance::write($statement));
+    }
+
+    #[TestWith(['CHECK TABLE t QUICK', 'CHECK TABLE `t` QUICK'])]
+    #[TestWith(['REPAIR NO_WRITE_TO_BINLOG TABLE t', 'REPAIR NO_WRITE_TO_BINLOG TABLE `t`'])]
+    #[TestWith(['ANALYZE LOCAL TABLE t', 'ANALYZE NO_WRITE_TO_BINLOG TABLE `t`'])]
+    #[TestWith(['CHECKSUM TABLE t EXTENDED', 'CHECKSUM TABLE `t` EXTENDED'])]
+    #[TestWith(['CHECKSUM TABLE t', 'CHECKSUM TABLE `t`'])]
+    #[TestWith(['ANALYZE TABLE t UPDATE HISTOGRAM ON id', 'ANALYZE TABLE `t` UPDATE HISTOGRAM ON `id`'])]
+    #[TestWith(["ANALYZE TABLE t UPDATE HISTOGRAM ON id USING DATA '{}'", "ANALYZE TABLE `t` UPDATE HISTOGRAM ON `id` USING DATA '{}'"])]
+    #[TestWith(['ANALYZE TABLE t DROP HISTOGRAM ON id', 'ANALYZE TABLE `t` DROP HISTOGRAM ON `id`'])]
+    public function testWriteSpellsEveryMaintenanceOperation(string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT)')))->bind($sql);
+        self::assertSame($expected, MySqlMaintenance::write($statement)?->toString());
     }
 }

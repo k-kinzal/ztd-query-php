@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Statement\Definition\MySqlTable;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Ast\DialectParser;
 use SqlSemantics\Ast\Identifiers;
@@ -69,5 +71,37 @@ final class PartitionDefinitionsTest extends TestCase
         $this->expectException(InvalidSql::class);
         $this->expectExceptionMessage(InputViolation::TableAlteration->message());
         PartitionDefinitions::build(static fn (): AfterColumn => new AfterColumn(''), $node, InputViolation::TableAlteration);
+    }
+
+    /**
+     * @return list<array{Dialect, ?string, string, mixed}>
+     */
+    public static function providerReadBindsEachPartitionBound(): array
+    {
+        return [
+            [Dialect::MySql, null, 'ALTER TABLE t ADD PARTITION (PARTITION p0 VALUES LESS THAN (10), PARTITION p1 VALUES LESS THAN MAXVALUE)', [\SqlSemantics\Model\Statement\Definition\MySql\Table\AlterTableStatement::class, 'ALTER TABLE `t` ADD PARTITION(PARTITION `p0` VALUES LESS THAN(10), PARTITION `p1` VALUES LESS THAN MAXVALUE)']],
+            [Dialect::MySql, null, 'ALTER TABLE t ADD PARTITION (PARTITION p0 VALUES LESS THAN (1, MAXVALUE))', [\SqlSemantics\Model\Statement\Definition\MySql\Table\AlterTableStatement::class, 'ALTER TABLE `t` ADD PARTITION(PARTITION `p0` VALUES LESS THAN(1, MAXVALUE))']],
+            [Dialect::MySql, null, 'ALTER TABLE t ADD PARTITION (PARTITION p0 VALUES IN ((1, 2), (3, 4)))', [\SqlSemantics\Model\Statement\Definition\MySql\Table\AlterTableStatement::class, 'ALTER TABLE `t` ADD PARTITION(PARTITION `p0` VALUES IN((1, 2), (3, 4)))']],
+            [Dialect::MySql, null, 'ALTER TABLE t ADD PARTITION (PARTITION p0 VALUES IN (1, 2) storage engine = InnoDB max_rows = 10 comment = \'x\')', [\SqlSemantics\Model\Statement\Definition\MySql\Table\AlterTableStatement::class, 'ALTER TABLE `t` ADD PARTITION(PARTITION `p0` VALUES IN(1, 2) ENGINE = `InnoDB` COMMENT = \'x\' MAX_ROWS = 10)']],
+            [Dialect::MySql, null, 'ALTER TABLE t ADD PARTITION (PARTITION p0 VALUES LESS THAN (10) (SUBPARTITION s0 max_rows = 5, SUBPARTITION s1 COMMENT = \'c\'))', [\SqlSemantics\Model\Statement\Definition\MySql\Table\AlterTableStatement::class, 'ALTER TABLE `t` ADD PARTITION(PARTITION `p0` VALUES LESS THAN(10)(SUBPARTITION `s0` MAX_ROWS = 5, SUBPARTITION `s1` COMMENT = \'c\'))']],
+            [Dialect::MySql, null, 'ALTER TABLE t ADD PARTITION (PARTITION p0 VALUES LESS THAN (10) max_rows = 4294967296)', [\SqlSemantics\Model\Statement\Definition\MySql\Table\AlterTableStatement::class, 'ALTER TABLE `t` ADD PARTITION(PARTITION `p0` VALUES LESS THAN(10) MAX_ROWS = 4294967296)']],
+        ];
+    }
+
+    #[DataProvider('providerReadBindsEachPartitionBound')]
+    public function testReadBindsEachPartitionBound(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t (a INT, b INT)')))->bind($sql, strict: false);
+        self::assertSame($expected, [$statement::class, $statement->toString()]);
+    }
+
+    #[TestWith(['ALTER TABLE t ADD PARTITION (PARTITION p0 VALUES IN (MAXVALUE))'])]
+    #[TestWith(['ALTER TABLE t ADD PARTITION (PARTITION p0 VALUES LESS THAN (10) max_rows = 18446744073709551615)'])]
+    #[TestWith(['ALTER TABLE t ADD PARTITION (PARTITION p0 VALUES LESS THAN (10) min_rows = 1.5)'])]
+    public function testEntryRejectsAnImpossibleBoundOrCount(string $sql): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (a INT, b INT)'));
+        $this->expectException(InvalidSql::class);
+        $binder->bind($sql, strict: false);
     }
 }

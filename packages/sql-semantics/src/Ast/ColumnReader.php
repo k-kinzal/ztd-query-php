@@ -40,28 +40,43 @@ final class ColumnReader
         $nullability = Nullability::MaybeNull;
         $default = null;
         $constraints = [];
-        $field = Tree::child($node, ['field_def']);
-        $generated = $field === null ? null : Tree::child($field, ['expr']);
+        $generated = self::generatedExpression($node);
         foreach ((new ConstraintGroups())->read($attributes) as $attribute) {
             $constraint = (new ConstraintReader($this->identifiers))->read($attribute, $name);
             if ($constraint !== null) {
                 $constraints[] = $constraint;
                 continue;
             }
-            $tokens = $attribute->tokens();
-            if (strtoupper($tokens[0]->text) === 'CONSTRAINT') {
-                $tokens = array_slice($tokens, 2);
-            }
-            $text = strtoupper(implode(' ', array_map(static fn ($token): string => $token->text, $tokens)));
-            if (str_starts_with($text, 'NOT NULL') || str_contains($text, 'IDENTITY') || $text === 'AUTO_INCREMENT') {
+            $words = self::attributeWords($attribute);
+            $text = implode(' ', $words);
+            if (str_starts_with($text, 'NOT NULL') || in_array('IDENTITY', $words, true) || $text === 'AUTO_INCREMENT') {
                 $nullability = Nullability::NotNull;
-            } elseif (str_starts_with($text, 'DEFAULT ')) {
+            } elseif (($words[0] ?? '') === 'DEFAULT') {
                 $default = $attribute;
-            } elseif (str_contains($text, 'GENERATED') || str_starts_with($text, 'AS ')) {
+            } elseif (in_array('GENERATED', $words, true) || ($words[0] ?? '') === 'AS') {
                 $generated = Tree::outer($attribute, ['a_expr', 'expr'])[0] ?? $attribute;
             }
         }
 
         return [new ColumnDefinition($name, $type, $nullability, $node, $default, $attributes, $generated, Definition\OptionReader::column($node, $attributes, $this->identifiers)), $constraints];
+    }
+
+    /**
+     * Finds the MySQL generation expression written after the column type (`AS (expression)`), in both the 5.7 and the 8.x shapes.
+     */
+    public static function generatedExpression(Node $column): ?Node
+    {
+        $field = Tree::child(Tree::child($column, ['field_spec']) ?? $column, ['field_def']);
+        return $field === null ? null : Tree::child(Tree::child($field, ['generated_column_func']) ?? $field, ['expr']);
+    }
+
+    /**
+     * Returns the uppercase words of a column attribute outside its expressions and without a leading CONSTRAINT name.
+     * @return list<string>
+     */
+    public static function attributeWords(Node $attribute): array
+    {
+        $words = Tree::keywords($attribute);
+        return ($words[0] ?? '') === 'CONSTRAINT' ? array_slice($words, 2) : $words;
     }
 }

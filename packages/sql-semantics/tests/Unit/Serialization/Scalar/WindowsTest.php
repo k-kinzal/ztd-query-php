@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Serialization\Scalar;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -72,5 +73,32 @@ final class WindowsTest extends TestCase
         self::assertNotNull($second->window->frame);
         self::assertInstanceOf(Unbounded::class, $second->window->frame->end);
         self::assertSame('UNBOUNDED FOLLOWING', Windows::boundary($second->window->frame->end)->toString());
+    }
+
+    /**
+     * @param list<string> $definitions
+     */
+    #[DataProvider('providerWriteSpellsEveryFrameBoundary')]
+    public function testWriteSpellsEveryFrameBoundary(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    /**
+     * @return iterable<string, array{Dialect, ?string, list<string>, string, string}>
+     */
+    public static function providerWriteSpellsEveryFrameBoundary(): iterable
+    {
+        return [
+            'select sum(a) over (order by a rows between unbounded preceding and current row) from t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (a INT, b INT)'], 'select sum(a) over (order by a rows between unbounded preceding and current row) from t', 'SELECT "sum"("a") OVER (ORDER BY "a" ASC ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) FROM "public"."t"'],
+            'select sum(a) over (order by a range between 1 preceding and 2 following exclude ties) from t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (a INT, b INT)'], 'select sum(a) over (order by a range between 1 preceding and 2 following exclude ties) from t', 'SELECT "sum"("a") OVER (ORDER BY "a" ASC RANGE BETWEEN 1 PRECEDING AND 2 FOLLOWING EXCLUDE TIES) FROM "public"."t"'],
+            'select sum(a) over (order by a groups between current row and unbounded following) from t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (a INT, b INT)'], 'select sum(a) over (order by a groups between current row and unbounded following) from t', 'SELECT "sum"("a") OVER (ORDER BY "a" ASC GROUPS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING) FROM "public"."t"'],
+            'select sum(a) over (order by a rows 3 preceding) from t (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (a INT, b INT)'], 'select sum(a) over (order by a rows 3 preceding) from t', 'SELECT "sum"("a") OVER (ORDER BY "a" ASC ROWS BETWEEN 3 PRECEDING AND CURRENT ROW) FROM "public"."t"'],
+            'select sum(a) over w from t window w as (partition by b) (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (a INT, b INT)'], 'select sum(a) over w from t window w as (partition by b)', 'SELECT "sum"("a") OVER "w" FROM "public"."t" WINDOW "w" AS (PARTITION BY "b")'],
+            'select sum(a) over (w order by a) from t window w as (partition by b) (PostgreSql)' => [Dialect::PostgreSql, null, ['CREATE TABLE t (a INT, b INT)'], 'select sum(a) over (w order by a) from t window w as (partition by b)', 'SELECT "sum"("a") OVER ("w" ORDER BY "a" ASC) FROM "public"."t" WINDOW "w" AS (PARTITION BY "b")'],
+            'select sum(a) over (order by a rows between 1 preceding and 1 following) from t (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT, b INT)'], 'select sum(a) over (order by a rows between 1 preceding and 1 following) from t', 'SELECT sum(`a`) OVER (ORDER BY `a` ASC ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING) FROM `t`'],
+            'select sum(a) over (w order by a) from t window w as (partition by b) (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT, b INT)'], 'select sum(a) over (w order by a) from t window w as (partition by b)', 'SELECT sum(`a`) OVER (`w` ORDER BY `a` ASC) FROM `t` WINDOW `w` AS (PARTITION BY `b`)'],
+        ];
     }
 }

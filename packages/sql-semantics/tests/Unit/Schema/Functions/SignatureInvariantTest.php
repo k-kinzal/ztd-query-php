@@ -7,6 +7,7 @@ namespace Tests\Unit\Schema\Functions;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
+use SqlSemantics\Schema\Functions\SignatureInvariant;
 use SqlSemantics\Schema\FunctionSignature;
 use SqlSemantics\SchemaBuilder;
 use SqlSemantics\Type\Nullability;
@@ -70,7 +71,7 @@ use SqlSemantics\Type\TypeDescriptor;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\TableConstraint::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\IndexDefinition::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\Functions\BuiltinResult::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Schema\Functions\SignatureInvariant::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(SignatureInvariant::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Schema\Functions\Builtins::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(Nullability::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(TypeDescriptor::class)]
@@ -145,5 +146,55 @@ final class SignatureInvariantTest extends TestCase
         self::assertTrue($signature->variadic);
         self::assertSame(1, $signature->optionalParameters);
         self::assertSame([$type], $signature->parameters);
+    }
+
+    public function testCheckAcceptsConsistentDeclarations(): void
+    {
+        $pg = TypeDescriptor::builtin(Dialect::PostgreSql, 'integer');
+        $this->expectNotToPerformAssertions();
+        SignatureInvariant::check('f', [$pg, $pg], $pg, false, 0);
+        SignatureInvariant::check('f', [$pg, $pg], $pg, false, 2);
+        SignatureInvariant::check('f', null, $pg, false, 0);
+        SignatureInvariant::check('f', [$pg], static fn (array $arguments): TypeDescriptor => $pg, true, 1);
+    }
+
+    /**
+     * @param list<TypeDescriptor>|null $parameters
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerInconsistentDeclarations')]
+    public function testCheckRejectsInconsistentDeclarations(string $name, ?array $parameters, bool $variadic, int $optional, string $message): void
+    {
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        $this->expectExceptionMessage($message);
+        SignatureInvariant::check($name, $parameters, TypeDescriptor::builtin(Dialect::PostgreSql, 'integer'), $variadic, $optional);
+    }
+
+    /**
+     * @return iterable<string, array{string, list<TypeDescriptor>|null, bool, int, string}>
+     */
+    public static function providerInconsistentDeclarations(): iterable
+    {
+        $pg = TypeDescriptor::builtin(Dialect::PostgreSql, 'integer');
+        $mysql = TypeDescriptor::builtin(Dialect::MySql, 'integer');
+        yield 'empty name' => ['', [$pg], false, 0, 'A function requires a name and a consistent parameter list.'];
+        yield 'negative optional count' => ['f', [$pg], false, -1, 'A function requires a name and a consistent parameter list.'];
+        yield 'too many optional parameters' => ['f', [$pg], false, 2, 'A function requires a name and a consistent parameter list.'];
+        yield 'variadic without a list' => ['f', null, true, 0, 'A function requires a name and a consistent parameter list.'];
+        yield 'variadic without parameters' => ['f', [], true, 0, 'A function requires a name and a consistent parameter list.'];
+        yield 'parameter of another dialect' => ['f', [$pg, $mysql], false, 0, 'Function argument and result types must belong to one dialect.'];
+    }
+
+    public function testCheckRejectsParametersOfDifferentDialectsBehindAClosureResult(): void
+    {
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        $this->expectExceptionMessage('Function argument and result types must belong to one dialect.');
+        SignatureInvariant::check('f', [TypeDescriptor::builtin(Dialect::PostgreSql, 'integer'), TypeDescriptor::builtin(Dialect::MySql, 'integer')], static fn (array $arguments): TypeDescriptor => TypeDescriptor::builtin(Dialect::MySql, 'integer'), false, 0);
+    }
+
+    public function testCheckRejectsAnUnorderedParameterList(): void
+    {
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        $this->expectExceptionMessage('Function parameters must be an ordered list.');
+        SignatureInvariant::check('f', [1 => TypeDescriptor::builtin(Dialect::PostgreSql, 'integer')], TypeDescriptor::builtin(Dialect::PostgreSql, 'integer'), false, 0);
     }
 }

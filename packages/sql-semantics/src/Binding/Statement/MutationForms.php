@@ -42,8 +42,7 @@ final class MutationForms
         }
         $with = (new CteBinder())->clause($origin->source, $context);
         $words = array_map(static fn ($token): string => strtoupper($token->text), $source->tokens());
-        $set = array_search('SET', $words, true);
-        $prefix = $set === false ? $words : array_slice($words, 0, $set);
+        $prefix = self::modifiers($words, 'UPDATE');
         $conflict = \SqlSemantics\Ast\Tree::child($source, ['orconf']);
         $resolution = $conflict === null ? null : \SqlSemantics\Ast\Tree::child($conflict, ['resolvetype']);
         $response = $resolution === null ? ConstraintResponse::Default : ConstraintResponse::from(strtoupper(\SqlSemantics\Ast\Tree::text($resolution)));
@@ -73,8 +72,7 @@ final class MutationForms
         }
         $with = (new CteBinder())->clause($origin->source, $context);
         $words = array_map(static fn ($token): string => strtoupper($token->text), $source->tokens());
-        $from = array_search('FROM', $words, true);
-        $prefix = $from === false ? $words : array_slice($words, 0, $from);
+        $prefix = self::modifiers($words, 'DELETE');
         if ($input !== null && ($input->relation instanceof Join || ($origin->dialect === \SqlSemantics\Dialect::MySql && \SqlSemantics\Binding\Query\QueryNodes::local($source, ['table_alias_ref_list', 'table_wild_list']) !== []))) {
             if ($origin->dialect === \SqlSemantics\Dialect::MySql) {
                 if ($orderBy !== [] || $limit !== null) {
@@ -85,5 +83,24 @@ final class MutationForms
             return new Mutation\DeleteUsingStatement($origin, $targets[0], $input->relation->right, $where, $outputs, $with);
         }
         return new Mutation\DeleteTableStatement($origin, $targets[0], $where, $outputs, $with, $orderBy, $limit, in_array('LOW_PRIORITY', $prefix, true), $origin->dialect === \SqlSemantics\Dialect::MySql && in_array('IGNORE', $prefix, true), in_array('QUICK', $prefix, true));
+    }
+
+    /**
+     * Returns the MySQL modifiers written right after the verb, so an IGNORE INDEX hint on a table is not read as
+     * the IGNORE modifier.
+     * @param list<string> $words Uppercase statement words
+     * @return list<string>
+     */
+    public static function modifiers(array $words, string $verb): array
+    {
+        $start = array_search($verb, $words, true);
+        $modifiers = [];
+        foreach (array_slice($words, $start === false ? 0 : $start + 1) as $word) {
+            if (!in_array($word, ['LOW_PRIORITY', 'QUICK', 'IGNORE'], true)) {
+                break;
+            }
+            $modifiers[] = $word;
+        }
+        return $modifiers;
     }
 }

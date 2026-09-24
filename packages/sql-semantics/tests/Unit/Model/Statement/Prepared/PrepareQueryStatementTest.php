@@ -40,4 +40,31 @@ final class PrepareQueryStatementTest extends TestCase
         self::assertSame('integer', $statement->statement->outputs[1]->expression->type->name);
         self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
     }
+
+    public function testRejectsAnotherDatabaseLanguage(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('PREPARE s AS SELECT 1');
+        $origin = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SELECT 1')->origin;
+        self::assertInstanceOf(PrepareQueryStatement::class, $statement);
+        $this->expectExceptionObject(new \SqlSemantics\Model\Validation\InvalidStructure('This prepared-statement form requires PostgreSql.'));
+        new PrepareQueryStatement($origin, 's', $statement->statement);
+    }
+
+    public function testRejectsAQueryOfAnotherDialect(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('PREPARE s AS SELECT 1');
+        $query = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SELECT 1');
+        self::assertInstanceOf(PrepareQueryStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        $this->expectExceptionObject(new \SqlSemantics\Model\Validation\InvalidStructure('The prepared query must use the enclosing dialect.'));
+        new PrepareQueryStatement($statement->origin, 's', $query);
+    }
+
+    public function testRejectsAParameterTypeOfAnotherDialect(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('PREPARE s AS SELECT 1');
+        self::assertInstanceOf(PrepareQueryStatement::class, $statement);
+        $this->expectExceptionObject(new \SqlSemantics\Model\Validation\InvalidStructure('Declared parameter types must use the enclosing dialect.'));
+        new PrepareQueryStatement($statement->origin, 's', $statement->statement, [\SqlSemantics\Type\TypeDescriptor::builtin(Dialect::PostgreSql, 'integer'), \SqlSemantics\Type\TypeDescriptor::builtin(Dialect::MySql, 'integer')]);
+    }
 }

@@ -79,4 +79,65 @@ final class CopySettingsTest extends TestCase
         self::assertInstanceOf(Copy\ListedColumns::class, CopySettings::columns(['a']));
         self::assertNull(CopySettings::columns('a'));
     }
+
+    /**
+     * @param string|int|list<string>|true|null $argument
+     */
+    #[TestWith(['freeze', 1, true])]
+    #[TestWith(['freeze', 'on', true])]
+    #[TestWith(['freeze', ['a'], null])]
+    #[TestWith(['format', 5, null])]
+    #[TestWith(['null', 'x', 'x'])]
+    #[TestWith(['default', 'd', 'd'])]
+    #[TestWith(['quote', 'q', 'q'])]
+    #[TestWith(['escape', 'e', 'e'])]
+    #[TestWith(['delimiter', ';', ';'])]
+    public function testValueReadsEachScalarOption(string $name, string|int|array|bool|null $argument, string|bool|null $expected): void
+    {
+        self::assertSame($expected, CopySettings::value($name, $argument));
+    }
+
+    public function testValueReadsEachColumnChoiceOption(): void
+    {
+        self::assertInstanceOf(Copy\EveryColumn::class, CopySettings::value('force_quote', true));
+        self::assertInstanceOf(Copy\ListedColumns::class, CopySettings::value('force_not_null', ['a']));
+        self::assertInstanceOf(Copy\EveryColumn::class, CopySettings::value('force_null', true));
+    }
+
+    public function testValueReadsTheLogVerbosityInAnyCase(): void
+    {
+        self::assertSame(Copy\CopyLogVerbosity::Verbose, CopySettings::value('log_verbosity', 'VERBOSE'));
+        self::assertNull(CopySettings::value('log_verbosity', ['verbose']));
+    }
+
+    public function testHeaderReadsAnIntegerFlagAndRejectsAList(): void
+    {
+        self::assertSame(Copy\CopyHeader::Present, CopySettings::header(1));
+        self::assertNull(CopySettings::header(['a']));
+    }
+
+    public function testOptionsApplyTheServerDefaults(): void
+    {
+        $node = new \SqlParser\Parser\Node('copy_options', 0, []);
+        $options = CopySettings::options([], $node);
+        self::assertFalse($options->freeze);
+        self::assertSame(Copy\CopyLogVerbosity::Default, $options->logVerbosity);
+        self::assertSame(Copy\CopyFormat::Text, $options->format);
+        self::assertSame(Copy\CopyHeader::Absent, $options->header);
+    }
+
+    public function testOptionsReadAWrittenFreezeAndVerbosity(): void
+    {
+        $node = new \SqlParser\Parser\Node('copy_options', 0, []);
+        $options = CopySettings::options([['freeze', null, $node], ['log_verbosity', 'verbose', $node]], $node);
+        self::assertTrue($options->freeze);
+        self::assertSame(Copy\CopyLogVerbosity::Verbose, $options->logVerbosity);
+    }
+
+    public function testOptionsRejectAnUnknownOption(): void
+    {
+        $node = new \SqlParser\Parser\Node('copy_options', 0, []);
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        CopySettings::options([['unknown', 'x', $node]], $node);
+    }
 }

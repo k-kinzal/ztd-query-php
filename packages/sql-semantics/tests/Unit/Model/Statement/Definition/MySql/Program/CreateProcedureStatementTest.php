@@ -39,7 +39,7 @@ final class CreateProcedureStatementTest extends TestCase
         self::assertSame(['app', 'p'], $statement->name->parts);
         self::assertInstanceOf(AccountName::class, $statement->definer);
         self::assertFalse($statement->ifNotExists);
-        self::assertSame("CREATE DEFINER = 'app' @'%' PROCEDURE `app`.`p`(IN `a` integer, OUT `b` integer) COMMENT 'sum' SQL SECURITY INVOKER BEGIN SELECT sum(`n`) FROM `t` WHERE (`n` > `a`) INTO `b`; END", $statement->toString());
+        self::assertSame("CREATE DEFINER = 'app'@'%' PROCEDURE `app`.`p`(IN `a` integer, OUT `b` integer) COMMENT 'sum' SQL SECURITY INVOKER BEGIN SELECT sum(`n`) FROM `t` WHERE (`n` > `a`) INTO `b`; END", $statement->toString());
         self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
     }
 

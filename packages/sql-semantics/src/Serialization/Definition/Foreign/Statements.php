@@ -18,10 +18,12 @@ final class Statements
      */
     public static function write(BoundStatement $statement): ?Tree
     {
-        return ForeignServers::write($statement)
-            ?? ForeignRemovals::write($statement)
-            ?? UserMappings::write($statement)
-            ?? WrapperDeclarations::write($statement)
-            ?? ForeignImports::write($statement);
+        foreach ([ForeignServers::write(...), ForeignRemovals::write(...), UserMappings::write(...), WrapperDeclarations::write(...), ForeignImports::write(...)] as $writer) {
+            $tree = $writer($statement);
+            if ($tree !== null) {
+                return $tree;
+            }
+        }
+        return null;
     }
 }

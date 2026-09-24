@@ -22,6 +22,8 @@ final class TableDefinition
      * @param bool $resolved Whether the declaration and its column set are known
      * @param list<IndexDefinition> $indexes Declared indexes in definition order
      * @param array<string, string|bool|list<string>> $options Named table options with decoded values
+     * @param string|null $catalog Written PostgreSQL catalog (database) qualifier of a three-part name
+     * @param bool $ifNotExists Whether IF NOT EXISTS precedes the table name
      */
     public function __construct(
         public readonly string $schema,
@@ -32,6 +34,8 @@ final class TableDefinition
         public readonly bool $resolved = true,
         public readonly array $indexes = [],
         public readonly array $options = [],
+        public readonly ?string $catalog = null,
+        public readonly bool $ifNotExists = false,
     ) {
     }
 }

@@ -26,4 +26,11 @@ final class DatabaseOptionTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new DatabaseOption(DatabaseParameter::ConnectionLimit, 'many');
     }
+
+    public function testRejectionNamesTheParameter(): void
+    {
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('The database option value is outside the domain of CONNECTION LIMIT.');
+        new DatabaseOption(DatabaseParameter::ConnectionLimit, 'many');
+    }
 }

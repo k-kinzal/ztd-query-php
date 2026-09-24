@@ -165,7 +165,7 @@ final class TableOptions
     public static function size(Node|Token $value): int
     {
         $token = $value instanceof Token ? $value : $value->tokens()[0];
-        if (preg_match('/^([0-9]+)([kmgt])$/i', $token->text, $match) !== 1) {
+        if (preg_match('/^([0-9]+)([kmgt])$/iD', $token->text, $match) !== 1) {
             return MySqlNumbers::read($value, InputViolation::TableOption, true);
         }
         $size = MySqlNumbers::bounded(ltrim($match[1], '0') === '' ? '0' : ltrim($match[1], '0'), strlen($match[1]) > 19, $value, InputViolation::TableOption);

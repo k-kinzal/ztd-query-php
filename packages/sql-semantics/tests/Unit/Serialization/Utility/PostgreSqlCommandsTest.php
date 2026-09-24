@@ -18,9 +18,15 @@ use SqlSemantics\Serialization\Utility\PostgreSqlCommands;
 final class PostgreSqlCommandsTest extends TestCase
 {
     #[TestWith(['CREATE DATABASE app', 'CREATE DATABASE "app"'])]
+    #[TestWith(["CREATE TABLESPACE ts LOCATION '/x'", 'CREATE TABLESPACE "ts" LOCATION \'/x\''])]
+    #[TestWith(['CREATE SCHEMA s', 'CREATE SCHEMA "s"'])]
+    #[TestWith(["ALTER SYSTEM SET work_mem = '1MB'", 'ALTER SYSTEM SET "work_mem" = \'1MB\''])]
+    #[TestWith(['SHOW work_mem', 'SHOW "work_mem"'])]
+    #[TestWith(['VACUUM t', 'VACUUM "public"."t"'])]
+    #[TestWith(['COPY t FROM STDIN', 'COPY "public"."t" FROM STDIN'])]
     public function testWriteRoutesEachUtilityFamily(string $sql, string $expected): void
     {
-        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql);
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER)')))->bind($sql);
         self::assertSame($expected, PostgreSqlCommands::write($statement)?->toString());
     }
 

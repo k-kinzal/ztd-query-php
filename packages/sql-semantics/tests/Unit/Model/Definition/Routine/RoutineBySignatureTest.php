@@ -29,4 +29,9 @@ final class RoutineBySignatureTest extends TestCase
         self::assertSame([$input, $output], $target->parameters);
     }
 
+    public function testSignatureRejectsMoreThanCatalogSchemaAndRoutine(): void
+    {
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        new Routine\RoutineBySignature(new QualifiedName(['x', 'a', 'b', 'f']), []);
+    }
 }

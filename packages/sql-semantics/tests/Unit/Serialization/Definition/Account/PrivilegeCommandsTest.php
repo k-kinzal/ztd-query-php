@@ -62,4 +62,15 @@ final class PrivilegeCommandsTest extends TestCase
         self::assertSame('IGNORE UNKNOWN USER', PrivilegeCommands::ignore(true)[0]->toString());
         self::assertSame([], PrivilegeCommands::ignore(false));
     }
+
+    #[TestWith(['mysql-8.4.7', 'GRANT r TO u', "GRANT 'r' TO 'u'"])]
+    #[TestWith(['mysql-8.4.7', 'GRANT PROXY ON p TO u', "GRANT PROXY ON 'p' TO 'u'"])]
+    #[TestWith(['mysql-8.4.7', 'REVOKE r FROM u', "REVOKE 'r' FROM 'u'"])]
+    #[TestWith(['mysql-5.7.44', 'GRANT SELECT ON *.* TO u', "GRANT SELECT ON *.* TO 'u'"])]
+    #[TestWith(['mysql-8.4.7', 'GRANT ALL ON *.* TO u', "GRANT ALL PRIVILEGES ON *.* TO 'u'"])]
+    public function testWriteOmitsAbsentOptionalClauses(string $version, string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build()))->bind($sql);
+        self::assertSame($expected, PrivilegeCommands::write($statement)?->toString());
+    }
 }

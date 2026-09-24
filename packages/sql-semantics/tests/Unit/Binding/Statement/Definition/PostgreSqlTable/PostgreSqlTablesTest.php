@@ -83,4 +83,22 @@ final class PostgreSqlTablesTest extends TestCase
         self::assertSame('heap', $statement->properties->accessMethod);
         self::assertSame('fast', $statement->properties->tablespace);
     }
+
+    #[TestWith(['CREATE TABLE c.s.t PARTITION OF p FOR VALUES IN (1)', 'CREATE TABLE "c"."s"."t" PARTITION OF "p" FOR VALUES IN(1)'])]
+    #[TestWith(['CREATE TABLE t OF s.ty', 'CREATE TABLE "t" OF "s"."ty"'])]
+    public function testBindAcceptsTheQualificationOfEachForm(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE p(a int) PARTITION BY LIST (a)')))->bind($sql)->toString());
+    }
+
+    #[TestWith(['CREATE TABLE x.c.s.t PARTITION OF p FOR VALUES IN (1)'])]
+    #[TestWith(['CREATE TABLE t PARTITION OF x.db.public.p FOR VALUES IN (1)'])]
+    #[TestWith(['CREATE TABLE t OF c.s.ty'])]
+    public function testBindRejectsAnOverQualifiedName(string $sql): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE p(a int) PARTITION BY LIST (a)'));
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(InputViolation::CatalogObjectName->message());
+        $binder->bind($sql);
+    }
 }

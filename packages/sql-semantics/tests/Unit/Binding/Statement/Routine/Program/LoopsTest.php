@@ -61,4 +61,24 @@ final class LoopsTest extends TestCase
         $this->expectExceptionMessage(InputViolation::ProgramLabel->message());
         (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql, strict: false);
     }
+
+    #[TestWith(['CREATE PROCEDURE p() BEGIN a: while 1 do leave a; end while a; END', 'CREATE PROCEDURE `p`() BEGIN `a` : WHILE 1 DO LEAVE `a`; END WHILE `a`; END'])]
+    #[TestWith(['CREATE PROCEDURE p() BEGIN a: repeat iterate a; until 1 end repeat; END', 'CREATE PROCEDURE `p`() BEGIN `a` : REPEAT ITERATE `a`; UNTIL 1 END REPEAT `a`; END'])]
+    #[TestWith(['CREATE PROCEDURE p() BEGIN a: LOOP LEAVE a; END LOOP A; END', 'CREATE PROCEDURE `p`() BEGIN `a` : LOOP LEAVE `a`; END LOOP `a`; END'])]
+    #[TestWith(['CREATE PROCEDURE p() BEGIN a: LOOP BEGIN ITERATE a; END; END LOOP; END', 'CREATE PROCEDURE `p`() BEGIN `a` : LOOP BEGIN ITERATE `a`; END; END LOOP `a`; END'])]
+    #[TestWith(['CREATE PROCEDURE p() b: BEGIN leave b; END', 'CREATE PROCEDURE `p`() `b` : BEGIN LEAVE `b`; END `b`'])]
+    public function testBindSpellsLabeledLoopsAndJumps(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql)->toString());
+    }
+
+    #[TestWith(['CREATE PROCEDURE p() b: BEGIN iterate b; END'])]
+    #[TestWith(['CREATE PROCEDURE p() a: BEGIN A: LOOP LEAVE a; END LOOP; END'])]
+    #[TestWith(['CREATE PROCEDURE p() BEGIN a: LOOP LEAVE a; END LOOP b; END'])]
+    public function testBindRejectsAMisusedLabel(string $sql): void
+    {
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(InputViolation::ProgramLabel->message());
+        (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql);
+    }
 }

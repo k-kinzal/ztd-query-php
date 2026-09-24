@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Binding\Write;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
@@ -242,5 +243,49 @@ final class ConflictBinderTest extends TestCase
         self::assertCount(2, $statement->conflicts[0]->assignments);
         self::assertSame('INSERT INTO `t`(`n`) VALUES (1) ON DUPLICATE KEY UPDATE `n` = VALUES (`t`.`n`), `m` = VALUES (`m`)', $statement->toString());
         self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+    }
+
+    /**
+     * @return list<array{Dialect, ?string, string, mixed}>
+     */
+    public static function providerBindReadsEachConflictHandler(): array
+    {
+        return [
+            [Dialect::Sqlite, null, 'INSERT INTO t VALUES (1, 2) ON CONFLICT (id) WHERE id > 0 DO UPDATE SET n = 1 WHERE n > 0', [\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, 'INSERT INTO "main"."t" VALUES (1, 2) ON CONFLICT("id") WHERE ("id" > 0) DO UPDATE SET "n" = 1 WHERE ("n" > 0)']],
+            [Dialect::Sqlite, null, 'INSERT INTO t VALUES (1, 2) ON CONFLICT (id) WHERE id > 0 DO UPDATE SET n = 1', [\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, 'INSERT INTO "main"."t" VALUES (1, 2) ON CONFLICT("id") WHERE ("id" > 0) DO UPDATE SET "n" = 1']],
+            [Dialect::Sqlite, null, 'insert into t values (1, 2) on conflict do nothing', [\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, 'INSERT INTO "main"."t" VALUES (1, 2) ON CONFLICT DO NOTHING']],
+            [Dialect::Sqlite, null, 'insert into t values (1, 2) returning id', [\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, 'INSERT INTO "main"."t" VALUES (1, 2) RETURNING "id" AS "id"']],
+            [Dialect::Sqlite, null, 'INSERT INTO t VALUES (1, 2) ON CONFLICT (id) DO NOTHING ON CONFLICT DO UPDATE SET n = 2', [\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, 'INSERT INTO "main"."t" VALUES (1, 2) ON CONFLICT("id") DO NOTHING ON CONFLICT DO UPDATE SET "n" = 2']],
+            [Dialect::PostgreSql, null, 'insert into t values (1, 2) on conflict ((n + 1)) do nothing', [\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, 'INSERT INTO "public"."t" VALUES (1, 2) ON CONFLICT(("n" + 1)) DO NOTHING']],
+            [Dialect::PostgreSql, null, 'insert into t values (1, 2) on conflict (id) where n > 0 do update set n = 1 where t.n > 1', [\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, 'INSERT INTO "public"."t" VALUES (1, 2) ON CONFLICT("id") WHERE ("n" > 0) DO UPDATE SET "n" = 1 WHERE ("t"."n" > 1)']],
+            [Dialect::PostgreSql, null, 'insert into t values (1, 2) on conflict on constraint t_pkey do nothing', [\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, 'INSERT INTO "public"."t" VALUES (1, 2) ON CONFLICT ON CONSTRAINT "t_pkey" DO NOTHING']],
+            [Dialect::MySql, null, 'insert into t values (1, 2) on duplicate key update n = 3, id = 4', [\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, 'INSERT INTO `t` VALUES (1, 2) ON DUPLICATE KEY UPDATE `n` = 3, `id` = 4']],
+        ];
+    }
+
+    #[DataProvider('providerBindReadsEachConflictHandler')]
+    public function testBindReadsEachConflictHandler(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(id INTEGER PRIMARY KEY, n INTEGER)')))->bind($sql, strict: false);
+        self::assertSame($expected, [$statement::class, $statement->toString()]);
+    }
+
+
+    public function testUpsertPredicatesSeparatesTheTargetAndUpdateConditions(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER PRIMARY KEY, n INT)'));
+        $update = $binder->bind('INSERT INTO t VALUES (1, 2) ON CONFLICT (id) DO UPDATE SET n = 3 WHERE n > 0');
+        $both = $binder->bind('INSERT INTO t VALUES (1, 2) ON CONFLICT (id) WHERE n > 1 DO UPDATE SET n = 3 WHERE n > 0');
+        self::assertSame('INSERT INTO "main"."t" VALUES (1, 2) ON CONFLICT("id") DO UPDATE SET "n" = 3 WHERE ("n" > 0)', $update->toString());
+        self::assertSame('INSERT INTO "main"."t" VALUES (1, 2) ON CONFLICT("id") WHERE ("n" > 1) DO UPDATE SET "n" = 3 WHERE ("n" > 0)', $both->toString());
+        self::assertSame($update->toString(), $binder->bind($update->toString())->toString());
+    }
+
+    public function testActionReadsDoNothingFromItsKeywordsNotFromLiterals(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER PRIMARY KEY, n TEXT)'));
+        $statement = $binder->bind("INSERT INTO t VALUES (1, 'a') ON CONFLICT (id) DO UPDATE SET n = 'DO NOTHING'");
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Conflict\DoUpdate::class, $statement->conflicts[0]);
     }
 }

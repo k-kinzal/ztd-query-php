@@ -8,8 +8,14 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Ast\DialectParser;
+use SqlSemantics\Ast\Identifiers;
+use SqlSemantics\Ast\Tree;
 use SqlSemantics\Binder;
+use SqlSemantics\Binding\Query\QueryContext;
+use SqlSemantics\Binding\Scope;
 use SqlSemantics\Binding\Statement\Utility\DatabaseCommands;
+use SqlSemantics\Binding\TableResolver;
 use SqlSemantics\Dialect;
 use SqlSemantics\InvalidSql;
 use SqlSemantics\Model\Definition\Database\PostgreSql\DatabaseOption;
@@ -99,5 +105,73 @@ final class DatabaseCommandsTest extends TestCase
     public function testValueConvertsAsTheServerOptionReaders(DatabaseParameter $parameter, string|int $raw, string|int|bool $expected): void
     {
         self::assertSame($expected, DatabaseCommands::value($parameter, $raw));
+    }
+
+    #[TestWith([DatabaseParameter::Template, 5, '5'])]
+    #[TestWith([DatabaseParameter::Strategy, 5, '5'])]
+    #[TestWith([DatabaseParameter::Locale, 5, '5'])]
+    #[TestWith([DatabaseParameter::LcCollate, 5, '5'])]
+    #[TestWith([DatabaseParameter::LcCtype, 5, '5'])]
+    #[TestWith([DatabaseParameter::IcuLocale, 5, '5'])]
+    #[TestWith([DatabaseParameter::IcuRules, 5, '5'])]
+    #[TestWith([DatabaseParameter::LocaleProvider, 5, '5'])]
+    #[TestWith([DatabaseParameter::BuiltinLocale, 5, '5'])]
+    #[TestWith([DatabaseParameter::CollationVersion, 5, '5'])]
+    #[TestWith([DatabaseParameter::Tablespace, 5, '5'])]
+    #[TestWith([DatabaseParameter::Location, 5, '5'])]
+    #[TestWith([DatabaseParameter::Encoding, 'UTF8', 'UTF8'])]
+    #[TestWith([DatabaseParameter::AllowConnections, 5, '5'])]
+    #[TestWith([DatabaseParameter::Oid, 'x100', 'x100'])]
+    #[TestWith([DatabaseParameter::Oid, '100x', '100x'])]
+    #[TestWith([DatabaseParameter::Oid, "100\n", "100\n"])]
+    public function testValueKeepsEachDomainAsTheServerDoes(DatabaseParameter $parameter, string|int $raw, string|int|bool $expected): void
+    {
+        self::assertSame($expected, DatabaseCommands::value($parameter, $raw));
+    }
+
+    public function testBindReadsDropDatabaseFlags(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $guarded = $binder->bind('DROP DATABASE IF EXISTS app');
+        $forced = $binder->bind('DROP DATABASE app WITH (FORCE)');
+        self::assertInstanceOf(Statement\DropDatabaseStatement::class, $guarded);
+        self::assertInstanceOf(Statement\DropDatabaseStatement::class, $forced);
+        self::assertTrue($guarded->ifExists);
+        self::assertFalse($guarded->force);
+        self::assertFalse($forced->ifExists);
+        self::assertTrue($forced->force);
+    }
+
+    #[TestWith(['ALTER DATABASE app SET TABLESPACE fast', 'fast'])]
+    #[TestWith(['ALTER DATABASE app TABLESPACE refresh', 'refresh'])]
+    public function testAlterationMovesToTheNamedTablespace(string $sql, string $tablespace): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql);
+        self::assertInstanceOf(Statement\SetDatabaseTablespaceStatement::class, $statement);
+        self::assertSame('app', $statement->name);
+        self::assertSame($tablespace, $statement->tablespace);
+    }
+
+    public function testOptionsReadTheConnectionLimit(): void
+    {
+        $source = Tree::outer((new DialectParser(Dialect::PostgreSql))->parse('CREATE DATABASE app CONNECTION LIMIT 5'), ['CreatedbStmt'])[0];
+        self::assertEquals([new DatabaseOption(DatabaseParameter::ConnectionLimit, 5)], DatabaseCommands::options($source, new Identifiers(Dialect::PostgreSql)));
+    }
+
+    public function testAlterationReadsAParsedRefresh(): void
+    {
+        $bound = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER DATABASE app REFRESH COLLATION VERSION');
+        $source = Tree::outer((new DialectParser(Dialect::PostgreSql))->parse('ALTER DATABASE app REFRESH COLLATION VERSION'), ['AlterDatabaseStmt'])[0];
+        $statement = DatabaseCommands::alteration($bound->origin, $source, 'app', ['app'], ['ALTER', 'DATABASE', 'APP', 'REFRESH', 'COLLATION', 'VERSION'], new Identifiers(Dialect::PostgreSql));
+        self::assertInstanceOf(Statement\RefreshDatabaseCollationStatement::class, $statement);
+    }
+
+    public function testSettingReadsAParsedReset(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build();
+        $bound = (new Binder($schema))->bind('ALTER DATABASE app RESET ALL');
+        $source = Tree::outer((new DialectParser(Dialect::PostgreSql))->parse('ALTER DATABASE app RESET ALL'), ['AlterDatabaseSetStmt'])[0];
+        $scope = new Scope(new Identifiers(Dialect::PostgreSql), queries: new QueryContext(new TableResolver($schema, new Identifiers(Dialect::PostgreSql), 'public')));
+        self::assertInstanceOf(Statement\AlterDatabaseResetAllStatement::class, DatabaseCommands::setting($bound->origin, $source, 'app', $scope));
     }
 }

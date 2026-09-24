@@ -28,6 +28,8 @@ final class IntrinsicExpressions
             $value instanceof Scalar\Document\JsonScalarExtraction => DocumentExpressions::write($value),
             $value instanceof Scalar\Temporal\DateShift,
             $value instanceof Scalar\Temporal\Extract,
+            $value instanceof Scalar\Temporal\TimestampAdd,
+            $value instanceof Scalar\Temporal\TimestampDiff,
             $value instanceof Scalar\Temporal\PeriodOverlap,
             $value instanceof Scalar\Temporal\ZoneConversion,
             $value instanceof Scalar\Temporal\TemporalFormat => TemporalExpressions::write($value),

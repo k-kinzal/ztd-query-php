@@ -55,7 +55,7 @@ final class StandardTypeReader
         if (in_array($name, ['ENUM', 'SET'], true)) {
             return LabelReader::read($source, $name);
         }
-        $baseName = preg_replace('/ (WITH|WITHOUT) TIME ZONE$/i', '', $canonical) ?? $canonical;
+        $baseName = preg_replace('/ (WITH|WITHOUT) TIME ZONE$/iD', '', $canonical) ?? $canonical;
         $base = Identity\BuiltinIdentity::tryFrom($baseName);
         if ($base === null) {
             throw new UnclassifiedSql('Unclassified type declaration: ' . $source->toString());

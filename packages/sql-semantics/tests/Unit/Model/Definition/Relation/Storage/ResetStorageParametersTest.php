@@ -25,4 +25,10 @@ final class ResetStorageParametersTest extends TestCase
         self::assertEquals(new Relation\Storage\ResetStorageParameters([new QualifiedName(['fillfactor']), new QualifiedName(['toast', 'autovacuum_enabled'])]), $statement->actions[0]);
         self::assertSame('ALTER TABLE "t" RESET("fillfactor", "toast"."autovacuum_enabled")', $statement->toString());
     }
+
+    public function testNamesRejectAThreePartParameter(): void
+    {
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        new Relation\Storage\ResetStorageParameters([new QualifiedName(['fillfactor']), new QualifiedName(['a', 'toast', 'fillfactor'])]);
+    }
 }

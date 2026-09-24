@@ -128,4 +128,51 @@ final class CatalogCommandsTest extends TestCase
         $this->expectExceptionMessage(InputViolation::CatalogObjectName->message());
         $binder->bind($sql, strict: false);
     }
+
+    /**
+     * @param class-string<object> $class
+     */
+    #[TestWith(['ALTER DOMAIN s.d RENAME CONSTRAINT a TO b', \SqlSemantics\Model\Statement\Definition\PostgreSql\Catalog\RenameDomainConstraintStatement::class, 'ALTER DOMAIN "s"."d" RENAME CONSTRAINT "a" TO "b"'])]
+    #[TestWith(['ALTER DOMAIN d RENAME TO e', \SqlSemantics\Model\Statement\Definition\PostgreSql\Catalog\RenameObjectStatement::class, 'ALTER DOMAIN "d" RENAME TO "e"'])]
+    #[TestWith(['ALTER TYPE s.ty RENAME ATTRIBUTE a TO b cascade', \SqlSemantics\Model\Statement\Definition\PostgreSql\Catalog\RenameTypeAttributeStatement::class, 'ALTER TYPE "s"."ty" RENAME ATTRIBUTE "a" TO "b" CASCADE'])]
+    #[TestWith(['ALTER TYPE ty RENAME ATTRIBUTE a TO b', \SqlSemantics\Model\Statement\Definition\PostgreSql\Catalog\RenameTypeAttributeStatement::class, 'ALTER TYPE "ty" RENAME ATTRIBUTE "a" TO "b"'])]
+    #[TestWith(['ALTER TYPE ty RENAME TO t2', \SqlSemantics\Model\Statement\Definition\PostgreSql\Catalog\RenameObjectStatement::class, 'ALTER TYPE "ty" RENAME TO "t2"'])]
+    #[TestWith(['ALTER POLICY p ON c.s.t RENAME TO q', \SqlSemantics\Model\Statement\Definition\PostgreSql\Catalog\RenamePolicyStatement::class, 'ALTER POLICY "p" ON "c"."s"."t" RENAME TO "q"'])]
+    public function testRenameAcceptsTheQualificationOfEachForm(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)')))->bind($sql, strict: false);
+        self::assertInstanceOf($class, $statement);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    #[TestWith(['ALTER DOMAIN c.s.d RENAME CONSTRAINT a TO b'])]
+    #[TestWith(['ALTER TYPE c.s.ty RENAME ATTRIBUTE a TO b'])]
+    #[TestWith(['ALTER POLICY p ON x.c.s.t RENAME TO q'])]
+    public function testRenameRejectsAnOverQualifiedOwner(string $sql): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)'));
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(InputViolation::CatalogObjectName->message());
+        $binder->bind($sql, strict: false);
+    }
+
+    /**
+     * @param class-string<object> $class
+     */
+    #[TestWith(['ALTER TRIGGER tr ON t DEPENDS ON EXTENSION e', \SqlSemantics\Model\Statement\Definition\PostgreSql\Catalog\AddExtensionDependencyStatement::class, 'ALTER TRIGGER "tr" ON "t" DEPENDS ON EXTENSION "e"'])]
+    #[TestWith(['ALTER INDEX ix NO DEPENDS ON EXTENSION e', \SqlSemantics\Model\Statement\Definition\PostgreSql\Catalog\RemoveExtensionDependencyStatement::class, 'ALTER INDEX "ix" NO DEPENDS ON EXTENSION "e"'])]
+    #[TestWith(['ALTER FUNCTION f() DEPENDS ON EXTENSION e', \SqlSemantics\Model\Statement\Definition\PostgreSql\Catalog\AddExtensionDependencyStatement::class, 'ALTER FUNCTION "f"() DEPENDS ON EXTENSION "e"'])]
+    public function testDependencyAcceptsEveryDependentObject(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)')))->bind($sql, strict: false);
+        self::assertInstanceOf($class, $statement);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    #[TestWith(['SECURITY LABEL ON SEQUENCE s IS null', 'SECURITY LABEL ON SEQUENCE "s" IS NULL'])]
+    #[TestWith(['COMMENT ON TABLE t IS null', 'COMMENT ON TABLE "t" IS NULL'])]
+    public function testTextReadsALowercaseNull(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)')))->bind($sql, strict: false)->toString());
+    }
 }

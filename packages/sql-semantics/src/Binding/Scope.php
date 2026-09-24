@@ -26,6 +26,7 @@ final class Scope
      * @param array<string, list<string>> $extensions
      * @param array<int|string, Expression> $merged USING columns visible without a qualifier
      * @param list<\SqlSemantics\Model\OutputColumn>|null $outputs Ordered joined row; null for a base relation scope
+     * @param bool $detached Whether no table is known, as in the MySQL 5 parser entries, so that unmatched column names stay unresolved without a diagnostic
      */
     public function __construct(
         public readonly Identifiers $identifiers,
@@ -35,6 +36,7 @@ final class Scope
         public readonly ?QueryContext $queries = null,
         public readonly array $merged = [],
         public readonly ?array $outputs = null,
+        public readonly bool $detached = false,
     ) {
     }
 
@@ -86,8 +88,7 @@ final class Scope
             return $literal;
         }
         if (count($matches) !== 1) {
-            $this->diagnostics()->report($matches === [] ? 'unknown-column' : 'ambiguous-column', 'Cannot resolve column unambiguously: ' . implode('.', $parts), $source);
-            return new \SqlSemantics\Model\Scalar\Reference\UnresolvedColumnReference(new \SqlSemantics\Model\Scalar\ExpressionFacts(\SqlSemantics\Type\TypeDescriptor::builtin($this->identifiers->dialect, 'unknown'), Nullability::Unknown, []), $source, $parts);
+            return $this->unmatched($parts, $matches !== [], $source);
         }
         $binding = $matches[0];
         if (isset($versions[$binding->relationId])) {
@@ -96,6 +97,19 @@ final class Scope
         $extensions = $this->extensions[$binding->relationId] ?? [];
 
         return new \SqlSemantics\Model\Scalar\Reference\ColumnReference(new \SqlSemantics\Model\Scalar\ExpressionFacts($binding->column->type, $extensions === [] ? $binding->column->nullability : Nullability::MaybeNull, $extensions), $source, $binding, $origins, [...$qualifiers, $name]);
+    }
+
+    /**
+     * Keeps a name that matches no column, or several, as an unresolved reference; the problem is diagnosed unless the scope is detached and nothing matched.
+     * @param list<string> $parts
+     * @throws SemanticException
+     */
+    public function unmatched(array $parts, bool $ambiguous, Node|Token $source): Expression
+    {
+        if ($ambiguous || !$this->detached) {
+            $this->diagnostics()->report($ambiguous ? 'ambiguous-column' : 'unknown-column', 'Cannot resolve column unambiguously: ' . implode('.', $parts), $source);
+        }
+        return new \SqlSemantics\Model\Scalar\Reference\UnresolvedColumnReference(new \SqlSemantics\Model\Scalar\ExpressionFacts(\SqlSemantics\Type\TypeDescriptor::builtin($this->identifiers->dialect, 'unknown'), Nullability::Unknown, []), $source, $parts);
     }
 
     /**
@@ -141,7 +155,7 @@ final class Scope
             }
         }
 
-        return new self($this->identifiers, [...$this->relations, ...$right->relations], $this->extensions + $right->extensions, $this->parent ?? $right->parent, $this->queries ?? $right->queries, $this->merged + $right->merged, Query\Joining\RowNamespace::combine($this, $right, $source));
+        return new self($this->identifiers, [...$this->relations, ...$right->relations], $this->extensions + $right->extensions, $this->parent ?? $right->parent, $this->queries ?? $right->queries, $this->merged + $right->merged, Query\Joining\RowNamespace::combine($this, $right, $source), $this->detached || $right->detached);
     }
 
     /**
@@ -155,7 +169,7 @@ final class Scope
         }
 
         $merged = array_map(static fn (Expression $value): Expression => $value->withFacts(new \SqlSemantics\Model\Scalar\ExpressionFacts($value->type, Nullability::MaybeNull, [...$value->nullExtendedBy, $joinId])), $this->merged);
-        return new self($this->identifiers, $this->relations, $extensions, $this->parent, $this->queries, $merged, $this->outputs === null ? null : Query\Joining\RowNamespace::extend($this->outputs, $joinId));
+        return new self($this->identifiers, $this->relations, $extensions, $this->parent, $this->queries, $merged, $this->outputs === null ? null : Query\Joining\RowNamespace::extend($this->outputs, $joinId), $this->detached);
     }
     /**
      * @return array<int|string, Expression> Unqualified joined output columns

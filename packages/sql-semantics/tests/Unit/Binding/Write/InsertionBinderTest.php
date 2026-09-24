@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Binding\Write;
 
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
@@ -213,9 +215,9 @@ final class InsertionBinderTest extends TestCase
 
     }
 
-    #[\PHPUnit\Framework\Attributes\TestWith(['INSERT INTO t (b) SELECT 1', 'INSERT INTO `t`(`b`) SELECT 1'])]
-    #[\PHPUnit\Framework\Attributes\TestWith(['INSERT INTO t (b) VALUES ROW(1), ROW(2)', 'INSERT INTO `t`(`b`) VALUES (1), (2)'])]
-    #[\PHPUnit\Framework\Attributes\TestWith(['REPLACE t () VALUES ROW()', 'REPLACE INTO `t` VALUES ()'])]
+    #[TestWith(['INSERT INTO t (b) SELECT 1', 'INSERT INTO `t`(`b`) SELECT 1'])]
+    #[TestWith(['INSERT INTO t (b) VALUES ROW(1), ROW(2)', 'INSERT INTO `t`(`b`) VALUES (1), (2)'])]
+    #[TestWith(['REPLACE t () VALUES ROW()', 'REPLACE INTO `t` VALUES ()'])]
     public function testColumnListFindsTheListBeforeAMySqlQuery(string $sql, string $expected): void
     {
         $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t (a INTEGER DEFAULT 1, b INTEGER)'));
@@ -224,5 +226,52 @@ final class InsertionBinderTest extends TestCase
         self::assertSame($expected, $binder->bind($expected)->toString());
         $tree = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql, 'mysql-8.4.7'))->parse('INSERT INTO t (b) SELECT 1');
         self::assertSame('b', (new \SqlSemantics\Binding\Write\InsertionBinder())->columnList($tree->find('insert_stmt')[0])?->toString());
+    }
+
+    /**
+     * @return iterable<string, array{Dialect, string, string, int}>
+     */
+    public static function providerBindResolvesTheDestinationColumns(): iterable
+    {
+        return [
+            'implicit prefix from a row' => [Dialect::PostgreSql, 'INSERT INTO t VALUES (1)', 't.a', 0],
+            'implicit prefix from a query' => [Dialect::PostgreSql, 'INSERT INTO t SELECT 1, 2', 't.a, t.b', 0],
+            'implicit prefix through an alias' => [Dialect::PostgreSql, 'INSERT INTO t AS x VALUES (1, 2)', 'x.a, x.b', 0],
+            'lowercase default row' => [Dialect::PostgreSql, 'insert into t default values', '', 0],
+            'explicit order' => [Dialect::PostgreSql, 'INSERT INTO t (c, a) VALUES (1, 2)', 'c, a', 0],
+            'every MySQL column' => [Dialect::MySql, 'INSERT INTO t VALUES (1, 2, 3)', 't.a, t.b, t.c', 0],
+            'assignments' => [Dialect::MySql, 'INSERT INTO t SET b = 1', 'b', 0],
+            'empty MySQL list' => [Dialect::MySql, 'insert into t () values ()', 't.a, t.b, t.c', 0],
+            'every SQLite column' => [Dialect::Sqlite, 'INSERT INTO t VALUES (1, 2, 3)', 't.a, t.b, t.c', 0],
+            'unresolved target without a list' => [Dialect::PostgreSql, 'INSERT INTO u VALUES (1, 2)', '', 1],
+            'repeated unresolved destination' => [Dialect::PostgreSql, 'INSERT INTO u (a, a) VALUES (1, 2)', 'a, a', 4],
+        ];
+    }
+
+    #[DataProvider('providerBindResolvesTheDestinationColumns')]
+    public function testBindResolvesTheDestinationColumns(Dialect $dialect, string $sql, string $columns, int $diagnostics): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t (a INTEGER, b INTEGER, c INTEGER NOT NULL)')))->bind($sql, strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\InsertStatement::class, $statement);
+        self::assertSame($columns, implode(', ', array_map(static fn ($column): string => implode('.', $column->column()->referenceParts()), $statement->insertion->columns)));
+        self::assertCount($diagnostics, $statement->diagnostics);
+    }
+
+    #[TestWith(["INSERT INTO t (a, c) SELECT 1, 'x'", 'Cannot assign text to integer.'])]
+    #[TestWith(['INSERT INTO t (b, a) VALUES (1, true)', 'Cannot assign boolean to integer.'])]
+    #[TestWith(['INSERT INTO t (a, a) VALUES (1, 2)', 'An INSERT column is specified more than once.'])]
+    public function testBindRejectsIncompatiblePostgresInputs(string $sql, string $message): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (a INTEGER, b INTEGER, c INTEGER NOT NULL)'));
+        $this->expectException(SemanticException::class);
+        $this->expectExceptionMessage($message);
+        $binder->bind($sql);
+    }
+
+    public function testBindChecksTheWidthOfAnExplicitUnresolvedList(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $binder->bind('INSERT INTO u (a, b) VALUES (1)', strict: false);
     }
 }

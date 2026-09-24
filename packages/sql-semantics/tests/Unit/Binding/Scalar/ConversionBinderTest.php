@@ -6,6 +6,7 @@ namespace Tests\Unit\Binding\Scalar;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Binding\Scalar\ConversionBinder;
@@ -64,5 +65,19 @@ final class ConversionBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $sqlite);
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Operator\CollatedExpression::class, $sqlite->outputs[0]->expression);
         self::assertSame(['NOCASE'], $sqlite->outputs[0]->expression->collation->parts);
+    }
+
+    #[TestWith([Dialect::Sqlite, 'SELECT CAST(a AS) FROM t', \SqlSemantics\Model\Scalar\Operator\CastExpression::class, 'SELECT CAST("a" AS) FROM "main"."t"'])]
+    #[TestWith([Dialect::Sqlite, 'SELECT cast(a as integer) FROM t', \SqlSemantics\Model\Scalar\Operator\CastExpression::class, 'SELECT CAST("a" AS "integer") FROM "main"."t"'])]
+    #[TestWith([Dialect::Sqlite, 'SELECT a collate nocase FROM t', \SqlSemantics\Model\Scalar\Operator\CollatedExpression::class, 'SELECT ("a" COLLATE "nocase") FROM "main"."t"'])]
+    #[TestWith([Dialect::PostgreSql, 'SELECT CAST(a AS int) + 1 FROM t', \SqlSemantics\Model\Scalar\Operator\BinaryExpression::class, 'SELECT (CAST("a" AS integer) + 1) FROM "public"."t"'])]
+    #[TestWith([Dialect::PostgreSql, 'SELECT cast(a as int) FROM t', \SqlSemantics\Model\Scalar\Operator\CastExpression::class, 'SELECT CAST("a" AS integer) FROM "public"."t"'])]
+    #[TestWith([Dialect::PostgreSql, 'SELECT a collate "C" FROM t', \SqlSemantics\Model\Scalar\Operator\CollatedExpression::class, 'SELECT ("a" COLLATE "C") FROM "public"."t"'])]
+    #[TestWith([Dialect::PostgreSql, 'SELECT a::text FROM t', \SqlSemantics\Model\Scalar\Operator\CastExpression::class, 'SELECT CAST("a" AS text) FROM "public"."t"'])]
+    public function testCastAndCollationReadLowercaseKeywords(Dialect $dialect, string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(a TEXT)')))->bind($sql);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertSame([$class, $expected], [$statement->outputs[0]->expression::class, $statement->toString()]);
     }
 }

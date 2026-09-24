@@ -41,7 +41,7 @@ final class Format
             return true;
         }
         if ($right->text === '(') {
-            return preg_match('/^[\\p{L}_`"]|[)\\]]$/u', $left->text) === 1
+            return preg_match('/^[\\p{L}_`"]|[)\\]]$/uD', $left->text) === 1
                 && !in_array(strtoupper($left->text), ['SELECT', 'AS', 'WHERE', 'AND', 'OR', 'NOT', 'IN', 'ON', 'VALUES', 'VALUE', 'RETURNING', 'HAVING', 'BY', 'UNION', 'INTERSECT', 'EXCEPT', 'ALL', 'DISTINCT', 'THEN', 'ELSE', 'WHEN', 'SET', 'DEFAULT', 'CHECK', 'FILTER', 'OVER', 'WITH'], true);
         }
         if ($left->text === '.' || $right->text === '.') {

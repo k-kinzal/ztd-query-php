@@ -83,4 +83,31 @@ final class RoutineOptionsTest extends TestCase
         self::assertInstanceOf(Option\ExecutionCost::class, $cost);
         self::assertSame('1000.5', $cost->cost->text);
     }
+
+    #[TestWith(['ALTER FUNCTION f() VOLATILE', AlterRoutineStatement::class, 'ALTER FUNCTION "f"() VOLATILE'])]
+    #[TestWith(['ALTER FUNCTION f() SUPPORT d.s.g', AlterRoutineStatement::class, 'ALTER FUNCTION "f"() SUPPORT "d"."s"."g"'])]
+    #[TestWith(['ALTER FUNCTION f() ROWS 1_000', AlterRoutineStatement::class, 'ALTER FUNCTION "f"() ROWS 1000'])]
+    #[TestWith(['ALTER FUNCTION f() PARALLEL SAFE', AlterRoutineStatement::class, 'ALTER FUNCTION "f"() PARALLEL SAFE'])]
+    public function testOptionSpellsEachAttribute(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql, strict: false);
+        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+    }
+
+    #[TestWith(['ALTER FUNCTION f() SUPPORT a.d.s.g'])]
+    #[TestWith(['ALTER FUNCTION f() COST 0'])]
+    #[TestWith(['ALTER FUNCTION f() COST -1'])]
+    #[TestWith(['ALTER FUNCTION f() PARALLEL "SAFE"'])]
+    public function testOptionRejectsImpossibleAttributes(string $sql): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $this->expectException(InvalidSql::class);
+        $binder->bind($sql, strict: false);
+    }
+
+    public function testEstimateDropsDigitSeparators(): void
+    {
+        $number = \SqlSemantics\Ast\Tree::outer((new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('ALTER FUNCTION f() COST 1_000'), ['NumericOnly'])[0];
+        self::assertSame('1000', RoutineOptions::estimate($number)->text);
+    }
 }

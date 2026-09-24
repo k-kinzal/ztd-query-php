@@ -57,4 +57,34 @@ final class OptionWordsTest extends TestCase
     {
         self::assertSame($expected, OptionWords::boolean($raw));
     }
+
+    public function testRawKeepsIntegersUpToTheLargestInt4AndDecimalsAsText(): void
+    {
+        $identifiers = new Identifiers(Dialect::PostgreSql);
+        self::assertSame(2147483647, OptionWords::raw(new Node('NumericOnly', 0, [new Token(0, 'ICONST', '2147483647', 0)]), $identifiers));
+        self::assertSame('100', OptionWords::raw(new Node('NumericOnly', 0, [new Token(0, 'FCONST', '100', 0)]), $identifiers));
+        self::assertSame('1000.5', OptionWords::raw(new Node('NumericOnly', 0, [new Token(0, 'FCONST', '1_000.5', 0)]), $identifiers));
+    }
+
+    #[TestWith(["42\n"])]
+    #[TestWith(['10x1f'])]
+    #[TestWith(['0x1fz'])]
+    #[TestWith(["0x1f\n"])]
+    #[TestWith(['10o17'])]
+    #[TestWith(['0o178'])]
+    #[TestWith(["0o17\n"])]
+    #[TestWith(['10b101'])]
+    #[TestWith(['0b1012'])]
+    #[TestWith(["0b101\n"])]
+    public function testIntegerRejectsTextAroundTheDigits(string $text): void
+    {
+        self::assertNull(OptionWords::integer($text));
+    }
+
+    #[TestWith(['true', true])]
+    #[TestWith(['FALSE', false])]
+    public function testBooleanReadsTheBooleanWords(string $raw, bool $expected): void
+    {
+        self::assertSame($expected, OptionWords::boolean($raw));
+    }
 }

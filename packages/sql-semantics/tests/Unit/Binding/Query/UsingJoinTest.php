@@ -211,4 +211,22 @@ final class UsingJoinTest extends TestCase
         self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
     }
 
+    #[\PHPUnit\Framework\Attributes\TestWith(['SELECT id FROM a LEFT JOIN b USING (id)', \SqlSemantics\Type\Nullability::NotNull])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['SELECT id FROM b LEFT JOIN a USING (id)', \SqlSemantics\Type\Nullability::MaybeNull])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['SELECT id FROM a RIGHT JOIN b USING (id)', \SqlSemantics\Type\Nullability::MaybeNull])]
+    public function testBindMergesTheLeftColumnOfALeftJoin(string $sql, \SqlSemantics\Type\Nullability $nullability): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE a(id INT NOT NULL, x INT)', 'CREATE TABLE b(id INT, y INT)')))->bind($sql);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertSame($nullability, $statement->outputs[0]->expression->nullability);
+    }
+
+    public function testBindKeepsAStraightJoinOrder(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (a INT)', 'CREATE TABLE u (a INT)')))->bind('SELECT a FROM t STRAIGHT_JOIN u USING (a)');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Relation\Joining\UsingJoin::class, $statement->from);
+        self::assertTrue($statement->from->straight);
+        self::assertSame('SELECT `a` AS `a` FROM `t` STRAIGHT_JOIN `u` USING(`a`)', $statement->toString());
+    }
 }

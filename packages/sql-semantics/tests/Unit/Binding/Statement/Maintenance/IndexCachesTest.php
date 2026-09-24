@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Statement\Maintenance;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -114,4 +115,27 @@ final class IndexCachesTest extends TestCase
         self::assertSame(['unknown-table'], array_column($statement->diagnostics, 'reason'));
     }
 
+    /**
+     * @param list<string> $definitions
+     */
+    #[DataProvider('providerBindReadsLowercaseCacheRequests')]
+    public function testBindReadsLowercaseCacheRequests(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    /**
+     * @return iterable<string, array{Dialect, ?string, list<string>, string, string}>
+     */
+    public static function providerBindReadsLowercaseCacheRequests(): iterable
+    {
+        return [
+            'cache index t in default (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT, KEY k (a)) PARTITION BY HASH (a) PARTITIONS 2'], 'cache index t in default', 'CACHE INDEX `t` IN DEFAULT'],
+            'cache index t partition (all) in c (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT, KEY k (a)) PARTITION BY HASH (a) PARTITIONS 2'], 'cache index t partition (all) in c', 'CACHE INDEX `t` PARTITION(ALL) IN `c`'],
+            'CACHE INDEX t PARTITION (p0, p1) KEY (k) IN c (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT, KEY k (a)) PARTITION BY HASH (a) PARTITIONS 2'], 'CACHE INDEX t PARTITION (p0, p1) KEY (k) IN c', 'CACHE INDEX `t` PARTITION(`p0`, `p1`) INDEX(`k`) IN `c`'],
+            'load index into cache t partition (all) ignore leaves (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT, KEY k (a)) PARTITION BY HASH (a) PARTITIONS 2'], 'load index into cache t partition (all) ignore leaves', 'LOAD INDEX INTO CACHE `t` PARTITION(ALL) IGNORE LEAVES'],
+            'LOAD INDEX INTO CACHE t IGNORE LEAVES, t INDEX (k) (MySql)' => [Dialect::MySql, null, ['CREATE TABLE t (a INT, KEY k (a)) PARTITION BY HASH (a) PARTITIONS 2'], 'LOAD INDEX INTO CACHE t IGNORE LEAVES, t INDEX (k)', 'LOAD INDEX INTO CACHE `t` IGNORE LEAVES, `t` INDEX(`k`)'],
+        ];
+    }
 }

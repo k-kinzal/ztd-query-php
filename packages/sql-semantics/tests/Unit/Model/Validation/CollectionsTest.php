@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Model\Validation;
 
+use ArrayObject;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\{Binder, Dialect, SchemaBuilder};
 use SqlSemantics\Model\Validation\InvalidStructure;
@@ -189,5 +190,31 @@ final class CollectionsTest extends TestCase
     {
         $this->expectException(InvalidStructure::class);
         \SqlSemantics\Model\Validation\Collections::alternatives([new stdClass()], [\SqlSemantics\Model\Expression::class]);
+    }
+
+    public function testAlternativesAcceptsAnOperandOfAnyListedClass(): void
+    {
+        $this->expectNotToPerformAssertions();
+        \SqlSemantics\Model\Validation\Collections::alternatives([new stdClass(), new ArrayObject()], [\SqlSemantics\Model\Expression::class, stdClass::class, ArrayObject::class]);
+    }
+
+    public function testAlternativesRejectsAnAssociativeCollection(): void
+    {
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('Semantic operands must form an ordered list.');
+        \SqlSemantics\Model\Validation\Collections::alternatives(['a' => new stdClass()], [stdClass::class]);
+    }
+
+    public function testComponentsAcceptsProductionsAndTerminals(): void
+    {
+        $this->expectNotToPerformAssertions();
+        \SqlSemantics\Model\Validation\Collections::components([\SqlSemantics\Model\Sql\Build::keyword('SELECT'), new \SqlSemantics\Model\Sql\Atom('number', '1')]);
+    }
+
+    public function testComponentsRejectsAnAssociativeCollection(): void
+    {
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('SQL components must form an ordered list.');
+        \SqlSemantics\Model\Validation\Collections::components(['a' => \SqlSemantics\Model\Sql\Build::keyword('SELECT')]);
     }
 }

@@ -68,4 +68,13 @@ final class MaintenanceBinderTest extends TestCase
         $origin = new \SqlSemantics\Model\Statement\Origin('s1', $source, Dialect::PostgreSql);
         self::assertNull((new MaintenanceBinder())->bind($origin, $source, new \SqlSemantics\Binding\Scope($identifiers, queries: $context)));
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'use db', 'USE `db`'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::Sqlite, 'analyze t', 'ANALYZE "t"'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::Sqlite, 'ANALYZE main.t', 'ANALYZE "main"."t"'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::Sqlite, 'ANALYZE', 'ANALYZE'])]
+    public function testBindReadsTheNamedObject(Dialect $dialect, string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder($dialect))->build()))->bind($sql)->toString());
+    }
 }

@@ -41,4 +41,18 @@ final class NormalizationBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Text\Normalization::class, $query->outputs[0]->expression);
         self::assertSame(UnicodeNormalForm::Nfc, $query->outputs[0]->expression->form);
     }
+
+    #[TestWith(['SELECT normalize(a, nfkc) FROM t', BoundSelect::class, 'SELECT NORMALIZE("a", NFKC) FROM "public"."t"'])]
+    #[TestWith(['SELECT normalize(a) FROM t', BoundSelect::class, 'SELECT NORMALIZE("a", NFC) FROM "public"."t"'])]
+    #[TestWith(['SELECT a is nfd normalized FROM t', BoundSelect::class, 'SELECT (("a") IS NFD NORMALIZED) FROM "public"."t"'])]
+    #[TestWith(['SELECT a IS NOT NORMALIZED FROM t', BoundSelect::class, 'SELECT (("a") IS NOT NFC NORMALIZED) FROM "public"."t"'])]
+    #[TestWith(['SELECT lower(a) FROM t', BoundSelect::class, 'SELECT "lower"("a") FROM "public"."t"'])]
+    #[TestWith(['SELECT coalesce(a, \'x\') FROM t', BoundSelect::class, 'SELECT COALESCE("a", \'x\') FROM "public"."t"'])]
+    #[TestWith(['SELECT a IS NULL FROM t', BoundSelect::class, 'SELECT ("a" IS NULL) FROM "public"."t"'])]
+    #[TestWith(['SELECT (a) IS NOT TRUE FROM t', BoundSelect::class, 'SELECT ("a" IS NOT TRUE) FROM "public"."t"'])]
+    public function testBindReadsLowercaseNormalForms(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a TEXT)')))->bind($sql, strict: false);
+        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+    }
 }

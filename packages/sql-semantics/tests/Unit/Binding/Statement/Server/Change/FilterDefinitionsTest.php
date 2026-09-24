@@ -35,4 +35,23 @@ final class FilterDefinitionsTest extends TestCase
         self::assertSame(['d.b', 't'], $statement->filters[0]->tables[0]->parts);
         self::assertSame('CHANGE REPLICATION FILTER REPLICATE_DO_TABLE = (`d.b`.`t`)', $statement->toString());
     }
+
+    public function testReadSpellsEveryLowercaseRule(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("change replication filter replicate_do_db = (a, b), replicate_ignore_db = (c), replicate_do_table = (d.t), replicate_ignore_table = (d.u), replicate_wild_do_table = ('d.%'), replicate_wild_ignore_table = ('e.%'), replicate_rewrite_db = ((a, b), (c, d))");
+        self::assertSame("CHANGE REPLICATION FILTER REPLICATE_DO_DB = (`a`, `b`), REPLICATE_IGNORE_DB = (`c`), REPLICATE_DO_TABLE = (`d`.`t`), REPLICATE_IGNORE_TABLE = (`d`.`u`), REPLICATE_WILD_DO_TABLE = ('d.%'), REPLICATE_WILD_IGNORE_TABLE = ('e.%'), REPLICATE_REWRITE_DB = ((`a`, `b`), (`c`, `d`))", $statement->toString());
+    }
+
+    public function testReadRejectsAWildcardWithoutADot(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $binder->bind("CHANGE REPLICATION FILTER REPLICATE_WILD_DO_TABLE = ('nodot')");
+    }
+
+    public function testTableReadsATableIdentifierNode(): void
+    {
+        $node = \SqlSemantics\Ast\Tree::outer((new \SqlSemantics\Ast\DialectParser(Dialect::MySql))->parse('CHANGE REPLICATION FILTER REPLICATE_DO_TABLE = (d.`t`)'), ['filter_table_ident'])[0];
+        self::assertSame(['d', 't'], FilterDefinitions::table($node, new \SqlSemantics\Ast\Identifiers(Dialect::MySql))->parts);
+    }
 }

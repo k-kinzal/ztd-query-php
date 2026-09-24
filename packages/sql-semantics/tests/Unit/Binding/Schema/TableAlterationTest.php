@@ -190,4 +190,57 @@ final class TableAlterationTest extends TestCase
         self::assertNotNull($schema->tables[0]->columns[1]->generation->default);
     }
 
+    public function testApplyBindsTheCheckOfAnAddedColumnAgainstTheQualifiedTable(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER)', 'ALTER TABLE t ADD COLUMN n INTEGER CHECK (public.t.id > 0)');
+        self::assertSame(['id', 'n'], array_column($schema->tables[0]->columns, 'name'));
+        self::assertCount(1, $schema->tables[0]->constraints);
+        self::assertInstanceOf(\SqlSemantics\Schema\Constraint\Check::class, $schema->tables[0]->constraints[0]);
+        self::assertSame('>', $schema->tables[0]->constraints[0]->predicate->spelling());
+    }
+
+    public function testApplyReadsLowerCaseRenamesAndDropsWithoutColumnKeyword(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER, n INTEGER, k INTEGER)', 'alter table t rename n to m', 'alter table t drop id');
+        self::assertSame(['m', 'k'], array_column($schema->tables[0]->columns, 'name'));
+    }
+
+    public function testApplyKeepsAColumnNamedLikeTheDroppedKeyword(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER DEFAULT 1, "constraint" INTEGER, "default" INTEGER, CONSTRAINT k CHECK (id > 0))', 'ALTER TABLE t DROP CONSTRAINT k', 'ALTER TABLE t ALTER id DROP DEFAULT');
+        self::assertSame(['id', 'constraint', 'default'], array_column($schema->tables[0]->columns, 'name'));
+    }
+
+    public function testColumnAttributesKeepsTheColumnsBeforeTheAlteredOne(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER, n INTEGER)', 'ALTER TABLE t ALTER COLUMN n TYPE bigint');
+        self::assertSame(['id', 'n'], array_column($schema->tables[0]->columns, 'name'));
+        self::assertSame(['integer', 'bigint'], array_map(static fn ($column): string => $column->type->name, $schema->tables[0]->columns));
+    }
+
+    public function testActionReturnsTheRenamedTableName(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER)');
+        $alteration = new \SqlSemantics\Binding\Schema\TableAlteration(new \SqlSemantics\Binding\TableResolver($schema, new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql), 'public'));
+        $action = \SqlSemantics\Ast\Tree::outer((new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('ALTER TABLE t RENAME TO u'), ['RenameStmt'])[0];
+        [$columns, $name] = $alteration->action($action, $schema->tables[0]->columns, 't');
+        self::assertSame('u', $name);
+        self::assertSame(['id'], array_column($columns, 'name'));
+    }
+
+    public function testColumnAttributesLeavesOtherOperationsAlone(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER)');
+        $alteration = new \SqlSemantics\Binding\Schema\TableAlteration(new \SqlSemantics\Binding\TableResolver($schema, new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql), 'public'));
+        $action = \SqlSemantics\Ast\Tree::outer((new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('ALTER TABLE t ALTER COLUMN id SET NOT NULL'), ['alter_table_cmd'])[0];
+        self::assertSame('not-null', $alteration->columnAttributes($action, $schema->tables[0]->columns)[0]->nullability->value);
+        self::assertSame($schema->tables[0]->columns, $alteration->columnAttributes(\SqlSemantics\Ast\Tree::outer((new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('ALTER TABLE t ALTER CONSTRAINT k DEFERRABLE'), ['alter_table_cmd'])[0], $schema->tables[0]->columns));
+    }
+
+
+    public function testApplyReadsColumnChangesOutsideTheDefaultExpression(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a text NOT NULL)', "ALTER TABLE t ALTER COLUMN a SET DEFAULT 'DROP NOT NULL'");
+        self::assertSame(\SqlSemantics\Type\Nullability::NotNull, $schema->tables[0]->columns[0]->nullability);
+    }
 }

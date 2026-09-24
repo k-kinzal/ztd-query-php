@@ -49,4 +49,12 @@ final class SqlJsonBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Function\FunctionCall::class, $query->outputs[0]->expression);
         self::assertSame('SELECT "json_object"(\'{a,1}\')', $query->toString());
     }
+
+    #[TestWith(['select json_exists(j, \'$.a\') from t', 'SELECT JSON_EXISTS("j", \'$.a\') FROM "public"."t"'])]
+    #[TestWith(['select json_query(j, \'$.a\') from t', 'SELECT JSON_QUERY("j", \'$.a\') FROM "public"."t"'])]
+    #[TestWith(['select json_value(j, \'$.a\') from t', 'SELECT JSON_VALUE("j", \'$.a\') FROM "public"."t"'])]
+    public function testBindReadsLowerCaseSqlJsonFunctions(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(j jsonb)')))->bind($sql)->toString());
+    }
 }

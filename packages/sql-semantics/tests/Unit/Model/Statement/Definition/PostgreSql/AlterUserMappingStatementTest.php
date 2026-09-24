@@ -6,6 +6,7 @@ namespace Tests\Unit\Model\Statement\Definition\PostgreSql;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
@@ -81,4 +82,10 @@ final class AlterUserMappingStatementTest extends TestCase
         $statement->withOptions([]);
     }
 
+    #[TestWith(['ALTER USER MAPPING FOR u SERVER s OPTIONS (ADD a \'x\', SET b \'y\', DROP c)', AlterUserMappingStatement::class, 'ALTER USER MAPPING FOR "u" SERVER "s" OPTIONS(ADD "a" \'x\', SET "b" \'y\', DROP "c")'])]
+    public function testOptionsAcceptEveryChangeForm(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql, strict: false);
+        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+    }
 }

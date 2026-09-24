@@ -33,4 +33,11 @@ final class SessionInspectionTest extends TestCase
         self::assertInstanceOf($expected, (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build()))->bind($sql));
     }
 
+    #[TestWith(['show errors', 'SHOW ERRORS'])]
+    #[TestWith(['show count(*) warnings', 'SHOW COUNT(*) WARNINGS'])]
+    #[TestWith(['show engine innodb status', 'SHOW ENGINE `innodb` STATUS'])]
+    public function testBindReadsLowercaseShowForms(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql)->toString());
+    }
 }

@@ -57,7 +57,7 @@ final class DateShiftBinder
         }
         $tokens = array_map(static fn (Token $token): string => strtoupper($token->text), array_values(array_filter($source->children, static fn ($child): bool => $child instanceof Token)));
         $direction = in_array('-', $tokens, true) || in_array($name, ['DATE_SUB', 'SUBDATE'], true) ? ShiftDirection::Subtract : ShiftDirection::Add;
-        $unit = $interval === null ? MySqlUnit::Day : MySqlUnit::from(strtoupper(Tree::text($interval)));
+        $unit = $interval === null ? MySqlUnit::Day : (MySqlUnit::spelled(Tree::text($interval)) ?? throw new UnclassifiedSql('Unclassified interval unit: ' . Tree::text($interval)));
         $version = $scope->queries?->tables->schema->grammarVersion ?? '';
         $rules = str_starts_with($version, 'mysql-5.') ? DateArithmeticRules::Legacy : DateArithmeticRules::Current;
         return new DateShift($source, $value, $quantity, $unit, $direction, $rules, $name === 'INTERVAL' ? IntervalOperandOrder::IntervalFirst : IntervalOperandOrder::TemporalFirst);

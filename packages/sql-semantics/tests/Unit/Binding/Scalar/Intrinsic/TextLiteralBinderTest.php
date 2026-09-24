@@ -63,4 +63,12 @@ final class TextLiteralBinderTest extends TestCase
     {
         self::assertSame($expected, TextLiteralBinder::content($quoted));
     }
+
+    #[TestWith(["select _UTF8MB4 'a' 'b'", "SELECT _utf8mb4 'ab'"])]
+    #[TestWith(["select n'a' 'b'", "SELECT N'ab'"])]
+    #[TestWith(["select 'a' 'b'", "SELECT 'ab'"])]
+    public function testBindWritesIntroducedAndNationalStringsBack(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build()))->bind($sql)->toString());
+    }
 }

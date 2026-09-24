@@ -88,4 +88,59 @@ final class AggregateCallTest extends TestCase
         self::assertSame('SELECT "count"(DISTINCT "n" ORDER BY "n" ASC) FILTER (WHERE ("n" > 0)) FROM "public"."t"', $statement->toString());
         self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
     }
+
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-5.6.51'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-8.4.7'])]
+    public function testKeepsTheGroupConcatModeOrderingAndSeparator(string $version): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t(a TEXT, b INT)'));
+        $query = $binder->bind("SELECT group_concat(DISTINCT a, b ORDER BY b DESC, a SEPARATOR ';') FROM t");
+        self::assertInstanceOf(BoundSelect::class, $query);
+        $call = $query->outputs[0]->expression;
+        self::assertInstanceOf(AggregateCall::class, $call);
+        self::assertCount(2, $call->arguments);
+        self::assertCount(2, $call->orderBy);
+        self::assertSame("';'", $call->separator?->text);
+        self::assertSame("SELECT group_concat(DISTINCT `a`, `b` ORDER BY `b` DESC, `a` ASC SEPARATOR ';') FROM `t`", $query->toString());
+        self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
+    }
+
+    public function testRejectsASeparatorOutsideGroupConcat(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)'));
+        $query = $binder->bind("SELECT count(a), 'x' FROM t");
+        self::assertInstanceOf(BoundSelect::class, $query);
+        $call = $query->outputs[0]->expression;
+        $separator = $query->outputs[1]->expression;
+        self::assertInstanceOf(AggregateCall::class, $call);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\Literal::class, $separator);
+        $this->expectException(InvalidStructure::class);
+        new AggregateCall($call->facts, $call->source, $call->function, $call->arguments, $call->mode, $call->orderBy, $call->filter, $separator);
+    }
+
+    public function testConcatenationRecognizesOnlyMySqlGroupConcat(): void
+    {
+        $mysql = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (a INT)')))->bind('SELECT GROUP_CONCAT(a ORDER BY 1), COUNT(a) FROM t');
+        self::assertInstanceOf(BoundSelect::class, $mysql);
+        $concatenation = $mysql->outputs[0]->expression;
+        $count = $mysql->outputs[1]->expression;
+        self::assertInstanceOf(AggregateCall::class, $concatenation);
+        self::assertInstanceOf(AggregateCall::class, $count);
+        self::assertTrue(AggregateCall::concatenation($concatenation->function, $concatenation->facts));
+        self::assertFalse(AggregateCall::concatenation($count->function, $count->facts));
+        self::assertSame([$concatenation->arguments[0]], $concatenation->inputs());
+    }
+
+    public function testOrderingPositionMustReferToAnArgumentOfGroupConcat(): void
+    {
+        $mysql = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (a INT)')))->bind('SELECT GROUP_CONCAT(a ORDER BY 1), COUNT(a) FROM t');
+        self::assertInstanceOf(BoundSelect::class, $mysql);
+        $concatenation = $mysql->outputs[0]->expression;
+        $count = $mysql->outputs[1]->expression;
+        self::assertInstanceOf(AggregateCall::class, $concatenation);
+        self::assertInstanceOf(AggregateCall::class, $count);
+        $this->expectException(InvalidStructure::class);
+        new AggregateCall($count->facts, $count->source, $count->function, $count->arguments, $count->mode, $concatenation->orderBy, null);
+    }
 }

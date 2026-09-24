@@ -22,7 +22,7 @@ final class RevokeAllGrantsStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('REVOKE ALL, GRANT OPTION FROM u');
         self::assertInstanceOf(RevokeAllGrantsStatement::class, $statement);
-        self::assertSame("REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'v' @'h'", $statement->withGrantees([new AccountName('v', 'h')])->toString());
+        self::assertSame("REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'v'@'h'", $statement->withGrantees([new AccountName('v', 'h')])->toString());
         self::assertEquals([new AccountName('u')], $statement->grantees);
     }
 

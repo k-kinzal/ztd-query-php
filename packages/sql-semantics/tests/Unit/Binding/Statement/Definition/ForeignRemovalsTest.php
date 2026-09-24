@@ -35,4 +35,11 @@ final class ForeignRemovalsTest extends TestCase
         self::assertTrue($statement->ifExists);
         self::assertSame(DropBehavior::Cascade, $statement->behavior);
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['drop server s restrict', 'DROP SERVER "s" RESTRICT'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['drop foreign data wrapper w cascade', 'DROP FOREIGN DATA WRAPPER "w" CASCADE'])]
+    public function testBindReadsLowerCaseRemovals(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+    }
 }

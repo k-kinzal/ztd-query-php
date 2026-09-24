@@ -23,4 +23,10 @@ final class TableLocksTest extends TestCase
         self::assertSame('LOCK TABLE ONLY "public"."t" IN ROW EXCLUSIVE MODE', $changed->toString());
         self::assertSame('LOCK /* comment */ TABLE ONLY(t) IN SHARE MODE', $statement->source->toString());
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['lock tables t read, u as x write', 'LOCK TABLES `t` READ, `u` AS `x` WRITE'])]
+    public function testWriteSpellsEveryLockForm(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t(a INT)', 'CREATE TABLE u(a INT)')))->bind($sql)->toString());
+    }
 }

@@ -49,7 +49,7 @@ final class AlterUsersStatementTest extends TestCase
         self::assertInstanceOf(AlterUsersStatement::class, $statement);
         $changed = $statement->withAlterations([new FactorRemoval(new AccountName('b'), [AuthenticationFactor::Third]), new AccountTarget(new AccountName('c', 'h'))]);
         self::assertCount(1, $statement->alterations);
-        self::assertSame("ALTER USER 'b' DROP 3 FACTOR, 'c' @'h' ACCOUNT LOCK", $changed->toString());
+        self::assertSame("ALTER USER 'b' DROP 3 FACTOR, 'c'@'h' ACCOUNT LOCK", $changed->toString());
     }
 
     public function testWithAlterationsRejectsTheClientAccountWithSharedClauses(): void
@@ -133,5 +133,48 @@ final class AlterUsersStatementTest extends TestCase
         $copy = $statement->withOrigin($statement->origin);
         self::assertNotSame($statement, $copy);
         self::assertSame("ALTER USER 'a' PASSWORD EXPIRE, 'b' PASSWORD EXPIRE", $copy->toString());
+    }
+
+    public function testWithAlterationsAcceptsTheClientAccountAlone(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('ALTER USER a DISCARD OLD PASSWORD');
+        self::assertInstanceOf(AlterUsersStatement::class, $statement);
+        self::assertSame('ALTER USER USER() DISCARD OLD PASSWORD', $statement->withAlterations([new OldPasswordDiscard(ClientAccount::Connected)])->toString());
+    }
+
+    public function testWithAlterationsRejectsTheClientAccountAmongOthers(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('ALTER USER a DISCARD OLD PASSWORD');
+        self::assertInstanceOf(AlterUsersStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        $statement->withAlterations([new OldPasswordDiscard(ClientAccount::Connected), new OldPasswordDiscard(new AccountName('b'))]);
+    }
+
+    public function testWithRequirementRejectsTheClientAccount(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('ALTER USER USER() DISCARD OLD PASSWORD');
+        self::assertInstanceOf(AlterUsersStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        $statement->withRequirement(ConnectionSecurity::Ssl);
+    }
+
+    public function testWithResourceLimitsRejectsTheClientAccount(): void
+    {
+        $limits = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('ALTER USER a WITH MAX_QUERIES_PER_HOUR 1');
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('ALTER USER USER() DISCARD OLD PASSWORD');
+        self::assertInstanceOf(AlterUsersStatement::class, $limits);
+        self::assertInstanceOf(AlterUsersStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        $statement->withResourceLimits($limits->resourceLimits);
+    }
+
+    public function testWithAnnotationRejectsTheClientAccount(): void
+    {
+        $annotated = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("ALTER USER a COMMENT 'c'");
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('ALTER USER USER() DISCARD OLD PASSWORD');
+        self::assertInstanceOf(AlterUsersStatement::class, $annotated);
+        self::assertInstanceOf(AlterUsersStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        $statement->withAnnotation($annotated->annotation);
     }
 }

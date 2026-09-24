@@ -89,4 +89,22 @@ final class XmlConstructorBinderTest extends TestCase
         $source = (new DialectParser(Dialect::PostgreSql))->parse("SELECT XMLELEMENT(NAME a, 'b', 'c')")->find('func_expr_common_subexpr')[0];
         self::assertSame(["'b'", "'c'"], array_map(static fn ($value): ?string => $value->spelling(), XmlConstructorBinder::values($source, new Scope(new Identifiers(Dialect::PostgreSql)))));
     }
+
+    #[TestWith(['SELECT XMLFOREST(zz) FROM t', 'SELECT XMLFOREST("zz") FROM "public"."t"'])]
+    #[TestWith(['SELECT XMLFOREST(t.*) FROM t', 'SELECT XMLFOREST("t".*) FROM "public"."t"'])]
+    #[TestWith(["SELECT XMLELEMENT(NAME e, XMLATTRIBUTES(a, b AS c), 'x', b) FROM t", 'SELECT XMLELEMENT(NAME "e", XMLATTRIBUTES("a", "b" AS "c"), \'x\', "b") FROM "public"."t"'])]
+    public function testNamedAcceptsReferencesWithoutAliases(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT, b TEXT)')))->bind($sql, strict: false)->toString());
+    }
+
+    #[TestWith(['SELECT XMLFOREST(a, 1) FROM t'])]
+    #[TestWith(['SELECT XMLELEMENT(NAME e, XMLATTRIBUTES(a, b AS a)) FROM t'])]
+    public function testNamedRejectsUnnamedValuesAndRepeatedAttributes(string $sql): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT, b TEXT)'));
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(InputViolation::XmlValueName->message());
+        $binder->bind($sql);
+    }
 }

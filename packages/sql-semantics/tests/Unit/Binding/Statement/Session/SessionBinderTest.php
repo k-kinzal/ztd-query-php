@@ -73,4 +73,30 @@ final class SessionBinderTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('LISTEN ch');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Notification\ListenStatement::class, $statement);
     }
+
+    /**
+     * @param class-string<object> $class
+     */
+    #[TestWith([Dialect::MySql, 'kill query 5', \SqlSemantics\Model\Statement\Server\KillQueryStatement::class, 'KILL QUERY 5'])]
+    #[TestWith([Dialect::MySql, 'kill 5', \SqlSemantics\Model\Statement\Server\KillConnectionStatement::class, 'KILL CONNECTION 5'])]
+    #[TestWith([Dialect::MySql, 'install plugin p soname \'x.so\'', \SqlSemantics\Model\Statement\Server\InstallPluginStatement::class, 'INSTALL PLUGIN `p` SONAME \'x.so\''])]
+    #[TestWith([Dialect::MySql, 'uninstall plugin p', \SqlSemantics\Model\Statement\Server\UninstallPluginStatement::class, 'UNINSTALL PLUGIN `p`'])]
+    #[TestWith([Dialect::MySql, 'install component \'file://x\'', \SqlSemantics\Model\Statement\Server\Administration\InstallComponentStatement::class, 'INSTALL COMPONENT \'file://x\''])]
+    #[TestWith([Dialect::MySql, 'clone local data directory = \'/d\'', \SqlSemantics\Model\Statement\Server\CloneLocalStatement::class, 'CLONE LOCAL DATA DIRECTORY \'/d\''])]
+    #[TestWith([Dialect::MySql, 'CLONE INSTANCE FROM \'u\'@\'h\':3306 IDENTIFIED BY \'p\'', \SqlSemantics\Model\Statement\Server\Administration\CloneRemoteStatement::class, 'CLONE INSTANCE FROM \'u\'@\'h\':3306 IDENTIFIED BY \'p\''])]
+    #[TestWith([Dialect::PostgreSql, 'checkpoint', \SqlSemantics\Model\Statement\Server\CheckpointStatement::class, 'CHECKPOINT'])]
+    #[TestWith([Dialect::MySql, 'unlock tables', \SqlSemantics\Model\Statement\Server\UnlockTablesStatement::class, 'UNLOCK TABLES'])]
+    #[TestWith([Dialect::MySql, 'binlog \'abc\'', \SqlSemantics\Model\Statement\Server\ApplyBinlogStatement::class, 'BINLOG \'abc\''])]
+    public function testBindReadsLowerCaseVerbs(Dialect $dialect, string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect))->build()))->bind($sql);
+        self::assertInstanceOf($class, $statement);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    public function testTextReadsTheFirstTextLiteral(): void
+    {
+        $node = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql))->parse("BINLOG 'abc'");
+        self::assertSame("'abc'", SessionBinder::text($node, new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::MySql)))->text);
+    }
 }

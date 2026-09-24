@@ -144,4 +144,9 @@ final class SemanticExceptionTest extends TestCase
         self::assertSame($node, $error->source);
         self::assertSame('Missing column', $error->getMessage());
     }
+
+    public function testCarriesNoErrorCode(): void
+    {
+        self::assertSame(0, (new SemanticException('unknown-column', 'Missing column', new \SqlParser\Parser\Node('expr', 0, [])))->getCode());
+    }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Statement;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -324,5 +325,55 @@ final class MutationBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertSelectStatement::class, $statement);
         self::assertSame($expected, $statement->toString());
         self::assertSame($expected, $binder->bind($expected)->toString());
+    }
+
+    /**
+     * @return list<array{Dialect, ?string, string, mixed}>
+     */
+    public static function providerBindResolvesTheWrittenRelations(): array
+    {
+        return [
+            [Dialect::PostgreSql, null, 'update t set n = 1 returning id', [\SqlSemantics\Model\Statement\Mutation\UpdateTableStatement::class, 'UPDATE "public"."t" SET "n" = 1 RETURNING "id" AS "id"', []]],
+            [Dialect::PostgreSql, null, 'insert into t values (1, 2) on conflict (id) do update set n = excluded.n', [\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, 'INSERT INTO "public"."t" VALUES (1, 2) ON CONFLICT("id") DO UPDATE SET "n" = "excluded"."n"', []]],
+            [Dialect::PostgreSql, null, 'UPDATE t SET n = excluded.n', [\SqlSemantics\Model\Statement\Mutation\UpdateTableStatement::class, 'UPDATE "public"."t" SET "n" = "excluded"."n"', ['unknown-column']]],
+            [Dialect::PostgreSql, null, 'UPDATE t AS x SET n = 1 WHERE x.id = 1', [\SqlSemantics\Model\Statement\Mutation\UpdateTableStatement::class, 'UPDATE "public"."t" AS "x" SET "n" = 1 WHERE ("x"."id" = 1)', []]],
+            [Dialect::PostgreSql, null, 'insert into t values (1, 2)', [\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, 'INSERT INTO "public"."t" VALUES (1, 2)', []]],
+            [Dialect::PostgreSql, null, 'INSERT INTO t VALUES (1, 2) ORDER BY 1', [\SqlSemantics\Model\Statement\Insert\InsertSelectStatement::class, 'INSERT INTO "public"."t" VALUES (1, 2) ORDER BY 1 ASC', []]],
+            [Dialect::MySql, null, 'REPLACE INTO t VALUES (1, 2)', [\SqlSemantics\Model\Statement\Insert\InsertValuesStatement::class, 'REPLACE INTO `t` VALUES (1, 2)', []]],
+            [Dialect::MySql, null, 'DELETE b FROM t a JOIN u b ON a.id = b.id', [\SqlSemantics\Model\Statement\Mutation\DeleteJoinedStatement::class, 'DELETE `b` FROM `t` AS `a` INNER JOIN `u` AS `b` ON (`a`.`id` = `b`.`id`)', []]],
+            [Dialect::MySql, null, 'DELETE a, b FROM t a JOIN u b ON a.id = b.id', [\SqlSemantics\Model\Statement\Mutation\DeleteJoinedStatement::class, 'DELETE `a`, `b` FROM `t` AS `a` INNER JOIN `u` AS `b` ON (`a`.`id` = `b`.`id`)', []]],
+            [Dialect::MySql, null, 'DELETE u.* FROM t JOIN u ON t.id = u.id', [\SqlSemantics\Model\Statement\Mutation\DeleteJoinedStatement::class, 'DELETE `u` FROM `t` INNER JOIN `u` ON (`t`.`id` = `u`.`id`)', []]],
+            [Dialect::MySql, null, 'DELETE v FROM t JOIN u ON t.id = u.id', [\SqlSemantics\Model\Statement\Mutation\DeleteJoinedStatement::class, 'DELETE `v` FROM `t` INNER JOIN `u` ON (`t`.`id` = `u`.`id`)', ['unknown-write-target', 'unknown-table']]],
+            [Dialect::MySql, null, 'UPDATE t, u SET u.n = 1 WHERE t.id = u.id', [\SqlSemantics\Model\Statement\Mutation\UpdateJoinedStatement::class, 'UPDATE `t` CROSS JOIN `u` SET `u`.`n` = 1 WHERE (`t`.`id` = `u`.`id`)', []]],
+            [Dialect::Sqlite, null, 'DELETE FROM main.t as x', [\SqlSemantics\Model\Statement\Mutation\DeleteTableStatement::class, 'DELETE FROM "main"."t" AS "x"', []]],
+            [Dialect::Sqlite, null, 'DELETE FROM t', [\SqlSemantics\Model\Statement\Mutation\DeleteTableStatement::class, 'DELETE FROM "main"."t"', []]],
+        ];
+    }
+
+    #[DataProvider('providerBindResolvesTheWrittenRelations')]
+    public function testBindResolvesTheWrittenRelations(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(id INTEGER PRIMARY KEY, n INTEGER); CREATE TABLE u(id INTEGER, n INTEGER)')))->bind($sql, strict: false);
+        self::assertSame($expected, [$statement::class, $statement->toString(), array_map(static fn ($diagnostic): string => $diagnostic->reason, $statement->diagnostics)]);
+    }
+
+
+    public function testTargetsReadsTheAliasOfASqliteTarget(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(id INT PRIMARY KEY, n INT)'));
+        $delete = $binder->bind('DELETE FROM t AS x WHERE x.id = 1');
+        $insert = $binder->bind('INSERT INTO t AS x VALUES (1, 2) ON CONFLICT (id) DO UPDATE SET n = x.n + 1');
+        self::assertSame('DELETE FROM "main"."t" AS "x" WHERE ("x"."id" = 1)', $delete->toString());
+        self::assertSame('INSERT INTO "main"."t" AS "x" VALUES (1, 2) ON CONFLICT("id") DO UPDATE SET "n" = ("x"."n" + 1)', $insert->toString());
+        self::assertSame($insert->toString(), $binder->bind($insert->toString())->toString());
+    }
+
+    public function testBindReadsTheReturningClauseOfASqliteUpsert(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(id INT PRIMARY KEY, n TEXT)'));
+        $statement = $binder->bind("INSERT INTO t VALUES (1, 'x') ON CONFLICT (id) DO NOTHING ON CONFLICT DO UPDATE SET n = 'RETURNING' RETURNING id");
+        $plain = $binder->bind("DELETE FROM t WHERE n = 'RETURNING'");
+        self::assertSame('INSERT INTO "main"."t" VALUES (1, \'x\') ON CONFLICT("id") DO NOTHING ON CONFLICT DO UPDATE SET "n" = \'RETURNING\' RETURNING "id" AS "id"', $statement->toString());
+        self::assertSame('DELETE FROM "main"."t" WHERE ("n" = \'RETURNING\')', $plain->toString());
     }
 }

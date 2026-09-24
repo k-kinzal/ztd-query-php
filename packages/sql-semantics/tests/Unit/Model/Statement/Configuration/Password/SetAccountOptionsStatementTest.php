@@ -42,4 +42,38 @@ final class SetAccountOptionsStatementTest extends TestCase
         $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
         $statement->withOperations([$statement->operations[0]]);
     }
+
+    public function testWithOperationsAcceptsOneVariableClauseBesideAPassword(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.6.51'))->build()))->bind("SET PASSWORD = '*one', @a = 1");
+        self::assertInstanceOf(SetAccountOptionsStatement::class, $statement);
+        self::assertSame("SET @`a` = 1, PASSWORD = '*one'", $statement->withOperations([$statement->operations[1], $statement->operations[0]])->toString());
+    }
+
+    public function testWithOperationsRejectsOnlyVariableClauses(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.6.51'))->build()))->bind("SET PASSWORD = '*one', @a = 1");
+        self::assertInstanceOf(SetAccountOptionsStatement::class, $statement);
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        $statement->withOperations([$statement->operations[1], $statement->operations[1]]);
+    }
+
+    public function testWithOperationsRejectsAVariableClauseWithTwoAssignments(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.6.51'))->build());
+        $statement = $binder->bind("SET PASSWORD = '*one', @a = 1");
+        $variables = $binder->bind('SET @a = 1, @b = 2');
+        self::assertInstanceOf(SetAccountOptionsStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $variables);
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        $statement->withOperations([$statement->operations[0], $variables]);
+    }
+
+    public function testWithOriginRejectsAnotherDatabaseLanguage(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.6.51'))->build()))->bind("SET PASSWORD = '*one', @a = 1");
+        self::assertInstanceOf(SetAccountOptionsStatement::class, $statement);
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        $statement->withOrigin(new \SqlSemantics\Model\Statement\Origin('other', $statement->source, Dialect::PostgreSql));
+    }
 }

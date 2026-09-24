@@ -34,7 +34,7 @@ final class GrantProxyStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('GRANT PROXY ON p TO u');
         self::assertInstanceOf(GrantProxyStatement::class, $statement);
-        self::assertSame("GRANT PROXY ON 'p' TO 'v' @'h', 'w'", $statement->withGrantees([new AccountName('v', 'h'), new AccountName('w')])->toString());
+        self::assertSame("GRANT PROXY ON 'p' TO 'v'@'h', 'w'", $statement->withGrantees([new AccountName('v', 'h'), new AccountName('w')])->toString());
         self::assertCount(1, $statement->grantees);
     }
 

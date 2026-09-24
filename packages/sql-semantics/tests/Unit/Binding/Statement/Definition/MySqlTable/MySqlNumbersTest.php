@@ -41,4 +41,19 @@ final class MySqlNumbersTest extends TestCase
         $this->expectException(InvalidSql::class);
         MySqlNumbers::bounded('18446744073709551615', false, $node, InputViolation::TableOption);
     }
+
+    #[TestWith(['0X1F', 31])]
+    #[TestWith(['0x0000000000000001f', 31])]
+    #[TestWith(['0xfffffffffffffff', 1152921504606846975])]
+    #[TestWith(['1000000000000000000', 1000000000000000000])]
+    public function testReadConvertsATerminal(string $text, int $expected): void
+    {
+        self::assertSame($expected, MySqlNumbers::read(new \SqlParser\Lexer\Token(0, 'NUM', $text, 0), InputViolation::TableOption));
+    }
+
+    public function testReadRejectsAFractionWithoutLeadingDigits(): void
+    {
+        $this->expectException(InvalidSql::class);
+        MySqlNumbers::read(new \SqlParser\Lexer\Token(0, 'IDENT', 'a.5', 0), InputViolation::TableOption);
+    }
 }

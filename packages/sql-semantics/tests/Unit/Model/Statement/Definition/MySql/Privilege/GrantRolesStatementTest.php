@@ -23,7 +23,7 @@ final class GrantRolesStatementTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('GRANT r TO u');
         self::assertInstanceOf(GrantRolesStatement::class, $statement);
-        self::assertSame("GRANT 's' @'h' TO 'u'", $statement->withRoles([new AccountName('s', 'h')])->toString());
+        self::assertSame("GRANT 's'@'h' TO 'u'", $statement->withRoles([new AccountName('s', 'h')])->toString());
         self::assertSame('r', $statement->roles[0]->username);
     }
 
@@ -59,5 +59,12 @@ final class GrantRolesStatementTest extends TestCase
         $origin = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build()))->bind('SELECT 1')->origin;
         $this->expectException(InvalidStructure::class);
         $statement->withOrigin($origin);
+    }
+
+    public function testWithAdminOptionDefaultsToOff(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('GRANT r TO u');
+        self::assertInstanceOf(GrantRolesStatement::class, $statement);
+        self::assertFalse((new GrantRolesStatement($statement->origin, $statement->roles, $statement->grantees))->withAdminOption);
     }
 }

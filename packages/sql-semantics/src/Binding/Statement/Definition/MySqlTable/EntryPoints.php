@@ -28,7 +28,7 @@ final class EntryPoints
      */
     public static function bind(Origin $origin, Node $statement, QueryContext $context): BoundStatement
     {
-        $scope = new Scope($context->tables->identifiers, queries: $context);
+        $scope = new Scope($context->tables->identifiers, queries: $context, detached: true);
         if ($statement->name === 'partition_entry') {
             return new PartitionSchemeStatement($origin, PartitionSchemes::read($statement, $scope) ?? throw new UnclassifiedSql('PARTITION BY requires its clause.'));
         }

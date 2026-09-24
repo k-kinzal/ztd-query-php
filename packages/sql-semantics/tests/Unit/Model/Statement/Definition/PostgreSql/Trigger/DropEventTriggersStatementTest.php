@@ -75,4 +75,10 @@ final class DropEventTriggersStatementTest extends TestCase
         self::assertSame($statement->names, $changed->names);
     }
 
+    public function testIfExistsDefaultsToOff(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('DROP EVENT TRIGGER IF EXISTS e', strict: false);
+        self::assertInstanceOf(DropEventTriggersStatement::class, $statement);
+        self::assertFalse((new DropEventTriggersStatement($statement->origin, $statement->names))->ifExists);
+    }
 }

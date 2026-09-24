@@ -55,6 +55,28 @@ final class AccountCommandsTest extends TestCase
         self::assertEquals(new AccountName('a', 'h'), $statement->renames[0]->from);
         self::assertSame(CurrentAccount::Authenticated, $statement->renames[0]->to);
         self::assertEquals(new AccountName('d'), $statement->renames[1]->to);
-        self::assertSame("RENAME USER 'a' @'h' TO CURRENT_USER, 'c' TO 'd'", $statement->toString());
+        self::assertSame("RENAME USER 'a'@'h' TO CURRENT_USER, 'c' TO 'd'", $statement->toString());
+    }
+
+    /**
+     * @param class-string<object> $class
+     */
+    #[TestWith([Dialect::MySql, 'rename user a to b, c to d', Account\RenameUsersStatement::class, 'RENAME USER \'a\' TO \'b\', \'c\' TO \'d\''])]
+    #[TestWith([Dialect::MySql, 'create user u', Account\CreateUsersStatement::class, 'CREATE USER \'u\''])]
+    #[TestWith([Dialect::MySql, 'alter user u account lock', Account\AlterUsersStatement::class, 'ALTER USER \'u\' ACCOUNT LOCK'])]
+    #[TestWith([Dialect::MySql, 'drop user u', \SqlSemantics\Model\Statement\Definition\MySql\DropUsersStatement::class, 'DROP USER \'u\''])]
+    #[TestWith([Dialect::PostgreSql, 'ALTER USER u WITH SUPERUSER', \SqlSemantics\Model\Statement\Definition\PostgreSql\Role\AlterRoleStatement::class, 'ALTER ROLE "u" SUPERUSER'])]
+    public function testBindRoutesLowerCaseAccountCommands(Dialect $dialect, string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect))->build()))->bind($sql);
+        self::assertInstanceOf($class, $statement);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    public function testRenamePairsParsedAccounts(): void
+    {
+        $origin = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('DO 1')->origin;
+        $statement = AccountCommands::rename($origin, (new \SqlSemantics\Ast\DialectParser(Dialect::MySql))->parse('RENAME USER a TO b'), new \SqlSemantics\Ast\Identifiers(Dialect::MySql));
+        self::assertSame("RENAME USER 'a' TO 'b'", $statement->toString());
     }
 }

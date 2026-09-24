@@ -79,4 +79,18 @@ final class JoinsTest extends TestCase
         self::assertSame('UPDATE LOW_PRIORITY `t` NATURAL JOIN `u` SET `a` = DEFAULT', $statement->toString());
         self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
     }
+
+    #[TestWith(['mysql-5.6.51', 'SELECT 1 FROM t STRAIGHT_JOIN u ON t.a = u.a', 'SELECT 1 FROM `t` STRAIGHT_JOIN `u` ON (`t`.`a` = `u`.`a`)'])]
+    #[TestWith(['mysql-5.7.44', 'SELECT 1 FROM t STRAIGHT_JOIN u', 'SELECT 1 FROM `t` STRAIGHT_JOIN `u`'])]
+    #[TestWith(['mysql-8.0.44', 'SELECT 1 FROM t STRAIGHT_JOIN u USING (a)', 'SELECT 1 FROM `t` STRAIGHT_JOIN `u` USING(`a`)'])]
+    #[TestWith(['mysql-9.1.0', 'SELECT 1 FROM t STRAIGHT_JOIN u ON t.a = u.a', 'SELECT 1 FROM `t` STRAIGHT_JOIN `u` ON (`t`.`a` = `u`.`a`)'])]
+    public function testWriteKeepsAStraightJoin(string $release, string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $release))->build('CREATE TABLE t (a INT)', 'CREATE TABLE u (a INT)'));
+        $query = $binder->bind($sql);
+        self::assertInstanceOf(BoundSelect::class, $query);
+        self::assertInstanceOf(Join::class, $query->from);
+        self::assertSame(substr($expected, strlen('SELECT 1 FROM ')), Joins::write($query->from, Dialect::MySql)->toString());
+        self::assertSame($expected, $binder->bind($expected)->toString());
+    }
 }

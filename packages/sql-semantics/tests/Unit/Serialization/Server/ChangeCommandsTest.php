@@ -52,4 +52,18 @@ final class ChangeCommandsTest extends TestCase
         self::assertInstanceOf(WildTableFilter::class, $statement->filters[0]);
         self::assertCount(2, ChangeCommands::values($statement->filters[0]));
     }
+
+    public function testFilterWritesTablesRewritesAndEmptyLists(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CHANGE REPLICATION FILTER REPLICATE_DO_TABLE = (a.t, b.u), REPLICATE_REWRITE_DB = ((a, b), (c, d)), REPLICATE_DO_DB = ()');
+        self::assertInstanceOf(ChangeReplicationFilterStatement::class, $statement);
+        self::assertSame('CHANGE REPLICATION FILTER REPLICATE_DO_TABLE = (`a`.`t`, `b`.`u`), REPLICATE_REWRITE_DB = ((`a`, `b`), (`c`, `d`)), REPLICATE_DO_DB = ()', ChangeCommands::filter($statement)->toString());
+    }
+
+    public function testSourceWritesTextNumberAccountAndKeywordValues(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("CHANGE REPLICATION SOURCE TO SOURCE_HOST = 'h', SOURCE_PORT = 3306, PRIVILEGE_CHECKS_USER = 'u'@'h', ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS = LOCAL, SOURCE_SSL = 1");
+        self::assertInstanceOf(ChangeReplicationSourceStatement::class, $statement);
+        self::assertSame("CHANGE REPLICATION SOURCE TO SOURCE_HOST = 'h', SOURCE_PORT = 3306, PRIVILEGE_CHECKS_USER = 'u'@'h', ASSIGN_GTIDS_TO_ANONYMOUS_TRANSACTIONS = LOCAL, SOURCE_SSL = 1", ChangeCommands::source($statement)->toString());
+    }
 }

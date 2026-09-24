@@ -179,6 +179,7 @@ final class ExpressionFactoryTest extends TestCase
     #[\PHPUnit\Framework\Attributes\TestWith(['/*'])]
     #[\PHPUnit\Framework\Attributes\TestWith(['*/'])]
     #[\PHPUnit\Framework\Attributes\TestWith(['+; SELECT 1'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(["+\n"])]
     public function testBinaryRejectsCommentAndStatementBoundaries(string $operator): void
     {
         $this->expectException(InvalidStructure::class);
@@ -189,5 +190,22 @@ final class ExpressionFactoryTest extends TestCase
         $expression = Sql\ExpressionFactory::binary('and', Expression::literal(true, Dialect::PostgreSql), Expression::literal(false, Dialect::PostgreSql));
         self::assertSame('AND', $expression->spelling());
         self::assertSame('(TRUE AND FALSE)', $expression->structure()->toString());
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['--'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['/*'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['*/'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['+; SELECT 1'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['+x'])]
+    public function testBinaryNamesTheRejectedOperator(string $operator): void
+    {
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('A binary operator must be one SQL operator.');
+        Sql\ExpressionFactory::binary($operator, Expression::literal(1, Dialect::PostgreSql), Expression::literal(2, Dialect::PostgreSql));
+    }
+
+    public function testBinaryAcceptsASymbolicOperator(): void
+    {
+        self::assertSame('(1 <= 2)', Sql\ExpressionFactory::binary('<=', Expression::literal(1, Dialect::PostgreSql), Expression::literal(2, Dialect::PostgreSql))->structure()->toString());
     }
 }

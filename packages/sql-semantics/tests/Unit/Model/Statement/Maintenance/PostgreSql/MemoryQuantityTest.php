@@ -22,12 +22,26 @@ final class MemoryQuantityTest extends TestCase
     #[TestWith(['0200', 128])]
     #[TestWith(['-1', -1])]
     #[TestWith(['1e3', 1000])]
+    #[TestWith(['0x10 kB', 16])]
+    #[TestWith(['0X10', 16])]
+    #[TestWith(['107', 107])]
+    #[TestWith(['09.5', 10])]
+    #[TestWith(['5kB', 5])]
+    #[TestWith(['1.5', 2])]
+    #[TestWith(['2.5', 2])]
+    #[TestWith(['1536B', 2])]
+    #[TestWith(['2560B', 2])]
+    #[TestWith(['2147483647', 2147483647])]
+    #[TestWith(['-2147483648', -2147483648])]
     public function testKilobytesReadsIntegerParameterSyntax(string $text, int $expected): void
     {
         self::assertSame($expected, MemoryQuantity::kilobytes($text));
     }
 
     #[TestWith(['2mb'])]
+    #[TestWith(['x5'])]
+    #[TestWith(['0128'])]
+    #[TestWith(['2147483648'])]
     #[TestWith(['08'])]
     #[TestWith(['abc'])]
     #[TestWith(['4TB'])]

@@ -16,10 +16,11 @@ use SqlSemantics\Model\Relation\QualifiedName;
 final class ZeroArgumentAggregate
 {
     /**
-     * Retains only operands that participate in the target's identity.
+     * Retains only operands that participate in the target's identity; the name has at most catalog, schema and aggregate.
+     * @throws \SqlSemantics\Model\Validation\InvalidStructure
      */
     public function __construct(public readonly QualifiedName $name)
     {
-
+        \SqlSemantics\Model\Definition\Catalog\CatalogInvariant::name($name, 3);
     }
 }

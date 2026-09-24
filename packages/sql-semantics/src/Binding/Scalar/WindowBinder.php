@@ -34,7 +34,9 @@ final class WindowBinder
         $partition = Tree::child($spec, ['opt_partition_clause', 'nexprlist']);
         $parts = array_map(static fn (Node $expression) => (new ExpressionBinder())->bind($expression, $scope), $partition === null ? [] : Tree::outer($partition, ['a_expr', 'expr']));
         $frame = Tree::child($spec, ['opt_frame_clause', 'opt_window_frame_clause', 'frame_opt']);
-        return new Window\WindowSpecification($base === null ? null : $scope->identifiers->parts($base)[0], $parts, (new \SqlSemantics\Binding\SelectModifiersBinder())->ordering($spec, $scope, null), $frame === null ? null : $this->frame($frame, $scope));
+        $sortlist = Tree::child($spec, ['sortlist']);
+        $ordering = (new \SqlSemantics\Binding\SelectModifiersBinder())->ordering($sortlist === null ? $spec : new Node('orderby_opt', 0, [$sortlist]), $scope, null);
+        return new Window\WindowSpecification($base === null ? null : $scope->identifiers->parts($base)[0], $parts, $ordering, $frame === null ? null : $this->frame($frame, $scope));
     }
 
     /**
@@ -43,7 +45,7 @@ final class WindowBinder
     public function frame(Node $node, Scope $scope): Window\Frame
     {
         $words = array_map(static fn ($token): string => strtoupper($token->text), $node->tokens());
-        $bounds = Tree::outer($node, ['frame_bound', 'window_frame_bound', 'window_frame_start']);
+        $bounds = Tree::outer($node, ['frame_bound_s', 'frame_bound_e', 'frame_bound', 'window_frame_bound', 'window_frame_start']);
         if ($bounds === []) {
             Tree::invalid($node, 'window frame boundaries');
         }
@@ -72,6 +74,7 @@ final class WindowBinder
         if ($value === null) {
             Tree::invalid($node, 'window offset');
         }
-        return new Window\Offset($direction, (new ExpressionBinder())->bind($value, $scope));
+        $interval = Tree::outer($node, ['interval'])[0] ?? null;
+        return new Window\Offset($direction, (new ExpressionBinder())->bind($value, $scope), $interval === null ? null : (\SqlSemantics\Model\Scalar\Temporal\MySqlUnit::spelled(Tree::text($interval)) ?? Tree::invalid($interval, 'interval unit')));
     }
 }

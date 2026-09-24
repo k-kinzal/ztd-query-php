@@ -26,6 +26,7 @@ final class BoundSelect extends BoundQuery
      * @param list<Ordering> $orderBy
      * @param list<Expression> $groupBy
      * @param list<Query\Optimization\OptimizerHint> $hints
+     * @param list<Query\Optimization\SelectOption> $options Distinct MySQL query block options, in written order
      * @param list<Query\Locking\RowLock> $locks
      * @param list<Window\Definition> $windows
      * @visibility SqlSemantics
@@ -47,6 +48,7 @@ final class BoundSelect extends BoundQuery
         public readonly array $windows = [],
         public readonly array $locks = [],
         public readonly array $hints = [],
+        public readonly array $options = [],
     ) {
         parent::__construct($origin, $ctes, $orderBy, $limit, $offset, $withTies);
         Validation\StatementOperands::relation($from, $origin->dialect);
@@ -61,6 +63,7 @@ final class BoundSelect extends BoundQuery
         Validation\Collections::objects($windows, Window\Definition::class);
         Validation\Collections::objects($hints, Query\Optimization\OptimizerHint::class);
         Validation\Collections::objects($locks, Query\Locking\RowLock::class);
+        Query\Optimization\SelectOptions::validate($options, $origin);
         if ($locks !== [] && $origin->dialect === \SqlSemantics\Dialect::Sqlite) {
             throw new Validation\InvalidStructure('SQLite SELECT does not have locking clauses.');
         }
@@ -92,7 +95,7 @@ final class BoundSelect extends BoundQuery
     #[Override]
     public function withOrigin(Statement\Origin $origin): static
     {
-        return new static($origin, $this->from, $this->outputs, $this->where, $this->quantifier, $this->orderBy, $this->limit, $this->offset, $this->groupBy, $this->having, $this->ctes, $this->withTies, $this->windows, $this->locks, $this->hints);
+        return new static($origin, $this->from, $this->outputs, $this->where, $this->quantifier, $this->orderBy, $this->limit, $this->offset, $this->groupBy, $this->having, $this->ctes, $this->withTies, $this->windows, $this->locks, $this->hints, $this->options);
     }
 
     /**
@@ -112,7 +115,7 @@ final class BoundSelect extends BoundQuery
      */
     public function withOutputs(array $outputs): self
     {
-        return $this->changed(new self($this->origin, $this->from, $outputs, $this->where, $this->quantifier, $this->orderBy, $this->limit, $this->offset, $this->groupBy, $this->having, $this->ctes, $this->withTies, $this->windows, $this->locks, $this->hints));
+        return $this->changed(new self($this->origin, $this->from, $outputs, $this->where, $this->quantifier, $this->orderBy, $this->limit, $this->offset, $this->groupBy, $this->having, $this->ctes, $this->withTies, $this->windows, $this->locks, $this->hints, $this->options));
     }
 
     /**
@@ -120,7 +123,7 @@ final class BoundSelect extends BoundQuery
      */
     public function withWhere(?Expression $where): self
     {
-        return $this->changed(new self($this->origin, $this->from, $this->outputs, $where, $this->quantifier, $this->orderBy, $this->limit, $this->offset, $this->groupBy, $this->having, $this->ctes, $this->withTies, $this->windows, $this->locks, $this->hints));
+        return $this->changed(new self($this->origin, $this->from, $this->outputs, $where, $this->quantifier, $this->orderBy, $this->limit, $this->offset, $this->groupBy, $this->having, $this->ctes, $this->withTies, $this->windows, $this->locks, $this->hints, $this->options));
     }
 
     /**
@@ -128,7 +131,7 @@ final class BoundSelect extends BoundQuery
      */
     public function withGroupBy(array $expressions): self
     {
-        return $this->changed(new self($this->origin, $this->from, $this->outputs, $this->where, $this->quantifier, $this->orderBy, $this->limit, $this->offset, $expressions, $this->having, $this->ctes, $this->withTies, $this->windows, $this->locks, $this->hints));
+        return $this->changed(new self($this->origin, $this->from, $this->outputs, $this->where, $this->quantifier, $this->orderBy, $this->limit, $this->offset, $expressions, $this->having, $this->ctes, $this->withTies, $this->windows, $this->locks, $this->hints, $this->options));
     }
 
     /**
@@ -136,7 +139,7 @@ final class BoundSelect extends BoundQuery
      */
     public function withHaving(?Expression $having): self
     {
-        return $this->changed(new self($this->origin, $this->from, $this->outputs, $this->where, $this->quantifier, $this->orderBy, $this->limit, $this->offset, $this->groupBy, $having, $this->ctes, $this->withTies, $this->windows, $this->locks, $this->hints));
+        return $this->changed(new self($this->origin, $this->from, $this->outputs, $this->where, $this->quantifier, $this->orderBy, $this->limit, $this->offset, $this->groupBy, $having, $this->ctes, $this->withTies, $this->windows, $this->locks, $this->hints, $this->options));
     }
 
     /**
@@ -144,7 +147,7 @@ final class BoundSelect extends BoundQuery
      */
     public function withFrom(TableUse|Join|null $from): self
     {
-        return $this->changed(new self($this->origin, $from, $this->outputs, $this->where, $this->quantifier, $this->orderBy, $this->limit, $this->offset, $this->groupBy, $this->having, $this->ctes, $this->withTies, $this->windows, $this->locks, $this->hints));
+        return $this->changed(new self($this->origin, $from, $this->outputs, $this->where, $this->quantifier, $this->orderBy, $this->limit, $this->offset, $this->groupBy, $this->having, $this->ctes, $this->withTies, $this->windows, $this->locks, $this->hints, $this->options));
     }
 
     /**
@@ -155,6 +158,6 @@ final class BoundSelect extends BoundQuery
     #[Override]
     public function withOrderBy(array $orderBy): static
     {
-        return $this->changed(new self($this->origin, $this->from, $this->outputs, $this->where, $this->quantifier, $orderBy, $this->limit, $this->offset, $this->groupBy, $this->having, $this->ctes, $this->withTies, $this->windows, $this->locks, $this->hints));
+        return $this->changed(new self($this->origin, $this->from, $this->outputs, $this->where, $this->quantifier, $orderBy, $this->limit, $this->offset, $this->groupBy, $this->having, $this->ctes, $this->withTies, $this->windows, $this->locks, $this->hints, $this->options));
     }
 }

@@ -225,4 +225,84 @@ final class SelectModifiersBinderTest extends TestCase
         self::assertFalse($query->withTies);
         self::assertSame('SELECT "id" AS "id" FROM "public"."t" ORDER BY "id" ASC LIMIT 1', $query->toString());
     }
+
+    public function testOrderingReadsEveryKeyWithLowercaseModifiers(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT, b INT)'));
+        $statement = $binder->bind('select a from t order by a desc nulls first, b');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertCount(2, $statement->orderBy);
+        self::assertTrue($statement->orderBy[0]->descending);
+        self::assertTrue($statement->orderBy[0]->nullsFirst);
+        self::assertFalse($statement->orderBy[1]->descending);
+        self::assertSame('SELECT "a" AS "a" FROM "public"."t" ORDER BY "a" DESC NULLS FIRST, "b" ASC', $statement->toString());
+    }
+
+    public function testWindowedExcludesEveryWindowOrdering(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT, b INT)'));
+        $statement = $binder->bind('SELECT sum(a) OVER (ORDER BY a), sum(b) OVER (ORDER BY b) FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertSame([], $statement->orderBy);
+        $node = \SqlSemantics\Ast\Tree::outer((new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('SELECT sum(a) OVER w FROM t WINDOW w AS (ORDER BY a), v AS (ORDER BY b)'), ['simple_select'])[0];
+        self::assertCount(2, (new \SqlSemantics\Binding\SelectModifiersBinder())->windowed($node));
+    }
+
+    public function testSortExpressionDefersPositionsBeyondAnUnresolvedWildcard(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT * FROM missing ORDER BY 3', strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Query\Ordering\UnresolvedOutputPosition::class, $statement->orderBy[0]->key);
+        self::assertSame('SELECT "missing".* FROM "public"."missing" ORDER BY 3 ASC', $statement->toString());
+    }
+
+    public function testSortExpressionRejectsPositionZeroBeforeAWildcard(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage('ORDER BY position is outside the result.');
+        $binder->bind('SELECT * FROM missing ORDER BY 0', strict: false);
+    }
+
+    public function testSortExpressionResolvesALaterAliasAndBindsAnAmbiguousOne(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $later = $binder->bind('SELECT 1 AS x, 2 AS y ORDER BY y');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $later);
+        self::assertInstanceOf(\SqlSemantics\Model\Query\Ordering\OutputAlias::class, $later->orderBy[0]->key);
+        self::assertSame($later->outputs[1], $later->orderBy[0]->key->output);
+        $ambiguous = $binder->bind('SELECT 1 AS x, 2 AS x ORDER BY x', strict: false);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $ambiguous);
+        self::assertInstanceOf(\SqlSemantics\Model\Expression::class, $ambiguous->orderBy[0]->key);
+        self::assertSame('ambiguous-output', $ambiguous->diagnostics[0]->reason);
+    }
+
+    public function testSortExpressionBindsTheExpressionWithoutOutputs(): void
+    {
+        $node = \SqlSemantics\Ast\Tree::outer((new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('SELECT 1 ORDER BY 2'), ['a_expr'])[1];
+        $key = (new \SqlSemantics\Binding\SelectModifiersBinder())->sortExpression($node, new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql)), null);
+        self::assertInstanceOf(\SqlSemantics\Model\Expression::class, $key);
+        self::assertSame('2', $key->spelling());
+    }
+
+    public function testPaginationReadsLowercaseFetchAndLimitAll(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $fetch = $binder->bind('select 1 fetch first rows only');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $fetch);
+        self::assertSame('1', $fetch->limit?->spelling());
+        $all = $binder->bind('SELECT 1 limit all');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $all);
+        self::assertNull($all->limit);
+        self::assertSame('SELECT 1', $binder->bind('SELECT 1 LIMIT ALL')->toString());
+    }
+
+    public function testImplicitRowReadsAFetchWithoutACount(): void
+    {
+        $node = \SqlSemantics\Ast\Tree::outer((new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('select 1 fetch first rows only'), ['select_limit'])[0];
+        $rows = (new \SqlSemantics\Binding\SelectModifiersBinder())->implicitRow($node, new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql)));
+        self::assertCount(1, $rows);
+        self::assertSame('1', $rows[0]->spelling());
+        self::assertSame([], (new \SqlSemantics\Binding\SelectModifiersBinder())->implicitRow(null, new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql))));
+    }
 }

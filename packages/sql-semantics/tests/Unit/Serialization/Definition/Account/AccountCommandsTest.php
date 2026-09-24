@@ -23,8 +23,8 @@ final class AccountCommandsTest extends TestCase
         self::assertNull(AccountCommands::write($statement));
     }
 
-    #[TestWith(['mysql-8.0.44', 'CREATE ROLE IF NOT EXISTS r, s@h', "CREATE ROLE IF NOT EXISTS 'r', 's' @'h'"])]
-    #[TestWith(['mysql-5.6.51', 'RENAME USER a TO b, CURRENT_USER() TO c@h', "RENAME USER 'a' TO 'b', CURRENT_USER TO 'c' @'h'"])]
+    #[TestWith(['mysql-8.0.44', 'CREATE ROLE IF NOT EXISTS r, s@h', "CREATE ROLE IF NOT EXISTS 'r', 's'@'h'"])]
+    #[TestWith(['mysql-5.6.51', 'RENAME USER a TO b, CURRENT_USER() TO c@h', "RENAME USER 'a' TO 'b', CURRENT_USER TO 'c'@'h'"])]
     #[TestWith(['mysql-8.4.7', 'ALTER USER a DEFAULT ROLE NONE', "ALTER USER 'a' DEFAULT ROLE NONE"])]
     #[TestWith(['mysql-8.4.7', 'ALTER USER a DEFAULT ROLE r, s', "ALTER USER 'a' DEFAULT ROLE 'r', 's'"])]
     #[TestWith(['mysql-8.4.7', 'ALTER USER a 2 FACTOR INITIATE REGISTRATION', "ALTER USER 'a' 2 FACTOR INITIATE REGISTRATION"])]

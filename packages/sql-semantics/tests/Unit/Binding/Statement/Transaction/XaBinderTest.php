@@ -88,4 +88,39 @@ final class XaBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Transaction\Xa\XaCommitStatement::class, $statements[1]);
         self::assertSame("'different'", $statements[1]->transactionId->global->text);
     }
+
+    /**
+     * @return list<array{Dialect, ?string, string, mixed}>
+     */
+    public static function providerBindClassifiesEachXaOperation(): array
+    {
+        return [
+            [Dialect::MySql, null, 'xa start \'a\' join', [XaStartStatement::class, 'XA START \'a\' JOIN']],
+            [Dialect::MySql, null, 'XA BEGIN \'a\' RESUME', [XaStartStatement::class, 'XA START \'a\' RESUME']],
+            [Dialect::MySql, null, 'XA END \'a\' SUSPEND', [XaEndStatement::class, 'XA END \'a\' SUSPEND']],
+            [Dialect::MySql, null, 'XA END \'a\', \'b\', 3', [XaEndStatement::class, 'XA END \'a\', \'b\', 3']],
+            [Dialect::MySql, null, 'XA PREPARE \'a\'', [\SqlSemantics\Model\Statement\Transaction\Xa\XaPrepareStatement::class, 'XA PREPARE \'a\'']],
+            [Dialect::MySql, null, 'xa commit \'a\' one phase', [\SqlSemantics\Model\Statement\Transaction\Xa\XaCommitStatement::class, 'XA COMMIT \'a\' ONE PHASE']],
+            [Dialect::MySql, null, 'XA COMMIT \'a\'', [\SqlSemantics\Model\Statement\Transaction\Xa\XaCommitStatement::class, 'XA COMMIT \'a\'']],
+            [Dialect::MySql, null, 'XA ROLLBACK \'a\'', [\SqlSemantics\Model\Statement\Transaction\Xa\XaRollbackStatement::class, 'XA ROLLBACK \'a\'']],
+            [Dialect::MySql, null, 'XA RECOVER', [\SqlSemantics\Model\Statement\Transaction\Xa\XaRecoverStatement::class, 'XA RECOVER']],
+            [Dialect::MySql, null, 'XA RECOVER CONVERT XID', [\SqlSemantics\Model\Statement\Transaction\Xa\XaRecoverStatement::class, 'XA RECOVER CONVERT XID']],
+            [Dialect::MySql, null, 'xa recover convert xid', [\SqlSemantics\Model\Statement\Transaction\Xa\XaRecoverStatement::class, 'XA RECOVER CONVERT XID']],
+        ];
+    }
+
+    #[DataProvider('providerBindClassifiesEachXaOperation')]
+    public function testBindClassifiesEachXaOperation(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build()))->bind($sql, strict: false);
+        self::assertSame($expected, [$statement::class, $statement->toString()]);
+    }
+
+    public function testIdentifierReadsTheGlobalAndBranchParts(): void
+    {
+        $root = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql))->parse("XA END 'a', 'b', 3");
+        $id = XaBinder::identifier(\SqlSemantics\Ast\Tree::outer($root, ['xid'])[0]);
+        self::assertSame("'a'", $id->global->spelling());
+        self::assertSame("'b'", $id->branch?->qualifier->spelling());
+    }
 }

@@ -41,7 +41,8 @@ final class InvocationBinder
             $call = new \SqlSemantics\Model\Scalar\Function\OrderedSetCall($facts, $source, $reference, $arguments, $this->orderedSet($source, $scope, $orderedInputs), $filter);
         } elseif ($aggregate || $filter !== null || FunctionClauses::find($source, ['sum_expr']) !== null || preg_match('/^\S+\s*\(\s*(DISTINCT|ALL)\b/', $text) === 1 || Tree::hasTokens(FunctionClauses::ordering($source))) {
             $mode = preg_match('/^\S+\s*\(\s*DISTINCT\b/', $text) === 1 ? \SqlSemantics\Model\Scalar\Function\ArgumentMode::Distinct : \SqlSemantics\Model\Scalar\Function\ArgumentMode::All;
-            $call = new \SqlSemantics\Model\Scalar\Function\AggregateCall($facts, $source, $reference, $arguments, $mode, (new \SqlSemantics\Binding\SelectModifiersBinder())->ordering(FunctionClauses::ordering($source), $scope, null), $filter);
+            $positions = \SqlSemantics\Model\Scalar\Function\AggregateCall::concatenation($reference, $facts) ? array_map(static fn (int $ordinal, Expression $argument): \SqlSemantics\Model\OutputColumn => new \SqlSemantics\Model\OutputColumn($ordinal, null, $argument), array_keys($arguments), $arguments) : null;
+            $call = new \SqlSemantics\Model\Scalar\Function\AggregateCall($facts, $source, $reference, $arguments, $mode, (new \SqlSemantics\Binding\SelectModifiersBinder())->ordering(FunctionClauses::ordering($source), $scope, $positions), $filter, self::separator($source, $scope));
         } else {
             $call = new \SqlSemantics\Model\Scalar\Function\FunctionCall($facts, $source, $reference, $arguments);
         }
@@ -50,6 +51,17 @@ final class InvocationBinder
             throw new \SqlSemantics\InvalidSql(\SqlSemantics\Model\Validation\InputViolation::OrderedSetWindow, $source);
         }
         return $over === null ? $call : new \SqlSemantics\Model\Scalar\Function\WindowCall($facts, $source, $call, (new WindowBinder())->bind($over, $scope));
+    }
+
+    /**
+     * Reads the explicit SEPARATOR string of a MySQL GROUP_CONCAT; null when the default comma applies.
+     */
+    public static function separator(Node $source, Scope $scope): ?\SqlSemantics\Model\Scalar\Value\Literal
+    {
+        $clause = FunctionClauses::find($source, ['opt_gconcat_separator']);
+        $token = $clause === null ? null : ($clause->tokens()[1] ?? null);
+        $literal = $token === null ? null : (new \SqlSemantics\Binding\LiteralBinder($scope->identifiers->dialect))->bind($token);
+        return $literal instanceof \SqlSemantics\Model\Scalar\Value\Literal ? $literal : null;
     }
 
     /**

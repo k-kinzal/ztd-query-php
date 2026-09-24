@@ -54,4 +54,22 @@ final class DatabaseOptionsTest extends TestCase
         $this->expectException(\SqlSemantics\InvalidSql::class);
         (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('ALTER DATABASE app READ ONLY DEFAULT READ ONLY 1');
     }
+
+    public function testBindReadsEveryLowerCaseDefault(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
+        $create = $binder->bind("create database d character set utf8mb4 collate utf8mb4_bin encryption 'Y'");
+        $alter = $binder->bind('alter database d collate utf8mb4_bin');
+        self::assertInstanceOf(CreateDatabaseStatement::class, $create);
+        self::assertInstanceOf(AlterDatabaseStatement::class, $alter);
+        self::assertSame("CREATE DATABASE `d` CHARACTER SET `utf8mb4` COLLATE `utf8mb4_bin` ENCRYPTION 'Y'", $create->toString());
+        self::assertSame('ALTER DATABASE `d` COLLATE `utf8mb4_bin`', $alter->toString());
+    }
+
+    public function testInitialReadsAParsedCollation(): void
+    {
+        $option = \SqlSemantics\Ast\Tree::outer((new \SqlSemantics\Ast\DialectParser(Dialect::MySql))->parse('CREATE DATABASE d COLLATE utf8mb4_bin'), ['create_database_option'])[0];
+        $initial = \SqlSemantics\Binding\Statement\Definition\Database\DatabaseOptions::initial($option, new \SqlSemantics\Ast\Identifiers(Dialect::MySql));
+        self::assertInstanceOf(DatabaseCollation::class, $initial);
+    }
 }

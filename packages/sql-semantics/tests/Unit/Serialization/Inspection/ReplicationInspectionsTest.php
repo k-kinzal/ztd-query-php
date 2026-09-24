@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Serialization\Inspection;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -52,5 +53,28 @@ final class ReplicationInspectionsTest extends TestCase
     public function testTextQuotesTheName(): void
     {
         self::assertSame("'a''b'", ReplicationInspections::text("a'b")->toString());
+    }
+
+    /**
+     * @param list<string> $definitions
+     */
+    #[DataProvider('providerWriteSpellsEveryEventListing')]
+    public function testWriteSpellsEveryEventListing(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
+        self::assertSame($expected, ReplicationInspections::write($statement)?->toString());
+    }
+
+    /**
+     * @return iterable<string, array{Dialect, ?string, list<string>, string, string}>
+     */
+    public static function providerWriteSpellsEveryEventListing(): iterable
+    {
+        return [
+            'SHOW BINLOG EVENTS (MySql)' => [Dialect::MySql, null, [], 'SHOW BINLOG EVENTS', 'SHOW BINLOG EVENTS'],
+            'SHOW BINLOG EVENTS IN \'log.1\' FROM 4 LIMIT 2, 5 (MySql)' => [Dialect::MySql, null, [], 'SHOW BINLOG EVENTS IN \'log.1\' FROM 4 LIMIT 2, 5', 'SHOW BINLOG EVENTS IN \'log.1\' FROM 4 LIMIT 5 OFFSET 2'],
+            'SHOW BINLOG EVENTS IN \'log.1\' LIMIT 5 (MySql)' => [Dialect::MySql, null, [], 'SHOW BINLOG EVENTS IN \'log.1\' LIMIT 5', 'SHOW BINLOG EVENTS IN \'log.1\' LIMIT 5'],
+            'SHOW RELAYLOG EVENTS IN \'r.1\' FROM 4 LIMIT 1 (MySql)' => [Dialect::MySql, null, [], 'SHOW RELAYLOG EVENTS IN \'r.1\' FROM 4 LIMIT 1', 'SHOW RELAYLOG EVENTS IN \'r.1\' FROM 4 LIMIT 1'],
+        ];
     }
 }

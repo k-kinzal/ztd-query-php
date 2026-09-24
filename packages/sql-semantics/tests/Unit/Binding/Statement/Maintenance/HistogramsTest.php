@@ -67,4 +67,60 @@ final class HistogramsTest extends TestCase
         $this->expectExceptionMessage($message);
         $binder->bind($sql);
     }
+
+    #[TestWith(['mysql-8.0.44'])]
+    #[TestWith(['mysql-8.4.7'])]
+    public function testBindImportsHistogramDataForOneColumn(string $version): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t(id INT, n INT)'));
+        $statement = $binder->bind("analyze table t update histogram on n using data 'x'");
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Maintenance\MySql\ImportHistogramStatement::class, $statement);
+        self::assertSame('t', $statement->table->declaration->name);
+        self::assertInstanceOf(ColumnReference::class, $statement->column);
+        self::assertSame('n', $statement->column->binding->column->name);
+        self::assertSame("'x'", $statement->data->text);
+        self::assertSame("ANALYZE TABLE `t` UPDATE HISTOGRAM ON `n` USING DATA 'x'", $statement->toString());
+    }
+
+    #[TestWith(['mysql-8.0.44'])]
+    #[TestWith(['mysql-8.4.7'])]
+    public function testBindDropsHistogramsWrittenInLowercase(string $version): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t(id INT, n INT)'));
+        $statement = $binder->bind('analyze table t drop histogram on id');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Maintenance\MySql\DropHistogramStatement::class, $statement);
+        self::assertSame('ANALYZE TABLE `t` DROP HISTOGRAM ON `id`', $statement->toString());
+    }
+
+    #[TestWith(['mysql-8.0.44', 'analyze table t update histogram on id with 0010 buckets', 10, \SqlSemantics\Model\Maintenance\Histogram\RefreshPolicy::Default])]
+    #[TestWith(['mysql-8.0.44', 'ANALYZE TABLE t UPDATE HISTOGRAM ON id', null, \SqlSemantics\Model\Maintenance\Histogram\RefreshPolicy::Default])]
+    #[TestWith(['mysql-8.4.7', 'analyze table t update histogram on id with 1 buckets manual update', 1, \SqlSemantics\Model\Maintenance\Histogram\RefreshPolicy::Manual])]
+    #[TestWith(['mysql-8.4.7', 'ANALYZE TABLE t UPDATE HISTOGRAM ON id WITH 00001024 BUCKETS AUTO UPDATE', 1024, \SqlSemantics\Model\Maintenance\Histogram\RefreshPolicy::Automatic])]
+    #[TestWith(['mysql-8.4.7', 'ANALYZE TABLE t UPDATE HISTOGRAM ON id AUTO UPDATE', null, \SqlSemantics\Model\Maintenance\Histogram\RefreshPolicy::Automatic])]
+    public function testBindReadsBucketsAndRefreshPolicy(string $version, string $sql, ?int $buckets, \SqlSemantics\Model\Maintenance\Histogram\RefreshPolicy $refresh): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build('CREATE TABLE t(id INT, n INT)'));
+        $statement = $binder->bind($sql);
+        self::assertInstanceOf(UpdateHistogramStatement::class, $statement);
+        self::assertSame($buckets, $statement->buckets?->value);
+        self::assertSame($refresh, $statement->refresh);
+    }
+
+    public function testColumnsBindsEachNamedColumn(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, n INT)');
+        $statement = (new Binder($schema))->bind('ANALYZE TABLE t UPDATE HISTOGRAM ON id');
+        self::assertInstanceOf(UpdateHistogramStatement::class, $statement);
+        $names = \SqlSemantics\Ast\Tree::outer((new \SqlSemantics\Ast\DialectParser(Dialect::MySql))->parse('ANALYZE TABLE t UPDATE HISTOGRAM ON n, id'), ['ident_string_list'])[0];
+        $columns = Histograms::columns($names, new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::MySql), [$statement->table]));
+        self::assertCount(2, $columns);
+        self::assertInstanceOf(ColumnReference::class, $columns[0]);
+        self::assertSame('n', $columns[0]->binding->column->name);
+    }
+
+    public function testBucketsReadsTheLimitWithoutLeadingZeros(): void
+    {
+        $node = new \SqlParser\Parser\Node('opt_histogram_num_buckets', 0, [new \SqlParser\Lexer\Token(1, 'WITH', 'WITH', 0), new \SqlParser\Lexer\Token(2, 'NUM', '0010', 5), new \SqlParser\Lexer\Token(3, 'BUCKETS_SYM', 'BUCKETS', 10)]);
+        self::assertSame(10, Histograms::buckets($node)->value);
+    }
 }

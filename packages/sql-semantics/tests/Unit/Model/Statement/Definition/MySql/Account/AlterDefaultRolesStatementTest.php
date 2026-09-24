@@ -34,7 +34,7 @@ final class AlterDefaultRolesStatementTest extends TestCase
         self::assertInstanceOf(AlterDefaultRolesStatement::class, $statement);
         $changed = $statement->withRoles([new AccountName('x', 'h'), new AccountName('y')]);
         self::assertCount(1, $statement->roles);
-        self::assertSame("ALTER USER 'a' DEFAULT ROLE 'x' @'h', 'y'", $changed->toString());
+        self::assertSame("ALTER USER 'a' DEFAULT ROLE 'x'@'h', 'y'", $changed->toString());
     }
 
     public function testWithOriginRetainsTheRequest(): void

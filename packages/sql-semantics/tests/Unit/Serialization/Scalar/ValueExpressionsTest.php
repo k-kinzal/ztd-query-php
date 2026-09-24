@@ -28,6 +28,7 @@ final class ValueExpressionsTest extends TestCase
     #[TestWith([Dialect::MySql, 'SELECT USER(), CURRENT_USER, CURRENT_ROLE(), SESSION_USER(), SYSTEM_USER()', 'SELECT USER(), CURRENT_USER, `CURRENT_ROLE`(), SESSION_USER(), SYSTEM_USER()'])]
     #[TestWith([Dialect::PostgreSql, "SELECT 1, 'a', TRUE, NULL, ROW(1,2), (1,2)", "SELECT 1, 'a', TRUE, NULL, ROW(1, 2), ROW(1, 2)"])]
     #[TestWith([Dialect::MySql, 'SELECT (1,2) = (3,4)', 'SELECT ((1, 2) = (3, 4))'])]
+    #[TestWith([Dialect::MySql, "SELECT date '2020-01-01', timestamp '2020-01-01 00:00:00', time '10:00'", "SELECT DATE '2020-01-01', TIMESTAMP '2020-01-01 00:00:00', TIME '10:00'"])]
     #[TestWith([Dialect::PostgreSql, 'SET search_path TO public, pg_catalog', 'SET "search_path" = "public", "pg_catalog"'])]
     #[TestWith([Dialect::PostgreSql, 'SET TIME ZONE LOCAL', 'SET "timezone" = LOCAL'])]
     #[TestWith([Dialect::MySql, 'SET sql_mode = ON', 'SET `sql_mode` = ON'])]

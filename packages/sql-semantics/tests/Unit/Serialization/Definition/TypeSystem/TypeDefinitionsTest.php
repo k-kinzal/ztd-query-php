@@ -65,4 +65,16 @@ final class TypeDefinitionsTest extends TestCase
     {
         self::assertSame('ALTER TYPE "s"."t"', TypeDefinitions::alter(new QualifiedName(['s', 't']))->toString());
     }
+
+    #[TestWith(['ALTER TYPE mood ADD VALUE IF NOT EXISTS \'b\' BEFORE \'a\'', \SqlSemantics\Model\Statement\Definition\PostgreSql\Type\AddEnumLabelStatement::class, 'ALTER TYPE "mood" ADD VALUE IF NOT EXISTS \'b\' BEFORE \'a\''])]
+    #[TestWith(['ALTER TYPE mood ADD VALUE \'b\' AFTER \'a\'', \SqlSemantics\Model\Statement\Definition\PostgreSql\Type\AddEnumLabelStatement::class, 'ALTER TYPE "mood" ADD VALUE \'b\' AFTER \'a\''])]
+    #[TestWith(['ALTER TYPE c ADD ATTRIBUTE y int CASCADE', \SqlSemantics\Model\Statement\Definition\PostgreSql\Type\AlterCompositeTypeStatement::class, 'ALTER TYPE "c" ADD ATTRIBUTE "y" integer CASCADE'])]
+    #[TestWith(['ALTER TYPE c DROP ATTRIBUTE IF EXISTS x RESTRICT', \SqlSemantics\Model\Statement\Definition\PostgreSql\Type\AlterCompositeTypeStatement::class, 'ALTER TYPE "c" DROP ATTRIBUTE IF EXISTS "x" RESTRICT'])]
+    #[TestWith(['ALTER TYPE c ALTER ATTRIBUTE x TYPE bigint', \SqlSemantics\Model\Statement\Definition\PostgreSql\Type\AlterCompositeTypeStatement::class, 'ALTER TYPE "c" ALTER ATTRIBUTE "x" TYPE bigint'])]
+    #[TestWith(['CREATE TYPE d AS (x int, y text)', \SqlSemantics\Model\Statement\Definition\PostgreSql\Type\CreateCompositeTypeStatement::class, 'CREATE TYPE "d" AS ("x" integer, "y" text)'])]
+    public function testWriteSpellsEnumAndCompositeChanges(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build("CREATE TYPE mood AS ENUM ('a')", 'CREATE TYPE c AS (x int)')))->bind($sql);
+        self::assertSame([$class, $expected], [$statement::class, TypeDefinitions::write($statement)?->toString()]);
+    }
 }

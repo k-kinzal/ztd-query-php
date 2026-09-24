@@ -32,4 +32,12 @@ final class ResourceGroupsTest extends TestCase
     {
         self::assertSame(['3', '0-2'], [ResourceGroups::cpus(new CpuRange(3, 3))->toString(), ResourceGroups::cpus(new CpuRange(0, 2))->toString()]);
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['create resource group g type = user vcpu = 0-1, 3 thread_priority = 5 disable', 'CREATE RESOURCE GROUP `g` TYPE = USER VCPU = 0-1, 3 THREAD_PRIORITY = 5 DISABLE'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['alter resource group g vcpu = 2 thread_priority = 1 enable force', 'ALTER RESOURCE GROUP `g` VCPU = 2 THREAD_PRIORITY = 1 ENABLE FORCE'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['set resource group g for 1, 2', 'SET RESOURCE GROUP `g` FOR 1, 2'])]
+    public function testWriteSpellsEveryResourceGroupClause(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build()))->bind($sql)->toString());
+    }
 }

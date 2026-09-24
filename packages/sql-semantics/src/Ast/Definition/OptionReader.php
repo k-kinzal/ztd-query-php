@@ -39,8 +39,8 @@ final class OptionReader
     public static function column(Node $source, array $attributes, Identifiers $identifiers): array
     {
         $result = [];
-        foreach ([...$attributes, ...Tree::outer($source, ['opt_charset_with_opt_binary', 'opt_binary', 'opt_column_format', 'opt_storage_media', 'field_option', 'opt_stored_attribute'])] as $attribute) {
-            $words = array_map(static fn ($token): string => strtoupper($token->text), $attribute->tokens());
+        foreach ([...$attributes, ...Tree::outer($source, ['opt_charset_with_opt_binary', 'opt_binary', 'opt_column_format', 'opt_storage_media', 'field_option', 'opt_stored_attribute', 'column_storage', 'column_compression'])] as $attribute) {
+            $words = Tree::keywords($attribute);
             if (in_array('AUTOINCREMENT', $words, true) || in_array('AUTO_INCREMENT', $words, true)) {
                 $result['auto_increment'] = true;
             }

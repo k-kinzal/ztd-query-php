@@ -63,4 +63,37 @@ final class AlterTypeOptionsStatementTest extends TestCase
         self::assertInstanceOf(AlterTypeOptionsStatement::class, $statement);
         self::assertSame("ALTER TYPE \"t\" SET (STORAGE = 'external')", $statement->withOptions([new DefinitionOption(BaseTypeAttribute::Storage, 'external')])->toString());
     }
+
+    public function testRejectsAnAttributeThatCannotChange(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER TYPE t SET (send = NONE)');
+        self::assertInstanceOf(AlterTypeOptionsStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        new AlterTypeOptionsStatement($statement->origin, new QualifiedName(['t']), [new DefinitionOption(BaseTypeAttribute::Input, new QualifiedName(['f']))]);
+    }
+
+    public function testRejectsARepeatedAttribute(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER TYPE t SET (send = NONE)');
+        self::assertInstanceOf(AlterTypeOptionsStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        new AlterTypeOptionsStatement($statement->origin, new QualifiedName(['t']), [...$statement->options, ...$statement->options]);
+    }
+
+    public function testRejectsAnOverlongTypeName(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER TYPE t SET (send = NONE)');
+        self::assertInstanceOf(AlterTypeOptionsStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        new AlterTypeOptionsStatement($statement->origin, new QualifiedName(['a', 'b', 'c', 'd']), $statement->options);
+    }
+
+    public function testRejectsAnotherDatabaseLanguage(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER TYPE t SET (send = NONE)');
+        $origin = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('SELECT 1')->origin;
+        self::assertInstanceOf(AlterTypeOptionsStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        new AlterTypeOptionsStatement($origin, new QualifiedName(['t']), $statement->options);
+    }
 }

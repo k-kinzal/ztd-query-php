@@ -79,4 +79,42 @@ final class PasswordBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
         self::assertInstanceOf(\SqlSemantics\Model\Configuration\AssignedUserVariable::class, $statement->settings[0]);
     }
+
+    /**
+     * @param list<string> $definitions
+     */
+    #[DataProvider('providerBindReadsEveryPasswordForm')]
+    public function testBindReadsEveryPasswordForm(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
+        self::assertSame($expected, $statement::class . ' => ' . $statement->toString());
+    }
+
+    /**
+     * @return iterable<string, array{Dialect, ?string, list<string>, string, string}>
+     */
+    public static function providerBindReadsEveryPasswordForm(): iterable
+    {
+        return [
+            'SET PASSWORD = \'x\' (MySql)' => [Dialect::MySql, null, [], 'SET PASSWORD = \'x\'', 'SqlSemantics\\Model\\Statement\\Configuration\\Password\\SetPasswordStatement => SET PASSWORD = \'x\''],
+            'SET PASSWORD FOR u = \'x\' (MySql)' => [Dialect::MySql, null, [], 'SET PASSWORD FOR u = \'x\'', 'SqlSemantics\\Model\\Statement\\Configuration\\Password\\SetPasswordStatement => SET PASSWORD FOR \'u\' = \'x\''],
+            'SET PASSWORD FOR \'u\'@\'h\' = \'x\' REPLACE \'y\' RETAIN CURRENT PASSWORD (MySql)' => [Dialect::MySql, null, [], 'SET PASSWORD FOR \'u\'@\'h\' = \'x\' REPLACE \'y\' RETAIN CURRENT PASSWORD', 'SqlSemantics\\Model\\Statement\\Configuration\\Password\\SetPasswordStatement => SET PASSWORD FOR \'u\'@\'h\' = \'x\' REPLACE \'y\' RETAIN CURRENT PASSWORD'],
+            'SET PASSWORD FOR CURRENT_USER() = \'x\' (MySql)' => [Dialect::MySql, null, [], 'SET PASSWORD FOR CURRENT_USER() = \'x\'', 'SqlSemantics\\Model\\Statement\\Configuration\\Password\\SetPasswordStatement => SET PASSWORD = \'x\''],
+            'SET PASSWORD TO RANDOM (MySql)' => [Dialect::MySql, null, [], 'SET PASSWORD TO RANDOM', 'SqlSemantics\\Model\\Statement\\Configuration\\Password\\SetRandomPasswordStatement => SET PASSWORD TO RANDOM'],
+            'SET PASSWORD FOR u TO RANDOM REPLACE \'y\' (MySql)' => [Dialect::MySql, null, [], 'SET PASSWORD FOR u TO RANDOM REPLACE \'y\'', 'SqlSemantics\\Model\\Statement\\Configuration\\Password\\SetRandomPasswordStatement => SET PASSWORD FOR \'u\' TO RANDOM REPLACE \'y\''],
+            'SET PASSWORD = password(\'x\') (MySql mysql-5.6.51)' => [Dialect::MySql, 'mysql-5.6.51', [], 'SET PASSWORD = password(\'x\')', 'SqlSemantics\\Model\\Statement\\Configuration\\Password\\SetDerivedPasswordStatement => SET PASSWORD = PASSWORD(\'x\')'],
+            'SET PASSWORD FOR u = OLD_PASSWORD(\'x\') (MySql mysql-5.6.51)' => [Dialect::MySql, 'mysql-5.6.51', [], 'SET PASSWORD FOR u = OLD_PASSWORD(\'x\')', 'SqlSemantics\\Model\\Statement\\Configuration\\Password\\SetDerivedPasswordStatement => SET PASSWORD FOR \'u\' = OLD_PASSWORD(\'x\')'],
+            'SET PASSWORD = \'*abc\' (MySql mysql-5.6.51)' => [Dialect::MySql, 'mysql-5.6.51', [], 'SET PASSWORD = \'*abc\'', 'SqlSemantics\\Model\\Statement\\Configuration\\Password\\SetPasswordHashStatement => SET PASSWORD = \'*abc\''],
+            'SET PASSWORD FOR u@h = \'x\' (MySql mysql-5.7.44)' => [Dialect::MySql, 'mysql-5.7.44', [], 'SET PASSWORD FOR u@h = \'x\'', 'SqlSemantics\\Model\\Statement\\Configuration\\Password\\SetPasswordStatement => SET PASSWORD FOR \'u\'@\'h\' = \'x\''],
+            'SET @a = 1 (MySql)' => [Dialect::MySql, null, [], 'SET @a = 1', 'SqlSemantics\\Model\\Statement\\Configuration\\SetStatement => SET @`a` = 1'],
+        ];
+    }
+
+
+    public function testBindLeavesAListedPasswordVariableToTheSettingBinder(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build()))->bind("SET GLOBAL sql_mode = 1, PASSWORD = '*x'");
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $statement);
+        self::assertSame("SET GLOBAL `sql_mode` = 1, GLOBAL `PASSWORD` = '*x'", $statement->toString());
+    }
 }

@@ -262,4 +262,46 @@ final class LiteralBinderTest extends TestCase
     {
         self::assertSame('text', (new \SqlSemantics\Binding\LiteralBinder(Dialect::MySql))->typeName(new \SqlParser\Lexer\Token(1, 'NCHAR_STRING', "N'value'", 0)));
     }
+
+    #[TestWith([Dialect::PostgreSql, 'ICONST', '1_0_0_0_0_0', 'integer'])]
+    #[TestWith([Dialect::PostgreSql, 'ICONST', '00000000002147483648', 'bigint'])]
+    #[TestWith([Dialect::PostgreSql, 'TRUE_P', 'true', 'boolean'])]
+    #[TestWith([Dialect::PostgreSql, 'FCONST', '10x1', 'numeric'])]
+    #[TestWith([Dialect::PostgreSql, 'FCONST', '0XA', 'integer'])]
+    #[TestWith([Dialect::PostgreSql, 'ICONST', '0O20000000000', 'bigint'])]
+    #[TestWith([Dialect::PostgreSql, 'ICONST', '0x80000000', 'bigint'])]
+    #[TestWith([Dialect::PostgreSql, 'ICONST', '0x_FF_FF_FF_FF_FF', 'bigint'])]
+    #[TestWith([Dialect::PostgreSql, 'QNUMBER', '1.5', 'real'])]
+    #[TestWith([Dialect::Sqlite, 'FLOAT', '1.5', 'real'])]
+    #[TestWith([Dialect::MySql, 'FLOAT_NUM', '1.5e3', 'double precision'])]
+    public function testTypeNameClassifiesEachTerminal(Dialect $dialect, string $name, string $text, string $expected): void
+    {
+        self::assertSame($expected, (new \SqlSemantics\Binding\LiteralBinder($dialect))->typeName(new \SqlParser\Lexer\Token(0, $name, $text, 0)));
+    }
+
+    public function testBindReadsALowerCaseNull(): void
+    {
+        $literal = (new \SqlSemantics\Binding\LiteralBinder(Dialect::PostgreSql))->bind(new \SqlParser\Lexer\Token(0, 'NULL_P', 'null', 0));
+        self::assertNotNull($literal);
+        self::assertSame(Nullability::AlwaysNull, $literal->nullability);
+    }
+
+    public function testNonDecimalLeavesADecimalSpellingAlone(): void
+    {
+        self::assertNull((new \SqlSemantics\Binding\LiteralBinder(Dialect::PostgreSql))->nonDecimal(new \SqlParser\Lexer\Token(0, 'FCONST', '10x1', 0)));
+        self::assertSame('integer', (new \SqlSemantics\Binding\LiteralBinder(Dialect::PostgreSql))->nonDecimal(new \SqlParser\Lexer\Token(0, 'ICONST', '0b1', 0)));
+    }
+
+    public function testFallbackReadsALowerCaseSqliteBoolean(): void
+    {
+        $literal = (new \SqlSemantics\Binding\LiteralBinder(Dialect::Sqlite))->fallback(new \SqlParser\Lexer\Token(0, 'ID', 'true', 0));
+        self::assertNotNull($literal);
+        self::assertSame('integer', $literal->type->name);
+    }
+
+    public function testQuotedNumberKeepsAnUpperCaseHexadecimalAnInteger(): void
+    {
+        self::assertSame('integer', (new \SqlSemantics\Binding\LiteralBinder(Dialect::Sqlite))->quotedNumber('0X1E5'));
+        self::assertSame('real', (new \SqlSemantics\Binding\LiteralBinder(Dialect::Sqlite))->quotedNumber('1E5'));
+    }
 }

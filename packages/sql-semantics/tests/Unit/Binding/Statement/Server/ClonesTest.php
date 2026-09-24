@@ -48,6 +48,6 @@ final class ClonesTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("CLONE INSTANCE FROM CURRENT_USER():1 IDENTIFIED BY 'p'");
         self::assertInstanceOf(CloneRemoteStatement::class, $statement);
         self::assertSame(CurrentAccount::Authenticated, $statement->donor);
-        self::assertSame("CLONE INSTANCE FROM CURRENT_USER : 1 IDENTIFIED BY 'p'", $statement->toString());
+        self::assertSame("CLONE INSTANCE FROM CURRENT_USER:1 IDENTIFIED BY 'p'", $statement->toString());
     }
 }

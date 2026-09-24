@@ -58,7 +58,7 @@ final class FunctionRelationTest extends TestCase
         self::assertSame($query->scopeId, $relation->scopeId);
         self::assertSame($relation->function, $moved->function);
         self::assertSame($relation->outputs, $moved->outputs);
-        self::assertSame(['g'], $moved->columnAliases);
+        self::assertSame([], $moved->columnAliases);
         self::assertSame(['g'], array_column($moved->outputs, 'name'));
     }
 }

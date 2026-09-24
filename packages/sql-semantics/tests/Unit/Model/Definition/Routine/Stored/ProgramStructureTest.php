@@ -97,4 +97,65 @@ final class ProgramStructureTest extends TestCase
         self::assertCount(4, ProgramStructure::children($procedure->body));
         self::assertSame([], ProgramStructure::children(new LeaveStatement('x')));
     }
+
+    public function testWalkSeesOuterDeclarationsAndDeclaredConditionsInAnyCase(): void
+    {
+        $procedure = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind("CREATE PROCEDURE p() BEGIN DECLARE c1 CURSOR FOR SELECT a FROM t; b: BEGIN DECLARE e CONDITION FOR SQLSTATE '45000'; DECLARE EXIT HANDLER FOR E BEGIN END; OPEN c1; CLOSE C1; END b; END");
+        self::assertInstanceOf(CreateProcedureStatement::class, $procedure);
+        self::assertInstanceOf(BlockStatement::class, $procedure->body);
+        self::assertSame(0, ProgramStructure::walk($procedure->body, ProgramKind::Procedure, [], []));
+    }
+
+    public function testWalkKeepsEnclosingLabelsOfLoopsAndBlocks(): void
+    {
+        $procedure = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE PROCEDURE p(x INT) a: BEGIN b: LOOP BEGIN LEAVE B; END; END LOOP b; w: WHILE x DO LEAVE a; END WHILE w; r: REPEAT ITERATE R; UNTIL x END REPEAT r; END a');
+        self::assertInstanceOf(CreateProcedureStatement::class, $procedure);
+        self::assertInstanceOf(BlockStatement::class, $procedure->body);
+        self::assertSame(0, ProgramStructure::walk($procedure->body, ProgramKind::Procedure, [], []));
+    }
+
+    public function testWalkCountsReturnsInEveryFlowControlStatement(): void
+    {
+        $function = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE FUNCTION f(x INT) RETURNS INT BEGIN DECLARE y INT; DECLARE CONTINUE HANDLER FOR SQLWARNING RETURN 1; DECLARE EXIT HANDLER FOR SQLEXCEPTION RETURN 0; CASE x WHEN 1 THEN RETURN 1; WHEN 2 THEN RETURN 2; ELSE RETURN 3; END CASE; CASE WHEN x THEN RETURN 4; ELSE RETURN 5; END CASE; LOOP RETURN 6; END LOOP; WHILE x DO RETURN 7; END WHILE; REPEAT RETURN 8; UNTIL x END REPEAT; IF x THEN RETURN 9; ELSE RETURN 10; END IF; END');
+        self::assertInstanceOf(CreateFunctionStatement::class, $function);
+        self::assertInstanceOf(BlockStatement::class, $function->body);
+        self::assertSame(12, ProgramStructure::walk($function->body, ProgramKind::Function, [], []));
+    }
+
+    public function testCheckAcceptsAReturnInsideALoopOnly(): void
+    {
+        $function = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE FUNCTION f(x INT) RETURNS INT BEGIN WHILE x DO RETURN 7; END WHILE; END');
+        self::assertInstanceOf(CreateFunctionStatement::class, $function);
+        self::assertInstanceOf(BlockStatement::class, $function->body);
+        self::assertSame(1, ProgramStructure::walk($function->body, ProgramKind::Function, [], []));
+    }
+
+    public function testCheckRejectsFetchAndCloseOfAnUndeclaredCursor(): void
+    {
+        $this->expectException(InvalidStructure::class);
+        ProgramStructure::check(new BlockStatement(null, [], [new \SqlSemantics\Model\Definition\Routine\Body\Cursor\CursorCloseStatement('c')]), ProgramKind::Procedure);
+    }
+
+    public function testCheckRejectsFetchOfAnUndeclaredCursor(): void
+    {
+        $procedure = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE PROCEDURE p() BEGIN DECLARE v INT; DECLARE c CURSOR FOR SELECT 1; FETCH c INTO v; END');
+        self::assertInstanceOf(CreateProcedureStatement::class, $procedure);
+        self::assertInstanceOf(BlockStatement::class, $procedure->body);
+        $fetch = $procedure->body->statements[0];
+        self::assertInstanceOf(\SqlSemantics\Model\Definition\Routine\Body\Cursor\CursorFetchStatement::class, $fetch);
+        $this->expectException(InvalidStructure::class);
+        ProgramStructure::check(new BlockStatement(null, [], [new \SqlSemantics\Model\Definition\Routine\Body\Cursor\CursorFetchStatement('d', $fetch->targets)]), ProgramKind::Procedure);
+    }
+
+    public function testCheckRejectsIterateOfAnUnknownLabel(): void
+    {
+        $this->expectException(InvalidStructure::class);
+        ProgramStructure::check(new LoopStatement('l', [new IterateStatement('m')]), ProgramKind::Procedure);
+    }
+
+    public function testCheckAcceptsLeaveAndIterateOfAnEnclosingLoop(): void
+    {
+        ProgramStructure::check(new LoopStatement('L', [new IterateStatement('l'), new LeaveStatement('l')]), ProgramKind::Procedure);
+        self::assertSame(['l' => true], ProgramStructure::labels(new LoopStatement('L', [new LeaveStatement('l')]), []));
+    }
 }

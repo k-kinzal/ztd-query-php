@@ -39,7 +39,7 @@ final class PasswordBinder
             return null;
         }
         $legacy = Tree::outer($start, ['option_value_no_option_type']);
-        $passwords = array_values(array_filter($legacy, static fn (Node $node): bool => ($node->tokens()[0]->name ?? '') === 'PASSWORD'));
+        $passwords = array_values(array_filter($legacy, static fn (Node $node): bool => ($node->children[0] ?? null) instanceof \SqlParser\Lexer\Token && $node->children[0]->name === 'PASSWORD'));
         if ($passwords !== []) {
             return LegacyPasswordList::bind($origin, $source, $passwords, $scope);
         }

@@ -67,4 +67,15 @@ final class XmlExpressionsTest extends TestCase
         self::assertSame([], XmlExpressions::mode(PassingMode::Default));
         self::assertSame('BY VALUE', XmlExpressions::mode(PassingMode::Value)[0]->toString());
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(["SELECT XMLEXISTS('//a' PASSING BY REF x BY VALUE) FROM t", 'SELECT XMLEXISTS(\'//a\' PASSING BY REF "x" BY VALUE) FROM "public"."t"'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(["SELECT XMLPARSE(DOCUMENT '<a/>' PRESERVE WHITESPACE)", "SELECT XMLPARSE(DOCUMENT '<a/>' PRESERVE WHITESPACE)"])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['SELECT XMLSERIALIZE(CONTENT x AS text INDENT) FROM t', 'SELECT XMLSERIALIZE(CONTENT "x" AS text INDENT) FROM "public"."t"'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(["SELECT XMLROOT(x, VERSION '1.0', STANDALONE YES) FROM t", 'SELECT XMLROOT("x", VERSION \'1.0\', STANDALONE YES) FROM "public"."t"'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(["SELECT XMLELEMENT(NAME a, XMLATTRIBUTES(1 AS b, 2 AS c), 'x', 'y')", 'SELECT XMLELEMENT(NAME "a", XMLATTRIBUTES(1 AS "b", 2 AS "c"), \'x\', \'y\')'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(["SELECT XMLPI(NAME p, 'c')", 'SELECT XMLPI(NAME "p", \'c\')'])]
+    public function testWriteKeepsEveryOperandOfEachXmlFunction(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(x xml)')))->bind($sql)->toString());
+    }
 }

@@ -59,4 +59,11 @@ final class AlterRoutinesTest extends TestCase
         $this->expectException(\SqlSemantics\InvalidSql::class);
         (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql);
     }
+
+    #[TestWith(['alter function f comment \'x\'', 'ALTER FUNCTION `f` COMMENT \'x\''])]
+    #[TestWith(['alter procedure p sql security invoker', 'ALTER PROCEDURE `p` SQL SECURITY INVOKER'])]
+    public function testBindReadsLowerCaseAlterations(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build()))->bind($sql)->toString());
+    }
 }

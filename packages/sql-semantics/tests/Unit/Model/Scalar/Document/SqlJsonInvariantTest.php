@@ -59,4 +59,21 @@ final class SqlJsonInvariantTest extends TestCase
         $value = Expression::literal(1, Dialect::PostgreSql);
         self::assertSame([], SqlJsonInvariant::extensions([$value, $value]));
     }
+
+    public function testExtensionsKeepEachOuterJoinOnceInOrder(): void
+    {
+        $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (a INT)', 'CREATE TABLE u (b INT)', 'CREATE TABLE v (c INT)')))->bind('SELECT u.b, v.c FROM t LEFT JOIN u ON true LEFT JOIN v ON true');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        $inner = $statement->outputs[0]->expression;
+        $outer = $statement->outputs[1]->expression;
+        self::assertCount(1, $inner->nullExtendedBy);
+        self::assertCount(1, $outer->nullExtendedBy);
+        self::assertSame([$inner->nullExtendedBy[0], $outer->nullExtendedBy[0]], SqlJsonInvariant::extensions([$inner, $outer, $inner]));
+    }
+
+    public function testDialectNamesTheOperation(): void
+    {
+        $this->expectExceptionObject(new InvalidStructure('JSON_VALUE operands must share one SQL dialect.'));
+        SqlJsonInvariant::dialect('JSON_VALUE', Dialect::MySql, [Expression::literal(1, Dialect::MySql), Expression::literal(1, Dialect::Sqlite)]);
+    }
 }

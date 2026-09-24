@@ -86,4 +86,65 @@ final class ViewBinderTest extends TestCase
         self::assertSame(ViewSecurity::Invoker, $decorated->properties->security);
     }
 
+    public function testBindReadsLowercasePostgreSqlModifiers(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('create or replace temp recursive view v (n) as select 1 with local check option');
+        self::assertInstanceOf(CreateViewStatement::class, $statement);
+        self::assertTrue($statement->temporary);
+        self::assertTrue($statement->replace);
+        self::assertFalse($statement->ifNotExists);
+        self::assertSame(ViewCheck::Local, $statement->check);
+        self::assertInstanceOf(PostgreSqlViewProperties::class, $statement->properties);
+        self::assertTrue($statement->properties->recursive);
+        self::assertSame('CREATE OR REPLACE TEMPORARY RECURSIVE VIEW "v"("n") AS SELECT 1 WITH LOCAL CHECK OPTION', $statement->toString());
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['CREATE VIEW v AS SELECT recursive FROM t'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(["CREATE VIEW v AS SELECT 'create temp x'"])]
+    public function testBindReadsModifiersOnlyFromTheViewHeader(string $sql): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(recursive INT)')))->bind($sql);
+        self::assertInstanceOf(CreateViewStatement::class, $statement);
+        self::assertFalse($statement->temporary);
+        self::assertInstanceOf(PostgreSqlViewProperties::class, $statement->properties);
+        self::assertFalse($statement->properties->recursive);
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql])]
+    public function testBindLeavesATableWithAViewAliasToItsOwnForm(Dialect $dialect): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect))->build()))->bind('CREATE TABLE x AS SELECT 1 AS view');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Definition\CreateTableAsStatement::class, $statement);
+    }
+
+    public function testMysqlReadsLowercaseAlgorithmAndSecurity(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build());
+        $statement = $binder->bind('create algorithm = merge sql security invoker view v as select 1 with local check option');
+        self::assertInstanceOf(CreateViewStatement::class, $statement);
+        self::assertSame(ViewCheck::Local, $statement->check);
+        self::assertSame('CREATE ALGORITHM = MERGE SQL SECURITY INVOKER VIEW `v` AS SELECT 1 WITH LOCAL CHECK OPTION', $statement->toString());
+        $source = \SqlSemantics\Ast\Tree::outer((new \SqlSemantics\Ast\DialectParser(Dialect::MySql))->parse('create algorithm = temptable sql security definer view v as select 1'), ['create'])[0];
+        $context = new \SqlSemantics\Binding\Query\QueryContext(new \SqlSemantics\Binding\TableResolver((new SchemaBuilder(Dialect::MySql))->build(), new \SqlSemantics\Ast\Identifiers(Dialect::MySql), ''));
+        $properties = \SqlSemantics\Binding\Statement\Definition\View\ViewBinder::mysql($source, $context);
+        self::assertSame(ViewAlgorithm::TempTable, $properties->algorithm);
+        self::assertSame(ViewSecurity::Definer, $properties->security);
+        self::assertNull($properties->definer);
+    }
+
+
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, null, 'CREATE VIEW v2 AS SELECT 1 AS materialized', 'CREATE VIEW "v2" AS SELECT 1 AS "materialized"'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, null, "CREATE VIEW v AS SELECT 'WITH CHECK OPTION', 'OR REPLACE'", 'CREATE VIEW "v" AS SELECT \'WITH CHECK OPTION\', \'OR REPLACE\''])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'mysql-5.7.44', "CREATE VIEW v AS SELECT 'WITH CHECK OPTION' AS a WITH LOCAL CHECK OPTION", "CREATE VIEW `v` AS SELECT 'WITH CHECK OPTION' AS `a` WITH LOCAL CHECK OPTION"])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'mysql-8.4.7', "CREATE VIEW v AS SELECT 'WITH CHECK OPTION' AS a", "CREATE VIEW `v` AS SELECT 'WITH CHECK OPTION' AS `a`"])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::Sqlite, null, "CREATE VIEW v AS SELECT 'OR REPLACE' AS materialized", 'CREATE VIEW "v" AS SELECT \'OR REPLACE\' AS "materialized"'])]
+    public function testBindReadsTheViewFormFromItsGrammarNotFromTheQueryText(Dialect $dialect, ?string $version, string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build());
+        $statement = $binder->bind($sql);
+        self::assertInstanceOf(CreateViewStatement::class, $statement);
+        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, $binder->bind($statement->toString())->toString());
+    }
 }

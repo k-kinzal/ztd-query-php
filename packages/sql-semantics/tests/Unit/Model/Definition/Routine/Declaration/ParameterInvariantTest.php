@@ -6,6 +6,7 @@ namespace Tests\Unit\Model\Definition\Routine\Declaration;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
@@ -78,5 +79,27 @@ final class ParameterInvariantTest extends TestCase
         $integer = TypeDescriptor::builtin(Dialect::PostgreSql, 'integer');
         $this->expectException(InvalidStructure::class);
         ParameterInvariant::table([new ParameterDeclaration(new RoutineParameter($integer, ParameterMode::InputOutput))], [new ResultColumn('a', $integer)]);
+    }
+
+    #[TestWith(["CREATE PROCEDURE p(OUT b integer, VARIADIC a integer[]) LANGUAGE sql AS ''", 'CREATE PROCEDURE "p"(OUT "b" integer, VARIADIC "a" integer []) LANGUAGE "sql" AS \'\''])]
+    #[TestWith(["CREATE FUNCTION f(VARIADIC a integer[], OUT b integer) LANGUAGE sql AS 'select 1'", 'CREATE FUNCTION "f"(VARIADIC "a" integer [], OUT "b" integer) LANGUAGE "sql" AS \'select 1\''])]
+    #[TestWith(["CREATE FUNCTION f(a integer, b integer DEFAULT 1) RETURNS integer LANGUAGE sql AS 'select 1'", 'CREATE FUNCTION "f"("a" integer, "b" integer DEFAULT 1) RETURNS integer LANGUAGE "sql" AS \'select 1\''])]
+    #[TestWith(["CREATE FUNCTION f(a integer DEFAULT 1, b integer DEFAULT 2) RETURNS integer LANGUAGE sql AS 'select 1'", 'CREATE FUNCTION "f"("a" integer DEFAULT 1, "b" integer DEFAULT 2) RETURNS integer LANGUAGE "sql" AS \'select 1\''])]
+    #[TestWith(["CREATE FUNCTION f(IN a integer, OUT a integer) LANGUAGE sql AS 'select 1'", 'CREATE FUNCTION "f"(IN "a" integer, OUT "a" integer) LANGUAGE "sql" AS \'select 1\''])]
+    #[TestWith(["CREATE FUNCTION f(integer, integer) RETURNS integer LANGUAGE sql AS 'select 1'", 'CREATE FUNCTION "f"(integer, integer) RETURNS integer LANGUAGE "sql" AS \'select 1\''])]
+    #[TestWith(["CREATE FUNCTION f(a integer, b integer) RETURNS integer LANGUAGE sql AS 'select 1'", 'CREATE FUNCTION "f"("a" integer, "b" integer) RETURNS integer LANGUAGE "sql" AS \'select 1\''])]
+    public function testParametersAcceptsValidDeclarations(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+    }
+
+    #[TestWith(["CREATE PROCEDURE p(VARIADIC a integer[], OUT b integer) LANGUAGE sql AS ''"])]
+    #[TestWith(["CREATE FUNCTION f(a integer DEFAULT 1, b integer) RETURNS integer LANGUAGE sql AS 'select 1'"])]
+    #[TestWith(["CREATE FUNCTION f(VARIADIC a integer) RETURNS integer LANGUAGE sql AS 'select 1'"])]
+    #[TestWith(["CREATE FUNCTION f(a integer, a integer) RETURNS integer LANGUAGE sql AS 'select 1'"])]
+    public function testParametersRejectsInvalidDeclarations(string $sql): void
+    {
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql);
     }
 }

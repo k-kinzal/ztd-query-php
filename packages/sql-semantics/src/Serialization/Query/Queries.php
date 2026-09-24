@@ -28,7 +28,7 @@ final class Queries
     public static function write(BoundQuery $query, bool $into = false): Tree
     {
         if ($query instanceof BoundSelect) {
-            $body = new Tree('select', [Build::keyword('SELECT'), OptimizerHints::write($query->hints), self::quantifier($query->quantifier), Parts::outputs($query->outputs, $query->origin->dialect), ...self::from($query, $into), Parts::expressions('WHERE', $query->where === null ? [] : [$query->where]), Parts::expressions('GROUP BY', $query->groupBy), Parts::expressions('HAVING', $query->having === null ? [] : [$query->having]), self::windows($query)]);
+            $body = new Tree('select', [Build::keyword('SELECT'), OptimizerHints::write($query->hints), self::quantifier($query->quantifier), ...array_map(static fn (\SqlSemantics\Model\Query\Optimization\SelectOption $option): Tree => Build::keyword($option->value), $query->options), Parts::outputs($query->outputs, $query->origin->dialect), ...self::from($query, $into), Parts::expressions('WHERE', $query->where === null ? [] : [$query->where]), Parts::expressions('GROUP BY', $query->groupBy), Parts::expressions('HAVING', $query->having === null ? [] : [$query->having]), self::windows($query)]);
         } elseif ($query instanceof Statement\ValuesStatement) {
             $body = $query->origin->dialect === \SqlSemantics\Dialect::MySql
                 ? new Tree('values', [Build::keyword('VALUES'), Build::separated(array_map(static fn (array $row): Tree => new Tree('row', [Build::keyword('ROW'), Build::parentheses(Build::separated(array_map(Expressions::write(...), $row)))]), $query->rows))])

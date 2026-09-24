@@ -18,7 +18,7 @@ final class AccountsTest extends TestCase
 {
     public function testWriteQuotesNamesAndKeepsSymbols(): void
     {
-        self::assertSame("'o''k' @'h'", Accounts::write(new AccountName("o'k", 'h'))->toString());
+        self::assertSame("'o''k'@'h'", Accounts::write(new AccountName("o'k", 'h'))->toString());
         self::assertSame('CURRENT_USER', Accounts::write(CurrentAccount::Authenticated)->toString());
         self::assertSame('USER()', Accounts::write(ClientAccount::Connected)->toString());
     }

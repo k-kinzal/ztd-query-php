@@ -45,4 +45,12 @@ final class SetColumnStatisticsTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new Relation\Column\SetColumnStatistics($column, $target);
     }
+
+    #[TestWith([1, -1])]
+    #[TestWith([32767, 10000])]
+    public function testAcceptsTheEdgesOfEachRange(int $column, int $target): void
+    {
+        $action = new Relation\Column\SetColumnStatistics($column, $target);
+        self::assertSame([$column, $target], [$action->column, $action->target]);
+    }
 }

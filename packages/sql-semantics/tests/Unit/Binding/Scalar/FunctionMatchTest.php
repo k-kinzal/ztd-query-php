@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Binding\Scalar;
 
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
@@ -220,4 +221,45 @@ final class FunctionMatchTest extends TestCase
         self::assertSame('text', $boundQuery2->outputs[0]->expression->type->name);
     }
 
+    public function testScoreWeighsExactWideningAndUnknownArguments(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (i INTEGER, s TEXT)')))->bind('SELECT i, s, $1 FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        $integerArgument = $statement->outputs[0]->expression;
+        $textArgument = $statement->outputs[1]->expression;
+        $unknownArgument = $statement->outputs[2]->expression;
+        $integer = new TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('integer'));
+        $bigint = new TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('bigint'));
+        $unknown = new TypeDescriptor(Dialect::PostgreSql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('unknown'));
+        self::assertSame(0, \SqlSemantics\Binding\Scalar\FunctionMatch::score(new FunctionSignature('f', null, $integer), [$integerArgument, $textArgument]));
+        self::assertSame(101, \SqlSemantics\Binding\Scalar\FunctionMatch::score(new FunctionSignature('f', [$integer], $integer), [$integerArgument]));
+        self::assertSame(11, \SqlSemantics\Binding\Scalar\FunctionMatch::score(new FunctionSignature('f', [$bigint], $bigint), [$integerArgument]));
+        self::assertSame(2, \SqlSemantics\Binding\Scalar\FunctionMatch::score(new FunctionSignature('f', [$integer], $integer), [$unknownArgument]));
+        self::assertSame(101, \SqlSemantics\Binding\Scalar\FunctionMatch::score(new FunctionSignature('f', [$unknown, $integer], $integer), [$textArgument, $integerArgument]));
+        self::assertNull(\SqlSemantics\Binding\Scalar\FunctionMatch::score(new FunctionSignature('f', [$integer], $integer), [$textArgument]));
+        self::assertNull(\SqlSemantics\Binding\Scalar\FunctionMatch::score(new FunctionSignature('f', [$integer], $integer), [$integerArgument, $integerArgument]));
+    }
+
+    public function testScoreAcceptsAnyKnownConversionOutsidePostgres(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (s TEXT)')))->bind('SELECT s FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        $integer = new TypeDescriptor(Dialect::MySql, \SqlSemantics\Type\Identity\BuiltinIdentity::from('integer'));
+        self::assertSame(11, \SqlSemantics\Binding\Scalar\FunctionMatch::score(new FunctionSignature('f', [$integer], $integer), [$statement->outputs[0]->expression]));
+    }
+
+    #[TestWith(['smallint', 'integer', true])]
+    #[TestWith(['integer', 'integer', true])]
+    #[TestWith(['real', 'double precision', true])]
+    #[TestWith(['double precision', 'real', false])]
+    #[TestWith(['numeric', 'real', true])]
+    #[TestWith(['char', 'text', true])]
+    #[TestWith(['text', 'varchar', true])]
+    #[TestWith(['text', 'integer', false])]
+    #[TestWith(['integer', 'text', false])]
+    #[TestWith(['boolean', 'boolean', false])]
+    public function testCompatibleWidensWithinOneFamily(string $actual, string $expected, bool $compatible): void
+    {
+        self::assertSame($compatible, \SqlSemantics\Binding\Scalar\FunctionMatch::compatible($actual, $expected));
+    }
 }

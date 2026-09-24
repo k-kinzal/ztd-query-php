@@ -116,4 +116,35 @@ final class SequencesTest extends TestCase
         self::assertInstanceOf(Identity\SequenceValueChange::class, $option);
         self::assertSame($expected, $option->value->text);
     }
+
+    #[TestWith(['create unlogged sequence s', 'CREATE UNLOGGED SEQUENCE "s"'])]
+    #[TestWith(['create sequence if not exists s', 'CREATE SEQUENCE IF NOT EXISTS "s"'])]
+    #[TestWith(['ALTER SEQUENCE a.b.s CYCLE', 'ALTER SEQUENCE "a"."b"."s" CYCLE'])]
+    #[TestWith(['ALTER SEQUENCE s OWNED BY a.b.t.id', 'ALTER SEQUENCE "s" OWNED BY "a"."b"."t"."id"'])]
+    #[TestWith(['ALTER SEQUENCE s RESTART', 'ALTER SEQUENCE "s" RESTART'])]
+    #[TestWith(['ALTER SEQUENCE s RESTART 5', 'ALTER SEQUENCE "s" RESTART WITH 5'])]
+    public function testBindSpellsTheAcceptedForms(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+    }
+
+    #[TestWith(['ALTER SEQUENCE a.b.c.s CYCLE'])]
+    #[TestWith(['ALTER SEQUENCE s OWNED BY x.a.b.t.id'])]
+    public function testNameRejectsAnOverQualifiedName(string $sql): void
+    {
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(InputViolation::CatalogObjectName->message());
+        (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql);
+    }
+
+    #[TestWith(['ALTER SEQUENCE s MINVALUE 9223372036854775808'])]
+    #[TestWith(['ALTER SEQUENCE s MINVALUE 0x10'])]
+    #[TestWith(['ALTER SEQUENCE s MINVALUE 1e3'])]
+    #[TestWith(['ALTER SEQUENCE s UNLOGGED'])]
+    public function testOptionRejectsAnImpossibleValue(string $sql): void
+    {
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(InputViolation::SequenceDefinition->message());
+        (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql);
+    }
 }

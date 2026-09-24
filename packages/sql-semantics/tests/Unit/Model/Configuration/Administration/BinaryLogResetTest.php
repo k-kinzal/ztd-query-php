@@ -36,4 +36,34 @@ final class BinaryLogResetTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new BinaryLogReset($statement->port);
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['1'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['2000000000'])]
+    public function testAcceptsTheEdgesOfTheIndexRange(string $index): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('RESET BINARY LOGS AND GTIDS TO ' . $index);
+        self::assertInstanceOf(ResetServerStatement::class, $statement);
+        self::assertInstanceOf(BinaryLogReset::class, $statement->targets[0]);
+        self::assertSame($index, $statement->targets[0]->firstIndex?->text);
+        self::assertTrue($statement->targets[0]->availableIn(80000));
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['1.5'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(["'7'"])]
+    public function testRejectsAnIndexThatIsNoInteger(string $index): void
+    {
+        $literal = (new \SqlSemantics\Binding\LiteralBinder(Dialect::MySql))->bind((new \SqlSemantics\Ast\DialectParser(Dialect::MySql))->parse('SELECT ' . $index)->tokens()[1]);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\Literal::class, $literal);
+        $this->expectException(InvalidStructure::class);
+        new BinaryLogReset($literal);
+    }
+
+    public function testRejectsIndexZero(): void
+    {
+        $literal = (new \SqlSemantics\Binding\LiteralBinder(Dialect::MySql))->bind((new \SqlSemantics\Ast\DialectParser(Dialect::MySql))->parse('SELECT 0')->tokens()[1]);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\Literal::class, $literal);
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('A binary log index is an integer from 1 to 2000000000.');
+        new BinaryLogReset($literal);
+    }
 }

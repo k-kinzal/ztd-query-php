@@ -43,4 +43,16 @@ final class StoredSettingsTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER DATABASE app RESET ALL');
         self::assertInstanceOf(AlterDatabaseResetAllStatement::class, $statement);
     }
+
+    #[TestWith(["ALTER DATABASE app SET work_mem = '1MB'", 'ALTER DATABASE "app" SET "work_mem" = \'1MB\''])]
+    #[TestWith(['ALTER DATABASE app SET work_mem TO DEFAULT', 'ALTER DATABASE "app" SET "work_mem" = DEFAULT'])]
+    #[TestWith(['ALTER DATABASE app SET work_mem FROM CURRENT', 'ALTER DATABASE "app" SET "work_mem" FROM CURRENT'])]
+    #[TestWith(['ALTER DATABASE app SET SESSION AUTHORIZATION r', 'ALTER DATABASE "app" SET "session_authorization" = "r"'])]
+    #[TestWith(['ALTER DATABASE app RESET work_mem', 'ALTER DATABASE "app" RESET "work_mem"'])]
+    #[TestWith(['ALTER ROLE r SET search_path = a, b', 'ALTER ROLE "r" SET "search_path" = "a", "b"'])]
+    public function testAssignmentAndResetReadOneStoredParameter(string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        self::assertSame($expected, $binder->bind($sql)->toString());
+    }
 }

@@ -105,4 +105,27 @@ final class AccountClausesTest extends TestCase
         self::assertTrue(AccountClauses::grantOption($body, 'grant_options'));
         self::assertFalse(AccountClauses::grantOption($body, 'opt_grant_option'));
     }
+
+    #[TestWith(['create user u require ssl', 'CREATE USER \'u\' REQUIRE SSL'])]
+    #[TestWith(['create user u require cipher \'a\' and issuer \'b\'', 'CREATE USER \'u\' REQUIRE CIPHER \'a\' AND ISSUER \'b\''])]
+    #[TestWith(['alter user u with max_queries_per_hour 1', 'ALTER USER \'u\' WITH MAX_QUERIES_PER_HOUR 1'])]
+    #[TestWith(['create user u password expire interval 90 day account lock failed_login_attempts 3', 'CREATE USER \'u\' PASSWORD EXPIRE INTERVAL 90 DAY ACCOUNT LOCK FAILED_LOGIN_ATTEMPTS 3'])]
+    #[TestWith(['alter user u comment \'x\'', 'ALTER USER \'u\' COMMENT \'x\''])]
+    public function testClausesReadLowercaseKeywords(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql)->toString());
+    }
+
+    public function testAnnotationIsNullWithoutTheClause(): void
+    {
+        $tree = (new DialectParser(Dialect::MySql, 'mysql-8.4.7'))->parse('ALTER USER u ACCOUNT LOCK');
+        self::assertNull(AccountClauses::annotation($tree->find('alter_user_stmt')[0]));
+    }
+
+    public function testGrantOptionReadsLowercaseKeywordsAndIgnoresOtherOptions(): void
+    {
+        $granted = (new DialectParser(Dialect::MySql, 'mysql-5.7.44'))->parse('grant select on *.* to u with grant option')->find('grant_command')[0];
+        $limited = (new DialectParser(Dialect::MySql, 'mysql-5.7.44'))->parse('GRANT SELECT ON *.* TO u WITH MAX_QUERIES_PER_HOUR 1')->find('grant_command')[0];
+        self::assertSame([true, false], [AccountClauses::grantOption($granted, 'grant_options'), AccountClauses::grantOption($limited, 'grant_options')]);
+    }
 }

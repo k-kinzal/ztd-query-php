@@ -35,7 +35,7 @@ final class QualifiedOperator
         if (count($qualifier) > 2 || in_array('', $qualifier, true)) {
             throw new InvalidStructure('An operator qualifier names at most a database and a schema, each nonempty.');
         }
-        if (strlen($symbol) > 63 || preg_match('/^[-+*\/<>=~!@#%^&|`?]+$/', $symbol) !== 1 || str_contains($symbol, '--') || str_contains($symbol, '/*')) {
+        if (strlen($symbol) > 63 || preg_match('/^[-+*\/<>=~!@#%^&|`?]+$/D', $symbol) !== 1 || str_contains($symbol, '--') || str_contains($symbol, '/*')) {
             throw new InvalidStructure('An operator symbol consists of up to 63 operator characters and cannot start a comment.');
         }
         $this->qualifier = $qualifier;

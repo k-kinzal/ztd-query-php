@@ -208,4 +208,33 @@ final class IndirectionBinderTest extends TestCase
         $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::RowExpansion->message());
         (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SELECT f($1.*.a)');
     }
+
+    public function testRowReportsNothingForARelationInScope(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER)')))->bind('SELECT f(t.*) FROM t', strict: false);
+        self::assertSame([], $query->diagnostics);
+        self::assertSame('SELECT "f"("t".*) FROM "public"."t"', $query->toString());
+    }
+
+    public function testRowReportsARelationOutOfScope(): void
+    {
+        $this->expectException(\SqlSemantics\SemanticException::class);
+        $this->expectExceptionMessage('Star has no matching relation.');
+        (new \SqlSemantics\Binding\Scalar\IndirectionBinder())->row(['x'], new \SqlParser\Parser\Node('columnref', 0, []), new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql)));
+    }
+
+    public function testApplyIndexesAnArrayValue(): void
+    {
+        $element = \SqlSemantics\Ast\Tree::outer((new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('SELECT a[1] FROM t'), ['indirection_el'])[0];
+        $access = (new \SqlSemantics\Binding\Scalar\IndirectionBinder())->apply(\SqlSemantics\Model\Expression::literal('{1}', Dialect::PostgreSql), $element, new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql)));
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\ElementAccess::class, $access);
+        self::assertSame('1', $access->index->spelling());
+    }
+
+    public function testExpansionLastRejectsAStarBeforeAnotherElement(): void
+    {
+        $elements = \SqlSemantics\Ast\Tree::outer((new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('SELECT f($1.*.a)'), ['indirection_el']);
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        \SqlSemantics\Binding\Scalar\IndirectionBinder::expansionLast($elements);
+    }
 }

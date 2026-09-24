@@ -32,7 +32,8 @@ final class Targets
     }
 
     /**
-     * Requires identifier components instead of treating subscript syntax as a routine name.
+     * Requires identifier components instead of treating subscript syntax as a routine name, and at most catalog,
+     * schema and routine, as PostgreSQL's name reader does.
      * @throws InvalidSql
      */
     public static function name(Node $source, QueryContext $context): QualifiedName
@@ -42,7 +43,11 @@ final class Targets
                 throw new InvalidSql(InputViolation::RoutineName, $source);
             }
         }
-        return new QualifiedName($context->tables->identifiers->parts($source));
+        $parts = $context->tables->identifiers->parts($source);
+        if (count($parts) > 3) {
+            throw new InvalidSql(InputViolation::CatalogObjectName, $source);
+        }
+        return new QualifiedName($parts);
     }
 
     /**

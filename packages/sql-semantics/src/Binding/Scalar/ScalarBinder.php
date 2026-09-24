@@ -38,6 +38,10 @@ final class ScalarBinder
             return $collated;
         }
         $children = Tree::significant($node);
+        $membership = Conditional\TableMembership::bind($node, $scope);
+        if ($membership !== null) {
+            return $membership;
+        }
         $subquery = $this->nestedQuery($node);
         if ($subquery !== null && $scope->queries !== null) {
             return $this->subquery($node, $subquery, $scope, $rowSubquery);
@@ -86,7 +90,7 @@ final class ScalarBinder
     {
         $operands = [];
         foreach ($node->children as $child) {
-            if (!$child instanceof Node || !Tree::hasTokens($child) || in_array($child->name, ['func_name', 'function_call_keyword', 'Typename', 'cast_type', 'typetoken', 'collate', 'collate_clause', 'opt_collate', 'filter_clause', 'over_clause', 'windowing_clause', 'opt_windowing_clause', 'within_group_clause', 'opt_sort_clause', 'orderby_opt', 'sortlist', 'order_clause'], true)) {
+            if (!$child instanceof Node || !Tree::hasTokens($child) || in_array($child->name, ['func_name', 'function_call_keyword', 'Typename', 'cast_type', 'typetoken', 'collate', 'collate_clause', 'opt_collate', 'filter_clause', 'over_clause', 'windowing_clause', 'opt_windowing_clause', 'within_group_clause', 'opt_sort_clause', 'orderby_opt', 'sortlist', 'order_clause', 'opt_gorder_clause', 'opt_gconcat_separator'], true)) {
                 continue;
             }
             if (in_array($child->name, ['a_expr', 'b_expr', 'c_expr', 'expr', 'bool_pri', 'predicate', 'bit_expr', 'simple_expr', 'func_application', 'func_expr', 'sum_expr', 'window_func_call', 'columnref', 'simple_ident', 'term', 'stable_integer'], true)) {

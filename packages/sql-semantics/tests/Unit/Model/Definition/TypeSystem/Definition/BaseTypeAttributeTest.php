@@ -44,4 +44,13 @@ final class BaseTypeAttributeTest extends TestCase
         self::assertFalse(BaseTypeAttribute::Input->alterable());
         self::assertFalse(BaseTypeAttribute::Alignment->alterable());
     }
+
+    public function testKindTypesEveryAttribute(): void
+    {
+        $kinds = array_map(static fn (BaseTypeAttribute $attribute): DefinitionKind => $attribute->kind(), BaseTypeAttribute::cases());
+        self::assertSame([
+            DefinitionKind::Type, DefinitionKind::Length, DefinitionKind::Name, DefinitionKind::Name, DefinitionKind::Name, DefinitionKind::Name, DefinitionKind::Name, DefinitionKind::Name, DefinitionKind::Name, DefinitionKind::Name,
+            DefinitionKind::Text, DefinitionKind::Boolean, DefinitionKind::Text, DefinitionKind::Type, DefinitionKind::Text, DefinitionKind::Choice, DefinitionKind::Choice, DefinitionKind::Boolean, DefinitionKind::Boolean,
+        ], $kinds);
+    }
 }

@@ -63,4 +63,22 @@ final class SubscriptionsTest extends TestCase
         self::assertInstanceOf(Statement\AlterSubscriptionPublicationsStatement::class, $statement);
         self::assertSame(['pub', 'Pub'], $statement->publications);
     }
+
+    #[TestWith(['create subscription s connection \'dbname=x\' publication p, q', Statement\CreateSubscriptionStatement::class, 'CREATE SUBSCRIPTION "s" CONNECTION \'dbname=x\' PUBLICATION "p", "q"'])]
+    #[TestWith(['drop subscription if exists s cascade', Statement\DropSubscriptionStatement::class, 'DROP SUBSCRIPTION IF EXISTS "s" CASCADE'])]
+    #[TestWith(['DROP SUBSCRIPTION s', Statement\DropSubscriptionStatement::class, 'DROP SUBSCRIPTION "s"'])]
+    #[TestWith(['drop subscription s restrict', Statement\DropSubscriptionStatement::class, 'DROP SUBSCRIPTION "s" RESTRICT'])]
+    #[TestWith(['alter subscription s enable', Statement\AlterSubscriptionEnabledStatement::class, 'ALTER SUBSCRIPTION "s" ENABLE'])]
+    #[TestWith(['alter subscription s disable', Statement\AlterSubscriptionEnabledStatement::class, 'ALTER SUBSCRIPTION "s" DISABLE'])]
+    #[TestWith(['alter subscription s skip (lsn = \'0/12345\')', Statement\SkipSubscriptionTransactionStatement::class, 'ALTER SUBSCRIPTION "s" SKIP(lsn = \'0/12345\')'])]
+    #[TestWith(['alter subscription s connection \'x\'', Statement\AlterSubscriptionConnectionStatement::class, 'ALTER SUBSCRIPTION "s" CONNECTION \'x\''])]
+    #[TestWith(['alter subscription s set publication p', Statement\AlterSubscriptionPublicationsStatement::class, 'ALTER SUBSCRIPTION "s" SET PUBLICATION "p"'])]
+    #[TestWith(['alter subscription s add publication p', Statement\AlterSubscriptionPublicationsStatement::class, 'ALTER SUBSCRIPTION "s" ADD PUBLICATION "p"'])]
+    #[TestWith(['alter subscription s refresh publication', Statement\RefreshSubscriptionStatement::class, 'ALTER SUBSCRIPTION "s" REFRESH PUBLICATION'])]
+    #[TestWith(['alter subscription s set (slot_name = NONE)', Statement\AlterSubscriptionOptionsStatement::class, 'ALTER SUBSCRIPTION "s" SET (slot_name = NONE)'])]
+    public function testBindSpellsEverySubscriptionForm(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql, strict: false);
+        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+    }
 }

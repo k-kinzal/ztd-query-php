@@ -52,4 +52,29 @@ final class AlterItemsTest extends TestCase
         self::assertInstanceOf(AlterTableStatement::class, $statement);
         self::assertSame($class, $statement->alterations[0]::class);
     }
+
+    #[TestWith(['alter table t add column n int', \SqlSemantics\Model\Definition\MySqlTable\Column\AddColumn::class, 'ALTER TABLE `t` ADD COLUMN `n` integer'])]
+    #[TestWith(['alter table t add index jx (id)', \SqlSemantics\Model\Definition\MySqlTable\Key\AddIndex::class, 'ALTER TABLE `t` ADD INDEX `jx`(`id`)'])]
+    #[TestWith(['alter table t add constraint u unique (id)', \SqlSemantics\Model\Definition\MySqlTable\Key\AddConstraint::class, 'ALTER TABLE `t` ADD CONSTRAINT `u` UNIQUE(`id`)'])]
+    #[TestWith(['alter table t change k j bigint', \SqlSemantics\Model\Definition\MySqlTable\Column\ChangeColumn::class, 'ALTER TABLE `t` CHANGE COLUMN `k` `j` bigint'])]
+    #[TestWith(['alter table t modify k bigint', \SqlSemantics\Model\Definition\MySqlTable\Column\ModifyColumn::class, 'ALTER TABLE `t` MODIFY COLUMN `k` bigint'])]
+    #[TestWith(['alter table t alter column k set default 1', \SqlSemantics\Model\Definition\MySqlTable\Column\ColumnDefaultAssignment::class, 'ALTER TABLE `t` ALTER COLUMN `k` SET DEFAULT 1'])]
+    #[TestWith(['alter table t alter index ix invisible', \SqlSemantics\Model\Definition\MySqlTable\Key\SetIndexVisibility::class, 'ALTER TABLE `t` ALTER INDEX `ix` INVISIBLE'])]
+    #[TestWith(['alter table t alter check c not enforced', \SqlSemantics\Model\Definition\MySqlTable\Key\SetConstraintEnforcement::class, 'ALTER TABLE `t` ALTER CHECK `c` NOT ENFORCED'])]
+    #[TestWith(['alter table t convert to character set utf8mb4', \SqlSemantics\Model\Definition\MySqlTable\Table\ConvertCharacterSet::class, 'ALTER TABLE `t` CONVERT TO CHARACTER SET `utf8mb4`'])]
+    #[TestWith(['alter table t order by id', \SqlSemantics\Model\Definition\MySqlTable\Table\OrderRows::class, 'ALTER TABLE `t` ORDER BY `id`'])]
+    #[TestWith(['alter table t disable keys', TableCommand::class, 'ALTER TABLE `t` DISABLE KEYS'])]
+    #[TestWith(['alter table t force', TableCommand::class, 'ALTER TABLE `t` FORCE'])]
+    #[TestWith(['alter table t engine = InnoDB', \SqlSemantics\Model\Definition\MySqlTable\Table\ChangeTableOptions::class, 'ALTER TABLE `t` ENGINE `InnoDB`'])]
+    #[TestWith(['alter table t rename index ix to jx', RenameIndex::class, 'ALTER TABLE `t` RENAME INDEX `ix` TO `jx`'])]
+    #[TestWith(['alter table t drop primary key', TableCommand::class, 'ALTER TABLE `t` DROP PRIMARY KEY'])]
+    #[TestWith(['alter table t drop foreign key f', DropKey::class, 'ALTER TABLE `t` DROP FOREIGN KEY `f`'])]
+    #[TestWith(['alter table t drop check c', DropKey::class, 'ALTER TABLE `t` DROP CHECK `c`'])]
+    #[TestWith(['alter table t rename column k to j', RenameColumn::class, 'ALTER TABLE `t` RENAME COLUMN `k` TO `j`'])]
+    public function testBindClassifiesEveryLowercaseItem(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, k INT, CONSTRAINT c CHECK (id > 0), INDEX ix (k))')))->bind($sql);
+        self::assertInstanceOf(AlterTableStatement::class, $statement);
+        self::assertSame([$class, $expected], [$statement->alterations[0]::class, $statement->toString()]);
+    }
 }

@@ -27,4 +27,24 @@ final class DefinitionOptionTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new DefinitionOption(OperatorAttribute::LeftArg, new QualifiedName(['integer']));
     }
+
+    public function testKeepsACanonicalChoiceAndText(): void
+    {
+        self::assertSame('plain', (new DefinitionOption(\SqlSemantics\Model\Definition\TypeSystem\Definition\BaseTypeAttribute::Storage, 'plain'))->value);
+        self::assertSame('U', (new DefinitionOption(\SqlSemantics\Model\Definition\TypeSystem\Definition\BaseTypeAttribute::Category, 'U'))->value);
+    }
+
+    public function testRejectsANonCanonicalChoice(): void
+    {
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('The STORAGE attribute requires a choice argument.');
+        new DefinitionOption(\SqlSemantics\Model\Definition\TypeSystem\Definition\BaseTypeAttribute::Storage, 'PLAIN');
+    }
+
+    public function testNamesTheAttributeAndKindItRequires(): void
+    {
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('The LEFTARG attribute requires a type argument.');
+        new DefinitionOption(OperatorAttribute::LeftArg, new QualifiedName(['integer']));
+    }
 }

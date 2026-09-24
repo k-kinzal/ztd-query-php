@@ -45,4 +45,45 @@ final class RoutinesTest extends TestCase
         self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
     }
 
+    public function testWriteSpellsTheMySqlFunctionRemovalWithItsGuard(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('DROP FUNCTION IF EXISTS db.f');
+        self::assertSame('DROP FUNCTION IF EXISTS `db`.`f`', \SqlSemantics\Serialization\Definition\Routines::write($statement)?->toString());
+    }
+
+    public function testWriteSpellsTheMySqlProcedureRemovalWithoutAGuard(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('DROP PROCEDURE p');
+        self::assertSame('DROP PROCEDURE `p`', \SqlSemantics\Serialization\Definition\Routines::write($statement)?->toString());
+    }
+
+    public function testWriteSpellsEveryPostgreSqlFunctionTargetAndTheBehavior(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('DROP FUNCTION IF EXISTS f, g(int) CASCADE');
+        self::assertSame('DROP FUNCTION IF EXISTS "f", "g"(integer) CASCADE', \SqlSemantics\Serialization\Definition\Routines::write($statement)?->toString());
+    }
+
+    public function testWriteSpellsThePostgreSqlProcedureRemoval(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('DROP PROCEDURE p, q()');
+        self::assertSame('DROP PROCEDURE "p", "q"()', \SqlSemantics\Serialization\Definition\Routines::write($statement)?->toString());
+    }
+
+    public function testWriteSpellsThePostgreSqlRoutineRemoval(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('DROP ROUTINE r() RESTRICT');
+        self::assertSame('DROP ROUTINE "r"() RESTRICT', \SqlSemantics\Serialization\Definition\Routines::write($statement)?->toString());
+    }
+
+    public function testWriteSpellsEveryAggregateSignatureForm(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('DROP AGGREGATE IF EXISTS a(int, text), b(int ORDER BY text), c(*)');
+        self::assertSame('DROP AGGREGATE IF EXISTS "a"(integer, text), "b"(integer ORDER BY text), "c"(*)', \SqlSemantics\Serialization\Definition\Routines::write($statement)?->toString());
+    }
+
+    public function testParameterSpellsTheColumnTypeReferenceAndTheSetMarker(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(c int)')))->bind('DROP FUNCTION f(OUT x t.c%TYPE, VARIADIC y int[], SETOF int)');
+        self::assertSame('DROP FUNCTION "f"(OUT "x" "t"."c" %TYPE, VARIADIC "y" integer [], SETOF integer)', \SqlSemantics\Serialization\Definition\Routines::write($statement)?->toString());
+    }
 }

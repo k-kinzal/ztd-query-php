@@ -40,6 +40,8 @@ enum ExpressionKind: string
     case Extremum = 'extremum';
     case DateShift = 'date-shift';
     case Extract = 'extract';
+    case TimestampAdd = 'timestamp-add';
+    case TimestampDiff = 'timestamp-diff';
     case Position = 'position';
     case Trim = 'trim';
     case Normalization = 'normalization';

@@ -6,6 +6,7 @@ namespace Tests\Unit\Binding\Query\Document;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Binding\Query\Document\JsonOptions;
@@ -138,5 +139,16 @@ final class JsonOptionsTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\TableFunction\Json\JsonTable::class, $relation->table);
         self::assertSame(\SqlSemantics\Model\TableFunction\Json\Response\TableError::EmptyRows, $relation->table->onError);
         self::assertStringContainsString('EMPTY ON ERROR', $statement->toString());
+    }
+
+    #[TestWith(["select json_query('{}' format json, '$' with array wrapper empty on empty error on error)", "SELECT JSON_QUERY('{}' FORMAT JSON, '$' WITH UNCONDITIONAL WRAPPER EMPTY ARRAY ON EMPTY ERROR ON ERROR)"])]
+    #[TestWith(["select json_query('{}', '$' omit quotes on scalar string empty array on error)", "SELECT JSON_QUERY('{}', '$' OMIT QUOTES EMPTY ARRAY ON ERROR)"])]
+    #[TestWith(["select json_query('{}', '$' keep quotes null on empty)", "SELECT JSON_QUERY('{}', '$' KEEP QUOTES NULL ON EMPTY)"])]
+    #[TestWith(["select json_value('{}', '$' default 1 + 1 on empty default 2 on error)", "SELECT JSON_VALUE('{}', '$' DEFAULT (1 + 1) ON EMPTY DEFAULT 2 ON ERROR)"])]
+    #[TestWith(["select json_exists('{}', '$' unknown on error)", "SELECT JSON_EXISTS('{}', '$' UNKNOWN ON ERROR)"])]
+    #[TestWith(["select * from json_table('{}', '$' columns (a int path '$') error on error) as j", 'SELECT "j"."a" AS "a" FROM JSON_TABLE(\'{}\', \'$\' COLUMNS("a" integer PATH \'$\') ERROR ON ERROR) AS "j"'])]
+    public function testOptionsReadLowercaseKeywords(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
     }
 }

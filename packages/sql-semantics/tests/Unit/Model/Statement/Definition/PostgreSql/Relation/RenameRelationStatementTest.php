@@ -89,4 +89,21 @@ final class RenameRelationStatementTest extends TestCase
         $this->expectException(InvalidStructure::class);
         $statement->withOnly(true);
     }
+
+    public function testDefaultsToNoExistenceCheckAndDescendants(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER TABLE t RENAME TO u', strict: false);
+        self::assertInstanceOf(RenameRelationStatement::class, $statement);
+        $default = new RenameRelationStatement($statement->origin, $statement->relationKind, $statement->name, 'v');
+        self::assertFalse($default->ifExists);
+        self::assertFalse($default->only);
+    }
+
+    public function testRejectsAnEmptyNewName(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER TABLE t RENAME TO u', strict: false);
+        self::assertInstanceOf(RenameRelationStatement::class, $statement);
+        $this->expectException(InvalidStructure::class);
+        new RenameRelationStatement($statement->origin, $statement->relationKind, $statement->name, '');
+    }
 }

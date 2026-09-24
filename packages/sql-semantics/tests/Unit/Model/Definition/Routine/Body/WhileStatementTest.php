@@ -38,4 +38,13 @@ final class WhileStatementTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new WhileStatement(null, $statement->body->condition, []);
     }
+
+    public function testRejectsAnEmptyLabel(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE PROCEDURE p(a INT) WHILE a DO DO 1; END WHILE');
+        self::assertInstanceOf(CreateProcedureStatement::class, $statement);
+        self::assertInstanceOf(WhileStatement::class, $statement->body);
+        $this->expectException(InvalidStructure::class);
+        new WhileStatement('', $statement->body->condition, $statement->body->statements);
+    }
 }

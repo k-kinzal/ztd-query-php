@@ -5,6 +5,10 @@ declare(strict_types=1);
 namespace Tests\Unit\Ast\Definition;
 
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Ast\Definition\IndexReader;
+use SqlSemantics\Ast\DialectParser;
+use SqlSemantics\Ast\Identifiers;
+use SqlSemantics\Ast\Tree;
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
 use SqlSemantics\Schema\FunctionSignature;
@@ -99,18 +103,18 @@ use SqlSemantics\Type\TypeDescriptor;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ConstraintGroups::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\DialectParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(DialectParser::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\TokenGroups::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\Tree::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(Tree::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ColumnReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\SchemaReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ConstraintReader::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\Identifiers::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(Identifiers::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\StatementList::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\Definition\ReferenceReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\Definition\IndexKeys::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\Definition\OptionReader::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Ast\Definition\IndexReader::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(IndexReader::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Serializer::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\StatementFactory::class)]
@@ -251,5 +255,84 @@ final class IndexReaderTest extends TestCase
     {
         $table = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT, KEY ix USING HASH (id))')->tables[0];
         self::assertSame('hash', $table->indexes[0]->method);
+    }
+
+    /**
+     * @return array<string, array{Dialect, string, string, ?list<mixed>}>
+     */
+    public static function providerReadStatements(): array
+    {
+        return [
+            'postgresql full header' => [Dialect::PostgreSql, 'dflt', 'CREATE UNIQUE INDEX CONCURRENTLY IF NOT EXISTS ix ON app.t USING btree (a) INCLUDE (b, c) WHERE a > 0', ['app', 'ix', ['app', 't'], true, 'btree', ['b', 'c'], 'a > 0', 'IndexStmt', ['concurrently' => true, 'if_not_exists' => true]]],
+            'postgresql unnamed' => [Dialect::PostgreSql, 'dflt', 'CREATE INDEX ON t (a)', ['dflt', null, ['dflt', 't'], false, null, [], null, 'IndexStmt', []]],
+            'postgresql without default schema' => [Dialect::PostgreSql, '', 'create index ix on t using gin (a)', ['', 'ix', ['t'], false, 'gin', [], null, 'IndexStmt', []]],
+            'mysql unique' => [Dialect::MySql, 'dflt', 'CREATE UNIQUE INDEX ix ON t (a)', ['dflt', 'ix', ['dflt', 't'], true, null, [], null, 'create_index_stmt', []]],
+            'mysql fulltext' => [Dialect::MySql, 'dflt', 'CREATE FULLTEXT INDEX ix ON t (a)', ['dflt', 'ix', ['dflt', 't'], false, null, [], null, 'create_index_stmt', ['kind' => 'fulltext']]],
+            'mysql spatial' => [Dialect::MySql, 'dflt', 'CREATE SPATIAL INDEX ix ON db.t (a)', ['db', 'ix', ['db', 't'], false, null, [], null, 'create_index_stmt', ['kind' => 'spatial']]],
+            'mysql two methods' => [Dialect::MySql, 'dflt', 'create index ix using btree on t (a) using hash', ['dflt', 'ix', ['dflt', 't'], false, 'btree', [], null, 'create_index_stmt', ['using' => 'hash']]],
+            'sqlite qualified name' => [Dialect::Sqlite, 'dflt', 'CREATE UNIQUE INDEX IF NOT EXISTS aux.ix ON t (a) WHERE a > 0', ['aux', 'ix', ['aux', 't'], true, null, [], 'a > 0', 'input', ['if_not_exists' => true]]],
+            'mysql table' => [Dialect::MySql, 'dflt', 'CREATE TABLE t (a int)', null],
+            'postgresql view mentioning index and on' => [Dialect::PostgreSql, 'dflt', 'CREATE VIEW v AS SELECT 1 AS index FROM t JOIN u ON true', null],
+            'mysql spatial reference system' => [Dialect::MySql, 'dflt', "CREATE SPATIAL REFERENCE SYSTEM 4326 NAME 'x' DEFINITION 'y'", null],
+        ];
+    }
+
+    /**
+     * @param ?list<mixed> $expected
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerReadStatements')]
+    public function testReadReturnsTheDeclaredIndex(Dialect $dialect, string $defaultSchema, string $sql, ?array $expected): void
+    {
+        $index = (new IndexReader(new Identifiers($dialect), $defaultSchema))->read((new DialectParser($dialect))->parse($sql));
+        self::assertSame($expected, $index === null ? null : [$index->schema, $index->name, $index->table, $index->unique, $index->method, $index->include, $index->predicate === null ? null : Tree::text($index->predicate), $index->source->name, $index->options]);
+    }
+
+    public function testTableReadsEveryKeyAfterOtherConstraints(): void
+    {
+        $indexes = (new IndexReader(new Identifiers(Dialect::MySql), 'dflt'))->table((new DialectParser(Dialect::MySql))->parse('CREATE TABLE t(a INT, PRIMARY KEY (a), key ix using hash (a), KEY jx (a) USING HASH, KEY (a))'), ['app', 't']);
+        self::assertSame([['app', 'ix', ['app', 't'], 'hash', []], ['app', 'jx', ['app', 't'], 'hash', ['using' => 'HASH']], ['app', null, ['app', 't'], null, []]], array_map(static fn (\SqlSemantics\Ast\Declaration\IndexDefinition $index): array => [$index->schema, $index->name, $index->table, $index->method, $index->options], $indexes));
+    }
+
+    public function testTargetReadsTheTokensFollowingOn(): void
+    {
+        $reader = new IndexReader(new Identifiers(Dialect::MySql), 'dflt');
+        $root = (new DialectParser(Dialect::MySql))->parse('CREATE INDEX ix ON db.t (a)');
+        self::assertSame(['db', 't'], $reader->target($root, array_slice($root->tokens(), 4)));
+    }
+
+    /**
+     * @return array<string, array{Dialect, string, ?string, array<string, string|bool|list<string>>, bool}>
+     */
+    public static function providerDefinitionWords(): array
+    {
+        return [
+            'if not exists alone' => [Dialect::Sqlite, 'CREATE TABLE IF NOT EXISTS t(a)', 'ifnotexists', ['if_not_exists' => true], false],
+            'if not exists ending at the ninth word' => [Dialect::PostgreSql, 'SELECT 1; CREATE UNIQUE INDEX IF NOT EXISTS ix ON t(a)', null, ['if_not_exists' => true], false],
+            'if not exists ending at the tenth word' => [Dialect::PostgreSql, 'SELECT 1, 2; CREATE INDEX IF NOT EXISTS ix ON t(a)', null, [], false],
+            'fulltext as third word' => [Dialect::Sqlite, 'SELECT 1 fulltext', null, ['kind' => 'fulltext'], false],
+            'fulltext as fourth word' => [Dialect::Sqlite, 'SELECT a, fulltext', null, [], false],
+            'spatial as third word' => [Dialect::Sqlite, 'SELECT 1 spatial', null, ['kind' => 'spatial'], false],
+            'spatial as fourth word' => [Dialect::Sqlite, 'SELECT a, spatial', null, [], false],
+            'spatial before fulltext' => [Dialect::Sqlite, 'SELECT spatial fulltext', null, ['kind' => 'fulltext'], false],
+            'fulltext after the kind window' => [Dialect::Sqlite, 'SELECT spatial, fulltext', null, ['kind' => 'spatial'], false],
+            'no kind' => [Dialect::Sqlite, 'SELECT 1', null, [], false],
+            'unique alone' => [Dialect::Sqlite, 'CREATE UNIQUE INDEX i ON t(a)', 'uniqueflag', [], true],
+            'unique as fourth word' => [Dialect::Sqlite, 'CREATE TABLE t(a INT NULL UNIQUE)', 'columnlist', [], true],
+            'unique as fifth word' => [Dialect::Sqlite, 'CREATE TABLE t(a INT NOT NULL UNIQUE)', 'columnlist', [], false],
+            'primary first' => [Dialect::Sqlite, 'CREATE TABLE t(a INT PRIMARY KEY)', 'ccons', [], true],
+            'primary as fourth word' => [Dialect::Sqlite, 'CREATE TABLE t(a INT NULL PRIMARY KEY)', 'columnlist', [], true],
+            'primary as fifth word' => [Dialect::Sqlite, 'CREATE TABLE t(a INT NOT NULL PRIMARY KEY)', 'columnlist', [], false],
+        ];
+    }
+
+    /**
+     * @param array<string, string|bool|list<string>> $options
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerDefinitionWords')]
+    public function testDefinitionReadsFlagsFromTheLeadingWords(Dialect $dialect, string $sql, ?string $node, array $options, bool $unique): void
+    {
+        $root = (new DialectParser($dialect))->parse($sql);
+        $index = (new IndexReader(new Identifiers($dialect), 'dflt'))->definition(Tree::outer($root, [$node ?? 'none'])[0] ?? $root, 'main', 'ix', ['main', 't'], []);
+        self::assertSame([$options, $unique], [$index->options, $index->unique]);
     }
 }

@@ -24,13 +24,13 @@ final class FieldSpelling
         if ($token->name !== 'SCONST' && !str_starts_with(strtoupper($text), 'U&')) {
             return $identifiers->name($token);
         }
-        if (preg_match('/^(\$(?:[^$]*)\$)(.*)\1$/s', $text, $dollar) === 1) {
+        if (preg_match('/^(\$(?:[^$]*)\$)(.*)\1$/sD', $text, $dollar) === 1) {
             return $dollar[2];
         }
         $unicode = str_starts_with(strtoupper($text), 'U&');
         $escaped = str_starts_with(strtoupper($text), 'E');
         $escape = '\\';
-        if ($unicode && preg_match("/\\s+UESCAPE\\s+'(.)'$/is", $text, $clause) === 1) {
+        if ($unicode && preg_match("/\\s+UESCAPE\\s+'(.)'$/isD", $text, $clause) === 1) {
             $escape = $clause[1];
             $text = substr($text, 0, -strlen($clause[0]));
         }

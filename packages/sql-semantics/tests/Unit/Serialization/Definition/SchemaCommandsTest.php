@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Serialization\Definition;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -60,4 +61,29 @@ final class SchemaCommandsTest extends TestCase
         self::assertSame('CREATE UNLOGGED TABLE "u"("x") WITH ("fillfactor" = 70) AS SELECT "a" AS "a" FROM "public"."t" WITH NO DATA', SchemaCommands::tableAs($statement)->toString());
     }
 
+    /**
+     * @return list<array{Dialect, ?string, string, mixed}>
+     */
+    public static function providerWriteSpellsTemporaryAndColumnCommands(): array
+    {
+        return [
+            [Dialect::MySql, null, 'DROP TEMPORARY TABLE t', [\SqlSemantics\Model\Statement\Definition\DropTableStatement::class, 'DROP TEMPORARY TABLE `t`']],
+            [Dialect::Sqlite, null, 'ALTER TABLE t DROP COLUMN a', [\SqlSemantics\Model\Statement\Definition\DropColumnStatement::class, 'ALTER TABLE "t" DROP COLUMN "a"']],
+            [Dialect::Sqlite, null, 'ALTER TABLE t ADD COLUMN b INT CHECK (b > 0) NOT NULL DEFAULT 1', [AddColumnStatement::class, 'ALTER TABLE "t" ADD COLUMN "b" "int" NOT NULL DEFAULT 1 CHECK (("b" > 0))']],
+            [Dialect::PostgreSql, null, 'CREATE UNLOGGED TABLE x AS SELECT 1 AS a', [CreateTableAsStatement::class, 'CREATE UNLOGGED TABLE "x" AS SELECT 1 AS "a"']],
+            [Dialect::PostgreSql, null, 'CREATE TEMPORARY TABLE x AS SELECT 1 AS a', [CreateTableAsStatement::class, 'CREATE TEMPORARY TABLE "x" AS SELECT 1 AS "a"']],
+            [Dialect::PostgreSql, null, 'CREATE TABLE x AS SELECT 1 AS a', [CreateTableAsStatement::class, 'CREATE TABLE "x" AS SELECT 1 AS "a"']],
+            [Dialect::MySql, null, 'CREATE TEMPORARY TABLE x AS SELECT 1 AS a', [CreateTableAsStatement::class, 'CREATE TEMPORARY TABLE `x` AS SELECT 1 AS `a`']],
+            [Dialect::Sqlite, null, 'CREATE TEMP TABLE x AS SELECT 1 AS a', [CreateTableAsStatement::class, 'CREATE TEMPORARY TABLE "x" AS SELECT 1 AS "a"']],
+            [Dialect::MySql, null, 'CREATE TABLE x AS SELECT 1 AS a', [CreateTableAsStatement::class, 'CREATE TABLE `x` AS SELECT 1 AS `a`']],
+        ];
+    }
+
+    #[DataProvider('providerWriteSpellsTemporaryAndColumnCommands')]
+    public function testWriteSpellsTemporaryAndColumnCommands(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(a INT, c INT)')))->bind($sql, strict: false);
+        self::assertTrue($statement instanceof \SqlSemantics\Model\Statement\Definition\DropTableStatement || $statement instanceof \SqlSemantics\Model\Statement\Definition\DropColumnStatement || $statement instanceof AddColumnStatement || $statement instanceof CreateTableAsStatement);
+        self::assertSame($expected, [$statement::class, SchemaCommands::write($statement)->toString()]);
+    }
 }

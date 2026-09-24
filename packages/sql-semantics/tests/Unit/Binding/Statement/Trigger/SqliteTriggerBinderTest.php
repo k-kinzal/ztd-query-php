@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Statement\Trigger;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
@@ -58,5 +59,29 @@ final class SqliteTriggerBinderTest extends TestCase
         $delete = $binder->bind('CREATE TRIGGER tr AFTER DELETE ON t BEGIN INSERT INTO u VALUES (OLD.a); END');
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Definition\CreateSqliteTriggerStatement::class, $delete);
         self::assertSame([], $delete->diagnostics);
+    }
+
+    /**
+     * @param list<string> $definitions
+     */
+    #[DataProvider('providerBindReadsLowercaseTriggers')]
+    public function testBindReadsLowercaseTriggers(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    /**
+     * @return iterable<string, array{Dialect, ?string, list<string>, string, string}>
+     */
+    public static function providerBindReadsLowercaseTriggers(): iterable
+    {
+        return [
+            'create trigger tr before insert on t begin select 1; end (Sqlite)' => [Dialect::Sqlite, null, ['CREATE TABLE t (a INT, b INT)'], 'create trigger tr before insert on t begin select 1; end', 'CREATE TRIGGER "tr" BEFORE INSERT ON "main"."t" FOR EACH ROW BEGIN SELECT 1; END'],
+            'create temp trigger if not exists tr after delete on t for each row when old.a > 1 begin select old.a; end (Sqlite)' => [Dialect::Sqlite, null, ['CREATE TABLE t (a INT, b INT)'], 'create temp trigger if not exists tr after delete on t for each row when old.a > 1 begin select old.a; end', 'CREATE TEMP TRIGGER IF NOT EXISTS "tr" AFTER DELETE ON "main"."t" FOR EACH ROW WHEN ("old"."a" > 1) BEGIN SELECT "old"."a" AS "a"; END'],
+            'create trigger tr instead of update of a, b on t begin select new.a; end (Sqlite)' => [Dialect::Sqlite, null, ['CREATE TABLE t (a INT, b INT)'], 'create trigger tr instead of update of a, b on t begin select new.a; end', 'CREATE TRIGGER "tr" INSTEAD OF UPDATE OF "a", "b" ON "main"."t" FOR EACH ROW BEGIN SELECT "new"."a" AS "a"; END'],
+            'create trigger main.tr update on t begin select 1; end (Sqlite)' => [Dialect::Sqlite, null, ['CREATE TABLE t (a INT, b INT)'], 'create trigger main.tr update on t begin select 1; end', 'CREATE TRIGGER "main"."tr" BEFORE UPDATE ON "main"."t" FOR EACH ROW BEGIN SELECT 1; END'],
+            'CREATE TRIGGER tr AFTER UPDATE ON t BEGIN SELECT 1; END (Sqlite)' => [Dialect::Sqlite, null, ['CREATE TABLE t (a INT, b INT)'], 'CREATE TRIGGER tr AFTER UPDATE ON t BEGIN SELECT 1; END', 'CREATE TRIGGER "tr" AFTER UPDATE ON "main"."t" FOR EACH ROW BEGIN SELECT 1; END'],
+        ];
     }
 }

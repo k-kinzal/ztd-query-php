@@ -32,10 +32,14 @@ final class UsingJoin extends Join
 
     /**
      * @param list<SharedColumn> $columns Shared columns in output order
+     * @param bool $straight Whether MySQL STRAIGHT_JOIN fixes the left input to be read first
      * @throws InvalidStructure
      */
-    public function __construct(string $id, JoinKind $kind, TableUse|Join $left, TableUse|Join $right, array $columns, Node $source)
+    public function __construct(string $id, JoinKind $kind, TableUse|Join $left, TableUse|Join $right, array $columns, Node $source, public readonly bool $straight = false)
     {
+        if ($straight && $kind !== JoinKind::Inner) {
+            throw new InvalidStructure('STRAIGHT_JOIN is an inner join.');
+        }
         Collections::objects($columns, SharedColumn::class);
         if ($columns === []) {
             throw new InvalidStructure('USING requires at least one shared column.');
@@ -53,6 +57,6 @@ final class UsingJoin extends Join
     #[Override]
     public function withInputs(TableUse|Join $left, TableUse|Join $right): static
     {
-        return new static($this->id, $this->kind, $left, $right, $this->columns, $this->source);
+        return new static($this->id, $this->kind, $left, $right, $this->columns, $this->source, $this->straight);
     }
 }

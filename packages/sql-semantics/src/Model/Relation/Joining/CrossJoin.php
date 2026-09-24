@@ -25,8 +25,9 @@ final class CrossJoin extends Join
 {
     /**
      * Requires two relational inputs and fixes the operation to a Cartesian product.
+     * @param bool $straight Whether MySQL STRAIGHT_JOIN fixes the left input to be read first
      */
-    public function __construct(string $id, TableUse|Join $left, TableUse|Join $right, Node $source)
+    public function __construct(string $id, TableUse|Join $left, TableUse|Join $right, Node $source, public readonly bool $straight = false)
     {
         parent::__construct($id, JoinKind::Cross, $left, $right, $source);
     }
@@ -37,6 +38,6 @@ final class CrossJoin extends Join
     #[Override]
     public function withInputs(TableUse|Join $left, TableUse|Join $right): static
     {
-        return new static($this->id, $left, $right, $this->source);
+        return new static($this->id, $left, $right, $this->source, $this->straight);
     }
 }

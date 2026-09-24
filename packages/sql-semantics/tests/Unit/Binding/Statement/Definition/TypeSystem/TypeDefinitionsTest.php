@@ -9,15 +9,20 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Ast\DialectParser;
+use SqlSemantics\Ast\Identifiers;
 use SqlSemantics\Ast\Tree;
 use SqlSemantics\Binder;
+use SqlSemantics\Binding\Query\QueryContext;
 use SqlSemantics\Binding\Statement\Definition\TypeSystem\TypeDefinitions;
+use SqlSemantics\Binding\TableResolver;
 use SqlSemantics\Dialect;
 use SqlSemantics\InvalidSql;
 use SqlSemantics\Model\Definition\DropBehavior;
 use SqlSemantics\Model\Definition\TypeSystem\Composite;
 use SqlSemantics\Model\Definition\TypeSystem\Enumeration;
+use SqlSemantics\Model\Relation\QualifiedName;
 use SqlSemantics\Model\Statement\Definition\PostgreSql\Type as Statement;
+use SqlSemantics\Model\Statement\Origin;
 use SqlSemantics\Model\Validation\InputViolation;
 use SqlSemantics\SchemaBuilder;
 
@@ -132,5 +137,51 @@ final class TypeDefinitionsTest extends TestCase
         $types = Tree::outer($tree, ['Typename']);
         self::assertTrue(TypeDefinitions::setOf($types[0]));
         self::assertFalse(TypeDefinitions::setOf($types[1]));
+    }
+
+    #[TestWith(['CREATE TYPE r AS RANGE (subtype = int4)', 'CREATE TYPE "r" AS RANGE(SUBTYPE = integer)'])]
+    #[TestWith(['CREATE TYPE b (input = f, output = g)', 'CREATE TYPE "b"(INPUT = "f", OUTPUT = "g")'])]
+    #[TestWith(['CREATE TYPE s.c AS (a int, b text COLLATE "C")', 'CREATE TYPE "s"."c" AS ("a" integer, "b" text COLLATE "C")'])]
+    #[TestWith(["ALTER TYPE e RENAME VALUE 'a' TO 'b'", "ALTER TYPE \"e\" RENAME VALUE 'a' TO 'b'"])]
+    #[TestWith(["ALTER TYPE e ADD VALUE IF NOT EXISTS 'x' BEFORE 'a'", "ALTER TYPE \"e\" ADD VALUE IF NOT EXISTS 'x' BEFORE 'a'"])]
+    #[TestWith(['ALTER TYPE c DROP ATTRIBUTE IF EXISTS a', 'ALTER TYPE "c" DROP ATTRIBUTE IF EXISTS "a"'])]
+    #[TestWith(['ALTER TYPE c ALTER ATTRIBUTE a SET DATA TYPE text COLLATE s.c', 'ALTER TYPE "c" ALTER ATTRIBUTE "a" TYPE text COLLATE "s"."c"'])]
+    public function testCreateAndAlterWriteBackEveryForm(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+    }
+
+    public function testCollationRejectsAnOverQualifiedName(): void
+    {
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(InputViolation::CatalogObjectName->message());
+        (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TYPE c AS (a int COLLATE a.b.c)');
+    }
+
+    public function testNameAndAttributesReadTheDefinition(): void
+    {
+        $context = new QueryContext(new TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new Identifiers(Dialect::PostgreSql), ''));
+        $tree = Tree::outer((new DialectParser(Dialect::PostgreSql))->parse('CREATE TYPE s.c AS (a int, b text COLLATE s."C")'), ['CompositeTypeStmt', 'DefineStmt'])[0];
+        $elements = Tree::outer($tree, ['TableFuncElement']);
+        self::assertSame(['s', 'c'], TypeDefinitions::name($tree, $context)->parts);
+        self::assertSame(['a', 'b'], array_map(static fn (Composite\CompositeAttribute $attribute): string => $attribute->name, TypeDefinitions::attributes($tree, $context)));
+        self::assertSame('b', TypeDefinitions::attribute($elements[1], $context)->name);
+        self::assertSame(['s', 'C'], TypeDefinitions::collation($elements[1], $context)?->parts);
+    }
+
+    public function testEnumAndLabelReadTheStringConstants(): void
+    {
+        $context = new QueryContext(new TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new Identifiers(Dialect::PostgreSql), ''));
+        $tree = Tree::outer((new DialectParser(Dialect::PostgreSql))->parse("CREATE TYPE e AS ENUM ('a', 'b')"), ['CreateEnumStmt', 'DefineStmt'])[0];
+        $statement = TypeDefinitions::enum(new Origin('s0', $tree, Dialect::PostgreSql), new QualifiedName(['e']), Tree::child($tree, ['opt_enum_val_list']), $tree, $context);
+        self::assertSame(['a', 'b'], $statement->labels);
+        self::assertSame('b', TypeDefinitions::label(Tree::outer($tree, ['Sconst'])[1], $context));
+    }
+
+    public function testChangeReadsOneCommand(): void
+    {
+        $context = new QueryContext(new TableResolver((new SchemaBuilder(Dialect::PostgreSql))->build(), new Identifiers(Dialect::PostgreSql), ''));
+        $command = Tree::outer((new DialectParser(Dialect::PostgreSql))->parse('ALTER TYPE c DROP ATTRIBUTE IF EXISTS a'), ['alter_type_cmd'])[0];
+        self::assertEquals(new Composite\DropAttribute('a', true, DropBehavior::Default), TypeDefinitions::change($command, $context));
     }
 }

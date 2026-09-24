@@ -98,4 +98,36 @@ final class TablePropertiesBinderTest extends TestCase
         $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::CatalogObjectName->message());
         $binder->bind('CREATE TABLE c(z INTEGER) INHERITS (w.x.y.z)');
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['create temp table t(a)', true])]
+    #[\PHPUnit\Framework\Attributes\TestWith(["CREATE TABLE t(a DEFAULT 'CREATE TEMP ')", false])]
+    public function testBindReadsSqliteTemporaryTablesFromTheHead(string $sql, bool $temporary): void
+    {
+        $properties = (new SchemaBuilder(Dialect::Sqlite))->build($sql)->tables[0]->properties;
+        self::assertInstanceOf(SqliteProperties::class, $properties);
+        self::assertSame($temporary, $properties->temporary);
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['create temp table t(a int) on commit delete rows', Persistence::Temporary, CommitAction::DeleteRows])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['CREATE TABLE temp_x(a int)', Persistence::Permanent, CommitAction::PreserveRows])]
+    public function testBindReadsPostgreSqlPersistenceBeforeTheTableKeyword(string $sql, Persistence $persistence, CommitAction $onCommit): void
+    {
+        $properties = (new SchemaBuilder(Dialect::PostgreSql))->build($sql)->tables[0]->properties;
+        self::assertInstanceOf(PostgreSqlProperties::class, $properties);
+        self::assertSame([$persistence, $onCommit], [$properties->persistence, $properties->onCommit]);
+    }
+
+    public function testParentsAcceptsACatalogQualifiedParent(): void
+    {
+        $statement = (new \SqlSemantics\Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE p(a int)')))->bind('CREATE TABLE c(a int) INHERITS (db.public.p)', strict: false);
+        self::assertSame('CREATE TABLE "public"."c"("a" integer) INHERITS("db"."public"."p")', $statement->toString());
+    }
+
+    public function testParentsRejectsAParentWithFourComponents(): void
+    {
+        $binder = new \SqlSemantics\Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE p(a int)'));
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage('The object name does not have the number of components its object class requires.');
+        $binder->bind('CREATE TABLE c(a int) INHERITS (a.db.public.p)', strict: false);
+    }
 }

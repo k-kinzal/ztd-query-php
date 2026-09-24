@@ -258,4 +258,31 @@ final class SchemaTest extends TestCase
         $this->expectException(InvalidStructure::class);
         $schema->withVariables(new \SqlSemantics\Schema\VariableDefinition('a', \SqlSemantics\Schema\VariableScope::User, \SqlSemantics\Type\TypeDescriptor::builtin(Dialect::PostgreSql, 'integer')));
     }
+
+    public function testRejectsTablePropertiesFromAnotherDialect(): void
+    {
+        $mysql = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT) ENGINE=InnoDB');
+        $pg = (new SchemaBuilder(Dialect::PostgreSql))->build();
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('A table must use the schema dialect.');
+        new \SqlSemantics\Schema($pg->dialect, $mysql->tables, $pg->defaultSchema, $pg->grammarVersion);
+    }
+
+    public function testRejectsColumnsFromAnotherDialect(): void
+    {
+        $pg = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
+        $mysql = (new SchemaBuilder(Dialect::MySql))->build();
+        $table = $pg->tables[0];
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('A column must use the schema dialect.');
+        new \SqlSemantics\Schema($mysql->dialect, [new \SqlSemantics\Schema\TableDefinition($table->schema, $table->name, $table->columns, [], $table->source)], $mysql->defaultSchema, $mysql->grammarVersion);
+    }
+
+    public function testWithVariablesKeepsTheSameNameInAnotherScope(): void
+    {
+        $integer = \SqlSemantics\Type\TypeDescriptor::builtin(Dialect::MySql, 'integer');
+        $declared = (new SchemaBuilder(Dialect::MySql))->build()->withVariables(new \SqlSemantics\Schema\VariableDefinition('a', \SqlSemantics\Schema\VariableScope::Session, $integer));
+        $added = $declared->withVariables(new \SqlSemantics\Schema\VariableDefinition('a', \SqlSemantics\Schema\VariableScope::User, $integer));
+        self::assertSame([\SqlSemantics\Schema\VariableScope::Session, \SqlSemantics\Schema\VariableScope::User], array_column($added->variables, 'scope'));
+    }
 }

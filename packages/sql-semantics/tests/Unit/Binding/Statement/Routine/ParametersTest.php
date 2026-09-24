@@ -6,6 +6,7 @@ namespace Tests\Unit\Binding\Statement\Routine;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
@@ -80,4 +81,17 @@ final class ParametersTest extends TestCase
         (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('DROP AGGREGATE f(OUT integer)');
     }
 
+    #[TestWith(['create function f(in out x int, variadic y int[], out z t.a%type) returns int language sql as $$ select 1 $$', \SqlSemantics\Model\Statement\Definition\Routine\CreateFunctionStatement::class, 'CREATE FUNCTION "f"(INOUT "x" integer, VARIADIC "y" integer [], OUT "z" "t"."a" %TYPE) RETURNS integer LANGUAGE "sql" AS $$ select 1 $$'])]
+    #[TestWith(['DROP FUNCTION f(inout int, t.a%TYPE)', PostgreSql\DropFunctionsStatement::class, 'DROP FUNCTION "f"(INOUT integer, "t"."a" %TYPE)'])]
+    public function testArgumentReadsLowercaseModesAndColumnTypes(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind($sql, strict: false);
+        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+    }
+
+    public function testTypeReportsAnUnknownColumnType(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind('CREATE FUNCTION f(x t.zz%TYPE) RETURNS int LANGUAGE sql AS $$ SELECT 1 $$', strict: false);
+        self::assertSame(['Cannot resolve column type: t.zz'], array_map(static fn (\SqlSemantics\Model\Diagnostic $diagnostic): string => $diagnostic->message, $statement->diagnostics));
+    }
 }

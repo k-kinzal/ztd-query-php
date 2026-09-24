@@ -26,13 +26,15 @@ final class CreateBinder
         $tables = $context->tables;
         $create = Tree::outer($statement, ['CreateStmt', 'create_table_stmt', 'create_table'])[0] ?? (preg_match('/^CREATE (TEMPORARY )*TABLE /i', Tree::text($statement)) === 1 ? $statement : null);
         $declarations = [];
+        $parsed = null;
         if ($create !== null) {
             $copy = TableLikeBinder::bind($origin, $create, $context);
             if ($copy !== null) {
                 return $copy;
             }
             $reader = new \SqlSemantics\Ast\SchemaReader($tables->identifiers, $tables->defaultSchema, $tables->diagnostics->report(...));
-            $declarations[] = \SqlSemantics\Binding\Schema\DeclarationBinder::bind($reader->table($tables->identifiers->dialect === \SqlSemantics\Dialect::Sqlite ? $statement : $create), $context);
+            $parsed = $reader->table($tables->identifiers->dialect === \SqlSemantics\Dialect::Sqlite ? $statement : $create);
+            $declarations[] = \SqlSemantics\Binding\Schema\DeclarationBinder::bind($parsed, $context);
         }
         $targets = array_map(fn (\SqlSemantics\Schema\TableDefinition $table): \SqlSemantics\Model\Relation\TableReference => new \SqlSemantics\Model\Relation\TableReference($context->ids->relation(), $origin->scopeId, $table, new \SqlSemantics\Model\Relation\QualifiedName($table->schema === '' ? [$table->name] : [$table->schema, $table->name]), null, $table->source), $declarations);
         $index = (new \SqlSemantics\Ast\Definition\IndexReader($tables->identifiers, $tables->defaultSchema))->read($statement);
@@ -51,7 +53,7 @@ final class CreateBinder
             $postgreSql = $origin->dialect === \SqlSemantics\Dialect::PostgreSql && $create !== null;
             $templates = $postgreSql ? PostgreSqlTable\Templates::read($create, $context) : [];
             $exclusions = $postgreSql ? PostgreSqlTable\Exclusions::read($create, $scope, $context) : [];
-            return new \SqlSemantics\Model\Statement\CreateTableStatement($origin, $definitions[0], $boundIndexes, str_contains(strtoupper(Tree::text($statement)), 'IF NOT EXISTS'), $templates, $exclusions);
+            return new \SqlSemantics\Model\Statement\CreateTableStatement($origin, $definitions[0], $boundIndexes, $parsed->ifNotExists ?? false, $templates, $exclusions, $parsed?->catalog);
         }
         if ($index !== null) {
             return new \SqlSemantics\Model\Statement\CreateIndexStatement($origin, $boundIndexes[0], $targets[0], ($index->options['if_not_exists'] ?? false) === true, ($index->options['concurrently'] ?? false) === true, MySqlTable\AlterPolicies::indexAlgorithm($statement, $tables->identifiers), MySqlTable\AlterPolicies::lock($statement, $tables->identifiers));

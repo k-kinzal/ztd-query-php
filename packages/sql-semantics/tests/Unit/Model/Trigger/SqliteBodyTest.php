@@ -79,4 +79,22 @@ final class SqliteBodyTest extends TestCase
         $this->expectException(InvalidStructure::class);
         SqliteBody::check($step);
     }
+
+    #[TestWith(['INSERT INTO t VALUES (1, 2)'])]
+    #[TestWith(['INSERT INTO t SELECT 1, 2'])]
+    #[TestWith(['UPDATE t SET x = u.id FROM u'])]
+    #[TestWith(['UPDATE t SET x = 1'])]
+    public function testCheckAcceptsEveryMutationStepForm(string $sql): void
+    {
+        $step = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER NOT NULL, x INTEGER); CREATE TABLE u(id INTEGER)')))->bind($sql);
+        $this->expectNotToPerformAssertions();
+        SqliteBody::check($step);
+    }
+
+    public function testCheckRejectsAStatementThatIsNoMutation(): void
+    {
+        $step = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('PRAGMA x');
+        $this->expectException(InvalidStructure::class);
+        SqliteBody::check($step);
+    }
 }

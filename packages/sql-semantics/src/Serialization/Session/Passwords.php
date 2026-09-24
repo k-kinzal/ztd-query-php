@@ -19,14 +19,26 @@ use SqlSemantics\Serialization\Settings;
 final class Passwords
 {
     /**
-     * Writes a single request or the ordered clauses of a MySQL 5.6 account SET.
+     * Writes a single request or the ordered clauses of a MySQL 5.6 account SET; a session item after a scoped item spells SESSION, because the server carries the earlier scope over.
      */
     public static function write(Statement\SetPasswordStatement|Statement\SetPasswordHashStatement|Statement\SetDerivedPasswordStatement|Statement\SetRandomPasswordStatement|Statement\SetAccountOptionsStatement $statement): Tree
     {
         if (!$statement instanceof Statement\SetAccountOptionsStatement) {
             return new Tree('set-password', [Build::keyword('SET'), self::clause($statement)]);
         }
-        $clauses = array_map(static fn ($operation): Tree => $operation instanceof SetStatement ? Settings::assignment($operation->settings[0], $operation->origin->dialect) : self::clause($operation), $statement->operations);
+        $clauses = [];
+        $carried = \SqlSemantics\Model\Configuration\SettingScope::Session;
+        foreach ($statement->operations as $operation) {
+            if (!$operation instanceof SetStatement) {
+                $clauses[] = self::clause($operation);
+                continue;
+            }
+            $setting = $operation->settings[0];
+            $clauses[] = Settings::assignment($setting, $operation->origin->dialect, $carried);
+            if ($setting instanceof \SqlSemantics\Model\Configuration\AssignedSetting || $setting instanceof \SqlSemantics\Model\Configuration\DefaultSetting) {
+                $carried = $setting->scope;
+            }
+        }
         return new Tree('account-set', [Build::keyword('SET'), Build::separated($clauses)]);
     }
 

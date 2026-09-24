@@ -29,4 +29,20 @@ final class MySqlNamesTest extends TestCase
         $token = new \SqlParser\Lexer\Token(0, 'IDENT_QUOTED', '`a\\b``c`', 0);
         self::assertSame('a\\b`c', \SqlSemantics\Ast\MySqlNames::read($token, new \SqlSemantics\Ast\Identifiers(Dialect::MySql)));
     }
+
+    #[TestWith(["'a\\0b'", "a\0b"])]
+    #[TestWith(["'a\\rb'", "a\rb"])]
+    #[TestWith(["'a\\bb'", "a\x08b"])]
+    #[TestWith(["'a\\tb'", "a\tb"])]
+    #[TestWith(["'a\\Zb'", "a\x1ab"])]
+    #[TestWith(["'a\\_b'", 'a\\_b'])]
+    #[TestWith(["'a\\qb'", 'aqb'])]
+    #[TestWith(["'a\\\\b'", 'a\\b'])]
+    #[TestWith(['"a""b"', 'a"b'])]
+    #[TestWith(['"a\'\'b"', "a''b"])]
+    public function testReadDecodesEveryEscape(string $text, string $expected): void
+    {
+        $token = new \SqlParser\Lexer\Token(0, 'TEXT_STRING', $text, 0);
+        self::assertSame($expected, \SqlSemantics\Ast\MySqlNames::read($token, new \SqlSemantics\Ast\Identifiers(Dialect::MySql)));
+    }
 }

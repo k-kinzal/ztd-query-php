@@ -31,25 +31,27 @@ final class ViewBinder
      */
     public static function bind(Origin $origin, Node $source, QueryContext $context): ?CreateViewStatement
     {
-        $words = array_map(static fn ($token): string => strtoupper($token->text), $source->tokens());
-        if (($words[0] ?? '') !== 'CREATE' || in_array('MATERIALIZED', $words, true)) {
+        $query = \SqlSemantics\Binding\Query\QueryNodes::legacyContainer($source) ?? Tree::outer($source, ['SelectStmt', 'select_stmt', 'select', 'query_expression', 'view_select', 'view_query_block'])[0] ?? null;
+        $start = $query?->tokens()[0]->offset ?? PHP_INT_MAX;
+        $words = array_map(static fn ($token): string => strtoupper($token->text), array_values(array_filter($source->tokens(), static fn ($token): bool => $token->offset < $start)));
+        if (($words[0] ?? '') !== 'CREATE' || MaterializedViewBinder::declares($words)) {
             return null;
         }
-        $query = \SqlSemantics\Binding\Query\QueryNodes::legacyContainer($source) ?? Tree::outer($source, ['SelectStmt', 'select_stmt', 'select', 'query_expression', 'view_select', 'view_query_block'])[0] ?? null;
         if ($query === null || !in_array('VIEW', array_slice($words, 0, is_int($position = array_search('AS', $words, true)) ? $position : count($words)), true)) {
             return null;
         }
         if ($query->name === 'view_query_block') {
             $query = Tree::outer($query, ['query_expression'])[0] ?? $query;
         }
-        $text = strtoupper(Tree::text($source));
-        $check = !str_contains($text, 'CHECK OPTION') ? ViewCheck::None : (str_contains($text, 'LOCAL CHECK OPTION') ? ViewCheck::Local : ViewCheck::Cascaded);
+        $text = implode(' ', $words);
+        $option = array_values(array_filter(Tree::outer($source, ['opt_check_option', 'view_check_option']), Tree::hasTokens(...)))[0] ?? null;
+        $check = $option === null ? ViewCheck::None : (str_contains(strtoupper(Tree::text($option)), 'LOCAL') ? ViewCheck::Local : ViewCheck::Cascaded);
         $properties = match ($origin->dialect) {
             Dialect::MySql => self::mysql($source, $context),
             Dialect::PostgreSql => new PostgreSqlViewProperties(in_array('RECURSIVE', array_slice($words, 0, 5), true), \SqlSemantics\Binding\Schema\StorageParameters::read($source, new Scope($context->tables->identifiers, queries: $context), ['SelectStmt'])),
             Dialect::Sqlite => null,
         };
-        return new CreateViewStatement($origin, ObjectBinder::name($source, $context), $context->bind($query), self::columns($source, $context), preg_match('/^CREATE (OR REPLACE )?(TEMP|TEMPORARY) /', $text) === 1, str_contains($text, 'OR REPLACE'), $origin->dialect === Dialect::Sqlite && Tree::child($source, ['ifnotexists']) !== null, $check, $properties);
+        return new CreateViewStatement($origin, ObjectBinder::name($source, $context), $context->bind($query), self::columns($source, $context), preg_match('/^CREATE (OR REPLACE )?(TEMP|TEMPORARY) /', $text) === 1, str_starts_with($text, 'CREATE OR REPLACE '), $origin->dialect === Dialect::Sqlite && Tree::child($source, ['ifnotexists']) !== null, $check, $properties);
     }
 
     /**

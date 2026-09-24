@@ -60,4 +60,15 @@ final class LoadableFunctionsTest extends TestCase
         $this->expectExceptionMessage(InputViolation::ServerDefinition->message());
         (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("CREATE FUNCTION `` RETURNS REAL SONAME 'u.so'");
     }
+
+    #[TestWith(['mysql-5.6.51', 'CREATE FUNCTION f RETURNS REAL SONAME \'x.so\'', CreateLoadableFunctionStatement::class, 'CREATE FUNCTION `f` RETURNS REAL SONAME \'x.so\''])]
+    #[TestWith(['mysql-5.7.44', 'CREATE FUNCTION f RETURNS REAL SONAME \'x.so\'', CreateLoadableFunctionStatement::class, 'CREATE FUNCTION `f` RETURNS REAL SONAME \'x.so\''])]
+    #[TestWith(['mysql-8.0.44', 'CREATE FUNCTION f RETURNS REAL SONAME \'x.so\'', CreateLoadableFunctionStatement::class, 'CREATE FUNCTION `f` RETURNS REAL SONAME \'x.so\''])]
+    #[TestWith(['mysql-8.4.7', 'CREATE FUNCTION f RETURNS REAL SONAME \'x.so\'', CreateLoadableFunctionStatement::class, 'CREATE FUNCTION `f` RETURNS REAL SONAME \'x.so\''])]
+    #[TestWith(['mysql-9.1.0', 'CREATE FUNCTION f RETURNS REAL SONAME \'x.so\'', CreateLoadableFunctionStatement::class, 'CREATE FUNCTION `f` RETURNS REAL SONAME \'x.so\''])]
+    public function testBindReadsTheRealResultUnderEveryGrammar(string $version, string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build()))->bind($sql, strict: false);
+        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+    }
 }

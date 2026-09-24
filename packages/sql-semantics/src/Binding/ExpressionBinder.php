@@ -86,6 +86,9 @@ final class ExpressionBinder
 
     /**
      * Resolves a scalar terminal as a literal, parameter, or column.
+     *
+     * A SQLite keyword standing alone as an expression can only be there through the grammar's
+     * `%fallback ID` list, so it names a column like any other identifier.
      * @throws Statement\UnclassifiedSql
      * @throws \SqlSemantics\InvalidSql
      */
@@ -110,6 +113,9 @@ final class ExpressionBinder
         $context = (new Scalar\ContextValueBinder())->bind(new Node('context', 0, [$token]), $scope);
         if ($context !== null) {
             return $context;
+        }
+        if ($scope->identifiers->dialect === \SqlSemantics\Dialect::Sqlite && preg_match('/^[A-Za-z_][A-Za-z0-9_$]*$/D', $token->text) === 1) {
+            return $scope->column([$scope->identifiers->name($token)], $token);
         }
         throw new Statement\UnclassifiedSql('Unclassified expression terminal: ' . $token->name . ' ' . $token->text);
     }

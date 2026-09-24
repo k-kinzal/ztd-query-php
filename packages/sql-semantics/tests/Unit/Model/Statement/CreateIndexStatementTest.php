@@ -214,4 +214,32 @@ final class CreateIndexStatementTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new \SqlSemantics\Model\Statement\CreateIndexStatement($statement->origin, $statement->index, $statement->table, lock: \SqlSemantics\Model\Definition\IndexLock::None);
     }
+
+    public function testAcceptsAnUnnamedPostgresIndexByDefault(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('CREATE INDEX ON t(id)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateIndexStatement::class, $statement);
+        $rebuilt = new \SqlSemantics\Model\Statement\CreateIndexStatement($statement->origin, $statement->index, $statement->table);
+        self::assertFalse($rebuilt->ifNotExists);
+        self::assertFalse($rebuilt->concurrently);
+        self::assertSame('CREATE INDEX ON "public"."t"("id")', $rebuilt->toString());
+        self::assertTrue((new \SqlSemantics\Model\Statement\CreateIndexStatement($statement->origin, $statement->index, $statement->table, concurrently: true))->concurrently);
+    }
+
+    public function testRejectsAnUnnamedIndexCreatedIfAbsent(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind('CREATE INDEX ON t(id)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateIndexStatement::class, $statement);
+        $this->expectExceptionObject(new InvalidStructure('This index creation requires an explicit index name.'));
+        new \SqlSemantics\Model\Statement\CreateIndexStatement($statement->origin, $statement->index, $statement->table, ifNotExists: true);
+    }
+
+    public function testRejectsConcurrentCreationOutsidePostgres(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INTEGER)')))->bind('CREATE INDEX ix ON t(id)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateIndexStatement::class, $statement);
+        self::assertFalse((new \SqlSemantics\Model\Statement\CreateIndexStatement($statement->origin, $statement->index, $statement->table))->concurrently);
+        $this->expectExceptionObject(new InvalidStructure('Concurrent index creation requires PostgreSQL.'));
+        new \SqlSemantics\Model\Statement\CreateIndexStatement($statement->origin, $statement->index, $statement->table, concurrently: true);
+    }
 }

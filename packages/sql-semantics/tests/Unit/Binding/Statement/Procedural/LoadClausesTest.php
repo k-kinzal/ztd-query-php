@@ -9,8 +9,11 @@ use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Ast\DialectParser;
+use SqlSemantics\Ast\Identifiers;
 use SqlSemantics\Binder;
+use SqlSemantics\Binding\Query\QueryContext;
 use SqlSemantics\Binding\Statement\Procedural\LoadClauses;
+use SqlSemantics\Binding\TableResolver;
 use SqlSemantics\Dialect;
 use SqlSemantics\InvalidSql;
 use SqlSemantics\Model\Statement\Loading\LoadFileStatement;
@@ -91,5 +94,87 @@ final class LoadClausesTest extends TestCase
     public function testDecimalConvertsHexadecimalDigits(): void
     {
         self::assertSame(['0', '255', '4096'], [LoadClauses::decimal('0'), LoadClauses::decimal('ff'), LoadClauses::decimal('1000')]);
+    }
+
+    #[TestWith(["LOAD XML INFILE 'f' INTO TABLE t ROWS IDENTIFIED BY '<r>'", "'<r>'"])]
+    #[TestWith(["LOAD XML INFILE 'f' INTO TABLE t", null])]
+    public function testLayoutReadsTheXmlRowTagAsTheLineTerminator(string $sql, ?string $terminator): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind($sql);
+        self::assertInstanceOf(LoadFileStatement::class, $statement);
+        self::assertSame([$terminator, 0], [$statement->layout->lines->terminator?->text, $statement->layout->skippedRows]);
+    }
+
+    public function testLayoutReadsLowercaseClausesAndOptionallyEnclosedAlone(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind("load data infile 'f' into table t fields optionally enclosed by '\"' escaped by 'x' lines starting by 'y'");
+        self::assertInstanceOf(LoadFileStatement::class, $statement);
+        $layout = $statement->layout;
+        self::assertSame([null, "'\"'", true, "'x'", "'y'"], [$layout->fields->terminator?->text, $layout->fields->enclosure?->text, $layout->fields->optionallyEnclosed, $layout->fields->escape?->text, $layout->lines->start?->text]);
+    }
+
+    public function testLayoutKeepsAPlainEnclosureNotOptional(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind("LOAD DATA INFILE 'f' INTO TABLE t FIELDS TERMINATED BY ',' ENCLOSED BY '\"'");
+        self::assertInstanceOf(LoadFileStatement::class, $statement);
+        self::assertSame(["'\"'", false], [$statement->layout->fields->enclosure?->text, $statement->layout->fields->optionallyEnclosed]);
+    }
+
+    public function testLayoutRejectsAMultiByteEnclosure(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)'));
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(InputViolation::LoadOption->message());
+        $binder->bind("LOAD DATA INFILE 'f' INTO TABLE t FIELDS ENCLOSED BY 'ab'");
+    }
+
+    #[TestWith(['mysql-5.6.51', 'load', 'charset default', null])]
+    #[TestWith(['mysql-8.4.7', 'load_stmt', 'CHARACTER SET Binary', 'binary'])]
+    #[TestWith(['mysql-8.4.7', 'load_stmt', 'CHARACTER SET utf8mb4', 'utf8mb4'])]
+    public function testCharacterSetReadsTheClauseOfTheStatement(string $version, string $rule, string $clause, ?string $name): void
+    {
+        $context = new QueryContext(new TableResolver((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build(), new Identifiers(Dialect::MySql), ''));
+        $node = (new DialectParser(Dialect::MySql, $version))->parse("LOAD DATA INFILE 'f' INTO TABLE t " . $clause)->find($rule)[0];
+        self::assertSame($name, LoadClauses::characterSet($node, $context));
+    }
+
+    #[TestWith(['COUNT 3', 3])]
+    #[TestWith(['count 2', 2])]
+    #[TestWith(['COUNT 1', 1])]
+    public function testFileCountReadsAPositiveCount(string $clause, int $count): void
+    {
+        $node = (new DialectParser(Dialect::MySql, 'mysql-8.4.7'))->parse("LOAD DATA INFILE 'f' " . $clause . ' INTO TABLE t ALGORITHM = BULK')->find('load_stmt')[0];
+        self::assertSame($count, LoadClauses::fileCount($node));
+    }
+
+    public function testFileCountIsNullWithoutTheClause(): void
+    {
+        $node = (new DialectParser(Dialect::MySql, 'mysql-8.4.7'))->parse("LOAD DATA INFILE 'f' INTO TABLE t ALGORITHM = BULK")->find('load_stmt')[0];
+        self::assertNull(LoadClauses::fileCount($node));
+    }
+
+    #[TestWith(['1K', '1024'])]
+    #[TestWith(['1M', '1048576'])]
+    #[TestWith(['3g', '3221225472'])]
+    #[TestWith(['1000000000K', '1024000000000'])]
+    #[TestWith(['00000000001K', '1024'])]
+    #[TestWith(['1073741824K', '1099511627776'])]
+    public function testMemoryReadsSuffixedSizes(string $size, string $bytes): void
+    {
+        $node = (new DialectParser(Dialect::MySql, 'mysql-8.4.7'))->parse("LOAD DATA INFILE 'f' INTO TABLE t MEMORY = " . $size . ' ALGORITHM = BULK')->find('load_stmt')[0];
+        self::assertSame($bytes, LoadClauses::memory($node));
+    }
+
+    #[TestWith(['a0x10'])]
+    #[TestWith(['0x10K'])]
+    #[TestWith(['a10'])]
+    #[TestWith(['a10K'])]
+    #[TestWith(['10KB'])]
+    public function testMemoryRejectsAnIdentifierSize(string $size): void
+    {
+        $node = (new DialectParser(Dialect::MySql, 'mysql-8.4.7'))->parse("LOAD DATA INFILE 'f' INTO TABLE t MEMORY = " . $size . ' ALGORITHM = BULK')->find('load_stmt')[0];
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(InputViolation::LoadOption->message());
+        LoadClauses::memory($node);
     }
 }

@@ -20,9 +20,12 @@ final class CatalogStatements
      */
     public static function write(BoundStatement $statement): ?Tree
     {
-        return CatalogCommands::write($statement)
-            ?? CatalogRemovals::write($statement)
-            ?? RelationCommands::write($statement)
-            ?? ForeignTables::write($statement);
+        foreach ([CatalogCommands::write(...), CatalogRemovals::write(...), RelationCommands::write(...), ForeignTables::write(...)] as $writer) {
+            $tree = $writer($statement);
+            if ($tree !== null) {
+                return $tree;
+            }
+        }
+        return null;
     }
 }

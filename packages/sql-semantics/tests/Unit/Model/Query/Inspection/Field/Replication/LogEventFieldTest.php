@@ -22,6 +22,10 @@ final class LogEventFieldTest extends TestCase
 
     #[TestWith([LogEventField::Position, 'bigint'])]
     #[TestWith([LogEventField::Info, 'varchar'])]
+    #[TestWith([LogEventField::ServerId, 'bigint'])]
+    #[TestWith([LogEventField::EndPosition, 'bigint'])]
+    #[TestWith([LogEventField::LogName, 'varchar'])]
+    #[TestWith([LogEventField::EventType, 'varchar'])]
     public function testTypeDeclaresTheBuiltinIdentityOfTheField(LogEventField $field, string $expected): void
     {
         self::assertSame($expected, $field->type());

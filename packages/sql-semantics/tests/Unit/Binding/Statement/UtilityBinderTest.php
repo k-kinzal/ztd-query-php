@@ -149,7 +149,7 @@ final class UtilityBinderTest extends TestCase
         self::assertSame('id', $statement->query->outputs[0]->name);
     }
 
-    public function testCommandsRetainsCursorAndQueryBoundaries(): void
+    public function testBindRetainsCursorAndQueryBoundaries(): void
     {
         $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)');
         $statement = (new Binder($schema))->bind('EXPLAIN DECLARE cur CURSOR FOR SELECT id FROM t');
@@ -182,4 +182,13 @@ final class UtilityBinderTest extends TestCase
         self::assertSame('integer', $primary->keys[0]->value()->type->name);
     }
 
+    public function testBindRoutesPragmaAndSettingStatements(): void
+    {
+        $pragma = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build()))->bind('PRAGMA cache_size');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\ReadPragmaStatement::class, $pragma);
+        self::assertSame('PRAGMA "cache_size"', $pragma->toString());
+        $setting = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('SET work_mem = 1');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Configuration\SetStatement::class, $setting);
+        self::assertSame('SET "work_mem" = 1', $setting->toString());
+    }
 }

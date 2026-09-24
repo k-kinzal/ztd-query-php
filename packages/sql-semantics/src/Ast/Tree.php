@@ -105,6 +105,21 @@ final class Tree
     }
 
     /**
+     * Returns the uppercase words of a clause outside its nested expressions, so that a name spelled like a keyword inside an expression is never read as that keyword.
+     * @return list<string>
+     */
+    public static function keywords(Node $clause): array
+    {
+        $nested = [];
+        foreach (self::outer($clause, ['a_expr', 'b_expr', 'c_expr', 'expr', 'bit_expr']) as $expression) {
+            foreach ($expression->tokens() as $token) {
+                $nested[$token->offset] = true;
+            }
+        }
+        return array_map(static fn (Token $token): string => strtoupper($token->text), array_values(array_filter($clause->tokens(), static fn (Token $token): bool => !isset($nested[$token->offset]))));
+    }
+
+    /**
      * @throws SemanticException
      */
     public static function invalid(Node|Token $node, string $context): never

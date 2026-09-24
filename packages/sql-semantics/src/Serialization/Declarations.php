@@ -36,13 +36,15 @@ final class Declarations
         $table = $statement->definition->table;
         $dialect = $statement->origin->dialect;
         $columns = [];
+        $columnKey = self::columnKey($table, $dialect);
         foreach ($table->columns as $position => $column) {
             array_push($columns, ...Definition\Table\PostgreSqlTables::templates($statement->templates, $position));
-            $columns[] = Definition\Columns::write($column, $dialect);
+            $written = Definition\Columns::write($column, $dialect);
+            $columns[] = $columnKey !== null && $columnKey->localColumns() === [$column->name] ? new Tree('column', [$written, Definition\Constraints::column($columnKey, $dialect)]) : $written;
         }
         array_push($columns, ...Definition\Table\PostgreSqlTables::templates($statement->templates, count($table->columns)));
         foreach ($table->constraints as $constraint) {
-            if ($dialect === \SqlSemantics\Dialect::Sqlite && $constraint instanceof PrimaryKey && array_filter($table->columns, static fn ($column): bool => $column->generation instanceof AutoIncrementColumn) !== []) {
+            if ($constraint === $columnKey || $dialect === \SqlSemantics\Dialect::Sqlite && $constraint instanceof PrimaryKey && array_filter($table->columns, static fn ($column): bool => $column->generation instanceof AutoIncrementColumn) !== []) {
                 continue;
             }
             $columns[] = Definition\Constraints::write($constraint, $dialect);
@@ -57,7 +59,30 @@ final class Declarations
         $modifier = $properties instanceof Table\PostgreSqlProperties ? match ($properties->persistence) {
             Table\Persistence::Permanent => '', Table\Persistence::Temporary => 'TEMPORARY ', Table\Persistence::Unlogged => 'UNLOGGED ',
         } : (($properties instanceof Table\MySqlProperties || $properties instanceof Table\SqliteProperties) && $properties->temporary ? 'TEMPORARY ' : '');
-        return new Tree('create-table', [Build::keyword('CREATE ' . $modifier . 'TABLE' . ($statement->ifNotExists ? ' IF NOT EXISTS' : '')), Build::identifier(self::tableName($table), $dialect), Build::parentheses(Build::separated($columns)), Definition\Storage::table($properties, $dialect)]);
+        return new Tree('create-table', [Build::keyword('CREATE ' . $modifier . 'TABLE' . ($statement->ifNotExists ? ' IF NOT EXISTS' : '')), Build::identifier($statement->catalog === null ? self::tableName($table) : [$statement->catalog, $table->schema, $table->name], $dialect), Build::parentheses(Build::separated($columns)), Definition\Storage::table($properties, $dialect)]);
+    }
+
+    /**
+     * Returns the SQLite primary key that must stay a column constraint: a descending key on one INTEGER column that
+     * may hold NULL was declared on the column, where DESC keeps it from aliasing the rowid, while the same key
+     * written as a table constraint would alias the rowid and forbid NULL.
+     */
+    public static function columnKey(\SqlSemantics\Schema\TableDefinition $table, \SqlSemantics\Dialect $dialect): ?PrimaryKey
+    {
+        if ($dialect !== \SqlSemantics\Dialect::Sqlite) {
+            return null;
+        }
+        foreach ($table->constraints as $constraint) {
+            if (!$constraint instanceof PrimaryKey || count($constraint->keys) !== 1 || $constraint->keys[0]->direction !== \SqlSemantics\Schema\Index\Direction::Descending) {
+                continue;
+            }
+            foreach ($table->columns as $column) {
+                if ($constraint->localColumns() === [$column->name] && $column->type->name === 'integer' && $column->nullability !== \SqlSemantics\Type\Nullability::NotNull) {
+                    return $constraint;
+                }
+            }
+        }
+        return null;
     }
 
     /**

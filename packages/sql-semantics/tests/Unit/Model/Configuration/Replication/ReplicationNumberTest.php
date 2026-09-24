@@ -57,4 +57,34 @@ final class ReplicationNumberTest extends TestCase
         self::assertSame(1.5, ReplicationNumber::real($decimal->port));
         self::assertSame(16.0, ReplicationNumber::real($hex->port));
     }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(["X'0F'", 15.0])]
+    #[\PHPUnit\Framework\Attributes\TestWith(["x''", 0.0])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['0X1F', 31.0])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['12.9e3', 12.0])]
+    public function testMagnitudeReadsEveryHexadecimalSpelling(string $sql, float $expected): void
+    {
+        $literal = (new \SqlSemantics\Binding\LiteralBinder(Dialect::MySql))->bind((new \SqlSemantics\Ast\DialectParser(Dialect::MySql))->parse('SELECT ' . $sql)->tokens()[1]);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\Literal::class, $literal);
+        self::assertSame($expected, ReplicationNumber::magnitude($literal));
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(["X'10'", 16.0])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['0X10', 16.0])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['2.5e1', 25.0])]
+    public function testRealReadsUpperCaseHexadecimalAsItsMagnitude(string $sql, float $expected): void
+    {
+        $literal = (new \SqlSemantics\Binding\LiteralBinder(Dialect::MySql))->bind((new \SqlSemantics\Ast\DialectParser(Dialect::MySql))->parse('SELECT ' . $sql)->tokens()[1]);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\Literal::class, $literal);
+        self::assertSame($expected, ReplicationNumber::real($literal));
+    }
+
+    public function testCheckNamesTheOperandItRejects(): void
+    {
+        $literal = (new \SqlSemantics\Binding\LiteralBinder(Dialect::MySql))->bind((new \SqlSemantics\Ast\DialectParser(Dialect::MySql))->parse("SELECT 'p'")->tokens()[1]);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\Literal::class, $literal);
+        $this->expectException(InvalidStructure::class);
+        $this->expectExceptionMessage('port requires an unsigned MySQL number literal.');
+        ReplicationNumber::check($literal, 'port');
+    }
 }

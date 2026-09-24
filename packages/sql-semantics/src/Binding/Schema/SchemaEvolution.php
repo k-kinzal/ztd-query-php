@@ -66,10 +66,10 @@ final class SchemaEvolution
             $tables = $schema->tables;
             foreach ($tables as $index => $existing) {
                 if ($identifiers->relationEqual($existing->name, $table->name) && $identifiers->relationEqual($existing->schema, $table->schema)) {
-                    if (str_contains($text, 'IF NOT EXISTS')) {
+                    if (preg_match('/^CREATE ([A-Z_]+ )*?(TABLE|VIEW) IF NOT EXISTS /', $text) === 1) {
                         return $tables;
                     }
-                    if (!str_contains($text, 'OR REPLACE')) {
+                    if (!str_starts_with($text, 'CREATE OR REPLACE ')) {
                         throw new SemanticException('duplicate-table', 'Duplicate table declaration: ' . $table->name, $statement);
                     }
                     $tables[$index] = $table;

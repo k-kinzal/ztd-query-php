@@ -224,4 +224,20 @@ final class IndexEvolutionTest extends TestCase
         self::assertSame([], $schema->tables[1]->indexes);
     }
 
+    public function testAddReportsADuplicateByDefault(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER); CREATE INDEX ix ON t(id)');
+        $evolution = new \SqlSemantics\Binding\Schema\IndexEvolution(new \SqlSemantics\Binding\TableResolver($schema, new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql), 'public'));
+        $this->expectException(\SqlSemantics\SemanticException::class);
+        $this->expectExceptionMessage('Duplicate index declaration: ix');
+        $evolution->add($schema->tables[0], $schema->tables[0]->indexes[0]);
+    }
+
+    public function testApplyKeepsTheTablesForAnotherStatement(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER); CREATE INDEX ix ON t(id)');
+        $evolution = new \SqlSemantics\Binding\Schema\IndexEvolution(new \SqlSemantics\Binding\TableResolver($schema, new \SqlSemantics\Ast\Identifiers(Dialect::PostgreSql), 'public'));
+        self::assertSame($schema->tables, $evolution->apply((new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('CREATE TABLE u(a INTEGER)')));
+        self::assertSame([], $evolution->drop((new \SqlSemantics\Ast\DialectParser(Dialect::PostgreSql))->parse('DROP INDEX ix'))[0]->indexes);
+    }
 }

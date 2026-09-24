@@ -49,4 +49,9 @@ final class OrderedSetAggregateTest extends TestCase
         new Routine\OrderedSetAggregate(new QualifiedName(['f']), [$argument], [$argument, $argument]);
     }
 
+    public function testSignatureRejectsMoreThanCatalogSchemaAndAggregate(): void
+    {
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        new Routine\OrderedSetAggregate(new QualifiedName(['x', 'a', 'b', 'f']), [], [new Routine\AggregateParameter(\SqlSemantics\Type\TypeDescriptor::builtin(Dialect::PostgreSql, 'integer'))]);
+    }
 }

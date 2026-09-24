@@ -44,4 +44,14 @@ final class ExtensionsTest extends TestCase
     {
         self::assertSame("'it''s'", Extensions::text("it's")->toString());
     }
+
+    #[TestWith(["CREATE EXTENSION IF NOT EXISTS e SCHEMA s VERSION '1' CASCADE", 'CREATE EXTENSION IF NOT EXISTS "e" SCHEMA "s" VERSION \'1\' CASCADE'])]
+    #[TestWith(['CREATE EXTENSION e', 'CREATE EXTENSION "e"'])]
+    #[TestWith(['ALTER EXTENSION e ADD TABLE t', 'ALTER EXTENSION "e" ADD TABLE "t"'])]
+    #[TestWith(['ALTER EXTENSION e DROP FUNCTION f()', 'ALTER EXTENSION "e" DROP FUNCTION "f"()'])]
+    #[TestWith(['CREATE OR REPLACE TRUSTED LANGUAGE l HANDLER h INLINE i VALIDATOR v', 'CREATE OR REPLACE TRUSTED LANGUAGE "l" HANDLER "h" INLINE "i" VALIDATOR "v"'])]
+    public function testWriteSpellsEveryExtensionClause(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind($sql)->toString());
+    }
 }

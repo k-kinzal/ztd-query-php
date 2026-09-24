@@ -34,7 +34,7 @@ final class QueryNodes
         }
         $result = [];
         foreach ($node->children as $child) {
-            if (!$child instanceof Node || ($child->name === 'table_factor' && self::isBody($child)) || (in_array($child->name, ['SelectStmt', 'select_stmt', 'select', 'select_with_parens', 'subquery', 'subselect', 'table_subquery', 'select_derived_union', 'insert_query_expression', 'create_select', 'with_clause', 'wqlist', 'a_expr', 'expr', 'func_expr'], true) && !in_array($node->name, ['parse_toplevel', 'stmtmulti', 'toplevel_stmt', 'stmt', 'start_entry', 'sql_statement', 'simple_statement_or_begin', 'simple_statement', 'input', 'cmdlist', 'ecmd', 'cmdx', 'cmd', 'query', 'verb_clause', 'statement'], true))) {
+            if (!$child instanceof Node || ($child->name === 'table_factor' && self::isBody($child)) || (in_array($child->name, ['SelectStmt', 'select_stmt', 'select', 'select_with_parens', 'subquery', 'subselect', 'table_subquery', 'select_derived_union', 'insert_query_expression', 'create_select', 'with_clause', 'wqlist', 'a_expr', 'expr', 'func_expr', 'func_application'], true) && !in_array($node->name, ['parse_toplevel', 'stmtmulti', 'toplevel_stmt', 'stmt', 'start_entry', 'sql_statement', 'simple_statement_or_begin', 'simple_statement', 'input', 'cmdlist', 'ecmd', 'cmdx', 'cmd', 'query', 'verb_clause', 'statement'], true))) {
                 continue;
             }
             array_push($result, ...self::local($child, $names));

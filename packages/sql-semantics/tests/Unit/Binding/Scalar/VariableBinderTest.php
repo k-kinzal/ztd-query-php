@@ -6,6 +6,7 @@ namespace Tests\Unit\Binding\Scalar;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
 use SqlSemantics\Binding\Scalar\VariableBinder;
@@ -59,5 +60,20 @@ final class VariableBinderTest extends TestCase
         self::assertSame('a', $assignment->value->columnBinding()?->column->name);
         self::assertSame('integer', $assignment->type->name);
         self::assertSame('SELECT (@`b` := `a`) FROM `t`', $statement->toString());
+    }
+
+    /**
+     * @param list<string> $texts
+     */
+    #[TestWith([['@', 'global', '.', 'x'], 'Cannot resolve variable: global.x'])]
+    #[TestWith([['@', '@', 'local', '.', 'x'], 'Cannot resolve variable: x'])]
+    #[TestWith([['@', '@', 'k', '.', 'x'], 'Cannot resolve variable: k.x'])]
+    #[TestWith([['@', 'u'], 'Cannot resolve variable: u'])]
+    public function testBindReportsTheUnresolvedVariableName(array $texts, string $message): void
+    {
+        $tokens = array_map(static fn (string $text): \SqlParser\Lexer\Token => new \SqlParser\Lexer\Token(0, 'IDENT', $text, 0), $texts);
+        $this->expectException(\SqlSemantics\SemanticException::class);
+        $this->expectExceptionMessage($message);
+        (new VariableBinder())->bind(new \SqlParser\Parser\Node('variable', 0, $tokens), new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::MySql)));
     }
 }

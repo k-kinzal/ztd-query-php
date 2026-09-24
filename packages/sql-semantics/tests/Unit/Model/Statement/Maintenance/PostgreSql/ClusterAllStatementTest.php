@@ -41,4 +41,11 @@ final class ClusterAllStatementTest extends TestCase
         $this->expectException(InvalidStructure::class);
         new ClusterAllStatement(new Origin($statement->origin->scopeId, $statement->origin->source, Dialect::MySql));
     }
+
+    public function testVerboseDefaultsToOff(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CLUSTER (VERBOSE)');
+        self::assertInstanceOf(ClusterAllStatement::class, $statement);
+        self::assertFalse((new ClusterAllStatement($statement->origin))->verbose);
+    }
 }

@@ -5,10 +5,15 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Scalar;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
+use SqlParser\Lexer\Token;
+use SqlParser\Parser\Node;
+use SqlSemantics\Ast\Identifiers;
 use SqlSemantics\Binder;
 use SqlSemantics\Binding\Scalar\ContextValueBinder;
+use SqlSemantics\Binding\Scope;
 use SqlSemantics\Dialect;
 use SqlSemantics\Model\Scalar\Value\ContextValueKind;
 use SqlSemantics\SchemaBuilder;
@@ -71,5 +76,33 @@ final class ContextValueBinderTest extends TestCase
     public function testSynonymReadsMySqlCurrentTimeSpellings(string $name, ?ContextValueKind $kind): void
     {
         self::assertSame($kind, ContextValueBinder::synonym($name));
+    }
+
+    /**
+     * @return array<string, array{Dialect, list<array{string, string}>, ?ContextValueKind}>
+     */
+    public static function providerTerminals(): array
+    {
+        return [
+            'identifier' => [Dialect::MySql, [['IDENT', 'current_date']], null],
+            'lower case keyword' => [Dialect::PostgreSql, [['CURRENT_DATE', 'current_date']], ContextValueKind::CurrentDate],
+            'mysql synonym call' => [Dialect::MySql, [['NOW', 'now'], ['(', '('], [')', ')']], ContextValueKind::CurrentTimestamp],
+            'bare mysql synonym' => [Dialect::MySql, [['NOW', 'now']], null],
+            'postgresql synonym call' => [Dialect::PostgreSql, [['NOW', 'now'], ['(', '('], [')', ')']], null],
+            'empty call' => [Dialect::MySql, [['CURRENT_DATE', 'CURRENT_DATE'], ['(', '('], [')', ')']], ContextValueKind::CurrentDate],
+            'doubled closing parenthesis' => [Dialect::MySql, [['CURRENT_DATE', 'CURRENT_DATE'], ['(', '('], [')', ')'], [')', ')']], null],
+            'call without opening parenthesis' => [Dialect::MySql, [['CURRENT_DATE', 'CURRENT_DATE'], ['IDENT', 'x'], [')', ')']], null],
+            'unknown keyword' => [Dialect::MySql, [['CURDATE', 'curdate']], null],
+        ];
+    }
+
+    /**
+     * @param list<array{string, string}> $terminals
+     */
+    #[DataProvider('providerTerminals')]
+    public function testBindClassifiesTheTerminals(Dialect $dialect, array $terminals, ?ContextValueKind $expected): void
+    {
+        $node = new Node('func_expr', 0, array_map(static fn (array $terminal): Token => new Token(0, $terminal[0], $terminal[1], 0), $terminals));
+        self::assertSame($expected, (new ContextValueBinder())->bind($node, new Scope(new Identifiers($dialect)))?->request);
     }
 }

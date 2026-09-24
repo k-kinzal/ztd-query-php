@@ -12,6 +12,9 @@ use Override;
   * @example Inspecting CreateTableStatement
  *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('create temporary table t(id integer default 1, constraint pk primary key(id))');
  *     $statement instanceof \SqlSemantics\Model\Statement\CreateTableStatement // => true
+ * @example Keeping the catalog of a three-part PostgreSQL name
+ *     $statement = (new \SqlSemantics\Binder((new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::PostgreSql))->build()))->bind('CREATE TABLE db.s.t(a integer)');
+ *     [$statement->catalog, $statement->definition->table->schema] // => ['db', 's']
  */
 final class CreateTableStatement extends \SqlSemantics\Model\BoundStatement
 {
@@ -21,6 +24,7 @@ final class CreateTableStatement extends \SqlSemantics\Model\BoundStatement
      * @param list<\SqlSemantics\Model\Definition\IndexDeclaration> $indexes
      * @param list<\SqlSemantics\Model\Definition\Table\TemplatePlacement> $templates
      * @param list<\SqlSemantics\Model\Definition\Relation\Constraint\ExclusionConstraint> $exclusions
+     * @param string|null $catalog Catalog (database) qualifier of a three-part PostgreSQL table name; the server checks it against the current database only at execution
      * @visibility SqlSemantics
      * @throws \SqlSemantics\Model\Validation\InvalidStructure
      */
@@ -31,7 +35,11 @@ final class CreateTableStatement extends \SqlSemantics\Model\BoundStatement
         public readonly bool $ifNotExists = false,
         public readonly array $templates = [],
         public readonly array $exclusions = [],
+        public readonly ?string $catalog = null,
     ) {
+        if ($catalog !== null && ($origin->dialect !== \SqlSemantics\Dialect::PostgreSql || $catalog === '')) {
+            throw new \SqlSemantics\Model\Validation\InvalidStructure('Only a PostgreSQL table name carries a nonempty catalog qualifier.');
+        }
         \SqlSemantics\Model\Validation\Collections::objects($exclusions, \SqlSemantics\Model\Definition\Relation\Constraint\ExclusionConstraint::class);
         if ($exclusions !== [] && $origin->dialect !== \SqlSemantics\Dialect::PostgreSql) {
             throw new \SqlSemantics\Model\Validation\InvalidStructure('EXCLUDE constraints are PostgreSQL table elements.');
@@ -70,7 +78,7 @@ final class CreateTableStatement extends \SqlSemantics\Model\BoundStatement
     #[Override]
     public function withOrigin(Origin $origin): static
     {
-        return new static($origin, $this->definition, $this->indexes, $this->ifNotExists, $this->templates, $this->exclusions);
+        return new static($origin, $this->definition, $this->indexes, $this->ifNotExists, $this->templates, $this->exclusions, $this->catalog);
     }
 
 
@@ -85,7 +93,7 @@ final class CreateTableStatement extends \SqlSemantics\Model\BoundStatement
         $table = $this->definition->table;
         $columns = array_map(static fn (\SqlSemantics\Schema\ColumnDefinition $column): \SqlSemantics\Schema\ColumnDefinition => $column === $target ? $replacement : $column, $table->columns);
         $definition = new \SqlSemantics\Model\Definition\TableDeclaration(new \SqlSemantics\Schema\TableDefinition($table->schema, $table->name, $columns, $table->constraints, $table->source, $table->resolved, $table->indexes, $table->properties));
-        return $this->changed(new self($this->origin, $definition, $this->indexes, $this->ifNotExists, $this->templates, $this->exclusions));
+        return $this->changed(new self($this->origin, $definition, $this->indexes, $this->ifNotExists, $this->templates, $this->exclusions, $this->catalog));
     }
 
     /**
@@ -96,7 +104,7 @@ final class CreateTableStatement extends \SqlSemantics\Model\BoundStatement
      */
     public function withTemplates(array $templates): self
     {
-        return $this->changed(new self($this->origin, $this->definition, $this->indexes, $this->ifNotExists, $templates, $this->exclusions));
+        return $this->changed(new self($this->origin, $this->definition, $this->indexes, $this->ifNotExists, $templates, $this->exclusions, $this->catalog));
     }
 
     /**
@@ -107,7 +115,16 @@ final class CreateTableStatement extends \SqlSemantics\Model\BoundStatement
      */
     public function withExclusions(array $exclusions): self
     {
-        return $this->changed(new self($this->origin, $this->definition, $this->indexes, $this->ifNotExists, $this->templates, $exclusions));
+        return $this->changed(new self($this->origin, $this->definition, $this->indexes, $this->ifNotExists, $this->templates, $exclusions, $this->catalog));
     }
 
+    /**
+     * Replaces the written catalog (database) qualifier of a PostgreSQL table name; null writes the name without it.
+     *
+     * @throws \SqlSemantics\Model\Validation\InvalidStructure
+     */
+    public function withCatalog(?string $catalog): self
+    {
+        return $this->changed(new self($this->origin, $this->definition, $this->indexes, $this->ifNotExists, $this->templates, $this->exclusions, $catalog));
+    }
 }

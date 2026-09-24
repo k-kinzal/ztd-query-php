@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Statement\Definition\Extensibility;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -88,5 +89,40 @@ final class StatisticsDefinitionsTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER, b INTEGER)')))->bind('CREATE STATISTICS s ON a, (b) FROM t');
         self::assertInstanceOf(Statement\CreateStatisticsStatement::class, $statement);
         self::assertSame([true, true], array_map(Statement\StatisticsInvariant::column(...), $statement->elements));
+    }
+
+    /**
+     * @return list<array{Dialect, ?string, string, mixed}>
+     */
+    public static function providerBindWritesEachStatisticsForm(): array
+    {
+        return [
+            [Dialect::PostgreSql, null, 'CREATE STATISTICS a.s.x ON a, b FROM t', [Statement\CreateStatisticsStatement::class, 'CREATE STATISTICS "a"."s"."x" ON "a", "b" FROM "public"."t"']],
+            [Dialect::PostgreSql, null, 'CREATE STATISTICS IF NOT EXISTS s ON a, b FROM t', [Statement\CreateStatisticsStatement::class, 'CREATE STATISTICS IF NOT EXISTS "s" ON "a", "b" FROM "public"."t"']],
+            [Dialect::PostgreSql, null, 'ALTER STATISTICS a.s.x SET STATISTICS 5', [Statement\SetStatisticsTargetStatement::class, 'ALTER STATISTICS "a"."s"."x" SET STATISTICS 5']],
+            [Dialect::PostgreSql, null, 'ALTER STATISTICS s SET STATISTICS - 1', [Statement\SetStatisticsTargetStatement::class, 'ALTER STATISTICS "s" SET STATISTICS -1']],
+            [Dialect::PostgreSql, null, 'ALTER STATISTICS s SET STATISTICS default', [Statement\SetStatisticsTargetStatement::class, 'ALTER STATISTICS "s" SET STATISTICS -1']],
+            [Dialect::PostgreSql, null, 'ALTER STATISTICS s SET STATISTICS 1_000', [Statement\SetStatisticsTargetStatement::class, 'ALTER STATISTICS "s" SET STATISTICS 1000']],
+            [Dialect::PostgreSql, null, 'CREATE STATISTICS s (ndistinct, dependencies) ON a, b FROM t', [Statement\CreateStatisticsStatement::class, 'CREATE STATISTICS "s"("ndistinct", "dependencies") ON "a", "b" FROM "public"."t"']],
+            [Dialect::PostgreSql, null, 'CREATE STATISTICS s ON a, b FROM ONLY t', [Statement\CreateStatisticsStatement::class, 'CREATE STATISTICS "s" ON "a", "b" FROM ONLY "public"."t"']],
+            [Dialect::PostgreSql, null, 'CREATE STATISTICS s ON lower(c), a FROM t', [Statement\CreateStatisticsStatement::class, 'CREATE STATISTICS "s" ON ("lower"("c")), "a" FROM "public"."t"']],
+        ];
+    }
+
+    #[DataProvider('providerBindWritesEachStatisticsForm')]
+    public function testBindWritesEachStatisticsForm(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(a INTEGER, b INTEGER, c TEXT)')))->bind($sql, strict: false);
+        self::assertSame($expected, [$statement::class, $statement->toString()]);
+    }
+
+    #[TestWith(['CREATE STATISTICS d.a.s.x ON a, b FROM t'])]
+    #[TestWith(['ALTER STATISTICS d.a.s.x SET STATISTICS 5'])]
+    #[TestWith(['ALTER STATISTICS s SET STATISTICS 1234567890'])]
+    public function testTargetRejectsOverlongNamesAndTargets(string $sql): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INTEGER, b INTEGER, c TEXT)'));
+        $this->expectException(InvalidSql::class);
+        $binder->bind($sql, strict: false);
     }
 }

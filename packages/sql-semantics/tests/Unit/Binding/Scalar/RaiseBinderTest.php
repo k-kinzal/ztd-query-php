@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Scalar;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
@@ -47,5 +48,28 @@ final class RaiseBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Control\RaiseError::class, $raise);
         self::assertSame(\SqlSemantics\Model\Scalar\Control\RaiseAction::Rollback, $raise->action);
         self::assertSame(\SqlSemantics\Type\Nullability::NotNull, $raise->nullability);
+    }
+
+    /**
+     * @param list<string> $definitions
+     */
+    #[DataProvider('providerBindReadsLowercaseActions')]
+    public function testBindReadsLowercaseActions(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    /**
+     * @return iterable<string, array{Dialect, ?string, list<string>, string, string}>
+     */
+    public static function providerBindReadsLowercaseActions(): iterable
+    {
+        return [
+            'SELECT raise(ignore) (Sqlite)' => [Dialect::Sqlite, null, [], 'SELECT raise(ignore)', 'SELECT RAISE(IGNORE)'],
+            'SELECT raise(abort, \'x\') (Sqlite)' => [Dialect::Sqlite, null, [], 'SELECT raise(abort, \'x\')', 'SELECT RAISE(ABORT, \'x\')'],
+            'SELECT raise(fail, \'y\') (Sqlite)' => [Dialect::Sqlite, null, [], 'SELECT raise(fail, \'y\')', 'SELECT RAISE(FAIL, \'y\')'],
+            'SELECT RAISE(ROLLBACK, \'z\') (Sqlite)' => [Dialect::Sqlite, null, [], 'SELECT RAISE(ROLLBACK, \'z\')', 'SELECT RAISE(ROLLBACK, \'z\')'],
+        ];
     }
 }

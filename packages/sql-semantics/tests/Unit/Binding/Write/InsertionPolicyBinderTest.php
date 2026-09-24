@@ -63,4 +63,21 @@ final class InsertionPolicyBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Write\Policy\PostgreSqlInsertion::class, $plain->policy);
         self::assertSame(\SqlSemantics\Model\Write\Policy\IdentityOverride::Default, $plain->policy->overriding);
     }
+
+    public function testBindIgnoresModifiersAfterTheTarget(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t(a INT, KEY k (a))')))->bind('insert into t select high_priority a from t ignore index (k)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Insert\InsertSelectStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Write\Policy\MySqlInsertion::class, $statement->policy);
+        self::assertSame(\SqlSemantics\Model\Write\Policy\Scheduling::Default, $statement->policy->scheduling);
+        self::assertFalse($statement->policy->ignore);
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::Sqlite, 'insert or replace into t values (1)', 'INSERT OR REPLACE INTO "main"."t" VALUES (1)'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::PostgreSql, 'insert into t overriding user value values (1)', 'INSERT INTO "public"."t" OVERRIDING USER VALUE VALUES (1)'])]
+    #[\PHPUnit\Framework\Attributes\TestWith([Dialect::MySql, 'insert low_priority ignore into t values (1)', 'INSERT LOW_PRIORITY IGNORE INTO `t` VALUES (1)'])]
+    public function testBindReadsLowerCasePolicies(Dialect $dialect, string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(a INT)')))->bind($sql)->toString());
+    }
 }

@@ -251,4 +251,75 @@ final class OptionReaderTest extends TestCase
         self::assertSame('20', $table->properties->storageParameters[1]->value->spelling());
     }
 
+    /**
+     * @return iterable<string, array{list<string>, array<string, string|bool|list<string>>}>
+     */
+    public static function providerOption(): iterable
+    {
+        yield 'no tokens' => [[], []];
+        yield 'without rowid in any case' => [['without', 'rowid'], ['without_rowid' => true]];
+        yield 'without another word' => [['WITHOUT', 'X'], ['without' => 'X']];
+        yield 'nulls not distinct' => [['NULLS', 'not', 'DISTINCT'], ['nulls_distinct' => false]];
+        yield 'nulls distinct' => [['NULLS', 'DISTINCT'], ['nulls_distinct' => true]];
+        yield 'if not exists in any case' => [['if', 'not', 'exists'], ['if_not_exists' => true]];
+        yield 'if exists' => [['IF', 'EXISTS'], ['if' => 'EXISTS']];
+        yield 'assigned value' => [['ENGINE', '=', 'InnoDB'], ['engine' => 'InnoDB']];
+        yield 'flag' => [['STRICT'], ['strict' => true]];
+        yield 'list' => [['X', '(', 'a', ',', 'b', ')'], ['x' => ['a', 'b']]];
+    }
+
+    /**
+     * @param list<string> $texts
+     * @param array<string, string|bool|list<string>> $expected
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerOption')]
+    public function testOptionReadsTheNameAndTheValue(array $texts, array $expected): void
+    {
+        $tokens = array_map(static fn (string $text): \SqlParser\Lexer\Token => new \SqlParser\Lexer\Token(0, 'IDENT', $text, 0), $texts);
+        self::assertSame($expected, \SqlSemantics\Ast\Definition\OptionReader::option($tokens, new \SqlSemantics\Ast\Identifiers(Dialect::MySql)));
+    }
+
+    /**
+     * @return iterable<string, array{non-empty-list<string>, array{string, int}}>
+     */
+    public static function providerName(): iterable
+    {
+        yield 'default character set' => [['default', 'character', 'set', '=', 'utf8'], ['character_set', 3]];
+        yield 'character set' => [['CHARACTER', 'SET', 'utf8'], ['character_set', 2]];
+        yield 'default charset' => [['DEFAULT', 'CHARSET', 'utf8'], ['character_set', 2]];
+        yield 'charset' => [['CHARSET', 'utf8'], ['character_set', 1]];
+        yield 'default collate' => [['DEFAULT', 'COLLATE', 'c'], ['collation', 2]];
+        yield 'collate' => [['COLLATE', 'c'], ['collation', 1]];
+        yield 'start with' => [['START', 'WITH', '5'], ['start', 2]];
+        yield 'increment by' => [['INCREMENT', 'BY', '2'], ['increment', 2]];
+        yield 'temp' => [['TEMP'], ['temporary', 1]];
+        yield 'bracketed name' => [['[Fill]', '=', '1'], ['Fill', 1]];
+        yield 'qualified name' => [['toast', '.', 'enabled', '=', 'false'], ['toast.enabled', 3]];
+        yield 'trailing dot' => [['toast', '.'], ['toast', 1]];
+    }
+
+    /**
+     * @param non-empty-list<string> $texts
+     * @param array{string, int} $expected
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerName')]
+    public function testNameNormalizesTheOptionName(array $texts, array $expected): void
+    {
+        $tokens = array_map(static fn (string $text): \SqlParser\Lexer\Token => new \SqlParser\Lexer\Token(0, 'IDENT', $text, 0), $texts);
+        self::assertSame($expected, \SqlSemantics\Ast\Definition\OptionReader::name($tokens, new \SqlSemantics\Ast\Identifiers(Dialect::Sqlite)));
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(["'it''s'", "it's"])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['[x y]', 'x y'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['plain', 'plain'])]
+    public function testValueDecodesTheQuoting(string $text, string $expected): void
+    {
+        self::assertSame($expected, \SqlSemantics\Ast\Definition\OptionReader::value(new \SqlParser\Lexer\Token(0, 'IDENT', $text, 0), new \SqlSemantics\Ast\Identifiers(Dialect::Sqlite)));
+    }
+
+    public function testColumnReadsALowercaseAutoIncrement(): void
+    {
+        $table = (new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(id INT auto_increment PRIMARY KEY)')->tables[0];
+        self::assertInstanceOf(\SqlSemantics\Schema\Column\AutoIncrementColumn::class, $table->columns[0]->generation);
+    }
 }

@@ -29,6 +29,18 @@ final class EntryPointsTest extends TestCase
     {
         $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-5.7.44'))->build()))->bind('PARSE_GCOL_EXPR (a + 1)', strict: false);
         self::assertInstanceOf(GeneratedColumnExpressionStatement::class, $statement);
-        self::assertSame('unknown-column', $statement->diagnostics[0]->reason);
+        self::assertSame([], $statement->diagnostics);
+    }
+
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-5.6.51', 'PARTITION BY RANGE (id) (PARTITION p0 VALUES LESS THAN (10))', 'PARTITION BY RANGE(`id`)(PARTITION `p0` VALUES LESS THAN(10))'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-5.7.44', 'PARTITION BY LIST (id + 1) (PARTITION p0 VALUES IN (10))', 'PARTITION BY LIST((`id` + 1))(PARTITION `p0` VALUES IN(10))'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['mysql-5.7.44', 'PARSE_GCOL_EXPR (a + 1)', 'PARSE_GCOL_EXPR((`a` + 1))'])]
+    public function testBindLeavesColumnsOfAParserEntryUnresolvedInStrictBinding(string $version, string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: $version))->build());
+        $statement = $binder->bind($sql);
+        self::assertSame($expected, $statement->toString());
+        self::assertSame($expected, $binder->bind($statement->toString())->toString());
     }
 }

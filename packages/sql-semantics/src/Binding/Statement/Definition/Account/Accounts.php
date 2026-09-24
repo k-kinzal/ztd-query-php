@@ -79,12 +79,12 @@ final class Accounts
     public static function count(Token $token, Node $context): int
     {
         $text = $token->text;
-        if (preg_match('/^0[xX]([0-9a-fA-F]+)$/', $text, $hex) === 1 || preg_match('/^[xX]\'([0-9a-fA-F]*)\'$/', $text, $hex) === 1) {
+        if (preg_match('/^0[xX]([0-9a-fA-F]+)$/D', $text, $hex) === 1 || preg_match('/^[xX]\'([0-9a-fA-F]*)\'$/D', $text, $hex) === 1) {
             $value = hexdec($hex[1]);
             return is_int($value) ? $value : throw new InvalidSql(InputViolation::AccountLimit, $context);
         }
         $digits = ltrim($text, '0');
-        if (preg_match('/^[0-9]+$/', $text) !== 1 || ($digits !== '' && (string) (int) $digits !== $digits)) {
+        if (preg_match('/^[0-9]+$/D', $text) !== 1 || ($digits !== '' && (string) (int) $digits !== $digits)) {
             throw new InvalidSql(InputViolation::AccountLimit, $context);
         }
         return (int) $digits;

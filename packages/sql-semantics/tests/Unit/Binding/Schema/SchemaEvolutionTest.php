@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Schema;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
@@ -214,5 +215,42 @@ final class SchemaEvolutionTest extends TestCase
         self::assertSame(['id', 'v'], array_map(static fn ($column): string => $column->name, $schema->tables[1]->columns));
         self::assertCount(1, $schema->tables[1]->constraints);
         self::assertSame(['id', 'v', 'z'], array_map(static fn ($column): string => $column->name, $schema->tables[2]->columns));
+    }
+
+    /**
+     * @return iterable<string, array{Dialect, list<string>, string}>
+     */
+    public static function providerApplyEvolvesTheDeclaredTables(): iterable
+    {
+        return [
+            'index text inside a table comment' => [Dialect::MySql, ["CREATE TABLE a (x INT) COMMENT 'CREATE INDEX i ON a (x)'"], '.a(x)'],
+            'idempotent create among several tables' => [Dialect::MySql, ['CREATE TABLE a (x INT)', 'CREATE TABLE b (y INT)', 'CREATE TABLE IF NOT EXISTS a (z INT)'], '.a(x); .b(y)'],
+            'drop text inside a comment' => [Dialect::PostgreSql, ['CREATE TABLE a (x INT)', "COMMENT ON TABLE a IS 'DROP TABLE a '"], 'public.a(x)'],
+            'view text inside a comment' => [Dialect::PostgreSql, ['CREATE TABLE a (x INT)', "COMMENT ON TABLE a IS 'CREATE VIEW v AS SELECT 1 '"], 'public.a(x)'],
+            'replaced view among several tables' => [Dialect::PostgreSql, ['CREATE TABLE a (x INT)', 'CREATE VIEW v AS SELECT x FROM a', 'CREATE TABLE b (y INT)', 'CREATE OR REPLACE VIEW v AS SELECT x, x AS w FROM a'], 'public.a(x); public.v(x,w); public.b(y)'],
+            'drop after an idempotent create' => [Dialect::Sqlite, ['CREATE TABLE a (x INT)', 'CREATE TABLE b (y INT)', 'CREATE TABLE IF NOT EXISTS b (z INT)', 'DROP TABLE a'], 'main.b(y)'],
+            'temporary drop' => [Dialect::MySql, ['CREATE TABLE a (x INT)', 'CREATE TABLE b (y INT)', 'DROP TEMPORARY TABLE a'], '.b(y)'],
+            'lowercase unique index' => [Dialect::MySql, ['CREATE TABLE a (x INT)', 'CREATE TABLE b (y INT)', 'create unique index i on a (x)'], '.a(x); .b(y)'],
+            'temporary view' => [Dialect::Sqlite, ['CREATE TABLE a (x INT)', 'CREATE TEMP VIEW v AS SELECT x FROM a'], 'main.a(x); temp.v(x)'],
+        ];
+    }
+
+    /**
+     * @param list<string> $definitions
+     */
+    #[DataProvider('providerApplyEvolvesTheDeclaredTables')]
+    public function testApplyEvolvesTheDeclaredTables(Dialect $dialect, array $definitions, string $expected): void
+    {
+        $schema = (new SchemaBuilder($dialect))->build(...$definitions);
+        self::assertSame($expected, implode('; ', array_map(static fn ($table): string => $table->schema . '.' . $table->name . '(' . implode(',', array_map(static fn ($column): string => $column->name, $table->columns)) . ')', $schema->tables)));
+    }
+
+
+    public function testApplyReadsIfNotExistsFromTheHeaderOnly(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE IF NOT EXISTS t(a text)', 'CREATE TABLE IF NOT EXISTS t(b int)');
+        self::assertSame(['a'], array_column($schema->tables[0]->columns, 'name'));
+        $this->expectException(\SqlSemantics\SemanticException::class);
+        (new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a text)', "CREATE TABLE t(a text DEFAULT 'IF NOT EXISTS')");
     }
 }

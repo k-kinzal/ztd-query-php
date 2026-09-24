@@ -91,4 +91,25 @@ final class SettingsTest extends TestCase
         self::assertSame("INTERVAL(3) '1'", Settings::intervalZone($setting->values[0])?->toString());
         self::assertNull(Settings::intervalZone(\SqlSemantics\Model\Expression::literal('UTC', Dialect::PostgreSql)));
     }
+
+    #[TestWith([Dialect::MySql, 'SET NAMES utf8mb4, @a = 1', 'SET NAMES `utf8mb4`, @`a` = 1'])]
+    #[TestWith([Dialect::MySql, 'SET CHARACTER SET utf8mb4', 'SET CHARACTER SET `utf8mb4`'])]
+    #[TestWith([Dialect::MySql, 'SET GLOBAL max_connections = 10, wait_timeout = 5', 'SET GLOBAL `max_connections` = 10, GLOBAL `wait_timeout` = 5'])]
+    #[TestWith([Dialect::MySql, 'SET PERSIST max_connections = DEFAULT, wait_timeout = 5', 'SET PERSIST `max_connections` = DEFAULT, PERSIST `wait_timeout` = 5'])]
+    #[TestWith([Dialect::MySql, 'SET TRANSACTION ISOLATION LEVEL READ COMMITTED', 'SET TRANSACTION ISOLATION LEVEL READ COMMITTED'])]
+    #[TestWith([Dialect::MySql, 'SET SESSION TRANSACTION READ ONLY', 'SET SESSION TRANSACTION READ ONLY'])]
+    #[TestWith([Dialect::PostgreSql, 'SET TRANSACTION READ ONLY', 'SET TRANSACTION READ ONLY'])]
+    #[TestWith([Dialect::PostgreSql, "SET TRANSACTION SNAPSHOT '0001'", "SET TRANSACTION SNAPSHOT '0001'"])]
+    #[TestWith([Dialect::PostgreSql, 'SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY', 'SET SESSION CHARACTERISTICS AS TRANSACTION READ ONLY'])]
+    #[TestWith([Dialect::PostgreSql, 'SET LOCAL search_path FROM CURRENT', 'SET LOCAL "search_path" FROM CURRENT'])]
+    #[TestWith([Dialect::PostgreSql, "SET LOCAL TIME ZONE INTERVAL '1' HOUR", "SET LOCAL TIME ZONE INTERVAL '1' HOUR"])]
+    #[TestWith([Dialect::PostgreSql, "SET TIME ZONE INTERVAL '2'", "SET TIME ZONE INTERVAL '2'"])]
+    #[TestWith([Dialect::PostgreSql, 'SET LOCAL timezone = 1', 'SET LOCAL "timezone" = 1'])]
+    #[TestWith([Dialect::PostgreSql, "SET timezone = 'UTC', 'x'", "SET \"timezone\" = 'UTC', 'x'"])]
+    public function testWriteSpellsTheScopeCarriedByEachItem(Dialect $dialect, string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect))->build()))->bind($sql, strict: false);
+        self::assertInstanceOf(ConfigurationStatement::class, $statement);
+        self::assertSame($expected, Settings::write($statement)->toString());
+    }
 }

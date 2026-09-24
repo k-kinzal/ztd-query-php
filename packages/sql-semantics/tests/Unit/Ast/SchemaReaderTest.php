@@ -188,6 +188,12 @@ final class SchemaReaderTest extends TestCase
         self::assertSame(Nullability::MaybeNull, $table->columns[0]->nullability);
     }
 
+    public function testPrimaryNotNullAliasesTheRowidForATableLevelDescendingKey(): void
+    {
+        $table = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE users (id INTEGER, CONSTRAINT pk PRIMARY KEY (id DESC))')->tables[0];
+        self::assertSame(Nullability::NotNull, $table->columns[0]->nullability);
+    }
+
     public function testCreateAsSelectExtractsResultColumns(): void
     {
         $schema = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE users AS SELECT 1 AS id');
@@ -261,5 +267,44 @@ final class SchemaReaderTest extends TestCase
         $this->expectException(\SqlSemantics\InvalidSql::class);
         $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::TemporaryTableSchema->message());
         (new Binder((new SchemaBuilder($dialect))->build()))->bind($sql);
+    }
+
+
+    #[TestWith([Dialect::PostgreSql, 'CREATE TABLE IF NOT EXISTS t (a int)', true])]
+    #[TestWith([Dialect::PostgreSql, "CREATE TABLE t (a text DEFAULT 'IF NOT EXISTS')", false])]
+    #[TestWith([Dialect::MySql, 'CREATE TEMPORARY TABLE IF NOT EXISTS t (a INT)', true])]
+    #[TestWith([Dialect::Sqlite, "CREATE TABLE t (a TEXT CHECK (a <> 'IF NOT EXISTS'))", false])]
+    public function testIfNotExistsReadsOnlyTheWordsBeforeTheName(Dialect $dialect, string $sql, bool $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect))->build()))->bind($sql);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $statement);
+        self::assertSame($expected, $statement->ifNotExists);
+    }
+
+    public function testTableKeepsTheCatalogOfAThreePartPostgreSqlName(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $statement = $binder->bind('CREATE TABLE c.s.t (a int)');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\CreateTableStatement::class, $statement);
+        self::assertSame('CREATE TABLE "c"."s"."t"("a" integer)', $statement->toString());
+        self::assertSame('s', $statement->definition->table->schema);
+        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+    }
+
+    public function testTableRejectsAFourPartPostgreSqlName(): void
+    {
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::RelationName->message());
+        (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('CREATE TABLE x.c.s.t (a int)');
+    }
+
+    public function testPrimaryKeysReadsSqliteTableOptionsNotLiterals(): void
+    {
+        $literal = (new SchemaBuilder(Dialect::Sqlite))->build("CREATE TABLE t (a TEXT DEFAULT 'STRICT' PRIMARY KEY)")->tables[0];
+        $strict = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t (a TEXT PRIMARY KEY) WITHOUT ROWID')->tables[0];
+        $named = (new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t (a INTEGER CONSTRAINT desc_key PRIMARY KEY)')->tables[0];
+        self::assertSame(Nullability::MaybeNull, $literal->columns[0]->nullability);
+        self::assertSame(Nullability::NotNull, $strict->columns[0]->nullability);
+        self::assertSame(Nullability::NotNull, $named->columns[0]->nullability);
     }
 }

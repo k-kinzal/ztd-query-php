@@ -53,22 +53,4 @@ final class UtilityBinder
         }
         throw new UnclassifiedSql('Unclassified statement ' . $statement->name . ': ' . $source->toString());
     }
-    /**
-     * Stops at each nested command boundary, including utility wrappers around queries.
-     *
-     * @return list<Node>
-     */
-    public function commands(Node $node): array
-    {
-        if (str_ends_with($node->name, 'Stmt') || str_ends_with($node->name, '_stmt') || in_array($node->name, ['select', 'query_expression', 'statement'], true)) {
-            return [$node];
-        }
-        $result = [];
-        foreach ($node->children as $child) {
-            if ($child instanceof Node && Tree::hasTokens($child)) {
-                array_push($result, ...$this->commands($child));
-            }
-        }
-        return $result;
-    }
 }

@@ -6,6 +6,7 @@ namespace Tests\Unit\Binding\Statement;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Binder;
@@ -165,4 +166,24 @@ final class ValuesBinderTest extends TestCase
         (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('VALUES (1,2), (3)');
     }
 
+    #[TestWith([Dialect::PostgreSql, "VALUES (1, 'a'), (NULL, 'b')", 'column1 SqlSemantics\\Model\\Scalar\\Value\\ValuesColumn integer MaybeNull; column2 SqlSemantics\\Model\\Scalar\\Value\\ValuesColumn text NotNull'])]
+    #[TestWith([Dialect::PostgreSql, "VALUES (1, 'a', true)", 'column1 SqlSemantics\\Model\\Scalar\\Value\\Literal integer NotNull; column2 SqlSemantics\\Model\\Scalar\\Value\\Literal unknown NotNull; column3 SqlSemantics\\Model\\Scalar\\Value\\Literal boolean NotNull'])]
+    #[TestWith([Dialect::PostgreSql, 'VALUES (1), (2), (3)', 'column1 SqlSemantics\\Model\\Scalar\\Value\\ValuesColumn integer NotNull'])]
+    #[TestWith([Dialect::MySql, "VALUES ROW(1, 'a'), ROW(2, NULL)", 'column1 SqlSemantics\\Model\\Scalar\\Value\\ValuesColumn integer NotNull; column2 SqlSemantics\\Model\\Scalar\\Value\\ValuesColumn text MaybeNull'])]
+    #[TestWith([Dialect::Sqlite, "VALUES (1, 'a'), (2, 'b')", 'column1 SqlSemantics\\Model\\Scalar\\Value\\ValuesColumn integer NotNull; column2 SqlSemantics\\Model\\Scalar\\Value\\ValuesColumn text NotNull'])]
+    public function testOutputsNamesAndTypesEveryColumn(Dialect $dialect, string $sql, string $expected): void
+    {
+        $query = (new Binder((new SchemaBuilder($dialect))->build()))->bind($sql);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\ValuesStatement::class, $query);
+        self::assertSame($expected, implode('; ', array_map(static fn ($output): string => $output->name . ' ' . $output->expression::class . ' ' . $output->expression->type->name . ' ' . $output->expression->nullability->name, $query->outputs)));
+    }
+
+    #[TestWith(['INSERT INTO t (id, n) VALUES (1, 2), (3)'])]
+    #[TestWith(['INSERT INTO t (id) VALUES (1), (2, 3)'])]
+    public function testRowsRejectsInconsistentInsertRowWidths(string $sql): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t (id INTEGER, n INTEGER)'));
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $binder->bind($sql);
+    }
 }

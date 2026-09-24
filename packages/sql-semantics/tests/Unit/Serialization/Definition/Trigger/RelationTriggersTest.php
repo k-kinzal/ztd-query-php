@@ -61,4 +61,17 @@ final class RelationTriggersTest extends TestCase
     {
         self::assertSame('EXECUTE FUNCTION "f"(\'1\', \'a\'\'b\')', RelationTriggers::invocation(new TriggerInvocation(new QualifiedName(['f']), ['1', "a'b"]))->toString());
     }
+
+    #[TestWith(['create constraint trigger tr after insert on t deferrable initially deferred for each row execute function f()', 'CREATE CONSTRAINT TRIGGER "tr" AFTER INSERT ON "public"."t" DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION "f"()'])]
+    #[TestWith(['create constraint trigger tr after insert on t deferrable initially immediate for each row execute function f()', 'CREATE CONSTRAINT TRIGGER "tr" AFTER INSERT ON "public"."t" DEFERRABLE FOR EACH ROW EXECUTE FUNCTION "f"()'])]
+    public function testWriteSpellsCheckingTimesAndTransitionTables(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a int)')))->bind($sql)->toString());
+    }
+
+    #[TestWith(['create trigger tr after update on t referencing new table as n old table as o for each statement execute function f()', 'CREATE TRIGGER "tr" AFTER UPDATE ON "public"."t" REFERENCING NEW TABLE AS "n" OLD TABLE AS "o" FOR EACH STATEMENT EXECUTE FUNCTION "f"()'])]
+    public function testWriteSpellsEveryTransitionTable(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a int)')))->bind($sql)->toString());
+    }
 }

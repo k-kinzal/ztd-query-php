@@ -43,4 +43,23 @@ final class ExecutionBinderTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Maintenance\TruncateTableStatement::class, $binder->bind('TRUNCATE TABLE t'));
         self::assertInstanceOf(\SqlSemantics\Model\Statement\Maintenance\MySql\CheckTablesStatement::class, $binder->bind('CHECK TABLE t'));
     }
+
+    /**
+     * @param class-string<\SqlSemantics\Model\BoundStatement> $class
+     */
+    #[TestWith([Dialect::PostgreSql, 'CREATE SCHEMA s', \SqlSemantics\Model\Statement\Definition\PostgreSql\Schema\CreateSchemaStatement::class])]
+    #[TestWith([Dialect::PostgreSql, 'SHOW search_path', \SqlSemantics\Model\Statement\Configuration\Show\ShowSettingStatement::class])]
+    #[TestWith([Dialect::PostgreSql, 'VACUUM', \SqlSemantics\Model\Statement\Maintenance\PostgreSql\VacuumStatement::class])]
+    #[TestWith([Dialect::PostgreSql, 'LOCK TABLE t', \SqlSemantics\Model\Statement\Locking\LockRelationsStatement::class])]
+    #[TestWith([Dialect::MySql, 'LOAD INDEX INTO CACHE t', \SqlSemantics\Model\Statement\Maintenance\MySql\PreloadTableIndexesStatement::class])]
+    #[TestWith([Dialect::MySql, 'LOCK TABLES t READ', \SqlSemantics\Model\Statement\Locking\LockTablesStatement::class])]
+    #[TestWith([Dialect::MySql, 'SHOW DATABASES', \SqlSemantics\Model\Statement\Inspection\Schema\ShowDatabasesStatement::class])]
+    #[TestWith([Dialect::MySql, 'SHOW CREATE TABLE t', \SqlSemantics\Model\Statement\Inspection\Definition\ShowCreateTableStatement::class])]
+    #[TestWith([Dialect::MySql, 'SHOW WARNINGS', \SqlSemantics\Model\Statement\Inspection\Session\ShowDiagnosticsStatement::class])]
+    #[TestWith([Dialect::MySql, 'SET @a = 1', \SqlSemantics\Model\Statement\Configuration\SetStatement::class])]
+    #[TestWith([Dialect::MySql, "PREPARE s FROM 'SELECT 1'", \SqlSemantics\Model\Statement\Prepared\PrepareTextStatement::class])]
+    public function testBindRoutesTheRemainingCommandFamilies(Dialect $dialect, string $sql, string $class): void
+    {
+        self::assertInstanceOf($class, (new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(id INT)')))->bind($sql));
+    }
 }

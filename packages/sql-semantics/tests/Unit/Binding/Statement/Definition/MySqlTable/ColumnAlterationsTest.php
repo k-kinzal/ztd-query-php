@@ -6,6 +6,7 @@ namespace Tests\Unit\Binding\Statement\Definition\MySqlTable;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Ast\DialectParser;
 use SqlSemantics\Ast\Identifiers;
@@ -88,5 +89,22 @@ final class ColumnAlterationsTest extends TestCase
     {
         $item = (new DialectParser(Dialect::MySql, 'mysql-5.7.44'))->parse('ALTER TABLE t CHANGE t.n m INT')->find('alter_list_item')[0];
         self::assertSame(['n'], ColumnAlterations::names($item, new Scope(new Identifiers(Dialect::MySql))));
+    }
+
+    #[TestWith(['ALTER TABLE t ADD COLUMN (a INT CHECK (a > 0), b INT)', 'ALTER TABLE `t` ADD COLUMN(`a` integer, `b` integer, CHECK ((`a` > 0)))'])]
+    #[TestWith(['alter table t drop column n cascade', 'ALTER TABLE `t` DROP COLUMN `n` CASCADE'])]
+    #[TestWith(['alter table t alter column n set invisible', 'ALTER TABLE `t` ALTER COLUMN `n` SET INVISIBLE'])]
+    #[TestWith(['alter table t alter column n set visible', 'ALTER TABLE `t` ALTER COLUMN `n` SET VISIBLE'])]
+    #[TestWith(['alter table t alter column n drop default', 'ALTER TABLE `t` ALTER COLUMN `n` DROP DEFAULT'])]
+    #[TestWith(['ALTER TABLE t ALTER COLUMN n SET DEFAULT 5', 'ALTER TABLE `t` ALTER COLUMN `n` SET DEFAULT 5'])]
+    #[TestWith(['ALTER TABLE t RENAME COLUMN n TO m', 'ALTER TABLE `t` RENAME COLUMN `n` TO `m`'])]
+    #[TestWith(['ALTER TABLE t ADD COLUMN z INT AFTER id', 'ALTER TABLE `t` ADD COLUMN `z` integer AFTER `id`'])]
+    #[TestWith(['ALTER TABLE t ADD COLUMN z INT FIRST', 'ALTER TABLE `t` ADD COLUMN `z` integer FIRST'])]
+    #[TestWith(['ALTER TABLE t CHANGE n m BIGINT FIRST', 'ALTER TABLE `t` CHANGE COLUMN `n` `m` bigint FIRST'])]
+    #[TestWith(['ALTER TABLE t MODIFY n BIGINT AFTER id', 'ALTER TABLE `t` MODIFY COLUMN `n` bigint AFTER `id`'])]
+    public function testAlterationsBindEveryColumnForm(string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t(id INT, n INT)'));
+        self::assertSame($expected, $binder->bind($sql)->toString());
     }
 }

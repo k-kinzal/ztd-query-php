@@ -6,6 +6,7 @@ namespace Tests\Unit\Binding\Statement\Utility\Maintenance;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Medium;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
 use SqlSemantics\Ast\DialectParser;
 use SqlSemantics\Ast\Tree;
@@ -74,5 +75,32 @@ final class MaintenanceSettingsTest extends TestCase
         self::assertNull($options->truncate);
         $this->expectException(\SqlSemantics\InvalidSql::class);
         MaintenanceSettings::build(['full' => true], null, 2, null, new \SqlParser\Parser\Node('VacuumStmt', 0, []));
+    }
+
+    #[TestWith(['VACUUM t', 'VACUUM "public"."t"'])]
+    #[TestWith(['VACUUM (VERBOSE false) t', 'VACUUM "public"."t"'])]
+    #[TestWith(['VACUUM (VERBOSE, ANALYZE, FREEZE, FULL, SKIP_DATABASE_STATS) t', 'VACUUM(FULL, FREEZE, VERBOSE, ANALYZE, SKIP_DATABASE_STATS) "public"."t"'])]
+    #[TestWith(['VACUUM (ONLY_DATABASE_STATS)', 'VACUUM(ONLY_DATABASE_STATS)'])]
+    #[TestWith(['VACUUM (BUFFER_USAGE_LIMIT 128) t', 'VACUUM(BUFFER_USAGE_LIMIT \'128\') "public"."t"'])]
+    #[TestWith(['VACUUM (PROCESS_MAIN false, PROCESS_TOAST false) t', 'VACUUM(PROCESS_MAIN FALSE, PROCESS_TOAST FALSE) "public"."t"'])]
+    #[TestWith(['VACUUM (FULL false, PARALLEL 2) t', 'VACUUM(PARALLEL 2) "public"."t"'])]
+    #[TestWith(['VACUUM (INDEX_CLEANUP off) t', 'VACUUM(INDEX_CLEANUP OFF) "public"."t"'])]
+    #[TestWith(['VACUUM FULL FREEZE VERBOSE ANALYZE t', 'VACUUM(FULL, FREEZE, VERBOSE, ANALYZE) "public"."t"'])]
+    #[TestWith(['ANALYZE t', 'ANALYZE "public"."t"'])]
+    #[TestWith(['ANALYZE (VERBOSE false, SKIP_LOCKED false) t', 'ANALYZE "public"."t"'])]
+    #[TestWith(['ANALYZE (VERBOSE, SKIP_LOCKED, BUFFER_USAGE_LIMIT 256) t', 'ANALYZE(VERBOSE, SKIP_LOCKED, BUFFER_USAGE_LIMIT \'256\') "public"."t"'])]
+    public function testVacuumAndAnalyzeSpellOnlyTheNonDefaultOptions(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind($sql)->toString());
+    }
+
+    #[TestWith(['VACUUM (BOGUS) t'])]
+    #[TestWith(['ANALYZE (FULL) t'])]
+    #[TestWith(['VACUUM (FULL, PARALLEL 2) t'])]
+    public function testVacuumAndAnalyzeRejectUnknownOrIncompatibleOptions(string $sql): void
+    {
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::MaintenanceOption->message());
+        (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)')))->bind($sql);
     }
 }

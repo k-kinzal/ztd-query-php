@@ -35,4 +35,15 @@ final class CrossJoinTest extends TestCase
         self::assertInstanceOf(CrossJoin::class, $rebound->from);
         self::assertSame(array_column($query->outputs, 'name'), array_column($rebound->outputs, 'name'));
     }
+
+    public function testWithInputsKeepsAStraightJoinOrder(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t (a INT)', 'CREATE TABLE u (a INT)')))->bind('SELECT 1 FROM t STRAIGHT_JOIN u');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $query);
+        $join = $query->from;
+        self::assertInstanceOf(CrossJoin::class, $join);
+        self::assertTrue($join->straight);
+        self::assertTrue($join->withInputs($join->left, $join->right)->straight);
+        self::assertSame('SELECT 1 FROM `t` STRAIGHT_JOIN `u`', $query->toString());
+    }
 }

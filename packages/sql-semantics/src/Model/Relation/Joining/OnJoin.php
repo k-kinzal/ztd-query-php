@@ -26,9 +26,14 @@ final class OnJoin extends Join
 {
     /**
      * Requires two relational inputs and the ON predicate evaluated before NULL extension.
+     * @param bool $straight Whether MySQL STRAIGHT_JOIN fixes the left input to be read first
+     * @throws \SqlSemantics\Model\Validation\InvalidStructure
      */
-    public function __construct(string $id, JoinKind $kind, TableUse|Join $left, TableUse|Join $right, public readonly Expression $condition, Node $source)
+    public function __construct(string $id, JoinKind $kind, TableUse|Join $left, TableUse|Join $right, public readonly Expression $condition, Node $source, public readonly bool $straight = false)
     {
+        if ($straight && $kind !== JoinKind::Inner) {
+            throw new \SqlSemantics\Model\Validation\InvalidStructure('STRAIGHT_JOIN is an inner join.');
+        }
         parent::__construct($id, $kind, $left, $right, $source);
     }
 
@@ -38,6 +43,6 @@ final class OnJoin extends Join
     #[Override]
     public function withInputs(TableUse|Join $left, TableUse|Join $right): static
     {
-        return new static($this->id, $this->kind, $left, $right, $this->condition, $this->source);
+        return new static($this->id, $this->kind, $left, $right, $this->condition, $this->source, $this->straight);
     }
 }

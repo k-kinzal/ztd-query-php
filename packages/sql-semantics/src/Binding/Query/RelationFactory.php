@@ -20,7 +20,9 @@ use SqlSemantics\Type\TypeDescriptor;
 final class RelationFactory
 {
     /**
-     * Gives a table function its own relation identity and bound argument graph.
+     * Gives a table function its own relation identity and bound argument graph; only written column aliases are
+     * kept as aliases, while the implicit output names (a SQLite JSON function's columns or the relation name) stay
+     * output labels, since SQLite has no column-alias list for a table-valued function.
      */
     public function function(Node $source, Node $function, QueryContext $context, ?Scope $parent, string $scopeId): BoundRelation
     {
@@ -33,10 +35,8 @@ final class RelationFactory
         $aliasNode = QueryNodes::local($source, ['func_alias_clause', 'alias_clause', 'as', 'opt_table_alias'])[0] ?? null;
         $names = $aliasNode === null ? [] : $this->aliases($aliasNode, $context);
         $name = $names[0] ?? strtolower($expression->spelling() ?? 'function');
-        $labels = array_slice($names, 1);
-        if ($labels === []) {
-            $labels = in_array($expression->spelling(), ['JSON_EACH', 'JSON_TREE'], true) ? ['key', 'value', 'type', 'atom', 'id', 'parent', 'fullkey', 'path'] : [$name];
-        }
+        $aliases = array_slice($names, 1);
+        $labels = $aliases !== [] ? $aliases : (in_array($expression->spelling(), ['JSON_EACH', 'JSON_TREE'], true) ? ['key', 'value', 'type', 'atom', 'id', 'parent', 'fullkey', 'path'] : [$name]);
         $outputs = [];
         foreach ($labels as $index => $label) {
             $type = in_array($expression->spelling(), ['JSON_EACH', 'JSON_TREE'], true) ? TypeDescriptor::builtin($scope->identifiers->dialect, in_array($label, ['id', 'parent'], true) ? 'integer' : (in_array($label, ['type', 'fullkey', 'path'], true) ? 'text' : 'dynamic')) : $expression->type;
@@ -44,7 +44,7 @@ final class RelationFactory
             $outputs[] = new OutputColumn($index, $label, $value);
         }
         $declaration = QueryRelation::columns($outputs, $name, [], $source);
-        $table = new \SqlSemantics\Model\Relation\FunctionRelation($context->ids->relation(), $scopeId, $declaration, $name, $source, $expression, $outputs, $labels);
+        $table = new \SqlSemantics\Model\Relation\FunctionRelation($context->ids->relation(), $scopeId, $declaration, $name, $source, $expression, $outputs, $aliases);
         return new BoundRelation($table, new Scope($scope->identifiers, [$table], parent: $parent, queries: $context));
     }
 

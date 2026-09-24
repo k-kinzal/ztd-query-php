@@ -12,9 +12,12 @@ use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
 use SqlSemantics\Model\BoundSelect;
 use SqlSemantics\Model\Scalar\Value\Literal;
+use SqlSemantics\Model\Scalar\Value\LiteralClassification;
+use SqlSemantics\Model\Scalar\Value\LiteralKind;
+use SqlSemantics\Model\Validation\InvalidStructure;
 use SqlSemantics\SchemaBuilder;
 
-#[CoversClass(\SqlSemantics\Model\Scalar\Value\LiteralClassification::class)]
+#[CoversClass(LiteralClassification::class)]
 #[Medium]
 final class LiteralClassificationTest extends TestCase
 {
@@ -31,4 +34,45 @@ final class LiteralClassificationTest extends TestCase
         self::assertSame('SELECT ' . $sql, $statement->toString());
     }
 
+    #[TestWith(['null', null, LiteralKind::Null])]
+    #[TestWith(['NULL', null, LiteralKind::Null])]
+    #[TestWith(['true', null, LiteralKind::Boolean])]
+    #[TestWith(['FALSE', null, LiteralKind::Boolean])]
+    #[TestWith(['0x0F', Dialect::MySql, LiteralKind::Binary])]
+    #[TestWith(['0B01', Dialect::MySql, LiteralKind::BitString])]
+    #[TestWith(['0x0F', null, LiteralKind::Number])]
+    #[TestWith(['-1.5e3', null, LiteralKind::Number])]
+    #[TestWith(["b'01'", null, LiteralKind::BitString])]
+    #[TestWith(["B''", null, LiteralKind::BitString])]
+    #[TestWith(["x'0f'", null, LiteralKind::Binary])]
+    #[TestWith(["X'AB'", null, LiteralKind::Binary])]
+    #[TestWith(["'abc'", Dialect::MySql, LiteralKind::Text])]
+    #[TestWith(["'abc'", Dialect::PostgreSql, LiteralKind::Text])]
+    public function testOfClassifiesEachSpelling(string $text, ?Dialect $dialect, LiteralKind $kind): void
+    {
+        self::assertSame($kind, LiteralClassification::of($text, $dialect));
+    }
+
+    #[TestWith(['10x0f', Dialect::MySql])]
+    #[TestWith(['0x0fz', Dialect::MySql])]
+    #[TestWith(["0x0f\n", Dialect::MySql])]
+    #[TestWith(['10b01', Dialect::MySql])]
+    #[TestWith(['0b012', Dialect::MySql])]
+    #[TestWith(["0b01\n", Dialect::MySql])]
+    #[TestWith(['a1', Dialect::MySql])]
+    #[TestWith(['1a', null])]
+    #[TestWith(["1\n", null])]
+    #[TestWith(["zb'01'", null])]
+    #[TestWith(["b'01'z", null])]
+    #[TestWith(["b'01'\n", null])]
+    #[TestWith(["zx'0f'", null])]
+    #[TestWith(["x'0f'z", null])]
+    #[TestWith(["x'0f'\n", null])]
+    #[TestWith(["'abc'", null])]
+    #[TestWith(['abc', Dialect::MySql])]
+    public function testOfRejectsUnclassifiedSpellings(string $text, ?Dialect $dialect): void
+    {
+        $this->expectException(InvalidStructure::class);
+        LiteralClassification::of($text, $dialect);
+    }
 }

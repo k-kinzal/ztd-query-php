@@ -42,4 +42,9 @@ final class TableStatusFieldTest extends TestCase
     {
         self::assertSame($expected, $field->nullability());
     }
+
+    public function testTypeDeclaresEveryField(): void
+    {
+        self::assertSame(['varchar', 'varchar', 'bigint', 'varchar', 'bigint', 'bigint', 'bigint', 'bigint', 'bigint', 'bigint', 'bigint', 'datetime', 'datetime', 'datetime', 'varchar', 'bigint', 'varchar', 'varchar'], array_map(static fn (TableStatusField $field): string => $field->type(), TableStatusField::cases()));
+    }
 }

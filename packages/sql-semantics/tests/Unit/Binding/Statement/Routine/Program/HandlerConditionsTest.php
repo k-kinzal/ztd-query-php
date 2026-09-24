@@ -57,4 +57,20 @@ final class HandlerConditionsTest extends TestCase
         $this->expectExceptionMessage(InputViolation::ProgramDeclaration->message());
         (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE PROCEDURE p() BEGIN DECLARE c CONDITION FOR ' . $value . '; END', strict: false);
     }
+
+    #[TestWith(["CREATE PROCEDURE p() BEGIN DECLARE Dup CONDITION FOR 1062; DECLARE s CONDITION FOR SQLSTATE '23000'; DECLARE EXIT HANDLER FOR dup, not found, sqlwarning, sqlexception, 1051, SQLSTATE '42S02' BEGIN END; END", "CREATE PROCEDURE `p`() BEGIN DECLARE `Dup` CONDITION FOR 1062; DECLARE `s` CONDITION FOR SQLSTATE '23000'; DECLARE EXIT HANDLER FOR `dup`, NOT FOUND, SQLWARNING, SQLEXCEPTION, 1051, SQLSTATE '42S02' BEGIN END; END"])]
+    #[TestWith(['CREATE PROCEDURE p() BEGIN DECLARE Dup CONDITION FOR 1062; DECLARE EXIT HANDLER FOR DUP BEGIN END; END', 'CREATE PROCEDURE `p`() BEGIN DECLARE `Dup` CONDITION FOR 1062; DECLARE EXIT HANDLER FOR `DUP` BEGIN END; END'])]
+    public function testListBindsEveryConditionForm(string $sql, string $expected): void
+    {
+        self::assertSame($expected, (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind($sql)->toString());
+    }
+
+    #[TestWith(['DECLARE Dup CONDITION FOR 1062; DECLARE EXIT HANDLER FOR dup, 1062 BEGIN END'])]
+    #[TestWith(["DECLARE EXIT HANDLER FOR SQLSTATE '42S02', SQLSTATE '42S02' BEGIN END"])]
+    public function testListComparesNamedConditionsByValue(string $declarations): void
+    {
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(InputViolation::ProgramDeclaration->message());
+        (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE PROCEDURE p() BEGIN ' . $declarations . '; END', strict: false);
+    }
 }

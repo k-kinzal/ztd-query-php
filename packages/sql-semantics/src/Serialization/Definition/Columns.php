@@ -20,15 +20,16 @@ use SqlSemantics\Serialization\TypeDeclaration;
 final class Columns
 {
     /**
-     * Writes declaration-level nullability and generation behavior.
+     * Writes declaration-level nullability and generation behavior; a MySQL generated column writes its expression before the other attributes, as its grammar requires.
      */
     public static function write(ColumnDefinition $column, Dialect $dialect): Tree
     {
-        $parts = [Build::identifier([$column->name], $dialect), TypeDeclaration::write($column->type), ColumnAttributes::write($column->attributes, $dialect)];
+        $generation = $column->generation;
+        $computed = $dialect === Dialect::MySql && $generation instanceof Column\ComputedColumn ? [Build::keyword('GENERATED ALWAYS AS'), Build::parentheses(Expressions::write($generation->expression)), Build::keyword(strtoupper($generation->storage->value))] : [];
+        $parts = [Build::identifier([$column->name], $dialect), TypeDeclaration::write($column->type), ...$computed, ColumnAttributes::write($column->attributes, $dialect)];
         if ($column->nullability === \SqlSemantics\Type\Nullability::NotNull) {
             $parts[] = Build::keyword('NOT NULL');
         }
-        $generation = $column->generation;
         if ($generation instanceof Column\SuppliedColumn) {
             if ($generation->default !== null) {
                 array_push($parts, Build::keyword('DEFAULT'), self::defaultValue($generation->default, $dialect));
@@ -36,7 +37,7 @@ final class Columns
             if ($generation->onUpdate !== null) {
                 array_push($parts, Build::keyword('ON UPDATE'), Expressions::write($generation->onUpdate));
             }
-        } elseif ($generation instanceof Column\ComputedColumn) {
+        } elseif ($generation instanceof Column\ComputedColumn && $computed === []) {
             array_push($parts, Build::keyword('GENERATED ALWAYS AS'), Build::parentheses(Expressions::write($generation->expression)), Build::keyword(strtoupper($generation->storage->value)));
         } elseif ($generation instanceof Column\IdentityColumn) {
             array_push($parts, Build::keyword('GENERATED ' . ($generation->mode === Column\IdentityMode::Always ? 'ALWAYS' : 'BY DEFAULT') . ' AS IDENTITY'), Sequence::write($generation->sequence));

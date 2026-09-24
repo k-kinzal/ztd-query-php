@@ -29,6 +29,8 @@ final class TableConstraint
      * @param bool $deferrable Whether constraint checking can be deferred
      * @param bool $initiallyDeferred Whether checking starts deferred
      * @param list<string> $deleteColumns Explicit columns affected by an ON DELETE SET action
+     * @param bool $enforced Whether a CHECK is enforced (MySQL NOT ENFORCED clears it)
+     * @param bool $noInherit Whether a CHECK is local to the table (PostgreSQL NO INHERIT)
      */
     public function __construct(
         public readonly ConstraintKind $kind,
@@ -44,6 +46,8 @@ final class TableConstraint
         public readonly bool $deferrable = false,
         public readonly bool $initiallyDeferred = false,
         public readonly array $deleteColumns = [],
+        public readonly bool $enforced = true,
+        public readonly bool $noInherit = false,
     ) {
     }
 }

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Statement\Definition\TypeSystem;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -87,5 +88,39 @@ final class LocalesTest extends TestCase
         $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build()))->bind('ALTER COLLATION s.c REFRESH VERSION');
         self::assertInstanceOf(Statement\RefreshCollationVersionStatement::class, $statement);
         self::assertSame(['s', 'c'], $statement->collation->parts);
+    }
+
+    /**
+     * @return list<array{Dialect, ?string, string, mixed}>
+     */
+    public static function providerBindReadsQualifiedLocaleObjects(): array
+    {
+        return [
+            [Dialect::PostgreSql, null, 'CREATE CONVERSION s.c FOR \'UTF8\' TO \'LATIN1\' FROM s.f', [Statement\CreateConversionStatement::class, 'CREATE CONVERSION "s"."c" FOR \'UTF8\' TO \'LATIN1\' FROM "s"."f"']],
+            [Dialect::PostgreSql, null, 'CREATE COLLATION s.c (locale = \'C\')', [Statement\CreateCollationStatement::class, 'CREATE COLLATION "s"."c"(LOCALE = \'C\')']],
+            [Dialect::PostgreSql, null, 'CREATE COLLATION s.c FROM s.d', [Statement\CopyCollationStatement::class, 'CREATE COLLATION "s"."c" FROM "s"."d"']],
+            [Dialect::PostgreSql, null, 'ALTER COLLATION s.c REFRESH VERSION', [Statement\RefreshCollationVersionStatement::class, 'ALTER COLLATION "s"."c" REFRESH VERSION']],
+            [Dialect::PostgreSql, null, 'CREATE COLLATION c (provider = icu, locale = \'und\', deterministic = false)', [Statement\CreateCollationStatement::class, 'CREATE COLLATION "c"(PROVIDER = \'icu\', LOCALE = \'und\', DETERMINISTIC = FALSE)']],
+        ];
+    }
+
+    #[DataProvider('providerBindReadsQualifiedLocaleObjects')]
+    public function testBindReadsQualifiedLocaleObjects(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build()))->bind($sql, strict: false);
+        self::assertSame($expected, [$statement::class, $statement->toString()]);
+    }
+
+    #[TestWith(["CREATE CONVERSION a.s.c FOR 'UTF8' TO 'LATIN1' FROM f"])]
+    #[TestWith(["CREATE CONVERSION c FOR 'UTF8' TO 'LATIN1' FROM a.s.f"])]
+    #[TestWith(["CREATE CONVERSION c FOR 'SQL_ASCII' TO 'UTF8' FROM f"])]
+    #[TestWith(["CREATE COLLATION a.s.c (locale = 'C')"])]
+    #[TestWith(['CREATE COLLATION c FROM a.s.d'])]
+    #[TestWith(['ALTER COLLATION a.s.c REFRESH VERSION'])]
+    public function testBindRejectsAnImpossibleLocaleObject(string $sql): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $this->expectException(InvalidSql::class);
+        $binder->bind($sql, strict: false);
     }
 }

@@ -38,7 +38,7 @@ final class ExtractBinder
         }
         $token = $fieldNode->tokens()[0];
         $name = FieldSpelling::read($token, $scope->identifiers);
-        $field = $scope->identifiers->dialect === Dialect::PostgreSql ? ExtractionField::postgres($name) : MySqlUnit::tryFrom(strtoupper($name));
+        $field = $scope->identifiers->dialect === Dialect::PostgreSql ? ExtractionField::postgres($name) : MySqlUnit::spelled($name);
         if ($field === null) {
             throw new InvalidSql(InputViolation::ExtractionField, $fieldNode);
         }

@@ -60,4 +60,14 @@ final class JsonExistenceTest extends TestCase
         $this->expectException(InvalidStructure::class);
         $value->withFacts($document->facts);
     }
+
+    public function testInputsListEveryPassingValue(): void
+    {
+        $query = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(d jsonb, n integer)')))->bind("SELECT JSON_EXISTS(d, '$.a' PASSING n AS x, 2 AS y) FROM t");
+        self::assertInstanceOf(BoundSelect::class, $query);
+        $value = $query->outputs[0]->expression;
+        self::assertInstanceOf(JsonExistence::class, $value);
+        self::assertCount(4, $value->inputs());
+        self::assertSame([$value->passing[0]->input->expression, $value->passing[1]->input->expression], array_slice($value->inputs(), 2));
+    }
 }

@@ -70,4 +70,13 @@ final class CopyCommandsTest extends TestCase
     {
         self::assertSame('("a", "B")', CopyCommands::names(['a', 'B'])->toString());
     }
+
+    #[TestWith(['COPY t FROM PROGRAM \'cat f\' WITH (FORMAT csv, HEADER match) WHERE a > 0', Copy\CopyFromStatement::class, 'COPY "public"."t" FROM PROGRAM \'cat f\' WITH (FORMAT \'csv\', HEADER MATCH) WHERE ("a" > 0)'])]
+    #[TestWith(['COPY t TO PROGRAM \'cat\' (HEADER true)', Copy\CopyToStatement::class, 'COPY "public"."t" TO PROGRAM \'cat\' WITH (HEADER TRUE)'])]
+    #[TestWith(['COPY t FROM STDIN', Copy\CopyFromStatement::class, 'COPY "public"."t" FROM STDIN'])]
+    public function testWriteSpellsFiltersProgramsAndHeaders(string $sql, string $class, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a INT)')))->bind($sql, strict: false);
+        self::assertSame([$class, $expected], [$statement::class, $statement->toString()]);
+    }
 }

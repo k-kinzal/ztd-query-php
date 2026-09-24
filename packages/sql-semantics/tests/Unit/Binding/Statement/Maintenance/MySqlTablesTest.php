@@ -48,4 +48,36 @@ final class MySqlTablesTest extends TestCase
         self::assertSame('unknown-table', $statement->diagnostics[0]->reason);
         self::assertSame(\SqlSemantics\Model\Maintenance\MySql\ChecksumMode::Automatic, $statement->mode);
     }
+
+    #[TestWith(['check table t quick fast', 'CHECK TABLE `t` QUICK FAST'])]
+    #[TestWith(['repair no_write_to_binlog table t quick extended use_frm', 'REPAIR NO_WRITE_TO_BINLOG TABLE `t` QUICK EXTENDED USE_FRM'])]
+    #[TestWith(['repair table t', 'REPAIR TABLE `t`'])]
+    #[TestWith(['analyze local table t', 'ANALYZE NO_WRITE_TO_BINLOG TABLE `t`'])]
+    #[TestWith(['analyze table t', 'ANALYZE TABLE `t`'])]
+    #[TestWith(['optimize local table t', 'OPTIMIZE NO_WRITE_TO_BINLOG TABLE `t`'])]
+    #[TestWith(['optimize table t', 'OPTIMIZE TABLE `t`'])]
+    #[TestWith(['checksum table t extended', 'CHECKSUM TABLE `t` EXTENDED'])]
+    #[TestWith(['checksum table t quick', 'CHECKSUM TABLE `t` QUICK'])]
+    #[TestWith(['analyze no_write_to_binlog table t update histogram on id', 'ANALYZE NO_WRITE_TO_BINLOG TABLE `t` UPDATE HISTOGRAM ON `id`'])]
+    #[TestWith(['analyze table t drop histogram on id', 'ANALYZE TABLE `t` DROP HISTOGRAM ON `id`'])]
+    public function testBindReadsEachVerbWithItsOptionsInAnyCase(string $sql, string $expected): void
+    {
+        $schema = (new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t(id INT)');
+        self::assertSame($expected, (new Binder($schema))->bind($sql)->toString());
+    }
+
+    public function testBindLeavesPostgreSqlAnalyzeToItsOwnBinder(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INT)')))->bind('ANALYZE t');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Maintenance\PostgreSql\AnalyzeStatement::class, $statement);
+    }
+
+    public function testTablesResolvesEveryTarget(): void
+    {
+        $schema = (new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build('CREATE TABLE t(id INT)', 'CREATE TABLE u(id INT)');
+        $node = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql, 'mysql-8.4.7'))->parse('OPTIMIZE TABLE t, u');
+        $context = new \SqlSemantics\Binding\Query\QueryContext(new \SqlSemantics\Binding\TableResolver($schema, new \SqlSemantics\Ast\Identifiers(Dialect::MySql), ''));
+        $tables = MySqlTables::tables(new \SqlSemantics\Model\Statement\Origin('s0', $node, Dialect::MySql), $node, $context);
+        self::assertSame(['t', 'u'], array_map(static fn ($table): string => $table->declaration->name, $tables));
+    }
 }

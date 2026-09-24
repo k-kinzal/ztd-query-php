@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Statement\Definition\Catalog;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -44,5 +45,28 @@ final class RelationTargetsTest extends TestCase
         self::assertInstanceOf($class, $statement);
         self::assertSame($expected, $statement->toString());
         self::assertSame($expected, $binder->bind($expected, strict: false)->toString());
+    }
+
+    /**
+     * @param list<string> $definitions
+     */
+    #[DataProvider('providerReadRecognizesLowercaseOnly')]
+    public function testReadRecognizesLowercaseOnly(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    /**
+     * @return iterable<string, array{Dialect, ?string, list<string>, string, string}>
+     */
+    public static function providerReadRecognizesLowercaseOnly(): iterable
+    {
+        return [
+            'alter table only t rename to u (PostgreSql)' => [Dialect::PostgreSql, null, [], 'alter table only t rename to u', 'ALTER TABLE ONLY "t" RENAME TO "u"'],
+            'ALTER TABLE t RENAME TO u (PostgreSql)' => [Dialect::PostgreSql, null, [], 'ALTER TABLE t RENAME TO u', 'ALTER TABLE "t" RENAME TO "u"'],
+            'alter table if exists only t rename column a to b (PostgreSql)' => [Dialect::PostgreSql, null, [], 'alter table if exists only t rename column a to b', 'ALTER TABLE IF EXISTS ONLY "t" RENAME COLUMN "a" TO "b"'],
+            'alter table t* rename to u (PostgreSql)' => [Dialect::PostgreSql, null, [], 'alter table t* rename to u', 'ALTER TABLE "t" RENAME TO "u"'],
+        ];
     }
 }

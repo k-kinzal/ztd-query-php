@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Statement\Definition\TypeSystem;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -80,5 +81,32 @@ final class CastsTest extends TestCase
         $statement = $binder->bind('DROP TRANSFORM FOR integer LANGUAGE "PlPerl"');
         self::assertInstanceOf(Statement\DropTransformStatement::class, $statement);
         self::assertSame('PlPerl', $statement->transform->language);
+    }
+
+    /**
+     * @param list<string> $definitions
+     */
+    #[DataProvider('providerBindReadsLowercaseCastsAndTransforms')]
+    public function testBindReadsLowercaseCastsAndTransforms(Dialect $dialect, ?string $version, array $definitions, string $sql, string $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build(...$definitions)))->bind($sql, strict: false);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    /**
+     * @return iterable<string, array{Dialect, ?string, list<string>, string, string}>
+     */
+    public static function providerBindReadsLowercaseCastsAndTransforms(): iterable
+    {
+        return [
+            'create cast (int as text) with function f(int) as implicit (PostgreSql)' => [Dialect::PostgreSql, null, [], 'create cast (int as text) with function f(int) as implicit', 'CREATE CAST(integer AS text) WITH FUNCTION "f"(integer) AS IMPLICIT'],
+            'CREATE CAST (int AS text) WITHOUT FUNCTION AS ASSIGNMENT (PostgreSql)' => [Dialect::PostgreSql, null, [], 'CREATE CAST (int AS text) WITHOUT FUNCTION AS ASSIGNMENT', 'CREATE CAST(integer AS text) WITHOUT FUNCTION AS ASSIGNMENT'],
+            'CREATE CAST (int AS text) WITH INOUT (PostgreSql)' => [Dialect::PostgreSql, null, [], 'CREATE CAST (int AS text) WITH INOUT', 'CREATE CAST(integer AS text) WITH INOUT'],
+            'create transform for int language plpgsql (from sql with function f(internal), to sql with function ... 3' => [Dialect::PostgreSql, null, [], 'create transform for int language plpgsql (from sql with function f(internal), to sql with function g(internal))', 'CREATE TRANSFORM FOR integer LANGUAGE "plpgsql"(FROM SQL WITH FUNCTION "f"("internal"), TO SQL WITH FUNCTION "g"("internal"))'],
+            'CREATE TRANSFORM FOR int LANGUAGE plpgsql (TO SQL WITH FUNCTION g(internal)) (PostgreSql)' => [Dialect::PostgreSql, null, [], 'CREATE TRANSFORM FOR int LANGUAGE plpgsql (TO SQL WITH FUNCTION g(internal))', 'CREATE TRANSFORM FOR integer LANGUAGE "plpgsql"(TO SQL WITH FUNCTION "g"("internal"))'],
+            'create or replace transform for int language plpgsql (from sql with function f(internal)) (PostgreSql)' => [Dialect::PostgreSql, null, [], 'create or replace transform for int language plpgsql (from sql with function f(internal))', 'CREATE OR REPLACE TRANSFORM FOR integer LANGUAGE "plpgsql"(FROM SQL WITH FUNCTION "f"("internal"))'],
+            'DROP TRANSFORM IF EXISTS FOR int LANGUAGE plpgsql CASCADE (PostgreSql)' => [Dialect::PostgreSql, null, [], 'DROP TRANSFORM IF EXISTS FOR int LANGUAGE plpgsql CASCADE', 'DROP TRANSFORM IF EXISTS FOR integer LANGUAGE "plpgsql" CASCADE'],
+            'DROP CAST (int AS text) (PostgreSql)' => [Dialect::PostgreSql, null, [], 'DROP CAST (int AS text)', 'DROP CAST(integer AS text)'],
+        ];
     }
 }

@@ -238,4 +238,118 @@ final class ExpressionBinderTest extends TestCase
         self::assertSame('SELECT $1[1], ($2)."f", $3[1 : 2]', $query->toString());
         self::assertSame($query->toString(), $binder->bind($query->toString())->toString());
     }
+
+    public function testTokenTypesAPositionalParameterByItsDeclaredPosition(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $statement = $binder->bind('PREPARE p (integer, text) AS SELECT $2, $1');
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Prepared\PrepareQueryStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement->statement);
+        self::assertSame('text', $statement->statement->outputs[0]->expression->type->name);
+        self::assertSame('integer', $statement->statement->outputs[1]->expression->type->name);
+    }
+
+    public function testTokenResolvesSqliteKeywordTokensAsColumns(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build('CREATE TABLE t(id INTEGER, indexed INTEGER, "left" INTEGER)'));
+        $statement = $binder->bind('SELECT indexed, left FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertSame(\SqlSemantics\Model\ExpressionKind::Column, $statement->outputs[0]->expression->kind);
+        self::assertSame(\SqlSemantics\Model\ExpressionKind::Column, $statement->outputs[1]->expression->kind);
+        self::assertSame('SELECT "indexed" AS "indexed", "left" AS "left" FROM "main"."t"', $statement->toString());
+    }
+
+    #[TestWith(['rename'])]
+    #[TestWith(['key'])]
+    #[TestWith(['glob'])]
+    #[TestWith(['row'])]
+    #[TestWith(['replace'])]
+    #[TestWith(['if'])]
+    #[TestWith(['current'])]
+    #[TestWith(['generated'])]
+    public function testTokenResolvesSqliteFallbackKeywordsAsColumns(string $keyword): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build());
+        $table = $binder->bind(sprintf('CREATE TABLE t (%s INT, CHECK (%s > 0))', $keyword, $keyword));
+        self::assertSame(sprintf('CREATE TABLE "main"."t"("%s" "int", CHECK (("%s" > 0)))', $keyword, $keyword), $table->toString());
+        $statement = (new Binder((new SchemaBuilder(Dialect::Sqlite))->build(sprintf('CREATE TABLE t (%s INT)', $keyword))))->bind(sprintf('SELECT %s FROM t', $keyword));
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertSame(\SqlSemantics\Model\ExpressionKind::Column, $statement->outputs[0]->expression->kind);
+        self::assertSame(sprintf('SELECT "%s" AS "%s" FROM "main"."t"', $keyword, $keyword), $statement->toString());
+    }
+
+    public function testTokenRejectsDefaultOutsideAWrite(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build());
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::DefaultContext->message());
+        $binder->bind('SELECT DEFAULT');
+    }
+
+    public function testQualifiedAcceptsOnlyDottedNamePaths(): void
+    {
+        $reader = new \SqlSemantics\Binding\ExpressionBinder();
+        $name = new \SqlParser\Parser\Node('nm', 0, [new \SqlParser\Lexer\Token(1, 'ID', 'a', 0)]);
+        $dot = new \SqlParser\Lexer\Token(2, 'DOT', '.', 1);
+        $plus = new \SqlParser\Lexer\Token(3, 'PLUS', '+', 1);
+        $other = new \SqlParser\Parser\Node('expr', 0, [new \SqlParser\Lexer\Token(1, 'ID', 'a', 0)]);
+        self::assertTrue($reader->qualified([$name, $dot, $name]));
+        self::assertTrue($reader->qualified([$name, $dot, $name, $dot, $name]));
+        self::assertFalse($reader->qualified([$name, $dot, $name, $dot]));
+        self::assertFalse($reader->qualified([$name, $dot, $name, $dot, $name, $dot]));
+        self::assertFalse($reader->qualified([$name, $plus, $name]));
+        self::assertFalse($reader->qualified([$name, $dot, $name, $plus, $name]));
+        self::assertFalse($reader->qualified([$other, $dot, $name]));
+        self::assertFalse($reader->qualified([$name, $dot, $other]));
+        self::assertFalse($reader->qualified([$name, $dot, $name, $dot, $other]));
+    }
+
+    public function testCallBindsAFunctionCall(): void
+    {
+        $tree = (new \SqlParser\Sqlite\SqliteParser())->parse('SELECT abs(1)');
+        $node = $tree->find('expr')[0];
+        $scope = new \SqlSemantics\Binding\Scope(new \SqlSemantics\Ast\Identifiers(Dialect::Sqlite));
+        $call = (new \SqlSemantics\Binding\ExpressionBinder())->call($node, \SqlSemantics\Ast\Tree::significant($node), $scope);
+        self::assertSame('ABS', $call->spelling());
+    }
+
+    #[TestWith([Dialect::PostgreSql])]
+    #[TestWith([Dialect::Sqlite])]
+    public function testOperationBindsPostfixNullTests(Dialect $dialect): void
+    {
+        $binder = new Binder((new SchemaBuilder($dialect))->build());
+        $statement = $binder->bind('SELECT 1 ISNULL, 1 NOTNULL');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertSame('IS NULL', $statement->outputs[0]->expression->spelling());
+        self::assertSame('IS NOT NULL', $statement->outputs[1]->expression->spelling());
+        self::assertSame('SELECT (1 IS NULL), (1 IS NOT NULL)', $statement->toString());
+    }
+
+    #[TestWith([Dialect::PostgreSql, 'SELECT ("id" IS NOT TRUE) FROM "public"."t"'])]
+    #[TestWith([Dialect::MySql, 'SELECT (`id` IS NOT TRUE) FROM `t`'])]
+    public function testOperationBindsTruthTests(Dialect $dialect, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder($dialect))->build('CREATE TABLE t(id BOOLEAN)'));
+        $statement = $binder->bind('SELECT id IS NOT TRUE FROM t');
+        self::assertInstanceOf(\SqlSemantics\Model\BoundSelect::class, $statement);
+        self::assertSame('IS NOT TRUE', $statement->outputs[0]->expression->spelling());
+        self::assertSame(\SqlSemantics\Model\ExpressionKind::Column, $statement->outputs[0]->expression->inputs()[0]->kind);
+        self::assertSame($expected, $statement->toString());
+    }
+
+    public function testOperationComparesARowSubqueryWithALowercaseOperator(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::Sqlite))->build());
+        self::assertSame('SELECT ((SELECT 1, 2) IS(1, 2))', $binder->bind('SELECT (SELECT 1, 2) is (1, 2)')->toString());
+    }
+
+    #[TestWith([Dialect::PostgreSql, 'SELECT (SELECT 1, 2) = 1'])]
+    #[TestWith([Dialect::Sqlite, 'SELECT (SELECT 1, 2) is (1, 2, 3)'])]
+    public function testOperationRejectsComparedRowsOfDifferentWidths(Dialect $dialect, string $sql): void
+    {
+        $binder = new Binder((new SchemaBuilder($dialect))->build());
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $this->expectExceptionMessage('Compared row operands must have equal widths.');
+        $binder->bind($sql);
+    }
 }

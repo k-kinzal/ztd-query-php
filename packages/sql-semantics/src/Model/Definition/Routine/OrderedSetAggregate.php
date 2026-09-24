@@ -26,6 +26,7 @@ final class OrderedSetAggregate
      */
     public function __construct(public readonly QualifiedName $name, public readonly array $direct, public readonly array $ordered)
     {
+        \SqlSemantics\Model\Definition\Catalog\CatalogInvariant::name($name, 3);
         Collections::objects($direct, AggregateParameter::class);
         Collections::objects(Collections::nonEmpty($ordered), AggregateParameter::class);
         $last = $direct === [] ? null : $direct[count($direct) - 1];

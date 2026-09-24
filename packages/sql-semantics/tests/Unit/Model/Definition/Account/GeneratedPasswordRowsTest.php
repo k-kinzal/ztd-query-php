@@ -52,4 +52,21 @@ final class GeneratedPasswordRowsTest extends TestCase
         self::assertSame(['user', 'host', 'generated password', 'auth_factor'], array_column($columns, 'name'));
         self::assertSame([], GeneratedPasswordRows::columns($statement->source, $statement->scopeId, null));
     }
+
+    public function testDefinitionDetectsAGeneratedFirstFactor(): void
+    {
+        self::assertTrue(GeneratedPasswordRows::definition(new AccountDefinition(new AccountName('u'), RandomPassword::Generated)));
+        self::assertTrue(GeneratedPasswordRows::definition(new AccountDefinition(new AccountName('u'), new PluginRandomPasswordIdentification('q'))));
+    }
+
+    #[\PHPUnit\Framework\Attributes\TestWith(['ALTER USER u IDENTIFIED BY RANDOM PASSWORD', true])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['ALTER USER u IDENTIFIED WITH caching_sha2_password BY RANDOM PASSWORD', true])]
+    #[\PHPUnit\Framework\Attributes\TestWith(["ALTER USER u IDENTIFIED BY 'x'", false])]
+    #[\PHPUnit\Framework\Attributes\TestWith(["ALTER USER u IDENTIFIED WITH caching_sha2_password BY 'x'", false])]
+    public function testAlterationDetectsAGeneratedCredentialChange(string $sql, bool $generated): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build()))->bind($sql);
+        self::assertInstanceOf(\SqlSemantics\Model\Statement\Definition\MySql\Account\AlterUsersStatement::class, $statement);
+        self::assertSame($generated, GeneratedPasswordRows::alteration($statement->alterations[0]));
+    }
 }

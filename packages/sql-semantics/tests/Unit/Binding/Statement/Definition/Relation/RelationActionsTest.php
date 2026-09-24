@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Tests\Unit\Binding\Statement\Definition\Relation;
 
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Medium;
 use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\TestCase;
@@ -107,5 +108,40 @@ final class RelationActionsTest extends TestCase
         self::assertInstanceOf($class, $statement);
         self::assertSame($expected, $statement->toString());
         self::assertSame($expected, $binder->bind($expected, strict: false)->toString());
+    }
+
+    /**
+     * @return list<array{Dialect, ?string, string, mixed}>
+     */
+    public static function providerReadWritesEachRelationAction(): array
+    {
+        return [
+            [Dialect::PostgreSql, null, 'ALTER FOREIGN TABLE t OPTIONS (ADD a \'b\', SET c \'d\', DROP e)', [\SqlSemantics\Model\Statement\Definition\PostgreSql\Relation\AlterRelationStatement::class, 'ALTER FOREIGN TABLE "t" OPTIONS(ADD "a" \'b\', SET "c" \'d\', DROP "e")']],
+            [Dialect::PostgreSql, null, 'ALTER TABLE t SET LOGGED, SET UNLOGGED', [\SqlSemantics\Model\Statement\Definition\PostgreSql\Relation\AlterRelationStatement::class, 'ALTER TABLE "t" SET LOGGED, SET UNLOGGED']],
+            [Dialect::PostgreSql, null, 'ALTER TABLE t SET WITHOUT OIDS, SET WITHOUT CLUSTER', [\SqlSemantics\Model\Statement\Definition\PostgreSql\Relation\AlterRelationStatement::class, 'ALTER TABLE "t" SET WITHOUT OIDS, SET WITHOUT CLUSTER']],
+            [Dialect::PostgreSql, null, 'ALTER TABLE t ENABLE ROW LEVEL SECURITY, DISABLE ROW LEVEL SECURITY', [\SqlSemantics\Model\Statement\Definition\PostgreSql\Relation\AlterRelationStatement::class, 'ALTER TABLE "t" ENABLE ROW LEVEL SECURITY, DISABLE ROW LEVEL SECURITY']],
+            [Dialect::PostgreSql, null, 'ALTER TABLE t ENABLE ALWAYS TRIGGER x, ENABLE REPLICA TRIGGER y, ENABLE TRIGGER ALL, DISABLE TRIGGER USER', [\SqlSemantics\Model\Statement\Definition\PostgreSql\Relation\AlterRelationStatement::class, 'ALTER TABLE "t" ENABLE ALWAYS TRIGGER "x", ENABLE REPLICA TRIGGER "y", ENABLE TRIGGER ALL, DISABLE TRIGGER USER']],
+            [Dialect::PostgreSql, null, 'alter table t replica identity full', [\SqlSemantics\Model\Statement\Definition\PostgreSql\Relation\AlterRelationStatement::class, 'ALTER TABLE "t" REPLICA IDENTITY FULL']],
+            [Dialect::PostgreSql, null, 'ALTER TABLE t OF s.typ', [\SqlSemantics\Model\Statement\Definition\PostgreSql\Relation\AlterRelationStatement::class, 'ALTER TABLE "t" OF "s"."typ"']],
+            [Dialect::PostgreSql, null, 'ALTER TABLE t INHERIT a.s.p', [\SqlSemantics\Model\Statement\Definition\PostgreSql\Relation\AlterRelationStatement::class, 'ALTER TABLE "t" INHERIT "a"."s"."p"']],
+            [Dialect::PostgreSql, null, 'ALTER TABLE t ADD CONSTRAINT c CHECK (id > 0)', [\SqlSemantics\Model\Statement\Definition\PostgreSql\Relation\AlterRelationStatement::class, 'ALTER TABLE "t" ADD CONSTRAINT "c" CHECK (("id" > 0))']],
+            [Dialect::PostgreSql, null, 'ALTER TABLE t ADD CHECK (id > 0)', [\SqlSemantics\Model\Statement\Definition\PostgreSql\Relation\AlterRelationStatement::class, 'ALTER TABLE "t" ADD CHECK (("id" > 0))']],
+        ];
+    }
+
+    #[DataProvider('providerReadWritesEachRelationAction')]
+    public function testReadWritesEachRelationAction(Dialect $dialect, ?string $version, string $sql, mixed $expected): void
+    {
+        $statement = (new Binder((new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(id INTEGER, n INTEGER)')))->bind($sql, strict: false);
+        self::assertSame($expected, [$statement::class, $statement->toString()]);
+    }
+
+    #[TestWith(['ALTER TABLE t OF a.s.typ'])]
+    #[TestWith(['ALTER TABLE t INHERIT d.a.s.p'])]
+    public function testHierarchyRejectsANameWithTooManyComponents(string $sql): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER, n INTEGER)'));
+        $this->expectException(\SqlSemantics\InvalidSql::class);
+        $binder->bind($sql, strict: false);
     }
 }

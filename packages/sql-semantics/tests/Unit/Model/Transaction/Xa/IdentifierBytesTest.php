@@ -45,6 +45,9 @@ final class IdentifierBytesTest extends TestCase
         yield 'empty hex' => ["X''", 0];
         yield 'bit string' => ["B'001000010'", 2];
         yield 'bit number' => ['0b100', 1];
+        yield 'one full bit byte' => ["B'00100001'", 1];
+        yield 'two doubled quotes' => ["'a''''b'", 4];
+        yield 'quotes around a letter' => ["'''a'''", 3];
         yield 'maximum byte count' => ["'" . str_repeat('a', 64) . "'", 64];
     }
 
@@ -73,5 +76,14 @@ final class IdentifierBytesTest extends TestCase
         self::assertInstanceOf(Literal::class, $literal);
         $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
         IdentifierBytes::check($literal);
+    }
+
+    public function testLengthRejectsANationalStringLiteral(): void
+    {
+        $token = (new DialectParser(Dialect::MySql))->parse("SELECT N'ab'")->tokens()[1];
+        $literal = (new LiteralBinder(Dialect::MySql))->bind($token);
+        self::assertInstanceOf(Literal::class, $literal);
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        IdentifierBytes::length($literal);
     }
 }

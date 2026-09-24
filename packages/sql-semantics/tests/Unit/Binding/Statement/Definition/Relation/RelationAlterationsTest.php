@@ -83,4 +83,24 @@ final class RelationAlterationsTest extends TestCase
         $this->expectExceptionMessage(InputViolation::ResetParameterValue->message());
         $binder->bind($sql, strict: false);
     }
+
+    #[TestWith(['ALTER TABLE t ADD CONSTRAINT c PRIMARY KEY (id)', 'ALTER TABLE "t" ADD CONSTRAINT "c" PRIMARY KEY("id")'])]
+    #[TestWith(['ALTER TABLE t ADD CONSTRAINT c CHECK (id > 0)', 'ALTER TABLE "t" ADD CONSTRAINT "c" CHECK (("id" > 0))'])]
+    #[TestWith(['ALTER FOREIGN TABLE t ADD CONSTRAINT c CHECK (id > 0)', 'ALTER FOREIGN TABLE "t" ADD CONSTRAINT "c" CHECK (("id" > 0))'])]
+    #[TestWith(['ALTER INDEX ix SET (fillfactor = 70)', 'ALTER INDEX "ix" SET ("fillfactor" = 70)'])]
+    #[TestWith(['ALTER TABLE t RESET (toast.autovacuum_enabled)', 'ALTER TABLE "t" RESET("toast"."autovacuum_enabled")'])]
+    #[TestWith(['ALTER TABLE ALL IN TABLESPACE a OWNED BY r SET TABLESPACE b NOWAIT', 'ALTER TABLE ALL IN TABLESPACE "a" OWNED BY "r" SET TABLESPACE "b" NOWAIT'])]
+    public function testBindResolvesTablesAndLeavesOtherRelationsUnresolved(string $sql, string $expected): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
+        self::assertSame($expected, $binder->bind($sql)->toString());
+    }
+
+    public function testBindRejectsAKeyOnAForeignTable(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(id INTEGER)'));
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage('Foreign tables accept only NOT NULL and CHECK constraints.');
+        $binder->bind('ALTER FOREIGN TABLE t ADD CONSTRAINT c PRIMARY KEY (id)');
+    }
 }

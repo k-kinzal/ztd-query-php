@@ -83,4 +83,65 @@ final class StoredProgramsTest extends TestCase
         self::assertInstanceOf(AlterEventStatement::class, $statement);
         self::assertSame('ALTER EVENT `e` RENAME TO `f`', StoredPrograms::alterEvent($statement)->toString());
     }
+
+    public function testWriteSpellsTheTriggerWithDefinerGuardAndOrder(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind("CREATE DEFINER = 'u'@'h' TRIGGER IF NOT EXISTS tr BEFORE INSERT ON t FOR EACH ROW FOLLOWS other SET @x = 1");
+        self::assertSame("CREATE DEFINER = 'u'@'h' TRIGGER IF NOT EXISTS `tr` BEFORE INSERT ON `t` FOR EACH ROW FOLLOWS `other` SET @`x` = 1", StoredPrograms::write($statement)?->toString());
+    }
+
+    public function testWriteSpellsTheTriggerTimingAndEventWithoutAnOrder(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind('CREATE TRIGGER tr AFTER DELETE ON t FOR EACH ROW BEGIN END');
+        self::assertSame('CREATE TRIGGER `tr` AFTER DELETE ON `t` FOR EACH ROW BEGIN END', StoredPrograms::write($statement)?->toString());
+    }
+
+    public function testWriteSpellsTheTriggerPrecedingAnotherTrigger(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build('CREATE TABLE t(a INT)')))->bind('CREATE TRIGGER tr BEFORE UPDATE ON t FOR EACH ROW PRECEDES o SET @x = 1');
+        self::assertSame('CREATE TRIGGER `tr` BEFORE UPDATE ON `t` FOR EACH ROW PRECEDES `o` SET @`x` = 1', StoredPrograms::write($statement)?->toString());
+    }
+
+    public function testWriteSpellsTheEventWithEveryNonDefaultClause(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("CREATE DEFINER = CURRENT_USER EVENT IF NOT EXISTS e ON SCHEDULE AT '2030-01-01 00:00:00' ON COMPLETION PRESERVE DISABLE COMMENT 'c' DO SELECT 1");
+        self::assertSame("CREATE DEFINER = CURRENT_USER EVENT IF NOT EXISTS `e` ON SCHEDULE AT '2030-01-01 00:00:00' ON COMPLETION PRESERVE DISABLE COMMENT 'c' DO SELECT 1", StoredPrograms::write($statement)?->toString());
+    }
+
+    public function testWriteOmitsTheEventDefaults(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE EVENT e ON SCHEDULE AT CURRENT_TIMESTAMP ON COMPLETION NOT PRESERVE ENABLE DO DO 1');
+        self::assertSame('CREATE EVENT `e` ON SCHEDULE AT(CURRENT_TIMESTAMP) DO DO 1', StoredPrograms::write($statement)?->toString());
+    }
+
+    public function testWriteSpellsTheReplicaDisabledEvent(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE EVENT e ON SCHEDULE AT CURRENT_TIMESTAMP DISABLE ON SLAVE DO DO 1');
+        self::assertSame('CREATE EVENT `e` ON SCHEDULE AT(CURRENT_TIMESTAMP) DISABLE ON SLAVE DO DO 1', StoredPrograms::write($statement)?->toString());
+    }
+
+    public function testWriteSpellsEveryAlterEventChange(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("ALTER DEFINER = CURRENT_USER EVENT e ON SCHEDULE AT '2030-01-01 00:00:00' ON COMPLETION NOT PRESERVE RENAME TO f ENABLE COMMENT 'x' DO DO 2");
+        self::assertSame("ALTER DEFINER = CURRENT_USER EVENT `e` ON SCHEDULE AT '2030-01-01 00:00:00' ON COMPLETION NOT PRESERVE RENAME TO `f` ENABLE COMMENT 'x' DO DO 2", StoredPrograms::write($statement)?->toString());
+    }
+
+    public function testWriteSpellsTheProcedureModesAndCharacteristics(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE PROCEDURE p(IN a INT, OUT b TEXT, INOUT c INT) DETERMINISTIC NO SQL SQL SECURITY INVOKER BEGIN END');
+        self::assertSame('CREATE PROCEDURE `p`(IN `a` integer, OUT `b` text, INOUT `c` integer) DETERMINISTIC NO SQL SQL SECURITY INVOKER BEGIN END', StoredPrograms::write($statement)?->toString());
+    }
+
+    public function testWriteSpellsTheFunctionWithModifiesSqlData(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind('CREATE FUNCTION g(a INT, b INT) RETURNS INT MODIFIES SQL DATA RETURN a');
+        self::assertSame('CREATE FUNCTION `g`(`a` integer, `b` integer) RETURNS integer MODIFIES SQL DATA RETURN `a`', StoredPrograms::write($statement)?->toString());
+    }
+
+    public function testRoutineEscapesExternalCode(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("CREATE FUNCTION f() RETURNS INT LANGUAGE JAVASCRIPT AS 'return \"it''s\\\\x\"'");
+        self::assertInstanceOf(CreateFunctionStatement::class, $statement);
+        self::assertSame('CREATE FUNCTION `f`() RETURNS integer LANGUAGE `JAVASCRIPT` AS \'return "it\'\'s\\\\x"\'', StoredPrograms::routine($statement)->toString());
+    }
 }

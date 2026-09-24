@@ -63,4 +63,19 @@ final class ProfileFieldTest extends TestCase
     {
         self::assertSame('numeric', \SqlSemantics\Type\TypeDescriptor::builtin(\SqlSemantics\Dialect::MySql, ProfileField::Duration->type())->name);
     }
+
+    public function testTypeCoversEveryField(): void
+    {
+        self::assertSame(['bigint', 'numeric', 'varchar', 'varchar', 'numeric', 'numeric', 'bigint', 'bigint', 'bigint', 'bigint', 'bigint', 'bigint', 'bigint', 'bigint', 'bigint', 'varchar', 'varchar', 'bigint'], array_map(static fn (ProfileField $field): string => $field->type(), ProfileField::cases()));
+    }
+
+    public function testNullabilityCoversEveryField(): void
+    {
+        self::assertSame(['not-null', 'not-null', 'not-null', 'not-null', 'maybe-null', 'maybe-null', 'maybe-null', 'maybe-null', 'maybe-null', 'maybe-null', 'maybe-null', 'maybe-null', 'maybe-null', 'maybe-null', 'maybe-null', 'maybe-null', 'maybe-null', 'maybe-null'], array_map(static fn (ProfileField $field): string => $field->nullability()->value, ProfileField::cases()));
+    }
+
+    public function testDetailAddsNoFieldForMemory(): void
+    {
+        self::assertSame(['Status', 'Duration', 'Block_ops_in', 'Block_ops_out'], array_column(ProfileField::detail([ProfileCategory::Memory, ProfileCategory::BlockIo]), 'value'));
+    }
 }

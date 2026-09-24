@@ -48,4 +48,58 @@ final class PrepareTextStatementTest extends TestCase
         self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\Literal::class, $statement->sql);
         self::assertSame("'runtime input'", $statement->sql->text);
     }
+
+    public function testRejectsAnotherDialect(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("PREPARE s FROM 'SELECT 1'");
+        self::assertInstanceOf(PrepareTextStatement::class, $statement);
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        $this->expectExceptionMessage('This prepared-statement form requires MySql.');
+        new PrepareTextStatement(new \SqlSemantics\Model\Statement\Origin('s0', $statement->source, Dialect::PostgreSql), 's', $statement->sql);
+    }
+
+    public function testRejectsANumberLiteral(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("PREPARE s FROM 'SELECT 1'");
+        self::assertInstanceOf(PrepareTextStatement::class, $statement);
+        $number = \SqlSemantics\Model\Expression::literal(1, Dialect::MySql);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\Literal::class, $number);
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        $this->expectExceptionMessage('Dynamic preparation requires a text literal or a MySQL user variable.');
+        new PrepareTextStatement($statement->origin, 's', $number);
+    }
+
+    public function testRejectsATextLiteralOfAnotherDialect(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("PREPARE s FROM 'SELECT 1'");
+        self::assertInstanceOf(PrepareTextStatement::class, $statement);
+        $text = \SqlSemantics\Model\Expression::literal('SELECT 1', Dialect::PostgreSql);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Value\Literal::class, $text);
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        $this->expectExceptionMessage('Dynamic preparation requires a text literal or a MySQL user variable.');
+        new PrepareTextStatement($statement->origin, 's', $text);
+    }
+
+    public function testRejectsASystemVariable(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()))->bind("PREPARE s FROM 'SELECT 1'");
+        self::assertInstanceOf(PrepareTextStatement::class, $statement);
+        $facts = new \SqlSemantics\Model\Scalar\ExpressionFacts(\SqlSemantics\Type\TypeDescriptor::builtin(Dialect::MySql, 'unknown'), \SqlSemantics\Type\Nullability::Unknown);
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        $this->expectExceptionMessage('Dynamic preparation reads only user variables.');
+        new PrepareTextStatement($statement->origin, 's', new \SqlSemantics\Model\Scalar\Reference\UnresolvedVariableReference($facts, $statement->source, 'x', \SqlSemantics\Schema\VariableScope::Session));
+    }
+
+    public function testRejectsADefinedSystemVariable(): void
+    {
+        $type = new \SqlSemantics\Type\TypeDescriptor(Dialect::MySql, \SqlSemantics\Type\Identity\BuiltinIdentity::Text);
+        $variable = new \SqlSemantics\Schema\VariableDefinition('sql', \SqlSemantics\Schema\VariableScope::User, $type);
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql))->build()->withVariables($variable)))->bind('PREPARE s FROM @sql');
+        self::assertInstanceOf(PrepareTextStatement::class, $statement);
+        self::assertInstanceOf(\SqlSemantics\Model\Scalar\Reference\VariableReference::class, $statement->sql);
+        $system = new \SqlSemantics\Schema\VariableDefinition('sql', \SqlSemantics\Schema\VariableScope::Session, $type);
+        $this->expectException(\SqlSemantics\Model\Validation\InvalidStructure::class);
+        $this->expectExceptionMessage('Dynamic preparation reads only user variables.');
+        new PrepareTextStatement($statement->origin, 's', new \SqlSemantics\Model\Scalar\Reference\VariableReference($statement->sql->facts, $statement->source, $system));
+    }
 }

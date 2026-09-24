@@ -65,4 +65,11 @@ final class MySqlExplainsTest extends TestCase
     {
         self::assertSame($decimal, MySqlExplains::decimal($hex));
     }
+
+    public function testTargetBindsADatabaseScopedQuery(): void
+    {
+        $statement = (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build()))->bind('EXPLAIN FOR SCHEMA d SELECT 1');
+        self::assertInstanceOf(ExplainInDatabaseStatement::class, $statement);
+        self::assertSame('EXPLAIN FOR DATABASE `d` SELECT 1', $statement->toString());
+    }
 }

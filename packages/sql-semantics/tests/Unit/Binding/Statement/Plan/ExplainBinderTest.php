@@ -66,4 +66,43 @@ final class ExplainBinderTest extends TestCase
         self::assertSame('EXPLAIN SELECT 1', $query->toString());
     }
 
+    #[TestWith([Dialect::MySql, 'mysql-8.4.7', 'explain format=json select 1', 'EXPLAIN FORMAT = JSON SELECT 1'])]
+    #[TestWith([Dialect::MySql, 'mysql-8.4.7', 'explain format=`json` into @Var select 1', 'EXPLAIN FORMAT = JSON INTO @`Var` SELECT 1'])]
+    #[TestWith([Dialect::MySql, 'mysql-8.4.7', 'explain analyze format=tree select 1', 'EXPLAIN ANALYZE FORMAT = TREE SELECT 1'])]
+    #[TestWith([Dialect::MySql, 'mysql-8.4.7', 'desc t', 'DESCRIBE `t`'])]
+    #[TestWith([Dialect::MySql, 'mysql-5.6.51', 'explain extended select 1', 'EXPLAIN EXTENDED SELECT 1'])]
+    #[TestWith([Dialect::MySql, 'mysql-5.6.51', 'explain partitions select 1', 'EXPLAIN PARTITIONS SELECT 1'])]
+    #[TestWith([Dialect::Sqlite, null, 'explain query plan select id from t', 'EXPLAIN QUERY PLAN SELECT "id" AS "id" FROM "main"."t"'])]
+    #[TestWith([Dialect::Sqlite, null, 'explain select 1', 'EXPLAIN SELECT 1'])]
+    #[TestWith([Dialect::PostgreSql, null, 'explain (analyze, format json) select 1', 'EXPLAIN(ANALYZE TRUE, VERBOSE FALSE, COSTS TRUE, SETTINGS FALSE, GENERIC_PLAN FALSE, BUFFERS FALSE, WAL FALSE, MEMORY FALSE, SERIALIZE NONE, FORMAT JSON) SELECT 1'])]
+    public function testBindWrapsTheExplainedCommandOfEachDialect(Dialect $dialect, ?string $version, string $sql, string $expected): void
+    {
+        $schema = (new SchemaBuilder($dialect, grammarVersion: $version))->build('CREATE TABLE t(id INT)');
+        self::assertSame($expected, (new Binder($schema))->bind($sql)->toString());
+    }
+
+    public function testBindRejectsAnUnknownFormat(): void
+    {
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::ExplainSetting->message());
+        (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build()))->bind('explain format=xml select 1');
+    }
+
+    public function testMysqlReadsEachPlanSetting(): void
+    {
+        $source = (new \SqlSemantics\Ast\DialectParser(Dialect::MySql, 'mysql-8.4.7'))->parse('explain analyze format=tree select 1')->find('explain_stmt')[0];
+        $context = new \SqlSemantics\Binding\Query\QueryContext(new \SqlSemantics\Binding\TableResolver((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build(), new \SqlSemantics\Ast\Identifiers(Dialect::MySql), ''));
+        $plan = ExplainBinder::mysql($source, $context);
+        self::assertSame(MySqlFormat::Tree, $plan->format);
+        self::assertTrue($plan->analyze);
+        self::assertFalse($plan->extended);
+        self::assertNull($plan->variable);
+    }
+
+    public function testMysqlDiagnosesAnIncompatibleCombination(): void
+    {
+        $this->expectException(InvalidSql::class);
+        $this->expectExceptionMessage(\SqlSemantics\Model\Validation\InputViolation::ExplainCombination->message());
+        (new Binder((new SchemaBuilder(Dialect::MySql, grammarVersion: 'mysql-8.4.7'))->build()))->bind('explain format=tree into @v select 1');
+    }
 }

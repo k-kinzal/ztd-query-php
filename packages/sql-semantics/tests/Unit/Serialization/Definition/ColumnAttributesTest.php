@@ -50,4 +50,13 @@ final class ColumnAttributesTest extends TestCase
     {
         self::assertSame("COMMENT 'it''s'", ColumnAttributes::write(new Attributes(comment: "it's"), Dialect::PostgreSql)->toString());
     }
+
+
+    public function testWritePlacesPostgreSqlStorageAndCompressionBeforeConstraints(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a int)'));
+        $statement = $binder->bind('ALTER TABLE t ADD COLUMN c text STORAGE EXTERNAL COMPRESSION pglz COLLATE "C" NOT NULL');
+        self::assertSame('ALTER TABLE "t" ADD COLUMN "c" text STORAGE EXTERNAL COMPRESSION "pglz" COLLATE "C" NOT NULL', $statement->toString());
+        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+    }
 }

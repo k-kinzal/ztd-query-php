@@ -5,6 +5,11 @@ declare(strict_types=1);
 namespace Tests\Unit\Ast\Definition;
 
 use PHPUnit\Framework\TestCase;
+use SqlSemantics\Ast\Declaration\IndexElement;
+use SqlSemantics\Ast\Definition\IndexKeys;
+use SqlSemantics\Ast\DialectParser;
+use SqlSemantics\Ast\Identifiers;
+use SqlSemantics\Ast\Tree;
 use SqlSemantics\Binder;
 use SqlSemantics\Dialect;
 use SqlSemantics\Schema\FunctionSignature;
@@ -99,16 +104,16 @@ use SqlSemantics\Type\TypeDescriptor;
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Model\Validation\Collections::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\TypeReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ConstraintGroups::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\DialectParser::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(DialectParser::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\TokenGroups::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\Tree::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(Tree::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ColumnReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\SchemaReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\ConstraintReader::class)]
-#[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\Identifiers::class)]
+#[\PHPUnit\Framework\Attributes\UsesClass(Identifiers::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\StatementList::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\Definition\ReferenceReader::class)]
-#[\PHPUnit\Framework\Attributes\CoversClass(\SqlSemantics\Ast\Definition\IndexKeys::class)]
+#[\PHPUnit\Framework\Attributes\CoversClass(IndexKeys::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\Definition\OptionReader::class)]
 #[\PHPUnit\Framework\Attributes\UsesClass(\SqlSemantics\Ast\Definition\IndexReader::class)]
 #[\PHPUnit\Framework\Attributes\Medium]
@@ -207,4 +212,51 @@ final class IndexKeysTest extends TestCase
         self::assertSame('ASC', $rebound->index->definition->elements[1]->direction?->value);
     }
 
+    /**
+     * @return array<string, array{Dialect, string, list<array{?string, ?string, ?string, ?string, list<string>, list<string>, ?int}>}>
+     */
+    public static function providerParsedKeys(): array
+    {
+        return [
+            'sqlite sort list' => [Dialect::Sqlite, 'CREATE INDEX i ON t(a collate nocase desc, b asc, c)', [['a', null, 'DESC', null, ['nocase'], [], null], ['b', null, 'ASC', null, [], [], null], ['c', null, null, null, [], [], null]]],
+            'mysql prefix and expression' => [Dialect::MySql, 'CREATE INDEX i ON t(a(10) desc, (b + 1), c)', [['a', null, 'DESC', null, [], [], 10], [null, 'b + 1', null, null, [], [], null], ['c', null, null, null, [], [], null]]],
+            'postgresql modifiers' => [Dialect::PostgreSql, 'CREATE INDEX i ON t (a collate "C" text_pattern_ops desc nulls first, (b + 1), c)', [['a', null, 'DESC', 'FIRST', ['C'], ['text_pattern_ops'], null], [null, 'b + 1', null, null, [], [], null], ['c', null, null, null, [], [], null]]],
+            'no key list' => [Dialect::PostgreSql, 'CREATE TABLE t(a INT)', []],
+        ];
+    }
+
+    /**
+     * @param list<array{?string, ?string, ?string, ?string, list<string>, list<string>, ?int}> $expected
+     */
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerParsedKeys')]
+    public function testReadReadsEachParsedKey(Dialect $dialect, string $sql, array $expected): void
+    {
+        $keys = IndexKeys::read((new DialectParser($dialect))->parse($sql), new Identifiers($dialect));
+        self::assertSame($expected, array_map(static fn (IndexElement $key): array => [$key->column, $key->expression === null ? null : Tree::text($key->expression), $key->direction, $key->nulls, $key->collation, $key->operatorClass, $key->prefixLength], $keys));
+    }
+
+    public function testValueReadsACollatedColumn(): void
+    {
+        $key = Tree::outer((new DialectParser(Dialect::Sqlite))->parse('CREATE INDEX i ON t(a collate nocase)'), ['sortlist'])[0];
+        [$column, $expression, $collation] = IndexKeys::value($key, new Identifiers(Dialect::Sqlite));
+        self::assertSame('a', $column);
+        self::assertNull($expression);
+        self::assertSame(['nocase'], $collation);
+    }
+
+    public function testElementReadsAParsedPrefixKey(): void
+    {
+        $key = Tree::outer((new DialectParser(Dialect::MySql))->parse('CREATE INDEX i ON t(a(10) DESC)'), ['key_part_with_expression'])[0];
+        $element = IndexKeys::element($key, new Identifiers(Dialect::MySql));
+        self::assertSame(['a', 10, 'DESC'], [$element->column, $element->prefixLength, $element->direction]);
+    }
+
+
+    public function testElementReadsAParameterizedOperatorClass(): void
+    {
+        $binder = new Binder((new SchemaBuilder(Dialect::PostgreSql))->build('CREATE TABLE t(a int)'));
+        $statement = $binder->bind('CREATE INDEX ON t (a COLLATE "C" int4_ops (x = 1) DESC)');
+        self::assertSame('CREATE INDEX ON "public"."t"("a" COLLATE "C" "int4_ops"("x" = 1) DESC)', $statement->toString());
+        self::assertSame($statement->toString(), $binder->bind($statement->toString())->toString());
+    }
 }
