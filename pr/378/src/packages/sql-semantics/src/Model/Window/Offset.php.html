@@ -55,26 +55,38 @@
 <span class="src-line" id="L15" data-diff="added"><a class="ln" href="#L15">15</a><span class="tok-com"> *     $frame-&gt;end-&gt;direction // =&gt; \SqlSemantics\Model\Window\Direction::Following</span></span>
 <span class="src-line" id="L16" data-diff="added"><a class="ln" href="#L16">16</a><span class="tok-com"> *     $frame-&gt;end-&gt;value-&gt;spelling() // =&gt; &#039;1&#039;</span></span>
 <span class="src-line" id="L17" data-diff="added"><a class="ln" href="#L17">17</a><span class="tok-com"> *     count($frame-&gt;end-&gt;expressions()) // =&gt; 1</span></span>
-<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a></span>
-<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> */</span></span>
-<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Offset</span> <span class="tok-kw">implements</span> <span class="tok-id">Boundary</span></span>
-<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a>{</span>
-<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
-<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Direction</span> <span class="tok-var">$direction</span>,</span>
-<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">\SqlSemantics\Model\Expression</span> <span class="tok-var">$value</span></span>
-<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>    ) {</span>
-<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>    }</span>
-<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com">     * Returns the required offset expression evaluated for this frame boundary.</span></span>
+<span class="src-line" id="L18" data-diff="added"><a class="ln" href="#L18">18</a><span class="tok-com"> * @example Reading a MySQL interval offset</span></span>
+<span class="src-line" id="L19" data-diff="added"><a class="ln" href="#L19">19</a><span class="tok-com"> *     $schema = (new \SqlSemantics\SchemaBuilder(\SqlSemantics\Dialect::MySql))-&gt;build(&#039;CREATE TABLE t(d DATE, n INTEGER)&#039;);</span></span>
+<span class="src-line" id="L20" data-diff="added"><a class="ln" href="#L20">20</a><span class="tok-com"> *     $query = (new \SqlSemantics\Binder($schema))-&gt;bind(&#039;SELECT sum(n) OVER (ORDER BY d RANGE INTERVAL 2 DAY PRECEDING) FROM t&#039;);</span></span>
+<span class="src-line" id="L21" data-diff="added"><a class="ln" href="#L21">21</a><span class="tok-com"> *     $query-&gt;outputs[0]-&gt;expression-&gt;window-&gt;frame-&gt;start-&gt;unit // =&gt; \SqlSemantics\Model\Scalar\Temporal\MySqlUnit::Day</span></span>
+<span class="src-line" id="L22" data-diff="added"><a class="ln" href="#L22">22</a></span>
+<span class="src-line" id="L23" data-diff="added"><a class="ln" href="#L23">23</a><span class="tok-com"> */</span></span>
+<span class="src-line" id="L24" data-diff="added"><a class="ln" href="#L24">24</a><span class="tok-kw">final</span> <span class="tok-kw">class</span> <span class="tok-id">Offset</span> <span class="tok-kw">implements</span> <span class="tok-id">Boundary</span></span>
+<span class="src-line" id="L25" data-diff="added"><a class="ln" href="#L25">25</a>{</span>
+<span class="src-line" id="L26" data-diff="added"><a class="ln" href="#L26">26</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a><span class="tok-com">     * A MySQL RANGE offset may be an interval, `INTERVAL value unit PRECEDING`; the unit then names how the value is read.</span></span>
+<span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a><span class="tok-com">     * @param \SqlSemantics\Model\Scalar\Temporal\MySqlUnit|null $unit Interval unit of a MySQL temporal offset</span></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a><span class="tok-com">     * @throws \SqlSemantics\Model\Validation\InvalidStructure</span></span>
 <span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">expressions</span>(): <span class="tok-kw">array</span></span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>    {</span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>        <span class="tok-kw">return</span> [<span class="tok-var">$this</span>-&gt;<span class="tok-id">value</span>];</span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    }</span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>}</span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a></span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">__construct</span>(</span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">Direction</span> <span class="tok-var">$direction</span>,</span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> <span class="tok-id">\SqlSemantics\Model\Expression</span> <span class="tok-var">$value</span>,</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>        <span class="tok-kw">public</span> <span class="tok-kw">readonly</span> ?<span class="tok-id">\SqlSemantics\Model\Scalar\Temporal\MySqlUnit</span> <span class="tok-var">$unit</span> = <span class="tok-id">null</span>,</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>    ) {</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>        <span class="tok-kw">if</span> (<span class="tok-var">$unit</span> !== <span class="tok-id">null</span> &amp;&amp; <span class="tok-var">$value</span>-&gt;<span class="tok-id">type</span>-&gt;<span class="tok-id">dialect</span> !== <span class="tok-id">\SqlSemantics\Dialect</span>::<span class="tok-id">MySql</span>) {</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>            <span class="tok-kw">throw</span> <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Model\Validation\InvalidStructure</span>(<span class="tok-str">&#039;Only a MySQL frame offset is an interval.&#039;</span>);</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>        }</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    }</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a><span class="tok-com">     * Returns the required offset expression evaluated for this frame boundary.</span></span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">expressions</span>(): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>    {</span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>        <span class="tok-kw">return</span> [<span class="tok-var">$this</span>-&gt;<span class="tok-id">value</span>];</span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>    }</span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>}</span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

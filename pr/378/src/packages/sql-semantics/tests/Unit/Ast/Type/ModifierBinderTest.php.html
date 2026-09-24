@@ -113,8 +113,30 @@
 <span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>        (<span class="tok-kw">new</span> <span class="tok-id">Binder</span>((<span class="tok-kw">new</span> <span class="tok-id">SchemaBuilder</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">PostgreSql</span>))-&gt;<span class="tok-id">build</span>()))-&gt;<span class="tok-id">bind</span>(<span class="tok-var">$sql</span>);</span>
 <span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>    }</span>
 <span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a></span>
-<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>}</span>
-<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a></span>
+<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testReadUnwrapsParenthesesAroundEveryOperandForm</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>    {</span>
+<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>        <span class="tok-var">$binder</span> = <span class="tok-kw">new</span> <span class="tok-id">Binder</span>((<span class="tok-kw">new</span> <span class="tok-id">SchemaBuilder</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">PostgreSql</span>))-&gt;<span class="tok-id">build</span>());</span>
+<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&quot;SELECT CAST(&#039;a&#039; AS \&quot;app\&quot;.\&quot;measure\&quot;(- (1), - (- (2)), &#039;a&#039;, \&quot;x\&quot;))&quot;</span>, <span class="tok-var">$binder</span>-&gt;<span class="tok-id">bind</span>(<span class="tok-str">&quot;SELECT app.measure(-(1), - -2, (&#039;a&#039;), (x)) &#039;a&#039;&quot;</span>)-&gt;<span class="tok-id">toString</span>());</span>
+<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a>    }</span>
+<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a></span>
+<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a>    #[<span class="tok-id">TestWith</span>([<span class="tok-str">&quot;SELECT app.measure(-&#039;1&#039;) &#039;a&#039;&quot;</span>])]</span>
+<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>    #[<span class="tok-id">TestWith</span>([<span class="tok-str">&quot;SELECT app.measure(B&#039;1&#039;) &#039;a&#039;&quot;</span>])]</span>
+<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>    #[<span class="tok-id">TestWith</span>([<span class="tok-str">&quot;SELECT app.measure(-x) &#039;a&#039;&quot;</span>])]</span>
+<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testReadRejectsNegatedTextBitStringsAndNegatedNames</span>(<span class="tok-id">string</span> <span class="tok-var">$sql</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>    {</span>
+<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">\SqlSemantics\InvalidSql</span>::<span class="tok-kw">class</span>);</span>
+<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-id">\SqlSemantics\Model\Validation\InputViolation</span>::<span class="tok-id">TypeModifier</span>-&gt;<span class="tok-id">message</span>());</span>
+<span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a>        (<span class="tok-kw">new</span> <span class="tok-id">Binder</span>((<span class="tok-kw">new</span> <span class="tok-id">SchemaBuilder</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">PostgreSql</span>))-&gt;<span class="tok-id">build</span>()))-&gt;<span class="tok-id">bind</span>(<span class="tok-var">$sql</span>);</span>
+<span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a>    }</span>
+<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a></span>
+<span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testReadKeepsANumericTokenSpelling</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a>    {</span>
+<span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a>        <span class="tok-var">$parameter</span> = <span class="tok-id">\SqlSemantics\Ast\Type\ModifierBinder</span>::<span class="tok-id">read</span>(<span class="tok-kw">new</span> <span class="tok-id">\SqlParser\Lexer\Token</span>(<span class="tok-num">0</span>, <span class="tok-str">&#039;ICONST&#039;</span>, <span class="tok-str">&#039;0012&#039;</span>, <span class="tok-num">0</span>));</span>
+<span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a>        <span class="tok-id">self</span>::<span class="tok-id">assertInstanceOf</span>(<span class="tok-id">NumericParameter</span>::<span class="tok-kw">class</span>, <span class="tok-var">$parameter</span>);</span>
+<span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;0012&#039;</span>, <span class="tok-var">$parameter</span>-&gt;<span class="tok-id">spelling</span>);</span>
+<span class="src-line" id="L97" data-diff="added"><a class="ln" href="#L97">97</a>    }</span>
+<span class="src-line" id="L98" data-diff="added"><a class="ln" href="#L98">98</a>}</span>
+<span class="src-line" id="L99" data-diff="added"><a class="ln" href="#L99">99</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

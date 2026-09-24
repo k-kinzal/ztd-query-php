@@ -110,8 +110,28 @@
 <span class="src-line" id="L70" data-diff="added"><a class="ln" href="#L70">70</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-id">InputViolation</span>::<span class="tok-id">AccountLimit</span>-&gt;<span class="tok-id">message</span>());</span>
 <span class="src-line" id="L71" data-diff="added"><a class="ln" href="#L71">71</a>        <span class="tok-id">Accounts</span>::<span class="tok-id">count</span>(<span class="tok-kw">new</span> <span class="tok-id">Token</span>(<span class="tok-num">0</span>, <span class="tok-str">&#039;NUM&#039;</span>, <span class="tok-var">$text</span>, <span class="tok-num">0</span>), <span class="tok-var">$tree</span>);</span>
 <span class="src-line" id="L72" data-diff="added"><a class="ln" href="#L72">72</a>    }</span>
-<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a>}</span>
-<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a></span>
+<span class="src-line" id="L73" data-diff="added"><a class="ln" href="#L73">73</a></span>
+<span class="src-line" id="L74" data-diff="added"><a class="ln" href="#L74">74</a>    #[<span class="tok-id">TestWith</span>([<span class="tok-str">&#039;10x1F&#039;</span>])]</span>
+<span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>    #[<span class="tok-id">TestWith</span>([<span class="tok-str">&#039;0x1Fz&#039;</span>])]</span>
+<span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>    #[<span class="tok-id">TestWith</span>([<span class="tok-str">&quot;x&#039;1F&#039;z&quot;</span>])]</span>
+<span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>    #[<span class="tok-id">TestWith</span>([<span class="tok-str">&quot;zx&#039;1F&#039;&quot;</span>])]</span>
+<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testCountRejectsHexadecimalSpellingsWithinOtherText</span>(<span class="tok-id">string</span> <span class="tok-var">$text</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>    {</span>
+<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a>        <span class="tok-var">$context</span> = (<span class="tok-kw">new</span> <span class="tok-id">DialectParser</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>))-&gt;<span class="tok-id">parse</span>(<span class="tok-str">&#039;SELECT 1&#039;</span>);</span>
+<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">InvalidSql</span>::<span class="tok-kw">class</span>);</span>
+<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a>        <span class="tok-id">Accounts</span>::<span class="tok-id">count</span>(<span class="tok-kw">new</span> <span class="tok-id">Token</span>(<span class="tok-num">0</span>, <span class="tok-str">&#039;NUM&#039;</span>, <span class="tok-var">$text</span>, <span class="tok-num">0</span>), <span class="tok-var">$context</span>);</span>
+<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>    }</span>
+<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a></span>
+<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>    #[<span class="tok-id">TestWith</span>([<span class="tok-str">&#039;0x1F&#039;</span>, <span class="tok-num">31</span>])]</span>
+<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>    #[<span class="tok-id">TestWith</span>([<span class="tok-str">&quot;X&#039;1f&#039;&quot;</span>, <span class="tok-num">31</span>])]</span>
+<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a>    #[<span class="tok-id">TestWith</span>([<span class="tok-str">&#039;0010&#039;</span>, <span class="tok-num">10</span>])]</span>
+<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testCountReadsDecimalAndHexadecimalCounts</span>(<span class="tok-id">string</span> <span class="tok-var">$text</span>, <span class="tok-id">int</span> <span class="tok-var">$expected</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a>    {</span>
+<span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a>        <span class="tok-var">$context</span> = (<span class="tok-kw">new</span> <span class="tok-id">DialectParser</span>(<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>))-&gt;<span class="tok-id">parse</span>(<span class="tok-str">&#039;SELECT 1&#039;</span>);</span>
+<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$expected</span>, <span class="tok-id">Accounts</span>::<span class="tok-id">count</span>(<span class="tok-kw">new</span> <span class="tok-id">Token</span>(<span class="tok-num">0</span>, <span class="tok-str">&#039;NUM&#039;</span>, <span class="tok-var">$text</span>, <span class="tok-num">0</span>), <span class="tok-var">$context</span>));</span>
+<span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a>    }</span>
+<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a>}</span>
+<span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

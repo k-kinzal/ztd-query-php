@@ -256,8 +256,23 @@
 <span class="src-line" id="L216" data-diff="added"><a class="ln" href="#L216">216</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;TABLE &quot;public&quot;.&quot;t&quot;&#039;</span>, <span class="tok-var">$statement</span>-&gt;<span class="tok-id">toString</span>());</span>
 <span class="src-line" id="L217" data-diff="added"><a class="ln" href="#L217">217</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([], <span class="tok-var">$changed</span>-&gt;<span class="tok-id">withOrderBy</span>([])-&gt;<span class="tok-id">orderBy</span>);</span>
 <span class="src-line" id="L218" data-diff="added"><a class="ln" href="#L218">218</a>    }</span>
-<span class="src-line" id="L219" data-diff="added"><a class="ln" href="#L219">219</a>}</span>
-<span class="src-line" id="L220" data-diff="added"><a class="ln" href="#L220">220</a></span>
+<span class="src-line" id="L219" data-diff="added"><a class="ln" href="#L219">219</a></span>
+<span class="src-line" id="L220" data-diff="added"><a class="ln" href="#L220">220</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L221" data-diff="added"><a class="ln" href="#L221">221</a><span class="tok-com">     * @param list&lt;string&gt; $parts</span></span>
+<span class="src-line" id="L222" data-diff="added"><a class="ln" href="#L222">222</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L223" data-diff="added"><a class="ln" href="#L223">223</a>    #[<span class="tok-id">\PHPUnit\Framework\Attributes\TestWith</span>([<span class="tok-id">Dialect</span>::<span class="tok-id">MySql</span>, [<span class="tok-str">&#039;u&#039;</span>]])]</span>
+<span class="src-line" id="L224" data-diff="added"><a class="ln" href="#L224">224</a>    #[<span class="tok-id">\PHPUnit\Framework\Attributes\TestWith</span>([<span class="tok-id">Dialect</span>::<span class="tok-id">PostgreSql</span>, [<span class="tok-str">&#039;public&#039;</span>, <span class="tok-str">&#039;u&#039;</span>]])]</span>
+<span class="src-line" id="L225" data-diff="added"><a class="ln" href="#L225">225</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testWithTableNamesTheReplacementWithItsSchema</span>(<span class="tok-id">Dialect</span> <span class="tok-var">$dialect</span>, <span class="tok-kw">array</span> <span class="tok-var">$parts</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L226" data-diff="added"><a class="ln" href="#L226">226</a>    {</span>
+<span class="src-line" id="L227" data-diff="added"><a class="ln" href="#L227">227</a>        <span class="tok-var">$schema</span> = (<span class="tok-kw">new</span> <span class="tok-id">SchemaBuilder</span>(<span class="tok-var">$dialect</span>))-&gt;<span class="tok-id">build</span>(<span class="tok-str">&#039;CREATE TABLE t(a INT)&#039;</span>, <span class="tok-str">&#039;CREATE TABLE u(b INT)&#039;</span>);</span>
+<span class="src-line" id="L228" data-diff="added"><a class="ln" href="#L228">228</a>        <span class="tok-var">$statement</span> = (<span class="tok-kw">new</span> <span class="tok-id">Binder</span>(<span class="tok-var">$schema</span>))-&gt;<span class="tok-id">bind</span>(<span class="tok-str">&#039;TABLE t&#039;</span>);</span>
+<span class="src-line" id="L229" data-diff="added"><a class="ln" href="#L229">229</a>        <span class="tok-id">self</span>::<span class="tok-id">assertInstanceOf</span>(<span class="tok-id">\SqlSemantics\Model\Statement\TableStatement</span>::<span class="tok-kw">class</span>, <span class="tok-var">$statement</span>);</span>
+<span class="src-line" id="L230" data-diff="added"><a class="ln" href="#L230">230</a>        <span class="tok-var">$name</span> = <span class="tok-var">$statement</span>-&gt;<span class="tok-id">withTable</span>(<span class="tok-var">$schema</span>-&gt;<span class="tok-id">tables</span>[<span class="tok-num">1</span>])-&gt;<span class="tok-id">from</span>-&gt;<span class="tok-id">name</span>;</span>
+<span class="src-line" id="L231" data-diff="added"><a class="ln" href="#L231">231</a>        <span class="tok-id">self</span>::<span class="tok-id">assertInstanceOf</span>(<span class="tok-id">\SqlSemantics\Model\Relation\QualifiedName</span>::<span class="tok-kw">class</span>, <span class="tok-var">$name</span>);</span>
+<span class="src-line" id="L232" data-diff="added"><a class="ln" href="#L232">232</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-var">$parts</span>, <span class="tok-var">$name</span>-&gt;<span class="tok-id">parts</span>);</span>
+<span class="src-line" id="L233" data-diff="added"><a class="ln" href="#L233">233</a>    }</span>
+<span class="src-line" id="L234" data-diff="added"><a class="ln" href="#L234">234</a>}</span>
+<span class="src-line" id="L235" data-diff="added"><a class="ln" href="#L235">235</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

@@ -68,16 +68,18 @@
 <span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>            <span class="tok-var">$value</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Scalar\Document\JsonScalarExtraction</span> =&gt; <span class="tok-id">DocumentExpressions</span>::<span class="tok-id">write</span>(<span class="tok-var">$value</span>),</span>
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>            <span class="tok-var">$value</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Scalar\Temporal\DateShift</span>,</span>
 <span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>            <span class="tok-var">$value</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Scalar\Temporal\Extract</span>,</span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>            <span class="tok-var">$value</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Scalar\Temporal\PeriodOverlap</span>,</span>
-<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>            <span class="tok-var">$value</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Scalar\Temporal\ZoneConversion</span>,</span>
-<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>            <span class="tok-var">$value</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Scalar\Temporal\TemporalFormat</span> =&gt; <span class="tok-id">TemporalExpressions</span>::<span class="tok-id">write</span>(<span class="tok-var">$value</span>),</span>
-<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>            <span class="tok-var">$value</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Scalar\Control\RaiseError</span>,</span>
-<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>            <span class="tok-var">$value</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Scalar\Control\RaiseIgnore</span> =&gt; <span class="tok-id">ControlExpressions</span>::<span class="tok-id">write</span>(<span class="tok-var">$value</span>),</span>
-<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>            <span class="tok-kw">default</span> =&gt; <span class="tok-id">null</span>,</span>
-<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>        };</span>
-<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    }</span>
-<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>}</span>
-<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>            <span class="tok-var">$value</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Scalar\Temporal\TimestampAdd</span>,</span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>            <span class="tok-var">$value</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Scalar\Temporal\TimestampDiff</span>,</span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>            <span class="tok-var">$value</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Scalar\Temporal\PeriodOverlap</span>,</span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>            <span class="tok-var">$value</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Scalar\Temporal\ZoneConversion</span>,</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>            <span class="tok-var">$value</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Scalar\Temporal\TemporalFormat</span> =&gt; <span class="tok-id">TemporalExpressions</span>::<span class="tok-id">write</span>(<span class="tok-var">$value</span>),</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a>            <span class="tok-var">$value</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Scalar\Control\RaiseError</span>,</span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>            <span class="tok-var">$value</span> <span class="tok-kw">instanceof</span> <span class="tok-id">Scalar\Control\RaiseIgnore</span> =&gt; <span class="tok-id">ControlExpressions</span>::<span class="tok-id">write</span>(<span class="tok-var">$value</span>),</span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>            <span class="tok-kw">default</span> =&gt; <span class="tok-id">null</span>,</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>        };</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>    }</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>}</span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

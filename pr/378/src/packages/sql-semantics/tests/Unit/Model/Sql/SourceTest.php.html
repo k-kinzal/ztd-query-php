@@ -197,8 +197,25 @@
 <span class="src-line" id="L157" data-diff="added"><a class="ln" href="#L157">157</a>        <span class="tok-id">self</span>::<span class="tok-id">assertNull</span>(<span class="tok-id">Sql\Source</span>::<span class="tok-id">commentEnd</span>(<span class="tok-str">&#039;/*!80000 &#039;</span>, <span class="tok-num">0</span>));</span>
 <span class="src-line" id="L158" data-diff="added"><a class="ln" href="#L158">158</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([], <span class="tok-id">Sql\Source</span>::<span class="tok-id">annotations</span>(<span class="tok-str">&#039;/*!80000 &#039;</span>));</span>
 <span class="src-line" id="L159" data-diff="added"><a class="ln" href="#L159">159</a>    }</span>
-<span class="src-line" id="L160" data-diff="added"><a class="ln" href="#L160">160</a>}</span>
-<span class="src-line" id="L161" data-diff="added"><a class="ln" href="#L161">161</a></span>
+<span class="src-line" id="L160" data-diff="added"><a class="ln" href="#L160">160</a></span>
+<span class="src-line" id="L161" data-diff="added"><a class="ln" href="#L161">161</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testReadKeepsAHintBeforeAToken</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L162" data-diff="added"><a class="ln" href="#L162">162</a>    {</span>
+<span class="src-line" id="L163" data-diff="added"><a class="ln" href="#L163">163</a>        <span class="tok-var">$tree</span> = <span class="tok-id">Sql\Source</span>::<span class="tok-id">read</span>(<span class="tok-kw">new</span> <span class="tok-id">\SqlParser\Lexer\Token</span>(<span class="tok-num">1</span>, <span class="tok-str">&#039;SELECT&#039;</span>, <span class="tok-str">&#039;SELECT&#039;</span>, <span class="tok-num">0</span>, <span class="tok-str">&#039;/*+ BKA(t) */ &#039;</span>));</span>
+<span class="src-line" id="L164" data-diff="added"><a class="ln" href="#L164">164</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([<span class="tok-str">&#039;/*+ BKA(t) */&#039;</span>, <span class="tok-str">&#039;SELECT&#039;</span>], <span class="tok-id">array_column</span>(<span class="tok-var">$tree</span>-&gt;<span class="tok-id">children</span>, <span class="tok-str">&#039;text&#039;</span>));</span>
+<span class="src-line" id="L165" data-diff="added"><a class="ln" href="#L165">165</a>    }</span>
+<span class="src-line" id="L166" data-diff="added"><a class="ln" href="#L166">166</a></span>
+<span class="src-line" id="L167" data-diff="added"><a class="ln" href="#L167">167</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testAnnotationsReadsFromTheFirstCharacter</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L168" data-diff="added"><a class="ln" href="#L168">168</a>    {</span>
+<span class="src-line" id="L169" data-diff="added"><a class="ln" href="#L169">169</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([<span class="tok-str">&#039;/*+ a */&#039;</span>], <span class="tok-id">array_column</span>(<span class="tok-id">Sql\Source</span>::<span class="tok-id">annotations</span>(<span class="tok-str">&#039;/*+ a */ #&#039;</span>), <span class="tok-str">&#039;text&#039;</span>));</span>
+<span class="src-line" id="L170" data-diff="added"><a class="ln" href="#L170">170</a>    }</span>
+<span class="src-line" id="L171" data-diff="added"><a class="ln" href="#L171">171</a></span>
+<span class="src-line" id="L172" data-diff="added"><a class="ln" href="#L172">172</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testCommentEndSearchesAfterTheOpeningMarker</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L173" data-diff="added"><a class="ln" href="#L173">173</a>    {</span>
+<span class="src-line" id="L174" data-diff="added"><a class="ln" href="#L174">174</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-num">4</span>, <span class="tok-id">Sql\Source</span>::<span class="tok-id">commentEnd</span>(<span class="tok-str">&#039;/**/&#039;</span>, <span class="tok-num">0</span>));</span>
+<span class="src-line" id="L175" data-diff="added"><a class="ln" href="#L175">175</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-num">8</span>, <span class="tok-id">Sql\Source</span>::<span class="tok-id">commentEnd</span>(<span class="tok-str">&#039;/*/ x */&#039;</span>, <span class="tok-num">0</span>));</span>
+<span class="src-line" id="L176" data-diff="added"><a class="ln" href="#L176">176</a>    }</span>
+<span class="src-line" id="L177" data-diff="added"><a class="ln" href="#L177">177</a>}</span>
+<span class="src-line" id="L178" data-diff="added"><a class="ln" href="#L178">178</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

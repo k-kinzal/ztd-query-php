@@ -213,8 +213,26 @@
 <span class="src-line" id="L173" data-diff="added"><a class="ln" href="#L173">173</a>        <span class="tok-id">self</span>::<span class="tok-id">assertInstanceOf</span>(<span class="tok-id">\SqlSemantics\Model\Statement\Configuration\ReadPragmaStatement</span>::<span class="tok-kw">class</span>, <span class="tok-var">$read</span>);</span>
 <span class="src-line" id="L174" data-diff="added"><a class="ln" href="#L174">174</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([<span class="tok-str">&#039;cache_size&#039;</span>], <span class="tok-var">$read</span>-&gt;<span class="tok-id">name</span>-&gt;<span class="tok-id">parts</span>);</span>
 <span class="src-line" id="L175" data-diff="added"><a class="ln" href="#L175">175</a>    }</span>
-<span class="src-line" id="L176" data-diff="added"><a class="ln" href="#L176">176</a>}</span>
-<span class="src-line" id="L177" data-diff="added"><a class="ln" href="#L177">177</a></span>
+<span class="src-line" id="L176" data-diff="added"><a class="ln" href="#L176">176</a></span>
+<span class="src-line" id="L177" data-diff="added"><a class="ln" href="#L177">177</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L178" data-diff="added"><a class="ln" href="#L178">178</a><span class="tok-com">     * @param list&lt;string&gt; $name</span></span>
+<span class="src-line" id="L179" data-diff="added"><a class="ln" href="#L179">179</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L180" data-diff="added"><a class="ln" href="#L180">180</a>    #[<span class="tok-id">\PHPUnit\Framework\Attributes\TestWith</span>([[<span class="tok-str">&#039;&#039;</span>], <span class="tok-id">\SqlSemantics\Model\Configuration\SettingScope</span>::<span class="tok-id">Session</span>])]</span>
+<span class="src-line" id="L181" data-diff="added"><a class="ln" href="#L181">181</a>    #[<span class="tok-id">\PHPUnit\Framework\Attributes\TestWith</span>([[<span class="tok-str">&#039;a&#039;</span>, <span class="tok-str">&#039;&#039;</span>], <span class="tok-id">\SqlSemantics\Model\Configuration\SettingScope</span>::<span class="tok-id">User</span>])]</span>
+<span class="src-line" id="L182" data-diff="added"><a class="ln" href="#L182">182</a>    #[<span class="tok-id">\PHPUnit\Framework\Attributes\TestWith</span>([[], <span class="tok-id">\SqlSemantics\Model\Configuration\SettingScope</span>::<span class="tok-id">User</span>])]</span>
+<span class="src-line" id="L183" data-diff="added"><a class="ln" href="#L183">183</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRejectsAnEmptyNamePartOutsideAUserVariable</span>(<span class="tok-kw">array</span> <span class="tok-var">$name</span>, <span class="tok-id">\SqlSemantics\Model\Configuration\SettingScope</span> <span class="tok-var">$scope</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L184" data-diff="added"><a class="ln" href="#L184">184</a>    {</span>
+<span class="src-line" id="L185" data-diff="added"><a class="ln" href="#L185">185</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">InvalidStructure</span>::<span class="tok-kw">class</span>);</span>
+<span class="src-line" id="L186" data-diff="added"><a class="ln" href="#L186">186</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&#039;An identifier requires nonempty name parts; only a user variable may be named by the empty string.&#039;</span>);</span>
+<span class="src-line" id="L187" data-diff="added"><a class="ln" href="#L187">187</a>        <span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Model\Configuration\CurrentSetting</span>(<span class="tok-var">$name</span>, <span class="tok-var">$scope</span>, <span class="tok-kw">new</span> <span class="tok-id">\SqlParser\Parser\Node</span>(<span class="tok-str">&#039;setting&#039;</span>, <span class="tok-num">0</span>, []));</span>
+<span class="src-line" id="L188" data-diff="added"><a class="ln" href="#L188">188</a>    }</span>
+<span class="src-line" id="L189" data-diff="added"><a class="ln" href="#L189">189</a></span>
+<span class="src-line" id="L190" data-diff="added"><a class="ln" href="#L190">190</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testAcceptsTheEmptyUserVariableName</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L191" data-diff="added"><a class="ln" href="#L191">191</a>    {</span>
+<span class="src-line" id="L192" data-diff="added"><a class="ln" href="#L192">192</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([<span class="tok-str">&#039;&#039;</span>], (<span class="tok-kw">new</span> <span class="tok-id">\SqlSemantics\Model\Configuration\CurrentSetting</span>([<span class="tok-str">&#039;&#039;</span>], <span class="tok-id">\SqlSemantics\Model\Configuration\SettingScope</span>::<span class="tok-id">User</span>, <span class="tok-kw">new</span> <span class="tok-id">\SqlParser\Parser\Node</span>(<span class="tok-str">&#039;setting&#039;</span>, <span class="tok-num">0</span>, [])))-&gt;<span class="tok-id">name</span>);</span>
+<span class="src-line" id="L193" data-diff="added"><a class="ln" href="#L193">193</a>    }</span>
+<span class="src-line" id="L194" data-diff="added"><a class="ln" href="#L194">194</a>}</span>
+<span class="src-line" id="L195" data-diff="added"><a class="ln" href="#L195">195</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

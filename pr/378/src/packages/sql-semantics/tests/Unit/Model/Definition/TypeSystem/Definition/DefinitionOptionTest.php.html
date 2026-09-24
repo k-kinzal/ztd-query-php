@@ -67,8 +67,28 @@
 <span class="src-line" id="L27" data-diff="added"><a class="ln" href="#L27">27</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">InvalidStructure</span>::<span class="tok-kw">class</span>);</span>
 <span class="src-line" id="L28" data-diff="added"><a class="ln" href="#L28">28</a>        <span class="tok-kw">new</span> <span class="tok-id">DefinitionOption</span>(<span class="tok-id">OperatorAttribute</span>::<span class="tok-id">LeftArg</span>, <span class="tok-kw">new</span> <span class="tok-id">QualifiedName</span>([<span class="tok-str">&#039;integer&#039;</span>]));</span>
 <span class="src-line" id="L29" data-diff="added"><a class="ln" href="#L29">29</a>    }</span>
-<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a>}</span>
-<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a></span>
+<span class="src-line" id="L30" data-diff="added"><a class="ln" href="#L30">30</a></span>
+<span class="src-line" id="L31" data-diff="added"><a class="ln" href="#L31">31</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testKeepsACanonicalChoiceAndText</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L32" data-diff="added"><a class="ln" href="#L32">32</a>    {</span>
+<span class="src-line" id="L33" data-diff="added"><a class="ln" href="#L33">33</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;plain&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">DefinitionOption</span>(<span class="tok-id">\SqlSemantics\Model\Definition\TypeSystem\Definition\BaseTypeAttribute</span>::<span class="tok-id">Storage</span>, <span class="tok-str">&#039;plain&#039;</span>))-&gt;<span class="tok-id">value</span>);</span>
+<span class="src-line" id="L34" data-diff="added"><a class="ln" href="#L34">34</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>(<span class="tok-str">&#039;U&#039;</span>, (<span class="tok-kw">new</span> <span class="tok-id">DefinitionOption</span>(<span class="tok-id">\SqlSemantics\Model\Definition\TypeSystem\Definition\BaseTypeAttribute</span>::<span class="tok-id">Category</span>, <span class="tok-str">&#039;U&#039;</span>))-&gt;<span class="tok-id">value</span>);</span>
+<span class="src-line" id="L35" data-diff="added"><a class="ln" href="#L35">35</a>    }</span>
+<span class="src-line" id="L36" data-diff="added"><a class="ln" href="#L36">36</a></span>
+<span class="src-line" id="L37" data-diff="added"><a class="ln" href="#L37">37</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testRejectsANonCanonicalChoice</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L38" data-diff="added"><a class="ln" href="#L38">38</a>    {</span>
+<span class="src-line" id="L39" data-diff="added"><a class="ln" href="#L39">39</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">InvalidStructure</span>::<span class="tok-kw">class</span>);</span>
+<span class="src-line" id="L40" data-diff="added"><a class="ln" href="#L40">40</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&#039;The STORAGE attribute requires a choice argument.&#039;</span>);</span>
+<span class="src-line" id="L41" data-diff="added"><a class="ln" href="#L41">41</a>        <span class="tok-kw">new</span> <span class="tok-id">DefinitionOption</span>(<span class="tok-id">\SqlSemantics\Model\Definition\TypeSystem\Definition\BaseTypeAttribute</span>::<span class="tok-id">Storage</span>, <span class="tok-str">&#039;PLAIN&#039;</span>);</span>
+<span class="src-line" id="L42" data-diff="added"><a class="ln" href="#L42">42</a>    }</span>
+<span class="src-line" id="L43" data-diff="added"><a class="ln" href="#L43">43</a></span>
+<span class="src-line" id="L44" data-diff="added"><a class="ln" href="#L44">44</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testNamesTheAttributeAndKindItRequires</span>(): <span class="tok-id">void</span></span>
+<span class="src-line" id="L45" data-diff="added"><a class="ln" href="#L45">45</a>    {</span>
+<span class="src-line" id="L46" data-diff="added"><a class="ln" href="#L46">46</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectException</span>(<span class="tok-id">InvalidStructure</span>::<span class="tok-kw">class</span>);</span>
+<span class="src-line" id="L47" data-diff="added"><a class="ln" href="#L47">47</a>        <span class="tok-var">$this</span>-&gt;<span class="tok-id">expectExceptionMessage</span>(<span class="tok-str">&#039;The LEFTARG attribute requires a type argument.&#039;</span>);</span>
+<span class="src-line" id="L48" data-diff="added"><a class="ln" href="#L48">48</a>        <span class="tok-kw">new</span> <span class="tok-id">DefinitionOption</span>(<span class="tok-id">OperatorAttribute</span>::<span class="tok-id">LeftArg</span>, <span class="tok-kw">new</span> <span class="tok-id">QualifiedName</span>([<span class="tok-str">&#039;integer&#039;</span>]));</span>
+<span class="src-line" id="L49" data-diff="added"><a class="ln" href="#L49">49</a>    }</span>
+<span class="src-line" id="L50" data-diff="added"><a class="ln" href="#L50">50</a>}</span>
+<span class="src-line" id="L51" data-diff="added"><a class="ln" href="#L51">51</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
