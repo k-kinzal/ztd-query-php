@@ -6,6 +6,7 @@ namespace Tests\Unit\MySql\Generation\Lexeme;
 
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\TestWith;
 use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -397,6 +398,20 @@ final class DefinitionFactoryTest extends TestCase
         $result = (new DefinitionFactory())->create('mysql-8.4.7')->lexemes->generate(new LexemeInput(TerminalSequence::fromNames(['WITH_ROLLUP_SYM']), 0, new ResolvedOutput()));
         self::assertNotNull($result);
         self::assertSame('WITH ROLLUP', implode(' ', array_map(static fn ($lexeme): string => $lexeme->text, [...$result->sequences()][0]->lexemes)));
+    }
+
+    #[TestWith(['mysql-5.6.51'])]
+    #[TestWith(['mysql-5.7.44'])]
+    public function testLegacyUdfReturnsKeywordIsSpelledReturns(string $version): void
+    {
+        $result = (new DefinitionFactory())->create($version)->lexemes->generate(new LexemeInput(TerminalSequence::fromNames(['UDF_RETURNS_SYM']), 0, new ResolvedOutput()));
+        self::assertNotNull($result);
+        self::assertSame('RETURNS', implode(' ', array_map(static fn ($lexeme): string => $lexeme->text, [...$result->sequences()][0]->lexemes)));
+    }
+
+    public function testUdfReturnsKeywordIsAbsentAfterItsRemoval(): void
+    {
+        self::assertNull((new DefinitionFactory())->create('mysql-8.0.44')->lexemes->generate(new LexemeInput(TerminalSequence::fromNames(['UDF_RETURNS_SYM']), 0, new ResolvedOutput())));
     }
 
     public function testSelectorsKeepsTheCompleteDeclaredOutputSymbol(): void

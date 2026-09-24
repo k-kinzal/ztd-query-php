@@ -1210,6 +1210,10 @@ final class DefinitionFactory
                 new KeywordLexemeGenerator(
                     $keywords['symbols'],
                     $keywords['functions'],
+                    match ($version) {
+                        'mysql-5.6.51', 'mysql-5.7.44' => ['CUBE_SYM', 'ROLLUP_SYM'],
+                        default => ['ROLLUP_SYM'],
+                    },
                 ),
                 new VersionedLexemeGenerator(
                     $version,
@@ -1797,6 +1801,17 @@ final class DefinitionFactory
                                                     new FixedLexemeGenerator('CUBE', 'keyword', 'sql/sql_lex.cc:MYSQLlex', 'mysql-with-phrase'),
                                                 ),
                                                 'mysql-with-cube',
+                                            ),
+                                        ),
+                                    ),
+                                    new MatchingLexemeGenerator(
+                                        'UDF_RETURNS_SYM',
+                                        new VersionedLexemeGenerator(
+                                            $version,
+                                            new VersionCase(
+                                                ['mysql-5.6.51', 'mysql-5.7.44'],
+                                                new FixedLexemeGenerator('RETURNS', 'keyword', 'sql/sql_yacc.yy:keyword_sp:UDF_RETURNS_SYM'),
+                                                'mysql-udf-returns',
                                             ),
                                         ),
                                     ),

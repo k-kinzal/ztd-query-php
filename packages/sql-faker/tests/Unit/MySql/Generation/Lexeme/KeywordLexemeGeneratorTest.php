@@ -30,6 +30,7 @@ use SqlFaker\MySql\Generation\Lexeme\KeywordLexemeGenerator;
 #[UsesClass(\SqlFaker\Generation\Lexeme\LexemeSequence::class)]
 #[UsesClass(\SqlFaker\Generation\Lexeme\SpacingConstraint::class)]
 #[UsesClass(\SqlFaker\Generation\Token\ProductionOccurrence::class)]
+#[UsesClass(\SqlFaker\MySql\Generation\Tokenization\MySqlQuoting::class)]
 final class KeywordLexemeGeneratorTest extends TestCase
 {
     public function testGenerateSeparatesFunctionUseFromIdentifierUse(): void
@@ -44,6 +45,32 @@ final class KeywordLexemeGeneratorTest extends TestCase
         $name = $generator->generate(new LexemeInput(new TerminalSequence([$identifier]), 0, $right));
         self::assertNotNull($name);
         self::assertSame('identifier', [...$name->sequences()][0]->lexemes[0]->kind);
+    }
+
+    public function testGenerateQuotesAnIdentifierKeywordTheLexerWouldJoinWithAPrecedingWith(): void
+    {
+        $generator = new KeywordLexemeGenerator(['ROLLUP_SYM' => ['ROLLUP'], 'WITH' => ['WITH']], [], ['ROLLUP_SYM']);
+        $sequence = new TerminalSequence([new TerminalOccurrence('WITH', 0), new TerminalOccurrence('ROLLUP_SYM', 1, [1], ['ident'])]);
+        $candidates = $generator->generate(new LexemeInput($sequence, 1, new ResolvedOutput()));
+        self::assertNotNull($candidates);
+        self::assertSame(['`ROLLUP`'], array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$candidates->sequences()]));
+    }
+
+    public function testGenerateKeepsAnIdentifierKeywordBareWhenWithDoesNotPrecedeIt(): void
+    {
+        $generator = new KeywordLexemeGenerator(['ROLLUP_SYM' => ['ROLLUP'], 'AS' => ['AS']], [], ['ROLLUP_SYM']);
+        $sequence = new TerminalSequence([new TerminalOccurrence('AS', 0), new TerminalOccurrence('ROLLUP_SYM', 1, [1], ['ident'])]);
+        $candidates = $generator->generate(new LexemeInput($sequence, 1, new ResolvedOutput()));
+        self::assertNotNull($candidates);
+        self::assertSame(['ROLLUP'], array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$candidates->sequences()]));
+    }
+
+    public function testGenerateKeepsAKeywordBareAfterWithOutsideAnIdentifier(): void
+    {
+        $generator = new KeywordLexemeGenerator(['ROLLUP_SYM' => ['ROLLUP'], 'WITH' => ['WITH']], [], ['ROLLUP_SYM']);
+        $candidates = $generator->generate(new LexemeInput(TerminalSequence::fromNames(['WITH', 'ROLLUP_SYM']), 1, new ResolvedOutput()));
+        self::assertNotNull($candidates);
+        self::assertSame(['ROLLUP'], array_map(static fn ($candidate): string => $candidate->lexemes[0]->text, [...$candidates->sequences()]));
     }
 
     public function testGenerateLeavesUndeclaredTerminalsUnclaimed(): void
