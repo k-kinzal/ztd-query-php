@@ -22,6 +22,7 @@ ZTD Query PHP wraps PDO/MySQLi to intercept and transform SQL queries using CTE 
 | [lemon-parser](packages/lemon-parser/) | Parser for Lemon grammar files, producing a lossless syntax tree · [Documentation](https://k-kinzal.github.io/ztd-query-php/k-kinzal/lemon-parser/) |
 | [bison-parser](packages/bison-parser/) | Parser for GNU Bison grammar files, producing a lossless syntax tree · [Documentation](https://k-kinzal.github.io/ztd-query-php/k-kinzal/bison-parser/) |
 | [sql-parser](packages/sql-parser/) | LALR(1) SQL parsers for MySQL, PostgreSQL and SQLite built from the official grammars |
+| [sql-formatter](packages/sql-formatter/) | SQL formatting with Compact, Expanded, Tabular, and River layouts, preserving concrete syntax |
 
 ## Quick Start
 
