@@ -183,24 +183,22 @@ jobs:
           else
             files=$(git ls-files src)
           fi
-          selected=$(printf '%s\n' "$files" | grep -E '\.php$' | sort | awk -v shard="$SHARD" 'NR % 8 == shard % 8' | paste -sd, -)
+          selected=$(printf '%s\n' "$files" | grep -E '\.php$' | sort | awk -v shard="$SHARD" 'NR % 8 == shard % 8' | paste -sd ' ' -)
           echo "files=${selected}" >> "$GITHUB_OUTPUT"
-          echo "Selected $(printf '%s' "$selected" | tr ',' '\n' | grep -c . || true) source files."
-      - name: Mutation testing on changed lines
+          echo "Selected $(printf '%s' "$selected" | wc -w) source files."
+      - name: Mutation testing on changed files
         if: github.event_name == 'pull_request' && steps.shard.outputs.files != ''
         run: >-
           php -d memory_limit=4G "$(command -v infection)"
           --configuration=infection.json5 --with-uncovered
           --threads=4
           --only-covering-test-cases
-          --filter="${{ steps.shard.outputs.files }}"
-          --git-diff-lines
-          --git-diff-base="origin/${GITHUB_BASE_REF}"
           --ignore-msi-with-no-mutations
           --min-msi=80
           --min-covered-msi=80
           --no-progress
           --logger-github
+          -- ${{ steps.shard.outputs.files }}
       - name: Mutation testing on the whole source tree
         if: github.event_name != 'pull_request' && steps.shard.outputs.files != ''
         run: >-
@@ -208,9 +206,9 @@ jobs:
           --configuration=infection.json5 --with-uncovered
           --threads=4
           --only-covering-test-cases
-          --filter="${{ steps.shard.outputs.files }}"
           --no-progress
           --logger-github
+          -- ${{ steps.shard.outputs.files }}
       - name: Reject skipped whole-tree mutants
         if: github.event_name != 'pull_request' && steps.shard.outputs.files != ''
         run: |
