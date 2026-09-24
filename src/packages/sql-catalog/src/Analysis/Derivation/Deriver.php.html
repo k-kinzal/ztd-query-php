@@ -210,7 +210,7 @@
 <span class="src-line" id="L172"><a class="ln" href="#L172">172</a>                        <span class="tok-id">array_map</span>(<span class="tok-kw">fn</span> (<span class="tok-id">Expr</span> <span class="tok-var">$goal</span>): <span class="tok-id">Domain</span> =&gt; <span class="tok-var">$this</span>-&gt;<span class="tok-id">expressions</span>-&gt;<span class="tok-id">evaluate</span>(<span class="tok-var">$goal</span>, <span class="tok-var">$environment</span>, <span class="tok-var">$scope</span>), <span class="tok-var">$goals</span>),</span>
 <span class="src-line" id="L173"><a class="ln" href="#L173">173</a>                        <span class="tok-var">$binding</span>-&gt;<span class="tok-id">through</span>,</span>
 <span class="src-line" id="L174"><a class="ln" href="#L174">174</a>                        <span class="tok-var">$arrival</span>-&gt;<span class="tok-id">path</span>-&gt;<span class="tok-id">truncated</span> || <span class="tok-var">$binding</span>-&gt;<span class="tok-id">truncated</span>,</span>
-<span class="src-line" id="L175"><a class="ln" href="#L175">175</a>                        <span class="tok-var">$binding</span>-&gt;<span class="tok-id">combined</span>,</span>
+<span class="src-line" id="L175"><a class="ln" href="#L175">175</a>                        <span class="tok-var">$binding</span>-&gt;<span class="tok-id">combined</span> || <span class="tok-var">$environment</span>-&gt;<span class="tok-id">combined</span>,</span>
 <span class="src-line" id="L176"><a class="ln" href="#L176">176</a>                    );</span>
 <span class="src-line" id="L177"><a class="ln" href="#L177">177</a>                }</span>
 <span class="src-line" id="L178"><a class="ln" href="#L178">178</a>            }</span>

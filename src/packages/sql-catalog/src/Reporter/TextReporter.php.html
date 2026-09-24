@@ -92,75 +92,76 @@
 <span class="src-line" id="L54"><a class="ln" href="#L54">54</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$catalog</span>-&gt;<span class="tok-id">sorted</span>()-&gt;<span class="tok-id">problems</span>() <span class="tok-kw">as</span> <span class="tok-var">$problem</span>) {</span>
 <span class="src-line" id="L55"><a class="ln" href="#L55">55</a>            <span class="tok-var">$lines</span>[] = <span class="tok-id">sprintf</span>(<span class="tok-str">&#039;! %s: %s&#039;</span>, <span class="tok-var">$problem</span>-&gt;<span class="tok-id">file</span>, <span class="tok-var">$problem</span>-&gt;<span class="tok-id">message</span>);</span>
 <span class="src-line" id="L56"><a class="ln" href="#L56">56</a>        }</span>
-<span class="src-line" id="L57"><a class="ln" href="#L57">57</a>        <span class="tok-var">$lines</span>[] = <span class="tok-var">$this</span>-&gt;<span class="tok-id">summaryLine</span>(<span class="tok-var">$catalog</span>);</span>
-<span class="src-line" id="L58"><a class="ln" href="#L58">58</a></span>
-<span class="src-line" id="L59"><a class="ln" href="#L59">59</a>        <span class="tok-kw">return</span> <span class="tok-id">CatalogArtifacts</span>::<span class="tok-id">one</span>(<span class="tok-id">self</span>::<span class="tok-id">FILE</span>, <span class="tok-id">implode</span>(<span class="tok-str">&quot;\n&quot;</span>, <span class="tok-var">$lines</span>) . <span class="tok-str">&quot;\n&quot;</span>);</span>
-<span class="src-line" id="L60"><a class="ln" href="#L60">60</a>    }</span>
-<span class="src-line" id="L61"><a class="ln" href="#L61">61</a></span>
-<span class="src-line" id="L62"><a class="ln" href="#L62">62</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L63"><a class="ln" href="#L63">63</a><span class="tok-com">     * The lines one statement is written as.</span></span>
-<span class="src-line" id="L64"><a class="ln" href="#L64">64</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L65"><a class="ln" href="#L65">65</a><span class="tok-com">     * @return list&lt;string&gt;</span></span>
-<span class="src-line" id="L66"><a class="ln" href="#L66">66</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L67"><a class="ln" href="#L67">67</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">entryLines</span>(<span class="tok-id">CatalogEntry</span> <span class="tok-var">$entry</span>): <span class="tok-kw">array</span></span>
-<span class="src-line" id="L68"><a class="ln" href="#L68">68</a>    {</span>
-<span class="src-line" id="L69"><a class="ln" href="#L69">69</a>        <span class="tok-var">$lines</span> = [</span>
-<span class="src-line" id="L70"><a class="ln" href="#L70">70</a>            <span class="tok-id">sprintf</span>(<span class="tok-str">&#039;%s  %s  %s&#039;</span>, <span class="tok-var">$entry</span>-&gt;<span class="tok-id">site</span>-&gt;<span class="tok-id">display</span>(), <span class="tok-id">strtoupper</span>(<span class="tok-var">$entry</span>-&gt;<span class="tok-id">kind</span>-&gt;<span class="tok-id">value</span>), <span class="tok-var">$entry</span>-&gt;<span class="tok-id">id</span>),</span>
-<span class="src-line" id="L71"><a class="ln" href="#L71">71</a>            <span class="tok-id">sprintf</span>(<span class="tok-str">&#039;  in %s via %s&#039;</span>, <span class="tok-var">$entry</span>-&gt;<span class="tok-id">site</span>-&gt;<span class="tok-id">function</span>, <span class="tok-var">$entry</span>-&gt;<span class="tok-id">site</span>-&gt;<span class="tok-id">sink</span>),</span>
-<span class="src-line" id="L72"><a class="ln" href="#L72">72</a>            <span class="tok-str">&#039;  &#039;</span> . <span class="tok-var">$entry</span>-&gt;<span class="tok-id">sql</span>(),</span>
-<span class="src-line" id="L73"><a class="ln" href="#L73">73</a>            <span class="tok-str">&#039;  &#039;</span> . <span class="tok-var">$this</span>-&gt;<span class="tok-id">statusLine</span>(<span class="tok-var">$entry</span>),</span>
-<span class="src-line" id="L74"><a class="ln" href="#L74">74</a>        ];</span>
-<span class="src-line" id="L75"><a class="ln" href="#L75">75</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$entry</span>-&gt;<span class="tok-id">placeholders</span> <span class="tok-kw">as</span> <span class="tok-var">$placeholder</span>) {</span>
-<span class="src-line" id="L76"><a class="ln" href="#L76">76</a>            <span class="tok-var">$lines</span>[] = <span class="tok-id">sprintf</span>(<span class="tok-str">&#039;  %s = %s&#039;</span>, <span class="tok-var">$placeholder</span>-&gt;<span class="tok-id">token</span>, <span class="tok-var">$placeholder</span>-&gt;<span class="tok-id">value</span>?-&gt;<span class="tok-id">display</span>() ?? <span class="tok-str">&#039;(unbound)&#039;</span>);</span>
-<span class="src-line" id="L77"><a class="ln" href="#L77">77</a>        }</span>
-<span class="src-line" id="L78"><a class="ln" href="#L78">78</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$entry</span>-&gt;<span class="tok-id">findings</span> <span class="tok-kw">as</span> <span class="tok-var">$finding</span>) {</span>
-<span class="src-line" id="L79"><a class="ln" href="#L79">79</a>            <span class="tok-var">$lines</span>[] = <span class="tok-id">sprintf</span>(<span class="tok-str">&#039;  [%s] %s %s&#039;</span>, <span class="tok-id">strtoupper</span>(<span class="tok-var">$finding</span>-&gt;<span class="tok-id">severity</span>-&gt;<span class="tok-id">value</span>), <span class="tok-var">$finding</span>-&gt;<span class="tok-id">rule</span>-&gt;<span class="tok-id">value</span>, <span class="tok-var">$finding</span>-&gt;<span class="tok-id">message</span>);</span>
-<span class="src-line" id="L80"><a class="ln" href="#L80">80</a>        }</span>
-<span class="src-line" id="L81"><a class="ln" href="#L81">81</a></span>
-<span class="src-line" id="L82"><a class="ln" href="#L82">82</a>        <span class="tok-kw">return</span> <span class="tok-var">$lines</span>;</span>
-<span class="src-line" id="L83"><a class="ln" href="#L83">83</a>    }</span>
-<span class="src-line" id="L84"><a class="ln" href="#L84">84</a></span>
-<span class="src-line" id="L85"><a class="ln" href="#L85">85</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L86"><a class="ln" href="#L86">86</a><span class="tok-com">     * The line saying how far the analyzer got with a statement.</span></span>
-<span class="src-line" id="L87"><a class="ln" href="#L87">87</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L88"><a class="ln" href="#L88">88</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">statusLine</span>(<span class="tok-id">CatalogEntry</span> <span class="tok-var">$entry</span>): <span class="tok-id">string</span></span>
-<span class="src-line" id="L89"><a class="ln" href="#L89">89</a>    {</span>
-<span class="src-line" id="L90"><a class="ln" href="#L90">90</a>        <span class="tok-var">$status</span> = [<span class="tok-var">$entry</span>-&gt;<span class="tok-id">resolution</span>()-&gt;<span class="tok-id">value</span>];</span>
-<span class="src-line" id="L91"><a class="ln" href="#L91">91</a>        <span class="tok-kw">if</span> (!<span class="tok-var">$entry</span>-&gt;<span class="tok-id">searchClosed</span>()) {</span>
-<span class="src-line" id="L92"><a class="ln" href="#L92">92</a>            <span class="tok-var">$status</span>[] = <span class="tok-str">&#039;search did not close&#039;</span>;</span>
-<span class="src-line" id="L93"><a class="ln" href="#L93">93</a>        }</span>
-<span class="src-line" id="L94"><a class="ln" href="#L94">94</a>        <span class="tok-kw">if</span> (!<span class="tok-var">$entry</span>-&gt;<span class="tok-id">correlated</span>) {</span>
-<span class="src-line" id="L95"><a class="ln" href="#L95">95</a>            <span class="tok-var">$status</span>[] = <span class="tok-str">&#039;alternatives may be unreachable&#039;</span>;</span>
-<span class="src-line" id="L96"><a class="ln" href="#L96">96</a>        }</span>
-<span class="src-line" id="L97"><a class="ln" href="#L97">97</a>        <span class="tok-kw">if</span> (<span class="tok-id">count</span>(<span class="tok-var">$entry</span>-&gt;<span class="tok-id">through</span>) &gt; <span class="tok-num">1</span>) {</span>
-<span class="src-line" id="L98"><a class="ln" href="#L98">98</a>            <span class="tok-var">$status</span>[] = <span class="tok-str">&#039;via &#039;</span> . <span class="tok-id">implode</span>(<span class="tok-str">&#039; -&gt; &#039;</span>, <span class="tok-var">$entry</span>-&gt;<span class="tok-id">through</span>);</span>
-<span class="src-line" id="L99"><a class="ln" href="#L99">99</a>        }</span>
-<span class="src-line" id="L100"><a class="ln" href="#L100">100</a></span>
-<span class="src-line" id="L101"><a class="ln" href="#L101">101</a>        <span class="tok-kw">return</span> <span class="tok-id">implode</span>(<span class="tok-str">&#039;; &#039;</span>, <span class="tok-var">$status</span>);</span>
-<span class="src-line" id="L102"><a class="ln" href="#L102">102</a>    }</span>
-<span class="src-line" id="L103"><a class="ln" href="#L103">103</a></span>
-<span class="src-line" id="L104"><a class="ln" href="#L104">104</a>    <span class="tok-com">/**</span></span>
-<span class="src-line" id="L105"><a class="ln" href="#L105">105</a><span class="tok-com">     * The closing line naming what the run found.</span></span>
-<span class="src-line" id="L106"><a class="ln" href="#L106">106</a><span class="tok-com">     */</span></span>
-<span class="src-line" id="L107"><a class="ln" href="#L107">107</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">summaryLine</span>(<span class="tok-id">Catalog</span> <span class="tok-var">$catalog</span>): <span class="tok-id">string</span></span>
-<span class="src-line" id="L108"><a class="ln" href="#L108">108</a>    {</span>
-<span class="src-line" id="L109"><a class="ln" href="#L109">109</a>        <span class="tok-var">$exact</span> = <span class="tok-num">0</span>;</span>
-<span class="src-line" id="L110"><a class="ln" href="#L110">110</a>        <span class="tok-var">$findings</span> = <span class="tok-num">0</span>;</span>
-<span class="src-line" id="L111"><a class="ln" href="#L111">111</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$catalog</span> <span class="tok-kw">as</span> <span class="tok-var">$entry</span>) {</span>
-<span class="src-line" id="L112"><a class="ln" href="#L112">112</a>            <span class="tok-var">$exact</span> += <span class="tok-var">$entry</span>-&gt;<span class="tok-id">isExact</span>() ? <span class="tok-num">1</span> : <span class="tok-num">0</span>;</span>
-<span class="src-line" id="L113"><a class="ln" href="#L113">113</a>            <span class="tok-var">$findings</span> += <span class="tok-id">count</span>(<span class="tok-var">$entry</span>-&gt;<span class="tok-id">findings</span>);</span>
-<span class="src-line" id="L114"><a class="ln" href="#L114">114</a>        }</span>
-<span class="src-line" id="L115"><a class="ln" href="#L115">115</a></span>
-<span class="src-line" id="L116"><a class="ln" href="#L116">116</a>        <span class="tok-kw">return</span> <span class="tok-id">sprintf</span>(</span>
-<span class="src-line" id="L117"><a class="ln" href="#L117">117</a>            <span class="tok-str">&#039;%d statement(s), %d fully resolved, %d finding(s), %d unreadable file(s).&#039;</span>,</span>
-<span class="src-line" id="L118"><a class="ln" href="#L118">118</a>            <span class="tok-var">$catalog</span>-&gt;<span class="tok-id">count</span>(),</span>
-<span class="src-line" id="L119"><a class="ln" href="#L119">119</a>            <span class="tok-var">$exact</span>,</span>
-<span class="src-line" id="L120"><a class="ln" href="#L120">120</a>            <span class="tok-var">$findings</span>,</span>
-<span class="src-line" id="L121"><a class="ln" href="#L121">121</a>            <span class="tok-id">count</span>(<span class="tok-var">$catalog</span>-&gt;<span class="tok-id">problems</span>()),</span>
-<span class="src-line" id="L122"><a class="ln" href="#L122">122</a>        );</span>
-<span class="src-line" id="L123"><a class="ln" href="#L123">123</a>    }</span>
-<span class="src-line" id="L124"><a class="ln" href="#L124">124</a>}</span>
-<span class="src-line" id="L125"><a class="ln" href="#L125">125</a></span>
+<span class="src-line" id="L57"><a class="ln" href="#L57">57</a>        <span class="tok-var">$lines</span>[] = <span class="tok-str">&#039;Conditions are not evaluated; runtime reachability is not assessed.&#039;</span>;</span>
+<span class="src-line" id="L58"><a class="ln" href="#L58">58</a>        <span class="tok-var">$lines</span>[] = <span class="tok-var">$this</span>-&gt;<span class="tok-id">summaryLine</span>(<span class="tok-var">$catalog</span>);</span>
+<span class="src-line" id="L59"><a class="ln" href="#L59">59</a></span>
+<span class="src-line" id="L60"><a class="ln" href="#L60">60</a>        <span class="tok-kw">return</span> <span class="tok-id">CatalogArtifacts</span>::<span class="tok-id">one</span>(<span class="tok-id">self</span>::<span class="tok-id">FILE</span>, <span class="tok-id">implode</span>(<span class="tok-str">&quot;\n&quot;</span>, <span class="tok-var">$lines</span>) . <span class="tok-str">&quot;\n&quot;</span>);</span>
+<span class="src-line" id="L61"><a class="ln" href="#L61">61</a>    }</span>
+<span class="src-line" id="L62"><a class="ln" href="#L62">62</a></span>
+<span class="src-line" id="L63"><a class="ln" href="#L63">63</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L64"><a class="ln" href="#L64">64</a><span class="tok-com">     * The lines one statement is written as.</span></span>
+<span class="src-line" id="L65"><a class="ln" href="#L65">65</a><span class="tok-com">     *</span></span>
+<span class="src-line" id="L66"><a class="ln" href="#L66">66</a><span class="tok-com">     * @return list&lt;string&gt;</span></span>
+<span class="src-line" id="L67"><a class="ln" href="#L67">67</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L68"><a class="ln" href="#L68">68</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">entryLines</span>(<span class="tok-id">CatalogEntry</span> <span class="tok-var">$entry</span>): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L69"><a class="ln" href="#L69">69</a>    {</span>
+<span class="src-line" id="L70"><a class="ln" href="#L70">70</a>        <span class="tok-var">$lines</span> = [</span>
+<span class="src-line" id="L71"><a class="ln" href="#L71">71</a>            <span class="tok-id">sprintf</span>(<span class="tok-str">&#039;%s  %s  %s&#039;</span>, <span class="tok-var">$entry</span>-&gt;<span class="tok-id">site</span>-&gt;<span class="tok-id">display</span>(), <span class="tok-id">strtoupper</span>(<span class="tok-var">$entry</span>-&gt;<span class="tok-id">kind</span>-&gt;<span class="tok-id">value</span>), <span class="tok-var">$entry</span>-&gt;<span class="tok-id">id</span>),</span>
+<span class="src-line" id="L72"><a class="ln" href="#L72">72</a>            <span class="tok-id">sprintf</span>(<span class="tok-str">&#039;  in %s via %s&#039;</span>, <span class="tok-var">$entry</span>-&gt;<span class="tok-id">site</span>-&gt;<span class="tok-id">function</span>, <span class="tok-var">$entry</span>-&gt;<span class="tok-id">site</span>-&gt;<span class="tok-id">sink</span>),</span>
+<span class="src-line" id="L73"><a class="ln" href="#L73">73</a>            <span class="tok-str">&#039;  &#039;</span> . <span class="tok-var">$entry</span>-&gt;<span class="tok-id">sql</span>(),</span>
+<span class="src-line" id="L74"><a class="ln" href="#L74">74</a>            <span class="tok-str">&#039;  &#039;</span> . <span class="tok-var">$this</span>-&gt;<span class="tok-id">statusLine</span>(<span class="tok-var">$entry</span>),</span>
+<span class="src-line" id="L75"><a class="ln" href="#L75">75</a>        ];</span>
+<span class="src-line" id="L76"><a class="ln" href="#L76">76</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$entry</span>-&gt;<span class="tok-id">placeholders</span> <span class="tok-kw">as</span> <span class="tok-var">$placeholder</span>) {</span>
+<span class="src-line" id="L77"><a class="ln" href="#L77">77</a>            <span class="tok-var">$lines</span>[] = <span class="tok-id">sprintf</span>(<span class="tok-str">&#039;  %s = %s&#039;</span>, <span class="tok-var">$placeholder</span>-&gt;<span class="tok-id">token</span>, <span class="tok-var">$placeholder</span>-&gt;<span class="tok-id">value</span>?-&gt;<span class="tok-id">display</span>() ?? <span class="tok-str">&#039;(unbound)&#039;</span>);</span>
+<span class="src-line" id="L78"><a class="ln" href="#L78">78</a>        }</span>
+<span class="src-line" id="L79"><a class="ln" href="#L79">79</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$entry</span>-&gt;<span class="tok-id">findings</span> <span class="tok-kw">as</span> <span class="tok-var">$finding</span>) {</span>
+<span class="src-line" id="L80"><a class="ln" href="#L80">80</a>            <span class="tok-var">$lines</span>[] = <span class="tok-id">sprintf</span>(<span class="tok-str">&#039;  [%s] %s %s&#039;</span>, <span class="tok-id">strtoupper</span>(<span class="tok-var">$finding</span>-&gt;<span class="tok-id">severity</span>-&gt;<span class="tok-id">value</span>), <span class="tok-var">$finding</span>-&gt;<span class="tok-id">rule</span>-&gt;<span class="tok-id">value</span>, <span class="tok-var">$finding</span>-&gt;<span class="tok-id">message</span>);</span>
+<span class="src-line" id="L81"><a class="ln" href="#L81">81</a>        }</span>
+<span class="src-line" id="L82"><a class="ln" href="#L82">82</a></span>
+<span class="src-line" id="L83"><a class="ln" href="#L83">83</a>        <span class="tok-kw">return</span> <span class="tok-var">$lines</span>;</span>
+<span class="src-line" id="L84"><a class="ln" href="#L84">84</a>    }</span>
+<span class="src-line" id="L85"><a class="ln" href="#L85">85</a></span>
+<span class="src-line" id="L86"><a class="ln" href="#L86">86</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L87"><a class="ln" href="#L87">87</a><span class="tok-com">     * The line saying how far the analyzer got with a statement.</span></span>
+<span class="src-line" id="L88"><a class="ln" href="#L88">88</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L89"><a class="ln" href="#L89">89</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">statusLine</span>(<span class="tok-id">CatalogEntry</span> <span class="tok-var">$entry</span>): <span class="tok-id">string</span></span>
+<span class="src-line" id="L90"><a class="ln" href="#L90">90</a>    {</span>
+<span class="src-line" id="L91"><a class="ln" href="#L91">91</a>        <span class="tok-var">$status</span> = [<span class="tok-var">$entry</span>-&gt;<span class="tok-id">resolution</span>()-&gt;<span class="tok-id">value</span>];</span>
+<span class="src-line" id="L92"><a class="ln" href="#L92">92</a>        <span class="tok-kw">if</span> (!<span class="tok-var">$entry</span>-&gt;<span class="tok-id">searchClosed</span>()) {</span>
+<span class="src-line" id="L93"><a class="ln" href="#L93">93</a>            <span class="tok-var">$status</span>[] = <span class="tok-str">&#039;search did not close&#039;</span>;</span>
+<span class="src-line" id="L94"><a class="ln" href="#L94">94</a>        }</span>
+<span class="src-line" id="L95"><a class="ln" href="#L95">95</a>        <span class="tok-kw">if</span> (!<span class="tok-var">$entry</span>-&gt;<span class="tok-id">correlated</span>) {</span>
+<span class="src-line" id="L96"><a class="ln" href="#L96">96</a>            <span class="tok-var">$status</span>[] = <span class="tok-str">&#039;alternatives may be unreachable&#039;</span>;</span>
+<span class="src-line" id="L97"><a class="ln" href="#L97">97</a>        }</span>
+<span class="src-line" id="L98"><a class="ln" href="#L98">98</a>        <span class="tok-kw">if</span> (<span class="tok-id">count</span>(<span class="tok-var">$entry</span>-&gt;<span class="tok-id">through</span>) &gt; <span class="tok-num">1</span>) {</span>
+<span class="src-line" id="L99"><a class="ln" href="#L99">99</a>            <span class="tok-var">$status</span>[] = <span class="tok-str">&#039;via &#039;</span> . <span class="tok-id">implode</span>(<span class="tok-str">&#039; -&gt; &#039;</span>, <span class="tok-var">$entry</span>-&gt;<span class="tok-id">through</span>);</span>
+<span class="src-line" id="L100"><a class="ln" href="#L100">100</a>        }</span>
+<span class="src-line" id="L101"><a class="ln" href="#L101">101</a></span>
+<span class="src-line" id="L102"><a class="ln" href="#L102">102</a>        <span class="tok-kw">return</span> <span class="tok-id">implode</span>(<span class="tok-str">&#039;; &#039;</span>, <span class="tok-var">$status</span>);</span>
+<span class="src-line" id="L103"><a class="ln" href="#L103">103</a>    }</span>
+<span class="src-line" id="L104"><a class="ln" href="#L104">104</a></span>
+<span class="src-line" id="L105"><a class="ln" href="#L105">105</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L106"><a class="ln" href="#L106">106</a><span class="tok-com">     * The closing line naming what the run found.</span></span>
+<span class="src-line" id="L107"><a class="ln" href="#L107">107</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L108"><a class="ln" href="#L108">108</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">summaryLine</span>(<span class="tok-id">Catalog</span> <span class="tok-var">$catalog</span>): <span class="tok-id">string</span></span>
+<span class="src-line" id="L109"><a class="ln" href="#L109">109</a>    {</span>
+<span class="src-line" id="L110"><a class="ln" href="#L110">110</a>        <span class="tok-var">$exact</span> = <span class="tok-num">0</span>;</span>
+<span class="src-line" id="L111"><a class="ln" href="#L111">111</a>        <span class="tok-var">$findings</span> = <span class="tok-num">0</span>;</span>
+<span class="src-line" id="L112"><a class="ln" href="#L112">112</a>        <span class="tok-kw">foreach</span> (<span class="tok-var">$catalog</span> <span class="tok-kw">as</span> <span class="tok-var">$entry</span>) {</span>
+<span class="src-line" id="L113"><a class="ln" href="#L113">113</a>            <span class="tok-var">$exact</span> += <span class="tok-var">$entry</span>-&gt;<span class="tok-id">isExact</span>() ? <span class="tok-num">1</span> : <span class="tok-num">0</span>;</span>
+<span class="src-line" id="L114"><a class="ln" href="#L114">114</a>            <span class="tok-var">$findings</span> += <span class="tok-id">count</span>(<span class="tok-var">$entry</span>-&gt;<span class="tok-id">findings</span>);</span>
+<span class="src-line" id="L115"><a class="ln" href="#L115">115</a>        }</span>
+<span class="src-line" id="L116"><a class="ln" href="#L116">116</a></span>
+<span class="src-line" id="L117"><a class="ln" href="#L117">117</a>        <span class="tok-kw">return</span> <span class="tok-id">sprintf</span>(</span>
+<span class="src-line" id="L118"><a class="ln" href="#L118">118</a>            <span class="tok-str">&#039;%d statement(s), %d fully resolved, %d finding(s), %d unreadable file(s).&#039;</span>,</span>
+<span class="src-line" id="L119"><a class="ln" href="#L119">119</a>            <span class="tok-var">$catalog</span>-&gt;<span class="tok-id">count</span>(),</span>
+<span class="src-line" id="L120"><a class="ln" href="#L120">120</a>            <span class="tok-var">$exact</span>,</span>
+<span class="src-line" id="L121"><a class="ln" href="#L121">121</a>            <span class="tok-var">$findings</span>,</span>
+<span class="src-line" id="L122"><a class="ln" href="#L122">122</a>            <span class="tok-id">count</span>(<span class="tok-var">$catalog</span>-&gt;<span class="tok-id">problems</span>()),</span>
+<span class="src-line" id="L123"><a class="ln" href="#L123">123</a>        );</span>
+<span class="src-line" id="L124"><a class="ln" href="#L124">124</a>    }</span>
+<span class="src-line" id="L125"><a class="ln" href="#L125">125</a>}</span>
+<span class="src-line" id="L126"><a class="ln" href="#L126">126</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>

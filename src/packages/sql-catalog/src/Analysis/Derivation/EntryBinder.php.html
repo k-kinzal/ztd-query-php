@@ -218,8 +218,8 @@
 <span class="src-line" id="L180"><a class="ln" href="#L180">180</a>    <span class="tok-com">/**</span></span>
 <span class="src-line" id="L181"><a class="ln" href="#L181">181</a><span class="tok-com">     * The ways into the body, each binding the parameters and other names the path still needs.</span></span>
 <span class="src-line" id="L182"><a class="ln" href="#L182">182</a><span class="tok-com">     *</span></span>
-<span class="src-line" id="L183"><a class="ln" href="#L183">183</a><span class="tok-com">     * A local with no reaching definition starts unset. Its null type makes</span></span>
-<span class="src-line" id="L184"><a class="ln" href="#L184">184</a><span class="tok-com">     * `isset` false, while its unresolved origin still flags an unguarded read.</span></span>
+<span class="src-line" id="L183"><a class="ln" href="#L183">183</a><span class="tok-com">     * A local with no reaching definition starts absent. Reading it yields null;</span></span>
+<span class="src-line" id="L184"><a class="ln" href="#L184">184</a><span class="tok-com">     * its existence remains separate from the values assigned later.</span></span>
 <span class="src-line" id="L185"><a class="ln" href="#L185">185</a><span class="tok-com">     * Parameters, declared globals and exhausted paths keep their open values.</span></span>
 <span class="src-line" id="L186"><a class="ln" href="#L186">186</a><span class="tok-com">     *</span></span>
 <span class="src-line" id="L187"><a class="ln" href="#L187">187</a><span class="tok-com">     * @return list&lt;Binding&gt;</span></span>
@@ -240,7 +240,7 @@
 <span class="src-line" id="L202"><a class="ln" href="#L202">202</a>        <span class="tok-var">$outside</span> = <span class="tok-kw">new</span> <span class="tok-id">Environment</span>();</span>
 <span class="src-line" id="L203"><a class="ln" href="#L203">203</a>        <span class="tok-kw">foreach</span> (<span class="tok-id">array_diff_key</span>(<span class="tok-var">$needs</span>, <span class="tok-var">$parameters</span>) <span class="tok-kw">as</span> <span class="tok-var">$needed</span> =&gt; <span class="tok-var">$_</span>) {</span>
 <span class="src-line" id="L204"><a class="ln" href="#L204">204</a>            <span class="tok-kw">if</span> (<span class="tok-var">$needed</span> !== <span class="tok-id">FreeNames</span>::<span class="tok-id">THIS</span> &amp;&amp; !<span class="tok-id">str_starts_with</span>(<span class="tok-var">$needed</span>, <span class="tok-id">FreeNames</span>::<span class="tok-id">THIS</span> . <span class="tok-str">&#039;-&gt;&#039;</span>)) {</span>
-<span class="src-line" id="L205"><a class="ln" href="#L205">205</a>                <span class="tok-var">$outside</span>-&gt;<span class="tok-id">write</span>(<span class="tok-var">$needed</span>, <span class="tok-id">Domain</span>::<span class="tok-id">opaque</span>(<span class="tok-id">TypeShape</span>::<span class="tok-id">of</span>([<span class="tok-str">&#039;null&#039;</span>]), <span class="tok-id">Origin</span>::<span class="tok-id">Unresolved</span>, <span class="tok-str">&#039;$&#039;</span> . <span class="tok-var">$needed</span>));</span>
+<span class="src-line" id="L205"><a class="ln" href="#L205">205</a>                <span class="tok-var">$outside</span>-&gt;<span class="tok-id">markAbsent</span>(<span class="tok-var">$needed</span>);</span>
 <span class="src-line" id="L206"><a class="ln" href="#L206">206</a>            }</span>
 <span class="src-line" id="L207"><a class="ln" href="#L207">207</a>        }</span>
 <span class="src-line" id="L208"><a class="ln" href="#L208">208</a>        <span class="tok-kw">if</span> (<span class="tok-var">$parameters</span> === []) {</span>

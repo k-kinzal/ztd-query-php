@@ -560,8 +560,31 @@
 <span class="src-line" id="L522"><a class="ln" href="#L522">522</a>            (<span class="tok-kw">new</span> <span class="tok-id">EntryFactory</span>())-&gt;<span class="tok-id">notAnalyzedReason</span>(<span class="tok-var">$record</span>),</span>
 <span class="src-line" id="L523"><a class="ln" href="#L523">523</a>        );</span>
 <span class="src-line" id="L524"><a class="ln" href="#L524">524</a>    }</span>
-<span class="src-line" id="L525"><a class="ln" href="#L525">525</a>}</span>
-<span class="src-line" id="L526"><a class="ln" href="#L526">526</a></span>
+<span class="src-line" id="L525"><a class="ln" href="#L525">525</a></span>
+<span class="src-line" id="L526"><a class="ln" href="#L526">526</a>    #[<span class="tok-id">\PHPUnit\Framework\Attributes\DataProvider</span>(<span class="tok-str">&#039;providerSearchClosure&#039;</span>)]</span>
+<span class="src-line" id="L527"><a class="ln" href="#L527">527</a>    <span class="tok-kw">public</span> <span class="tok-kw">function</span> <span class="tok-id">testBuildSharesSearchCompletionAcrossEveryCandidate</span>(<span class="tok-id">bool</span> <span class="tok-var">$truncated</span>, <span class="tok-id">TextPattern</span> <span class="tok-var">$other</span>, <span class="tok-id">bool</span> <span class="tok-var">$closed</span>): <span class="tok-id">void</span></span>
+<span class="src-line" id="L528"><a class="ln" href="#L528">528</a>    {</span>
+<span class="src-line" id="L529"><a class="ln" href="#L529">529</a>        <span class="tok-var">$site</span> = <span class="tok-kw">new</span> <span class="tok-id">CallSite</span>(<span class="tok-str">&#039;a.php&#039;</span>, <span class="tok-num">1</span>, <span class="tok-str">&#039;f&#039;</span>, <span class="tok-str">&#039;pdo.query&#039;</span>);</span>
+<span class="src-line" id="L530"><a class="ln" href="#L530">530</a>        <span class="tok-var">$entries</span> = (<span class="tok-kw">new</span> <span class="tok-id">EntryFactory</span>())-&gt;<span class="tok-id">build</span>([</span>
+<span class="src-line" id="L531"><a class="ln" href="#L531">531</a>            <span class="tok-kw">new</span> <span class="tok-id">QueryRecord</span>(<span class="tok-var">$site</span>, <span class="tok-str">&#039;k&#039;</span>, <span class="tok-id">TextPattern</span>::<span class="tok-id">fromText</span>(<span class="tok-str">&#039;SELECT 1&#039;</span>)),</span>
+<span class="src-line" id="L532"><a class="ln" href="#L532">532</a>            <span class="tok-kw">new</span> <span class="tok-id">QueryRecord</span>(<span class="tok-var">$site</span>, <span class="tok-str">&#039;k&#039;</span>, <span class="tok-var">$other</span>, <span class="tok-id">truncated</span>: <span class="tok-var">$truncated</span>),</span>
+<span class="src-line" id="L533"><a class="ln" href="#L533">533</a>        ]);</span>
+<span class="src-line" id="L534"><a class="ln" href="#L534">534</a>        <span class="tok-id">self</span>::<span class="tok-id">assertTrue</span>(<span class="tok-var">$entries</span>[<span class="tok-num">0</span>]-&gt;<span class="tok-id">isExact</span>());</span>
+<span class="src-line" id="L535"><a class="ln" href="#L535">535</a>        <span class="tok-id">self</span>::<span class="tok-id">assertSame</span>([<span class="tok-var">$closed</span>, <span class="tok-var">$closed</span>], <span class="tok-id">array_map</span>(<span class="tok-kw">static</span> <span class="tok-kw">fn</span> (<span class="tok-id">CatalogEntry</span> <span class="tok-var">$entry</span>): <span class="tok-id">bool</span> =&gt; <span class="tok-var">$entry</span>-&gt;<span class="tok-id">searchClosed</span>(), <span class="tok-var">$entries</span>));</span>
+<span class="src-line" id="L536"><a class="ln" href="#L536">536</a>    }</span>
+<span class="src-line" id="L537"><a class="ln" href="#L537">537</a></span>
+<span class="src-line" id="L538"><a class="ln" href="#L538">538</a>    <span class="tok-com">/**</span></span>
+<span class="src-line" id="L539"><a class="ln" href="#L539">539</a><span class="tok-com">     * @return list&lt;array{bool, TextPattern, bool}&gt;</span></span>
+<span class="src-line" id="L540"><a class="ln" href="#L540">540</a><span class="tok-com">     */</span></span>
+<span class="src-line" id="L541"><a class="ln" href="#L541">541</a>    <span class="tok-kw">public</span> <span class="tok-kw">static</span> <span class="tok-kw">function</span> <span class="tok-id">providerSearchClosure</span>(): <span class="tok-kw">array</span></span>
+<span class="src-line" id="L542"><a class="ln" href="#L542">542</a>    {</span>
+<span class="src-line" id="L543"><a class="ln" href="#L543">543</a>        <span class="tok-var">$known</span> = <span class="tok-id">TextPattern</span>::<span class="tok-id">fromText</span>(<span class="tok-str">&#039;SELECT 2&#039;</span>);</span>
+<span class="src-line" id="L544"><a class="ln" href="#L544">544</a>        <span class="tok-var">$unknown</span> = <span class="tok-id">TextPattern</span>::<span class="tok-id">fromHole</span>(<span class="tok-kw">new</span> <span class="tok-id">TextHole</span>(<span class="tok-id">Origin</span>::<span class="tok-id">Unresolved</span>, <span class="tok-id">TypeShape</span>::<span class="tok-id">unknown</span>()));</span>
+<span class="src-line" id="L545"><a class="ln" href="#L545">545</a>        <span class="tok-kw">return</span> [[<span class="tok-id">false</span>, <span class="tok-var">$known</span>, <span class="tok-id">true</span>], [<span class="tok-id">true</span>, <span class="tok-var">$known</span>, <span class="tok-id">false</span>], [<span class="tok-id">false</span>, <span class="tok-var">$unknown</span>, <span class="tok-id">false</span>], [<span class="tok-id">true</span>, <span class="tok-var">$unknown</span>, <span class="tok-id">false</span>]];</span>
+<span class="src-line" id="L546"><a class="ln" href="#L546">546</a>    }</span>
+<span class="src-line" id="L547"><a class="ln" href="#L547">547</a></span>
+<span class="src-line" id="L548"><a class="ln" href="#L548">548</a>}</span>
+<span class="src-line" id="L549"><a class="ln" href="#L549">549</a></span>
 </code></pre>
 </main>
 <footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
