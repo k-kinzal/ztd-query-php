@@ -16,25 +16,27 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="ZTD Query PHP">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/document-design-v1.0.0.css">
 <link rel="stylesheet" href="../../../../assets/style.css">
-<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}}catch(e){}</script>
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}}catch(e){}</script>
 </head>
 <body data-root="../../../../">
-<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sb-pkg"><a href="../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a></div><nav class="sb-block"><div class="sb-title">Package</div><ul class="sb-list"><li><a href="../../../../k-kinzal/ztd-query-php/all-items.html">All items</a></li><li><a href="../../../../k-kinzal/ztd-query-php/index.html#documents">Documents</a></li></ul></nav></nav>
-<div class="page">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a></div><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li><a href="../../../../k-kinzal/ztd-query-php/all-items.html">All items</a></li><li><a href="../../../../k-kinzal/ztd-query-php/index.html#documents">Documents</a></li></ul></nav></aside>
+<div class="main">
 <header class="topbar">
-<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
-<nav class="crumbs"><a href="../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a><span class="crumb-sep">::</span><span class="crumb-current">docs/sql-support-matrix.md</span></nav>
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">docs/sql-support-matrix.md</span></nav>
 <div class="topbar-tools">
-<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
 <a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
-<button id="theme-toggle" title="Toggle theme">◐</button>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
 </div>
 </header>
 <div class="search-results" id="search-results" hidden></div>
-<main class="content">
-<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>ZTD SQL Support Matrix</h1><div class="symbol-meta"><span class="src-link">docs/sql-support-matrix.md</span></div></div>
-<section class="readme"><h2>ZTD SQL Support Matrix</h2>
+<main class="content" id="content">
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>ZTD SQL Support Matrix</h1><div class="symbol-meta"><span class="source-link">docs/sql-support-matrix.md</span></div></div>
+<section class="readme prose"><h2>ZTD SQL Support Matrix</h2>
 <p>A list of SQL statements supported by ZTD. Since ZTD simulates query results without modifying the actual database, all operations are executed virtually.</p>
 <h3>Legend</h3>
 <div class="table-wrap"><table><thead><tr><th>Status</th><th>Meaning</th></tr></thead><tbody><tr><td>Supported</td><td>Fully supported</td></tr><tr><td>Unsupported</td><td>Not supported (behavior depends on configuration)</td></tr><tr><td>Unsupported (Parser Limitation)</td><td>Not supported due to SQL parser limitations</td></tr></tbody></table></div>
@@ -122,14 +124,14 @@
 <h4>Behavior Modes</h4>
 <div class="table-wrap"><table><thead><tr><th>Mode</th><th>Description</th><th>Use Case</th></tr></thead><tbody><tr><td><code>ignore</code></td><td>Silently ignore (default)</td><td>Testing in production-like environments</td></tr><tr><td><code>notice</code></td><td>Output a warning but continue</td><td>Debugging during development</td></tr><tr><td><code>exception</code></td><td>Throw an exception</td><td>Strict testing, detecting unsupported SQL</td></tr></tbody></table></div>
 <h4>Configuration Example</h4>
-<pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Config\UnsupportedSqlBehavior</span>;
+<pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Config\UnsupportedSqlBehavior</span>;
 
 <span class="tok-var">$config</span> = <span class="tok-kw">new</span> <span class="tok-id">ZtdConfig</span>(
     <span class="tok-id">unsupportedBehavior</span>: <span class="tok-id">UnsupportedSqlBehavior</span>::<span class="tok-id">Notice</span>,
 );</code></pre>
 <h4>Behavior Rules</h4>
 <p>You can use <code>behaviorRules</code> to configure individual behavior for specific SQL patterns. These override the default <code>unsupportedBehavior</code>.</p>
-<pre class="code-block"><code><span class="tok-var">$config</span> = <span class="tok-kw">new</span> <span class="tok-id">ZtdConfig</span>(
+<pre class="code"><code><span class="tok-var">$config</span> = <span class="tok-kw">new</span> <span class="tok-id">ZtdConfig</span>(
     <span class="tok-id">unsupportedBehavior</span>: <span class="tok-id">UnsupportedSqlBehavior</span>::<span class="tok-id">Exception</span>,
     <span class="tok-id">behaviorRules</span>: [
         <span class="tok-com">// Prefix-based (case-insensitive)</span>
@@ -142,7 +144,7 @@
 );</code></pre>
 <h4>Pattern Matching</h4>
 <p>Regex patterns (strings starting with <code>/</code>) can also be used.</p>
-<pre class="code-block"><code><span class="tok-var">$config</span> = <span class="tok-kw">new</span> <span class="tok-id">ZtdConfig</span>(
+<pre class="code"><code><span class="tok-var">$config</span> = <span class="tok-kw">new</span> <span class="tok-id">ZtdConfig</span>(
     <span class="tok-id">unsupportedBehavior</span>: <span class="tok-id">UnsupportedSqlBehavior</span>::<span class="tok-id">Exception</span>,
     <span class="tok-id">behaviorRules</span>: [
         <span class="tok-str">&#039;/^SET\s+SESSION/i&#039;</span> =&gt; <span class="tok-id">UnsupportedSqlBehavior</span>::<span class="tok-id">Ignore</span>,  <span class="tok-com">// Ignore SET SESSION</span>
@@ -154,11 +156,11 @@
 <h4>Behavior Details</h4>
 <div class="table-wrap"><table><thead><tr><th>Status</th><th>ignore mode</th><th>notice mode</th><th>exception mode</th></tr></thead><tbody><tr><td>Supported</td><td>Normal execution</td><td>Normal execution</td><td>Normal execution</td></tr><tr><td>Unsupported</td><td>Ignored</td><td>Warning + ignored</td><td>Exception (can be overridden by behaviorRules)</td></tr></tbody></table></div>
 <h4>Notice Output Example</h4>
-<pre class="code-block"><code>[ZTD Notice] Unsupported SQL ignored: BEGIN
+<pre class="code"><code>[ZTD Notice] Unsupported SQL ignored: BEGIN
 [ZTD Notice] Unsupported SQL ignored: SET NAMES utf8mb4
 [ZTD Notice] Unsupported SQL ignored: CREATE DATABASE test</code></pre>
 <h4>Exception Example</h4>
-<pre class="code-block"><code><span class="tok-com">// When using UnsupportedSqlBehavior::Exception mode</span>
+<pre class="code"><code><span class="tok-com">// When using UnsupportedSqlBehavior::Exception mode</span>
 <span class="tok-kw">try</span> {
     <span class="tok-var">$ztdPdo</span>-&gt;<span class="tok-id">exec</span>(<span class="tok-str">&#039;CREATE DATABASE test&#039;</span>);
 } <span class="tok-kw">catch</span> (<span class="tok-id">UnsupportedSqlException</span> <span class="tok-var">$e</span>) {
@@ -169,8 +171,8 @@
 <div class="table-wrap"><table><thead><tr><th>Environment</th><th>Recommended Mode</th><th>Reason</th></tr></thead><tbody><tr><td>Development</td><td><code>notice</code></td><td>Continue development while tracking unsupported SQL</td></tr><tr><td>CI/Testing</td><td><code>exception</code> + behaviorRules</td><td>Detect unintended unsupported SQL</td></tr><tr><td>Production-equivalent testing</td><td><code>ignore</code></td><td>Test actual application behavior</td></tr></tbody></table></div>
 </section>
 </main>
-<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
-</div>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
 <script src="../../../../assets/search-index.js" defer></script>
 <script src="../../../../assets/app.js" defer></script>
 </body>

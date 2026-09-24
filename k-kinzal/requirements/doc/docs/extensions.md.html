@@ -16,30 +16,32 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="ZTD Query PHP">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/document-design-v1.0.0.css">
 <link rel="stylesheet" href="../../../../assets/style.css">
-<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}}catch(e){}</script>
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}}catch(e){}</script>
 </head>
 <body data-root="../../../../">
-<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sb-pkg"><a href="../../../../k-kinzal/requirements/index.html">k-kinzal/requirements</a></div><nav class="sb-block"><div class="sb-title">Package</div><ul class="sb-list"><li><a href="../../../../k-kinzal/requirements/all-items.html">All items</a></li><li><a href="../../../../k-kinzal/requirements/index.html#documents">Documents</a></li></ul></nav><nav class="sb-block"><div class="sb-title">Namespaces</div><ul class="sb-list"><li><a href="../../../../k-kinzal/requirements/Requirements/Config/index.html" title="Requirements\Config">Requirements\Config</a></li><li><a href="../../../../k-kinzal/requirements/Requirements/Console/index.html" title="Requirements\Console">Requirements\Console</a></li><li><a href="../../../../k-kinzal/requirements/Requirements/Ears/index.html" title="Requirements\Ears">Requirements\Ears</a></li><li><a href="../../../../k-kinzal/requirements/Requirements/Markdown/index.html" title="Requirements\Markdown">Requirements\Markdown</a></li><li><a href="../../../../k-kinzal/requirements/Requirements/Model/index.html" title="Requirements\Model">Requirements\Model</a></li><li><a href="../../../../k-kinzal/requirements/Requirements/Report/index.html" title="Requirements\Report">Requirements\Report</a></li><li><a href="../../../../k-kinzal/requirements/Requirements/Source/index.html" title="Requirements\Source">Requirements\Source</a></li><li><a href="../../../../k-kinzal/requirements/Requirements/Test/index.html" title="Requirements\Test">Requirements\Test</a></li></ul></nav></nav>
-<div class="page">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../../k-kinzal/requirements/index.html">k-kinzal/requirements</a></div><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li><a href="../../../../k-kinzal/requirements/all-items.html">All items</a></li><li><a href="../../../../k-kinzal/requirements/index.html#documents">Documents</a></li></ul></nav><nav class="sidebar-section"><div class="sidebar-title">Namespaces</div><ul class="sidebar-list"><li><a href="../../../../k-kinzal/requirements/Requirements/Config/index.html" title="Requirements\Config">Requirements\Config</a></li><li><a href="../../../../k-kinzal/requirements/Requirements/Console/index.html" title="Requirements\Console">Requirements\Console</a></li><li><a href="../../../../k-kinzal/requirements/Requirements/Ears/index.html" title="Requirements\Ears">Requirements\Ears</a></li><li><a href="../../../../k-kinzal/requirements/Requirements/Markdown/index.html" title="Requirements\Markdown">Requirements\Markdown</a></li><li><a href="../../../../k-kinzal/requirements/Requirements/Model/index.html" title="Requirements\Model">Requirements\Model</a></li><li><a href="../../../../k-kinzal/requirements/Requirements/Report/index.html" title="Requirements\Report">Requirements\Report</a></li><li><a href="../../../../k-kinzal/requirements/Requirements/Source/index.html" title="Requirements\Source">Requirements\Source</a></li><li><a href="../../../../k-kinzal/requirements/Requirements/Test/index.html" title="Requirements\Test">Requirements\Test</a></li></ul></nav></aside>
+<div class="main">
 <header class="topbar">
-<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
-<nav class="crumbs"><a href="../../../../k-kinzal/requirements/index.html">k-kinzal/requirements</a><span class="crumb-sep">::</span><span class="crumb-current">docs/extensions.md</span></nav>
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../k-kinzal/requirements/index.html">k-kinzal/requirements</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">docs/extensions.md</span></nav>
 <div class="topbar-tools">
-<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
 <a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
-<button id="theme-toggle" title="Toggle theme">◐</button>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
 </div>
 </header>
 <div class="search-results" id="search-results" hidden></div>
-<main class="content">
-<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Source and test extensions</h1><div class="symbol-meta"><span class="src-link">docs/extensions.md</span></div></div>
-<section class="readme"><h2>Source and test extensions</h2>
+<main class="content" id="content">
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Source and test extensions</h1><div class="symbol-meta"><span class="source-link">docs/extensions.md</span></div></div>
+<section class="readme prose"><h2>Source and test extensions</h2>
 <p>A <strong>source extension</strong> retrieves reference material and selects its traceable units. A <strong>test extension</strong> runs a selected test and translates its result into specification verification. The test extension interface is named <code>RunnerExtension</code>; configuration registers it under <code>extensions.runners</code>.</p>
 <p>Both extension mechanisms are implemented by the core. Built-in HTML, JSON and other sources use <code>SourceExtension</code>, and the PHPUnit/Behat runners use <code>RunnerExtension</code>. Custom implementations run through the same <code>check</code>, <code>coverage</code> and <code>spec</code> commands. They can be used without changing the requirements package or installing a plugin into PHPUnit or Behat.</p>
 <h3>Source extensions</h3>
 <p>A source extension implements this interface:</p>
-<pre class="code-block"><code><span class="tok-kw">namespace</span> <span class="tok-id">Requirements\Source</span>;
+<pre class="code"><code><span class="tok-kw">namespace</span> <span class="tok-id">Requirements\Source</span>;
 
 <span class="tok-kw">use</span> <span class="tok-id">Requirements\Model\Source</span>;
 
@@ -54,7 +56,7 @@
 <p>A Slack or Jira adapter owns service retrieval, pagination and selector semantics. It can load its client from the consuming project&#039;s Composer autoloader, read credentials from the environment, and use <code>Source::options</code> for non-secret settings. When an API returns multiple pages, scope selection must enumerate every selected page. The core does not assume those services behave like HTML.</p>
 <h4>Create a source adapter</h4>
 <p>The runnable <span class="md-target" title="../examples/extensions/CatalogSource.php">CatalogSource</span> reads a JSON mapping of stable IDs to source text. <code>*</code> selects the whole catalog; an entry ID selects one quotation:</p>
-<pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">Requirements\Model\Source</span>;
+<pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">Requirements\Model\Source</span>;
 <span class="tok-kw">use</span> <span class="tok-id">Requirements\Source\ResourceLoader</span>;
 <span class="tok-kw">use</span> <span class="tok-id">Requirements\Source\SourceExtension</span>;
 <span class="tok-kw">use</span> <span class="tok-id">Requirements\Source\Unit</span>;
@@ -86,7 +88,7 @@
 <p><code>ResourceLoader</code> is optional. It supplies bounded HTTP(S)/local reads, ignored local snapshot caching and digest verification. Service adapters can use their own retrieval client and enforce their own time/size limits. The example catalog is project-authored synthetic data, so it can be committed; upstream snapshots remain untracked caches.</p>
 <h3>Test extensions</h3>
 <p>A test extension implements:</p>
-<pre class="code-block"><code><span class="tok-kw">namespace</span> <span class="tok-id">Requirements\Test</span>;
+<pre class="code"><code><span class="tok-kw">namespace</span> <span class="tok-id">Requirements\Test</span>;
 
 <span class="tok-kw">interface</span> <span class="tok-id">RunnerExtension</span>
 {
@@ -97,7 +99,7 @@
 <p>The core executes each distinct runner-name/target pair once per <code>spec</code> invocation and shares that result across linked specifications. All linked results must pass. The CLI counts each successful target once in its passed/linked ratio, regardless of the adapter&#039;s executed-case count. That case count remains in the JSON <code>tests</code> field. For example, a successful method with 33 data-provider cases contributes <code>1/1</code> linked targets and <code>tests: 33</code>. <code>spec --no-test</code> displays <code>-/1</code> and never calls <code>run()</code>; extensions do not need to implement test discovery or result caching. A custom extension owns actual selection, execution and result interpretation; it must not report success solely because a process exited zero.</p>
 <h4>Create a test adapter</h4>
 <p>For a command that writes JUnit XML, use <code>ProcessRunner</code>:</p>
-<pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">Requirements\Test\ProcessRunner</span>;
+<pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">Requirements\Test\ProcessRunner</span>;
 <span class="tok-kw">use</span> <span class="tok-id">Requirements\Test\RunnerConfig</span>;
 <span class="tok-kw">use</span> <span class="tok-id">Requirements\Test\RunnerExtension</span>;
 <span class="tok-kw">use</span> <span class="tok-id">Requirements\Test\TestResult</span>;
@@ -118,7 +120,7 @@
 <p>The complete <span class="md-target" title="../examples/extensions/ScenarioRunner.php">ScenarioRunner</span> and <span class="md-target" title="../examples/extensions/scenario.php">example command</span> exercise this contract by actually checking ASCII uppercase conversion. Replace the example assertion with your application tests. The built-in PHPUnit runner uses exact <code>Class::method</code> selection, including datasets; Behat uses <code>file.feature:line</code> scenario selection, including all outline examples.</p>
 <h3>Register and use extensions</h3>
 <p>Put extension classes in your project&#039;s Composer PSR-4 autoload paths, run <code>composer dump-autoload</code>, and load that autoloader with <code>bootstrap</code>:</p>
-<pre class="code-block"><code>version: 1
+<pre class="code"><code>version: 1
 bootstrap: vendor/autoload.php
 definitions: [requirements/*.yaml]
 extensions:
@@ -134,7 +136,7 @@ runners:
     timeout: 30</code></pre>
 <p>Classes are instantiated with no arguments; use a no-argument constructor or constructor defaults. <code>lint</code> checks interface registration. The bootstrap and extensions are project code, just like the project&#039;s test suite. Names may override built-ins deliberately; normal built-in usage needs no explicit registration.</p>
 <p>Select the source adapter with <code>source.format</code> and the configured test runner with <code>tests[].runner</code>:</p>
-<pre class="code-block"><code>version: 1
+<pre class="code"><code>version: 1
 source:
   id: converter-catalog
   uri: catalog.json
@@ -151,15 +153,15 @@ items:
         target: ascii-uppercase</code></pre>
 <p>Here <code>catalog</code> and <code>scenario</code> are extension names; <code>acceptance</code> is the configured runner instance. Several runner instances may share one extension with different commands, working directories or timeouts. Definition paths, source files and runner working directories are resolved relative to the configuration directory.</p>
 <p>From <code>packages/requirements</code>, run the complete bundled example:</p>
-<pre class="code-block"><code>php bin/requirements lint --config examples/extensions/requirements.yaml
+<pre class="code"><code>php bin/requirements lint --config examples/extensions/requirements.yaml
 php bin/requirements check --config examples/extensions/requirements.yaml
 php bin/requirements coverage --config examples/extensions/requirements.yaml
 php bin/requirements spec --config examples/extensions/requirements.yaml</code></pre>
 <p>The sample bootstrap loads the two supplied classes directly, so these commands work after <code>composer install</code> without preparing another project. The integration tests execute this example through the real CLI and verify that both extension contracts participate in source coverage and test execution.</p>
 </section>
 </main>
-<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
-</div>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
 <script src="../../../../assets/search-index.js" defer></script>
 <script src="../../../../assets/app.js" defer></script>
 </body>

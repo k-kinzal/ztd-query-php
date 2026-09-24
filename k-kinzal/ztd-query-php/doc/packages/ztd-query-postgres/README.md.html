@@ -16,25 +16,27 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="ZTD Query PHP">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../../assets/document-design-v1.0.0.css">
 <link rel="stylesheet" href="../../../../../assets/style.css">
-<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}}catch(e){}</script>
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}}catch(e){}</script>
 </head>
 <body data-root="../../../../../">
-<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../../../../index.html">ZTD Query PHP</a></div><div class="sb-pkg"><a href="../../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a></div><nav class="sb-block"><div class="sb-title">Package</div><ul class="sb-list"><li><a href="../../../../../k-kinzal/ztd-query-php/all-items.html">All items</a></li><li><a href="../../../../../k-kinzal/ztd-query-php/index.html#documents">Documents</a></li></ul></nav></nav>
-<div class="page">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a></div><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li><a href="../../../../../k-kinzal/ztd-query-php/all-items.html">All items</a></li><li><a href="../../../../../k-kinzal/ztd-query-php/index.html#documents">Documents</a></li></ul></nav></aside>
+<div class="main">
 <header class="topbar">
-<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
-<nav class="crumbs"><a href="../../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a><span class="crumb-sep">::</span><span class="crumb-current">packages/ztd-query-postgres/README.md</span></nav>
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">packages/ztd-query-postgres/README.md</span></nav>
 <div class="topbar-tools">
-<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
 <a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
-<button id="theme-toggle" title="Toggle theme">◐</button>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
 </div>
 </header>
 <div class="search-results" id="search-results" hidden></div>
-<main class="content">
-<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>ZTD Query PostgreSQL</h1><div class="symbol-meta"><span class="src-link">packages/ztd-query-postgres/README.md</span></div></div>
-<section class="readme"><h2>ZTD Query PostgreSQL</h2>
+<main class="content" id="content">
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>ZTD Query PostgreSQL</h1><div class="symbol-meta"><span class="source-link">packages/ztd-query-postgres/README.md</span></div></div>
+<section class="readme prose"><h2>ZTD Query PostgreSQL</h2>
 <p><a href="https://opensource.org/licenses/MIT"><span class="md-target" title="https://img.shields.io/badge/License-MIT-yellow.svg">License: MIT</span></a> <a href="https://www.php.net/"><span class="md-target" title="https://img.shields.io/badge/PHP-8.1%2B-blue.svg">PHP Version</span></a></p>
 <p>PostgreSQL platform support for <a href="https://github.com/k-kinzal/ztd-query-core">ZTD Query PHP</a>. Provides SQL parsing, classification, rewriting, and schema management for PostgreSQL.</p>
 <h3>Overview</h3>
@@ -44,11 +46,11 @@
 <h3>Requirements</h3>
 <ul><li>PHP 8.1 or higher</li><li><a href="https://github.com/k-kinzal/ztd-query-core">k-kinzal/ztd-query-php</a> (core)</li></ul>
 <h3>Installation</h3>
-<pre class="code-block"><code>composer require k-kinzal/ztd-query-postgres</code></pre>
+<pre class="code"><code>composer require k-kinzal/ztd-query-postgres</code></pre>
 <h3>Usage</h3>
 <h4>Creating a PostgreSQL Session</h4>
 <p><code>PgSqlSessionFactory</code> is the main entry point. It creates a fully configured <code>Session</code> instance for PostgreSQL:</p>
-<pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Config\ZtdConfig</span>;
+<pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Config\ZtdConfig</span>;
 <span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Platform\Postgres\PgSqlSessionFactory</span>;
 
 <span class="tok-com">// $connection implements ZtdQuery\Connection\ConnectionInterface</span>
@@ -57,7 +59,7 @@
 <ol><li>Reflects the database schema via <code>information_schema</code> queries</li><li>Sets up the SQL parser, query guard, and all transformers</li><li>Configures the shadow store for virtual write tracking</li></ol>
 <h4>Query Classification</h4>
 <p><code>PgSqlQueryGuard</code> classifies SQL statements into query kinds:</p>
-<pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Platform\Postgres\PgSqlQueryGuard</span>;
+<pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Platform\Postgres\PgSqlQueryGuard</span>;
 <span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Platform\Postgres\PgSqlParser</span>;
 <span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Rewrite\QueryKind</span>;
 
@@ -77,7 +79,7 @@
 <span class="tok-com">// =&gt; null (unsupported)</span></code></pre>
 <h4>SQL Rewriting</h4>
 <p><code>PgSqlRewriter</code> transforms SQL statements for ZTD execution:</p>
-<pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Platform\Postgres\PgSqlRewriter</span>;
+<pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Platform\Postgres\PgSqlRewriter</span>;
 
 <span class="tok-com">// Rewrite a single statement</span>
 <span class="tok-var">$plan</span> = <span class="tok-var">$rewriter</span>-&gt;<span class="tok-id">rewrite</span>(<span class="tok-str">&#039;SELECT email FROM users WHERE id = 1&#039;</span>);
@@ -88,7 +90,7 @@
 <span class="tok-var">$plans</span> = <span class="tok-var">$rewriter</span>-&gt;<span class="tok-id">rewriteMultiple</span>(<span class="tok-str">&#039;SELECT 1; SELECT 2&#039;</span>);</code></pre>
 <h4>Error Classification</h4>
 <p><code>PgSqlErrorClassifier</code> identifies PostgreSQL error codes related to unknown schemas:</p>
-<pre class="code-block"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Platform\Postgres\PgSqlErrorClassifier</span>;
+<pre class="code"><code><span class="tok-kw">use</span> <span class="tok-id">ZtdQuery\Platform\Postgres\PgSqlErrorClassifier</span>;
 
 <span class="tok-var">$classifier</span> = <span class="tok-kw">new</span> <span class="tok-id">PgSqlErrorClassifier</span>();
 
@@ -96,7 +98,7 @@
 <span class="tok-var">$classifier</span>-&gt;<span class="tok-id">isUnknownSchemaError</span>(<span class="tok-str">&#039;42703&#039;</span>); <span class="tok-com">// true (Undefined column)</span>
 <span class="tok-var">$classifier</span>-&gt;<span class="tok-id">isUnknownSchemaError</span>(<span class="tok-str">&#039;42601&#039;</span>); <span class="tok-com">// false (Syntax error)</span></code></pre>
 <h3>Architecture</h3>
-<pre class="code-block"><code>PgSqlSessionFactory
+<pre class="code"><code>PgSqlSessionFactory
     |
     +-- PgSqlParser (regex-based SQL parsing)
     +-- PgSqlQueryGuard (query classification)
@@ -116,7 +118,7 @@
 <h4>Unsupported</h4>
 <ul><li>MERGE</li><li>Stored procedures, triggers, functions, views</li><li>Database/schema operations</li><li>User/permission management</li><li>Server operations (VACUUM, ANALYZE, REINDEX, etc.)</li></ul>
 <h3>Development</h3>
-<pre class="code-block"><code># Run tests
+<pre class="code"><code># Run tests
 composer test
 
 # Run unit tests
@@ -136,8 +138,8 @@ composer format</code></pre>
 <p>MIT License. See <span class="md-target" title="LICENSE">LICENSE</span> for details.</p>
 </section>
 </main>
-<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
-</div>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
 <script src="../../../../../assets/search-index.js" defer></script>
 <script src="../../../../../assets/app.js" defer></script>
 </body>

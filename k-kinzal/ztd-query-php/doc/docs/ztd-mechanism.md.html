@@ -16,25 +16,27 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="ZTD Query PHP">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/document-design-v1.0.0.css">
 <link rel="stylesheet" href="../../../../assets/style.css">
-<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}}catch(e){}</script>
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}}catch(e){}</script>
 </head>
 <body data-root="../../../../">
-<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sb-pkg"><a href="../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a></div><nav class="sb-block"><div class="sb-title">Package</div><ul class="sb-list"><li><a href="../../../../k-kinzal/ztd-query-php/all-items.html">All items</a></li><li><a href="../../../../k-kinzal/ztd-query-php/index.html#documents">Documents</a></li></ul></nav></nav>
-<div class="page">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a></div><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li><a href="../../../../k-kinzal/ztd-query-php/all-items.html">All items</a></li><li><a href="../../../../k-kinzal/ztd-query-php/index.html#documents">Documents</a></li></ul></nav></aside>
+<div class="main">
 <header class="topbar">
-<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
-<nav class="crumbs"><a href="../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a><span class="crumb-sep">::</span><span class="crumb-current">docs/ztd-mechanism.md</span></nav>
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">docs/ztd-mechanism.md</span></nav>
 <div class="topbar-tools">
-<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
 <a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
-<button id="theme-toggle" title="Toggle theme">◐</button>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
 </div>
 </header>
 <div class="search-results" id="search-results" hidden></div>
-<main class="content">
-<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Zero Table Dependency (ZTD) Mechanism</h1><div class="symbol-meta"><span class="src-link">docs/ztd-mechanism.md</span></div></div>
-<section class="readme"><h2>Zero Table Dependency (ZTD) Mechanism</h2>
+<main class="content" id="content">
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>Zero Table Dependency (ZTD) Mechanism</h1><div class="symbol-meta"><span class="source-link">docs/ztd-mechanism.md</span></div></div>
+<section class="readme prose"><h2>Zero Table Dependency (ZTD) Mechanism</h2>
 <h3>Overview</h3>
 <p><strong>Zero Table Dependency (ZTD)</strong> is a SQL testing methodology that eliminates table dependencies. It uses a real database engine while replacing all physical table reads and writes with shadow tables implemented as CTEs (Common Table Expressions).</p>
 <p>ZTD enables SQL unit testing without migrations, seeding, or cleanup operations.</p>
@@ -55,9 +57,9 @@
 <p>But physical table access is blocked by the CTE.</p>
 <h5>Transformation Example</h5>
 <p><strong>Before (original query):</strong></p>
-<pre class="code-block"><code>SELECT email FROM users WHERE id = $1</code></pre>
+<pre class="code"><code>SELECT email FROM users WHERE id = $1</code></pre>
 <p><strong>After (with CTE Shadowing):</strong></p>
-<pre class="code-block"><code>WITH users AS (
+<pre class="code"><code>WITH users AS (
   SELECT 1 AS id, &#039;alice@example.com&#039; AS email
   UNION ALL
   SELECT 2 AS id, &#039;bob@example.com&#039; AS email
@@ -76,7 +78,7 @@ SELECT email FROM users WHERE id = $1</code></pre>
 <ol><li><strong>Sequence Defaults</strong>: Defaults invoking <code>nextval</code> are rewritten into deterministic expressions (e.g., <code>row_number() over ()</code>).</li></ol>
 <ol><li><strong>Output Generation</strong>: Produces a result-select query (SELECT that returns the rows that would be inserted). RETURNING clauses MUST NOT be used (DR-10) -- they execute actual DML, violating ZTD&#039;s zero-write principle.</li></ol>
 <p><strong>Example:</strong></p>
-<pre class="code-block"><code>-- Before
+<pre class="code"><code>-- Before
 INSERT INTO users (name, email) VALUES (&#039;Alice&#039;, &#039;alice@example.com&#039;)
 
 -- After (result-select)
@@ -92,7 +94,7 @@ SELECT
 <ol><li><strong>Column Expression Building</strong>: For each column in the target table:<ul><li>Checks SET expressions for column overrides</li><li>Preserves original column references if not updated</li></ul></li></ol>
 <ol><li><strong>Output Generation</strong>: Produces a result-select query (SELECT reflecting updated columns with WHERE filter). RETURNING clauses MUST NOT be used (DR-10).</li></ol>
 <p><strong>Example:</strong></p>
-<pre class="code-block"><code>-- Before
+<pre class="code"><code>-- Before
 UPDATE users SET email = &#039;new@example.com&#039; WHERE id = 1
 
 -- After (result-select)
@@ -109,7 +111,7 @@ WHERE id = 1</code></pre>
 <ol><li><strong>Column Reference Resolution</strong>: Parses namespaces, builds context maps for aliases, validates column existence.</li></ol>
 <ol><li><strong>Output Generation</strong>: Produces a result-select query (SELECT returning the rows that would be deleted). RETURNING clauses MUST NOT be used (DR-10).</li></ol>
 <p><strong>Example:</strong></p>
-<pre class="code-block"><code>-- Before
+<pre class="code"><code>-- Before
 DELETE FROM users WHERE id = 1
 
 -- After (result-select)
@@ -159,7 +161,7 @@ SELECT * FROM users WHERE id = 1</code></pre>
 <hr>
 <h3>API Usage (pg-testkit)</h3>
 <h4>Three Primary APIs</h4>
-<pre class="code-block"><code>// 1. Create isolated client with lazy connection
+<pre class="code"><code>// 1. Create isolated client with lazy connection
 const client = createPgTestkitClient({
   connectionFactory: () =&gt; new Client({ connectionString: process.env.PG_URL! }),
   tableDefinitions: [...],
@@ -177,12 +179,12 @@ const raw = new Client({ connectionString: process.env.PG_URL! });
 await raw.connect();
 const wrapped = wrapPgClient(raw, { tableDefinitions, tableRows });</code></pre>
 <h4>Scoped Fixtures</h4>
-<pre class="code-block"><code>const scoped = client.withFixtures([{
+<pre class="code"><code>const scoped = client.withFixtures([{
   tableName: &#039;users&#039;,
   rows: [{ id: 2, email: &#039;bob@example.com&#039; }]
 }]);</code></pre>
 <h4>DDL-Based Configuration</h4>
-<pre class="code-block"><code>ddl: {
+<pre class="code"><code>ddl: {
   directories: [path.join(__dirname, &#039;..&#039;, &#039;ztd&#039;, &#039;ddl&#039;)],
   extensions: [&#039;.sql&#039;]
 }</code></pre>
@@ -212,8 +214,8 @@ const wrapped = wrapPgClient(raw, { tableDefinitions, tableRows });</code></pre>
 <ol><li><strong>No physical table dependency</strong> - Tables are shadowed with CTEs</li><li><strong>Uses real database engine</strong> - Not mocks, but actual SQL processing</li><li><strong>Tests SQL as pure functions</strong> - Focus only on input (fixtures) and output (query results)</li><li><strong>Fast and parallelizable</strong> - No migration or cleanup required</li><li><strong>Low adoption cost</strong> - Can be introduced without modifying existing code</li></ol>
 </section>
 </main>
-<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
-</div>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
 <script src="../../../../assets/search-index.js" defer></script>
 <script src="../../../../assets/app.js" defer></script>
 </body>
