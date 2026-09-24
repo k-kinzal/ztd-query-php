@@ -105,6 +105,8 @@ use SqlCatalog\Text\Origin;
 #[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
 #[UsesClass(\SqlCatalog\Analysis\Effect\WriteEffects::class)]
 #[UsesClass(\SqlCatalog\Analysis\Effect\ReferenceEffects::class)]
+#[UsesClass(\SqlCatalog\Evaluation\ObjectMemory::class)]
+#[UsesClass(\SqlCatalog\Extension\Model\CallContext::class)]
 final class ExpressionEvaluatorTest extends TestCase
 {
     #[DataProvider('providerEvaluate')]
@@ -689,4 +691,26 @@ final class ExpressionEvaluatorTest extends TestCase
         self::assertSame('literal:string:before|literal:string:changed|literal:string:first', $result->signature());
     }
 
+
+    public function testEvaluateCloneCreatesAnIndependentTrackedAllocation(): void
+    {
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $object = new \SqlCatalog\Evaluation\ObjectTerm('Builder', identity: 'original', state: new \SqlCatalog\Evaluation\ArrayTerm([]));
+        $env = new Environment(['q' => \SqlCatalog\Evaluation\Domain::of($object)]);
+        $cloned = $expressions->evaluateClone(new \PhpParser\Node\Expr\Clone_(new Variable('q')), $env, new FunctionScope('query.php'))->soleObject();
+        self::assertNotNull($cloned);
+        self::assertNotSame($object->identity, $cloned->identity);
+        self::assertSame($object->state, $cloned->state);
+        self::assertSame($object, $env->read('q')->soleObject());
+    }
+
+    public function testEvaluateInvalidatesAllAliasesOfAReferenceAssignedObject(): void
+    {
+        $expressions = (new Interpreter(new ProgramIndex(), []))->evaluatorFor();
+        $object = new \SqlCatalog\Evaluation\ObjectTerm('Builder', identity: 'a', state: new \SqlCatalog\Evaluation\ArrayTerm([]));
+        $env = new Environment(['q' => \SqlCatalog\Evaluation\Domain::of($object), 'alias' => \SqlCatalog\Evaluation\Domain::of($object)]);
+        $expressions->evaluate(new \PhpParser\Node\Expr\AssignRef(new Variable('r'), new Variable('q')), $env, new FunctionScope('query.php'));
+        self::assertNull($env->read('alias')->soleObject()?->state);
+        self::assertSame('a', $env->read('alias')->soleObject()?->identity);
+    }
 }

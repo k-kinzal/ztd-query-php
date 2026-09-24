@@ -10,6 +10,7 @@ use PhpParser\Node\Scalar;
 use SqlCatalog\Analysis\Effect\WriteEffects;
 use SqlCatalog\Evaluation\Domain;
 use SqlCatalog\Evaluation\Environment;
+use SqlCatalog\Evaluation\ObjectTerm;
 use SqlCatalog\Php\NodeText;
 use SqlCatalog\Text\Origin;
 use SqlCatalog\Type\TypeShape;
@@ -28,6 +29,8 @@ final class ExpressionEvaluator
     private EvaluationBudget $budget;
 
     private NodeText $text;
+
+    private int $clones = 0;
 
     /**
      * Wires the evaluator to the parts that read references and follow calls.
@@ -128,6 +131,9 @@ final class ExpressionEvaluator
      */
     public function evaluateOperator(Expr $node, Environment $environment, FunctionScope $scope): ?Domain
     {
+        if ($node instanceof Expr\Clone_) {
+            return $this->evaluateClone($node, $environment, $scope);
+        }
         if ($node instanceof Scalar\InterpolatedString) {
             return $this->evaluateInterpolation($node, $environment, $scope);
         }
@@ -160,6 +166,25 @@ final class ExpressionEvaluator
         }
 
         return $this->evaluateResult($node, $environment, $scope);
+    }
+
+    /**
+     * Clones a tracked object without sharing its allocation with the original.
+     */
+    public function evaluateClone(Expr\Clone_ $node, Environment $environment, FunctionScope $scope): Domain
+    {
+        $value = $this->evaluate($node->expr, $environment, $scope);
+        $terms = [];
+        foreach ($value->terms as $term) {
+            if ($term instanceof ObjectTerm && $term->identity !== null) {
+                $this->clones++;
+                $term = new ObjectTerm($term->className, $term->enumCase, $term->statementId, 'clone:' . $this->clones, $term->state);
+                $environment->objects()->remember($term);
+            }
+            $terms[] = $term;
+        }
+
+        return Domain::fromTerms($terms, $value->widened, $value->combined);
     }
 
     /**

@@ -36,4 +36,12 @@ final class SinkSpecTest extends TestCase
         self::assertSame('PDOStatement', $sink->handleType);
         self::assertNull($sink->valuesParameter);
     }
+    public function testModelledOutputsUseSqlAndBindingsWithoutArgumentPositions(): void
+    {
+        $sink = new SinkSpec('example.run', SinkCallKind::FunctionCall, null, 'run', SinkRole::Modelled, model: 'example');
+        self::assertSame(0, $sink->sqlParameter);
+        self::assertSame(1, $sink->valuesParameter);
+        self::assertSame('example', $sink->model);
+    }
+
 }

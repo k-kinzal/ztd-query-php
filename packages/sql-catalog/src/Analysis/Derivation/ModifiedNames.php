@@ -7,6 +7,7 @@ namespace SqlCatalog\Analysis\Derivation;
 use PhpParser\Node;
 use PhpParser\Node\Expr;
 use PhpParser\Node\Stmt;
+use SqlCatalog\Analysis\Derivation\Objects\ObjectEffects;
 use SqlCatalog\Analysis\Effect\ReferenceEffects;
 use SqlCatalog\Analysis\Effect\WriteEffects;
 use WeakMap;
@@ -35,7 +36,7 @@ final class ModifiedNames
     /**
      * Builds the reader over the naming the rest of the derivation uses.
      */
-    public function __construct(?FreeNames $names = null)
+    public function __construct(?FreeNames $names = null, private readonly ?ObjectEffects $objects = null)
     {
         $this->names = $names ?? new FreeNames();
         $this->remembered = new WeakMap();
@@ -126,10 +127,19 @@ final class ModifiedNames
             return $this->targets($node->var);
         }
 
-        $written = (new WriteEffects())->own($node);
+        $written = (new WriteEffects())->own($node)
+            + ($node instanceof Expr\CallLike ? ($this->objects?->writes($node) ?? []) : []);
         $this->references ??= new ReferenceEffects();
 
         return $written + ($node instanceof Expr\CallLike ? $this->references->affected($node, $written) : []);
+    }
+
+    /**
+     * Whether object calls are retained as whole expression steps.
+     */
+    public function tracksObjects(): bool
+    {
+        return $this->objects !== null;
     }
 
     /**
@@ -139,6 +149,12 @@ final class ModifiedNames
      */
     public function targets(Node $target): array
     {
+        if ($target instanceof Expr\ArrayDimFetch && $this->objects !== null) {
+            return $this->targets($target->var);
+        }
+        if ($target instanceof Expr\PropertyFetch && $this->objects !== null && $this->names->propertyName($target) === null) {
+            return $this->objects->writes($target);
+        }
         $base = $this->baseName($target);
         if ($base !== null) {
             return [$base => true];

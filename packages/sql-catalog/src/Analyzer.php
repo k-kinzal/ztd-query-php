@@ -160,6 +160,8 @@ final class Analyzer
             $options->budget(),
             new DeclaredGlobals($this->extensions->globalsOf($options->extensions)),
             $this->functionModels,
+            $options->dialect,
+            $this->extensions->modelProvidersOf($options->extensions),
         );
 
         return $this->sortRecords($this->entries->build($interpreter->analyze($files)));

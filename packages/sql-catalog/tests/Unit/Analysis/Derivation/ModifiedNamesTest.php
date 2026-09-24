@@ -20,6 +20,7 @@ use SqlCatalog\Php\SourceParser;
 #[UsesClass(SourceParser::class)]
 #[UsesClass(\SqlCatalog\Analysis\Effect\WriteEffects::class)]
 #[UsesClass(\SqlCatalog\Analysis\Effect\ReferenceEffects::class)]
+#[UsesClass(\SqlCatalog\Analysis\Derivation\Objects\ObjectEffects::class)]
 final class ModifiedNamesTest extends TestCase
 {
     /**
@@ -106,4 +107,17 @@ final class ModifiedNamesTest extends TestCase
     {
         self::assertSame(['a' => true, 'b' => true], (new ModifiedNames())->all([new Expr\Variable('a'), new Expr\Variable('b')]));
     }
+
+    public function testTracksObjectsRequiresAnExplicitEffectModel(): void
+    {
+        self::assertFalse((new ModifiedNames())->tracksObjects());
+        self::assertTrue((new ModifiedNames(objects: new \SqlCatalog\Analysis\Derivation\Objects\ObjectEffects()))->tracksObjects());
+    }    public function testOwnRetainsSymbolTableWritesAlongsideObjectEffects(): void
+    {
+        $call = new Expr\FuncCall(new Expr\Variable('callback'), [new \PhpParser\Node\Arg(new Expr\Variable('q'))]);
+        $modified = new ModifiedNames(objects: new \SqlCatalog\Analysis\Derivation\Objects\ObjectEffects());
+        self::assertSame(['*' => true, 'q' => true], $modified->own($call));
+        self::assertTrue($modified->touches($call, ['other' => true]));
+    }
+
 }

@@ -27,7 +27,7 @@ final class SinkMatcher
      * @param list<SinkSpec> $sinks The calls the enabled extensions recognise
      * @param ProgramIndex $index The declarations of the analyzed source, for subclass checks
      */
-    public function __construct(array $sinks, ProgramIndex $index)
+    public function __construct(array $sinks, ProgramIndex $index, private readonly ?\SqlCatalog\Extension\Model\ModelSet $models = null)
     {
         $this->sinks = $sinks;
         $this->index = $index;
@@ -134,6 +134,9 @@ final class SinkMatcher
         $left = ltrim($className, '\\');
         $right = ltrim($expected, '\\');
         if (strcasecmp($left, $right) === 0) {
+            return true;
+        }
+        if ($this->models?->matchesClass($left, $right) === true) {
             return true;
         }
         if ($this->index->isInstanceOf($left, $right)) {

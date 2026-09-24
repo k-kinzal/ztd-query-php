@@ -16,6 +16,7 @@ enum SinkRole: string
     case Prepare = 'prepare';
     case Execute = 'execute';
     case Bind = 'bind';
+    case Modelled = 'modelled';
 
     /**
      * Whether the call hands the statement text back rather than sending it.
@@ -37,7 +38,7 @@ enum SinkRole: string
     {
         return match ($this) {
             self::Query, self::Compose, self::Prepare => true,
-            self::Execute, self::Bind => false,
+            self::Execute, self::Bind, self::Modelled => false,
         };
     }
 }

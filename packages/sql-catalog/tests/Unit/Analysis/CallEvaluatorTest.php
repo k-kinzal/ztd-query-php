@@ -95,6 +95,10 @@ use SqlCatalog\Text\TextPattern;
 #[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
 #[UsesClass(\SqlCatalog\Analysis\Effect\WriteEffects::class)]
 #[UsesClass(\SqlCatalog\Analysis\Effect\ReferenceEffects::class)]
+#[UsesClass(\SqlCatalog\Extension\Laravel\BuilderCalls::class)]
+#[UsesClass(\SqlCatalog\Extension\Laravel\QueryState::class)]
+#[UsesClass(\SqlCatalog\Evaluation\ObjectMemory::class)]
+#[UsesClass(\SqlCatalog\Extension\Model\CallContext::class)]
 final class CallEvaluatorTest extends TestCase
 {
     public function testTheCallMethodsAreReachedDirectly(): void
@@ -841,4 +845,17 @@ final class CallEvaluatorTest extends TestCase
         self::assertNull($environment->read('a')->soleLiteral());
     }
 
+
+    public function testInvalidateEscapesOpensAliasedObjectState(): void
+    {
+        $index = new ProgramIndex();
+        $object = new ObjectTerm('DemoObject', identity: 'demo:1', state: new \SqlCatalog\Evaluation\ArrayTerm([]));
+        $env = new Environment(['q' => Domain::of($object), 'alias' => Domain::of($object)]);
+        $calls = new CallEvaluator($index, new \SqlCatalog\Analysis\SinkMatcher([], $index), \SqlCatalog\Analysis\FunctionModel\Registry::withBuiltins(), new \SqlCatalog\Analysis\ExternalInput(), new \SqlCatalog\Php\NodeText());
+        $call = new FuncCall(new Name('customize'), [new \PhpParser\Node\Arg(new \PhpParser\Node\Expr\Variable('q'))]);
+        $calls->invalidateEscapes($call, $env);
+        $read = $env->read('alias')->soleObject();
+        self::assertNotNull($read);
+        self::assertNull($read->state);
+    }
 }

@@ -6,6 +6,7 @@ namespace SqlCatalog\Analysis\FunctionModel;
 
 use SqlCatalog\Analysis\BuiltinCallModel;
 use SqlCatalog\Evaluation\Domain;
+use SqlCatalog\Extension\Model\CallContext;
 
 /**
  * Registered interpretations of PHP function calls, from evaluated arguments to values.
@@ -23,6 +24,11 @@ final class Registry
      * @var array<string, list<callable(list<Domain>): ?Domain>>
      */
     private array $models = [];
+
+    /**
+     * @var list<callable(CallContext): ?Domain>
+     */
+    private array $calls = [];
 
     /**
      * The standard models, which may be extended or overridden through register().
@@ -63,6 +69,31 @@ final class Registry
     {
         foreach (array_reverse($this->models[$this->normalize($name)] ?? []) as $model) {
             $value = $model($arguments);
+            if ($value !== null) {
+                return $value;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Adds a context-aware model for PHP calls, including methods and constructors.
+     *
+     * @param callable(CallContext): ?Domain $model The AST, evaluated values and shared object state.
+     */
+    public function registerCall(callable $model): void
+    {
+        $this->calls[] = $model;
+    }
+
+    /**
+     * Tries newer context-aware models first, preserving ordinary function models as a fallback.
+     */
+    public function evaluateCall(CallContext $context): ?Domain
+    {
+        foreach (array_reverse($this->calls) as $model) {
+            $value = $model($context);
             if ($value !== null) {
                 return $value;
             }

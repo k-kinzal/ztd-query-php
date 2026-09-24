@@ -84,7 +84,7 @@ final class CatalogCommand
         $analyzer = $this->configuredAnalyzer($command->configuration);
         $catalog = $command->filter->apply($analyzer->analyzePaths(
             $command->paths,
-            new AnalysisOptions($command->extensions),
+            new AnalysisOptions($command->extensions, dialect: $command->dialect),
             $command->root,
             $command->excluded,
         ));

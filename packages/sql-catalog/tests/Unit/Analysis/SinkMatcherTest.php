@@ -39,6 +39,8 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(TypeReader::class)]
 #[UsesClass(TypeShape::class)]
 #[UsesClass(\SqlCatalog\Php\ClassShape::class)]
+#[UsesClass(\SqlCatalog\Extension\LaravelExtension::class)]
+#[UsesClass(\SqlCatalog\Extension\Model\ModelSet::class)]
 final class SinkMatcherTest extends TestCase
 {
     public function testMatchMethodFindsTheCallOnAKnownReceiver(): void
@@ -153,5 +155,12 @@ final class SinkMatcherTest extends TestCase
 
         self::assertTrue($matcher->models(Domain::of(new ObjectTerm('PDO'))));
         self::assertFalse($matcher->models(Domain::of(new ObjectTerm('App\\Repository'))));
+    }
+
+    public function testClassMatchesUsesRegisteredTypeRelationsOnly(): void
+    {
+        $models = new \SqlCatalog\Extension\Model\ModelSet(classRelations: [static fn (string $class, string $expected): bool => $class === 'VendorConnection' && $expected === 'Driver']);
+        self::assertTrue((new SinkMatcher([], new ProgramIndex(), $models))->classMatches('VendorConnection', 'Driver'));
+        self::assertFalse((new SinkMatcher([], new ProgramIndex()))->classMatches('VendorConnection', 'Driver'));
     }
 }

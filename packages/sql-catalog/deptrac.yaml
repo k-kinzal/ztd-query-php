@@ -32,7 +32,17 @@ deptrac:
     - name: Extension
       collectors:
         - type: directory
-          value: 'src/Extension/'
+          value: 'src/Extension/(?!LaravelExtension\.php)[^/]+\.php$'
+    - name: ExtensionModel
+      collectors:
+        - type: directory
+          value: 'src/Extension/Model/'
+    - name: Laravel
+      collectors:
+        - type: directory
+          value: 'src/Extension/Laravel/'
+        - type: classLike
+          value: '^SqlCatalog\\Extension\\LaravelExtension$'
     - name: Catalog
       collectors:
         - type: directory
@@ -76,9 +86,11 @@ deptrac:
     Evaluation: [Text, Type]
     Php: [Type, PhpParser]
     Source: []
-    Extension: [Sql]
+    Extension: [Sql, ExtensionModel, Laravel]
+    ExtensionModel: [Analysis, Evaluation, Extension, Php, PhpParser]
+    Laravel: [Analysis, Evaluation, Extension, ExtensionModel, Php, Sql, Text, Type, PhpParser]
     Catalog: [Evaluation, Sql, Text, Type]
-    Analysis: [Catalog, Evaluation, Extension, Php, Sql, Text, Type, PhpParser]
+    Analysis: [Catalog, Evaluation, Extension, ExtensionModel, Php, Sql, Text, Type, PhpParser]
     Filter: [Catalog, Sql]
     Reporter: [Catalog]
     Facade: [Analysis, Catalog, Extension, Php, Source, Yaml]

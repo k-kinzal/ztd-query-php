@@ -94,6 +94,7 @@ use SqlCatalog\Text\Origin;
 #[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
 #[UsesClass(\SqlCatalog\Analysis\Effect\WriteEffects::class)]
 #[UsesClass(\SqlCatalog\Analysis\Effect\ReferenceEffects::class)]
+#[UsesClass(\SqlCatalog\Extension\Model\CallContext::class)]
 final class InterpreterTest extends TestCase
 {
     public function testAnalyzeReadsEveryStatementFromTheCallThatIssuesIt(): void

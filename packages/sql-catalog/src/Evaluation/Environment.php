@@ -19,6 +19,8 @@ final class Environment
      */
     private array $variables;
 
+    private ?ObjectMemory $objects;
+
     /** @var array<string, Presence> */
     private array $presence = [];
 
@@ -30,9 +32,15 @@ final class Environment
     /**
      * @param array<string, Domain> $variables Initial bindings, keyed by variable name without the sigil
      */
-    public function __construct(array $variables = [])
+    public function __construct(array $variables = [], ?ObjectMemory $objects = null)
     {
         $this->variables = $variables;
+        $this->objects = $objects;
+        foreach ($variables as $value) {
+            if ($value->soleObject()?->identity !== null) {
+                $this->objects()->import($value);
+            }
+        }
         $this->presence = array_fill_keys(array_keys($variables), Presence::Present);
     }
 
@@ -45,7 +53,7 @@ final class Environment
             return Domain::literal(null);
         }
 
-        return $this->variables[$name] ?? Domain::opaque(TypeShape::unknown(), Origin::Unresolved, '$' . $name);
+        return $this->refresh($this->variables[$name] ?? Domain::opaque(TypeShape::unknown(), Origin::Unresolved, '$' . $name));
     }
 
     /**
@@ -54,6 +62,11 @@ final class Environment
     public function write(string $name, Domain $domain): void
     {
         $this->variables[$name] = $domain;
+        $this->objects?->import($domain);
+        $object = $domain->soleObject();
+        if ($object?->identity !== null) {
+            $this->objects()->remember($object);
+        }
         $this->presence[$name] = Presence::Present;
     }
 
@@ -100,7 +113,10 @@ final class Environment
      */
     public function copy(): self
     {
-        return clone $this;
+        $copy = clone $this;
+        $copy->objects = $this->objects?->copy();
+
+        return $copy;
     }
 
     /**
@@ -119,6 +135,8 @@ final class Environment
             $joined->presence[$name] = $left === $right ? $left : Presence::Maybe;
         }
         $joined->combined = $this->combined || $other->combined || !$this->equals($other);
+
+        $joined->objects = $this->objects === null ? $other->objects?->copy() : ($other->objects === null ? $this->objects->copy() : $this->objects->join($other->objects));
 
         return $joined;
     }
@@ -145,6 +163,7 @@ final class Environment
      */
     public function invalidate(string $name, Origin $origin = Origin::Unresolved): void
     {
+        $this->objects?->invalidate($this->read($name));
         $this->variables[$name] = Domain::opaque(TypeShape::unknown(), $origin, '$' . $name);
         $this->presence[$name] = Presence::Maybe;
     }
@@ -157,6 +176,7 @@ final class Environment
         $this->variables = $other->variables;
         $this->presence = $other->presence;
         $this->combined = $other->combined;
+        $this->objects = $other->objects;
     }
 
     /**
@@ -171,7 +191,9 @@ final class Environment
         }
         sort($parts);
 
-        return ($this->combined ? 'combined;' : '') . implode(';', $parts);
+        $objects = $this->objects?->signature() ?? '';
+
+        return ($this->combined ? 'combined;' : '') . implode(';', $parts) . ($objects === '' ? '' : ';objects:' . $objects);
     }
 
     /**
@@ -180,5 +202,21 @@ final class Environment
     public function equals(self $other): bool
     {
         return $this->signature() === $other->signature();
+    }
+
+    /**
+     * Resolves an already-evaluated object reference after subsequent argument effects.
+     */
+    public function refresh(Domain $value): Domain
+    {
+        return $this->objects?->read($value) ?? $value;
+    }
+
+    /**
+     * The object snapshots shared by this run's aliases.
+     */
+    public function objects(): ObjectMemory
+    {
+        return $this->objects ??= new ObjectMemory();
     }
 }

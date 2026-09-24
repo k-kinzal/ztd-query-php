@@ -13,6 +13,7 @@ use SqlCatalog\Analysis\FunctionModel\Registry;
 use SqlCatalog\Evaluation\Domain;
 use SqlCatalog\Evaluation\Environment;
 use SqlCatalog\Evaluation\ObjectTerm;
+use SqlCatalog\Extension\Model\CallContext;
 use SqlCatalog\Extension\SinkRole;
 use SqlCatalog\Extension\SinkSpec;
 use SqlCatalog\Php\FunctionShape;
@@ -80,20 +81,26 @@ final class CallEvaluator
         if ($node->isFirstClassCallable()) {
             return Domain::of(new ObjectTerm('Closure'));
         }
+        $receiver = $node instanceof Expr\MethodCall || $node instanceof Expr\NullsafeMethodCall ? $expressions->evaluate($node->var, $environment, $scope) : null;
         $arguments = $this->arguments($node, $environment, $scope, $expressions);
-        $this->applyEffects($node, $environment);
 
         if ($node instanceof Expr\New_) {
+            $modelled = $this->functions->evaluateCall(new CallContext($node, $arguments, $environment, $scope, $expressions, className: $node->class instanceof Node\Name ? $node->class->toString() : null));
+            if ($modelled !== null) {
+                return $modelled;
+            }
+            $this->applyEffects($node, $environment);
+            $this->invalidateEscapes($node, $environment);
             return $this->evaluateInstantiation($node, $scope);
         }
         if ($node instanceof Expr\MethodCall || $node instanceof Expr\NullsafeMethodCall) {
-            return $this->evaluateMethod($node, $arguments, $environment, $scope, $expressions);
+            return $this->evaluateMethod($node, $arguments, $environment, $scope, $expressions, $receiver);
         }
         if ($node instanceof Expr\StaticCall) {
-            return $this->evaluateStatic($node, $arguments, $scope, $expressions);
+            return $this->evaluateStatic($node, $arguments, $scope, $expressions, $environment);
         }
         if ($node instanceof Expr\FuncCall) {
-            return $this->evaluateFunction($node, $arguments, $scope, $expressions);
+            return $this->evaluateFunction($node, $arguments, $scope, $expressions, $environment);
         }
 
         return Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node));
@@ -174,14 +181,23 @@ final class CallEvaluator
         Environment $environment,
         FunctionScope $scope,
         ExpressionEvaluator $expressions,
+        ?Domain $receiver = null,
     ): Domain {
         $name = $node->name instanceof Node\Identifier ? $node->name->toString() : null;
         if ($name === null) {
+            $this->applyEffects($node, $environment);
+            $this->invalidateEscapes($node, $environment);
+            $environment->objects()->invalidate($receiver ?? $expressions->evaluate($node->var, $environment, $scope));
             return Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node));
         }
 
-        $receiver = $expressions->evaluate($node->var, $environment, $scope);
+        $receiver = $environment->refresh($receiver ?? $expressions->evaluate($node->var, $environment, $scope));
         $sink = $this->sinks->matchMethod($receiver, $name);
+        $modelled = $this->functions->evaluateCall(new CallContext($node, $arguments, $environment, $scope, $expressions, $name, $receiver, sink: $sink));
+        if ($modelled !== null) {
+            return $modelled;
+        }
+        $this->applyEffects($node, $environment);
         if ($sink !== null) {
             return $this->applySink($sink, $node, $arguments, $scope);
         }
@@ -189,6 +205,7 @@ final class CallEvaluator
             return Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node));
         }
 
+        $this->invalidateEscapes($node, $environment);
         $className = $receiver->type()->soleClassName();
         $method = $this->index->findMethod($className, $name);
         if ($method?->node?->getStmts() === null) {
@@ -246,10 +263,15 @@ final class CallEvaluator
         array $arguments,
         FunctionScope $scope,
         ExpressionEvaluator $expressions,
+        ?Environment $environment = null,
     ): Domain {
         $name = $node->name instanceof Node\Identifier ? $node->name->toString() : null;
         $className = $node->class instanceof Node\Name ? $node->class->toString() : null;
         if ($name === null || $className === null) {
+            if ($environment !== null) {
+                $this->applyEffects($node, $environment);
+                $this->invalidateEscapes($node, $environment);
+            }
             return Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node));
         }
         if (in_array(strtolower($className), ['self', 'static', 'parent'], true)) {
@@ -257,10 +279,17 @@ final class CallEvaluator
         }
 
         $sink = $this->sinks->matchStatic($className, $name);
+        $environment ??= new Environment();
+        $modelled = $this->functions->evaluateCall(new CallContext($node, $arguments, $environment, $scope, $expressions, $name, className: $className, sink: $sink));
+        if ($modelled !== null) {
+            return $modelled;
+        }
+        $this->applyEffects($node, $environment);
         if ($sink !== null) {
             return $this->applySink($sink, $node, $arguments, $scope);
         }
 
+        $this->invalidateEscapes($node, $environment);
         $method = $this->index->findMethod($className, $name);
 
         return $method === null
@@ -278,13 +307,24 @@ final class CallEvaluator
         array $arguments,
         FunctionScope $scope,
         ExpressionEvaluator $expressions,
+        ?Environment $environment = null,
     ): Domain {
         if (!$node->name instanceof Node\Name) {
+            if ($environment !== null) {
+                $this->applyEffects($node, $environment);
+                $this->invalidateEscapes($node, $environment);
+            }
             return Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node));
         }
         $name = $this->functionName($node->name);
 
         $sink = $this->sinks->matchFunction($name);
+        $environment ??= new Environment();
+        $modelled = $this->functions->evaluateCall(new CallContext($node, $arguments, $environment, $scope, $expressions, $name, sink: $sink));
+        if ($modelled !== null) {
+            return $modelled;
+        }
+        $this->applyEffects($node, $environment);
         if ($sink !== null) {
             return $this->applySink($sink, $node, $arguments, $scope);
         }
@@ -296,11 +336,24 @@ final class CallEvaluator
             return Domain::opaque(TypeShape::unknown(), Origin::External, $name . '()');
         }
 
+        $this->invalidateEscapes($node, $environment);
+
         $function = $this->index->findFunction($name);
 
         return $function === null
             ? Domain::opaque(TypeShape::unknown(), Origin::Call, $this->text->render($node))
             : $this->follow($function, $arguments, $scope, $expressions);
+    }
+
+    /**
+     * Unknown calls may mutate objects passed directly or captured by callbacks.
+     */
+    public function invalidateEscapes(Expr\CallLike $node, Environment $environment): void
+    {
+        $arguments = array_map(static fn (Node\Arg $argument): Expr => $argument->value, array_values($node->getArgs()));
+        foreach ((new Derivation\FreeNames())->of($arguments) as $name => $_) {
+            $environment->objects()->invalidate($environment->read($name));
+        }
     }
 
     /**
@@ -336,7 +389,7 @@ final class CallEvaluator
                 null,
                 $this->siteKeyOf($node, $scope, $sink->id),
             )),
-            SinkRole::Query => Domain::opaque(TypeShape::unknown(), Origin::Call, $sink->id),
+            SinkRole::Query, SinkRole::Modelled => Domain::opaque(TypeShape::unknown(), Origin::Call, $sink->id),
             SinkRole::Execute, SinkRole::Bind => Domain::opaque(TypeShape::of(['bool']), Origin::Call, $sink->id),
         };
     }

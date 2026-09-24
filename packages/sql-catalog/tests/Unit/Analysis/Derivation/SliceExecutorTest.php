@@ -100,6 +100,8 @@ use WeakMap;
 #[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
 #[UsesClass(\SqlCatalog\Analysis\Effect\WriteEffects::class)]
 #[UsesClass(\SqlCatalog\Analysis\Effect\ReferenceEffects::class)]
+#[UsesClass(\SqlCatalog\Evaluation\ObjectMemory::class)]
+#[UsesClass(\SqlCatalog\Extension\Model\CallContext::class)]
 final class SliceExecutorTest extends TestCase
 {
     public function testRunSplitsOnATernarySoLaterReadsAgree(): void

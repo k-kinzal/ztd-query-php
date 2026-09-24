@@ -46,7 +46,8 @@ final class AssignmentSteps
             if (!$this->modified->touches($assignment, $path->needs)) {
                 continue;
             }
-            $needs = $this->replaces($assignment) && !isset($written[WriteEffects::ALL]) ? array_diff_key($path->needs, $this->modified->own($assignment)) : $path->needs;
+            $replaced = $assignment instanceof Expr\Assign || $assignment instanceof Expr\AssignRef ? $this->modified->targets($assignment->var) : $this->modified->own($assignment);
+            $needs = $this->replaces($assignment) && !isset($written[WriteEffects::ALL]) ? array_diff_key($path->needs, $replaced) : $path->needs;
             $path = $path->through(new SliceStep($assignment), $needs + $this->names->read($assignment));
         }
 
@@ -71,7 +72,7 @@ final class AssignmentSteps
         if ($node instanceof Expr\Closure || $node instanceof Expr\ArrowFunction) {
             return [];
         }
-        if ($node instanceof Expr && ($this->modified->own($node) !== []
+        if ($node instanceof Expr && ($this->modified->tracksObjects() || $this->modified->own($node) !== []
             || (($node instanceof Expr\Ternary || $node instanceof Expr\Match_ || $node instanceof Expr\BinaryOp)
                 && $this->modified->of($node) !== []))) {
             return [$node];

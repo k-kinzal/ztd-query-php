@@ -168,8 +168,9 @@ final class Deriver
             foreach ($bindings as $binding) {
                 $runs = $this->executor->run($steps, $binding->environment, $scope, $this->expressions, $depth === 0, $each);
                 foreach ($runs as $environment) {
+                    $values = array_map(fn (Expr $goal): Domain => $this->expressions->evaluate($goal, $environment, $scope), $goals);
                     $solutions[] = new Solution(
-                        array_map(fn (Expr $goal): Domain => $this->expressions->evaluate($goal, $environment, $scope), $goals),
+                        array_map($environment->refresh(...), $values),
                         $binding->through,
                         $arrival->path->truncated || $binding->truncated,
                         $binding->combined || $environment->combined,

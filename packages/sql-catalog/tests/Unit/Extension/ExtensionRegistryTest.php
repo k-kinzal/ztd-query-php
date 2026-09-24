@@ -104,4 +104,11 @@ final class ExtensionRegistryTest extends TestCase
         $this->expectException(UnknownExtensionException::class);
         ExtensionRegistry::withBuiltins()->globalsOf(['symfony']);
     }
+    public function testModelProvidersOfSelectsEnabledProvidersAndKeepsRawExtensionsCompatible(): void
+    {
+        $registry = ExtensionRegistry::withBuiltins();
+        self::assertSame([], $registry->modelProvidersOf(['pdo', 'wordpress']));
+        self::assertSame([$registry->get('laravel')], $registry->modelProvidersOf(['pdo', 'laravel']));
+    }
+
 }

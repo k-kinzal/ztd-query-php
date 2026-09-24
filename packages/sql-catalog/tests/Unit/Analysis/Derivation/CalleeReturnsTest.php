@@ -85,6 +85,11 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
 #[UsesClass(\SqlCatalog\Analysis\Effect\WriteEffects::class)]
 #[UsesClass(\SqlCatalog\Analysis\Effect\ReferenceEffects::class)]
+#[UsesClass(\SqlCatalog\Evaluation\ArrayEntry::class)]
+#[UsesClass(\SqlCatalog\Evaluation\ArrayTerm::class)]
+#[UsesClass(\SqlCatalog\Evaluation\ObjectTerm::class)]
+#[UsesClass(\SqlCatalog\Evaluation\ObjectMemory::class)]
+#[UsesClass(\SqlCatalog\Extension\Model\CallContext::class)]
 final class CalleeReturnsTest extends TestCase
 {
     public function testValueOfReadsWhatTheCalleeReturns(): void
@@ -510,4 +515,14 @@ final class CalleeReturnsTest extends TestCase
         ];
     }
 
+
+    public function testCacheableRejectsAllocationsEvenInsideArrays(): void
+    {
+        $budget = new EvaluationBudget();
+        $returns = new CalleeReturns(new BackwardSlicer(new SourceTree([]), $budget), new SliceExecutor(), $budget);
+        $object = Domain::of(new \SqlCatalog\Evaluation\ObjectTerm('Builder', identity: 'a'));
+        self::assertFalse($returns->cacheable($object));
+        self::assertFalse($returns->cacheable(Domain::of(new \SqlCatalog\Evaluation\ArrayTerm([new \SqlCatalog\Evaluation\ArrayEntry(null, $object)]))));
+        self::assertTrue($returns->cacheable(Domain::literal('sql')));
+    }
 }

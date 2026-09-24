@@ -36,6 +36,7 @@ final class CommandLineParser
         'exclude' => 'exclude',
         'root' => 'root',
         'fail-on' => 'fail-on',
+        'dialect' => 'dialect',
     ];
 
     private const FLAG_OPTIONS = [
@@ -138,6 +139,10 @@ final class CommandLineParser
     public function build(array $values, array $flags, array $paths, Configuration $configuration = new Configuration()): CommandLine
     {
         $output = $this->last($values, 'output');
+        $dialect = $this->last($values, 'dialect');
+        if ($dialect !== null && !in_array($dialect, ['mysql', 'pgsql', 'sqlite'], true)) {
+            throw new InvalidCommandLineException('Unknown SQL dialect: ' . $dialect . '. Known dialects: mysql, pgsql, sqlite.');
+        }
 
         return new CommandLine(
             $paths,
@@ -153,6 +158,7 @@ final class CommandLineParser
             $flags['list-reporters'] ?? false,
             $this->last($values, 'config') ?? $configuration->file,
             $configuration,
+            $dialect,
         );
     }
 

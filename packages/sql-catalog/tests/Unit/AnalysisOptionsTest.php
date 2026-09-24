@@ -37,4 +37,11 @@ final class AnalysisOptionsTest extends TestCase
         $budget = new EvaluationBudget(10);
         self::assertSame($budget, (new AnalysisOptions(['pdo'], $budget))->budget());
     }
+
+    public function testWithExtensionsPreservesTheConfiguredDialect(): void
+    {
+        self::assertSame('pgsql', (new AnalysisOptions(dialect: 'pgsql'))->withExtensions(['laravel'])->dialect);
+    }
+
+
 }

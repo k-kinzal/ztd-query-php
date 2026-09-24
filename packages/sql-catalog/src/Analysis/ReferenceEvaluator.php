@@ -313,6 +313,16 @@ final class ReferenceEvaluator
 
             return;
         }
+        if ($target instanceof Expr\PropertyFetch) {
+            $receiver = $expressions->evaluate($target->var, $environment, $scope);
+            foreach ($receiver->terms as $term) {
+                if ($term instanceof ObjectTerm && $term->identity !== null) {
+                    $environment->objects()->remember(new ObjectTerm($term->className, $term->enumCase, $term->statementId, $term->identity));
+                }
+            }
+
+            return;
+        }
         if ($target instanceof Expr\ArrayDimFetch) {
             $this->assignElement($target, $value, $environment, $scope, $expressions);
 
@@ -368,6 +378,13 @@ final class ReferenceEvaluator
     ): void {
         $name = $this->trackedName($target->var);
         if ($name === null) {
+            $base = $target->var;
+            while ($base instanceof Expr\ArrayDimFetch) {
+                $base = $base->var;
+            }
+            if ($base instanceof Expr\PropertyFetch) {
+                $this->assign($base, Domain::unknown(), $environment, $scope, $expressions);
+            }
             $this->loseTrack($target->var, $environment);
 
             return;
