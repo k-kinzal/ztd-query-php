@@ -111,6 +111,7 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(TypeShape::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\CallerSet::class)]
 #[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
+#[UsesClass(\SqlCatalog\Analysis\BuiltinCallModel::class)]
 final class PropertyWritesTest extends TestCase
 {
     /**

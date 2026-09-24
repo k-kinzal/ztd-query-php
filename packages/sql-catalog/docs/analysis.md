@@ -372,16 +372,23 @@ configured prefix.
 ## Configured function models
 
 Function evaluation uses `Analysis\FunctionModel\Registry`. The standard
-models are installed by `BuiltinCallModel::register()`, and a user can register
-additional models or conditional overrides through the same API. A model reads
-the evaluated argument domains, so local assignments and traced helper returns
-compose with it normally. It need not know a runtime value such as `count($ids)`
-to supply a representative value chosen by the configuration.
+models are installed by `BuiltinCallModel::register()`, and applications can
+register additional models or conditional overrides through the same API.
+Models receive evaluated argument domains, so assignments and traced helper
+returns compose with them normally.
 
-The default analysis continues to leave an unmodeled dependency open. Explicit
-configuration can instead select a representative, such as a singleton array
-for a placeholder list; that result becomes the configured interpretation of
-the call, with no enumeration of possible lengths. Completion and binding
-findings then describe that interpretation, not the discarded runtime variants.
-See [Function models](../README.md#function-models) for the registration contract
-and the placeholder-list configuration.
+The built-in `array_fill` model represents arrays filled with `'?'` as one
+placeholder, regardless of count. Together with `implode` this catalogs variable
+placeholder lists as `IN (?)` without enumerating lengths. A registered
+override takes precedence. Other unmodeled dependencies remain open.
+
+The CLI loads project settings from `.catalog.yaml`, including function model
+classes, paths, filters and output settings. Explicit command-line options
+override the corresponding file settings. See
+[Catalog configuration](../README.md#catalog-configuration) and
+[Function models](../README.md#function-models) for the configuration and
+registration contracts.
+
+Configured interpretations and built-in normalization define the cataloged SQL
+shape. Completion and binding findings describe that interpretation rather
+than discarded runtime variants.

@@ -85,7 +85,7 @@ final class BuiltinCallModelTest extends TestCase
     public static function providerSupports(): array
     {
         return [
-            ['sprintf'], ['vsprintf'], ['implode'], ['join'], ['str_repeat'],
+            ['sprintf'], ['vsprintf'], ['implode'], ['join'], ['str_repeat'], ['array_fill'],
             ['strtolower'], ['strtoupper'], ['ucfirst'], ['lcfirst'],
             ['trim'], ['ltrim'], ['rtrim'], ['str_replace'], ['strval'],
             ['intval'], ['count'], ['strlen'],
@@ -439,4 +439,26 @@ final class BuiltinCallModelTest extends TestCase
         self::assertSame('x', $models->evaluate('strval', [Domain::literal('x')])?->soleLiteral()?->value);
     }
 
+    #[DataProvider('providerFillCounts')]
+    public function testFillKeepsOnlyARepresentativePlaceholder(Domain $count): void
+    {
+        $result = (new BuiltinCallModel())->fill([Domain::literal(0), $count, Domain::literal('?')]);
+        self::assertCount(1, $result?->soleArray()->entries ?? []);
+        self::assertSame('?', $result?->soleArray()?->entries[0]->value->soleLiteral()?->value);
+    }
+
+    /**
+     * @return list<array{Domain}>
+     */
+    public static function providerFillCounts(): array
+    {
+        return [[Domain::unknown()], [Domain::literal(0)], [Domain::literal(100)]];
+    }
+
+    public function testFillDeclinesOtherOrMissingValues(): void
+    {
+        $model = new BuiltinCallModel();
+        self::assertNull($model->fill([Domain::literal(0), Domain::unknown(), Domain::literal('x')]));
+        self::assertNull($model->fill([]));
+    }
 }

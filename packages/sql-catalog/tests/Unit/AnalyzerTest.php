@@ -117,6 +117,8 @@ use SqlCatalog\Source\SourceScanException;
 #[UsesClass(\SqlCatalog\Analysis\Derivation\CallerSet::class)]
 #[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
 #[UsesClass(\SqlCatalog\Configuration::class)]
+#[UsesClass(\SqlCatalog\Analysis\FunctionModel\NamedModel::class)]
+#[UsesClass(\SqlCatalog\ConfigurationSchema::class)]
 final class AnalyzerTest extends TestCase
 {
     public function testIssetGuardsAConditionallyAssignedSqlFragment(): void
@@ -531,7 +533,7 @@ final class AnalyzerTest extends TestCase
             $catalog->entries(),
         ));
     }
-    public function testWithConfigurationNormalizesPlaceholderListsThroughVariables(): void
+    public function testAnalyzeSourceNormalizesPlaceholderListsThroughVariables(): void
     {
         $source = <<<'PHP'
 <?php
@@ -544,16 +546,14 @@ function findUsers(PDO $db, array $ids) {
 }
 PHP;
         $analyzer = new Analyzer();
-        $configured = $analyzer->withConfiguration(__DIR__ . '/../../examples/placeholder-lists.php');
-        self::assertSame('SELECT * FROM users WHERE id IN (?)', $configured->analyzeSource(['users.php' => $source])->entries()[0]->sql());
-        self::assertSame('SELECT * FROM users WHERE id IN ({$})', $analyzer->analyzeSource(['users.php' => $source])->entries()[0]->sql());
+        self::assertSame('SELECT * FROM users WHERE id IN (?)', $analyzer->analyzeSource(['users.php' => $source])->entries()[0]->sql());
     }
 
     #[DataProvider('providerConfiguredPlaceholderLists')]
-    public function testWithConfigurationHandlesPlaceholderExpressions(string $expression, string $expected): void
+    public function testAnalyzeSourceHandlesPlaceholderExpressions(string $expression, string $expected): void
     {
         $source = '<?php function f(PDO $db, array $ids) { $db->prepare("SELECT * FROM users WHERE id IN (" . ' . $expression . ' . ")"); }';
-        $catalog = (new Analyzer())->withConfiguration(__DIR__ . '/../../examples/placeholder-lists.php')->analyzeSource(['users.php' => $source]);
+        $catalog = (new Analyzer())->analyzeSource(['users.php' => $source]);
         self::assertCount(1, $catalog->entries());
         self::assertSame('SELECT * FROM users WHERE id IN (' . $expected . ')', $catalog->entries()[0]->sql());
     }
@@ -603,6 +603,15 @@ function run(\PDO $db) {
 PHP;
         $entries = (new Analyzer())->analyzeSource(['app.php' => $source])->entries();
         self::assertSame(['SELECT local', 'SELECT FOO'], array_map(static fn ($entry): string => $entry->sql(), $entries));
+    }
+
+    public function testWithConfigurationOverridesTheBuiltinWithoutChangingTheOriginalAnalyzer(): void
+    {
+        $analyzer = new Analyzer();
+        $configured = $analyzer->withConfiguration(new \SqlCatalog\Configuration(functionModels: ['array_fill' => \Tests\Fake\PairModel::class]));
+        $source = '<?php function f(PDO $db, array $ids) { $db->prepare("SELECT * FROM users WHERE id IN (" . implode(",", array_fill(0, count($ids), "?")) . ")"); }';
+        self::assertSame('SELECT * FROM users WHERE id IN (?,?)', $configured->analyzeSource(['users.php' => $source])->entries()[0]->sql());
+        self::assertSame('SELECT * FROM users WHERE id IN (?)', $analyzer->analyzeSource(['users.php' => $source])->entries()[0]->sql());
     }
 
 }

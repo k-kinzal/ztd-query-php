@@ -124,6 +124,8 @@ use SqlCatalog\Reporter\TextReporter;
 #[UsesClass(\SqlCatalog\Configuration::class)]
 #[UsesClass(\SqlCatalog\InvalidConfigurationException::class)]
 #[UsesClass(\SqlCatalog\Analysis\BuiltinCallModel::class)]
+#[UsesClass(\SqlCatalog\Analysis\FunctionModel\NamedModel::class)]
+#[UsesClass(\SqlCatalog\ConfigurationSchema::class)]
 final class CatalogCommandTest extends TestCase
 {
     public function testRunAnswersTheHelp(): void
@@ -228,31 +230,39 @@ final class CatalogCommandTest extends TestCase
             $command->status(new CommandLine(['src'], failOn: Severity::High), new Catalog()),
         );
     }
-    public function testConfiguredAnalyzerLoadsTheRequestedModelsWithoutLeakingThem(): void
+    public function testConfiguredAnalyzerOverridesModelsWithoutLeakingThem(): void
     {
         $command = new CatalogCommand();
-        $configured = $command->configuredAnalyzer(__DIR__ . '/../../../examples/placeholder-lists.php');
+        $configured = $command->configuredAnalyzer(new \SqlCatalog\Configuration(functionModels: ['array_fill' => \Tests\Fake\PairModel::class]));
         $source = '<?php function f(PDO $db, array $ids) { $db->prepare("SELECT * FROM users WHERE id IN (" . implode(",", array_fill(0, count($ids), "?")) . ")"); }';
-        self::assertSame('SELECT * FROM users WHERE id IN (?)', $configured->analyzeSource(['query.php' => $source])->entries()[0]->sql());
-        self::assertSame('SELECT * FROM users WHERE id IN ({$})', $command->configuredAnalyzer(null)->analyzeSource(['query.php' => $source])->entries()[0]->sql());
+        self::assertSame('SELECT * FROM users WHERE id IN (?,?)', $configured->analyzeSource(['query.php' => $source])->entries()[0]->sql());
+        self::assertSame('SELECT * FROM users WHERE id IN (?)', $command->configuredAnalyzer(new \SqlCatalog\Configuration())->analyzeSource(['query.php' => $source])->entries()[0]->sql());
     }
 
-    public function testRunLoadsConfigurationBeforeAnalyzingSource(): void
+    public function testRunLoadsCatalogSettingsAndAllowsCliOverrides(): void
     {
-        $path = sys_get_temp_dir() . '/sql-catalog-query-' . bin2hex(random_bytes(6)) . '.php';
-        file_put_contents($path, '<?php function f(PDO $db, array $ids) { $db->prepare("SELECT * FROM users WHERE id IN (" . implode(",", array_fill(0, count($ids), "?")) . ")"); }');
+        $directory = sys_get_temp_dir() . '/catalog-' . bin2hex(random_bytes(6));
+        mkdir($directory);
+        file_put_contents($directory . '/query.php', '<?php function f(PDO $db, array $ids) { $db->prepare("SELECT * FROM users WHERE id IN (" . implode(",", array_fill(0, count($ids), "?")) . ")"); }');
+        file_put_contents($directory . '/.catalog.yaml', "paths: [query.php]\nextensions: [pdo]\nreporter: json\nfunction-models:\n  array_fill: Tests\\Fake\\PairModel\n");
         try {
-            $result = (new CatalogCommand())->run(['--config', __DIR__ . '/../../../examples/placeholder-lists.php', $path]);
+            $command = new CatalogCommand();
+            $result = $command->run(['--config', $directory . '/.catalog.yaml', '--reporter=text']);
             self::assertSame(ExitCode::Success, $result->exitCode);
-            self::assertStringContainsString('SELECT * FROM users WHERE id IN (?)', $result->output);
+            self::assertStringContainsString('SELECT * FROM users WHERE id IN (?,?)', $result->output);
+            self::assertStringContainsString('query.php:', $result->output);
+            $withoutConfig = $command->run([$directory . '/query.php']);
+            self::assertStringContainsString('SELECT * FROM users WHERE id IN (?)', $withoutConfig->output);
         } finally {
-            unlink($path);
+            unlink($directory . '/query.php');
+            unlink($directory . '/.catalog.yaml');
+            rmdir($directory);
         }
     }
 
     public function testRunReportsMissingConfigurationAsAnInvalidCommandLine(): void
     {
-        $result = (new CatalogCommand())->run(['--config=/definitely/missing/config.php', 'src']);
+        $result = (new CatalogCommand())->run(['--config=/definitely/missing/.catalog.yaml', 'src']);
         self::assertSame(ExitCode::InvalidCommandLine, $result->exitCode);
         self::assertStringContainsString('Cannot read configuration', $result->error);
     }
@@ -260,7 +270,7 @@ final class CatalogCommandTest extends TestCase
     #[\PHPUnit\Framework\Attributes\DataProvider('providerInvalidConfiguration')]
     public function testRunReportsConfigurationErrors(string $source, string $message): void
     {
-        $path = sys_get_temp_dir() . '/sql-catalog-config-' . bin2hex(random_bytes(6)) . '.php';
+        $path = sys_get_temp_dir() . '/sql-catalog-config-' . bin2hex(random_bytes(6)) . '.yaml';
         file_put_contents($path, $source);
         try {
             $result = (new CatalogCommand())->run(['--config', $path, 'src']);
@@ -278,15 +288,15 @@ final class CatalogCommandTest extends TestCase
     public static function providerInvalidConfiguration(): array
     {
         return [
-            'invalid return' => ['<?php return [];', 'must return a callable'],
-            'syntax error' => ['<?php return function (', 'Cannot load configuration'],
-            'callback error' => ['<?php return static function () { throw new RuntimeException("Invalid model configuration"); };', 'Invalid model configuration'],
+            'not a mapping' => ['[]', 'must contain a YAML mapping'],
+            'syntax error' => ['paths: [', 'Invalid configuration'],
+            'unknown model' => ["function-models:\n  array_fill: Missing\\Model\n", 'must be an autoloadable callable'],
         ];
     }
 
     public function testRunDoesNotLoadConfigurationWhenPrintingHelp(): void
     {
-        $result = (new CatalogCommand())->run(['--config=/definitely/missing/config.php', '--help']);
+        $result = (new CatalogCommand())->run(['--config=/definitely/missing/.catalog.yaml', '--help']);
         self::assertSame(ExitCode::Success, $result->exitCode);
         self::assertStringContainsString('--config=FILE', $result->output);
     }

@@ -118,6 +118,7 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(TypeShape::class)]
 #[UsesClass(CallerSet::class)]
 #[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
+#[UsesClass(\SqlCatalog\Analysis\BuiltinCallModel::class)]
 final class EntryBinderTest extends TestCase
 {
     /**

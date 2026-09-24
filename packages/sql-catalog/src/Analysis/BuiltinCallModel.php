@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace SqlCatalog\Analysis;
 
 use SqlCatalog\Analysis\FunctionModel\Registry;
+use SqlCatalog\Evaluation\ArrayEntry;
 use SqlCatalog\Evaluation\ArrayTerm;
 use SqlCatalog\Evaluation\Domain;
 use SqlCatalog\Evaluation\LiteralTerm;
@@ -47,6 +48,7 @@ final class BuiltinCallModel
         $registry->register('sprintf', fn (array $arguments): Domain => $this->sprintf(array_slice($arguments, 1), $arguments[0] ?? Domain::unknown()));
         $registry->register('vsprintf', $this->vsprintf(...));
         $registry->register('implode', $this->implode(...));
+        $registry->register('array_fill', $this->fill(...));
         $registry->register('join', $this->implode(...));
         $registry->register('str_repeat', $this->repeat(...));
         $registry->register('str_replace', $this->replace(...));
@@ -225,6 +227,21 @@ final class BuiltinCallModel
         }
 
         return null;
+    }
+
+    /**
+     * A representative placeholder array, independent of its runtime length.
+     *
+     * @param list<Domain> $arguments
+     */
+    public function fill(array $arguments): ?Domain
+    {
+        $value = $arguments[2] ?? Domain::unknown();
+        if ($value->soleLiteral()?->value !== '?') {
+            return null;
+        }
+
+        return Domain::of(new ArrayTerm([new ArrayEntry(null, $value)]));
     }
 
     /**

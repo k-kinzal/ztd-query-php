@@ -16,6 +16,8 @@ use SqlCatalog\Evaluation\LiteralTerm;
 #[UsesClass(BuiltinCallModel::class)]
 #[UsesClass(Domain::class)]
 #[UsesClass(LiteralTerm::class)]
+#[UsesClass(\SqlCatalog\Evaluation\OpaqueTerm::class)]
+#[UsesClass(\SqlCatalog\Type\TypeShape::class)]
 final class RegistryTest extends TestCase
 {
     public function testWithBuiltinsRetainsStandardModels(): void
@@ -54,4 +56,11 @@ final class RegistryTest extends TestCase
     {
         self::assertSame('app\\implode', (new Registry())->normalize('\\App\\IMPlODE'));
     }
+    public function testRegisterOverridesTheBuiltinArrayFill(): void
+    {
+        $models = Registry::withBuiltins();
+        $models->register('array_fill', static fn (array $arguments): Domain => Domain::literal('custom'));
+        self::assertSame('custom', $models->evaluate('array_fill', [Domain::literal(0), Domain::literal(3), Domain::literal('?')])?->soleLiteral()?->value);
+    }
+
 }

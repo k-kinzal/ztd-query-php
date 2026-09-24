@@ -43,7 +43,7 @@ final class UsageText
             '  -r, --reporter=NAME    Render with NAME (default: text on standard output, json into a directory)',
             '',
             'What to read:',
-            '  -c, --config=FILE      Load function models from a PHP configuration file',
+            '  -c, --config=FILE      Read catalog settings (default: .catalog.yaml)',
             '  -e, --extension=NAME   Recognise the database calls of NAME; repeatable (default: pdo,mysqli)',
             '      --exclude=PATTERN  Skip source files whose reported path matches; repeatable',
             '      --root=DIR         Report paths relative to DIR (default: the working directory)',

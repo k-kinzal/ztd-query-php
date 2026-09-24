@@ -107,6 +107,7 @@ use SqlCatalog\Text\TextPattern;
 #[UsesClass(\SqlCatalog\Analysis\Derivation\SourceTree::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\CallerSet::class)]
 #[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
+#[UsesClass(\SqlCatalog\Analysis\BuiltinCallModel::class)]
 final class JsonReporterTest extends TestCase
 {
     public function testNameIsHowTheCommandLineSelectsIt(): void

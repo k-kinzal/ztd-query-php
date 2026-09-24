@@ -110,6 +110,7 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(\SqlCatalog\Analysis\Derivation\SourceTree::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\CallerSet::class)]
 #[UsesClass(\SqlCatalog\Analysis\FunctionModel\Registry::class)]
+#[UsesClass(\SqlCatalog\Analysis\BuiltinCallModel::class)]
 final class TextReporterTest extends TestCase
 {
     public function testNameIsHowTheCommandLineSelectsIt(): void

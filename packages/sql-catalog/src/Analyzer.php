@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace SqlCatalog;
 
+use RuntimeException;
 use SqlCatalog\Analysis\EntryFactory;
 use SqlCatalog\Analysis\FunctionModel\Registry;
 use SqlCatalog\Analysis\Interpreter;
@@ -66,13 +67,13 @@ final class Analyzer
     }
 
     /**
-     * An independent analyzer with the function registrations from a PHP configuration.
+     * An independent analyzer with the function registrations from catalog settings.
      *
-     * @throws InvalidConfigurationException When the file cannot supply a configuration callback
+     * @throws RuntimeException When a configured function model cannot be resolved
      */
-    public function withConfiguration(string $path): self
+    public function withConfiguration(Configuration $configuration): self
     {
-        $models = (new Configuration())->load($path, $this->functionModels);
+        $models = $configuration->apply($this->functionModels);
 
         return new self($this->extensions, $models);
     }

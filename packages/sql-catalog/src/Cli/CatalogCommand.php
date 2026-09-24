@@ -8,6 +8,7 @@ use RuntimeException;
 use SqlCatalog\AnalysisOptions;
 use SqlCatalog\Analyzer;
 use SqlCatalog\Catalog\Catalog;
+use SqlCatalog\Configuration;
 use SqlCatalog\InvalidConfigurationException;
 use SqlCatalog\Reporter\ReporterRegistry;
 use Throwable;
@@ -80,7 +81,7 @@ final class CatalogCommand
             throw new InvalidCommandLineException('Name at least one file or directory to analyze.');
         }
 
-        $analyzer = $this->configuredAnalyzer($command->config);
+        $analyzer = $this->configuredAnalyzer($command->configuration);
         $catalog = $command->filter->apply($analyzer->analyzePaths(
             $command->paths,
             new AnalysisOptions($command->extensions),
@@ -96,15 +97,12 @@ final class CatalogCommand
      *
      * @throws InvalidConfigurationException When loading or applying the configuration fails
      */
-    public function configuredAnalyzer(?string $path): Analyzer
+    public function configuredAnalyzer(Configuration $configuration): Analyzer
     {
-        if ($path === null) {
-            return $this->analyzer;
-        }
         try {
-            return $this->analyzer->withConfiguration($path);
+            return $this->analyzer->withConfiguration($configuration);
         } catch (Throwable $exception) {
-            throw new InvalidConfigurationException(sprintf('Cannot load configuration "%s": %s', $path, $exception->getMessage()), 0, $exception);
+            throw new InvalidConfigurationException(sprintf('Cannot load configuration "%s": %s', $configuration->file ?? '(provided settings)', $exception->getMessage()), 0, $exception);
         }
     }
 

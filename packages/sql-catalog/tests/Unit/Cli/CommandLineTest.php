@@ -13,6 +13,7 @@ use SqlCatalog\Filter\CatalogFilter;
 
 #[CoversClass(CommandLine::class)]
 #[UsesClass(CatalogFilter::class)]
+#[UsesClass(\SqlCatalog\Configuration::class)]
 final class CommandLineTest extends TestCase
 {
     public function testIsQueryWhenTheCommandWasAskedForInformation(): void
