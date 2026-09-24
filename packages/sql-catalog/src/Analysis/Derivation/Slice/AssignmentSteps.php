@@ -9,6 +9,7 @@ use PhpParser\Node\Expr;
 use PhpParser\Node\Stmt;
 use SqlCatalog\Analysis\Derivation\FreeNames;
 use SqlCatalog\Analysis\Derivation\ModifiedNames;
+use SqlCatalog\Analysis\Effect\WriteEffects;
 
 /**
  * Walks a path back over what one statement assigns.
@@ -41,11 +42,11 @@ final class AssignmentSteps
     public function over(Expr $expression, Pending $path): Pending
     {
         foreach (array_reverse($this->within($expression)) as $assignment) {
-            $written = $this->modified->own($assignment);
-            if (array_intersect_key($written, $path->needs) === []) {
+            $written = $this->modified->of($assignment);
+            if (!$this->modified->touches($assignment, $path->needs)) {
                 continue;
             }
-            $needs = $this->replaces($assignment) ? array_diff_key($path->needs, $written) : $path->needs;
+            $needs = $this->replaces($assignment) && !isset($written[WriteEffects::ALL]) ? array_diff_key($path->needs, $this->modified->own($assignment)) : $path->needs;
             $path = $path->through(new SliceStep($assignment), $needs + $this->names->read($assignment));
         }
 
@@ -57,11 +58,7 @@ final class AssignmentSteps
      */
     public function replaces(Expr $assignment): bool
     {
-        if (!$assignment instanceof Expr\Assign && !$assignment instanceof Expr\AssignRef) {
-            return false;
-        }
-
-        return !$assignment->var instanceof Expr\ArrayDimFetch;
+        return $assignment instanceof Expr\Assign && !$assignment->var instanceof Expr\ArrayDimFetch;
     }
 
     /**
@@ -74,6 +71,11 @@ final class AssignmentSteps
         if ($node instanceof Expr\Closure || $node instanceof Expr\ArrowFunction) {
             return [];
         }
+        if ($node instanceof Expr && ($this->modified->own($node) !== []
+            || (($node instanceof Expr\Ternary || $node instanceof Expr\Match_ || $node instanceof Expr\BinaryOp)
+                && $this->modified->of($node) !== []))) {
+            return [$node];
+        }
         $found = [];
         foreach (get_object_vars($node) as $sub) {
             foreach (is_array($sub) ? $sub : [$sub] as $child) {
@@ -81,9 +83,6 @@ final class AssignmentSteps
                     $found = array_merge($found, $this->within($child));
                 }
             }
-        }
-        if ($node instanceof Expr && $this->modified->own($node) !== []) {
-            $found[] = $node;
         }
 
         return $found;

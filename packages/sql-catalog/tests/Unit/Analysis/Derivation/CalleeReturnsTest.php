@@ -82,6 +82,8 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(\SqlCatalog\Text\TextHole::class)]
 #[UsesClass(TextPattern::class)]
 #[UsesClass(TypeShape::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\WriteEffects::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\ReferenceEffects::class)]
 final class CalleeReturnsTest extends TestCase
 {
     public function testValueOfReadsWhatTheCalleeReturns(): void
@@ -478,4 +480,33 @@ final class CalleeReturnsTest extends TestCase
         self::assertSame(['return 4;'], array_map(static fn (Stmt\Return_ $return): string => (new Standard())->prettyPrint([$return]), $found));
         self::assertSame([], $returns->returnsIn([]));
     }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('providerLocalReturns')]
+    public function testValueOfKeepsAbsenceDistinctFromUnresolvedReturns(string $body, string $expected, bool $combined): void
+    {
+        $file = (new SourceParser())->parse('a.php', '<?php function fragment($input) { ' . $body . ' }');
+        $index = (new ProgramIndexBuilder())->build([$file]);
+        $budget = new EvaluationBudget(maxLoopPasses: 1);
+        $returns = new CalleeReturns(new BackwardSlicer(new SourceTree([$file]), $budget), new SliceExecutor(budget: $budget), $budget);
+        $callee = $index->findFunction('fragment');
+        self::assertInstanceOf(FunctionShape::class, $callee);
+        $value = $returns->valueOf($callee, [Domain::literal('known')], new FunctionScope('a.php'), (new Interpreter($index, [], $budget))->evaluatorFor([$file]));
+        self::assertSame($expected, $value->signature());
+        self::assertSame($combined, $value->combined);
+    }
+
+    /**
+     * @return array<string, array{string, string, bool}>
+     */
+    public static function providerLocalReturns(): array
+    {
+        return [
+            'absent local' => ['return $tail;', 'literal:null:', false],
+            'bound parameter' => ['return $input;', 'literal:string:known', false],
+            'unresolved receiver' => ['return $this;', 'opaque:mixed:unresolved', false],
+            'separate arm writes' => ['true ? $tail = "a" : $tail = "b"; return $tail;', 'literal:string:a|literal:string:b', true],
+            'truncated loop' => ['$tail = ""; while ($input) { $tail .= "x"; } return $tail;', 'literal:string:|literal:string:x|opaque:string:budget', false],
+        ];
+    }
+
 }

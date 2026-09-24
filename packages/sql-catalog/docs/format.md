@@ -22,7 +22,11 @@ pull request read as the change in the SQL an application issues.
 ```json
 {
     "$schema": "catalog-schema.json",
-    "version": 1,
+    "version": 2,
+    "analysis": {
+        "conditions": "not-evaluated",
+        "reachability": "not-assessed"
+    },
     "summary": {
         "statements": 1,
         "resolved": 1,
@@ -71,14 +75,15 @@ pull request read as the change in the SQL an application issues.
 | Field | Meaning |
 |-------|---------|
 | `version` | The format version. A reader that does not know this number should not guess. |
+| `analysis` | Conditions are not evaluated and runtime reachability is not assessed, for every candidate. |
 | `summary` | How many statements were found, how many resolved fully, how many did not, and how many findings were reported. |
 | `statements[].id` | The identifier the statement keeps across runs: a hash of the file, the enclosing function, the database call and the statement shape. Deliberately not of the line number, so editing unrelated lines does not renumber the catalog. |
 | `statements[].kind` | What the statement does: `select`, `insert`, `update`, `delete`, `replace`, `merge`, `truncate`, `create`, `alter`, `drop`, `call`, `show`, `explain`, `transaction`, `other` or `unknown`. |
 | `statements[].sql` | The statement text. Every value the analyzer could not pin down is written as `{$}`. |
 | `statements[].exact` | Whether the text holds no gaps. |
 | `statements[].resolution` | How far the analyzer got and why it got no further: `resolved`, `external-input`, `incomplete-model`, `incomplete` or `not-analyzed`. |
-| `statements[].searchClosed` | Whether the analyzer closed every dependency it set out to follow: the resolution is `resolved` or `external-input`, and no bound on loop passes, callers or ways in cut the search short. When false, the statements listed for this call site may not be all of them. |
-| `statements[].correlated` | Whether the alternatives listed are ones the code can reach. When false, the text was assembled from parts that vary independently, so some combinations may be unreachable. |
+| `statements[].searchClosed` | Whether every candidate at this call site has closed dependencies (`resolved` or `external-input`) and no bound cut the search short. An exact candidate remains open when a sibling has an unresolved dependency. When false, the statements listed for this call site may not be all of them. |
+| `statements[].correlated` | Whether the alternatives retained their structural pairing. False means independent parts or joined branch states may have introduced combinations. Neither value guarantees reachability. |
 | `statements[].tables` | The tables the statement names, in order and without repeats. A name the analyzer knows only part of — a prefix read from configuration, say — is written with `{$}` in place of the unknown part; a name nothing is known of is not listed. |
 | `statements[].site` | The file and line, the enclosing function, and which database call was matched. A `sink` of `unmatched` means the call is written the way a database call is written but what it is called on could not be worked out. A call with a `not-analyzed` resolution is one nothing was read from, which is how a gap in the analysis is told apart from a statement whose text did not resolve. |
 | `statements[].through` | The calls that were followed to reach this reading, outermost first. Empty when the statement was read from the body it is written in. |
@@ -88,20 +93,24 @@ pull request read as the change in the SQL an application issues.
 
 ## Reading it
 
-A statement is trustworthy as a complete answer for its call site when
-`searchClosed` and `correlated` are both true. Otherwise:
+Format v2 separates three facts:
 
-- `searchClosed: false` — the listed statements are a lower bound. There may be
-  more, and the accompanying `analysis-incomplete` finding says what stopped the
-  search.
-- `correlated: false` — the listed statements are an upper bound. Some
-  combinations may be unreachable.
+- `exact` says every character of this candidate is known.
+- `searchClosed` says the modeled dependency search for this call site completed.
+  False means dependencies or additional candidates remain unknown. Mixed external
+  input and unresolved dependencies do not close the search.
+- `analysis.reachability` is always `not-assessed`. Conditions never select branches,
+  so even exact, closed, correlated candidates can be infeasible at runtime.
+
+`correlated` describes structural pairing only. The listing is not a lower bound
+or an exact enumeration of runtime statements. Version 1 readers must not infer
+reachability from version 2's `correlated` field.
 
 ## Reading a diff
 
 Three changes are worth looking for in a pull request:
 
-- a statement **added or removed** — the application issues different SQL;
+- a statement **added or removed** — the analysis found a different set of SQL candidates;
 - `resolution` moving away from `resolved` — a statement that used to be fixed is
   now assembled from something the analyzer cannot follow;
 - a finding appearing, especially `external-input`.

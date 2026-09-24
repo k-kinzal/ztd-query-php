@@ -18,6 +18,8 @@ use SqlCatalog\Php\SourceParser;
 #[UsesClass(FreeNames::class)]
 #[UsesClass(\SqlCatalog\Php\ParsedFile::class)]
 #[UsesClass(SourceParser::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\WriteEffects::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\ReferenceEffects::class)]
 final class ModifiedNamesTest extends TestCase
 {
     /**

@@ -106,6 +106,8 @@ use SqlCatalog\Text\TextPattern;
 #[UsesClass(\SqlCatalog\Analysis\Derivation\Solution::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\SourceTree::class)]
 #[UsesClass(\SqlCatalog\Analysis\Derivation\CallerSet::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\WriteEffects::class)]
+#[UsesClass(\SqlCatalog\Analysis\Effect\ReferenceEffects::class)]
 final class JsonReporterTest extends TestCase
 {
     public function testNameIsHowTheCommandLineSelectsIt(): void
@@ -183,7 +185,11 @@ final class JsonReporterTest extends TestCase
         self::assertSame(
             '{' . "\n"
             . '    "$schema": "catalog-schema.json",' . "\n"
-            . '    "version": 1,' . "\n"
+            . '    "version": 2,' . "\n"
+            . '    "analysis": {' . "\n"
+            . '        "conditions": "not-evaluated",' . "\n"
+            . '        "reachability": "not-assessed"' . "\n"
+            . '    },' . "\n"
             . '    "summary": {' . "\n"
             . '        "statements": 1,' . "\n"
             . '        "resolved": 1,' . "\n"

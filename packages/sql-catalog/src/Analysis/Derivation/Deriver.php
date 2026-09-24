@@ -172,7 +172,7 @@ final class Deriver
                         array_map(fn (Expr $goal): Domain => $this->expressions->evaluate($goal, $environment, $scope), $goals),
                         $binding->through,
                         $arrival->path->truncated || $binding->truncated,
-                        $binding->combined,
+                        $binding->combined || $environment->combined,
                     );
                 }
             }

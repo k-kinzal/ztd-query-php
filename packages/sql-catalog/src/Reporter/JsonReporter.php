@@ -22,7 +22,7 @@ use SqlCatalog\Catalog\Placeholder;
  * @phpstan-type SiteNode array{file: string, line: int, function: string, sink: string}
  * @phpstan-type StatementNode array{id: string, kind: string, sql: string, exact: bool, resolution: string, searchClosed: bool, correlated: bool, tables: list<string>, site: SiteNode, through: list<string>, placeholders: list<PlaceholderNode>, findings: list<FindingNode>}
  * @phpstan-type SummaryNode array{statements: int, resolved: int, undetermined: int, findings: int}
- * @phpstan-type CatalogDocument array{'$schema': string, version: int, summary: SummaryNode, statements: list<StatementNode>, problems: list<array{file: string, message: string}>}
+ * @phpstan-type CatalogDocument array{'$schema': string, version: int, analysis: array{conditions: string, reachability: string}, summary: SummaryNode, statements: list<StatementNode>, problems: list<array{file: string, message: string}>}
  *
  * @visibility root
  */
@@ -31,7 +31,7 @@ final class JsonReporter implements ReporterInterface
     /**
      * The format version written into the document.
      */
-    public const VERSION = 1;
+    public const VERSION = 2;
 
     /**
      * The name the artifact is written under.
@@ -111,6 +111,7 @@ final class JsonReporter implements ReporterInterface
         return [
             '$schema' => self::SCHEMA_FILE,
             'version' => self::VERSION,
+            'analysis' => ['conditions' => 'not-evaluated', 'reachability' => 'not-assessed'],
             'summary' => $this->summary($catalog),
             'statements' => $statements,
             'problems' => $problems,

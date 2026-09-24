@@ -61,8 +61,12 @@ final class EntryFactory
         $entries = [];
         $occurrences = [];
         foreach ($this->groupBySite($this->merge($records)) as $group) {
+            $closed = true;
             foreach ($group as $record) {
-                $entry = $this->buildOne($record, count($group) > 1);
+                $closed = $closed && !$record->isTruncated() && Resolution::of($record->pattern)->isClosed();
+            }
+            foreach ($group as $record) {
+                $entry = $this->buildOne($record, count($group) > 1, $closed);
                 $seen = $occurrences[$entry->id] ?? 0;
                 $occurrences[$entry->id] = $seen + 1;
                 $entries[] = $seen === 0 ? $entry : $this->renumber($entry, $record, $seen);
@@ -88,6 +92,7 @@ final class EntryFactory
             $entry->correlated,
             $entry->through,
             $entry->truncated,
+            $entry->siteClosed,
         );
     }
 
@@ -134,7 +139,7 @@ final class EntryFactory
      *
      * @param bool $alternatives Whether the call site produced more than one statement
      */
-    public function buildOne(QueryRecord $record, bool $alternatives = false): CatalogEntry
+    public function buildOne(QueryRecord $record, bool $alternatives = false, bool $siteClosed = true): CatalogEntry
     {
         $pattern = $record->pattern;
         $placeholders = $this->bindPlaceholders($pattern, $record);
@@ -150,6 +155,7 @@ final class EntryFactory
             !$record->combined,
             $record->through,
             $record->isTruncated(),
+            $siteClosed,
         );
     }
 
