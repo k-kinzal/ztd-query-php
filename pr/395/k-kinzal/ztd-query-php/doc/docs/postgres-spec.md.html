@@ -16,26 +16,28 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="ZTD Query PHP">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/document-design-v1.0.0.css">
 <link rel="stylesheet" href="../../../../assets/style.css">
-<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
 </head>
 <body data-root="../../../../">
-<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sb-pkg"><a href="../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a></div><nav class="sb-block"><div class="sb-title">Package</div><ul class="sb-list"><li data-diff="same"><a href="../../../../k-kinzal/ztd-query-php/all-items.html">All items</a></li><li data-diff="same"><a href="../../../../k-kinzal/ztd-query-php/index.html#documents">Documents</a></li></ul></nav></nav>
-<div class="page">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a></div><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../../k-kinzal/ztd-query-php/all-items.html">All items</a></li><li data-diff="same"><a href="../../../../k-kinzal/ztd-query-php/index.html#documents">Documents</a></li></ul></nav></aside>
+<div class="main">
 <header class="topbar">
-<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
-<nav class="crumbs"><a href="../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a><span class="crumb-sep">::</span><span class="crumb-current">docs/postgres-spec.md</span></nav>
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">docs/postgres-spec.md</span></nav>
 <div class="topbar-tools">
-<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
-<span class="diff-range" title="Comparing bf569d7b36 to working tree">bf569d7b36 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
-<button id="theme-toggle" title="Toggle theme">◐</button>
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 774e55ba22 to working tree">774e55ba22 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
 </div>
 </header>
 <div class="search-results" id="search-results" hidden></div>
-<main class="content">
-<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between bf569d7b36 and working tree." data-off="This page documents what bf569d7b36 had and working tree no longer has. Switch to Diff to read it." hidden></p>
-<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>PostgreSQL SQL Specification for ZTD</h1><div class="symbol-meta"><span class="src-link">docs/postgres-spec.md</span></div></div>
-<section class="readme" data-diff="same"><div class="doc-block" data-diff="same"><h2>PostgreSQL SQL Specification for ZTD</h2>
+<main class="content" id="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 774e55ba22 and working tree." data-off="This page documents what 774e55ba22 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>PostgreSQL SQL Specification for ZTD</h1><div class="symbol-meta"><span class="source-link">docs/postgres-spec.md</span></div></div>
+<section class="readme prose" data-diff="same"><div class="doc-block" data-diff="same"><h2>PostgreSQL SQL Specification for ZTD</h2>
 </div><div class="doc-block" data-diff="same"><p>This document defines how ZTD (Zero Downtime Deployment) handles PostgreSQL SQL statements. ZTD simulates query results without modifying the physical database by using CTEs to shadow tables and virtualize writes.</p>
 </div><div class="doc-block" data-diff="same"><p><strong>Grammar Reference:</strong> PostgreSQL 17.2 official Bison grammar (<code>gram.y</code>). The <code>stmt</code> rule defines 125 statement alternatives (124 named + 1 empty production). This spec covers all 124 named alternatives.</p>
 </div><div class="doc-block" data-diff="same"><h3>Overview</h3>
@@ -55,7 +57,7 @@
 </div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Mode</th><th>Behavior</th></tr></thead><tbody><tr><td>Rewrite</td><td>Convert to result-select query, store mutation in ShadowStore</td></tr></tbody></table></div>
 </div><div class="doc-block" data-diff="same"><p><strong>Grammar:</strong> <code>InsertStmt</code> -&gt; <code>opt_with_clause INSERT INTO insert_target insert_rest opt_on_conflict returning_clause</code>. <code>insert_rest</code> has 5 alternatives: SELECT, VALUES, SET DEFAULT, and parenthesized SELECT.</p>
 </div><div class="doc-block" data-diff="same"><p><strong>Transformation:</strong></p>
-</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>-- Original
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>-- Original
 INSERT INTO users (id, name) VALUES (1, &#039;Alice&#039;)
 
 -- Transformed (Result Select)
@@ -63,7 +65,7 @@ SELECT 1 AS &quot;id&quot;, &#039;Alice&#039; AS &quot;name&quot;</code></pre>
 </div><div class="doc-block" data-diff="same"><p><strong>Supported Syntax:</strong></p>
 </div><div class="doc-block" data-diff="same"><ul><li><code>INSERT INTO ... VALUES (...)</code> - Single row insert</li><li><code>INSERT INTO ... VALUES (...), (...)</code> - Multi-row insert</li><li><code>INSERT ... SELECT ...</code> - Insert from subquery</li><li><code>INSERT ... ON CONFLICT ... DO UPDATE SET ...</code> - Upsert (PostgreSQL-native)</li><li><code>INSERT ... ON CONFLICT ... DO NOTHING</code> - Skip conflicts</li><li><code>INSERT INTO ONLY ...</code> - Inheritance-aware insert (ONLY keyword accepted)</li><li><code>INSERT INTO ... OVERRIDING SYSTEM VALUE ...</code> - Identity column override</li><li><code>INSERT INTO ... OVERRIDING USER VALUE ...</code> - Identity column override</li><li><code>WITH ... INSERT ...</code> - CTE with INSERT</li><li><code>INSERT INTO ... DEFAULT VALUES</code> - Insert defaults only</li></ul>
 </div><div class="doc-block" data-diff="same"><p><strong>PostgreSQL-Specific Upsert:</strong></p>
-</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>-- Original
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>-- Original
 INSERT INTO users (id, name) VALUES (1, &#039;Alice&#039;)
 ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name
 
@@ -74,7 +76,7 @@ ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name
 </div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Mode</th><th>Behavior</th></tr></thead><tbody><tr><td>Rewrite</td><td>Convert to result-select query, store mutation in ShadowStore</td></tr></tbody></table></div>
 </div><div class="doc-block" data-diff="same"><p><strong>Grammar:</strong> <code>UpdateStmt</code> -&gt; <code>opt_with_clause UPDATE relation_expr_opt_alias SET set_clause_list from_clause where_or_current_clause returning_clause</code></p>
 </div><div class="doc-block" data-diff="same"><p><strong>Transformation:</strong></p>
-</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>-- Original
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>-- Original
 UPDATE users SET name = &#039;Bob&#039; WHERE id = 1
 
 -- Transformed (Result Select with CTE shadowing)
@@ -92,7 +94,7 @@ SELECT &#039;Bob&#039; AS &quot;name&quot;, &quot;users&quot;.&quot;id&quot; FRO
 </div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Mode</th><th>Behavior</th></tr></thead><tbody><tr><td>Rewrite</td><td>Convert to result-select query, store mutation in ShadowStore</td></tr></tbody></table></div>
 </div><div class="doc-block" data-diff="same"><p><strong>Grammar:</strong> <code>DeleteStmt</code> -&gt; <code>opt_with_clause DELETE FROM relation_expr_opt_alias using_clause where_or_current_clause returning_clause</code></p>
 </div><div class="doc-block" data-diff="same"><p><strong>Transformation:</strong></p>
-</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>-- Original
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>-- Original
 DELETE FROM users WHERE id = 1
 
 -- Transformed (Result Select with CTE shadowing)
@@ -179,7 +181,7 @@ SELECT &quot;users&quot;.&quot;id&quot; AS &quot;id&quot;, &quot;users&quot;.&qu
 </div><div class="doc-block" data-diff="same"><h3>Multiple Statements</h3>
 </div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Mode</th><th>Behavior</th></tr></thead><tbody><tr><td>Rewrite</td><td>Process each statement sequentially via <code>rewriteMultiple()</code></td></tr></tbody></table></div>
 </div><div class="doc-block" data-diff="same"><p><strong>Supported:</strong></p>
-</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>SELECT 1; SELECT 2
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>SELECT 1; SELECT 2
 INSERT INTO t VALUES (1); UPDATE t SET x = 2</code></pre>
 </div><div class="doc-block" data-diff="same"><p><strong>Result:</strong> <code>MultiRewritePlan</code> containing individual <code>RewritePlan</code> for each statement.</p>
 </div><div class="doc-block" data-diff="same"><p><strong>Result Retrieval:</strong> Use <code>nextRowset()</code> to iterate through result sets.</p>
@@ -188,27 +190,27 @@ INSERT INTO t VALUES (1); UPDATE t SET x = 2</code></pre>
 </div><div class="doc-block" data-diff="same"><h3>CTE Shadowing Details (PostgreSQL-Specific)</h3>
 </div><div class="doc-block" data-diff="same"><h4>AS MATERIALIZED</h4>
 </div><div class="doc-block" data-diff="same"><p>PostgreSQL 12+ supports <code>AS MATERIALIZED</code> to prevent CTE inlining:</p>
-</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>WITH &quot;users&quot; AS MATERIALIZED (
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>WITH &quot;users&quot; AS MATERIALIZED (
   SELECT ...
 )
 SELECT * FROM &quot;users&quot;</code></pre>
 </div><div class="doc-block" data-diff="same"><p>ZTD uses <code>AS MATERIALIZED</code> for all generated CTEs to ensure consistent behavior.</p>
 </div><div class="doc-block" data-diff="same"><h4>Multi-Row CTEs via VALUES</h4>
 </div><div class="doc-block" data-diff="same"><p>For tables with multiple rows, PostgreSQL uses the <code>VALUES</code> clause:</p>
-</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>WITH &quot;users&quot; AS MATERIALIZED (
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>WITH &quot;users&quot; AS MATERIALIZED (
   SELECT * FROM (VALUES
     (CAST(1 AS INTEGER), CAST(&#039;Alice&#039; AS TEXT)),
     (CAST(2 AS INTEGER), CAST(&#039;Bob&#039; AS TEXT))
   ) AS t(&quot;id&quot;, &quot;name&quot;)
 )</code></pre>
 </div><div class="doc-block" data-diff="same"><p>For single-row tables, a simple <code>SELECT</code> is used:</p>
-</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>WITH &quot;users&quot; AS MATERIALIZED (SELECT CAST(1 AS INTEGER) AS &quot;id&quot;, CAST(&#039;Alice&#039; AS TEXT) AS &quot;name&quot;)</code></pre>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>WITH &quot;users&quot; AS MATERIALIZED (SELECT CAST(1 AS INTEGER) AS &quot;id&quot;, CAST(&#039;Alice&#039; AS TEXT) AS &quot;name&quot;)</code></pre>
 </div><div class="doc-block" data-diff="same"><h4>Empty CTEs</h4>
 </div><div class="doc-block" data-diff="same"><p>For tables with no fixture data:</p>
-</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>WITH &quot;users&quot; AS MATERIALIZED (SELECT CAST(NULL AS INTEGER) AS &quot;id&quot;, CAST(NULL AS TEXT) AS &quot;name&quot; WHERE FALSE)</code></pre>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>WITH &quot;users&quot; AS MATERIALIZED (SELECT CAST(NULL AS INTEGER) AS &quot;id&quot;, CAST(NULL AS TEXT) AS &quot;name&quot; WHERE FALSE)</code></pre>
 </div><div class="doc-block" data-diff="same"><h4>Identifier Quoting</h4>
 </div><div class="doc-block" data-diff="same"><p>PostgreSQL uses double-quote identifiers (<code>&quot;identifier&quot;</code>). Embedded double quotes are escaped by doubling (<code>&quot;&quot;</code>).</p>
-</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>-- Table name: my table
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>-- Table name: my table
 SELECT * FROM &quot;my table&quot;
 
 -- Column name with quote: col&quot;name
@@ -236,7 +238,7 @@ SELECT &quot;col&quot;&quot;name&quot; FROM &quot;users&quot;</code></pre>
 </div><div class="doc-block" data-diff="same"><h4>Data Type Errors</h4>
 </div><div class="doc-block" data-diff="same"><p>ZTD applies CAST to all values in INSERT/UPDATE based on SchemaRegistry metadata. Type conversion errors are detected by the database.</p>
 </div><div class="doc-block" data-diff="same"><p><strong>Example:</strong></p>
-</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>-- Schema: users (id INTEGER, name TEXT, created_at TIMESTAMP)
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>-- Schema: users (id INTEGER, name TEXT, created_at TIMESTAMP)
 -- Original
 INSERT INTO users (id, name, created_at) VALUES (&#039;123&#039;, &#039;Alice&#039;, &#039;2024-01-01&#039;)
 
@@ -263,8 +265,8 @@ SELECT
 </div><div class="doc-block" data-diff="same"><ol><li><strong>Zero Physical Impact</strong> - All operations are virtual; physical tables are never modified</li><li><strong>SQL as Pure Functions</strong> - Input (fixtures) and output (query results) only, no side effects</li><li><strong>Real Database Engine</strong> - Uses actual database for SQL parsing, type inference, and query execution</li><li><strong>CTE-Based Isolation</strong> - Tables are shadowed with CTEs using <code>AS MATERIALIZED</code>, not mocked</li><li><strong>Simplicity</strong> - Complex features (stored procedures, triggers, views) are out of scope</li><li><strong>Type Conversion via CAST</strong> - Schema metadata used to apply appropriate type casts</li><li><strong>Result Select over RETURNING</strong> - Consistent cross-platform approach; does not rely on PostgreSQL-specific <code>RETURNING</code></li></ol>
 </div></section>
 </main>
-<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
-</div>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
 <script src="../../../../assets/search-index.js" defer></script>
 <script src="../../../../assets/app.js" defer></script>
 </body>

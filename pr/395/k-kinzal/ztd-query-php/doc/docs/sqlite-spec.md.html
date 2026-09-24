@@ -16,26 +16,28 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="ZTD Query PHP">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../assets/document-design-v1.0.0.css">
 <link rel="stylesheet" href="../../../../assets/style.css">
-<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
 </head>
 <body data-root="../../../../">
-<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sb-pkg"><a href="../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a></div><nav class="sb-block"><div class="sb-title">Package</div><ul class="sb-list"><li data-diff="same"><a href="../../../../k-kinzal/ztd-query-php/all-items.html">All items</a></li><li data-diff="same"><a href="../../../../k-kinzal/ztd-query-php/index.html#documents">Documents</a></li></ul></nav></nav>
-<div class="page">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../index.html">ZTD Query PHP</a></div><div class="sidebar-header sidebar-package"><a href="../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a></div><nav class="sidebar-section"><div class="sidebar-title">Package</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../../k-kinzal/ztd-query-php/all-items.html">All items</a></li><li data-diff="same"><a href="../../../../k-kinzal/ztd-query-php/index.html#documents">Documents</a></li></ul></nav></aside>
+<div class="main">
 <header class="topbar">
-<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
-<nav class="crumbs"><a href="../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a><span class="crumb-sep">::</span><span class="crumb-current">docs/sqlite-spec.md</span></nav>
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">docs/sqlite-spec.md</span></nav>
 <div class="topbar-tools">
-<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
-<span class="diff-range" title="Comparing bf569d7b36 to working tree">bf569d7b36 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
-<button id="theme-toggle" title="Toggle theme">◐</button>
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<span class="diff-range" title="Comparing 774e55ba22 to working tree">774e55ba22 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
 </div>
 </header>
 <div class="search-results" id="search-results" hidden></div>
-<main class="content">
-<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between bf569d7b36 and working tree." data-off="This page documents what bf569d7b36 had and working tree no longer has. Switch to Diff to read it." hidden></p>
-<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>SQLite SQL Specification for ZTD</h1><div class="symbol-meta"><span class="src-link">docs/sqlite-spec.md</span></div></div>
-<section class="readme" data-diff="same"><div class="doc-block" data-diff="same"><h2>SQLite SQL Specification for ZTD</h2>
+<main class="content" id="content">
+<p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 774e55ba22 and working tree." data-off="This page documents what 774e55ba22 had and working tree no longer has. Switch to Diff to read it." hidden></p>
+<div class="symbol-head"><h1><span class="chip chip-kind k-document">document</span>SQLite SQL Specification for ZTD</h1><div class="symbol-meta"><span class="source-link">docs/sqlite-spec.md</span></div></div>
+<section class="readme prose" data-diff="same"><div class="doc-block" data-diff="same"><h2>SQLite SQL Specification for ZTD</h2>
 </div><div class="doc-block" data-diff="same"><p>This document defines how ZTD (Zero Downtime Deployment) handles SQLite SQL statements. ZTD simulates query results without modifying the physical database by using CTEs to shadow tables and virtualize writes.</p>
 </div><div class="doc-block" data-diff="same"><p><strong>Grammar Reference:</strong> SQLite 3.47.2 official Lemon grammar (<code>parse.y</code>). The <code>cmd</code> rule defines 40 production alternatives. This spec covers all 40 alternatives. Additionally, the <code>explain</code> rule wraps <code>cmd</code> to add <code>EXPLAIN</code> and <code>EXPLAIN QUERY PLAN</code> prefixes.</p>
 </div><div class="doc-block" data-diff="same"><h3>Overview</h3>
@@ -57,7 +59,7 @@
 </div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Mode</th><th>Behavior</th></tr></thead><tbody><tr><td>Rewrite</td><td>Convert to result-select query, store mutation in ShadowStore</td></tr></tbody></table></div>
 </div><div class="doc-block" data-diff="same"><p><strong>Grammar:</strong> <code>cmd</code> alternatives #16 and #17. Alternative #16: <code>with insert_cmd INTO xfullname idlist_opt select upsert</code> (INSERT with values/select). Alternative #17: <code>with insert_cmd INTO xfullname idlist_opt DEFAULT VALUES returning</code> (INSERT DEFAULT VALUES). The <code>insert_cmd</code> rule has 2 alternatives: <code>INSERT orconf</code> and <code>REPLACE</code>.</p>
 </div><div class="doc-block" data-diff="same"><p><strong>Transformation:</strong></p>
-</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>-- Original
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>-- Original
 INSERT INTO users (id, name) VALUES (1, &#039;Alice&#039;)
 
 -- Transformed (Result Select)
@@ -65,7 +67,7 @@ SELECT 1 AS &quot;id&quot;, &#039;Alice&#039; AS &quot;name&quot;</code></pre>
 </div><div class="doc-block" data-diff="same"><p><strong>Supported Syntax:</strong></p>
 </div><div class="doc-block" data-diff="same"><ul><li><code>INSERT INTO ... VALUES (...)</code> - Single row insert</li><li><code>INSERT INTO ... VALUES (...), (...)</code> - Multi-row insert</li><li><code>INSERT ... SELECT ...</code> - Insert from subquery</li><li><code>INSERT ... ON CONFLICT ... DO UPDATE SET ...</code> - Upsert</li><li><code>INSERT ... ON CONFLICT ... DO NOTHING</code> - Skip conflicts</li><li><code>INSERT OR REPLACE INTO ...</code> - Replace on conflict</li><li><code>INSERT OR IGNORE INTO ...</code> - Ignore on conflict</li><li><code>INSERT OR ROLLBACK INTO ...</code> - Rollback on conflict</li><li><code>INSERT OR ABORT INTO ...</code> - Abort on conflict</li><li><code>INSERT OR FAIL INTO ...</code> - Fail on conflict</li><li><code>REPLACE INTO ...</code> - Replace (synonym for INSERT OR REPLACE)</li><li><code>WITH ... INSERT ...</code> - CTE with INSERT</li><li><code>INSERT INTO ... DEFAULT VALUES</code> - Insert defaults only</li></ul>
 </div><div class="doc-block" data-diff="same"><p><strong>SQLite-Specific Conflict Handling (from <code>orconf</code> rule):</strong></p>
-</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>-- INSERT OR REPLACE
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>-- INSERT OR REPLACE
 INSERT OR REPLACE INTO users (id, name) VALUES (1, &#039;Bob&#039;)
 -- Resolved as ReplaceMutation
 
@@ -87,7 +89,7 @@ ON CONFLICT (id) DO UPDATE SET name = excluded.name
 </div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Mode</th><th>Behavior</th></tr></thead><tbody><tr><td>Rewrite</td><td>Convert to result-select query, store mutation in ShadowStore</td></tr></tbody></table></div>
 </div><div class="doc-block" data-diff="same"><p><strong>Grammar:</strong> <code>cmd</code> alternatives #14 and #15. Alternative #14: <code>with UPDATE orconf xfullname indexed_opt SET setlist from where_opt_ret orderby_opt limit_opt</code> (with ORDER BY/LIMIT). Alternative #15: <code>with UPDATE orconf xfullname indexed_opt SET setlist from where_opt_ret</code> (simple).</p>
 </div><div class="doc-block" data-diff="same"><p><strong>Transformation:</strong></p>
-</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>-- Original
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>-- Original
 UPDATE users SET name = &#039;Bob&#039; WHERE id = 1
 
 -- Transformed (Result Select with CTE shadowing)
@@ -103,7 +105,7 @@ SELECT &#039;Bob&#039; AS &quot;name&quot;, &quot;users&quot;.&quot;id&quot; FRO
 </div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Mode</th><th>Behavior</th></tr></thead><tbody><tr><td>Rewrite</td><td>Convert to result-select query, store mutation in ShadowStore</td></tr></tbody></table></div>
 </div><div class="doc-block" data-diff="same"><p><strong>Grammar:</strong> <code>cmd</code> alternatives #12 and #13. Alternative #12: <code>with DELETE FROM xfullname indexed_opt where_opt_ret orderby_opt limit_opt</code> (with ORDER BY/LIMIT). Alternative #13: <code>with DELETE FROM xfullname indexed_opt where_opt_ret</code> (simple).</p>
 </div><div class="doc-block" data-diff="same"><p><strong>Transformation:</strong></p>
-</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>-- Original
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>-- Original
 DELETE FROM users WHERE id = 1
 
 -- Transformed (Result Select with CTE shadowing)
@@ -112,7 +114,7 @@ WITH &quot;users&quot; AS (
 )
 SELECT &quot;users&quot;.&quot;id&quot; AS &quot;id&quot;, &quot;users&quot;.&quot;name&quot; AS &quot;name&quot; FROM &quot;users&quot; WHERE id = 1</code></pre>
 </div><div class="doc-block" data-diff="same"><p><strong>Special Case - DELETE without WHERE (Truncate equivalent):</strong></p>
-</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>-- Original
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>-- Original
 DELETE FROM users
 
 -- No transformation needed (acts as TRUNCATE)
@@ -189,7 +191,7 @@ DELETE FROM users
 </div><div class="doc-block" data-diff="same"><div class="table-wrap"><table><thead><tr><th>Mode</th><th>Behavior</th></tr></thead><tbody><tr><td>Rewrite</td><td>Process each statement sequentially via <code>rewriteMultiple()</code></td></tr></tbody></table></div>
 </div><div class="doc-block" data-diff="same"><p><strong>Grammar:</strong> The <code>input</code> -&gt; <code>cmdlist</code> -&gt; <code>ecmd</code> -&gt; <code>cmdx</code> chain handles semicolon-separated statements. <code>cmdlist</code> is recursive: <code>cmdlist ecmd | ecmd</code>. Each <code>ecmd</code> is <code>SEMI | cmdx SEMI | explain cmdx SEMI</code>.</p>
 </div><div class="doc-block" data-diff="same"><p><strong>Supported:</strong></p>
-</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>SELECT 1; SELECT 2
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>SELECT 1; SELECT 2
 INSERT INTO t VALUES (1); UPDATE t SET x = 2</code></pre>
 </div><div class="doc-block" data-diff="same"><p><strong>Result:</strong> <code>MultiRewritePlan</code> containing individual <code>RewritePlan</code> for each statement.</p>
 </div><div class="doc-block" data-diff="same"><p><strong>Result Retrieval:</strong> Use <code>nextRowset()</code> to iterate through result sets.</p>
@@ -198,7 +200,7 @@ INSERT INTO t VALUES (1); UPDATE t SET x = 2</code></pre>
 </div><div class="doc-block" data-diff="same"><h3>CTE Shadowing Details (SQLite-Specific)</h3>
 </div><div class="doc-block" data-diff="same"><h4>UNION ALL Chains</h4>
 </div><div class="doc-block" data-diff="same"><p>SQLite uses <code>SELECT ... UNION ALL SELECT ...</code> chains for all multi-row CTEs:</p>
-</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>WITH &quot;users&quot; AS (
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>WITH &quot;users&quot; AS (
   SELECT CAST(1 AS INTEGER) AS &quot;id&quot;, CAST(&#039;Alice&#039; AS TEXT) AS &quot;name&quot;
   UNION ALL
   SELECT CAST(2 AS INTEGER) AS &quot;id&quot;, CAST(&#039;Bob&#039; AS TEXT) AS &quot;name&quot;
@@ -207,11 +209,11 @@ SELECT * FROM &quot;users&quot;</code></pre>
 </div><div class="doc-block" data-diff="same"><p><strong>Design Decision:</strong> Unlike PostgreSQL (which uses <code>VALUES</code> clause) and MySQL (which uses <code>UNION ALL</code>), SQLite uses <code>UNION ALL</code> chains. SQLite does not use <code>AS MATERIALIZED</code> since SQLite&#039;s CTE implementation does not inline CTEs by default (pre-3.35) and the keyword is not supported.</p>
 </div><div class="doc-block" data-diff="same"><h4>Empty CTEs</h4>
 </div><div class="doc-block" data-diff="same"><p>For tables with no fixture data:</p>
-</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>WITH &quot;users&quot; AS (SELECT CAST(NULL AS INTEGER) AS &quot;id&quot;, CAST(NULL AS TEXT) AS &quot;name&quot; WHERE 0)</code></pre>
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>WITH &quot;users&quot; AS (SELECT CAST(NULL AS INTEGER) AS &quot;id&quot;, CAST(NULL AS TEXT) AS &quot;name&quot; WHERE 0)</code></pre>
 </div><div class="doc-block" data-diff="same"><p>Note: SQLite uses <code>WHERE 0</code> instead of PostgreSQL&#039;s <code>WHERE FALSE</code>.</p>
 </div><div class="doc-block" data-diff="same"><h4>Identifier Quoting</h4>
 </div><div class="doc-block" data-diff="same"><p>SQLite supports multiple quoting styles. ZTD uses double-quote identifiers (<code>&quot;identifier&quot;</code>), which is the SQL standard:</p>
-</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>-- Table name: my table
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>-- Table name: my table
 SELECT * FROM &quot;my table&quot;</code></pre>
 </div><div class="doc-block" data-diff="same"><p>The parser also recognizes backtick-quoted (`<code> </code>identifier<code> </code><code>) and bracket-quoted (</code>[identifier]`) identifiers when reading, but generates double-quoted identifiers for output.</p>
 </div><div class="doc-block" data-diff="same"><hr>
@@ -237,7 +239,7 @@ SELECT * FROM &quot;my table&quot;</code></pre>
 </div><div class="doc-block" data-diff="same"><h4>Data Type Errors</h4>
 </div><div class="doc-block" data-diff="same"><p>ZTD applies CAST to all values using SQLite&#039;s type affinity system.</p>
 </div><div class="doc-block" data-diff="same"><p><strong>Example:</strong></p>
-</div><div class="doc-block" data-diff="same"><pre class="code-block"><code>-- Schema: users (id INTEGER, name TEXT, active BOOLEAN)
+</div><div class="doc-block" data-diff="same"><pre class="code"><code>-- Schema: users (id INTEGER, name TEXT, active BOOLEAN)
 -- Original
 INSERT INTO users (id, name, active) VALUES (&#039;123&#039;, &#039;Alice&#039;, 1)
 
@@ -265,8 +267,8 @@ SELECT
 </div><div class="doc-block" data-diff="same"><ol><li><strong>Zero Physical Impact</strong> - All operations are virtual; physical tables are never modified</li><li><strong>SQL as Pure Functions</strong> - Input (fixtures) and output (query results) only, no side effects</li><li><strong>Real Database Engine</strong> - Uses actual SQLite database for SQL parsing, type inference, and query execution</li><li><strong>CTE-Based Isolation</strong> - Tables are shadowed with CTEs, not mocked</li><li><strong>Simplicity</strong> - Complex features (triggers, views, virtual tables) are out of scope</li><li><strong>Type Conversion via CAST</strong> - Schema metadata used to apply appropriate type casts using SQLite&#039;s affinity system</li><li><strong>Result Select over RETURNING</strong> - Consistent cross-platform approach; does not rely on SQLite 3.35+ <code>RETURNING</code></li></ol>
 </div></section>
 </main>
-<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
-</div>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
 <script src="../../../../assets/search-index.js" defer></script>
 <script src="../../../../assets/app.js" defer></script>
 </body>
