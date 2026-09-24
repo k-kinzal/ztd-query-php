@@ -18,7 +18,7 @@ final class ReportAssetsTest extends TestCase
     public function testAllCarriesTheDesignItsNoticeAndTheReportsOwnFiles(): void
     {
         self::assertSame(
-            ['assets/document-design-v1.0.0.css', 'assets/document-design-v1.0.0.js', 'assets/document-design-LICENSE.txt', 'assets/report.js'],
+            ['assets/document-design-v1.0.0.css', 'assets/document-design-v1.0.0.js', 'assets/document-design-LICENSE.txt', 'assets/report.js', 'assets/report.css'],
             array_keys((new ReportAssets())->all()),
         );
     }
@@ -28,7 +28,7 @@ final class ReportAssetsTest extends TestCase
      */
     public static function providerAsset(): array
     {
-        return [['assets/document-design-v1.0.0.css'], ['assets/document-design-v1.0.0.js'], ['assets/document-design-LICENSE.txt'], ['assets/report.js']];
+        return [['assets/document-design-v1.0.0.css'], ['assets/document-design-v1.0.0.js'], ['assets/document-design-LICENSE.txt'], ['assets/report.js'], ['assets/report.css']];
     }
 
     #[DataProvider('providerAsset')]

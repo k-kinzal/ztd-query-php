@@ -136,6 +136,7 @@ as the routes to a statement rather than as one long listing:
 | `findings.html` | The functions flagged most, then every finding under the rule that reported it |
 | `statements/*.html` | One page per statement: the SQL laid out a clause per line, where it is issued and through what, its tables, bound values and findings, and the other statements of the same function and on the same table |
 | `assets/document-design-v1.0.0.css`, `assets/document-design-v1.0.0.js`, `assets/document-design-LICENSE.txt` | The design the pages are written in: the unmodified [document-design](https://k-kinzal.github.io/document-design/) doc-ui release, its script, and the notice naming the release, its license and the SHA-256 of each file |
+| `assets/report.css` | Keeps multiline SQL listings fully visible without changing the pinned doc-ui stylesheet |
 | `assets/report.js` | The ranking of a search over statements and the narrowing of a listing by the facts a page arrives with, written once beside the pages |
 | `assets/search-index.js` | Every statement and its page, so the search box on every page finds a statement by its SQL, table, function or file |
 
@@ -158,7 +159,17 @@ index is a script rather than data fetched at runtime, nothing is loaded over
 the network, and every page reads without the scripts — they only add
 narrowing, sorting, copying, the theme switch and search.
 
-A gap is rendered as a marked `{$}` that says, when pointed at, where the value
-filling it comes from — and a call that no statement was read from is not
-dressed up as a statement at all, but shown as the call it is, with the reason
+SQL in listings and statement pages uses [sql-formatter](../../sql-formatter/)'s
+Expanded layout, with clause bodies and list items on separate lines, without
+clipping listings to a fixed number of lines. Gaps and client placeholders are preserved through formatting. The report tries the
+supported MySQL, PostgreSQL and SQLite grammars; text none accepts is kept as
+written. Statement pages also retain the original layout under **As written in
+the source**, while **Copy** copies the displayed, formatted SQL.
+
+A gap uses the PHP variable name when known, such as `{$sql}` for an unresolved
+`$pdo->prepare($sql)` or `{$table}` in a concatenated query. When the variable
+cannot be identified, it remains `{$}`. This is a display annotation: the JSON
+and text SQL markers and statement identities remain unchanged. Each marked gap
+says, when pointed at, where the value filling it comes from. A call that no
+statement was read from is not dressed up as a statement at all, but shown as the call it is, with the reason
 the analysis has nothing to say about it.

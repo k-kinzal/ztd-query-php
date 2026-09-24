@@ -197,6 +197,30 @@ final class Domain
     }
 
     /**
+     * Labels opaque alternatives with the PHP variable read at their use site.
+     *
+     * Provenance, resolved fragments, comparison signatures and domain flags
+     * remain unchanged; the name is only an annotation for report readers.
+     */
+    public function withVariable(string $variable): self
+    {
+        if (array_filter($this->terms, static fn (Term $term): bool => $term instanceof OpaqueTerm) === []) {
+            return $this;
+        }
+
+        return new self(
+            array_map(
+                static fn (Term $term): Term => $term instanceof OpaqueTerm
+                    ? new OpaqueTerm($term->type, $term->origin, $term->expression, $variable)
+                    : $term,
+                $this->terms,
+            ),
+            $this->widened,
+            $this->combined,
+        );
+    }
+
+    /**
      * The alternatives written as string patterns.
      *
      * @return list<TextPattern>

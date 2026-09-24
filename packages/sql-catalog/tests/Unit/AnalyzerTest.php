@@ -29,6 +29,7 @@ use SqlCatalog\Source\SourceScanException;
 #[UsesClass(AnalysisProblem::class)]
 #[UsesClass(Catalog::class)]
 #[UsesClass(CatalogEntry::class)]
+#[UsesClass(\SqlCatalog\Catalog\StatementPart::class)]
 #[UsesClass(EvaluationBudget::class)]
 #[UsesClass(Resolution::class)]
 #[UsesClass(ExtensionRegistry::class)]
@@ -1039,6 +1040,30 @@ PHP;
         $catalog = $analyzer->analyzeSource(['query.php' => '<?php $table = "items"; $pdo = new PDO("sqlite::memory:"); $pdo->query("SELECT * FROM " . fragment($table) . " JOIN " . fragment($table));'], new AnalysisOptions(['pdo', 'example']));
         self::assertSame('SELECT * FROM items JOIN items', $catalog->entries()[0]->sql());
         self::assertTrue($catalog->entries()[0]->searchClosed());
+    }
+
+    public function testAnalyzeSourceKeepsVariableNamesForUnresolvedSqlAndFragments(): void
+    {
+        $source = <<<'SOURCE'
+<?php
+function queries(PDO $pdo, string $input): void {
+    $sql = buildSql();
+    $pdo->prepare($sql);
+    $pdo->prepare($input);
+    $table = tableName();
+    $pdo->query('SELECT id FROM ' . $table . ' WHERE active = 1');
+    $pdo->prepare(buildSql());
+}
+SOURCE;
+        $entries = (new Analyzer())->analyzeSource(['queries.php' => $source])->entries();
+
+        self::assertCount(4, $entries);
+        self::assertSame('$sql', $entries[0]->firstGap()?->variable);
+        self::assertSame('\\buildSql()', $entries[0]->firstGap()->expression);
+        self::assertSame('$input', $entries[1]->firstGap()?->variable);
+        self::assertSame('$table', $entries[2]->firstGap()?->variable);
+        self::assertNull($entries[3]->firstGap()?->variable);
+        self::assertSame('{$}', $entries[0]->sql());
     }
 
 }

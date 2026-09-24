@@ -129,7 +129,7 @@ final class StatementPage
      * The statement itself, laid out for reading, or the call it was not read from.
      *
      * The copy button takes what the block shows, so what is copied is what
-     * was read: the statement a clause per line, with every gap as `{$}`.
+     * was read: expanded SQL, with named gaps where PHP variables are known.
      */
     public function body(CatalogEntry $entry): string
     {
@@ -289,7 +289,7 @@ final class StatementPage
         $places[] = ['File ' . $entry->site->file, $site->filePage($entry->site->file), count($index->byFile()[$entry->site->file] ?? []), false];
         $siblings = [];
         foreach ($index->byFunction()[$entry->site->function] ?? [] as $other) {
-            $siblings[] = [$this->text->truncate($other->sql(), self::LABEL), $site->statementPage($other->id), null, $other->id === $entry->id];
+            $siblings[] = [$this->text->truncate($this->sql->plain($other->parts()), self::LABEL), $site->statementPage($other->id), null, $other->id === $entry->id];
         }
 
         return [['Belongs to', $places, null], ['Statements of ' . $scope->display(), $siblings, $site->functionUrl($entry)]];

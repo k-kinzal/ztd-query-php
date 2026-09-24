@@ -56,7 +56,7 @@ final class SearchIndex
     public function entryToArray(ReportSite $site, CatalogEntry $entry): array
     {
         return [
-            'q' => $this->text->truncate($entry->sql(), self::LENGTH),
+            'q' => $this->text->truncate((new SqlHighlighter())->plain($entry->parts()), self::LENGTH),
             'w' => $entry->site->display(),
             'f' => $entry->site->function,
             't' => implode(' ', $entry->tables),

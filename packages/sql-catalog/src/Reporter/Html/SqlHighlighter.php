@@ -61,6 +61,16 @@ final class SqlHighlighter
     }
 
     /**
+     * The displayed SQL without markup, for navigation and search labels.
+     *
+     * @param list<StatementPart> $parts
+     */
+    public function plain(array $parts): string
+    {
+        return implode('', array_map(fn (StatementPart $part): string => $part->isGap ? $this->holeLabel($part) : $part->text, $parts));
+    }
+
+    /**
      * The whole statement on one line, for a listing.
      *
      * @param list<StatementPart> $parts
@@ -156,7 +166,19 @@ final class SqlHighlighter
         }
 
         return '<span class="hole ' . $this->text->escape($this->holeRole($gap->origin)) . '" title="'
-            . $this->text->escape($note) . '">{$}</span>';
+            . $this->text->escape($note) . '">' . $this->text->escape($this->holeLabel($gap)) . '</span>';
+    }
+
+    /**
+     * A named PHP variable when known, or the anonymous gap marker.
+     */
+    public function holeLabel(StatementPart $gap): string
+    {
+        $variable = $gap->variable ?? $gap->expression;
+
+        return $variable !== null && preg_match('/\A\$[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*\z/', $variable) === 1
+            ? '{' . $variable . '}'
+            : '{$}';
     }
 
     /**

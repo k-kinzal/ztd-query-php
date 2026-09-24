@@ -46,6 +46,11 @@ final class PageShell
     public const SCRIPT = 'assets/report.js';
 
     /**
+     * Report-specific layout adjustments to the pinned doc-ui stylesheet.
+     */
+    public const STYLE = 'assets/report.css';
+
+    /**
      * The name the search index is written under.
      */
     public const INDEX = 'assets/search-index.js';
@@ -113,6 +118,7 @@ final class PageShell
             . '<meta name="color-scheme" content="light dark">' . "\n"
             . '<title>' . $this->text->escape($title) . '</title>' . "\n"
             . '<link rel="stylesheet" href="' . $this->text->escape($prefix . self::DESIGN_STYLE) . '">' . "\n"
+            . '<link rel="stylesheet" href="' . $this->text->escape($prefix . self::STYLE) . '">' . "\n"
             . $this->bootstrap() . "\n"
             . '</head>' . "\n";
     }

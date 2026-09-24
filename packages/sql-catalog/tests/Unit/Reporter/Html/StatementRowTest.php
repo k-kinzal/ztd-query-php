@@ -21,6 +21,7 @@ use SqlCatalog\Reporter\Html\HtmlText;
 use SqlCatalog\Reporter\Html\Palette;
 use SqlCatalog\Reporter\Html\ReportSite;
 use SqlCatalog\Reporter\Html\Scope;
+use SqlCatalog\Reporter\Html\SqlFormatter;
 use SqlCatalog\Reporter\Html\SqlHighlighter;
 use SqlCatalog\Reporter\Html\StatementRow;
 use SqlCatalog\Sql\StatementKind;
@@ -45,6 +46,7 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(Scope::class)]
 #[UsesClass(Severity::class)]
 #[UsesClass(SqlHighlighter::class)]
+#[UsesClass(SqlFormatter::class)]
 #[UsesClass(StatementKind::class)]
 #[UsesClass(StatementPart::class)]
 #[UsesClass(LiteralText::class)]
@@ -60,11 +62,14 @@ final class StatementRowTest extends TestCase
         $site = new ReportSite(new Catalog([$entry]));
 
         self::assertSame(
-            '<li class="row" data-kind="select" data-resolution="resolved" data-severity="" data-rule="" data-sink="pdo.query" data-open="" data-table="users" data'
-                . '-namespace="App" data-class="App\\R" data-function="App\\R::find" data-file="src/a.php"><a class="row-main" href="../statements/a1.html"><span class="'
-                . 'chip tone-blue">SELECT</span><span class="row-body"><span class="tok-kw">SELECT</span> <span class="tok-num">1</span> <span class="tok-kw">FROM</span>'
-                . ' users</span></a><p class="row-meta"><a href="../files/src-a-php.html">src/a.php:4</a><a href="../classes/app-r.html#fn-app-r-find">R::find</a><a clas'
-                . 's="chip chip-ghost" href="../tables/users.html">users</a></p></li>',
+            '<li class="row" data-kind="select" data-resolution="resolved" data-severity="" data-rule="" data-sink="pdo.query" data-open="" data-table="u'
+                . 'sers" data-namespace="App" data-class="App\\R" data-function="App\\R::find" data-file="src/a.php"><a class="row-main" href="../statements/a1.h'
+                . 'tml"><span class="chip tone-blue">SELECT</span><span class="row-body"><span class="tok-kw">SELECT</span>
+    <span class="tok-num">1</span>
+'
+                . '<span class="tok-kw">FROM</span>
+    users</span></a><p class="row-meta"><a href="../files/src-a-php.html">src/a.php:4</a><a href="../classe'
+                . 's/app-r.html#fn-app-r-find">R::find</a><a class="chip chip-ghost" href="../tables/users.html">users</a></p></li>',
             (new StatementRow())->render($site, 'tables/users.html', $entry),
         );
     }
@@ -128,4 +133,14 @@ final class StatementRowTest extends TestCase
         self::assertSame('<a href="files/a-php.html#fn-f">f</a>', $row->meta($site, '', $entry, ['file', 'tables']));
         self::assertSame('', $row->meta($site, '', $entry, ['file', 'tables', 'function']));
     }
+    public function testSqlDisplaysThePhpVariableForAnUnknownStatement(): void
+    {
+        $entry = new CatalogEntry('q', StatementKind::Unknown, TextPattern::fromHole(
+            new TextHole(Origin::Call, TypeShape::unknown(), 'buildSql()', '$sql'),
+        ), [], [], new CallSite('query.php', 4, 'f', 'pdo.prepare'), []);
+
+        self::assertStringEndsWith('>{$sql}</span>', (new StatementRow())->sql($entry));
+        self::assertStringContainsString('Written as buildSql().', (new StatementRow())->sql($entry));
+    }
+
 }

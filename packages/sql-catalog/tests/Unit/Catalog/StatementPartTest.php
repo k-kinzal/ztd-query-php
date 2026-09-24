@@ -35,7 +35,7 @@ final class StatementPartTest extends TestCase
     public function testOfKeepsWhatIsKnownAboutAGap(): void
     {
         $parts = StatementPart::of(TextPattern::fromHole(
-            new TextHole(Origin::External, TypeShape::unknown(), '$_GET["id"]'),
+            new TextHole(Origin::External, TypeShape::unknown(), '$_GET["id"]', '$id'),
         ));
 
         self::assertCount(1, $parts);
@@ -44,6 +44,7 @@ final class StatementPartTest extends TestCase
         self::assertSame('external', $parts[0]->origin);
         self::assertSame('external input', $parts[0]->reason);
         self::assertSame('$_GET["id"]', $parts[0]->expression);
+        self::assertSame('$id', $parts[0]->variable);
     }
 
     public function testOfKeepsTheRunsAndTheGapsInOrder(): void

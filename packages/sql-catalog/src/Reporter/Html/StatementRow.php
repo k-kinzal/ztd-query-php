@@ -12,7 +12,7 @@ use SqlCatalog\Catalog\Severity;
  * One statement as a row of a listing.
  *
  * A row is a doc-ui listing row. A listing is for scanning, so a row shows
- * the statement itself first — the SQL, on as few lines as it fits in — and
+ * the statement itself first — the SQL, formatted across multiple lines — and
  * then where it is issued, with every place it names linked to the page for
  * it. What the analyzer thinks of
  * the statement is shown only when it is not the ordinary case: a resolved
@@ -29,14 +29,17 @@ final class StatementRow
 
     private Palette $palette;
 
+    private SqlFormatter $formatter;
+
     /**
      * Wires the row to the text and SQL rendering it is written with.
      */
-    public function __construct(?HtmlText $text = null, ?SqlHighlighter $sql = null, ?Palette $palette = null)
+    public function __construct(?HtmlText $text = null, ?SqlHighlighter $sql = null, ?Palette $palette = null, ?SqlFormatter $formatter = null)
     {
         $this->text = $text ?? new HtmlText();
         $this->sql = $sql ?? new SqlHighlighter($this->text);
         $this->palette = $palette ?? new Palette();
+        $this->formatter = $formatter ?? new SqlFormatter();
     }
 
     /**
@@ -88,12 +91,12 @@ final class StatementRow
     }
 
     /**
-     * The statement on one line, or the call it was not read from.
+     * The formatted statement, or the call it was not read from.
      */
     public function sql(CatalogEntry $entry): string
     {
         if ($entry->resolution() !== Resolution::NotAnalyzed) {
-            return $this->sql->inline($entry->parts());
+            return $this->sql->render($this->formatter->format($entry->parts()));
         }
         $written = $entry->firstGap()?->expression;
 

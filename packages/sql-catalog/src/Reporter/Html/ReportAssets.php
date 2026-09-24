@@ -13,7 +13,7 @@ namespace SqlCatalog\Reporter\Html;
  * the network at whatever version is current: a report is read years after it
  * is written, offline as often as not, and has to look then the way it looked
  * when it was checked. The report's own script adds statement search and
- * filtering; all styling comes from doc-ui.
+ * filtering; a small report stylesheet keeps formatted SQL listings unclipped.
  *
  * The assets are written beside the pages rather than inlined into each of
  * them: a report of a thousand statements is a hundred documents, and a
@@ -32,6 +32,7 @@ final class ReportAssets
         PageShell::DESIGN_SCRIPT => 'document-design-' . PageShell::DESIGN_VERSION . '.js',
         PageShell::DESIGN_LICENSE => 'document-design-LICENSE.txt',
         PageShell::SCRIPT => 'report.js',
+        PageShell::STYLE => 'report.css',
     ];
 
     /**

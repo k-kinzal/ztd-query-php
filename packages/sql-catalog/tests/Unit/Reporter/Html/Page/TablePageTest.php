@@ -215,51 +215,74 @@ final class TablePageTest extends TestCase
         $site = new ReportSite($catalog);
 
         self::assertSame(
-            '<h1><code>posts</code><span class="count">4 statements</span></h1><p class="lede">This table is read by 2 statements, written by 2 statements. 3 state'
-                . 'ments carry a finding worth looking at.</p><h2 id="used-from">Used from<span class="count">2 functions</span></h2><div class="table-wrap"><table class'
-                . '="sortable" data-dd-sortable><thead><tr><th scope="col" data-dd-sort="text">Function</th><th scope="col" data-dd-sort="text">File</th><th scope="col" '
-                . 'class="num" data-dd-sort="number">Statements</th><th scope="col" class="tight">Does</th></tr></thead><tbody><tr><td><a class="mono" href="../classes/a'
-                . 'pp-r.html#fn-app-r-add">R::add</a></td><td><a class="muted" href="../files/src-a-php.html">src/a.php</a></td><td class="num">2</td><td class="tight">w'
-                . 'rites</td></tr><tr><td><a class="mono" href="../classes/app-r.html#fn-app-r-find">R::find</a></td><td><a class="muted" href="../files/src-a-php.html">'
-                . 'src/a.php</a></td><td class="num">2</td><td class="tight">reads</td></tr></tbody></table></div><h2 id="alongside">Named alongside</h2><p class="lede">'
-                . 'Tables that appear in the same statements, usually through a join.</p><div class="chips"><a class="chip chip-ghost" href="../tables/users.html">users<'
-                . 'span class="facet-count">1</span></a></div><h2 id="statements">Statements</h2><div data-narrowable><div class="facets" role="group" aria-label="Narrow'
-                . ' the listing"><input type="search" name="narrow" class="input facet-search" placeholder="Narrow by text…" aria-label="Narrow by text" autocomplete="of'
-                . 'f" spellcheck="false"><span class="facet-group"><button type="button" class="chip facet tone-blue" data-facet="kind" data-value="select" aria-pressed='
-                . '"false">SELECT<span class="facet-count">2</span></button><button type="button" class="chip facet tone-teal" data-facet="kind" data-value="insert" aria'
-                . '-pressed="false">INSERT<span class="facet-count">1</span></button><button type="button" class="chip facet tone-violet" data-facet="kind" data-value="u'
-                . 'pdate" aria-pressed="false">UPDATE<span class="facet-count">1</span></button></span><span class="facet-group"><button type="button" class="chip facet '
-                . 'tone-ok" data-facet="resolution" data-value="resolved" aria-pressed="false">resolved<span class="facet-count">3</span></button><button type="button" c'
-                . 'lass="chip facet tone-danger" data-facet="resolution" data-value="external-input" aria-pressed="false">external-input<span class="facet-count">1</span'
-                . '></button></span><span class="facet-group"><button type="button" class="chip facet tone-warn" data-facet="severity" data-value="medium" aria-pressed="'
-                . 'false">medium<span class="facet-count">2</span></button><button type="button" class="chip facet tone-danger" data-facet="severity" data-value="high" a'
-                . 'ria-pressed="false">high<span class="facet-count">1</span></button></span><span class="facet-shown" aria-live="polite"></span><button type="button" cl'
-                . 'ass="btn facet-clear" hidden>Clear</button></div><section class="group" id="writes"><h3>Writes<span class="count">2</span></h3><ol class="rows"><li cl'
-                . 'ass="row" data-kind="insert" data-resolution="resolved" data-severity="" data-rule="" data-sink="pdo.query" data-open="" data-table="posts" data-names'
-                . 'pace="App" data-class="App\\R" data-function="App\\R::add" data-file="src/a.php"><a class="row-main" href="../statements/a2.html"><span class="chip to'
-                . 'ne-teal">INSERT</span><span class="row-body"><span class="tok-kw">INSERT</span> <span class="tok-kw">INTO</span> posts (id) <span class="tok-kw">VALUE'
-                . 'S</span> (<span class="tok-num">1</span>)</span></a><p class="row-meta"><a href="../files/src-a-php.html">src/a.php:9</a><a href="../classes/app-r.htm'
-                . 'l#fn-app-r-add">R::add</a><a class="chip chip-ghost" href="../tables/posts.html">posts</a></p></li><li class="row" data-kind="update" data-resolution='
-                . '"resolved" data-severity="medium" data-rule="placeholder-count-mismatch" data-sink="pdo.prepare" data-open="" data-table="posts" data-namespace="App" '
-                . 'data-class="App\\R" data-function="App\\R::add" data-file="src/a.php"><a class="row-main" href="../statements/a3.html"><span class="chip tone-violet">'
-                . 'UPDATE</span><span class="row-body"><span class="tok-kw">UPDATE</span> posts <span class="tok-kw">SET</span> title = <span class="tok-var">?</span> <s'
-                . 'pan class="tok-kw">WHERE</span> id = <span class="tok-var">?</span></span></a><p class="row-meta"><a href="../files/src-a-php.html">src/a.php:14</a><a'
-                . ' href="../classes/app-r.html#fn-app-r-add">R::add</a><a class="chip chip-ghost" href="../tables/posts.html">posts</a><span class="chip tone-warn" titl'
-                . 'e="The most serious finding on this statement">medium</span></p></li></ol></section><section class="group" id="reads"><h3>Reads<span class="count">2</'
-                . 'span></h3><ol class="rows"><li class="row" data-kind="select" data-resolution="external-input" data-severity="high" data-rule="external-input" data-si'
-                . 'nk="pdo.query" data-open="" data-table="posts" data-namespace="App" data-class="App\\R" data-function="App\\R::find" data-file="src/a.php"><a class="r'
-                . 'ow-main" href="../statements/a1.html"><span class="chip tone-blue">SELECT</span><span class="row-body"><span class="tok-kw">SELECT</span> id <span cla'
-                . 'ss="tok-kw">FROM</span> posts <span class="tok-kw">WHERE</span> slug = <span class="hole tone-danger" title="This is a gap: external input fills it. W'
-                . 'ritten as $_GET[&quot;s&quot;].">{$}</span></span></a><p class="row-meta"><a href="../files/src-a-php.html">src/a.php:4</a><a href="../classes/app-r.h'
-                . 'tml#fn-app-r-find">R::find</a><a class="chip chip-ghost" href="../tables/posts.html">posts</a><span class="chip tone-danger" title="The values were fo'
-                . 'llowed to runtime input, so the text cannot be fixed.">external-input</span><span class="chip tone-danger" title="The most serious finding on this sta'
-                . 'tement">high</span></p></li><li class="row" data-kind="select" data-resolution="resolved" data-severity="medium" data-rule="dynamic-sql" data-sink="pd'
-                . 'o.query" data-open="" data-table="posts users" data-namespace="App" data-class="App\\R" data-function="App\\R::find" data-file="src/d.php"><a class="r'
-                . 'ow-main" href="../statements/d1.html"><span class="chip tone-blue">SELECT</span><span class="row-body"><span class="tok-kw">SELECT</span> * <span clas'
-                . 's="tok-kw">FROM</span> posts p <span class="tok-kw">JOIN</span> users u <span class="tok-kw">ON</span> u.id = p.author</span></a><p class="row-meta"><'
-                . 'a href="../files/src-d-php.html">src/d.php:1</a><a href="../classes/app-r.html#fn-app-r-find">R::find</a><a class="chip chip-ghost" href="../tables/po'
-                . 'sts.html">posts</a><a class="chip chip-ghost" href="../tables/users.html">users</a><span class="chip tone-warn" title="The most serious finding on thi'
-                . 's statement">medium</span></p></li></ol></section></div>',
+            '<h1><code>posts</code><span class="count">4 statements</span></h1><p class="lede">This table is read by 2 statements, written by 2 statement'
+                . 's. 3 statements carry a finding worth looking at.</p><h2 id="used-from">Used from<span class="count">2 functions</span></h2><div class="tabl'
+                . 'e-wrap"><table class="sortable" data-dd-sortable><thead><tr><th scope="col" data-dd-sort="text">Function</th><th scope="col" data-dd-sort="t'
+                . 'ext">File</th><th scope="col" class="num" data-dd-sort="number">Statements</th><th scope="col" class="tight">Does</th></tr></thead><tbody><t'
+                . 'r><td><a class="mono" href="../classes/app-r.html#fn-app-r-add">R::add</a></td><td><a class="muted" href="../files/src-a-php.html">src/a.php'
+                . '</a></td><td class="num">2</td><td class="tight">writes</td></tr><tr><td><a class="mono" href="../classes/app-r.html#fn-app-r-find">R::find<'
+                . '/a></td><td><a class="muted" href="../files/src-a-php.html">src/a.php</a></td><td class="num">2</td><td class="tight">reads</td></tr></tbody'
+                . '></table></div><h2 id="alongside">Named alongside</h2><p class="lede">Tables that appear in the same statements, usually through a join.</p>'
+                . '<div class="chips"><a class="chip chip-ghost" href="../tables/users.html">users<span class="facet-count">1</span></a></div><h2 id="statement'
+                . 's">Statements</h2><div data-narrowable><div class="facets" role="group" aria-label="Narrow the listing"><input type="search" name="narrow" c'
+                . 'lass="input facet-search" placeholder="Narrow by text…" aria-label="Narrow by text" autocomplete="off" spellcheck="false"><span class="fac'
+                . 'et-group"><button type="button" class="chip facet tone-blue" data-facet="kind" data-value="select" aria-pressed="false">SELECT<span class="f'
+                . 'acet-count">2</span></button><button type="button" class="chip facet tone-teal" data-facet="kind" data-value="insert" aria-pressed="false">I'
+                . 'NSERT<span class="facet-count">1</span></button><button type="button" class="chip facet tone-violet" data-facet="kind" data-value="update" a'
+                . 'ria-pressed="false">UPDATE<span class="facet-count">1</span></button></span><span class="facet-group"><button type="button" class="chip face'
+                . 't tone-ok" data-facet="resolution" data-value="resolved" aria-pressed="false">resolved<span class="facet-count">3</span></button><button typ'
+                . 'e="button" class="chip facet tone-danger" data-facet="resolution" data-value="external-input" aria-pressed="false">external-input<span class'
+                . '="facet-count">1</span></button></span><span class="facet-group"><button type="button" class="chip facet tone-warn" data-facet="severity" da'
+                . 'ta-value="medium" aria-pressed="false">medium<span class="facet-count">2</span></button><button type="button" class="chip facet tone-danger"'
+                . ' data-facet="severity" data-value="high" aria-pressed="false">high<span class="facet-count">1</span></button></span><span class="facet-shown'
+                . '" aria-live="polite"></span><button type="button" class="btn facet-clear" hidden>Clear</button></div><section class="group" id="writes"><h3>'
+                . 'Writes<span class="count">2</span></h3><ol class="rows"><li class="row" data-kind="insert" data-resolution="resolved" data-severity="" data-'
+                . 'rule="" data-sink="pdo.query" data-open="" data-table="posts" data-namespace="App" data-class="App\\R" data-function="App\\R::add" data-file="'
+                . 'src/a.php"><a class="row-main" href="../statements/a2.html"><span class="chip tone-teal">INSERT</span><span class="row-body"><span class="to'
+                . 'k-kw">INSERT</span> <span class="tok-kw">INTO</span>
+    posts (id)
+<span class="tok-kw">VALUES</span>
+    (<span class="tok-num">1</span>)<'
+                . '/span></a><p class="row-meta"><a href="../files/src-a-php.html">src/a.php:9</a><a href="../classes/app-r.html#fn-app-r-add">R::add</a><a cla'
+                . 'ss="chip chip-ghost" href="../tables/posts.html">posts</a></p></li><li class="row" data-kind="update" data-resolution="resolved" data-severi'
+                . 'ty="medium" data-rule="placeholder-count-mismatch" data-sink="pdo.prepare" data-open="" data-table="posts" data-namespace="App" data-class="'
+                . 'App\\R" data-function="App\\R::add" data-file="src/a.php"><a class="row-main" href="../statements/a3.html"><span class="chip tone-violet">UPDA'
+                . 'TE</span><span class="row-body"><span class="tok-kw">UPDATE</span>
+    posts
+<span class="tok-kw">SET</span>
+    title = <span class="tok-va'
+                . 'r">?</span>
+<span class="tok-kw">WHERE</span>
+    id = <span class="tok-var">?</span></span></a><p class="row-meta"><a href="../files/src-a-'
+                . 'php.html">src/a.php:14</a><a href="../classes/app-r.html#fn-app-r-add">R::add</a><a class="chip chip-ghost" href="../tables/posts.html">post'
+                . 's</a><span class="chip tone-warn" title="The most serious finding on this statement">medium</span></p></li></ol></section><section class="gr'
+                . 'oup" id="reads"><h3>Reads<span class="count">2</span></h3><ol class="rows"><li class="row" data-kind="select" data-resolution="external-inpu'
+                . 't" data-severity="high" data-rule="external-input" data-sink="pdo.query" data-open="" data-table="posts" data-namespace="App" data-class="Ap'
+                . 'p\\R" data-function="App\\R::find" data-file="src/a.php"><a class="row-main" href="../statements/a1.html"><span class="chip tone-blue">SELECT<'
+                . '/span><span class="row-body"><span class="tok-kw">SELECT</span>
+    id
+<span class="tok-kw">FROM</span>
+    posts
+<span class="tok-kw">WHERE'
+                . '</span>
+    slug = <span class="hole tone-danger" title="This is a gap: external input fills it. Written as $_GET[&quot;s&quot;].">{$}</span'
+                . '></span></a><p class="row-meta"><a href="../files/src-a-php.html">src/a.php:4</a><a href="../classes/app-r.html#fn-app-r-find">R::find</a><a'
+                . ' class="chip chip-ghost" href="../tables/posts.html">posts</a><span class="chip tone-danger" title="The values were followed to runtime inpu'
+                . 't, so the text cannot be fixed.">external-input</span><span class="chip tone-danger" title="The most serious finding on this statement">high'
+                . '</span></p></li><li class="row" data-kind="select" data-resolution="resolved" data-severity="medium" data-rule="dynamic-sql" data-sink="pdo.'
+                . 'query" data-open="" data-table="posts users" data-namespace="App" data-class="App\\R" data-function="App\\R::find" data-file="src/d.php"><a cl'
+                . 'ass="row-main" href="../statements/d1.html"><span class="chip tone-blue">SELECT</span><span class="row-body"><span class="tok-kw">SELECT</sp'
+                . 'an>
+    *
+<span class="tok-kw">FROM</span>
+    posts p
+<span class="tok-kw">JOIN</span>
+    users u
+<span class="tok-kw">ON</span>
+    u.id '
+                . '= p.author</span></a><p class="row-meta"><a href="../files/src-d-php.html">src/d.php:1</a><a href="../classes/app-r.html#fn-app-r-find">R::f'
+                . 'ind</a><a class="chip chip-ghost" href="../tables/posts.html">posts</a><a class="chip chip-ghost" href="../tables/users.html">users</a><span'
+                . ' class="chip tone-warn" title="The most serious finding on this statement">medium</span></p></li></ol></section></div>',
             (new TablePage())->render($site, 'posts'),
         );
     }

@@ -113,6 +113,35 @@ final class SqlHighlighterTest extends TestCase
     }
 
     /**
+     * @return list<array{string|null, string|null, string}>
+     */
+    public static function providerHoleLabel(): array
+    {
+        return [
+            ['$sql', null, '{$sql}'],
+            ['$query_2', null, '{$query_2}'],
+            ['$クエリ', null, '{$クエリ}'],
+            ['buildSql()', '$sql', '{$sql}'],
+            [null, null, '{$}'],
+            ['buildSql($sql)', null, '{$}'],
+            ['$$name', null, '{$}'],
+            ['$sql + $other', null, '{$}'],
+            ['$sql<script>', null, '{$}'],
+        ];
+    }
+
+    #[DataProvider('providerHoleLabel')]
+    public function testHoleLabelUsesOnlyAnIdentifiedVariableName(?string $expression, ?string $variable, string $expected): void
+    {
+        $gap = new StatementPart('', true, 'call', 'a call result', $expression, $variable);
+        $highlighter = new SqlHighlighter();
+
+        self::assertSame($expected, $highlighter->holeLabel($gap));
+        self::assertStringEndsWith('>' . $expected . '</span>', $highlighter->hole($gap));
+        self::assertStringNotContainsString('<script>', $highlighter->hole($gap));
+    }
+
+    /**
      * @return list<array{Origin, string}>
      */
     public static function providerHoleRole(): array
@@ -130,4 +159,14 @@ final class SqlHighlighterTest extends TestCase
     {
         self::assertSame($expected, (new SqlHighlighter())->holeRole($origin->value));
     }
+    public function testPlainUsesNamedGapsWithoutEscapingKnownText(): void
+    {
+        self::assertSame('SELECT * FROM {$table} WHERE id < 3 AND {$}', (new SqlHighlighter())->plain([
+            new StatementPart('SELECT * FROM '),
+            new StatementPart('', true, 'parameter', 'a parameter', '$table'),
+            new StatementPart(' WHERE id < 3 AND '),
+            new StatementPart('', true, 'call', 'a call result', 'condition()'),
+        ]));
+    }
+
 }

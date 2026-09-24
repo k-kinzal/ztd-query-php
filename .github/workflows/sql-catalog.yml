@@ -7,6 +7,8 @@ on:
   pull_request:
     paths:
       - 'packages/sql-catalog/**'
+      - 'packages/sql-formatter/**'
+      - 'packages/sql-parser/**'
       - 'packages/sql-faker/**'
       - 'packages/sql-fixture/**'
       - '.github/workflows/sql-catalog.yml'

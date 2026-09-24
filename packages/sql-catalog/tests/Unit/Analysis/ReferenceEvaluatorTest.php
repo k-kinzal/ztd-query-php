@@ -29,6 +29,7 @@ use SqlCatalog\Evaluation\ArrayEntry;
 use SqlCatalog\Evaluation\ArrayTerm;
 use SqlCatalog\Evaluation\Domain;
 use SqlCatalog\Evaluation\Environment;
+use SqlCatalog\Evaluation\OpaqueTerm;
 use SqlCatalog\Php\NodeText;
 use SqlCatalog\Php\ProgramIndex;
 use SqlCatalog\Php\ProgramIndexBuilder;
@@ -56,7 +57,7 @@ use SqlCatalog\Type\TypeShape;
 #[UsesClass(\SqlCatalog\Analysis\SinkMatcher::class)]
 #[UsesClass(\SqlCatalog\Evaluation\LiteralTerm::class)]
 #[UsesClass(\SqlCatalog\Evaluation\ObjectTerm::class)]
-#[UsesClass(\SqlCatalog\Evaluation\OpaqueTerm::class)]
+#[UsesClass(OpaqueTerm::class)]
 #[UsesClass(\SqlCatalog\Evaluation\PatternTerm::class)]
 #[UsesClass(\SqlCatalog\Php\ClassShape::class)]
 #[UsesClass(\SqlCatalog\Php\MethodShape::class)]
@@ -737,4 +738,26 @@ final class ReferenceEvaluatorTest extends TestCase
         self::assertTrue($environment->read('fresh')->soleArray()?->complete);
         self::assertFalse($environment->read('partial')->soleArray()?->complete);
     }
+    public function testReadVariablePreservesProvenanceAndDomainFlagsWhileNamingOpaqueValues(): void
+    {
+        $value = Domain::fromTerms([
+            new OpaqueTerm(TypeShape::of(['string']), Origin::Call, 'buildSql()'),
+            new \SqlCatalog\Evaluation\LiteralTerm('SELECT 1'),
+        ], true, true);
+        $environment = new Environment(['sql' => $value]);
+        $evaluator = new ReferenceEvaluator(new ProgramIndex(), new ExternalInput(), new NodeText());
+        $read = $evaluator->readVariable(new Variable('sql'), $environment, new FunctionScope('t.php'));
+        $hole = $read->patterns()[0]->holes()[0];
+
+        self::assertSame('$sql', $hole->variable);
+        self::assertSame('buildSql()', $hole->expression);
+        self::assertSame(Origin::Call, $hole->origin);
+        self::assertSame('string', $hole->type->display());
+        self::assertSame('SELECT 1', $read->patterns()[1]->text());
+        self::assertTrue($read->widened);
+        self::assertTrue($read->combined);
+        self::assertSame($value->signature(), $read->signature());
+        self::assertNull($value->patterns()[0]->holes()[0]->variable);
+    }
+
 }
