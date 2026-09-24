@@ -53,7 +53,7 @@ final class TableIndexPage
         return '<h1>Tables' . $this->text->count(count($tables), 'table') . '</h1>'
             . '<p class="lede">Every table the statements name, most named first. A join counts for each of its tables. '
             . 'Open a table to see what reads, writes and alters it, and from where.</p>'
-            . '<input type="search" class="row-filter" placeholder="Narrow by table name…" autocomplete="off" spellcheck="false">'
+            . '<input type="search" name="filter" class="input input-block" data-filter-rows placeholder="Narrow by table name…" aria-label="Narrow by table name" autocomplete="off" spellcheck="false">'
             . $sections;
     }
 
@@ -86,11 +86,11 @@ final class TableIndexPage
             $rows .= $this->row($site, $table, $entries);
         }
 
-        return '<div class="table-wrap"><table class="sortable filter-target"><thead><tr>'
-            . '<th data-sort="text">Table</th><th class="num" data-sort="num">Statements</th>'
-            . '<th class="num" data-sort="num">Reads</th><th class="num" data-sort="num">Writes</th>'
-            . '<th class="num" data-sort="num">Schema</th><th class="num" data-sort="num">Attention</th>'
-            . '<th class="num" data-sort="num">Functions</th></tr></thead><tbody>' . $rows . '</tbody></table></div>';
+        return '<div class="table-wrap"><table class="sortable filter-target" data-dd-sortable><thead><tr>'
+            . '<th scope="col" data-dd-sort="text">Table</th><th scope="col" class="num" data-dd-sort="number">Statements</th>'
+            . '<th scope="col" class="num" data-dd-sort="number">Reads</th><th scope="col" class="num" data-dd-sort="number">Writes</th>'
+            . '<th scope="col" class="num" data-dd-sort="number">Schema</th><th scope="col" class="num" data-dd-sort="number">Attention</th>'
+            . '<th scope="col" class="num" data-dd-sort="number">Functions</th></tr></thead><tbody>' . $rows . '</tbody></table></div>';
     }
 
     /**

@@ -14,7 +14,7 @@ use SqlCatalog\Catalog\StatementPart;
  * the analysis and not about the statement, and rendering it as an ordinary
  * `{$}` in the middle of the SQL hides which of the two a reader is looking at.
  * Here it is marked, tinted by where the value came from, and says so when
- * pointed at.
+ * pointed at. The tokens are written in the classes doc-ui highlights.
  *
  * @visibility root
  */
@@ -29,6 +29,11 @@ final class SqlHighlighter
      * How the tokens of a resolved run are told apart.
      */
     public const TOKENS = '/(?<com>--[^\n]*|\#[^\n]*|\/\*.*?\*\/)|(?<str>\'(?:\'\'|\\\\.|[^\'])*\'|"(?:""|\\\\.|[^"])*")|(?<qid>`[^`]*`)|(?<ph>\?|:[A-Za-z_][A-Za-z0-9_]*|\$[0-9]+|%[sdfF]\b)|(?<num>\b[0-9]+(?:\.[0-9]+)?\b)|(?<word>[A-Za-z_][A-Za-z0-9_]*)/s';
+
+    /**
+     * The class each kind of token is written with, as doc-ui names them.
+     */
+    private const TOKEN_CLASSES = ['com' => 'tok-com', 'str' => 'tok-str', 'qid' => 'tok-id', 'ph' => 'tok-var', 'num' => 'tok-num'];
 
     private HtmlText $text;
 
@@ -121,7 +126,7 @@ final class SqlHighlighter
     {
         foreach (['com', 'str', 'qid', 'ph', 'num'] as $kind) {
             if (($match[$kind] ?? '') !== '') {
-                return '<span class="tok-' . ($kind === 'qid' ? 'id' : $kind) . '">'
+                return '<span class="' . self::TOKEN_CLASSES[$kind] . '">'
                     . $this->text->escape($match[$kind]) . '</span>';
             }
         }
@@ -155,14 +160,19 @@ final class SqlHighlighter
     }
 
     /**
-     * The role class a gap of that origin is tinted by.
+     * The tone a gap of that origin is tinted by.
+     *
+     * A value from outside the program is the one thing in a statement worth
+     * a warning colour; a call the analysis never reached is not a claim about
+     * the statement at all and is written in no colour; every other gap is a
+     * caution.
      */
     public function holeRole(string $origin): string
     {
         return match ($origin) {
-            'external' => 'hole-external',
-            'unreached' => 'hole-unreached',
-            default => 'hole-open',
+            'external' => 'tone-danger',
+            'unreached' => 'tone-neutral',
+            default => 'tone-warn',
         };
     }
 }

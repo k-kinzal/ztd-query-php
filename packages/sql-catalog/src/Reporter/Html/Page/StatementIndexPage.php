@@ -44,7 +44,7 @@ final class StatementIndexPage
         return '<h1>Statements' . $this->text->count(count($entries), 'statement') . '</h1>'
             . '<p class="lede">Every statement the source can issue, in the order it is written. '
             . 'Narrow the listing by what a statement does, how far the analysis got with it, or any text in it.</p>'
-            . '<div class="filterable" data-narrowable>'
+            . '<div data-narrowable>'
             . $this->list->facets($entries)
             . '<div class="active-filters" hidden></div>'
             . $this->list->rows($site, ReportSite::STATEMENTS, $entries)

@@ -92,7 +92,8 @@ final class NamespacePageTest extends TestCase
         $section = (new NamespacePage())->section(new ReportSite(new Catalog($entries)), '', $entries);
 
         self::assertStringContainsString('<a class="anchor" href="statements.html?namespace=">All statements</a>', $section);
-        self::assertStringContainsString('<tr><td><a class="mono" href="classes/r.html">R</a></td><td class="tight muted">class</td><td><a class="muted" href="files/src-a-php.html">src/a.php</a></td><td class="num">1</td><td class="num">1</td>', $section);
+        self::assertStringContainsString('<tr><td><a class="mono" href="classes/r.html">R</a></td><td class="tight muted">class</td><td><a class="muted" href="files/src-a-php.html">src/a.php</'
+            . 'a></td><td class="num">1</td><td class="num">1</td>', $section);
         self::assertStringContainsString('<a class="mono" href="files/src-b-php.html#fn-helper">helper</a></td><td class="tight muted">function</td>', $section);
         self::assertStringContainsString('<a class="mono" href="statements.html?function=%7Bmain%7D">top-level code</a></td><td class="tight muted">top-level code</td>', $section);
     }
@@ -175,43 +176,43 @@ final class NamespacePageTest extends TestCase
         $site = new ReportSite($catalog);
 
         self::assertSame(
-            '<h1>Namespaces<span class="count">3 namespaces</span></h1><p class="lede">The classes and functions that issue statements, under the namespa'
-                . 'ce each is declared in. Open a class to read its statements method by method.</p><input type="search" class="row-filter" placeholder="Narrow'
-                . ' by class or function name…" autocomplete="off" spellcheck="false"><section class="group"><h2 id="ns-global-namespace"><code>(global namespa'
-                . 'ce)</code><span class="count">2 statements</span><a class="anchor" href="statements.html?namespace=">All statements</a></h2><div class="tabl'
-                . 'e-wrap"><table class="sortable filter-target"><thead><tr><th data-sort="text">Name</th><th class="tight">Kind</th><th data-sort="text">File<'
-                . '/th><th class="num" data-sort="num">Statements</th><th class="num" data-sort="num">Tables</th><th class="num" data-sort="num">Attention</th>'
-                . '</tr></thead><tbody><tr><td><a class="mono" href="files/lib-c-php.html#fn-helper">helper</a></td><td class="tight muted">function</td><td><a'
-                . ' class="muted" href="files/lib-c-php.html">lib/c.php</a></td><td class="num">1</td><td class="num">0</td><td class="num"><span class="none">'
-                . '0</span></td></tr><tr><td><a class="mono" href="statements.html?function=%7Bmain%7D">top-level code</a></td><td class="tight muted">top-leve'
-                . 'l code</td><td><a class="muted" href="files/lib-c-php.html">lib/c.php</a></td><td class="num">1</td><td class="num">0</td><td class="num"><s'
-                . 'pan class="none">0</span></td></tr></tbody></table></div></section><section class="group"><h2 id="ns-app"><code>App</code><span class="count'
-                . '">14 statements</span><a class="anchor" href="statements.html?namespace=App">All statements</a></h2><div class="table-wrap"><table class="so'
-                . 'rtable filter-target"><thead><tr><th data-sort="text">Name</th><th class="tight">Kind</th><th data-sort="text">File</th><th class="num" data'
-                . '-sort="num">Statements</th><th class="num" data-sort="num">Tables</th><th class="num" data-sort="num">Attention</th></tr></thead><tbody><tr>'
-                . '<td><a class="mono" href="classes/app-f.html">App\\F</a></td><td class="tight muted">class</td><td><a class="muted" href="files/src-f-php.htm'
-                . 'l">src/f.php</a></td><td class="num">2</td><td class="num">2</td><td class="num"><span class="none">0</span></td></tr><tr><td><a class="mono'
-                . '" href="classes/app-g.html">App\\G</a></td><td class="tight muted">class</td><td><a class="muted" href="files/src-f-php.html">src/f.php</a></'
-                . 'td><td class="num">1</td><td class="num">1</td><td class="num"><span class="none">0</span></td></tr><tr><td><a class="mono" href="classes/ap'
-                . 'p-h.html">App\\H</a></td><td class="tight muted">class</td><td><a class="muted" href="files/src-f-php.html">src/f.php</a></td><td class="num"'
-                . '>1</td><td class="num">1</td><td class="num"><span class="none">0</span></td></tr><tr><td><a class="mono" href="classes/app-i.html">App\\I</a'
-                . '></td><td class="tight muted">class</td><td><a class="muted" href="files/src-g-php.html">src/g.php</a></td><td class="num">1</td><td class="'
-                . 'num">1</td><td class="num"><span class="none">0</span></td></tr><tr><td><a class="mono" href="classes/app-j.html">App\\J</a></td><td class="t'
-                . 'ight muted">class</td><td><a class="muted" href="files/src-h-php.html">src/h.php</a></td><td class="num">1</td><td class="num">1</td><td cla'
-                . 'ss="num"><span class="none">0</span></td></tr><tr><td><a class="mono" href="classes/app-k.html">App\\K</a></td><td class="tight muted">class<'
-                . '/td><td><a class="muted" href="files/src-i-php.html">src/i.php</a></td><td class="num">1</td><td class="num">1</td><td class="num">1</td></t'
-                . 'r><tr><td><a class="mono" href="classes/app-l.html">App\\L</a></td><td class="tight muted">class</td><td><a class="muted" href="files/src-j-p'
-                . 'hp.html">src/j.php</a></td><td class="num">1</td><td class="num">1</td><td class="num">1</td></tr><tr><td><a class="mono" href="classes/app-'
-                . 'm.html">App\\M</a></td><td class="tight muted">class</td><td><a class="muted" href="files/src-k-php.html">src/k.php</a></td><td class="num">1'
-                . '</td><td class="num">1</td><td class="num">1</td></tr><tr><td><a class="mono" href="classes/app-r.html">App\\R</a></td><td class="tight muted'
-                . '">class</td><td><a class="muted" href="files/src-a-php.html">src/a.php</a></td><td class="num">5</td><td class="num">2</td><td class="num">3'
-                . '</td></tr></tbody></table></div></section><section class="group"><h2 id="ns-app-admin"><code>App\\Admin</code><span class="count">2 statement'
-                . 's</span><a class="anchor" href="statements.html?namespace=App%5CAdmin">All statements</a></h2><div class="table-wrap"><table class="sortable'
-                . ' filter-target"><thead><tr><th data-sort="text">Name</th><th class="tight">Kind</th><th data-sort="text">File</th><th class="num" data-sort='
-                . '"num">Statements</th><th class="num" data-sort="num">Tables</th><th class="num" data-sort="num">Attention</th></tr></thead><tbody><tr><td><a'
-                . ' class="mono" href="classes/app-admin-u.html">App\\Admin\\U</a></td><td class="tight muted">class</td><td><a class="muted" href="files/src-b-p'
-                . 'hp.html">src/b.php</a></td><td class="num">2</td><td class="num">1</td><td class="num"><span class="none">0</span></td></tr></tbody></table>'
-                . '</div></section>',
+            '<h1>Namespaces<span class="count">3 namespaces</span></h1><p class="lede">The classes and functions that issue statements, under the namespace each is'
+                . ' declared in. Open a class to read its statements method by method.</p><input type="search" name="filter" class="input input-block" data-filter-rows p'
+                . 'laceholder="Narrow by class or function name…" aria-label="Narrow by class or function name" autocomplete="off" spellcheck="false"><section class="gro'
+                . 'up"><h2 id="ns-global-namespace"><code>(global namespace)</code><span class="count">2 statements</span><a class="anchor" href="statements.html?namespa'
+                . 'ce=">All statements</a></h2><div class="table-wrap"><table class="sortable filter-target" data-dd-sortable><thead><tr><th scope="col" data-dd-sort="te'
+                . 'xt">Name</th><th scope="col" class="tight">Kind</th><th scope="col" data-dd-sort="text">File</th><th scope="col" class="num" data-dd-sort="number">Sta'
+                . 'tements</th><th scope="col" class="num" data-dd-sort="number">Tables</th><th scope="col" class="num" data-dd-sort="number">Attention</th></tr></thead>'
+                . '<tbody><tr><td><a class="mono" href="files/lib-c-php.html#fn-helper">helper</a></td><td class="tight muted">function</td><td><a class="muted" href="fi'
+                . 'les/lib-c-php.html">lib/c.php</a></td><td class="num">1</td><td class="num">0</td><td class="num"><span class="none">0</span></td></tr><tr><td><a clas'
+                . 's="mono" href="statements.html?function=%7Bmain%7D">top-level code</a></td><td class="tight muted">top-level code</td><td><a class="muted" href="files'
+                . '/lib-c-php.html">lib/c.php</a></td><td class="num">1</td><td class="num">0</td><td class="num"><span class="none">0</span></td></tr></tbody></table></'
+                . 'div></section><section class="group"><h2 id="ns-app"><code>App</code><span class="count">14 statements</span><a class="anchor" href="statements.html?n'
+                . 'amespace=App">All statements</a></h2><div class="table-wrap"><table class="sortable filter-target" data-dd-sortable><thead><tr><th scope="col" data-dd'
+                . '-sort="text">Name</th><th scope="col" class="tight">Kind</th><th scope="col" data-dd-sort="text">File</th><th scope="col" class="num" data-dd-sort="nu'
+                . 'mber">Statements</th><th scope="col" class="num" data-dd-sort="number">Tables</th><th scope="col" class="num" data-dd-sort="number">Attention</th></tr'
+                . '></thead><tbody><tr><td><a class="mono" href="classes/app-f.html">App\\F</a></td><td class="tight muted">class</td><td><a class="muted" href="files/sr'
+                . 'c-f-php.html">src/f.php</a></td><td class="num">2</td><td class="num">2</td><td class="num"><span class="none">0</span></td></tr><tr><td><a class="mon'
+                . 'o" href="classes/app-g.html">App\\G</a></td><td class="tight muted">class</td><td><a class="muted" href="files/src-f-php.html">src/f.php</a></td><td c'
+                . 'lass="num">1</td><td class="num">1</td><td class="num"><span class="none">0</span></td></tr><tr><td><a class="mono" href="classes/app-h.html">App\\H</'
+                . 'a></td><td class="tight muted">class</td><td><a class="muted" href="files/src-f-php.html">src/f.php</a></td><td class="num">1</td><td class="num">1</t'
+                . 'd><td class="num"><span class="none">0</span></td></tr><tr><td><a class="mono" href="classes/app-i.html">App\\I</a></td><td class="tight muted">class<'
+                . '/td><td><a class="muted" href="files/src-g-php.html">src/g.php</a></td><td class="num">1</td><td class="num">1</td><td class="num"><span class="none">'
+                . '0</span></td></tr><tr><td><a class="mono" href="classes/app-j.html">App\\J</a></td><td class="tight muted">class</td><td><a class="muted" href="files/'
+                . 'src-h-php.html">src/h.php</a></td><td class="num">1</td><td class="num">1</td><td class="num"><span class="none">0</span></td></tr><tr><td><a class="m'
+                . 'ono" href="classes/app-k.html">App\\K</a></td><td class="tight muted">class</td><td><a class="muted" href="files/src-i-php.html">src/i.php</a></td><td'
+                . ' class="num">1</td><td class="num">1</td><td class="num">1</td></tr><tr><td><a class="mono" href="classes/app-l.html">App\\L</a></td><td class="tight '
+                . 'muted">class</td><td><a class="muted" href="files/src-j-php.html">src/j.php</a></td><td class="num">1</td><td class="num">1</td><td class="num">1</td>'
+                . '</tr><tr><td><a class="mono" href="classes/app-m.html">App\\M</a></td><td class="tight muted">class</td><td><a class="muted" href="files/src-k-php.htm'
+                . 'l">src/k.php</a></td><td class="num">1</td><td class="num">1</td><td class="num">1</td></tr><tr><td><a class="mono" href="classes/app-r.html">App\\R</'
+                . 'a></td><td class="tight muted">class</td><td><a class="muted" href="files/src-a-php.html">src/a.php</a></td><td class="num">5</td><td class="num">2</t'
+                . 'd><td class="num">3</td></tr></tbody></table></div></section><section class="group"><h2 id="ns-app-admin"><code>App\\Admin</code><span class="count">2'
+                . ' statements</span><a class="anchor" href="statements.html?namespace=App%5CAdmin">All statements</a></h2><div class="table-wrap"><table class="sortable'
+                . ' filter-target" data-dd-sortable><thead><tr><th scope="col" data-dd-sort="text">Name</th><th scope="col" class="tight">Kind</th><th scope="col" data-d'
+                . 'd-sort="text">File</th><th scope="col" class="num" data-dd-sort="number">Statements</th><th scope="col" class="num" data-dd-sort="number">Tables</th><'
+                . 'th scope="col" class="num" data-dd-sort="number">Attention</th></tr></thead><tbody><tr><td><a class="mono" href="classes/app-admin-u.html">App\\Admin\\U'
+                . '</a></td><td class="tight muted">class</td><td><a class="muted" href="files/src-b-php.html">src/b.php</a></td><td class="num">2</td><td class="num">1<'
+                . '/td><td class="num"><span class="none">0</span></td></tr></tbody></table></div></section>',
             (new NamespacePage())->render($site),
         );
     }

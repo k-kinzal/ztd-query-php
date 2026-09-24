@@ -74,19 +74,20 @@ final class PageShellTest extends TestCase
     {
         $page = (new PageShell())->render(new ReportSite(new Catalog()), 'tables/users.html', 'users', [['Overview', 'index.html'], ['users', null]], '<p>body</p>', [['On this page', [['Reads', '#reads', null, false]], null]]);
 
-        self::assertStringStartsWith('<!DOCTYPE html>' . "\n" . '<html lang="en">', $page);
+        self::assertStringStartsWith('<!DOCTYPE html>' . "\n" . '<html lang="en" data-dd-theme-key="sql-catalog-theme">', $page);
         self::assertStringContainsString('<title>users</title>', $page);
-        self::assertStringContainsString('<link rel="stylesheet" href="../assets/report.css">', $page);
+        self::assertStringContainsString('<link rel="stylesheet" href="../assets/document-design-v1.0.0.css">' . "\n" . '<link rel="stylesheet" href="../assets/report.css">', $page);
         self::assertStringContainsString('<body data-root="../">', $page);
-        self::assertStringContainsString('<main class="content">' . "\n" . '<p>body</p></main>', $page);
-        self::assertStringContainsString('<script src="../assets/search-index.js" defer></script>', $page);
-        self::assertStringContainsString('<a href="#reads" title="Reads">Reads</a>', $page);
+        self::assertStringContainsString('<div class="doc">' . "\n" . '<nav class="sidebar" id="navigation" aria-label="Report navigation">', $page);
+        self::assertStringContainsString('<main class="content" id="content">' . "\n" . '<p>body</p></main>', $page);
+        self::assertStringContainsString('<script src="../assets/search-index.js" defer></script>' . "\n" . '<script src="../assets/report.js" defer></script>' . "\n" . '<script src="../assets/document-design-v1.0.0.js" defer></script>', $page);
+        self::assertStringContainsString('<ul class="sidebar-list sidebar-context" data-dd-toc><li><a href="#reads" title="Reads">Reads</a></li></ul>', $page);
     }
 
     public function testCrumbsWriteTheTrailToThePage(): void
     {
         self::assertSame(
-            '<a href="../index.html">Overview</a><span class="crumb-sep">/</span><span class="crumb-current">Tables</span>',
+            '<a href="../index.html">Overview</a><span class="breadcrumb-sep">/</span><span class="breadcrumb-current">Tables</span>',
             (new PageShell())->crumbs([['Overview', 'index.html'], ['Tables', null]], '../'),
         );
     }
@@ -98,8 +99,9 @@ final class PageShellTest extends TestCase
         ]);
         $sidebar = (new PageShell())->sidebar(new ReportSite($catalog), 'tables/t.html', [['Tables', [['t', 'tables/t.html', 1, true]], 'tables.html']]);
 
-        self::assertStringStartsWith('<div class="sb-block"><p class="sb-title">Browse</p>', $sidebar);
-        self::assertStringEndsWith('<div class="sb-block"><p class="sb-title">Tables</p><ul class="sb-list sb-context"><li class="is-active"><a href="../tables/t.html" title="t">t</a><span class="sb-count">1</span></li></ul></div>', $sidebar);
+        self::assertStringStartsWith('<div class="sidebar-section"><p class="sidebar-title">Browse</p>', $sidebar);
+        self::assertStringEndsWith('<div class="sidebar-section"><p class="sidebar-title">Tables</p><ul class="sidebar-list sidebar-context"><li class="is-active"><a href="../tables/t.ht'
+            . 'ml" title="t" aria-current="page">t</a><span class="sidebar-count">1</span></li></ul></div>', $sidebar);
         self::assertStringNotContainsString('SQL catalog', $sidebar);
     }
 
@@ -110,9 +112,9 @@ final class PageShellTest extends TestCase
         ]);
         $routes = (new PageShell())->routes(new ReportSite($catalog), 'tables/users.html');
 
-        self::assertStringContainsString('<li class="is-active"><a href="../tables.html">Tables</a><span class="sb-count">1</span></li>', $routes);
+        self::assertStringContainsString('<li class="is-active"><a href="../tables.html" aria-current="page">Tables</a><span class="sidebar-count">1</span></li>', $routes);
         self::assertStringContainsString('<li><a href="../index.html">Overview</a></li>', $routes);
-        self::assertStringContainsString('<li><a href="../findings.html">Findings</a><span class="sb-count">0</span></li>', $routes);
+        self::assertStringContainsString('<li><a href="../findings.html">Findings</a><span class="sidebar-count">0</span></li>', $routes);
     }
 
     public function testBlockWritesSectionsAsTheyAreAndPagesRelativeToTheRoot(): void
@@ -121,9 +123,13 @@ final class PageShellTest extends TestCase
 
         self::assertSame('', $shell->block('Empty', [], null, '../'));
         self::assertSame(
-            '<div class="sb-block"><p class="sb-title">On this page</p><ul class="sb-list sb-context"><li><a href="#a" title="A &amp; B">A &amp; B</a></li>'
-            . '<li class="is-active"><a href="../tables/t.html" title="t">t</a><span class="sb-count">3</span></li></ul></div>',
+            '<div class="sidebar-section"><p class="sidebar-title">On this page</p><ul class="sidebar-list sidebar-context"><li><a href="#a" title="A &amp; B">A &a'
+                . 'mp; B</a></li><li class="is-active"><a href="../tables/t.html" title="t" aria-current="page">t</a><span class="sidebar-count">3</span></li></ul></div>',
             $shell->block('On this page', [['A & B', '#a', null, false], ['t', 'tables/t.html', 3, true]], null, '../'),
+        );
+        self::assertSame(
+            '<div class="sidebar-section"><p class="sidebar-title">On this page</p><ul class="sidebar-list sidebar-context" data-dd-toc><li><a href="#a" title="A">A</a></li></ul></div>',
+            $shell->block('On this page', [['A', '#a', null, false]], null, '../'),
         );
     }
 
@@ -134,8 +140,8 @@ final class PageShellTest extends TestCase
 
         self::assertStringContainsString('title="t40"', $block);
         self::assertStringNotContainsString('title="t41"', $block);
-        self::assertStringEndsWith('<li class="sb-more"><a href="tables.html">All 41…</a></li></ul></div>', $block);
-        self::assertStringNotContainsString('sb-more', (new PageShell())->block('Tables', array_slice($items, 0, 40), 'tables.html', ''));
+        self::assertStringEndsWith('<li class="sidebar-more"><a href="tables.html">All 41…</a></li></ul></div>', $block);
+        self::assertStringNotContainsString('sidebar-more', (new PageShell())->block('Tables', array_slice($items, 0, 40), 'tables.html', ''));
     }
 
     public function testOnThisPageTurnsAnchorsIntoABlock(): void
@@ -144,9 +150,31 @@ final class PageShellTest extends TestCase
         self::assertSame([['On this page', [['Reads', '#reads', null, false]], null]], (new PageShell())->onThisPage([['Reads', 'reads']]));
     }
 
+    public function testHeadLoadsTheDesignBeforeTheReportsOwnStylesheet(): void
+    {
+        $head = (new PageShell())->head('../', 'A & B');
+
+        self::assertStringStartsWith('<!DOCTYPE html>' . "\n" . '<html lang="en" data-dd-theme-key="sql-catalog-theme">' . "\n" . '<head>', $head);
+        self::assertStringContainsString('<meta name="color-scheme" content="light dark">', $head);
+        self::assertStringContainsString('<title>A &amp; B</title>', $head);
+        self::assertStringContainsString('<link rel="stylesheet" href="../assets/document-design-v1.0.0.css">' . "\n" . '<link rel="stylesheet" href="../assets/report.css">', $head);
+        self::assertStringEndsWith((new PageShell())->bootstrap() . "\n" . '</head>' . "\n", $head);
+    }
+
+    public function testTopbarCarriesTheTrailAndTheControlsTheScriptReveals(): void
+    {
+        $topbar = (new PageShell())->topbar([['Overview', 'index.html'], ['Tables', null]], '../');
+
+        self::assertStringStartsWith('<header class="topbar">' . "\n" . '<button class="btn nav-toggle" type="button" data-dd-nav-toggle aria-controls="navigation" aria-expanded="false"', $topbar);
+        self::assertStringContainsString('<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../index.html">Overview</a><span class="breadcrumb-sep">/</span><span class="breadcrumb-current">Tables</span></nav>', $topbar);
+        self::assertStringContainsString('<input type="search" id="search" class="input input-search" data-dd-search data-dd-enhance hidden', $topbar);
+        self::assertStringContainsString('<button class="btn" type="button" data-dd-theme-toggle data-dd-enhance hidden aria-label="Switch theme">◐</button>', $topbar);
+        self::assertStringEndsWith('</header>' . "\n", $topbar);
+    }
+
     public function testBootstrapRestoresTheChosenTheme(): void
     {
-        self::assertStringContainsString('localStorage.getItem("sql-catalog-theme")', (new PageShell())->bootstrap());
+        self::assertSame('<script>try{var t=localStorage.getItem("sql-catalog-theme");if(t){document.documentElement.dataset.ddTheme=t}}catch(e){}</script>', (new PageShell())->bootstrap());
     }
 
     public function testRenderIsWrittenExactly(): void
@@ -195,53 +223,65 @@ final class PageShellTest extends TestCase
 
         self::assertSame(
             '<!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-dd-theme-key="sql-catalog-theme">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>p'
-                . 'osts</title>
+<meta name="viewport" content="width=device-width'
+                . ', initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>posts</title>
+<link rel="stylesheet" href="../assets/document-design-v1.0.0'
+                . '.css">
 <link rel="stylesheet" href="../assets/report.css">
-<script>try{var t=localStorage.getItem("sql-catalog-theme");if(t){document.'
-                . 'documentElement.dataset.theme=t}}catch(e){}</script>
+<script>try{var t=localStorage.getItem("sql-catalog-theme");if(t){document.documentElement.'
+                . 'dataset.ddTheme=t}}catch(e){}</script>
 </head>
 <body data-root="../">
-<nav class="sidebar" id="sidebar"><div class="sb-block">'
-                . '<p class="sb-title">Browse</p><ul class="sb-list"><li><a href="../index.html">Overview</a></li><li><a href="../statements.html">Statements</'
-                . 'a><span class="sb-count">18</span></li><li class="is-active"><a href="../tables.html">Tables</a><span class="sb-count">11</span></li><li><a '
-                . 'href="../namespaces.html">Namespaces</a><span class="sb-count">3</span></li><li><a href="../files.html">Files</a><span class="sb-count">11</'
-                . 'span></li><li><a href="../findings.html">Findings</a><span class="sb-count">8</span></li></ul></div><div class="sb-block"><p class="sb-title'
-                . '">On this page</p><ul class="sb-list sb-context"><li><a href="#used-from" title="Used from">Used from</a></li><li><a href="#alongside" title'
-                . '="Named alongside">Named alongside</a></li><li><a href="#writes" title="Writes">Writes</a></li><li><a href="#reads" title="Reads">Reads</a><'
-                . '/li></ul></div><div class="sb-block"><p class="sb-title">Tables</p><ul class="sb-list sb-context"><li class="is-active"><a href="../tables/p'
-                . 'osts.html" title="posts">posts</a><span class="sb-count">4</span></li><li><a href="../tables/users.html" title="users">users</a><span class='
-                . '"sb-count">3</span></li><li><a href="../tables/t1.html" title="t1">t1</a><span class="sb-count">1</span></li><li><a href="../tables/t2.html"'
-                . ' title="t2">t2</a><span class="sb-count">1</span></li><li><a href="../tables/t3.html" title="t3">t3</a><span class="sb-count">1</span></li><'
-                . 'li><a href="../tables/t4.html" title="t4">t4</a><span class="sb-count">1</span></li><li><a href="../tables/t5.html" title="t5">t5</a><span c'
-                . 'lass="sb-count">1</span></li><li><a href="../tables/t6.html" title="t6">t6</a><span class="sb-count">1</span></li><li><a href="../tables/t7.'
-                . 'html" title="t7">t7</a><span class="sb-count">1</span></li><li><a href="../tables/t8.html" title="t8">t8</a><span class="sb-count">1</span><'
-                . '/li><li><a href="../tables/t9.html" title="t9">t9</a><span class="sb-count">1</span></li></ul></div></nav>
-<div class="page">
-<header class='
-                . '"topbar">
-<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
-<nav class="crumbs"><a href="../index.html">Overvi'
-                . 'ew</a><span class="crumb-sep">/</span><a href="../tables.html">Tables</a><span class="crumb-sep">/</span><span class="crumb-current">posts</'
-                . 'span></nav>
+<a class="skip" href="#content">Skip to content</a>
+<div class="doc">
+<nav class'
+                . '="sidebar" id="navigation" aria-label="Report navigation"><div class="sidebar-section"><p class="sidebar-title">Browse</p><ul class="sidebar-list"><li'
+                . '><a href="../index.html">Overview</a></li><li><a href="../statements.html">Statements</a><span class="sidebar-count">18</span></li><li class="is-activ'
+                . 'e"><a href="../tables.html" aria-current="page">Tables</a><span class="sidebar-count">11</span></li><li><a href="../namespaces.html">Namespaces</a><sp'
+                . 'an class="sidebar-count">3</span></li><li><a href="../files.html">Files</a><span class="sidebar-count">11</span></li><li><a href="../findings.html">Fi'
+                . 'ndings</a><span class="sidebar-count">8</span></li></ul></div><div class="sidebar-section"><p class="sidebar-title">On this page</p><ul class="sidebar'
+                . '-list sidebar-context" data-dd-toc><li><a href="#used-from" title="Used from">Used from</a></li><li><a href="#alongside" title="Named alongside">Named'
+                . ' alongside</a></li><li><a href="#writes" title="Writes">Writes</a></li><li><a href="#reads" title="Reads">Reads</a></li></ul></div><div class="sidebar'
+                . '-section"><p class="sidebar-title">Tables</p><ul class="sidebar-list sidebar-context"><li class="is-active"><a href="../tables/posts.html" title="post'
+                . 's" aria-current="page">posts</a><span class="sidebar-count">4</span></li><li><a href="../tables/users.html" title="users">users</a><span class="sideba'
+                . 'r-count">3</span></li><li><a href="../tables/t1.html" title="t1">t1</a><span class="sidebar-count">1</span></li><li><a href="../tables/t2.html" title='
+                . '"t2">t2</a><span class="sidebar-count">1</span></li><li><a href="../tables/t3.html" title="t3">t3</a><span class="sidebar-count">1</span></li><li><a h'
+                . 'ref="../tables/t4.html" title="t4">t4</a><span class="sidebar-count">1</span></li><li><a href="../tables/t5.html" title="t5">t5</a><span class="sideba'
+                . 'r-count">1</span></li><li><a href="../tables/t6.html" title="t6">t6</a><span class="sidebar-count">1</span></li><li><a href="../tables/t7.html" title='
+                . '"t7">t7</a><span class="sidebar-count">1</span></li><li><a href="../tables/t8.html" title="t8">t8</a><span class="sidebar-count">1</span></li><li><a h'
+                . 'ref="../tables/t9.html" title="t9">t9</a><span class="sidebar-count">1</span></li></ul></div></nav>
+<div class="main">
+<header class="topbar">
+<button'
+                . ' class="btn nav-toggle" type="button" data-dd-nav-toggle aria-controls="navigation" aria-expanded="false" aria-label="Open navigation">☰</button>
+<nav'
+                . ' class="breadcrumbs" aria-label="Breadcrumb"><a href="../index.html">Overview</a><span class="breadcrumb-sep">/</span><a href="../tables.html">Tables<'
+                . '/a><span class="breadcrumb-sep">/</span><span class="breadcrumb-current">posts</span></nav>
 <div class="topbar-tools">
-<input type="search" id="search" placeholder="Find a statement… ( / )" title="Search by SQL text, tab'
-                . 'le, function or file" autocomplete="off" spellcheck="false">
-<button id="theme-toggle" title="Toggle theme">◐</button>
+<input type="search" id="search'
+                . '" class="input input-search" data-dd-search data-dd-enhance hidden placeholder="Find a statement… ( / )" aria-label="Search by SQL text, table, functi'
+                . 'on or file" autocomplete="off" spellcheck="false">
+<button class="btn" type="button" data-dd-theme-toggle data-dd-enhance hidden aria-label="Switch th'
+                . 'eme">◐</button>
 </div>
 </header>
-<div'
-                . ' class="search-results" id="search-results" hidden></div>
-<main class="content">
-<p>body</p></main>
+<div class="search-results" data-dd-search-results hidden></div>
+<main class="content" id="content">
+<p>body</p></mai'
+                . 'n>
+<footer class="doc-footer">Written by <a href="https://github.com/k-kinzal/ztd-query-php/tree/main/packages/sql-catalog">sql-catalog</a>.</footer>
+'
+                . '</div>
 </div>
-<script src="../assets/search-ind'
-                . 'ex.js" defer></script>
+<script src="../assets/search-index.js" defer></script>
 <script src="../assets/report.js" defer></script>
+<script src="../assets/documen'
+                . 't-design-v1.0.0.js" defer></script>
 </body>
 </html>
 ',

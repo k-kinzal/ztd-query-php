@@ -115,6 +115,9 @@ final class HtmlReporterTest extends TestCase
 
         self::assertSame(
             [
+                'assets/document-design-LICENSE.txt',
+                'assets/document-design-v1.0.0.css',
+                'assets/document-design-v1.0.0.js',
                 'assets/report.css',
                 'assets/report.js',
                 'assets/search-index.js',
@@ -165,7 +168,7 @@ final class HtmlReporterTest extends TestCase
         $page = (string) (new HtmlReporter())->render($catalog)->get('statements/a1.html');
 
         self::assertStringContainsString('no statement was read from this call', $page);
-        self::assertStringContainsString('<span class="chip s-neutral">not-analyzed</span>', $page);
+        self::assertStringContainsString('<span class="chip tone-neutral">not-analyzed</span>', $page);
     }
 
     public function testRenderCarriesTheFilesThatCouldNotBeRead(): void
@@ -195,7 +198,7 @@ final class HtmlReporterTest extends TestCase
         $pages = (new HtmlReporter())->classPages(new ReportSite($catalog), new PageShell());
 
         self::assertSame(['classes/app-r.html'], array_keys($pages));
-        self::assertStringContainsString('<span class="crumb-current">R</span>', $pages['classes/app-r.html']);
+        self::assertStringContainsString('<span class="breadcrumb-current">R</span>', $pages['classes/app-r.html']);
     }
 
     public function testFilePagesWriteOneDocumentPerFile(): void
@@ -227,22 +230,22 @@ final class HtmlReporterTest extends TestCase
             new CatalogEntry('a1', StatementKind::Select, TextPattern::fromText('SELECT * FROM posts'), ['posts'], [], new CallSite('src/a.php', 1, 'App\\R::find', 'pdo.query'), []),
         ]);
         $artifacts = (new HtmlReporter())->render($catalog);
-        $home = '<a href="../index.html">Overview</a><span class="crumb-sep">/</span>';
+        $home = '<a href="../index.html">Overview</a><span class="breadcrumb-sep">/</span>';
 
-        self::assertStringContainsString('<nav class="crumbs"><span class="crumb-current">Overview</span></nav>', (string) $artifacts->get('index.html'));
-        self::assertStringContainsString('<a href="index.html">Overview</a><span class="crumb-sep">/</span><span class="crumb-current">Statements</span>', (string) $artifacts->get('statements.html'));
-        self::assertStringContainsString('<a href="index.html">Overview</a><span class="crumb-sep">/</span><span class="crumb-current">Tables</span>', (string) $artifacts->get('tables.html'));
-        self::assertStringContainsString('<a href="index.html">Overview</a><span class="crumb-sep">/</span><span class="crumb-current">Namespaces</span>', (string) $artifacts->get('namespaces.html'));
-        self::assertStringContainsString('<a href="index.html">Overview</a><span class="crumb-sep">/</span><span class="crumb-current">Files</span>', (string) $artifacts->get('files.html'));
-        self::assertStringContainsString('<a href="index.html">Overview</a><span class="crumb-sep">/</span><span class="crumb-current">Findings</span>', (string) $artifacts->get('findings.html'));
-        self::assertStringContainsString($home . '<a href="../tables.html">Tables</a><span class="crumb-sep">/</span><span class="crumb-current">posts</span>', (string) $artifacts->get('tables/posts.html'));
-        self::assertStringContainsString($home . '<a href="../namespaces.html">Namespaces</a><span class="crumb-sep">/</span><span class="crumb-current">R</span>', (string) $artifacts->get('classes/app-r.html'));
-        self::assertStringContainsString($home . '<a href="../files.html">Files</a><span class="crumb-sep">/</span><span class="crumb-current">src/a.php</span>', (string) $artifacts->get('files/src-a-php.html'));
-        self::assertStringContainsString($home . '<a href="../statements.html">Statements</a><span class="crumb-sep">/</span><span class="crumb-current">a1</span>', (string) $artifacts->get('statements/a1.html'));
+        self::assertStringContainsString('<nav class="breadcrumbs" aria-label="Breadcrumb"><span class="breadcrumb-current">Overview</span></nav>', (string) $artifacts->get('index.html'));
+        self::assertStringContainsString('<a href="index.html">Overview</a><span class="breadcrumb-sep">/</span><span class="breadcrumb-current">Statements</span>', (string) $artifacts->get('statements.html'));
+        self::assertStringContainsString('<a href="index.html">Overview</a><span class="breadcrumb-sep">/</span><span class="breadcrumb-current">Tables</span>', (string) $artifacts->get('tables.html'));
+        self::assertStringContainsString('<a href="index.html">Overview</a><span class="breadcrumb-sep">/</span><span class="breadcrumb-current">Namespaces</span>', (string) $artifacts->get('namespaces.html'));
+        self::assertStringContainsString('<a href="index.html">Overview</a><span class="breadcrumb-sep">/</span><span class="breadcrumb-current">Files</span>', (string) $artifacts->get('files.html'));
+        self::assertStringContainsString('<a href="index.html">Overview</a><span class="breadcrumb-sep">/</span><span class="breadcrumb-current">Findings</span>', (string) $artifacts->get('findings.html'));
+        self::assertStringContainsString($home . '<a href="../tables.html">Tables</a><span class="breadcrumb-sep">/</span><span class="breadcrumb-current">posts</span>', (string) $artifacts->get('tables/posts.html'));
+        self::assertStringContainsString($home . '<a href="../namespaces.html">Namespaces</a><span class="breadcrumb-sep">/</span><span class="breadcrumb-current">R</span>', (string) $artifacts->get('classes/app-r.html'));
+        self::assertStringContainsString($home . '<a href="../files.html">Files</a><span class="breadcrumb-sep">/</span><span class="breadcrumb-current">src/a.php</span>', (string) $artifacts->get('files/src-a-php.html'));
+        self::assertStringContainsString($home . '<a href="../statements.html">Statements</a><span class="breadcrumb-sep">/</span><span class="breadcrumb-current">a1</span>', (string) $artifacts->get('statements/a1.html'));
         self::assertStringContainsString('<a href="#attention" title="Needs attention">Needs attention</a></li><li><a href="#coverage"', (string) $artifacts->get('index.html'));
-        self::assertStringContainsString('<p class="sb-title">Tables</p>', (string) $artifacts->get('tables/posts.html'));
-        self::assertStringContainsString('<p class="sb-title">Classes in App</p>', (string) $artifacts->get('classes/app-r.html'));
-        self::assertStringContainsString('<p class="sb-title">Files in src/</p>', (string) $artifacts->get('files/src-a-php.html'));
-        self::assertStringContainsString('<p class="sb-title">Belongs to</p>', (string) $artifacts->get('statements/a1.html'));
+        self::assertStringContainsString('<p class="sidebar-title">Tables</p>', (string) $artifacts->get('tables/posts.html'));
+        self::assertStringContainsString('<p class="sidebar-title">Classes in App</p>', (string) $artifacts->get('classes/app-r.html'));
+        self::assertStringContainsString('<p class="sidebar-title">Files in src/</p>', (string) $artifacts->get('files/src-a-php.html'));
+        self::assertStringContainsString('<p class="sidebar-title">Belongs to</p>', (string) $artifacts->get('statements/a1.html'));
     }
 }

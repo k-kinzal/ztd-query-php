@@ -11,9 +11,10 @@ use SqlCatalog\Catalog\Severity;
 /**
  * One statement as a row of a listing.
  *
- * A listing is for scanning, so a row shows the statement itself first — the
- * SQL, on as few lines as it fits in — and then where it is issued, with
- * every place it names linked to the page for it. What the analyzer thinks of
+ * A row is a doc-ui listing row. A listing is for scanning, so a row shows
+ * the statement itself first — the SQL, on as few lines as it fits in — and
+ * then where it is issued, with every place it names linked to the page for
+ * it. What the analyzer thinks of
  * the statement is shown only when it is not the ordinary case: a resolved
  * statement with nothing reported carries no state chips at all, so the ones
  * that do stand out.
@@ -50,8 +51,8 @@ final class StatementRow
         return '<li class="row"' . $this->attributes($entry) . '>'
             . '<a class="row-main" href="' . $this->text->escape($prefix . $site->statementPage($entry->id)) . '">'
             . $this->text->chip(strtoupper($entry->kind->value), $this->palette->kind($entry->kind->value))
-            . '<code class="row-sql">' . $this->sql($entry) . '</code></a>'
-            . '<div class="row-meta">' . $this->meta($site, $prefix, $entry, $omit) . '</div>'
+            . '<span class="row-body">' . $this->sql($entry) . '</span></a>'
+            . '<p class="row-meta">' . $this->meta($site, $prefix, $entry, $omit) . '</p>'
             . '</li>';
     }
 
@@ -110,10 +111,10 @@ final class StatementRow
         $scope = Scope::of($entry->site->function);
         $items = [];
         if (!in_array('file', $omit, true)) {
-            $items[] = $this->text->link($entry->site->display(), $prefix . $site->filePage($entry->site->file), 'row-site');
+            $items[] = $this->text->link($entry->site->display(), $prefix . $site->filePage($entry->site->file));
         }
         if (!in_array('function', $omit, true) && !$scope->isMain()) {
-            $items[] = $this->text->link($scope->display(), $prefix . $site->functionUrl($entry), 'row-fn');
+            $items[] = $this->text->link($scope->display(), $prefix . $site->functionUrl($entry));
         }
         if (!in_array('tables', $omit, true)) {
             foreach ($entry->tables as $table) {

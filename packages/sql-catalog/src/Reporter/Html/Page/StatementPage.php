@@ -115,7 +115,7 @@ final class StatementPage
         if (!$scope->isMain()) {
             $sentence .= ' in ' . $this->text->link($scope->function(), '../' . $site->functionUrl($entry), 'mono');
         }
-        $sentence .= ' through ' . $this->text->chip($entry->site->sink, 'chip-sm', 'The database call that was matched');
+        $sentence .= ' through ' . $this->text->chip($entry->site->sink, 'chip-sm chip-ghost', 'The database call that was matched');
         if (count($entry->through) > 1) {
             $sentence .= ', reached by way of <code>' . $this->text->escape(implode(' → ', $entry->through)) . '</code>';
         }
@@ -125,21 +125,23 @@ final class StatementPage
 
     /**
      * The statement itself, laid out for reading, or the call it was not read from.
+     *
+     * The copy button takes what the block shows, so what is copied is what
+     * was read: the statement a clause per line, with every gap as `{$}`.
      */
     public function body(CatalogEntry $entry): string
     {
         if ($entry->resolution() === Resolution::NotAnalyzed) {
             $written = $entry->firstGap()?->expression;
 
-            return '<pre class="sql sql-full"><span class="tok-com">-- no statement was read from this call</span>'
+            return '<pre class="code code-lead"><span class="tok-com">-- no statement was read from this call</span>'
                 . ($written === null ? '' : "\n" . $this->text->escape($written)) . '</pre>';
         }
 
-        return '<div class="sql-block">'
-            . '<button type="button" class="copy" data-copy="sql-text" title="Copy the statement">Copy</button>'
-            . '<pre class="sql sql-full">' . $this->sql->render($this->formatter->format($entry->parts())) . '</pre>'
-            . '<textarea id="sql-text" hidden readonly>' . $this->text->escape($entry->sql()) . '</textarea>'
-            . '<details class="as-written"><summary>As written in the source</summary><pre class="sql">'
+        return '<div class="code-block">'
+            . '<button type="button" class="btn copy" data-dd-copy title="Copy the statement">Copy</button>'
+            . '<pre class="code code-lead">' . $this->sql->render($this->formatter->format($entry->parts())) . '</pre>'
+            . '<details class="as-written"><summary>As written in the source</summary><pre class="code">'
             . $this->sql->render($entry->parts()) . '</pre></details></div>';
     }
 
@@ -167,7 +169,7 @@ final class StatementPage
             $items .= '<li>' . $this->text->escape($caveat) . '</li>';
         }
 
-        return '<div class="notice notice-warn"><ul>' . $items . '</ul></div>';
+        return '<div class="notice tone-warn"><ul>' . $items . '</ul></div>';
     }
 
     /**
@@ -194,7 +196,7 @@ final class StatementPage
             $written .= '<div><dt>' . $this->text->escape($label) . '</dt><dd>' . $value . '</dd></div>';
         }
 
-        return '<section><h2 id="facts">About this statement</h2><dl class="facts-grid">' . $written . '</dl></section>';
+        return '<section><h2 id="facts">About this statement</h2><dl class="facts">' . $written . '</dl></section>';
     }
 
     /**
@@ -211,7 +213,7 @@ final class StatementPage
         }
 
         return '<section><h2 id="values">Bound values</h2><div class="table-wrap"><table>'
-            . '<thead><tr><th class="tight">Parameter</th><th class="tight">Type</th><th>Bound to</th></tr></thead>'
+            . '<thead><tr><th scope="col" class="tight">Parameter</th><th scope="col" class="tight">Type</th><th scope="col">Bound to</th></tr></thead>'
             . '<tbody>' . $rows . '</tbody></table></div></section>';
     }
 
@@ -300,7 +302,7 @@ final class StatementPage
             $written .= '<section><h2 id="same-function">Also issued by <code>' . $this->text->escape($scope->display()) . '</code>'
                 . $this->text->count(count($siblings)) . '</h2>'
                 . $this->list->rows($site, $page, array_slice($siblings, 0, self::RELATED), ['function'])
-                . (count($siblings) > self::RELATED ? '<p class="route-all">' . $this->text->link('Every statement of this function', '../' . $site->functionUrl($entry)) . '</p>' : '')
+                . (count($siblings) > self::RELATED ? '<p class="more">' . $this->text->link('Every statement of this function', '../' . $site->functionUrl($entry)) . '</p>' : '')
                 . '</section>';
         }
         foreach (array_slice($entry->tables, 0, 2) as $table) {
@@ -311,7 +313,7 @@ final class StatementPage
             $written .= '<section><h2 id="' . $this->text->escape('same-table-' . $this->text->slug($table)) . '">Also on '
                 . $this->text->chipLink((new TableName($table))->label(), '../' . $site->tablePage($table), 'chip-ghost') . $this->text->count(count($others)) . '</h2>'
                 . $this->list->rows($site, $page, array_slice($others, 0, self::RELATED))
-                . (count($others) > self::RELATED ? '<p class="route-all">' . $this->text->link('Every statement on this table', '../' . $site->tablePage($table)) . '</p>' : '')
+                . (count($others) > self::RELATED ? '<p class="more">' . $this->text->link('Every statement on this table', '../' . $site->tablePage($table)) . '</p>' : '')
                 . '</section>';
         }
 

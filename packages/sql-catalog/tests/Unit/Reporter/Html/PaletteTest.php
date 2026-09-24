@@ -21,22 +21,22 @@ final class PaletteTest extends TestCase
     public static function providerKind(): array
     {
         return [
-            [StatementKind::Select, 'k-select'],
-            [StatementKind::Insert, 'k-insert'],
-            [StatementKind::Replace, 'k-insert'],
-            [StatementKind::Merge, 'k-insert'],
-            [StatementKind::Update, 'k-update'],
-            [StatementKind::Delete, 'k-delete'],
-            [StatementKind::Create, 'k-schema'],
-            [StatementKind::Alter, 'k-schema'],
-            [StatementKind::Drop, 'k-schema'],
-            [StatementKind::Truncate, 'k-schema'],
-            [StatementKind::Call, 'k-other'],
-            [StatementKind::Show, 'k-other'],
-            [StatementKind::Explain, 'k-other'],
-            [StatementKind::Transaction, 'k-other'],
-            [StatementKind::Other, 'k-other'],
-            [StatementKind::Unknown, 'k-other'],
+            [StatementKind::Select, 'tone-blue'],
+            [StatementKind::Insert, 'tone-teal'],
+            [StatementKind::Replace, 'tone-teal'],
+            [StatementKind::Merge, 'tone-teal'],
+            [StatementKind::Update, 'tone-violet'],
+            [StatementKind::Delete, 'tone-pink'],
+            [StatementKind::Create, 'tone-indigo'],
+            [StatementKind::Alter, 'tone-indigo'],
+            [StatementKind::Drop, 'tone-indigo'],
+            [StatementKind::Truncate, 'tone-indigo'],
+            [StatementKind::Call, 'tone-slate'],
+            [StatementKind::Show, 'tone-slate'],
+            [StatementKind::Explain, 'tone-slate'],
+            [StatementKind::Transaction, 'tone-slate'],
+            [StatementKind::Other, 'tone-slate'],
+            [StatementKind::Unknown, 'tone-slate'],
         ];
     }
 
@@ -58,11 +58,11 @@ final class PaletteTest extends TestCase
     public static function providerResolution(): array
     {
         return [
-            [Resolution::Resolved, 's-ok'],
-            [Resolution::ExternalInput, 's-danger'],
-            [Resolution::IncompleteModel, 's-open'],
-            [Resolution::Incomplete, 's-open'],
-            [Resolution::NotAnalyzed, 's-neutral'],
+            [Resolution::Resolved, 'tone-ok'],
+            [Resolution::ExternalInput, 'tone-danger'],
+            [Resolution::IncompleteModel, 'chip-ghost'],
+            [Resolution::Incomplete, 'chip-ghost'],
+            [Resolution::NotAnalyzed, 'tone-neutral'],
         ];
     }
 
@@ -78,10 +78,10 @@ final class PaletteTest extends TestCase
     public static function providerSeverity(): array
     {
         return [
-            [Severity::High, 's-danger'],
-            [Severity::Medium, 's-warn'],
-            [Severity::Low, 's-neutral'],
-            [Severity::Info, 's-neutral'],
+            [Severity::High, 'tone-danger'],
+            [Severity::Medium, 'tone-warn'],
+            [Severity::Low, 'tone-neutral'],
+            [Severity::Info, 'tone-neutral'],
         ];
     }
 
@@ -91,8 +91,9 @@ final class PaletteTest extends TestCase
         self::assertSame($expected, (new Palette())->severity($severity));
     }
 
-    public function testBarFollowsTheChipItGoesWith(): void
+    public function testBarKeepsAToneAndHatchesAnOpenSearch(): void
     {
-        self::assertSame('bar-ok', (new Palette())->bar('s-ok'));
+        self::assertSame('tone-ok', (new Palette())->bar('tone-ok'));
+        self::assertSame('is-open', (new Palette())->bar(Palette::OPEN));
     }
 }

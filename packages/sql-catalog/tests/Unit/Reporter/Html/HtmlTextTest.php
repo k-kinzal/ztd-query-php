@@ -18,7 +18,7 @@ final class HtmlTextTest extends TestCase
 
     public function testChipCarriesItsRoleAndTitle(): void
     {
-        self::assertSame('<span class="chip k-select" title="What it does">SELECT</span>', (new HtmlText())->chip('SELECT', 'k-select', 'What it does'));
+        self::assertSame('<span class="chip tone-blue" title="What it does">SELECT</span>', (new HtmlText())->chip('SELECT', 'tone-blue', 'What it does'));
         self::assertSame('<span class="chip">plain</span>', (new HtmlText())->chip('plain'));
     }
 
@@ -53,9 +53,19 @@ final class HtmlTextTest extends TestCase
         self::assertSame('0%', (new HtmlText())->percent(1, 0));
     }
 
-    public function testBarShowsAShare(): void
+    public function testChipCountCarriesHowManyTheChipStandsFor(): void
     {
-        self::assertSame('<span class="bar bar-ok"><span style="--w:50%"></span></span>', (new HtmlText())->bar(1, 2, 'bar-ok'));
+        self::assertSame(
+            '<a class="chip chip-ghost" href="tables/posts.html">posts<span class="facet-count">1,234</span></a>',
+            (new HtmlText())->chipCount('posts', 'tables/posts.html', 1234, 'chip-ghost'),
+        );
+        self::assertSame('<a class="chip" href="a.html">A &amp; B<span class="facet-count">0</span></a>', (new HtmlText())->chipCount('A & B', 'a.html', 0));
+    }
+
+    public function testNounAgreesWithTheCount(): void
+    {
+        self::assertSame('table', (new HtmlText())->noun(1, 'table'));
+        self::assertSame('tables', (new HtmlText())->noun(0, 'table'));
     }
 
     public function testSlugIsWritableAsAnIdentifier(): void
@@ -77,7 +87,7 @@ final class HtmlTextTest extends TestCase
     public function testMarkedMarksEveryGapInAName(): void
     {
         self::assertSame(
-            '<span class="hole hole-open" title="A part of this name the analysis could not pin down">{$}</span>posts &amp; more',
+            '<span class="hole tone-warn" title="A part of this name the analysis could not pin down">{$}</span>posts &amp; more',
             (new HtmlText())->marked('{$}posts & more'),
         );
     }
