@@ -16,27 +16,29 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="ZTD Query PHP">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="../../../../../../assets/document-design-v1.0.0.css">
 <link rel="stylesheet" href="../../../../../../assets/style.css">
-<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.theme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
+<script>try{var t=localStorage.getItem("docgen-theme");if(t){document.documentElement.dataset.ddTheme=t}document.documentElement.dataset.diffMode=localStorage.getItem("docgen-diff-mode")||"inline"}catch(e){}</script>
 </head>
 <body data-root="../../../../../../">
-<nav class="sidebar" id="sidebar"><div class="sb-head"><a class="sb-site" href="../../../../../../index.html">ZTD Query PHP</a></div><nav class="sb-block"><div class="sb-title">Packages</div><ul class="sb-list"><li data-diff="same"><a href="../../../../../../k-kinzal/bison-parser/index.html">k-kinzal/bison-parser</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/container/index.html">k-kinzal/container</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/lemon-parser/index.html">k-kinzal/lemon-parser</a></li><li data-diff="added"><a href="../../../../../../k-kinzal/requirements/index.html">k-kinzal/requirements</a></li><li data-diff="modified"><a href="../../../../../../k-kinzal/sql-catalog/index.html">k-kinzal/sql-catalog</a></li><li data-diff="modified"><a href="../../../../../../k-kinzal/sql-faker/index.html">k-kinzal/sql-faker</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/sql-fixture/index.html">k-kinzal/sql-fixture</a></li><li data-diff="modified"><a href="../../../../../../k-kinzal/sql-parser/index.html">k-kinzal/sql-parser</a></li><li data-diff="modified"><a href="../../../../../../k-kinzal/sql-semantics/index.html">k-kinzal/sql-semantics</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/ztd-query-core/index.html">k-kinzal/ztd-query-core</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/ztd-query-mysql/index.html">k-kinzal/ztd-query-mysql</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/ztd-query-mysqli-adapter/index.html">k-kinzal/ztd-query-mysqli-adapter</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/ztd-query-pdo-adapter/index.html">k-kinzal/ztd-query-pdo-adapter</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/ztd-query-postgres/index.html">k-kinzal/ztd-query-postgres</a></li><li data-diff="modified"><a href="../../../../../../k-kinzal/ztd-query-sqlite/index.html">k-kinzal/ztd-query-sqlite</a></li></ul></nav></nav>
-<div class="page">
+<a class="skip" href="#content">Skip to content</a><div class="doc">
+<aside class="sidebar" id="sidebar" aria-label="Documentation navigation"><div class="sidebar-header"><a class="sidebar-site" href="../../../../../../index.html">ZTD Query PHP</a></div><nav class="sidebar-section"><div class="sidebar-title">Packages</div><ul class="sidebar-list"><li data-diff="same"><a href="../../../../../../k-kinzal/bison-parser/index.html">k-kinzal/bison-parser</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/container/index.html">k-kinzal/container</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/lemon-parser/index.html">k-kinzal/lemon-parser</a></li><li data-diff="added"><a href="../../../../../../k-kinzal/requirements/index.html">k-kinzal/requirements</a></li><li data-diff="modified"><a href="../../../../../../k-kinzal/sql-catalog/index.html">k-kinzal/sql-catalog</a></li><li data-diff="modified"><a href="../../../../../../k-kinzal/sql-faker/index.html">k-kinzal/sql-faker</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/sql-fixture/index.html">k-kinzal/sql-fixture</a></li><li data-diff="added"><a href="../../../../../../k-kinzal/sql-formatter/index.html">k-kinzal/sql-formatter</a></li><li data-diff="modified"><a href="../../../../../../k-kinzal/sql-parser/index.html">k-kinzal/sql-parser</a></li><li data-diff="modified"><a href="../../../../../../k-kinzal/sql-semantics/index.html">k-kinzal/sql-semantics</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/ztd-query-core/index.html">k-kinzal/ztd-query-core</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/ztd-query-mysql/index.html">k-kinzal/ztd-query-mysql</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/ztd-query-mysqli-adapter/index.html">k-kinzal/ztd-query-mysqli-adapter</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/ztd-query-pdo-adapter/index.html">k-kinzal/ztd-query-pdo-adapter</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/ztd-query-php/index.html">k-kinzal/ztd-query-php</a></li><li data-diff="same"><a href="../../../../../../k-kinzal/ztd-query-postgres/index.html">k-kinzal/ztd-query-postgres</a></li><li data-diff="modified"><a href="../../../../../../k-kinzal/ztd-query-sqlite/index.html">k-kinzal/ztd-query-sqlite</a></li></ul></nav></aside>
+<div class="main">
 <header class="topbar">
-<button class="nav-toggle" id="nav-toggle" title="Toggle navigation">☰</button>
-<nav class="crumbs"><a href="../../../../../../index.html">src</a><span class="crumb-sep">::</span><span class="crumb-current">packages/sql-semantics/src/Model/Statement/StatementKind.php</span></nav>
+<button class="btn nav-toggle" id="nav-toggle" type="button" aria-controls="sidebar" aria-expanded="false" title="Toggle navigation">☰</button>
+<nav class="breadcrumbs" aria-label="Breadcrumb"><a href="../../../../../../index.html">src</a><span class="breadcrumb-sep">::</span><span class="breadcrumb-current">packages/sql-semantics/src/Model/Statement/StatementKind.php</span></nav>
 <div class="topbar-tools">
-<input type="search" id="search" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
+<input class="input input-search" type="search" id="search" aria-label="Search documentation" placeholder="Search… ( / )" autocomplete="off" spellcheck="false">
 <span class="diff-range" title="Comparing 524dd75927 to working tree">524dd75927 <span class="diff-arrow">→</span> working tree</span><div class="diff-modes" id="diff-modes" role="group" aria-label="Diff display mode"><button type="button" class="diff-mode" data-diff-mode="off" title="Documentation of the head revision, without diff marks">Off</button><button type="button" class="diff-mode" data-diff-mode="inline" title="Every page with additions and removals marked">Diff</button><button type="button" class="diff-mode" data-diff-mode="changes" title="Only what the head revision added, changed, or removed">Changes</button></div><a class="repo-link" href="https://github.com/k-kinzal/ztd-query-php" title="Repository: https://github.com/k-kinzal/ztd-query-php" rel="noreferrer">github.com</a>
-<button id="theme-toggle" title="Toggle theme">◐</button>
+<button class="btn" type="button" id="theme-toggle" title="Toggle theme">◐</button>
 </div>
 </header>
 <div class="search-results" id="search-results" hidden></div>
-<main class="content">
+<main class="content" id="content">
 <p class="diff-empty" id="diff-empty" data-changes="Nothing on this page changed between 524dd75927 and working tree." data-off="This page documents what 524dd75927 had and working tree no longer has. Switch to Diff to read it." hidden></p>
 <div class="symbol-head"><h1 class="source-title">packages/sql-semantics/src/Model/Statement/StatementKind.php</h1></div>
 <div class="notice diff-banner" data-diff="added">Added in working tree, compared to 524dd75927.</div>
-<pre class="source" data-diff="added"><code><span class="src-line" id="L1" data-diff="added"><a class="ln" href="#L1">1</a>&lt;?php</span>
+<pre class="code code-scroll source" data-diff="added"><code><span class="src-line" id="L1" data-diff="added"><a class="ln" href="#L1">1</a>&lt;?php</span>
 <span class="src-line" id="L2" data-diff="added"><a class="ln" href="#L2">2</a></span>
 <span class="src-line" id="L3" data-diff="added"><a class="ln" href="#L3">3</a><span class="tok-kw">declare</span>(<span class="tok-id">strict_types</span>=<span class="tok-num">1</span>);</span>
 <span class="src-line" id="L4" data-diff="added"><a class="ln" href="#L4">4</a></span>
@@ -113,20 +115,39 @@
 <span class="src-line" id="L75" data-diff="added"><a class="ln" href="#L75">75</a>    <span class="tok-kw">case</span> <span class="tok-id">Grant</span> = <span class="tok-str">&#039;GRANT&#039;</span>;</span>
 <span class="src-line" id="L76" data-diff="added"><a class="ln" href="#L76">76</a>    <span class="tok-kw">case</span> <span class="tok-id">Revoke</span> = <span class="tok-str">&#039;REVOKE&#039;</span>;</span>
 <span class="src-line" id="L77" data-diff="added"><a class="ln" href="#L77">77</a>    <span class="tok-kw">case</span> <span class="tok-id">Call</span> = <span class="tok-str">&#039;CALL&#039;</span>;</span>
-<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>    <span class="tok-kw">case</span> <span class="tok-kw">Do</span> = <span class="tok-str">&#039;DO&#039;</span>;</span>
-<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>    <span class="tok-kw">case</span> <span class="tok-id">Show</span> = <span class="tok-str">&#039;SHOW&#039;</span>;</span>
-<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a>    <span class="tok-kw">case</span> <span class="tok-kw">Use</span> = <span class="tok-str">&#039;USE&#039;</span>;</span>
-<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>    <span class="tok-kw">case</span> <span class="tok-id">Analyze</span> = <span class="tok-str">&#039;ANALYZE&#039;</span>;</span>
-<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a>    <span class="tok-kw">case</span> <span class="tok-id">Vacuum</span> = <span class="tok-str">&#039;VACUUM&#039;</span>;</span>
-<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>    <span class="tok-kw">case</span> <span class="tok-id">Attach</span> = <span class="tok-str">&#039;ATTACH&#039;</span>;</span>
-<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>    <span class="tok-kw">case</span> <span class="tok-id">Detach</span> = <span class="tok-str">&#039;DETACH&#039;</span>;</span>
-<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>    <span class="tok-kw">case</span> <span class="tok-id">Reindex</span> = <span class="tok-str">&#039;REINDEX&#039;</span>;</span>
-<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>}</span>
-<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a></span>
+<span class="src-line" id="L78" data-diff="added"><a class="ln" href="#L78">78</a>    <span class="tok-kw">case</span> <span class="tok-id">Help</span> = <span class="tok-str">&#039;HELP&#039;</span>;</span>
+<span class="src-line" id="L79" data-diff="added"><a class="ln" href="#L79">79</a>    <span class="tok-kw">case</span> <span class="tok-id">Signal</span> = <span class="tok-str">&#039;SIGNAL&#039;</span>;</span>
+<span class="src-line" id="L80" data-diff="added"><a class="ln" href="#L80">80</a>    <span class="tok-kw">case</span> <span class="tok-id">Resignal</span> = <span class="tok-str">&#039;RESIGNAL&#039;</span>;</span>
+<span class="src-line" id="L81" data-diff="added"><a class="ln" href="#L81">81</a>    <span class="tok-kw">case</span> <span class="tok-id">GetDiagnostics</span> = <span class="tok-str">&#039;GET DIAGNOSTICS&#039;</span>;</span>
+<span class="src-line" id="L82" data-diff="added"><a class="ln" href="#L82">82</a>    <span class="tok-kw">case</span> <span class="tok-id">Handler</span> = <span class="tok-str">&#039;HANDLER&#039;</span>;</span>
+<span class="src-line" id="L83" data-diff="added"><a class="ln" href="#L83">83</a>    <span class="tok-kw">case</span> <span class="tok-id">Describe</span> = <span class="tok-str">&#039;DESCRIBE&#039;</span>;</span>
+<span class="src-line" id="L84" data-diff="added"><a class="ln" href="#L84">84</a>    <span class="tok-kw">case</span> <span class="tok-kw">Do</span> = <span class="tok-str">&#039;DO&#039;</span>;</span>
+<span class="src-line" id="L85" data-diff="added"><a class="ln" href="#L85">85</a>    <span class="tok-kw">case</span> <span class="tok-id">Show</span> = <span class="tok-str">&#039;SHOW&#039;</span>;</span>
+<span class="src-line" id="L86" data-diff="added"><a class="ln" href="#L86">86</a>    <span class="tok-kw">case</span> <span class="tok-kw">Use</span> = <span class="tok-str">&#039;USE&#039;</span>;</span>
+<span class="src-line" id="L87" data-diff="added"><a class="ln" href="#L87">87</a>    <span class="tok-kw">case</span> <span class="tok-id">Analyze</span> = <span class="tok-str">&#039;ANALYZE&#039;</span>;</span>
+<span class="src-line" id="L88" data-diff="added"><a class="ln" href="#L88">88</a>    <span class="tok-kw">case</span> <span class="tok-id">Vacuum</span> = <span class="tok-str">&#039;VACUUM&#039;</span>;</span>
+<span class="src-line" id="L89" data-diff="added"><a class="ln" href="#L89">89</a>    <span class="tok-kw">case</span> <span class="tok-id">Cluster</span> = <span class="tok-str">&#039;CLUSTER&#039;</span>;</span>
+<span class="src-line" id="L90" data-diff="added"><a class="ln" href="#L90">90</a>    <span class="tok-kw">case</span> <span class="tok-id">Copy</span> = <span class="tok-str">&#039;COPY&#039;</span>;</span>
+<span class="src-line" id="L91" data-diff="added"><a class="ln" href="#L91">91</a>    <span class="tok-kw">case</span> <span class="tok-id">Attach</span> = <span class="tok-str">&#039;ATTACH&#039;</span>;</span>
+<span class="src-line" id="L92" data-diff="added"><a class="ln" href="#L92">92</a>    <span class="tok-kw">case</span> <span class="tok-id">Detach</span> = <span class="tok-str">&#039;DETACH&#039;</span>;</span>
+<span class="src-line" id="L93" data-diff="added"><a class="ln" href="#L93">93</a>    <span class="tok-kw">case</span> <span class="tok-id">Reindex</span> = <span class="tok-str">&#039;REINDEX&#039;</span>;</span>
+<span class="src-line" id="L94" data-diff="added"><a class="ln" href="#L94">94</a>    <span class="tok-kw">case</span> <span class="tok-id">Refresh</span> = <span class="tok-str">&#039;REFRESH&#039;</span>;</span>
+<span class="src-line" id="L95" data-diff="added"><a class="ln" href="#L95">95</a>    <span class="tok-kw">case</span> <span class="tok-id">Rename</span> = <span class="tok-str">&#039;RENAME&#039;</span>;</span>
+<span class="src-line" id="L96" data-diff="added"><a class="ln" href="#L96">96</a>    <span class="tok-kw">case</span> <span class="tok-id">Comment</span> = <span class="tok-str">&#039;COMMENT&#039;</span>;</span>
+<span class="src-line" id="L97" data-diff="added"><a class="ln" href="#L97">97</a>    <span class="tok-kw">case</span> <span class="tok-id">SecurityLabel</span> = <span class="tok-str">&#039;SECURITY LABEL&#039;</span>;</span>
+<span class="src-line" id="L98" data-diff="added"><a class="ln" href="#L98">98</a>    <span class="tok-kw">case</span> <span class="tok-id">Purge</span> = <span class="tok-str">&#039;PURGE&#039;</span>;</span>
+<span class="src-line" id="L99" data-diff="added"><a class="ln" href="#L99">99</a>    <span class="tok-kw">case</span> <span class="tok-id">Flush</span> = <span class="tok-str">&#039;FLUSH&#039;</span>;</span>
+<span class="src-line" id="L100" data-diff="added"><a class="ln" href="#L100">100</a>    <span class="tok-kw">case</span> <span class="tok-id">Start</span> = <span class="tok-str">&#039;START&#039;</span>;</span>
+<span class="src-line" id="L101" data-diff="added"><a class="ln" href="#L101">101</a>    <span class="tok-kw">case</span> <span class="tok-id">Stop</span> = <span class="tok-str">&#039;STOP&#039;</span>;</span>
+<span class="src-line" id="L102" data-diff="added"><a class="ln" href="#L102">102</a>    <span class="tok-kw">case</span> <span class="tok-id">Change</span> = <span class="tok-str">&#039;CHANGE&#039;</span>;</span>
+<span class="src-line" id="L103" data-diff="added"><a class="ln" href="#L103">103</a>    <span class="tok-kw">case</span> <span class="tok-id">Partition</span> = <span class="tok-str">&#039;PARTITION&#039;</span>;</span>
+<span class="src-line" id="L104" data-diff="added"><a class="ln" href="#L104">104</a>    <span class="tok-kw">case</span> <span class="tok-id">ParseGeneratedColumnExpression</span> = <span class="tok-str">&#039;PARSE_GCOL_EXPR&#039;</span>;</span>
+<span class="src-line" id="L105" data-diff="added"><a class="ln" href="#L105">105</a>}</span>
+<span class="src-line" id="L106" data-diff="added"><a class="ln" href="#L106">106</a></span>
 </code></pre>
 </main>
-<footer class="site-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
-</div>
+<footer class="doc-footer">Generated by <a href="https://github.com/k-kinzal/php-ai-toolkit">php-ai-toolkit</a> docgen</footer>
+</div></div>
 <script src="../../../../../../assets/search-index.js" defer></script>
 <script src="../../../../../../assets/app.js" defer></script>
 </body>
